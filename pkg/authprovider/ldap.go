@@ -30,11 +30,22 @@ type LDAPConfig struct {
 	ConnTimeout  time.Duration // dial + bind timeout
 }
 
+// ldapConn is the subset of *ldap.Conn methods used by LDAPProvider.
+// This interface enables unit testing without a real LDAP server.
+type ldapConn interface {
+	Bind(username, password string) error
+	Search(searchRequest *ldap.SearchRequest) (*ldap.SearchResult, error)
+	Close() error
+	IsClosing() bool
+	StartTLS(config *tls.Config) error
+}
+
 // LDAPProvider authenticates users against an LDAP or Active Directory server.
 type LDAPProvider struct {
-	cfg  LDAPConfig
-	pool chan *ldap.Conn
-	mu   sync.Mutex
+	cfg      LDAPConfig
+	pool     chan ldapConn
+	mu       sync.Mutex
+	dialFunc func(ctx context.Context) (ldapConn, error) // injectable for tests
 }
 
 // NewLDAPProvider creates a new LDAPProvider with a connection pool.
@@ -57,8 +68,9 @@ func NewLDAPProvider(cfg LDAPConfig) (*LDAPProvider, error) {
 
 	p := &LDAPProvider{
 		cfg:  cfg,
-		pool: make(chan *ldap.Conn, cfg.PoolSize),
+		pool: make(chan ldapConn, cfg.PoolSize),
 	}
+	p.dialFunc = p.dial
 	return p, nil
 }
 
@@ -98,7 +110,7 @@ func (p *LDAPProvider) Authenticate(ctx context.Context, creds Credentials) (*Au
 
 	// Step 3: Re-bind as the user to verify the password.
 	// We need a fresh connection for the user bind because the service bind state is on conn.
-	userConn, err := p.dial(ctx)
+	userConn, err := p.dialFunc(ctx)
 	if err != nil {
 		p.putConn(conn, true)
 		return nil, errors.Wrap(errors.ErrInternal, "failed to connect for user bind", err)
@@ -130,7 +142,7 @@ func (p *LDAPProvider) Authenticate(ctx context.Context, creds Credentials) (*Au
 }
 
 // searchUser finds the user DN and attributes matching the filter.
-func (p *LDAPProvider) searchUser(conn *ldap.Conn, username string) (string, map[string]any, error) {
+func (p *LDAPProvider) searchUser(conn ldapConn, username string) (string, map[string]any, error) {
 	filter := fmt.Sprintf(p.cfg.UserFilter, ldap.EscapeFilter(username))
 
 	searchReq := ldap.NewSearchRequest(
@@ -162,21 +174,21 @@ func (p *LDAPProvider) searchUser(conn *ldap.Conn, username string) (string, map
 }
 
 // getConn retrieves a connection from the pool or dials a new one.
-func (p *LDAPProvider) getConn(ctx context.Context) (*ldap.Conn, error) {
+func (p *LDAPProvider) getConn(ctx context.Context) (ldapConn, error) {
 	select {
 	case conn := <-p.pool:
 		if conn.IsClosing() {
 			closeQuietly(conn)
-			return p.dial(ctx)
+			return p.dialFunc(ctx)
 		}
 		return conn, nil
 	default:
-		return p.dial(ctx)
+		return p.dialFunc(ctx)
 	}
 }
 
 // putConn returns a healthy connection to the pool or closes it.
-func (p *LDAPProvider) putConn(conn *ldap.Conn, healthy bool) {
+func (p *LDAPProvider) putConn(conn ldapConn, healthy bool) {
 	if !healthy || conn.IsClosing() {
 		closeQuietly(conn)
 		return
@@ -189,7 +201,7 @@ func (p *LDAPProvider) putConn(conn *ldap.Conn, healthy bool) {
 }
 
 // dial establishes a new LDAP connection.
-func (p *LDAPProvider) dial(ctx context.Context) (*ldap.Conn, error) {
+func (p *LDAPProvider) dial(ctx context.Context) (ldapConn, error) {
 	opts := []ldap.DialOpt{
 		ldap.DialWithDialer(&net.Dialer{Timeout: p.cfg.ConnTimeout}),
 	}
@@ -237,7 +249,7 @@ func (p *LDAPProvider) Close() {
 	}
 }
 
-func closeQuietly(conn *ldap.Conn) {
+func closeQuietly(conn ldapConn) {
 	_ = conn.Close()
 }
 
