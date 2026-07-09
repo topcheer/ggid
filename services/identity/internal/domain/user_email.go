@@ -22,11 +22,12 @@ type UserEmail struct {
 // to verify ownership. It is stored in the database (hash only) and
 // consumed on verification.
 type EmailVerificationToken struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	EmailID   uuid.UUID
-	TokenHash string // SHA-256 hash of the plaintext token
-	ExpiresAt time.Time
+	ID         uuid.UUID
+	TenantID   uuid.UUID
+	UserID     uuid.UUID
+	EmailID    uuid.UUID
+	TokenHash  string // SHA-256 hash of the plaintext token
+	ExpiresAt  time.Time
 	ConsumedAt *time.Time // nil = not yet consumed
-	CreatedAt time.Time
+	CreatedAt  time.Time
 }

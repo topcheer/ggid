@@ -46,12 +46,12 @@ func setTenantRLS(ctx context.Context, tx pgx.Tx, tenantID uuid.UUID) error {
 // isDuplicateKey returns true if err is a PostgreSQL unique violation.
 func isDuplicateKey(err error) bool {
 	var pgErr *pgconn.PgError
-	return errors.As(err, &pgErr) && pgErr.Code == "23505"
+	return stderrors.As(err, &pgErr) && pgErr.Code == "23505"
 }
 
 // isNoRows returns true if err is pgx.ErrNoRows.
 func isNoRows(err error) bool {
-	return errors.Is(err, pgx.ErrNoRows)
+	return stderrors.Is(err, pgx.ErrNoRows)
 }
 
 // hashToken returns a hex-encoded SHA-256 hash of the plaintext token.
@@ -71,7 +71,7 @@ RETURNING created_at, updated_at`
 func (r *pgRepo) CreateUser(ctx context.Context, user *domain.User) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -93,9 +93,9 @@ func (r *pgRepo) CreateUser(ctx context.Context, user *domain.User) error {
 
 	if err != nil {
 		if isDuplicateKey(err) {
-			return errors.AlreadyExists("user", user.Username)
+			return ggiderrors.AlreadyExists("user", user.Username)
 		}
-		return errors.Wrap(errors.ErrInternal, "create user", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "create user", err)
 	}
 
 	return tx.Commit(ctx)
@@ -141,7 +141,7 @@ func scanUser(row pgx.Row) (*domain.User, error) {
 func (r *pgRepo) GetUserByID(ctx context.Context, tenantID, id uuid.UUID) (*domain.User, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -153,9 +153,9 @@ func (r *pgRepo) GetUserByID(ctx context.Context, tenantID, id uuid.UUID) (*doma
 	user, err := scanUser(row)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("user", id.String())
+			return nil, ggiderrors.NotFound("user", id.String())
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "get user", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get user", err)
 	}
 
 	tx.Rollback(ctx)
@@ -173,7 +173,7 @@ func (r *pgRepo) GetUserByEmail(ctx context.Context, tenantID uuid.UUID, email s
 func (r *pgRepo) getUserByColumn(ctx context.Context, tenantID uuid.UUID, where, value string) (*domain.User, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -186,9 +186,9 @@ func (r *pgRepo) getUserByColumn(ctx context.Context, tenantID uuid.UUID, where,
 	user, err := scanUser(row)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("user", value)
+			return nil, ggiderrors.NotFound("user", value)
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "get user", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get user", err)
 	}
 
 	tx.Rollback(ctx)
@@ -209,7 +209,7 @@ RETURNING %s`
 func (r *pgRepo) UpdateUser(ctx context.Context, tenantID, id uuid.UUID, input *domain.UpdateUserInput) (*domain.User, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -223,9 +223,9 @@ func (r *pgRepo) UpdateUser(ctx context.Context, tenantID, id uuid.UUID, input *
 	user, err := scanUser(row)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("user", id.String())
+			return nil, ggiderrors.NotFound("user", id.String())
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "update user", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "update user", err)
 	}
 
 	tx.Rollback(ctx)
@@ -239,7 +239,7 @@ WHERE id = $2 AND tenant_id = $1 AND deleted_at IS NULL`
 func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -249,10 +249,10 @@ func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 
 	tag, err := tx.Exec(ctx, deleteUserSQL, tenantID, id, string(domain.UserStatusDeleted))
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "delete user", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "delete user", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return errors.NotFound("user", id.String())
+		return ggiderrors.NotFound("user", id.String())
 	}
 
 	return tx.Commit(ctx)
@@ -261,7 +261,7 @@ func (r *pgRepo) DeleteUser(ctx context.Context, tenantID, id uuid.UUID) error {
 func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) (*domain.ListUsersResult, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -292,7 +292,7 @@ func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) 
 	countQuery := fmt.Sprintf("SELECT count(*) FROM users WHERE %s", whereClause)
 	var total int
 	if err := tx.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "count users", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "count users", err)
 	}
 
 	// Build ORDER BY.
@@ -319,7 +319,7 @@ func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) 
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "list users", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "list users", err)
 	}
 	defer rows.Close()
 
@@ -327,12 +327,12 @@ func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) 
 	for rows.Next() {
 		user, err := scanUser(rows)
 		if err != nil {
-			return nil, errors.Wrap(errors.ErrInternal, "scan user", err)
+			return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "scan user", err)
 		}
 		users = append(users, user)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "iterate users", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "iterate users", err)
 	}
 
 	result := &domain.ListUsersResult{
@@ -355,7 +355,7 @@ RETURNING %s`
 func (r *pgRepo) SetUserStatus(ctx context.Context, tenantID, id uuid.UUID, status domain.UserStatus) (*domain.User, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -368,9 +368,9 @@ func (r *pgRepo) SetUserStatus(ctx context.Context, tenantID, id uuid.UUID, stat
 	user, err := scanUser(row)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("user", id.String())
+			return nil, ggiderrors.NotFound("user", id.String())
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "set user status", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "set user status", err)
 	}
 
 	tx.Rollback(ctx)
@@ -384,7 +384,7 @@ WHERE id = $2 AND tenant_id = $1`
 func (r *pgRepo) UpdateLastLogin(ctx context.Context, tenantID, id uuid.UUID, ip string) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -394,7 +394,7 @@ func (r *pgRepo) UpdateLastLogin(ctx context.Context, tenantID, id uuid.UUID, ip
 
 	_, err = tx.Exec(ctx, updateLastLoginSQL, tenantID, id, ip)
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "update last login", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "update last login", err)
 	}
 
 	return tx.Commit(ctx)
@@ -407,7 +407,7 @@ WHERE id = $2 AND tenant_id = $1 AND deleted_at IS NULL`
 func (r *pgRepo) UpdatePassword(ctx context.Context, tenantID, id uuid.UUID, passwordHash string) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -417,10 +417,10 @@ func (r *pgRepo) UpdatePassword(ctx context.Context, tenantID, id uuid.UUID, pas
 
 	tag, err := tx.Exec(ctx, updatePasswordSQL, tenantID, id, passwordHash)
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "update password", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "update password", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return errors.NotFound("user", id.String())
+		return ggiderrors.NotFound("user", id.String())
 	}
 
 	return tx.Commit(ctx)
@@ -438,7 +438,7 @@ WHERE tenant_id = $1
 func (r *pgRepo) GetCredentialByUsername(ctx context.Context, tenantID uuid.UUID, username string) (*authprovider.LocalCredential, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -452,9 +452,9 @@ func (r *pgRepo) GetCredentialByUsername(ctx context.Context, tenantID uuid.UUID
 		Scan(&cred.UserID, &cred.Username, &cred.Email, &status, &cred.PasswordHash)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("user", username)
+			return nil, ggiderrors.NotFound("user", username)
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "get credential", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get credential", err)
 	}
 	cred.Status = status
 
@@ -478,7 +478,7 @@ func scanUserEmail(row pgx.Row) (*domain.UserEmail, error) {
 func (r *pgRepo) ListUserEmails(ctx context.Context, tenantID, userID uuid.UUID) ([]*domain.UserEmail, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -489,7 +489,7 @@ func (r *pgRepo) ListUserEmails(ctx context.Context, tenantID, userID uuid.UUID)
 	query := fmt.Sprintf(`SELECT %s FROM user_emails WHERE user_id = $1 ORDER BY is_primary DESC, created_at ASC`, userEmailColumns)
 	rows, err := tx.Query(ctx, query, userID)
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "list emails", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "list emails", err)
 	}
 	defer rows.Close()
 
@@ -497,7 +497,7 @@ func (r *pgRepo) ListUserEmails(ctx context.Context, tenantID, userID uuid.UUID)
 	for rows.Next() {
 		e, err := scanUserEmail(rows)
 		if err != nil {
-			return nil, errors.Wrap(errors.ErrInternal, "scan email", err)
+			return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "scan email", err)
 		}
 		emails = append(emails, e)
 	}
@@ -514,7 +514,7 @@ RETURNING %s`
 func (r *pgRepo) AddUserEmail(ctx context.Context, tenantID, userID uuid.UUID, email string) (*domain.UserEmail, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -528,13 +528,13 @@ func (r *pgRepo) AddUserEmail(ctx context.Context, tenantID, userID uuid.UUID, e
 	ue, err := scanUserEmail(row)
 	if err != nil {
 		if isDuplicateKey(err) {
-			return nil, errors.AlreadyExists("email", email)
+			return nil, ggiderrors.AlreadyExists("email", email)
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "add email", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "add email", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "commit", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "commit", err)
 	}
 	return ue, nil
 }
@@ -547,7 +547,7 @@ WHERE user_id = $2 AND email = $3 AND is_primary = false
 func (r *pgRepo) RemoveUserEmail(ctx context.Context, tenantID, userID uuid.UUID, email string) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -557,10 +557,10 @@ func (r *pgRepo) RemoveUserEmail(ctx context.Context, tenantID, userID uuid.UUID
 
 	tag, err := tx.Exec(ctx, removeUserEmailSQL, tenantID, userID, email)
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "remove email", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "remove email", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return errors.New(errors.ErrInvalidArgument, "email not found or cannot remove primary email")
+		return ggiderrors.New(ggiderrors.ErrInvalidArgument, "email not found or cannot remove primary email")
 	}
 
 	return tx.Commit(ctx)
@@ -575,7 +575,7 @@ RETURNING %s`
 func (r *pgRepo) SetPrimaryEmail(ctx context.Context, tenantID, userID, emailID uuid.UUID) (*domain.UserEmail, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -589,20 +589,20 @@ func (r *pgRepo) SetPrimaryEmail(ctx context.Context, tenantID, userID, emailID 
 	ue, err := scanUserEmail(row)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("email", emailID.String())
+			return nil, ggiderrors.NotFound("email", emailID.String())
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "set primary email", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "set primary email", err)
 	}
 
 	// Also update users.email denormalised field.
 	_, err = tx.Exec(ctx, `UPDATE users SET email = $3 WHERE id = $2 AND tenant_id = $1`,
 		tenantID, userID, ue.Email)
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "sync user email", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "sync user email", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "commit", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "commit", err)
 	}
 	return ue, nil
 }
@@ -610,7 +610,7 @@ func (r *pgRepo) SetPrimaryEmail(ctx context.Context, tenantID, userID, emailID 
 func (r *pgRepo) GetUserByEmailID(ctx context.Context, tenantID, emailID uuid.UUID) (*domain.UserEmail, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -623,9 +623,9 @@ func (r *pgRepo) GetUserByEmailID(ctx context.Context, tenantID, emailID uuid.UU
 	ue, err := scanUserEmail(row)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("email", emailID.String())
+			return nil, ggiderrors.NotFound("email", emailID.String())
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "get email", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get email", err)
 	}
 
 	tx.Rollback(ctx)
@@ -642,7 +642,7 @@ RETURNING created_at`
 func (r *pgRepo) CreateEmailVerificationToken(ctx context.Context, token *domain.EmailVerificationToken) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -654,7 +654,7 @@ func (r *pgRepo) CreateEmailVerificationToken(ctx context.Context, token *domain
 		token.ID, token.UserID, token.EmailID, token.TokenHash, token.ExpiresAt,
 	).Scan(&token.CreatedAt)
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "create verification token", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "create verification token", err)
 	}
 
 	return tx.Commit(ctx)
@@ -669,7 +669,7 @@ RETURNING id, user_id, email_id, expires_at, consumed_at, created_at`
 func (r *pgRepo) ConsumeEmailVerificationToken(ctx context.Context, tokenHash string) (*domain.EmailVerificationToken, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -679,13 +679,13 @@ func (r *pgRepo) ConsumeEmailVerificationToken(ctx context.Context, tokenHash st
 		Scan(&token.ID, &token.UserID, &token.EmailID, &token.ExpiresAt, &token.ConsumedAt, &token.CreatedAt)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.New(errors.ErrInvalidArgument, "invalid or expired verification token")
+			return nil, ggiderrors.New(ggiderrors.ErrInvalidArgument, "invalid or expired verification token")
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "consume token", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "consume token", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "commit", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "commit", err)
 	}
 	return &token, nil
 }
@@ -710,7 +710,7 @@ func scanExternalIdentity(row pgx.Row) (*domain.ExternalIdentity, error) {
 func (r *pgRepo) ListExternalIdentities(ctx context.Context, tenantID, userID uuid.UUID) ([]*domain.ExternalIdentity, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -721,7 +721,7 @@ func (r *pgRepo) ListExternalIdentities(ctx context.Context, tenantID, userID uu
 	query := fmt.Sprintf(`SELECT %s FROM user_external_identities WHERE user_id = $1 ORDER BY linked_at DESC`, externalIdentityColumns)
 	rows, err := tx.Query(ctx, query, userID)
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "list external identities", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "list external identities", err)
 	}
 	defer rows.Close()
 
@@ -729,7 +729,7 @@ func (r *pgRepo) ListExternalIdentities(ctx context.Context, tenantID, userID uu
 	for rows.Next() {
 		ei, err := scanExternalIdentity(rows)
 		if err != nil {
-			return nil, errors.Wrap(errors.ErrInternal, "scan identity", err)
+			return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "scan identity", err)
 		}
 		identities = append(identities, ei)
 	}
@@ -746,7 +746,7 @@ RETURNING %s`
 func (r *pgRepo) LinkExternalIdentity(ctx context.Context, ei *domain.ExternalIdentity) (*domain.ExternalIdentity, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -762,14 +762,14 @@ func (r *pgRepo) LinkExternalIdentity(ctx context.Context, ei *domain.ExternalId
 	result, err := scanExternalIdentity(row)
 	if err != nil {
 		if isDuplicateKey(err) {
-			return nil, errors.AlreadyExists("external identity", ei.Provider+":"+ei.ExternalID)
+			return nil, ggiderrors.AlreadyExists("external identity", ei.Provider+":"+ei.ExternalID)
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "link identity", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "link identity", err)
 	}
 	result.TenantID = ei.TenantID
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "commit", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "commit", err)
 	}
 	return result, nil
 }
@@ -782,7 +782,7 @@ WHERE id = $3 AND user_id = $2
 func (r *pgRepo) UnlinkExternalIdentity(ctx context.Context, tenantID, userID, identityID uuid.UUID) error {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -792,10 +792,10 @@ func (r *pgRepo) UnlinkExternalIdentity(ctx context.Context, tenantID, userID, i
 
 	tag, err := tx.Exec(ctx, unlinkExternalIdentitySQL, tenantID, userID, identityID)
 	if err != nil {
-		return errors.Wrap(errors.ErrInternal, "unlink identity", err)
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "unlink identity", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return errors.NotFound("external identity", identityID.String())
+		return ggiderrors.NotFound("external identity", identityID.String())
 	}
 
 	return tx.Commit(ctx)
@@ -809,7 +809,7 @@ LIMIT 1`
 func (r *pgRepo) FindExternalIdentity(ctx context.Context, tenantID uuid.UUID, provider, externalID string) (*domain.ExternalIdentity, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "begin tx", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "begin tx", err)
 	}
 	defer tx.Rollback(ctx)
 
@@ -822,9 +822,9 @@ func (r *pgRepo) FindExternalIdentity(ctx context.Context, tenantID uuid.UUID, p
 	ei, err := scanExternalIdentity(row)
 	if err != nil {
 		if isNoRows(err) {
-			return nil, errors.NotFound("external identity", provider+":"+externalID)
+			return nil, ggiderrors.NotFound("external identity", provider+":"+externalID)
 		}
-		return nil, errors.Wrap(errors.ErrInternal, "find identity", err)
+		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "find identity", err)
 	}
 	ei.TenantID = tenantID
 
