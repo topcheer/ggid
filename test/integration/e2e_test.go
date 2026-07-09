@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -375,6 +376,121 @@ func TestAuthRegisterLogin(t *testing.T) {
 		t.Fatal("refresh token should be rotated")
 	}
 	t.Log("Token rotation verified (new access + refresh tokens issued)")
+}
+
+// TestIdentityUserCRUD tests the full user lifecycle through the Identity API.
+func TestIdentityUserCRUD(t *testing.T) {
+	baseURL := os.Getenv("IDENTITY_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:8081"
+	}
+	tenantID := "00000000-0000-0000-0000-000000000001"
+	username := fmt.Sprintf("crud_%d", time.Now().UnixNano())
+	email := fmt.Sprintf("%s@test.local", username)
+
+	// Create user
+	createBody := fmt.Sprintf(`{"username":"%s","email":"%s","password":"CrudPassw0rd123!"}`, username, email)
+	req, _ := http.NewRequest("POST", baseURL+"/api/v1/users", stringReader(createBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Tenant-ID", tenantID)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Skipf("Identity Service not running: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusCreated {
+		t.Skipf("Identity Service returned %d", resp.StatusCode)
+	}
+
+	var createResult map[string]any
+	json.NewDecoder(resp.Body).Decode(&createResult)
+	userID, _ := createResult["id"].(string)
+	if userID == "" {
+		t.Fatal("missing user ID in create response")
+	}
+	t.Logf("Created user: %s (id=%s)", username, userID)
+
+	// Get user
+	req2, _ := http.NewRequest("GET", baseURL+"/api/v1/users/"+userID, nil)
+	req2.Header.Set("X-Tenant-ID", tenantID)
+	resp2, err := http.DefaultClient.Do(req2)
+	if err != nil {
+		t.Fatalf("get user failed: %v", err)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusOK {
+		t.Fatalf("get user returned %d", resp2.StatusCode)
+	}
+	var getResult map[string]any
+	json.NewDecoder(resp2.Body).Decode(&getResult)
+	if getResult["username"] != username {
+		t.Fatalf("username mismatch: got %v", getResult["username"])
+	}
+	t.Log("User retrieved successfully")
+
+	// Lock user
+	req3, _ := http.NewRequest("POST", baseURL+"/api/v1/users/"+userID+"/lock", nil)
+	req3.Header.Set("X-Tenant-ID", tenantID)
+	resp3, err := http.DefaultClient.Do(req3)
+	if err != nil {
+		t.Fatalf("lock user failed: %v", err)
+	}
+	defer resp3.Body.Close()
+	if resp3.StatusCode != http.StatusOK {
+		t.Fatalf("lock user returned %d", resp3.StatusCode)
+	}
+	var lockResult map[string]any
+	json.NewDecoder(resp3.Body).Decode(&lockResult)
+	if lockResult["status"] != "locked" {
+		t.Fatalf("expected status 'locked', got %v", lockResult["status"])
+	}
+	t.Log("User locked successfully")
+
+	// Unlock user
+	req4, _ := http.NewRequest("POST", baseURL+"/api/v1/users/"+userID+"/unlock", nil)
+	req4.Header.Set("X-Tenant-ID", tenantID)
+	resp4, err := http.DefaultClient.Do(req4)
+	if err != nil {
+		t.Fatalf("unlock user failed: %v", err)
+	}
+	defer resp4.Body.Close()
+	if resp4.StatusCode != http.StatusOK {
+		t.Fatalf("unlock user returned %d", resp4.StatusCode)
+	}
+	var unlockResult map[string]any
+	json.NewDecoder(resp4.Body).Decode(&unlockResult)
+	if unlockResult["status"] != "active" {
+		t.Fatalf("expected status 'active', got %v", unlockResult["status"])
+	}
+	t.Log("User unlocked successfully")
+
+	// Delete user
+	req5, _ := http.NewRequest("DELETE", baseURL+"/api/v1/users/"+userID, nil)
+	req5.Header.Set("X-Tenant-ID", tenantID)
+	resp5, err := http.DefaultClient.Do(req5)
+	if err != nil {
+		t.Fatalf("delete user failed: %v", err)
+	}
+	defer resp5.Body.Close()
+	if resp5.StatusCode != http.StatusOK {
+		t.Fatalf("delete user returned %d", resp5.StatusCode)
+	}
+	t.Log("User deleted successfully")
+
+	// Verify user is soft-deleted (status = "deleted")
+	req6, _ := http.NewRequest("GET", baseURL+"/api/v1/users/"+userID, nil)
+	req6.Header.Set("X-Tenant-ID", tenantID)
+	resp6, err := http.DefaultClient.Do(req6)
+	if err != nil {
+		t.Fatalf("get deleted user failed: %v", err)
+	}
+	defer resp6.Body.Close()
+	var deletedResult map[string]any
+	json.NewDecoder(resp6.Body).Decode(&deletedResult)
+	if deletedResult["status"] != "deleted" {
+		t.Fatalf("expected status 'deleted', got %v", deletedResult["status"])
+	}
+	t.Log("Deleted user correctly has status='deleted'")
 }
 
 // TestLDAPConnection verifies that the LDAP test server is accessible.
