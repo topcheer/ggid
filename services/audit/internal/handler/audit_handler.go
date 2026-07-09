@@ -8,7 +8,6 @@ import (
 	pb "github.com/ggid/ggid/api/gen/audit/v1"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/audit/internal/domain"
-	"github.com/ggid/ggid/services/audit/internal/service"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,13 +15,20 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// AuditSvcReader provides the subset of AuditService methods needed by the handler.
+type AuditSvcReader interface {
+	GetEvent(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error)
+	ListEvents(ctx context.Context, filter domain.ListFilter, page, pageSize int) ([]*domain.AuditEvent, int, error)
+	InsertEvent(ctx context.Context, event *domain.AuditEvent) error
+}
+
 // AuditHandler implements the AuditService gRPC interface.
 type AuditHandler struct {
 	pb.UnimplementedAuditServiceServer
-	svc *service.AuditService
+	svc AuditSvcReader
 }
 
-func NewAuditHandler(svc *service.AuditService) *AuditHandler {
+func NewAuditHandler(svc AuditSvcReader) *AuditHandler {
 	return &AuditHandler{svc: svc}
 }
 

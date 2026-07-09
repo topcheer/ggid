@@ -1,11 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   --sidebar-width: 250px;
 }
 
 body {
-  @apply bg-gray-50 text-gray-900;
+  background-color: #f9fafb;
+  color: #111827;
 }
