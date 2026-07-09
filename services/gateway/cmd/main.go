@@ -34,8 +34,7 @@ func main() {
 	}
 
 	// Create gateway router
-	verifier := middleware.NewJWTVerifier(jwks, cfg.JWTIssuer, cfg.JWTAudience)
-	gw := router.New(cfg, verifier)
+	gw := router.New(cfg, jwks)
 	gw.PrintRoutes()
 
 	// HTTP server
