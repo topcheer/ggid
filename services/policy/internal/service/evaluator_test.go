@@ -276,8 +276,8 @@ func TestCheck_ABAC_Deny_Overrides_ABAC_Allow(t *testing.T) {
 	pr := &mockPolicyReader{
 		policies: map[uuid.UUID][]*domain.Policy{
 			userID: {
-				newPolicy(domain.EffectAllow, "allow-read", []string{"users:read"}, nil),
-				newPolicy(domain.EffectDeny, "deny-read", []string{"users:read"}, nil),
+				newPolicy(domain.EffectAllow, "allow-read", []string{"*"}, nil),
+				newPolicy(domain.EffectDeny, "deny-read", []string{"*"}, nil),
 			},
 		},
 	}

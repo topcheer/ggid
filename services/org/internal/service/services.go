@@ -10,16 +10,63 @@ import (
 	"github.com/google/uuid"
 )
 
-// TenantService handles tenant CRUD operations.
-type TenantService struct {
-	repo *repository.TenantRepository
+// --- Interfaces for testability ---
+
+// TenantRepo provides tenant persistence operations.
+type TenantRepo interface {
+	Create(ctx context.Context, t *domain.Tenant) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Tenant, error)
+	GetBySlug(ctx context.Context, slug string) (*domain.Tenant, error)
+	Update(ctx context.Context, t *domain.Tenant) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-func NewTenantService(repo *repository.TenantRepository) *TenantService {
+// OrgRepo provides organization tree persistence.
+type OrgRepo interface {
+	Create(ctx context.Context, org *domain.Organization) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Organization, error)
+	ListByTenant(ctx context.Context, tenantID uuid.UUID, limit, offset int) ([]*domain.Organization, error)
+	GetSubTree(ctx context.Context, tenantID, rootID uuid.UUID) ([]*domain.Organization, error)
+	Update(ctx context.Context, org *domain.Organization) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+// DeptRepo provides department persistence.
+type DeptRepo interface {
+	Create(ctx context.Context, dept *domain.Department) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Department, error)
+	ListByOrg(ctx context.Context, orgID uuid.UUID) ([]*domain.Department, error)
+	Update(ctx context.Context, dept *domain.Department) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+// TeamRepo provides team persistence.
+type TeamRepo interface {
+	Create(ctx context.Context, team *domain.Team) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Team, error)
+	ListByOrg(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]*domain.Team, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+// MemberRepo provides membership persistence.
+type MemberRepo interface {
+	Create(ctx context.Context, m *domain.Membership) error
+	Activate(ctx context.Context, id uuid.UUID) error
+	Remove(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Membership, error)
+	List(ctx context.Context, filter repository.ListMembersFilter, limit, offset int) ([]*domain.Membership, error)
+}
+
+// --- TenantService ---
+
+type TenantService struct {
+	repo TenantRepo
+}
+
+func NewTenantService(repo TenantRepo) *TenantService {
 	return &TenantService{repo: repo}
 }
 
-// Create creates a new tenant.
 func (s *TenantService) Create(ctx context.Context, t *domain.Tenant) (*domain.Tenant, error) {
 	if t.Slug == "" {
 		return nil, errors.InvalidArgument("slug is required")
@@ -39,17 +86,14 @@ func (s *TenantService) Create(ctx context.Context, t *domain.Tenant) (*domain.T
 	return t, nil
 }
 
-// Get retrieves a tenant by ID.
 func (s *TenantService) Get(ctx context.Context, id uuid.UUID) (*domain.Tenant, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-// GetBySlug retrieves a tenant by slug.
 func (s *TenantService) GetBySlug(ctx context.Context, slug string) (*domain.Tenant, error) {
 	return s.repo.GetBySlug(ctx, slug)
 }
 
-// Update modifies a tenant.
 func (s *TenantService) Update(ctx context.Context, t *domain.Tenant) (*domain.Tenant, error) {
 	if err := s.repo.Update(ctx, t); err != nil {
 		return nil, err
@@ -57,19 +101,17 @@ func (s *TenantService) Update(ctx context.Context, t *domain.Tenant) (*domain.T
 	return t, nil
 }
 
-// Delete soft-deletes a tenant.
 func (s *TenantService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
-// --- Org Service ---
+// --- OrgService ---
 
-// OrgService handles organization tree operations.
 type OrgService struct {
-	repo *repository.OrgRepository
+	repo OrgRepo
 }
 
-func NewOrgService(repo *repository.OrgRepository) *OrgService {
+func NewOrgService(repo OrgRepo) *OrgService {
 	return &OrgService{repo: repo}
 }
 
@@ -113,14 +155,13 @@ func (s *OrgService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
-// --- Dept Service ---
+// --- DeptService ---
 
-// DeptService handles department operations.
 type DeptService struct {
-	repo *repository.DeptRepository
+	repo DeptRepo
 }
 
-func NewDeptService(repo *repository.DeptRepository) *DeptService {
+func NewDeptService(repo DeptRepo) *DeptService {
 	return &DeptService{repo: repo}
 }
 
@@ -153,14 +194,13 @@ func (s *DeptService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
-// --- Team Service ---
+// --- TeamService ---
 
-// TeamService handles team operations.
 type TeamService struct {
-	repo *repository.TeamRepository
+	repo TeamRepo
 }
 
-func NewTeamService(repo *repository.TeamRepository) *TeamService {
+func NewTeamService(repo TeamRepo) *TeamService {
 	return &TeamService{repo: repo}
 }
 
@@ -193,18 +233,16 @@ func (s *TeamService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Delete(ctx, id)
 }
 
-// --- Membership Service ---
+// --- MembershipService ---
 
-// MembershipService handles member invitation and management.
 type MembershipService struct {
-	repo *repository.MembershipRepository
+	repo MemberRepo
 }
 
-func NewMembershipService(repo *repository.MembershipRepository) *MembershipService {
+func NewMembershipService(repo MemberRepo) *MembershipService {
 	return &MembershipService{repo: repo}
 }
 
-// Invite creates a new membership with 'invited' status.
 func (s *MembershipService) Invite(ctx context.Context, m *domain.Membership) (*domain.Membership, error) {
 	if m.Status == "" {
 		m.Status = domain.MembershipInvited
@@ -215,17 +253,14 @@ func (s *MembershipService) Invite(ctx context.Context, m *domain.Membership) (*
 	return m, nil
 }
 
-// AcceptInvitation activates an invited membership.
 func (s *MembershipService) AcceptInvitation(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Activate(ctx, id)
 }
 
-// Remove sets membership status to removed.
 func (s *MembershipService) Remove(ctx context.Context, id uuid.UUID) error {
 	return s.repo.Remove(ctx, id)
 }
 
-// List returns memberships matching the filter.
 func (s *MembershipService) List(ctx context.Context, filter repository.ListMembersFilter, page, pageSize int) ([]*domain.Membership, error) {
 	if pageSize <= 0 || pageSize > 200 {
 		pageSize = 50

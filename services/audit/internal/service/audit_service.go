@@ -5,16 +5,23 @@ import (
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/audit/internal/domain"
-	"github.com/ggid/ggid/services/audit/internal/repository"
 	"github.com/google/uuid"
 )
 
-// AuditService handles audit event queries.
-type AuditService struct {
-	repo *repository.AuditRepository
+// AuditRepo provides audit event persistence and queries.
+// Satisfied by *repository.AuditRepository.
+type AuditRepo interface {
+	Insert(ctx context.Context, e *domain.AuditEvent) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error)
+	List(ctx context.Context, filter domain.ListFilter, limit, offset int) ([]*domain.AuditEvent, int, error)
 }
 
-func NewAuditService(repo *repository.AuditRepository) *AuditService {
+// AuditService handles audit event queries.
+type AuditService struct {
+	repo AuditRepo
+}
+
+func NewAuditService(repo AuditRepo) *AuditService {
 	return &AuditService{repo: repo}
 }
 
