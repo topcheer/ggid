@@ -20,6 +20,8 @@ MIGRATIONS=(
     "services/audit/migrations/000001_init_extensions.up.sql"
     "services/audit/migrations/000002_create_partitions.up.sql"
     "services/policy/migrations/000003_seed_system_roles_permissions.up.sql"
+    "services/oauth/migrations/000001_initial_schema.up.sql"
+    "services/auth/migrations/000001_mfa_devices.up.sql"
 )
 
 echo "=== GGID Database Migration ==="
