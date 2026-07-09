@@ -54,7 +54,7 @@ func main() {
 	}
 
 	// Initialize gRPC handlers
-	roleHandler := handler.NewRoleHandler(roleSvc)
+	roleHandler := handler.NewRoleHandler(roleSvc, nil) // auditor wired later
 	permHandler := handler.NewPermissionHandler(roleSvc)
 	policyHandler := handler.NewPolicyHandler(policySvc, evaluator)
 

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	pb "github.com/ggid/ggid/api/gen/policy/v1"
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/ggid/ggid/services/policy/internal/service"
@@ -17,11 +18,12 @@ import (
 // RoleHandler implements the RoleService gRPC interface.
 type RoleHandler struct {
 	pb.UnimplementedRoleServiceServer
-	roleSvc *service.RoleService
+	roleSvc   *service.RoleService
+	auditor   *audit.Publisher
 }
 
-func NewRoleHandler(roleSvc *service.RoleService) *RoleHandler {
-	return &RoleHandler{roleSvc: roleSvc}
+func NewRoleHandler(roleSvc *service.RoleService, auditor *audit.Publisher) *RoleHandler {
+	return &RoleHandler{roleSvc: roleSvc, auditor: auditor}
 }
 
 func (h *RoleHandler) CreateRole(ctx context.Context, req *pb.CreateRoleRequest) (*pb.Role, error) {
@@ -41,6 +43,7 @@ func (h *RoleHandler) CreateRole(ctx context.Context, req *pb.CreateRoleRequest)
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
+	h.emitAudit("role.create", "success", tenantID, uuid.Nil, "roles", role.ID.String())
 	return roleToProto(role), nil
 }
 
@@ -128,6 +131,7 @@ func (h *RoleHandler) AssignRole(ctx context.Context, req *pb.AssignRoleRequest)
 	if err := h.roleSvc.AssignRole(ctx, userID, roleID, domain.ScopeType(req.GetScopeType()), scopeID, grantedBy, expiresAt); err != nil {
 		return nil, toGRPCError(err)
 	}
+	h.emitAudit("role.assign", "success", tenantIDFromContext(ctx), grantedBy, "roles", roleID.String())
 	return &pb.AssignRoleResponse{}, nil
 }
 
@@ -147,6 +151,7 @@ func (h *RoleHandler) RevokeRole(ctx context.Context, req *pb.RevokeRoleRequest)
 	if err := h.roleSvc.RevokeRole(ctx, userID, roleID, domain.ScopeType(req.GetScopeType()), scopeID); err != nil {
 		return nil, toGRPCError(err)
 	}
+	h.emitAudit("role.revoke", "success", tenantIDFromContext(ctx), uuid.Nil, "roles", roleID.String())
 	return &pb.RevokeRoleResponse{}, nil
 }
 
@@ -216,4 +221,27 @@ func toGRPCError(err error) error {
 		}
 	}
 	return status.Error(codes.Internal, err.Error())
+}
+
+// emitAudit publishes an audit event if the publisher is configured.
+// It's best-effort — failures are silently dropped.
+func (h *RoleHandler) emitAudit(action, result string, tenantID, actorID uuid.UUID, resourceType, resourceID string) {
+	if h.auditor == nil {
+		return
+	}
+	h.auditor.PublishAsync(audit.Event{
+		TenantID:     tenantID,
+		ActorType:    "user",
+		ActorID:      actorID,
+		Action:       action,
+		Result:       result,
+		ResourceType: resourceType,
+		ResourceID:   uuid.MustParse(resourceID),
+	})
+}
+
+// tenantIDFromContext is a placeholder — in production this would extract
+// the tenant ID from gRPC metadata or context.
+func tenantIDFromContext(_ context.Context) uuid.UUID {
+	return uuid.Nil
 }
