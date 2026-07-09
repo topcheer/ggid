@@ -19,7 +19,7 @@ import (
 type AuthService struct {
 	cfg            *conf.Config
 	chain          *authprovider.Chain
-	credentialRepo *repository.CredentialRepository
+	credentialRepo CredentialRepo
 	tokenService   *TokenService
 	sessionService *SessionService
 	passwordService *PasswordService
@@ -32,7 +32,7 @@ type AuthService struct {
 func NewAuthService(
 	cfg *conf.Config,
 	chain *authprovider.Chain,
-	credRepo *repository.CredentialRepository,
+	credRepo CredentialRepo,
 	tokenSvc *TokenService,
 	sessionSvc *SessionService,
 	passwordSvc *PasswordService,
