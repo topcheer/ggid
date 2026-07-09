@@ -55,11 +55,11 @@ func main() {
 	}
 
 	// Initialize gRPC handlers
-	tenantHandler := handler.NewTenantHandler(tenantSvc)
+	tenantHandler := handler.NewTenantHandler(tenantSvc, nil)
 	orgHandler := handler.NewOrgHandler(orgSvc)
 	deptHandler := handler.NewDeptHandler(deptSvc)
 	teamHandler := handler.NewTeamHandler(teamSvc)
-	memberHandler := handler.NewMembershipHandler(memberSvc)
+	memberHandler := handler.NewMembershipHandler(memberSvc, nil)
 
 	// Start gRPC server
 	lis, err := net.Listen("tcp", cfg.GRPCAddr)

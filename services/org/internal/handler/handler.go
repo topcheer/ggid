@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	pb "github.com/ggid/ggid/api/gen/org/v1"
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/org/internal/domain"
 	"github.com/ggid/ggid/services/org/internal/repository"
@@ -65,11 +66,12 @@ func jsonToMap(s string) map[string]any {
 
 type TenantHandler struct {
 	pb.UnimplementedTenantServiceServer
-	svc *service.TenantService
+	svc     *service.TenantService
+	auditor *audit.Publisher
 }
 
-func NewTenantHandler(svc *service.TenantService) *TenantHandler {
-	return &TenantHandler{svc: svc}
+func NewTenantHandler(svc *service.TenantService, auditor *audit.Publisher) *TenantHandler {
+	return &TenantHandler{svc: svc, auditor: auditor}
 }
 
 func (h *TenantHandler) CreateTenant(ctx context.Context, req *pb.CreateTenantRequest) (*pb.Tenant, error) {
@@ -84,6 +86,7 @@ func (h *TenantHandler) CreateTenant(ctx context.Context, req *pb.CreateTenantRe
 	if err != nil {
 		return nil, toGRPCError(err)
 	}
+	h.emitAudit("tenant.create", "success", created.ID)
 	return tenantToProto(created), nil
 }
 
@@ -135,6 +138,7 @@ func (h *TenantHandler) DeleteTenant(ctx context.Context, req *pb.DeleteTenantRe
 	if err := h.svc.Delete(ctx, id); err != nil {
 		return nil, toGRPCError(err)
 	}
+	h.emitAudit("tenant.delete", "success", id)
 	return &pb.DeleteTenantResponse{}, nil
 }
 
@@ -495,11 +499,12 @@ func teamToProto(t *domain.Team) *pb.Team {
 
 type MembershipHandler struct {
 	pb.UnimplementedMembershipServiceServer
-	svc *service.MembershipService
+	svc     *service.MembershipService
+	auditor *audit.Publisher
 }
 
-func NewMembershipHandler(svc *service.MembershipService) *MembershipHandler {
-	return &MembershipHandler{svc: svc}
+func NewMembershipHandler(svc *service.MembershipService, auditor *audit.Publisher) *MembershipHandler {
+	return &MembershipHandler{svc: svc, auditor: auditor}
 }
 
 func (h *MembershipHandler) InviteMember(ctx context.Context, req *pb.InviteMemberRequest) (*pb.Membership, error) {
@@ -610,4 +615,32 @@ func membershipToProto(m *domain.Membership) *pb.Membership {
 		s2 := m.TeamID.String(); p.TeamId = &s2
 	}
 	return p
+}
+
+// emitAudit publishes a tenant audit event if publisher is configured.
+func (h *TenantHandler) emitAudit(action, result string, resourceID uuid.UUID) {
+	if h.auditor == nil {
+		return
+	}
+	h.auditor.PublishAsync(audit.Event{
+		ActorType:    "user",
+		Action:       action,
+		Result:       result,
+		ResourceType: "tenants",
+		ResourceID:   resourceID,
+	})
+}
+
+// emitAudit publishes a membership audit event if publisher is configured.
+func (h *MembershipHandler) emitAudit(action, result string, resourceID uuid.UUID) {
+	if h.auditor == nil {
+		return
+	}
+	h.auditor.PublishAsync(audit.Event{
+		ActorType:    "user",
+		Action:       action,
+		Result:       result,
+		ResourceType: "memberships",
+		ResourceID:   resourceID,
+	})
 }
