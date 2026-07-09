@@ -12,6 +12,7 @@ import (
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/service"
+	"github.com/ggid/ggid/services/auth/internal/webauthn"
 	"github.com/google/uuid"
 )
 
@@ -42,6 +43,10 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/verify", h.mfaVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
+
+	// WebAuthn / Passkey endpoints
+	webauthnHandler := webauthn.NewHandler("ggid.dev", "GGID Platform")
+	webauthnHandler.RegisterRoutes(h.mux)
 }
 
 // ServeHTTP implements http.Handler.

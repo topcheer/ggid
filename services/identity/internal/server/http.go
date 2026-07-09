@@ -10,7 +10,7 @@ import (
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
-	"github.com/ggid/ggid/services/identity/internal/domain"
+	"github.com/ggid/ggid/services/identity/internal/scim"
 	"github.com/ggid/ggid/services/identity/internal/service"
 	"github.com/google/uuid"
 )
@@ -36,6 +36,10 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/healthz", h.healthz)
 	h.mux.HandleFunc("/api/v1/users", h.handleUsers)
 	h.mux.HandleFunc("/api/v1/users/", h.handleUserByID)
+
+	// SCIM 2.0 endpoints
+	scimHandler := scim.NewHandler(h.svc)
+	scimHandler.RegisterRoutes(h.mux)
 }
 
 // ServeHTTP implements http.Handler.

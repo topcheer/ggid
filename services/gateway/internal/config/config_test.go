@@ -23,15 +23,16 @@ func TestConfig_Default(t *testing.T) {
 func TestConfig_DefaultHasAllServiceRoutes(t *testing.T) {
 	cfg := Default()
 	expectedRoutes := []string{
-		"/api/v1/auth",
-		"/api/v1/users",
-		"/api/v1/roles",
-		"/api/v1/policies",
-		"/api/v1/orgs",
-		"/api/v1/audit",
-		"/oauth",
-		"/saml",
-	}
+			"/api/v1/auth",
+			"/api/v1/users",
+			"/api/v1/roles",
+			"/api/v1/permissions",
+			"/api/v1/policies",
+			"/api/v1/orgs",
+			"/api/v1/audit",
+			"/oauth",
+			"/saml",
+		}
 	for _, route := range expectedRoutes {
 		if _, ok := cfg.Routes[route]; !ok {
 			t.Errorf("expected route %s in default config", route)

@@ -29,14 +29,15 @@ func Default() *Config {
 		JWTAudience:   "ggid",
 		PublicKeyPath: "configs/rsa_public.pem",
 		Routes: map[string]string{
-			"/api/v1/auth":     "http://localhost:9001",
-			"/api/v1/users":    "http://localhost:8081",
-			"/api/v1/roles":    "http://localhost:8070",
-			"/api/v1/policies": "http://localhost:8070",
-			"/api/v1/orgs":     "http://localhost:8071",
-			"/api/v1/audit":    "http://localhost:8072",
-			"/oauth":           "http://localhost:9005",
-			"/saml":            "http://localhost:9005",
+			"/api/v1/auth":         "http://localhost:9001",
+			"/api/v1/users":        "http://localhost:8081",
+			"/api/v1/roles":        "http://localhost:8070",
+			"/api/v1/permissions":  "http://localhost:8070",
+			"/api/v1/policies":     "http://localhost:8070",
+			"/api/v1/orgs":         "http://localhost:8071",
+			"/api/v1/audit":        "http://localhost:8072",
+			"/oauth":               "http://localhost:9005",
+			"/saml":                "http://localhost:9005",
 		},
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -64,14 +65,15 @@ func LoadFromEnv(cfg *Config) *Config {
 
 	// Service URL overrides — each maps a path prefix to a backend URL
 	serviceEnvs := map[string]string{
-		"AUTH_SERVICE_URL":     "/api/v1/auth",
-		"IDENTITY_SERVICE_URL": "/api/v1/users",
-		"POLICY_SERVICE_URL":   "/api/v1/policies",
-		"ROLES_SERVICE_URL":    "/api/v1/roles",
-		"ORG_SERVICE_URL":      "/api/v1/orgs",
-		"AUDIT_SERVICE_URL":    "/api/v1/audit",
-		"OAUTH_SERVICE_URL":    "/oauth",
-		"SAML_SERVICE_URL":     "/saml",
+		"AUTH_SERVICE_URL":         "/api/v1/auth",
+		"IDENTITY_SERVICE_URL":     "/api/v1/users",
+		"ROLES_SERVICE_URL":        "/api/v1/roles",
+		"PERMISSIONS_SERVICE_URL":  "/api/v1/permissions",
+		"POLICY_SERVICE_URL":       "/api/v1/policies",
+		"ORG_SERVICE_URL":          "/api/v1/orgs",
+		"AUDIT_SERVICE_URL":        "/api/v1/audit",
+		"OAUTH_SERVICE_URL":        "/oauth",
+		"SAML_SERVICE_URL":         "/saml",
 	}
 	for envKey, route := range serviceEnvs {
 		if v := os.Getenv(envKey); v != "" {
