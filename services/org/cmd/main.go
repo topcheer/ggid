@@ -17,6 +17,7 @@ import (
 	"github.com/ggid/ggid/services/org/internal/data"
 	"github.com/ggid/ggid/services/org/internal/handler"
 	"github.com/ggid/ggid/services/org/internal/repository"
+	httpserver "github.com/ggid/ggid/services/org/internal/server"
 	"github.com/ggid/ggid/services/org/internal/service"
 	"google.golang.org/grpc"
 )
@@ -91,12 +92,16 @@ func main() {
 		}
 	}()
 
-	// HTTP health server
+	// HTTP server (health + REST API for Console)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+	// REST API endpoints
+	httpAPI := httpserver.NewHTTPServer(orgSvc, deptSvc, teamSvc, memberSvc)
+	httpAPI.RegisterRoutes(mux)
+
 	httpServer := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
 
 	go func() {
