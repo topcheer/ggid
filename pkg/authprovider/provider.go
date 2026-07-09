@@ -5,6 +5,7 @@ package authprovider
 import (
 	"context"
 
+	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -67,6 +68,9 @@ func (c *Chain) Authenticate(ctx context.Context, creds Credentials) (*AuthResul
 			return result, nil
 		}
 		lastErr = err
+	}
+	if lastErr == nil {
+		return nil, ggiderrors.Unauthenticated("no auth providers configured")
 	}
 	return nil, lastErr
 }
