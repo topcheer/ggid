@@ -47,7 +47,7 @@ func main() {
 	// Initialize services
 	roleSvc := service.NewRoleService(roleRepo, permRepo, userRoleRepo)
 	policySvc := service.NewPolicyService(policyRepo)
-	evaluator := service.NewEvaluator(roleRepo, permRepo, policyRepo, userRoleRepo)
+	evaluator := service.NewEvaluator(roleRepo, userRoleRepo, policyRepo)
 
 	_ = roleSvc
 	_ = policySvc

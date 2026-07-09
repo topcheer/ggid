@@ -8,10 +8,27 @@ import (
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
-	"github.com/ggid/ggid/services/policy/internal/repository"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+// RoleReader provides read access to roles and role-permission mappings.
+// Implemented by *repository.RoleRepository; mocked in tests.
+type RoleReader interface {
+	GetAncestorChain(ctx context.Context, roleID uuid.UUID) ([]uuid.UUID, error)
+	GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error)
+}
+
+// UserRoleReader provides read access to user-role assignments.
+// Implemented by *repository.UserRoleRepository; mocked in tests.
+type UserRoleReader interface {
+	GetRoleIDsForUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+}
+
+// PolicyReader provides read access to ABAC policies.
+// Implemented by *repository.PolicyRepository; mocked in tests.
+type PolicyReader interface {
+	GetPoliciesForUserAndRoles(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID) ([]*domain.Policy, error)
+}
 
 // Evaluator is the core permission evaluation engine.
 // It combines RBAC (role-permission checks) and ABAC (policy evaluation)
@@ -24,35 +41,18 @@ import (
 //  4. Deny policies always override allow.
 //  5. Default deny if no explicit allow.
 type Evaluator struct {
-	roleRepo     *repository.RoleRepository
-	permRepo     *repository.PermissionRepository
-	policyRepo   *repository.PolicyRepository
-	userRoleRepo *repository.UserRoleRepository
+	roleReader     RoleReader
+	userRoleReader UserRoleReader
+	policyReader   PolicyReader
 }
 
-// NewEvaluator creates a new permission evaluator.
-func NewEvaluator(
-	roleRepo *repository.RoleRepository,
-	permRepo *repository.PermissionRepository,
-	policyRepo *repository.PolicyRepository,
-	userRoleRepo *repository.UserRoleRepository,
-) *Evaluator {
+// NewEvaluator creates a new permission evaluator from the individual readers.
+func NewEvaluator(roleReader RoleReader, userRoleReader UserRoleReader, policyReader PolicyReader) *Evaluator {
 	return &Evaluator{
-		roleRepo:     roleRepo,
-		permRepo:     permRepo,
-		policyRepo:   policyRepo,
-		userRoleRepo: userRoleRepo,
+		roleReader:     roleReader,
+		userRoleReader: userRoleReader,
+		policyReader:   policyReader,
 	}
-}
-
-// NewEvaluatorFromPool is a convenience constructor that creates all needed repos from a pool.
-func NewEvaluatorFromPool(db *pgxpool.Pool) *Evaluator {
-	return NewEvaluator(
-		repository.NewRoleRepository(db),
-		repository.NewPermissionRepository(db),
-		repository.NewPolicyRepository(db),
-		repository.NewUserRoleRepository(db),
-	)
 }
 
 // Check performs a permission check and returns a boolean.
@@ -62,7 +62,7 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 	}
 
 	// Step 1: Get the user's direct role assignments.
-	userRoleIDs, err := e.userRoleRepo.GetRoleIDsForUser(ctx, req.UserID)
+	userRoleIDs, err := e.userRoleReader.GetRoleIDsForUser(ctx, req.UserID)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "get user roles", err)
 	}
@@ -73,7 +73,7 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 	// Step 2: Resolve role inheritance — collect all role IDs including ancestors.
 	allRoleIDs := make(map[uuid.UUID]bool)
 	for _, roleID := range userRoleIDs {
-		ancestorIDs, err := e.roleRepo.GetAncestorChain(ctx, roleID)
+		ancestorIDs, err := e.roleReader.GetAncestorChain(ctx, roleID)
 		if err != nil {
 			return nil, errors.Wrap(errors.ErrInternal, "resolve role chain", err)
 		}
@@ -89,7 +89,7 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 
 	// Step 3: RBAC check — see if any permission matches.
 	rbacAllowed := false
-	perms, err := e.roleRepo.GetRolePermissions(ctx, resolvedIDs)
+	perms, err := e.roleReader.GetRolePermissions(ctx, resolvedIDs)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "get role permissions", err)
 	}
@@ -106,7 +106,7 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 	}
 
 	// Step 4: ABAC evaluation — check policies attached to user and roles.
-	abacPolicies, err := e.policyRepo.GetPoliciesForUserAndRoles(ctx, req.UserID, resolvedIDs)
+	abacPolicies, err := e.policyReader.GetPoliciesForUserAndRoles(ctx, req.UserID, resolvedIDs)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "get abac policies", err)
 	}
