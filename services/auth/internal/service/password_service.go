@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
@@ -167,6 +169,11 @@ func (ps *PasswordService) ConsumeResetToken(ctx context.Context, token string) 
 	}
 
 	return tenantID, userID, nil
+}
+
+// VerifyOldPassword checks if the old password matches the stored hash.
+func (ps *PasswordService) VerifyOldPassword(_ context.Context, cred *domain.Credential, oldPassword string) (bool, error) {
+	return crypto.VerifyPassword(oldPassword, cred.Secret)
 }
 
 func passwordResetKey(hash string) string {
