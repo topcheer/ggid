@@ -10,6 +10,7 @@ import (
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/ggid/ggid/services/identity/internal/scim"
 	"github.com/ggid/ggid/services/identity/internal/service"
 	"github.com/google/uuid"
