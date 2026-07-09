@@ -167,7 +167,7 @@ export default function UsersPage() {
                           : user.status === "locked"
                             ? "bg-red-100 text-red-700"
                             : "bg-gray-100 text-gray-600"
-                      }`
+                      }`}
                     >
                       {user.status}
                     </span>
