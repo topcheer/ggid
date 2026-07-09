@@ -1,0 +1,184 @@
+# GGID Helm Values
+
+# Global
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# PostgreSQL — shared by all services
+postgresql:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: postgres
+    tag: "16-alpine"
+  auth:
+    username: ggid
+    password: ggid
+    database: ggid
+  primary:
+    persistence:
+      size: 20Gi
+  params:
+    - max_connections=200
+    - shared_buffers=256MB
+
+# Redis — session/token cache + rate limiting
+redis:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: redis
+    tag: "7-alpine"
+  auth:
+    enabled: true
+    password: ggid-redis
+  master:
+    persistence:
+      size: 5Gi
+
+# NATS — audit event streaming
+nats:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: nats
+    tag: "2-alpine"
+  jetstream:
+    enabled: true
+    storage:
+      size: 10Gi
+
+# API Gateway
+gateway:
+  enabled: true
+  image:
+    repository: ggid/gateway
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  env:
+    JWKS_REFRESH_INTERVAL: "15m"
+    LOG_LEVEL: info
+
+# Identity Service
+identity:
+  enabled: true
+  image:
+    repository: ggid/identity
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    httpPort: 8081
+    grpcPort: 50051
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Auth Service
+auth:
+  enabled: true
+  image:
+    repository: ggid/auth
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    httpPort: 8082
+    grpcPort: 50052
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Policy Engine
+policy:
+  enabled: true
+  image:
+    repository: ggid/policy
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    httpPort: 8083
+    grpcPort: 50053
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Org Service
+org:
+  enabled: true
+  image:
+    repository: ggid/org
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    httpPort: 8084
+    grpcPort: 50054
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Audit Service
+audit:
+  enabled: true
+  image:
+    repository: ggid/audit
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    httpPort: 8085
+    grpcPort: 50055
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Ingress ningress:
+  enabled: false
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: iam.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []

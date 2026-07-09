@@ -1,0 +1,21 @@
+apiVersion: v2
+name: ggid
+description: GGID - Production-grade Identity & Access Management Suite
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - iam
+  - identity
+  - access-management
+  - authentication
+  - authorization
+  - sso
+  - rbac
+  - abac
+  - multi-tenant
+home: https://github.com/ggid/ggid
+sources:
+  - https://github.com/ggid/ggid
+maintainers:
+  - name: GGID Contributors
