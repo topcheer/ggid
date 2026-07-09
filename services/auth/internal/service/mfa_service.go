@@ -122,6 +122,9 @@ func (s *MFAService) VerifyUserCode(ctx context.Context, tenantID, userID uuid.U
 	if err != nil {
 		return fmt.Errorf("no enabled MFA device: %w", err)
 	}
+	if device == nil {
+		return fmt.Errorf("no enabled MFA device")
+	}
 
 	valid := totp.Validate(code, device.Secret)
 	if !valid {

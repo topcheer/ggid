@@ -38,6 +38,10 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password/reset", h.resetPassword)
 	h.mux.HandleFunc("/api/v1/auth/password/change", h.changePassword)
 	h.mux.HandleFunc("/api/v1/auth/sessions", h.handleSessions)
+	h.mux.HandleFunc("/api/v1/auth/mfa/setup", h.mfaSetup)
+	h.mux.HandleFunc("/api/v1/auth/mfa/verify", h.mfaVerify)
+	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
+	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
 }
 
 // ServeHTTP implements http.Handler.
@@ -313,6 +317,137 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// --- MFA ---
+
+type mfaSetupRequest struct {
+	UserID     string `json:"user_id"`
+	DeviceName string `json:"device_name"`
+}
+
+func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req mfaSetupRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	user, err := uuid.Parse(req.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	resp, err := h.authSvc.MFAService().SetupMFA(r.Context(), user, req.DeviceName)
+	if err != nil {
+		log.Printf("MFA setup error for user %s: %v", req.UserID, err)
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+type mfaVerifyRequest struct {
+	DeviceID string `json:"device_id"`
+	Code     string `json:"code"`
+}
+
+func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req mfaVerifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	deviceID, err := uuid.Parse(req.DeviceID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid device_id")
+		return
+	}
+
+	if err := h.authSvc.MFAService().VerifyMFA(r.Context(), deviceID, req.Code); err != nil {
+		if stderrors.Is(err, service.ErrInvalidMFACode) {
+			writeError(w, http.StatusUnauthorized, "invalid MFA code")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]bool{"verified": true})
+}
+
+type mfaDisableRequest struct {
+	DeviceID string `json:"device_id"`
+}
+
+func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req mfaDisableRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	deviceID, err := uuid.Parse(req.DeviceID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid device_id")
+		return
+	}
+
+	if err := h.authSvc.MFAService().DisableMFA(r.Context(), deviceID); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]bool{"disabled": true})
+}
+
+type mfaLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	MFACode  string `json:"mfa_code"`
+}
+
+func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req mfaLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	ip := clientIP(r)
+	userAgent := r.Header.Get("User-Agent")
+
+	tokens, err := h.authSvc.LoginMFA(r.Context(), req.Username, req.Password, req.MFACode, ip, userAgent)
+	if err != nil {
+		log.Printf("MFA login error for user %s: %v", req.Username, err)
+		writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, tokens)
 }
 
 // --- Helpers ---
