@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -384,13 +385,12 @@ func TestJWTAuth_TamperedToken(t *testing.T) {
 		"iat": time.Now().Unix(),
 	})
 
-	// Tamper: flip last char
-	tampered := token[:len(token)-1]
-	if token[len(token)-1] == 'A' {
-		tampered += "B"
-	} else {
-		tampered += "A"
+	// Tamper: replace the signature (last segment) with garbage
+	parts := strings.SplitN(token, ".", 3)
+	if len(parts) != 3 {
+		t.Fatalf("expected 3-part JWT, got %d parts", len(parts))
 	}
+	tampered := parts[0] + "." + parts[1] + ".INVALID_SIGNATURE"
 
 	handler := JWTAuth(jwks, true, "", "")(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("should not reach handler with tampered token")
