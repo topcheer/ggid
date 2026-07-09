@@ -85,9 +85,23 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch r.Method {
-	case http.MethodGet:
+	// Check for sub-path (e.g. /api/v1/users/{id}/lock)
+	action := ""
+	if len(parts) > 1 && parts[1] != "" {
+		action = parts[1]
+	}
+
+	switch {
+	case action == "" && r.Method == http.MethodGet:
 		h.getUser(ctx, userID, w, r)
+	case action == "" && r.Method == http.MethodDelete:
+		h.deleteUser(ctx, userID, w, r)
+	case action == "" && r.Method == http.MethodPatch:
+		h.updateUser(ctx, userID, w, r)
+	case action == "lock" && r.Method == http.MethodPost:
+		h.lockUser(ctx, userID, w, r)
+	case action == "unlock" && r.Method == http.MethodPost:
+		h.unlockUser(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -170,6 +184,56 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 		"total":       result.Total,
 		"next_offset": result.NextOffset,
 	})
+}
+
+func (h *HTTPHandler) deleteUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.DeleteUser(ctx, userID); err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Phone       *string `json:"phone"`
+		DisplayName *string `json:"display_name"`
+		Locale      *string `json:"locale"`
+		Timezone    *string `json:"timezone"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	user, err := h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{
+		Phone:       req.Phone,
+		DisplayName: req.DisplayName,
+		Locale:      req.Locale,
+		Timezone:    req.Timezone,
+	})
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, userToJSON(user))
+}
+
+func (h *HTTPHandler) lockUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	user, err := h.svc.LockUser(ctx, userID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, userToJSON(user))
+}
+
+func (h *HTTPHandler) unlockUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	user, err := h.svc.UnlockUser(ctx, userID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, userToJSON(user))
 }
 
 // --- Helpers ---

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
 import { Search, Plus, Lock, Unlock, Trash2, UserPlus } from "lucide-react";
 
@@ -19,20 +19,39 @@ export default function UsersPage() {
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const body = {
-      username: formData.get("username"),
-      email: formData.get("email"),
-      password: formData.get("password"),
-    };
     try {
       await apiFetch("/api/v1/users", {
         method: "POST",
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          username: formData.get("username"),
+          email: formData.get("email"),
+          password: formData.get("password"),
+        }),
       });
       setShowCreate(false);
       refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to create user");
+    }
+  };
+
+  const handleLock = async (userId: string, currentStatus: string) => {
+    const action = currentStatus === "active" ? "lock" : "unlock";
+    try {
+      await apiFetch(`/api/v1/users/${userId}/${action}`, { method: "POST" });
+      refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : `Failed to ${action} user`);
+    }
+  };
+
+  const handleDelete = async (userId: string, username: string) => {
+    if (!confirm(`Delete user "${username}"? This action cannot be undone.`)) return;
+    try {
+      await apiFetch(`/api/v1/users/${userId}`, { method: "DELETE" });
+      refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete user");
     }
   };
 
@@ -173,20 +192,32 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
-                    {new Date(user.created_at).toLocaleDateString()}
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString() : "-"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
                       {user.status === "active" ? (
-                        <button title="Lock" className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                        <button
+                          onClick={() => handleLock(user.id, user.status)}
+                          title="Lock"
+                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        >
                           <Lock className="h-4 w-4" />
                         </button>
                       ) : (
-                        <button title="Unlock" className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                        <button
+                          onClick={() => handleLock(user.id, user.status)}
+                          title="Unlock"
+                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        >
                           <Unlock className="h-4 w-4" />
                         </button>
                       )}
-                      <button title="Delete" className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                      <button
+                        onClick={() => handleDelete(user.id, user.username)}
+                        title="Delete"
+                        className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
