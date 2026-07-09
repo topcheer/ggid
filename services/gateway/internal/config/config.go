@@ -30,7 +30,7 @@ func Default() *Config {
 		PublicKeyPath: "configs/rsa_public.pem",
 		Routes: map[string]string{
 			"/api/v1/auth":     "http://localhost:9001",
-			"/api/v1/users":    "http://localhost:9002",
+			"/api/v1/users":    "http://localhost:8081",
 			"/api/v1/roles":    "http://localhost:9004",
 			"/api/v1/policies": "http://localhost:9004",
 			"/api/v1/orgs":     "http://localhost:9005",
