@@ -65,9 +65,42 @@ func main() {
 	passwordService := service.NewPasswordService(cfg.Password, credRepo, rdb)
 	rateLimiter := service.NewRateLimiter(rdb)
 
-	// 5. Build auth provider chain (local + future LDAP)
+	// 5. Build auth provider chain (local + optional LDAP)
 	localProvider := service.NewLocalProvider(credRepo, cfg.Password)
-	chain := authprovider.NewChain(localProvider)
+
+	var providers []authprovider.Provider
+	providers = append(providers, localProvider)
+
+	// Wire LDAP provider when LDAP_URL is configured.
+	if ldapURL := os.Getenv("LDAP_URL"); ldapURL != "" {
+		ldapCfg := authprovider.LDAPConfig{
+			ServerURL:     ldapURL,
+			BindDN:        os.Getenv("LDAP_BIND_DN"),
+			BindPassword:  os.Getenv("LDAP_BIND_PASSWORD"),
+			BaseDN:        os.Getenv("LDAP_BASE_DN"),
+			UserFilter:    os.Getenv("LDAP_USER_FILTER"),
+			StartTLS:      os.Getenv("LDAP_START_TLS") == "true",
+			AutoProvision: os.Getenv("LDAP_AUTO_PROVISION") == "true",
+		}
+		if ldapCfg.BaseDN == "" {
+			ldapCfg.BaseDN = "dc=corp,dc=local"
+		}
+		if ldapCfg.UserFilter == "" {
+			ldapCfg.UserFilter = "(&(objectClass=inetOrgPerson)(uid=%s))"
+		}
+
+		ldapProvider, err := authprovider.NewLDAPProvider(ldapCfg)
+		if err != nil {
+			log.Printf("WARNING: failed to create LDAP provider, skipping: %v", err)
+		} else {
+			providers = append(providers, ldapProvider)
+			log.Printf("LDAP provider configured: server=%s base=%s filter=%s",
+				ldapCfg.ServerURL, ldapCfg.BaseDN, ldapCfg.UserFilter)
+		}
+	}
+
+	chain := authprovider.NewChain(providers...)
+	log.Printf("Auth provider chain: %d provider(s) configured", len(providers))
 
 	// 5a. Build MFA service
 	mfaRepo := repository.NewPGMFADeviceRepository(pool)

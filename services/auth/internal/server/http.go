@@ -31,6 +31,7 @@ func New(authSvc *service.AuthService) *Handler {
 
 func (h *Handler) registerRoutes() {
 	h.mux = http.NewServeMux()
+	h.mux.HandleFunc("/healthz", h.healthz)
 	h.mux.HandleFunc("/api/v1/auth/login", h.login)
 	h.mux.HandleFunc("/api/v1/auth/register", h.register)
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)
@@ -67,6 +68,12 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	h.mux.ServeHTTP(w, r)
+}
+
+// --- Health Check ---
+
+func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 // --- Login ---
