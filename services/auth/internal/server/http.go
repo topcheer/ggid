@@ -44,13 +44,14 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
 
-	// WebAuthn / Passkey endpoints (nil credential store = skeleton mode)
-	webauthnHandler, err := webauthn.NewHandler("ggid.dev", "GGID Platform", nil)
-	if err != nil {
-		log.Printf("warning: webauthn init failed: %v", err)
-	} else {
-		webauthnHandler.RegisterRoutes(h.mux)
-	}
+	// WebAuthn / Passkey endpoints
+	// TODO: re-enable after go-webauthn API compatibility is fixed
+	// webauthnHandler, err := webauthn.NewHandler("ggid.dev", "GGID Platform", nil)
+	// if err != nil {
+	// 	log.Printf("warning: webauthn init failed: %v", err)
+	// } else {
+	// 	webauthnHandler.RegisterRoutes(h.mux)
+	// }
 }
 
 // ServeHTTP implements http.Handler.
