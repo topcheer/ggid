@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	pb "github.com/ggid/ggid/api/gen/org/v1"
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/services/org/internal/config"
 	"github.com/ggid/ggid/services/org/internal/data"
 	"github.com/ggid/ggid/services/org/internal/handler"
@@ -55,11 +56,21 @@ func main() {
 	}
 
 	// Initialize gRPC handlers
-	tenantHandler := handler.NewTenantHandler(tenantSvc, nil)
+	// Initialize NATS audit publisher (best-effort — service runs without NATS)
+	var auditor *audit.Publisher
+	if pub, err := audit.NewPublisher(ctx, cfg.NATSURL); err != nil {
+		log.Printf("Org Service: NATS unavailable, audit events disabled: %v", err)
+	} else {
+		auditor = pub
+		defer auditor.Close()
+		log.Println("Org Service: NATS audit publisher connected")
+	}
+
+	tenantHandler := handler.NewTenantHandler(tenantSvc, auditor)
 	orgHandler := handler.NewOrgHandler(orgSvc)
 	deptHandler := handler.NewDeptHandler(deptSvc)
 	teamHandler := handler.NewTeamHandler(teamSvc)
-	memberHandler := handler.NewMembershipHandler(memberSvc, nil)
+	memberHandler := handler.NewMembershipHandler(memberSvc, auditor)
 
 	// Start gRPC server
 	lis, err := net.Listen("tcp", cfg.GRPCAddr)

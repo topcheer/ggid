@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	pb "github.com/ggid/ggid/api/gen/policy/v1"
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/services/policy/internal/config"
 	"github.com/ggid/ggid/services/policy/internal/data"
 	"github.com/ggid/ggid/services/policy/internal/handler"
@@ -53,8 +54,18 @@ func main() {
 		return
 	}
 
+	// Initialize NATS audit publisher (best-effort — service runs without NATS)
+	var auditor *audit.Publisher
+	if pub, err := audit.NewPublisher(ctx, cfg.NATSURL); err != nil {
+		log.Printf("Policy Engine: NATS unavailable, audit events disabled: %v", err)
+	} else {
+		auditor = pub
+		defer auditor.Close()
+		log.Println("Policy Engine: NATS audit publisher connected")
+	}
+
 	// Initialize gRPC handlers
-	roleHandler := handler.NewRoleHandler(roleSvc, nil) // auditor wired later
+	roleHandler := handler.NewRoleHandler(roleSvc, auditor)
 	permHandler := handler.NewPermissionHandler(roleSvc)
 	policyHandler := handler.NewPolicyHandler(policySvc, evaluator)
 

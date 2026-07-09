@@ -14,6 +14,7 @@ type Config struct {
 	GRPCAddr string
 	HTTPAddr string
 	DB       data.Config
+	NATSURL  string
 }
 
 func FromEnv() *Config {
@@ -31,6 +32,7 @@ func FromEnv() *Config {
 			MinConns:        int32(getEnvInt("DB_MIN_CONNS", 2)),
 			MaxConnLifetime: time.Duration(getEnvInt("DB_CONN_LIFETIME", 300)) * time.Second,
 		},
+		NATSURL: getEnv("NATS_URL", "nats://localhost:4222"),
 	}
 }
 
