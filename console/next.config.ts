@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'standalone',
   async rewrites() {
-    const gatewayUrl = process.env.GATEWAY_URL || 'http://gateway:8080';
+    const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:8080';
     return [
       {
         source: '/api/:path*',

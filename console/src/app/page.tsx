@@ -47,7 +47,7 @@ export default function DashboardPage() {
           const Icon = stat.icon;
           return (
             <div
-n              key={stat.label}
+              key={stat.label}
               className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
             >
               <div className="flex items-center justify-between">

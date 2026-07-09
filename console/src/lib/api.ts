@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const API_BASE = process.env.NEXT_PUBLIC_GGID_API || "http://localhost:8080";
 const TENANT_ID =
@@ -28,12 +28,27 @@ export interface PageResult<T> {
   total_count?: number;
 }
 
+// Get JWT from localStorage (set by login page)
+function getAuthToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("ggid_access_token");
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "X-Tenant-ID": TENANT_ID,
-    ...(options?.headers as Record<string, string>),
   };
+
+  // Attach JWT if available
+  const token = getAuthToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  if (options?.headers) {
+    Object.assign(headers, options.headers);
+  }
 
   const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
@@ -51,7 +66,7 @@ export function useUsers() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiFetch<PageResult<User>>("/api/v1/users");
@@ -62,15 +77,38 @@ export function useUsers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   return { users, loading, error, refresh };
 }
 
 export function useApi() {
   return { apiFetch, API_BASE, TENANT_ID };
+}
+
+// Check if user is authenticated
+export function useAuth() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = getAuthToken();
+    setIsAuthenticated(!!token);
+    setLoading(false);
+  }, []);
+
+  const logout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("ggid_access_token");
+      localStorage.removeItem("ggid_refresh_token");
+      localStorage.removeItem("ggid_session_id");
+    }
+    setIsAuthenticated(false);
+  };
+
+  return { isAuthenticated, loading, logout };
 }
