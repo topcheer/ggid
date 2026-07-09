@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -10,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log"
+	"math/big"
 	"net"
 	"net/http"
 	"os"
@@ -21,54 +23,73 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/repository"
 	"github.com/ggid/ggid/services/oauth/internal/service"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Server encapsulates the OAuth HTTP server.
 type Server struct {
-	cfg       *conf.Config
-	httpSrv   *http.Server
-	oauthSvc  *service.OAuthService
+	cfg      *conf.Config
+	httpSrv  *http.Server
+	oauthSvc *service.OAuthService
+	pool     *pgxpool.Pool
 }
 
 // keyProvider implements domain.KeyProvider by loading RSA keys from disk.
 type keyProvider struct {
-	priv    *rsa.PrivateKey
-	pub     *rsa.PublicKey
-	kid     string
+	priv *rsa.PrivateKey
+	pub  *rsa.PublicKey
+	kid  string
 }
 
 func (kp *keyProvider) PublicKey() *rsa.PublicKey   { return kp.pub }
 func (kp *keyProvider) PrivateKey() *rsa.PrivateKey { return kp.priv }
-func (kp *keyProvider) KeyID() string                { return kp.kid }
+func (kp *keyProvider) KeyID() string               { return kp.kid }
 
 // New constructs and wires up the OAuth server.
 func New(cfg *conf.Config) (*Server, error) {
 	ctx := context.Background()
 
-	// Load RSA keys.
-	kp, err := loadKeyProvider(cfg.PrivateKeyPath, cfg.PublicKeyPath)
+	// Load or create RSA keys — shares same paths as Auth Service.
+	kp, err := loadOrCreateKeyProvider(cfg.PrivateKeyPath, cfg.PublicKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("load keys: %w", err)
 	}
+	log.Printf("OAuth key loaded (kid=%s)", kp.KeyID())
 
-	// Database (skip if URL is empty — for testing).
-	var clientRepo repository.ClientRepository
-	var codeRepo repository.AuthorizationCodeRepository
-	var tokenRepo repository.IDTokenRepository
+	var (
+		clientRepo repository.ClientRepository
+		codeRepo   repository.AuthorizationCodeRepository
+		tokenRepo  repository.IDTokenRepository
+		pool       *pgxpool.Pool
+	)
 
 	if cfg.Database.URL != "" {
-		// Use shared DB connection logic from pkg/data or inline.
-		// For now, repos need a *pgxpool.Pool which we can't create without a live DB.
-		// In production, this is wired up via cmd/main.go.
-		log.Println("Database URL configured — repos will be injected by cmd/main.go")
+		poolCfg, err := pgxpool.ParseConfig(cfg.Database.URL)
+		if err == nil {
+			if cfg.Database.MaxConns > 0 {
+				poolCfg.MaxConns = cfg.Database.MaxConns
+			}
+			if cfg.Database.MinConns > 0 {
+				poolCfg.MinConns = cfg.Database.MinConns
+			}
+			p, err := pgxpool.NewWithConfig(ctx, poolCfg)
+			if err == nil && p.Ping(ctx) == nil {
+				pool = p
+				clientRepo = repository.NewPGClientRepository(pool)
+				codeRepo = repository.NewPGAuthorizationCodeRepository(pool)
+				tokenRepo = repository.NewPGIDTokenRepository(pool)
+				log.Println("OAuth database connected")
+			} else if err != nil {
+				log.Printf("warning: failed to connect database: %v (running without DB)", err)
+			} else {
+				log.Printf("warning: database ping failed (running without DB)")
+				p.Close()
+			}
+		}
 	}
-	_ = ctx
-	_ = clientRepo
-	_ = codeRepo
-	_ = tokenRepo
 
 	// Create the OAuth service.
-	oauthSvc := service.NewOAuthService(nil, nil, nil, kp, cfg.Issuer)
+	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, kp, cfg.Issuer)
 
 	// Build HTTP handler.
 	handler := buildHandler(oauthSvc, cfg)
@@ -80,7 +101,7 @@ func New(cfg *conf.Config) (*Server, error) {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc}, nil
+	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool}, nil
 }
 
 // Run starts the server and blocks until ctx is cancelled.
@@ -104,6 +125,9 @@ func (s *Server) Run(ctx context.Context) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		_ = s.httpSrv.Shutdown(shutdownCtx)
+		if s.pool != nil {
+			s.pool.Close()
+		}
 		return nil
 	case err := <-errCh:
 		return err
@@ -128,11 +152,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 
 	// Authorize endpoint (GET — redirects with code)
 	mux.HandleFunc("/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
-		// In a full implementation, this endpoint:
-		// 1. Checks if user is authenticated (session/cookie)
-		// 2. Shows consent page
-		// 3. Creates authorization code and redirects
-		// For now, it requires the user to be pre-authenticated.
 		writeJSON(w, http.StatusOK, map[string]string{
 			"status":  "authorization_required",
 			"message": "This endpoint requires user authentication and consent.",
@@ -153,10 +172,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			return
 		}
 
-		// Build tenant context from client authentication.
-		// In production, client auth is extracted from Authorization header or POST body.
 		ctx := tenant.WithContext(r.Context(), &tenant.Context{
-			TenantID:       uuid.Nil, // resolved from client
+			TenantID:       uuid.Nil,
 			IsolationLevel: tenant.IsolationShared,
 		})
 
@@ -180,10 +197,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 
 	// UserInfo endpoint (GET)
 	mux.HandleFunc("/oauth/userinfo", func(w http.ResponseWriter, r *http.Request) {
-		// Requires a valid Bearer token in production.
-		writeJSON(w, http.StatusOK, map[string]string{
-			"status": "requires_bearer_token",
-		})
+		writeJSON(w, http.StatusOK, map[string]string{"status": "requires_bearer_token"})
 	})
 
 	// Token revocation
@@ -192,7 +206,6 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
 			return
 		}
-		// RFC 7009: always return 200 even if token is invalid.
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -205,6 +218,46 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusOK, map[string]any{"active": false})
 	})
 
+	// --- SAML 2.0 IdP skeleton ---
+
+	mux.HandleFunc("/saml/metadata", func(w http.ResponseWriter, r *http.Request) {
+		entityID := cfg.Issuer + "/saml"
+		meta := samlMetadata(entityID, cfg.Issuer)
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(meta))
+	})
+
+	mux.HandleFunc("/saml/acs", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		// POST Binding: SAMLResponse in form body
+		_ = r.ParseForm()
+		samlResponse := r.FormValue("SAMLResponse")
+		if samlResponse == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLResponse"})
+			return
+		}
+		// Skeleton: in production, parse and validate SAML assertion here.
+		writeJSON(w, http.StatusOK, map[string]string{
+			"status": "saml_response_received",
+			"note":   "SAML assertion processing not yet implemented",
+		})
+	})
+
+	mux.HandleFunc("/saml/sso", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{
+			"status": "saml_sso_initiated",
+			"note":   "SP-initiated SSO redirect placeholder",
+		})
+	})
+
+	mux.HandleFunc("/saml/slo", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "saml_slo_initiated"})
+	})
+
 	// Health check
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
@@ -213,29 +266,42 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 	return mux
 }
 
+// samlMetadata generates a minimal SAML 2.0 IdP metadata XML.
+func samlMetadata(entityID, issuer string) string {
+	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" entityID="%s">
+  <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <KeyDescriptor use="signing">
+      <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+        <KeyName>%s</KeyName>
+      </KeyInfo>
+    </KeyDescriptor>
+    <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
+    <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="%s/saml/sso"/>
+    <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="%s/saml/sso"/>
+    <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="%s/saml/slo"/>
+  </IDPSSODescriptor>
+</EntityDescriptor>`, entityID, issuer, issuer, issuer, issuer)
+}
+
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// jsonEncode is kept as a wrapper for potential future use (e.g. custom encoders).
-func jsonEncode(w http.ResponseWriter, v any) error {
-	return json.NewEncoder(w).Encode(v)
-}
-
-// loadKeyProvider loads RSA keys from disk and computes a key ID.
-func loadKeyProvider(privPath, pubPath string) (*keyProvider, error) {
-	priv, err := loadPrivateKey(privPath)
+// loadOrCreateKeyProvider loads RSA keys from disk, or generates them if missing.
+// This shares the same key files as the Auth Service (configs/rsa_private.pem).
+func loadOrCreateKeyProvider(privPath, pubPath string) (*keyProvider, error) {
+	priv, err := loadOrCreatePrivateKey(privPath)
 	if err != nil {
-		return nil, fmt.Errorf("load private key: %w", err)
+		return nil, fmt.Errorf("private key: %w", err)
 	}
 	pub := &priv.PublicKey
 	kid := computeKID(pub)
 
-	// Try to load public key from file for external verification.
+	// Try to load public key from file for JWKS verification.
 	if _, err := os.Stat(pubPath); err == nil {
-		// Public key exists — we use it for JWKS verification.
 		loadedPub, err := loadPublicKey(pubPath)
 		if err == nil {
 			pub = loadedPub
@@ -245,28 +311,61 @@ func loadKeyProvider(privPath, pubPath string) (*keyProvider, error) {
 	return &keyProvider{priv: priv, pub: pub, kid: kid}, nil
 }
 
-func loadPrivateKey(path string) (*rsa.PrivateKey, error) {
-	data, err := os.ReadFile(path)
+// loadOrCreatePrivateKey mirrors Auth Service's pattern: load if exists, generate if not.
+func loadOrCreatePrivateKey(path string) (*rsa.PrivateKey, error) {
+	if data, err := os.ReadFile(path); err == nil {
+		return parsePrivateKeyPEM(data)
+	}
+	// Generate new 2048-bit RSA key.
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
 	}
+	// Write to disk so Auth Service can also read it.
+	_ = os.MkdirAll("configs", 0o700)
+	data := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+	if err := os.WriteFile(path, data, 0o600); err != nil {
+		return nil, fmt.Errorf("write private key: %w", err)
+	}
+	// Also write the public key for JWKS.
+	pubPath := path
+	if len(pubPath) > len("private.pem") && pubPath[len(pubPath)-11:] == "private.pem" {
+		pubPath = pubPath[:len(pubPath)-11] + "public.pem"
+	} else {
+		pubPath = "configs/rsa_public.pem"
+	}
+	pubBytes, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	if err != nil {
+		return nil, fmt.Errorf("marshal public key: %w", err)
+	}
+	pubData := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubBytes,
+	})
+	_ = os.WriteFile(pubPath, pubData, 0o644)
+	log.Printf("Generated new RSA key pair: %s + %s", path, pubPath)
+	return key, nil
+}
+
+func parsePrivateKeyPEM(data []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(data)
 	if block == nil {
-		return nil, fmt.Errorf("failed to decode PEM")
+		return nil, fmt.Errorf("failed to decode PEM block")
 	}
-
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		// Try PKCS8
-		keyAny, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("parse private key: %w", err)
+		keyAny, err2 := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err2 != nil {
+			return nil, fmt.Errorf("parse private key: %w (pkcs8: %v)", err, err2)
 		}
-		var ok bool
-		key, ok = keyAny.(*rsa.PrivateKey)
+		rsaKey, ok := keyAny.(*rsa.PrivateKey)
 		if !ok {
 			return nil, fmt.Errorf("key is not RSA")
 		}
+		return rsaKey, nil
 	}
 	return key, nil
 }
@@ -282,7 +381,12 @@ func loadPublicKey(path string) (*rsa.PublicKey, error) {
 	}
 	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		return nil, err
+		// Try PKCS1
+		rsaPub, err2 := x509.ParsePKCS1PublicKey(block.Bytes)
+		if err2 != nil {
+			return nil, fmt.Errorf("parse public key: %w", err)
+		}
+		return rsaPub, nil
 	}
 	rsaPub, ok := pub.(*rsa.PublicKey)
 	if !ok {
@@ -292,10 +396,16 @@ func loadPublicKey(path string) (*rsa.PublicKey, error) {
 }
 
 func computeKID(pub *rsa.PublicKey) string {
-	data, _ := x509.MarshalPKIXPublicKey(pub)
+	data, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return ""
+	}
 	h := sha256.Sum256(data)
 	return fmt.Sprintf("%x", h[:8])
 }
 
-// Unused domain import guard.
-var _ = domain.ClientTypeConfidential
+// Suppress unused imports.
+var (
+	_ = domain.ClientTypeConfidential
+	_ = big.NewInt
+)
