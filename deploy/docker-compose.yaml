@@ -124,8 +124,8 @@ services:
       JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
       AUTH_SERVICE_URL: "http://auth:9001"
       IDENTITY_SERVICE_URL: "http://identity:8080"
-      POLICY_SERVICE_URL: "http://policy:8084"
-      ROLES_SERVICE_URL: "http://policy:8084"
+      POLICY_SERVICE_URL: "http://policy:8070"
+      ROLES_SERVICE_URL: "http://policy:8070"
       ORG_SERVICE_URL: "http://org:8071"
       AUDIT_SERVICE_URL: "http://audit:8072"
       OAUTH_SERVICE_URL: "http://oauth:9005"
@@ -146,8 +146,8 @@ services:
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
     ports:
-      - "8083:8084"
-      - "50053:9070"
+      - "8070:8070"
+      - "9070:9070"
 
   org:
     build:
@@ -159,9 +159,11 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+      ORG_HTTP_ADDR: ":8071"
+      ORG_GRPC_ADDR: ":9071"
     ports:
-      - "8084:8071"
-      - "50054:9071"
+      - "8071:8071"
+      - "9071:9071"
 
   audit:
     build:
@@ -176,9 +178,11 @@ services:
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
       NATS_URL: "nats://nats:4222"
+      AUDIT_HTTP_ADDR: ":8072"
+      AUDIT_GRPC_ADDR: ":9072"
     ports:
-      - "8085:8072"
-      - "50055:9072"
+      - "8072:8072"
+      - "9072:9072"
 
   oauth:
     build:
@@ -195,7 +199,19 @@ services:
       REDIS_ADDR: "redis:6379"
     ports:
       - "9005:9005"
-      - "50056:9073"
+
+  console:
+    build:
+      context: ../console
+      dockerfile: Dockerfile
+    container_name: ggid-console
+    depends_on:
+      - gateway
+    environment:
+      GATEWAY_URL: "http://gateway:8080"
+      NEXTAUTH_URL: "http://localhost:3000"
+    ports:
+      - "3000:3000"
 
 volumes:
   ggid-pgdata:
