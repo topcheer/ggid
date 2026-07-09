@@ -252,6 +252,9 @@ func (m *mockRepo) LinkExternalIdentity(_ context.Context, ei *domain.ExternalId
 	if m.linkExtIdentityErr != nil {
 		return nil, m.linkExtIdentityErr
 	}
+	if ei.ID == uuid.Nil {
+		ei.ID = uuid.New()
+	}
 	ei.LinkedAt = time.Now()
 	m.externalIdentities = append(m.externalIdentities, ei)
 	return ei, nil
