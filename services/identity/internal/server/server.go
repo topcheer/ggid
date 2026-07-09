@@ -42,13 +42,14 @@ func New(cfg *conf.Config) (*Server, error) {
 
 	repo := repository.NewPGRepository(pool)
 	identitySvc := service.NewIdentityService(repo)
-	_ = identitySvc // used by gRPC handler (generated from proto)
 
 	grpcSrv := grpc.NewServer()
-	// TODO: register generated identity_pb.IdentityServiceServer once proto is compiled.
+	// gRPC handlers will be registered once proto code is generated.
 
+	httpHandler := NewHTTPHandler(identitySvc)
 	httpSrv := &http.Server{
 		Addr:         cfg.HTTP.Addr,
+		Handler:      httpHandler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}

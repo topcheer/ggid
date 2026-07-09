@@ -1,0 +1,9 @@
+dn: ou=groups,dc=corp,dc=local
+objectClass: organizationalUnit
+ou: groups
+
+dn: cn=engineers,ou=groups,dc=corp,dc=local
+objectClass: groupOfNames
+cn: engineers
+member: cn=johndoe,ou=users,dc=corp,dc=local
+member: cn=janedoe,ou=users,dc=corp,dc=local

@@ -1,0 +1,21 @@
+dn: ou=users,dc=corp,dc=local
+objectClass: organizationalUnit
+ou: users
+
+dn: cn=johndoe,ou=users,dc=corp,dc=local
+objectClass: inetOrgPerson
+cn: johndoe
+sn: Doe
+givenName: John
+displayName: John Doe
+mail: johndoe@corp.local
+userPassword: Password123!
+
+dn: cn=janedoe,ou=users,dc=corp,dc=local
+objectClass: inetOrgPerson
+cn: janedoe
+sn: Doe
+givenName: Jane
+displayName: Jane Doe
+mail: janedoe@corp.local
+userPassword: Password456!

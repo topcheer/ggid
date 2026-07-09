@@ -1,4 +1,5 @@
 services:
+  # === Infrastructure ===
   postgres:
     image: postgres:16-alpine
     container_name: ggid-postgres
@@ -12,9 +13,9 @@ services:
       - ggid-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ggid"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 3s
+      timeout: 3s
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -23,17 +24,145 @@ services:
       - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 3s
+      timeout: 3s
+      retries: 10
 
   nats:
     image: nats:2-alpine
     container_name: ggid-nats
     ports:
-      - "4222:4222"   # NATS
-      - "8222:8222"   # Monitoring
-    command: ["-js"]  # Enable JetStream
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-js"]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # LDAP test server
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: ggid-ldap
+    environment:
+      LDAP_ORGANISATION: "GGID Test Corp"
+      LDAP_DOMAIN: "corp.local"
+      LDAP_BASE_DN: "dc=corp,dc=local"
+      LDAP_ADMIN_PASSWORD: "admin123"
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - ggid-ldapdata:/var/lib/ldap
+      - ggid-ldapconfig:/etc/ldap/slapd.d
+
+  ldap-seed:
+    image: osixia/openldap:1.5.0
+    container_name: ggid-ldap-seed
+    depends_on:
+      - ldap
+    environment:
+      LDAP_HOST: "ldap"
+      LDAP_PORT: "389"
+      LDAP_ADMIN_PASSWORD: "admin123"
+    entrypoint: ""
+    command: ["sh", "-c", "sleep 5 && ldapadd -x -H ldap://ldap:389 -D cn=admin,dc=corp,dc=local -w admin123 -f /seed/users.ldif && ldapadd -x -H ldap://ldap:389 -D cn=admin,dc=corp,dc=local -w admin123 -f /seed/groups.ldif && echo 'LDAP seed done'"]
+    volumes:
+      - ./ldap-seed:/seed:ro
+    restart: "no"
+
+  # === Microservices ===
+  identity:
+    build:
+      context: ..
+      dockerfile: services/identity/Dockerfile
+    container_name: ggid-identity
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+    ports:
+      - "8081:8080"
+      - "50051:9090"
+
+  auth:
+    build:
+      context: ..
+      dockerfile: services/auth/Dockerfile
+    container_name: ggid-auth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      AUTH_HTTP_ADDR: ":9001"
+    ports:
+      - "9001:9001"
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: services/gateway/Dockerfile
+    container_name: ggid-gateway
+    depends_on:
+      - auth
+      - identity
+    environment:
+      GATEWAY_ADDR: ":8080"
+    ports:
+      - "8080:8080"
+
+  policy:
+    build:
+      context: ..
+      dockerfile: services/policy/Dockerfile
+    container_name: ggid-policy
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+    ports:
+      - "8083:8084"
+      - "50053:9070"
+
+  org:
+    build:
+      context: ..
+      dockerfile: services/org/Dockerfile
+    container_name: ggid-org
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+    ports:
+      - "8084:8071"
+      - "50054:9071"
+
+  audit:
+    build:
+      context: ..
+      dockerfile: services/audit/Dockerfile
+    container_name: ggid-audit
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    environment:
+      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+      NATS_URL: "nats://nats:4222"
+    ports:
+      - "8085:8072"
+      - "50055:9072"
 
 volumes:
   ggid-pgdata:
+  ggid-ldapdata:
+  ggid-ldapconfig:
