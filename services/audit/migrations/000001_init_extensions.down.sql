@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS audit_events;
+DROP TYPE IF EXISTS event_result;
+DROP TYPE IF EXISTS actor_type;
+DROP EXTENSION IF EXISTS "pgcrypto";

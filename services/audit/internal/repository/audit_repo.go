@@ -1,0 +1,159 @@
+package repository
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/services/audit/internal/domain"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// AuditRepository manages audit event persistence and queries.
+type AuditRepository struct {
+	db *pgxpool.Pool
+}
+
+func NewAuditRepository(db *pgxpool.Pool) *AuditRepository {
+	return &AuditRepository{db: db}
+}
+
+// Insert writes a single audit event to the database.
+func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) error {
+	metaJSON, _ := json.Marshal(e.Metadata)
+	query := `
+		INSERT INTO audit_events (tenant_id, actor_type, actor_id, actor_name, action,
+		    resource_type, resource_id, resource_name, result, ip_address,
+		    user_agent, request_id, metadata)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11, $12, $13)
+		RETURNING id, created_at`
+	return r.db.QueryRow(ctx, query,
+		e.TenantID, e.ActorType, e.ActorID, e.ActorName, e.Action,
+		e.ResourceType, e.ResourceID, e.ResourceName, e.Result, e.IPAddress,
+		e.UserAgent, e.RequestID, metaJSON,
+	).Scan(&e.ID, &e.CreatedAt)
+}
+
+// GetByID retrieves a single audit event by ID.
+func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
+	event := &domain.AuditEvent{}
+	var metaBytes []byte
+	query := `
+		SELECT id, tenant_id, actor_type, actor_id, actor_name, action,
+		    resource_type, resource_id, resource_name, result,
+		    ip_address::text, user_agent, request_id, metadata, created_at
+		FROM audit_events WHERE id = $1`
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&event.ID, &event.TenantID, &event.ActorType, &event.ActorID, &event.ActorName,
+		&event.Action, &event.ResourceType, &event.ResourceID, &event.ResourceName,
+		&event.Result, &event.IPAddress, &event.UserAgent, &event.RequestID, &metaBytes, &event.CreatedAt,
+	)
+	if err != nil {
+		return nil, mapErr(err, "audit_event", id.String())
+	}
+	if len(metaBytes) > 0 {
+		json.Unmarshal(metaBytes, &event.Metadata)
+	}
+	return event, nil
+}
+
+// List returns audit events matching the filter with pagination.
+func (r *AuditRepository) List(ctx context.Context, filter domain.ListFilter, limit, offset int) ([]*domain.AuditEvent, int, error) {
+	where := "WHERE tenant_id = $1"
+	args := []any{filter.TenantID}
+	n := 2
+
+	if filter.ActorID != nil {
+		where += fmt.Sprintf(" AND actor_id = $%d", n)
+		args = append(args, *filter.ActorID)
+		n++
+	}
+	if filter.Action != "" {
+		where += fmt.Sprintf(" AND action = $%d", n)
+		args = append(args, filter.Action)
+		n++
+	}
+	if filter.ResourceType != "" {
+		where += fmt.Sprintf(" AND resource_type = $%d", n)
+		args = append(args, filter.ResourceType)
+		n++
+	}
+	if filter.Result != "" {
+		where += fmt.Sprintf(" AND result = $%d", n)
+		args = append(args, filter.Result)
+		n++
+	}
+	if filter.StartTime != nil {
+		where += fmt.Sprintf(" AND created_at >= $%d", n)
+		args = append(args, *filter.StartTime)
+		n++
+	}
+	if filter.EndTime != nil {
+		where += fmt.Sprintf(" AND created_at < $%d", n)
+		args = append(args, *filter.EndTime)
+		n++
+	}
+
+	// Count total
+	countQuery := "SELECT count(*) FROM audit_events " + where
+	var total int
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("count audit events: %w", err)
+	}
+
+	// Build ORDER BY
+	orderCol := "created_at"
+	switch filter.OrderBy {
+	case "action":
+		orderCol = "action"
+	case "actor_name":
+		orderCol = "actor_name"
+	}
+	orderDir := "DESC"
+	if !filter.Descending {
+		orderDir = "ASC"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT id, tenant_id, actor_type, actor_id, actor_name, action,
+		    resource_type, resource_id, resource_name, result,
+		    ip_address::text, user_agent, request_id, metadata, created_at
+		FROM audit_events %s
+		ORDER BY %s %s LIMIT $%d OFFSET $%d`,
+		where, orderCol, orderDir, n, n+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("list audit events: %w", err)
+	}
+	defer rows.Close()
+
+	var events []*domain.AuditEvent
+	for rows.Next() {
+		e := &domain.AuditEvent{}
+		var metaBytes []byte
+		if err := rows.Scan(
+			&e.ID, &e.TenantID, &e.ActorType, &e.ActorID, &e.ActorName, &e.Action,
+			&e.ResourceType, &e.ResourceID, &e.ResourceName, &e.Result,
+			&e.IPAddress, &e.UserAgent, &e.RequestID, &metaBytes, &e.CreatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+		if len(metaBytes) > 0 {
+			json.Unmarshal(metaBytes, &e.Metadata)
+		}
+		events = append(events, e)
+	}
+	return events, total, nil
+}
+
+func mapErr(err error, resource, id string) error {
+	if err == pgx.ErrNoRows {
+		return errors.NotFound(resource, id)
+	}
+	return errors.Wrap(errors.ErrInternal, "database error", err)
+}
