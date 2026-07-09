@@ -123,13 +123,37 @@ func (gw *Gateway) matchBackend(path string) *httputil.ReverseProxy {
 }
 
 // Handler returns an http.Handler with all middleware applied in the correct order.
+// Public paths (login, register, healthz, .well-known) skip JWT verification.
+// All other paths require a valid JWT Bearer token.
 func (gw *Gateway) Handler() http.Handler {
-	var handler http.Handler = gw
+	// Inner handler: JWT enforcement + gateway routing
+	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if this is a public path
+		isPublic := false
+		for _, pp := range publicPaths {
+			if strings.HasPrefix(r.URL.Path, pp) {
+				isPublic = true
+				break
+		}
+		}
+		// Health check and JWKS are always public
+		if r.URL.Path == "/healthz" || r.URL.Path == "/.well-known/jwks.json" {
+			isPublic = true
+		}
 
-	// Apply middleware outermost-first (last applied = outermost):
-	//   CORS → RequestID → Logging → TenantResolver → JWTAuth → gateway.ServeHTTP
-	handler = middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)(handler)
-	handler = middleware.TenantResolver(gw.cfg.DomainSuffix)(handler)
+		if isPublic {
+			// Public path: no JWT required, but still validate if token present
+			jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
+			jwtMW(gw).ServeHTTP(w, r)
+		} else {
+			// Protected path: JWT required
+			jwtMW := middleware.JWTAuth(gw.jwks, true, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
+			jwtMW(gw).ServeHTTP(w, r)
+		}
+	})
+
+	// Apply outer middleware: CORS → RequestID → Logging → TenantResolver → inner
+	handler := middleware.TenantResolver(gw.cfg.DomainSuffix)(inner)
 	handler = middleware.Logging(handler)
 	handler = middleware.RequestID(handler)
 	handler = middleware.CORS(handler)

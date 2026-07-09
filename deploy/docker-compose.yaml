@@ -101,8 +101,12 @@ services:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
       REDIS_ADDR: "redis:6379"
       AUTH_HTTP_ADDR: ":9001"
+      JWT_PRIVATE_KEY_PATH: "/configs/rsa_private.pem"
+      JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
     ports:
       - "9001:9001"
+    volumes:
+      - ggid-configs:/configs
 
   gateway:
     build:
@@ -112,10 +116,24 @@ services:
     depends_on:
       - auth
       - identity
+      - policy
+      - org
+      - audit
     environment:
       GATEWAY_ADDR: ":8080"
+      JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
+      AUTH_SERVICE_URL: "http://auth:9001"
+      IDENTITY_SERVICE_URL: "http://identity:8080"
+      POLICY_SERVICE_URL: "http://policy:8084"
+      ROLES_SERVICE_URL: "http://policy:8084"
+      ORG_SERVICE_URL: "http://org:8071"
+      AUDIT_SERVICE_URL: "http://audit:8072"
+      OAUTH_SERVICE_URL: "http://oauth:9005"
+      SAML_SERVICE_URL: "http://oauth:9005"
     ports:
       - "8080:8080"
+    volumes:
+      - ggid-configs:/configs:ro
 
   policy:
     build:
@@ -162,7 +180,25 @@ services:
       - "8085:8072"
       - "50055:9072"
 
+  oauth:
+    build:
+      context: ..
+      dockerfile: services/oauth/Dockerfile
+    container_name: ggid-oauth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+    ports:
+      - "9005:9005"
+      - "50056:9073"
+
 volumes:
   ggid-pgdata:
   ggid-ldapdata:
   ggid-ldapconfig:
+  ggid-configs:

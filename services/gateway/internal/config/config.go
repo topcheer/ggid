@@ -44,6 +44,7 @@ func Default() *Config {
 }
 
 // LoadFromEnv overrides config from environment variables.
+// All service URLs can be overridden for Docker deployment.
 func LoadFromEnv(cfg *Config) *Config {
 	if v := os.Getenv("GATEWAY_ADDR"); v != "" {
 		cfg.Addr = v
@@ -60,11 +61,23 @@ func LoadFromEnv(cfg *Config) *Config {
 	if v := os.Getenv("JWT_PUBLIC_KEY_PATH"); v != "" {
 		cfg.PublicKeyPath = v
 	}
-	if v := os.Getenv("AUTH_SERVICE_URL"); v != "" {
-		cfg.Routes["/api/v1/auth"] = v
+
+	// Service URL overrides — each maps a path prefix to a backend URL
+	serviceEnvs := map[string]string{
+		"AUTH_SERVICE_URL":     "/api/v1/auth",
+		"IDENTITY_SERVICE_URL": "/api/v1/users",
+		"POLICY_SERVICE_URL":   "/api/v1/policies",
+		"ROLES_SERVICE_URL":    "/api/v1/roles",
+		"ORG_SERVICE_URL":      "/api/v1/orgs",
+		"AUDIT_SERVICE_URL":    "/api/v1/audit",
+		"OAUTH_SERVICE_URL":    "/oauth",
+		"SAML_SERVICE_URL":     "/saml",
 	}
-	if v := os.Getenv("IDENTITY_SERVICE_URL"); v != "" {
-		cfg.Routes["/api/v1/users"] = v
+	for envKey, route := range serviceEnvs {
+		if v := os.Getenv(envKey); v != "" {
+			cfg.Routes[route] = v
+		}
 	}
+
 	return cfg
 }
