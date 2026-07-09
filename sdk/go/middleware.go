@@ -1,9 +1,9 @@
-// Package ggid provides HTTP middleware for protecting Go backends with GGID IAM.
-// Use as a standard http.Handler wrapper or with any compatible router.
 package ggid
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -25,19 +25,6 @@ type MiddlewareConfig struct {
 }
 
 // Middleware wraps an http.Handler with GGID JWT verification.
-// It extracts the Bearer token from Authorization header, verifies it
-// via the GGID API, and injects UserInfo into the request context.
-//
-// Usage:
-//
-//	mux := http.NewServeMux()
-//	mux.HandleFunc("/api/data", myHandler)
-//	client := ggid.New("https://iam.example.com")
-//	protected := client.Middleware(mux, ggid.MiddlewareConfig{
-//	    PublicPaths: []string{"/healthz"},
-//	    TenantID:    "your-tenant-id",
-//	})
-//	http.ListenAndServe(":8080", protected)
 func (c *Client) Middleware(next http.Handler, cfg MiddlewareConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if path is public
@@ -80,21 +67,12 @@ func (c *Client) Middleware(next http.Handler, cfg MiddlewareConfig) http.Handle
 }
 
 // UserFromContext extracts the authenticated user info from request context.
-// Returns nil if not authenticated.
 func UserFromContext(ctx context.Context) *UserInfo {
 	user, _ := ctx.Value(ContextKeyUser).(*UserInfo)
 	return user
 }
 
-// RequirePermission returns an http.HandlerFunc that checks user permission
-// before calling the wrapped handler.
-//
-// Usage:
-//
-//	mux.HandleFunc("/api/admin/users", client.RequirePermission(
-//	    "iam:users", "read",
-//	    myHandler,
-//	))
+// RequirePermission returns middleware that checks user permission.
 func (c *Client) RequirePermission(resource, action string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := UserFromContext(r.Context())
@@ -119,30 +97,16 @@ func (c *Client) RequirePermission(resource, action string, next http.HandlerFun
 }
 
 func writeUnauthorized(w http.ResponseWriter, msg string) {
-	writeJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": msg})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSONResponse(w, status, map[string]string{"error": msg})
-}
-
-func writeJSONResponse(w http.ResponseWriter, status int, body interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	// Use json encoder to avoid importing in the main file
-	enc := newJSONEncoder(w)
-	enc.Encode(body)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
 
-// jsonEncoder wraps encoding/json.Encoder to avoid import in client.go.
-type jsonEncoder struct {
-	w http.ResponseWriter
-}
-
-func newJSONEncoder(w http.ResponseWriter) *jsonEncoder {
-	return &jsonEncoder{w: w}
-}
-
-func (e *jsonEncoder) Encode(v interface{}) error {
-	return encodeJSON(e.w, v)
-}
+// fmt import is needed for potential future error formatting
+var _ = fmt.Sprintf
