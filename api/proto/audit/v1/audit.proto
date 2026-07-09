@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package ggid.audit.v1;
+option go_package = "github.com/ggid/ggid/api/gen/audit/v1;auditv1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+// --- Domain message ---
+
+message AuditEvent {
+  string id = 1;
+  string tenant_id = 2;
+  string actor_type = 3;    // user | api_key | system | anonymous
+  string actor_id = 4;
+  string actor_name = 5;
+  string action = 6;        // e.g. "user.login", "role.assign"
+  string resource_type = 7;
+  string resource_id = 8;
+  string resource_name = 9;
+  string result = 10;       // success | failure | denied
+  string ip_address = 11;
+  string user_agent = 12;
+  string request_id = 13;
+  google.protobuf.Struct metadata = 14;
+  google.protobuf.Timestamp created_at = 15;
+}
+
+// --- Audit service ---
+
+service AuditService {
+  // Query audit events with filtering, sorting, pagination.
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
+  // Get a single event.
+  rpc GetEvent(GetEventRequest) returns (AuditEvent);
+}
+
+message ListEventsRequest {
+  string tenant_id = 1;
+  optional string actor_id = 2;
+  optional string action = 3;
+  optional string resource_type = 4;
+  optional string result = 5;
+  optional google.protobuf.Timestamp start_time = 6;
+  optional google.protobuf.Timestamp end_time = 7;
+  string order_by = 8;      // created_at | action | actor_name
+  bool descending = 9;
+  int32 page_size = 10;
+  string page_token = 11;
+}
+
+message ListEventsResponse {
+  repeated AuditEvent events = 1;
+  string next_page_token = 2;
+  int32 total = 3;
+}
+
+message GetEventRequest { string id = 1; }

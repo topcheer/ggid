@@ -1,0 +1,227 @@
+syntax = "proto3";
+
+package ggid.org.v1;
+option go_package = "github.com/ggid/ggid/api/gen/org/v1;orgv1";
+
+import "google/protobuf/timestamp.proto";
+
+// --- Domain messages ---
+
+message Tenant {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string plan = 4;          // free | pro | enterprise
+  string status = 5;        // active | suspended | deleted
+  string settings = 6;      // JSON
+  int32 max_users = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message Organization {
+  string id = 1;
+  string tenant_id = 2;
+  optional string parent_id = 3;
+  string name = 4;
+  string path = 5;          // LTREE path
+  string metadata = 6;      // JSON
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message Department {
+  string id = 1;
+  string org_id = 2;
+  optional string parent_id = 3;
+  string name = 4;
+  string path = 5;          // LTREE path
+  optional string manager_id = 6;
+  string metadata = 7;      // JSON
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message Team {
+  string id = 1;
+  string org_id = 2;
+  string name = 3;
+  string description = 4;
+  string created_by = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message Membership {
+  string id = 1;
+  string user_id = 2;
+  string tenant_id = 3;
+  string org_id = 4;
+  optional string dept_id = 5;
+  optional string team_id = 6;
+  string title = 7;
+  string status = 8;        // active | invited | removed
+  google.protobuf.Timestamp joined_at = 9;
+  string metadata = 10;     // JSON
+}
+
+// --- Tenant service ---
+
+service TenantService {
+  rpc CreateTenant(CreateTenantRequest) returns (Tenant);
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+  rpc UpdateTenant(UpdateTenantRequest) returns (Tenant);
+  rpc DeleteTenant(DeleteTenantRequest) returns (DeleteTenantResponse);
+}
+
+message CreateTenantRequest {
+  string name = 1;
+  string slug = 2;
+  string plan = 3;
+  int32 max_users = 4;
+  string settings = 5;  // JSON
+}
+message GetTenantRequest { string id = 1; }
+message UpdateTenantRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string plan = 3;
+  optional int32 max_users = 4;
+  optional string settings = 5;
+  optional string status = 6;
+}
+message DeleteTenantRequest { string id = 1; }
+message DeleteTenantResponse {}
+
+// --- Organization service ---
+
+service OrganizationService {
+  rpc CreateOrganization(CreateOrgRequest) returns (Organization);
+  rpc GetOrganization(GetOrgRequest) returns (Organization);
+  rpc ListOrganizations(ListOrgsRequest) returns (ListOrgsResponse);
+  rpc GetSubTree(GetSubTreeRequest) returns (ListOrgsResponse);
+  rpc UpdateOrganization(UpdateOrgRequest) returns (Organization);
+  rpc DeleteOrganization(DeleteOrgRequest) returns (DeleteOrgResponse);
+}
+
+message CreateOrgRequest {
+  string tenant_id = 1;
+  optional string parent_id = 2;
+  string name = 3;
+  string metadata = 4;  // JSON
+}
+message GetOrgRequest { string id = 1; }
+message ListOrgsRequest {
+  string tenant_id = 1;
+  optional string parent_id = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+message ListOrgsResponse {
+  repeated Organization organizations = 1;
+  string next_page_token = 2;
+}
+message GetSubTreeRequest {
+  string tenant_id = 1;
+  string root_id = 2;
+}
+message UpdateOrgRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string metadata = 3;
+}
+message DeleteOrgRequest { string id = 1; }
+message DeleteOrgResponse {}
+
+// --- Department service ---
+
+service DepartmentService {
+  rpc CreateDepartment(CreateDeptRequest) returns (Department);
+  rpc GetDepartment(GetDeptRequest) returns (Department);
+  rpc ListDepartments(ListDeptsRequest) returns (ListDeptsResponse);
+  rpc UpdateDepartment(UpdateDeptRequest) returns (Department);
+  rpc DeleteDepartment(DeleteDeptRequest) returns (DeleteDeptResponse);
+}
+
+message CreateDeptRequest {
+  string org_id = 1;
+  optional string parent_id = 2;
+  string name = 3;
+  optional string manager_id = 4;
+  string metadata = 5;
+}
+message GetDeptRequest { string id = 1; }
+message ListDeptsRequest {
+  string org_id = 1;
+  optional string parent_id = 2;
+}
+message ListDeptsResponse { repeated Department departments = 1; }
+message UpdateDeptRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string manager_id = 3;
+  optional string metadata = 4;
+}
+message DeleteDeptRequest { string id = 1; }
+message DeleteDeptResponse {}
+
+// --- Team service ---
+
+service TeamService {
+  rpc CreateTeam(CreateTeamRequest) returns (Team);
+  rpc GetTeam(GetTeamRequest) returns (Team);
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse);
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse);
+}
+
+message CreateTeamRequest {
+  string org_id = 1;
+  string name = 2;
+  string description = 3;
+  string created_by = 4;
+}
+message GetTeamRequest { string id = 1; }
+message ListTeamsRequest {
+  string org_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+message ListTeamsResponse {
+  repeated Team teams = 1;
+  string next_page_token = 2;
+}
+message DeleteTeamRequest { string id = 1; }
+message DeleteTeamResponse {}
+
+// --- Membership service ---
+
+service MembershipService {
+  rpc InviteMember(InviteMemberRequest) returns (Membership);
+  rpc AcceptInvitation(AcceptInvitationRequest) returns (Membership);
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+}
+
+message InviteMemberRequest {
+  string user_id = 1;
+  string tenant_id = 2;
+  string org_id = 3;
+  optional string dept_id = 4;
+  optional string team_id = 5;
+  string title = 6;
+  string metadata = 7;
+}
+message AcceptInvitationRequest { string membership_id = 1; }
+message RemoveMemberRequest { string membership_id = 1; }
+message RemoveMemberResponse {}
+message ListMembersRequest {
+  string tenant_id = 1;
+  optional string org_id = 2;
+  optional string dept_id = 3;
+  optional string team_id = 4;
+  string status = 5;
+  int32 page_size = 6;
+  string page_token = 7;
+}
+message ListMembersResponse {
+  repeated Membership memberships = 1;
+  string next_page_token = 2;
+}

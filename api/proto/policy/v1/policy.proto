@@ -1,0 +1,228 @@
+syntax = "proto3";
+
+package ggid.policy.v1;
+option go_package = "github.com/ggid/ggid/api/gen/policy/v1;policyv1";
+
+import "google/protobuf/timestamp.proto";
+
+// --- Domain messages ---
+
+message Role {
+  string id = 1;
+  string tenant_id = 2;
+  string key = 3;
+  string name = 4;
+  string description = 5;
+  bool system_role = 6;
+  optional string parent_role_id = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message Permission {
+  string id = 1;
+  string tenant_id = 2;
+  string key = 3;
+  string name = 4;
+  string resource_type = 5;
+  string action = 6;
+  string description = 7;
+  bool system_perm = 8;
+}
+
+message Policy {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string effect = 5;       // allow | deny
+  repeated string actions = 6;
+  repeated string resources = 7;
+  string conditions = 8;    // JSON
+  int32 priority = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+// --- Role service ---
+
+service RoleService {
+  rpc CreateRole(CreateRoleRequest) returns (Role);
+  rpc GetRole(GetRoleRequest) returns (Role);
+  rpc ListRoles(ListRolesRequest) returns (ListRolesResponse);
+  rpc UpdateRole(UpdateRoleRequest) returns (Role);
+  rpc DeleteRole(DeleteRoleRequest) returns (DeleteRoleResponse);
+
+  rpc AssignRole(AssignRoleRequest) returns (AssignRoleResponse);
+  rpc RevokeRole(RevokeRoleRequest) returns (RevokeRoleResponse);
+  rpc ListUserRoles(ListUserRolesRequest) returns (ListUserRolesResponse);
+}
+
+message CreateRoleRequest {
+  string tenant_id = 1;
+  string key = 2;
+  string name = 3;
+  string description = 4;
+  optional string parent_role_id = 5;
+}
+
+message GetRoleRequest { string id = 1; }
+message ListRolesRequest {
+  string tenant_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+message ListRolesResponse {
+  repeated Role roles = 1;
+  string next_page_token = 2;
+}
+message UpdateRoleRequest {
+  string id = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional string parent_role_id = 4;
+}
+message DeleteRoleRequest { string id = 1; }
+message DeleteRoleResponse {}
+
+message AssignRoleRequest {
+  string user_id = 1;
+  string role_id = 2;
+  string scope_type = 3;  // global | organization | department | team | resource
+  string scope_id = 4;
+  string granted_by = 5;
+  optional google.protobuf.Timestamp expires_at = 6;
+}
+message AssignRoleResponse {}
+message RevokeRoleRequest {
+  string user_id = 1;
+  string role_id = 2;
+  string scope_type = 3;
+  string scope_id = 4;
+}
+message RevokeRoleResponse {}
+message ListUserRolesRequest {
+  string user_id = 1;
+  string tenant_id = 2;
+}
+message ListUserRolesResponse {
+  repeated UserRoleEntry roles = 1;
+}
+message UserRoleEntry {
+  string role_id = 1;
+  string role_key = 2;
+  string role_name = 3;
+  string scope_type = 4;
+  string scope_id = 5;
+  google.protobuf.Timestamp expires_at = 6;
+}
+
+// --- Permission service ---
+
+service PermissionService {
+  rpc CreatePermission(CreatePermissionRequest) returns (Permission);
+  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
+  rpc GrantPermissions(GrantPermissionsRequest) returns (GrantPermissionsResponse);
+  rpc RevokePermissions(RevokePermissionsRequest) returns (RevokePermissionsResponse);
+}
+
+message CreatePermissionRequest {
+  string tenant_id = 1;
+  string key = 2;
+  string name = 3;
+  string resource_type = 4;
+  string action = 5;
+  string description = 6;
+}
+message ListPermissionsRequest {
+  string tenant_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+message ListPermissionsResponse {
+  repeated Permission permissions = 1;
+  string next_page_token = 2;
+}
+message GrantPermissionsRequest {
+  string role_id = 1;
+  repeated string permission_ids = 2;
+}
+message GrantPermissionsResponse {}
+message RevokePermissionsRequest {
+  string role_id = 1;
+  repeated string permission_ids = 2;
+}
+message RevokePermissionsResponse {}
+
+// --- Policy service (ABAC) ---
+
+service PolicyService {
+  rpc CreatePolicy(CreatePolicyRequest) returns (Policy);
+  rpc GetPolicy(GetPolicyRequest) returns (Policy);
+  rpc ListPolicies(ListPoliciesRequest) returns (ListPoliciesResponse);
+  rpc DeletePolicy(DeletePolicyRequest) returns (DeletePolicyResponse);
+  rpc AttachPolicy(AttachPolicyRequest) returns (AttachPolicyResponse);
+  rpc DetachPolicy(DetachPolicyRequest) returns (DetachPolicyResponse);
+
+  // Evaluate a permission request with full context.
+  rpc Evaluate(EvaluateRequest) returns (EvaluateResponse);
+  // Simple boolean check.
+  rpc Check(CheckRequest) returns (CheckResponse);
+}
+
+message CreatePolicyRequest {
+  string tenant_id = 1;
+  string name = 2;
+  string description = 3;
+  string effect = 4;
+  repeated string actions = 5;
+  repeated string resources = 6;
+  string conditions = 7;  // JSON
+  int32 priority = 8;
+}
+message GetPolicyRequest { string id = 1; }
+message ListPoliciesRequest {
+  string tenant_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+message ListPoliciesResponse {
+  repeated Policy policies = 1;
+  string next_page_token = 2;
+}
+message DeletePolicyRequest { string id = 1; }
+message DeletePolicyResponse {}
+message AttachPolicyRequest {
+  string policy_id = 1;
+  string principal_type = 2;  // user | role | group
+  string principal_id = 3;
+}
+message AttachPolicyResponse {}
+message DetachPolicyRequest {
+  string policy_id = 1;
+  string principal_type = 2;
+  string principal_id = 3;
+}
+message DetachPolicyResponse {}
+
+message EvaluateRequest {
+  string user_id = 1;
+  string resource_type = 2;
+  string action = 3;
+  string resource = 4;
+  string conditions = 5;  // JSON
+}
+message EvaluateResponse {
+  bool allowed = 1;
+  string reason = 2;
+  string matched_by = 3;
+}
+
+message CheckRequest {
+  string user_id = 1;
+  string resource_type = 2;
+  string action = 3;
+  string resource = 4;
+}
+message CheckResponse {
+  bool allowed = 1;
+}

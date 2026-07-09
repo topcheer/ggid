@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+package api.auth.v1;
+
+option go_package = "github.com/ggid/ggid/api/proto/auth/v1;authv1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+// AuthService handles authentication operations.
+service AuthService {
+  // Password-based login.
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/login"
+      body: "*"
+    };
+  }
+
+  // Register a new user credential.
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/register"
+      body: "*"
+    };
+  }
+
+  // Logout — revokes session and tokens.
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/logout"
+      body: "*"
+    };
+  }
+
+  // Refresh an expired access token using a refresh token.
+  rpc RefreshToken(RefreshTokenRequest) returns (TokenSet) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/refresh"
+      body: "*"
+    };
+  }
+
+  // Initiate forgot-password flow (sends reset email).
+  rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/password/forgot"
+      body: "*"
+    };
+  }
+
+  // Reset password using a reset token.
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/password/reset"
+      body: "*"
+    };
+  }
+
+  // Change password (requires authentication).
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/password/change"
+      body: "*"
+    };
+  }
+
+  // List active sessions for the authenticated user.
+  rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/auth/sessions"
+    };
+  }
+
+  // Revoke a specific session.
+  rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/auth/sessions/{session_id}"
+    };
+  }
+}
+
+// --- Token Types ---
+
+// TokenSet represents the tokens issued after authentication.
+message TokenSet {
+  string access_token = 1;
+  string refresh_token = 2;
+  string token_type = 3;    // "Bearer"
+  int32  expires_in = 4;    // access token TTL in seconds
+  string session_id = 5;
+}
+
+// --- Login ---
+
+message LoginRequest {
+  string username = 1;   // username or email
+  string password = 2;
+  string scope = 3;       // optional requested scopes
+}
+
+message LoginResponse {
+  TokenSet tokens = 1;
+  string user_id = 2;
+  bool mfa_required = 3;
+}
+
+// --- Register ---
+
+message RegisterRequest {
+  string username = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+}
+
+// --- Logout ---
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutResponse {}
+
+// --- Refresh ---
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+// --- Password ---
+
+message ForgotPasswordRequest {
+  string email = 1;
+}
+
+message ForgotPasswordResponse {
+  bool reset_initiated = 1;
+}
+
+message ResetPasswordRequest {
+  string token = 1;
+  string new_password = 2;
+}
+
+message ResetPasswordResponse {}
+
+message ChangePasswordRequest {
+  string user_id = 1;
+  string old_password = 2;
+  string new_password = 3;
+}
+
+message ChangePasswordResponse {}
+
+// --- Sessions ---
+
+message ListSessionsRequest {
+  string user_id = 1;
+}
+
+message SessionInfo {
+  string id = 1;
+  string ip_address = 2;
+  string user_agent = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  bool current = 6;
+}
+
+message ListSessionsResponse {
+  repeated SessionInfo sessions = 1;
+}
+
+message RevokeSessionRequest {
+  string session_id = 1;
+}
+
+message RevokeSessionResponse {}

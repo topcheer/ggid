@@ -1,0 +1,299 @@
+syntax = "proto3";
+
+package api.identity.v1;
+
+option go_package = "github.com/ggid/ggid/api/proto/identity/v1;identityv1";
+
+import "google/protobuf/timestamp.proto";
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+
+// IdentityService manages user identity lifecycle: CRUD, registration,
+// email management, and external identity linking.
+service IdentityService {
+  // --- User CRUD ---
+
+  rpc CreateUser(CreateUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/api/v1/users"
+      body: "*"
+    };
+  }
+
+  rpc GetUser(GetUserRequest) returns (User) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{id}"
+    };
+  }
+
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users"
+    };
+  }
+
+  rpc UpdateUser(UpdateUserRequest) returns (User) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/{id}"
+      body: "*"
+    };
+  }
+
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/users/{id}"
+    };
+  }
+
+  rpc LockUser(LockUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/api/v1/users/{id}/lock"
+    };
+  }
+
+  rpc UnlockUser(UnlockUserRequest) returns (User) {
+    option (google.api.http) = {
+      post: "/api/v1/users/{id}/unlock"
+    };
+  }
+
+  // --- Registration & Email Verification ---
+
+  rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/register"
+      body: "*"
+    };
+  }
+
+  rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/auth/verify-email"
+      body: "*"
+    };
+  }
+
+  // --- Multi-Email Management ---
+
+  rpc ListUserEmails(ListUserEmailsRequest) returns (ListUserEmailsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{user_id}/emails"
+    };
+  }
+
+  rpc AddUserEmail(AddUserEmailRequest) returns (UserEmail) {
+    option (google.api.http) = {
+      post: "/api/v1/users/{user_id}/emails"
+      body: "*"
+    };
+  }
+
+  rpc RemoveUserEmail(RemoveUserEmailRequest) returns (RemoveUserEmailResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/users/{user_id}/emails/{email}"
+    };
+  }
+
+  rpc SetPrimaryEmail(SetPrimaryEmailRequest) returns (UserEmail) {
+    option (google.api.http) = {
+      put: "/api/v1/users/{user_id}/emails/{email_id}/primary"
+    };
+  }
+
+  // --- External Identity Linking ---
+
+  rpc ListExternalIdentities(ListExternalIdentitiesRequest) returns (ListExternalIdentitiesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{user_id}/external-identities"
+    };
+  }
+
+  rpc LinkExternalIdentity(LinkExternalIdentityRequest) returns (ExternalIdentity) {
+    option (google.api.http) = {
+      post: "/api/v1/users/{user_id}/external-identities"
+      body: "*"
+    };
+  }
+
+  rpc UnlinkExternalIdentity(UnlinkExternalIdentityRequest) returns (UnlinkExternalIdentityResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/users/{user_id}/external-identities/{identity_id}"
+    };
+  }
+}
+
+// === Domain Messages ===
+
+enum UserStatus {
+  USER_STATUS_UNSPECIFIED = 0;
+  USER_STATUS_ACTIVE = 1;
+  USER_STATUS_LOCKED = 2;
+  USER_STATUS_DISABLED = 3;
+  USER_STATUS_DELETED = 4;
+}
+
+message User {
+  string id = 1;
+  string tenant_id = 2;
+  string username = 3;
+  string email = 4;
+  string phone = 5;
+  UserStatus status = 6;
+  bool email_verified = 7;
+  bool phone_verified = 8;
+  string primary_email_id = 9;
+  string avatar_url = 10;
+  string locale = 11;
+  string timezone = 12;
+  google.protobuf.Timestamp last_login_at = 13;
+  string last_login_ip = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}
+
+message UserEmail {
+  string id = 1;
+  string user_id = 2;
+  string email = 3;
+  bool is_primary = 4;
+  google.protobuf.Timestamp verified_at = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message ExternalIdentity {
+  string id = 1;
+  string user_id = 2;
+  string provider = 3;
+  string external_id = 4;
+  bytes metadata = 5; // JSONB
+  google.protobuf.Timestamp linked_at = 6;
+}
+
+// === Request/Response Messages ===
+
+message CreateUserRequest {
+  string username = 1 [(validate.rules).string.min_len = 3];
+  string email = 2 [(validate.rules).string.email = true];
+  string phone = 3;
+  string password = 4 [(validate.rules).string.min_len = 8];
+  string display_name = 5;
+  string locale = 6;
+  string timezone = 7;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message ListUsersRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  string search = 3;
+  UserStatus status_filter = 4;
+  string sort_by = 5;
+  bool sort_desc = 6;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  string next_page_token = 2;
+  int32 total = 3;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  optional string phone = 2;
+  optional string avatar_url = 3;
+  optional string locale = 4;
+  optional string timezone = 5;
+  optional string display_name = 6;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message DeleteUserResponse {
+  bool success = 1;
+}
+
+message LockUserRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message UnlockUserRequest {
+  string id = 1;
+}
+
+message RegisterUserRequest {
+  string username = 1 [(validate.rules).string.min_len = 3];
+  string email = 2 [(validate.rules).string.email = true];
+  string password = 3 [(validate.rules).string.min_len = 8];
+  string locale = 4;
+}
+
+message RegisterUserResponse {
+  User user = 1;
+  string verification_token = 2; // for dev/testing; prod sends via email
+}
+
+message VerifyEmailRequest {
+  string token = 1;
+}
+
+message VerifyEmailResponse {
+  bool success = 1;
+  string user_id = 2;
+}
+
+message ListUserEmailsRequest {
+  string user_id = 1;
+}
+
+message ListUserEmailsResponse {
+  repeated UserEmail emails = 1;
+}
+
+message AddUserEmailRequest {
+  string user_id = 1;
+  string email = 2 [(validate.rules).string.email = true];
+}
+
+message RemoveUserEmailRequest {
+  string user_id = 1;
+  string email = 2;
+}
+
+message RemoveUserEmailResponse {
+  bool success = 1;
+}
+
+message SetPrimaryEmailRequest {
+  string user_id = 1;
+  string email_id = 2;
+}
+
+message ListExternalIdentitiesRequest {
+  string user_id = 1;
+}
+
+message ListExternalIdentitiesResponse {
+  repeated ExternalIdentity identities = 1;
+}
+
+message LinkExternalIdentityRequest {
+  string user_id = 1;
+  string provider = 2;
+  string external_id = 3;
+  bytes metadata = 4;
+}
+
+message UnlinkExternalIdentityRequest {
+  string user_id = 1;
+  string identity_id = 2;
+}
+
+message UnlinkExternalIdentityResponse {
+  bool success = 1;
+}

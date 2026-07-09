@@ -1,0 +1,124 @@
+// Package conf defines the configuration structures for the Auth Service.
+package conf
+
+import (
+	"os"
+	"time"
+)
+
+// Config is the root configuration for the Auth Service.
+type Config struct {
+	Server    ServerConfig    `yaml:"server"`
+	Database  DatabaseConfig  `yaml:"database"`
+	Redis     RedisConfig     `yaml:"redis"`
+	JWT       JWTConfig       `yaml:"jwt"`
+	Password  PasswordPolicy  `yaml:"password_policy"`
+	RateLimit RateLimitConfig `yaml:"rate_limit"`
+}
+
+type ServerConfig struct {
+	HTTP HTTPConfig `yaml:"http"`
+}
+
+type HTTPConfig struct {
+	Addr         string        `yaml:"addr"`
+	ReadTimeout  time.Duration `yaml:"read_timeout"`
+	WriteTimeout time.Duration `yaml:"write_timeout"`
+}
+
+type DatabaseConfig struct {
+	URL          string `yaml:"url"`
+	MaxOpenConns int32  `yaml:"max_open_conns"`
+	MaxIdleConns int32  `yaml:"max_idle_conns"`
+}
+
+type RedisConfig struct {
+	Addr     string `yaml:"addr"`
+	Password string `yaml:"password"`
+	DB       int    `yaml:"db"`
+}
+
+type JWTConfig struct {
+	PrivateKeyPath string        `yaml:"private_key_path"`
+	PublicKeyPath  string        `yaml:"public_key_path"`
+	Issuer         string        `yaml:"issuer"`
+	Audience       string        `yaml:"audience"`
+	AccessTokenTTL time.Duration `yaml:"access_token_ttl"`
+}
+
+type PasswordPolicy struct {
+	MinLength      int  `yaml:"min_length"`
+	RequireUpper   bool `yaml:"require_upper"`
+	RequireLower   bool `yaml:"require_lower"`
+	RequireDigit   bool `yaml:"require_digit"`
+	RequireSpecial bool `yaml:"require_special"`
+	HistoryCount   int  `yaml:"history_count"`
+	MaxAttempts    int  `yaml:"max_attempts"`
+	LockDuration   time.Duration `yaml:"lock_duration"`
+}
+
+type RateLimitConfig struct {
+	LoginPerMinute int `yaml:"login_per_minute"`
+}
+
+// Default returns the default configuration with sensible production values.
+func Default() *Config {
+	return &Config{
+		Server: ServerConfig{
+			HTTP: HTTPConfig{
+				Addr:         ":9001",
+				ReadTimeout:  10 * time.Second,
+				WriteTimeout: 10 * time.Second,
+			},
+		},
+		Database: DatabaseConfig{
+			URL:          "postgres://ggid:ggid@localhost:5432/ggid?sslmode=disable",
+			MaxOpenConns: 25,
+			MaxIdleConns: 5,
+		},
+		Redis: RedisConfig{
+			Addr: "localhost:6379",
+			DB:   0,
+		},
+		JWT: JWTConfig{
+			PrivateKeyPath: "configs/rsa_private.pem",
+			PublicKeyPath:  "configs/rsa_public.pem",
+			Issuer:         "ggid-auth",
+			Audience:       "ggid",
+			AccessTokenTTL: 15 * time.Minute,
+		},
+		Password: PasswordPolicy{
+			MinLength:      12,
+			RequireUpper:   true,
+			RequireLower:   true,
+			RequireDigit:   true,
+			RequireSpecial: false,
+			HistoryCount:   5,
+			MaxAttempts:    5,
+			LockDuration:   30 * time.Minute,
+		},
+		RateLimit: RateLimitConfig{
+			LoginPerMinute: 5,
+		},
+	}
+}
+
+// LoadFromEnv overrides config values from environment variables.
+func LoadFromEnv(cfg *Config) *Config {
+	if v := os.Getenv("AUTH_HTTP_ADDR"); v != "" {
+		cfg.Server.HTTP.Addr = v
+	}
+	if v := os.Getenv("DATABASE_URL"); v != "" {
+		cfg.Database.URL = v
+	}
+	if v := os.Getenv("REDIS_ADDR"); v != "" {
+		cfg.Redis.Addr = v
+	}
+	if v := os.Getenv("JWT_PRIVATE_KEY_PATH"); v != "" {
+		cfg.JWT.PrivateKeyPath = v
+	}
+	if v := os.Getenv("JWT_PUBLIC_KEY_PATH"); v != "" {
+		cfg.JWT.PublicKeyPath = v
+	}
+	return cfg
+}

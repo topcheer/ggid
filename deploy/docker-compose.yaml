@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ggid-postgres
+    environment:
+      POSTGRES_USER: ggid
+      POSTGRES_PASSWORD: ggid
+      POSTGRES_DB: ggid
+    ports:
+      - "5432:5432"
+    volumes:
+      - ggid-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ggid"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ggid-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2-alpine
+    container_name: ggid-nats
+    ports:
+      - "4222:4222"   # NATS
+      - "8222:8222"   # Monitoring
+    command: ["-js"]  # Enable JetStream
+
+volumes:
+  ggid-pgdata:
