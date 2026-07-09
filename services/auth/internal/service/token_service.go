@@ -15,7 +15,6 @@ import (
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/domain"
-	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -23,16 +22,16 @@ import (
 
 // TokenService handles JWT signing and refresh-token lifecycle.
 type TokenService struct {
-	privateKey   *rsa.PrivateKey
-	publicKey    *rsa.PublicKey
-	keyID        string
-	jwtCfg       conf.JWTConfig
-	refreshRepo  *repository.RefreshTokenRepository
-	rdb          *redis.Client
+	privateKey  *rsa.PrivateKey
+	publicKey   *rsa.PublicKey
+	keyID       string
+	jwtCfg      conf.JWTConfig
+	refreshRepo RefreshTokenRepo
+	rdb         *redis.Client
 }
 
 // NewTokenService loads RSA keys and returns a ready token service.
-func NewTokenService(cfg conf.JWTConfig, refreshRepo *repository.RefreshTokenRepository, rdb *redis.Client) (*TokenService, error) {
+func NewTokenService(cfg conf.JWTConfig, refreshRepo RefreshTokenRepo, rdb *redis.Client) (*TokenService, error) {
 	privKey, err := loadOrCreatePrivateKey(cfg.PrivateKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("load private key: %w", err)

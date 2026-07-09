@@ -10,7 +10,6 @@ import (
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/domain"
-	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/google/uuid"
 )
 

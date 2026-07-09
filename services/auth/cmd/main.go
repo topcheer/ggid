@@ -61,7 +61,7 @@ func main() {
 	}
 	log.Printf("JWT key loaded (kid=%s)", tokenService.KeyID())
 
-	sessionService := service.NewSessionService(sessionRepo, pool)
+	sessionService := service.NewSessionService(sessionRepo)
 	passwordService := service.NewPasswordService(cfg.Password, credRepo, rdb)
 	rateLimiter := service.NewRateLimiter(rdb)
 

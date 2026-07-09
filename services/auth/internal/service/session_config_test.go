@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/services/auth/internal/conf"
-	"github.com/ggid/ggid/services/auth/internal/domain"
 	"github.com/google/uuid"
 )
 
@@ -68,22 +67,6 @@ func TestLocalProvider_Name(t *testing.T) {
 	}
 }
 
-func TestLocalProvider_CreateCredential(t *testing.T) {
-	// CreateCredential requires a DB repo, but we can verify the params flow
-	params := CreateCredentialParams{
-		TenantID:   uuid.New(),
-		UserID:     uuid.New(),
-		Identifier: "testuser",
-		Password:   "StrongPassword123",
-		Type:       domain.CredentialPassword,
-	}
-	if params.Identifier != "testuser" {
-		t.Error("identifier mismatch")
-	}
-	if params.Type != domain.CredentialPassword {
-		t.Error("expected password credential type")
-	}
-}
 
 // --- Config tests ---
 

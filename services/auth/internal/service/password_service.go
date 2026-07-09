@@ -10,7 +10,6 @@ import (
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/domain"
-	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -28,14 +27,14 @@ var (
 
 // PasswordService handles password validation, change, and reset flows.
 type PasswordService struct {
-	policy        conf.PasswordPolicy
-	credentialRepo *repository.CredentialRepository
-	rdb           *redis.Client
+	policy         conf.PasswordPolicy
+	credentialRepo CredentialRepo
+	rdb            *redis.Client
 }
 
 func NewPasswordService(
 	policy conf.PasswordPolicy,
-	credentialRepo *repository.CredentialRepository,
+	credentialRepo CredentialRepo,
 	rdb *redis.Client,
 ) *PasswordService {
 	return &PasswordService{

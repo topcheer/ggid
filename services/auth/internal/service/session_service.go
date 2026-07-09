@@ -6,22 +6,18 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/services/auth/internal/domain"
-	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // SessionService manages the session lifecycle: create, query, revoke, cleanup.
 type SessionService struct {
-	sessionRepo *repository.SessionRepository
-	db          *pgxpool.Pool
+	sessionRepo SessionRepo
 }
 
-func NewSessionService(sessionRepo *repository.SessionRepository, db *pgxpool.Pool) *SessionService {
+func NewSessionService(sessionRepo SessionRepo) *SessionService {
 	return &SessionService{
 		sessionRepo: sessionRepo,
-		db:          db,
 	}
 }
 

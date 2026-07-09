@@ -9,18 +9,17 @@ import (
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/domain"
-	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/google/uuid"
 )
 
 // LocalProvider implements authprovider.Provider for local DB password authentication.
 type LocalProvider struct {
-	credRepo *repository.CredentialRepository
+	credRepo CredentialRepo
 	policy   conf.PasswordPolicy
 }
 
 // NewLocalProvider creates a LocalProvider backed by the credential repository.
-func NewLocalProvider(credRepo *repository.CredentialRepository, policy conf.PasswordPolicy) *LocalProvider {
+func NewLocalProvider(credRepo CredentialRepo, policy conf.PasswordPolicy) *LocalProvider {
 	return &LocalProvider{credRepo: credRepo, policy: policy}
 }
 
