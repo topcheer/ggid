@@ -11,17 +11,17 @@ import (
 	"os/signal"
 	"syscall"
 
+	pb "github.com/ggid/ggid/api/gen/policy/v1"
 	"github.com/ggid/ggid/services/policy/internal/config"
 	"github.com/ggid/ggid/services/policy/internal/data"
+	"github.com/ggid/ggid/services/policy/internal/handler"
 	"github.com/ggid/ggid/services/policy/internal/repository"
 	"github.com/ggid/ggid/services/policy/internal/service"
+	"google.golang.org/grpc"
 )
 
 func main() {
-	var (
-		migrateOnly bool
-	)
-	flag.BoolVar(&migrateOnly, "migrate-only", false, "Run database migrations and exit")
+	migrateOnly := flag.Bool("migrate-only", false, "Run database migrations and exit")
 	flag.Parse()
 
 	cfg := config.FromEnv()
@@ -35,7 +35,6 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 	defer db.Close()
-
 	log.Println("Policy Engine: database connected")
 
 	// Initialize repositories
@@ -49,22 +48,39 @@ func main() {
 	policySvc := service.NewPolicyService(policyRepo)
 	evaluator := service.NewEvaluator(roleRepo, userRoleRepo, policyRepo)
 
-	_ = roleSvc
-	_ = policySvc
-	_ = evaluator
-
-	if migrateOnly {
+	if *migrateOnly {
 		log.Println("Policy Engine: migration mode, skipping server start")
 		return
 	}
 
-	// Start HTTP health server (skeleton — gRPC server will be added after proto generation)
+	// Initialize gRPC handlers
+	roleHandler := handler.NewRoleHandler(roleSvc)
+	permHandler := handler.NewPermissionHandler(roleSvc)
+	policyHandler := handler.NewPolicyHandler(policySvc, evaluator)
+
+	// Start gRPC server
+	lis, err := net.Listen("tcp", cfg.GRPCAddr)
+	if err != nil {
+		log.Fatalf("failed to listen on %s: %v", cfg.GRPCAddr, err)
+	}
+	grpcServer := grpc.NewServer()
+	pb.RegisterRoleServiceServer(grpcServer, roleHandler)
+	pb.RegisterPermissionServiceServer(grpcServer, permHandler)
+	pb.RegisterPolicyServiceServer(grpcServer, policyHandler)
+
+	go func() {
+		log.Printf("Policy Engine: gRPC listening on %s", cfg.GRPCAddr)
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("gRPC serve: %v", err)
+		}
+	}()
+
+	// Start HTTP health server
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
-
 	httpServer := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
 
 	go func() {
@@ -74,32 +90,13 @@ func main() {
 		}
 	}()
 
-	// Start gRPC listener (placeholder)
-	lis, err := net.Listen("tcp", cfg.GRPCAddr)
-	if err != nil {
-		log.Fatalf("failed to listen on %s: %v", cfg.GRPCAddr, err)
-	}
-	_ = lis // gRPC server registration will happen after proto generation
-	log.Printf("Policy Engine: gRPC listening on %s", cfg.GRPCAddr)
-
 	// Wait for shutdown signal
-	// Keep gRPC listener open until shutdown
-	go func() {
-		for {
-			conn, err := lis.Accept()
-			if err != nil {
-				return
-			}
-			conn.Close()
-		}
-	}()
-
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
 
 	log.Println("Policy Engine: shutting down...")
-	cancel()
+	grpcServer.GracefulStop()
 	httpServer.Shutdown(context.Background())
 	log.Println("Policy Engine: stopped")
 }
