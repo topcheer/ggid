@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package api.oauth.v1;
+
+option go_package = "github.com/ggid/ggid/api/proto/oauth/v1;oauthv1";
+
+import "google/protobuf/timestamp.proto";
+
+// OAuthService manages OAuth2 client registration and OIDC operations.
+// Standard OAuth2/OIDC endpoints (authorize, token, jwks, userinfo) are
+// served as REST handlers — this gRPC service handles admin CRUD for clients.
+service OAuthService {
+  rpc CreateClient(CreateClientRequest) returns (OAuthClient);
+  rpc GetClient(GetClientRequest) returns (OAuthClient);
+  rpc ListClients(ListClientsRequest) returns (ListClientsResponse);
+  rpc UpdateClient(UpdateClientRequest) returns (OAuthClient);
+  rpc DeleteClient(DeleteClientRequest) returns (DeleteClientResponse);
+}
+
+// === Domain Messages ===
+
+enum ClientType {
+  CLIENT_TYPE_UNSPECIFIED = 0;
+  CLIENT_TYPE_CONFIDENTIAL = 1;
+  CLIENT_TYPE_PUBLIC = 2;
+}
+
+message OAuthClient {
+  string id = 1;
+  string tenant_id = 2;
+  string client_id = 3;
+  string client_secret = 4; // only returned on create
+  string name = 5;
+  ClientType type = 6;
+  repeated string grant_types = 7;
+  repeated string response_types = 8;
+  repeated string redirect_uris = 9;
+  repeated string scopes = 10;
+  string token_endpoint_auth_method = 11;
+  bytes metadata = 12; // JSONB
+  bool enabled = 13;
+  google.protobuf.Timestamp created_at = 14;
+  google.protobuf.Timestamp updated_at = 15;
+}
+
+// === Request/Response ===
+
+message CreateClientRequest {
+  string name = 1;
+  ClientType type = 2;
+  repeated string grant_types = 3;
+  repeated string response_types = 4;
+  repeated string redirect_uris = 5;
+  repeated string scopes = 6;
+  string token_endpoint_auth_method = 7;
+  bytes metadata = 8;
+}
+
+message GetClientRequest {
+  string client_id = 1;
+}
+
+message ListClientsRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListClientsResponse {
+  repeated OAuthClient clients = 1;
+  string next_page_token = 2;
+}
+
+message UpdateClientRequest {
+  string client_id = 1;
+  optional string name = 2;
+  repeated string redirect_uris = 3;
+  repeated string scopes = 4;
+  optional bool enabled = 5;
+  optional bytes metadata = 6;
+}
+
+message DeleteClientRequest {
+  string client_id = 1;
+}
+
+message DeleteClientResponse {
+  bool success = 1;
+}
