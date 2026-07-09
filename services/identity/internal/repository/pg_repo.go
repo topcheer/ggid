@@ -36,7 +36,7 @@ func NewPGRepository(pool *pgxpool.Pool) UserRepository {
 // setTenantRLS sets the app.tenant_id session variable so that PostgreSQL
 // Row Level Security policies filter rows automatically.
 func setTenantRLS(ctx context.Context, tx pgx.Tx, tenantID uuid.UUID) error {
-	_, err := tx.Exec(ctx, "SET LOCAL app.tenant_id = $1", tenantID.String())
+	_, err := tx.Exec(ctx, fmt.Sprintf("SET LOCAL app.tenant_id = '%s'", tenantID.String()))
 	if err != nil {
 		return fmt.Errorf("set tenant RLS: %w", err)
 	}

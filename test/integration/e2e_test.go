@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -261,41 +262,46 @@ func TestAuthRegisterLogin(t *testing.T) {
 	}
 
 	baseURL := "http://localhost:9001"
+	tenantID := "00000000-0000-0000-0000-000000000001"
 	username := fmt.Sprintf("authuser_%d", time.Now().UnixNano())
 	email := fmt.Sprintf("%s@test.local", username)
-	password := "TestPass123!"
+	password := "TestPassw0rd123!" // >= 12 chars to meet policy
 
 	// Step 1: Register
 	registerBody := fmt.Sprintf(`{"username":"%s","email":"%s","password":"%s"}`, username, email, password)
-	resp, err := http.Post(
-		baseURL+"/api/v1/auth/register",
-		"application/json",
-		stringReader(registerBody),
-	)
+	req, _ := http.NewRequest("POST", baseURL+"/api/v1/auth/register", stringReader(registerBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Tenant-ID", tenantID)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Skipf("Auth Service not running on %s: %v", baseURL, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		// Auth service might not be running — skip instead of fail
-		t.Skipf("Auth Service returned %d (might not be running)", resp.StatusCode)
+		body, _ := io.ReadAll(resp.Body)
+		t.Skipf("Auth Service returned %d: %s (might not be running)", resp.StatusCode, body)
 	}
+
+	var regResult map[string]any
+	json.NewDecoder(resp.Body).Decode(&regResult)
+	userID, _ := regResult["user_id"].(string)
+	t.Logf("Registered user: %s (id=%s)", username, userID)
 
 	// Step 2: Login
 	loginBody := fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password)
-	resp2, err := http.Post(
-		baseURL+"/api/v1/auth/login",
-		"application/json",
-		stringReader(loginBody),
-	)
+	req2, _ := http.NewRequest("POST", baseURL+"/api/v1/auth/login", stringReader(loginBody))
+	req2.Header.Set("Content-Type", "application/json")
+	req2.Header.Set("X-Tenant-ID", tenantID)
+	resp2, err := http.DefaultClient.Do(req2)
 	if err != nil {
 		t.Fatalf("login request failed: %v", err)
 	}
 	defer resp2.Body.Close()
 
 	if resp2.StatusCode != http.StatusOK {
-		t.Fatalf("login failed with status %d", resp2.StatusCode)
+		body, _ := io.ReadAll(resp2.Body)
+		t.Fatalf("login failed with status %d: %s", resp2.StatusCode, body)
 	}
 
 	var loginResult map[string]any
@@ -309,13 +315,66 @@ func TestAuthRegisterLogin(t *testing.T) {
 	}
 	t.Logf("JWT access token received (length=%d)", len(accessToken))
 
-	// Step 3: Verify JWT has expected claims
-	// Parse JWT payload (without verification — just check structure)
+	refreshToken, ok := loginResult["refresh_token"].(string)
+	if !ok || refreshToken == "" {
+		t.Fatal("login response missing refresh_token")
+	}
+
+	sessionID, ok := loginResult["session_id"].(string)
+	if !ok || sessionID == "" {
+		t.Fatal("login response missing session_id")
+	}
+	t.Logf("Session ID: %s", sessionID)
+
+	// Step 3: Verify JWT has 3 parts
 	parts := splitJWT(accessToken)
 	if len(parts) != 3 {
 		t.Fatal("JWT should have 3 parts")
 	}
-	t.Logf("JWT has 3 parts (header.payload.signature)")
+	t.Log("JWT structure verified (header.payload.signature)")
+
+	// Step 4: Login with wrong password should fail
+	wrongBody := fmt.Sprintf(`{"username":"%s","password":"WrongPassword123!"}`, username)
+	req3, _ := http.NewRequest("POST", baseURL+"/api/v1/auth/login", stringReader(wrongBody))
+	req3.Header.Set("Content-Type", "application/json")
+	req3.Header.Set("X-Tenant-ID", tenantID)
+	resp3, err := http.DefaultClient.Do(req3)
+	if err != nil {
+		t.Fatalf("wrong password request failed: %v", err)
+	}
+	defer resp3.Body.Close()
+	if resp3.StatusCode == http.StatusOK {
+		t.Fatal("wrong password should not succeed")
+	}
+	t.Log("Wrong password correctly rejected")
+
+	// Step 5: Refresh token rotation
+	refreshReq := fmt.Sprintf(`{"refresh_token":"%s"}`, refreshToken)
+	req4, _ := http.NewRequest("POST", baseURL+"/api/v1/auth/refresh", stringReader(refreshReq))
+	req4.Header.Set("Content-Type", "application/json")
+	resp4, err := http.DefaultClient.Do(req4)
+	if err != nil {
+		t.Fatalf("refresh request failed: %v", err)
+	}
+	defer resp4.Body.Close()
+	if resp4.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp4.Body)
+		t.Fatalf("refresh failed with status %d: %s", resp4.StatusCode, body)
+	}
+	var refreshResult map[string]any
+	json.NewDecoder(resp4.Body).Decode(&refreshResult)
+	newAccessToken, _ := refreshResult["access_token"].(string)
+	newRefreshToken, _ := refreshResult["refresh_token"].(string)
+	if newAccessToken == "" || newRefreshToken == "" {
+		t.Fatal("refresh response missing tokens")
+	}
+	if newAccessToken == accessToken {
+		t.Fatal("access token should be different after refresh")
+	}
+	if newRefreshToken == refreshToken {
+		t.Fatal("refresh token should be rotated")
+	}
+	t.Log("Token rotation verified (new access + refresh tokens issued)")
 }
 
 // TestLDAPConnection verifies that the LDAP test server is accessible.

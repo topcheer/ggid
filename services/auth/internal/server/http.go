@@ -4,6 +4,8 @@ package server
 import (
 	"encoding/json"
 	stderrors "errors"
+	"log"
+	"net"
 	"net/http"
 	"strings"
 
@@ -78,6 +80,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 
 	tokens, err := h.authSvc.Login(r.Context(), req.Username, req.Password, ip, userAgent)
 	if err != nil {
+		log.Printf("login error for user %s: %v", req.Username, err)
 		writeAuthError(w, err)
 		return
 	}
@@ -358,10 +361,10 @@ func clientIP(r *http.Request) string {
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
 		return xri
 	}
-	// Strip port from RemoteAddr
-	idx := strings.LastIndex(r.RemoteAddr, ":")
-	if idx > 0 {
-		return r.RemoteAddr[:idx]
+	// Use net.SplitHostPort to correctly handle both IPv4 and IPv6
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
 	}
-	return r.RemoteAddr
+	return host
 }
