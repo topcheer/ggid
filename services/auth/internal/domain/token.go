@@ -39,4 +39,7 @@ type TokenSet struct {
 	TokenType    string `json:"token_type"` // always "Bearer"
 	ExpiresIn    int    `json:"expires_in"` // access token TTL in seconds
 	SessionID    string `json:"session_id"`
+	// MFA challenge — populated when MFA is required but not yet completed.
+	MFARequired  bool   `json:"mfa_required,omitempty"`
+	MFAChallenge string `json:"mfa_challenge,omitempty"`
 }

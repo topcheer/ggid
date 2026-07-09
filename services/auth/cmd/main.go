@@ -69,11 +69,16 @@ func main() {
 	localProvider := service.NewLocalProvider(credRepo, cfg.Password)
 	chain := authprovider.NewChain(localProvider)
 
+	// 5a. Build MFA service
+	mfaRepo := repository.NewPGMFADeviceRepository(pool)
+	mfaService := service.NewMFAService(mfaRepo)
+
 	// 6. Build auth service
 	authSvc := service.NewAuthService(
 		cfg, chain, credRepo,
 		tokenService, sessionService, passwordService,
 		rateLimiter, &service.NoopIdentityClient{},
+		mfaService,
 	)
 
 	// 7. Start session cleanup goroutine

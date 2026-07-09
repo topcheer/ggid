@@ -15,7 +15,7 @@ import (
 )
 
 // AuthService orchestrates the authentication workflow:
-// login, logout, register, refresh, password flows, session management.
+// login, logout, register, refresh, password flows, session management, MFA.
 type AuthService struct {
 	cfg            *conf.Config
 	chain          *authprovider.Chain
@@ -25,6 +25,7 @@ type AuthService struct {
 	passwordService *PasswordService
 	rateLimiter    *RateLimiter
 	identityClient IdentityClient
+	mfaService     *MFAService
 }
 
 // NewAuthService creates a new AuthService with all dependencies.
@@ -37,6 +38,7 @@ func NewAuthService(
 	passwordSvc *PasswordService,
 	rateLimiter *RateLimiter,
 	identityClient IdentityClient,
+	mfaSvc *MFAService,
 ) *AuthService {
 	return &AuthService{
 		cfg:             cfg,
@@ -47,6 +49,7 @@ func NewAuthService(
 		passwordService: passwordSvc,
 		rateLimiter:     rateLimiter,
 		identityClient:  identityClient,
+		mfaService:      mfaSvc,
 	}
 }
 
@@ -77,6 +80,19 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	tc, err := tenant.FromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("tenant context required: %w", err)
+	}
+
+	// 4a. Check if MFA is required for this user.
+	if s.mfaService != nil && s.mfaService.HasMFAEnabled(ctx, tc.TenantID, userID) {
+		// Issue a short-lived MFA challenge instead of tokens.
+		challenge, err := crypto.GenerateRandomToken(32)
+		if err != nil {
+			return nil, fmt.Errorf("generate mfa challenge: %w", err)
+		}
+		return &domain.TokenSet{
+			MFARequired:  true,
+			MFAChallenge: challenge,
+		}, nil
 	}
 
 	// 5. Create session
@@ -266,3 +282,68 @@ func (s *AuthService) RevokeSession(ctx context.Context, sessionID uuid.UUID) er
 func (s *AuthService) CleanupExpired(ctx context.Context) (int64, error) {
 	return s.sessionService.CleanupExpired(ctx, 7*24*time.Hour)
 }
+
+// LoginMFA completes the MFA challenge during login.
+// It re-authenticates the user (to get the userID), verifies the TOTP code,
+// and then issues the full token set.
+func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode, ip, userAgent string) (*domain.TokenSet, error) {
+	// 1. Re-authenticate via provider chain (without rate limiting — already checked in Login)
+	result, err := s.chain.Authenticate(ctx, authprovider.Credentials{
+		Username: username,
+		Password: password,
+	})
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	if result.LinkedUser == nil {
+		return nil, fmt.Errorf("authentication succeeded but no linked user")
+	}
+	userID := *result.LinkedUser
+
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("tenant context required: %w", err)
+	}
+
+	// 2. Verify MFA code.
+	if s.mfaService == nil {
+		return nil, fmt.Errorf("MFA service not configured")
+	}
+	if err := s.mfaService.VerifyUserCode(ctx, tc.TenantID, userID, mfaCode); err != nil {
+		return nil, err
+	}
+
+	// 3. Create session and issue tokens (same as Login step 5-7).
+	_, session, err := s.sessionService.Create(ctx, CreateSessionParams{
+		TenantID:  tc.TenantID,
+		UserID:    userID,
+		IPAddress: ip,
+		UserAgent: userAgent,
+		TTL:       24 * time.Hour,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("issue access token: %w", err)
+	}
+
+	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tc.TenantID, userID, session.ID)
+	if err != nil {
+		return nil, fmt.Errorf("issue refresh token: %w", err)
+	}
+
+	return &domain.TokenSet{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    expiresIn,
+		SessionID:    session.ID.String(),
+	}, nil
+}
+
+// MFAService returns the MFA service for direct access (setup, verify, disable).
+func (s *AuthService) MFAService() *MFAService { return s.mfaService }
