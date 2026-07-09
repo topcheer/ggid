@@ -1,0 +1,148 @@
+// Package ggid provides HTTP middleware for protecting Go backends with GGID IAM.
+// Use as a standard http.Handler wrapper or with any compatible router.
+package ggid
+
+import (
+	"context"
+	"net/http"
+	"strings"
+)
+
+// contextKey is used to store user info in request context.
+type contextKey string
+
+const (
+	// ContextKeyUser is the context key for the authenticated user info.
+	ContextKeyUser contextKey = "ggid_user"
+)
+
+// MiddlewareConfig controls which paths require authentication.
+type MiddlewareConfig struct {
+	// PublicPaths are path prefixes that skip JWT verification (e.g. /healthz, /public).
+	PublicPaths []string
+	// TenantID is injected as X-Tenant-ID header on all proxied requests.
+	TenantID string
+}
+
+// Middleware wraps an http.Handler with GGID JWT verification.
+// It extracts the Bearer token from Authorization header, verifies it
+// via the GGID API, and injects UserInfo into the request context.
+//
+// Usage:
+//
+//	mux := http.NewServeMux()
+//	mux.HandleFunc("/api/data", myHandler)
+//	client := ggid.New("https://iam.example.com")
+//	protected := client.Middleware(mux, ggid.MiddlewareConfig{
+//	    PublicPaths: []string{"/healthz"},
+//	    TenantID:    "your-tenant-id",
+//	})
+//	http.ListenAndServe(":8080", protected)
+func (c *Client) Middleware(next http.Handler, cfg MiddlewareConfig) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if path is public
+		for _, prefix := range cfg.PublicPaths {
+			if strings.HasPrefix(r.URL.Path, prefix) {
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
+		// Extract Bearer token
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			writeUnauthorized(w, "missing authorization header")
+			return
+		}
+
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		if token == authHeader {
+			writeUnauthorized(w, "invalid authorization scheme")
+			return
+		}
+
+		// Verify token
+		userInfo, err := c.VerifyToken(r.Context(), token)
+		if err != nil {
+			writeUnauthorized(w, "invalid or expired token")
+			return
+		}
+
+		// Inject tenant header if configured
+		if cfg.TenantID != "" {
+			r.Header.Set("X-Tenant-ID", cfg.TenantID)
+		}
+
+		// Inject user info into context
+		ctx := context.WithValue(r.Context(), ContextKeyUser, userInfo)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// UserFromContext extracts the authenticated user info from request context.
+// Returns nil if not authenticated.
+func UserFromContext(ctx context.Context) *UserInfo {
+	user, _ := ctx.Value(ContextKeyUser).(*UserInfo)
+	return user
+}
+
+// RequirePermission returns an http.HandlerFunc that checks user permission
+// before calling the wrapped handler.
+//
+// Usage:
+//
+//	mux.HandleFunc("/api/admin/users", client.RequirePermission(
+//	    "iam:users", "read",
+//	    myHandler,
+//	))
+func (c *Client) RequirePermission(resource, action string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := UserFromContext(r.Context())
+		if user == nil {
+			writeUnauthorized(w, "not authenticated")
+			return
+		}
+
+		allowed, err := c.CheckPermission(r.Context(), user.UserID, resource, action)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "permission check failed")
+			return
+		}
+
+		if !allowed {
+			writeError(w, http.StatusForbidden, "permission denied")
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+func writeUnauthorized(w http.ResponseWriter, msg string) {
+	writeJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": msg})
+}
+
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSONResponse(w, status, map[string]string{"error": msg})
+}
+
+func writeJSONResponse(w http.ResponseWriter, status int, body interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	// Use json encoder to avoid importing in the main file
+	enc := newJSONEncoder(w)
+	enc.Encode(body)
+}
+
+// jsonEncoder wraps encoding/json.Encoder to avoid import in client.go.
+type jsonEncoder struct {
+	w http.ResponseWriter
+}
+
+func newJSONEncoder(w http.ResponseWriter) *jsonEncoder {
+	return &jsonEncoder{w: w}
+}
+
+func (e *jsonEncoder) Encode(v interface{}) error {
+	return encodeJSON(e.w, v)
+}
