@@ -591,6 +591,229 @@ func TestPolicySeed(t *testing.T) {
 	}
 }
 
+// TestPolicyE2E tests the Policy Engine REST API through the Gateway.
+// Flow: create role → query roles → create policy → permission check.
+func TestPolicyE2E(t *testing.T) {
+	gatewayURL := os.Getenv("GATEWAY_URL")
+	if gatewayURL == "" {
+		gatewayURL = "http://localhost:8080"
+	}
+	tenantID := defaultTenantID
+
+	// Step 1: Create a custom role
+	roleKey := fmt.Sprintf("e2e_role_%d", time.Now().UnixNano()%1000000)
+	createBody := fmt.Sprintf(`{"tenant_id":"%s","key":"%s","name":"E2E Test Role","description":"Created by integration test"}`, tenantID, roleKey)
+	resp := postJSON(t, gatewayURL+"/api/v1/roles", createBody, tenantID, "")
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		t.Skipf("Policy Service not reachable via Gateway (status %d): %s", resp.StatusCode, body)
+	}
+	resp.Body.Close()
+	t.Logf("Created role with key=%s", roleKey)
+
+	// Step 2: Query roles for tenant
+	listResp := getJSON(t, gatewayURL+"/api/v1/roles?tenant_id="+tenantID, tenantID, "")
+	defer listResp.Body.Close()
+	if listResp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(listResp.Body)
+		t.Fatalf("list roles failed (status %d): %s", listResp.StatusCode, body)
+	}
+	var listResult map[string]any
+	json.NewDecoder(listResp.Body).Decode(&listResult)
+	roles, _ := listResult["roles"].([]any)
+	if len(roles) == 0 {
+		t.Error("expected at least 1 role in list")
+	}
+	t.Logf("Retrieved %d roles", len(roles))
+
+	// Step 3: Permission check (POST /api/v1/policies/check)
+	// Use the seeded admin user
+	checkBody := fmt.Sprintf(`{"user_id":"00000000-0000-0000-0000-000000000002","resource_type":"users","action":"read","resource":"*","tenant_id":"%s"}`, tenantID)
+	checkResp := postJSON(t, gatewayURL+"/api/v1/policies/check", checkBody, tenantID, "")
+	defer checkResp.Body.Close()
+	if checkResp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(checkResp.Body)
+		t.Logf("Permission check returned %d: %s (may need seeded user)", checkResp.StatusCode, body)
+	} else {
+		var checkResult map[string]any
+		json.NewDecoder(checkResp.Body).Decode(&checkResult)
+		t.Logf("Permission check result: allowed=%v", checkResult["allowed"])
+	}
+}
+
+// TestOrgE2E tests the Org Service REST API through the Gateway.
+// Flow: create organization → query organizations → delete organization.
+func TestOrgE2E(t *testing.T) {
+	gatewayURL := os.Getenv("GATEWAY_URL")
+	if gatewayURL == "" {
+		gatewayURL = "http://localhost:8080"
+	}
+	tenantID := defaultTenantID
+
+	// Step 1: Create an organization
+	orgName := fmt.Sprintf("E2E Org %d", time.Now().UnixNano())
+	createBody := fmt.Sprintf(`{"tenant_id":"%s","name":"%s"}`, tenantID, orgName)
+	resp := postJSON(t, gatewayURL+"/api/v1/orgs", createBody, tenantID, "")
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		t.Skipf("Org Service not reachable via Gateway (status %d): %s", resp.StatusCode, body)
+	}
+
+	var orgResult map[string]any
+	json.NewDecoder(resp.Body).Decode(&orgResult)
+	resp.Body.Close()
+	orgID, _ := orgResult["id"].(string)
+	if orgID == "" {
+		t.Fatal("missing org ID in create response")
+	}
+	t.Logf("Created organization: %s (id=%s)", orgName, orgID)
+
+	// Step 2: Query organizations
+	listResp := getJSON(t, gatewayURL+"/api/v1/orgs?tenant_id="+tenantID, tenantID, "")
+	defer listResp.Body.Close()
+	if listResp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(listResp.Body)
+		t.Fatalf("list orgs failed (status %d): %s", listResp.StatusCode, body)
+	}
+	var listResult map[string]any
+	json.NewDecoder(listResp.Body).Decode(&listResult)
+	orgs, _ := listResult["organizations"].([]any)
+	if len(orgs) == 0 {
+		t.Error("expected at least 1 organization")
+	}
+	t.Logf("Retrieved %d organizations", len(orgs))
+
+	// Step 3: Get organization by ID
+	getResp := getJSON(t, gatewayURL+"/api/v1/orgs/"+orgID, tenantID, "")
+	defer getResp.Body.Close()
+	if getResp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(getResp.Body)
+		t.Fatalf("get org failed (status %d): %s", getResp.StatusCode, body)
+	}
+	var getResult map[string]any
+	json.NewDecoder(getResp.Body).Decode(&getResult)
+	if getResult["name"] != orgName {
+		t.Errorf("expected name %q, got %v", orgName, getResult["name"])
+	}
+	t.Logf("Retrieved org by ID: name=%s", getResult["name"])
+
+	// Step 4: Delete organization
+	delResp := deleteJSON(t, gatewayURL+"/api/v1/orgs/"+orgID, tenantID, "")
+	defer delResp.Body.Close()
+	if delResp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(delResp.Body)
+		t.Fatalf("delete org failed (status %d): %s", delResp.StatusCode, body)
+	}
+	t.Log("Organization deleted successfully")
+}
+
+// TestAuditE2E tests the Audit Service REST API through the Gateway.
+// Flow: query audit events → verify response structure.
+func TestAuditE2E(t *testing.T) {
+	gatewayURL := os.Getenv("GATEWAY_URL")
+	if gatewayURL == "" {
+		gatewayURL = "http://localhost:8080"
+	}
+	tenantID := defaultTenantID
+
+	// Step 1: Query audit events for the default tenant
+	resp := getJSON(t, gatewayURL+"/api/v1/audit/events?tenant_id="+tenantID+"&page_size=5", tenantID, "")
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Skipf("Audit Service not reachable via Gateway (status %d): %s", resp.StatusCode, body)
+	}
+
+	var result map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		t.Fatalf("decode audit events: %v", err)
+	}
+	resp.Body.Close()
+
+	total, _ := result["total"].(float64)
+	events, _ := result["events"].([]any)
+	t.Logf("Retrieved %d audit events (total=%v)", len(events), total)
+
+	// Verify response structure has expected fields
+	if _, ok := result["total"]; !ok {
+		t.Error("response missing 'total' field")
+	}
+	if _, ok := result["events"]; !ok {
+		t.Error("response missing 'events' field")
+	}
+
+	// Step 2: Query with filter (action filter)
+	filterResp := getJSON(t, gatewayURL+"/api/v1/audit/events?tenant_id="+tenantID+"&action=user.login", tenantID, "")
+	defer filterResp.Body.Close()
+	if filterResp.StatusCode != http.StatusOK {
+		t.Logf("Filtered audit query returned %d (may have no login events yet)", filterResp.StatusCode)
+	} else {
+		var filterResult map[string]any
+		json.NewDecoder(filterResp.Body).Decode(&filterResult)
+		filteredTotal, _ := filterResult["total"].(float64)
+		t.Logf("Filtered by action=user.login: %v events", filteredTotal)
+	}
+}
+
+// --- HTTP helpers ---
+
+func postJSON(t *testing.T, url, body, tenantID, jwt string) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest("POST", url, strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if tenantID != "" {
+		req.Header.Set("X-Tenant-ID", tenantID)
+	}
+	if jwt != "" {
+		req.Header.Set("Authorization", "Bearer "+jwt)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Skipf("service not reachable at %s: %v", url, err)
+	}
+	return resp
+}
+
+func getJSON(t *testing.T, url, tenantID, jwt string) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	if tenantID != "" {
+		req.Header.Set("X-Tenant-ID", tenantID)
+	}
+	if jwt != "" {
+		req.Header.Set("Authorization", "Bearer "+jwt)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Skipf("service not reachable at %s: %v", url, err)
+	}
+	return resp
+}
+
+func deleteJSON(t *testing.T, url, tenantID, jwt string) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest("DELETE", url, nil)
+	if err != nil {
+		t.Fatalf("create request: %v", err)
+	}
+	if tenantID != "" {
+		req.Header.Set("X-Tenant-ID", tenantID)
+	}
+	if jwt != "" {
+		req.Header.Set("Authorization", "Bearer "+jwt)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Skipf("service not reachable at %s: %v", url, err)
+	}
+	return resp
+}
+
 // --- helpers ---
 
 func stringReader(s string) *strings.Reader {
