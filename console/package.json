@@ -17,6 +17,7 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "recharts": "^3.9.2",
     "tailwind-merge": "latest"
   },
   "devDependencies": {
