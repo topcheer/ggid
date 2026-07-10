@@ -292,6 +292,7 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		SubjectTypesSupported:             []string{"public"},
 		IDTokenSigningAlgValues:           []string{"RS256"},
 		ScopesSupported:                   []string{"openid", "profile", "email", "offline_access"},
+		ClaimsSupported:                   []string{"sub", "email", "name", "picture", "groups", "preferred_username", "updated_at"},
 		TokenEndpointAuthMethodsSupported: []string{"client_secret_basic", "client_secret_post", "none"},
 		CodeChallengeMethodsSupported:     []string{"S256", "plain"},
 	}
@@ -377,6 +378,90 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 	}
 
 	return signed, nil
+}
+
+// --- Token Validation / Introspection ---
+
+// ParseAccessToken validates and parses an access token JWT.
+func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return s.keyProvider.PublicKey(), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+	return claims, nil
+}
+
+// UserInfoResponse holds the standard OIDC UserInfo claims.
+type UserInfoResponse struct {
+	Sub       string `json:"sub"`
+	Name      string `json:"name,omitempty"`
+	Email     string `json:"email,omitempty"`
+	Picture   string `json:"picture,omitempty"`
+	TenantID  string `json:"tenant_id,omitempty"`
+}
+
+// GetUserInfo returns user info claims from a validated access token.
+func (s *OAuthService) GetUserInfo(tokenStr string) (*UserInfoResponse, error) {
+	claims, err := s.ParseAccessToken(tokenStr)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &UserInfoResponse{
+		Sub:      getStringClaim(claims, "sub"),
+		Name:     getStringClaim(claims, "name"),
+		Email:    getStringClaim(claims, "email"),
+		Picture:  getStringClaim(claims, "picture"),
+		TenantID: getStringClaim(claims, "tenant_id"),
+	}
+	return resp, nil
+}
+
+// IntrospectionResponse is the RFC 7662 token introspection response.
+type IntrospectionResponse struct {
+	Active    bool   `json:"active"`
+	Scope     string `json:"scope,omitempty"`
+	ClientID  string `json:"client_id,omitempty"`
+	Username  string `json:"username,omitempty"`
+	 TokenType string `json:"token_type,omitempty"`
+	Exp       int64  `json:"exp,omitempty"`
+	Iat       int64  `json:"iat,omitempty"`
+	Sub       string `json:"sub,omitempty"`
+	Aud       string `json:"aud,omitempty"`
+	Iss       string `json:"iss,omitempty"`
+}
+
+// IntrospectToken validates a token and returns introspection data.
+func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
+	claims, err := s.ParseAccessToken(tokenStr)
+	if err != nil {
+		return &IntrospectionResponse{Active: false}
+	}
+
+	resp := &IntrospectionResponse{
+		Active:   true,
+		Sub:      getStringClaim(claims, "sub"),
+		Aud:      getStringClaim(claims, "aud"),
+		Iss:      getStringClaim(claims, "iss"),
+		ClientID: getStringClaim(claims, "aud"), // client_id = audience for M2M tokens
+		Exp:      getInt64Claim(claims, "exp"),
+		Iat:      getInt64Claim(claims, "iat"),
+	}
+	if scope, ok := claims["scope"]; ok {
+		if s, ok := scope.(string); ok {
+			resp.Scope = s
+		}
+	}
+	return resp
 }
 
 // --- Refresh Token Grant ---
@@ -484,6 +569,7 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 
 // --- Utility functions ---
 
+// generateClientID generates a public client identifier.
 func generateClientID() string {
 	id, _ := crypto.GenerateRandomToken(16)
 	return "gcid_" + id
@@ -531,3 +617,27 @@ var _ = x509.MarshalPKIXPublicKey
 
 // Suppress unused import warning for json.
 var _ = json.Marshal
+
+func getStringClaim(claims jwt.MapClaims, key string) string {
+	if v, ok := claims[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}
+
+func getInt64Claim(claims jwt.MapClaims, key string) int64 {
+	if v, ok := claims[key]; ok {
+		switch n := v.(type) {
+		case float64:
+			return int64(n)
+		case int64:
+			return n
+		case json.Number:
+			i, _ := n.Int64()
+			return i
+		}
+	}
+	return 0
+}

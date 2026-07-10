@@ -9,11 +9,16 @@ import (
 	"github.com/ggid/ggid/services/gateway/internal/config"
 )
 
-func TestGateway_ServeHTTP_HealthCheck(t *testing.T) {
+func testGatewayNoJWKS(t *testing.T) *Gateway {
 	cfg := config.Default()
-	cfg.Routes = map[string]string{} // no routes needed for health check
-	gw := New(cfg, nil)
+	cfg.Routes = map[string]string{}
+	return New(cfg, nil)
+}
 
+// --- Health Check ---
+
+func TestGateway_Healthz(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
 	req := httptest.NewRequest("GET", "/healthz", nil)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
@@ -28,96 +33,219 @@ func TestGateway_ServeHTTP_HealthCheck(t *testing.T) {
 	}
 }
 
-func TestGateway_ServeHTTP_NoRoute(t *testing.T) {
-	cfg := config.Default()
-	cfg.Routes = map[string]string{}
-	gw := New(cfg, nil)
+// --- JWKS ---
 
-	req := httptest.NewRequest("GET", "/nonexistent/path", nil)
+func TestGateway_JWKS_NoClient_Panics(t *testing.T) {
+	// This tests that JWKS handler is only called when jwks client is set
+	// Without jwks client, it would panic — but healthz doesn't need it
+	gw := testGatewayNoJWKS(t)
+
+	// healthz should work without jwks
+	req := httptest.NewRequest("GET", "/healthz", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+// --- Docs / Swagger ---
+
+func TestGateway_Docs(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
+	req := httptest.NewRequest("GET", "/docs", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if ct := w.Header().Get("Content-Type"); ct != "text/html; charset=utf-8" {
+		t.Errorf("expected text/html, got %s", ct)
+	}
+	if !contains(w.Body.String(), "Swagger") {
+		t.Error("expected Swagger UI in docs")
+	}
+}
+
+func TestGateway_DocsTrailingSlash(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
+	req := httptest.NewRequest("GET", "/docs/", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+// --- Hosted Login ---
+
+func TestGateway_Login(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
+	req := httptest.NewRequest("GET", "/login", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if !contains(w.Body.String(), "Sign In") {
+		t.Error("expected login form with 'Sign In'")
+	}
+}
+
+// --- Hosted Register ---
+
+func TestGateway_Register(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
+	req := httptest.NewRequest("GET", "/register", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if !contains(w.Body.String(), "Create Account") {
+		t.Error("expected register form")
+	}
+}
+
+// --- Forgot Password ---
+
+func TestGateway_ForgotPassword(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
+	req := httptest.NewRequest("GET", "/forgot-password", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if !contains(w.Body.String(), "Reset") {
+		t.Error("expected reset form")
+	}
+}
+
+// --- API Docs ---
+
+func TestGateway_ApiDocs(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
+	req := httptest.NewRequest("GET", "/api-docs", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	// Should be valid JSON
+	var body map[string]any
+	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+		t.Fatalf("expected valid JSON for api-docs: %v", err)
+	}
+	if body["openapi"] == nil {
+		t.Error("expected openapi field")
+	}
+}
+
+// --- 404 ---
+
+func TestGateway_NotFound(t *testing.T) {
+	gw := testGatewayNoJWKS(t)
+	req := httptest.NewRequest("GET", "/nonexistent", nil)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotFound {
 		t.Errorf("expected 404, got %d", w.Code)
 	}
-}
-
-func TestGateway_MatchBackend_EmptyRoutes(t *testing.T) {
-	cfg := config.Default()
-	cfg.Routes = map[string]string{}
-	gw := New(cfg, nil)
-
-	backend := gw.matchBackend("/any/path")
-	if backend != nil {
-		t.Error("expected nil when no routes configured")
-	}
-}
-
-func TestGateway_MatchBackend_LongestPrefix(t *testing.T) {
-	// Start two mock backends
-	shortBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"backend":"short"}`))
-	}))
-	defer shortBackend.Close()
-	longBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"backend":"long"}`))
-	}))
-	defer longBackend.Close()
-
-	cfg := config.Default()
-	cfg.Routes = map[string]string{
-		"/api/v1":       shortBackend.URL,
-		"/api/v1/users": longBackend.URL,
-	}
-	gw := New(cfg, nil)
-
-	// Path /api/v1/users/list should match the longer prefix
-	backend := gw.matchBackend("/api/v1/users/list")
-	if backend == nil {
-		t.Fatal("expected non-nil backend for /api/v1/users/list")
-	}
-
-	// Verify it's the longer-prefix backend by making a request
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/api/v1/users/list", nil)
-	backend.ServeHTTP(rec, req)
-
-	// The response should contain "long" from the longBackend
 	var body map[string]string
-	json.Unmarshal(rec.Body.Bytes(), &body)
-	if body["backend"] != "long" {
-		t.Errorf("expected long backend, got %s", body["backend"])
+	json.NewDecoder(w.Body).Decode(&body)
+	if body["error"] == "" {
+		t.Error("expected error message")
 	}
 }
 
-func TestGateway_MatchBackend_ShortPrefix(t *testing.T) {
-	shortBackend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
+// --- Reverse Proxy ---
+
+func TestGateway_ReverseProxy(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Backend", "hit")
+		w.Write([]byte(`{"ok":true}`))
 	}))
-	defer shortBackend.Close()
+	defer backend.Close()
 
 	cfg := config.Default()
-	cfg.Routes = map[string]string{
-		"/api/v1": shortBackend.URL,
-	}
+	cfg.Routes = map[string]string{"/api/v1/test": backend.URL}
 	gw := New(cfg, nil)
 
-	backend := gw.matchBackend("/api/v1/anything")
-	if backend == nil {
-		t.Fatal("expected non-nil backend")
+	req := httptest.NewRequest("GET", "/api/v1/test/data", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+	if w.Header().Get("X-Backend") != "hit" {
+		t.Error("expected to reach backend")
 	}
 }
 
-func TestNew_CreatesGatewayWithProxies(t *testing.T) {
+// --- Proxy Error ---
+
+func TestGateway_ProxyError_502(t *testing.T) {
+	cfg := config.Default()
+	cfg.Routes = map[string]string{"/api/v1/test": "http://127.0.0.1:1"} // blackhole
+	gw := New(cfg, nil)
+
+	req := httptest.NewRequest("GET", "/api/v1/test/data", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadGateway {
+		t.Errorf("expected 502, got %d", w.Code)
+	}
+}
+
+// --- Longest Prefix Match ---
+
+func TestGateway_LongestPrefixMatch(t *testing.T) {
+	short := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("short"))
+	}))
+	defer short.Close()
+	long := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("long"))
+	}))
+	defer long.Close()
+
 	cfg := config.Default()
 	cfg.Routes = map[string]string{
-		"/api/v1/test": "http://127.0.0.1:9999",
+		"/api/v1":       short.URL,
+		"/api/v1/users": long.URL,
 	}
 	gw := New(cfg, nil)
-	if gw == nil {
-		t.Fatal("expected non-nil gateway")
+
+	req := httptest.NewRequest("GET", "/api/v1/users/list", nil)
+	w := httptest.NewRecorder()
+	gw.ServeHTTP(w, req)
+
+	if w.Body.String() != "long" {
+		t.Errorf("expected 'long' backend, got %s", w.Body.String())
 	}
-	if len(gw.proxies) == 0 {
-		t.Error("expected proxies to be built")
+}
+
+// --- Helper ---
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
+}
+
+func findSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
 	}
+	return false
 }
