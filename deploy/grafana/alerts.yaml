@@ -1,0 +1,83 @@
+groups:
+  - name: ggid-gateway
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="gateway",status=~"5.."}[5m]))
+          / sum(rate(http_requests_total{job="gateway"}[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: gateway
+        annotations:
+          summary: "Gateway error rate > 5%"
+          description: "{{ $value | humanizePercentage }} of gateway requests are returning 5xx errors."
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_ms_bucket{job="gateway"}[5m])) by (le)
+          ) > 500
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "Gateway p95 latency > 500ms"
+
+      - alert: GatewayDown
+        expr: up{job="gateway"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: gateway
+        annotations:
+          summary: "Gateway is down"
+
+  - name: ggid-auth
+    rules:
+      - alert: HighLoginFailures
+        expr: |
+          sum(rate(auth_login_attempts_total{result="failure"}[5m])) by (tenant_id) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: auth
+        annotations:
+          summary: "High login failure rate for tenant {{ $labels.tenant_id }}"
+          description: "Possible brute-force attack — >10 failures/min."
+
+      - alert: AuthDown
+        expr: up{job="auth"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: auth
+
+  - name: ggid-infrastructure
+    rules:
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_database_numbackends > 150
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connections > 150"
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage > 80%"
+
+      - alert: NATSConsumerLag
+        expr: nats_consumer_num_ack_pending > 1000
+        for: 5m
+        labels:
+          severity: critical
+          service: audit
+        annotations:
+          summary: "NATS audit consumer lag > 1000 messages"
+          description: "Audit events may be delayed — consumer is not keeping up."
