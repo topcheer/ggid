@@ -46,6 +46,7 @@ type Gateway struct {
 	proxies       map[string]*httputil.ReverseProxy
 	timeouts      map[string]time.Duration
 	healthChecker *healthcheck.Checker
+	rateLimiter   *middleware.TenantBucketLimiter
 	reloadFunc    ReloadFunc
 	routeVersion  int64
 	stats         *middleware.StatsCollector
@@ -56,10 +57,11 @@ type Gateway struct {
 // New creates a new API Gateway handler.
 func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
 	gw := &Gateway{
-		cfg:      cfg,
-		jwks:     jwks,
-		proxies:  make(map[string]*httputil.ReverseProxy),
-		timeouts: make(map[string]time.Duration),
+		cfg:         cfg,
+		jwks:        jwks,
+		proxies:     make(map[string]*httputil.ReverseProxy),
+		timeouts:    make(map[string]time.Duration),
+		rateLimiter: middleware.NewTenantBucketLimiter(middleware.DefaultBucketRateLimitConfig()),
 	}
 	gw.buildProxies()
 	gw.buildHealthChecker()
@@ -334,9 +336,10 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 	})
 
-	// Apply outer middleware: PanicRecovery → CORS → RequestID → StructuredLogging → TenantResolver → inner
+	// Apply outer middleware: PanicRecovery → CORS → RequestID → StructuredLogging → RateLimit → TenantResolver → inner
 	logger := middleware.NewStructuredLogger("ggid-gateway")
 	handler := middleware.TenantResolver(gw.cfg.DomainSuffix)(inner)
+	handler = gw.rateLimiter.Middleware(handler)
 	handler = middleware.RequestLogger(logger)(handler)
 	handler = middleware.RequestID(handler)
 	handler = middleware.CORS(handler)
