@@ -33,7 +33,7 @@ echo -n "3. Login + JWT:            "
 LOGIN=$(curl -s -X POST "$GATEWAY/api/v1/auth/login" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT_ID" \
-  -d "{\"email\":\"e2e-${TS}@docker.test\",\"password\":\"TestPass123!\"}")
+  -d "{\"username\":\"e2e-${TS}\",\"password\":\"TestPass123!\"}")
 JWT=$(echo "$LOGIN" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null)
 if [ -n "$JWT" ]; then echo "PASS (len=${#JWT})"; PASS=$((PASS+1)); else echo "FAIL (no JWT)"; FAIL=$((FAIL+1)); fi
 
