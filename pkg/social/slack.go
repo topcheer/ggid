@@ -56,13 +56,11 @@ func (c *slackConnector) HandleCallback(ctx context.Context, code, state, redire
 	}
 
 	var profile struct {
-		OK   bool   `json:"ok"`
+		OK   bool `json:"ok"`
 		User struct {
-			Name  string `json:"name"`
-			ID    string `json:"id"`
-			Email string `json:"email"`
-		} `json:"user"`
-		UserStruct struct {
+			Name     string `json:"name"`
+			ID       string `json:"id"`
+			Email    string `json:"email"`
 			Image512 string `json:"image_512"`
 		} `json:"user"`
 		Team struct {
@@ -81,6 +79,6 @@ func (c *slackConnector) HandleCallback(ctx context.Context, code, state, redire
 		ExternalID: profile.User.ID,
 		Email:      profile.User.Email,
 		Name:       profile.User.Name,
-		AvatarURL:  "",
+		AvatarURL:  profile.User.Image512,
 	}, nil
 }
