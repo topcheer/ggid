@@ -33,6 +33,7 @@ func TestAdminStats_WithStatsCollector(t *testing.T) {
 	gw.stats = sc
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/stats", nil)
+	req.Header.Set("Authorization", adminAuthHeader)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
 
@@ -70,6 +71,7 @@ func TestAdminStats_NoStatsCollector(t *testing.T) {
 	gw := New(cfg, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/stats", nil)
+	req.Header.Set("Authorization", adminAuthHeader)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
 
@@ -98,6 +100,7 @@ func TestAdminToggleRoute_EnableAfterDisable(t *testing.T) {
 
 	// First: disable the route
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/routes//api/v1/users/toggle", nil)
+	req.Header.Set("Authorization", adminAuthHeader)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
 
@@ -112,6 +115,8 @@ func TestAdminToggleRoute_EnableAfterDisable(t *testing.T) {
 
 	// Second: re-enable the route
 	req2 := httptest.NewRequest(http.MethodPost, "/api/v1/admin/routes//api/v1/users/toggle", nil)
+	req.Header.Set("Authorization", adminAuthHeader)
+	req2.Header.Set("Authorization", adminAuthHeader)
 	w2 := httptest.NewRecorder()
 	gw.ServeHTTP(w2, req2)
 
@@ -143,6 +148,7 @@ func TestAdminToggleRoute_EmptyPrefix(t *testing.T) {
 
 	// Toggle with just "/toggle" → empty prefix
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/routes//toggle", nil)
+	req.Header.Set("Authorization", adminAuthHeader)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
 

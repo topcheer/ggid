@@ -121,6 +121,7 @@ func TestServeHTTP_StatsConfigured(t *testing.T) {
 func TestServeHTTP_AdminRoutesMultipleRoutes(t *testing.T) {
 	gw := newTestGateway(t)
 	req := httptest.NewRequest("GET", "/api/v1/admin/routes", nil)
+	req.Header.Set("Authorization", adminAuthHeader)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
 	if w.Code != http.StatusOK {
@@ -207,6 +208,7 @@ func TestAdminToggleRoute_EnableInvalidBackendURL(t *testing.T) {
 	// Route is disabled (invalid URL won't be in proxies)
 	// So toggle should try to re-enable it
 	req := httptest.NewRequest("POST", "/api/v1/admin/routes//api/v1/test/toggle", nil)
+	req.Header.Set("Authorization", adminAuthHeader)
 	w := httptest.NewRecorder()
 	gw.ServeHTTP(w, req)
 	// May get 500 due to invalid URL parse, or 404 if prefix doesn't match exactly
