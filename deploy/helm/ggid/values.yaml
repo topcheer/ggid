@@ -71,6 +71,20 @@ gateway:
   env:
     JWKS_REFRESH_INTERVAL: "15m"
     LOG_LEVEL: info
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    # targetMemoryUtilizationPercentage: 80
+  # Pod Disruption Budget
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+  # NetworkPolicy
+  networkPolicy:
+    enabled: true
 
 # Identity Service
 identity:
@@ -171,6 +185,10 @@ audit:
     requests:
       cpu: 100m
       memory: 128Mi
+
+# Global NetworkPolicy settings
+networkPolicy:
+  enabled: true
 
 # JWT signing secret (auto-generated if empty)
 jwt:

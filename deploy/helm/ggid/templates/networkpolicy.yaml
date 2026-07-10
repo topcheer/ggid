@@ -1,0 +1,110 @@
+{{- if .Values.networkPolicy.enabled }}
+# Gateway NetworkPolicy - allows ingress from anywhere
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ggid.fullname" $ }}-gateway-ingress
+  labels:
+    {{- include "ggid.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ggid.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: gateway
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.gateway.service.httpPort | default .Values.gateway.service.port | default 8080 }}
+  egress:
+    # DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # NATS
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nats
+      ports:
+        - protocol: TCP
+          port: 4222
+    # Backend services
+    - to:
+        - podSelector:
+            matchLabels:
+              {{- include "ggid.selectorLabels" $ | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8070
+        - protocol: TCP
+          port: 8071
+        - protocol: TCP
+          port: 8072
+---
+# Backend services NetworkPolicy - only gateway namespace can reach them
+{{- range $name, $svc := dict "identity" .Values.identity "auth" .Values.auth "oauth" .Values.oauth "policy" .Values.policy "org" .Values.org "audit" .Values.audit -}}
+{{- if $svc.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "ggid.fullname" $ }}-{{ $name }}-ingress
+  labels:
+    {{- include "ggid.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "ggid.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only allow traffic from gateway pods
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "ggid.selectorLabels" $ | nindent 12 }}
+              app.kubernetes.io/component: gateway
+      ports:
+        {{- if $svc.service.httpPort }}
+        - protocol: TCP
+          port: {{ $svc.service.httpPort }}
+        {{- end }}
+        {{- if $svc.service.port }}
+        - protocol: TCP
+          port: {{ $svc.service.port }}
+        {{- end }}
+        {{- if $svc.service.grpcPort }}
+        - protocol: TCP
+          port: {{ $svc.service.grpcPort }}
+        {{- end }}
+---
+{{- end }}
+{{- end }}
+{{- end }}

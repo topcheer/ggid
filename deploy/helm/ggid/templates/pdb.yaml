@@ -1,0 +1,37 @@
+{{- if .Values.gateway.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ggid.fullname" $ }}-gateway
+  labels:
+    {{- include "ggid.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: gateway
+spec:
+  {{- if .Values.gateway.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.gateway.podDisruptionBudget.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.gateway.podDisruptionBudget.maxUnavailable | default 1 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ggid.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: gateway
+{{- end }}
+{{- range $name, $svc := dict "identity" .Values.identity "auth" .Values.auth "oauth" .Values.oauth "policy" .Values.policy "org" .Values.org "audit" .Values.audit -}}
+{{- if and $svc.enabled (($svc).podDisruptionBudgetEnabled) }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ggid.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "ggid.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      {{- include "ggid.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name }}
+{{- end }}
+{{- end }}
