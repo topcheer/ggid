@@ -1,372 +1,217 @@
-# GGID IAM Platform — Development Roadmap
+# GGID Roadmap
 
-> Derived from the [Feature Comparison Matrix](./feature-matrix.md).
-> Aligns 157 benchmarked features into phased delivery milestones.
-
----
-
-## Current State (As of Phase 8)
-
-| Metric | Value |
-|--------|-------|
-| Services | 7 microservices + Console + Gateway |
-| Feature Coverage | 58/157 fully implemented (37%) |
-| Test Coverage | 250+ test cases, 15 packages, 0 FAIL |
-| Docker | 13 containers, 11/11 E2E tests pass |
-| SDKs | Go, Node.js, Java |
-
-### Strengths
-- RBAC + ABAC policy engine (60% coverage — strongest category)
-- Organization tree with multi-tenant RLS (58%)
-- User lifecycle management (42%)
-- gRPC + REST dual protocol (unique advantage)
-- Temporary role assignment with TTL (no competitor has this)
-
-### Critical Gaps
-- No social login (blocks B2C)
-- No pre-built login UI (blocks developer adoption)
-- No enterprise SSO connectors (blocks B2B)
-- WebAuthn only skeleton
-- Missing basic web security (CORS, CSRF, cookie flags)
+Development phases, completed features, and future plans for the GGID IAM Platform.
 
 ---
 
-## Phase 9 — Foundation Hardening (P0 Blockers)
+## Completed Phases
 
-> **Goal:** Close table-stakes gaps that block GA release.
-> **Timeline:** 4-6 weeks
-> **Theme:** "Every competitor has these; we must too."
+### Phase 1: Foundation (Done)
 
-### 9.1 Social Login Connectors
-**Priority:** P0 | **Effort:** Medium | **Reference:** Logto connectors, Clerk social
+- Go 1.25 monorepo structure
+- 7 microservice scaffolds (`cmd/` → `internal/{config,domain,service,handler,server}`)
+- Shared packages: `pkg/errors`, `pkg/tenant`, `pkg/crypto`, `pkg/authprovider`
+- PostgreSQL 16 with pgx v5
+- gRPC + REST dual-protocol services
+- Proto definitions for 6 services (`buf generate`)
 
-Deliverables:
-- [x] Pluggable connector interface (`pkg/social/connector.go`)
-- [x] Google OAuth2 connector
-- [x] GitHub OAuth2 connector
-- [ ] Microsoft / Apple connectors
-- [x] OIDC generic connector (any compliant IdP)
-- [x] Social login callback handler in Auth Service
-- [x] Identity linking flow (link social account to existing user)
-- [x] JIT provisioning for social logins
+### Phase 2: Identity & Authentication (Done)
 
-**Design:** Follow Logto's connector pattern — each provider is a self-contained package implementing a common `Connector` interface. Store connector configs per-tenant in the database.
+- User registration and login (Argon2id password hashing)
+- JWT issuance (RS256) with refresh token rotation
+- JWKS endpoint (`/.well-known/jwks.json`)
+- User CRUD: create, get, update, delete
+- Account lifecycle: lock/unlock, activate/deactivate
+- Password reset (forgot → token → reset)
+- Password policy enforcement (complexity + history)
 
-### 9.2 WebAuthn / Passkey Full Implementation
-**Priority:** P0 | **Effort:** Medium | **Reference:** Clerk passkeys, go-webauthn
+### Phase 3: Authorization Engine (Done)
 
-Deliverables:
-- [x] WebAuthn handler verified complete (Phase 6)
-- [x] Registration flow (attestation creation + verification)
-- [x] Authentication flow (assertion creation + verification)
-- [ ] Credential storage in PostgreSQL (per-user, per-device)
-- [ ] Passkey login as passwordless alternative
-- [ ] Console UI for passkey management
+- RBAC engine: roles, permissions, role hierarchy (parent/child inheritance)
+- Wildcard resource matching (`documents:*`)
+- Policy check API (`POST /api/v1/policies/check`)
+- ABAC engine: attribute-based conditions (JSON)
+- Policy CRUD: create, list, delete
+- Policy import/export (JSON)
+- Attribute mapping API
 
-**Current state:** `services/auth/internal/webauthn/handler.go` exists but passes `nil` credential store. Need a PostgreSQL-backed `CredentialStore` implementation.
+### Phase 4: Organization Management (Done)
 
-### 9.3 Pre-built Hosted Login UI
-**Priority:** P0 | **Effort:** Medium | **Reference:** Auth0 Universal Login, Clerk
+- Organization CRUD
+- Org tree (PostgreSQL LTREE for hierarchical queries)
+- Departments within organizations
+- Teams (cross-cutting groups)
+- Membership management (add/remove members with titles)
+- Org-level role scoping
 
-Deliverables:
-- [x] Hosted login page at /login (Gateway)
-- [x] Username/password form (hosted)
-- [x] Social login buttons (Google/GitHub/SSO)
-- [x] MFA challenge form (TOTP in hosted login)
-- [x] Password reset flow UI (/forgot-password)
-- [x] Registration form (/register)
-- [ ] Customizable branding (logo, colors, CSS per tenant)
-- [ ] Localization framework (Chinese + English)
+### Phase 5: Audit Pipeline (Done)
 
-### 9.4 OIDC Completeness
-**Priority:** P0 | **Effort:** Small
+- NATS JetStream event bus (durable stream, file-backed)
+- `pkg/audit.Publisher` (best-effort, non-blocking)
+- Audit service: JetStream durable consumer → PostgreSQL
+- Query API with filtering (action, actor, result, time range, resource)
+- Audit statistics (aggregated metrics)
+- CSV export
+- Server-Sent Events (SSE) real-time streaming
+- Retention configuration API
+- Anomaly detection rules API
+- Audit integrity verification (hash chain)
 
-Deliverables:
-- [ ] UserInfo endpoint returns real user data (currently stub)
-- [ ] Token introspection returns real token status (currently stub)
-- [ ] OAuth authorize endpoint implements real redirect flow (currently stub)
-- [ ] Client credentials grant type (M2M tokens)
+### Phase 6: Multi-Tenancy & SSO (Done)
 
-### 9.5 Web Security Baseline
-**Priority:** P0 | **Effort:** Small-Medium
+- PostgreSQL Row-Level Security (RLS) on all multi-tenant tables
+- `SET LOCAL app.tenant_id` per-transaction context
+- OAuth2/OIDC provider (authorization code, client credentials, refresh)
+- SAML 2.0 Service Provider
+- OIDC discovery document
+- SCIM 2.0 user provisioning (`/scim/v2/Users`)
+- LDAP/AD integration (auth provider chain: Local + LDAP)
 
-Deliverables:
-- [x] CORS middleware (CORSWithConfig — configurable origins)
-- [x] Cookie security flags (HttpOnly/Secure/SameSite) (HttpOnly, Secure, SameSite=Lax/Strict)
-- [x] CSRF protection (CSRFProtect — double-submit cookie)
-- [x] Security headers (X-Content-Type-Options, X-Frame-Options, HSTS)
-- [x] HSTS header (via SecurityHeaders middleware)
+### Phase 7: API Gateway (Done)
 
-### 9.6 API Documentation
-**Priority:** P0 | **Effort:** Small
+- JWT verification (RS256) with JWKS caching
+- Reverse proxy with route table
+- Per-IP rate limiting (login: 5/min, register: 3/min, API: 100/min)
+- CORS with configurable origins
+- Tenant context injection (query param + JSON body)
+- Health check aggregation
+- Graceful shutdown (30s in-flight drain)
+- Prometheus metrics (`/metrics`)
 
-Deliverables:
-- [x] OpenAPI 3.0 spec at /api-docs
-- [x] Swagger UI served at /docs
-- [ ] Postman collection export
-- [x] API reference documentation (docs/api-reference.md)
+### Phase 8: Docker Compose & E2E (Done)
 
-### 9.7 Python SDK
-**Priority:** P0 | **Effort:** Medium
+- Full-stack Docker Compose (13 containers)
+- Idempotent database migrations
+- Docker healthchecks for all services
+- RSA key generation init container
+- E2E test suite: 11/11 tests passing
+- Deploy scripts
 
-Deliverables:
-- [ ] JWT verification middleware (FastAPI, Django, Flask)
-- [ ] Permission checking client
-- [ ] Auto-generate from OpenAPI spec if possible
-- [ ] PyPI package publish pipeline
+### Phase 9: Advanced Features (Done)
 
----
+- MFA: TOTP (RFC 6238), Email OTP, WebAuthn/Passkey (FIDO2)
+- Passwordless: Magic link authentication
+- Social login: Google, GitHub, Discord, LinkedIn, Slack, Microsoft, GitLab
+- Generic OIDC IdP federation
+- IdP configuration API (`/api/v1/idp/config`)
+- Step-up authentication (challenge + verify)
+- Session management (list, revoke, logout-all)
+- Auth hooks engine (pre-registration, post-login, pre-token-issue)
+- Email change flow (request + confirm)
+- Phone OTP authentication
+- Passwordless registration (WebAuthn-only accounts)
 
-## Phase 10 — Enterprise Readiness (P1)
+### Phase 10: Gateway Advanced (Done)
 
-> **Goal:** Win B2B enterprise deals.
-> **Timeline:** 6-8 weeks after Phase 9
-> **Theme:** "SSO, SCIM, and directory sync for enterprise IT."
+- Circuit breaker (per-backend, configurable thresholds)
+- Response compression (gzip)
+- API key authentication (M2M)
+- gRPC-Web protocol translation
+- GraphQL query engine (fragments + variables)
+- WebSocket proxy with session registry
+- Request coalescing (singleflight for identical GETs)
+- Shadow traffic (`X-Shadow-Backend` header)
+- Canary deployment routing
+- Custom error pages (502/503/504 with request_id)
+- Per-route body size limits
+- Bot detection
+- IP allowlist
+- Hosted Universal Login pages (`/login`, `/register`, `/forgot-password`)
+- Swagger UI + OpenAPI spec serving
+- Prometheus histogram per API
+- OpenTelemetry tracing (W3C traceparent, OTLP HTTP exporter)
+- Versioned health check (includes version + uptime)
+- Slow request detection middleware
 
-### 10.1 SAML SP (Service Provider)
-**Priority:** P0 (enterprise) | **Effort:** Large | **Reference:** Keycloak SP
+### Phase 11: Production Hardening (Done)
 
-Deliverables:
-- [ ] SAML assertion parser and validator
-- [ ] XML signature verification
-- [ ] SP-initiated SSO redirect binding
-- [ ] SP-initiated SSO POST binding
-- [ ] SAML attribute mapping to user profile
-- [ ] Per-tenant SAML IdP configuration
-- [ ] Metadata exchange (SP metadata endpoint)
-
-### 10.2 Enterprise SSO Connectors
-**Priority:** P0 (enterprise) | **Effort:** Large | **Reference:** WorkOS 50+ connectors
-
-Deliverables:
-- [ ] Okta SSO connector template
-- [ ] Azure AD / Entra ID connector template
-- [ ] Google Workspace connector template
-- [ ] Generic SAML connector (any SAML 2.0 IdP)
-- [ ] Admin UI for SSO configuration per organization
-- [ ] Connection testing endpoint
-
-### 10.3 Per-Tenant SSO Configuration
-**Priority:** P0 | **Effort:** Medium | **Reference:** WorkOS/Logto per-org SSO
-
-Deliverables:
-- [ ] Database schema: tenant SSO configurations table
-- [ ] API: CRUD for tenant SSO settings
-- [ ] Gateway: route auth requests to correct IdP based on tenant
-- [ ] Console UI: SSO settings page per organization
-
-### 10.4 SAML IdP Full Implementation
-**Priority:** P1 | **Effort:** Large | **Reference:** Keycloak IdP
-
-Deliverables:
-- [ ] SAML response generation with XML signing
-- [ ] IdP-initiated SSO
-- [ ] IdP metadata with real signing keys
-- [ ] SAML SLO (Single Logout)
-
-### 10.5 Directory Sync (SCIM Outbound)
-**Priority:** P1 | **Effort:** Large | **Reference:** WorkOS directory sync
-
-Deliverables:
-- [ ] SCIM outbound provisioning engine
-- [ ] Push user changes to external systems (Slack, Google, etc.)
-- [ ] Deprovisioning on user disable/delete
-- [ ] Sync status dashboard in Console
-
-### 10.6 Delegated Administration
-**Priority:** P1 | **Effort:** Medium | **Reference:** WorkOS Admin Portal
-
-Deliverables:
-- [ ] Organization admin roles (scoped to org)
-- [ ] Admin portal embeddable in customer apps
-- [ ] Org-scoped user management API
-- [ ] Org-scoped SSO/SCIM configuration
-
-### 10.7 Webhooks & Event Subscriptions
-**Priority:** P1 | **Effort:** Medium
-
-Deliverables:
-- [ ] Webhook configuration API (per-tenant event subscriptions)
-- [ ] Event delivery with retry (exponential backoff)
-- [ ] Webhook signing (HMAC)
-- [ ] Event types: user.created, user.deleted, role.assigned, etc.
-- [ ] NATS consumer → webhook dispatcher
-
-### 10.8 Additional MFA Methods
-**Priority:** P1 | **Effort:** Medium
-
-Deliverables:
-- [ ] Email OTP MFA
-- [ ] SMS OTP MFA (Twilio integration)
-- [ ] MFA enforcement policy (per-tenant: required, optional, disabled)
-- [ ] Adaptive/step-up MFA (trigger based on risk score)
-
-### 10.9 Passwordless Authentication
-**Priority:** P1 | **Effort:** Medium | **Reference:** Logto/Ory
-
-Deliverables:
-- [ ] Magic link (email) login flow
-- [ ] SMS OTP passwordless flow
-- [ ] Unified passwordless + password + social login page
-
-### 10.10 Kubernetes Deployment
-**Priority:** P1 | **Effort:** Medium
-
-Deliverables:
-- [ ] Helm chart for all 7 services + infrastructure
-- [ ] K8s manifests with health checks, readiness probes
-- [ ] ConfigMap/Secret management
-- [ ] Horizontal Pod Autoscaler templates
-- [ ] Production deployment guide
+- Security hardening guide (TLS, key rotation, CORS, rate limiting)
+- Performance tuning guide (DB indexing, connection pools, pprof)
+- Migration guide (Auth0/Keycloak → GGID)
+- OWASP Top 10 security audit checklist
+- k6 benchmark suite (3 load test scripts)
+- Grafana dashboard (provisioned)
+- Prometheus alert rules (7 alerts)
+- Helm chart (Deployments, Services, Ingress, HPA, PDB, NetworkPolicy)
+- govulncheck in CI
+- Trivy container scanning
+- Comprehensive documentation suite (20+ documents)
+- SDK documentation (Go, Node.js, Java, Python)
+- Admin Console (10 pages: Dashboard, Users, Roles, Orgs, Audit, Settings, Monitoring, OAuth Clients, Webhooks, Profile)
 
 ---
 
-## Phase 11 — Security & Compliance (P1)
+## Future Phases
 
-> **Goal:** Pass enterprise security audits.
-> **Timeline:** 4-6 weeks after Phase 10
-> **Theme:** "SOC2-ready, breach-resistant, audit-complete."
+### Phase 12: Plugin System (Planned — Q3 2024)
 
-### 11.1 Breached Password Detection
-**Priority:** P1 | **Effort:** Small | **Reference:** Auth0, Clerk (HIBP)
+- **Go plugin SDK** — Compile-time plugins for service-level extension
+- **gRPC plugin sidecar** — Out-of-process plugins via gRPC
+- **Plugin marketplace** — Community plugin registry
+- **Hot-reloadable hooks** — Update auth hooks without restart
+- **Plugin lifecycle management** — Install, enable, disable, uninstall via API
 
-- [ ] Integrate HaveIBeenPwned API
-- [ ] Check on registration and password change
-- [ ] Block or warn based on policy
+### Phase 13: Multi-Region Deployment (Planned — Q4 2024)
 
-### 11.2 Key Rotation
-**Priority:** P1 | **Effort:** Medium
+- **Active-active multi-region** — Cross-region PostgreSQL replication (Citus/ Patroni)
+- **Geo-distributed Gateway** — DNS-based routing to nearest region
+- **Cross-region audit sync** — NATS super-cluster for global audit pipeline
+- **Region-aware rate limiting** — Distributed rate limit via Redis cluster
+- **Disaster recovery** — Automated failover with RTO < 5 min, RPO < 1 min
 
-- [ ] JWT signing key rotation with overlapping validity
-- [ ] JWKS endpoint serves current + previous keys
-- [ ] Admin API to trigger rotation
-- [ ] Automated rotation schedule
+### Phase 14: Passwordless Everywhere (Planned — Q4 2024)
 
-### 11.3 Anomaly Detection
-**Priority:** P1 | **Effort:** Large | **Reference:** Auth0 Attack Protection
+- **FIDO2 Enterprise Attestation** — Verify device attestation certificates
+- **Device trust** — Register trusted devices, skip MFA for known devices
+- **Adaptive authentication** — Risk-based step-up (location, device, behavior)
+- **Biometric login** — Platform authenticator integration (Touch ID, Face ID, Windows Hello)
+- **Passwordless by default** — Option to disable password login entirely
+- **Recovery codes** — Backup codes for passwordless account recovery
 
-- [ ] Impossible travel detection (geo-velocity)
-- [ ] New device/location alerting
-- [ ] Suspicious IP detection (known bad IPs)
-- [ ] Risk score calculation on login
+### Phase 15: B2B Federation (Planned — Q1 2025)
 
-### 11.4 Audit & Compliance Enhancement
-**Priority:** P1 | **Effort:** Medium
+- **Cross-tenant SSO** — Users from Tenant A can access Tenant B via federation
+- **Organizations API** — B2B customer organization management (like Auth0 Organizations)
+- **Tenant invitation flow** — Invite users to join a tenant
+- **Delegated admin** — Tenant-scoped admin roles (without platform admin)
+- **Connection templates** — Pre-configured SSO templates for common IdPs (Okta, Azure AD, Google Workspace)
+- **Just-in-time (JIT) provisioning** — Auto-create users on first SSO login
 
-- [ ] Compliance report templates (SOC2, GDPR)
-- [ ] Log retention policies (configurable per event type)
-- [ ] SIEM integration (Splunk, Datadog log streaming)
-- [ ] Admin activity logging (all console actions)
-- [ ] Per-user login history
-- [ ] Immutable audit trail (hash-chain verification)
+### Phase 16: Fine-Grained Authorization GA (Planned — Q1 2025)
 
-### 11.5 IP Allowlisting / Blocklisting
-**Priority:** P1 | **Effort:** Medium
+- **Relationship-Based Access Control (ReBAC)** — Google Zanzibar-style tuple-based authorization
+- **Resource-level permissions** — Per-object ACLs (e.g., "user X can edit document Y")
+- **Policy versioning GA** — Full version management with rollback and diff
+- **Policy templates marketplace** — Pre-built compliance templates (SOC2, HIPAA, PCI)
+- **Visual policy builder** — Drag-and-drop policy editor in Console
+- **Policy simulation** — "What-if" testing before deploying policies
+- **Real-time policy sync** — Push policy updates to all Gateway instances via NATS
 
-- [ ] Per-tenant IP allow/deny lists
-- [ ] Gateway middleware to enforce IP rules
-- [ ] Admin Console UI for IP management
+### Phase 17+: Future Considerations
 
-### 11.6 User Import / Export
-**Priority:** P1 | **Effort:** Medium
-
-- [ ] CSV/JSON bulk user import API
-- [ ] User export API (GDPR data portability)
-- [ ] Import job status tracking
-- [ ] Dry-run / validation mode
-
-### 11.7 User Search
-**Priority:** P1 | **Effort:** Medium
-
-- [ ] Full-text search across user attributes
-- [ ] PostgreSQL tsvector or Elasticsearch integration
-- [ ] Search API with relevance scoring
-- [ ] Console search bar
+- **Hosted SaaS** — Fully managed GGID cloud
+- **Mobile SDK** — iOS (Swift) and Android (Kotlin) SDKs
+- **Privacy vault** — Tokenization for PII fields (e.g., SSN, credit card)
+- **Zero-knowledge proofs** — Privacy-preserving authentication
+- **Decentralized identity** — DID/VC support, verifiable credentials
+- **AI-powered anomaly detection** — ML-based threat detection in audit pipeline
 
 ---
 
-## Phase 12 — Growth & Polish (P2)
+## Release Cadence
 
-> **Goal:** Delight developers and match best-in-class UX.
-> **Timeline:** Ongoing after Phase 11
-
-### 12.1 Developer Experience
-- [ ] Quick start guides (Next.js, Express, FastAPI, Spring Boot)
-- [ ] Sample applications with GGID integration
-- [ ] Interactive API playground
-- [ ] SDK for Ruby
-- [ ] SDK for PHP
-- [ ] CLI tool for management (`ggid-cli`)
-- [ ] Terraform provider for infrastructure-as-code
-
-### 12.2 Advanced Features
-- [ ] Push notification MFA (mobile app)
-- [ ] ReBAC (Google Zanzibar model)
-- [ ] GraphQL API
-- [ ] User impersonation (admin tool)
-- [ ] Bot detection / CAPTCHA integration
-- [ ] Custom domain support per tenant
-- [ ] Remember Me / long-lived sessions
-- [ ] Single Logout (SLO) across applications
-
-### 12.3 Compliance & Certification
-- [ ] SOC2 Type II audit preparation
-- [ ] ISO 27001 alignment
-- [ ] HIPAA compliance documentation
-- [ ] Data residency (multi-region deployment)
-
-### 12.4 Mobile SDKs
-- [ ] iOS SDK (Swift)
-- [ ] Android SDK (Kotlin)
-- [ ] React Native integration guide
-- [ ] Flutter integration guide
+| Release | Focus | Target |
+|---------|-------|--------|
+| v1.0 | Production-ready core (Phase 1-11) | Done |
+| v1.1 | Plugin system + bug fixes | Q3 2024 |
+| v1.2 | Multi-region + adaptive auth | Q4 2024 |
+| v2.0 | B2B federation + ReBAC | Q1 2025 |
 
 ---
 
-## Milestone Summary
+## Community
 
-| Phase | Theme | Duration | Key Outcomes |
-|-------|-------|----------|--------------|
-| **9** | Foundation Hardening | 4-6 weeks | Social login, WebAuthn, Login UI, OIDC complete, Web security, OpenAPI, Python SDK |
-| **10** | Enterprise Readiness | 6-8 weeks | SAML SP, SSO connectors, Per-tenant SSO, SCIM outbound, Delegated admin, Webhooks, MFA methods, Passwordless, K8s |
-| **11** | Security & Compliance | 4-6 weeks | Breached password check, Key rotation, Anomaly detection, Audit enhancement, IP rules, Import/export, Search |
-| **12** | Growth & Polish | Ongoing | Quick starts, Advanced features, Compliance cert, Mobile SDKs |
-
----
-
-## Coverage Projection
-
-| Phase | Projected Coverage | Delta |
-|-------|--------------------|-------|
-| Current (Phase 8) | 37% (58/157) | — |
-| After Phase 9 | ~55% (~86/157) | +28 features |
-| After Phase 10 | ~72% (~113/157) | +27 features |
-| After Phase 11 | ~85% (~134/157) | +21 features |
-| After Phase 12 | ~95% (~149/157) | +15 features |
-
----
-
-## Team Allocation Suggestions
-
-Based on existing team structure and file ownership:
-
-| Teammate | Phase 9 Focus | Phase 10 Focus |
-|----------|---------------|----------------|
-| **dev** (Identity + Auth Provider) | 9.2 WebAuthn, 9.4 OIDC completeness | 10.8 MFA methods, 10.9 Passwordless |
-| **dev2** (Auth Service + Gateway) | 9.1 Social login, 9.5 Web security | 10.1 SAML SP, 10.3 Per-tenant SSO |
-| **dev3** (Policy + Org + Audit) | 9.7 Python SDK (policy/client) | 10.7 Webhooks (NATS consumer), 11.4 Audit enhancement |
-| **arch** (Shared + SDK + Console + Infra) | 9.3 Login UI, 9.6 OpenAPI, 9.7 Python SDK | 10.2 SSO connectors, 10.6 Delegated admin, 10.10 K8s Helm |
-
----
-
-## Success Metrics
-
-| Metric | Current | Phase 9 Target | Phase 10 Target | Phase 11 Target |
-|--------|---------|----------------|-----------------|-----------------|
-| Feature coverage | 37% | 55% | 72% | 85% |
-| E2E tests | 11 | 30+ | 50+ | 70+ |
-| SDK languages | 3 | 4 (+Python) | 4 | 5+ |
-| Social login providers | 0 | 4+ | 8+ | 10+ |
-| Docker containers | 13 | 13 | 14+ (connectors) | 14+ |
-| P0 gaps closed | 0/12 | 12/12 | 12/12 | 12/12 |
-| P1 gaps closed | 0/19 | 0/19 | 12/19 | 19/19 |
+- **Feature requests:** Open an issue with `feature-request` label
+- **Bug reports:** Open an issue with `bug` label
+- **Discussions:** GitHub Discussions
+- **Contributing:** See [Contributing Quick Start](./contributing-quickstart.md)
