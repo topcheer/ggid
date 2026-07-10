@@ -312,4 +312,71 @@ DELETE /api/v1/users/{user_id}/mfa
 # User must set up MFA again on next login (if required)
 ```
 
+---
+
+## Per-Role MFA Enforcement
+
+Different roles can have different MFA requirements:
+
+```bash
+curl -X PATCH https://iam.example.com/api/v1/admin/tenant/settings/mfa-policy \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "required": true,
+    "per_role": {
+      "admin": { "required": true, "methods": ["webauthn", "totp"], "min_factors": 2 },
+      "editor": { "required": true, "methods": ["totp", "sms"] },
+      "viewer": { "required": false },
+      "service_account": { "required": false, "excluded": true }
+    }
+  }'
+```
+
+| Role | MFA Required | Methods | Min Factors |
+|------|:-----------:|---------|:-----------:|
+| admin | Yes | WebAuthn + TOTP | 2 |
+| editor | Yes | TOTP or SMS | 1 |
+| viewer | No | Optional | - |
+| service_account | Excluded | N/A | - |
+
+## Grace Periods
+
+When enforcing MFA tenant-wide, a grace period gives users time to enroll:
+
+```bash
+curl -X PATCH .../admin/tenant/settings/mfa-policy \
+  -d '{
+    "required": true,
+    "enrollment_grace_period_days": 14,
+    "reminder_days_before": 3
+  }'
+```
+
+During the grace period:
+- Users see MFA enrollment prompts but can skip
+- Days 1-7: gentle reminder on login
+- Days 8-11: prominent banner
+- Days 12-14: countdown warning
+- Day 15+: login blocked until MFA enrolled
+
+## Backup Codes
+
+During MFA enrollment, GGID generates one-time backup codes:
+
+```bash
+curl -X POST .../users/{user_id}/mfa/backup-codes \
+  -d '{ "count": 10 }'
+```
+
+```json
+{
+  "codes": ["ABCDE-FGHIJ", "KLMNO-PQRST", "UVWXY-Z0123"]
+}
+```
+
+- Codes are hashed at rest (never stored in plaintext)
+- Displayed once during generation
+- Each code used exactly once
+- Regenerating codes invalidates all previous codes
+
 3. Audit event published: `mfa.disable` (actor: admin)

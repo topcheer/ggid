@@ -532,4 +532,59 @@ RATE_LIMIT_FAIL_MODE=open   # 'open' or 'closed'
 - [Rate Limiting Guide](./rate-limiting.md) — Detailed algorithm explanation
 - [Security Checklist](./security-checklist.md) — Production security audit
 - [Error Codes](./error-codes.md) — Complete error reference
+
+---
+
+## Admin Override
+
+Admins can bypass rate limits or exempt specific clients:
+
+### Per-Client Override
+
+```bash
+curl -X PATCH .../admin/rate-limits/overrides \
+  -d '{
+    "client_id": "trusted-service",
+    "exempt": true,
+    "reason": "internal M2M service"
+  }'
+```
+
+### Per-IP Allowlist
+
+```bash
+curl -X PATCH .../admin/rate-limits/ip-allowlist \
+  -d '{ "cidrs": ["10.0.0.0/8", "192.168.0.0/16"] }'
+```
+
+### Burst Handling
+
+Token bucket allows configurable burst capacity:
+
+```yaml
+rate_limit:
+  burst_multiplier: 2    # Burst = 2x steady rate
+  # Example: 100 req/min → burst of 200 instantaneous, then refills at 100/min
+```
+
+### 429 Response Format
+
+```json
+{
+  "error": "gateway.rate_limited",
+  "message": "Rate limit exceeded",
+  "retry_after": 30,
+  "limit": 100,
+  "remaining": 0,
+  "reset_at": "2024-01-15T10:31:00Z"
+}
+```
+
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1705312860
+```
 - [API Reference](./api-reference.md) — All endpoints
