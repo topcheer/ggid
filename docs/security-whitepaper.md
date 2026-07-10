@@ -1,200 +1,174 @@
 # GGID Security Whitepaper
 
-> Threat model and security architecture for the GGID IAM Platform.
+> Threat model, security architecture, and mitigations for the GGID IAM Platform.
 
 ---
 
 ## 1. Threat Model (STRIDE)
 
-| Threat | Category | Mitigation |
-|--------|----------|------------|
-| Forged JWT tokens | Spoofing | RS256 signatures + JWKS rotation, key ID in header |
-| Stolen credentials | Spoofing | MFA (TOTP/WebAuthn), password history, lockout policy |
-| Tenant data leakage | Information Disclosure | PostgreSQL Row-Level Security (RLS) per tenant_id |
-| Privilege escalation | Elevation of Privilege | RBAC + ABAC policy engine, least-privilege defaults |
-| Replay attacks | Repudiation | JWT `iat`/`exp` + nonce + refresh token rotation |
-| Audit log tampering | Repudiation | Append-only NATS JetStream + immutable storage |
-| DoS / brute force | Denial of Service | Per-tenant rate limiting + account lockout + IP allowlist |
-| Supply chain attack | Tampering | Pinned dependencies, Docker image scanning, signed builds |
+| Threat | Category | Risk | Mitigation |
+|--------|----------|------|------------|
+| Forged JWT tokens | Spoofing | Critical | RS256 signatures + JWKS rotation + key ID in header |
+| Cross-tenant data access | Information Disclosure | Critical | PostgreSQL Row-Level Security (RLS) per tenant_id |
+| Brute-force password | Spoofing | High | Account lockout (5 attempts / 15 min lock) + rate limiting |
+| Token replay | Repudiation | High | JWT `exp` (15 min access, 7d refresh) + refresh rotation |
+| Privilege escalation | Tampering | High | RBAC + ABAC policy engine enforces least privilege |
+| Audit log tampering | Repudiation | High | NATS JetStream (durable, at-least-once delivery) + append-only DB |
+| Session hijacking | Spoofing | Medium | HTTP-only + Secure cookies + SameSite=Strict |
+| CSRF | Spoofing | Medium | Double-submit cookie + SameSite cookies |
+| XSS in Console | Tampering | Medium | React auto-escaping + CSP headers + no inline scripts |
+| Man-in-the-middle | Information Disclosure | Critical | TLS 1.3 required + HSTS header |
+| SQL injection | Tampering | High | Parameterized queries only (pgx) + RLS as backstop |
+| Supply chain attack | Tampering | Medium | Go modules from verified sources + Docker image scanning |
 
 ---
 
 ## 2. Authentication Security
 
 ### 2.1 Password Storage
-
 - **Algorithm**: bcrypt (cost 12)
-- **Never stored in plaintext** — only the hash is persisted
-- **Password history**: configurable (default 5) — rejects reused passwords
-- **Password policy**: min 8 chars, upper+lower+digit+special
+- **Minimum length**: 12 characters
+- **Complexity**: requires uppercase, lowercase, digit, special
+- **History**: last 10 passwords checked, reuse rejected
+- **Expiration**: configurable per tenant (default: 90 days)
 
 ### 2.2 JWT Security
-
 ```
-Header: { "alg": "RS256", "kid": "key-2024-v1", "typ": "JWT" }
+Header: { "alg": "RS256", "kid": "key-2024-01", "typ": "JWT" }
 Payload: {
   "iss": "ggid",
   "sub": "user-uuid",
   "aud": "tenant-uuid",
-  "exp": 1735689600,
-  "iat": 1735603200,
-  "jti": "unique-token-id",
-  "scope": "users:read users:write",
-  "tenant_id": "tenant-uuid",
-  "roles": ["admin", "user_manager"]
+  "exp": 1700000000,
+  "iat": 1699999100,
+  "scope": "openid profile email",
+  "roles": ["admin", "user_manager"],
+  "tenant_id": "uuid"
 }
 ```
 
-- **Signing**: RS256 (asymmetric) — private key never leaves Auth Service
-- **Key rotation**: JWKS endpoint supports multiple keys, `kid` header selects correct key
-- **Lifetime**: Access token 15min, Refresh token 7d (configurable per tenant)
-- **Revocation**: Token blacklist in Redis + JWKS key revocation
+- **Signing**: RS256 (asymmetric, 2048-bit RSA)
+- **Key rotation**: JWKS endpoint, 90-day rotation, overlap period
+- **Access token TTL**: 15 minutes (configurable per tenant)
+- **Refresh token TTL**: 7 days, rotated on each use
+- **Revocation**: token blacklist in Redis + revocation endpoint (RFC 7009)
 
-### 2.3 MFA / Passwordless
-
-| Method | Standard | Use Case |
-|--------|----------|----------|
-| TOTP | RFC 6238 (Google Authenticator, Authy) | Standard MFA |
-| WebAuthn / Passkey | W3C WebAuthn, FIDO2 | Phishing-resistant MFA |
-| Email OTP | Custom | Passwordless login |
-| SMS OTP | Custom | Phone-based verification (less secure) |
+### 2.3 Multi-Factor Authentication
+| Method | Implementation | Use Case |
+|--------|---------------|----------|
+| TOTP | RFC 6238, 30s window, Google Authenticator compatible | Default MFA |
+| WebAuthn / Passkey | CTAP 2.0, platform authenticators | Passwordless |
+| Email OTP | 6-digit code, 10 min expiry | Verification |
+| SMS OTP | Via Twilio (optional) | High-risk operations |
 
 ### 2.4 Session Management
-
-- Sessions stored in Redis with TTL
-- Concurrent session limit per user (configurable, default 5)
-- Session revocation on password change / MFA enrollment
-- Refresh token rotation: each refresh issues a new refresh token, old one invalidated
+- Server-side sessions in Redis (not stateless JWT-only)
+- Session ID: 256-bit CSPRNG, HTTP-only + Secure cookie
+- Concurrent session limit: 5 per user (configurable)
+- Idle timeout: 30 min (configurable)
+- Step-up auth for sensitive operations (require recent MFA)
 
 ---
 
 ## 3. Authorization Security
 
-### 3.1 RBAC + ABAC Policy Engine
+### 3.1 RBAC + ABAC
+- **RBAC**: Roles → Permissions mapping (many-to-many)
+- **ABAC**: Attribute-based conditions (IP, time, device, risk score)
+- **Policy evaluation**: deny-by-default, explicit allow required
+- **Role hierarchy**: parent roles inherit child permissions (planned)
 
+### 3.2 Policy Decision Point
 ```
-Decision = RBAC(user_roles, required_permissions)
-         AND ABAC(user_attrs, resource_attrs, environment, action)
+Request → Policy Engine
+  → Check RBAC: user has role with required permission?
+  → Check ABAC: conditions satisfied (IP allowlist, time window)?
+  → Check Deny rules: explicit deny overrides allow
+  → Decision: ALLOW or DENY
 ```
-
-- **RBAC**: Role → Permission mapping, evaluated first (fast path)
-- **ABAC**: Attribute-based conditions (e.g., "user.department == resource.department")
-- **Default deny**: If no policy explicitly allows, access is denied
-- **Policy caching**: Evaluated policies cached in Redis (5min TTL)
-
-### 3.2 Role Hierarchy
-
-- Parent roles inherit child role permissions
-- Prevents circular inheritance (validated at assignment time)
-- Temporary role assignment with TTL (auto-expire)
 
 ---
 
-## 4. Multi-Tenant Isolation
+## 4. Network Security
 
-### 4.1 Data Isolation
+### 4.1 TLS Configuration
+- TLS 1.3 required (1.2 with PFS as fallback)
+- HSTS: `max-age=63072000; includeSubDomains; preload`
+- Cipher suites: ChaCha20-Poly1305, AES-GCM only
+- Certificate: Let's Encrypt or customer-provided
 
-```sql
--- Every table has tenant_id column
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-
--- Policy: users can only see their tenant's data
-CREATE POLICY tenant_isolation ON users
-  FOR ALL
-  USING (tenant_id = current_setting('app.tenant_id')::uuid);
-```
-
-- **Defense in depth**: Isolation at both application (WHERE tenant_id = ?) and database (RLS) levels
-- **Connection-level isolation**: `SET LOCAL app.tenant_id` per transaction
-- **Cross-tenant queries**: Impossible even with SQL injection (PostgreSQL enforces RLS)
-
-### 4.2 Per-Tenant Configuration
-
-| Setting | Scope | Default |
-|---------|-------|---------|
-| Rate limits | Per tenant per endpoint | 100 req/min |
-| Password policy | Per tenant | min 8, complexity on |
-| MFA requirement | Per tenant | Optional |
-| Session lifetime | Per tenant | Access 15m, Refresh 7d |
-| IP allowlist | Per tenant | Disabled |
-| JWT claims | Per tenant | Standard claims |
+### 4.2 API Gateway Defense
+| Layer | Control |
+|-------|---------|
+| DDoS | Rate limiting per tenant per endpoint |
+| Bot | User-Agent analysis + behavioral fingerprinting |
+| IP | Per-tenant IP allowlist |
+| Size | Request body size limit (per route) |
+| CORS | Strict origin allowlist per tenant |
+| Headers | X-Content-Type-Options, X-Frame-Options, CSP |
 
 ---
 
-## 5. Network Security
+## 5. Data Security
 
-### 5.1 TLS / mTLS
+### 5.1 At Rest
+- PostgreSQL: TDE (Transparent Data Encryption) or disk-level encryption
+- Backups: AES-256 encrypted, stored in separate region
+- Secrets: never in plaintext config, Docker secrets / K8s secrets / Vault
 
-- All external traffic TLS 1.2+ (TLS 1.3 preferred)
-- Internal service-to-service: mTLS via service mesh (optional, Istio/Linkerd)
-- JWT signing keys: RS256, 2048-bit RSA minimum
+### 5.2 In Transit
+- All inter-service communication: mTLS (K8s) or VPC-private network
+- Database connections: TLS required
+- Redis: TLS optional (recommended for production)
+- NATS: TLS required for JetStream
 
-### 5.2 API Security
-
-- **CORS**: Per-origin configurable, no wildcard in production
-- **CSRF**: SameSite=Strict cookies for session-based auth
-- **Headers**: X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security
-- **Body size**: Per-route limits (login: 4KB, file upload: configurable)
-- **Bot detection**: User-Agent analysis + behavioral fingerprinting
+### 5.3 PII Handling
+- Email and phone: stored in `users` table, encrypted at column level via pgcrypto
+- Password: bcrypt hash only (never plaintext, never reversible)
+- Audit logs: user_id reference only (no PII in audit events)
+- Right to erasure: cascading delete across all services
 
 ---
 
-## 6. Audit & Compliance
-
-### 6.1 Audit Trail
-
-Every security-relevant event is logged:
-
-| Event Type | Trigger | Fields |
-|------------|---------|--------|
-| `user.login.success` | Successful login | user_id, ip, user_agent, tenant_id |
-| `user.login.failed` | Failed login | username, ip, reason |
-| `user.register` | New registration | user_id, email, tenant_id |
-| `user.password.change` | Password changed | user_id |
-| `user.mfa.enable` | MFA enrolled | user_id, method |
-| `role.assign` | Role granted | user_id, role_id, assigned_by |
-| `policy.evaluate` | Policy decision | user_id, resource, decision |
-| `token.revoke` | Token revoked | user_id, token_jti |
-
-### 6.2 Log Integrity
-
-- Events published to NATS JetStream (durable, ordered)
-- Consumer writes to PostgreSQL (queryable) + S3 (archival)
-- Hash chaining: each event includes hash of previous event (tamper detection)
-- Retention: configurable per tenant (default 90 days hot, 7 years cold)
-
-### 6.3 Compliance Frameworks
+## 6. Compliance
 
 | Framework | Status |
 |-----------|--------|
-| SOC 2 Type II | Architecture ready, audit pending |
-| GDPR | Data export/deletion endpoints, right-to-be-forgotten |
-| HIPAA | BAA-ready (PHI fields configurable, encryption at rest) |
-| ISO 27001 | Control mapping documented |
+| OWASP Top 10 2021 | All categories addressed |
+| SOC 2 Type II | Audit trail + access controls implemented |
+| GDPR | Data export, right to erasure, data residency (per-tenant region planned) |
+| HIPAA | Audit logging + encryption at rest/transit (BAA required) |
+| ISO 27001 | Information security management controls implemented |
 
 ---
 
 ## 7. Incident Response
 
-### 7.1 Anomaly Detection
+### Detection
+- Real-time anomaly detection in audit service (unusual login patterns)
+- Alerting via webhook (Slack/PagerDuty integration)
+- Prometheus alert rules for security events
 
-- Failed login spike detection (> 10/min per IP → alert)
-- Geographic anomaly (login from new country → step-up auth)
-- Impossible travel detection (login from 2 distant IPs within 1h)
-- Token reuse detection (same refresh token from 2 IPs → revoke)
-
-### 7.2 Breach Response
-
-1. **Revoke all tokens**: `POST /api/v1/admin/revoke-all` (admin only)
-2. **Force password reset**: `POST /api/v1/admin/force-reset` (marks all users requiring reset)
-3. **Lock affected tenant**: Disable tenant, redirect to maintenance page
-4. **Export audit trail**: Preserve evidence for forensic analysis
+### Response
+1. Revoke compromised JWTs (blacklist in Redis)
+2. Force password reset for affected users
+3. Lock affected tenant if breach confirmed
+4. Generate forensic audit report (export from audit service)
 
 ---
 
-## 8. Dependency Security
+## 8. Security Checklist for Production Deployment
 
-- **Go modules**: `go mod tidy` + `govulncheck` in CI
-- **Docker images**: Distroleless base, Trivy scan in CI
-- **npm packages**: `npm audit` + Dependabot
-- **Secrets**: Never in git, stored in Vault / cloud KMS, injected as env vars
+- [ ] TLS certificates configured (not self-signed)
+- [ ] Strong JWT signing key (2048-bit RSA minimum)
+- [ ] Unique DB password (not default "ggid")
+- [ ] Unique Redis password (not default "ggid-redis")
+- [ ] LDAP bind password stored in secret
+- [ ] Rate limits configured per tenant
+- [ ] IP allowlist configured for admin endpoints
+- [ ] Audit log retention policy set (minimum 90 days)
+- [ ] Backup encryption enabled
+- [ ] HSTS header enforced
+- [ ] CSP header configured for Console
+- [ ] Container images scanned (Trivy/Grype)
+- [ ] Secret management (Vault, not env vars in prod)
