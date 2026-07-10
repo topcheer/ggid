@@ -94,7 +94,7 @@
 ### P2 — Enhancement
 - [TODO] Console: OAuth client management page
 - [TODO] Console: Webhook management page
-- [IN PROGRESS: dev3] Console: Audit dashboard with charts (recharts)
+- [DONE] Console: Audit dashboard with charts (recharts)
 - [TODO] Console: User activity timeline
 - [TODO] Console: Dark mode support
 - [TODO] Console: i18n (Chinese + English)
