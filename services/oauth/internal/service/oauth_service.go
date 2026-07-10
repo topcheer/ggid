@@ -942,6 +942,3 @@ func defaultIfEmpty2(s, def string) string {
 	}
 	return s
 }
-
-// --- RFC 8693 Token Exchange ---
-
