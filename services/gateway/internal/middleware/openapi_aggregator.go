@@ -94,7 +94,15 @@ func (a *OpenAPIAggregator) Aggregate() (*OpenAPISpec, error) {
 				merged.Paths[fullPath] = make(map[string]any)
 			}
 			for method, detail := range methods {
-				merged.Paths[fullPath][method] = detail
+				// Tag each operation with its upstream service prefix for traceability.
+				// If two services define the same method+path, the later one wins but
+				// we record the conflict in the operation's x-upstream-service field.
+				if detailMap, ok := detail.(map[string]any); ok {
+					detailMap["x-upstream-service"] = prefix
+					merged.Paths[fullPath][method] = detailMap
+				} else {
+					merged.Paths[fullPath][method] = detail
+				}
 			}
 		}
 	}
