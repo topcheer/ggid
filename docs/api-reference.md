@@ -539,6 +539,252 @@ curl -s "$API/api/v1/audit/events?limit=10&tenant_id=$TENANT" \
 
 ---
 
+## OAuth 2.0 / OIDC Endpoints
+
+### Discovery
+```http
+GET /.well-known/openid-configuration
+```
+Returns the OpenID Connect discovery document:
+```json
+{
+  "issuer": "http://localhost:8080",
+  "authorization_endpoint": "http://localhost:8080/oauth/authorize",
+  "token_endpoint": "http://localhost:8080/oauth/token",
+  "userinfo_endpoint": "http://localhost:8080/oauth/userinfo",
+  "jwks_uri": "http://localhost:8080/.well-known/jwks.json",
+  "revocation_endpoint": "http://localhost:8080/oauth/revoke",
+  "introspection_endpoint": "http://localhost:8080/oauth/introspect",
+  "end_session_endpoint": "http://localhost:8080/oauth/logout",
+  "grant_types_supported": [
+    "authorization_code", "refresh_token",
+    "client_credentials", "password",
+    "urn:ietf:params:oauth:grant-type:device_code"
+  ],
+  "response_types_supported": ["code", "token", "id_token"],
+  "scopes_supported": ["openid", "profile", "email", "offline_access"],
+  "token_endpoint_auth_methods_supported": [
+    "client_secret_basic", "client_secret_post", "private_key_jwt"
+  ],
+  "subject_types_supported": ["public"],
+  "id_token_signing_alg_values_supported": ["RS256", "EdDSA"]
+}
+```
+
+### JWKS
+```http
+GET /.well-known/jwks.json
+```
+Returns the JSON Web Key Set for JWT verification:
+```json
+{
+  "keys": [{
+    "kid": "2024-01-key",
+    "kty": "RSA",
+    "alg": "RS256",
+    "use": "sig",
+    "n": "...base64url...",
+    "e": "AQAB"
+  }]
+}
+```
+
+### Authorization
+```http
+GET /oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=URL&scope=openid%20profile&state=RANDOM
+```
+**Response 302:** Redirect to `redirect_uri` with `code` and `state` params.
+
+### Token
+```http
+POST /oauth/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code&code=AUTH_CODE&client_id=CLIENT_ID&client_secret=SECRET&redirect_uri=URL
+```
+**Response 200:**
+```json
+{
+  "access_token": "eyJhbG...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "rt-uuid...",
+  "id_token": "eyJhbG...",
+  "scope": "openid profile"
+}
+```
+
+### Token Refresh
+```http
+POST /oauth/token
+grant_type=refresh_token&refresh_token=rt-uuid...&client_id=CLIENT_ID&client_secret=SECRET
+```
+
+### Client Credentials
+```http
+POST /oauth/token
+grant_type=client_credentials&client_id=CLIENT_ID&client_secret=SECRET&scope=policy:check
+```
+
+### Token Introspection
+```http
+POST /oauth/introspect
+Authorization: Basic <client_credentials>
+token=eyJhbG...&token_hint=access_token
+```
+**Response 200:**
+```json
+{
+  "active": true,
+  "scope": "openid profile",
+  "client_id": "my-app",
+  "username": "john.doe",
+  "exp": 1700000000,
+  "iat": 1699996400,
+  "sub": "user-uuid",
+  "tenant_id": "tenant-uuid"
+}
+```
+
+### Token Revocation
+```http
+POST /oauth/revoke
+token=rt-uuid...&token_type_hint=refresh_token
+```
+**Response 200:** _(empty body)_
+
+### UserInfo
+```http
+GET /oauth/userinfo
+Authorization: Bearer <access_token>
+```
+**Response 200:**
+```json
+{
+  "sub": "550e8400-...",
+  "name": "John Doe",
+  "preferred_username": "john.doe",
+  "email": "john@example.com",
+  "email_verified": true
+}
+```
+
+### Client Management
+```http
+POST   /api/v1/oauth/clients           # Register client
+GET    /api/v1/oauth/clients           # List clients
+GET    /api/v1/oauth/clients/:id       # Get client
+PUT    /api/v1/oauth/clients/:id       # Update client
+DELETE /api/v1/oauth/clients/:id       # Delete client
+```
+
+**Register Client:**
+```json
+{
+  "name": "My App",
+  "redirect_uris": ["https://app.example.com/callback"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "scope": "openid profile email",
+  "token_endpoint_auth_method": "client_secret_basic"
+}
+```
+**Response 201:**
+```json
+{
+  "client_id": "client-uuid",
+  "client_secret": "secret-shown-once",
+  "name": "My App",
+  "redirect_uris": ["https://app.example.com/callback"]
+}
+```
+
+---
+
+## MFA Endpoints
+
+### Enable TOTP
+```http
+POST /api/v1/auth/mfa/totp/enable
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "secret": "JBSWY3DPEHPK3PXP",
+  "qr_code": "data:image/png;base64,...",
+  "uri": "otpauth://totp/GGID:user@example.com?secret=..."
+}
+```
+
+### Verify TOTP Setup
+```http
+POST /api/v1/auth/mfa/totp/verify
+Authorization: Bearer <JWT>
+
+{ "code": "123456" }
+```
+**Response 200:** `{ "enabled": true }`
+
+### Disable TOTP
+```http
+DELETE /api/v1/auth/mfa/totp
+Authorization: Bearer <JWT>
+
+{ "password": "current-password" }
+```
+
+### List MFA Factors
+```http
+GET /api/v1/auth/mfa/factors
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "factors": [
+    { "type": "totp", "enabled": true, "created_at": "2024-01-15T10:00:00Z" },
+    { "type": "webauthn", "enabled": true, "credentials": 2 }
+  ]
+}
+```
+
+### Step-Up Authentication
+```http
+POST /api/v1/auth/stepup
+Authorization: Bearer <JWT>
+
+{ "code": "123456", "method": "totp" }
+```
+**Response 200:**
+```json
+{
+  "access_token": "eyJhbG...",
+  "elevated": true,
+  "expires_in": 300
+}
+```
+
+---
+
+## Social Login
+
+### Initiate Social Login
+```http
+GET /api/v1/auth/social/:provider?redirect_uri=URL
+```
+Providers: `google`, `github`, `microsoft`, `discord`, `slack`, `linkedin`, `gitlab`, `apple`.
+
+**Response 302:** Redirect to provider's OAuth consent screen.
+
+### Social Login Callback
+```http
+GET /api/v1/auth/social/:provider/callback?code=OAUTH_CODE&state=RANDOM
+```
+**Response 302:** Redirect to application with JWT in query or fragment.
+
+---
+
 ## API Conventions
 
 - **Versioning:** All endpoints under `/api/v1/`. Breaking changes require `/api/v2/`.
