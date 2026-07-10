@@ -88,13 +88,13 @@
 ### P1 — Enterprise
 - [TODO] Policy export/import (JSON format for CI/CD integration)
 - [TODO] Audit log retention policy + scheduled cleanup
-- [IN PROGRESS: dev3] Audit log export (CSV/JSON download)
+- [DONE] Audit log export (CSV/JSON download)
 - [TODO] Org service coverage → 70%+ (currently 65.8%)
 
 ### P2 — Enhancement
 - [TODO] Console: OAuth client management page
 - [TODO] Console: Webhook management page
-- [TODO] Console: Audit dashboard with charts (recharts)
+- [IN PROGRESS: dev3] Console: Audit dashboard with charts (recharts)
 - [TODO] Console: User activity timeline
 - [TODO] Console: Dark mode support
 - [TODO] Console: i18n (Chinese + English)
