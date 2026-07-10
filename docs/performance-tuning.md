@@ -375,4 +375,144 @@ ORDER BY pg_total_relation_size(relid) DESC;
 - [Benchmark Guide](./benchmark.md) — k6 load test scripts
 - [Database Optimization](./database-optimization.md) — Query optimization
 - [High Availability](./high-availability.md) — Multi-instance deployment
+
+---
+
+## Go Runtime Tuning
+
+### GOMAXPROCS
+
+In containers, `GOMAXPROCS` defaults to the host's CPU count, not the
+container's CPU limit. Use `automaxprocs` to fix this:
+
+```dockerfile
+# Dockerfile
+ENV GOMAXPROCS=4
+# Or use uber-go/automaxprocs
+```
+
+```go
+import _ "go.uber.org/automaxprocs"
+```
+
+### Garbage Collection
+
+| Env Var | Default | Effect |
+|---------|---------|--------|
+| `GOGC=100` | 100% | GC runs when heap doubles (default) |
+| `GOGC=200` | 200% | Less frequent GC, more memory usage |
+| `GOGC=50` | 50% | More frequent GC, lower latency peaks |
+| `GOMEMLIMIT=512MiB` | off | Soft memory limit (Go 1.19+) |
+
+**Recommendation**: `GOGC=100` (default) for most workloads. Use
+`GOMEMLIMIT` in containers to match memory limits.
+
+### Memory Ballast
+
+```go
+// Allocate a large ballast to stabilize GC frequency
+var ballast [1 << 30]byte  // 1GB ballast (never accessed)
+```
+
+> Only useful in Go < 1.19. With `GOMEMLIMIT`, ballast is unnecessary.
+
+### Performance Profiling
+
+```bash
+# CPU profile
+go test -cpuprofile cpu.out ./...
+
+# Memory profile
+go test -memprofile mem.out ./...
+
+# Analyze
+go tool pprof cpu.out
+(pprof) top 10
+(pprof) web  # Graphviz visualization
+
+# Live profiling endpoint
+curl http://service:port/debug/pprof/profile?seconds=30 > cpu.prof
+```
+
+### Benchmarking
+
+```bash
+# Run benchmarks
+go test -bench=. -benchmem ./...
+
+# Compare benchmarks
+go test -bench=. -count=5 ./... | benchstat old.txt new.txt
+```
+
+---
+
+## Frontend Tuning (Next.js Console)
+
+### Bundle Analysis
+
+```bash
+# Analyze bundle size
+cd console
+ANALYZE=true npm run build
+
+# Output: .next/analyze/client.html
+# Look for: large dependencies, duplicate imports, unoptimized images
+```
+
+### Code Splitting and Lazy Loading
+
+```typescript
+// Lazy-load heavy components (charts, editors)
+import dynamic from 'next/dynamic';
+
+const AuditChart = dynamic(() => import('@/components/AuditChart'), {
+  loading: () => <Skeleton />,
+  ssr: false,  // Client-only component
+});
+
+const RichEditor = dynamic(() => import('@/components/RichEditor'));
+```
+
+### Image Optimization
+
+```typescript
+import Image from 'next/image';
+
+// Automatic WebP/AVIF conversion, responsive sizes
+<Image
+  src="/logo.png"
+  width={200}
+  height={50}
+  priority  // Above-the-fold images
+  alt="Logo"
+/>
+```
+
+### Performance Metrics
+
+| Metric | Target | Tool |
+|--------|--------|------|
+| First Contentful Paint | < 1.5s | Lighthouse |
+| Time to Interactive | < 3s | Lighthouse |
+| Bundle size (initial) | < 200KB gzip | webpack-bundle-analyzer |
+| Lighthouse score | > 90 | PageSpeed Insights |
+
+### Caching Strategy
+
+```typescript
+// next.config.js
+module.exports = {
+  experimental: {
+    staleTimer: 1000,  // ISR revalidation
+  },
+  headers: async () => [
+    {
+      source: '/_next/static/:path*',
+      headers: [
+        { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+      ],
+    },
+  ],
+};
+```
 - [Helm Chart Guide](./helm-chart.md) — K8s resource limits
