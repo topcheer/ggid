@@ -1,182 +1,179 @@
 package dev.ggid.sdk;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
- * GGID IAM SDK client for Java.
- * Integrate GGID identity and access management into Java backends.
+ * GGID IAM Platform API client.
+ * 
+ * Usage:
+ *   GGIDClient client = GGIDClient.builder()
+ *       .gatewayUrl("https://iam.example.com")
+ *       .tenantId("00000000-0000-0000-0000-000000000001")
+ *       .build();
  */
 public class GGIDClient {
-
-    private final String baseURL;
-    private final String apiKey;
+    
+    private final String gatewayUrl;
+    private final String tenantId;
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
-
+    
     private GGIDClient(Builder builder) {
-        this.baseURL = builder.baseURL.replaceAll("/$", "");
-        this.apiKey = builder.apiKey;
+        this.gatewayUrl = builder.gatewayUrl;
+        this.tenantId = builder.tenantId;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
-        this.mapper = new ObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.mapper = new ObjectMapper();
     }
-
-    /**
-     * Check if a user has permission for an action on a resource.
-     */
-    public boolean checkPermission(String userId, String resource, String action) throws Exception {
-        Map<String, String> body = Map.of("user_id", userId, "resource", resource, "action", action);
-        PermissionResult result = post("/api/v1/policies/check", body, PermissionResult.class);
-        return result.allowed;
+    
+    public static Builder builder() {
+        return new Builder();
     }
-
-    /**
-     * Create a new user (requires API key).
-     */
-    public User createUser(CreateUserRequest req) throws Exception {
-        return post("/api/v1/users", req, User.class);
+    
+    // --- Auth ---
+    
+    public TokenSet login(String username, String password) throws GGIDException {
+        Map<String, String> body = Map.of("username", username, "password", password);
+        return post("/api/v1/auth/login", body, "", TokenSet.class);
     }
-
-    /**
-     * Get a user by ID.
-     */
-    public User getUser(String userId) throws Exception {
-        return get("/api/v1/users/" + userId, User.class);
+    
+    public String register(String username, String email, String password, String name) throws GGIDException {
+        Map<String, String> body = new HashMap<>();
+        body.put("username", username);
+        body.put("email", email);
+        body.put("password", password);
+        body.put("name", name != null ? name : "");
+        Map<String, Object> resp = post("/api/v1/auth/register", body, "", Map.class);
+        return (String) resp.get("user_id");
     }
-
-    /**
-     * List users with pagination.
-     */
-    public PageResult<User> listUsers(int page, int pageSize) throws Exception {
-        String path = "/api/v1/users?page=" + page + "&page_size=" + pageSize;
-        return get(path, mapper.getTypeFactory().constructType(PageResult.class));
-    }
-
-    // --- HTTP helpers ---
-
-    private <T> T get(String path, Class<T> type) throws Exception {
-        HttpRequest request = buildRequest("GET", path, null);
-        return execute(request, type);
-    }
-
-    private <T> T get(String path, com.fasterxml.jackson.databind.JavaType type) throws Exception {
-        HttpRequest request = buildRequest("GET", path, null);
-        return execute(request, type);
-    }
-
-    private <T> T post(String path, Object body, Class<T> type) throws Exception {
-        String json = mapper.writeValueAsString(body);
-        HttpRequest request = buildRequest("POST", path, json);
-        return execute(request, type);
-    }
-
-    private HttpRequest buildRequest(String method, String path, String jsonBody) {
-        HttpRequest.Builder builder = HttpRequest.newBuilder()
-                .uri(URI.create(baseURL + path))
-                .timeout(Duration.ofSeconds(30));
-
-        if (apiKey != null && !apiKey.isEmpty()) {
-            builder.header("X-API-Key", apiKey);
-        }
-
-        if ("POST".equals(method) && jsonBody != null) {
-            builder.header("Content-Type", "application/json");
-            builder.POST(HttpRequest.BodyPublishers.ofString(jsonBody));
-        } else {
-            builder.GET();
-        }
-
-        return builder.build();
-    }
-
+    
+    // --- Users ---
+    
     @SuppressWarnings("unchecked")
-    private <T> T execute(HttpRequest request, Class<T> type) throws Exception {
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() >= 400) {
-            throw new GGIDException("API error (status " + response.statusCode() + "): " + response.body());
+    public List<User> listUsers(String token) throws GGIDException {
+        Map<String, Object> resp = get("/api/v1/users", token, Map.class);
+        List<Map<String, Object>> usersData = (List<Map<String, Object>>) resp.get("users");
+        if (usersData == null) usersData = (List<Map<String, Object>>) resp.get("");
+        if (usersData == null) return Collections.emptyList();
+        
+        List<User> users = new ArrayList<>();
+        for (Map<String, Object> data : usersData) {
+            users.add(mapper.convertValue(data, User.class));
         }
-        return mapper.readValue(response.body(), type);
+        return users;
     }
-
-    private <T> T execute(HttpRequest request, com.fasterxml.jackson.databind.JavaType type) throws Exception {
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() >= 400) {
-            throw new GGIDException("API error (status " + response.statusCode() + "): " + response.body());
+    
+    public User getUser(String token, String userId) throws GGIDException {
+        return get("/api/v1/users/" + userId, token, User.class);
+    }
+    
+    public void deleteUser(String token, String userId) throws GGIDException {
+        request("DELETE", "/api/v1/users/" + userId, null, token);
+    }
+    
+    // --- RBAC ---
+    
+    @SuppressWarnings("unchecked")
+    public List<Role> listRoles(String token) throws GGIDException {
+        Map<String, Object> resp = get("/api/v1/roles", token, Map.class);
+        List<Map<String, Object>> rolesData = (List<Map<String, Object>>) resp.get("roles");
+        if (rolesData == null) return Collections.emptyList();
+        
+        List<Role> roles = new ArrayList<>();
+        for (Map<String, Object> data : rolesData) {
+            roles.add(mapper.convertValue(data, Role.class));
         }
-        return mapper.readValue(response.body(), type);
+        return roles;
     }
-
-    // --- DTOs ---
-
+    
+    public PolicyResult checkPermission(String token, String resource, String action) throws GGIDException {
+        Map<String, String> body = Map.of("resource", resource, "action", action);
+        return post("/api/v1/policies/check", body, token, PolicyResult.class);
+    }
+    
+    // --- Internal HTTP ---
+    
+    private <T> T get(String path, String token, Class<T> responseType) throws GGIDException {
+        return request("GET", path, null, token, responseType);
+    }
+    
+    private <T> T post(String path, Object body, String token, Class<T> responseType) throws GGIDException {
+        return request("POST", path, body, token, responseType);
+    }
+    
+    private void request(String method, String path, Object body, String token) throws GGIDException {
+        request(method, path, body, token, Map.class);
+    }
+    
+    @SuppressWarnings("unchecked")
+    private <T> T request(String method, String path, Object body, String token, Class<T> responseType) throws GGIDException {
+        try {
+            String jsonBody = body != null ? mapper.writeValueAsString(body) : "";
+            
+            HttpRequest.Builder reqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(gatewayUrl + path))
+                    .header("X-Tenant-ID", tenantId)
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(30));
+            
+            if (token != null && !token.isEmpty()) {
+                reqBuilder.header("Authorization", "Bearer " + token);
+            }
+            
+            if ("GET".equals(method)) {
+                reqBuilder.GET();
+            } else if ("DELETE".equals(method)) {
+                reqBuilder.DELETE();
+            } else {
+                reqBuilder.method(method, HttpRequest.BodyPublishers.ofString(jsonBody));
+            }
+            
+            HttpResponse<String> response = httpClient.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() >= 400) {
+                throw new GGIDException("API error: " + response.statusCode() + " " + response.body());
+            }
+            
+            if (responseType == Map.class) {
+                return (T) mapper.readValue(response.body(), Map.class);
+            }
+            return mapper.readValue(response.body(), responseType);
+            
+        } catch (GGIDException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new GGIDException("Request failed: " + e.getMessage(), e);
+        }
+    }
+    
+    // --- Builder ---
+    
     public static class Builder {
-        private String baseURL;
-        private String apiKey;
-
-        public Builder baseURL(String baseURL) {
-            this.baseURL = baseURL;
+        private String gatewayUrl;
+        private String tenantId = "00000000-0000-0000-0000-000000000001";
+        
+        public Builder gatewayUrl(String url) {
+            this.gatewayUrl = url.replaceAll("/$", "");
             return this;
         }
-
-        public Builder apiKey(String apiKey) {
-            this.apiKey = apiKey;
+        
+        public Builder tenantId(String id) {
+            this.tenantId = id;
             return this;
         }
-
+        
         public GGIDClient build() {
-            if (baseURL == null || baseURL.isEmpty()) {
-                throw new IllegalArgumentException("baseURL is required");
+            if (gatewayUrl == null || gatewayUrl.isEmpty()) {
+                throw new IllegalArgumentException("gatewayUrl is required");
             }
             return new GGIDClient(this);
-        }
-    }
-
-    public static class PermissionResult {
-        @JsonProperty("allowed")
-        public boolean allowed;
-    }
-
-    public static class User {
-        @JsonProperty("id") public String id;
-        @JsonProperty("tenant_id") public String tenantId;
-        @JsonProperty("username") public String username;
-        @JsonProperty("email") public String email;
-        @JsonProperty("phone") public String phone;
-        @JsonProperty("status") public String status;
-        @JsonProperty("email_verified") public boolean emailVerified;
-        @JsonProperty("created_at") public String createdAt;
-        @JsonProperty("updated_at") public String updatedAt;
-    }
-
-    public static class CreateUserRequest {
-        @JsonProperty("username") public String username;
-        @JsonProperty("email") public String email;
-        @JsonProperty("password") public String password;
-        @JsonProperty("phone") public String phone;
-    }
-
-    public static class PageResult<T> {
-        @JsonProperty("items") public List<T> items;
-        @JsonProperty("total_count") public int totalCount;
-        @JsonProperty("page") public int page;
-        @JsonProperty("page_size") public int pageSize;
-    }
-
-    public static class GGIDException extends Exception {
-        public GGIDException(String message) {
-            super(message);
         }
     }
 }

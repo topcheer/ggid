@@ -39,7 +39,7 @@
 ### P2 — Enhancement
 - [DONE] OAuth consent screen (user approves scopes)
 - [DONE] JWT claim customization (add custom claims via rules)
-- [TODO] Auth service coverage → 85%+ (currently 80.0%)
+- [TODO] Auth service coverage → 85%+ (currently 80.4%)
 - [TODO] OAuth service coverage → 70%+ (currently 59.9%)
 - [DONE] Social connector: Microsoft, Apple, GitLab, Discord, LinkedIn
 
