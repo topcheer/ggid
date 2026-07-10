@@ -812,3 +812,154 @@ pg_replication_lag_seconds > 10
 # Alert: NATS consumer lag
 nats_jetstream_consumer_num_ack_pending > 100
 ```
+
+---
+
+## Blue-Green Deployment
+
+Blue-green deployment eliminates downtime by running two identical environments
+and switching traffic between them.
+
+### Architecture
+
+```
+                   ┌──────────────────┐
+                   │  Load Balancer   │
+                   │  (weighted DNS)  │
+                   └────┬───────┬─────┘
+                        │       │
+          100% traffic  │       │  0% traffic
+                   ┌────▼──┐ ┌──▼──────┐
+                   │ BLUE  │ │  GREEN  │
+                   │ v1.3  │ │  v1.4   │
+                   │ (live)│ │ (idle)  │
+                   └───┬───┘ └────┬────┘
+                       │          │
+                   ┌───▼──────────▼───┐
+                   │  Shared Database  │
+                   │  (backward compat)│
+                   └──────────────────┘
+```
+
+### Kubernetes Blue-Green
+
+```bash
+# 1. Deploy green (new version) alongside blue
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ggid-gateway-green
+spec:
+  replicas: 3
+  selector:
+    matchLabels: {app: ggid-gateway, slot: green}
+  template:
+    metadata:
+      labels: {app: ggid-gateway, slot: green}
+    spec:
+      containers:
+        - name: gateway
+          image: ghcr.io/ggid/gateway:v1.4.0
+          readinessProbe:
+            httpGet: {path: /readyz, port: 8080}
+EOF
+
+# 2. Wait for green to be healthy
+kubectl rollout status deployment/ggid-gateway-green
+kubectl wait --for=condition=available deployment/ggid-gateway-green --timeout=120s
+
+# 3. Switch service to green
+kubectl patch service ggid-gateway -p '{"spec":{"selector":{"slot":"green"}}}'
+
+# 4. Verify traffic on green
+curl -s https://iam.example.com/healthz
+
+# 5. Scale down blue (keep for rollback)
+kubectl scale deployment ggid-gateway-blue --replicas=0
+
+# Or rollback if issues:
+# kubectl patch service ggid-gateway -p '{"spec":{"selector":{"slot":"blue"}}}'
+```
+
+### Blue-Green Database Considerations
+
+Database schema changes must be **backward compatible** during blue-green:
+
+| Migration Type | Safe? | Example |
+|----------------|-------|---------|
+| Add column (nullable) | Yes | `ALTER TABLE users ADD COLUMN phone TEXT` |
+| Add table | Yes | `CREATE TABLE notifications (...)` |
+| Add index (CONCURRENT) | Yes | `CREATE INDEX CONCURRENTLY ...` |
+| Remove column | No | Blue code still reads it |
+| Rename column | No | Blue code uses old name |
+| Change type | No | May break old code |
+
+**Strategy for breaking changes:** Two-phase deploy over two releases:
+
+```
+Release 1: Add new column, keep old column (dual-write)
+Release 2: Switch reads to new column, drop old column
+```
+
+---
+
+## Zero-Downtime Database Migration
+
+### Online Schema Change Process
+
+```bash
+# 1. Add nullable column (instant, no lock)
+psql -c "ALTER TABLE users ADD COLUMN phone VARCHAR(20);"
+
+# 2. Backfill existing rows in batches (no long lock)
+psql <<'SQL'
+DO $$
+DECLARE
+  batch_size INT := 1000;
+  rows_affected INT := 1;
+BEGIN
+  WHILE rows_affected > 0 LOOP
+    UPDATE users
+    SET phone = (
+      SELECT phone_number FROM legacy_phones
+      WHERE legacy_phones.user_id = users.id
+    )
+    WHERE phone IS NULL
+      AND id IN (
+        SELECT id FROM users WHERE phone IS NULL LIMIT batch_size
+      );
+    GET DIAGNOSTICS rows_affected = ROW_COUNT;
+    PERFORM pg_sleep(0.1);  -- 100ms between batches
+  END LOOP;
+END $$;
+SQL
+
+# 3. Add NOT NULL constraint (with default)
+psql -c "ALTER TABLE users ALTER COLUMN phone SET DEFAULT '';"
+psql -c "ALTER TABLE users ALTER COLUMN phone SET NOT NULL;"
+
+# 4. Create index concurrently (no write lock)
+psql -c "CREATE INDEX CONCURRENTLY idx_users_phone ON users(phone);"
+```
+
+### Migration Safety Rules
+
+1. **Never use `ALTER TABLE ... TYPE`** that requires a rewrite — add a new column instead
+2. **Never drop a column in the same release** that stops using it
+3. **Never add a NOT NULL column without a default** — use nullable first, backfill, then set NOT NULL
+4. **Always use `CREATE INDEX CONCURRENTLY`** — non-concurrent index creation locks the table
+5. **Always test on staging** with production data volume
+
+### Migration Verification
+
+```bash
+# Verify migration applied
+psql -c "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'users';"
+
+# Check for long-running queries during migration
+psql -c "SELECT pid, now() - query_start AS duration, query FROM pg_stat_activity WHERE state = 'active' AND now() - query_start > interval '5 seconds';"
+
+# Check table locks
+psql -c "SELECT relation::regclass, mode, pid FROM pg_locks WHERE NOT granted;"
+```
