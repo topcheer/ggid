@@ -430,9 +430,23 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 	if idStr == "" || idStr == "check" {
 		return
 	}
-	id, err := uuid.Parse(idStr)
+
+	// Handle sub-paths: /api/v1/policies/{id}/versions
+	parts := strings.SplitN(idStr, "/", 2)
+	policyIDStr := parts[0]
+	id, err := uuid.Parse(policyIDStr)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid policy ID")
+		return
+	}
+
+	// Sub-path: versions
+	if len(parts) == 2 && parts[1] == "versions" {
+		// Route to existing handlePolicyVersions via query param
+		q := r.URL.Query()
+		q.Set("policy_id", id.String())
+		r.URL.RawQuery = q.Encode()
+		s.handlePolicyVersions(w, r)
 		return
 	}
 

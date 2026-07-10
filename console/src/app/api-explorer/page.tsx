@@ -26,7 +26,7 @@ const QUICK_ENDPOINTS = [
 ];
 
 export default function APIExplorerPage() {
-  const { API_BASE, TENANT_ID, token } = useApi();
+  const { API_BASE, TENANT_ID } = useApi();
   const [endpoints, setEndpoints] = useState<Endpoint[]>([
     {
       id: "1",
@@ -84,7 +84,8 @@ export default function APIExplorerPage() {
     const url = API_BASE + ep.path;
     const headers: Record<string, string> = {};
     ep.headers.forEach(h => { if (h.key) headers[h.key] = h.value; });
-    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const authToken = typeof window !== "undefined" ? localStorage.getItem("ggid_access_token") : null;
+    if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
 
     const start = performance.now();
     try {
