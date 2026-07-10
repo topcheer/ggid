@@ -518,6 +518,93 @@ stateDiagram-v2
 
 ---
 
+## Resource Quotas and Tier Mapping
+
+GGID enforces per-tenant resource quotas based on the tenant's tier. Quotas
+prevent noisy-neighbor problems and enable fair resource allocation.
+
+### Tier Configuration
+
+| Tier | Users | Orgs | Roles | API RPS | Audit Retention | Custom Domain |
+|------|-------|------|-------|---------|-----------------|---------------|
+| Free | 100 | 1 | 5 | 10 | 30 days | No |
+| Starter | 1,000 | 5 | 20 | 50 | 90 days | 1 |
+| Pro | 10,000 | 50 | 100 | 200 | 365 days | 5 |
+| Enterprise | Unlimited | Unlimited | Unlimited | 1,000 | 7 years | Unlimited |
+
+### Quota Enforcement Points
+
+```
+Gateway → Rate Limit Check (RPS per tier)
+       → User Count Check (on registration)
+       → Org Count Check (on org creation)
+       → Role Count Check (on role creation)
+```
+
+### Configure Tenant Tier
+
+```bash
+curl -X PATCH $API/api/v1/tenants/$TENANT_ID \
+    -H "Authorization: Bearer $SUPERADMIN_TOKEN" \
+    -d '{
+        "tier": "pro",
+        "quotas": {
+            "max_users": 10000,
+            "max_orgs": 50,
+            "max_roles": 100,
+            "api_rps": 200,
+            "audit_retention_days": 365
+        }
+    }'
+```
+
+### Quota Exceeded Responses
+
+When a tenant exceeds its quota, GGID returns a descriptive error:
+
+```json
+{
+  "error": "quota_exceeded",
+  "code": "QUOTA_EXCEEDED",
+  "quota_type": "max_users",
+  "limit": 100,
+  "current": 100,
+  "tier": "free",
+  "message": "User limit of 100 reached for free tier. Upgrade at https://iam.example.com/billing."
+}
+```
+
+### Schema-Per-Tenant vs RLS Comparison (Extended)
+
+| Aspect | Schema-Per-Tenant | Row-Level Security (GGID default) |
+|--------|-------------------|-----------------------------------|
+| Isolation | Strong (separate namespaces) | Strong (DB-enforced policies) |
+| Max tenants | ~100-500 (schema overhead) | Unlimited |
+| Migration | Per-schema migration scripts | Single migration for all |
+| Backup/Restore | Per-tenant possible | All-at-once |
+| Query complexity | Simple (no tenant filter) | Simple (RLS is automatic) |
+| Connection pool | Shared or per-schema | Shared (SET LOCAL) |
+| Cross-tenant queries | Difficult (UNION across schemas) | Easy (superuser bypass) |
+| Storage overhead | Higher (system catalogs) | Lower |
+| Onboarding | Slow (DDL per tenant) | Fast (INSERT row) |
+| Best for | Regulated (data residency) | SaaS (most use cases) |
+
+### Custom Quota Overrides
+
+```bash
+# Override specific quotas for a tenant (enterprise only)
+curl -X PATCH $API/api/v1/tenants/$TENANT_ID/quotas \
+    -H "Authorization: Bearer $SUPERADMIN_TOKEN" \
+    -d '{
+        "max_users": 50000,
+        "max_api_keys": 100,
+        "max_webhooks": 50,
+        "max_saml_sps": 20
+    }'
+```
+
+---
+
 ## References
 
 - [Architecture](./architecture.md) — Overall system design
