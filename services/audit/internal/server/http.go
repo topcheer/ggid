@@ -48,6 +48,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/stats", s.handleStats)
 	mux.HandleFunc("/api/v1/audit/export", s.handleExport)
 	mux.HandleFunc("/api/v1/audit/stream", s.handleStream)
+	mux.HandleFunc("/api/v1/audit/metrics", s.handleMetrics)
 	mux.HandleFunc("/api/v1/audit/retention", s.handleRetention)
 	mux.HandleFunc("/api/v1/audit/rules", s.handleAnomalyRules)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
@@ -318,6 +319,76 @@ func writeAuditCSV(w http.ResponseWriter, events []*domain.AuditEvent) {
 		})
 	}
 	wr.Flush()
+}
+
+// GET /api/v1/audit/metrics?tenant_id=X — returns aggregated metrics:
+// event counts by action, hourly buckets, top actors, failure rate
+func (s *HTTPServer) handleMetrics(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	stats, err := s.svc.GetStats(r.Context(), tenantID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Build action breakdown
+	actionBreakdown := make(map[string]int)
+	for action, count := range stats.EventsByAction {
+		actionBreakdown[action] = count
+	}
+
+	// Build hourly buckets
+	hourlyBuckets := make([]map[string]any, len(stats.HourlyDistribution))
+	for i, h := range stats.HourlyDistribution {
+		hourlyBuckets[i] = map[string]any{
+			"hour":  h.Hour.Format("15:04"),
+			"count": h.Count,
+		}
+	}
+
+	// Top actors
+	topActors := make([]map[string]any, len(stats.TopActors))
+	for i, a := range stats.TopActors {
+		topActors[i] = map[string]any{
+			"actor_id":   a.ActorID.String(),
+			"actor_name": a.ActorName,
+			"count":      a.Count,
+		}
+	}
+
+	totalEvents := stats.TotalEvents24h
+	failedLogins := stats.FailedLogins24h
+	failureRate := 0.0
+	if totalEvents > 0 {
+		failureRate = float64(failedLogins) / float64(totalEvents) * 100
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"period": "24h",
+		"summary": map[string]any{
+			"total_events":  totalEvents,
+			"failed_logins": failedLogins,
+			"failure_rate":  failureRate,
+		},
+		"action_breakdown": actionBreakdown,
+		"hourly_buckets":   hourlyBuckets,
+		"top_actors":       topActors,
+	})
 }
 
 // GET /api/v1/audit/stream?tenant_id=X — Server-Sent Events for real-time audit events

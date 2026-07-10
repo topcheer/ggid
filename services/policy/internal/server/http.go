@@ -38,6 +38,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies", s.handlePolicies)
 	mux.HandleFunc("/api/v1/policies/", s.handlePolicyByID)
 	mux.HandleFunc("/api/v1/policies/check", s.handleCheck)
+	mux.HandleFunc("/api/v1/policies/evaluate", s.handleEvaluate)
 	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
 	mux.HandleFunc("/api/v1/policies/import", s.handlePolicyImport)
 	mux.HandleFunc("/api/v1/policies/attribute-mapping", s.handleAttributeMapping)
@@ -377,6 +378,81 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		"allowed":    result.Allowed,
 		"reason":     result.Reason,
 		"matched_by": result.MatchedBy,
+	})
+}
+
+// --- ABAC Policy Evaluate ---
+
+// POST /api/v1/policies/evaluate — evaluate ABAC policies with attribute conditions
+// Request: {"user_id": "...", "tenant_id": "...", "resource_type": "user", "action": "read",
+//           "attributes": {"user.department": "eng", "resource.owner": "abc", "env.time": "14:30"}}
+// Response: {"allowed": true, "reason": "...", "matched_rules": [...], "evaluation_time_ms": 1}
+func (s *HTTPServer) handleEvaluate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		UserID       string         `json:"user_id"`
+		TenantID     string         `json:"tenant_id"`
+		ResourceType string         `json:"resource_type"`
+		Action       string         `json:"action"`
+		Resource     string         `json:"resource"`
+		Attributes   map[string]any `json:"attributes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	if req.UserID == "" {
+		writeJSONError(w, http.StatusBadRequest, "user_id is required")
+		return
+	}
+
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	// Merge attributes into conditions for the evaluator
+	conditions := req.Attributes
+	if conditions == nil {
+		conditions = map[string]any{}
+	}
+
+	start := time.Now()
+	result, err := s.evaluator.Check(r.Context(), &domain.CheckRequest{
+		UserID:       userID,
+		ResourceType: req.ResourceType,
+		Action:       req.Action,
+		Resource:     req.Resource,
+		Conditions:   conditions,
+	})
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Build matched rules response
+	matchedRules := []map[string]any{}
+	if result.Allowed {
+		matchedRules = append(matchedRules, map[string]any{
+			"type":   result.MatchedBy,
+			"effect": "allow",
+			"conditions_evaluated": conditions,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"allowed":            result.Allowed,
+		"reason":             result.Reason,
+		"matched_by":         result.MatchedBy,
+		"matched_rules":      matchedRules,
+		"attributes":         conditions,
+		"evaluation_time_ms": time.Since(start).Milliseconds(),
 	})
 }
 

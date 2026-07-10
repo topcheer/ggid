@@ -6,6 +6,7 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/ggid/ggid/pkg/errors"
@@ -32,6 +33,7 @@ func NewHTTPServer(orgSvc *service.OrgService, deptSvc *service.DeptService, tea
 func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	// Organizations
 	mux.HandleFunc("/api/v1/orgs", s.handleOrgs)
+	mux.HandleFunc("/api/v1/orgs/tree", s.handleFullTree)
 	mux.HandleFunc("/api/v1/orgs/", s.handleOrgByID)
 	// Departments
 	mux.HandleFunc("/api/v1/departments", s.handleDepartments)
@@ -39,6 +41,106 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	// Teams
 	mux.HandleFunc("/api/v1/teams", s.handleTeams)
 	mux.HandleFunc("/api/v1/teams/", s.handleTeamByID)
+}
+
+// GET /api/v1/orgs/tree?tenant_id=X&depth=N — returns full org tree as nested structure
+func (s *HTTPServer) handleFullTree(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	depth := 0 // 0 = unlimited
+	if d := r.URL.Query().Get("depth"); d != "" {
+		if parsed, err := strconv.Atoi(d); err == nil && parsed > 0 {
+			depth = parsed
+		}
+	}
+
+	orgs, err := s.orgSvc.List(r.Context(), tenantID, 1, 500)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "failed to load organizations")
+		return
+	}
+
+	// Build nested tree structure
+	tree := buildOrgTree(orgs, depth)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"tree":     tree,
+		"count":    len(orgs),
+		"depth":    depth,
+	})
+}
+
+// orgTreeNode represents a node in the org tree response.
+type orgTreeNode struct {
+	ID       string         `json:"id"`
+	Name     string         `json:"name"`
+	Path     string         `json:"path"`
+	ParentID *string        `json:"parent_id,omitempty"`
+	Children []*orgTreeNode `json:"children,omitempty"`
+}
+
+func buildOrgTree(orgs []*domain.Organization, maxDepth int) []*orgTreeNode {
+	nodeMap := make(map[uuid.UUID]*orgTreeNode)
+	var roots []*orgTreeNode
+
+	// Create all nodes
+	for _, org := range orgs {
+		node := &orgTreeNode{
+			ID:       org.ID.String(),
+			Name:     org.Name,
+			Path:     org.Path,
+			Children: []*orgTreeNode{},
+		}
+		if org.ParentID != nil {
+			pid := org.ParentID.String()
+			node.ParentID = &pid
+		}
+		nodeMap[org.ID] = node
+	}
+
+	// Link children to parents
+	for _, org := range orgs {
+		if org.ParentID == nil {
+			roots = append(roots, nodeMap[org.ID])
+		} else if parent, ok := nodeMap[*org.ParentID]; ok {
+			parent.Children = append(parent.Children, nodeMap[org.ID])
+		} else {
+			// Orphan node (parent not in result set) — treat as root
+			roots = append(roots, nodeMap[org.ID])
+		}
+	}
+
+	// Apply depth limit
+	if maxDepth > 0 {
+		for _, root := range roots {
+			pruneTree(root, maxDepth, 1)
+		}
+	}
+
+	return roots
+}
+
+func pruneTree(node *orgTreeNode, maxDepth, currentDepth int) {
+	if currentDepth >= maxDepth {
+		node.Children = nil
+		return
+	}
+	for _, child := range node.Children {
+		pruneTree(child, maxDepth, currentDepth+1)
+	}
 }
 
 // ===== Organizations =====
