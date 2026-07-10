@@ -459,3 +459,99 @@ graph LR
 - [Deployment Guide](./deployment.md) — Production deployment instructions
 - [Security Whitepaper](./security-whitepaper.md) — Threat model and security controls
 - [Data Model Design](./design/data-model.md) — Entity relationships and schema
+
+---
+
+## Appendix: Request Flow Trace
+
+### Complete Request Lifecycle (Login → API Call)
+
+```
+Client                    Gateway(:8080)              Auth(:9001)          Redis          PostgreSQL
+  │                           │                          │                   │                 │
+  │ POST /api/v1/auth/login   │                          │                   │                 │
+  │ X-Tenant-ID: <uuid>       │                          │                   │                 │
+  ├──────────────────────────►│                          │                   │                 │
+  │                           │ 1. PanicRecovery         │                   │                 │
+  │                           │ 2. RequestID             │                   │                 │
+  │                           │ 3. TenantResolver        │                   │                 │
+  │                           │ 4. RateLimiter           │                   │                 │
+  │                           │ 5. Route: /auth/*        │                   │                 │
+  │                           ├─────────────────────────►│                   │                 │
+  │                           │                          │ 6. Validate creds │                 │
+  │                           │                          ├──────────────────────────────────►│
+  │                           │                          │                   │                 │
+  │                           │                          │ 7. Check password │                 │
+  │                           │                          │◄──────────────────────────────────┤
+  │                           │                          │                   │                 │
+  │                           │                          │ 8. Check MFA req  │                 │
+  │                           │                          │ 9. Issue JWT      │                 │
+  │                           │                          │ 10. Store session ├────────────────►│
+  │                           │                          │ 11. Audit event   ├───────────────►│ (NATS)
+  │                           │ 12. JSON response        │                   │                 │
+  │                           │◄─────────────────────────┤                   │                 │
+  │ { access_token, ... }     │                          │                   │                 │
+  │◄──────────────────────────┤                          │                   │                 │
+  │                           │                          │                   │                 │
+  │ GET /api/v1/users         │                          │                   │                 │
+  │ Authorization: Bearer <jwt>│                         │                   │                 │
+  ├──────────────────────────►│                          │                   │                 │
+  │                           │ 13. JWTAuth middleware    │                   │                 │
+  │                           │     - Parse token         │                   │                 │
+  │                           │     - Verify signature    │                   │                 │
+  │                           │     - Check expiry        │                   │                 │
+  │                           │     - Check revocation    │                   │                 │
+  │                           │ 14. Route: /users/*      │                   │                 │
+  │                           │     proxy → Identity(:8081)                  │                 │
+  │                           ├──────────────┐           │                   │                 │
+  │                           │              │ Identity(:8081)                 │                 │
+  │                           │              ├──────────────────────────────►│                 │
+  │                           │              │ 15. RLS: SET LOCAL tenant_id   │                 │
+  │                           │              │ 16. Query users WHERE ...      │                 │
+  │                           │              │◄──────────────────────────────┤                 │
+  │                           │ 17. JSON response        │                   │                 │
+  │                           │◄────────────┘           │                   │                 │
+  │ [{ user data }]           │                          │                   │                 │
+  │◄──────────────────────────┤                          │                   │                 │
+```
+
+### gRPC vs REST Boundary
+
+| Protocol | Used For | Services |
+|----------|----------|----------|
+| **REST (HTTP/JSON)** | Client-facing API, browser, curl | Gateway only |
+| **gRPC (HTTP/2)** | Service-to-service internal | Identity↔Policy, Audit↔NATS |
+| **gRPC (HTTP/2)** | Admin operations, streaming | All services expose gRPC |
+
+```
+Browser/curl ──REST──► Gateway ──gRPC──► Identity, Auth, Policy, Org, Audit
+```
+
+The Gateway is the sole REST endpoint. All internal communication uses gRPC
+for performance (protobuf binary, HTTP/2 multiplexing). External clients never
+access gRPC ports directly.
+
+### Tenant Isolation Architecture
+
+```
+┌──────────────────────────────────────────────────────┐
+│                    PostgreSQL                         │
+│                                                       │
+│  ┌─────────────────────────────────────────────┐     │
+│  │           Row-Level Security (RLS)           │     │
+│  │                                               │     │
+│  │  SET LOCAL app.tenant_id = '<uuid>';         │     │
+│  │                                               │     │
+│  │  Policy: WHERE tenant_id = current_setting() │     │
+│  │                                               │     │
+│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐      │     │
+│  │  │Tenant A │  │Tenant B │  │Tenant C │      │     │
+│  │  │ users   │  │ users   │  │ users   │      │     │
+│  │  │ roles   │  │ roles   │  │ roles   │      │     │
+│  │  │ orgs    │  │ orgs    │  │ orgs    │      │     │
+│  │  └─────────┘  └─────────┘  └─────────┘      │     │
+│  └─────────────────────────────────────────────┘     │
+│                                                       │
+│  Connection pool: each query sets tenant_id first     │
+└──────────────────────────────────────────────────────┘
+```
