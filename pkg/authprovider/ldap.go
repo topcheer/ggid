@@ -28,6 +28,13 @@ type LDAPConfig struct {
 	TLSConfig    *tls.Config   // optional TLS config; nil means use defaults
 	PoolSize     int           // max pooled connections (default 5)
 	ConnTimeout  time.Duration // dial + bind timeout
+	GroupRoleMappings []GroupRoleMapping // optional: map LDAP groups to roles
+}
+
+// GroupRoleMapping maps an LDAP group DN to an application role.
+type GroupRoleMapping struct {
+	GroupDN string // e.g. "cn=admins,dc=corp,dc=local"
+	Role    string // e.g. "admin"
 }
 
 // ldapConn is the subset of *ldap.Conn methods used by LDAPProvider.
@@ -131,6 +138,11 @@ func (p *LDAPProvider) Authenticate(ctx context.Context, creds Credentials) (*Au
 		Provider:   ProviderLDAP,
 		Attributes: attributes,
 		NewUser:    p.cfg.AutoProvision,
+	}
+
+	// Map LDAP groups to roles if a mapping is configured.
+	if len(p.cfg.GroupRoleMappings) > 0 {
+		result.Roles = p.mapGroupsToRoles(attributes)
 	}
 
 	// If not auto-provisioning, the caller must link the user manually.
@@ -340,4 +352,31 @@ func (c *ChainEnhanced) ProviderNames() string {
 		names[i] = p.Name()
 	}
 	return strings.Join(names, ", ")
+}
+
+// mapGroupsToRoles extracts the user's LDAP groups from attributes and
+// maps them to application roles using the configured GroupRoleMappings.
+func (p *LDAPProvider) mapGroupsToRoles(attrs map[string]any) []string {
+	// Extract group memberships from attributes.
+	var groups []string
+	if memberOf, ok := attrs["memberOf"]; ok {
+		switch v := memberOf.(type) {
+		case []string:
+			groups = v
+		case string:
+			groups = []string{v}
+		}
+	}
+
+	seen := map[string]bool{}
+	var roles []string
+	for _, mapping := range p.cfg.GroupRoleMappings {
+		for _, group := range groups {
+			if strings.EqualFold(group, mapping.GroupDN) && !seen[mapping.Role] {
+				roles = append(roles, mapping.Role)
+				seen[mapping.Role] = true
+			}
+		}
+	}
+	return roles
 }

@@ -47,6 +47,7 @@ type AuthResult struct {
 	MustLink    bool           // needs linking to a local account
 	NewUser     bool           // first-time login, requires JIT provisioning
 	LinkedUser  *uuid.UUID     // non-nil if already linked to a local user
+	Roles       []string       // mapped roles from group membership
 }
 
 // Chain holds an ordered list of providers and tries them in sequence.
