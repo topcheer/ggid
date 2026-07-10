@@ -1,6 +1,25 @@
 package email
 
-import "html"
+import (
+	"html"
+	"strings"
+)
+
+// safeURL sanitises a URL for use in an href attribute. It rejects dangerous
+// protocols (javascript:, data:, vbscript:) by returning a safe placeholder.
+// This prevents XSS via href injection even if html.EscapeString is bypassed.
+func safeURL(link string) string {
+	lower := strings.ToLower(strings.TrimSpace(link))
+	if strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://") {
+		return html.EscapeString(link)
+	}
+	// Relative URLs (starting with /) are also safe.
+	if strings.HasPrefix(link, "/") {
+		return html.EscapeString(link)
+	}
+	// Block javascript:, data:, vbscript:, and any other non-http scheme.
+	return "#"
+}
 
 // Templates provides HTML email templates for common IAM notifications.
 // All user-supplied fields are HTML-escaped to prevent injection attacks.
@@ -26,7 +45,7 @@ func PasswordResetHTML(d PasswordResetData) string {
 We received a request to reset your password. Click the button below to set a new password:
 </p>
 <p style="text-align: center; margin: 30px 0;">
-<a href="` + html.EscapeString(d.Link) + `" style="background-color: #4F46E5; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">Reset Password</a>
+<a href="` + safeURL(d.Link) + `" style="background-color: #4F46E5; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold;">Reset Password</a>
 </p>
 <p style="color: #6b7280; font-size: 14px;">
 This link will expire in ` + html.EscapeString(d.Expiry) + `.
@@ -68,7 +87,7 @@ func EmailVerificationHTML(d EmailVerificationData) string {
 <p style="color: #4a4a4a; font-size: 16px;">Hi ` + html.EscapeString(d.UserName) + `,</p>
 <p style="color: #4a4a4a; font-size: 16px;">Please verify your email address by clicking the button below:</p>
 <p style="text-align: center; margin: 30px 0;">
-<a href="` + html.EscapeString(d.Link) + `" style="background-color: #10B981; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verify Email</a>
+<a href="` + safeURL(d.Link) + `" style="background-color: #10B981; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold;">Verify Email</a>
 </p>
 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 <p style="color: #9ca3af; font-size: 12px;">This is an automated message from ` + html.EscapeString(appName) + `.</p>
@@ -93,7 +112,7 @@ func WelcomeHTML(d WelcomeData) string {
 <p style="color: #4a4a4a; font-size: 16px;">Hi ` + html.EscapeString(d.UserName) + `,</p>
 <p style="color: #4a4a4a; font-size: 16px;">Your account has been created successfully. Welcome aboard!</p>
 <p style="text-align: center; margin: 30px 0;">
-<a href="` + html.EscapeString(d.Link) + `" style="background-color: #4F46E5; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Started</a>
+<a href="` + safeURL(d.Link) + `" style="background-color: #4F46E5; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold;">Get Started</a>
 </p>
 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
 <p style="color: #9ca3af; font-size: 12px;">This is an automated message from ` + html.EscapeString(appName) + `.</p>

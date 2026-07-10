@@ -40,15 +40,20 @@ func (m *mockRoleReader) GetRolePermissions(_ context.Context, roleIDs []uuid.UU
 }
 
 type mockUserRoleReader struct {
-	roleIDs map[uuid.UUID][]uuid.UUID
+	roleIDs map[uuid.UUID][]uuid.UUID // keep as role IDs for convenience
 	err     error
 }
 
-func (m *mockUserRoleReader) GetRoleIDsForUser(_ context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+func (m *mockUserRoleReader) GetUserRoles(_ context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
-	return m.roleIDs[userID], nil
+	ids := m.roleIDs[userID]
+	var roles []*domain.UserRole
+	for _, id := range ids {
+		roles = append(roles, &domain.UserRole{RoleID: id})
+	}
+	return roles, nil
 }
 
 type mockPolicyReader struct {

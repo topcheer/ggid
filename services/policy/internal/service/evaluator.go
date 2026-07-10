@@ -24,7 +24,7 @@ type RoleReader interface {
 // UserRoleReader provides read access to user-role assignments.
 // Implemented by *repository.UserRoleRepository; mocked in tests.
 type UserRoleReader interface {
-	GetRoleIDsForUser(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error)
 }
 
 // PolicyReader provides read access to ABAC policies.
@@ -139,10 +139,23 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 		return &domain.CheckResult{Allowed: false, Reason: "anonymous user"}, nil
 	}
 
-	// Step 1: Get the user's direct role assignments.
-	userRoleIDs, err := e.userRoleReader.GetRoleIDsForUser(ctx, req.UserID)
+	// Step 1: Get the user's direct role assignments (with ExpiresAt for filtering).
+	userRoles, err := e.userRoleReader.GetUserRoles(ctx, req.UserID)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "get user roles", err)
+	}
+
+	// Step 1b: Filter out expired role assignments (defense-in-depth).
+	// Even if the database query already filters by expires_at > NOW(),
+	// we enforce it here so any caching layer or alternative reader
+	// implementation cannot bypass expiration.
+	now := time.Now().UTC()
+	var userRoleIDs []uuid.UUID
+	for _, ur := range userRoles {
+		if ur.ExpiresAt != nil && ur.ExpiresAt.Before(now) {
+			continue // role assignment has expired
+		}
+		userRoleIDs = append(userRoleIDs, ur.RoleID)
 	}
 	if len(userRoleIDs) == 0 {
 		return &domain.CheckResult{Allowed: false, Reason: "user has no role assignments"}, nil

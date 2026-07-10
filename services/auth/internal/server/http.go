@@ -839,11 +839,13 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// In production, send email. In dev, return the token.
+	// In production, send email. In dev mode (DEV_MODE=true), log the token.
+	if os.Getenv("DEV_MODE") == "true" {
+		log.Printf("[DEV] magic link token for %s: %s", body.Email, token)
+	}
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "sent",
 		"message": "If the email exists, a magic link has been sent.",
-		"token":   token, // dev mode only
 	})
 }
 
@@ -968,11 +970,13 @@ func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Don't reveal whether email exists — but return token in dev mode.
+	// Don't reveal whether email exists. Log token only in DEV_MODE.
+	if os.Getenv("DEV_MODE") == "true" {
+		log.Printf("[DEV] verification token for %s: %s", body.Email, token)
+	}
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "sent",
 		"message": "If the email exists, a verification link has been sent.",
-		"token":   token, // dev mode only
 	})
 }
 
@@ -1106,11 +1110,13 @@ func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// In production, send OTP via SMS. In dev, return the OTP.
+	// In production, send OTP via SMS. In dev mode, log the OTP.
+	if os.Getenv("DEV_MODE") == "true" {
+		log.Printf("[DEV] phone OTP for %s: %s", body.Phone, otp)
+	}
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "sent",
 		"message": "OTP sent to phone number",
-		"otp":     otp, // dev mode only
 	})
 }
 
@@ -1387,11 +1393,12 @@ func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if os.Getenv("DEV_MODE") == "true" {
+		log.Printf("[DEV] email change tokens — old: %s, new: %s", result.OldEmailToken, result.NewEmailToken)
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":          "sent",
-		"message":         "Verification links sent to both old and new email addresses.",
-		"old_email_token": result.OldEmailToken, // dev mode only
-		"new_email_token": result.NewEmailToken, // dev mode only
+		"status":  "sent",
+		"message": "Verification links sent to both old and new email addresses.",
 	})
 }
 
@@ -1807,7 +1814,13 @@ func (h *Handler) emailChange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, result)
+	if os.Getenv("DEV_MODE") == "true" {
+		log.Printf("[DEV] email change tokens — old: %s, new: %s", result.OldEmailToken, result.NewEmailToken)
+	}
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":  "sent",
+		"message": "Verification links sent to both old and new email addresses.",
+	})
 }
 
 func (h *Handler) emailChangeConfirm(w http.ResponseWriter, r *http.Request) {

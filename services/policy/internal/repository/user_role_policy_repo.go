@@ -86,6 +86,30 @@ func (r *UserRoleRepository) GetRoleIDsForUser(ctx context.Context, userID uuid.
 	return ids, nil
 }
 
+// GetUserRoles returns all role assignments for a user including ExpiresAt metadata.
+// The evaluator uses this to enforce role expiration independently of the SQL filter.
+func (r *UserRoleRepository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
+	query := `
+		SELECT user_id, role_id, scope_type, scope_id, granted_by, expires_at, created_at
+		FROM user_roles
+		WHERE user_id = $1`
+	rows, err := r.db.Query(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("get user roles: %w", err)
+	}
+	defer rows.Close()
+
+	var assignments []*domain.UserRole
+	for rows.Next() {
+		ur := &domain.UserRole{}
+		if err := rows.Scan(&ur.UserID, &ur.RoleID, &ur.ScopeType, &ur.ScopeID, &ur.GrantedBy, &ur.ExpiresAt, &ur.CreatedAt); err != nil {
+			return nil, err
+		}
+		assignments = append(assignments, ur)
+	}
+	return assignments, nil
+}
+
 // --- Policy repository ---
 
 // PolicyRepository manages ABAC policy persistence.

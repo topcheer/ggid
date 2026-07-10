@@ -125,8 +125,12 @@ type mockEvalUserRoleReader struct {
 	roleIDs []uuid.UUID
 }
 
-func (m *mockEvalUserRoleReader) GetRoleIDsForUser(_ context.Context, _ uuid.UUID) ([]uuid.UUID, error) {
-	return m.roleIDs, nil
+func (m *mockEvalUserRoleReader) GetUserRoles(_ context.Context, _ uuid.UUID) ([]*domain.UserRole, error) {
+	var roles []*domain.UserRole
+	for _, id := range m.roleIDs {
+		roles = append(roles, &domain.UserRole{RoleID: id})
+	}
+	return roles, nil
 }
 
 func TestSetDecisionLogger(t *testing.T) {

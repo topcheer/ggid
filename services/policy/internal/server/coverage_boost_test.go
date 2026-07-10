@@ -242,8 +242,13 @@ type testUserRoleReader struct {
 	userRoles map[uuid.UUID][]uuid.UUID
 }
 
-func (m *testUserRoleReader) GetRoleIDsForUser(_ context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
-	return m.userRoles[userID], nil
+func (m *testUserRoleReader) GetUserRoles(_ context.Context, userID uuid.UUID) ([]*domain.UserRole, error) {
+	ids := m.userRoles[userID]
+	var roles []*domain.UserRole
+	for _, id := range ids {
+		roles = append(roles, &domain.UserRole{RoleID: id})
+	}
+	return roles, nil
 }
 
 // testPolicyReader implements service.PolicyReader for the evaluator.
