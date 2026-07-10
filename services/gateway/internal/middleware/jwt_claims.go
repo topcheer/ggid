@@ -90,6 +90,9 @@ func ExtractJWTClaims(r *http.Request) JWTCClaims {
 
 // ClaimsFromContext retrieves JWT claims from context.
 func ClaimsFromContext(ctx context.Context) JWTCClaims {
+	if ctx == nil {
+		return JWTCClaims{}
+	}
 	if c, ok := ctx.Value(claimsKey).(JWTCClaims); ok {
 		return c
 	}
