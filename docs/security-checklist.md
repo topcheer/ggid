@@ -567,3 +567,206 @@ before going live.
 - [Password Policy](./password-policy.md) — Policy configuration
 - [Rate Limiting](./rate-limiting.md) — Rate limit details
 - [Compliance Checklist](./compliance-checklist.md) — GDPR/SOC2/ISO27001
+
+---
+
+## Secret Rotation Procedure
+
+### Rotation Schedule
+
+| Secret | Rotation Period | Method |
+|--------|----------------|--------|
+| JWT signing key (RSA) | 90 days | Dual-key overlap |
+| Cookie encryption key | 90 days | Grace period rotation |
+| Database password | 60 days | `ALTER ROLE` + restart |
+| Redis password | 60 days | ConfigMap + restart |
+| NATS credentials | 90 days | Account-based rotation |
+| LDAP bind password | 90 days | Service account reset |
+| OAuth client secrets | 180 days | Admin API rotation |
+| API keys | 180 days | Admin API rotation |
+| TLS certificates | 90 days (Let's Encrypt) / 1 year (CA) | cert-manager / manual |
+
+### JWT Signing Key Rotation
+
+```bash
+# 1. Generate new RSA key pair
+openssl genpkey -algorithm RSA -out new-jwt.key -pkeyopt rsa_keygen_bits:2048
+openssl rsa -in new-jwt.key -pubout -out new-jwt.pub
+
+# 2. Deploy with dual keys (old + new)
+JWT_SIGNING_KEY=/etc/ggid/keys/jwt.key
+JWT_SIGNING_KEY_NEW=/etc/ggid/keys/new-jwt.key
+# Gateway accepts tokens signed with either key
+
+# 3. Wait for old tokens to expire (15 min access tokens = wait 15 min)
+sleep 900
+
+# 4. Switch primary signing key to new
+JWT_SIGNING_KEY=/etc/ggid/keys/new-jwt.key
+# Remove old key from config
+
+# 5. Restart auth and gateway services
+docker compose restart auth gateway
+```
+
+### Database Password Rotation
+
+```bash
+# 1. Set new password
+docker exec ggid-postgres psql -U ggid_admin -d ggid \
+  -c "ALTER ROLE ggid_app WITH PASSWORD 'new-strong-password';"
+
+# 2. Update environment
+DATABASE_URL=postgres://ggid_app:new-strong-password@postgres:5432/ggid
+
+# 3. Rolling restart (no downtime with connection pooling)
+kubectl rollout restart deployment/auth
+kubectl rollout restart deployment/identity
+kubectl rollout restart deployment/oauth
+```
+
+### Automated Rotation (Vault)
+
+```yaml
+# Vault dynamic database credentials
+vault:
+  database:
+    enabled: true
+    role: "ggid-app"
+    credential_ttl: "24h"
+    max_ttl: "48h"
+  
+  transit:
+    jwt_signing:
+      enabled: true
+      key_name: "g gid-jwt-signing"
+      key_type: "rsa-2048"
+      rotation_period: "2160h"  # 90 days
+```
+
+---
+
+## Audit Log Retention
+
+### Retention Policy
+
+| Data Type | Hot Storage | Warm Storage | Cold Archive | Total Retention |
+|-----------|------------|-------------|-------------|-----------------|
+| Authentication events | 30 days | 90 days | 1 year | 15 months |
+| Admin actions | 90 days | 1 year | 7 years | 8+ years |
+| User CRUD events | 90 days | 1 year | 3 years | 4+ years |
+| Security events | 90 days | 1 year | 7 years | 8+ years |
+| OAuth token events | 30 days | 90 days | 1 year | 15 months |
+| Session data | 7 days | 30 days | N/A | 37 days |
+
+### Configuration
+
+```yaml
+audit:
+  retention:
+    hot_days: 30           # Fast query (PostgreSQL)
+    warm_days: 365         # Slower query (compressed partitions)
+    cold_years: 7          # Archive (S3 Glacier / cold storage)
+    
+    # Auto-partitioning by month
+    partition_strategy: "monthly"
+    
+    # Auto-purge expired records
+    purge_cron: "0 2 * * *"    # Daily at 2 AM
+    batch_size: 10000           # Purge in batches to avoid lock contention
+  
+  storage:
+    hot: "postgresql"
+    warm: "postgresql_compressed"
+    cold: "s3://ggid-audit-archive/"
+    
+  compliance:
+    immutable: true          # WORM (Write Once Read Many)
+    tamper_proof: true       # Hash chain verification
+```
+
+### Legal Hold
+
+```bash
+# Apply legal hold (prevents purging)
+curl -X POST http://localhost:8080/api/v1/admin/audit/legal-hold \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "reason": "SOC2 audit Q1 2024",
+    "start_date": "2024-01-01",
+    "end_date": "2024-03-31",
+    "hold_until": "2025-06-30"
+  }'
+```
+
+### Hash Chain Verification
+
+```bash
+# Verify audit log integrity (tamper detection)
+curl http://localhost:8080/api/v1/admin/audit/verify-integrity \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{ "start": "2024-01-01T00:00:00Z", "end": "2024-01-31T23:59:59Z" }'
+
+# Response:
+# { "verified": true, "events_checked": 152348, "chain_intact": true }
+```
+
+---
+
+## Session Timeout Configuration
+
+### Session Tiers
+
+| Tier | Access Token TTL | Session Max | Idle Timeout | Re-auth |
+|------|-----------------|-------------|-------------|---------|
+| Standard | 15 min | 8 hours | 1 hour | 7 days |
+| Elevated (admin) | 10 min | 4 hours | 30 min | 4 hours |
+| High-security | 5 min | 2 hours | 15 min | 1 hour |
+| Service (M2M) | 1 hour | N/A | N/A | N/A |
+
+### Configuration
+
+```yaml
+session:
+  # Access token lifetime (short-lived JWT)
+  access_token_ttl: "15m"
+  
+  # Maximum session duration (hard limit regardless of activity)
+  max_session_duration: "8h"
+  
+  # Idle timeout (revoked after inactivity)
+  idle_timeout: "1h"
+  
+  # Require re-authentication after this period (even if active)
+  reauth_interval: "168h"    # 7 days
+  
+  # Concurrent session limit per user
+  max_concurrent_sessions: 3
+  
+  # Require step-up auth for sensitive operations
+  step_up_auth:
+    enabled: true
+    max_age: "300s"           # Must have authenticated within 5 min
+    operations:
+      - "user.delete"
+      - "role.assign"
+      - "tenant.config.change"
+      - "admin.impersonate"
+```
+
+### Per-Role Session Policy
+
+```sql
+-- Longer sessions for service accounts, shorter for admins
+UPDATE tenant_settings 
+SET session_policy = jsonb_set(
+  session_policy,
+  '{role_overrides}',
+  '{
+    "service-account": {"max_session_duration": "720h", "idle_timeout": "0"},
+    "admin": {"max_session_duration": "4h", "idle_timeout": "30m", "reauth_interval": "4h"},
+    "viewer": {"max_session_duration": "8h", "idle_timeout": "1h"}
+  }'
+)
+WHERE tenant_id = "your-tenant-id";
+```
