@@ -36,6 +36,7 @@ export function Sidebar() {
     { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
     { href: "/users", label: t("nav.users"), icon: Users },
     { href: "/roles", label: t("nav.roles"), icon: Shield },
+    { href: "/policies", label: "Policies", icon: Shield },
     { href: "/organizations", label: t("nav.organizations"), icon: Building2 },
     { href: "/audit", label: t("nav.audit"), icon: ScrollText },
     { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
