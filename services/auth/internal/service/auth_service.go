@@ -28,6 +28,7 @@ type AuthService struct {
 	rateLimiter    *RateLimiter
 	identityClient IdentityClient
 	mfaService     *MFAService
+	emailService   *EmailService
 }
 
 // NewAuthService creates a new AuthService with all dependencies.
@@ -52,6 +53,7 @@ func NewAuthService(
 		rateLimiter:     rateLimiter,
 		identityClient:  identityClient,
 		mfaService:      mfaSvc,
+		emailService:    NewEmailService(rateLimiter.rdb),
 	}
 }
 
@@ -362,6 +364,13 @@ func (s *AuthService) MFAService() *MFAService { return s.mfaService }
 // LookupUser looks up a user by identifier (email or username) via the identity client.
 func (s *AuthService) LookupUser(ctx context.Context, tenantID uuid.UUID, identifier string) (*UserInfo, error) {
 	return s.identityClient.GetUser(ctx, tenantID, identifier)
+}
+
+// --- Email Verification ---
+
+// VerifyEmailToken validates an email verification token.
+func (s *AuthService) VerifyEmailToken(ctx context.Context, token string) (uuid.UUID, uuid.UUID, string, error) {
+	return s.emailService.VerifyEmailToken(ctx, token)
 }
 
 // PasswordPolicy returns the current password policy configuration.

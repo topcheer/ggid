@@ -54,6 +54,10 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/magic-link", h.magicLink)
 	h.mux.HandleFunc("/api/v1/auth/magic-link/verify", h.magicLinkVerify)
 
+	// Email verification
+	h.mux.HandleFunc("/api/v1/auth/email/verify", h.emailVerify)
+	h.mux.HandleFunc("/api/v1/auth/email/resend", h.emailResend)
+
 	// Social login endpoints
 	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
 
@@ -568,6 +572,63 @@ func (h *Handler) magicLinkVerify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, tokens)
+}
+
+// --- Email Verification ---
+
+func (h *Handler) emailVerify(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Token string `json:"token"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		// Try query param fallback.
+		body.Token = r.URL.Query().Get("token")
+	}
+	if body.Token == "" {
+		body.Token = r.URL.Query().Get("token")
+	}
+	if body.Token == "" {
+		writeError(w, http.StatusBadRequest, "token is required")
+		return
+	}
+
+	_, _, _, err := h.authSvc.VerifyEmailToken(r.Context(), body.Token)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid or expired verification token")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "verified"})
+}
+
+func (h *Handler) emailResend(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.Email == "" {
+		writeError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+
+	// Don't reveal whether email exists.
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":  "sent",
+		"message": "If the email exists, a verification link has been sent.",
+	})
 }
 
 // --- Helpers ---
