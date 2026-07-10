@@ -24,6 +24,11 @@ type AuthorizationCodeRepository interface {
 }
 
 // IDTokenRepository stores ID token records for audit (the tokens themselves are stateless JWTs).
+// It also manages refresh token records for rotation and reuse detection.
 type IDTokenRepository interface {
 	RecordIDToken(ctx context.Context, record *domain.IDTokenRecord) error
+	StoreRefreshToken(ctx context.Context, record *domain.RefreshTokenRecord) error
+	GetRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) (*domain.RefreshTokenRecord, error)
+	RevokeRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) error
+	RevokeAllRefreshTokens(ctx context.Context, tenantID, clientID uuid.UUID) error
 }

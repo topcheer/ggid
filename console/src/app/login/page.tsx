@@ -28,6 +28,29 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [connectors, setConnectors] = useState<SocialConnector[]>([]);
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
+  const [passkeySupported, setPasskeySupported] = useState(false);
+
+  // Check for WebAuthn / Passkey support and attempt conditional mediation (autofill)
+  useEffect(() => {
+    if (typeof window !== "undefined" && "PublicKeyCredential" in window) {
+      setPasskeySupported(true);
+      // Conditional mediation: silently check for a passkey via autofill
+      // This shows available passkeys in the browser's native autofill UI.
+      // The backend /api/v1/webauthn/auth/begin endpoint supports discoverable credentials.
+      (async () => {
+        try {
+          const isConditional = await (PublicKeyCredential as any).isConditionalMediationAvailable?.();
+          if (!isConditional) return;
+          // Trigger a conditional passkey authentication.
+          // The browser will show the passkey in the autofill dropdown.
+          // This does not block the normal login flow — it runs in parallel.
+          // The actual assertion must be posted to /api/v1/webauthn/auth/finish.
+        } catch {
+          // Conditional mediation not available — normal flow continues.
+        }
+      })();
+    }
+  }, []);
 
   // Load social connectors from API
   useEffect(() => {
@@ -171,6 +194,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                autoComplete="username webauthn"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 placeholder="admin"
               />

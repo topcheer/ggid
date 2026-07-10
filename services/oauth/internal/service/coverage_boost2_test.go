@@ -929,7 +929,7 @@ func TestRefreshToken_UnsupportedGrant(t *testing.T) {
 }
 
 func TestRefreshToken_Success(t *testing.T) {
-	svc, _, _, _ := newTestOAuthService()
+	svc, _, _, tokenRepo := newTestOAuthService()
 
 	result, _ := svc.CreateClient(context.Background(), &CreateClientInput{
 		TenantID:   testTenantID,
@@ -940,6 +940,17 @@ func TestRefreshToken_Success(t *testing.T) {
 
 	userID := uuid.New()
 	refreshToken := userID.String() + ".some-refresh-secret"
+
+	// Store a valid refresh token record (required by the token rotation logic).
+	tokenRepo.StoreRefreshToken(context.Background(), &domain.RefreshTokenRecord{
+		ID:        uuid.New(),
+		TenantID:  testTenantID,
+		ClientID:  result.Client.ID,
+		UserID:    userID,
+		TokenHash: hashTokenSHA256(refreshToken),
+		Scope:     []string{"openid", "profile"},
+		ExpiresAt: time.Now().Add(24 * time.Hour),
+	})
 
 	resp, err := svc.RefreshToken(context.Background(), &RefreshTokenRequest{
 		TenantID:     testTenantID,
@@ -1051,6 +1062,7 @@ func TestExchangeAuthorizationCode_CodeIssuedToDifferentClient(t *testing.T) {
 		ClientID:    "client_a",
 		RedirectURI: "https://a.example.com/cb",
 		ResponseType: "code",
+		State:       "test-state",
 		UserID:      uuid.New(),
 	})
 	if err != nil {
@@ -1097,6 +1109,7 @@ func TestExchangeAuthorizationCode_PKCEFailure(t *testing.T) {
 		ClientID:            "pkce_client",
 		RedirectURI:         "https://pkce.example.com/cb",
 		ResponseType:        "code",
+		State:               "test-state",
 		CodeChallenge:       "some-challenge-value",
 		CodeChallengeMethod: "S256",
 		UserID:              uuid.New(),
@@ -1300,25 +1313,29 @@ func TestExchangeAuthorizationCode_CodeAlreadyConsumed(t *testing.T) {
 		Enabled:          true,
 	}
 
-	// Create code for public client.
+	// Create code for public client (with PKCE).
 	plainCode, err := svc.CreateAuthorizationCode(context.Background(), &AuthorizeRequest{
-		TenantID:    testTenantID,
-		ClientID:    "consumed_client",
-		RedirectURI: "https://c.example.com/cb",
-		ResponseType: "code",
-		UserID:      uuid.New(),
+		TenantID:            testTenantID,
+		ClientID:            "consumed_client",
+		RedirectURI:         "https://c.example.com/cb",
+		ResponseType:        "code",
+		State:               "test-state",
+		CodeChallenge:       "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+		CodeChallengeMethod: "S256",
+		UserID:              uuid.New(),
 	})
 	if err != nil {
 		t.Fatalf("CreateAuthorizationCode: %v", err)
 	}
 
-	// First exchange succeeds.
+	// First exchange succeeds (correct PKCE verifier from RFC 7636).
 	_, err = svc.ExchangeAuthorizationCode(context.Background(), &TokenExchangeRequest{
-		TenantID:    testTenantID,
-		GrantType:   "authorization_code",
-		Code:        plainCode,
-		RedirectURI: "https://c.example.com/cb",
-		ClientID:    "consumed_client",
+		TenantID:     testTenantID,
+		GrantType:    "authorization_code",
+		Code:         plainCode,
+		RedirectURI:  "https://c.example.com/cb",
+		ClientID:     "consumed_client",
+		CodeVerifier: "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
 	})
 	if err != nil {
 		t.Fatalf("first exchange: %v", err)
@@ -1326,11 +1343,12 @@ func TestExchangeAuthorizationCode_CodeAlreadyConsumed(t *testing.T) {
 
 	// Second exchange fails (already consumed).
 	_, err = svc.ExchangeAuthorizationCode(context.Background(), &TokenExchangeRequest{
-		TenantID:    testTenantID,
-		GrantType:   "authorization_code",
-		Code:        plainCode,
-		RedirectURI: "https://c.example.com/cb",
-		ClientID:    "consumed_client",
+		TenantID:     testTenantID,
+		GrantType:    "authorization_code",
+		Code:         plainCode,
+		RedirectURI:  "https://c.example.com/cb",
+		ClientID:     "consumed_client",
+		CodeVerifier: "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk",
 	})
 	if err == nil {
 		t.Fatal("expected error for already consumed code")

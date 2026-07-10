@@ -38,6 +38,7 @@ type OAuthClient struct {
 	Scopes                  []string
 	TokenEndpointAuthMethod string
 	Metadata                map[string]any
+	RequirePKCE             bool // enforce PKCE for this client
 	Enabled                 bool
 	CreatedAt               time.Time
 	UpdatedAt               time.Time
@@ -45,6 +46,12 @@ type OAuthClient struct {
 
 // IsConfidential returns true for confidential clients.
 func (c *OAuthClient) IsConfidential() bool { return c.Type == ClientTypeConfidential }
+
+// IsPublic returns true for public clients.
+func (c *OAuthClient) IsPublic() bool { return c.Type == ClientTypePublic }
+
+// RequiresPKCE returns true if PKCE should be enforced (public clients or RequirePKCE flag).
+func (c *OAuthClient) RequiresPKCE() bool { return c.RequirePKCE || c.IsPublic() }
 
 // SupportsGrantType checks if the client allows the given grant type.
 func (c *OAuthClient) SupportsGrantType(gt string) bool {
@@ -73,6 +80,20 @@ func (c *OAuthClient) MetadataJSON() json.RawMessage {
 	}
 	b, _ := json.Marshal(c.Metadata)
 	return b
+}
+
+// RefreshTokenRecord tracks an issued refresh token for rotation and reuse detection.
+type RefreshTokenRecord struct {
+	ID        uuid.UUID
+	TenantID  uuid.UUID
+	ClientID  uuid.UUID
+	UserID    uuid.UUID
+	TokenHash string
+	Scope     []string
+	ExpiresAt time.Time
+	Revoked   bool
+	Used      bool
+	CreatedAt time.Time
 }
 
 // AuthorizationCode represents a short-lived OAuth2 authorization code.

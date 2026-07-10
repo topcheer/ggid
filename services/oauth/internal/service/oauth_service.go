@@ -166,6 +166,27 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		}
 	}
 
+	// Enforce state parameter (OAuth 2.1 / OIDC best practice).
+	if req.State == "" {
+		return "", errors.InvalidArgument("state parameter is required")
+	}
+
+	// Enforce nonce for OIDC flows that return an id_token.
+	if strings.Contains(req.ResponseType, "id_token") && req.Nonce == "" {
+		return "", errors.InvalidArgument("nonce parameter is required for OIDC flows")
+	}
+
+	// Enforce PKCE for public clients or clients with RequirePKCE.
+	if client.RequiresPKCE() && req.CodeChallenge == "" {
+		return "", errors.InvalidArgument("code_challenge is required for this client (PKCE enforced)")
+	}
+
+	// Default PKCE method to S256 if not specified.
+	codeChallengeMethod := req.CodeChallengeMethod
+	if codeChallengeMethod == "" {
+		codeChallengeMethod = "S256"
+	}
+
 	plaintextCode, err := crypto.GenerateRandomToken(32)
 	if err != nil {
 		return "", errors.Internal("generate auth code", err)
@@ -180,7 +201,7 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		RedirectURI:         req.RedirectURI,
 		Scope:               req.Scope,
 		CodeChallenge:       req.CodeChallenge,
-		CodeChallengeMethod: req.CodeChallengeMethod,
+		CodeChallengeMethod: codeChallengeMethod,
 		Nonce:               req.Nonce,
 		ExpiresAt:           time.Now().Add(10 * time.Minute), // auth codes are short-lived
 	}
@@ -579,6 +600,9 @@ type RefreshTokenRequest struct {
 }
 
 // RefreshToken issues new tokens using a refresh token.
+// On each use, a new refresh token is issued and the old one is invalidated.
+// If a previously-used (revoked) token is presented, all tokens for that
+// client are revoked (reuse detection).
 func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenRequest) (*TokenResponse, error) {
 	// 1. Look up the client.
 	client, err := s.clientRepo.GetClientByID(ctx, req.TenantID, req.ClientID)
@@ -599,29 +623,56 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		return nil, errors.InvalidArgument("client does not support refresh_token grant")
 	}
 
-	// 4. Parse and validate the refresh token JWT.
-	// In production, this would verify against stored tokens.
-	// For now, we issue a new access token using the client identity.
-	parts := strings.SplitN(req.RefreshToken, ".", 2)
-	if len(parts) != 2 {
-		return nil, errors.Unauthenticated("invalid refresh token")
-	}
-	userIDStr := parts[0]
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
+	// 4. Hash the refresh token and look it up.
+	tokenHash := hashTokenSHA256(req.RefreshToken)
+	record, err := s.tokenRepo.GetRefreshToken(ctx, req.TenantID, tokenHash)
+	if err != nil || record == nil {
 		return nil, errors.Unauthenticated("invalid refresh token")
 	}
 
-	accessToken, expiresIn, err := s.issueAccessToken(userID, req.TenantID, client.ClientID)
+	// 5. Reuse detection: if the token was already used or revoked, revoke ALL tokens.
+	if record.Used || record.Revoked {
+		_ = s.tokenRepo.RevokeAllRefreshTokens(ctx, req.TenantID, client.ID)
+		return nil, errors.Unauthenticated("refresh token reuse detected — all tokens revoked")
+	}
+
+	// 6. Check expiry.
+	if time.Now().After(record.ExpiresAt) {
+		_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
+		return nil, errors.Unauthenticated("refresh token expired")
+	}
+
+	// 7. Mark the old token as used (rotation).
+	_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
+
+	// 8. Issue new access token.
+	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, client.ClientID)
 	if err != nil {
 		return nil, err
 	}
 
+	// 9. Issue new refresh token (rotation).
+	newRefreshToken, err := crypto.GenerateRandomToken(32)
+	if err != nil {
+		return nil, errors.Internal("generate refresh token", err)
+	}
+	newRecord := &domain.RefreshTokenRecord{
+		ID:        uuid.New(),
+		TenantID:  req.TenantID,
+		ClientID:  client.ID,
+		UserID:    record.UserID,
+		TokenHash: hashTokenSHA256(newRefreshToken),
+		Scope:     req.Scope,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // 30 days
+	}
+	_ = s.tokenRepo.StoreRefreshToken(ctx, newRecord)
+
 	return &TokenResponse{
-		AccessToken: accessToken,
-		TokenType:   "Bearer",
-		ExpiresIn:   expiresIn,
-		Scope:       joinScopes(req.Scope),
+		AccessToken:  accessToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    expiresIn,
+		RefreshToken: newRefreshToken,
+		Scope:        joinScopes(req.Scope),
 	}, nil
 }
 

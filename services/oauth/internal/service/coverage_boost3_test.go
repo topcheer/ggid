@@ -254,7 +254,8 @@ func TestExchangeAuthorizationCode_PKCEVerifierMismatch3(t *testing.T) {
 	v := "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
 	h2 := sha256.Sum256([]byte(v))
 	ch := base64.RawURLEncoding.EncodeToString(h2[:])
-	pc, err := svc.CreateAuthorizationCode(context.Background(), &AuthorizeRequest{TenantID: testTenantID, ClientID: "pkce3", RedirectURI: "https://app.example.com/cb", ResponseType: "code", Scope: []string{"openid"}, CodeChallenge: ch, CodeChallengeMethod: "S256", UserID: uuid.New()})
+	pc, err := svc.CreateAuthorizationCode(context.Background(), &AuthorizeRequest{TenantID: testTenantID, ClientID: "pkce3", RedirectURI: "https://app.example.com/cb", ResponseType: "code",
+		State:       "test-state", Scope: []string{"openid"}, CodeChallenge: ch, CodeChallengeMethod: "S256", UserID: uuid.New()})
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}

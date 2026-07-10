@@ -233,6 +233,37 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, status, map[string]string{"error": msg})
 }
 
+// classifyError maps a WebAuthn library error to a structured error code.
+// This helps the frontend display user-friendly messages.
+func classifyError(err error) (code, message string) {
+	if err == nil {
+		return "OK", ""
+	}
+	msg := err.Error()
+	lower := strings.ToLower(msg)
+	switch {
+	case strings.Contains(lower, "notallowed"):
+		return "USER_CANCELLED", "The operation was cancelled or not allowed"
+	case strings.Contains(lower, "invalidstate"):
+		return "INVALID_STATE", "A credential with this authenticator already exists"
+	case strings.Contains(lower, "abort"):
+		return "TIMEOUT", "The operation timed out"
+	case strings.Contains(lower, "security") || strings.Contains(lower, "origin"):
+		return "SECURITY_ERROR", "Security verification failed"
+	default:
+		return "UNKNOWN_ERROR", msg
+	}
+}
+
+// writeClassifiedError writes a structured WebAuthn error response.
+func writeClassifiedError(w http.ResponseWriter, status int, err error) {
+	code, msg := classifyError(err)
+	writeJSON(w, status, map[string]string{
+		"error":      msg,
+		"error_code": code,
+	})
+}
+
 func getTenantAndUser(r *http.Request) (context.Context, uuid.UUID, uuid.UUID, error) {
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	tenantID, err := uuid.Parse(tenantIDStr)
@@ -395,7 +426,7 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 	// Verify the attestation — this is the core cryptographic check.
 	credential, err := h.wbn.CreateCredential(user, *sd.data, parsedResponse)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("verify attestation: %v", err))
+		writeClassifiedError(w, http.StatusBadRequest, fmt.Errorf("verify attestation: %w", err))
 		return
 	}
 
@@ -581,7 +612,7 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 	// Verify the assertion — this is the core cryptographic check.
 	credential, err := h.wbn.ValidateLogin(user, *sd.data, parsedResponse)
 	if err != nil {
-		writeError(w, http.StatusUnauthorized, fmt.Sprintf("verify assertion: %v", err))
+		writeClassifiedError(w, http.StatusUnauthorized, fmt.Errorf("verify assertion: %w", err))
 		return
 	}
 

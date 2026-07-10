@@ -411,6 +411,7 @@ func TestExchangeAuthorizationCode_Success(t *testing.T) {
 		ClientID:    "test_client",
 		RedirectURI: "https://app.example.com/callback",
 		ResponseType: "code",
+		State:       "test-state",
 		Scope:       []string{"openid", "profile"},
 		Nonce:       "test-nonce",
 		UserID:      userID,
@@ -500,6 +501,7 @@ func TestExchangeAuthorizationCode_CodeReplayPrevented(t *testing.T) {
 		ClientID:    "test_client",
 		RedirectURI: "https://app.example.com/callback",
 		ResponseType: "code",
+		State:       "test-state",
 		Scope:       []string{"openid"},
 		UserID:      uuid.New(),
 	})
@@ -550,6 +552,7 @@ func TestExchangeAuthorizationCode_RedirectURIMismatch(t *testing.T) {
 		ClientID:    "test_client",
 		RedirectURI: "https://app.example.com/callback",
 		ResponseType: "code",
+		State:       "test-state",
 		UserID:      uuid.New(),
 	})
 
