@@ -522,7 +522,8 @@ func TestRequirePermission_Allowed(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := NewClient(ts.URL)
+	// Client must have a verifier for Middleware to work
+	c := NewClient(ts.URL, WithJWKS("http://localhost:8080/.well-known/jwks.json"))
 
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
@@ -532,8 +533,7 @@ func TestRequirePermission_Allowed(t *testing.T) {
 	handler := c.Middleware(c.RequirePermission("docs", "read")(inner))
 
 	req := httptest.NewRequest("GET", "/api/v1/data", nil)
-	// We need a valid-looking JWT to pass middleware
-	// Create a simple JWT that will parse correctly
+	// Create a valid-looking JWT with far-future exp
 	payload := `{"sub":"test","exp":9999999999}`
 	encodedPayload := base64URLEncode([]byte(payload))
 	token := "header." + encodedPayload + ".signature"
@@ -553,7 +553,8 @@ func TestRequirePermission_Denied(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	c := NewClient(ts.URL)
+	// Client must have a verifier for Middleware to work
+	c := NewClient(ts.URL, WithJWKS("http://localhost:8080/.well-known/jwks.json"))
 
 	inner := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
@@ -649,29 +650,5 @@ func TestErrors(t *testing.T) {
 // --- Helpers ---
 
 func base64URLEncode(data []byte) string {
-	const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-	var result []byte
-	for i := 0; i < len(data); i += 3 {
-		b1 := data[i]
-		var b2, b3 byte
-		if i+1 < len(data) { b2 = data[i+1] }
-		if i+2 < len(data) { b3 = data[i+2] }
-
-		result = append(result, alphabet[b1>>2])
-		result = append(result, alphabet[((b1&0x03)<<4)|(b2>>4)])
-		if i+1 < len(data) {
-			result = append(result, alphabet[((b2&0x0f)<<2)|(b3>>6)])
-		} else {
-			result = append(result, '=')
-			result = append(result, '=')
-			break
-		}
-		if i+2 < len(data) {
-			result = append(result, alphabet[b3&0x3f])
-		} else {
-			result = append(result, '=')
-			break
-		}
-	}
-	return string(result)
+	return base64.RawURLEncoding.EncodeToString(data)
 }
