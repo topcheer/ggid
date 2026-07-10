@@ -465,6 +465,50 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusCreated, result)
 	})
 
+	// OAuth Consent Screen
+	mux.HandleFunc("/oauth/consent", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+
+		clientID := r.URL.Query().Get("client_id")
+		scopeParam := r.URL.Query().Get("scope")
+		redirectURI := r.URL.Query().Get("redirect_uri")
+		state := r.URL.Query().Get("state")
+
+		if r.Method == http.MethodPost {
+			_ = r.ParseForm()
+			decision := r.FormValue("decision")
+			if decision == "approve" {
+				authURL := "/oauth/authorize?consent=true&client_id=" + clientID + "&redirect_uri=" + redirectURI + "&response_type=code&scope=" + scopeParam + "&state=" + state
+				writeJSON(w, http.StatusOK, map[string]string{
+					"status":       "approved",
+					"redirect_url": authURL,
+				})
+			} else {
+				writeJSON(w, http.StatusOK, map[string]string{
+					"status":       "denied",
+					"redirect_url": redirectURI + "?error=access_denied&state=" + state,
+				})
+			}
+			return
+		}
+
+		var scopes []string
+		if scopeParam != "" {
+			scopes = strings.Split(scopeParam, " ")
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":       "consent_required",
+			"client_id":    clientID,
+			"scopes":       scopes,
+			"redirect_uri": redirectURI,
+			"state":        state,
+			"message":      "Review and approve the requested permissions",
+		})
+	})
+
 	// --- SAML 2.0 IdP skeleton ---
 
 	mux.HandleFunc("/saml/metadata", func(w http.ResponseWriter, r *http.Request) {

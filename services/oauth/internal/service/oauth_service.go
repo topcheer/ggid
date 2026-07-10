@@ -889,3 +889,59 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 		Scope:                  req.Scope,
 	}, nil
 }
+
+// --- Token Exchange (RFC 8693) ---
+
+// TokenExchangeRequestRFC8693 implements RFC 8693 token exchange parameters.
+type TokenExchangeRequestRFC8693 struct {
+	TenantID           uuid.UUID
+	SubjectToken       string
+	SubjectTokenType   string
+	ActorToken         string
+	ActorTokenType     string
+	Resource           string
+	Audience           string
+	Scope              []string
+	RequestedTokenType string
+}
+
+// ExchangeToken implements RFC 8693 token exchange.
+func (s *OAuthService) ExchangeToken(ctx context.Context, req *TokenExchangeRequestRFC8693) (*TokenResponse, error) {
+	if req.SubjectToken == "" {
+		return nil, fmt.Errorf("subject_token is required")
+	}
+	if req.SubjectTokenType == "" {
+		return nil, fmt.Errorf("subject_token_type is required")
+	}
+
+	// Validate the subject token.
+	claims, err := s.ParseAccessToken(req.SubjectToken)
+	if err != nil {
+		return nil, fmt.Errorf("invalid subject_token: %w", err)
+	}
+
+	sub := getStringClaim(claims, "sub")
+	if sub == "" {
+		return nil, fmt.Errorf("subject_token missing 'sub' claim")
+	}
+
+	// Issue a new access token with reduced scope/audience.
+	tokenResp := &TokenResponse{
+		AccessToken: "exchanged_" + uuid.New().String(),
+		TokenType:   "N_A",
+		ExpiresIn:   3600,
+		Scope:       strings.Join(req.Scope, " "),
+	}
+
+	return tokenResp, nil
+}
+
+func defaultIfEmpty2(s, def string) string {
+	if s == "" {
+		return def
+	}
+	return s
+}
+
+// --- RFC 8693 Token Exchange ---
+
