@@ -221,6 +221,20 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// --- Admin API ---
+	if r.URL.Path == "/api/v1/admin/routes" && r.Method == http.MethodGet {
+		gw.handleAdminRoutes(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/admin/stats" && r.Method == http.MethodGet {
+		gw.handleAdminStats(w, r)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, "/api/v1/admin/routes") && strings.HasSuffix(r.URL.Path, "/toggle") && r.Method == http.MethodPost {
+		gw.handleAdminToggleRoute(w, r)
+		return
+	}
+
 	// --- Gateway management API ---
 	if r.URL.Path == "/api/v1/gateway/routes" && r.Method == http.MethodGet {
 		gw.handleGetRoutes(w, r)
@@ -484,6 +498,145 @@ func (gw *Gateway) handleReloadRoutes(w http.ResponseWriter, _ *http.Request) {
 // SetReloadFunc sets the callback used by the reload endpoint.
 func (gw *Gateway) SetReloadFunc(fn ReloadFunc) {
 	gw.reloadFunc = fn
+}
+
+// --- Admin API Handlers ---
+
+// AdminRouteInfo describes a route for the admin API, including enabled state.
+type AdminRouteInfo struct {
+	Prefix   string `json:"prefix"`
+	Backend  string `json:"backend"`
+	Enabled  bool   `json:"enabled"`
+	Timeout  string `json:"timeout,omitempty"`
+}
+
+// AdminStatsResponse holds per-backend statistics.
+type AdminStatsResponse struct {
+	Backends map[string]*BackendStats `json:"backends"`
+}
+
+// BackendStats holds statistics for a single backend.
+type BackendStats struct {
+	RequestCount   int64   `json:"request_count"`
+	ErrorCount     int64   `json:"error_count"`
+	ErrorRate      float64 `json:"error_rate"`
+	AvgLatencyMs   float64 `json:"avg_latency_ms"`
+	P99LatencyMs   float64 `json:"p99_latency_ms"`
+}
+
+// handleAdminRoutes returns all route configurations with enabled state.
+func (gw *Gateway) handleAdminRoutes(w http.ResponseWriter, _ *http.Request) {
+	gw.mu.RLock()
+	defer gw.mu.RUnlock()
+
+	routes := make([]AdminRouteInfo, 0, len(gw.cfg.Routes))
+	for prefix, backend := range gw.cfg.Routes {
+		ri := AdminRouteInfo{
+			Prefix:  prefix,
+			Backend: backend,
+			Enabled: true,
+		}
+		if _, exists := gw.proxies[prefix]; !exists {
+			ri.Enabled = false
+		}
+		if to, ok := gw.timeouts[prefix]; ok && to > 0 {
+			ri.Timeout = to.String()
+		}
+		routes = append(routes, ri)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"routes":  routes,
+		"version": gw.routeVersion,
+	})
+}
+
+// handleAdminStats returns aggregated per-backend statistics.
+func (gw *Gateway) handleAdminStats(w http.ResponseWriter, _ *http.Request) {
+	gw.mu.RLock()
+	defer gw.mu.RUnlock()
+
+	resp := &AdminStatsResponse{
+		Backends: make(map[string]*BackendStats),
+	}
+
+	for prefix := range gw.cfg.Routes {
+		resp.Backends[prefix] = &BackendStats{
+			RequestCount: 0,
+			ErrorCount:   0,
+			ErrorRate:    0,
+			AvgLatencyMs: 0,
+			P99LatencyMs: 0,
+		}
+	}
+
+	// If stats collector is configured, merge real data
+	if gw.stats != nil {
+		snap := gw.stats.Snapshot()
+		for prefix, rs := range snap.Routes {
+			if bs, ok := resp.Backends[prefix]; ok {
+				bs.RequestCount = int64(rs.Requests)
+				bs.ErrorCount = int64(rs.Errors)
+				if rs.Requests > 0 {
+					bs.ErrorRate = float64(rs.Errors) / float64(rs.Requests)
+				}
+			}
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+// handleAdminToggleRoute enables or disables a route by prefix.
+func (gw *Gateway) handleAdminToggleRoute(w http.ResponseWriter, r *http.Request) {
+	// Extract route prefix from URL: /api/v1/admin/routes/{prefix}/toggle
+	path := strings.TrimPrefix(r.URL.Path, "/api/v1/admin/routes/")
+	prefix := strings.TrimSuffix(path, "/toggle")
+	if prefix == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "route prefix required"})
+		return
+	}
+
+	gw.mu.Lock()
+	defer gw.mu.Unlock()
+
+	backendURL, exists := gw.cfg.Routes[prefix]
+	if !exists {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "route not found"})
+		return
+	}
+
+	// Check if currently enabled
+	if _, proxied := gw.proxies[prefix]; proxied {
+		// Disable: remove proxy
+		delete(gw.proxies, prefix)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"prefix":  prefix,
+			"enabled": false,
+		})
+	} else {
+		// Enable: recreate proxy
+		parsed, err := url.Parse(backendURL)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid backend URL"})
+			return
+		}
+		gw.proxies[prefix] = httputil.NewSingleHostReverseProxy(parsed)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"prefix":  prefix,
+			"enabled": true,
+		})
+	}
 }
 
 // buildProxiesLocked builds proxies without acquiring the write lock.
