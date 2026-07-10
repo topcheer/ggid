@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useUsers } from "@/lib/api";
 import {
   Users as UsersIcon,
@@ -8,8 +9,56 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+const API_BASE =
+  process.env.NEXT_PUBLIC_GGID_API || "http://localhost:8080";
+const TENANT_ID =
+  process.env.NEXT_PUBLIC_TENANT_ID ||
+  "00000000-0000-0000-0000-000000000001";
+
+function getToken() {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("ggid_access_token") || "";
+}
+
 export default function DashboardPage() {
   const { users, loading } = useUsers();
+  const [roleCount, setRoleCount] = useState<number | null>(null);
+  const [auditCount, setAuditCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+
+    // Fetch roles count
+    fetch(`${API_BASE}/api/v1/roles`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "X-Tenant-ID": TENANT_ID,
+      },
+    })
+      .then((r) => (r.ok ? r.json() : Promise.resolve({ roles: [] })))
+      .then((d) => setRoleCount(Array.isArray(d.roles) ? d.roles.length : Array.isArray(d) ? d.length : 0))
+      .catch(() => setRoleCount(0));
+
+    // Fetch audit event count
+    fetch(`${API_BASE}/api/v1/audit?limit=100`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "X-Tenant-ID": TENANT_ID,
+      },
+    })
+      .then((r) => (r.ok ? r.json() : Promise.resolve({ events: [] })))
+      .then((d) =>
+        setAuditCount(
+          Array.isArray(d.events)
+            ? d.events.length
+            : Array.isArray(d.data)
+              ? d.data.length
+              : 0,
+        ),
+      )
+      .catch(() => setAuditCount(0));
+  }, []);
 
   const stats = [
     {
@@ -26,13 +75,13 @@ export default function DashboardPage() {
     },
     {
       label: "Roles",
-      value: "3",
+      value: roleCount === null ? "..." : String(roleCount),
       icon: ShieldCheck,
       color: "bg-purple-500",
     },
     {
-      label: "Audit Events (24h)",
-      value: "—",
+      label: "Audit Events",
+      value: auditCount === null ? "..." : String(auditCount),
       icon: TrendingUp,
       color: "bg-orange-500",
     },
