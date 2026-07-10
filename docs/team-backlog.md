@@ -39,8 +39,8 @@
 ### P2 — Enhancement
 - [DONE] OAuth consent screen (user approves scopes)
 - [DONE] JWT claim customization (add custom claims via rules)
-- [TODO] Auth service coverage → 85%+ (currently 74.4%)
-- [TODO] OAuth service coverage → 70%+ (currently 47.7%)
+- [TODO] Auth service coverage → 85%+ (currently 80.0%)
+- [TODO] OAuth service coverage → 70%+ (currently 59.9%)
 - [DONE] Social connector: Microsoft, Apple, GitLab, Discord, LinkedIn
 
 ### P3 — Innovation
@@ -56,25 +56,29 @@
 ### P0 — Core
 - [DONE] Webhook system: registration + HMAC delivery + retry
 - [DONE] Prometheus metrics endpoint: GET /metrics
-- [IN PROGRESS: dev2] Health check aggregation: GET /healthz returns all backend statuses
-- [TODO] Request tracing: X-Request-ID propagation + OpenTelemetry spans
+- [DONE] Health check aggregation: GET /healthz returns all backend statuses
+- [DONE] Health check split: /healthz/live + /healthz/ready (Kubernetes probes)
+- [DONE] Request tracing: X-Request-ID propagation + W3C traceparent spans
 
 ### P1 — Security
-- [TODO] API key authentication (alternative to JWT for M2M)
-- [TODO] IP allowlist middleware (per-tenant configurable)
-- [TODO] Bot detection (User-Agent + behavior analysis)
-- [TODO] Gateway middleware coverage → 70%+ (currently 53%)
+- [DONE] API key authentication (alternative to JWT for M2M)
+- [DONE] IP allowlist middleware (per-tenant configurable)
+- [DONE] Bot detection (User-Agent + behavior analysis)
+- [DONE] Gateway middleware coverage → 70%+ (currently 71.3%)
 
 ### P2 — Performance
-- [TODO] Response caching middleware (ETag + conditional GET)
-- [TODO] Connection pooling tuning + keep-alive optimization
-- [TODO] Request body size limiting middleware
-- [TODO] Compression middleware (gzip/brotli)
+- [DONE] Response caching middleware (ETag + conditional GET)
+- [DONE] Connection pooling tuning + keep-alive optimization
+- [DONE] Request body size limiting middleware
+- [DONE] Compression middleware (gzip/brotli)
+- [DONE] Per-route timeout configuration (RouteConfig + RouteTimeout)
 
 ### P3 — Innovation
 - [TODO] GraphQL proxy support
-- [TODO] WebSocket proxy support
-- [TODO] Canary deployment routing (percentage-based traffic splitting)
+- [DONE] WebSocket proxy support (HTTP hijack → bidirectional TCP tunnel)
+- [DONE] Canary deployment routing (percentage-based traffic splitting with header/cookie override)
+- [TODO] Circuit breaker pattern (fail-fast on backend degradation)
+- [TODO] Request ID propagation to backends via X-Request-ID header in all proxied requests
 
 ---
 
