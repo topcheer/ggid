@@ -371,6 +371,51 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusOK, userInfo)
 	})
 
+	// Back-channel logout (OIDC Session Management 1.0)
+	mux.HandleFunc("/oauth/logout", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		_ = r.ParseForm()
+
+		logoutToken := r.FormValue("logout_token")
+		if logoutToken == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "logout_token is required"})
+			return
+		}
+
+		// Parse the logout token to extract sub (user ID) and sid (session ID).
+		claims, err := oauthSvc.ParseAccessToken(logoutToken)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid logout token"})
+			return
+		}
+
+		// Revoke the token.
+		_ = oauthSvc.RevokeToken(logoutToken)
+
+		// Extract session ID for back-channel notification.
+		sub := ""
+		sid := ""
+		if v, ok := claims["sub"]; ok {
+			if s, ok := v.(string); ok {
+				sub = s
+			}
+		}
+		if v, ok := claims["sid"]; ok {
+			if s, ok := v.(string); ok {
+				sid = s
+			}
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":  "logged_out",
+			"sub":     sub,
+			"sid":     sid,
+		})
+	})
+
 	// Token revocation
 	mux.HandleFunc("/oauth/revoke", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

@@ -469,6 +469,52 @@ func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
 	return resp
 }
 
+// --- JWT Claim Customization ---
+
+// ClaimRule defines a custom claim to inject into JWT tokens.
+type ClaimRule struct {
+	ClaimName  string // e.g. "department"
+	SourceAttr string // attribute name from user info or token claims
+	Default    string // default value if source is empty
+}
+
+// ClaimRulesEngine applies custom claim rules to JWT claims.
+type ClaimRulesEngine struct {
+	rules []ClaimRule
+}
+
+// NewClaimRulesEngine creates a new engine with the given rules.
+func NewClaimRulesEngine(rules []ClaimRule) *ClaimRulesEngine {
+	return &ClaimRulesEngine{rules: rules}
+}
+
+// ApplyRules injects custom claims into a JWT claims map based on
+// user attributes (e.g. from LDAP groups, SCIM extensions, etc).
+func (e *ClaimRulesEngine) ApplyRules(claims jwt.MapClaims, userAttrs map[string]any) {
+	if e == nil {
+		return
+	}
+	for _, rule := range e.rules {
+		val := rule.Default
+		if rule.SourceAttr != "" {
+			if attrVal, ok := userAttrs[rule.SourceAttr]; ok {
+				if s, ok := attrVal.(string); ok && s != "" {
+					val = s
+				}
+			}
+		}
+		// Don't overwrite existing claims.
+		if _, exists := claims[rule.ClaimName]; !exists {
+			claims[rule.ClaimName] = val
+		}
+	}
+}
+
+// AddRule adds a custom claim rule.
+func (e *ClaimRulesEngine) AddRule(rule ClaimRule) {
+	e.rules = append(e.rules, rule)
+}
+
 // --- SAML Token Issuance ---
 
 // IssueSAMLToken issues a JWT for a user authenticated via SAML assertion.
