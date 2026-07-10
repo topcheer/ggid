@@ -212,6 +212,29 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			scopes = strings.Split(scopeParam, " ")
 		}
 
+		// Consent screen: if client requests non-basic scopes and user hasn't
+		// explicitly consented, return consent_required response.
+		basicScopes := map[string]bool{"openid": true, "profile": true, "email": true, "offline_access": true}
+		hasExtendedScope := false
+		for _, s := range scopes {
+			if !basicScopes[s] {
+				hasExtendedScope = true
+				break
+			}
+		}
+		consentGiven := r.URL.Query().Get("consent") == "true"
+		if hasExtendedScope && !consentGiven {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"status":           "consent_required",
+				"client_id":        clientID,
+				"requested_scopes": scopes,
+				"state":            state,
+				"message":          "User consent is required for the requested scopes.",
+				"consent_url":      "/oauth/authorize?consent=true&client_id=" + clientID + "&redirect_uri=" + redirectURI + "&response_type=code&scope=" + scopeParam + "&user_id=" + userIDStr,
+			})
+			return
+		}
+
 		code, err := oauthSvc.CreateAuthorizationCode(ctx, &service.AuthorizeRequest{
 			TenantID:            tenantID,
 			ClientID:            clientID,
