@@ -156,6 +156,10 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		return "", err
 	}
 
+	if !client.Enabled {
+		return "", errors.InvalidArgument("client is disabled")
+	}
+
 	if !client.ValidateRedirectURI(req.RedirectURI) {
 		return "", errors.InvalidArgument("redirect_uri not registered for this client")
 	}
@@ -288,7 +292,7 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 
 	// 8. Issue ID Token if OIDC scope is present.
 	if contains(code.Scope, "openid") {
-		idToken, err := s.issueIDToken(code.UserID, code.TenantID, client.ClientID, code.Nonce)
+		idToken, err := s.issueIDToken(code.UserID, code.TenantID, client.ClientID, code.Nonce, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -379,7 +383,14 @@ func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience str
 	return signed, int(expiresAt.Sub(now).Seconds()), nil
 }
 
-func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce string) (string, error) {
+// IDTokenOptions provides optional claims for OIDC ID Token enrichment.
+type IDTokenOptions struct {
+	AMR      []string // authentication methods references (e.g. ["pwd","otp"])
+	ACR      string   // authentication context class reference
+	AuthTime int64    // unix timestamp when the user authenticated
+}
+
+func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce string, opts *IDTokenOptions) (string, error) {
 	now := time.Now()
 	expiresAt := now.Add(1 * time.Hour)
 
@@ -391,6 +402,19 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 		"exp":       expiresAt.Unix(),
 		"nonce":     nonce,
 		"tenant_id": tenantID.String(),
+	}
+
+	// Enrich with OIDC authentication context claims if provided.
+	if opts != nil {
+		if len(opts.AMR) > 0 {
+			claims["amr"] = opts.AMR
+		}
+		if opts.ACR != "" {
+			claims["acr"] = opts.ACR
+		}
+		if opts.AuthTime > 0 {
+			claims["auth_time"] = opts.AuthTime
+		}
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
@@ -426,11 +450,12 @@ func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) 
 
 // UserInfoResponse holds the standard OIDC UserInfo claims.
 type UserInfoResponse struct {
-	Sub       string `json:"sub"`
-	Name      string `json:"name,omitempty"`
-	Email     string `json:"email,omitempty"`
-	Picture   string `json:"picture,omitempty"`
-	TenantID  string `json:"tenant_id,omitempty"`
+	Sub           string `json:"sub"`
+	Name          string `json:"name,omitempty"`
+	Email         string `json:"email,omitempty"`
+	EmailVerified bool   `json:"email_verified,omitempty"`
+	Picture       string `json:"picture,omitempty"`
+	TenantID      string `json:"tenant_id,omitempty"`
 }
 
 // GetUserInfo returns user info claims from a validated access token.
@@ -441,11 +466,12 @@ func (s *OAuthService) GetUserInfo(tokenStr string) (*UserInfoResponse, error) {
 	}
 
 	resp := &UserInfoResponse{
-		Sub:      getStringClaim(claims, "sub"),
-		Name:     getStringClaim(claims, "name"),
-		Email:    getStringClaim(claims, "email"),
-		Picture:  getStringClaim(claims, "picture"),
-		TenantID: getStringClaim(claims, "tenant_id"),
+		Sub:           getStringClaim(claims, "sub"),
+		Name:          getStringClaim(claims, "name"),
+		Email:         getStringClaim(claims, "email"),
+		EmailVerified: getBoolClaim(claims, "email_verified"),
+		Picture:       getStringClaim(claims, "picture"),
+		TenantID:      getStringClaim(claims, "tenant_id"),
 	}
 	return resp, nil
 }
@@ -475,13 +501,15 @@ func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
 	}
 
 	resp := &IntrospectionResponse{
-		Active:   true,
-		Sub:      getStringClaim(claims, "sub"),
-		Aud:      getStringClaim(claims, "aud"),
-		Iss:      getStringClaim(claims, "iss"),
-		ClientID: getStringClaim(claims, "aud"), // client_id = audience for M2M tokens
-		Exp:      getInt64Claim(claims, "exp"),
-		Iat:      getInt64Claim(claims, "iat"),
+		Active:    true,
+		TokenType: "Bearer",
+		Sub:       getStringClaim(claims, "sub"),
+		Aud:       getStringClaim(claims, "aud"),
+		Iss:       getStringClaim(claims, "iss"),
+		ClientID:  getStringClaim(claims, "aud"),
+		Username:  getStringClaim(claims, "preferred_username"),
+		Exp:       getInt64Claim(claims, "exp"),
+		Iat:       getInt64Claim(claims, "iat"),
 	}
 	if scope, ok := claims["scope"]; ok {
 		if s, ok := scope.(string); ok {
@@ -702,6 +730,11 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 		}
 	}
 
+	// 3. Check client is enabled.
+	if !client.Enabled {
+		return nil, errors.InvalidArgument("client is disabled")
+	}
+
 	// 3. Verify grant type.
 	if !client.SupportsGrantType("client_credentials") {
 		return nil, errors.InvalidArgument("client does not support client_credentials grant")
@@ -829,6 +862,15 @@ func getInt64Claim(claims jwt.MapClaims, key string) int64 {
 		}
 	}
 	return 0
+}
+
+func getBoolClaim(claims jwt.MapClaims, key string) bool {
+	if v, ok := claims[key]; ok {
+		if b, ok := v.(bool); ok {
+			return b
+		}
+	}
+	return false
 }
 
 // --- Dynamic Client Registration (RFC 7591) ---
@@ -1028,6 +1070,7 @@ type DeviceCodeInfo struct {
 	Status     string // "pending", "approved", "denied", "expired"
 	CreatedAt  time.Time
 	ExpiresAt  time.Time
+	LastPoll   *time.Time // for slow_down enforcement
 }
 
 // deviceCodeStore holds pending device codes in-memory (production would use Redis).
@@ -1092,6 +1135,12 @@ func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID
 	}
 
 	if info.Status == "pending" {
+		// Check if client is polling too fast (interval enforcement).
+		if info.LastPoll != nil && time.Since(*info.LastPoll) < 5*time.Second {
+			return nil, fmt.Errorf("slow_down")
+		}
+		now := time.Now()
+		info.LastPoll = &now
 		return nil, fmt.Errorf("authorization_pending")
 	}
 
