@@ -1263,10 +1263,14 @@ func TestHandleStream_ConnectAndCancel(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	// Run handler in goroutine, cancel after short delay
-	go mux.ServeHTTP(w, req)
+	done := make(chan struct{})
+	go func() {
+		mux.ServeHTTP(w, req)
+		close(done)
+	}()
 	time.Sleep(100 * time.Millisecond)
 	cancel()
-	time.Sleep(50 * time.Millisecond)
+	<-done // ensure handler goroutine exited before reading body
 
 	// Should have written the initial "connected" SSE event
 	body := w.Body.String()
@@ -1447,11 +1451,15 @@ func TestHandleStream_ReceivesAuditEvent(t *testing.T) {
 	req = req.WithContext(ctx)
 	w := httptest.NewRecorder()
 
-	go mux.ServeHTTP(w, req)
+	done := make(chan struct{})
+	go func() {
+		mux.ServeHTTP(w, req)
+		close(done)
+	}()
 	// Wait for at least one ticker fire (2s interval) so audit_event SSE lines are emitted
 	time.Sleep(2600 * time.Millisecond)
 	cancel()
-	time.Sleep(50 * time.Millisecond)
+	<-done // ensure handler goroutine exited before reading body
 
 	body := w.Body.String()
 	if !strings.Contains(body, "event: connected") {
