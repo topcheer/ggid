@@ -24,6 +24,10 @@ func NewAuditRepository(db *pgxpool.Pool) *AuditRepository {
 // Insert writes a single audit event to the database.
 func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) error {
 	metaJSON, _ := json.Marshal(e.Metadata)
+	var ipAddr any
+	if e.IPAddress != "" {
+		ipAddr = e.IPAddress
+	}
 	query := `
 		INSERT INTO audit_events (tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result, ip_address,
@@ -31,25 +35,34 @@ func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) erro
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11, $12, $13)
 		RETURNING id, created_at`
 	return r.db.QueryRow(ctx, query,
-		e.TenantID, e.ActorType, e.ActorID, e.ActorName, e.Action,
-		e.ResourceType, e.ResourceID, e.ResourceName, e.Result, e.IPAddress,
-		e.UserAgent, e.RequestID, metaJSON,
+		e.TenantID, e.ActorType, e.ActorID, nullableStr(e.ActorName), e.Action,
+		nullableStr(e.ResourceType), e.ResourceID, nullableStr(e.ResourceName), e.Result, ipAddr,
+		nullableStr(e.UserAgent), nullableStr(e.RequestID), metaJSON,
 	).Scan(&e.ID, &e.CreatedAt)
+}
+
+// nullableStr returns nil for empty strings so PostgreSQL stores NULL.
+func nullableStr(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
 }
 
 // GetByID retrieves a single audit event by ID.
 func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
 	event := &domain.AuditEvent{}
 	var metaBytes []byte
+	var actorName, resourceType, resourceName, ipAddr, userAgent, requestID *string
 	query := `
 		SELECT id, tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result,
 		    ip_address::text, user_agent, request_id, metadata, created_at
 		FROM audit_events WHERE id = $1`
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&event.ID, &event.TenantID, &event.ActorType, &event.ActorID, &event.ActorName,
-		&event.Action, &event.ResourceType, &event.ResourceID, &event.ResourceName,
-		&event.Result, &event.IPAddress, &event.UserAgent, &event.RequestID, &metaBytes, &event.CreatedAt,
+		&event.ID, &event.TenantID, &event.ActorType, &event.ActorID, &actorName,
+		&event.Action, &resourceType, &event.ResourceID, &resourceName,
+		&event.Result, &ipAddr, &userAgent, &requestID, &metaBytes, &event.CreatedAt,
 	)
 	if err != nil {
 		return nil, mapErr(err, "audit_event", id.String())
@@ -57,7 +70,20 @@ func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Au
 	if len(metaBytes) > 0 {
 		json.Unmarshal(metaBytes, &event.Metadata)
 	}
+	event.ActorName = ptrStr(actorName)
+	event.ResourceType = ptrStr(resourceType)
+	event.ResourceName = ptrStr(resourceName)
+	event.IPAddress = ptrStr(ipAddr)
+	event.UserAgent = ptrStr(userAgent)
+	event.RequestID = ptrStr(requestID)
 	return event, nil
+}
+
+func ptrStr(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 // List returns audit events matching the filter with pagination.
@@ -136,16 +162,23 @@ func (r *AuditRepository) List(ctx context.Context, filter domain.ListFilter, li
 	for rows.Next() {
 		e := &domain.AuditEvent{}
 		var metaBytes []byte
+		var actorName, resourceType, resourceName, ipAddr, userAgent, requestID *string
 		if err := rows.Scan(
-			&e.ID, &e.TenantID, &e.ActorType, &e.ActorID, &e.ActorName, &e.Action,
-			&e.ResourceType, &e.ResourceID, &e.ResourceName, &e.Result,
-			&e.IPAddress, &e.UserAgent, &e.RequestID, &metaBytes, &e.CreatedAt,
+			&e.ID, &e.TenantID, &e.ActorType, &e.ActorID, &actorName, &e.Action,
+			&resourceType, &e.ResourceID, &resourceName, &e.Result,
+			&ipAddr, &userAgent, &requestID, &metaBytes, &e.CreatedAt,
 		); err != nil {
 			return nil, 0, err
 		}
 		if len(metaBytes) > 0 {
 			json.Unmarshal(metaBytes, &e.Metadata)
 		}
+		e.ActorName = ptrStr(actorName)
+		e.ResourceType = ptrStr(resourceType)
+		e.ResourceName = ptrStr(resourceName)
+		e.IPAddress = ptrStr(ipAddr)
+		e.UserAgent = ptrStr(userAgent)
+		e.RequestID = ptrStr(requestID)
 		events = append(events, e)
 	}
 	return events, total, nil
