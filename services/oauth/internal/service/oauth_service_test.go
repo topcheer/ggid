@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
+	"sync"
 	"testing"
 	"time"
 
@@ -132,19 +133,27 @@ type mockKeyProvider struct {
 	kid  string
 }
 
+var (
+	mockKeyOnce sync.Once
+	cachedPriv  *rsa.PrivateKey
+)
+
+// newMockKeyProvider returns a key provider backed by a single cached RSA
+// key. Generating a fresh 2048-bit key on every call starves the CPU when
+// dozens of tests run together, causing intermittent panics/timeouts.
 func newMockKeyProvider() *mockKeyProvider {
-	// Generate a small RSA key for tests.
-	priv, err := rsa.GenerateKey(stdcrypto.Reader, 2048)
-	if err != nil {
-		// Use a deterministic key if randomness fails.
-		priv = &rsa.PrivateKey{
-			PublicKey: rsa.PublicKey{N: big.NewInt(1), E: 65537},
-			D:         big.NewInt(1),
+	mockKeyOnce.Do(func() {
+		priv, err := rsa.GenerateKey(stdcrypto.Reader, 2048)
+		if err != nil {
+			// Use a deterministic key if randomness fails.
+			priv = &rsa.PrivateKey{
+				PublicKey: rsa.PublicKey{N: big.NewInt(1), E: 65537},
+				D:         big.NewInt(1),
+			}
 		}
-	}
-	pub := &priv.PublicKey
-	kid := "test-kid"
-	return &mockKeyProvider{priv: priv, pub: pub, kid: kid}
+		cachedPriv = priv
+	})
+	return &mockKeyProvider{priv: cachedPriv, pub: &cachedPriv.PublicKey, kid: "test-kid"}
 }
 
 func (kp *mockKeyProvider) PublicKey() *rsa.PublicKey   { return kp.pub }
