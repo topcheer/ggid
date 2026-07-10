@@ -202,3 +202,244 @@ config := gateway.RateLimitConfig{
   annotations:
     summary: "Possible brute-force attack — many login failures"
 ```
+
+---
+
+## Per-Endpoint Rate Limits (Complete Reference)
+
+| Endpoint | Method | Default Limit | Key | Burst |
+|----------|--------|---------------|-----|-------|
+| `/api/v1/auth/login` | POST | 10/min | IP + username | 5 |
+| `/api/v1/auth/register` | POST | 5/min | IP | 3 |
+| `/api/v1/auth/refresh` | POST | 30/min | Token `jti` | 10 |
+| `/api/v1/auth/logout` | POST | 10/min | User ID | 5 |
+| `/api/v1/auth/password/change` | POST | 5/min | User ID | 3 |
+| `/api/v1/auth/password/reset` | POST | 3/min | IP | 2 |
+| `/api/v1/auth/mfa/*` | POST | 10/min | User ID | 5 |
+| `/api/v1/auth/webauthn/*` | POST | 10/min | User ID | 5 |
+| `/api/v1/users` | GET | 60/min | User ID | 20 |
+| `/api/v1/users` | POST | 10/min | User ID | 5 |
+| `/api/v1/users/:id` | GET | 60/min | User ID | 20 |
+| `/api/v1/users/:id` | PATCH | 20/min | User ID | 10 |
+| `/api/v1/users/:id` | DELETE | 5/min | User ID | 2 |
+| `/api/v1/roles` | GET/POST | 30/min | User ID | 15 |
+| `/api/v1/policies/check` | POST | 200/min | User ID | 50 |
+| `/api/v1/orgs` | GET/POST | 30/min | User ID | 15 |
+| `/api/v1/audit/events` | GET | 20/min | User ID | 10 |
+| `/api/v1/audit/stream` | SSE | 5 conns | User ID | — |
+| `/scim/v2/*` | * | 100/min | API key | 30 |
+| `/healthz` | GET | Unlimited | — | — |
+| `/.well-known/*` | GET | Unlimited | — | — |
+
+---
+
+## Tenant Tier Configuration
+
+GGID supports per-tenant rate limit overrides via the tenant management API.
+
+### Tier Definitions
+
+| Tier | Login | Register | API Calls | SSE Streams |
+|------|-------|----------|-----------|-------------|
+| `free` | 10/min | 5/min | 60/min | 1 |
+| `starter` | 20/min | 10/min | 120/min | 3 |
+| `pro` | 50/min | 20/min | 300/min | 10 |
+| `enterprise` | Custom | Custom | Custom | Unlimited |
+
+### Configure Tenant Tier
+
+```bash
+# Set tenant tier
+curl -X PUT http://localhost:8080/api/v1/tenants/00000000-0000-0000-0000-000000000001/rate-limits \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tier": "enterprise",
+    "custom_limits": {
+      "login_rpm": 200,
+      "register_rpm": 50,
+      "api_rpm": 1000,
+      "sse_connections": 50
+    }
+  }'
+```
+
+### How Tier Resolution Works
+
+```mermaid
+graph LR
+    Req[Incoming Request] --> Auth[Extract JWT]
+    Auth --> TenantID[Get tenant_id from JWT]
+    TenantID --> Lookup{Tier lookup<br/>from Redis cache}
+    Lookup -->|Hit| Apply[Apply tier-specific limit]
+    Lookup -->|Miss| DB[(Database query)]
+    DB --> Cache[Cache for 5 min]
+    Cache --> Apply
+    Apply --> Check{Under limit?}
+    Check -->|Yes| Forward[Forward to backend]
+    Check -->|No| Reject429[Return 429]
+
+    style Apply fill:#3498db,color:#fff
+    style Reject429 fill:#e74c3c,color:#fff
+```
+
+---
+
+## Redis Token Bucket Algorithm
+
+GGID uses a **token bucket** algorithm backed by Redis for distributed rate limiting.
+
+### How It Works
+
+1. Each bucket starts with a **capacity** (burst size) of tokens
+2. Tokens are **refilled** at a fixed rate (e.g., 1 token/second = 60 RPM)
+3. Each request **consumes** 1 token
+4. If no tokens available, request is **rejected** (429)
+
+```mermaid
+graph LR
+    subgraph "Token Bucket (capacity=10, refill=1/s)"
+        T1[10 tokens<br/>────────]
+        T2[7 tokens<br/>──────]
+        T3[3 tokens<br/>──]
+        T4[0 tokens<br/>BLOCKED]
+    end
+
+    Req1[Request] -->|consume| T1
+    Req2[Request] -->|consume| T2
+    Req3[Request] -->|consume| T3
+    Req4[Request] -->|blocked| T4
+
+    Refill[Refill +1/s] --> T4
+```
+
+### Redis Lua Script (Atomic Operation)
+
+```lua
+-- token_bucket.lua
+-- KEYS[1] = bucket key (e.g., "rate_limit:login:192.168.1.1")
+-- ARGV[1] = capacity (burst)
+-- ARGV[2] = refill_rate (tokens per second)
+-- ARGV[3] = current_time (unix timestamp)
+-- ARGV[4] = consumed (tokens to consume, usually 1)
+
+local key = KEYS[1]
+local capacity = tonumber(ARGV[1])
+local refill_rate = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+local consumed = tonumber(ARGV[4])
+
+local bucket = redis.call('HMGET', key, 'tokens', 'last_refill')
+local tokens = tonumber(bucket[1]) or capacity
+local last_refill = tonumber(bucket[2]) or now
+
+-- Refill tokens based on elapsed time
+local elapsed = math.max(0, now - last_refill)
+tokens = math.min(capacity, tokens + (elapsed * refill_rate))
+
+-- Try to consume
+if tokens >= consumed then
+    tokens = tokens - consumed
+    redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
+    redis.call('EXPIRE', key, math.ceil(capacity / refill_rate) + 60)
+    return {1, math.floor(tokens)}  -- allowed, remaining
+else
+    redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
+    redis.call('EXPIRE', key, math.ceil(capacity / refill_rate) + 60)
+    return {0, math.floor(tokens)}  -- denied, remaining
+end
+```
+
+### Redis Key Structure
+
+```
+rate_limit:{endpoint_type}:{key_identifier}
+
+Examples:
+rate_limit:login:ip:192.168.1.100           # Per-IP login limit
+rate_limit:login:user:alice@test.com        # Per-username login limit
+rate_limit:register:ip:192.168.1.100        # Per-IP register limit
+rate_limit:api:user:uuid-here               # Per-user API limit
+rate_limit:tenant:tenant-uuid:api           # Per-tenant aggregate limit
+rate_limit:scim:apikey:key-id               # Per-SCIM API key
+```
+
+TTL is set to `capacity / refill_rate + 60` seconds to auto-clean idle buckets.
+
+---
+
+## Client-Side 429 Handling
+
+### Response Format
+
+```json
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+Retry-After: 30
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1699999999
+
+{
+  "error": "rate limit exceeded",
+  "code": "RATE_LIMIT_EXCEEDED",
+  "retry_after_seconds": 30
+}
+```
+
+### Retry Strategy (Exponential Backoff with Jitter)
+
+```go
+// Go example
+func withRetry(ctx context.Context, fn func() (*http.Response, error)) (*http.Response, error) {
+    maxRetries := 3
+    baseDelay := time.Second
+
+    for i := 0; i < maxRetries; i++ {
+        resp, err := fn()
+        if err != nil {
+            return nil, err
+        }
+
+        if resp.StatusCode != 429 {
+            return resp, nil
+        }
+
+        // Parse Retry-After header
+        retryAfter := resp.Header.Get("Retry-After")
+        delay, _ := strconv.Atoi(retryAfter)
+        if delay == 0 {
+            delay = int(baseDelay.Seconds()) * (1 << i) // exponential
+        }
+
+        // Add jitter (0-50% of delay)
+        jitter := time.Duration(rand.Intn(delay*1000)/2) * time.Millisecond
+
+        select {
+        case <-time.After(time.Duration(delay)*time.Second + jitter):
+        case <-ctx.Done():
+            return nil, ctx.Err()
+        }
+    }
+
+    return nil, fmt.Errorf("max retries exceeded")
+}
+```
+
+```javascript
+// Node.js example
+async function withRetry(fn, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    const resp = await fn();
+
+    if (resp.status !== 429) return resp;
+
+    const retryAfter = parseInt(resp.headers.get('Retry-After') || '1', 10);
+    const delay = retryAfter * 1000 + Math.random() * 500; // jitter
+
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+
+  throw new Error('Max retries exceeded');
+}
+```
