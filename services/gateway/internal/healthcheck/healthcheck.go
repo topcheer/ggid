@@ -92,6 +92,28 @@ func (c *Checker) ReadyHandler() http.HandlerFunc {
 	}
 }
 
+// DeepHandler returns a deep health check that pings ALL backends with a
+// configurable timeout (default 5s). Returns 503 if any backend is down.
+// Unlike ReadyHandler, this includes per-service latency and error detail.
+func (c *Checker) DeepHandler() http.HandlerFunc {
+	deepClient := &http.Client{Timeout: 5 * time.Second}
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Temporarily swap client for deeper checks
+		orig := c.client
+		c.client = deepClient
+		defer func() { c.client = orig }()
+
+		status := c.CheckAll(r.Context())
+		code := http.StatusOK
+		if status.Unhealthy > 0 {
+			code = http.StatusServiceUnavailable
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(code)
+		json.NewEncoder(w).Encode(status)
+	}
+}
+
 // HandlerWithMode dispatches based on the "mode" query parameter.
 // mode=live  → liveness probe (process alive only)
 // mode=ready → readiness probe (all backends healthy)
