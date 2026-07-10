@@ -65,6 +65,12 @@ func (gw *Gateway) buildProxies() {
 			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
+				// Also inject as query param for backend services that read tenant_id from URL
+				q := req.URL.Query()
+				if q.Get("tenant_id") == "" {
+					q.Set("tenant_id", tenantID)
+					req.URL.RawQuery = q.Encode()
+				}
 			}
 		}
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {

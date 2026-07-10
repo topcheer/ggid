@@ -30,6 +30,8 @@ func NewHTTPServer(svc *service.AuditService) *HTTPServer {
 func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/audit/events/", s.handleEventByID)
+	// Alias: Gateway may route /api/v1/audit without /events suffix
+	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
 
 // GET /api/v1/audit/events?tenant_id=X&action=Y&result=Z&page_size=N
