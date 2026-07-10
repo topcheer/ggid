@@ -175,3 +175,127 @@ docker compose -f deploy/docker-compose.yaml down -v
 | Gateway returns 502 | Backend service not ready, wait 30s and retry |
 | `X-Tenant-ID` missing error | All API calls need this header (use the default tenant ID) |
 | Rate limited (429) | Auth limits to 10 logins/min; restart auth container to reset |
+
+---
+
+## Next Steps: SDK Integration
+
+### Go SDK
+
+```bash
+go get github.com/ggid/ggid/pkg/sdk/go@latest
+```
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    ggid "github.com/ggid/ggid/pkg/sdk/go"
+)
+
+func main() {
+    client := ggid.NewClient("http://localhost:8080", ggid.WithTenantID("00000000-0000-0000-0000-000000000001"))
+
+    // Login
+    resp, err := client.Auth.Login(context.Background(), &ggid.LoginRequest{
+        Username: "admin",
+        Password: "Sup3rSecure!Pass",
+    })
+    if err != nil {
+        panic(err)
+    }
+
+    // Use the token for authenticated calls
+    authClient := client.WithToken(resp.AccessToken)
+
+    users, err := authClient.Users.List(context.Background())
+    if err != nil {
+        panic(err)
+    }
+
+    for _, u := range users {
+        fmt.Printf("- %s (%s)\n", u.Username, u.Email)
+    }
+}
+```
+
+### Node.js / TypeScript SDK
+
+```bash
+npm install @ggid/sdk
+```
+
+```typescript
+import { GGIDClient } from '@ggid/sdk';
+
+const client = new GGIDClient({
+  baseURL: 'http://localhost:8080',
+  tenantID: '00000000-0000-0000-0000-000000000001',
+});
+
+// Login
+const { access_token } = await client.auth.login({
+  username: 'admin',
+  password: 'Sup3rSecure!Pass',
+});
+
+// Authenticated calls
+const users = await client.users.list(access_token);
+console.log(users);
+```
+
+### curl One-Liners (Copy-Paste)
+
+```bash
+# Set variables
+export GW="http://localhost:8080"
+export TENANT="00000000-0000-0000-0000-000000000001"
+
+# Register
+curl -sX POST "$GW/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"testuser","email":"test@test.com","password":"Test1234!"}' | jq .
+
+# Login
+export TOKEN=$(curl -sX POST "$GW/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"testuser","password":"Test1234!"}' | jq -r .access_token)
+
+# List users
+curl -s "$GW/api/v1/users" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq .
+
+# Create role
+curl -sX POST "$GW/api/v1/roles" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"viewer","key":"viewer","description":"Read-only access"}' | jq .
+
+# Query audit log
+curl -s "$GW/api/v1/audit/events?limit=10" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq .
+
+# Create organization
+curl -sX POST "$GW/api/v1/orgs" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Engineering","description":"Engineering Department"}' | jq .
+```
+
+### Using Docker Compose E2E Test
+
+```bash
+# Run the built-in E2E test suite
+bash deploy/e2e-docker-test.sh
+
+# Expected: 11/11 PASS
+# Tests: health, register, login, JWT, 401, users, roles, orgs, audit, 401, 409
+```
