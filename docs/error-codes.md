@@ -197,3 +197,135 @@ Response:
 ### Fallback
 
 If the requested locale is not available, GGID falls back to English (`en-US`).
+
+---
+
+## Audit Error Codes
+
+| Code | HTTP | Message | Fix |
+|------|------|---------|-----|
+| `AUDIT_QUERY_INVALID_RANGE` | 400 | Invalid date range for audit query | Ensure `start_date` < `end_date`, max 90-day range |
+| `AUDIT_STREAM_DISCONNECTED` | 200 | SSE stream disconnected unexpectedly | Client should reconnect with exponential backoff |
+| `AUDIT_NATS_UNAVAILABLE` | 503 | Audit event stream unavailable | Check NATS JetStream health; ensure stream exists |
+| `AUDIT_PUBLISH_FAILED` | 500 | Failed to publish audit event | Check NATS connection; verify JetStream stream config |
+| `AUDIT_EVENT_NOT_FOUND` | 404 | Audit event not found | Verify event_id and tenant_id |
+
+## Webhook Error Codes
+
+| Code | HTTP | Message | Fix |
+|------|------|---------|-----|
+| `WEBHOOK_NOT_FOUND` | 404 | Webhook subscription not found | Verify webhook_id and tenant scope |
+| `WEBHOOK_DELIVERY_FAILED` | 200 | Webhook delivery failed (logged) | Check target endpoint availability; review retry log |
+| `WEBHOOK_SIGNATURE_INVALID` | 401 | Invalid webhook signature | Ensure same secret on sender and receiver; use constant-time comparison |
+| `WEBHOOK_URL_INVALID` | 400 | Invalid webhook URL | Must be HTTPS; no localhost in production |
+| `WEBHOOK_RATE_EXCEEDED` | 429 | Webhook delivery rate exceeded | Reduce event volume or batch deliveries |
+
+## Identity & SCIM Error Codes
+
+| Code | HTTP | Message | Fix |
+|------|------|---------|-----|
+| `USER_NOT_FOUND` | 404 | User not found | Verify user_id is a valid UUID in the correct tenant |
+| `USER_ALREADY_EXISTS` | 409 | User already exists | Check for duplicate username/email; use unique identifier |
+| `USER_LOCKED` | 423 | User account is locked | Wait for lockout expiry (default 15 min) or admin unlock |
+| `USER_INACTIVE` | 403 | User account is inactive | Admin must activate the user |
+| `EMAIL_NOT_VERIFIED` | 403 | Email address not verified | User must verify email before proceeding |
+| `SCIM_INVALID_SCHEMA` | 400 | Invalid SCIM schema | Ensure request uses correct `schemas` URN |
+| `SCIM_FILTER_INVALID` | 400 | Invalid SCIM filter expression | Check filter syntax (e.g., `userName eq "user@test.com"`) |
+| `SCIM_RESOURCE_NOT_FOUND` | 404 | SCIM resource not found | Verify resource exists and API key has correct scope |
+
+## MFA Error Codes
+
+| Code | HTTP | Message | Fix |
+|------|------|---------|-----|
+| `MFA_NOT_ENABLED` | 400 | MFA not enabled for user | User must set up MFA first via `/auth/mfa/setup` |
+| `MFA_CODE_INVALID` | 401 | Invalid MFA code | Verify TOTP app time sync; code is single-use |
+| `MFA_CODE_EXPIRED` | 401 | MFA code expired | Request new code from authenticator app |
+| `MFA_BACKUP_CODES_EXHAUSTED` | 400 | All backup codes used | Generate new backup codes after MFA verification |
+| `WEBAUTHN_CREDENTIAL_NOT_FOUND` | 404 | WebAuthn credential not found | User must register a passkey |
+| `WEBAUTHN_CHALLENGE_EXPIRED` | 401 | WebAuthn challenge expired | Restart registration/authentication flow |
+
+## LDAP Error Codes
+
+| Code | HTTP | Message | Fix |
+|------|------|---------|-----|
+| `LDAP_CONNECTION_FAILED` | 503 | Cannot connect to LDAP server | Verify LDAP_URL; check network/firewall; test with ldapsearch |
+| `LDAP_BIND_FAILED` | 401 | LDAP bind authentication failed | Verify BIND_DN and BIND_PASSWORD; check service account |
+| `LDAP_USER_NOT_FOUND` | 404 | User not found in LDAP directory | Verify BASE_DN and USER_FILTER; check user exists in directory |
+| `LDAP_STARTTLS_FAILED` | 500 | STARTTLS negotiation failed | Check LDAP server TLS config; verify CA certificate |
+
+---
+
+## Error Troubleshooting Guide
+
+### Common Error Patterns
+
+```mermaid
+graph TD
+    Err[Error Response] --> Status{HTTP Status}
+    Status -->|400| Client[Client Error<br/>Check request format]
+    Status -->|401| Auth[Auth Error<br/>Check JWT/token]
+    Status -->|403| Permission[Permission Error<br/>Check RBAC policy]
+    Status -->|404| NotFound[Not Found<br/>Check ID + tenant]
+    Status -->|409| Conflict[Conflict<br/>Duplicate resource]
+    Status -->|429| RateLimit[Rate Limited<br/>Check Retry-After]
+    Status -->|500| Server[Server Error<br/>Check logs]
+    Status -->|503| Unavail[Service Unavailable<br/>Check dependencies]
+
+    style Client fill:#e67e22,color:#fff
+    style Auth fill:#e74c3c,color:#fff
+    style RateLimit fill:#9b59b6,color:#fff
+```
+
+### Debugging 401 Errors
+
+| Error Code | Likely Cause | Diagnostic Step |
+|------------|-------------|-----------------|
+| `JWT_INVALID` | Expired or tampered token | `echo $TOKEN \| cut -d. -f2 \| base64 -d \| jq .exp` |
+| `JWT_EXPIRED` | Token past expiry time | Refresh token via `/auth/refresh` |
+| `JWT_SIGNATURE_INVALID` | Wrong signing key or JWKS stale | Fetch JWKS: `curl /well-known/jwks.json` |
+| `JWT_MISSING` | No Authorization header | Ensure `Authorization: Bearer <token>` header present |
+| `JWT_TENANT_MISMATCH` | Token tenant ≠ request tenant | Verify X-Tenant-ID matches JWT `tid` claim |
+
+### Debugging 403 Errors
+
+| Error Code | Likely Cause | Fix |
+|------------|-------------|-----|
+| `PERMISSION_DENIED` | User lacks required permission | Assign role with needed permission |
+| `ROLE_INSUFFICIENT` | Role hierarchy violation | Can't assign roles above own level |
+| `TENANT_ACCESS_DENIED` | User not member of tenant | Add user to tenant's org |
+
+---
+
+## Request Tracing
+
+Every error response includes a `request_id` for tracing:
+
+```json
+{
+  "error": "internal server error",
+  "code": "INTERNAL_ERROR",
+  "request_id": "req-abc123def456"
+}
+```
+
+### Finding Logs by Request ID
+
+```bash
+# Docker
+docker compose logs gateway | grep "req-abc123"
+
+# Kubernetes
+kubectl logs -n ggid deploy/ggid-gateway | grep "req-abc123"
+
+# Loki / ELK query
+{service="gateway"} |= "req-abc123"
+```
+
+---
+
+## References
+
+- [API Reference](./api-reference.md) — REST endpoint documentation
+- [Troubleshooting](./troubleshooting.md) — Diagnostic guides
+- [API Conventions](./api-conventions.md) — Error response format design
+- [SDK Guide](./sdk-guide.md) — Error handling in SDKs
