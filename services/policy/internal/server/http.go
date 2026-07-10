@@ -50,6 +50,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/time-conditions", s.handleTimeConditions)
 	mux.HandleFunc("/api/v1/policies/dry-run", s.handleDryRun)
 	mux.HandleFunc("/api/v1/policies/diff", s.handlePolicyDiff)
+	mux.HandleFunc("/api/v1/policies/analyze", s.handleAnalyze)
 }
 
 // --- Roles ---
@@ -1380,3 +1381,104 @@ func (s *HTTPServer) handlePolicyDiff(w http.ResponseWriter, r *http.Request) {
 
 // Ensure context import is used.
 var _ context.Context
+
+// GET /api/v1/policies/analyze?role_id=X — returns all resource+action pairs
+// that the role can access. Groups by resource_type for easy visualization.
+func (s *HTTPServer) handleAnalyze(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	roleIDStr := r.URL.Query().Get("role_id")
+	if roleIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "role_id query parameter is required")
+		return
+	}
+	roleID, err := uuid.Parse(roleIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid role_id")
+		return
+	}
+
+	// Get the role
+	role, err := s.roleSvc.GetRole(r.Context(), roleID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Get direct permissions
+	permissions, err := s.roleSvc.GetRolePermissions(r.Context(), roleID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// If role has parent, recursively get inherited permissions
+	inheritedPerms := []*domain.Permission{}
+	if role.ParentRoleID != nil {
+		parentPerms, err := s.roleSvc.GetRolePermissions(r.Context(), *role.ParentRoleID)
+		if err == nil {
+			inheritedPerms = parentPerms
+		}
+	}
+
+	// Build resource → actions map
+	resourceActions := map[string]map[string]bool{}      // direct
+	inheritedResourceActions := map[string]map[string]bool{} // inherited
+
+	for _, p := range permissions {
+		res := p.ResourceType
+		if resourceActions[res] == nil {
+			resourceActions[res] = map[string]bool{}
+		}
+		resourceActions[res][p.Action] = true
+	}
+	for _, p := range inheritedPerms {
+		res := p.ResourceType
+		if inheritedResourceActions[res] == nil {
+			inheritedResourceActions[res] = map[string]bool{}
+		}
+		inheritedResourceActions[res][p.Action] = true
+	}
+
+	// Build response grouped by resource
+	resources := []map[string]any{}
+	for res, actions := range resourceActions {
+		actionList := make([]string, 0, len(actions))
+		for a := range actions {
+			actionList = append(actionList, a)
+		}
+		// Check which actions are inherited only
+		inheritedOnly := []string{}
+		if inhActions, ok := inheritedResourceActions[res]; ok {
+			for a := range inhActions {
+				if !actions[a] {
+					inheritedOnly = append(inheritedOnly, a)
+				}
+			}
+		}
+		allActions := append(actionList, inheritedOnly...)
+		resources = append(resources, map[string]any{
+			"resource":           res,
+			"direct_actions":     actionList,
+			"inherited_actions":  inheritedOnly,
+			"total_actions":      len(allActions),
+		})
+	}
+
+	// Total counts
+	totalDirect := len(permissions)
+	totalInherited := len(inheritedPerms)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"role_id":            roleID.String(),
+		"role_name":          role.Name,
+		"has_parent":         role.ParentRoleID != nil,
+		"total_direct":       totalDirect,
+		"total_inherited":    totalInherited,
+		"resource_count":     len(resources),
+		"resources":          resources,
+	})
+}
