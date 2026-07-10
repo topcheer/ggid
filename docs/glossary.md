@@ -528,4 +528,39 @@ An HTTP header identifying the tenant context for a request. Required for all AP
 
 ---
 
+## J
+
+### JAR (JWT-Secured Authorization Request)
+An OAuth 2.0 extension (RFC 9101) that encodes authorization request parameters in a signed JWT instead of plain URL query parameters. Provides integrity protection, prevents parameter tampering, and enables request authentication. GGID supports JAR alongside PAR for high-security deployments.
+
+---
+
+## O
+
+### OID4VC (OpenID for Verifiable Credentials)
+A family of OpenID specifications enabling issuance and verification of W3C Verifiable Credentials (VCs) using OAuth 2.0 flows. Includes OID4VCI (issuance) and OID4VP (presentation). GGID's roadmap includes OID4VC support for wallet-based decentralized identity.
+
+---
+
+## P
+
+### PAR (Pushed Authorization Requests)
+An OAuth 2.0 extension (RFC 9126) where the client sends authorization parameters to a pushed authorization request endpoint (`/oauth/par`) and receives a `request_uri`. The authorization endpoint then receives only the `request_uri`, keeping sensitive parameters off the URL. PAR + JAR together provide maximum request security.
+
+---
+
+## R
+
+### RISC (Risk and Incident Sharing via Event Streams)
+An OpenID Foundation standard (now part of CAEP/SSF) for sharing security events between providers. GGID can publish and consume RISC events (e.g., account disabled, credential changed) to trigger cross-provider session revocation.
+
+---
+
+## S
+
+### SSE (Server-Sent Events)
+A standard HTTP protocol (HTML5 EventSource API) for streaming server-to-client updates over a persistent connection. GGID uses SSE for real-time audit event streaming at `GET /api/v1/audit/stream`, delivering events as they are published to NATS JetStream.
+
+---
+
 *Last updated: Phase 10 — Enterprise Features*
