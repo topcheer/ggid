@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/services/audit/internal/domain"
+	"github.com/ggid/ggid/services/audit/internal/service"
+	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/google/uuid"
 )
 
@@ -24,11 +27,9 @@ type mockRepo struct {
 	getErr     error
 }
 
-func (m *mockRepo) Insert(ctx interface{ Done() <-chan struct{} }, e *domain.AuditEvent) error {
-	return nil
-}
+func (m *mockRepo) Insert(_ context.Context, _ *domain.AuditEvent) error { return nil }
 
-func (m *mockRepo) GetByID(ctx interface{ Done() <-chan struct{} }, id uuid.UUID) (*domain.AuditEvent, error) {
+func (m *mockRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.AuditEvent, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
@@ -40,21 +41,21 @@ func (m *mockRepo) GetByID(ctx interface{ Done() <-chan struct{} }, id uuid.UUID
 	return nil, m.getErr
 }
 
-func (m *mockRepo) List(ctx interface{ Done() <-chan struct{} }, filter domain.ListFilter, limit, offset int) ([]*domain.AuditEvent, int, error) {
+func (m *mockRepo) List(_ context.Context, _ domain.ListFilter, _, _ int) ([]*domain.AuditEvent, int, error) {
 	if m.listErr != nil {
 		return nil, 0, m.listErr
 	}
 	return m.events, len(m.events), nil
 }
 
-func (m *mockRepo) GetStats(ctx interface{ Done() <-chan struct{} }, tenantID uuid.UUID, since time.Time) (*domain.Stats, error) {
+func (m *mockRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*domain.Stats, error) {
 	if m.statsErr != nil {
 		return nil, m.statsErr
 	}
 	return m.stats, nil
 }
 
-func (m *mockRepo) DeleteOlderThan(ctx interface{ Done() <-chan struct{} }, before time.Time) (int64, error) {
+func (m *mockRepo) DeleteOlderThan(_ context.Context, _ time.Time) (int64, error) {
 	if m.cleanupErr != nil {
 		return 0, m.cleanupErr
 	}
@@ -63,15 +64,15 @@ func (m *mockRepo) DeleteOlderThan(ctx interface{ Done() <-chan struct{} }, befo
 
 // --- Test helpers ---
 
-func newTestServer(events []*domain.AuditEvent, stats *domain.Stats) *HTTPServer {
-	tenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+var testTenantID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
 
+func newTestServer(events []*domain.AuditEvent, stats *domain.Stats) *HTTPServer {
 	if events == nil {
 		actorID := uuid.New()
 		events = []*domain.AuditEvent{
 			{
 				ID:        uuid.New(),
-				TenantID:  tenantID,
+				TenantID:  testTenantID,
 				ActorType: domain.ActorUser,
 				ActorID:   &actorID,
 				ActorName: "admin",
@@ -97,37 +98,26 @@ func newTestServer(events []*domain.AuditEvent, stats *domain.Stats) *HTTPServer
 		}
 	}
 
-	repo := &mockRepo{events: events, stats: stats}
-	svc := newTestService(repo)
+	repo := &mockRepo{events: events, stats: stats, cleanupN: 5}
+	svc := service.NewAuditService(repo)
 	return NewHTTPServer(svc)
 }
 
-// newTestService creates an AuditService using the mock repo.
-// We need to use a type assertion since AuditRepo is an interface.
-func newTestService(repo *mockRepo) *service.AuditService {
-	return service.NewAuditService(repo)
-}
-
-func doRequest(t *testing.T, srv *HTTPServer, method, path string, body string) *httptest.ResponseRecorder {
+func doRequest(srv *HTTPServer, method, path, body string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
-	srv.RegisterRoutes(http.NewServeMux())
-
-	// Use a mux that's already registered
 	mux := http.NewServeMux()
 	srv.RegisterRoutes(mux)
 	mux.ServeHTTP(w, req)
 	return w
 }
 
-// --- Tests ---
+// --- Events Handler ---
 
 func TestHandleEvents_GetList(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	tenantID := "00000000-0000-0000-0000-000000000001"
-
-	w := doRequest(t, srv, "GET", "/api/v1/audit/events?tenant_id="+tenantID, "")
+	w := doRequest(srv, "GET", "/api/v1/audit/events?tenant_id="+testTenantID.String(), "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
@@ -145,9 +135,19 @@ func TestHandleEvents_GetList(t *testing.T) {
 	}
 }
 
+func TestHandleEvents_WithFilters(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	url := "/api/v1/audit/events?tenant_id=" + testTenantID.String() +
+		"&action=user.login&result=success&page_size=10"
+	w := doRequest(srv, "GET", url, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
 func TestHandleEvents_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "GET", "/api/v1/audit/events", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/events", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -155,7 +155,15 @@ func TestHandleEvents_MissingTenantID(t *testing.T) {
 
 func TestHandleEvents_InvalidTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "GET", "/api/v1/audit/events?tenant_id=invalid", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/events?tenant_id=invalid", "")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestHandleEvents_InvalidActorID(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/events?tenant_id="+testTenantID.String()+"&actor_id=bad", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -163,17 +171,53 @@ func TestHandleEvents_InvalidTenantID(t *testing.T) {
 
 func TestHandleEvents_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	w := doRequest(t, srv, "POST", "/api/v1/audit/events?tenant_id="+tenantID, "")
+	w := doRequest(srv, "POST", "/api/v1/audit/events?tenant_id="+testTenantID.String(), "")
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("expected 405, got %d", w.Code)
 	}
 }
 
+// --- EventByID Handler ---
+
+func TestHandleEventByID(t *testing.T) {
+	srv := newTestServer(nil, nil)
+
+	// Get the event ID from the mock
+	w := doRequest(srv, "GET", "/api/v1/audit/events?tenant_id="+testTenantID.String(), "")
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	eventsArr := resp["events"].([]any)
+	firstEvent := eventsArr[0].(map[string]any)
+	eventID := firstEvent["id"].(string)
+
+	// Fetch by ID
+	w2 := doRequest(srv, "GET", "/api/v1/audit/events/"+eventID, "")
+	if w2.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w2.Code, w2.Body.String())
+	}
+}
+
+func TestHandleEventByID_InvalidID(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/events/not-a-uuid", "")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestHandleEventByID_MethodNotAllowed(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "DELETE", "/api/v1/audit/events/"+uuid.New().String(), "")
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", w.Code)
+	}
+}
+
+// --- Stats Handler ---
+
 func TestHandleStats_Get(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	w := doRequest(t, srv, "GET", "/api/v1/audit/stats?tenant_id="+tenantID, "")
+	w := doRequest(srv, "GET", "/api/v1/audit/stats?tenant_id="+testTenantID.String(), "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -190,15 +234,17 @@ func TestHandleStats_Get(t *testing.T) {
 
 func TestHandleStats_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "GET", "/api/v1/audit/stats", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/stats", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
 
+// --- Retention Handler ---
+
 func TestHandleRetention_Get(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "GET", "/api/v1/audit/retention", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/retention", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -213,13 +259,22 @@ func TestHandleRetention_Get(t *testing.T) {
 	}
 }
 
+func TestHandleRetention_Get_NoLastCleanup(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/retention", "")
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	// last_cleanup should be absent before any POST
+	if _, exists := resp["last_cleanup"]; exists {
+		t.Fatal("expected no last_cleanup before POST")
+	}
+}
+
 func TestHandleRetention_Put(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	enabled := false
 	body := `{"retention_days": 30, "enabled": false}`
-	_ = enabled
 
-	w := doRequest(t, srv, "PUT", "/api/v1/audit/retention", body)
+	w := doRequest(srv, "PUT", "/api/v1/audit/retention", body)
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
@@ -234,16 +289,33 @@ func TestHandleRetention_Put(t *testing.T) {
 	}
 
 	// Verify GET returns updated value
-	w2 := doRequest(t, srv, "GET", "/api/v1/audit/retention", "")
+	w2 := doRequest(srv, "GET", "/api/v1/audit/retention", "")
 	json.Unmarshal(w2.Body.Bytes(), &resp)
 	if resp["retention_days"].(float64) != 30 {
 		t.Fatalf("expected 30 after update, got %v", resp["retention_days"])
 	}
 }
 
+func TestHandleRetention_Put_OnlyDays(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "PUT", "/api/v1/audit/retention", `{"retention_days": 60}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["retention_days"].(float64) != 60 {
+		t.Fatalf("expected 60, got %v", resp["retention_days"])
+	}
+	// enabled should stay true
+	if resp["enabled"] != true {
+		t.Fatalf("expected enabled=true, got %v", resp["enabled"])
+	}
+}
+
 func TestHandleRetention_Put_InvalidJSON(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "PUT", "/api/v1/audit/retention", "not json")
+	w := doRequest(srv, "PUT", "/api/v1/audit/retention", "not json")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -251,7 +323,7 @@ func TestHandleRetention_Put_InvalidJSON(t *testing.T) {
 
 func TestHandleRetention_Post(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "POST", "/api/v1/audit/retention?days=7", "")
+	w := doRequest(srv, "POST", "/api/v1/audit/retention?days=7", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -264,21 +336,54 @@ func TestHandleRetention_Post(t *testing.T) {
 	if resp["retention_days"].(float64) != 7 {
 		t.Fatalf("expected 7 days, got %v", resp["retention_days"])
 	}
+	if resp["deleted_count"].(float64) != 5 {
+		t.Fatalf("expected 5 deleted, got %v", resp["deleted_count"])
+	}
+	// lastRun should now be set
+	if _, exists := resp["cleanup_timestamp"]; !exists {
+		t.Fatal("expected cleanup_timestamp")
+	}
+}
+
+func TestHandleRetention_Post_DefaultDays(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	// First update default
+	doRequest(srv, "PUT", "/api/v1/audit/retention", `{"retention_days": 45}`)
+
+	w := doRequest(srv, "POST", "/api/v1/audit/retention", "")
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["retention_days"].(float64) != 45 {
+		t.Fatalf("expected 45 (from config), got %v", resp["retention_days"])
+	}
+}
+
+func TestHandleRetention_Post_SetsLastRun(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	doRequest(srv, "POST", "/api/v1/audit/retention?days=1", "")
+
+	w := doRequest(srv, "GET", "/api/v1/audit/retention", "")
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if _, exists := resp["last_cleanup"]; !exists {
+		t.Fatal("expected last_cleanup after POST")
+	}
 }
 
 func TestHandleRetention_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "DELETE", "/api/v1/audit/retention", "")
+	w := doRequest(srv, "DELETE", "/api/v1/audit/retention", "")
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("expected 405, got %d", w.Code)
 	}
 }
 
-func TestHandleAnomalyRules_Get(t *testing.T) {
-	// Reset global rules
+// --- Anomaly Rules Handler ---
+
+func TestHandleAnomalyRules_GetEmpty(t *testing.T) {
 	anomalyRules = []map[string]any{}
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "GET", "/api/v1/audit/rules", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/rules", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -299,7 +404,7 @@ func TestHandleAnomalyRules_Create(t *testing.T) {
 	srv := newTestServer(nil, nil)
 	body := `{"name": "Brute Force", "action": "user.login", "threshold": 10, "window_minutes": 5, "severity": "critical"}`
 
-	w := doRequest(t, srv, "POST", "/api/v1/audit/rules", body)
+	w := doRequest(srv, "POST", "/api/v1/audit/rules", body)
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected 201, got %d: %s", w.Code, w.Body.String())
 	}
@@ -312,13 +417,8 @@ func TestHandleAnomalyRules_Create(t *testing.T) {
 	if resp["severity"] != "critical" {
 		t.Fatalf("expected critical, got %v", resp["severity"])
 	}
-}
-
-func TestHandleAnomalyRules_Create_MissingFields(t *testing.T) {
-	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "POST", "/api/v1/audit/rules", `{"threshold": 5}`)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
+	if resp["id"] == nil {
+		t.Fatal("expected id to be set")
 	}
 }
 
@@ -327,7 +427,7 @@ func TestHandleAnomalyRules_Create_Defaults(t *testing.T) {
 	srv := newTestServer(nil, nil)
 	body := `{"name": "Test", "action": "user.login"}`
 
-	w := doRequest(t, srv, "POST", "/api/v1/audit/rules", body)
+	w := doRequest(srv, "POST", "/api/v1/audit/rules", body)
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected 201, got %d", w.Code)
 	}
@@ -345,23 +445,30 @@ func TestHandleAnomalyRules_Create_Defaults(t *testing.T) {
 	}
 }
 
+func TestHandleAnomalyRules_Create_MissingFields(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "POST", "/api/v1/audit/rules", `{"threshold": 5}`)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
 func TestHandleAnomalyRules_Create_InvalidJSON(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "POST", "/api/v1/audit/rules", "bad json")
+	w := doRequest(srv, "POST", "/api/v1/audit/rules", "bad json")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
 
 func TestHandleAnomalyRules_Delete(t *testing.T) {
-	// Add a rule first
 	ruleID := uuid.New().String()
 	anomalyRules = []map[string]any{
 		{"id": ruleID, "name": "Test Rule", "action": "user.login", "threshold": 5, "window_minutes": 5, "severity": "warning"},
 	}
 	srv := newTestServer(nil, nil)
 
-	w := doRequest(t, srv, "DELETE", "/api/v1/audit/rules?id="+ruleID, "")
+	w := doRequest(srv, "DELETE", "/api/v1/audit/rules?id="+ruleID, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -373,7 +480,7 @@ func TestHandleAnomalyRules_Delete(t *testing.T) {
 
 func TestHandleAnomalyRules_Delete_MissingID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "DELETE", "/api/v1/audit/rules", "")
+	w := doRequest(srv, "DELETE", "/api/v1/audit/rules", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -381,16 +488,17 @@ func TestHandleAnomalyRules_Delete_MissingID(t *testing.T) {
 
 func TestHandleAnomalyRules_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "PATCH", "/api/v1/audit/rules", "")
+	w := doRequest(srv, "PATCH", "/api/v1/audit/rules", "")
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("expected 405, got %d", w.Code)
 	}
 }
 
+// --- Export Handler ---
+
 func TestHandleExport_JSON(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	w := doRequest(t, srv, "GET", "/api/v1/audit/export?tenant_id="+tenantID+"&format=json", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/export?tenant_id="+testTenantID.String()+"&format=json", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -401,8 +509,7 @@ func TestHandleExport_JSON(t *testing.T) {
 
 func TestHandleExport_CSV(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	w := doRequest(t, srv, "GET", "/api/v1/audit/export?tenant_id="+tenantID+"&format=csv", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/export?tenant_id="+testTenantID.String()+"&format=csv", "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
@@ -414,10 +521,21 @@ func TestHandleExport_CSV(t *testing.T) {
 	}
 }
 
+func TestHandleExport_DefaultFormat(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/export?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	// Default should be JSON
+	if !strings.Contains(w.Header().Get("Content-Type"), "application/json") {
+		t.Fatalf("expected JSON content type, got %s", w.Header().Get("Content-Type"))
+	}
+}
+
 func TestHandleExport_InvalidFormat(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	w := doRequest(t, srv, "GET", "/api/v1/audit/export?tenant_id="+tenantID+"&format=xml", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/export?tenant_id="+testTenantID.String()+"&format=xml", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -425,7 +543,7 @@ func TestHandleExport_InvalidFormat(t *testing.T) {
 
 func TestHandleExport_MissingTenantID(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "GET", "/api/v1/audit/export", "")
+	w := doRequest(srv, "GET", "/api/v1/audit/export", "")
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
@@ -433,41 +551,13 @@ func TestHandleExport_MissingTenantID(t *testing.T) {
 
 func TestHandleExport_MethodNotAllowed(t *testing.T) {
 	srv := newTestServer(nil, nil)
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	w := doRequest(t, srv, "POST", "/api/v1/audit/export?tenant_id="+tenantID, "")
+	w := doRequest(srv, "POST", "/api/v1/audit/export?tenant_id="+testTenantID.String(), "")
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Fatalf("expected 405, got %d", w.Code)
 	}
 }
 
-func TestHandleEventByID(t *testing.T) {
-	events := newTestServer(nil, nil).retention.days // just to have server
-	_ = events
-	srv := newTestServer(nil, nil)
-
-	// Get the event ID from the mock events
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	w := doRequest(t, srv, "GET", "/api/v1/audit/events?tenant_id="+tenantID, "")
-	var resp map[string]any
-	json.Unmarshal(w.Body.Bytes(), &resp)
-	eventsArr := resp["events"].([]any)
-	firstEvent := eventsArr[0].(map[string]any)
-	eventID := firstEvent["id"].(string)
-
-	// Fetch by ID
-	w2 := doRequest(t, srv, "GET", "/api/v1/audit/events/"+eventID, "")
-	if w2.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d: %s", w2.Code, w2.Body.String())
-	}
-}
-
-func TestHandleEventByID_InvalidID(t *testing.T) {
-	srv := newTestServer(nil, nil)
-	w := doRequest(t, srv, "GET", "/api/v1/audit/events/not-a-uuid", "")
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-}
+// --- Helper function tests ---
 
 func TestEventToJSON(t *testing.T) {
 	actorID := uuid.New()
@@ -509,8 +599,29 @@ func TestEventToJSON(t *testing.T) {
 	}
 }
 
+func TestEventToJSON_NilOptionals(t *testing.T) {
+	e := &domain.AuditEvent{
+		ID:        uuid.New(),
+		TenantID:  uuid.New(),
+		ActorType: domain.ActorSystem,
+		Action:    "system.cleanup",
+		Result:    domain.ResultSuccess,
+		CreatedAt: time.Now().UTC(),
+	}
+
+	m := eventToJSON(e)
+	if _, exists := m["actor_id"]; exists {
+		t.Fatal("expected no actor_id when nil")
+	}
+	if _, exists := m["resource_id"]; exists {
+		t.Fatal("expected no resource_id when nil")
+	}
+	if _, exists := m["metadata"]; exists {
+		t.Fatal("expected no metadata when nil")
+	}
+}
+
 func TestStatsToJSON(t *testing.T) {
-	tenantID := uuid.New()
 	actorID := uuid.New()
 	stats := &domain.Stats{
 		TotalEvents24h:  42,
@@ -552,6 +663,194 @@ func TestStatsToJSON(t *testing.T) {
 	if actors[0]["actor_name"] != "admin" {
 		t.Fatalf("expected admin, got %v", actors[0]["actor_name"])
 	}
+}
 
-	_ = tenantID // keep tenantID for potential future use
+// --- WriteJSON helpers ---
+
+func TestWriteJSON(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeJSON(w, http.StatusTeapot, map[string]string{"msg": "hello"})
+
+	if w.Code != http.StatusTeapot {
+		t.Fatalf("expected 418, got %d", w.Code)
+	}
+	if w.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("expected JSON content type, got %s", w.Header().Get("Content-Type"))
+	}
+}
+
+func TestWriteJSONError(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeJSONError(w, http.StatusBadRequest, "bad input")
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+
+	var resp map[string]string
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["error"] != "bad input" {
+		t.Fatalf("expected error message, got %v", resp["error"])
+	}
+}
+
+// --- Error paths and edge cases ---
+
+func TestHandleEvents_InvalidPageSize(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	// page_size=0 or negative or >500 should fall back to default 50
+	w := doRequest(srv, "GET", "/api/v1/audit/events?tenant_id="+testTenantID.String()+"&page_size=0", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 with invalid page_size, got %d", w.Code)
+	}
+	w = doRequest(srv, "GET", "/api/v1/audit/events?tenant_id="+testTenantID.String()+"&page_size=999", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 with large page_size, got %d", w.Code)
+	}
+}
+
+func TestHandleEvents_WithTimeRange(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	start := time.Now().UTC().Add(-24 * time.Hour).Format(time.RFC3339)
+	end := time.Now().UTC().Format(time.RFC3339)
+	url := "/api/v1/audit/events?tenant_id=" + testTenantID.String() +
+		"&start_time=" + start + "&end_time=" + end
+	w := doRequest(srv, "GET", url, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleEventByID_NotFound(t *testing.T) {
+	// Create a server with a repo that returns error on GetByID
+	actorID := uuid.New()
+	events := []*domain.AuditEvent{
+		{ID: uuid.New(), TenantID: testTenantID, ActorType: domain.ActorUser, ActorID: &actorID,
+			ActorName: "admin", Action: "user.login", Result: domain.ResultSuccess, CreatedAt: time.Now()},
+	}
+	repo := &mockRepo{events: events, stats: defaultStats(), cleanupN: 5, getErr: errorsNotFound("not found")}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+
+	// Valid UUID but not in repo
+	w := doRequest(srv, "GET", "/api/v1/audit/events/"+uuid.New().String(), "")
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandleStats_InvalidTenantID(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/stats?tenant_id=bad", "")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestHandleStats_MethodNotAllowed(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "POST", "/api/v1/audit/stats", "")
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", w.Code)
+	}
+}
+
+func TestHandleExport_WithFilters(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	url := "/api/v1/audit/export?tenant_id=" + testTenantID.String() +
+		"&format=csv&action=user.login&result=success"
+	w := doRequest(srv, "GET", url, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleExport_WithTimeRange(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	start := time.Now().UTC().Add(-48 * time.Hour).Format(time.RFC3339)
+	url := "/api/v1/audit/export?tenant_id=" + testTenantID.String() + "&start_time=" + start
+	w := doRequest(srv, "GET", url, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleRetention_Put_NegativeDays(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	// Negative days should be ignored (stays at default 90)
+	w := doRequest(srv, "PUT", "/api/v1/audit/retention", `{"retention_days": -5}`)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["retention_days"].(float64) != 90 {
+		t.Fatalf("expected 90 (negative ignored), got %v", resp["retention_days"])
+	}
+}
+
+func TestDetectAnomalies_WithRules(t *testing.T) {
+	// Set up a rule
+	anomalyRules = []map[string]any{
+		{"id": uuid.New().String(), "name": "Brute Force", "action": "user.login",
+			"threshold": 5, "window_minutes": 60, "severity": "warning"},
+	}
+	srv := newTestServer(nil, nil)
+	// The check=true query triggers detectAnomalies
+	w := doRequest(srv, "GET", "/api/v1/audit/rules?check=true&tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if _, ok := resp["alerts"]; !ok {
+		t.Fatal("expected alerts key in response")
+	}
+	// Reset
+	anomalyRules = []map[string]any{}
+}
+
+func TestDetectAnomalies_MissingTenantID(t *testing.T) {
+	anomalyRules = []map[string]any{
+		{"id": uuid.New().String(), "name": "Test", "action": "user.login",
+			"threshold": 5, "window_minutes": 60, "severity": "warning"},
+	}
+	srv := newTestServer(nil, nil)
+	// Without tenant_id, detectAnomalies should skip (no alerts)
+	w := doRequest(srv, "GET", "/api/v1/audit/rules?check=true", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	anomalyRules = []map[string]any{}
+}
+
+func TestWriteServiceError_UnknownError(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeServiceError(w, errSimple("some error"))
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
+// --- Mock error helpers ---
+
+type simpleErr struct{ msg string }
+
+func (e simpleErr) Error() string { return e.msg }
+
+func errSimple(msg string) error                  { return simpleErr{msg: msg} }
+func errorsNotFound(msg string) error             { return ggiderrors.New(ggiderrors.ErrNotFound, msg) }
+
+func defaultStats() *domain.Stats {
+	return &domain.Stats{
+		TotalEvents24h:  10,
+		FailedLogins24h: 2,
+		EventsByAction:  map[string]int{"user.login": 8},
+		HourlyDistribution: []domain.HourlyCount{
+			{Hour: time.Now().UTC().Truncate(time.Hour), Count: 3},
+		},
+		TopActors: []domain.ActorActivity{
+			{ActorID: uuid.New(), ActorName: "admin", Count: 5},
+		},
+	}
 }
