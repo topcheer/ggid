@@ -878,3 +878,31 @@ func TestOrgService_List(t *testing.T) {
 	_, err := svc.List(context.Background(), uuid.New(), 1, 50)
 	if err != nil { t.Fatalf("unexpected: %v", err) }
 }
+
+func TestOrgService_Update_NilID(t *testing.T) {
+	svc := NewOrgService(&mockOrgRepo{orgs: map[uuid.UUID]*domain.Organization{}})
+	_, err := svc.Update(context.Background(), &domain.Organization{Name: "X"})
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestTeamService_Get_WithResult(t *testing.T) {
+	id := uuid.New()
+	repo := &mockTeamRepo{teams: map[uuid.UUID]*domain.Team{id: {ID: id, Name: "T"}}}
+	svc := NewTeamService(repo)
+	result, err := svc.Get(context.Background(), id)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+	if result == nil { t.Fatal("expected result") }
+}
+
+func TestTeamService_Delete2(t *testing.T) {
+	svc := NewTeamService(&mockTeamRepo{teams: map[uuid.UUID]*domain.Team{}})
+	err := svc.Delete(context.Background(), uuid.New())
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestTenantService_Delete(t *testing.T) {
+	id := uuid.New()
+	svc := NewTenantService(&mockTenantRepo{tenants: map[uuid.UUID]*domain.Tenant{id: {ID: id, Name: "T"}}})
+	err := svc.Delete(context.Background(), id)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
