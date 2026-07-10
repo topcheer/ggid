@@ -224,7 +224,7 @@ func TestSMTPSender_Send_TLSConnectionFailed(t *testing.T) {
 
 // --- LogSender ---
 
-func TestLogSender_SendBatch(t *testing.T) {
+func TestLogSender_SendBatch_Multiple(t *testing.T) {
 	var count int
 	s := NewLogSender(func(format string, args ...interface{}) {
 		count++
