@@ -57,10 +57,18 @@ func IsAPIKeyRequest(r *http.Request) bool {
 }
 
 // HasScope checks if the request context contains a specific API key scope.
+// HasScope checks if the request context has the required scope.
+// If no scopes are in context, returns false (deny by default).
 func HasScope(ctx context.Context, scope string) bool {
 	scopes, ok := ctx.Value(APIKeyScopesKey).([]string)
 	if !ok {
-		return true // No scope restriction if not using API key
+		// P0 Security: deny by default when no scopes in context.
+		// Check JWT scopes if available.
+		jwtScopes, jwtOk := ctx.Value(jwtScopesKey).([]string)
+		if !jwtOk {
+			return false
+		}
+		scopes = jwtScopes
 	}
 	for _, s := range scopes {
 		if s == scope || s == "*" {
@@ -123,6 +131,9 @@ var _ = uuid.New          // keep import
 
 // context key for API key scopes
 var APIKeyScopesKey apiScopeCtxKey = "api_key_scopes"
+
+// jwtScopesKey is for JWT scopes extracted from token claims.
+var jwtScopesKey apiScopeCtxKey = "jwt_scopes"
 
 type apiScopeCtxKey string
 

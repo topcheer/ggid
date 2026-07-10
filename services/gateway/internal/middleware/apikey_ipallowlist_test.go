@@ -91,9 +91,18 @@ func TestHasScope(t *testing.T) {
 		t.Error("should not have admin scope")
 	}
 
-	// No scopes in context = unrestricted
-	if !HasScope(context.Background(), "anything") {
-		t.Error("expected unrestricted without scopes")
+	// P0 Security: No scopes in context = deny by default (was true before fix)
+	if HasScope(context.Background(), "anything") {
+		t.Error("expected deny without scopes (P0 security fix)")
+	}
+
+	// JWT scopes should also be checked
+	jwtCtx := context.WithValue(context.Background(), jwtScopesKey, []string{"openid", "profile"})
+	if !HasScope(jwtCtx, "openid") {
+		t.Error("expected openid scope from JWT")
+	}
+	if HasScope(jwtCtx, "admin") {
+		t.Error("should not have admin scope from JWT")
 	}
 }
 

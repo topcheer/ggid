@@ -16,6 +16,8 @@ import (
 type GRPCInterceptorConfig struct {
 	// JWTSecret is the HMAC secret for JWT validation. If empty, auth is skipped.
 	JWTSecret string
+	// RequireAuth if true, makes JWTSecret mandatory (fatal on startup if empty).
+	RequireAuth bool
 	// TenantHeader is the gRPC metadata key for tenant ID (default: x-tenant-id).
 	TenantHeader string
 	// LogRequests enables request logging via standard log package.
@@ -53,6 +55,11 @@ func UserFromGRPCContext(ctx context.Context) string {
 func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerInterceptor {
 	if cfg == nil {
 		cfg = &GRPCInterceptorConfig{}
+	}
+	// P0 Security: If RequireAuth is true but JWTSecret is empty, fail hard.
+	// Silent bypass when secret is empty is a critical vulnerability.
+	if cfg.RequireAuth && cfg.JWTSecret == "" {
+		log.Fatal("GRPCUnaryInterceptor: RequireAuth=true but JWTSecret is empty — refusing to start with silent auth bypass")
 	}
 	tenantHeader := cfg.TenantHeader
 	if tenantHeader == "" {

@@ -263,6 +263,12 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		return "", err
 	}
 
+	// Store state for CSRF validation during token exchange.
+	if req.State != "" {
+		stateKey := fmt.Sprintf("oauth:state:%s:%s", req.ClientID, req.State)
+		stateStore.Store(stateKey, time.Now().Add(10 * time.Minute))
+	}
+
 	return plaintextCode, nil
 }
 
@@ -275,6 +281,7 @@ type TokenExchangeRequest struct {
 	ClientID       string
 	ClientSecret   string // for confidential clients
 	CodeVerifier   string // PKCE code_verifier
+	State          string // OAuth state parameter for CSRF validation
 }
 
 // TokenResponse is the standard OAuth2 token endpoint response.
@@ -631,6 +638,55 @@ func (s *OAuthService) IssueSAMLToken(tenantID uuid.UUID, nameID, email, display
 
 // revokedTokens stores revoked token hashes (thread-safe).
 var revokedTokens sync.Map
+var stateStore sync.Map // stateKey -> expiry time
+
+// ValidateState checks whether a state parameter was previously stored during /authorize.
+
+// BuildAuthorizeRedirectURL builds the redirect URL with code, state, and iss parameters.
+// Per RFC 6749 §10.14, the iss parameter identifies the authorization server.
+func (s *OAuthService) BuildAuthorizeRedirectURL(redirectURI, code, state string) string {
+	u := redirectURI
+sep := "?"
+	if containsQS(redirectURI) {
+		sep = "&"
+	}
+	u += sep + "code=" + code
+	if state != "" {
+		u += "&state=" + state
+	}
+	// RFC 6749 §10.14: iss parameter prevents mix-up attacks.
+	u += "&iss=" + s.issuer
+	return u
+}
+
+// containsQS checks if a URL already has a query string.
+func containsQS(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] == '?' {
+			return true
+		}
+	}
+	return false
+}
+// Used for CSRF protection per OAuth 2.0 RFC 6749 §10.12.
+func (s *OAuthService) ValidateState(clientID, state string) bool {
+	if state == "" {
+		return false
+	}
+	stateKey := fmt.Sprintf("oauth:state:%s:%s", clientID, state)
+	val, ok := stateStore.Load(stateKey)
+	if !ok {
+		return false // state not found (unknown, expired, or replayed)
+	}
+	expiry, ok := val.(time.Time)
+	if !ok || time.Now().After(expiry) {
+		stateStore.Delete(stateKey)
+		return false // expired
+	}
+	// Delete after use — one-time use per RFC 6749 §10.12.
+	stateStore.Delete(stateKey)
+	return true
+}
 
 // backchannelLogoutList stores subjects that have been globally logged out.
 var backchannelLogoutList sync.Map
