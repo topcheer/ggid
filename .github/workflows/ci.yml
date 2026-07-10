@@ -27,6 +27,17 @@ jobs:
       - name: Test with coverage
         run: go test -race -cover -coverprofile=coverage.out ./...
 
+      - name: Enforce minimum coverage
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: ${COVERAGE}%"
+          THRESHOLD=80
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "::error::Coverage ${COVERAGE}% is below threshold ${THRESHOLD}%"
+            exit 1
+          fi
+          echo "::notice::Coverage ${COVERAGE}% meets threshold ${THRESHOLD}%"
+
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
