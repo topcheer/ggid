@@ -1351,3 +1351,411 @@ func TestHandleExport_CSVFormat(t *testing.T) {
 		t.Fatalf("expected 200, got %d", w.Code)
 	}
 }
+
+// --- Coverage Boost: writeServiceError branches ---
+
+func TestWriteServiceError_NotFoundMsg(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeServiceError(w, errSimple("record not found"))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestWriteServiceError_GGIDNotFound(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeServiceError(w, ggiderrors.New(ggiderrors.ErrNotFound, "event gone"))
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestWriteServiceError_GGIDInvalidArgument(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeServiceError(w, ggiderrors.New(ggiderrors.ErrInvalidArgument, "bad arg"))
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestWriteServiceError_GGIDInternal(t *testing.T) {
+	w := httptest.NewRecorder()
+	writeServiceError(w, ggiderrors.New(ggiderrors.ErrInternal, "boom"))
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", w.Code)
+	}
+}
+
+// --- Coverage Boost: handleAuditWebhooks PUT/DELETE/NotFound ---
+
+func TestHandleWebhooks_Delete_NotFound(t *testing.T) {
+	auditWebhooks.configs = nil
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "DELETE", "/api/v1/audit/webhooks?id="+uuid.New().String()+"&tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandleWebhooks_Get_FiltersByTenant(t *testing.T) {
+	auditWebhooks.Lock()
+	auditWebhooks.configs = []map[string]any{
+		{"id": "wh1", "tenant_id": testTenantID.String(), "url": "http://a"},
+		{"id": "wh2", "tenant_id": "other-tenant", "url": "http://b"},
+	}
+	auditWebhooks.Unlock()
+	defer func() {
+		auditWebhooks.Lock()
+		auditWebhooks.configs = nil
+		auditWebhooks.Unlock()
+	}()
+
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/webhooks?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	hooks := resp["webhooks"].([]any)
+	if len(hooks) != 1 {
+		t.Fatalf("expected 1 webhook for tenant, got %d", len(hooks))
+	}
+}
+
+func TestHandleWebhooks_Post_WithoutBodyURL(t *testing.T) {
+	auditWebhooks.configs = nil
+	srv := newTestServer(nil, nil)
+	// POST without url field
+	w := doRequest(srv, "POST", "/api/v1/audit/webhooks?tenant_id="+testTenantID.String(), `{"event_types":["a"]}`)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 missing url, got %d", w.Code)
+	}
+}
+
+// --- Coverage Boost: handleStream emits audit_event SSE ---
+
+func TestHandleStream_ReceivesAuditEvent(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	mux := http.NewServeMux()
+	srv.RegisterRoutes(mux)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	req := httptest.NewRequest("GET", "/api/v1/audit/stream?tenant_id="+testTenantID.String(), nil)
+	req = req.WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	go mux.ServeHTTP(w, req)
+	// Wait for at least one ticker fire (2s interval) so audit_event SSE lines are emitted
+	time.Sleep(2600 * time.Millisecond)
+	cancel()
+	time.Sleep(50 * time.Millisecond)
+
+	body := w.Body.String()
+	if !strings.Contains(body, "event: connected") {
+		t.Fatalf("expected connected event, got: %s", body)
+	}
+	if !strings.Contains(body, "event: audit_event") {
+		t.Fatalf("expected at least one audit_event SSE line, got: %s", body[:min(len(body), 200)])
+	}
+}
+
+// --- Coverage Boost: handleCorrelate with IP/resource ---
+
+func TestHandleCorrelate_ResourceTypeFilter(t *testing.T) {
+	actorID := uuid.New()
+	events := []*domain.AuditEvent{
+		{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorUser,
+			ActorID:   &actorID,
+			ActorName: "admin",
+			Action:    "user.login",
+			Result:    domain.ResultFailure,
+			IPAddress: "10.0.0.5",
+			CreatedAt: time.Now().UTC(),
+		},
+		{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorUser,
+			ActorID:   &actorID,
+			ActorName: "admin",
+			Action:    "user.login",
+			Result:    domain.ResultDenied,
+			IPAddress: "10.0.0.6",
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+	srv := newTestServer(events, nil)
+
+	w := doRequest(srv, "GET", "/api/v1/audit/correlate?tenant_id="+testTenantID.String()+"&time_range=1h", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	chains := resp["chains"].([]any)
+	if len(chains) == 0 {
+		t.Fatal("expected at least 1 correlation chain")
+	}
+	// The admin chain should have high risk (2 failures + 2 IPs)
+	chain := chains[0].(map[string]any)
+	if chain["risk_level"] != "medium" && chain["risk_level"] != "high" {
+		t.Fatalf("expected medium/high risk, got %v", chain["risk_level"])
+	}
+}
+
+func TestHandleCorrelate_AnonymousActorKey(t *testing.T) {
+	events := []*domain.AuditEvent{
+		{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorSystem,
+			Action:    "system.task",
+			Result:    domain.ResultSuccess,
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+	srv := newTestServer(events, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/correlate?tenant_id="+testTenantID.String()+"&time_range=1h", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleCorrelate_OldEventFiltered(t *testing.T) {
+	events := []*domain.AuditEvent{
+		{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorUser,
+			ActorName: "olduser",
+			Action:    "user.login",
+			Result:    domain.ResultSuccess,
+			CreatedAt: time.Now().UTC().Add(-48 * time.Hour), // outside 1h range
+		},
+	}
+	srv := newTestServer(events, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/correlate?tenant_id="+testTenantID.String()+"&time_range=1h", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["total_chains"].(float64) != 0 {
+		t.Fatalf("expected 0 chains for old events, got %v", resp["total_chains"])
+	}
+}
+
+func TestHandleCorrelate_ActorMatchByUUID(t *testing.T) {
+	actorID := uuid.New()
+	events := []*domain.AuditEvent{
+		{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorUser,
+			ActorID:   &actorID,
+			ActorName: "",
+			Action:    "user.login",
+			Result:    domain.ResultSuccess,
+			IPAddress: "1.2.3.4",
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+	srv := newTestServer(events, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/correlate?tenant_id="+testTenantID.String()+"&actor="+actorID.String()+"&time_range=1h", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["total_chains"].(float64) != 1 {
+		t.Fatalf("expected 1 chain matching actor UUID, got %v", resp["total_chains"])
+	}
+}
+
+// --- Coverage Boost: handleVerifyIntegrity tampered detection ---
+
+func TestHandleVerifyIntegrity_Tampered(t *testing.T) {
+	events := []*domain.AuditEvent{
+		{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorUser,
+			Action:    "user.login",
+			Result:    domain.ResultSuccess,
+			CreatedAt: time.Now().UTC(),
+			Hash:      "tampered-hash-value",
+		},
+	}
+	srv := newTestServer(events, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/verify-integrity?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["status"] != "tampered" {
+		t.Fatalf("expected tampered, got %v", resp["status"])
+	}
+}
+
+func TestHandleVerifyIntegrity_LimitParam(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/verify-integrity?tenant_id="+testTenantID.String()+"&limit=abc", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 with invalid limit, got %d", w.Code)
+	}
+}
+
+func TestHandleVerifyIntegrity_LargeLimit(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/verify-integrity?tenant_id="+testTenantID.String()+"&limit=10000", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleVerifyIntegrity_VerifiedChain(t *testing.T) {
+	prevHash := ""
+	var events []*domain.AuditEvent
+	for i := 0; i < 3; i++ {
+		e := &domain.AuditEvent{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorUser,
+			Action:    "user.login",
+			Result:    domain.ResultSuccess,
+			CreatedAt: time.Now().UTC(),
+		}
+		h := computeEventHash(e, prevHash)
+		e.Hash = h
+		events = append(events, e)
+		prevHash = h
+	}
+	srv := newTestServer(events, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/verify-integrity?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["status"] != "valid" {
+		t.Fatalf("expected valid chain, got %v", resp["status"])
+	}
+	if resp["verified"].(float64) != 3 {
+		t.Fatalf("expected 3 verified, got %v", resp["verified"])
+	}
+}
+
+// --- Coverage Boost: computeEventHash edge case ---
+
+func TestComputeEventHash_WithPrevHash(t *testing.T) {
+	e := &domain.AuditEvent{
+		ID:        uuid.New(),
+		TenantID:  uuid.New(),
+		Action:    "test",
+		ActorName: "tester",
+		Result:    domain.ResultSuccess,
+		CreatedAt: time.Now().UTC(),
+	}
+	h1 := computeEventHash(e, "")
+	h2 := computeEventHash(e, "some-prev-hash")
+	if h1 == h2 {
+		t.Fatal("expected different hashes when prevHash differs")
+	}
+	if h1 == "" {
+		t.Fatal("expected non-empty hash")
+	}
+}
+
+// --- Coverage Boost: detectAnomalies threshold exceeded ---
+
+func TestDetectAnomalies_ThresholdExceeded(t *testing.T) {
+	// Build events with enough failures to exceed threshold=3
+	var events []*domain.AuditEvent
+	for i := 0; i < 5; i++ {
+		events = append(events, &domain.AuditEvent{
+			ID:        uuid.New(),
+			TenantID:  testTenantID,
+			ActorType: domain.ActorUser,
+			Action:    "user.login",
+			Result:    domain.ResultFailure,
+			CreatedAt: time.Now().UTC(),
+		})
+	}
+
+	anomalyRules = []map[string]any{
+		{"id": uuid.New().String(), "name": "Brute", "action": "user.login",
+			"threshold": 3, "window_minutes": 60, "severity": "critical"},
+	}
+	defer func() { anomalyRules = []map[string]any{} }()
+
+	srv := newTestServer(events, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/rules?check=true&tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	alerts, ok := resp["alerts"].([]any)
+	if !ok || len(alerts) == 0 {
+		t.Fatalf("expected at least 1 alert, got %v", resp["alerts"])
+	}
+	alert := alerts[0].(map[string]any)
+	if alert["severity"] != "critical" {
+		t.Fatalf("expected critical severity, got %v", alert["severity"])
+	}
+}
+
+func TestDetectAnomalies_InvalidTenantID(t *testing.T) {
+	anomalyRules = []map[string]any{
+		{"id": uuid.New().String(), "name": "Test", "action": "user.login",
+			"threshold": 5, "window_minutes": 60, "severity": "warning"},
+	}
+	defer func() { anomalyRules = []map[string]any{} }()
+
+	srv := newTestServer(nil, nil)
+	// Invalid tenant_id → detectAnomalies should skip (uuid.Parse fails)
+	w := doRequest(srv, "GET", "/api/v1/audit/rules?check=true&tenant_id=not-a-uuid", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+// --- Coverage Boost: handleExport error paths via repo ---
+
+func TestHandleExport_ListError(t *testing.T) {
+	events := []*domain.AuditEvent{}
+	repo := &mockRepo{events: events, stats: defaultStats(), cleanupN: 5, listErr: errSimple("db not found")}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+
+	w := doRequest(srv, "GET", "/api/v1/audit/export?tenant_id="+testTenantID.String()+"&format=json", "")
+	if w.Code != http.StatusNotFound && w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 404 or 500 on list error, got %d", w.Code)
+	}
+}
+
+func TestHandleEvents_ListError(t *testing.T) {
+	events := []*domain.AuditEvent{}
+	repo := &mockRepo{events: events, stats: defaultStats(), cleanupN: 5, listErr: errSimple("db connection not found")}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+
+	w := doRequest(srv, "GET", "/api/v1/audit/events?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusNotFound && w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 404 or 500, got %d", w.Code)
+	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
