@@ -692,3 +692,104 @@ fi
 
 echo "=== Verification complete ==="
 ```
+
+---
+
+## Clerk → GGID
+
+### Export Users from Clerk
+
+Clerk provides a Backend API for user export:
+
+```bash
+# Export all users via Clerk Backend API
+curl -s "https://api.clerk.com/v1/users?limit=500" \
+  -H "Authorization: Bearer $CLERK_SECRET_KEY" \
+  | jq '.' > clerk_users.json
+
+# Paginate if needed
+curl -s "https://api.clerk.com/v1/users?limit=500&offset=500" \
+  -H "Authorization: Bearer $CLERK_SECRET_KEY" \
+  | jq '.' >> clerk_users_all.json
+```
+
+### Clerk User → GGID Transform
+
+```python
+#!/usr/bin/env python3
+"""Transform Clerk users to GGID import format."""
+
+import json, hashlib
+
+with open("clerk_users.json") as f:
+    clerk = json.load(f)
+
+ggid_users = []
+for u in clerk:
+    # Clerk stores password hashes in a non-standard format
+    # Users must reset password on first login
+    primary_email = next((e["email_address"] for e in u.get("email_addresses", []) if e.get("id") == u.get("primary_email_address_id")), "")
+
+    ggid_users.append({
+        "username": u.get("username") or primary_email,
+        "email": primary_email,
+        "first_name": u.get("first_name", ""),
+        "last_name": u.get("last_name", ""),
+        "active": "active" if u.get("active", True) else "suspended",
+        "external_id": u["id"],  # Clerk user ID for reference
+        "metadata": {
+            "migrated_from": "clerk",
+            "clerk_id": u["id"],
+            "created_at": u.get("created_at"),
+        }
+    })
+
+with open("ggid_import.json", "w") as f:
+    json.dump({"users": ggid_users}, f, indent=2)
+
+print(f"Transformed {len(ggid_users)} users")
+```
+
+### Clerk Role Mapping
+
+| Clerk Role | GGID Role Key | GGID Permissions |
+|------------|---------------|------------------|
+| `org:admin` | `admin` | `*` (all) |
+| `org:member` | `member` | `read:users`, `read:orgs` |
+| (custom) | Map by name | Configure per requirements |
+
+### Clerk OAuth Client Migration
+
+```bash
+# Clerk social connections → GGID OAuth providers
+# For each social provider in Clerk:
+# 1. Get provider config from Clerk dashboard
+# 2. Set the same Client ID / Secret in GGID
+
+# Google
+ggid-env OAUTH_GOOGLE_CLIENT_ID=$GOOGLE_CID
+ggid-env OAUTH_GOOGLE_CLIENT_SECRET=$GOOGLE_SECRET
+
+# GitHub
+ggid-env OAUTH_GITHUB_CLIENT_ID=$GITHUB_CID
+ggid-env OAUTH_GITHUB_CLIENT_SECRET=$GITHUB_SECRET
+
+# Update redirect URI in provider dashboard:
+#   Clerk:  https://your-app.clerk.accounts.dev/oauth/callback
+#   GGID:   https://api.your-domain.com/oauth/callback/google
+```
+
+### Clerk → GGID Feature Mapping
+
+| Clerk Feature | GGID Equivalent | Notes |
+|---------------|-----------------|-------|
+| User Management | Identity Service | Full CRUD + SCIM 2.0 |
+| Authentication | Auth Service | JWT, bcrypt, MFA |
+| Sessions | Redis sessions | TTL-based, revocable |
+| Organizations | Org Service | Tree structure, departments, teams |
+| RBAC | Policy Service | RBAC + ABAC engine |
+| Webhooks | Gateway Webhooks | HMAC-signed, retry, dead-letter |
+| JWT Templates | Custom Claims | Per-tenant JWT customization |
+| Social Login | pkg/social | 9 connectors (Google, GitHub, etc.) |
+| MFA (TOTP) | Auth MFA | TOTP + WebAuthn |
+| B2B (Organizations) | Multi-tenant | RLS isolation per tenant |
