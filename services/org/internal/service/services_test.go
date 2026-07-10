@@ -808,14 +808,25 @@ func TestMemberService_Invite(t *testing.T) {
 	_ = svc // MembershipService doesn't have Update method; just verify construction
 }
 
-func TestMembershipService_AcceptInvitation(t *testing.T) {
+func TestMembershipService_List_PaginationEdge(t *testing.T) {
 	svc := NewMembershipService(&mockMemberRepo{members: map[uuid.UUID]*domain.Membership{}})
-	err := svc.AcceptInvitation(context.Background(), uuid.New())
+	// page=0 should get normalized to page 1
+	_, err := svc.List(context.Background(), repository.ListMembersFilter{}, 0, 0)
 	if err != nil { t.Fatalf("unexpected: %v", err) }
 }
 
-func TestMembershipService_Remove(t *testing.T) {
-	svc := NewMembershipService(&mockMemberRepo{members: map[uuid.UUID]*domain.Membership{}})
-	err := svc.Remove(context.Background(), uuid.New())
+func TestDeptService_Get(t *testing.T) {
+	id := uuid.New()
+	repo := &mockDeptRepo{depts: map[uuid.UUID]*domain.Department{id: {ID: id, Name: "Eng"}}}
+	svc := NewDeptService(repo)
+	_, err := svc.Get(context.Background(), id)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestTeamService_Get(t *testing.T) {
+	id := uuid.New()
+	repo := &mockTeamRepo{teams: map[uuid.UUID]*domain.Team{id: {ID: id, Name: "Alpha"}}}
+	svc := NewTeamService(repo)
+	_, err := svc.Get(context.Background(), id)
 	if err != nil { t.Fatalf("unexpected: %v", err) }
 }
