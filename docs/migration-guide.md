@@ -793,3 +793,174 @@ ggid-env OAUTH_GITHUB_CLIENT_SECRET=$GITHUB_SECRET
 | Social Login | pkg/social | 9 connectors (Google, GitHub, etc.) |
 | MFA (TOTP) | Auth MFA | TOTP + WebAuthn |
 | B2B (Organizations) | Multi-tenant | RLS isolation per tenant |
+
+---
+
+## Pre-Migration Checklist
+
+Complete this checklist before starting any migration:
+
+### Infrastructure
+
+- [ ] GGID deployed and healthy (all containers/services running)
+- [ ] Database backups configured and tested
+- [ ] DNS record for new GGID instance (e.g., `iam.example.com`)
+- [ ] TLS certificate provisioned for new domain
+- [ ] Load balancer configured with health checks
+- [ ] Monitoring and alerting in place (Prometheus + Grafana)
+
+### User Data
+
+- [ ] Export user directory from source system (CSV/JSON/SCIM)
+- [ ] Verify user count and data integrity
+- [ ] Map source attributes to GGID schema (email, name, phone, department)
+- [ ] Identify service accounts and API keys
+- [ ] Document password reset strategy (force reset on first login)
+
+### Role & Group Mapping
+
+- [ ] Inventory all roles/groups in source system
+- [ ] Create GGID roles matching source roles
+- [ ] Document group-to-role mapping table
+- [ ] Plan orphaned role cleanup (roles with no users)
+
+### Application Inventory
+
+- [ ] List all apps using the source IdP
+- [ ] For each app: document SAML/OIDC config, redirect URIs, cert
+- [ ] Identify apps that can be migrated independently
+- [ ] Identify apps with hard dependencies (must migrate together)
+- [ ] Test SAML SP metadata import for each app
+
+### Signing Key Strategy
+
+- [ ] Export JWT signing key from source system (if possible)
+- [ ] Plan key overlap period (dual-key acceptance window)
+- [ ] Document fallback if tokens signed with old key fail
+
+### Rollback Plan
+
+- [ ] Define rollback criteria (error rate threshold, login success rate)
+- [ ] Keep source IdP running in read-only mode for 7 days
+- [ ] Document DNS cutover reversal procedure
+- [ ] Test rollback in staging environment
+
+---
+
+## JWT Signing Key Migration
+
+### Strategy: Dual-Key Overlap
+
+During migration, both the old and new signing keys are accepted. This allows
+existing tokens (signed by the source system) to remain valid until they
+expire, while new tokens are signed by GGID.
+
+```
+Phase 1 (Pre-cutover):
+  Source IdP signs with Key-A
+  GGID accepts Key-A (imported) + Key-B (new)
+
+Phase 2 (Cutover):
+  GGID signs with Key-B
+  Source IdP disabled
+  GGID still accepts Key-A for lingering tokens
+
+Phase 3 (Post-migration):
+  GGID accepts only Key-B
+  Key-A removed after all tokens expired
+```
+
+### Importing External Signing Keys
+
+```bash
+# Export public key from source IdP (e.g., Auth0)
+# Auth0: Settings → Advanced → Signing Key → Download Certificate
+
+# Register in GGID for dual-key acceptance
+curl -X POST https://iam.example.com/api/v1/admin/oauth/signing-keys \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -F "key=@auth0-signing-cert.pem" \
+  -F "status=accept_only"
+```
+
+### Key Overlap Configuration
+
+```yaml
+oauth:
+  jwt:
+    # Primary signing key (GGID's own)
+    signing_key: "/etc/ggid/keys/ggid-signing.key"
+    signing_cert: "/etc/ggid/keys/ggid-signing.crt"
+    
+    # Additional accepted keys (for migration overlap)
+    accepted_keys:
+      - cert: "/etc/ggid/keys/auth0-signing.crt"
+        label: "auth0-migration"
+        remove_after: "2024-02-15T00:00:00Z"  # Auto-remove date
+      - cert: "/etc/ggid/keys/keycloak-signing.crt"
+        label: "keycloak-migration"
+        remove_after: "2024-02-15T00:00:00Z"
+```
+
+---
+
+## Phased Cutover Strategy
+
+### Phase 1: Parallel (Days 1-7)
+
+```
+                    ┌──────────────────┐
+  User Login ──────►│  Load Balancer    │
+                    │  (weighted:       │
+                    │   90% → Source    │
+                    │   10% → GGID)     │
+                    └───┬──────────┬───┘
+                        │          │
+                 90%    ▼    10%   ▼
+              ┌──────────┐    ┌──────────┐
+              │ Source IdP│    │   GGID   │
+              │ (active)  │    │ (shadow) │
+              └──────────┘    └──────────┘
+```
+
+- Both systems active simultaneously
+- 10% of traffic routed to GGID
+- Monitor error rates, login success rates
+- Both systems share user directory (LDAP or synced)
+
+### Phase 2: Majority Cutover (Days 8-14)
+
+```
+Load Balancer: 80% → GGID, 20% → Source
+```
+
+- Most users now authenticate via GGID
+- Source IdP kept as fallback
+- Migrate one application group at a time
+
+### Phase 3: Full Cutover (Day 15)
+
+```
+Load Balancer: 100% → GGID
+```
+
+- All traffic through GGID
+- Source IdP kept running in read-only mode (rollback safety)
+- Users who haven't logged in are force-reset
+
+### Phase 4: Decommission (Day 22)
+
+- Source IdP shut down
+- Remove dual-key acceptance for old signing keys
+- Final data reconciliation
+
+### Application Migration Groups
+
+Migrate apps in dependency order:
+
+| Group | Apps | When |
+|-------|------|------|
+| 1 | Internal tools (lowest risk) | Phase 1 |
+| 2 | Admin console, dashboards | Phase 2 |
+| 3 | Customer-facing apps | Phase 2-3 |
+| 4 | Critical integrations (billing, security) | Phase 3 |
