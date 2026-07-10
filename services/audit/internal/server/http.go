@@ -149,10 +149,10 @@ func eventToJSON(e *domain.AuditEvent) map[string]any {
 		"request_id":    e.RequestID,
 		"created_at":    e.CreatedAt,
 	}
-	if e.ActorID != uuid.Nil {
+	if e.ActorID != nil {
 		m["actor_id"] = e.ActorID.String()
 	}
-	if e.ResourceID != uuid.Nil {
+	if e.ResourceID != nil {
 		m["resource_id"] = e.ResourceID.String()
 	}
 	if e.Metadata != nil {

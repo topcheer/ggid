@@ -31,11 +31,11 @@ type AuditEvent struct {
 	ID           uuid.UUID
 	TenantID     uuid.UUID
 	ActorType    ActorType
-	ActorID      uuid.UUID
+	ActorID      *uuid.UUID
 	ActorName    string
 	Action       string // e.g. "user.login", "role.assign"
 	ResourceType string
-	ResourceID   uuid.UUID
+	ResourceID   *uuid.UUID
 	ResourceName string
 	Result       EventResult
 	IPAddress    string

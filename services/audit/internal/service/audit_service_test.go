@@ -66,7 +66,7 @@ func eventMatchesFilter(e *domain.AuditEvent, f domain.ListFilter) bool {
 	if e.TenantID != f.TenantID {
 		return false
 	}
-	if f.ActorID != nil && e.ActorID != *f.ActorID {
+	if f.ActorID != nil && (e.ActorID == nil || *e.ActorID != *f.ActorID) {
 		return false
 	}
 	if f.Action != "" && e.Action != f.Action {
@@ -228,9 +228,9 @@ func TestListEvents_FilterByActorID(t *testing.T) {
 	actor2 := uuid.New()
 	repo := &mockAuditRepo{}
 	repo.events = []*domain.AuditEvent{
-		{TenantID: tenantID, ActorID: actor1, Action: "a"},
-		{TenantID: tenantID, ActorID: actor2, Action: "a"},
-		{TenantID: tenantID, ActorID: actor1, Action: "a"},
+		{TenantID: tenantID, ActorID: &actor1, Action: "a"},
+		{TenantID: tenantID, ActorID: &actor2, Action: "a"},
+		{TenantID: tenantID, ActorID: &actor1, Action: "a"},
 	}
 	for _, e := range repo.events {
 		e.ID = uuid.New()
@@ -395,10 +395,10 @@ func TestListEvents_CombinedFilters(t *testing.T) {
 	base := time.Date(2025, 6, 15, 12, 0, 0, 0, time.UTC)
 	repo := &mockAuditRepo{}
 	repo.events = []*domain.AuditEvent{
-		{TenantID: tenantID, ActorID: actor1, Action: "user.login", ResourceType: "users", Result: domain.ResultSuccess, CreatedAt: base},
-		{TenantID: tenantID, ActorID: actor1, Action: "user.login", ResourceType: "users", Result: domain.ResultFailure, CreatedAt: base},
-		{TenantID: tenantID, ActorID: actor1, Action: "role.assign", ResourceType: "roles", Result: domain.ResultSuccess, CreatedAt: base},
-		{TenantID: tenantID, ActorID: uuid.New(), Action: "user.login", ResourceType: "users", Result: domain.ResultSuccess, CreatedAt: base},
+		{TenantID: tenantID, ActorID: &actor1, Action: "user.login", ResourceType: "users", Result: domain.ResultSuccess, CreatedAt: base},
+		{TenantID: tenantID, ActorID: &actor1, Action: "user.login", ResourceType: "users", Result: domain.ResultFailure, CreatedAt: base},
+		{TenantID: tenantID, ActorID: &actor1, Action: "role.assign", ResourceType: "roles", Result: domain.ResultSuccess, CreatedAt: base},
+		{TenantID: tenantID, ActorID: &uuid.UUID{}, Action: "user.login", ResourceType: "users", Result: domain.ResultSuccess, CreatedAt: base},
 	}
 	for _, e := range repo.events {
 		e.ID = uuid.New()
@@ -420,3 +420,5 @@ func TestListEvents_CombinedFilters(t *testing.T) {
 		t.Errorf("expected 1 event matching all filters, got %d", total)
 	}
 }
+
+func ptrUUID(u uuid.UUID) *uuid.UUID { return &u }

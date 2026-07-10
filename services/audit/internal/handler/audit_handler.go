@@ -106,10 +106,10 @@ func eventToProto(e *domain.AuditEvent) *pb.AuditEvent {
 		UserAgent:    e.UserAgent,
 		RequestId:    e.RequestID,
 	}
-	if e.ActorID != uuid.Nil {
+	if e.ActorID != nil {
 		p.ActorId = e.ActorID.String()
 	}
-	if e.ResourceID != uuid.Nil {
+	if e.ResourceID != nil {
 		p.ResourceId = e.ResourceID.String()
 	}
 	if e.Metadata != nil {
