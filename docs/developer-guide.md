@@ -724,3 +724,249 @@ If you need to add an entirely new microservice:
 7. **Add health check** at `/healthz`.
 
 8. **Update `GGCODE.md`** with the new service in the architecture table.
+
+---
+
+## Adding a New Auth Provider
+
+GGID uses a provider chain pattern for authentication. You can add custom
+providers (e.g., a proprietary IdP, a legacy system, or a new social connector)
+by implementing the `AuthProvider` interface.
+
+### Step 1: Implement the Provider Interface
+
+```go
+// pkg/authprovider/provider.go
+type AuthProvider interface {
+    // Name returns the provider identifier (e.g., "local", "ldap", "custom")
+    Name() string
+
+    // Authenticate validates credentials and returns the user identity
+    Authenticate(ctx context.Context, identifier, password string) (*AuthResult, error)
+
+    // SupportsPasswordChange indicates if this provider allows password updates
+    SupportsPasswordChange() bool
+
+    // ChangePassword updates the user's password (if supported)
+    ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error
+}
+```
+
+### Step 2: Create Your Provider
+
+```go
+// pkg/authprovider/custom/custom_provider.go
+package custom
+
+import (
+    "context"
+    "fmt"
+    "net/http"
+
+    "github.com/ggid/ggid/pkg/authprovider"
+)
+
+type CustomProvider struct {
+    apiURL  string
+    apiKey  string
+    client  *http.Client
+}
+
+type Config struct {
+    APIURL  string
+    APIKey  string
+}
+
+func New(cfg Config) *CustomProvider {
+    return &CustomProvider{
+        apiURL: cfg.APIURL,
+        apiKey: cfg.APIKey,
+        client: &http.Client{},
+    }
+}
+
+func (p *CustomProvider) Name() string { return "custom" }
+
+func (p *CustomProvider) Authenticate(ctx context.Context, identifier, password string) (*authprovider.AuthResult, error) {
+    // Call external API
+    // POST {apiURL}/verify with identifier + password
+    // Map response to AuthResult
+    return &authprovider.AuthResult{
+        UserID:       parsedUserID,
+        TenantID:     tenantID,
+        ProviderName: "custom",
+        Claims:       map[string]string{"email": email},
+    }, nil
+}
+
+func (p *CustomProvider) SupportsPasswordChange() bool { return false }
+
+func (p *CustomProvider) ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error {
+    return fmt.Errorf("password change not supported by custom provider")
+}
+```
+
+### Step 3: Register in the Auth Chain
+
+```go
+// services/auth/cmd/main.go
+
+func buildProviderChain(cfg *conf.Config) authprovider.Chain {
+    chain := authprovider.NewChain()
+
+    // Always add local provider first
+    chain.Add(authprovider.NewLocalProvider(localRepo))
+
+    // Add LDAP if configured
+    if cfg.LDAP.URL != "" {
+        chain.Add(authprovider.NewLDAPProvider(cfg.LDAP))
+    }
+
+    // Add your custom provider
+    if cfg.Custom.APIURL != "" {
+        chain.Add(custom.New(custom.Config{
+            APIURL: cfg.Custom.APIURL,
+            APIKey: cfg.Custom.APIKey,
+        }))
+    }
+
+    return chain
+}
+```
+
+### Step 4: Add Configuration
+
+```go
+// services/auth/internal/conf/conf.go
+
+type Config struct {
+    // ... existing fields ...
+    Custom CustomConfig
+}
+
+type CustomConfig struct {
+    APIURL string `env:"CUSTOM_AUTH_API_URL" envDefault:""`
+    APIKey string `env:"CUSTOM_AUTH_API_KEY" envDefault:""`
+}
+```
+
+### Step 5: Write Tests
+
+```go
+// pkg/authprovider/custom/custom_provider_test.go
+package custom_test
+
+import (
+    "context"
+    "net/http"
+    "net/http/httptest"
+    "testing"
+)
+
+func TestCustomProvider_Authenticate(t *testing.T) {
+    // Start mock API server
+    srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if r.URL.Path == "/verify" {
+            w.WriteHeader(200)
+            w.Write([]byte(`{"user_id":"uuid-here","email":"user@test.com"}`))
+        }
+    }))
+    defer srv.Close()
+
+    provider := custom.New(custom.Config{APIURL: srv.URL, APIKey: "test-key"})
+    result, err := provider.Authenticate(context.Background(), "user@test.com", "pass")
+
+    if err != nil {
+        t.Fatalf("unexpected error: %v", err)
+    }
+    if result.ProviderName != "custom" {
+        t.Errorf("expected provider name 'custom', got '%s'", result.ProviderName)
+    }
+}
+```
+
+### Step 6: Add Social Connector (for OAuth-based providers)
+
+For OAuth 2.0 / OIDC-based providers, implement the `Connector` interface in
+`pkg/social/`:
+
+```go
+// pkg/social/exampleconnector/connector.go
+package exampleconnector
+
+import (
+    "context"
+    "golang.org/x/oauth2"
+)
+
+type Connector struct {
+    clientID     string
+    clientSecret string
+    redirectURL  string
+}
+
+func New(clientID, clientSecret, redirectURL string) *Connector {
+    return &Connector{clientID, clientSecret, redirectURL}
+}
+
+func (c *Connector) Name() string { return "example" }
+
+func (c *Connector) GetAuthURL(state string) string {
+    // Build authorization URL with PKCE
+    conf := &oauth2.Config{
+        ClientID:     c.clientID,
+        ClientSecret: c.clientSecret,
+        RedirectURL:  c.redirectURL,
+        Endpoint: oauth2.Endpoint{
+            AuthURL:  "https://provider.com/oauth/authorize",
+            TokenURL: "https://provider.com/oauth/token",
+        },
+        Scopes: []string{"openid", "email", "profile"},
+    }
+    return conf.AuthCodeURL(state, oauth2.AccessTypeOnline)
+}
+
+func (c *Connector) HandleCallback(ctx context.Context, code string) (*SocialUser, error) {
+    // Exchange code for token
+    // Fetch user profile from provider's API
+    // Return SocialUser with email, name, provider user ID
+    return &SocialUser{
+        Email:        email,
+        Name:         name,
+        ProviderName: "example",
+        ProviderID:   providerUserID,
+    }, nil
+}
+```
+
+Then register in the connector registry:
+
+```go
+// pkg/social/registry.go
+func NewRegistry() *Registry {
+    r := &Registry{connectors: make(map[string]Connector)}
+    r.Register("google", google.New(...))
+    r.Register("github", github.New(...))
+    r.Register("example", exampleconnector.New(...))  // Add yours
+    return r
+}
+```
+
+### Auth Provider Chain Flow
+
+```mermaid
+graph TB
+    Login[Login Request<br/>username + password] --> Chain[Auth Provider Chain]
+
+    Chain --> P1[1. Local Provider<br/>Check bcrypt hash in DB]
+    P1 -->|success| Authenticated[Return JWT]
+    P1 -->|not found| P2[2. LDAP Provider<br/>Check directory]
+    P2 -->|success| Authenticated
+    P2 -->|not found| P3[3. Custom Provider<br/>Call external API]
+    P3 -->|success| Authenticated
+    P3 -->|fail| Denied[401 Unauthorized]
+
+    style Chain fill:#3498db,color:#fff
+    style Authenticated fill:#27ae60,color:#fff
+    style Denied fill:#e74c3c,color:#fff
+```
