@@ -52,7 +52,12 @@ interface Member {
   team_id?: string;
 }
 
-type Tab = "orgs" | "depts" | "teams";
+type Tab = "orgs" | "depts" | "teams" | "tree";
+
+interface TreeData {
+  organizations: Organization[];
+  departments: Department[];
+}
 
 // ===== Main Component =====
 
@@ -68,6 +73,11 @@ export default function OrganizationsPage() {
   const [depts, setDepts] = useState<Department[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+
+  // Tree view state
+  const [treeData, setTreeData] = useState<TreeData | null>(null);
+  const [treeLoading, setTreeLoading] = useState(false);
+  const [treeRootId, setTreeRootId] = useState<string | null>(null);
 
   // UI state
   const [showCreate, setShowCreate] = useState(false);
@@ -153,6 +163,34 @@ export default function OrganizationsPage() {
       loadTeams(selectedOrgId);
     }
   }, [tab, selectedOrgId, loadDepts, loadTeams]);
+
+  // Load tree data for tree tab
+  const loadTree = useCallback(
+    async (orgId: string) => {
+      setTreeLoading(true);
+      try {
+        const data = await apiFetch<{ organizations?: Organization[]; departments?: Department[] }>(
+          `/api/v1/orgs/${orgId}/tree`,
+        );
+        setTreeData({
+          organizations: data.organizations || [],
+          departments: data.departments || [],
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load tree");
+        setTreeData(null);
+      } finally {
+        setTreeLoading(false);
+      }
+    },
+    [apiFetch],
+  );
+
+  useEffect(() => {
+    if (tab === "tree" && treeRootId) {
+      loadTree(treeRootId);
+    }
+  }, [tab, treeRootId, loadTree]);
 
   // ===== Handlers =====
 
@@ -389,11 +427,31 @@ export default function OrganizationsPage() {
         </div>
       )}
 
+      {/* Tree root selector */}
+      {tab === "tree" && (
+        <div className="mb-4 flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-600">Root Organization:</label>
+          <select
+            value={treeRootId || ""}
+            onChange={(e) => setTreeRootId(e.target.value || null)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          >
+            <option value="">-- Select org --</option>
+            {orgs.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="mb-4 flex gap-2 border-b border-gray-200">
         <TabButton active={tab === "orgs"} onClick={() => setTab("orgs")} icon={Building2} label={`Organizations (${orgs.length})`} />
         <TabButton active={tab === "depts"} onClick={() => setTab("depts")} icon={Network} label={`Departments (${depts.length})`} />
         <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Users} label={`Teams (${teams.length})`} />
+        <TabButton active={tab === "tree"} onClick={() => setTab("tree")} icon={Layers} label="Tree View" />
       </div>
 
       {/* Content */}
@@ -463,7 +521,7 @@ export default function OrganizationsPage() {
             </table>
           </div>
         )
-      ) : (
+      ) : tab === "teams" ? (
         /* ===== Teams ===== */
         !selectedOrgId ? (
           <EmptyState icon={Users} title="Select an organization" subtitle="Choose an organization above to view its teams" />
@@ -499,12 +557,169 @@ export default function OrganizationsPage() {
             ))}
           </div>
         )
-      )}
+      ) : tab === "tree" ? (
+        /* ===== Unified Tree View ===== */
+        !treeRootId ? (
+          <EmptyState icon={Layers} title="Select a root organization" subtitle="Choose an organization above to view its full hierarchy" />
+        ) : treeLoading ? (
+          <p className="text-gray-500">Loading tree...</p>
+        ) : !treeData || treeData.organizations.length === 0 ? (
+          <EmptyState icon={Layers} title="No tree data" subtitle="Failed to load or empty tree" />
+        ) : (
+          <UnifiedTreeView treeData={treeData} memberCounts={memberCounts} />
+        )
+      ) : null}
     </div>
   );
 }
 
-// ===== Sub-Components =====
+// ===== Unified Tree View Component =====
+
+function UnifiedTreeView({
+  treeData,
+  memberCounts,
+}: {
+  treeData: TreeData;
+  memberCounts: Record<string, number>;
+}) {
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  // Build org tree from the tree data
+  const orgTree = buildTree(treeData.organizations);
+
+  // Group departments by org_id
+  const deptsByOrg = new Map<string, Department[]>();
+  for (const d of treeData.departments) {
+    const list = deptsByOrg.get(d.org_id) || [];
+    list.push(d);
+    deptsByOrg.set(d.org_id, list);
+  }
+
+  const toggle = (id: string) => {
+    setExpandedNodes((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  // Auto-expand root nodes
+  useEffect(() => {
+    if (expandedNodes.size === 0 && orgTree.length > 0) {
+      setExpandedNodes(new Set(orgTree.map((o) => o.id)));
+    }
+  }, [orgTree, expandedNodes.size]);
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+        <Layers className="h-4 w-4 text-brand-600" />
+        Organization Structure
+        <span className="text-xs font-normal text-gray-400">
+          ({treeData.organizations.length} orgs, {treeData.departments.length} depts)
+        </span>
+      </h3>
+      <div className="space-y-0.5">
+        {orgTree.map((org) => (
+          <UnifiedOrgNode
+            key={org.id}
+            org={org}
+            depth={0}
+            expanded={expandedNodes}
+            onToggle={toggle}
+            memberCount={memberCounts[org.id] || 0}
+            deptsByOrg={deptsByOrg}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function UnifiedOrgNode({
+  org,
+  depth,
+  expanded,
+  onToggle,
+  memberCount,
+  deptsByOrg,
+}: {
+  org: OrgNode;
+  depth: number;
+  expanded: Set<string>;
+  onToggle: (id: string) => void;
+  memberCount: number;
+  deptsByOrg: Map<string, Department[]>;
+}) {
+  const isExpanded = expanded.has(org.id);
+  const hasChildren = org.children.length > 0;
+  const orgDepts = deptsByOrg.get(org.id) || [];
+  const hasDepts = orgDepts.length > 0;
+  const hasContent = hasChildren || hasDepts;
+
+  return (
+    <>
+      <div
+        className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50"
+        style={{ paddingLeft: `${depth * 20 + 8}px` }}
+      >
+        <button
+          onClick={() => hasContent && onToggle(org.id)}
+          className={`flex h-4 w-4 items-center justify-center ${hasContent ? "cursor-pointer text-gray-400" : "invisible"}`}
+        >
+          {hasContent && (isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />)}
+        </button>
+        <Building2 className={`h-4 w-4 ${depth === 0 ? "text-brand-600" : "text-gray-400"}`} />
+        <span className={`text-sm ${depth === 0 ? "font-semibold" : "font-medium"}`}>{org.name}</span>
+        {org.path && (
+          <span className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-400">{org.path}</span>
+        )}
+        <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+          <Users className="h-3 w-3" />
+          {memberCount}
+        </span>
+        {hasDepts && (
+          <span className="flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-600">
+            <Network className="h-3 w-3" />
+            {orgDepts.length} depts
+          </span>
+        )}
+      </div>
+
+      {isExpanded && (
+        <>
+          {/* Render departments under this org */}
+          {orgDepts.map((dept) => (
+            <div
+              key={dept.id}
+              className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-blue-50/30"
+              style={{ paddingLeft: `${(depth + 1) * 20 + 28}px` }}
+            >
+              <Network className="h-3.5 w-3.5 text-blue-400" />
+              <span className="text-sm text-gray-600">{dept.name}</span>
+              {dept.path && (
+                <span className="font-mono text-xs text-gray-300">{dept.path}</span>
+              )}
+            </div>
+          ))}
+          {/* Render child organizations */}
+          {org.children.map((child) => (
+            <UnifiedOrgNode
+              key={child.id}
+              org={child}
+              depth={depth + 1}
+              expanded={expanded}
+              onToggle={onToggle}
+              memberCount={0}
+              deptsByOrg={deptsByOrg}
+            />
+          ))}
+        </>
+      )}
+    </>
+  );
+}
 
 interface OrgNode extends Organization {
   children: OrgNode[];
