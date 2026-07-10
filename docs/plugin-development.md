@@ -1060,6 +1060,374 @@ curl -v -H "X-Debug: true" \
 
 ---
 
+## Middleware Chain Plugin
+
+Middleware plugins wrap the Gateway's HTTP handler chain, enabling custom
+request/response processing (custom headers, request rewriting, response
+filtering).
+
+### Middleware Plugin Interface
+
+```go
+// Plugin interface for HTTP middleware
+type MiddlewarePlugin interface {
+    // Name returns the plugin identifier
+    Name() string
+
+    // Wrap is called for every HTTP request. It receives the next handler
+    // and must call it to continue the chain.
+    Wrap(next http.Handler) http.Handler
+}
+```
+
+### Sample Middleware Plugin: Request Logger
+
+```go
+// plugins/request_logger/plugin.go
+package main
+
+import (
+    "log"
+    "net/http"
+    "time"
+)
+
+type RequestLoggerPlugin struct{}
+
+func (p *RequestLoggerPlugin) Name() string {
+    return "request-logger"
+}
+
+func (p *RequestLoggerPlugin) Wrap(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+
+        // Wrap ResponseWriter to capture status code
+        wrapped := &statusWriter{ResponseWriter: w, status: 200}
+
+        // Process request
+        next.ServeHTTP(wrapped, r)
+
+        // Log after request completes
+        log.Printf(
+            "[%s] %s %s %d %s %s",
+            p.Name(),
+            r.Method,
+            r.URL.Path,
+            wrapped.status,
+            time.Since(start),
+            r.Header.Get("X-Tenant-ID"),
+        )
+    })
+}
+
+type statusWriter struct {
+    http.ResponseWriter
+    status int
+}
+
+func (w *statusWriter) WriteHeader(status int) {
+    w.status = status
+    w.ResponseWriter.WriteHeader(status)
+}
+
+// Required: export Plugin instance
+var Plugin RequestLoggerPlugin
+```
+
+### Sample Middleware Plugin: Custom Header Injection
+
+```go
+// plugins/custom_headers/plugin.go
+package main
+
+import (
+    "net/http"
+    "os"
+)
+
+type CustomHeaderPlugin struct {
+    headers map[string]string
+}
+
+func (p *CustomHeaderPlugin) Name() string {
+    return "custom-headers"
+}
+
+func (p *CustomHeaderPlugin) Wrap(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Inject custom headers before processing
+        for key, value := range p.headers {
+            w.Header().Set(key, value)
+        }
+
+        // Add security headers
+        w.Header().Set("X-Custom-Security", "enabled")
+        w.Header().Set("X-Request-ID", r.Header.Get("X-Request-ID"))
+
+        next.ServeHTTP(w, r)
+    })
+}
+
+func init() {
+    // Read config from env
+    Plugin = CustomHeaderPlugin{
+        headers: map[string]string{
+            "X-Powered-By": "GGID",
+            "X-Frame-Options": "DENY",
+        },
+    }
+}
+
+var Plugin CustomHeaderPlugin
+```
+
+### Sample Middleware Plugin: Tenant-Based Rate Limiter
+
+```go
+// plugins/tenant_ratelimit/plugin.go
+package main
+
+import (
+    "net/http"
+    "sync"
+    "time"
+)
+
+type TenantRateLimitPlugin struct {
+    mu      sync.Mutex
+    buckets map[string]*bucket // tenant_id → bucket
+    limit   int
+    window  time.Duration
+}
+
+func (p *TenantRateLimitPlugin) Name() string {
+    return "tenant-ratelimit"
+}
+
+func (p *TenantRateLimitPlugin) Wrap(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        tenantID := r.Header.Get("X-Tenant-ID")
+        if tenantID == "" {
+            next.ServeHTTP(w, r)
+            return
+        }
+
+        p.mu.Lock()
+        b, ok := p.buckets[tenantID]
+        if !ok {
+            b = &bucket{count: 0, reset: time.Now().Add(p.window)}
+            p.buckets[tenantID] = b
+        }
+
+        // Reset bucket if window expired
+        if time.Now().After(b.reset) {
+            b.count = 0
+            b.reset = time.Now().Add(p.window)
+        }
+
+        // Check limit
+        if b.count >= p.limit {
+            w.Header().Set("Retry-After", "60")
+            http.Error(w, `{"error":"rate limited"}`, http.StatusTooManyRequests)
+            p.mu.Unlock()
+            return
+        }
+
+        b.count++
+        w.Header().Set("X-RateLimit-Limit", "100")
+        w.Header().Set("X-RateLimit-Remaining", "0")
+        p.mu.Unlock()
+
+        next.ServeHTTP(w, r)
+    })
+}
+
+type bucket struct {
+    count int
+    reset time.Time
+}
+
+var Plugin = &TenantRateLimitPlugin{
+    buckets: make(map[string]*bucket),
+    limit:   100,
+    window:  time.Minute,
+}
+```
+
+### Middleware Chain Order
+
+Plugins execute in registration order. The Gateway builds the chain:
+
+```
+Request → Plugin1.Wrap → Plugin2.Wrap → Plugin3.Wrap → Handler → Response
+```
+
+Register middleware plugins in the Gateway's `main.go`:
+
+```go
+func main() {
+    gateway := NewGateway()
+
+    // Register middleware plugins (order matters!)
+    gateway.UsePlugin(&RequestLoggerPlugin{})
+    gateway.UsePlugin(&TenantRateLimitPlugin{})
+    gateway.UsePlugin(&CustomHeaderPlugin{})
+
+    gateway.ListenAndServe(":8080")
+}
+```
+
+### Middleware vs Hooks
+
+| Aspect | Middleware Plugin | Hook |
+|--------|-------------------|------|
+| Scope | All HTTP requests | Specific auth events |
+| Can modify response | Yes | No |
+| Can short-circuit | Yes (return 4xx/5xx) | Yes (deny) |
+| Runs async | No (synchronous) | Configurable |
+| Use case | Headers, logging, rate limit | Token customization, validation |
+
+---
+
+## Sample Complete Plugin
+
+A full example combining auth provider and event subscriber patterns:
+
+```go
+// plugins/legacy_idp/main.go
+package main
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
+    "sync"
+    "time"
+)
+
+// === Auth Provider Interface ===
+type AuthProvider interface {
+    Name() string
+    Authenticate(ctx context.Context, username, password string) (*User, error)
+}
+
+// === Event Subscriber Interface ===
+type EventSubscriber interface {
+    HandleEvent(ctx context.Context, event Event) error
+}
+
+type User struct {
+    ID       string
+    Username string
+    Email    string
+    TenantID string
+}
+
+type Event struct {
+    EventType string          `json:"event_type"`
+    Data      json.RawMessage `json:"data"`
+}
+
+// === Legacy IdP Plugin ===
+type LegacyIdPPlugin struct {
+    baseURL string
+    client  *http.Client
+}
+
+func NewLegacyIdP(baseURL string) *LegacyIdPPlugin {
+    return &LegacyIdPPlugin{
+        baseURL: baseURL,
+        client:  &http.Client{Timeout: 5 * time.Second},
+    }
+}
+
+// --- Auth Provider Implementation ---
+func (p *LegacyIdPPlugin) Name() string {
+    return "legacy-idp"
+}
+
+func (p *LegacyIdPPlugin) Authenticate(ctx context.Context, username, password string) (*User, error) {
+    // Call legacy IdP API
+    body := fmt.Sprintf(`{"username":"%s","password":"%s"}`, username, password)
+
+    req, _ := http.NewRequestWithContext(ctx, "POST",
+        p.baseURL+"/api/auth", strings.NewReader(body))
+    req.Header.Set("Content-Type", "application/json")
+
+    resp, err := p.client.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("legacy idp unreachable: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return nil, fmt.Errorf("legacy idp returned %d", resp.StatusCode)
+    }
+
+    var result struct {
+        UserID string `json:"user_id"`
+        Email  string `json:"email"`
+        Name   string `json:"name"`
+    }
+    json.NewDecoder(resp.Body).Decode(&result)
+
+    return &User{
+        ID:       result.UserID,
+        Username: username,
+        Email:    result.Email,
+    }, nil
+}
+
+// --- Event Subscriber Implementation ---
+func (p *LegacyIdPPlugin) HandleEvent(ctx context.Context, event Event) error {
+    // Sync user creation events to the legacy IdP
+    if event.EventType == "user.created" {
+        var data struct {
+            UserID string `json:"user_id"`
+            Email  string `json:"email"`
+        }
+        json.Unmarshal(event.Data, &data)
+
+        // Create user in legacy system
+        log.Printf("[LegacyIdP] Syncing new user %s", data.Email)
+        // POST to legacy IdP...
+    }
+    return nil
+}
+
+// === Plugin Registration ===
+var Plugin *LegacyIdPPlugin
+var once sync.Once
+
+func Init(baseURL string) *LegacyIdPPlugin {
+    once.Do(func() {
+        Plugin = NewLegacyIdP(baseURL)
+        log.Printf("[LegacyIdP] Initialized with base URL: %s", baseURL)
+    })
+    return Plugin
+}
+```
+
+### Usage
+
+```go
+// In GGID main.go
+func main() {
+    legacyIdP := legacyidp.Init(os.Getenv("LEGACY_IDP_URL"))
+
+    // Register as auth provider (in the auth chain after Local and LDAP)
+    authService.AddProvider(legacyIdP)
+
+    // Register as event subscriber (receives user.created events)
+    eventBus.Subscribe("ggid.events.user.created", legacyIdP)
+}
+```
+
+---
+
 ## References
 
 - [Plugin API Reference](./plugin-api-reference.md) — Detailed API docs
