@@ -2,20 +2,22 @@
 
 ## P0 — Security Debt
 
-### Resolved
-- [x] CSRF token predictable entropy → crypto/rand (commit 29b51c1)
-- [x] Rate limiter not wired into handler chain (commit fc20c41)
-- [x] SecurityHeaders not wired into handler chain (commit 64991a6)
-- [x] Tenant spoofing via X-Tenant-ID header (commit 5bcbfce)
+### Resolved (10)
+- [x] CSRF token predictable entropy → crypto/rand (arch 29b51c1)
+- [x] Rate limiter not wired into handler chain (arch fc20c41)
+- [x] SecurityHeaders not wired into handler chain (arch 64991a6)
+- [x] Tenant spoofing via X-Tenant-ID header (arch 5bcbfce)
+- [x] Admin API no role check — any authenticated user (arch 66ef1db)
+- [x] OAuth state param not validated on token exchange (dev 72edaa5)
+- [x] No iss parameter in auth redirect (dev 72edaa5)
+- [x] JWTSecret empty → silent auth bypass (dev 72edaa5)
+- [x] HasScope() always returns true for JWT (dev 72edaa5)
+- [x] JWT jti not tracked — tokens replayable (dev 72edaa5)
 
-### Outstanding
-- [ ] OAuth state param not validated on token exchange
-- [ ] Gateway HasScope() returns true for any JWT
-- [ ] Access token issued without scope claim
-- [ ] JWT jti not tracked — tokens fully replayable
+### Outstanding (8)
+- [ ] OAuth introspection endpoint has NO AUTH (server.go:545)
 - [ ] Webhook HTTPDeliverer has zero SSRF protection
 - [ ] No Host header validation (DNS rebinding)
-- [ ] JWTSecret empty → silent auth bypass
 - [ ] gRPC plaintext between all services
 - [ ] No audit hash chain
 - [ ] No database backup automation
