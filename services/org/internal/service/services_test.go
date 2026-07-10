@@ -830,3 +830,51 @@ func TestTeamService_Get(t *testing.T) {
 	_, err := svc.Get(context.Background(), id)
 	if err != nil { t.Fatalf("unexpected: %v", err) }
 }
+
+func TestDeptService_Create_EmptyName(t *testing.T) {
+	svc := NewDeptService(&mockDeptRepo{})
+	_, err := svc.Create(context.Background(), &domain.Department{Name: ""})
+	if err == nil { t.Fatal("expected error for empty name") }
+}
+
+func TestTeamService_Create_EmptyName(t *testing.T) {
+	svc := NewTeamService(&mockTeamRepo{})
+	_, err := svc.Create(context.Background(), &domain.Team{Name: ""})
+	if err == nil { t.Fatal("expected error for empty name") }
+}
+
+func TestOrgService_Create_EmptyName(t *testing.T) {
+	svc := NewOrgService(&mockOrgRepo{})
+	_, err := svc.Create(context.Background(), &domain.Organization{Name: ""})
+	if err == nil { t.Fatal("expected error for empty name") }
+}
+
+func TestDeptService_List(t *testing.T) {
+	svc := NewDeptService(&mockDeptRepo{depts: map[uuid.UUID]*domain.Department{}})
+	_, err := svc.ListByOrg(context.Background(), uuid.New())
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestTeamService_List(t *testing.T) {
+	svc := NewTeamService(&mockTeamRepo{teams: map[uuid.UUID]*domain.Team{}})
+	_, err := svc.List(context.Background(), uuid.New(), 1, 50)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestDeptService_Delete(t *testing.T) {
+	svc := NewDeptService(&mockDeptRepo{depts: map[uuid.UUID]*domain.Department{}})
+	err := svc.Delete(context.Background(), uuid.New())
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestTeamService_Delete(t *testing.T) {
+	svc := NewTeamService(&mockTeamRepo{teams: map[uuid.UUID]*domain.Team{}})
+	err := svc.Delete(context.Background(), uuid.New())
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestOrgService_List(t *testing.T) {
+	svc := NewOrgService(&mockOrgRepo{orgs: map[uuid.UUID]*domain.Organization{}})
+	_, err := svc.List(context.Background(), uuid.New(), 1, 50)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
