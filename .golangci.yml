@@ -1,0 +1,32 @@
+version: "2"
+
+run:
+  timeout: 5m
+  go-version: "1.25"
+
+linters:
+  default: standard
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - revive
+
+  settings:
+    staticcheck:
+      checks: ["all", "-ST1000"]
+
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - revive
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

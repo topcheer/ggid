@@ -28,7 +28,7 @@ jobs:
           echo "Total coverage: ${TOTAL}%"
           
           # Fail if below threshold
-          THRESHOLD=75.0
+          THRESHOLD=80.0
           if (( $(echo "$TOTAL < $THRESHOLD" | bc -l) )); then
             echo "::error::Coverage ${TOTAL}% is below threshold ${THRESHOLD}%"
             exit 1
