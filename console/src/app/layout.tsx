@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/sidebar";
 import { AuthGuard } from "@/components/auth-guard";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
+import { ToastProvider } from "@/components/Toast";
 
 export const metadata: Metadata = {
   title: "GGID Console",
@@ -20,6 +21,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <I18nProvider>
+            <ToastProvider>
             <AuthGuard>
               <div className="flex h-screen">
                 <Sidebar />
@@ -28,6 +30,7 @@ export default function RootLayout({
                 </main>
               </div>
             </AuthGuard>
+            </ToastProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>
