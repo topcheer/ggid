@@ -35,6 +35,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/stats", s.handleStats)
 	mux.HandleFunc("/api/v1/audit/export", s.handleExport)
 	mux.HandleFunc("/api/v1/audit/stream", s.handleStream)
+	mux.HandleFunc("/api/v1/audit/retention", s.handleRetention)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -367,6 +368,35 @@ func (s *HTTPServer) handleStream(w http.ResponseWriter, r *http.Request) {
 			lastCheck = t.UTC()
 		}
 	}
+}
+
+// POST /api/v1/audit/retention?action=cleanup&days=90
+func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	daysStr := r.URL.Query().Get("days")
+	days := 90 // default retention
+	if daysStr != "" {
+		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
+			days = d
+		}
+	}
+
+	deleted, err := s.svc.CleanupOldEvents(r.Context(), days)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":             "completed",
+		"retention_days":     days,
+		"deleted_count":      deleted,
+		"cleanup_timestamp":  time.Now().UTC().Format(time.RFC3339),
+	})
 }
 
 // --- Helpers ---

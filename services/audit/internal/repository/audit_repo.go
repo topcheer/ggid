@@ -273,6 +273,19 @@ func (r *AuditRepository) GetStats(ctx context.Context, tenantID uuid.UUID, sinc
 	return stats, nil
 }
 
+// DeleteOlderThan deletes audit events older than the given time.
+// Returns the number of deleted rows.
+func (r *AuditRepository) DeleteOlderThan(ctx context.Context, before time.Time) (int64, error) {
+	tag, err := r.db.Exec(ctx,
+		`DELETE FROM audit_events WHERE created_at < $1`,
+		before,
+	)
+	if err != nil {
+		return 0, fmt.Errorf("delete old audit events: %w", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
 func mapErr(err error, resource, id string) error {
 	if err == pgx.ErrNoRows {
 		return errors.NotFound(resource, id)

@@ -16,6 +16,7 @@ type AuditRepo interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error)
 	List(ctx context.Context, filter domain.ListFilter, limit, offset int) ([]*domain.AuditEvent, int, error)
 	GetStats(ctx context.Context, tenantID uuid.UUID, since time.Time) (*domain.Stats, error)
+	DeleteOlderThan(ctx context.Context, before time.Time) (int64, error)
 }
 
 // AuditService handles audit event queries.
@@ -67,4 +68,14 @@ func (s *AuditService) GetStats(ctx context.Context, tenantID uuid.UUID) (*domai
 	}
 	since := time.Now().UTC().Add(-24 * time.Hour)
 	return s.repo.GetStats(ctx, tenantID, since)
+}
+
+// CleanupOldEvents deletes audit events older than the retention period.
+// Returns the number of deleted events.
+func (s *AuditService) CleanupOldEvents(ctx context.Context, retentionDays int) (int64, error) {
+	if retentionDays <= 0 {
+		retentionDays = 90 // default 90 days
+	}
+	before := time.Now().UTC().Add(-time.Duration(retentionDays) * 24 * time.Hour)
+	return s.repo.DeleteOlderThan(ctx, before)
 }
