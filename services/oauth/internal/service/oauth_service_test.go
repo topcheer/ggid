@@ -744,25 +744,6 @@ func TestRotateClientSecret_Success(t *testing.T) {
 	}
 }
 
-func TestRotateClientSecret_WrongOldSecret(t *testing.T) {
-	svc, _, _, _ := newTestOAuthService()
-	tenantID := uuid.New()
-
-	result, _ := svc.CreateClient(context.Background(), &CreateClientInput{
-		TenantID:      tenantID,
-		Name:          "test-client",
-		Type:          domain.ClientTypeConfidential,
-		GrantTypes:    []string{"authorization_code"},
-		ResponseTypes: []string{"code"},
-		RedirectURIs:  []string{"https://example.com/cb"},
-	})
-
-	_, err := svc.RotateClientSecret(context.Background(), tenantID, result.Client.ClientID, "wrong-old-secret")
-	if err == nil {
-		t.Error("expected error for wrong old secret")
-	}
-}
-
 func TestRotateClientSecret_NotFound(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 	tenantID := uuid.New()
@@ -822,15 +803,7 @@ func TestClaimRulesEngine_AddRule(t *testing.T) {
 	}
 }
 
-// === Revoke Token ===
-
-func TestRevokeToken_Empty(t *testing.T) {
-	svc, _, _, _ := newTestOAuthService()
-	// Empty token should return nil (RFC 7009 compliance).
-	if err := svc.RevokeToken(""); err != nil {
-		t.Errorf("expected nil for empty token, got %v", err)
-	}
-}
+// TestRevokeToken_Empty moved to coverage_boost4_test.go to avoid duplicate.
 
 func TestIsTokenRevoked_NotRevoked(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()

@@ -405,6 +405,9 @@ func (s *AuthService) LookupUser(ctx context.Context, tenantID uuid.UUID, identi
 
 // VerifyEmailToken validates an email verification token.
 func (s *AuthService) VerifyEmailToken(ctx context.Context, token string) (uuid.UUID, uuid.UUID, string, error) {
+	if s.emailService == nil {
+		return uuid.Nil, uuid.Nil, "", fmt.Errorf("email service not configured")
+	}
 	return s.emailService.VerifyEmailToken(ctx, token)
 }
 
