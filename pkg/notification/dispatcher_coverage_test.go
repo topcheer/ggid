@@ -22,6 +22,13 @@ func (m *mockSender2) Send(ctx context.Context, msg *email.Message) error {
 	return m.err
 }
 
+func (m *mockSender2) SendBatch(ctx context.Context, msgs []*email.Message) error {
+	if len(msgs) > 0 {
+		m.lastMsg = msgs[0]
+	}
+	return m.err
+}
+
 func TestNewDispatcher_WithCustomTimeout(t *testing.T) {
 	cfg := &WebhookConfig{URL: "http://example.com", Timeout: 30 * time.Second}
 	d := NewDispatcher(nil, cfg)
