@@ -4,6 +4,7 @@ package server
 import (
 	"encoding/json"
 	stderrors "errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -65,6 +66,18 @@ func (h *Handler) registerRoutes() {
 	// Step-up authentication
 	h.mux.HandleFunc("/api/v1/auth/stepup/challenge", h.stepUpChallenge)
 	h.mux.HandleFunc("/api/v1/auth/stepup/verify", h.stepUpVerify)
+
+	// Logout all devices
+	h.mux.HandleFunc("/api/v1/auth/logout-all", h.logoutAll)
+
+	// Email change (dual confirmation)
+	h.mux.HandleFunc("/api/v1/auth/email/change", h.emailChange)
+	h.mux.HandleFunc("/api/v1/auth/email/change/confirm", h.emailChangeConfirm)
+
+	// Auth0 Lock compatible hosted login
+	h.mux.HandleFunc("/authorize", h.authorize)
+	h.mux.HandleFunc("/usernamepassword/login", h.usernamePasswordLogin)
+	h.mux.HandleFunc("/dbconnections/signup", h.dbConnectionsSignup)
 
 	// Social login endpoints
 	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
@@ -840,7 +853,218 @@ func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, result)
 }
 
-// --- Social Login ---
+// --- Logout All Devices ---
+
+func (h *Handler) logoutAll(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+
+	var body struct {
+		UserID string `json:"user_id"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	if err := h.authSvc.LogoutAll(r.Context(), tc.TenantID, userID, uuid.Nil); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to logout all devices")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]bool{"logged_out_all": true})
+}
+
+// --- Email Change (Dual Confirmation) ---
+
+func (h *Handler) emailChange(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		UserID   string `json:"user_id"`
+		OldEmail string `json:"old_email"`
+		NewEmail string `json:"new_email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	result, err := h.authSvc.InitiateEmailChange(r.Context(), userID, body.OldEmail, body.NewEmail)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) emailChangeConfirm(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Token string `json:"token"`
+		Step  string `json:"step"` // "old" or "new"
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	applied, err := h.authSvc.ConfirmEmailChange(r.Context(), body.Token, body.Step)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"confirmed": true,
+		"applied":   applied,
+	})
+}
+
+// --- Auth0 Lock Compatible Endpoints ---
+
+// authorize handles the Auth0-compatible /authorize endpoint.
+// Supports client_id + connection parameters like Auth0 Lock.
+func (h *Handler) authorize(w http.ResponseWriter, r *http.Request) {
+	clientID := r.URL.Query().Get("client_id")
+	connection := r.URL.Query().Get("connection")
+	responseType := r.URL.Query().Get("response_type")
+	redirectURI := r.URL.Query().Get("redirect_uri")
+
+	if clientID == "" {
+		writeError(w, http.StatusBadRequest, "client_id is required")
+		return
+	}
+
+	// If connection is specified, redirect to that social provider.
+	if connection != "" && connection != "Username-Password-Authentication" {
+		// Social connection — redirect to social login begin.
+		scheme := "https"
+		if r.TLS == nil {
+			scheme = "http"
+		}
+		host := r.Host
+		if fh := r.Header.Get("X-Forwarded-Host"); fh != "" {
+			host = fh
+		}
+		authURL := fmt.Sprintf("%s://%s/api/v1/auth/social/%s?redirect_uri=%s",
+			scheme, host, connection, redirectURI)
+		writeJSON(w, http.StatusOK, map[string]string{
+			"redirect_to": authURL,
+			"connection":  connection,
+			"client_id":   clientID,
+		})
+		return
+	}
+
+	// Database connection — return login page parameters for Lock.
+	writeJSON(w, http.StatusOK, map[string]any{
+		"client_id":     clientID,
+		"response_type": responseType,
+		"redirect_uri":  redirectURI,
+		"connection":    connection,
+		"domain":        r.Host,
+		"state":         r.URL.Query().Get("state"),
+	})
+}
+
+// usernamePasswordLogin handles Auth0 Lock's /usernamepassword/login endpoint.
+func (h *Handler) usernamePasswordLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+		Connection string `json:"connection"`
+		ClientID  string `json:"client_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	ip := clientIP(r)
+	userAgent := r.Header.Get("User-Agent")
+
+	tokens, err := h.authSvc.Login(r.Context(), body.Username, body.Password, ip, userAgent)
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, tokens)
+}
+
+// dbConnectionsSignup handles Auth0 Lock's /dbconnections/signup endpoint.
+func (h *Handler) dbConnectionsSignup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Connection string `json:"connection"`
+		ClientID  string `json:"client_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+
+	userID := uuid.New()
+	username := body.Email
+	if username == "" {
+		writeError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+
+	if err := h.authSvc.Register(r.Context(), tc.TenantID, userID, username, body.Password); err != nil {
+		writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"_id":  userID.String(),
+		"email": body.Email,
+	})
+}
+
 
 // handleSocial routes social login requests: /api/v1/auth/social/{provider} and /api/v1/auth/social/{provider}/callback
 func (h *Handler) handleSocial(w http.ResponseWriter, r *http.Request) {

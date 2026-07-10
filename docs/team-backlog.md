@@ -77,8 +77,9 @@
 - [TODO] GraphQL proxy support
 - [DONE] WebSocket proxy support (HTTP hijack → bidirectional TCP tunnel)
 - [DONE] Canary deployment routing (percentage-based traffic splitting with header/cookie override)
-- [TODO] Circuit breaker pattern (fail-fast on backend degradation)
-- [TODO] Request ID propagation to backends via X-Request-ID header in all proxied requests
+- [DONE] Circuit breaker pattern (closed/open/half-open with per-backend registry)
+- [DONE] Request ID propagation to backends via X-Request-ID header in proxy Director
+- [TODO] gRPC-Web protocol translation middleware
 
 ---
 

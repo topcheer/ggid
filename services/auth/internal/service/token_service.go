@@ -211,6 +211,11 @@ func (ts *TokenService) RevokeAllForSession(ctx context.Context, sessionID uuid.
 	return ts.refreshRepo.RevokeAllForSession(ctx, sessionID)
 }
 
+// RevokeAllForUser revokes all refresh tokens for a user (global logout).
+func (ts *TokenService) RevokeAllForUser(ctx context.Context, tenantID, userID uuid.UUID) error {
+	return ts.refreshRepo.RevokeAllForUser(ctx, tenantID, userID)
+}
+
 // PublicKey returns the RSA public key for JWT verification.
 func (ts *TokenService) PublicKey() *rsa.PublicKey {
 	return ts.publicKey
