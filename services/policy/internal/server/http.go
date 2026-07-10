@@ -56,9 +56,18 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, http.StatusBadRequest, "role ID is required")
 		return
 	}
-	id, err := uuid.Parse(idStr)
+
+	// Handle sub-paths: /api/v1/roles/{id}/permissions
+	parts := strings.SplitN(idStr, "/", 2)
+	id, err := uuid.Parse(parts[0])
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid role ID")
+		return
+	}
+
+	// Route to permissions sub-resource
+	if len(parts) == 2 && parts[1] == "permissions" {
+		s.handleRolePermissions(w, r, id)
 		return
 	}
 
@@ -314,6 +323,70 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		"reason":     result.Reason,
 		"matched_by": result.MatchedBy,
 	})
+}
+
+// --- Role-Permission management ---
+
+func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Request, roleID uuid.UUID) {
+	switch r.Method {
+	case http.MethodGet:
+		perms, err := s.roleSvc.GetRolePermissions(r.Context(), roleID)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		result := make([]map[string]any, len(perms))
+		for i, p := range perms {
+			result[i] = permissionToJSON(p)
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"permissions": result})
+	case http.MethodPost:
+		var req struct {
+			PermissionIDs []string `json:"permission_ids"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		permIDs := make([]uuid.UUID, 0, len(req.PermissionIDs))
+		for _, idStr := range req.PermissionIDs {
+			pid, err := uuid.Parse(idStr)
+			if err != nil {
+				writeJSONError(w, http.StatusBadRequest, "invalid permission_id")
+				return
+			}
+			permIDs = append(permIDs, pid)
+		}
+		if err := s.roleSvc.GrantPermissionsToRole(r.Context(), roleID, permIDs); err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "granted"})
+	case http.MethodDelete:
+		var req struct {
+			PermissionIDs []string `json:"permission_ids"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		permIDs := make([]uuid.UUID, 0, len(req.PermissionIDs))
+		for _, idStr := range req.PermissionIDs {
+			pid, err := uuid.Parse(idStr)
+			if err != nil {
+				writeJSONError(w, http.StatusBadRequest, "invalid permission_id")
+				return
+			}
+			permIDs = append(permIDs, pid)
+		}
+		if err := s.roleSvc.RevokePermissionsFromRole(r.Context(), roleID, permIDs); err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }
 
 // --- Helpers ---

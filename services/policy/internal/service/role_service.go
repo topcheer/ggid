@@ -18,6 +18,7 @@ type RoleRepo interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	GrantPermissions(ctx context.Context, roleID uuid.UUID, addIDs []uuid.UUID, conditions map[string]any) error
 	RevokePermissions(ctx context.Context, roleID uuid.UUID, permIDs []uuid.UUID) error
+	GetRolePermissions(ctx context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error)
 }
 
 // PermRepo provides permission persistence operations.
@@ -171,4 +172,9 @@ func (s *RoleService) GrantPermissionsToRole(ctx context.Context, roleID uuid.UU
 // RevokePermissionsFromRole removes permissions from a role.
 func (s *RoleService) RevokePermissionsFromRole(ctx context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
 	return s.roleRepo.RevokePermissions(ctx, roleID, permissionIDs)
+}
+
+// GetRolePermissions returns all permissions assigned to a role.
+func (s *RoleService) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
+	return s.roleRepo.GetRolePermissions(ctx, []uuid.UUID{roleID})
 }
