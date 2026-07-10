@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/org/internal/domain"
@@ -177,6 +178,22 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 		if subPath == "members" {
 			s.handleOrgMembers(w, r, id)
 			return
+		}
+		if subPath == "roles" {
+			s.handleOrgRoles(w, r, id)
+			return
+		}
+		// Handle members/{userId} and roles/{roleId} sub-paths
+		subParts := strings.SplitN(subPath, "/", 2)
+		if len(subParts) == 2 {
+			if subParts[0] == "members" {
+				s.handleOrgMemberByID(w, r, id, subParts[1])
+				return
+			}
+			if subParts[0] == "roles" {
+				s.handleOrgRoleByID(w, r, id, subParts[1])
+				return
+			}
 		}
 		if subPath == "tree" {
 			s.handleOrgTree(w, r, id)
@@ -715,6 +732,143 @@ func teamToJSON(t *domain.Team) map[string]any {
 		"description": t.Description,
 		"created_by":  t.CreatedBy.String(),
 	}
+}
+
+// ===== Org Role Assignment (in-memory) =====
+//
+// POST   /api/v1/orgs/{id}/roles        — assign role to org
+// GET    /api/v1/orgs/{id}/roles        — list org roles
+// DELETE /api/v1/orgs/{id}/roles/{roleId} — remove role from org
+
+var orgRoles = struct {
+	sync.RWMutex
+	data map[uuid.UUID][]string // orgID -> []roleID
+}{data: make(map[uuid.UUID][]string)}
+
+func (s *HTTPServer) handleOrgRoles(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	switch r.Method {
+	case http.MethodPost:
+		var req struct {
+			RoleID string `json:"role_id"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		if req.RoleID == "" {
+			writeJSONError(w, http.StatusBadRequest, "role_id is required")
+			return
+		}
+
+		orgRoles.Lock()
+		// Check for duplicate
+		for _, existing := range orgRoles.data[orgID] {
+			if existing == req.RoleID {
+				orgRoles.Unlock()
+				writeJSONError(w, http.StatusConflict, "role already assigned to this organization")
+				return
+			}
+		}
+		orgRoles.data[orgID] = append(orgRoles.data[orgID], req.RoleID)
+		orgRoles.Unlock()
+
+		writeJSON(w, http.StatusCreated, map[string]any{
+			"status":  "assigned",
+			"role_id": req.RoleID,
+			"org_id":  orgID.String(),
+		})
+
+	case http.MethodGet:
+		orgRoles.RLock()
+		roleIDs := orgRoles.data[orgID]
+		orgRoles.RUnlock()
+
+		// Return a copy
+		result := make([]string, len(roleIDs))
+		copy(result, roleIDs)
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"org_id":   orgID.String(),
+			"roles":    result,
+			"count":    len(result),
+		})
+
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+func (s *HTTPServer) handleOrgRoleByID(w http.ResponseWriter, r *http.Request, orgID uuid.UUID, roleIDStr string) {
+	if r.Method != http.MethodDelete {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	orgRoles.Lock()
+	roles := orgRoles.data[orgID]
+	found := false
+	for i, rid := range roles {
+		if rid == roleIDStr {
+			orgRoles.data[orgID] = append(roles[:i], roles[i+1:]...)
+			found = true
+			break
+		}
+	}
+	orgRoles.Unlock()
+
+	if !found {
+		writeJSONError(w, http.StatusNotFound, "role not assigned to this organization")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":  "removed",
+		"role_id": roleIDStr,
+		"org_id":  orgID.String(),
+	})
+}
+
+// handleOrgMemberByID handles DELETE /api/v1/orgs/{id}/members/{userId}
+func (s *HTTPServer) handleOrgMemberByID(w http.ResponseWriter, r *http.Request, orgID uuid.UUID, userIDStr string) {
+	if r.Method != http.MethodDelete {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	tenantID, _ := uuid.Parse(tenantIDStr)
+
+	// Find and remove the membership
+	members, err := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
+		TenantID: tenantID, OrgID: &orgID,
+	}, 1, 500)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	for _, m := range members {
+		if m.UserID == userID {
+			if err := s.memberSvc.Remove(r.Context(), m.ID); err != nil {
+				writeServiceError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]any{
+				"status":  "removed",
+				"user_id": userIDStr,
+				"org_id":  orgID.String(),
+			})
+			return
+		}
+	}
+
+	writeJSONError(w, http.StatusNotFound, "member not found in this organization")
 }
 
 // ===== Helpers =====

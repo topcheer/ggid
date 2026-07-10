@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 )
@@ -173,12 +174,24 @@ func TestNewStickyRouter_Defaults(t *testing.T) {
 
 // mockNATSConn captures published messages for testing.
 type mockNATSConn struct {
+	mu       sync.Mutex
 	messages [][]byte
 }
 
 func (m *mockNATSConn) Publish(_ string, data []byte) error {
+	m.mu.Lock()
 	m.messages = append(m.messages, data)
+	m.mu.Unlock()
 	return nil
+}
+
+// Messages returns a copy of the published messages (thread-safe).
+func (m *mockNATSConn) Messages() [][]byte {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([][]byte, len(m.messages))
+	copy(out, m.messages)
+	return out
 }
 
 func TestNATSAuditPublisher_Publish(t *testing.T) {
@@ -188,8 +201,8 @@ func TestNATSAuditPublisher_Publish(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(mock.messages) != 1 {
-		t.Fatalf("expected 1 message, got %d", len(mock.messages))
+	if len(mock.Messages()) != 1 {
+		t.Fatalf("expected 1 message, got %d", len(mock.Messages()))
 	}
 }
 
@@ -213,8 +226,8 @@ func TestAuditLogger_AsyncPublish(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 	logger.Stop()
 
-	if len(mock.messages) != 2 {
-		t.Errorf("expected 2 messages, got %d", len(mock.messages))
+	if len(mock.Messages()) != 2 {
+		t.Errorf("expected 2 messages, got %d", len(mock.Messages()))
 	}
 }
 
@@ -250,12 +263,13 @@ func TestAuditMiddleware_CapturesRequest(t *testing.T) {
 	// Wait for async
 	time.Sleep(100 * time.Millisecond)
 
-	if len(mock.messages) != 1 {
-		t.Fatalf("expected 1 audit message, got %d", len(mock.messages))
+	if len(mock.Messages()) != 1 {
+		t.Fatalf("expected 1 audit message, got %d", len(mock.Messages()))
 	}
 	// Verify the event content
 	var event AuditEvent
-	jsonUnmarshal(t, mock.messages[0], &event)
+	messages := mock.Messages()
+	jsonUnmarshal(t, messages[0], &event)
 	if event.Method != "POST" {
 		t.Errorf("expected POST, got %s", event.Method)
 	}
