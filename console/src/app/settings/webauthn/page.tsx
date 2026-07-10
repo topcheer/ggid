@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
-import { Fingerprint, Save, KeyRound, Loader2 } from "lucide-react";
+import { Fingerprint, Save, KeyRound, Loader2, Plus, Trash2, ShieldCheck, ShieldX } from "lucide-react";
+
+interface AaguidEntry {
+  aaguid: string;
+  label: string;
+}
 
 interface WebAuthnConfig {
   rp_id: string;
@@ -10,6 +15,9 @@ interface WebAuthnConfig {
   origins: string;
   timeout: number;
   attestation: "none" | "indirect" | "direct";
+  user_verification: "required" | "preferred" | "discouraged";
+  aaguid_allowlist: AaguidEntry[];
+  aaguid_denylist: AaguidEntry[];
 }
 
 interface Credential {
@@ -27,6 +35,9 @@ const defaultConfig: WebAuthnConfig = {
   origins: "http://localhost:3000",
   timeout: 60000,
   attestation: "none",
+  user_verification: "preferred",
+  aaguid_allowlist: [],
+  aaguid_denylist: [],
 };
 
 export default function WebAuthnSettingsPage() {
@@ -38,6 +49,12 @@ export default function WebAuthnSettingsPage() {
   const [credError, setCredError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // AAGUID editor form state
+  const [allowAaguid, setAllowAaguid] = useState("");
+  const [allowLabel, setAllowLabel] = useState("");
+  const [denyAaguid, setDenyAaguid] = useState("");
+  const [denyLabel, setDenyLabel] = useState("");
 
   // Load config from localStorage or API
   useEffect(() => {
@@ -75,7 +92,7 @@ export default function WebAuthnSettingsPage() {
     }
   };
 
-  const fetchCredentials = useCallback(async () => {
+  const fetchCredentials = async () => {
     if (!userId) return;
     setCredLoading(true);
     setCredError(null);
@@ -90,11 +107,36 @@ export default function WebAuthnSettingsPage() {
     } finally {
       setCredLoading(false);
     }
-  }, [apiFetch, userId]);
+  };
 
-  useEffect(() => {
-    if (userId) fetchCredentials();
-  }, [userId, fetchCredentials]);
+  // AAGUID list operations
+  const addToAllowlist = () => {
+    if (!allowAaguid.trim()) return;
+    setConfig({
+      ...config,
+      aaguid_allowlist: [...config.aaguid_allowlist, { aaguid: allowAaguid.trim(), label: allowLabel.trim() || allowAaguid.trim() }],
+    });
+    setAllowAaguid("");
+    setAllowLabel("");
+  };
+
+  const removeFromAllowlist = (aaguid: string) => {
+    setConfig({ ...config, aaguid_allowlist: config.aaguid_allowlist.filter((e) => e.aaguid !== aaguid) });
+  };
+
+  const addToDenylist = () => {
+    if (!denyAaguid.trim()) return;
+    setConfig({
+      ...config,
+      aaguid_denylist: [...config.aaguid_denylist, { aaguid: denyAaguid.trim(), label: denyLabel.trim() || denyAaguid.trim() }],
+    });
+    setDenyAaguid("");
+    setDenyLabel("");
+  };
+
+  const removeFromDenylist = (aaguid: string) => {
+    setConfig({ ...config, aaguid_denylist: config.aaguid_denylist.filter((e) => e.aaguid !== aaguid) });
+  };
 
   return (
     <div>
@@ -139,21 +181,21 @@ export default function WebAuthnSettingsPage() {
               <input
                 value={config.rp_name}
                 onChange={(e) => setConfig({ ...config, rp_name: e.target.value })}
-                placeholder="GGID"
+                placeholder="GGID Authentication"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
               <p className="mt-1 text-xs text-gray-400">Display name shown to users</p>
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-gray-500">Origins (comma-separated)</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Origin Allowlist (one URL per line)</label>
               <textarea
                 value={config.origins}
                 onChange={(e) => setConfig({ ...config, origins: e.target.value })}
-                rows={2}
-                placeholder="https://example.com, https://app.example.com"
+                rows={3}
+                placeholder={"https://example.com\nhttps://app.example.com"}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
-              <p className="mt-1 text-xs text-gray-400">Allowed origins for WebAuthn requests</p>
+              <p className="mt-1 text-xs text-gray-400">Allowed origins for WebAuthn requests, one per line</p>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Timeout (ms)</label>
@@ -165,7 +207,7 @@ export default function WebAuthnSettingsPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Attestation Preference</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Attestation Conveyance</label>
               <select
                 value={config.attestation}
                 onChange={(e) =>
@@ -184,6 +226,144 @@ export default function WebAuthnSettingsPage() {
                     ? "Anonymized attestation from a trusted CA"
                     : "Full attestation from the authenticator"}
               </p>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">User Verification Requirement</label>
+              <select
+                value={config.user_verification}
+                onChange={(e) =>
+                  setConfig({ ...config, user_verification: e.target.value as WebAuthnConfig["user_verification"] })
+                }
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+              >
+                <option value="required">required</option>
+                <option value="preferred">preferred</option>
+                <option value="discouraged">discouraged</option>
+              </select>
+              <p className="mt-1 text-xs text-gray-400">
+                {config.user_verification === "required"
+                  ? "User verification (biometric/PIN) is mandatory"
+                  : config.user_verification === "preferred"
+                    ? "User verification preferred but not required"
+                    : "User verification not required"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* AAGUID Allow/Deny Lists */}
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-1 text-lg font-semibold dark:text-gray-100">AAGUID Allowlist / Denylist</h2>
+          <p className="mb-4 text-xs text-gray-500">
+            Control which authenticators can register. The allowlist permits only listed AAGUIDs; the denylist blocks listed AAGUIDs. Leave both empty to allow all authenticators.
+          </p>
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Allowlist */}
+            <div className="rounded-lg border border-green-200 bg-green-50/30 p-4 dark:border-green-800 dark:bg-green-950/20">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-green-700 dark:text-green-400">
+                <ShieldCheck className="h-4 w-4" /> Allowlist ({config.aaguid_allowlist.length})
+              </h3>
+              {/* Add form */}
+              <div className="mb-3 space-y-2">
+                <input
+                  value={allowAaguid}
+                  onChange={(e) => setAllowAaguid(e.target.value)}
+                  placeholder="AAGUID (e.g. ea9b8d66-4d01-1d21-3ce4-b6e48643g000)"
+                  className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-xs font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addToAllowlist(); } }}
+                />
+                <div className="flex gap-2">
+                  <input
+                    value={allowLabel}
+                    onChange={(e) => setAllowLabel(e.target.value)}
+                    placeholder="Label (e.g. YubiKey 5)"
+                    className="flex-1 rounded border border-gray-300 px-2.5 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addToAllowlist(); } }}
+                  />
+                  <button
+                    onClick={addToAllowlist}
+                    disabled={!allowAaguid.trim()}
+                    className="flex items-center gap-1 rounded bg-green-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    <Plus className="h-3 w-3" /> Add
+                  </button>
+                </div>
+              </div>
+              {/* List */}
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {config.aaguid_allowlist.length === 0 ? (
+                  <p className="py-3 text-center text-xs text-gray-400">No entries — all authenticators allowed</p>
+                ) : (
+                  config.aaguid_allowlist.map((entry) => (
+                    <div key={entry.aaguid} className="flex items-center justify-between rounded border border-green-200 bg-white px-2.5 py-1.5 dark:border-green-800 dark:bg-gray-800">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-gray-800 dark:text-gray-200">{entry.label}</p>
+                        <p className="truncate text-xs text-gray-400 font-mono">{entry.aaguid}</p>
+                      </div>
+                      <button
+                        onClick={() => removeFromAllowlist(entry.aaguid)}
+                        className="ml-2 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Denylist */}
+            <div className="rounded-lg border border-red-200 bg-red-50/30 p-4 dark:border-red-800 dark:bg-red-950/20">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-red-700 dark:text-red-400">
+                <ShieldX className="h-4 w-4" /> Denylist ({config.aaguid_denylist.length})
+              </h3>
+              {/* Add form */}
+              <div className="mb-3 space-y-2">
+                <input
+                  value={denyAaguid}
+                  onChange={(e) => setDenyAaguid(e.target.value)}
+                  placeholder="AAGUID to block"
+                  className="w-full rounded border border-gray-300 px-2.5 py-1.5 text-xs font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addToDenylist(); } }}
+                />
+                <div className="flex gap-2">
+                  <input
+                    value={denyLabel}
+                    onChange={(e) => setDenyLabel(e.target.value)}
+                    placeholder="Label (e.g. Unknown device)"
+                    className="flex-1 rounded border border-gray-300 px-2.5 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addToDenylist(); } }}
+                  />
+                  <button
+                    onClick={addToDenylist}
+                    disabled={!denyAaguid.trim()}
+                    className="flex items-center gap-1 rounded bg-red-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  >
+                    <Plus className="h-3 w-3" /> Add
+                  </button>
+                </div>
+              </div>
+              {/* List */}
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {config.aaguid_denylist.length === 0 ? (
+                  <p className="py-3 text-center text-xs text-gray-400">No entries — no authenticators blocked</p>
+                ) : (
+                  config.aaguid_denylist.map((entry) => (
+                    <div key={entry.aaguid} className="flex items-center justify-between rounded border border-red-200 bg-white px-2.5 py-1.5 dark:border-red-800 dark:bg-gray-800">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-medium text-gray-800 dark:text-gray-200">{entry.label}</p>
+                        <p className="truncate text-xs text-gray-400 font-mono">{entry.aaguid}</p>
+                      </div>
+                      <button
+                        onClick={() => removeFromDenylist(entry.aaguid)}
+                        className="ml-2 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
