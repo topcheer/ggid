@@ -80,7 +80,7 @@
 ## Backlog for dev3 (services/policy, org, audit, console pages)
 
 ### P0 — Core
-- [IN PROGRESS: dev3] Policy engine: ABAC condition evaluation (resource attributes)
+- [DONE] Policy engine: ABAC condition evaluation (resource attributes)
 - [TODO] Role hierarchy: parent role inherits child permissions
 - [TODO] Bulk user-role assignment API
 - [TODO] Audit real-time streaming via WebSocket
@@ -88,7 +88,7 @@
 ### P1 — Enterprise
 - [TODO] Policy export/import (JSON format for CI/CD integration)
 - [TODO] Audit log retention policy + scheduled cleanup
-- [TODO] Audit log export (CSV/JSON download)
+- [IN PROGRESS: dev3] Audit log export (CSV/JSON download)
 - [TODO] Org service coverage → 70%+ (currently 65.8%)
 
 ### P2 — Enhancement
