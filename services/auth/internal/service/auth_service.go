@@ -717,3 +717,27 @@ func (s *AuthService) slidingWindowCheck(ctx context.Context, key string, limit 
 	}
 	return nil
 }
+
+// --- Trusted Device (MFA bypass) ---
+
+const trustedDeviceTTL = 30 * 24 * time.Hour // 30 days
+
+// RememberTrustedDevice stores a device fingerprint as trusted for a user.
+// When this user logs in from the same device within 30 days, MFA is skipped.
+func (s *AuthService) RememberTrustedDevice(ctx context.Context, userID uuid.UUID, fingerprint, deviceName string) error {
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return fmt.Errorf("tenant context required: %w", err)
+	}
+
+	key := fmt.Sprintf("ggid:trusted_device:%s:%s:%s", tc.TenantID, userID, fingerprint)
+	val := fmt.Sprintf("%s:%d", deviceName, time.Now().Unix())
+	return s.rateLimiter.rdb.Set(ctx, key, val, trustedDeviceTTL).Err()
+}
+
+// IsTrustedDevice checks if a device fingerprint is trusted and within the 30-day window.
+func (s *AuthService) IsTrustedDevice(ctx context.Context, tenantID, userID uuid.UUID, fingerprint string) bool {
+	key := fmt.Sprintf("ggid:trusted_device:%s:%s:%s", tenantID, userID, fingerprint)
+	_, err := s.rateLimiter.rdb.Get(ctx, key).Result()
+	return err == nil
+}

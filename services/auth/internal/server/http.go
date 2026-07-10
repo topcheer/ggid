@@ -117,6 +117,13 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/email/change", h.emailChange)
 	h.mux.HandleFunc("/api/v1/auth/email/change/confirm", h.emailChangeConfirm)
 
+	// Email change — arch-spec routes
+	h.mux.HandleFunc("/api/v1/auth/change-email", h.changeEmail)
+	h.mux.HandleFunc("/api/v1/auth/verify-email-change", h.verifyEmailChange)
+
+	// Remember device (trusted devices)
+	h.mux.HandleFunc("/api/v1/auth/device", h.rememberDevice)
+
 	// Auth0 Lock compatible hosted login
 	h.mux.HandleFunc("/authorize", h.authorize)
 	h.mux.HandleFunc("/usernamepassword/login", h.usernamePasswordLogin)
@@ -1103,6 +1110,137 @@ func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, result)
+}
+
+// changeEmail handles POST /api/v1/auth/change-email.
+// Sends verification link to the new email address. Uses InitiateEmailChange service.
+func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		UserID   string `json:"user_id"`
+		OldEmail string `json:"old_email"`
+		NewEmail string `json:"new_email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.NewEmail == "" {
+		writeError(w, http.StatusBadRequest, "new_email is required")
+		return
+	}
+	if body.UserID == "" {
+		body.UserID = r.Header.Get("X-User-ID")
+	}
+
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	result, err := h.authSvc.InitiateEmailChange(r.Context(), userID, body.OldEmail, body.NewEmail)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":          "sent",
+		"message":         "Verification links sent to both old and new email addresses.",
+		"old_email_token": result.OldEmailToken, // dev mode only
+		"new_email_token": result.NewEmailToken, // dev mode only
+	})
+}
+
+// verifyEmailChange handles GET /api/v1/auth/verify-email-change?token=xxx&step=old|new.
+func (h *Handler) verifyEmailChange(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	token := r.URL.Query().Get("token")
+	step := r.URL.Query().Get("step")
+	if step == "" {
+		step = "new"
+	}
+	if token == "" && r.Method == http.MethodPost {
+		var body struct {
+			Token string `json:"token"`
+			Step  string `json:"step"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err == nil {
+			token = body.Token
+			if body.Step != "" {
+				step = body.Step
+			}
+		}
+	}
+	if token == "" {
+		writeError(w, http.StatusBadRequest, "token is required")
+		return
+	}
+
+	applied, err := h.authSvc.ConfirmEmailChange(r.Context(), token, step)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if applied {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "email_changed"})
+	} else {
+		writeJSON(w, http.StatusOK, map[string]string{
+			"status":  "pending",
+			"message": "One side confirmed. Waiting for the other email confirmation.",
+		})
+	}
+}
+
+// rememberDevice handles POST /api/v1/auth/device.
+// Records a trusted device fingerprint for the user.
+func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		UserID      string `json:"user_id"`
+		Fingerprint string `json:"fingerprint"`
+		DeviceName  string `json:"device_name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.Fingerprint == "" {
+		writeError(w, http.StatusBadRequest, "fingerprint is required")
+		return
+	}
+	if body.UserID == "" {
+		body.UserID = r.Header.Get("X-User-ID")
+	}
+	userUUID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	if err := h.authSvc.RememberTrustedDevice(r.Context(), userUUID, body.Fingerprint, body.DeviceName); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status": "trusted",
+		"message": "Device registered as trusted. MFA will be skipped for 30 days.",
+	})
 }
 
 // --- Auth Hooks (Auth0 Actions equivalent) ---

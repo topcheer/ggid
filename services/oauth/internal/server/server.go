@@ -367,6 +367,19 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 				}
 				return
 			}
+		case "urn:ietf:params:oauth:grant-type:jwt-bearer":
+			// RFC 7523: JWT bearer assertion grant.
+			assertion := r.FormValue("assertion")
+			if assertion == "" {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "assertion parameter is required for jwt-bearer grant"})
+				return
+			}
+			resp, tokenErr = oauthSvc.JWTBearerGrant(ctx, &service.JWTBearerRequest{
+				TenantID:  tenantID,
+				Assertion: assertion,
+				Scope:     scopes,
+				Issuer:    cfg.Issuer,
+			})
 		default:
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_grant_type"})
 			return
@@ -453,7 +466,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		})
 	})
 
-	// Token revocation
+	// Token revocation (RFC 7009)
 	mux.HandleFunc("/oauth/revoke", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
@@ -461,7 +474,21 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		}
 		_ = r.ParseForm()
 		token := r.FormValue("token")
-		_ = oauthSvc.RevokeToken(token)
+		tokenTypeHint := r.FormValue("token_type_hint")
+		_ = oauthSvc.RevokeToken(token, tokenTypeHint)
+		w.WriteHeader(http.StatusOK)
+	})
+
+	// Token revocation route alias (RFC 7009)
+	mux.HandleFunc("/api/v1/oauth/revoke", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		_ = r.ParseForm()
+		token := r.FormValue("token")
+		tokenTypeHint := r.FormValue("token_type_hint")
+		_ = oauthSvc.RevokeToken(token, tokenTypeHint)
 		w.WriteHeader(http.StatusOK)
 	})
 

@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"net/mail"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -121,6 +123,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.deactivateUser(ctx, userID, w, r)
 	case action == "activate" && r.Method == http.MethodPost:
 		h.activateUser(ctx, userID, w, r)
+	case action == "avatar" && r.Method == http.MethodPost:
+		h.uploadAvatar(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -366,6 +370,87 @@ func (h *HTTPHandler) activateUser(ctx context.Context, userID uuid.UUID, w http
 		return
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
+}
+
+// uploadAvatar handles POST /api/v1/users/{id}/avatar.
+// Accepts multipart/form-data with an image file (max 2MB, image/* types).
+// Stores the file locally and returns the avatar_url.
+func (h *HTTPHandler) uploadAvatar(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	// Limit request body to 2MB.
+	r.Body = http.MaxBytesReader(w, r.Body, 2<<20) // 2MB
+
+	if err := r.ParseMultipartForm(2 << 20); err != nil {
+		writeError(w, http.StatusBadRequest, "file too large or invalid form data (max 2MB)")
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "file field is required")
+		return
+	}
+	defer file.Close()
+
+	// Validate content type.
+	contentType := header.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "image/") {
+		writeError(w, http.StatusBadRequest, "file must be an image (image/*)")
+		return
+	}
+
+	// Validate file size (redundant with MaxBytesReader, but explicit).
+	if header.Size > 2<<20 {
+		writeError(w, http.StatusBadRequest, "file size exceeds 2MB limit")
+		return
+	}
+
+	// Read the file content.
+	data, err := io.ReadAll(file)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to read file")
+		return
+	}
+
+	// Determine file extension from content type.
+	ext := ".png"
+	switch contentType {
+	case "image/jpeg", "image/jpg":
+		ext = ".jpg"
+	case "image/gif":
+		ext = ".gif"
+	case "image/webp":
+		ext = ".webp"
+	}
+
+	// Store file locally (production would use S3/CDN).
+	avatarDir := "uploads/avatars"
+	if err := os.MkdirAll(avatarDir, 0755); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create avatar directory")
+		return
+	}
+
+	filename := userID.String() + ext
+	filePath := filepath.Join(avatarDir, filename)
+
+	if err := os.WriteFile(filePath, data, 0644); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to save avatar")
+		return
+	}
+
+	// Update user's avatar_url in the database.
+	avatarURL := "/uploads/avatars/" + filename
+	_, err = h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{
+		AvatarURL: &avatarURL,
+	})
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":     "uploaded",
+		"avatar_url": avatarURL,
+	})
 }
 
 // --- Helpers ---

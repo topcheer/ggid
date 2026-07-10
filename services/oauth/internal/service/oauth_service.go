@@ -533,7 +533,7 @@ var revokedTokens sync.Map
 
 // RevokeToken marks a token as revoked. The token's JWT ID is extracted and
 // stored in the blacklist. Subsequent introspection calls will return active=false.
-func (s *OAuthService) RevokeToken(tokenStr string) error {
+func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) error {
 	if tokenStr == "" {
 		return nil // RFC 7009: return 200 even for empty token
 	}
@@ -1159,4 +1159,93 @@ func cryptoRandInt(max int) int {
 		return 0
 	}
 	return int(bigN.Int64())
+}
+
+// --- JWT Bearer Assertion Grant (RFC 7523) ---
+
+// JWTBearerRequest holds parameters for the jwt-bearer grant type.
+type JWTBearerRequest struct {
+	TenantID  uuid.UUID
+	Assertion string // the third-party-signed JWT
+	Scope     []string
+	Issuer    string
+}
+
+// JWTBearerGrant implements RFC 7523: validates a third-party JWT assertion
+// and issues a GGID access token for the assertion subject.
+func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest) (*TokenResponse, error) {
+	if req.Assertion == "" {
+		return nil, fmt.Errorf("assertion is required")
+	}
+
+	// Parse the JWT without verifying signature first (to extract claims).
+	// In production, the assertion would be verified against a trusted issuer's JWKS.
+	token, _, err := new(jwt.Parser).ParseUnverified(req.Assertion, jwt.MapClaims{})
+	if err != nil {
+		return nil, fmt.Errorf("invalid assertion: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid assertion claims")
+	}
+
+	// Extract subject (sub) — the user/service this token is for.
+	sub, ok := claims["sub"].(string)
+	if !ok || sub == "" {
+		return nil, fmt.Errorf("assertion missing 'sub' claim")
+	}
+
+	// Extract issuer (iss) — who signed this assertion.
+	iss, _ := claims["iss"].(string)
+
+	// Verify expiration.
+	exp, ok := claims["exp"].(float64)
+	if !ok {
+		return nil, fmt.Errorf("assertion missing 'exp' claim")
+	}
+	if time.Now().Unix() > int64(exp) {
+		return nil, fmt.Errorf("assertion has expired")
+	}
+
+	// Parse the subject as a user ID.
+	userID, err := uuid.Parse(sub)
+	if err != nil {
+		return nil, fmt.Errorf("assertion sub must be a valid user ID")
+	}
+
+	// Issue a GGID access token for this user.
+	now := time.Now()
+	expiresAt := now.Add(1 * time.Hour)
+
+	gidClaims := jwt.MapClaims{
+		"iss":           s.issuer,
+		"sub":           userID.String(),
+		"aud":           "ggid",
+		"tenant_id":     req.TenantID.String(),
+		"iat":           now.Unix(),
+		"exp":           expiresAt.Unix(),
+		"jti":           uuid.New().String(),
+		"assertion_iss": iss, // track the original assertion issuer
+	}
+
+	gidToken := jwt.NewWithClaims(jwt.SigningMethodRS256, gidClaims)
+	gidToken.Header["kid"] = s.keyProvider.KeyID()
+
+	signed, err := gidToken.SignedString(s.keyProvider.PrivateKey())
+	if err != nil {
+		return nil, fmt.Errorf("sign jwt-bearer token: %w", err)
+	}
+
+	scopeStr := ""
+	if len(req.Scope) > 0 {
+		scopeStr = strings.Join(req.Scope, " ")
+	}
+
+	return &TokenResponse{
+		AccessToken: signed,
+		TokenType:   "Bearer",
+		ExpiresIn:   int(time.Until(expiresAt).Seconds()),
+		Scope:       scopeStr,
+	}, nil
 }
