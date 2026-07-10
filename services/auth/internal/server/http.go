@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/social"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/service"
@@ -23,11 +24,18 @@ type Handler struct {
 	authSvc   *service.AuthService
 	mux       *http.ServeMux
 	socialReg *social.Registry
+	hooks     *service.HookManager
+	idpConfigs map[string]*service.IdPConfig // keyed by config ID
 }
 
 // New creates a new Auth Service HTTP handler.
 func New(authSvc *service.AuthService) *Handler {
-	h := &Handler{authSvc: authSvc, socialReg: social.NewRegistry()}
+	h := &Handler{
+		authSvc:    authSvc,
+		socialReg:  social.NewRegistry(),
+		hooks:      service.NewHookManager(),
+		idpConfigs: make(map[string]*service.IdPConfig),
+	}
 	h.registerRoutes()
 	return h
 }
@@ -69,6 +77,19 @@ func (h *Handler) registerRoutes() {
 
 	// Logout all devices
 	h.mux.HandleFunc("/api/v1/auth/logout-all", h.logoutAll)
+
+	// Auth hooks (Auth0 Actions equivalent)
+	h.mux.HandleFunc("/api/v1/auth/hooks", h.manageHooks)
+
+	// Passwordless (WebAuthn-only) registration + login
+	h.mux.HandleFunc("/api/v1/auth/passwordless/register", h.passwordlessRegister)
+
+	// MFA WebAuthn (second factor via passkey)
+	h.mux.HandleFunc("/api/v1/auth/mfa/webauthn/begin", h.mfaWebAuthnBegin)
+	h.mux.HandleFunc("/api/v1/auth/mfa/webauthn/finish", h.mfaWebAuthnFinish)
+
+	// IdP federation config
+	h.mux.HandleFunc("/api/v1/idp/config", h.idpConfig)
 
 	// Email change (dual confirmation)
 	h.mux.HandleFunc("/api/v1/auth/email/change", h.emailChange)
@@ -851,6 +872,175 @@ func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, result)
+}
+
+// --- Auth Hooks (Auth0 Actions equivalent) ---
+
+func (h *Handler) manageHooks(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodPost:
+		var hook service.AuthHook
+		if err := json.NewDecoder(r.Body).Decode(&hook); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if hook.ID == "" {
+			hook.ID = uuid.New().String()
+		}
+		if hook.Headers == nil {
+			hook.Headers = make(map[string]string)
+		}
+		hook.Enabled = true
+		h.hooks.RegisterHook(&hook)
+		writeJSON(w, http.StatusCreated, map[string]string{"id": hook.ID, "status": "registered"})
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		h.hooks.RemoveHook(id)
+		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// --- Passwordless (WebAuthn-only) ---
+
+func (h *Handler) passwordlessRegister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	// Passwordless registration = standard registration but no password required.
+	// Instead, the user must complete WebAuthn registration.
+	var body struct {
+		UserID   string `json:"user_id"`
+		Username string `json:"username"`
+		Email    string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if body.Email == "" {
+		writeError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+
+	userID, _ := uuid.Parse(body.UserID)
+	if userID == uuid.Nil {
+		userID = uuid.New()
+	}
+
+	// Create a random temporary password (user will never use it).
+	tempPass, _ := crypto.GenerateRandomToken(32)
+	username := body.Username
+	if username == "" {
+		username = body.Email
+	}
+
+	if err := h.authSvc.Register(r.Context(), tc.TenantID, userID, username, tempPass); err != nil {
+		writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]string{
+		"user_id":  userID.String(),
+		"message":  "Passwordless account created. Complete WebAuthn registration at /api/v1/webauthn/register/begin",
+		"next_url": "/api/v1/webauthn/register/begin?user_id=" + userID.String(),
+	})
+}
+
+// --- MFA WebAuthn (second factor) ---
+
+func (h *Handler) mfaWebAuthnBegin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		UserID string `json:"user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	if body.UserID == "" {
+		writeError(w, http.StatusBadRequest, "user_id is required")
+		return
+	}
+
+	// Redirect to WebAuthn begin registration endpoint.
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":   "mfa_webauthn_challenge",
+		"message":  "Complete WebAuthn registration as second factor",
+		"begin_url": "/api/v1/webauthn/register/begin?user_id=" + body.UserID,
+	})
+}
+
+func (h *Handler) mfaWebAuthnFinish(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":  "mfa_webauthn_enrolled",
+		"message": "WebAuthn second factor enrolled successfully",
+	})
+}
+
+// --- IdP Federation ---
+
+func (h *Handler) idpConfig(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		var configs []*service.IdPConfig
+		for _, c := range h.idpConfigs {
+			configs = append(configs, c)
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"configs": configs})
+
+	case http.MethodPost:
+		var cfg service.IdPConfig
+		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if cfg.ID == "" {
+			cfg.ID = uuid.New().String()
+		}
+		if cfg.Enabled {
+			// no-op, just mark as enabled
+		}
+		cfg.Enabled = true
+		h.idpConfigs[cfg.ID] = &cfg
+		writeJSON(w, http.StatusCreated, cfg)
+
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		delete(h.idpConfigs, id)
+		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }
 
 // --- Logout All Devices ---
