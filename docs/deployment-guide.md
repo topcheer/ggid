@@ -768,6 +768,299 @@ See [Backup & Recovery Guide](./backup-recovery.md) for:
 
 ---
 
+## TLS Termination with Caddy
+
+Caddy provides automatic HTTPS with Let's Encrypt, making it the simplest
+option for TLS termination in front of GGID.
+
+### Caddyfile
+
+```caddyfile
+# /etc/caddy/Caddyfile
+iam.example.com {
+    reverse_proxy gateway:8080 {
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Real-IP {remote_host}
+    }
+
+    # WebSocket support (for SSE audit stream)
+    reverse_proxy gateway:8080 {
+        flush_interval -1
+    }
+}
+
+# Custom domain for hosted login pages
+login.example.com {
+    reverse_proxy gateway:8080
+}
+```
+
+### Docker Compose with Caddy
+
+```yaml
+services:
+  caddy:
+    image: caddy:2.7-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      gateway:
+        condition: service_healthy
+
+  gateway:
+    # ... existing config ...
+    environment:
+      # Tell GGID it's behind a TLS-terminating proxy
+      TRUSTED_PROXIES: "caddy"
+      SECURE_COOKIES: "true"
+
+volumes:
+  caddy_data:
+  caddy_config:
+```
+
+### Automatic Certificate Renewal
+
+Caddy handles Let's Encrypt certificate provisioning and renewal automatically.
+No cron jobs or manual renewal needed.
+
+For custom CA certificates:
+
+```caddyfile
+iam.example.com {
+    tls /etc/caddy/cert.pem /etc/caddy/key.pem
+    reverse_proxy gateway:8080
+}
+```
+
+---
+
+## Docker Secrets
+
+For production deployments, avoid putting secrets in environment variables or
+`.env` files. Use Docker secrets instead.
+
+### Create Secrets
+
+```bash
+# Create secrets from files or stdin
+echo "my-secure-db-password" | docker secret create ggid_db_password -
+echo "my-redis-password" | docker secret create ggid_redis_password -
+openssl genrsa -out /tmp/jwt-private.pem 2048
+docker secret create ggid_jwt_private_key /tmp/jwt-private.pem
+rm /tmp/jwt-private.pem
+
+# List secrets
+docker secret ls
+```
+
+### Use Secrets in Docker Compose (Swarm Mode)
+
+```yaml
+services:
+  auth:
+    image: ghcr.io/ggid/auth:latest
+    secrets:
+      - ggid_db_password
+      - ggid_jwt_private_key
+    environment:
+      # GGID reads secrets from /run/secrets/
+      DB_PASSWORD_FILE: /run/secrets/ggid_db_password
+      JWT_PRIVATE_KEY_PATH: /run/secrets/ggid_jwt_private_key
+
+secrets:
+  ggid_db_password:
+    external: true
+  ggid_jwt_private_key:
+    external: true
+```
+
+### Non-Swarm: Mount Secret Files
+
+For Docker Compose (non-Swarm), mount secret files via volumes:
+
+```yaml
+services:
+  auth:
+    volumes:
+      - ./secrets/db_password:/run/secrets/ggid_db_password:ro
+      - ./secrets/jwt_private.pem:/run/secrets/ggid_jwt_private_key:ro
+    environment:
+      DB_PASSWORD_FILE: /run/secrets/ggid_db_password
+      JWT_PRIVATE_KEY_PATH: /run/secrets/ggid_jwt_private_key
+```
+
+### Vault Integration
+
+For enterprise deployments, use HashiCorp Vault to inject secrets:
+
+```yaml
+services:
+  auth:
+    image: ghcr.io/ggid/auth:latest
+    # Vault Agent sidecar reads secrets and writes to /vault/secrets/
+    # GGID reads from file paths instead of env vars
+    environment:
+      DB_PASSWORD_FILE: /vault/secrets/db_password
+      JWT_PRIVATE_KEY_PATH: /vault/secrets/jwt_private_key
+    volumes:
+      - vault-secrets:/vault/secrets:ro
+```
+
+---
+
+## Persistent Volumes
+
+Production deployments must persist data across container restarts.
+
+### Volume Configuration
+
+```yaml
+# docker-compose.yaml
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/ggid/postgres  # Mount on fast SSD
+
+  redis_data:
+    driver: local
+
+  nats_data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Data persists across container restarts and recreations
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes  # Enable AOF persistence
+    volumes:
+      - redis_data:/data
+
+  nats:
+    image: nats:2.10-alpine
+    command: ["-js", "--store_dir", "/data"]
+    volumes:
+      - nats_data:/data
+```
+
+### Kubernetes Persistent Volume Claims
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ggid-postgres-pvc
+  namespace: ggid
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: fast-ssd
+  resources:
+    requests:
+      storage: 100Gi
+```
+
+---
+
+## Backup Strategy
+
+### Automated PostgreSQL Backup (pg_dump Cron)
+
+Create a sidecar container that runs `pg_dump` on a schedule:
+
+```yaml
+# docker-compose.yaml
+services:
+  pg-backup:
+    image: prodrigestivill/postgres-backup-local:16
+    restart: unless-stopped
+    volumes:
+      - ./backups:/backups
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ggid
+      POSTGRES_USER: ggid
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      SCHEDULE: "@daily"           # Cron: every day at midnight
+      BACKUP_KEEP_DAYS: 7          # Keep 7 daily backups
+      BACKUP_KEEP_WEEKS: 4         # Keep 4 weekly backups
+      BACKUP_KEEP_MONTHS: 6        # Keep 6 monthly backups
+      HEALTHCHECK_PORT: 8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+```
+
+### Manual Backup and Restore
+
+```bash
+# Full backup
+docker exec ggid-postgres pg_dump -U ggid -Fc ggid > backup-$(date +%Y%m%d).dump
+
+# Restore from backup
+docker exec -i ggid-postgres pg_restore -U ggid -d ggid < backup-20240115.dump
+
+# Compressed backup (smaller, slower)
+docker exec ggid-postgres pg_dump -U ggid -Fc --compress=9 ggid > backup-compressed.dump
+
+# Schema-only backup (for testing)
+docker exec ggid-postgres pg_dump -U ggid -s ggid > schema.sql
+```
+
+### WAL Archiving (Point-in-Time Recovery)
+
+For point-in-time recovery, enable WAL archiving in PostgreSQL:
+
+```ini
+# postgresql.conf
+archive_mode = on
+archive_command = 'aws s3 cp %p s3://ggid-wal-archive/%f'
+wal_level = replica
+max_wal_size = 4GB
+```
+
+### Redis Backup
+
+```bash
+# Manual RDB snapshot
+docker exec ggid-redis redis-cli BGSAVE
+docker cp ggid-redis:/data/dump.rdb ./redis-backup-$(date +%Y%m%d).rdb
+
+# Or configure periodic snapshots in redis.conf
+# save 900 1    # Save if 1 key changed in 15 min
+# save 300 10   # Save if 10 keys changed in 5 min
+# save 60 10000 # Save if 10000 keys changed in 1 min
+```
+
+### Backup Verification
+
+```bash
+# Verify backup integrity (test restore to temporary DB)
+docker run --rm -d --name test-pg \
+  -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=test \
+  postgres:16-alpine
+
+sleep 5
+docker exec -i test-pg pg_restore -U test -d test < backup-20240115.dump
+docker exec test-pg psql -U test -d test -c "SELECT COUNT(*) FROM users;"
+docker stop test-pg
+```
+
+---
+
 ## References
 
 - [Docker Compose Reference](../deploy/) — Production compose files
