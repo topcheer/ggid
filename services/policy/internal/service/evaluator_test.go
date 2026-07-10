@@ -210,6 +210,39 @@ func TestCheck_RBAC_RoleInheritance(t *testing.T) {
 	}
 }
 
+func TestCheck_RBAC_MultiLevelInheritance(t *testing.T) {
+	userID := uuid.New()
+	grandparent := uuid.New()
+	parent := uuid.New()
+	child := uuid.New()
+
+	rr := &mockRoleReader{
+		// child → parent → grandparent chain
+		ancestorChain: map[uuid.UUID][]uuid.UUID{
+			child:        {child, parent, grandparent},
+			parent:       {parent, grandparent},
+			grandparent:  {grandparent},
+		},
+		// Only grandparent has the permission
+		rolePermissions: map[uuid.UUID][]*domain.Permission{
+			grandparent: {newPerm("admin", "manage")},
+			parent:      {},
+			child:       {},
+		},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {child}}}
+	e := NewEvaluator(rr, ur, &mockPolicyReader{})
+
+	// User assigned child role should inherit from grandparent (2 levels up)
+	result, err := e.Check(context.Background(), newRequest(userID, "admin", "manage"))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !result.Allowed {
+		t.Error("child role should inherit grandparent permission through 2-level chain")
+	}
+}
+
 func TestCheck_ABAC_Allow_Policy(t *testing.T) {
 	userID := uuid.New()
 	roleID := uuid.New()
