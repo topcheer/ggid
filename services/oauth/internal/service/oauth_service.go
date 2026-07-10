@@ -775,3 +775,117 @@ func getInt64Claim(claims jwt.MapClaims, key string) int64 {
 	}
 	return 0
 }
+
+// --- Dynamic Client Registration (RFC 7591) ---
+
+// DynamicRegistrationRequest represents a RFC 7591 client registration request.
+type DynamicRegistrationRequest struct {
+	ClientName              string            `json:"client_name"`
+	RedirectURIs           []string          `json:"redirect_uris"`
+	GrantTypes             []string          `json:"grant_types"`
+	ResponseTypes          []string          `json:"response_types"`
+	TokenEndpointAuthMethod string           `json:"token_endpoint_auth_method"`
+	Scope                  string            `json:"scope"`
+	// Optional fields per RFC 7591 Section 2:
+	ClientURI              string            `json:"client_uri,omitempty"`
+	LogoURI                string            `json:"logo_uri,omitempty"`
+	PolicyURI              string            `json:"policy_uri,omitempty"`
+	TosURI                 string            `json:"tos_uri,omitempty"`
+	JwksURI                string            `json:"jwks_uri,omitempty"`
+	SoftwareID             string            `json:"software_id,omitempty"`
+	SoftwareVersion        string            `json:"software_version,omitempty"`
+}
+
+// DynamicRegistrationResponse is the RFC 7591 registration response.
+type DynamicRegistrationResponse struct {
+	ClientID                string   `json:"client_id"`
+	ClientSecret            string   `json:"client_secret,omitempty"`
+	ClientIDIssuedAt        int64    `json:"client_id_issued_at"`
+	ClientSecretExpiresAt   int64    `json:"client_secret_expires_at,omitempty"`
+	ClientName              string   `json:"client_name"`
+	RedirectURIs           []string `json:"redirect_uris"`
+	GrantTypes             []string `json:"grant_types"`
+	ResponseTypes          []string `json:"response_types"`
+	TokenEndpointAuthMethod string   `json:"token_endpoint_auth_method"`
+	Scope                  string   `json:"scope"`
+}
+
+// DynamicClientRegister implements RFC 7591 dynamic client registration.
+// It creates a new OAuth2 client based on the provided metadata.
+func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRegistrationRequest) (*DynamicRegistrationResponse, error) {
+	if len(req.RedirectURIs) == 0 {
+		return nil, errors.New(errors.ErrInvalidArgument, "redirect_uris is required")
+	}
+
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrFailedPrecondition, "missing tenant context")
+	}
+
+	// Default grant/response types if not specified.
+	if len(req.GrantTypes) == 0 {
+		req.GrantTypes = []string{"authorization_code", "refresh_token"}
+	}
+	if len(req.ResponseTypes) == 0 {
+		req.ResponseTypes = []string{"code"}
+	}
+	if req.TokenEndpointAuthMethod == "" {
+		req.TokenEndpointAuthMethod = "client_secret_basic"
+	}
+	if req.Scope == "" {
+		req.Scope = "openid profile email"
+	}
+
+	clientID := generateClientID()
+	scopes := strings.Fields(req.Scope)
+
+	client := &domain.OAuthClient{
+		ID:                      uuid.New(),
+		TenantID:                tc.TenantID,
+		ClientID:                clientID,
+		Name:                    defaultIfEmpty(req.ClientName, "Dynamic Client"),
+		Type:                    domain.ClientTypeConfidential,
+		GrantTypes:              req.GrantTypes,
+		ResponseTypes:           req.ResponseTypes,
+		RedirectURIs:            req.RedirectURIs,
+		Scopes:                  scopes,
+		TokenEndpointAuthMethod: req.TokenEndpointAuthMethod,
+		Metadata: map[string]any{
+			"client_uri":       req.ClientURI,
+			"logo_uri":         req.LogoURI,
+			"policy_uri":       req.PolicyURI,
+			"tos_uri":          req.TosURI,
+			"jwks_uri":         req.JwksURI,
+			"software_id":      req.SoftwareID,
+			"software_version": req.SoftwareVersion,
+		},
+		Enabled: true,
+	}
+
+	var plaintextSecret string
+	if client.IsConfidential() {
+		plaintextSecret = generateClientSecret()
+		hash, err := crypto.HashPassword(plaintextSecret)
+		if err != nil {
+			return nil, errors.Internal("hash client secret", err)
+		}
+		client.ClientSecretHash = hash
+	}
+
+	if err := s.clientRepo.CreateClient(ctx, client); err != nil {
+		return nil, err
+	}
+
+	now := time.Now()
+	return &DynamicRegistrationResponse{
+		ClientID:                clientID,
+		ClientSecret:            plaintextSecret,
+		ClientIDIssuedAt:        now.Unix(),
+		ClientName:              client.Name,
+		RedirectURIs:           req.RedirectURIs,
+		GrantTypes:             req.GrantTypes,
+		ResponseTypes:          req.ResponseTypes,
+		TokenEndpointAuthMethod: req.TokenEndpointAuthMethod,
+		Scope:                  req.Scope,
+	}, nil
+}

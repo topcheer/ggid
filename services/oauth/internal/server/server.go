@@ -446,6 +446,25 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusOK, result)
 	})
 
+	// Dynamic Client Registration (RFC 7591)
+	mux.HandleFunc("/oauth/register", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		var req service.DynamicRegistrationRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+			return
+		}
+		result, err := oauthSvc.DynamicClientRegister(r.Context(), &req)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusCreated, result)
+	})
+
 	// --- SAML 2.0 IdP skeleton ---
 
 	mux.HandleFunc("/saml/metadata", func(w http.ResponseWriter, r *http.Request) {
