@@ -78,6 +78,13 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Route to parent sub-resource: POST /api/v1/roles/{id}/parent
+	if len(parts) == 2 && parts[1] == "parent" {
+		// TODO: implement handleSetRoleParent
+		w.WriteHeader(http.StatusNotImplemented)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		role, err := s.roleSvc.GetRole(r.Context(), id)
@@ -95,6 +102,46 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// POST /api/v1/roles/{id}/parent — set parent role for hierarchy/inheritance.
+func (s *HTTPServer) handleSetRoleParent(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+	if r.Method != http.MethodPost && r.Method != http.MethodPut {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		ParentRoleID string `json:"parent_role_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	if req.ParentRoleID == "" {
+		// Clear parent (make root role)
+		role, err := s.roleSvc.UpdateRole(r.Context(), id, nil, nil, &uuid.Nil)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, roleToJSON(role))
+		return
+	}
+
+	parentID, err := uuid.Parse(req.ParentRoleID)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid parent_role_id")
+		return
+	}
+
+	role, err := s.roleSvc.SetParent(r.Context(), id, parentID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, roleToJSON(role))
 }
 
 func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
