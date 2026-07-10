@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
 import Link from "next/link";
-import { Search, Plus, Lock, Unlock, Trash2, UserPlus, ChevronLeft, ChevronRight, Shield } from "lucide-react";
+import { Search, Plus, Lock, Unlock, Trash2, UserPlus, ChevronLeft, ChevronRight, Shield, Download, Upload, X } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -17,6 +17,9 @@ export default function UsersPage() {
   const [batchRole, setBatchRole] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [roles, setRoles] = useState<{ id: string; key: string; name: string }[]>([]);
+  const [showImport, setShowImport] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importResult, setImportResult] = useState<string | null>(null);
 
   // Load roles for batch assign
   useCallback(async () => {
@@ -118,20 +121,83 @@ export default function UsersPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    const header = "username,email,status,created_at\n";
+    const rows = filtered.map((u) => `${u.username},${u.email},${u.status || "active"},${u.created_at || ""}`).join("\n");
+    const blob = new Blob([header + rows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users_export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportCSV = async () => {
+    const lines = importText.trim().split("\n").filter((l) => l.trim() && !l.startsWith("username,"));
+    let created = 0;
+    const errors: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const [username, email, password] = lines[i].split(",").map((s) => s.trim());
+      if (!username || !email) { errors.push(`Row ${i + 1}: missing username or email`); continue; }
+      try {
+        await apiFetch("/api/v1/users", {
+          method: "POST",
+          body: JSON.stringify({ username, email, password: password || "TempPass123!" }),
+        });
+        created++;
+      } catch (err) {
+        errors.push(`Row ${i + 1}: ${err instanceof Error ? err.message : "failed"}`);
+      }
+    }
+    setImportResult(`Created ${created} users${errors.length ? `, ${errors.length} errors: ${errors.join("; ")}` : ""}`);
+    setImportText("");
+    refresh();
+  };
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Users</h1>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-        >
-          <UserPlus className="h-4 w-4" /> New User
-        </button>
+        <div className="flex gap-2">
+          <button onClick={handleExportCSV} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
+            <Download className="h-4 w-4" /> Export
+          </button>
+          <button onClick={() => setShowImport(!showImport)} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
+            <Upload className="h-4 w-4" /> Import
+          </button>
+          <button
+            onClick={() => setShowCreate(!showCreate)}
+            className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            <UserPlus className="h-4 w-4" /> New User
+          </button>
+        </div>
       </div>
 
       {msg && (
         <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{msg}</div>
+      )}
+
+      {showImport && (
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Import Users (CSV)</h2>
+            <button onClick={() => setShowImport(false)}><X className="h-4 w-4 text-gray-400" /></button>
+          </div>
+          <p className="mb-2 text-xs text-gray-500">Format: username,email,password (one per line, password optional)</p>
+          <textarea
+            value={importText}
+            onChange={(e) => setImportText(e.target.value)}
+            rows={6}
+            placeholder={"alice,alice@example.com,Pass123!\nbob,bob@example.com,Pass123!"}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm"
+          />
+          <button onClick={handleImportCSV} disabled={!importText.trim()} className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50">
+            Import Users
+          </button>
+          {importResult && <p className="mt-3 text-sm text-gray-600">{importResult}</p>}
+        </div>
       )}
 
       {showCreate && (
