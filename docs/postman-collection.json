@@ -1,0 +1,361 @@
+{
+  "info": {
+    "name": "GGID IAM Platform API",
+    "description": "Complete API collection for the GGID IAM Platform.\n\nBase URL: {{baseUrl}}\nTenant ID: {{tenantId}}\n\n## Authentication\n\n1. Register a user via POST /api/v1/auth/register\n2. Login via POST /api/v1/auth/login to get a JWT\n3. Use the JWT as `Authorization: Bearer {{token}}` for authenticated endpoints\n\nAll requests must include `X-Tenant-ID` header.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "tenantId", "value": "00000000-0000-0000-0000-000000000001" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "roleId", "value": "" },
+    { "key": "orgId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Gateway Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/healthz"
+          },
+          "test": "pm.test('Status 200', () => pm.response.to.have.status(200));"
+        },
+        {
+          "name": "Aggregated Health",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Tenant-ID", "value": "{{tenantId}}" }],
+            "url": "{{baseUrl}}/healthz/aggregated"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.user_id) pm.variables.set('userId', body.user_id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser_{{$timestamp}}\",\n  \"email\": \"test_{{$timestamp}}@example.com\",\n  \"password\": \"Test@123456\",\n  \"full_name\": \"Test User\",\n  \"tenant_id\": \"{{tenantId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "if (body.access_token) pm.variables.set('token', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@123456\",\n  \"tenant_id\": \"{{tenantId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"\",\n  \"tenant_id\": \"{{tenantId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/auth/refresh"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/users"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "Create Role",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.variables.set('roleId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"editor_{{$timestamp}}\",\n  \"key\": \"editor_{{$timestamp}}\",\n  \"description\": \"Content Editor\",\n  \"permissions\": [\"content:read\", \"content:write\"],\n  \"tenant_id\": \"{{tenantId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/roles"
+          }
+        },
+        {
+          "name": "List Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/roles"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create Organization",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "if (body.id) pm.variables.set('orgId', body.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering Dept\",\n  \"description\": \"Engineering Organization\",\n  \"type\": \"department\",\n  \"tenant_id\": \"{{tenantId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/orgs"
+          }
+        },
+        {
+          "name": "List Organizations",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/orgs"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit",
+      "item": [
+        {
+          "name": "Query Audit Events",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/api/v1/audit?action=user.login.success&limit=20"
+          }
+        }
+      ]
+    },
+    {
+      "name": "OAuth2",
+      "item": [
+        {
+          "name": "Authorize (Browser Redirect)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Tenant-ID", "value": "{{tenantId}}" }],
+            "url": "{{baseUrl}}/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:3000/callback&scope=openid+profile+email&state=random-state"
+          }
+        },
+        {
+          "name": "Token Exchange",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/x-www-form-urlencoded" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "authorization_code" },
+                { "key": "code", "value": "AUTH_CODE_FROM_REDIRECT" },
+                { "key": "redirect_uri", "value": "http://localhost:3000/callback" },
+                { "key": "client_id", "value": "YOUR_CLIENT_ID" },
+                { "key": "client_secret", "value": "YOUR_CLIENT_SECRET" }
+              ]
+            },
+            "url": "{{baseUrl}}/oauth/token"
+          }
+        },
+        {
+          "name": "JWKS",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/.well-known/jwks.json"
+          }
+        },
+        {
+          "name": "OpenID Configuration",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/.well-known/openid-configuration"
+          }
+        }
+      ]
+    },
+    {
+      "name": "SCIM 2.0",
+      "item": [
+        {
+          "name": "List Users (SCIM)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/scim/v2/Users?count=10&startIndex=1"
+          }
+        },
+        {
+          "name": "List Groups (SCIM)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Tenant-ID", "value": "{{tenantId}}" }
+            ],
+            "url": "{{baseUrl}}/scim/v2/Groups"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hosted Pages",
+      "item": [
+        {
+          "name": "Login Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/login"
+          }
+        },
+        {
+          "name": "Register Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/register"
+          }
+        },
+        {
+          "name": "Swagger UI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/docs"
+          }
+        }
+      ]
+    }
+  ]
+}
