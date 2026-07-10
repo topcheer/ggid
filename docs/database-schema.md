@@ -526,3 +526,209 @@ psql -c "\dt" | grep -E 'tenants|users|roles|audit'
 - [Multi-Tenancy Guide](./multi-tenancy-guide.md) — RLS deep dive
 - [Deployment Guide](./deployment-guide.md) — Database setup
 - [Configuration Reference](./configuration-reference.md) — DB env vars
+
+---
+
+## Auth Service Tables
+
+### credentials
+
+```sql
+CREATE TABLE credentials (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL REFERENCES tenants(id),
+    user_id         UUID NOT NULL REFERENCES users(id),
+    identity_type   VARCHAR(32) NOT NULL DEFAULT 'password',
+    identifier      VARCHAR(255) NOT NULL,
+    secret_hash     TEXT,
+    metadata        JSONB DEFAULT '{}',
+    verified        BOOLEAN DEFAULT FALSE,
+    last_used_at    TIMESTAMPTZ,
+    expires_at      TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(tenant_id, identity_type, identifier)
+);
+
+CREATE INDEX idx_credentials_user ON credentials(tenant_id, user_id);
+CREATE INDEX idx_credentials_lookup ON credentials(tenant_id, identity_type, identifier);
+```
+
+### sessions
+
+```sql
+CREATE TABLE sessions (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL,
+    user_id         UUID NOT NULL,
+    session_token   VARCHAR(512) NOT NULL,
+    refresh_token   VARCHAR(512),
+    ip_address      INET,
+    user_agent      TEXT,
+    device_type     VARCHAR(32),
+    expires_at      TIMESTAMPTZ NOT NULL,
+    idle_expires_at TIMESTAMPTZ,
+    revoked         BOOLEAN DEFAULT FALSE,
+    revoked_reason  VARCHAR(128),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_activity   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(session_token)
+);
+
+CREATE INDEX idx_sessions_user ON sessions(tenant_id, user_id);
+CREATE INDEX idx_sessions_expires ON sessions(expires_at) WHERE revoked = FALSE;
+```
+
+### mfa_factors
+
+```sql
+CREATE TABLE mfa_factors (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL,
+    user_id         UUID NOT NULL,
+    method          VARCHAR(32) NOT NULL,  -- 'totp', 'sms', 'webauthn'
+    secret          TEXT,                  -- TOTP secret (encrypted)
+    phone           VARCHAR(32),           -- SMS method
+    verified        BOOLEAN DEFAULT FALSE,
+    enabled         BOOLEAN DEFAULT FALSE,
+    backup_codes    TEXT[],                -- Hashed backup codes
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(tenant_id, user_id, method)
+);
+```
+
+## OAuth Service Tables
+
+### oauth_clients
+
+```sql
+CREATE TABLE oauth_clients (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id           UUID NOT NULL,
+    client_id           VARCHAR(128) NOT NULL UNIQUE,
+    client_secret_hash  TEXT,
+    name                VARCHAR(256) NOT NULL,
+    description         TEXT,
+    grant_types         TEXT[] NOT NULL DEFAULT ARRAY['authorization_code'],
+    response_types      TEXT[] NOT NULL DEFAULT ARRAY['code'],
+    redirect_uris       TEXT[] NOT NULL DEFAULT '{}',
+    scopes              TEXT[] NOT NULL DEFAULT '{}',
+    pkce_required       BOOLEAN DEFAULT TRUE,
+    token_endpoint_auth VARCHAR(32) DEFAULT 'client_secret_post',
+    access_token_ttl    INTEGER DEFAULT 900,
+    refresh_token_ttl   INTEGER DEFAULT 86400,
+    status              VARCHAR(16) DEFAULT 'active',
+    metadata            JSONB DEFAULT '{}',
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_oauth_clients_tenant ON oauth_clients(tenant_id);
+```
+
+### oauth_authorization_codes
+
+```sql
+CREATE TABLE oauth_authorization_codes (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id           UUID NOT NULL,
+    client_id           VARCHAR(128) NOT NULL,
+    user_id             UUID,
+    code_hash           VARCHAR(64) NOT NULL,
+    redirect_uri        TEXT NOT NULL,
+    scopes              TEXT[] NOT NULL DEFAULT '{}',
+    code_challenge      VARCHAR(256),
+    code_challenge_method VARCHAR(8),
+    nonce               VARCHAR(128),
+    expires_at          TIMESTAMPTZ NOT NULL,
+    used                BOOLEAN DEFAULT FALSE,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(code_hash)
+);
+
+CREATE INDEX idx_oauth_codes_expiry ON oauth_authorization_codes(expires_at);
+```
+
+### oauth_refresh_tokens
+
+```sql
+CREATE TABLE oauth_refresh_tokens (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID NOT NULL,
+    user_id         UUID,
+    client_id       VARCHAR(128) NOT NULL,
+    token_hash      VARCHAR(64) NOT NULL,
+    family_id       UUID NOT NULL,
+    scopes          TEXT[] NOT NULL DEFAULT '{}',
+    used            BOOLEAN DEFAULT FALSE,
+    expires_at      TIMESTAMPTZ NOT NULL,
+    revoked         BOOLEAN DEFAULT FALSE,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(token_hash)
+);
+
+CREATE INDEX idx_refresh_tokens_family ON oauth_refresh_tokens(family_id);
+CREATE INDEX idx_refresh_tokens_user ON oauth_refresh_tokens(tenant_id, user_id);
+```
+
+## WebAuthn Tables
+
+### webauthn_credentials
+
+```sql
+CREATE TABLE webauthn_credentials (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id           UUID NOT NULL,
+    user_id             UUID NOT NULL,
+    credential_id       BYTEA NOT NULL,
+    public_key          BYTEA NOT NULL,
+    attestation_format  VARCHAR(32) NOT NULL,
+    aaguid              UUID,
+    sign_count          BIGINT NOT NULL DEFAULT 0,
+    transports          TEXT[],
+    device_type         VARCHAR(32),
+    backed_up           BOOLEAN DEFAULT FALSE,
+    name                VARCHAR(128),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_used_at        TIMESTAMPTZ,
+    UNIQUE(tenant_id, credential_id)
+);
+```
+
+## RLS Policy Reference
+
+All tenant-scoped tables have this RLS policy pattern:
+
+```sql
+-- Enable RLS
+ALTER TABLE {table} ENABLE ROW LEVEL SECURITY;
+
+-- Policy: users can only see their tenant's data
+CREATE POLICY tenant_isolation ON {table}
+    USING (tenant_id::text = current_setting('app.tenant_id', true));
+
+-- Force RLS even for table owners (except superuser/BYPASSRLS)
+ALTER TABLE {table} FORCE ROW LEVEL SECURITY;
+```
+
+### Tables with RLS Enabled
+
+| Table | Service | Tenant Column |
+|-------|---------|---------------|
+| users | Identity | tenant_id |
+| groups | Identity | tenant_id |
+| group_members | Identity | tenant_id |
+| credentials | Auth | tenant_id |
+| sessions | Auth | tenant_id |
+| mfa_factors | Auth | tenant_id |
+| webauthn_credentials | Auth | tenant_id |
+| oauth_clients | OAuth | tenant_id |
+| oauth_authorization_codes | OAuth | tenant_id |
+| oauth_refresh_tokens | OAuth | tenant_id |
+| oauth_consents | OAuth | tenant_id |
+| roles | Policy | tenant_id |
+| role_assignments | Policy | tenant_id |
+| policies | Policy | tenant_id |
+| orgs | Org | tenant_id |
+| org_members | Org | tenant_id |
+| audit_events | Audit | tenant_id |
