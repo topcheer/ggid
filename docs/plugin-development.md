@@ -1714,3 +1714,362 @@ default:
 - [Custom Claims Guide](./custom-claims.md) — JWT claim injection
 - [Developer Guide](./developer-guide.md) — Adding auth providers
 - [Webhooks Guide](./webhooks-guide.md) — Event webhook configuration
+
+---
+
+## Writing Custom Auth Providers
+
+GGID's `authprovider` package defines an interface for pluggable
+authentication backends. You can implement custom providers for databases,
+APIs, or legacy systems.
+
+### AuthProvider Interface
+
+```go
+package authprovider
+
+// AuthProvider is the interface for authentication backends.
+type AuthProvider interface {
+    // Authenticate validates credentials and returns user identity.
+    Authenticate(ctx context.Context, username, password string) (*AuthResult, error)
+    
+    // ProviderName returns the provider identifier.
+    ProviderName() string
+    
+    // Priority sets order in the chain (lower = higher priority).
+    Priority() int
+}
+
+// AuthResult contains authentication outcome.
+type AuthResult struct {
+    UserID      string
+    Username    string
+    Email       string
+    DisplayName string
+    Groups      []string
+    Attributes  map[string]string
+    Provider    string
+}
+```
+
+### Example: Custom REST API Provider
+
+```go
+package myprovider
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "net/url"
+)
+
+type RESTProvider struct {
+    apiURL    string
+    apiKey    string
+    client    *http.Client
+}
+
+func NewRESTProvider(apiURL, apiKey string) *RESTProvider {
+    return &RESTProvider{
+        apiURL: apiURL,
+        apiKey: apiKey,
+        client: &http.Client{},
+    }
+}
+
+func (p *RESTProvider) ProviderName() string { return "rest-api" }
+func (p *RESTProvider) Priority() int        { return 50 }
+
+func (p *RESTProvider) Authenticate(ctx context.Context, username, password string) (*authprovider.AuthResult, error) {
+    // Call external API
+    resp, err := p.client.PostForm(p.apiURL+"/auth", url.Values{
+        "username": {username},
+        "password": {password},
+        "api_key":  {p.apiKey},
+    })
+    if err != nil {
+        return nil, fmt.Errorf("rest provider: %w", err)
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != http.StatusOK {
+        return nil, fmt.Errorf("authentication failed: status %d", resp.StatusCode)
+    }
+    
+    var result struct {
+        UserID string `json:"user_id"`
+        Name   string `json:"display_name"`
+        Email  string `json:"email"`
+        Groups []string `json:"groups"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+        return nil, fmt.Errorf("decode response: %w", err)
+    }
+    
+    return &authprovider.AuthResult{
+        UserID:      result.UserID,
+        Username:    username,
+        Email:       result.Email,
+        DisplayName: result.Name,
+        Groups:      result.Groups,
+        Provider:    p.ProviderName(),
+    }, nil
+}
+```
+
+### Registering Custom Providers
+
+```go
+// In your service initialization (main.go)
+func main() {
+    chain := authprovider.NewChain()
+    
+    // Add built-in providers
+    chain.Add(localProvider)
+    chain.Add(ldapProvider)
+    
+    // Add custom provider
+    restProvider := myprovider.NewRESTProvider(
+        os.Getenv("CUSTOM_API_URL"),
+        os.Getenv("CUSTOM_API_KEY"),
+    )
+    chain.Add(restProvider)
+    
+    // Auth service uses the chain — tries each provider in priority order
+    authSvc := auth.NewService(chain, ...)
+}
+```
+
+### Provider Chain Order
+
+```
+Priority 10: Local (database)     ← Default, always first
+Priority 20: LDAP / AD
+Priority 30: OAuth / OIDC (external)
+Priority 50: Custom REST API
+Priority 99: Fallback (deny all)
+```
+
+---
+
+## Writing Custom Audit Sinks
+
+Audit sinks allow forwarding audit events to external systems (SIEM, Splunk,
+Elasticsearch, Datadog).
+
+### AuditSink Interface
+
+```go
+package audit
+
+// AuditSink consumes audit events.
+type AuditSink interface {
+    // Publish sends an event to the sink.
+    Publish(ctx context.Context, event *AuditEvent) error
+    
+    // SinkName returns the sink identifier.
+    SinkName() string
+    
+    // Close cleans up resources.
+    Close() error
+}
+
+// AuditEvent represents a single auditable action.
+type AuditEvent struct {
+    ID          string            `json:"id"`
+    TenantID    string            `json:"tenant_id"`
+    EventType   string            `json:"event_type"`
+    UserID      string            `json:"user_id,omitempty"`
+    ActorID     string            `json:"actor_id,omitempty"`
+    Resource    string            `json:"resource,omitempty"`
+    Action      string            `json:"action,omitempty"`
+    SourceIP    string            `json:"source_ip,omitempty"`
+    UserAgent   string            `json:"user_agent,omitempty"`
+    Timestamp   time.Time         `json:"timestamp"`
+    Metadata    map[string]string `json:"metadata,omitempty"`
+}
+```
+
+### Example: Splunk HEC Sink
+
+```go
+package audit
+
+import (
+    "bytes"
+    "context"
+    "encoding/json"
+    "net/http"
+)
+
+type SplunkSink struct {
+    hecURL string
+    token  string
+    client *http.Client
+}
+
+func NewSplunkSink(hecURL, token string) *SplunkSink {
+    return &SplunkSink{
+        hecURL: hecURL,
+        token:  token,
+        client: &http.Client{},
+    }
+}
+
+func (s *SplunkSink) SinkName() string { return "splunk" }
+
+func (s *SplunkSink) Publish(ctx context.Context, event *AuditEvent) error {
+    payload := map[string]interface{}{
+        "time":       event.Timestamp.Unix(),
+        "host":       event.SourceIP,
+        "source":     "ggid",
+        "sourcetype": "ggid:audit",
+        "event":      event,
+    }
+    
+    body, _ := json.Marshal(payload)
+    
+    req, err := http.NewRequestWithContext(ctx, "POST", s.hecURL, bytes.NewReader(body))
+    if err != nil {
+        return err
+    }
+    req.Header.Set("Authorization", "Splunk "+s.token)
+    
+    resp, err := s.client.Do(req)
+    if err != nil {
+        return err
+    }
+    resp.Body.Close()
+    
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("splunk HEC returned %d", resp.StatusCode)
+    }
+    return nil
+}
+
+func (s *SplunkSink) Close() error { return nil }
+```
+
+### Registering Custom Sinks
+
+```go
+// In audit service initialization
+func main() {
+    publisher := audit.NewPublisher()
+    
+    // Built-in: NATS JetStream
+    publisher.AddSink(natsSink)
+    
+    // Built-in: PostgreSQL
+    publisher.AddSink(pgSink)
+    
+    // Custom: Splunk
+    splunkSink := NewSplunkSink(
+        os.Getenv("SPLUNK_HEC_URL"),
+        os.Getenv("SPLUNK_HEC_TOKEN"),
+    )
+    publisher.AddSink(splunkSink)
+    
+    // Custom: Datadog
+    if os.Getenv("DATADOG_API_KEY") != "" {
+        ddSink := datadog.NewSink(os.Getenv("DATADOG_API_KEY"))
+        publisher.AddSink(ddSink)
+    }
+    
+    // Publisher fans out to all sinks asynchronously
+    auditSvc := audit.NewService(publisher, ...)
+}
+```
+
+### Sink Reliability
+
+| Feature | Behavior |
+|---------|----------|
+| Async publishing | Non-blocking — events queued via NATS |
+| Retry | Exponential backoff (3 retries) |
+| Dead letter | Failed events stored in PostgreSQL for replay |
+| Ordering | Events ordered per-tenant via NATS consumer |
+| Backpressure | NATS JetStream handles flow control |
+
+---
+
+## Writing Custom Middleware
+
+Custom HTTP middleware for the Gateway can intercept requests for logging,
+rate limiting, or custom authorization.
+
+### Middleware Interface
+
+```go
+package middleware
+
+// Middleware wraps an http.Handler with additional behavior.
+type Middleware func(http.Handler) http.Handler
+```
+
+### Example: IP Allowlist Middleware
+
+```go
+package myplugin
+
+import (
+    "net"
+    "net/http"
+)
+
+func IPAllowlist(allowedCIDRs []string) middleware.Middleware {
+    // Parse CIDRs once at startup
+    networks := make([]*net.IPNet, 0, len(allowedCIDRs))
+    for _, cidr := range allowedCIDRs {
+        _, n, _ := net.ParseCIDR(cidr)
+        networks = append(networks, n)
+    }
+    
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            ip := net.ParseIP(extractIP(r))
+            if ip == nil {
+                http.Error(w, "forbidden", http.StatusForbidden)
+                return
+            }
+            
+            allowed := false
+            for _, n := range networks {
+                if n.Contains(ip) {
+                    allowed = true
+                    break
+                }
+            }
+            
+            if !allowed {
+                http.Error(w, "IP not allowed", http.StatusForbidden)
+                return
+            }
+            
+            next.ServeHTTP(w, r)
+        })
+    }
+}
+```
+
+### Registering Middleware
+
+```go
+// In Gateway initialization
+func main() {
+    r := router.New()
+    
+    // Built-in middleware
+    r.Use(middleware.RequestID())
+    r.Use(middleware.TenantContext())
+    r.Use(middleware.JWTAuth(authSvc))
+    
+    // Custom middleware
+    r.Use(myplugin.IPAllowlist(os.Getenv("ALLOWED_CIDR").split(",")))
+    
+    r.Use(middleware.RateLimiter())
+    r.Use(middleware.Logger())
+}
+```
