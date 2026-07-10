@@ -382,3 +382,253 @@ Application → GGID (primary)
 | `POST /api/v2/users/{id}/roles` | `POST /api/v1/users/{id}/roles` |
 | `GET /api/v2/logs` | `GET /api/v1/audit/events` |
 | `POST /api/v2/jobs/users-exports` | `GET /api/v1/users?format=csv` |
+
+---
+
+## Auth0 Rules Migration
+
+Auth0 Rules are JavaScript functions that execute during the authentication
+pipeline. GGID replaces them with middleware plugins and webhook handlers.
+
+### Rule Migration Mapping
+
+| Auth0 Rule Pattern | GGID Equivalent |
+|--------------------|-----------------|
+| Add custom claims to JWT | JWT claims customization (policy engine) |
+| Call external API on login | Webhook handler (`user.login` event) |
+| Role-based access control | RBAC policy engine |
+| IP allow/deny list | Rate limiter middleware / Gateway rules |
+| Enrich user profile | Event subscriber plugin |
+| Redirect based on metadata | Custom login flow / hosted page |
+
+### Example: Adding Custom Claims
+
+**Auth0 Rule:**
+```javascript
+function (user, context, callback) {
+    context.accessToken['https://app.example.com/department'] = user.department;
+    context.accessToken['https://app.example.com/cost_center'] = user.cost_center;
+    callback(null, user, context);
+}
+```
+
+**GGID Equivalent (Custom Claims via API):**
+```bash
+curl -X PUT $API/api/v1/settings/jwt/claims \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "custom_claims": {
+            "department": "{{user.department}}",
+            "cost_center": "{{user.cost_center}}"
+        }
+    }'
+```
+
+### Example: Call External API on Login
+
+**Auth0 Rule:**
+```javascript
+function (user, context, callback) {
+    request.post({
+        url: 'https://crm.example.com/api/user-login',
+        json: { email: user.email }
+    }, callback);
+}
+```
+
+**GGID Equivalent (Webhook):**
+```bash
+curl -X POST $API/api/v1/webhooks \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "url": "https://crm.example.com/api/user-login",
+        "events": ["auth.login"],
+        "headers": { "Authorization": "Bearer crm-token" }
+    }'
+```
+
+---
+
+## Auth0 Actions Migration
+
+Auth0 Actions (next-gen rules) use a Node.js runtime. GGID replaces them
+with the plugin system:
+
+### Action Migration Mapping
+
+| Auth0 Action Trigger | GGID Equivalent |
+|----------------------|-----------------|
+| `post-login` | Event subscriber on `auth.login` |
+| `pre-user-registration` | Pre-registration validation plugin |
+| `post-user-registration` | Webhook on `user.created` |
+| `post-change-password` | Webhook on `auth.password_changed` |
+| `send-phone-message` | Notification service (SMS provider) |
+
+### Example: Post-Login Action
+
+**Auth0 Action:**
+```javascript
+exports.onExecutePostLogin = async (event, api) => {
+    if (event.user.email.endsWith('@external.com')) {
+        api.access.deny('Access denied for external users');
+    }
+};
+```
+
+**GGID Equivalent (Auth Policy):**
+```bash
+# Create ABAC policy to deny external emails
+curl -X POST $API/api/v1/policies \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "name": "deny-external-email",
+        "effect": "deny",
+        "conditions": [{
+            "attribute": "email",
+            "operator": "ends_with",
+            "value": "@external.com"
+        }],
+        "applies_to": ["auth.login"]
+    }'
+```
+
+---
+
+## Connections Migration
+
+Auth0 Connections map to GGID Auth Providers:
+
+| Auth0 Connection Type | GGID Provider |
+|----------------------|---------------|
+| Database (Username-Password) | Local Provider |
+| Google | Social: Google |
+| Microsoft (Azure AD) | Social: Microsoft |
+| GitHub | Social: GitHub |
+| SAML (Enterprise) | SAML SP |
+| LDAP (Enterprise) | LDAP Provider |
+| Active Directory | LDAP Provider |
+
+### Connection to GGID Configuration
+
+```bash
+# Migrate Auth0 Google Connection
+curl -X PUT $API/api/v1/settings/auth-providers \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "google": {
+            "enabled": true,
+            "client_id": "from-auth0-connection.apps.googleusercontent.com",
+            "client_secret": "$GOOGLE_CLIENT_SECRET",
+            "scopes": ["openid", "email", "profile"]
+        }
+    }'
+```
+
+---
+
+## Tenant Migration Script
+
+```python
+#!/usr/bin/env python3
+"""
+Migrate Auth0 tenant to GGID.
+
+Usage: python3 migrate_auth0.py --domain tenant.auth0.com --token MGMT_TOKEN
+"""
+
+import requests
+import json
+import argparse
+
+def export_auth0(domain, token):
+    """Export users and clients from Auth0 Management API."""
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Export users
+    users = []
+    page = 0
+    while True:
+        resp = requests.get(
+            f"https://{domain}/api/v2/users?page={page}&per_page=100",
+            headers=headers
+        )
+        data = resp.json()
+        if not data:
+            break
+        users.extend(data)
+        page += 1
+
+    # Export clients
+    resp = requests.get(f"https://{domain}/api/v2/clients", headers=headers)
+    clients = resp.json()
+
+    # Export roles
+    resp = requests.get(f"https://{domain}/api/v2/roles", headers=headers)
+    roles = resp.json()
+
+    return {"users": users, "clients": clients, "roles": roles}
+
+def convert_to_ggid(auth0_data):
+    """Convert Auth0 export to GGID import format."""
+    return {
+        "users": [{
+            "username": u.get("username") or u["email"],
+            "email": u["email"],
+            "name": u.get("name", ""),
+            "status": "active" if not u.get("blocked") else "suspended",
+            "require_password_reset": True,  # Can't migrate Auth0 passwords
+            "roles": [r["name"] for r in u.get("roles", [])],
+        } for u in auth0_data["users"]],
+
+        "oauth_clients": [{
+            "name": c["name"],
+            "client_id": c["client_id"],
+            "client_secret": c.get("client_secret", ""),
+            "redirect_uris": c.get("callbacks", []),
+            "grant_types": c.get("grant_types", ["authorization_code"]),
+        } for c in auth0_data["clients"] if not c.get("global", False)],
+
+        "roles": [{
+            "key": r["name"],
+            "name": r.get("description", r["name"]),
+        } for r in auth0_data["roles"]],
+    }
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--domain", required=True)
+    parser.add_argument("--token", required=True)
+    args = parser.parse_args()
+
+    data = export_auth0(args.domain, args.token)
+    ggid_data = convert_to_ggid(data)
+
+    with open("ggid-import.json", "w") as f:
+        json.dump(ggid_data, f, indent=2)
+
+    print(f"Exported {len(ggid_data['users'])} users, "
+          f"{len(ggid_data['oauth_clients'])} clients, "
+          f"{len(ggid_data['roles'])} roles")
+```
+
+---
+
+## Migration Checklist
+
+- [ ] Export users from Auth0 Management API
+- [ ] Export OAuth clients (non-global)
+- [ ] Export roles
+- [ ] Export rules/actions → map to GGID equivalents
+- [ ] Run conversion script
+- [ ] Create GGID tenant
+- [ ] Import roles
+- [ ] Import users (with password reset)
+- [ ] Import OAuth clients (update redirect URIs)
+- [ ] Configure social connections (Google, GitHub, etc.)
+- [ ] Configure enterprise connections (LDAP, SAML)
+- [ ] Reimplement rules as policies/webhooks
+- [ ] Update application URLs to GGID Gateway
+- [ ] Send password reset emails
+- [ ] Verify login flows
+- [ ] Monitor for 24 hours
+- [ ] Remove Auth0 integration
