@@ -243,16 +243,17 @@ func TenantResolver(domainSuffix string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var tenantID uuid.UUID
 
-			// 1. Try X-Tenant-ID header (highest priority)
-			if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
+			// 1. Try JWT claim tenant_id first (highest priority — authenticated source)
+			// X-Tenant-ID header is unauthenticated and must NOT override JWT claims.
+			if tidStr := extractTenantFromJWT(r); tidStr != "" {
 				if id, err := uuid.Parse(tidStr); err == nil {
 					tenantID = id
 				}
 			}
 
-			// 2. Try JWT claim tenant_id (parse without verification — JWTAuth verifies later)
+			// 2. Try X-Tenant-ID header (only for public endpoints without JWT)
 			if tenantID == uuid.Nil {
-				if tidStr := extractTenantFromJWT(r); tidStr != "" {
+				if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
 					if id, err := uuid.Parse(tidStr); err == nil {
 						tenantID = id
 					}
