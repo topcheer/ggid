@@ -59,6 +59,10 @@ export default function AuditPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionFilter, setActionFilter] = useState("");
+  const [actorFilter, setActorFilter] = useState("");
+  const [resultFilter, setResultFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -70,6 +74,10 @@ export default function AuditPage() {
       } else {
         const params = new URLSearchParams();
         if (actionFilter) params.set("action", actionFilter);
+        if (actorFilter) params.set("actor_id", actorFilter);
+        if (resultFilter) params.set("result", resultFilter);
+        if (dateFrom) params.set("start_time", dateFrom + "T00:00:00Z");
+        if (dateTo) params.set("end_time", dateTo + "T23:59:59Z");
         params.set("page_size", "50");
         const data = await apiFetch<{ events?: AuditEvent[] }>(
           `/api/v1/audit/events?${params}`,
@@ -81,7 +89,7 @@ export default function AuditPage() {
     } finally {
       setLoading(false);
     }
-  }, [apiFetch, tab, actionFilter]);
+  }, [apiFetch, tab, actionFilter, actorFilter, resultFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     loadData();
@@ -397,14 +405,42 @@ export default function AuditPage() {
       ) : tab === "events" ? (
         /* ===== Event Log Table ===== */
         <>
-          <div className="mb-4 flex items-center gap-2">
+          <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             <input
               type="text"
-              placeholder="Filter by action (e.g. user.login)"
+              placeholder="Action (e.g. user.login)"
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && loadData()}
-              className="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2"
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              placeholder="Actor ID/Name"
+              value={actorFilter}
+              onChange={(e) => setActorFilter(e.target.value)}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+            <select
+              value={resultFilter}
+              onChange={(e) => setResultFilter(e.target.value)}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="">All Results</option>
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+              <option value="denied">Denied</option>
+            </select>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </div>
           {events.length === 0 ? (
