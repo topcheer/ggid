@@ -133,6 +133,55 @@ func (s *OAuthService) DeleteClient(ctx context.Context, clientID string) error 
 	return s.clientRepo.DeleteClient(ctx, tc.TenantID, clientID)
 }
 
+// --- RFC 7592: OAuth 2.0 Dynamic Client Management ---
+
+// UpdateClientMetadata updates a client's metadata fields (RFC 7592 §2.2).
+// Only non-nil fields are updated; nil fields retain their existing values.
+func (s *OAuthService) UpdateClientMetadata(ctx context.Context, clientID string, updates *ClientMetadataUpdate) (*domain.OAuthClient, error) {
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return nil, errors.New(errors.ErrFailedPrecondition, "missing tenant context")
+	}
+
+	client, err := s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
+	if err != nil {
+		return nil, errors.New(errors.ErrNotFound, "client not found")
+	}
+
+	// Apply updates to non-nil fields.
+	if updates.Name != nil {
+		client.Name = *updates.Name
+	}
+	if updates.RedirectURIs != nil {
+		client.RedirectURIs = updates.RedirectURIs
+	}
+	if updates.GrantTypes != nil {
+		client.GrantTypes = updates.GrantTypes
+	}
+	if updates.ResponseTypes != nil {
+		client.ResponseTypes = updates.ResponseTypes
+	}
+	if updates.Scopes != nil {
+		client.Scopes = updates.Scopes
+	}
+	if updates.TokenEndpointAuthMethod != nil {
+		client.TokenEndpointAuthMethod = *updates.TokenEndpointAuthMethod
+	}
+
+	return s.clientRepo.UpdateClient(ctx, tc.TenantID, clientID, client)
+}
+
+// ClientMetadataUpdate holds optional metadata fields for RFC 7592 PATCH.
+// Nil fields are not updated; non-nil fields replace the existing value.
+type ClientMetadataUpdate struct {
+	Name                      *string   `json:"client_name,omitempty"`
+	RedirectURIs              []string  `json:"redirect_uris,omitempty"`
+	GrantTypes                []string  `json:"grant_types,omitempty"`
+	ResponseTypes             []string  `json:"response_types,omitempty"`
+	Scopes                    []string  `json:"scope,omitempty"`
+	TokenEndpointAuthMethod   *string   `json:"token_endpoint_auth_method,omitempty"`
+}
+
 // --- Authorization Code Flow ---
 
 // AuthorizeRequest holds parameters for the /oauth/authorize endpoint.
@@ -321,7 +370,7 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		IDTokenSigningAlgValues:           []string{"RS256"},
 		ScopesSupported:                   []string{"openid", "profile", "email", "offline_access"},
 		ClaimsSupported:                   []string{"sub", "email", "name", "picture", "groups", "preferred_username", "updated_at"},
-		TokenEndpointAuthMethodsSupported: []string{"client_secret_basic", "client_secret_post", "none"},
+		TokenEndpointAuthMethodsSupported: []string{"client_secret_basic", "client_secret_post", "none", "tls_client_auth", "self_signed_tls_client_auth"},
 		CodeChallengeMethodsSupported:     []string{"S256", "plain"},
 	}
 }
@@ -1298,6 +1347,15 @@ func (s *OAuthService) ParseBackchannelLogoutToken(tokenStr string) (jwt.MapClai
 	// Must not have nonce (per spec).
 	if _, ok := claims["nonce"]; ok {
 		return nil, fmt.Errorf("logout token must not contain 'nonce'")
+	}
+
+	// Replay prevention: check jti uniqueness (OIDC Back-Channel Logout §2.4).
+	if jti, ok := claims["jti"].(string); ok && jti != "" {
+		jtiKey := fmt.Sprintf("ggid:backchannel_logout_jti:%s", jti)
+		if _, seen := backchannelLogoutList.Load(jtiKey); seen {
+			return nil, fmt.Errorf("logout token replay detected (duplicate jti)")
+		}
+		backchannelLogoutList.Store(jtiKey, time.Now().Unix())
 	}
 
 	return claims, nil
