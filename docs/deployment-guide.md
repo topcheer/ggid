@@ -1069,3 +1069,243 @@ docker stop test-pg
 - [Security Checklist](./security-checklist.md) — Production security audit
 - [Backup & Recovery](./backup-recovery.md) — Backup strategies
 - [Helm Chart Guide](./helm-chart.md) — Kubernetes Helm deployment
+
+---
+
+## Bare Metal Deployment
+
+### Prerequisites
+
+```bash
+# Install Go 1.25+
+sudo apt-get install -y golang-1.25
+
+# Install PostgreSQL 16
+sudo apt-get install -y postgresql-16
+
+# Install Redis 7
+sudo apt-get install -y redis-server
+
+# Install NATS
+curl -sf https://binaries.nats.dev/nats-io/nats-server/v2@latest | sudo tee /usr/local/bin/nats-server
+sudo chmod +x /usr/local/bin/nats-server
+```
+
+### Build from Source
+
+```bash
+git clone https://github.com/ggid/ggid.git
+cd ggid
+
+# Build all services
+make build
+
+# Binaries in bin/
+ls bin/
+# gateway  identity  auth  oauth  policy  org  audit
+```
+
+### Systemd Services
+
+```ini
+# /etc/systemd/system/ggid-gateway.service
+[Unit]
+Description=GGID Gateway
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=ggid
+ExecStart=/opt/ggid/bin/gateway
+EnvironmentFile=/etc/ggid/gateway.env
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# Enable and start all services
+for svc in gateway identity auth oauth policy org audit; do
+    sudo systemctl enable ggid-$svc
+    sudo systemctl start ggid-$svc
+done
+```
+
+### Nginx Reverse Proxy (TLS)
+
+```nginx
+# /etc/nginx/sites-available/ggid
+upstream ggid_gateway {
+    server 127.0.0.1:8080;
+    keepalive 32;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name iam.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/iam.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/iam.example.com/privkey.pem;
+    ssl_protocols       TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache   shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Proxy to Gateway
+    location / {
+        proxy_pass http://ggid_gateway;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 60s;
+    }
+}
+
+# HTTP → HTTPS redirect
+server {
+    listen 80;
+    server_name iam.example.com;
+    return 301 https://$host$request_uri;
+}
+```
+
+### Certificate Management (Let's Encrypt)
+
+```bash
+# Install certbot
+sudo apt-get install -y certbot python3-certbot-nginx
+
+# Obtain certificate
+sudo certbot --nginx -d iam.example.com
+
+# Auto-renewal (certbot adds cron automatically)
+sudo systemctl status certbot.timer
+```
+
+---
+
+## Monitoring Integration
+
+### Prometheus
+
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'ggid-gateway'
+    static_configs:
+      - targets: ['gateway:8080']
+    metrics_path: /metrics
+
+  - job_name: 'ggid-auth'
+    static_configs:
+      - targets: ['auth:9001']
+    metrics_path: /metrics
+
+  - job_name: 'ggid-identity'
+    static_configs:
+      - targets: ['identity:8080']
+    metrics_path: /metrics
+
+  - job_name: 'ggid-oauth'
+    static_configs:
+      - targets: ['oauth:9005']
+    metrics_path: /metrics
+
+  - job_name: 'ggid-policy'
+    static_configs:
+      - targets: ['policy:8070']
+    metrics_path: /metrics
+
+  - job_name: 'ggid-org'
+    static_configs:
+      - targets: ['org:8071']
+    metrics_path: /metrics
+
+  - job_name: 'ggid-audit'
+    static_configs:
+      - targets: ['audit:8072']
+    metrics_path: /metrics
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+
+  - job_name: 'nats'
+    static_configs:
+      - targets: ['nats:8222']
+```
+
+### Grafana Dashboard
+
+```yaml
+# grafana/provisioning/dashboards/ggid.yaml
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    url: http://prometheus:9090
+    isDefault: true
+
+dashboards:
+  - name: GGID Overview
+    panels:
+      - title: Request Rate (req/s)
+        targets:
+          - expr: sum(rate(http_requests_total[1m])) by (service)
+
+      - title: Error Rate (%)
+        targets:
+          - expr: sum(rate(http_requests_total{status=~"5.."}[1m])) / sum(rate(http_requests_total[1m])) * 100
+
+      - title: P99 Latency (ms)
+        targets:
+          - expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service)) * 1000
+
+      - title: Active Sessions
+        targets:
+          - expr: ggid_auth_active_sessions
+
+      - title: Failed Logins (5m)
+        targets:
+          - expr: sum(increase(ggid_auth_failed_logins_total[5m]))
+
+      - title: Token Issuance Rate
+        targets:
+          - expr: sum(rate(ggid_oauth_tokens_issued_total[1m])) by (grant_type)
+
+      - title: DB Connection Pool
+        targets:
+          - expr: pg_stat_database_numbackends
+
+      - title: Redis Memory (MB)
+        targets:
+          - expr: redis_memory_used_bytes / 1024 / 1024
+
+    alerts:
+      - name: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+```
