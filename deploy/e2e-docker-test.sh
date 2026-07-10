@@ -20,7 +20,7 @@ echo -n "1. Gateway healthz:        "
 STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$GATEWAY/healthz")
 if [ "$STATUS" = "200" ]; then echo "PASS ($STATUS)"; PASS=$((PASS+1)); else echo "FAIL ($STATUS)"; FAIL=$((FAIL+1)); fi
 
-# 2. Register (unique email)
+# 2. Register (unique username)
 echo -n "2. Register user:          "
 STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY/api/v1/auth/register" \
   -H "Content-Type: application/json" \
