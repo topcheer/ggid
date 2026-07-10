@@ -308,6 +308,61 @@ Maps users to roles (many-to-many).
 
 ---
 
+### organizations
+
+Organizational units within a tenant (groups, departments).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | PK |
+| `tenant_id` | UUID | FK to tenants (RLS) |
+| `name` | VARCHAR(200) | Org display name |
+| `slug` | VARCHAR(100) | URL-friendly identifier |
+| `parent_id` | UUID | FK to organizations (nullable, for hierarchy) |
+| `metadata` | JSONB | Arbitrary org metadata |
+| `created_at` | TIMESTAMPTZ | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | Last update |
+
+**Indexes:** `uniq_orgs_tenant_slug`
+**RLS:** Enabled
+
+### organization_members
+
+Maps users to organizations (many-to-many).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `org_id` | UUID | FK to organizations |
+| `user_id` | UUID | FK to users |
+| `role` | VARCHAR(50) | Role within org (admin/member/viewer) |
+| `joined_at` | TIMESTAMPTZ | Membership start |
+
+**Index:** `idx_org_members_org_user` (org_id, user_id)
+**RLS:** Enabled
+
+---
+
+### policies
+
+ABAC policy rules for fine-grained access control.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | PK |
+| `tenant_id` | UUID | FK to tenants (RLS) |
+| `name` | VARCHAR(200) | Policy name |
+| `effect` | VARCHAR(10) | `allow` or `deny` |
+| `conditions` | JSONB | Attribute conditions (array of {attribute, operator, value}) |
+| `applies_to` | JSONB | Target actions (e.g., `["auth.login", "users:read"]`) |
+| `priority` | INTEGER | Evaluation order (lower = higher priority) |
+| `enabled` | BOOLEAN | Policy active flag |
+| `created_at` | TIMESTAMPTZ | Creation timestamp |
+
+**Index:** `idx_policies_tenant` (tenant_id, enabled, priority)
+**RLS:** Enabled
+
+---
+
 ### audit_events
 
 Append-only audit log with hash chaining for tamper detection.
