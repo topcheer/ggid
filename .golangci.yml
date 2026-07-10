@@ -1,32 +1,34 @@
-version: "2"
-
 run:
   timeout: 5m
-  go-version: "1.25"
+  go: "1.25"
 
 linters:
-  default: standard
   enable:
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
     - unused
-    - misspell
+    - gosec
+    - gocritic
     - revive
+    - misspell
 
-  settings:
-    staticcheck:
-      checks: ["all", "-ST1000"]
-
-  exclusions:
-    rules:
-      - path: _test\.go
-        linters:
-          - errcheck
-          - revive
+linters-settings:
+  gosec:
+    excludes:
+      - G104  # unhandled errors (we check them explicitly)
+    severity: medium
+    confidence: medium
 
 issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - gocritic
+    - path: cmd/
+      linters:
+        - errcheck
   max-issues-per-linter: 0
   max-same-issues: 0
