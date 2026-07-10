@@ -48,6 +48,7 @@ type User struct {
 	AvatarURL      string
 	Locale         string
 	Timezone       string
+	ExternalID     string // SCIM externalId for enterprise directory sync
 	LastLoginAt    *time.Time
 	LastLoginIP    *netip.Addr
 	PasswordHash   string // Argon2id encoded hash; empty for external-only users
@@ -66,6 +67,7 @@ type CreateUserInput struct {
 	DisplayName string
 	Locale      string
 	Timezone    string
+	ExternalID  string // SCIM externalId
 }
 
 // UpdateUserInput holds optional fields for updating a user.
