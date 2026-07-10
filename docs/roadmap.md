@@ -209,6 +209,61 @@ Development phases, completed features, and future plans for the GGID IAM Platfo
 
 ---
 
+## Phase Status (Detailed)
+
+### Phase 9: Production Hardening — COMPLETE
+
+| Feature | Status | Commit |
+|---------|--------|--------|
+| Circuit breaker (gateway) | Done | `d51579e` |
+| Sliding window rate limiting | Done | `9cf600b` |
+| Shadow traffic mirroring | Done | `d51579e` |
+| IP allowlist middleware | Done | `d51579e` |
+| WASM plugin support | Done | `0d8d039` |
+| Request ID propagation | Done | `f3b1d8b` |
+| Audit SSE streaming | Done | `1f0226d` |
+| Role hierarchy + effective permissions | Done | `2241795` |
+| Webhook HMAC signing + retry | Done | `bfa0a9b` |
+| Custom JWT claims + hooks | Done | `bfa0a9b` |
+
+### Phase 10: Documentation + SDK — COMPLETE
+
+| Feature | Status | Lines |
+|---------|--------|-------|
+| OpenAPI 3.1 spec | Done | 2400+ |
+| API reference (REST + gRPC + SCIM) | Done | 561 |
+| Architecture (C4 model) | Done | 461 |
+| Security whitepaper (STRIDE) | Done | 337 |
+| Helm Chart guide | Done | 634 |
+| Benchmark + k6 scripts | Done | 645 |
+| Developer guide | Done | 1145 |
+| SDK cookbook (8 recipes) | Done | 606 |
+| Migration guides (Auth0/Keycloak/Clerk) | Done | 795 |
+| Performance tuning | Done | 378 |
+| Backup/recovery | Done | 463 |
+| Multi-tenant architecture | Done | 339 |
+| 73+ docs total | Done | — |
+
+### Phase 11: Security Enhancement — PLANNED
+
+| Feature | Priority | ETA |
+|---------|----------|-----|
+| OAuth token introspection (RFC 7662) | High | Q3 2024 |
+| Token revocation endpoint (RFC 7009) | High | Q3 2024 |
+| OIDC back-channel logout | Medium | Q3 2024 |
+| DPoP (Demonstration of Proof-of-Possession) | Medium | Q4 2024 |
+| PAR (Pushed Authorization Requests) | Medium | Q4 2024 |
+| JARM (JWT-Secured Authorization Response Mode) | Low | Q1 2025 |
+| Step-up authentication enforcement | High | Q3 2024 |
+| Passwordless login (magic link + OTP) | Medium | Q4 2024 |
+| Risk-based authentication (adaptive MFA) | Medium | Q4 2024 |
+| Audit integrity verification (hash chain) | High | Q3 2024 |
+| Key rotation automation (JWKS) | High | Q3 2024 |
+| GDPR data export automation | Medium | Q4 2024 |
+| Session binding (token binding) | Low | Q1 2025 |
+
+---
+
 ## Community
 
 - **Feature requests:** Open an issue with `feature-request` label
