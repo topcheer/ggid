@@ -495,3 +495,32 @@ func TestGetStats_RepoError(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+func TestCleanupOldEvents_Default(t *testing.T) {
+	repo := &mockAuditRepo{}
+	svc := NewAuditService(repo)
+	deleted, err := svc.CleanupOldEvents(context.Background(), 0)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+	if deleted != 0 { t.Fatalf("expected 0 deleted") }
+}
+
+func TestCleanupOldEvents_CustomDays(t *testing.T) {
+	repo := &mockAuditRepo{}
+	svc := NewAuditService(repo)
+	_, err := svc.CleanupOldEvents(context.Background(), 30)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestListEvents_EmptyFilter(t *testing.T) {
+	repo := &mockAuditRepo{events: []*domain.AuditEvent{}}
+	svc := NewAuditService(repo)
+	_, _, err := svc.ListEvents(context.Background(), domain.ListFilter{TenantID: uuid.New()}, 1, 50)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestListEvents_InvalidPage(t *testing.T) {
+	repo := &mockAuditRepo{events: []*domain.AuditEvent{}}
+	svc := NewAuditService(repo)
+	_, _, err := svc.ListEvents(context.Background(), domain.ListFilter{TenantID: uuid.New()}, -1, 0)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
