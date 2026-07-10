@@ -339,15 +339,79 @@ All errors follow this structure:
 
 ## WebAuthn (Passkeys)
 
+GGID implements the WebAuthn (Web Authentication) API for passwordless
+authentication using passkeys, security keys, and platform authenticators
+(Face ID, Touch ID, Windows Hello).
+
 ### Begin Registration
+
+Initiates a WebAuthn credential registration flow.
+
 ```http
 POST /api/v1/auth/webauthn/register/begin
 Authorization: Bearer <JWT>
+Content-Type: application/json
 X-Tenant-ID: <tenant-uuid>
+
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "My iPhone",
+  "authenticator_selection": {
+    "authenticator_attachment": "platform",
+    "user_verification": "preferred",
+    "resident_key": "preferred",
+    "require_resident_key": false
+  }
+}
 ```
-**Response 200:** `{ "challenge": "...", "rp": {...}, "user": {...} }`
+
+**Response 200:**
+```json
+{
+  "challenge": "base64url-challenge-string",
+  "rp": {
+    "name": "GGID",
+    "id": "example.com"
+  },
+  "user": {
+    "id": "base64url-user-handle",
+    "name": "john.doe@example.com",
+    "displayName": "John Doe"
+  },
+  "pubKeyCredParams": [
+    { "type": "public-key", "alg": -7 },
+    { "type": "public-key", "alg": -257 }
+  ],
+  "timeout": 60000,
+  "excludeCredentials": [
+    {
+      "type": "public-key",
+      "id": "base64url-existing-credential-id"
+    }
+  ],
+  "attestation": "none",
+  "extensions": {
+    "credProps": true
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `challenge` | base64url | Random challenge to prevent replay attacks |
+| `rp.id` | string | Relying Party ID (domain). Must match origin |
+| `rp.name` | string | Display name shown in browser prompt |
+| `user.id` | base64url | User handle (opaque, not PII) |
+| `user.displayName` | string | Human-readable name shown in browser prompt |
+| `pubKeyCredParams` | array | Supported algorithms: ES256 (-7), RS256 (-257) |
+| `timeout` | int | Milliseconds before challenge expires |
+| `excludeCredentials` | array | Credentials already registered (prevents duplicates) |
+| `attestation` | string | Attestation conveyance: `none`, `indirect`, `direct` |
 
 ### Finish Registration
+
+Completes registration by verifying the attestation from the authenticator.
+
 ```http
 POST /api/v1/auth/webauthn/register/finish
 Authorization: Bearer <JWT>
@@ -355,34 +419,180 @@ Content-Type: application/json
 X-Tenant-ID: <tenant-uuid>
 
 {
-  "id": "...",
-  "rawId": "...",
-  "response": { "attestationObject": "...", "clientDataJSON": "..." }
+  "id": "base64url-credential-id",
+  "rawId": "base64url-credential-id",
+  "type": "public-key",
+  "response": {
+    "attestationObject": "base64url-attestation-object",
+    "clientDataJSON": "base64url-client-data-json",
+    "transports": ["internal", "hybrid"]
+  }
 }
 ```
-**Response 200:** `{ "credential_id": "...", "registered": true }`
+
+**Response 200:**
+```json
+{
+  "credential_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "My iPhone",
+  "public_key": "base64url-spki-public-key",
+  "aaguid": "00000000-0000-0000-0000-000000000000",
+  "backup_eligible": true,
+  "backup_state": true,
+  "transports": ["internal", "hybrid"],
+  "registered": true
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `credential_id` | UUID | Internal credential identifier |
+| `name` | string | Human-readable credential name |
+| `aaguid` | UUID | Authenticator Attestation GUID (identifies device model) |
+| `backup_eligible` | bool | Whether credential supports multi-device sync |
+| `backup_state` | bool | Whether credential is currently synced |
+| `transports` | array | How the credential can communicate: `usb`, `nfc`, `ble`, `internal`, `hybrid` |
 
 ### Begin Authentication
+
+Initiates a WebAuthn authentication (assertion) flow.
+
 ```http
 POST /api/v1/auth/webauthn/login/begin
-X-Tenant-ID: <tenant-uuid>
-
-{ "username": "user@example.com" }
-```
-**Response 200:** `{ "challenge": "...", "allowCredentials": [...] }`
-
-### Finish Authentication
-```http
-POST /api/v1/auth/webauthn/login/finish
+Content-Type: application/json
 X-Tenant-ID: <tenant-uuid>
 
 {
-  "id": "...",
-  "rawId": "...",
-  "response": { "authenticatorData": "...", "signature": "...", "clientDataJSON": "..." }
+  "username": "john.doe@example.com",
+  "user_verification": "preferred"
 }
 ```
-**Response 200:** `{ "access_token": "...", "refresh_token": "..." }`
+
+**Response 200:**
+```json
+{
+  "challenge": "base64url-challenge-string",
+  "rpId": "example.com",
+  "allowCredentials": [
+    {
+      "type": "public-key",
+      "id": "base64url-credential-id",
+      "transports": ["internal", "hybrid"]
+    }
+  ],
+  "userVerification": "preferred",
+  "timeout": 60000
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `challenge` | base64url | Random challenge for this assertion |
+| `rpId` | string | Relying Party ID that the credential was registered with |
+| `allowCredentials` | array | Matching credentials for this user. Empty for discoverable credentials (passkeys) |
+| `userVerification` | string | `required`, `preferred`, or `discouraged` |
+
+### Finish Authentication
+
+Completes authentication by verifying the signature from the authenticator.
+
+```http
+POST /api/v1/auth/webauthn/login/finish
+Content-Type: application/json
+X-Tenant-ID: <tenant-uuid>
+
+{
+  "id": "base64url-credential-id",
+  "rawId": "base64url-credential-id",
+  "type": "public-key",
+  "response": {
+    "authenticatorData": "base64url-auth-data",
+    "clientDataJSON": "base64url-client-data",
+    "signature": "base64url-signature",
+    "userHandle": "base64url-user-handle"
+  }
+}
+```
+
+**Response 200:**
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIs...",
+  "refresh_token": "rt-550e8400-e29b-41d4-...",
+  "token_type": "Bearer",
+  "expires_in": 900
+}
+```
+
+### List Credentials
+
+```http
+GET /api/v1/auth/webauthn/credentials?user_id=<uuid>
+Authorization: Bearer <JWT>
+X-Tenant-ID: <tenant-uuid>
+```
+
+**Response 200:**
+```json
+{
+  "credentials": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "My iPhone",
+      "aaguid": "adce0002-35bc-c60a-648b-0b25f1f05503",
+      "backup_eligible": true,
+      "backup_state": true,
+      "transports": ["internal", "hybrid"],
+      "created_at": "2024-01-15T10:30:00Z",
+      "last_used_at": "2024-07-10T08:15:00Z",
+      "sign_count": 142
+    }
+  ]
+}
+```
+
+### Rename Credential
+
+```http
+PATCH /api/v1/auth/webauthn/credentials/:id
+Authorization: Bearer <JWT>
+Content-Type: application/json
+X-Tenant-ID: <tenant-uuid>
+
+{ "name": "Work Laptop" }
+```
+
+### Delete Credential
+
+```http
+DELETE /api/v1/auth/webauthn/credentials/:id
+Authorization: Bearer <JWT>
+X-Tenant-ID: <tenant-uuid>
+```
+
+**Response 204:** _(empty body)_
+
+### Supported Algorithms
+
+| COSE Algorithm ID | Name | Key Type | Recommended |
+|-------------------|------|----------|-------------|
+| -7 | ES256 (ECDSA w/ SHA-256) | ECDSA P-256 | Yes (preferred) |
+| -257 | RS256 (RSASSA-PKCS1-v1_5 w/ SHA-256) | RSA 2048 | Yes (fallback) |
+| -8 | EdDSA | Ed25519 | Optional |
+| -37 | PS256 (RSASSA-PSS w/ SHA-256) | RSA 2048 | Optional |
+
+### WebAuthn Error Codes
+
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `WEBAUTHN_INVALID_CHALLENGE` | 400 | Challenge expired or mismatched |
+| `WEBAUTHN_INVALID_ORIGIN` | 400 | Origin not in allowed list |
+| `WEBAUTHN_INVALID_RP_ID` | 400 | RP ID doesn't match configuration |
+| `WEBAUTHN_INVALID_ATTESTATION` | 400 | Attestation verification failed |
+| `WEBAUTHN_INVALID_ASSERTION` | 400 | Assertion signature verification failed |
+| `WEBAUTHN_USER_NOT_FOUND` | 404 | No user with matching credential |
+| `WEBAUTHN_DUPLICATE_CREDENTIAL` | 409 | Credential ID already registered |
+| `WEBAUTHN_RATE_LIMITED` | 429 | Too many WebAuthn attempts |
 
 ---
 
