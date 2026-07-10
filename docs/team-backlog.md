@@ -53,9 +53,9 @@
 ## Backlog for dev2 (services/gateway, middleware, router, Docker)
 
 ### P0 — Core
-- [TODO] Webhook system: registration + HMAC delivery + retry
-- [TODO] Prometheus metrics endpoint: GET /metrics
-- [TODO] Health check aggregation: GET /healthz returns all backend statuses
+- [DONE] Webhook system: registration + HMAC delivery + retry
+- [DONE] Prometheus metrics endpoint: GET /metrics
+- [IN PROGRESS: dev2] Health check aggregation: GET /healthz returns all backend statuses
 - [TODO] Request tracing: X-Request-ID propagation + OpenTelemetry spans
 
 ### P1 — Security
@@ -80,7 +80,7 @@
 ## Backlog for dev3 (services/policy, org, audit, console pages)
 
 ### P0 — Core
-- [TODO] Policy engine: ABAC condition evaluation (resource attributes)
+- [IN PROGRESS: dev3] Policy engine: ABAC condition evaluation (resource attributes)
 - [TODO] Role hierarchy: parent role inherits child permissions
 - [TODO] Bulk user-role assignment API
 - [TODO] Audit real-time streaming via WebSocket
