@@ -100,6 +100,9 @@ func (h *Handler) registerRoutes() {
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
 
+	// Adaptive MFA: risk-based step-up authentication
+	h.mux.HandleFunc("/api/v1/auth/risk-assess", h.riskAssess)
+
 	// Auth hooks (Auth0 Actions equivalent)
 	h.mux.HandleFunc("/api/v1/auth/hooks", h.manageHooks)
 
@@ -1367,6 +1370,62 @@ func (h *Handler) loginAttempts(w http.ResponseWriter, r *http.Request) {
 
 // rememberDevice handles POST /api/v1/auth/device.
 // Records a trusted device fingerprint for the user.
+// riskAssess handles POST /api/v1/auth/risk-assess.
+// Evaluates login risk and returns whether step-up MFA is required.
+// Body: {"user_id": "...", "ip": "...", "user_agent": "..."}
+func (h *Handler) riskAssess(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		UserID    string `json:"user_id"`
+		IP        string `json:"ip"`
+		UserAgent string `json:"user_agent"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	userID, err := uuid.Parse(req.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "valid user_id is required")
+		return
+	}
+
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "tenant context required")
+		return
+	}
+
+	ip := req.IP
+	if ip == "" {
+		ip = clientIP(r)
+	}
+
+	assessment := h.authSvc.AssessLoginRisk(r.Context(), tc.TenantID, userID, ip, req.UserAgent)
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"level":               string(assessment.Level),
+		"score":               assessment.Score,
+		"reasons":             assessment.Reasons,
+		"requires_step_up":    assessment.RequiresStepUp,
+		"requires_admin_alert": assessment.RequiresAdminAlert,
+		"recommended_action": func() string {
+			if assessment.RequiresStepUp {
+				return "require_mfa"
+			}
+			if assessment.Score >= 70 {
+				return "block"
+			}
+			return "allow"
+		}(),
+	})
+}
+
 func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")

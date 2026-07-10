@@ -558,6 +558,20 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		result := oauthSvc.IntrospectToken(token)
 		writeJSON(w, http.StatusOK, result)
 	})
+	mux.HandleFunc("/api/v1/oauth/introspect", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		_ = r.ParseForm()
+		token := r.FormValue("token")
+		if token == "" {
+			writeJSON(w, http.StatusOK, map[string]bool{"active": false})
+			return
+		}
+		result := oauthSvc.IntrospectToken(token)
+		writeJSON(w, http.StatusOK, result)
+	})
 
 	// Dynamic Client Registration (RFC 7591)
 	mux.HandleFunc("/oauth/register", func(w http.ResponseWriter, r *http.Request) {
