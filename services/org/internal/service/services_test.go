@@ -80,12 +80,13 @@ func (m *mockTenantRepo) Delete(_ context.Context, id uuid.UUID) error {
 }
 
 type mockOrgRepo struct {
-	orgs     map[uuid.UUID]*domain.Organization
-	subTree  []*domain.Organization
+	orgs      map[uuid.UUID]*domain.Organization
+	subTree   []*domain.Organization
 	createErr error
 	getErr    error
 	listErr   error
 	deleteErr error
+	updateErr error
 }
 
 func (m *mockOrgRepo) Create(_ context.Context, org *domain.Organization) error {
@@ -136,6 +137,9 @@ func (m *mockOrgRepo) GetSubTree(_ context.Context, _, _ uuid.UUID) ([]*domain.O
 }
 
 func (m *mockOrgRepo) Update(_ context.Context, org *domain.Organization) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
 	if m.orgs == nil {
 		m.orgs = map[uuid.UUID]*domain.Organization{}
 	}
@@ -155,8 +159,9 @@ func (m *mockOrgRepo) Delete(_ context.Context, id uuid.UUID) error {
 }
 
 type mockDeptRepo struct {
-	depts map[uuid.UUID]*domain.Department
-	err   error
+	depts    map[uuid.UUID]*domain.Department
+	err      error
+	updateErr error
 }
 
 func (m *mockDeptRepo) Create(_ context.Context, dept *domain.Department) error {
@@ -187,6 +192,9 @@ func (m *mockDeptRepo) ListByOrg(_ context.Context, _ uuid.UUID) ([]*domain.Depa
 }
 
 func (m *mockDeptRepo) Update(_ context.Context, dept *domain.Department) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
 	if m.depts == nil {
 		m.depts = map[uuid.UUID]*domain.Department{}
 	}
@@ -200,8 +208,10 @@ func (m *mockDeptRepo) Delete(_ context.Context, id uuid.UUID) error {
 }
 
 type mockTeamRepo struct {
-	teams map[uuid.UUID]*domain.Team
-	err   error
+	teams     map[uuid.UUID]*domain.Team
+	err       error
+	updateErr error
+	listErr   error
 }
 
 func (m *mockTeamRepo) Create(_ context.Context, team *domain.Team) error {
@@ -224,6 +234,9 @@ func (m *mockTeamRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Team, e
 }
 
 func (m *mockTeamRepo) ListByOrg(_ context.Context, _ uuid.UUID, _, _ int) ([]*domain.Team, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
 	var result []*domain.Team
 	for _, t := range m.teams {
 		result = append(result, t)
@@ -237,6 +250,9 @@ func (m *mockTeamRepo) Delete(_ context.Context, id uuid.UUID) error {
 }
 
 func (m *mockTeamRepo) Update(_ context.Context, team *domain.Team) error {
+	if m.updateErr != nil {
+		return m.updateErr
+	}
 	if m.teams != nil {
 		m.teams[team.ID] = team
 	}
@@ -1040,5 +1056,52 @@ func TestMembershipService_Remove_Error(t *testing.T) {
 	err := svc.Remove(context.Background(), uuid.New())
 	if err == nil {
 		t.Fatal("expected error for non-existent member")
+	}
+}
+
+// --- Update error path tests (94.9% → 98%+) ---
+
+func TestOrgService_Update_RepoError(t *testing.T) {
+	repo := &mockOrgRepo{updateErr: errors.New("db error")}
+	svc := NewOrgService(repo)
+	_, err := svc.Update(context.Background(), &domain.Organization{Name: "X"})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestDeptService_Update_RepoError(t *testing.T) {
+	repo := &mockDeptRepo{updateErr: errors.New("db error")}
+	svc := NewDeptService(repo)
+	_, err := svc.Update(context.Background(), &domain.Department{Name: "X"})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestTeamService_Update_RepoError(t *testing.T) {
+	repo := &mockTeamRepo{updateErr: errors.New("db error")}
+	svc := NewTeamService(repo)
+	_, err := svc.Update(context.Background(), &domain.Team{Name: "X"})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestTeamService_List_RepoError(t *testing.T) {
+	repo := &mockTeamRepo{listErr: errors.New("db error")}
+	svc := NewTeamService(repo)
+	_, err := svc.List(context.Background(), uuid.New(), 1, 50)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestTeamService_List_ZeroPageSize(t *testing.T) {
+	repo := &mockTeamRepo{teams: map[uuid.UUID]*domain.Team{}}
+	svc := NewTeamService(repo)
+	_, err := svc.List(context.Background(), uuid.New(), 1, 0)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
 	}
 }
