@@ -8,27 +8,6 @@ import (
 	"sync"
 )
 
-// compressibleContentTypes lists content types that benefit from gzip.
-var compressibleContentTypes = []string{
-	"text/",
-	"application/json",
-	"application/javascript",
-	"application/xml",
-	"application/xhtml+xml",
-	"image/svg+xml",
-}
-
-// skipCompressionPrefixes are response content types that are already compressed.
-var skipCompressionPrefixes = []string{
-	"image/",
-	"video/",
-	"audio/",
-	"application/zip",
-	"application/gzip",
-	"application/x-gzip",
-	"application/octet-stream",
-}
-
 // Gzip compresses responses for clients that accept gzip encoding.
 // It skips already-compressed content types and small responses (<512 bytes).
 func Gzip(next http.Handler) http.Handler {
@@ -96,24 +75,8 @@ func (g *gzipResponseWriter) Close() {
 	}
 }
 
-func shouldSkipCompression(contentType string) bool {
-	contentType = strings.ToLower(contentType)
+// compressWriter is an alias for gzipResponseWriter for backward compatibility.
+type compressWriter = gzipResponseWriter
 
-	// SVG is compressible despite image/ prefix
-	if strings.HasPrefix(contentType, "image/svg+xml") {
-		return false
-	}
-
-	for _, prefix := range skipCompressionPrefixes {
-		if strings.HasPrefix(contentType, prefix) {
-			return true
-		}
-	}
-	// Check if it's a compressible type
-	for _, ct := range compressibleContentTypes {
-		if strings.HasPrefix(contentType, ct) {
-			return false
-		}
-	}
-	return true // skip unknown types
-}
+// GzipBrotli is an alias for Gzip for backward compatibility.
+func GzipBrotli(next http.Handler) http.Handler { return Gzip(next) }
