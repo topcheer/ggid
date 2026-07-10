@@ -61,6 +61,24 @@ func NewAuthService(
 	}
 }
 
+// GetPasswordPolicy returns the current password policy configuration.
+func (s *AuthService) GetPasswordPolicy() conf.PasswordPolicy {
+	if s.passwordService == nil {
+		return conf.PasswordPolicy{}
+	}
+	return s.passwordService.GetPolicy()
+}
+
+// SetPasswordPolicy updates the password policy at runtime.
+func (s *AuthService) SetPasswordPolicy(policy conf.PasswordPolicy) {
+	if s.cfg != nil {
+		s.cfg.Password = policy
+	}
+	if s.passwordService != nil {
+		s.passwordService.UpdatePolicy(policy)
+	}
+}
+
 // Login authenticates a user and returns a token set.
 func (s *AuthService) Login(ctx context.Context, username, password, ip, userAgent string) (*domain.TokenSet, error) {
 	// 1. Rate limit: 5 attempts per minute per IP
@@ -771,13 +789,12 @@ func (s *AuthService) GetPasswordHistory(ctx context.Context, userID uuid.UUID) 
 	return result, nil
 }
 
-// SetPasswordPolicy replaces the entire password policy (admin operation).
-func (s *AuthService) SetPasswordPolicy(policy conf.PasswordPolicy) {
-	s.passwordService.UpdatePolicy(policy)
-	s.cfg.Password = policy
-}
-
 // GenerateWebAuthnChallenge generates a random challenge for WebAuthn flows.
 func (s *AuthService) GenerateWebAuthnChallenge(ctx context.Context) (string, error) {
 	return crypto.GenerateRandomToken(32)
+}
+
+// GetPasswordService returns the password service (may be nil if not configured).
+func (s *AuthService) GetPasswordService() *PasswordService {
+	return s.passwordService
 }

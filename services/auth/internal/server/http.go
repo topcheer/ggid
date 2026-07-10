@@ -15,6 +15,7 @@ import (
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/social"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
 	"github.com/google/uuid"
@@ -157,6 +158,9 @@ func (h *Handler) registerRoutes() {
 	// Step-up check endpoint
 	h.mux.HandleFunc("/api/v1/auth/step-up-check", h.stepUpCheck)
 	h.mux.HandleFunc("/api/v1/auth/step-up", h.stepUpTrigger)
+
+	// Security: password policy configuration (arch-spec path)
+	h.mux.HandleFunc("/api/v1/security/password-policy", h.securityPasswordPolicy)
 
 	// WebAuthn / Passkey endpoints (nil credential store = skeleton mode)
 	webauthnHandler, err := webauthn.NewHandler("ggid.dev", "GGID Platform", nil)
@@ -1214,8 +1218,15 @@ func (h *Handler) stepUpCheck(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// stepUpTrigger initiates step-up authentication (alias for stepUpChallenge).
+// stepUpTrigger handles step-up authentication.
+// GET: checks if current session meets requested ACR level (via acr_values query param).
+//      Returns 200 if sufficient, 403 + acr_values hint if step-up required.
+// POST: initiates a step-up challenge (password or MFA).
 func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		h.stepUpACRCheck(w, r)
+		return
+	}
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
@@ -1250,6 +1261,63 @@ func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, result)
+}
+
+// stepUpACRCheck handles GET /api/v1/auth/step-up?acr_values=...
+// Checks if the current session's ACR level meets the requested level.
+// Returns 200 if sufficient, 403 with acr_values hint if step-up is required.
+func (h *Handler) stepUpACRCheck(w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid user identity")
+		return
+	}
+
+	acrValues := r.URL.Query().Get("acr_values")
+	if acrValues == "" {
+		acrValues = r.URL.Query().Get("acr")
+	}
+	if acrValues == "" {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"step_up_required": false,
+			"message":          "no acr_values requested",
+		})
+		return
+	}
+
+	// Current ACR from session context (default to 0 = no assurance).
+	currentACR := r.Header.Get("X-ACR")
+	if currentACR == "" {
+		currentACR = "0"
+	}
+
+	satisfied, challenge, err := h.authSvc.ACRStepUpCheck(r.Context(), userID, currentACR, acrValues)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if satisfied {
+		writeJSON(w, http.StatusOK, map[string]any{
+			"step_up_required": false,
+			"acr":              currentACR,
+		})
+		return
+	}
+
+	// Step-up required — return 403 with hint.
+	writeJSON(w, http.StatusForbidden, map[string]any{
+		"error":             "insufficient_authentication",
+		"step_up_required":  true,
+		"acr_values":        acrValues,
+		"max_age":           300,
+		"challenge":         challenge,
+	})
 }
 
 // changeEmail handles POST /api/v1/auth/change-email.
@@ -2050,4 +2118,49 @@ func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 		"status":  "ok",
 		"message": "session limit enforced",
 	})
+}
+
+// securityPasswordPolicy handles GET/PUT /api/v1/security/password-policy.
+// GET returns the current policy; PUT updates it at runtime.
+func (h *Handler) securityPasswordPolicy(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, map[string]any{
+			"policy": h.authSvc.GetPasswordPolicy(),
+		})
+
+	case http.MethodPut:
+		var policy struct {
+			MinLength      int      `json:"min_length"`
+			RequireUpper   bool     `json:"require_upper"`
+			RequireLower   bool     `json:"require_lower"`
+			RequireDigit   bool     `json:"require_digit"`
+			RequireSpecial bool     `json:"require_special"`
+			Blacklist      []string `json:"blacklist"`
+			HistoryCount   int      `json:"history_count"`
+			MaxAttempts    int      `json:"max_attempts"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		newPolicy := conf.PasswordPolicy{
+			MinLength:      policy.MinLength,
+			RequireUpper:   policy.RequireUpper,
+			RequireLower:   policy.RequireLower,
+			RequireDigit:   policy.RequireDigit,
+			RequireSpecial: policy.RequireSpecial,
+			Blacklist:      policy.Blacklist,
+			HistoryCount:   policy.HistoryCount,
+			MaxAttempts:    policy.MaxAttempts,
+		}
+		h.authSvc.SetPasswordPolicy(newPolicy)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status": "updated",
+			"policy": h.authSvc.GetPasswordPolicy(),
+		})
+
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }

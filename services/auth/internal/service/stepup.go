@@ -161,6 +161,48 @@ func (s *AuthService) ValidateStepUpToken(ctx context.Context, token string, use
 	return nil
 }
 
+// ACRStepUpCheck evaluates whether the current session meets the requested ACR level.
+// If not, returns a non-nil StepUpChallenge with the required acr_values.
+// Supported ACR levels: urn:mace:incommon:iap:silver (1) < urn:mace:incommon:iap:gold (2).
+func (s *AuthService) ACRStepUpCheck(ctx context.Context, userID uuid.UUID, currentACR, requestedACR string) (bool, *StepUpChallenge, error) {
+	current := acrLevel(currentACR)
+	required := acrLevel(requestedACR)
+
+	if current >= required {
+		return true, nil, nil
+	}
+
+	// Need step-up: determine the method.
+	method := "password"
+	if required >= 2 {
+		method = "mfa"
+	}
+
+	challenge, err := s.InitStepUp(ctx, userID, method)
+	if err != nil {
+		return false, nil, err
+	}
+
+	challenge.Method = method
+	return false, challenge, nil
+}
+
+// acrLevel maps an ACR string to a numeric level.
+func acrLevel(acr string) int {
+	switch acr {
+	case "urn:mace:incommon:iap:gold":
+		return 2
+	case "urn:mace:incommon:iap:silver":
+		return 1
+	case "1":
+		return 1
+	case "2":
+		return 2
+	default:
+		return 0
+	}
+}
+
 // splitColon splits s by ':' into at most n parts.
 func splitColon(s string, n int) []string {
 	result := make([]string, 0, n)
