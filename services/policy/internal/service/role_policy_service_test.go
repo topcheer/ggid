@@ -503,3 +503,187 @@ func TestRevokePermissionsFromRole_Success(t *testing.T) {
 	err := svc.RevokePermissionsFromRole(context.Background(), uuid.New(), []uuid.UUID{uuid.New()})
 	if err != nil { t.Fatalf("unexpected: %v", err) }
 }
+
+// --- SetParent (Role Hierarchy) Tests ---
+
+func TestSetParent_Success(t *testing.T) {
+	tenantID := uuid.New()
+	parent := &domain.Role{ID: uuid.New(), TenantID: tenantID, Key: "admin", Name: "Admin"}
+	child := &domain.Role{ID: uuid.New(), TenantID: tenantID, Key: "editor", Name: "Editor"}
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+		parent.ID: parent,
+		child.ID:  child,
+	}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	updated, err := svc.SetParent(context.Background(), child.ID, parent.ID)
+	if err != nil {
+		t.Fatalf("expected success, got: %v", err)
+	}
+	if updated.ParentRoleID == nil || *updated.ParentRoleID != parent.ID {
+		t.Fatalf("expected parent_id=%s, got %v", parent.ID, updated.ParentRoleID)
+	}
+}
+
+func TestSetParent_SelfParent(t *testing.T) {
+	roleID := uuid.New()
+	role := &domain.Role{ID: roleID, TenantID: uuid.New(), Key: "r", Name: "R"}
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{roleID: role}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	_, err := svc.SetParent(context.Background(), roleID, roleID)
+	if err == nil {
+		t.Fatal("expected error for self-parent")
+	}
+	// Should be ErrInvalidArgument
+	if !isErrorCode(err, errors.ErrInvalidArgument) {
+		t.Fatalf("expected ErrInvalidArgument, got: %v", err)
+	}
+}
+
+func TestSetParent_DirectCycle(t *testing.T) {
+	// A -> B (parent), then try B -> A (parent): should fail
+	tenantID := uuid.New()
+	aID := uuid.New()
+	bID := uuid.New()
+	a := &domain.Role{ID: aID, TenantID: tenantID, Key: "a", Name: "A", ParentRoleID: nil}
+	b := &domain.Role{ID: bID, TenantID: tenantID, Key: "b", Name: "B", ParentRoleID: nil}
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{aID: a, bID: b}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	// Set A's parent to B
+	_, err := svc.SetParent(context.Background(), aID, bID)
+	if err != nil {
+		t.Fatalf("first SetParent failed: %v", err)
+	}
+
+	// Now try B's parent to A — A already has B in chain, so B -> A creates cycle
+	_, err = svc.SetParent(context.Background(), bID, aID)
+	if err == nil {
+		t.Fatal("expected cycle detection error")
+	}
+	if !isErrorCode(err, errors.ErrFailedPrecondition) {
+		t.Fatalf("expected ErrFailedPrecondition, got: %v", err)
+	}
+}
+
+func TestSetParent_TransitiveCycle(t *testing.T) {
+	// Chain: C -> B -> A. Try A -> C: should fail
+	tenantID := uuid.New()
+	aID, bID, cID := uuid.New(), uuid.New(), uuid.New()
+	a := &domain.Role{ID: aID, TenantID: tenantID, Key: "a", Name: "A", ParentRoleID: nil}
+	b := &domain.Role{ID: bID, TenantID: tenantID, Key: "b", Name: "B", ParentRoleID: &aID}
+	c := &domain.Role{ID: cID, TenantID: tenantID, Key: "c", Name: "C", ParentRoleID: &bID}
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{aID: a, bID: b, cID: c}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	// Try to set A's parent to C — would create A -> C -> B -> A cycle
+	_, err := svc.SetParent(context.Background(), aID, cID)
+	if err == nil {
+		t.Fatal("expected transitive cycle detection error")
+	}
+	if !isErrorCode(err, errors.ErrFailedPrecondition) {
+		t.Fatalf("expected ErrFailedPrecondition, got: %v", err)
+	}
+}
+
+func TestSetParent_ParentNotFound(t *testing.T) {
+	roleID := uuid.New()
+	role := &domain.Role{ID: roleID, TenantID: uuid.New(), Key: "r", Name: "R"}
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{roleID: role}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	_, err := svc.SetParent(context.Background(), roleID, uuid.New())
+	if err == nil {
+		t.Fatal("expected error for non-existent parent")
+	}
+	if !isErrorCode(err, errors.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound, got: %v", err)
+	}
+}
+
+func TestSetParent_RoleNotFound(t *testing.T) {
+	parentID := uuid.New()
+	parent := &domain.Role{ID: parentID, TenantID: uuid.New(), Key: "p", Name: "P"}
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{parentID: parent}}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	_, err := svc.SetParent(context.Background(), uuid.New(), parentID)
+	if err == nil {
+		t.Fatal("expected error for non-existent role")
+	}
+}
+
+func TestSetParent_UpdateError(t *testing.T) {
+	tenantID := uuid.New()
+	parentID := uuid.New()
+	childID := uuid.New()
+	parent := &domain.Role{ID: parentID, TenantID: tenantID, Key: "p", Name: "P"}
+	child := &domain.Role{ID: childID, TenantID: tenantID, Key: "c", Name: "C"}
+	repo := &mockRoleRepo{
+		roles:     map[uuid.UUID]*domain.Role{parentID: parent, childID: child},
+		updateErr: errors.New(errors.ErrInternal, "db error"),
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	_, err := svc.SetParent(context.Background(), childID, parentID)
+	if err == nil {
+		t.Fatal("expected update error")
+	}
+	if !isErrorCode(err, errors.ErrInternal) {
+		t.Fatalf("expected ErrInternal, got: %v", err)
+	}
+}
+
+func TestSetParent_DeepChain_NoCycle(t *testing.T) {
+	// Build a 10-level chain, verify no false-positive cycle detection
+	tenantID := uuid.New()
+	repo := &mockRoleRepo{roles: map[uuid.UUID]*domain.Role{}}
+	var prevID *uuid.UUID
+	var roleIDs []uuid.UUID
+	for i := 0; i < 10; i++ {
+		id := uuid.New()
+		role := &domain.Role{ID: id, TenantID: tenantID, Key: "r" + string(rune('A'+i)), Name: "R" + string(rune('A'+i))}
+		if prevID != nil {
+			role.ParentRoleID = prevID
+		}
+		repo.roles[id] = role
+		roleIDs = append(roleIDs, id)
+		prevID = &id
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	// Set the last role's parent to the first role's parent (no cycle)
+	_, err := svc.SetParent(context.Background(), roleIDs[9], roleIDs[0])
+	if err != nil {
+		t.Fatalf("expected success for deep chain, got: %v", err)
+	}
+}
+
+func TestSetParent_GetByIDErrorOnRole(t *testing.T) {
+	parentID := uuid.New()
+	parent := &domain.Role{ID: parentID, TenantID: uuid.New(), Key: "p", Name: "P"}
+	repo := &mockRoleRepo{
+		roles:  map[uuid.UUID]*domain.Role{parentID: parent},
+		getErr: errors.New(errors.ErrInternal, "db down"),
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	// GetByID will fail during cycle check (walking parent chain)
+	_, err := svc.SetParent(context.Background(), uuid.New(), parentID)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// isErrorCode checks if an error has the given GGID error code.
+func isErrorCode(err error, code errors.ErrorCode) bool {
+	if err == nil {
+		return false
+	}
+	ggidErr, ok := err.(*errors.GGIDError)
+	if !ok {
+		return false
+	}
+	return ggidErr.Code == code
+}
