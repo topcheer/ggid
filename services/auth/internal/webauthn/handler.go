@@ -22,16 +22,21 @@ import (
 
 // Credential represents a registered WebAuthn credential (passkey).
 type Credential struct {
-	ID           uuid.UUID
-	TenantID     uuid.UUID
-	UserID       uuid.UUID
-	Name         string
-	CredentialID []byte // raw credential ID from authenticator
-	PublicKey    []byte // COSE-encoded public key
-	Transports   []string
-	Counter      uint32
-	CreatedAt    time.Time
-	LastUsedAt   *time.Time
+	ID              uuid.UUID
+	TenantID        uuid.UUID
+	UserID          uuid.UUID
+	Name            string
+	CredentialID    []byte // raw credential ID from authenticator
+	PublicKey       []byte // COSE-encoded public key
+	Transports      []string
+	Counter         uint32
+	BackupEligible  bool   // WA-1: credential can be backed up (sync'd)
+	BackupState     bool   // WA-1: credential has been backed up
+	UserVerified    bool   // WA-1: user verification flag at registration
+	AttestationType string // WA-1: attestation type (e.g. "none", "basic_full")
+	AAGUID          []byte // WA-1: authenticator model identifier
+	CreatedAt       time.Time
+	LastUsedAt      *time.Time
 }
 
 // webAuthnUser implements webauthn.User to bridge our domain user with the library.
@@ -198,13 +203,19 @@ func (h *Handler) buildWebAuthnUser(ctx context.Context, tenantID, userID uuid.U
 				for _, t := range c.Transports {
 					transports = append(transports, protocol.AuthenticatorTransport(t))
 				}
+
 				wcreds = append(wcreds, webauthn.Credential{
 					ID:              c.CredentialID,
 					PublicKey:       c.PublicKey,
-					AttestationType: "none",
+					AttestationType: c.AttestationType,
+					Flags: webauthn.CredentialFlags{
+						BackupEligible: c.BackupEligible,
+						BackupState:    c.BackupState,
+						UserVerified:   c.UserVerified,
+					},
 					Authenticator: webauthn.Authenticator{
-						AAGUID:    make([]byte, 16),
-						SignCount: c.Counter,
+						AAGUID:     c.AAGUID,
+						SignCount:  c.Counter,
 						Attachment: protocol.Platform,
 					},
 				})
@@ -240,7 +251,28 @@ func (h *Handler) beginRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	options, sessData, err := h.wbn.BeginRegistration(user)
+	// WA-3: exclude existing credentials so the same authenticator can't be registered twice.
+	var excludeCreds []protocol.CredentialDescriptor
+	for _, wc := range user.credentials {
+		excludeCreds = append(excludeCreds, protocol.CredentialDescriptor{
+			Type:         protocol.PublicKeyCredentialType,
+			CredentialID: wc.ID,
+		})
+	}
+
+	// WA-4: explicit AuthenticatorSelection with ResidentKey preferred, UV preferred.
+	authSel := protocol.AuthenticatorSelection{
+		ResidentKey:      protocol.ResidentKeyRequirementPreferred,
+		UserVerification: protocol.VerificationPreferred,
+	}
+
+	var regOpts []webauthn.RegistrationOption
+	regOpts = append(regOpts, webauthn.WithAuthenticatorSelection(authSel))
+	if len(excludeCreds) > 0 {
+		regOpts = append(regOpts, webauthn.WithExclusions(excludeCreds))
+	}
+
+	options, sessData, err := h.wbn.BeginRegistration(user, regOpts...)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("begin registration: %v", err))
 		return
@@ -302,15 +334,20 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 	// Persist the credential if store is available.
 	if h.creds != nil {
 		cred := &Credential{
-			ID:           uuid.New(),
-			TenantID:     tenantID,
-			UserID:       userID,
-			Name:         r.URL.Query().Get("name"),
-			CredentialID: credential.ID,
-			PublicKey:    credential.PublicKey,
-			Transports:   []string{string(credential.Authenticator.Attachment)},
-			Counter:      credential.Authenticator.SignCount,
-			CreatedAt:    time.Now(),
+			ID:              uuid.New(),
+			TenantID:        tenantID,
+			UserID:          userID,
+			Name:            r.URL.Query().Get("name"),
+			CredentialID:    credential.ID,
+			PublicKey:       credential.PublicKey,
+			Transports:      []string{string(credential.Authenticator.Attachment)},
+			Counter:         credential.Authenticator.SignCount,
+			BackupEligible:  credential.Flags.BackupEligible,
+			BackupState:     credential.Flags.BackupState,
+			UserVerified:    credential.Flags.UserVerified,
+			AttestationType: credential.AttestationType,
+			AAGUID:          credential.Authenticator.AAGUID,
+			CreatedAt:       time.Now(),
 		}
 		if err := h.creds.SaveCredential(ctx, cred); err != nil {
 			writeError(w, http.StatusInternalServerError, fmt.Sprintf("save credential: %v", err))
@@ -427,6 +464,19 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, fmt.Sprintf("verify assertion: %v", err))
 		return
+	}
+
+	// WA-2: Clone detection — check signCount monotonicity.
+	// If the stored counter > 0 and the received counter <= stored counter,
+	// a cloned authenticator may exist.
+	if h.creds != nil {
+		storedCred, getErr := h.creds.GetCredentialByID(ctx, tenantID, credential.ID)
+		if getErr == nil && storedCred != nil && storedCred.Counter > 0 {
+			if credential.Authenticator.SignCount <= storedCred.Counter {
+				writeError(w, http.StatusUnauthorized, "possible credential clone detected")
+				return
+			}
+		}
 	}
 
 	// Update credential counter.

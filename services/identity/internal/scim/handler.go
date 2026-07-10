@@ -5,9 +5,11 @@ package scim
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
@@ -68,8 +70,11 @@ type SCIMPhone struct {
 }
 
 type SCIMMeta struct {
-	ResourceType string `json:"resourceType"`
-	Location     string `json:"location,omitempty"`
+	ResourceType  string `json:"resourceType"`
+	Location      string `json:"location,omitempty"`
+	Created       *string `json:"created,omitempty"`
+	LastModified  *string `json:"lastModified,omitempty"`
+	Version       string  `json:"version,omitempty"`
 }
 
 // ListResponse is the standard SCIM paginated response.
@@ -128,6 +133,9 @@ func injectTenant(r *http.Request) (bool, context.Context) {
 
 // toSCIMUser converts a domain User to SCIM format.
 func toSCIMUser(u *domain.User) SCIMUser {
+	created := formatSCIMTime(u.CreatedAt)
+	lastMod := formatSCIMTime(u.UpdatedAt)
+	version := fmt.Sprintf("W/\"%d\"", u.UpdatedAt.UnixNano())
 	return SCIMUser{
 		Schemas:     []string{scimUserSchema},
 		ID:          u.ID.String(),
@@ -142,8 +150,17 @@ func toSCIMUser(u *domain.User) SCIMUser {
 		Active: u.Status == domain.UserStatusActive,
 		Meta: SCIMMeta{
 			ResourceType: "User",
+			Location:     "/scim/v2/Users/" + u.ID.String(),
+			Created:      &created,
+			LastModified: &lastMod,
+			Version:      version,
 		},
 	}
+}
+
+// formatSCIMTime formats a time.Time as RFC 3339 for SCIM meta timestamps.
+func formatSCIMTime(t time.Time) string {
+	return t.UTC().Format(time.RFC3339)
 }
 
 // --- Handlers ---
