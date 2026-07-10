@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/audit/internal/domain"
@@ -182,6 +183,94 @@ func (r *AuditRepository) List(ctx context.Context, filter domain.ListFilter, li
 		events = append(events, e)
 	}
 	return events, total, nil
+}
+
+// GetStats returns aggregated audit statistics for the given tenant since the given time.
+func (r *AuditRepository) GetStats(ctx context.Context, tenantID uuid.UUID, since time.Time) (*domain.Stats, error) {
+	stats := &domain.Stats{
+		EventsByAction: make(map[string]int),
+	}
+
+	// 1. Total events in last 24h
+	if err := r.db.QueryRow(ctx,
+		`SELECT count(*) FROM audit_events WHERE tenant_id = $1 AND created_at >= $2`,
+		tenantID, since,
+	).Scan(&stats.TotalEvents24h); err != nil {
+		return nil, fmt.Errorf("count total events: %w", err)
+	}
+
+	// 2. Count by action
+	rows, err := r.db.Query(ctx,
+		`SELECT action, count(*) FROM audit_events
+		 WHERE tenant_id = $1 AND created_at >= $2
+		 GROUP BY action ORDER BY count(*) DESC`,
+		tenantID, since,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query events by action: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var action string
+		var count int
+		if err := rows.Scan(&action, &count); err != nil {
+			return nil, err
+		}
+		stats.EventsByAction[action] = count
+	}
+
+	// 3. Hourly distribution (24 buckets)
+	hourlyRows, err := r.db.Query(ctx,
+		`SELECT date_trunc('hour', created_at) AS hour, count(*) AS cnt
+		 FROM audit_events
+		 WHERE tenant_id = $1 AND created_at >= $2
+		 GROUP BY hour ORDER BY hour`,
+		tenantID, since,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query hourly distribution: %w", err)
+	}
+	defer hourlyRows.Close()
+	for hourlyRows.Next() {
+		var hc domain.HourlyCount
+		if err := hourlyRows.Scan(&hc.Hour, &hc.Count); err != nil {
+			return nil, err
+		}
+		stats.HourlyDistribution = append(stats.HourlyDistribution, hc)
+	}
+
+	// 4. Top 10 active actors
+	actorRows, err := r.db.Query(ctx,
+		`SELECT actor_id, COALESCE(actor_name, ''), count(*) AS cnt
+		 FROM audit_events
+		 WHERE tenant_id = $1 AND created_at >= $2 AND actor_id IS NOT NULL
+		 GROUP BY actor_id, actor_name
+		 ORDER BY cnt DESC LIMIT 10`,
+		tenantID, since,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query top actors: %w", err)
+	}
+	defer actorRows.Close()
+	for actorRows.Next() {
+		var aa domain.ActorActivity
+		if err := actorRows.Scan(&aa.ActorID, &aa.ActorName, &aa.Count); err != nil {
+			return nil, err
+		}
+		stats.TopActors = append(stats.TopActors, aa)
+	}
+
+	// 5. Failed logins in 24h
+	if err := r.db.QueryRow(ctx,
+		`SELECT count(*) FROM audit_events
+		 WHERE tenant_id = $1 AND created_at >= $2
+		   AND action = 'user.login' AND result = 'failure'`,
+		tenantID, since,
+	).Scan(&stats.FailedLogins24h); err != nil {
+		return nil, fmt.Errorf("count failed logins: %w", err)
+	}
+
+	return stats, nil
 }
 
 func mapErr(err error, resource, id string) error {

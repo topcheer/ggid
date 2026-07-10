@@ -30,6 +30,7 @@ func NewHTTPServer(svc *service.AuditService) *HTTPServer {
 func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/audit/events/", s.handleEventByID)
+	mux.HandleFunc("/api/v1/audit/stats", s.handleStats)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -132,6 +133,61 @@ func (s *HTTPServer) handleEventByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, eventToJSON(event))
+}
+
+// GET /api/v1/audit/stats?tenant_id=X
+func (s *HTTPServer) handleStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	stats, err := s.svc.GetStats(r.Context(), tenantID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, statsToJSON(stats))
+}
+
+func statsToJSON(s *domain.Stats) map[string]any {
+	actions := make(map[string]any, len(s.EventsByAction))
+	for k, v := range s.EventsByAction {
+		actions[k] = v
+	}
+	hourly := make([]map[string]any, len(s.HourlyDistribution))
+	for i, h := range s.HourlyDistribution {
+		hourly[i] = map[string]any{
+			"hour":  h.Hour.Format(time.RFC3339),
+			"count": h.Count,
+		}
+	}
+	actors := make([]map[string]any, len(s.TopActors))
+	for i, a := range s.TopActors {
+		actors[i] = map[string]any{
+			"actor_id":   a.ActorID.String(),
+			"actor_name": a.ActorName,
+			"count":      a.Count,
+		}
+	}
+	return map[string]any{
+		"total_events_24h":     s.TotalEvents24h,
+		"events_by_action":     actions,
+		"hourly_distribution":  hourly,
+		"top_actors":           actors,
+		"failed_logins_24h":    s.FailedLogins24h,
+	}
 }
 
 // --- Helpers ---

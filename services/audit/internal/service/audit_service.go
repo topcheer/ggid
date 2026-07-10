@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/audit/internal/domain"
@@ -14,6 +15,7 @@ type AuditRepo interface {
 	Insert(ctx context.Context, e *domain.AuditEvent) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.AuditEvent, error)
 	List(ctx context.Context, filter domain.ListFilter, limit, offset int) ([]*domain.AuditEvent, int, error)
+	GetStats(ctx context.Context, tenantID uuid.UUID, since time.Time) (*domain.Stats, error)
 }
 
 // AuditService handles audit event queries.
@@ -56,4 +58,13 @@ func (s *AuditService) InsertEvent(ctx context.Context, event *domain.AuditEvent
 		return errors.Wrap(errors.ErrInternal, "insert audit event", err)
 	}
 	return nil
+}
+
+// GetStats returns aggregated audit analytics for the last 24 hours.
+func (s *AuditService) GetStats(ctx context.Context, tenantID uuid.UUID) (*domain.Stats, error) {
+	if tenantID == uuid.Nil {
+		return nil, errors.InvalidArgument("tenant_id is required")
+	}
+	since := time.Now().UTC().Add(-24 * time.Hour)
+	return s.repo.GetStats(ctx, tenantID, since)
 }

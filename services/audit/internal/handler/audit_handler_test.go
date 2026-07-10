@@ -66,6 +66,10 @@ func (m *mockAuditRepo) List(_ context.Context, filter domain.ListFilter, limit,
 	return filtered[offset:end], total, nil
 }
 
+func (m *mockAuditRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*domain.Stats, error) {
+	return &domain.Stats{EventsByAction: make(map[string]int)}, nil
+}
+
 func eventMatchesFilter(e *domain.AuditEvent, f domain.ListFilter) bool {
 	if e.TenantID != f.TenantID {
 		return false

@@ -13,10 +13,12 @@ import (
 // --- Mock ---
 
 type mockAuditRepo struct {
-	events   []*domain.AuditEvent
+	events    []*domain.AuditEvent
 	insertErr error
 	listErr   error
 	getErr    error
+	stats     *domain.Stats
+	statsErr  error
 }
 
 func (m *mockAuditRepo) Insert(_ context.Context, e *domain.AuditEvent) error {
@@ -60,6 +62,16 @@ func (m *mockAuditRepo) List(_ context.Context, filter domain.ListFilter, limit,
 		end = total
 	}
 	return filtered[offset:end], total, nil
+}
+
+func (m *mockAuditRepo) GetStats(_ context.Context, _ uuid.UUID, _ time.Time) (*domain.Stats, error) {
+	if m.statsErr != nil {
+		return nil, m.statsErr
+	}
+	if m.stats != nil {
+		return m.stats, nil
+	}
+	return &domain.Stats{EventsByAction: make(map[string]int)}, nil
 }
 
 func eventMatchesFilter(e *domain.AuditEvent, f domain.ListFilter) bool {
@@ -422,3 +434,60 @@ func TestListEvents_CombinedFilters(t *testing.T) {
 }
 
 func ptrUUID(u uuid.UUID) *uuid.UUID { return &u }
+
+// --- GetStats tests ---
+
+func TestGetStats_RequiresTenantID(t *testing.T) {
+	svc := NewAuditService(&mockAuditRepo{})
+	_, err := svc.GetStats(context.Background(), uuid.Nil)
+	if err == nil {
+		t.Fatal("expected error for nil tenant_id")
+	}
+}
+
+func TestGetStats_Success(t *testing.T) {
+	tenantID := uuid.New()
+	actorID := uuid.New()
+	repo := &mockAuditRepo{
+		stats: &domain.Stats{
+			TotalEvents24h:  100,
+			FailedLogins24h: 5,
+			EventsByAction: map[string]int{
+				"user.login":   40,
+				"role.assign":  10,
+			},
+			HourlyDistribution: []domain.HourlyCount{
+				{Hour: time.Now().UTC().Truncate(time.Hour), Count: 15},
+			},
+			TopActors: []domain.ActorActivity{
+				{ActorID: actorID, ActorName: "admin", Count: 30},
+			},
+		},
+	}
+	svc := NewAuditService(repo)
+
+	stats, err := svc.GetStats(context.Background(), tenantID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if stats.TotalEvents24h != 100 {
+		t.Errorf("expected 100 total events, got %d", stats.TotalEvents24h)
+	}
+	if stats.FailedLogins24h != 5 {
+		t.Errorf("expected 5 failed logins, got %d", stats.FailedLogins24h)
+	}
+	if stats.EventsByAction["user.login"] != 40 {
+		t.Errorf("expected 40 login events, got %d", stats.EventsByAction["user.login"])
+	}
+	if len(stats.TopActors) != 1 || stats.TopActors[0].ActorName != "admin" {
+		t.Errorf("unexpected top actors: %+v", stats.TopActors)
+	}
+}
+
+func TestGetStats_RepoError(t *testing.T) {
+	svc := NewAuditService(&mockAuditRepo{statsErr: errors.New("db error")})
+	_, err := svc.GetStats(context.Background(), uuid.New())
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
