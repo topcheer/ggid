@@ -3,7 +3,6 @@ package ggid
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 )
@@ -27,7 +26,7 @@ type MiddlewareConfig struct {
 // Middleware wraps an http.Handler with GGID JWT verification.
 func (c *Client) Middleware(next http.Handler, cfg MiddlewareConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if path is public
+		// Check if path is public.
 		for _, prefix := range cfg.PublicPaths {
 			if strings.HasPrefix(r.URL.Path, prefix) {
 				next.ServeHTTP(w, r)
@@ -35,7 +34,7 @@ func (c *Client) Middleware(next http.Handler, cfg MiddlewareConfig) http.Handle
 			}
 		}
 
-		// Extract Bearer token
+		// Extract Bearer token.
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			writeUnauthorized(w, "missing authorization header")
@@ -48,19 +47,19 @@ func (c *Client) Middleware(next http.Handler, cfg MiddlewareConfig) http.Handle
 			return
 		}
 
-		// Verify token
+		// Verify token.
 		userInfo, err := c.VerifyToken(r.Context(), token)
 		if err != nil {
 			writeUnauthorized(w, "invalid or expired token")
 			return
 		}
 
-		// Inject tenant header if configured
+		// Inject tenant header if configured.
 		if cfg.TenantID != "" {
 			r.Header.Set("X-Tenant-ID", cfg.TenantID)
 		}
 
-		// Inject user info into context
+		// Inject user info into context.
 		ctx := context.WithValue(r.Context(), ContextKeyUser, userInfo)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -72,7 +71,8 @@ func UserFromContext(ctx context.Context) *UserInfo {
 	return user
 }
 
-// RequirePermission returns middleware that checks user permission.
+// RequirePermission returns an http.HandlerFunc that checks user permission
+// against the GGID policy engine before calling the wrapped handler.
 func (c *Client) RequirePermission(resource, action string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := UserFromContext(r.Context())
@@ -96,17 +96,55 @@ func (c *Client) RequirePermission(resource, action string, next http.HandlerFun
 	}
 }
 
+// RequireRole returns an http.HandlerFunc that checks if the authenticated user
+// has the specified role before calling the wrapped handler. This is a local
+// check (no API call) — it relies on roles present in the JWT claims.
+func (c *Client) RequireRole(role string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := UserFromContext(r.Context())
+		if user == nil {
+			writeUnauthorized(w, "not authenticated")
+			return
+		}
+
+		for _, ur := range user.Roles {
+			if ur == role {
+				next(w, r)
+				return
+			}
+		}
+
+		writeError(w, http.StatusForbidden, "insufficient role")
+	}
+}
+
+// RequireScope returns an http.HandlerFunc that checks if the authenticated
+// user has the specified OAuth scope. This is a local check based on JWT claims.
+func (c *Client) RequireScope(scope string, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := UserFromContext(r.Context())
+		if user == nil {
+			writeUnauthorized(w, "not authenticated")
+			return
+		}
+
+		for _, s := range user.Scopes {
+			if s == scope {
+				next(w, r)
+				return
+			}
+		}
+
+		writeError(w, http.StatusForbidden, "insufficient scope")
+	}
+}
+
 func writeUnauthorized(w http.ResponseWriter, msg string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusUnauthorized)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	writeError(w, http.StatusUnauthorized, msg)
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }
-
-// fmt import is needed for potential future error formatting
-var _ = fmt.Sprintf
