@@ -4,6 +4,7 @@ package healthcheck
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -26,21 +27,27 @@ func NewChecker(services map[string]string) *Checker {
 
 // ServiceStatus is the health status of a single backend service.
 type ServiceStatus struct {
-	Name    string `json:"name"`
-	Status  string `json:"status"`
-	Latency int64  `json:"latency_ms"`
-	Error   string `json:"error,omitempty"`
+	Name           string `json:"name"`
+	Status         string `json:"status"`
+	Latency        int64  `json:"latency_ms"`
+	Version        string `json:"version,omitempty"`
+	UptimeSeconds  int64  `json:"uptime_seconds,omitempty"`
+	Error          string `json:"error,omitempty"`
 }
 
 // AggregatedStatus is the overall health response.
 type AggregatedStatus struct {
-	Status   string                    `json:"status"`
-	Total    int                       `json:"total"`
-	Healthy  int                       `json:"healthy"`
+	Status    string                   `json:"status"`
+	Total     int                      `json:"total"`
+	Healthy   int                      `json:"healthy"`
 	Unhealthy int                      `json:"unhealthy"`
-	Services map[string]ServiceStatus  `json:"services"`
+	Services  map[string]ServiceStatus `json:"services"`
+	GatewayUptimeSeconds int64          `json:"gateway_uptime_seconds"`
 	CheckedAt time.Time                `json:"checked_at"`
 }
+
+// gatewayStart tracks when the checker was created (proxy for gateway uptime).
+var gatewayStart = time.Now()
 
 // Handler returns an http.HandlerFunc that checks all backends.
 func (c *Checker) Handler() http.HandlerFunc {
@@ -139,12 +146,13 @@ func (c *Checker) CheckAll(ctx context.Context) *AggregatedStatus {
 	}
 
 	return &AggregatedStatus{
-		Status:    overall,
-		Total:     len(results),
-		Healthy:   healthy,
-		Unhealthy: len(results) - healthy,
-		Services:  results,
-		CheckedAt: time.Now().UTC(),
+		Status:              overall,
+		Total:               len(results),
+		Healthy:             healthy,
+		Unhealthy:           len(results) - healthy,
+		Services:            results,
+		GatewayUptimeSeconds: int64(time.Since(gatewayStart).Seconds()),
+		CheckedAt:           time.Now().UTC(),
 	}
 }
 
@@ -161,10 +169,22 @@ func (c *Checker) checkOne(ctx context.Context, name, healthURL string) ServiceS
 	if err != nil {
 		return ServiceStatus{Name: name, Status: "unhealthy", Error: err.Error(), Latency: latency}
 	}
-	resp.Body.Close()
+	defer resp.Body.Close()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return ServiceStatus{Name: name, Status: "healthy", Latency: latency}
+		// Try to parse version + uptime from response body
+		status := ServiceStatus{Name: name, Status: "healthy", Latency: latency}
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		var info struct {
+			Version       string `json:"version"`
+			UptimeSeconds int64  `json:"uptime_seconds"`
+			Uptime        int64  `json:"uptime"`
+		}
+		if json.Unmarshal(body, &info) == nil {
+			status.Version = info.Version
+			status.UptimeSeconds = info.UptimeSeconds + info.Uptime
+		}
+		return status
 	}
 	return ServiceStatus{Name: name, Status: "unhealthy", Error: "non-200 status", Latency: latency}
 }
