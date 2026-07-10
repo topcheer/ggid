@@ -169,3 +169,132 @@ Retry-After: 42
 - [API Reference](./api-reference.md) — Endpoint documentation
 - [Rate Limiting](./api-rate-limiting.md) — Rate limit details
 - [SDK Guide](./sdk-guide.md) — SDK error handling
+
+---
+
+## Per-Service Error Codes
+
+### Auth Service Errors
+
+| Code | HTTP | Message | Cause | Resolution |
+|------|------|---------|-------|------------|
+| `auth.invalid_credentials` | 401 | Invalid username or password | Wrong password | Check credentials, retry |
+| `auth.account_locked` | 423 | Account locked after {N} failed attempts | 5+ failed logins | Wait 30 min or admin unlock |
+| `auth.account_disabled` | 403 | Account is deactivated | Admin deactivated | Contact administrator |
+| `auth.token_expired` | 401 | Token has expired | JWT `exp` passed | Refresh token |
+| `auth.token_invalid` | 401 | Invalid token signature | Tampered JWT | Re-authenticate |
+| `auth.refresh_token_reuse` | 401 | Refresh token reuse detected | Stolen token | Re-authenticate (all tokens revoked) |
+| `auth.mfa_required` | 403 | MFA challenge required | MFA enabled | Complete MFA flow |
+| `auth.mfa_invalid` | 401 | Invalid MFA code | Wrong TOTP code | Retry with new code |
+| `auth.password_too_weak` | 400 | Password does not meet policy | Short, missing chars | Use stronger password |
+
+```bash
+# Trigger: wrong password
+curl -sX POST "$GW/api/v1/auth/login" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"user","password":"wrong"}' | jq .
+# {"error":"auth.invalid_credentials","message":"Invalid username or password"}
+
+# Trigger: expired token
+curl -s "$GW/api/v1/users" \
+  -H "Authorization: Bearer expired.jwt.token" \
+  -H "X-Tenant-ID: $TENANT" | jq .
+# {"error":"auth.token_expired","message":"Token has expired"}
+```
+
+### Identity Service Errors
+
+| Code | HTTP | Message | Cause |
+|------|------|---------|-------|
+| `identity.user_not_found` | 404 | User not found | Wrong ID or tenant |
+| `identity.duplicate_username` | 409 | Username already exists | Registration conflict |
+| `identity.duplicate_email` | 409 | Email already registered | Registration conflict |
+| `identity.invalid_user_data` | 400 | Invalid user data | Missing required field |
+| `identity.scim_invalid_filter` | 400 | Invalid SCIM filter syntax | Malformed filter |
+
+```bash
+# Trigger: duplicate registration
+curl -sX POST "$GW/api/v1/auth/register" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"existing","password":"Test123!"}' | jq .
+# {"error":"identity.duplicate_username","message":"Username already exists"}
+```
+
+### Policy Service Errors
+
+| Code | HTTP | Message | Cause |
+|------|------|---------|-------|
+| `policy.role_not_found` | 404 | Role not found | Wrong role ID |
+| `policy.duplicate_role_key` | 409 | Role key already exists | UNIQUE(tenant_id, key) conflict |
+| `policy.access_denied` | 403 | Insufficient permissions | User lacks required role |
+| `policy.evaluation_error` | 500 | Policy evaluation failed | Malformed policy rule |
+
+```bash
+# Trigger: create role with duplicate key
+curl -sX POST "$GW/api/v1/roles" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"name":"Admin","key":"admin"}' | jq .
+# {"error":"policy.duplicate_role_key","message":"Role key 'admin' already exists"}
+```
+
+### OAuth Service Errors
+
+| Code | HTTP | Message | Cause |
+|------|------|---------|-------|
+| `oauth.invalid_grant` | 400 | Invalid authorization grant | Expired/used code |
+| `oauth.invalid_client` | 401 | Client authentication failed | Wrong secret |
+| `oauth.invalid_redirect_uri` | 400 | Redirect URI mismatch | Not registered |
+| `oauth.pkce_required` | 400 | code_challenge is required | Missing PKCE |
+| `oauth.invalid_scope` | 400 | Requested scope not allowed | Client lacks scope |
+| `oauth.unsupported_grant_type` | 400 | Grant type not supported | Implicit/password disabled |
+| `oauth.authorization_pending` | 400 | Authorization pending (device flow) | User hasn't approved |
+
+```bash
+# Trigger: missing PKCE
+curl -s "$GW/oauth/authorize?response_type=code&client_id=app&redirect_uri=https://app/cb" | jq .
+# {"error":"oauth.pkce_required","message":"code_challenge is required"}
+
+# Trigger: wrong client secret
+curl -sX POST "$GW/oauth/token" \
+  -d "grant_type=client_credentials&client_id=x&client_secret=wrong" | jq .
+# {"error":"oauth.invalid_client","message":"Client authentication failed"}
+```
+
+### Gateway Errors
+
+| Code | HTTP | Message | Cause |
+|------|------|---------|-------|
+| `gateway.missing_tenant` | 412 | Missing X-Tenant-ID header | Header omitted |
+| `gateway.tenant_not_found` | 404 | Tenant not found | Invalid tenant ID |
+| `gateway.cross_tenant_denied` | 403 | Cross-tenant access denied | JWT tenant ≠ header |
+| `gateway.rate_limited` | 429 | Rate limit exceeded | Too many requests |
+| `gateway.backend_unavailable` | 502 | Backend service unavailable | Service down |
+| `gateway.circuit_open` | 503 | Circuit breaker open | Backend failing repeatedly |
+
+```bash
+# Trigger: missing tenant header
+curl -s "$GW/api/v1/users" -H "Authorization: Bearer $TOKEN" | jq .
+# {"error":"gateway.missing_tenant","message":"X-Tenant-ID header required"}
+
+# Trigger: rate limited
+for i in $(seq 1 100); do curl -s "$GW/api/v1/auth/login" ...; done
+# {"error":"gateway.rate_limited","message":"Rate limit exceeded. Retry after 30s"}
+```
+
+### Audit Service Errors
+
+| Code | HTTP | Message | Cause |
+|------|------|---------|-------|
+| `audit.query_too_broad` | 400 | Query range too broad | Date range > 90 days without filter |
+| `audit.export_limit` | 400 | Export exceeds max records | > 100k records requested |
+
+### SCIM Errors (RFC 7644)
+
+| Code | HTTP | scimType | Cause |
+|------|------|----------|-------|
+| `invalidFilter` | 400 | invalidFilter | Malformed filter expression |
+| `uniqueness` | 409 | uniqueness | Attribute uniqueness violated |
+| `invalidPath` | 400 | invalidPath | PATCH path not found |
+| `noTarget` | 400 | noTarget | PATCH target missing |
+| `tooMany` | 400 | tooMany | Results exceed maxResults |
