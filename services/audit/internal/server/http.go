@@ -4,7 +4,10 @@
 package httpserver
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/csv"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -52,6 +55,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/retention", s.handleRetention)
 	mux.HandleFunc("/api/v1/audit/rules", s.handleAnomalyRules)
 	mux.HandleFunc("/api/v1/audit/correlate", s.handleCorrelate)
+	mux.HandleFunc("/api/v1/audit/webhooks", s.handleAuditWebhooks)
+	mux.HandleFunc("/api/v1/audit/verify-integrity", s.handleVerifyIntegrity)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -558,6 +563,175 @@ func (s *HTTPServer) handleCorrelate(w http.ResponseWriter, r *http.Request) {
 		"total_chains": len(result),
 		"chains":       result,
 	})
+}
+
+// --- Audit Alert Webhooks ---
+//
+// GET  /api/v1/audit/webhooks?tenant_id=X — list webhook configs
+// POST /api/v1/audit/webhooks — create webhook config
+//   {"tenant_id": "...", "url": "https://hooks.example.com/alert", "event_types": ["user.login"], "severity_threshold": "warning"}
+// DELETE /api/v1/audit/webhooks?id=X — remove webhook config
+
+var auditWebhooks = struct {
+	sync.RWMutex
+	configs []map[string]any
+}{configs: []map[string]any{}}
+
+func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		tenantID := r.URL.Query().Get("tenant_id")
+		auditWebhooks.RLock()
+		result := []map[string]any{}
+		for _, cfg := range auditWebhooks.configs {
+			if tenantID != "" && cfg["tenant_id"] != tenantID {
+				continue
+			}
+			result = append(result, cfg)
+		}
+		auditWebhooks.RUnlock()
+		writeJSON(w, http.StatusOK, map[string]any{"webhooks": result, "count": len(result)})
+
+	case http.MethodPost:
+		var req struct {
+			TenantID         string   `json:"tenant_id"`
+			URL              string   `json:"url"`
+			EventTypes       []string `json:"event_types"`
+			SeverityThreshold string  `json:"severity_threshold"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		if req.URL == "" {
+			writeJSONError(w, http.StatusBadRequest, "url is required")
+			return
+		}
+		if req.SeverityThreshold == "" {
+			req.SeverityThreshold = "warning"
+		}
+		cfg := map[string]any{
+			"id":                uuid.New().String(),
+			"tenant_id":         req.TenantID,
+			"url":               req.URL,
+			"event_types":       req.EventTypes,
+			"severity_threshold": req.SeverityThreshold,
+			"created_at":        time.Now().UTC().Format(time.RFC3339),
+		}
+		auditWebhooks.Lock()
+		auditWebhooks.configs = append(auditWebhooks.configs, cfg)
+		auditWebhooks.Unlock()
+		writeJSON(w, http.StatusCreated, cfg)
+
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			writeJSONError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		auditWebhooks.Lock()
+		found := false
+		for i, cfg := range auditWebhooks.configs {
+			if cfg["id"] == id {
+				auditWebhooks.configs = append(auditWebhooks.configs[:i], auditWebhooks.configs[i+1:]...)
+				found = true
+				break
+			}
+		}
+		auditWebhooks.Unlock()
+		if !found {
+			writeJSONError(w, http.StatusNotFound, "webhook not found")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
+
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// --- HMAC Chain Integrity Verification ---
+//
+// GET /api/v1/audit/verify-integrity?tenant_id=X
+// Verifies the HMAC chain across all audit events for the given tenant.
+// Each event's hash includes the previous event's hash, creating a tamper-evident chain.
+
+// integritySecret is the HMAC key (in production, this should be configured via env).
+var integritySecret = []byte("ggid-audit-integrity-key-v1")
+
+func (s *HTTPServer) handleVerifyIntegrity(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	events, total, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
+		TenantID: tenantID,
+	}, 500, 0)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Verify HMAC chain
+	var prevHash string
+	verified := 0
+	tampered := 0
+	for _, e := range events {
+		expected := computeEventHash(e, prevHash)
+		if e.Hash != "" {
+			if e.Hash != expected {
+				tampered++
+			} else {
+				verified++
+			}
+		}
+		prevHash = expected
+	}
+
+	result := "valid"
+	if tampered > 0 {
+		result = "tampered"
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":          result,
+		"total_events":    total,
+		"verified":        verified,
+		"tampered":        tampered,
+		"chain_complete":  verified + tampered == total,
+		"checked_at":      time.Now().UTC().Format(time.RFC3339),
+	})
+}
+
+// computeEventHash computes the HMAC-SHA256 hash for an audit event,
+// chaining it with the previous event's hash.
+func computeEventHash(e *domain.AuditEvent, prevHash string) string {
+	data := fmt.Sprintf("%s|%s|%s|%s|%s|%s",
+		e.ID.String(),
+		e.TenantID.String(),
+		e.Action,
+		e.ActorName,
+		e.Result,
+		e.CreatedAt.Format(time.RFC3339Nano),
+	)
+	if prevHash != "" {
+		data += "|" + prevHash
+	}
+	h := hmac.New(sha256.New, integritySecret)
+	h.Write([]byte(data))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // POST /api/v1/audit/retention?action=cleanup&days=90

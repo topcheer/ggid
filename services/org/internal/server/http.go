@@ -194,6 +194,10 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 				s.handleOrgRoleByID(w, r, id, subParts[1])
 				return
 			}
+			if subParts[0] == "inherit" {
+				s.handleOrgInherit(w, r, id, subParts[1])
+				return
+			}
 		}
 		if subPath == "tree" {
 			s.handleOrgTree(w, r, id)
@@ -869,6 +873,84 @@ func (s *HTTPServer) handleOrgMemberByID(w http.ResponseWriter, r *http.Request,
 	}
 
 	writeJSONError(w, http.StatusNotFound, "member not found in this organization")
+}
+
+// ===== Org Role Inheritance =====
+//
+// POST /api/v1/orgs/{id}/inherit/{parentId} — set parent org for role inheritance
+// GET  /api/v1/orgs/{id}/inherit  — get inheritance config
+
+var orgInheritance = struct {
+	sync.RWMutex
+	data map[uuid.UUID]uuid.UUID // childOrgID -> parentOrgID
+}{data: make(map[uuid.UUID]uuid.UUID)}
+
+func (s *HTTPServer) handleOrgInherit(w http.ResponseWriter, r *http.Request, orgID uuid.UUID, parentIDStr string) {
+	switch r.Method {
+	case http.MethodPost:
+		parentID, err := uuid.Parse(parentIDStr)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid parent org ID")
+			return
+		}
+		if parentID == orgID {
+			writeJSONError(w, http.StatusBadRequest, "cannot inherit from self")
+			return
+		}
+
+		// Check for cycles: walk up the chain
+		orgInheritance.RLock()
+		visited := map[uuid.UUID]bool{orgID: true}
+		cur := parentID
+		for i := 0; i < 100; i++ {
+			if visited[cur] {
+				orgInheritance.RUnlock()
+				writeJSONError(w, http.StatusBadRequest, "inheritance cycle detected")
+				return
+			}
+			visited[cur] = true
+			next, ok := orgInheritance.data[cur]
+			if !ok {
+				break
+			}
+			cur = next
+		}
+		orgInheritance.RUnlock()
+
+		// Set inheritance
+		orgInheritance.Lock()
+		orgInheritance.data[orgID] = parentID
+		orgInheritance.Unlock()
+
+		// Merge parent roles into child
+		orgRoles.Lock()
+		childRoles := orgRoles.data[orgID]
+		parentRoles := orgRoles.data[parentID]
+		for _, prid := range parentRoles {
+			found := false
+			for _, crid := range childRoles {
+				if crid == prid {
+					found = true
+					break
+				}
+			}
+			if !found {
+				childRoles = append(childRoles, prid)
+			}
+		}
+		orgRoles.data[orgID] = childRoles
+		orgRoles.Unlock()
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":     "inheriting",
+			"org_id":     orgID.String(),
+			"parent_id":  parentID.String(),
+			"merged_roles": len(parentRoles),
+		})
+
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }
 
 // ===== Helpers =====

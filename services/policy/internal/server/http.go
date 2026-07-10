@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
@@ -45,6 +46,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/versions", s.handlePolicyVersions)
 	mux.HandleFunc("/api/v1/policies/templates", s.handlePolicyTemplates)
 	mux.HandleFunc("/api/v1/policies/from-template/", s.handleFromTemplate)
+	mux.HandleFunc("/api/v1/policies/default-action", s.handleDefaultAction)
+	mux.HandleFunc("/api/v1/policies/time-conditions", s.handleTimeConditions)
 }
 
 // --- Roles ---
@@ -1022,6 +1025,121 @@ func writeServiceError(w http.ResponseWriter, err error) {
 		return
 	}
 	writeJSONError(w, http.StatusInternalServerError, err.Error())
+}
+
+// --- Default Action (deny-all vs allow-all) ---
+
+var defaultPolicyAction = struct {
+	sync.RWMutex
+	action string // "allow" or "deny"
+}{action: "deny"}
+
+// GET /api/v1/policies/default-action
+// PUT /api/v1/policies/default-action  {"default_action": "deny"}
+func (s *HTTPServer) handleDefaultAction(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		defaultPolicyAction.RLock()
+		action := defaultPolicyAction.action
+		defaultPolicyAction.RUnlock()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"default_action": action,
+			"description":   "When no explicit policy matches, requests are " + action + "ed by default",
+		})
+	case http.MethodPut:
+		var req struct {
+			DefaultAction string `json:"default_action"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		action := strings.ToLower(strings.TrimSpace(req.DefaultAction))
+		if action != "allow" && action != "deny" {
+			writeJSONError(w, http.StatusBadRequest, "default_action must be 'allow' or 'deny'")
+			return
+		}
+		defaultPolicyAction.Lock()
+		defaultPolicyAction.action = action
+		defaultPolicyAction.Unlock()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"default_action": action,
+			"status":        "updated",
+		})
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// GetDefaultPolicyAction returns the current default action (thread-safe).
+// Used by the evaluator to determine the fallback when no policy matches.
+func GetDefaultPolicyAction() string {
+	defaultPolicyAction.RLock()
+	defer defaultPolicyAction.RUnlock()
+	return defaultPolicyAction.action
+}
+
+// --- Time-Based Access Control Conditions ---
+
+// timeCondition stores time-based policy conditions.
+var timeConditions = struct {
+	sync.RWMutex
+	rules []map[string]any
+}{rules: []map[string]any{}}
+
+// GET /api/v1/policies/time-conditions — list time-based conditions
+// POST /api/v1/policies/time-conditions — create time-based condition
+//   {"name": "business-hours", "time_between": "09:00-17:00", "days_of_week": [1,2,3,4,5], "timezone": "America/New_York", "effect": "allow"}
+func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		timeConditions.RLock()
+		rules := timeConditions.rules
+		timeConditions.RUnlock()
+		// Return a copy
+		result := make([]map[string]any, len(rules))
+		copy(result, rules)
+		writeJSON(w, http.StatusOK, map[string]any{"conditions": result, "count": len(result)})
+
+	case http.MethodPost:
+		var req struct {
+			Name       string   `json:"name"`
+			TimeBetween string  `json:"time_between"`  // "09:00-17:00"
+			DaysOfWeek []int    `json:"days_of_week"`  // [1,2,3,4,5] (1=Mon)
+			Timezone   string   `json:"timezone"`      // "America/New_York"
+			Effect     string   `json:"effect"`        // "allow" or "deny"
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		if req.Name == "" {
+			writeJSONError(w, http.StatusBadRequest, "name is required")
+			return
+		}
+		if req.Effect == "" {
+			req.Effect = "allow"
+		}
+		if req.Timezone == "" {
+			req.Timezone = "UTC"
+		}
+		rule := map[string]any{
+			"id":            uuid.New().String(),
+			"name":          req.Name,
+			"time_between":  req.TimeBetween,
+			"days_of_week":  req.DaysOfWeek,
+			"timezone":      req.Timezone,
+			"effect":        req.Effect,
+			"created_at":    time.Now().UTC().Format(time.RFC3339),
+		}
+		timeConditions.Lock()
+		timeConditions.rules = append(timeConditions.rules, rule)
+		timeConditions.Unlock()
+		writeJSON(w, http.StatusCreated, rule)
+
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }
 
 // Ensure context import is used.
