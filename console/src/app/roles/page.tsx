@@ -20,7 +20,7 @@ interface Permission {
   action: string;
 }
 
-type Tab = "roles" | "permissions" | "checker";
+type Tab = "roles" | "permissions" | "checker" | "matrix";
 
 export default function RolesPage() {
   const { apiFetch } = useApi();
@@ -231,6 +231,7 @@ export default function RolesPage() {
         <TabButton active={tab === "roles"} onClick={() => setTab("roles")} label={`Roles (${roles.length})`} />
         <TabButton active={tab === "permissions"} onClick={() => setTab("permissions")} label="Permission Assignment" />
         <TabButton active={tab === "checker"} onClick={() => setTab("checker")} label="Policy Checker" />
+        <TabButton active={tab === "matrix"} onClick={() => setTab("matrix")} label="Matrix" />
       </div>
 
       {loading ? (
@@ -283,6 +284,8 @@ export default function RolesPage() {
           onRevoke={handleRevokePerm}
           loading={permLoading}
         />
+      ) : tab === "matrix" ? (
+        <RolePermissionMatrix roles={roles} permissions={permissions} apiFetch={apiFetch} />
       ) : (
         /* ===== Policy Checker ===== */
         <PolicyChecker apiFetch={apiFetch} />
@@ -625,5 +628,96 @@ function TabButton({
     >
       {label}
     </button>
+  );
+}
+
+// ===== Role-Permission Matrix =====
+
+function RolePermissionMatrix({
+  roles,
+  permissions,
+  apiFetch,
+}: {
+  roles: Role[];
+  permissions: Permission[];
+  apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
+}) {
+  const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadMatrix = async () => {
+      setLoading(true);
+      const m: Record<string, Set<string>> = {};
+      for (const role of roles) {
+        try {
+          const data = await apiFetch<{ permissions?: Permission[] }>(`/api/v1/roles/${role.id}/permissions`);
+          m[role.id] = new Set((data.permissions || []).map((p) => p.id));
+        } catch {
+          m[role.id] = new Set();
+        }
+      }
+      setMatrix(m);
+      setLoading(false);
+    };
+    if (roles.length > 0) loadMatrix();
+    else setLoading(false);
+  }, [roles, apiFetch]);
+
+  if (loading) return <p className="text-gray-500">Loading matrix...</p>;
+  if (roles.length === 0 || permissions.length === 0) {
+    return <p className="text-gray-500">No roles or permissions to display</p>;
+  }
+
+  // Group permissions by resource_type
+  const grouped = permissions.reduce((acc, p) => {
+    const key = p.resource_type || "other";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(p);
+    return acc;
+  }, {} as Record<string, Permission[]>);
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table className="w-full text-sm">
+        <thead className="sticky top-0 border-b border-gray-200 bg-gray-50">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium text-gray-500">Role</th>
+            {Object.entries(grouped).map(([resource, perms]) => (
+              <th key={resource} className="px-3 py-2 text-center font-medium text-gray-500">
+                {resource}
+                <span className="ml-1 text-xs text-gray-400">({perms.length})</span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {roles.map((role) => (
+            <tr key={role.id} className="hover:bg-gray-50">
+              <td className="px-3 py-2 font-medium">
+                {role.name}
+                {role.system_role && <span className="ml-1 text-xs text-gray-400">(system)</span>}
+              </td>
+              {Object.entries(grouped).map(([resource, perms]) => {
+                const rolePerms = matrix[role.id];
+                const hasAll = perms.every((p) => rolePerms?.has(p.id));
+                const hasSome = perms.some((p) => rolePerms?.has(p.id));
+                return (
+                  <td key={resource} className="px-3 py-2 text-center">
+                    {hasAll ? (
+                      <CheckCircle2 className="mx-auto h-5 w-5 text-green-500" />
+                    ) : hasSome ? (
+                      <span className="text-xs text-amber-600">partial</span>
+                    ) : (
+                      <XCircle className="mx-auto h-5 w-5 text-gray-300" />
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
