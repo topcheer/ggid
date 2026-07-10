@@ -51,6 +51,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/dry-run", s.handleDryRun)
 	mux.HandleFunc("/api/v1/policies/diff", s.handlePolicyDiff)
 	mux.HandleFunc("/api/v1/policies/analyze", s.handleAnalyze)
+	mux.HandleFunc("/api/v1/policies/decision-log", s.handleDecisionLog)
 }
 
 // --- Roles ---
@@ -1564,5 +1565,69 @@ func (s *HTTPServer) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 		"total_inherited":    totalInherited,
 		"resource_count":     len(resources),
 		"resources":          resources,
+	})
+}
+
+// GET /api/v1/policies/decision-log?limit=N — query recent policy evaluation decisions.
+// Returns the most recent allow/deny decisions recorded by the evaluator.
+func (s *HTTPServer) handleDecisionLog(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	limit := 50
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 500 {
+			limit = parsed
+		}
+	}
+
+	decisions := service.GetRecentDecisions(limit)
+
+	// Apply optional filters
+	userIDFilter := r.URL.Query().Get("user_id")
+	allowedFilter := r.URL.Query().Get("allowed")
+
+	filtered := make([]map[string]any, 0, len(decisions))
+	for _, d := range decisions {
+		if userIDFilter != "" && d.UserID.String() != userIDFilter {
+			continue
+		}
+		if allowedFilter == "true" && !d.Allowed {
+			continue
+		}
+		if allowedFilter == "false" && d.Allowed {
+			continue
+		}
+		filtered = append(filtered, map[string]any{
+			"timestamp": d.Timestamp.Format("2006-01-02T15:04:05Z07:00"),
+			"user_id":   d.UserID.String(),
+			"tenant_id": d.TenantID.String(),
+			"action":    d.Action,
+			"resource":  d.Resource,
+			"allowed":   d.Allowed,
+			"reason":    d.Reason,
+			"matched_by": d.MatchedBy,
+		})
+	}
+
+	// Summary stats
+	totalAllow := 0
+	totalDeny := 0
+	for _, d := range decisions {
+		if d.Allowed {
+			totalAllow++
+		} else {
+			totalDeny++
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"total":          len(decisions),
+		"filtered":       len(filtered),
+		"allow_count":    totalAllow,
+		"deny_count":     totalDeny,
+		"decisions":      filtered,
 	})
 }
