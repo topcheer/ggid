@@ -576,6 +576,110 @@ paths:
         '200':
           description: WebAuthn credential registered
 
+  /api/v1/auth/webauthn/register/begin:
+    post:
+      tags: [Auth]
+      summary: Begin WebAuthn registration
+      description: Returns PublicKeyCredentialCreationOptions for browser WebAuthn API.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                device_name:
+                  type: string
+      responses:
+        '200':
+          description: Credential creation options (PublicKeyCredentialCreationOptions JSON)
+
+  /api/v1/auth/webauthn/register/finish:
+    post:
+      tags: [Auth]
+      summary: Finish WebAuthn registration
+      description: Submits the attestation response from the authenticator.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: AuthenticatorAttestationResponse from navigator.credentials.create()
+      responses:
+        '200':
+          description: WebAuthn credential registered and verified
+
+  /api/v1/auth/webauthn/login/begin:
+    post:
+      tags: [Auth]
+      summary: Begin WebAuthn login (assertion)
+      description: Returns PublicKeyCredentialRequestOptions for browser WebAuthn API.
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+      responses:
+        '200':
+          description: Credential request options
+
+  /api/v1/auth/webauthn/login/finish:
+    post:
+      tags: [Auth]
+      summary: Finish WebAuthn login (assertion)
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: AuthenticatorAssertionResponse from navigator.credentials.get()
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+
+  /api/v1/auth/step-up-check:
+    get:
+      tags: [Auth]
+      summary: Check if step-up authentication is required
+      parameters:
+        - name: scope
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Step-up requirement info
+
+  /api/v1/auth/step-up:
+    post:
+      tags: [Auth]
+      summary: Trigger step-up authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scope:
+                  type: string
+                methods:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Step-up challenge created
+
   /api/v1/idp/config:
     get:
       tags: [Auth]
@@ -1110,9 +1214,119 @@ paths:
       summary: List policy versions
       parameters:
         - $ref: '#/components/parameters/TenantIDQuery'
+        - name: policy_id
+          in: query
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Version list
+    post:
+      tags: [Policies]
+      summary: Snapshot current policy as new version
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+        - name: policy_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Version created
+
+  /api/v1/policies/versions/rollback:
+    post:
+      tags: [Policies]
+      summary: Rollback policy to a specific version
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+        - name: policy_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: version
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Rolled back
+
+  /api/v1/policies/templates:
+    get:
+      tags: [Policies]
+      summary: List compliance policy templates
+      responses:
+        '200':
+          description: Template list
+
+  /api/v1/policies/from-template/{template_id}:
+    parameters:
+      - name: template_id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      tags: [Policies]
+      summary: Create policies from a compliance template
+      responses:
+        '201':
+          description: Policies created from template
+
+  /api/v1/policies/default-action:
+    get:
+      tags: [Policies]
+      summary: Get default policy action (allow-all or deny-all)
+      responses:
+        '200':
+          description: Current default action
+    put:
+      tags: [Policies]
+      summary: Set default policy action
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                default_action:
+                  type: string
+                  enum: [allow, deny]
+      responses:
+        '200':
+          description: Updated
+
+  /api/v1/policies/time-conditions:
+    get:
+      tags: [Policies]
+      summary: List time-based policy conditions
+      responses:
+        '200':
+          description: Time condition list
+    post:
+      tags: [Policies]
+      summary: Create a time-based condition
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                schedule:
+                  type: string
+                  description: Cron expression or time range
+      responses:
+        '201':
+          description: Created
 
   # ---------------------------------------------------------------------------
   # Organizations
@@ -1459,6 +1673,53 @@ paths:
       responses:
         '201':
           description: Created
+
+  /api/v1/audit/integrity:
+    get:
+      tags: [Audit]
+      summary: Verify audit log integrity (hash chain)
+      description: Returns a verification result showing whether any events have been tampered with.
+      responses:
+        '200':
+          description: Integrity verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                  event_count:
+                    type: integer
+                  last_verified_event:
+                    type: string
+                    format: date-time
+
+  /api/v1/audit/webhooks:
+    get:
+      tags: [Audit]
+      summary: List audit webhook subscriptions
+      responses:
+        '200':
+          description: Webhook list
+    post:
+      tags: [Audit]
+      summary: Register audit webhook subscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Webhook registered
 
   # ---------------------------------------------------------------------------
   # OAuth / OIDC
