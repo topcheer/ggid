@@ -14,6 +14,7 @@ import {
   Sun,
   Moon,
   Globe,
+  Server,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
@@ -31,6 +32,7 @@ export function Sidebar() {
     { href: "/audit", label: t("nav.audit"), icon: ScrollText },
     { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
     { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
+    { href: "/monitoring", label: "Monitoring", icon: Server },
     { href: "/settings", label: t("nav.settings"), icon: Settings },
   ];
 
