@@ -36,6 +36,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/export", s.handleExport)
 	mux.HandleFunc("/api/v1/audit/stream", s.handleStream)
 	mux.HandleFunc("/api/v1/audit/retention", s.handleRetention)
+	mux.HandleFunc("/api/v1/audit/rules", s.handleAnomalyRules)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -397,6 +398,126 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 		"deleted_count":      deleted,
 		"cleanup_timestamp":  time.Now().UTC().Format(time.RFC3339),
 	})
+}
+
+// --- Anomaly Detection Rules ---
+
+var anomalyRules = []map[string]any{}
+
+// GET/POST/DELETE /api/v1/audit/rules
+func (s *HTTPServer) handleAnomalyRules(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		// Optionally check for triggered rules
+		if r.URL.Query().Get("check") == "true" {
+			results := s.detectAnomalies(r)
+			writeJSON(w, http.StatusOK, map[string]any{"alerts": results})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"rules": anomalyRules})
+
+	case http.MethodPost:
+		var req struct {
+			Name       string `json:"name"`
+			Action     string `json:"action"`
+			Threshold  int    `json:"threshold"`
+			WindowMins int    `json:"window_minutes"`
+			Severity   string `json:"severity"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		if req.Name == "" || req.Action == "" {
+			writeJSONError(w, http.StatusBadRequest, "name and action are required")
+			return
+		}
+		if req.Threshold == 0 {
+			req.Threshold = 5
+		}
+		if req.WindowMins == 0 {
+			req.WindowMins = 5
+		}
+		if req.Severity == "" {
+			req.Severity = "warning"
+		}
+		rule := map[string]any{
+			"id":             uuid.New().String(),
+			"name":           req.Name,
+			"action":         req.Action,
+			"threshold":      req.Threshold,
+			"window_minutes": req.WindowMins,
+			"severity":       req.Severity,
+			"created_at":     time.Now().UTC().Format(time.RFC3339),
+		}
+		anomalyRules = append(anomalyRules, rule)
+		writeJSON(w, http.StatusCreated, rule)
+
+	case http.MethodDelete:
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			writeJSONError(w, http.StatusBadRequest, "id is required")
+			return
+		}
+		filtered := anomalyRules[:0]
+		for _, rule := range anomalyRules {
+			if rule["id"] != idStr {
+				filtered = append(filtered, rule)
+			}
+		}
+		anomalyRules = filtered
+		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// detectAnomalies checks all rules against recent audit events.
+func (s *HTTPServer) detectAnomalies(r *http.Request) []map[string]any {
+	var alerts []map[string]any
+
+	for _, rule := range anomalyRules {
+		action, _ := rule["action"].(string)
+		threshold, _ := rule["threshold"].(int)
+		windowMins, _ := rule["window_minutes"].(int)
+
+		since := time.Now().UTC().Add(-time.Duration(windowMins) * time.Minute)
+		tenantIDStr := r.URL.Query().Get("tenant_id")
+		if tenantIDStr == "" {
+			continue
+		}
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			continue
+		}
+
+		events, _, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
+			TenantID:  tenantID,
+			Action:    action,
+			StartTime: &since,
+			Result:    domain.EventResult("failure"),
+		}, 1, threshold+10)
+		if err != nil {
+			continue
+		}
+
+		if len(events) >= threshold {
+			alerts = append(alerts, map[string]any{
+				"rule_id":    rule["id"],
+				"rule_name":  rule["name"],
+				"severity":   rule["severity"],
+				"count":      len(events),
+				"threshold":  threshold,
+				"window_mins": windowMins,
+				"action":     action,
+				"triggered":  time.Now().UTC().Format(time.RFC3339),
+				"message":    fmt.Sprintf("%d '%s' failures in %d minutes (threshold: %d)", len(events), action, windowMins, threshold),
+			})
+		}
+	}
+
+	return alerts
 }
 
 // --- Helpers ---
