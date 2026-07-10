@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Fragment, useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
 import {
   ScrollText,
@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Users,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import {
   BarChart,
@@ -35,10 +37,12 @@ interface AuditEvent {
   actor_name: string;
   action: string;
   resource_type: string;
+  resource_id?: string;
   result: string;
   created_at: string;
   ip_address?: string;
   user_agent?: string;
+  metadata?: Record<string, unknown>;
 }
 
 interface Stats {
@@ -66,6 +70,9 @@ export default function AuditPage() {
   const [ipFilter, setIpFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   // Sync filters to URL query params
   useEffect(() => {
@@ -79,6 +86,11 @@ export default function AuditPage() {
     const qs = params.toString();
     const newUrl = qs ? `?${qs}` : window.location.pathname;
     window.history.replaceState(null, "", newUrl);
+  }, [actionFilter, actorFilter, resultFilter, ipFilter, dateFrom, dateTo]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
   }, [actionFilter, actorFilter, resultFilter, ipFilter, dateFrom, dateTo]);
 
   // Read filters from URL on mount
@@ -107,10 +119,13 @@ export default function AuditPage() {
         if (ipFilter) params.set("ip_address", ipFilter);
         if (dateFrom) params.set("from", dateFrom + "T00:00:00Z");
         if (dateTo) params.set("to", dateTo + "T23:59:59Z");
-        params.set("page_size", "50");
-        const data = await apiFetch<{ events?: AuditEvent[] }>(
+        params.set("page_size", "20");
+        params.set("page", String(page));
+        const data = await apiFetch<{ events?: AuditEvent[]; total?: number; total_count?: number }>(
           `/api/v1/audit/events?${params}`,
         );
+        const totalCount = data.total || data.total_count || 0;
+        setTotalPages(totalCount > 0 ? Math.ceil(totalCount / 20) : 1);
         let filtered = data.events || [];
         // Client-side IP filter fallback if API doesn't support it
         if (ipFilter && filtered.length > 0) {
@@ -123,7 +138,7 @@ export default function AuditPage() {
     } finally {
       setLoading(false);
     }
-  }, [apiFetch, tab, actionFilter, actorFilter, resultFilter, ipFilter, dateFrom, dateTo]);
+  }, [apiFetch, tab, actionFilter, actorFilter, resultFilter, ipFilter, dateFrom, dateTo, page]);
 
   useEffect(() => {
     loadData();
@@ -593,38 +608,88 @@ export default function AuditPage() {
                 <tbody className="divide-y divide-gray-100">
                   {events.map((event) => {
                     const anomaly = isAnomalousEvent(event);
+                    const isExpanded = expandedRow === event.id;
                     return (
-                    <tr key={event.id} className={`hover:bg-gray-50 ${anomaly ? "border-l-4 border-l-red-400 bg-red-50/40" : ""}`}>
-                      <td className="px-4 py-3 text-sm text-gray-500">
-                        {event.created_at ? new Date(event.created_at).toLocaleString() : "-"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs">{event.action}</span>
-                          {anomaly && (
-                            <span className="flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-600" title={anomaly}>
-                              <AlertTriangle className="h-3 w-3" />
-                            </span>
+                    <Fragment key={event.id}>
+                      <tr
+                        onClick={() => setExpandedRow(isExpanded ? null : event.id)}
+                        className={`cursor-pointer hover:bg-gray-50 ${anomaly ? "border-l-4 border-l-red-400 bg-red-50/40" : ""} ${isExpanded ? "bg-gray-50" : ""}`}
+                      >
+                        <td className="px-4 py-3 text-sm text-gray-500">
+                          <div className="flex items-center gap-1.5">
+                            {isExpanded ? (
+                              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                            ) : (
+                              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                            )}
+                            {event.created_at ? new Date(event.created_at).toLocaleString() : "-"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs">{event.action}</span>
+                            {anomaly && (
+                              <span className="flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-600" title={anomaly}>
+                                <AlertTriangle className="h-3 w-3" />
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {event.actor_name || (event.actor_id ? event.actor_id.substring(0, 8) : "system")}
+                          {event.ip_address && (
+                            <span className="ml-1 font-mono text-xs text-gray-400">{event.ip_address}</span>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {event.actor_name || (event.actor_id ? event.actor_id.substring(0, 8) : "system")}
-                        {event.ip_address && (
-                          <span className="ml-1 font-mono text-xs text-gray-400">{event.ip_address}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{event.resource_type || "-"}</td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${resultColor(event.result)}`}>
-                          {event.result}
-                        </span>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
+                          {event.resource_type || "-"}
+                          {event.resource_id && (
+                            <span className="ml-1 font-mono text-xs text-gray-400">{event.resource_id.substring(0, 8)}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${resultColor(event.result)}`}>
+                            {event.result}
+                          </span>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={5} className="bg-gray-50 px-4 py-3">
+                            <pre className="overflow-x-auto rounded-lg bg-gray-900 p-4 text-xs text-green-400">
+                              {JSON.stringify(event, null, 2)}
+                            </pre>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                     );
                   })}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                Page {page} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  Next
+                </button>
+              </div>
             </div>
             </>
           )}

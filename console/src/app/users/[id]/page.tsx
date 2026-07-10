@@ -17,6 +17,8 @@ import {
   UserPlus,
   Fingerprint,
   Globe,
+  Cloud,
+  RefreshCw,
 } from "lucide-react";
 
 interface User {
@@ -76,7 +78,13 @@ interface SocialConnection {
   created_at?: string;
 }
 
-type DetailTab = "info" | "roles" | "organizations" | "activity";
+interface ScimData {
+  external_id: string;
+  source: string;
+  last_synced: string;
+}
+
+type DetailTab = "info" | "roles" | "organizations" | "activity" | "scim";
 
 export default function UserDetailPage({ params }: { params: { id: string } }) {
   const { apiFetch } = useApi();
@@ -97,6 +105,38 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const [activityLoading, setActivityLoading] = useState(false);
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
+  const [scimData, setScimData] = useState<ScimData | null>(null);
+  const [scimLoading, setScimLoading] = useState(false);
+  const [scimSyncing, setScimSyncing] = useState(false);
+
+  const loadScim = useCallback(async () => {
+    setScimLoading(true);
+    try {
+      const data = await apiFetch<ScimData>(
+        `/api/v1/users/${params.id}/scim`,
+      ).catch(() => null);
+      setScimData(data);
+    } catch {
+      setScimData(null);
+    } finally {
+      setScimLoading(false);
+    }
+  }, [apiFetch, params.id]);
+
+  const handleScimSync = async () => {
+    setScimSyncing(true);
+    try {
+      await apiFetch(`/api/v1/users/${params.id}/scim/sync`, {
+        method: "POST",
+      });
+      setMsg("SCIM sync triggered successfully");
+      loadScim();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sync SCIM");
+    } finally {
+      setScimSyncing(false);
+    }
+  };
 
   const loadActivity = useCallback(async () => {
     setActivityLoading(true);
@@ -141,7 +181,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     if (detailTab === "activity") loadActivity();
     if (detailTab === "roles") loadUserRoles();
     if (detailTab === "organizations") loadOrgs();
-  }, [detailTab, loadActivity, loadUserRoles, loadOrgs]);
+    if (detailTab === "scim") loadScim();
+  }, [detailTab, loadActivity, loadUserRoles, loadOrgs, loadScim]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -305,6 +346,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         >
           <Activity className="h-4 w-4" /> Activity
         </button>
+        <button
+          onClick={() => setDetailTab("scim")}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${detailTab === "scim" ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500"}`}
+        >
+          <Cloud className="h-4 w-4" /> SCIM
+        </button>
       </div>
 
       {/* ===== Activity Tab ===== */}
@@ -355,6 +402,62 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== SCIM Tab ===== */}
+      {detailTab === "scim" && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+            <Cloud className="h-4 w-4 text-brand-600" />
+            SCIM Provisioning
+          </h3>
+          {scimLoading ? (
+            <p className="py-8 text-center text-sm text-gray-500">Loading...</p>
+          ) : !scimData ? (
+            <div className="py-8 text-center">
+              <Cloud className="mx-auto mb-3 h-10 w-10 text-gray-300" />
+              <p className="text-sm text-gray-400">Not provisioned via SCIM</p>
+              <p className="mt-1 text-xs text-gray-400">
+                This user was not created through a SCIM identity provider.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <dl className="space-y-3">
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">External ID</dt>
+                  <dd className="font-mono text-sm font-medium">{scimData.external_id || "-"}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Source / Provider</dt>
+                  <dd>
+                    <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium capitalize text-brand-700">
+                      {scimData.source || "unknown"}
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Last Synced</dt>
+                  <dd className="text-sm font-medium">
+                    {scimData.last_synced
+                      ? new Date(scimData.last_synced).toLocaleString()
+                      : "Never"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="border-t border-gray-100 pt-4">
+                <button
+                  onClick={handleScimSync}
+                  disabled={scimSyncing}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-4 w-4 ${scimSyncing ? "animate-spin" : ""}`} />
+                  {scimSyncing ? "Syncing..." : "Sync Now"}
+                </button>
+              </div>
             </div>
           )}
         </div>
