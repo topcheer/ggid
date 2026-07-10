@@ -11,6 +11,7 @@ import {
   Save,
   Shield,
   Trash2,
+  Activity,
 } from "lucide-react";
 
 interface User {
@@ -34,6 +35,17 @@ interface Role {
   system_role: boolean;
 }
 
+interface AuditEvent {
+  id: string;
+  action: string;
+  resource_type: string;
+  result: string;
+  created_at: string;
+  ip_address: string;
+}
+
+type DetailTab = "info" | "activity";
+
 export default function UserDetailPage({ params }: { params: { id: string } }) {
   const { apiFetch } = useApi();
   const router = useRouter();
@@ -46,6 +58,27 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const [editForm, setEditForm] = useState({ display_name: "", email: "", phone: "" });
   const [resetPassword, setResetPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+  const [detailTab, setDetailTab] = useState<DetailTab>("info");
+  const [activity, setActivity] = useState<AuditEvent[]>([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+
+  const loadActivity = useCallback(async () => {
+    setActivityLoading(true);
+    try {
+      const data = await apiFetch<{ events?: AuditEvent[] }>(
+        `/api/v1/audit/events?actor_id=${params.id}&page_size=20`,
+      ).catch(() => ({ events: [] }));
+      setActivity(data.events || []);
+    } catch {
+      setActivity([]);
+    } finally {
+      setActivityLoading(false);
+    }
+  }, [apiFetch, params.id]);
+
+  useEffect(() => {
+    if (detailTab === "activity") loadActivity();
+  }, [detailTab, loadActivity]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -162,6 +195,75 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         </div>
       )}
 
+      {/* Tab switcher */}
+      <div className="mb-4 flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => setDetailTab("info")}
+          className={`px-4 py-2 text-sm font-medium ${detailTab === "info" ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500"}`}
+        >
+          Profile
+        </button>
+        <button
+          onClick={() => setDetailTab("activity")}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${detailTab === "activity" ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500"}`}
+        >
+          <Activity className="h-4 w-4" /> Activity
+        </button>
+      </div>
+
+      {detailTab === "activity" ? (
+        /* ===== Activity Timeline ===== */
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-sm font-semibold">Recent Activity</h3>
+          {activityLoading ? (
+            <p className="text-gray-500">Loading...</p>
+          ) : activity.length === 0 ? (
+            <p className="py-8 text-center text-gray-400">No activity recorded</p>
+          ) : (
+            <div className="relative space-y-4">
+              {activity.map((event, idx) => {
+                const iconMap: Record<string, string> = {
+                  "user.login": "bg-green-100 text-green-600",
+                  "user.logout": "bg-gray-100 text-gray-600",
+                  "user.register": "bg-blue-100 text-blue-600",
+                  "user.password.change": "bg-amber-100 text-amber-600",
+                  "role.assign": "bg-purple-100 text-purple-600",
+                };
+                return (
+                  <div key={event.id} className="flex gap-3">
+                    {/* Timeline line */}
+                    {idx < activity.length - 1 && (
+                      <div className="absolute left-[19px] mt-8 h-[calc(100%-2rem)] w-px bg-gray-100" />
+                    )}
+                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${iconMap[event.action] || "bg-gray-100 text-gray-500"}`}>
+                      <Activity className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{event.action}</span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(event.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className={`rounded-full px-2 py-0.5 text-xs ${event.result === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                          {event.result}
+                        </span>
+                        {event.resource_type && (
+                          <span className="text-xs text-gray-400">on {event.resource_type}</span>
+                        )}
+                        {event.ip_address && (
+                          <span className="font-mono text-xs text-gray-400">{event.ip_address}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="grid gap-6 lg:grid-cols-2">
         {/* User Info Card */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -326,6 +428,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

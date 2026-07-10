@@ -10,31 +10,40 @@ import {
   KeyRound,
   Settings,
   LayoutDashboard,
+  Webhook,
+  Sun,
+  Moon,
+  Globe,
 } from "lucide-react";
-
-const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/users", label: "Users", icon: Users },
-  { href: "/roles", label: "Roles & Permissions", icon: Shield },
-  { href: "/organizations", label: "Organizations", icon: Building2 },
-  { href: "/audit", label: "Audit Log", icon: ScrollText },
-  { href: "/oauth-clients", label: "OAuth Clients", icon: KeyRound },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+import { useTheme } from "@/lib/theme";
+import { useI18n } from "@/lib/i18n";
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { theme, toggle } = useTheme();
+  const { locale, setLocale, t } = useI18n();
+
+  const navItems = [
+    { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
+    { href: "/users", label: t("nav.users"), icon: Users },
+    { href: "/roles", label: t("nav.roles"), icon: Shield },
+    { href: "/organizations", label: t("nav.organizations"), icon: Building2 },
+    { href: "/audit", label: t("nav.audit"), icon: ScrollText },
+    { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
+    { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
+    { href: "/settings", label: t("nav.settings"), icon: Settings },
+  ];
 
   return (
     <aside
-      className="flex flex-col border-r border-gray-200 bg-white"
+      className="flex flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
       style={{ width: "var(--sidebar-width)" }}
     >
-      <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
+      <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6 dark:border-gray-800">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white font-bold">
           G
         </div>
-        <span className="text-lg font-semibold">GGID</span>
+        <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">GGID</span>
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
@@ -49,8 +58,8 @@ export function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                 active
-                  ? "bg-brand-50 text-brand-700 font-medium"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-brand-50 text-brand-700 font-medium dark:bg-brand-900/30 dark:text-brand-400"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -60,14 +69,35 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-gray-200 p-4">
+      {/* Controls: theme + locale */}
+      <div className="border-t border-gray-200 p-3 dark:border-gray-800">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={toggle}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+            title={theme === "light" ? "Switch to dark" : "Switch to light"}
+          >
+            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => setLocale(locale === "en" ? "zh" : "en")}
+            className="flex h-8 items-center gap-1 rounded-lg border border-gray-200 px-2 text-xs font-medium text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+            title="Switch language"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            {locale === "en" ? "EN" : "中"}
+          </button>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-200 p-4 dark:border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium dark:bg-gray-700 dark:text-gray-300">
             A
           </div>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium">admin@ggid.dev</p>
-            <p className="truncate text-xs text-gray-500">Administrator</p>
+            <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-200">admin@ggid.dev</p>
+            <p className="truncate text-xs text-gray-500 dark:text-gray-500">Administrator</p>
           </div>
         </div>
       </div>
