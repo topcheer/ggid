@@ -2,31 +2,101 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
-import { Building2, Plus, ChevronRight } from "lucide-react";
+import {
+  Building2,
+  Plus,
+  ChevronRight,
+  ChevronDown,
+  X,
+  Users,
+  GitBranch,
+  Network,
+  Trash2,
+  Layers,
+} from "lucide-react";
+
+// ===== Types =====
 
 interface Organization {
   id: string;
   name: string;
   path: string;
   parent_id?: string;
-  metadata?: Record<string, unknown>;
 }
 
+interface Department {
+  id: string;
+  org_id: string;
+  name: string;
+  path: string;
+  parent_id?: string;
+  manager_id?: string;
+}
+
+interface Team {
+  id: string;
+  org_id: string;
+  name: string;
+  description: string;
+  created_by: string;
+}
+
+interface Member {
+  id: string;
+  user_id: string;
+  tenant_id: string;
+  org_id: string;
+  status: string;
+  title: string;
+  dept_id?: string;
+  team_id?: string;
+}
+
+type Tab = "orgs" | "depts" | "teams";
+
+// ===== Main Component =====
+
 export default function OrganizationsPage() {
-  const { apiFetch } = useApi();
-  const [orgs, setOrgs] = useState<Organization[]>([]);
+  const { apiFetch, TENANT_ID } = useApi();
+  const [tab, setTab] = useState<Tab>("orgs");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  // Data
+  const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [depts, setDepts] = useState<Department[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+
+  // UI state
   const [showCreate, setShowCreate] = useState(false);
+  const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set());
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
 
   const loadOrgs = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const data = await apiFetch<{ organizations?: Organization[]; items?: Organization[] }>(
-        "/api/v1/orgs",
+      const data = await apiFetch<{ organizations?: Organization[] }>("/api/v1/orgs");
+      const list = data.organizations || [];
+      setOrgs(list);
+
+      // Fetch member counts for each org in parallel
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        list.map(async (org) => {
+          try {
+            const memData = await apiFetch<{ members?: Member[] }>(
+              `/api/v1/orgs/${org.id}/members`,
+            );
+            counts[org.id] = memData.members?.length || 0;
+          } catch {
+            counts[org.id] = 0;
+          }
+        }),
       );
-      setOrgs(data.organizations || data.items || []);
-      setError(null);
+      setMemberCounts(counts);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load organizations");
       setOrgs([]);
@@ -35,112 +105,406 @@ export default function OrganizationsPage() {
     }
   }, [apiFetch]);
 
+  const loadDepts = useCallback(
+    async (orgId: string) => {
+      try {
+        const data = await apiFetch<{ departments?: Department[] }>(
+          `/api/v1/departments?org_id=${orgId}`,
+        );
+        setDepts(data.departments || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load departments");
+        setDepts([]);
+      }
+    },
+    [apiFetch],
+  );
+
+  const loadTeams = useCallback(
+    async (orgId: string) => {
+      try {
+        const data = await apiFetch<{ teams?: Team[] }>(`/api/v1/teams?org_id=${orgId}`);
+        setTeams(data.teams || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load teams");
+        setTeams([]);
+      }
+    },
+    [apiFetch],
+  );
+
   useEffect(() => {
     loadOrgs();
   }, [loadOrgs]);
 
-  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Auto-expand root orgs on load
+  useEffect(() => {
+    if (orgs.length > 0 && expandedOrgs.size === 0) {
+      const roots = orgs.filter((o) => !o.parent_id);
+      setExpandedOrgs(new Set(roots.map((r) => r.id)));
+    }
+  }, [orgs, expandedOrgs.size]);
+
+  // Load depts/teams when switching tabs or selecting an org
+  useEffect(() => {
+    if (tab === "depts" && selectedOrgId) {
+      loadDepts(selectedOrgId);
+    } else if (tab === "teams" && selectedOrgId) {
+      loadTeams(selectedOrgId);
+    }
+  }, [tab, selectedOrgId, loadDepts, loadTeams]);
+
+  // ===== Handlers =====
+
+  const toggleExpand = (id: string) => {
+    setExpandedOrgs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleCreateOrg = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const body: Record<string, string> = {
+      tenant_id: TENANT_ID,
+      name: formData.get("name") as string,
+    };
+    const parentId = formData.get("parent_id") as string;
+    if (parentId) body.parent_id = parentId;
     try {
-      await apiFetch("/api/v1/orgs", {
-        method: "POST",
-        body: JSON.stringify({ name: formData.get("name") }),
-      });
+      await apiFetch("/api/v1/orgs", { method: "POST", body: JSON.stringify(body) });
       setShowCreate(false);
+      setMsg("Organization created");
       loadOrgs();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create organization");
+      setError(err instanceof Error ? err.message : "Failed to create organization");
     }
   };
 
-  // Build tree structure from flat list
+  const handleCreateDept = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const body: Record<string, string> = {
+      org_id: (formData.get("org_id") as string) || selectedOrgId || "",
+      name: formData.get("name") as string,
+    };
+    const parentId = formData.get("parent_id") as string;
+    if (parentId) body.parent_id = parentId;
+    try {
+      await apiFetch("/api/v1/departments", { method: "POST", body: JSON.stringify(body) });
+      setShowCreate(false);
+      setMsg("Department created");
+      if (body.org_id) loadDepts(body.org_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create department");
+    }
+  };
+
+  const handleCreateTeam = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const body: Record<string, string> = {
+      org_id: (formData.get("org_id") as string) || selectedOrgId || "",
+      name: formData.get("name") as string,
+      description: (formData.get("description") as string) || "",
+      created_by: formData.get("created_by") as string,
+    };
+    try {
+      await apiFetch("/api/v1/teams", { method: "POST", body: JSON.stringify(body) });
+      setShowCreate(false);
+      setMsg("Team created");
+      if (body.org_id) loadTeams(body.org_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create team");
+    }
+  };
+
+  const handleDeleteOrg = async (id: string) => {
+    if (!confirm("Delete this organization? This cannot be undone.")) return;
+    try {
+      await apiFetch(`/api/v1/orgs/${id}`, { method: "DELETE" });
+      setMsg("Organization deleted");
+      loadOrgs();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
+  const handleDeleteDept = async (id: string) => {
+    if (!confirm("Delete this department?")) return;
+    try {
+      await apiFetch(`/api/v1/departments/${id}`, { method: "DELETE" });
+      setMsg("Department deleted");
+      if (selectedOrgId) loadDepts(selectedOrgId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
+  const handleDeleteTeam = async (id: string) => {
+    if (!confirm("Delete this team?")) return;
+    try {
+      await apiFetch(`/api/v1/teams/${id}`, { method: "DELETE" });
+      setMsg("Team deleted");
+      if (selectedOrgId) loadTeams(selectedOrgId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
+    }
+  };
+
+  // ===== Build Tree =====
   const tree = buildTree(orgs);
+  const orgMap = new Map(orgs.map((o) => [o.id, o]));
+
+  // Auto-dismiss messages
+  useEffect(() => {
+    if (msg) {
+      const t = setTimeout(() => setMsg(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [msg]);
 
   return (
     <div>
+      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Organizations</h1>
         <button
-          onClick={() => setShowCreate(!showCreate)}
-          className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          onClick={() => {
+            setShowCreate(!showCreate);
+            setError(null);
+          }}
+          className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
           <Plus className="h-4 w-4" />
-          New Organization
+          New {tab === "orgs" ? "Organization" : tab === "depts" ? "Department" : "Team"}
         </button>
       </div>
 
-      {showCreate && (
-        <form
-          onSubmit={handleCreate}
-          className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-        >
-          <div className="flex gap-4">
-            <input
-              name="name"
-              required
-              placeholder="Organization name"
-              className="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2"
-            />
-            <button
-              type="submit"
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              Create
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCreate(false)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+      {/* Messages */}
+      {msg && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+          {msg}
+        </div>
       )}
-
       {error && (
-        <div className="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
           <p className="mt-1 text-xs">Make sure Org Service (:8071) is running.</p>
         </div>
       )}
 
+      {/* Create Forms */}
+      {showCreate && tab === "orgs" && (
+        <CreateForm
+          title="New Organization"
+          onClose={() => setShowCreate(false)}
+          onSubmit={handleCreateOrg}
+        >
+          <FormField label="Name" name="name" placeholder="e.g. Engineering" required />
+          <FormField
+            label="Parent Organization"
+            name="parent_id"
+            type="select"
+            placeholder="-- None (root) --"
+            options={orgs.map((o) => ({ value: o.id, label: o.name }))}
+          />
+        </CreateForm>
+      )}
+
+      {showCreate && tab === "depts" && (
+        <CreateForm
+          title="New Department"
+          onClose={() => setShowCreate(false)}
+          onSubmit={handleCreateDept}
+        >
+          <FormField
+            label="Organization"
+            name="org_id"
+            type="select"
+            placeholder="-- Select org --"
+            required
+            options={orgs.map((o) => ({ value: o.id, label: o.name }))}
+            value={selectedOrgId || undefined}
+          />
+          <FormField label="Name" name="name" placeholder="e.g. Frontend" required />
+          <FormField
+            label="Parent Department"
+            name="parent_id"
+            type="select"
+            placeholder="-- None (root) --"
+            options={depts.map((d) => ({ value: d.id, label: d.name }))}
+          />
+        </CreateForm>
+      )}
+
+      {showCreate && tab === "teams" && (
+        <CreateForm
+          title="New Team"
+          onClose={() => setShowCreate(false)}
+          onSubmit={handleCreateTeam}
+        >
+          <FormField
+            label="Organization"
+            name="org_id"
+            type="select"
+            placeholder="-- Select org --"
+            required
+            options={orgs.map((o) => ({ value: o.id, label: o.name }))}
+            value={selectedOrgId || undefined}
+          />
+          <FormField label="Name" name="name" placeholder="e.g. Platform Team" required />
+          <FormField label="Description" name="description" placeholder="Optional" />
+          <FormField
+            label="Created By (User ID)"
+            name="created_by"
+            placeholder="UUID of the creator"
+            required
+          />
+        </CreateForm>
+      )}
+
+      {/* Org Filter for Depts/Teams tabs */}
+      {(tab === "depts" || tab === "teams") && (
+        <div className="mb-4 flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-600">Filter by Organization:</label>
+          <select
+            value={selectedOrgId || ""}
+            onChange={(e) => setSelectedOrgId(e.target.value || null)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          >
+            <option value="">-- Select org --</option>
+            {orgs.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div className="mb-4 flex gap-2 border-b border-gray-200">
+        <TabButton active={tab === "orgs"} onClick={() => setTab("orgs")} icon={Building2} label={`Organizations (${orgs.length})`} />
+        <TabButton active={tab === "depts"} onClick={() => setTab("depts")} icon={Network} label={`Departments (${depts.length})`} />
+        <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Users} label={`Teams (${teams.length})`} />
+      </div>
+
+      {/* Content */}
       {loading ? (
-        <p className="text-gray-500">Loading organizations...</p>
-      ) : orgs.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
-          <Building2 className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-gray-500">No organizations yet</p>
-          <p className="mt-1 text-xs text-gray-400">
-            Create an organization to start managing your team structure
-          </p>
-        </div>
+        <p className="text-gray-500">Loading...</p>
+      ) : tab === "orgs" ? (
+        /* ===== Organizations Tree View ===== */
+        orgs.length === 0 ? (
+          <EmptyState icon={Building2} title="No organizations yet" subtitle="Create an organization to start managing your team structure" />
+        ) : (
+          <div className="space-y-1">
+            {tree.map((org) => (
+              <OrgTreeNode
+                key={org.id}
+                org={org}
+                depth={0}
+                expanded={expandedOrgs}
+                onToggle={toggleExpand}
+                memberCount={memberCounts[org.id] || 0}
+                onDelete={handleDeleteOrg}
+              />
+            ))}
+          </div>
+        )
+      ) : tab === "depts" ? (
+        /* ===== Departments ===== */
+        !selectedOrgId ? (
+          <EmptyState icon={Network} title="Select an organization" subtitle="Choose an organization above to view its departments" />
+        ) : depts.length === 0 ? (
+          <EmptyState icon={Network} title="No departments" subtitle="Create a department under this organization" />
+        ) : (
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+            <table className="w-full">
+              <thead className="border-b border-gray-200 bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Department</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Path</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {depts.map((d) => (
+                  <tr key={d.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Network className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium">{d.name}</span>
+                        {d.parent_id && d.parent_id !== d.id && (
+                          <span className="text-xs text-gray-400">
+                            (under {depts.find((p) => p.id === d.parent_id)?.name || "parent"})
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-gray-500">{d.path || "-"}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDeleteDept(d.id)}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
       ) : (
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <table className="w-full">
-            <thead className="border-b border-gray-200 bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                  Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                  Path
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                  ID
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {tree.map((org) => renderOrgRow(org, 0))}
-            </tbody>
-          </table>
-        </div>
+        /* ===== Teams ===== */
+        !selectedOrgId ? (
+          <EmptyState icon={Users} title="Select an organization" subtitle="Choose an organization above to view its teams" />
+        ) : teams.length === 0 ? (
+          <EmptyState icon={Users} title="No teams" subtitle="Create a team under this organization" />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {teams.map((t) => (
+              <div key={t.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="mb-3 flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                      <Users className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{t.name}</h3>
+                      {t.description && (
+                        <p className="text-xs text-gray-500">{t.description}</p>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteTeam(t.id)}
+                    className="text-gray-400 hover:text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Org: {orgMap.get(t.org_id)?.name || t.org_id.slice(0, 8)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )
       )}
     </div>
   );
 }
+
+// ===== Sub-Components =====
 
 interface OrgNode extends Organization {
   children: OrgNode[];
@@ -150,12 +514,9 @@ function buildTree(orgs: Organization[]): OrgNode[] {
   const map = new Map<string, OrgNode>();
   const roots: OrgNode[] = [];
 
-  // Create nodes
   for (const org of orgs) {
     map.set(org.id, { ...org, children: [] });
   }
-
-  // Build tree
   for (const org of orgs) {
     const node = map.get(org.id)!;
     if (org.parent_id && map.has(org.parent_id)) {
@@ -164,25 +525,219 @@ function buildTree(orgs: Organization[]): OrgNode[] {
       roots.push(node);
     }
   }
-
   return roots;
 }
 
-function renderOrgRow(org: OrgNode, depth: number): React.JSX.Element {
+function OrgTreeNode({
+  org,
+  depth,
+  expanded,
+  onToggle,
+  memberCount,
+  onDelete,
+}: {
+  org: OrgNode;
+  depth: number;
+  expanded: Set<string>;
+  onToggle: (id: string) => void;
+  memberCount: number;
+  onDelete: (id: string) => void;
+}) {
+  const isExpanded = expanded.has(org.id);
+  const hasChildren = org.children.length > 0;
+
   return (
     <>
-      <tr key={org.id} className="hover:bg-gray-50">
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 20}px` }}>
-            {org.children.length > 0 && <ChevronRight className="h-4 w-4 text-gray-400" />}
-            <Building2 className="h-4 w-4 text-gray-400" />
-            <span className="text-sm font-medium">{org.name}</span>
-          </div>
-        </td>
-        <td className="px-4 py-3 font-mono text-xs text-gray-500">{org.path}</td>
-        <td className="px-4 py-3 font-mono text-xs text-gray-400">{org.id.slice(0, 8)}</td>
-      </tr>
-      {org.children.map((child) => renderOrgRow(child, depth + 1))}
+      <div
+        className={`flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50 ${depth === 0 ? "border-b border-gray-100" : ""}`}
+        style={{ paddingLeft: `${depth * 24 + 12}px` }}
+      >
+        {/* Expand/Collapse toggle */}
+        <button
+          onClick={() => hasChildren && onToggle(org.id)}
+          className={`flex h-5 w-5 items-center justify-center ${hasChildren ? "cursor-pointer text-gray-400" : "invisible"}`}
+        >
+          {hasChildren && (isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
+        </button>
+
+        {/* Icon */}
+        <Building2 className={`h-4 w-4 ${depth === 0 ? "text-brand-600" : "text-gray-400"}`} />
+
+        {/* Name */}
+        <span className={`text-sm ${depth === 0 ? "font-semibold" : "font-medium"}`}>
+          {org.name}
+        </span>
+
+        {/* Path badge */}
+        {org.path && (
+          <span className="rounded-full bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">
+            {org.path}
+          </span>
+        )}
+
+        {/* Member count badge */}
+        <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+          <Users className="h-3 w-3" />
+          {memberCount}
+        </span>
+
+        {/* Child count */}
+        {hasChildren && (
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <GitBranch className="h-3 w-3" />
+            {org.children.length}
+          </span>
+        )}
+
+        {/* Delete */}
+        <button
+          onClick={() => onDelete(org.id)}
+          className="ml-auto text-gray-300 hover:text-red-500"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Render children */}
+      {isExpanded &&
+        org.children.map((child) => (
+          <OrgTreeNode
+            key={child.id}
+            org={child}
+            depth={depth + 1}
+            expanded={expanded}
+            onToggle={onToggle}
+            memberCount={0}
+            onDelete={onDelete}
+          />
+        ))}
     </>
+  );
+}
+
+// ===== Reusable UI Components =====
+
+function CreateForm({
+  title,
+  onClose,
+  onSubmit,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <form
+      onSubmit={onSubmit}
+      className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <button type="button" onClick={onClose}>
+          <X className="h-4 w-4 text-gray-400" />
+        </button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+      <button
+        type="submit"
+        className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+      >
+        Create
+      </button>
+    </form>
+  );
+}
+
+function FormField({
+  label,
+  name,
+  placeholder,
+  required,
+  type = "text",
+  options,
+  value,
+}: {
+  label: string;
+  name: string;
+  placeholder?: string;
+  required?: boolean;
+  type?: "text" | "select";
+  options?: { value: string; label: string }[];
+  value?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-gray-500">
+        {label}
+        {required && <span className="text-red-500"> *</span>}
+      </label>
+      {type === "select" ? (
+        <select
+          name={name}
+          defaultValue={value || ""}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        >
+          <option value="">{placeholder || "-- Select --"}</option>
+          {options?.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          name={name}
+          required={required}
+          placeholder={placeholder}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        />
+      )}
+    </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  icon: Icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ElementType;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${
+        active
+          ? "border-b-2 border-brand-600 text-brand-600"
+          : "text-gray-500 hover:text-gray-700"
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
+
+function EmptyState({
+  icon: Icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+      <Icon className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+      <p className="text-gray-500">{title}</p>
+      <p className="mt-1 text-xs text-gray-400">{subtitle}</p>
+    </div>
   );
 }
