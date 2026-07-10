@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -64,6 +65,22 @@ type SCIMEmail struct {
 	Primary bool   `json:"primary,omitempty"`
 }
 
+// EnterpriseUser is the RFC 7643 Enterprise User extension schema.
+// urn:ietf:params:scim:schemas:extension:enterprise:2.0:User
+type EnterpriseUser struct {
+	EmployeeNumber string       `json:"employeeNumber,omitempty"`
+	Department     string       `json:"department,omitempty"`
+	Division       string       `json:"division,omitempty"`
+	Manager        *SCIMManager `json:"manager,omitempty"`
+}
+
+// SCIMManager represents a manager reference in the EnterpriseUser extension.
+type SCIMManager struct {
+	Value   string `json:"value,omitempty"`
+	Ref     string `json:"$ref,omitempty"`
+	Display string `json:"displayName,omitempty"`
+}
+
 type SCIMPhone struct {
 	Value string `json:"value"`
 	Type  string `json:"type,omitempty"`
@@ -86,12 +103,23 @@ type ListResponse struct {
 	Resources    []SCIMUser  `json:"Resources"`
 }
 
-// ErrorResponse is the SCIM standard error format.
+// ErrorResponse is the SCIM standard error format (RFC 7644 Section 3.12).
 type ErrorResponse struct {
-	Schemas []string `json:"schemas"`
-	Detail  string   `json:"detail"`
-	Status  string   `json:"status"`
+	Schemas  []string `json:"schemas"`
+	Detail   string   `json:"detail"`
+	Status   string   `json:"status"`
+	ScimType string   `json:"scimType,omitempty"`
 }
+
+// SCIM error type constants (RFC 7644 Section 3.12.1).
+const (
+	ScimTypeInvalidFilter  = "invalidFilter"
+	ScimTypeInvalidSyntax  = "invalidSyntax"
+	ScimTypeInvalidPath    = "invalidPath"
+	ScimTypeUniqueness     = "uniqueness"
+	ScimTypeInvalidValue   = "invalidValue"
+	ScimTypeTooMany        = "tooMany"
+)
 
 // --- Helpers ---
 
@@ -112,6 +140,18 @@ func writeSCIMError(w http.ResponseWriter, status int, detail string) {
 		Schemas: []string{scimErrSchema},
 		Detail:  detail,
 		Status:  strconv.Itoa(status),
+	})
+}
+
+// writeSCIMErrorWithType writes a SCIM error response with a scimType field.
+// Common mappings: invalidFilter/invalidSyntax/invalidPath→400, uniqueness→409,
+// invalidValue→400, tooMany→407.
+func writeSCIMErrorWithType(w http.ResponseWriter, status int, scimType, detail string) {
+	writeSCIMJSON(w, status, ErrorResponse{
+		Schemas:  []string{scimErrSchema},
+		Detail:   detail,
+		Status:   strconv.Itoa(status),
+		ScimType: scimType,
 	})
 }
 
@@ -139,6 +179,7 @@ func toSCIMUser(u *domain.User) SCIMUser {
 	return SCIMUser{
 		Schemas:     []string{scimUserSchema},
 		ID:          u.ID.String(),
+		ExternalID:  u.ExternalID,
 		UserName:    u.Username,
 		DisplayName: u.DisplayName,
 		Name: SCIMName{
@@ -220,10 +261,17 @@ func (h *Handler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.
 		pageSize = 20
 	}
 
+	// SCIM-09: Sort support — map SCIM attribute names to domain fields.
+	sortBy := mapSCIMSortAttr(r.URL.Query().Get("sortBy"))
+	sortOrder := strings.ToLower(r.URL.Query().Get("sortOrder"))
+	sortDesc := sortOrder == "descending"
+
 	offset := startIndex - 1
 	result, err := h.svc.ListUsers(ctx, &domain.ListUsersFilter{
 		PageSize: pageSize,
 		Offset:   offset,
+		SortBy:   sortBy,
+		SortDesc: sortDesc,
 	})
 	if err != nil {
 		writeSCIMError(w, http.StatusInternalServerError, err.Error())
@@ -244,11 +292,53 @@ func (h *Handler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.
 	})
 }
 
+// mapSCIMSortAttr maps SCIM attribute names to domain sort field names.
+func mapSCIMSortAttr(scimAttr string) string {
+	switch strings.ToLower(scimAttr) {
+	case "username":
+		return "username"
+	case "displayname":
+		return "display_name"
+	case "meta.created", "created":
+		return "created_at"
+	case "meta.lastmodified", "lastmodified":
+		return "updated_at"
+	case "email", "emails.value":
+		return "email"
+	default:
+		return "" // let the service apply its default sort
+	}
+}
+
 func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	var scimUser SCIMUser
-	if err := json.NewDecoder(r.Body).Decode(&scimUser); err != nil {
-		writeSCIMError(w, http.StatusBadRequest, "invalid request body")
+	// Decode raw body first to detect EnterpriseUser extension schema
+	var rawBody map[string]json.RawMessage
+	bodyBytes, _ := io.ReadAll(r.Body)
+	if err := json.Unmarshal(bodyBytes, &rawBody); err != nil {
+		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidSyntax, "invalid request body")
 		return
+	}
+
+	var scimUser SCIMUser
+	if err := json.Unmarshal(bodyBytes, &scimUser); err != nil {
+		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidSyntax, "invalid request body")
+		return
+	}
+
+	// SCIM-04: Detect EnterpriseUser extension
+	entSchema := "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+	var entUser EnterpriseUser
+	hasEnterprise := false
+	for _, s := range scimUser.Schemas {
+		if s == entSchema {
+			hasEnterprise = true
+			break
+		}
+	}
+	if hasEnterprise {
+		if rawEnt, ok := rawBody[entSchema]; ok {
+			_ = json.Unmarshal(rawEnt, &entUser)
+		}
 	}
 
 	email := ""
@@ -261,13 +351,18 @@ func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http
 		Email:       email,
 		Password:    "TempPass123!", // SCIM provisioned users get temp password
 		DisplayName: scimUser.DisplayName,
+		ExternalID:  scimUser.ExternalID,
 	})
 	if err != nil {
-		writeSCIMError(w, http.StatusConflict, err.Error())
+		writeSCIMErrorWithType(w, http.StatusConflict, ScimTypeUniqueness, err.Error())
 		return
 	}
 
 	resp := toSCIMUser(user)
+	// Include enterprise extension in response if it was provided
+	if hasEnterprise {
+		resp.Schemas = append(resp.Schemas, entSchema)
+	}
 	writeSCIMJSON(w, http.StatusCreated, resp)
 }
 
