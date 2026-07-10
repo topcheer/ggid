@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -207,6 +208,9 @@ func ClientIP(r *http.Request) string {
 		return xri
 	}
 	// Fall back to RemoteAddr (strip port)
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return host
+	}
 	return r.RemoteAddr
 }
 

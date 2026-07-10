@@ -567,8 +567,8 @@ func TestClientIP_RemoteAddr(t *testing.T) {
 	req := httptest.NewRequest("GET", "/", nil)
 	req.RemoteAddr = "192.168.1.1:12345"
 	ip := ClientIP(req)
-	if ip != "192.168.1.1:12345" {
-		t.Errorf("ClientIP: want '192.168.1.1:12345', got '%s'", ip)
+	if ip != "192.168.1.1" {
+		t.Errorf("ClientIP: want '192.168.1.1', got '%s'", ip)
 	}
 }
 
