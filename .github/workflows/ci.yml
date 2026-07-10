@@ -52,6 +52,29 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./... || true
 
+  # ---- SDK build + test ----
+  sdk:
+    name: SDK Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/go
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -race -cover ./...
+
   # ---- Security scan ----
   security:
     name: Security Scan
