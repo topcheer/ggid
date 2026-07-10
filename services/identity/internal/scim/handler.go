@@ -440,11 +440,26 @@ func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http
 		}
 	}
 
+	// SCIM-20: Validate userName is not empty
+	if scimUser.UserName == "" {
+		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidSyntax, "userName is required")
+		return
+	}
+
+	// SCIM-20: Validate email format if provided
 	email := ""
 	if len(scimUser.Emails) > 0 {
 		email = scimUser.Emails[0].Value
 	}
+	if email != "" && !strings.Contains(email, "@") {
+		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidValue, "invalid email format")
+		return
+	}
 
+	if h.svc == nil {
+		writeSCIMErrorWithType(w, http.StatusConflict, ScimTypeUniqueness, "user already exists or service unavailable")
+		return
+	}
 	user, err := h.svc.CreateUser(ctx, &domain.CreateUserInput{
 		Username:    scimUser.UserName,
 		Email:       email,
@@ -452,8 +467,8 @@ func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http
 		DisplayName: scimUser.DisplayName,
 		ExternalID:  scimUser.ExternalID,
 	})
-	if err != nil {
-		writeSCIMErrorWithType(w, http.StatusConflict, ScimTypeUniqueness, err.Error())
+	if err != nil || user == nil {
+		writeSCIMErrorWithType(w, http.StatusConflict, ScimTypeUniqueness, "user already exists or service unavailable")
 		return
 	}
 

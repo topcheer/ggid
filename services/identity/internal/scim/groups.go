@@ -166,12 +166,24 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request, id string) {
 	writeSCIMError(w, http.StatusNotFound, "group not found")
 }
 
+// patchGroupStore provides mutable state for group PATCH operations in tests.
+// In production, this would be the database.
+var patchGroupStore = map[string]*SCIMGroup{}
+
 func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) {
+	// Initialize store with mock data on first access
+	if len(patchGroupStore) == 0 {
+		for _, g := range h.getMockGroups("", "") {
+			gc := g
+			patchGroupStore[g.ID] = &gc
+		}
+	}
+
 	var patch struct {
 		Operations []struct {
-			Op    string `json:"op"`    // "replace", "add", "remove"
-			Path  string `json:"path"`  // e.g. "displayName" or "members"
-			Value any    `json:"value"` // new value
+			Op    string `json:"op"`
+			Path  string `json:"path"`
+			Value any    `json:"value"`
 		} `json:"Operations"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
@@ -179,12 +191,125 @@ func (h *Handler) patchGroup(w http.ResponseWriter, r *http.Request, id string) 
 		return
 	}
 
-	// In production, apply operations to the persisted group.
-	// For now, return success with a no-content response.
-	writeSCIMJSON(w, http.StatusOK, map[string]any{
-		"schemas": []string{"urn:ietf:params:scim:api:messages:2.0:PatchOp"},
-		"status":  "200",
-	})
+	group, ok := patchGroupStore[id]
+	if !ok {
+		writeSCIMError(w, http.StatusNotFound, "group not found")
+		return
+	}
+
+	// Apply each operation
+	for _, op := range patch.Operations {
+		opPath := strings.ToLower(strings.TrimSpace(op.Path))
+
+		switch strings.ToLower(op.Op) {
+		case "replace":
+			if opPath == "displayname" {
+				if name, ok := op.Value.(string); ok {
+					group.DisplayName = name
+				}
+			} else if opPath == "members" {
+				// Replace all members
+				group.Members = valueToMembers(op.Value)
+			}
+
+		case "add":
+			if opPath == "members" {
+				newMembers := valueToMembers(op.Value)
+				// Merge: add only members not already present
+				existing := make(map[string]bool)
+				for _, m := range group.Members {
+					existing[m.Value] = true
+				}
+				for _, m := range newMembers {
+					if !existing[m.Value] {
+						group.Members = append(group.Members, m)
+						existing[m.Value] = true
+					}
+				}
+			}
+
+		case "remove":
+			if opPath == "members" || strings.HasPrefix(opPath, "members[") {
+				// Remove members. If path has a filter like members[value eq "xxx"],
+				// remove only matching members. Otherwise remove all.
+				removeIDs := parseMemberFilter(op.Path)
+				if len(removeIDs) > 0 {
+					var filtered []SCIMGroupMember
+					for _, m := range group.Members {
+						if !removeIDs[m.Value] {
+							filtered = append(filtered, m)
+						}
+					}
+					group.Members = filtered
+				} else {
+					group.Members = nil
+				}
+			}
+		}
+	}
+
+	writeSCIMJSON(w, http.StatusOK, group)
+}
+
+// valueToMembers converts a patch value (array of objects) to []SCIMGroupMember.
+func valueToMembers(val any) []SCIMGroupMember {
+	arr, ok := val.([]any)
+	if !ok {
+		return nil
+	}
+	var members []SCIMGroupMember
+	for _, item := range arr {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		member := SCIMGroupMember{}
+		if v, ok := m["value"].(string); ok {
+			member.Value = v
+		}
+		if d, ok := m["display"].(string); ok {
+			member.Display = d
+		}
+		if ref, ok := m["$ref"].(string); ok {
+			member.Ref = ref
+		}
+		if t, ok := m["type"].(string); ok {
+			member.Type = t
+		}
+		members = append(members, member)
+	}
+	return members
+}
+
+// parseMemberFilter extracts member IDs from a path like "members[value eq \"abc\"]".
+func parseMemberFilter(path string) map[string]bool {
+	result := make(map[string]bool)
+	// Extract value between brackets
+	idx := strings.Index(path, "[")
+	if idx < 0 {
+		return result
+	}
+	inner := path[idx+1:]
+	endIdx := strings.Index(inner, "]")
+	if endIdx >= 0 {
+		inner = inner[:endIdx]
+	}
+	// Parse: value eq "abc" or value eq "abc" and value eq "def"
+	parts := strings.Split(inner, " or ")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		// Also handle "and" conjunctions
+		for _, p := range strings.Split(part, " and ") {
+			p = strings.TrimSpace(p)
+			if strings.HasPrefix(strings.ToLower(p), "value eq") {
+				val := strings.Trim(strings.TrimSpace(p[len("value eq"):]), "\"")
+				if val != "" {
+					result[val] = true
+				}
+			}
+		}
+	}
+	return result
 }
 
 func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, id string) {
