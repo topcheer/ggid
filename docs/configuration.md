@@ -289,6 +289,183 @@ PORT=3000
 
 ---
 
+## Feature Flags
+
+GGID supports runtime feature flags for gradual rollouts and A/B testing.
+
+### Available Feature Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `FEATURE_WEBAUTHN` | bool | `true` | Enable WebAuthn/passkey registration and login |
+| `FEATURE_MFA_TOTP` | bool | `true` | Enable TOTP-based MFA |
+| `FEATURE_LDAP` | bool | `false` | Enable LDAP authentication |
+| `FEATURE_SAML` | bool | `false` | Enable SAML 2.0 SSO |
+| `FEATURE_SOCIAL_LOGIN` | bool | `false` | Enable social login connectors |
+| `FEATURE_SCIM` | bool | `true` | Enable SCIM 2.0 provisioning API |
+| `FEATURE_SSE_AUDIT` | bool | `true` | Enable SSE audit event streaming |
+| `FEATURE_PASSWORD_HISTORY` | bool | `true` | Enforce password history on change |
+| `FEATURE_BREACH_DETECTION` | bool | `false` | Check passwords against HIBP API |
+| `FEATURE_STEPUP_AUTH` | bool | `true` | Enable step-up authentication |
+| `FEATURE_ANOMALY_DETECTION` | bool | `false` | ML-based login anomaly scoring |
+| `FEATURE_CUSTOM_CLAIMS` | bool | `true` | Allow custom JWT claims via hooks |
+
+### Configure Feature Flags
+
+Feature flags can be set via environment variables or managed at runtime via
+the admin API:
+
+```bash
+# Via environment variable
+FEATURE_WEBAUTHN=true
+FEATURE_SAML=false
+
+# Via admin API (runtime toggle)
+curl -X PUT $API/api/v1/settings/features \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "webauthn": true,
+    "mfa_totp": true,
+    "saml": true,
+    "social_login": false
+  }'
+
+# Get current feature flags
+curl $API/api/v1/settings/features \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+Runtime changes take effect immediately without service restart.
+
+---
+
+## Security Defaults
+
+GGID ships with secure defaults. Override only when you understand the
+implications.
+
+### Authentication Security
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `JWT_ACCESS_TOKEN_TTL` | `15m` | Access token lifetime (short-lived) |
+| `JWT_REFRESH_TOKEN_TTL` | `168h` (7d) | Refresh token lifetime |
+| `JWT_SIGNING_ALG` | `RS256` | JWT signing algorithm |
+| `BCRYPT_COST` | `12` | bcrypt cost factor (higher = slower) |
+| `SESSION_MAX_CONCURRENT` | `5` | Max active sessions per user |
+| `SESSION_IDLE_TIMEOUT` | `30m` | Idle session timeout |
+| `ACCOUNT_LOCKOUT_THRESHOLD` | `5` | Failed attempts before lockout |
+| `ACCOUNT_LOCKOUT_DURATION` | `15m` | Lockout period |
+| `PASSWORD_MIN_LENGTH` | `12` | Minimum password length |
+| `PASSWORD_REQUIRE_UPPER` | `true` | Require uppercase letter |
+| `PASSWORD_REQUIRE_LOWER` | `true` | Require lowercase letter |
+| `PASSWORD_REQUIRE_DIGIT` | `true` | Require at least one digit |
+| `PASSWORD_REQUIRE_SPECIAL` | `true` | Require special character |
+| `PASSWORD_HISTORY_COUNT` | `5` | Reject reuse of last N passwords |
+| `PASSWORD_MAX_AGE` | `90d` | Password expiry (set 0 to disable) |
+
+### Rate Limiting Defaults
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `RATE_LIMIT_AUTH` | `10/min` | Auth endpoints (login, register) |
+| `RATE_LIMIT_API` | `60/min` | General API endpoints |
+| `RATE_LIMIT_POLICY_CHECK` | `100/min` | Policy check endpoint |
+| `RATE_LIMIT_SCIM` | `100/min` | SCIM provisioning endpoints |
+| `RATE_LIMIT_REFRESH` | `30/min` | Token refresh endpoint |
+| `RATE_LIMIT_BURST` | `1.5x` | Burst multiplier above steady rate |
+| `RATE_LIMIT_FAIL_MODE` | `open` | Behavior when Redis is unavailable |
+
+### TLS/Network
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `TLS_MIN_VERSION` | `1.2` | Minimum TLS version |
+| `CORS_ALLOW_CREDENTIALS` | `true` | Allow cookies in CORS |
+| `CORS_MAX_AGE` | `24h` | Preflight cache duration |
+| `COOKIE_SECURE` | `true` (prod) | Set Secure flag on cookies |
+| `COOKIE_HTTP_ONLY` | `true` | Set HttpOnly flag |
+| `COOKIE_SAME_SITE` | `strict` | SameSite attribute |
+| `HSTS_MAX_AGE` | `31536000` | HSTS header max age (1 year) |
+| `HSTS_INCLUDE_SUBDOMAINS` | `true` | Include subdomains in HSTS |
+| `HSTS_PRELOAD` | `true` | Enable HSTS preload |
+
+### Audit
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `AUDIT_ENABLED` | `true` | Enable audit event collection |
+| `AUDIT_RETENTION_DAYS` | `90` | Hot retention period |
+| `AUDIT_PII_REDACTION` | `true` | Redact PII in audit logs |
+| `AUDIT_NATS_STREAM` | `GGID_EVENTS` | JetStream stream name |
+| `AUDIT_NATS_RETENTION` | `7d` | JetStream message retention |
+
+---
+
+## Multi-Tenancy Settings
+
+### Tenant Isolation
+
+GGID enforces tenant isolation at three layers:
+
+1. **Application layer** — Every query includes `tenant_id` from JWT context
+2. **Database layer** — PostgreSQL Row-Level Security (RLS) policies
+3. **Network layer** — Tenant ID in `X-Tenant-ID` header, validated by Gateway
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `MULTI_TENANT_MODE` | `true` | Enable multi-tenancy (set false for single-tenant) |
+| `DEFAULT_TENANT_ID` | `00000000-0000-0000-0000-000000000001` | Default tenant UUID |
+| `TENANT_HEADER` | `X-Tenant-ID` | Header name for tenant identification |
+| `TENANT_ISOLATION_STRICT` | `true` | Reject requests without valid tenant header |
+| `TENANT_AUTO_CREATE` | `false` | Auto-create tenant on first request |
+
+### Tenant Management API
+
+```bash
+# List tenants
+curl $API/api/v1/tenants \
+  -H "Authorization: Bearer $SUPERADMIN_TOKEN"
+
+# Create tenant
+curl -X POST $API/api/v1/tenants \
+  -H "Authorization: Bearer $SUPERADMIN_TOKEN" \
+  -d '{
+    "name": "Acme Corp",
+    "tier": "pro",
+    "features": {
+      "webauthn": true,
+      "saml": true
+    }
+  }'
+
+# Configure tenant-specific rate limits
+curl -X PUT $API/api/v1/tenants/$TENANT_ID \
+  -H "Authorization: Bearer $SUPERADMIN_TOKEN" \
+  -d '{
+    "rate_limits": {
+      "auth_endpoints": "20/min",
+      "crud_endpoints": "60/min"
+    }
+  }'
+```
+
+### Single-Tenant Mode
+
+For deployments that don't need multi-tenancy:
+
+```bash
+MULTI_TENANT_MODE=false
+DEFAULT_TENANT_ID=00000000-0000-0000-0000-000000000001
+```
+
+In single-tenant mode:
+- The `X-Tenant-ID` header becomes optional
+- RLS still applies but with a fixed tenant_id
+- All data belongs to the default tenant
+
+---
+
 ## DATABASE_URL Format
 
 Auth, Identity, and OAuth services use `DATABASE_URL`:
