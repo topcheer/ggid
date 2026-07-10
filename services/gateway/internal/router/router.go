@@ -223,18 +223,26 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// --- Admin API ---
-	if r.URL.Path == "/api/v1/admin/routes" && r.Method == http.MethodGet {
-		gw.handleAdminRoutes(w, r)
-		return
-	}
-	if r.URL.Path == "/api/v1/admin/stats" && r.Method == http.MethodGet {
-		gw.handleAdminStats(w, r)
-		return
-	}
-	if strings.HasPrefix(r.URL.Path, "/api/v1/admin/routes") && strings.HasSuffix(r.URL.Path, "/toggle") && r.Method == http.MethodPost {
-		gw.handleAdminToggleRoute(w, r)
-		return
+	// --- Admin API (requires admin scope) ---
+	if strings.HasPrefix(r.URL.Path, "/api/v1/admin/") {
+		if !gw.hasAdminScope(r) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "admin scope required"})
+			return
+		}
+		if r.URL.Path == "/api/v1/admin/routes" && r.Method == http.MethodGet {
+			gw.handleAdminRoutes(w, r)
+			return
+		}
+		if r.URL.Path == "/api/v1/admin/stats" && r.Method == http.MethodGet {
+			gw.handleAdminStats(w, r)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/toggle") && r.Method == http.MethodPost {
+			gw.handleAdminToggleRoute(w, r)
+			return
+		}
 	}
 
 	// --- Gateway management API ---
@@ -529,6 +537,17 @@ type BackendStats struct {
 }
 
 // handleAdminRoutes returns all route configurations with enabled state.
+// hasAdminScope checks if the request has admin scope in JWT claims.
+func (gw *Gateway) hasAdminScope(r *http.Request) bool {
+	claims := middleware.ExtractJWTClaims(r)
+	for _, s := range claims.Scopes {
+		if s == "admin" || s == "ggid:admin" {
+			return true
+		}
+	}
+	return false
+}
+
 func (gw *Gateway) handleAdminRoutes(w http.ResponseWriter, _ *http.Request) {
 	gw.mu.RLock()
 	defer gw.mu.RUnlock()
