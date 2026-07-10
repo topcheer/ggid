@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,6 +16,8 @@ import {
   Moon,
   Globe,
   Server,
+  X,
+  Menu,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
@@ -23,6 +26,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
   const { locale, setLocale, t } = useI18n();
+  const [collapsed, setCollapsed] = useState(false);
 
   const navItems = [
     { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
@@ -37,8 +41,17 @@ export function Sidebar() {
   ];
 
   return (
+    <>
+      {collapsed && (
+        <button
+          onClick={() => setCollapsed(false)}
+          className="fixed left-4 top-4 z-50 rounded-lg border border-gray-200 bg-white p-2 shadow-md dark:border-gray-700 dark:bg-gray-800 md:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
     <aside
-      className="flex flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+      className={`${collapsed ? "hidden" : "flex"} flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 md:flex lg:flex`}
       style={{ width: "var(--sidebar-width)" }}
     >
       <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6 dark:border-gray-800">
@@ -46,6 +59,9 @@ export function Sidebar() {
           G
         </div>
         <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">GGID</span>
+        <button onClick={() => setCollapsed(true)} className="ml-auto md:hidden text-gray-400">
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       <nav className="flex-1 space-y-1 p-3">
@@ -104,5 +120,6 @@ export function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   );
 }
