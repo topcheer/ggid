@@ -357,3 +357,89 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 
 // MFAService returns the MFA service for direct access (setup, verify, disable).
 func (s *AuthService) MFAService() *MFAService { return s.mfaService }
+
+// SocialLogin authenticates a user via a social provider's UserInfo.
+// It handles three cases:
+//  1. External identity already linked → look up user, issue JWT
+//  2. Email matches existing user → link identity to that user, issue JWT
+//  3. No match → JIT-provision a new user + link identity, issue JWT
+func (s *AuthService) SocialLogin(ctx context.Context, provider, externalID, email, name, avatarURL, ip, userAgent string) (*domain.TokenSet, error) {
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("tenant context required: %w", err)
+	}
+
+	metadata := map[string]any{
+		"provider":  provider,
+		"email":     email,
+		"name":      name,
+		"avatar":    avatarURL,
+	}
+
+	var userID uuid.UUID
+
+	// 1. Check if external identity is already linked.
+	link, err := s.identityClient.FindExternalIdentity(ctx, tc.TenantID, provider, externalID)
+	if err != nil {
+		return nil, fmt.Errorf("find external identity: %w", err)
+	}
+	if link != nil {
+		userID = link.UserID
+	} else if email != "" {
+		// 2. Try to match by email.
+		existingUser, err := s.identityClient.GetUser(ctx, tc.TenantID, email)
+		if err == nil && existingUser != nil {
+			// Link the social identity to this existing user.
+			if err := s.identityClient.LinkExternalIdentity(ctx, tc.TenantID, existingUser.ID, provider, externalID, metadata); err != nil {
+				return nil, fmt.Errorf("link external identity: %w", err)
+			}
+			userID = existingUser.ID
+		}
+	}
+
+	// 3. No match — JIT-provision a new user.
+	if userID == uuid.Nil {
+		// Generate username from provider + externalID (truncated to 60 chars).
+		username := provider + "_" + externalID
+		if len(username) > 60 {
+			username = username[:60]
+		}
+
+		newUser, err := s.identityClient.CreateUserFromSocial(ctx, tc.TenantID, username, email, name, provider, externalID, metadata)
+		if err != nil {
+			return nil, fmt.Errorf("create user from social: %w", err)
+		}
+		userID = newUser.ID
+	}
+
+	// 4. Create session.
+	_, session, err := s.sessionService.Create(ctx, CreateSessionParams{
+		TenantID:  tc.TenantID,
+		UserID:    userID,
+		IPAddress: ip,
+		UserAgent: userAgent,
+		TTL:       24 * time.Hour,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+
+	// 5. Issue JWT tokens.
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("issue access token: %w", err)
+	}
+
+	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tc.TenantID, userID, session.ID)
+	if err != nil {
+		return nil, fmt.Errorf("issue refresh token: %w", err)
+	}
+
+	return &domain.TokenSet{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    expiresIn,
+		SessionID:    session.ID.String(),
+	}, nil
+}

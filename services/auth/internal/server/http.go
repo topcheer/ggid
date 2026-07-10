@@ -622,13 +622,16 @@ func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provide
 
 	log.Printf("social login success: provider=%s external_id=%s email=%s", userInfo.Provider, userInfo.ExternalID, userInfo.Email)
 
-	// Return user info — the frontend will use this to complete login
-	// (either link to existing user or JIT-provision a new one)
-	writeJSON(w, http.StatusOK, map[string]any{
-		"provider":   userInfo.Provider,
-		"external_id": userInfo.ExternalID,
-		"email":       userInfo.Email,
-		"name":        userInfo.Name,
-		"avatar_url":  userInfo.AvatarURL,
-	})
+	// Complete social login: JIT-provision or link identity, then issue JWT.
+	ip := clientIP(r)
+	userAgent := r.Header.Get("User-Agent")
+
+	tokens, err := h.authSvc.SocialLogin(r.Context(), userInfo.Provider, userInfo.ExternalID, userInfo.Email, userInfo.Name, userInfo.AvatarURL, ip, userAgent)
+	if err != nil {
+		log.Printf("social login completion error (%s): %v", provider, err)
+		writeError(w, http.StatusInternalServerError, "social login failed")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, tokens)
 }
