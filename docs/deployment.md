@@ -461,3 +461,242 @@ Forward to ELK/Loki/Datadog via Docker logging driver or Fluent Bit.
 - [ ] **Backup RSA keys** — store in Vault/Secrets Manager
 - [ ] **Configure retention** — set audit log retention (default: 90 days)
 - [ ] **Monitor failed logins** — alert on spike in 401 responses
+
+---
+
+## Secrets Management with Vault
+
+### HashiCorp Vault Integration
+
+```bash
+# Install Vault (quick start)
+brew install hashicorp/tap/vault
+vault server -dev -dev-root-token-id=root
+
+# Store GGID secrets
+vault kv put secret/ggid \
+  postgres_password="$(openssl rand -base64 32)" \
+  redis_password="$(openssl rand -base64 24)" \
+  jwt_private_key="$(cat rsa_private.pem)" \
+  ldap_bind_password="YourLDAPBindPassword"
+
+# Verify
+vault kv get secret/ggid
+```
+
+### External Secrets Operator (Kubernetes)
+
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: ggid-secrets
+  namespace: ggid
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: ggid-secrets
+  data:
+    - secretKey: POSTGRES_PASSWORD
+      remoteRef:
+        key: secret/ggid
+        property: postgres_password
+    - secretKey: JWT_PRIVATE_KEY
+      remoteRef:
+        key: secret/ggid
+        property: jwt_private_key
+```
+
+### SOPS (Mozilla SOPS) Alternative
+
+```bash
+# Encrypt secrets file
+sops --encrypt --in-place deploy/secrets.yaml
+
+# Decrypt at deploy time
+sops --decrypt deploy/secrets.yaml | kubectl apply -f -
+```
+
+### Secret Rotation Schedule
+
+| Secret | Rotation Period | Method |
+|--------|----------------|--------|
+| JWT signing keys | 90 days | Key overlap window (old + new valid) |
+| PostgreSQL password | 6 months | Rotate via `ALTER USER` + restart |
+| Redis password | 6 months | Rotate via config + rolling restart |
+| LDAP bind password | Per LDAP policy | Coordinate with directory admin |
+| API keys | 365 days (max) | User-initiated or auto-expire |
+
+---
+
+## Connection Pool Tuning
+
+Each GGID service uses `pgxpool` for PostgreSQL connections. Proper sizing
+prevents connection exhaustion under load.
+
+### pgxpool Configuration
+
+```go
+// Recommended pool settings per service
+pool, err := pgxpool.New(ctx, connString, pgxpool.WithMaxConns(20),
+    pgxpool.WithMinConns(5),
+    pgxpool.WithMaxConnLifetime(30*time.Minute),
+    pgxpool.WithMaxConnIdleTime(5*time.Minute),
+    pgxpool.WithHealthCheckPeriod(30*time.Second),
+)
+```
+
+### Per-Service Pool Sizing
+
+| Service | Max Conns | Min Conns | Rationale |
+|---------|-----------|-----------|-----------|
+| Gateway | 5 | 2 | Rarely queries DB directly |
+| Auth | 20 | 5 | Heavy credential lookups |
+| Identity | 15 | 5 | User CRUD |
+| OAuth | 10 | 3 | Moderate DB usage |
+| Policy | 15 | 5 | Policy lookups on every request |
+| Org | 10 | 3 | Lower traffic |
+| Audit | 10 | 3 | Append-heavy |
+
+### PostgreSQL max_connections Calculation
+
+```sql
+-- Total pool connections = sum of all service Max Conns
+-- Auth: 20 + Identity: 15 + Policy: 15 + OAuth: 10 + Org: 10 + Audit: 10 + Gateway: 5 = 85
+-- Add 20% headroom for migrations/admin connections
+-- Required: max_connections >= 85 * 1.2 = 102
+
+SHOW max_connections;
+-- Default: 100 → Increase to 120+ for production
+ALTER SYSTEM SET max_connections = 120;
+```
+
+### Redis Connection Pooling
+
+```go
+// Redis pool settings
+rdb := redis.NewClient(&redis.Options{
+    Addr:         "redis:6379",
+    PoolSize:     20,
+    MinIdleConns: 5,
+    MaxRetries:   3,
+    DialTimeout:  5 * time.Second,
+    ReadTimeout:  3 * time.Second,
+    WriteTimeout: 3 * time.Second,
+})
+```
+
+---
+
+## Monitoring with Prometheus + Grafana
+
+### Prometheus scrape targets
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'ggid'
+    static_configs:
+      - targets:
+        - 'gateway:8080'    # /metrics endpoint
+        - 'auth:9001'
+        - 'identity:8081'
+        - 'oauth:9005'
+        - 'policy:8070'
+        - 'org:8071'
+        - 'audit:8072'
+    metrics_path: /metrics
+    scrape_interval: 15s
+```
+
+### Key Metrics to Monitor
+
+| Metric | Type | Alert Threshold |
+|--------|------|-----------------|
+| `http_requests_total` | Counter | — |
+| `http_request_duration_seconds` | Histogram | p95 > 500ms |
+| `http_requests_failed_total` | Counter | rate > 10/min |
+| `ggid_login_attempts_total` | Counter | — |
+| `ggid_login_failures_total` | Counter | rate > 50/min (brute force) |
+| `pgxpool_acquired_conns` | Gauge | > MaxConns * 0.9 |
+| `redis_commands_total` | Counter | — |
+| `nats_jetstream_pending_messages` | Gauge | > 1000 (consumer lag) |
+| `go_goroutines` | Gauge | > 1000 per pod (leak) |
+| `go_memstats_alloc_bytes` | Gauge | trending up (leak) |
+
+### Grafana Dashboard JSON
+
+```json
+{
+  "dashboard": {
+    "title": "GGID IAM Platform",
+    "panels": [
+      {
+        "title": "Request Rate (RPS)",
+        "targets": [{"expr": "rate(http_requests_total{job=\"ggid\"}[1m])"}],
+        "type": "graph"
+      },
+      {
+        "title": "Request Latency p95",
+        "targets": [{"expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"}],
+        "type": "graph"
+      },
+      {
+        "title": "Login Failures",
+        "targets": [{"expr": "rate(ggid_login_failures_total[1m])"}],
+        "type": "graph"
+      },
+      {
+        "title": "DB Pool Usage",
+        "targets": [{"expr": "pgxpool_acquired_conns"}],
+        "type": "gauge"
+      },
+      {
+        "title": "NATS Consumer Lag",
+        "targets": [{"expr": "nats_jetstream_pending_messages"}],
+        "type": "graph"
+      },
+      {
+        "title": "Error Rate (5xx)",
+        "targets": [{"expr": "rate(http_requests_total{status=~\"5..\"}[1m])"}],
+        "type": "graph"
+      }
+    ]
+  }
+}
+```
+
+### Alerting Rules
+
+```yaml
+# alerts.yml
+groups:
+  - name: ggid
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 2m
+        annotations:
+          summary: "5xx error rate > 5% for 2 minutes"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        annotations:
+          summary: "p95 latency > 500ms for 5 minutes"
+
+      - alert: BruteForceDetected
+        expr: rate(ggid_login_failures_total[1m]) > 50
+        for: 2m
+        annotations:
+          summary: "Possible brute-force attack (>50 login failures/min)"
+
+      - alert: DBPoolExhaustion
+        expr: pgxpool_acquired_conns / pgxpool_max_conns > 0.9
+        for: 1m
+        annotations:
+          summary: "DB connection pool > 90% utilized"
+```
