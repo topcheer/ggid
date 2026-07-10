@@ -4,6 +4,7 @@
 package httpserver
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/csv"
@@ -27,6 +28,7 @@ type retentionConfig struct {
 	mu         sync.RWMutex
 	days       int
 	lastRun    time.Time
+	lastDeleted int64
 	enabled    bool
 }
 
@@ -42,6 +44,41 @@ func NewHTTPServer(svc *service.AuditService) *HTTPServer {
 	h.retention.days = 90 // default 90-day retention
 	h.retention.enabled = true
 	return h
+}
+
+// StartRetentionCleanup launches a background goroutine that periodically
+// deletes audit events older than the configured retention period.
+// Default interval is 1 hour. The goroutine exits when ctx is cancelled.
+func (s *HTTPServer) StartRetentionCleanup(ctx context.Context, interval time.Duration) {
+	if interval <= 0 {
+		interval = time.Hour
+	}
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.retention.mu.RLock()
+				enabled := s.retention.enabled
+				days := s.retention.days
+				s.retention.mu.RUnlock()
+				if !enabled {
+					continue
+				}
+				deleted, err := s.svc.CleanupOldEvents(ctx, days)
+				if err != nil {
+					continue
+				}
+				s.retention.mu.Lock()
+				s.retention.lastRun = time.Now().UTC()
+				s.retention.lastDeleted = deleted
+				s.retention.mu.Unlock()
+			}
+		}
+	}()
 }
 
 // RegisterRoutes registers all Audit Service HTTP routes on the given mux.
@@ -850,6 +887,7 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 		}
 		if !s.retention.lastRun.IsZero() {
 			resp["last_cleanup"] = s.retention.lastRun.UTC().Format(time.RFC3339)
+			resp["last_deleted_count"] = s.retention.lastDeleted
 		}
 		writeJSON(w, http.StatusOK, resp)
 
@@ -893,6 +931,7 @@ func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
 
 		s.retention.mu.Lock()
 		s.retention.lastRun = time.Now().UTC()
+		s.retention.lastDeleted = deleted
 		s.retention.mu.Unlock()
 
 		writeJSON(w, http.StatusOK, map[string]any{

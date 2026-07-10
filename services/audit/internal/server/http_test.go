@@ -1113,3 +1113,114 @@ func TestHandleWebhooks_MethodNotAllowed(t *testing.T) {
 		t.Fatalf("expected 405, got %d", w.Code)
 	}
 }
+
+// --- Scheduled Cleanup Tests ---
+
+func TestStartRetentionCleanup_RunsPeriodically(t *testing.T) {
+	repo := &mockRepo{cleanupN: 3}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Start with 50ms interval for fast testing
+	srv.StartRetentionCleanup(ctx, 50*time.Millisecond)
+
+	// Wait for at least 2 ticks
+	time.Sleep(200 * time.Millisecond)
+
+	srv.retention.mu.RLock()
+	defer srv.retention.mu.RUnlock()
+	if srv.retention.lastRun.IsZero() {
+		t.Fatal("expected lastRun to be set after ticker fired")
+	}
+	if srv.retention.lastDeleted != 3 {
+		t.Fatalf("expected lastDeleted=3, got %d", srv.retention.lastDeleted)
+	}
+}
+
+func TestStartRetentionCleanup_DisabledSkipsCleanup(t *testing.T) {
+	repo := &mockRepo{cleanupN: 10}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+	srv.retention.enabled = false
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	srv.StartRetentionCleanup(ctx, 50*time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
+
+	srv.retention.mu.RLock()
+	defer srv.retention.mu.RUnlock()
+	if !srv.retention.lastRun.IsZero() {
+		t.Fatal("expected lastRun to remain zero when disabled")
+	}
+}
+
+func TestStartRetentionCleanup_ContextCancelStops(t *testing.T) {
+	repo := &mockRepo{cleanupN: 1}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	srv.StartRetentionCleanup(ctx, 50*time.Millisecond)
+
+	// Let it tick once
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	// Wait a bit more, verify it stopped (no panic, no deadlock)
+	time.Sleep(100 * time.Millisecond)
+
+	srv.retention.mu.RLock()
+	ran := srv.retention.lastRun
+	srv.retention.mu.RUnlock()
+
+	if ran.IsZero() {
+		t.Fatal("expected at least one cleanup run before cancel")
+	}
+}
+
+func TestStartRetentionCleanup_DefaultInterval(t *testing.T) {
+	// Passing interval=0 should use default (1h) without panic
+	repo := &mockRepo{cleanupN: 0}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// This should not panic with zero/negative interval
+	srv.StartRetentionCleanup(ctx, 0)
+	time.Sleep(50 * time.Millisecond)
+	// Just verify no panic occurred
+}
+
+func TestHandleRetention_Get_LastDeletedCount(t *testing.T) {
+	repo := &mockRepo{cleanupN: 7}
+	svc := service.NewAuditService(repo)
+	srv := NewHTTPServer(svc)
+
+	// Run manual cleanup to set lastDeleted
+	w := doRequest(srv, "POST", "/api/v1/audit/retention?days=30", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	// Now GET should include last_deleted_count
+	w = doRequest(srv, "GET", "/api/v1/audit/retention", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var resp map[string]any
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if resp["last_deleted_count"] == nil {
+		t.Fatal("expected last_deleted_count in response")
+	}
+	if int(resp["last_deleted_count"].(float64)) != 7 {
+		t.Fatalf("expected last_deleted_count=7, got %v", resp["last_deleted_count"])
+	}
+}
