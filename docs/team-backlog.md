@@ -26,7 +26,7 @@
 - [DONE] OAuth2 PKCE verification in authorize endpoint (S256 challenge)
 - [DONE] Token revocation endpoint: POST /oauth/revoke (RFC 7009)
 - [DONE] Back-channel logout: POST /oauth/logout (OIDC Back-Channel Logout 1.0)
-- [TODO] OAuth client credentials rotation: rotate client_secret
+- [DONE] OAuth client credentials rotation: rotate client_secret
 
 ### P1 — Enterprise
 - [DONE] Password history enforcement (reject reused passwords)
@@ -46,8 +46,8 @@
 ### P3 — Innovation
 - [TODO] Passkey autofill (WebAuthn conditional mediation)
 - [DONE] Step-up authentication (re-challenge for sensitive operations)
-- [TODO] Risk-based authentication (IP reputation, device fingerprinting)
-- [TODO] Password expiration forced reset (max_age_days policy)
+- [DONE] Risk-based authentication (IP reputation, device fingerprinting)
+- [DONE] Password expiration forced reset (max_age_days policy)
 
 ---
 

@@ -668,6 +668,41 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 
 // --- Utility functions ---
 
+// RotateClientSecret generates a new client secret, replacing the old one.
+// The old secret is immediately invalidated. Returns the new plaintext secret.
+// This follows OAuth2 client secret rotation best practices.
+func (s *OAuthService) RotateClientSecret(ctx context.Context, tenantID uuid.UUID, clientID, oldSecret string) (string, error) {
+	// 1. Look up the client.
+	client, err := s.clientRepo.GetClientByID(ctx, tenantID, clientID)
+	if err != nil {
+		return "", errors.Unauthenticated("client not found")
+	}
+
+	// 2. Verify old secret for confidential clients.
+	if client.IsConfidential() {
+		ok, _ := crypto.VerifyPassword(oldSecret, client.ClientSecretHash)
+		if !ok {
+			return "", errors.Unauthenticated("invalid client credentials — old secret does not match")
+		}
+	}
+
+	// 3. Generate new secret.
+	newSecret := generateClientSecret()
+	hash, err := crypto.HashPassword(newSecret)
+	if err != nil {
+		return "", errors.Internal("hash client secret", err)
+	}
+
+	// 4. Update client with new secret hash.
+	client.ClientSecretHash = hash
+	_, err = s.clientRepo.UpdateClient(ctx, tenantID, clientID, client)
+	if err != nil {
+		return "", err
+	}
+
+	return newSecret, nil
+}
+
 // generateClientID generates a public client identifier.
 func generateClientID() string {
 	id, _ := crypto.GenerateRandomToken(16)

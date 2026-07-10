@@ -13,6 +13,7 @@ import (
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -58,6 +59,8 @@ func (m *mockClientRepo) UpdateClient(_ context.Context, _ uuid.UUID, clientID s
 	existing.RedirectURIs = client.RedirectURIs
 	existing.Scopes = client.Scopes
 	existing.Enabled = client.Enabled
+	existing.ClientSecretHash = client.ClientSecretHash
+	existing.UpdatedAt = time.Now()
 	return existing, nil
 }
 
@@ -669,3 +672,274 @@ func TestJoinScopes(t *testing.T) {
 
 // Suppress unused imports.
 var _ = x509.MarshalPKIXPublicKey
+
+// === Client Secret Rotation ===
+
+func TestRotateClientSecret_Success(t *testing.T) {
+	svc, clientRepo, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	// Create a confidential client.
+	result, err := svc.CreateClient(context.Background(), &CreateClientInput{
+		TenantID:      tenantID,
+		Name:          "test-client",
+		Type:          domain.ClientTypeConfidential,
+		GrantTypes:    []string{"authorization_code"},
+		ResponseTypes: []string{"code"},
+		RedirectURIs:  []string{"https://example.com/cb"},
+		Scopes:        []string{"openid"},
+	})
+	if err != nil {
+		t.Fatalf("CreateClient: %v", err)
+	}
+	oldSecret := result.ClientSecret
+
+	// Rotate the secret.
+	newSecret, err := svc.RotateClientSecret(context.Background(), tenantID, result.Client.ClientID, oldSecret)
+	if err != nil {
+		t.Fatalf("RotateClientSecret: %v", err)
+	}
+	if newSecret == "" {
+		t.Error("expected non-empty new secret")
+	}
+	if newSecret == oldSecret {
+		t.Error("new secret should differ from old")
+	}
+
+	// Verify old secret no longer works.
+	stored := clientRepo.clients[result.Client.ClientID]
+	ok, _ := crypto.VerifyPassword(oldSecret, stored.ClientSecretHash)
+	if ok {
+		t.Error("old secret should no longer match after rotation")
+	}
+	ok, _ = crypto.VerifyPassword(newSecret, stored.ClientSecretHash)
+	if !ok {
+		t.Error("new secret should match after rotation")
+	}
+}
+
+func TestRotateClientSecret_WrongOldSecret(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	result, _ := svc.CreateClient(context.Background(), &CreateClientInput{
+		TenantID:      tenantID,
+		Name:          "test-client",
+		Type:          domain.ClientTypeConfidential,
+		GrantTypes:    []string{"authorization_code"},
+		ResponseTypes: []string{"code"},
+		RedirectURIs:  []string{"https://example.com/cb"},
+	})
+
+	_, err := svc.RotateClientSecret(context.Background(), tenantID, result.Client.ClientID, "wrong-old-secret")
+	if err == nil {
+		t.Error("expected error for wrong old secret")
+	}
+}
+
+func TestRotateClientSecret_NotFound(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	_, err := svc.RotateClientSecret(context.Background(), tenantID, "nonexistent", "secret")
+	if err == nil {
+		t.Error("expected error for non-existent client")
+	}
+}
+
+// === ClaimRulesEngine ===
+
+func TestClaimRulesEngine_ApplyRules(t *testing.T) {
+	engine := NewClaimRulesEngine([]ClaimRule{
+		{ClaimName: "department", SourceAttr: "dept", Default: "engineering"},
+		{ClaimName: "cost_center", SourceAttr: "cc", Default: "1000"},
+	})
+
+	claims := jwt.MapClaims{}
+	userAttrs := map[string]any{
+		"dept": "sales",
+		// cc is missing — should use default.
+	}
+
+	engine.ApplyRules(claims, userAttrs)
+
+	if claims["department"] != "sales" {
+		t.Errorf("expected department='sales', got %v", claims["department"])
+	}
+	if claims["cost_center"] != "1000" {
+		t.Errorf("expected cost_center='1000', got %v", claims["cost_center"])
+	}
+}
+
+func TestClaimRulesEngine_NoOverwrite(t *testing.T) {
+	engine := NewClaimRulesEngine([]ClaimRule{
+		{ClaimName: "sub", SourceAttr: "uid", Default: "default"},
+	})
+
+	claims := jwt.MapClaims{"sub": "existing"}
+	engine.ApplyRules(claims, map[string]any{"uid": "override"})
+
+	if claims["sub"] != "existing" {
+		t.Error("should not overwrite existing claims")
+	}
+}
+
+func TestClaimRulesEngine_AddRule(t *testing.T) {
+	engine := NewClaimRulesEngine(nil)
+	engine.AddRule(ClaimRule{ClaimName: "custom", Default: "val"})
+
+	claims := jwt.MapClaims{}
+	engine.ApplyRules(claims, nil)
+
+	if claims["custom"] != "val" {
+		t.Error("AddRule should add a working rule")
+	}
+}
+
+// === Revoke Token ===
+
+func TestRevokeToken_Empty(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	// Empty token should return nil (RFC 7009 compliance).
+	if err := svc.RevokeToken(""); err != nil {
+		t.Errorf("expected nil for empty token, got %v", err)
+	}
+}
+
+func TestIsTokenRevoked_NotRevoked(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	if svc.IsTokenRevoked("some-random-token") {
+		t.Error("token should not be revoked")
+	}
+}
+
+// === Client Credentials Grant ===
+
+func TestClientCredentials_Success(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	result, _ := svc.CreateClient(context.Background(), &CreateClientInput{
+		TenantID:   tenantID,
+		Name:       "m2m-client",
+		Type:       domain.ClientTypeConfidential,
+		GrantTypes: []string{"client_credentials"},
+		Scopes:     []string{"read", "write"},
+	})
+
+	resp, err := svc.ClientCredentials(context.Background(), &ClientCredentialsRequest{
+		TenantID:     tenantID,
+		ClientID:     result.Client.ClientID,
+		ClientSecret: result.ClientSecret,
+		Scope:        []string{"read"},
+	})
+	if err != nil {
+		t.Fatalf("ClientCredentials: %v", err)
+	}
+	if resp.AccessToken == "" {
+		t.Error("expected non-empty access token")
+	}
+	if resp.TokenType != "Bearer" {
+		t.Errorf("expected Bearer, got %s", resp.TokenType)
+	}
+}
+
+func TestClientCredentials_WrongSecret(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	result, _ := svc.CreateClient(context.Background(), &CreateClientInput{
+		TenantID:   tenantID,
+		Name:       "m2m-client",
+		Type:       domain.ClientTypeConfidential,
+		GrantTypes: []string{"client_credentials"},
+	})
+
+	_, err := svc.ClientCredentials(context.Background(), &ClientCredentialsRequest{
+		TenantID:     tenantID,
+		ClientID:     result.Client.ClientID,
+		ClientSecret: "wrong-secret",
+	})
+	if err == nil {
+		t.Error("expected error for wrong secret")
+	}
+}
+
+func TestClientCredentials_UnsupportedGrant(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	result, _ := svc.CreateClient(context.Background(), &CreateClientInput{
+		TenantID:   tenantID,
+		Name:       "auth-code-only",
+		Type:       domain.ClientTypeConfidential,
+		GrantTypes: []string{"authorization_code"}, // no client_credentials
+	})
+
+	_, err := svc.ClientCredentials(context.Background(), &ClientCredentialsRequest{
+		TenantID:     tenantID,
+		ClientID:     result.Client.ClientID,
+		ClientSecret: result.ClientSecret,
+	})
+	if err == nil {
+		t.Error("expected error for unsupported grant type")
+	}
+}
+
+// === Refresh Token Grant ===
+
+func TestRefreshToken_InvalidToken(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	_, err := svc.RefreshToken(context.Background(), &RefreshTokenRequest{
+		TenantID:     tenantID,
+		RefreshToken: "invalid",
+		ClientID:     "nonexistent",
+	})
+	if err == nil {
+		t.Error("expected error for invalid refresh token")
+	}
+}
+
+// === SAML Token ===
+
+func TestIssueSAMLToken(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+
+	token, _, err := svc.IssueSAMLToken(tenantID, "nameid@example.com", "user@example.com", "John Doe")
+	if err != nil {
+		t.Fatalf("IssueSAMLToken: %v", err)
+	}
+	if token == "" {
+		t.Error("expected non-empty SAML token")
+	}
+}
+
+// === DefaultIfEmpty ===
+
+func TestDefaultIfEmpty(t *testing.T) {
+	if defaultIfEmpty("", "default") != "default" {
+		t.Error("expected 'default' for empty string")
+	}
+	if defaultIfEmpty("value", "default") != "value" {
+		t.Error("expected 'value' for non-empty string")
+	}
+}
+
+// === issueIDToken test ===
+
+func TestIssueIDToken(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	tenantID := uuid.New()
+	userID := uuid.New()
+
+	token, err := svc.issueIDToken(userID, tenantID, "test-client", "nonce123")
+	if err != nil {
+		t.Fatalf("issueIDToken: %v", err)
+	}
+	if token == "" {
+		t.Error("expected non-empty ID token")
+	}
+}
