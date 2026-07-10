@@ -493,3 +493,89 @@ curl $API/api/v1/webhooks/$WEBHOOK_ID/deliveries \
   }
 ]
 ```
+
+---
+
+## Event Type Categories
+
+### User Events
+
+| Event | Trigger | Payload Fields |
+|-------|---------|----------------|
+| `user.created` | New user registered | `user_id`, `username`, `email`, `source` |
+| `user.updated` | Profile modified | `user_id`, `changes`, `updated_by` |
+| `user.deleted` | User account deleted | `user_id`, `deleted_by`, `hard_delete` |
+| `user.activated` | Account activated | `user_id`, `activated_by` |
+| `user.deactivated` | Account deactivated | `user_id`, `reason`, `deactivated_by` |
+| `user.locked` | Account locked (failed attempts) | `user_id`, `source_ip`, `failed_attempts` |
+| `user.unlocked` | Account unlocked | `user_id`, `unlocked_by` |
+
+### Authentication Events
+
+| Event | Trigger | Payload Fields |
+|-------|---------|----------------|
+| `user.login` | Successful login | `user_id`, `source_ip`, `method`, `mfa_used` |
+| `user.login.failed` | Failed login attempt | `username`, `source_ip`, `reason` |
+| `user.logout` | User logged out | `user_id`, `session_id` |
+| `user.password.changed` | Password changed | `user_id`, `changed_by`, `mfa_verified` |
+| `user.password.reset` | Password reset | `user_id`, `reset_method` |
+| `user.mfa.enabled` | MFA factor enrolled | `user_id`, `method` (totp/sms/webauthn) |
+| `user.mfa.disabled` | MFA factor removed | `user_id`, `method`, `disabled_by` |
+
+### OAuth Events
+
+| Event | Trigger | Payload Fields |
+|-------|---------|----------------|
+| `oauth.token.issued` | Access token issued | `client_id`, `user_id`, `grant_type`, `scopes` |
+| `oauth.token.refreshed` | Refresh token rotated | `client_id`, `user_id`, `family_id` |
+| `oauth.token.revoked` | Token revoked | `client_id`, `user_id`, `reason` |
+| `oauth.token.reuse_detected` | Refresh token reuse | `client_id`, `user_id`, `family_id` |
+| `oauth.consent.granted` | User granted consent | `user_id`, `client_id`, `scopes` |
+| `oauth.consent.revoked` | User revoked consent | `user_id`, `client_id` |
+| `oauth.client.created` | New OAuth client registered | `client_id`, `name`, `created_by` |
+
+### Audit Events
+
+| Event | Trigger | Payload Fields |
+|-------|---------|----------------|
+| `audit.query` | Audit log queried | `queried_by`, `filters`, `result_count` |
+| `audit.export` | Audit log exported | `exported_by`, `format`, `date_range` |
+| `admin.config.changed` | Tenant config modified | `changed_by`, `section`, `changes` |
+| `admin.impersonation.started` | Admin started impersonation | `admin_id`, `target_user_id`, `reason` |
+| `admin.impersonation.ended` | Admin stopped impersonation | `admin_id`, `target_user_id`, `duration` |
+
+### Event Payload Example (OAuth)
+
+```json
+{
+  "event": "oauth.token.reuse_detected",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "client_id": "web-app",
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "family_id": "fam-abc-123",
+    "revoked_token_count": 3,
+    "source_ip": "192.168.1.50",
+    "severity": "critical"
+  }
+}
+```
+
+### Filtering Events
+
+Webhook registrations can filter by event category:
+
+```bash
+curl -X PATCH https://iam.example.com/api/v1/auth/hooks/{id} \
+  -d '{
+    "events": [
+      "user.login",
+      "user.login.failed",
+      "oauth.token.reuse_detected",
+      "admin.impersonation.*"
+    ]
+  }'
+```
+
+Wildcards (`*`) match all events in a category.
