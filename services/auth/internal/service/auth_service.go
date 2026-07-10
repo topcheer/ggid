@@ -358,6 +358,9 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 // MFAService returns the MFA service for direct access (setup, verify, disable).
 func (s *AuthService) MFAService() *MFAService { return s.mfaService }
 
+// PasswordPolicy returns the current password policy configuration.
+func (s *AuthService) PasswordPolicy() conf.PasswordPolicy { return s.cfg.Password }
+
 // SocialLogin authenticates a user via a social provider's UserInfo.
 // It handles three cases:
 //  1. External identity already linked → look up user, issue JWT

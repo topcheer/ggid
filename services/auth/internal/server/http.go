@@ -47,6 +47,9 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
 
+	// Password policy config endpoint
+	h.mux.HandleFunc("/api/v1/auth/password/policy", h.passwordPolicy)
+
 	// Social login endpoints
 	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
 
@@ -469,6 +472,13 @@ func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, tokens)
+}
+
+// --- Password Policy ---
+
+func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
+	policy := h.authSvc.PasswordPolicy()
+	writeJSON(w, http.StatusOK, policy)
 }
 
 // --- Helpers ---

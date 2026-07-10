@@ -47,14 +47,15 @@ type JWTConfig struct {
 }
 
 type PasswordPolicy struct {
-	MinLength      int  `yaml:"min_length"`
-	RequireUpper   bool `yaml:"require_upper"`
-	RequireLower   bool `yaml:"require_lower"`
-	RequireDigit   bool `yaml:"require_digit"`
-	RequireSpecial bool `yaml:"require_special"`
-	HistoryCount   int  `yaml:"history_count"`
-	MaxAttempts    int  `yaml:"max_attempts"`
+	MinLength      int           `yaml:"min_length"`
+	RequireUpper   bool          `yaml:"require_upper"`
+	RequireLower   bool          `yaml:"require_lower"`
+	RequireDigit   bool          `yaml:"require_digit"`
+	RequireSpecial bool          `yaml:"require_special"`
+	HistoryCount   int           `yaml:"history_count"`
+	MaxAttempts    int           `yaml:"max_attempts"`
 	LockDuration   time.Duration `yaml:"lock_duration"`
+	MaxAgeDays     int           `yaml:"max_age_days"`
 }
 
 type RateLimitConfig struct {

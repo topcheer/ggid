@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/auth/internal/conf"
@@ -50,7 +51,7 @@ func (ps *PasswordService) Validate(password string) error {
 		return ErrPasswordTooShort
 	}
 
-	var hasUpper, hasLower, hasDigit bool
+	var hasUpper, hasLower, hasDigit, hasSpecial bool
 	for _, ch := range password {
 		switch {
 		case 'A' <= ch && ch <= 'Z':
@@ -59,6 +60,8 @@ func (ps *PasswordService) Validate(password string) error {
 			hasLower = true
 		case '0' <= ch && ch <= '9':
 			hasDigit = true
+		case !unicode.IsLetter(ch) && !unicode.IsDigit(ch):
+			hasSpecial = true
 		}
 	}
 
@@ -71,7 +74,9 @@ func (ps *PasswordService) Validate(password string) error {
 	if ps.policy.RequireDigit && !hasDigit {
 		return ErrPasswordTooWeak
 	}
-	// RequireSpecial is optional (checked by ASCII non-alphanumeric presence)
+	if ps.policy.RequireSpecial && !hasSpecial {
+		return ErrPasswordTooWeak
+	}
 
 	return nil
 }
