@@ -726,6 +726,218 @@ docker exec ggid-auth cat /keys/active_kid.txt
 
 ---
 
+## LDAP Issues
+
+### Q: LDAP login returns "invalid credentials" for all users
+
+**Cause:** LDAP bind DN or password is incorrect, or the user filter doesn't
+match the LDAP schema.
+
+**Fix:**
+
+```bash
+# 1. Verify LDAP server is reachable
+docker exec ggid-auth sh -c 'ldapsearch -x -H "$LDAP_URL" -D "$LDAP_BIND_DN" -w "$LDAP_BIND_PASSWORD" -b "$LDAP_BASE_DN" -s sub "(objectClass=person)" dn'
+
+# 2. Check auth service logs for LDAP errors
+docker compose logs auth | grep -i ldap
+
+# 3. Test with ldapsearch directly
+ldapsearch -x -H ldap://localhost:389 \
+  -D "cn=admin,dc=example,dc=com" \
+  -w "admin-password" \
+  -b "dc=example,dc=com" \
+  "(uid=testuser)" dn mail
+
+# 4. Verify the user filter matches your LDAP schema
+# Common patterns:
+#   OpenLDAP:    (uid=%s)
+#   Active Dir:  (sAMAccountName=%s)
+#   FreeIPA:     (uid=%s)
+```
+
+### Q: LDAP connection times out
+
+**Cause:** Network issue between auth container and LDAP server, or LDAP
+requires TLS.
+
+**Fix:**
+
+```bash
+# Check network connectivity
+docker exec ggid-auth wget -qO- --timeout=5 http://ldap:389 || echo "unreachable"
+
+# If using LDAPS (port 636), set LDAP_URL=ldaps://ldap:636
+# If using StartTLS, set LDAP_START_TLS=true
+
+# Verify TLS certificate is trusted (for LDAPS)
+openssl s_client -connect ldap:636 -showcerts
+```
+
+### Q: LDAP users get created but can't login afterwards
+
+**Cause:** `LDAP_AUTO_PROVISION` creates the user on first login, but the
+local credential isn't set.
+
+**Fix:** This is expected — LDAP users authenticate through LDAP, not local
+password. Ensure the LDAP provider is still in the auth chain. Verify:
+
+```bash
+# Check if user was provisioned
+curl $API/api/v1/users?username=ldapuser \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID"
+
+# Check auth provider chain includes LDAP
+docker compose logs auth | grep "provider chain"
+# Expected: "provider chain: local, ldap"
+```
+
+---
+
+## NATS JetStream Issues
+
+### Q: Audit events are not appearing in the SSE stream
+
+**Cause:** NATS JetStream may not be enabled, or the audit consumer is not
+connected.
+
+**Fix:**
+
+```bash
+# 1. Check NATS monitoring
+curl http://localhost:8222/jsz?enabled=true | jq '.enabled'
+# Expected: true
+
+# 2. Check if JetStream stream exists
+curl http://localhost:8222/jsz?streams=true | jq '.streams[].name'
+# Expected: ["GGID_EVENTS"]
+
+# 3. Check audit service is connected to NATS
+docker compose logs audit | grep -i nats
+# Expected: "connected to NATS at nats://nats:4222"
+
+# 4. Check consumer lag
+nats consumer info GGID_EVENTS audit-consumer --server nats://localhost:4222
+# Look at "Num Ack Pending" and "Num Redelivered"
+
+# 5. Restart the audit service if consumer is stuck
+docker compose restart audit
+```
+
+### Q: "stream not found" error in audit logs
+
+**Cause:** JetStream stream `GGID_EVENTS` was not created (NATS may have lost
+persistent storage, or JetStream wasn't enabled on first boot).
+
+**Fix:**
+
+```bash
+# Recreate the stream
+nats stream add GGID_EVENTS \
+  --subjects "ggid.events.>" \
+  --storage file \
+  --retention limits \
+  --max-age 7d \
+  --server nats://localhost:4222
+
+# Restart audit service to re-create consumer
+docker compose restart audit
+```
+
+### Q: NATS JetStream shows high consumer lag
+
+**Cause:** Audit service can't keep up with event ingestion, or consumer is
+stuck on a poison message.
+
+**Fix:**
+
+```bash
+# Check pending messages
+nats consumer info GGID_EVENTS audit-consumer --server nats://localhost:4222
+
+# If pending is high, check for errors in audit service
+docker compose logs audit --tail 100 | grep -i error
+
+# Purge and restart consumer (will lose unprocessed events)
+nats consumer rm GGID_EVENTS audit-consumer --force --server nats://localhost:4222
+docker compose restart audit
+```
+
+---
+
+## Rate Limiting Issues
+
+### Q: API returns 429 immediately on first request
+
+**Cause:** Rate limit key collision, or Redis has stale rate limit buckets from
+previous deployments.
+
+**Fix:**
+
+```bash
+# Check rate limit headers in the response
+curl -v -X POST $API/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"Test123!"}' 2>&1 | grep -i ratelimit
+
+# If X-RateLimit-Remaining is 0, clear Redis rate limit keys
+redis-cli -h localhost KEYS "rl:*" | head -20
+redis-cli -h localhost FLUSHDB  # WARNING: clears ALL Redis data
+
+# Or selectively delete rate limit keys
+redis-cli --scan --pattern 'rl:*' | xargs redis-cli DEL
+
+# Restart auth to clear in-memory rate counters
+docker compose restart auth
+```
+
+### Q: Rate limit not working at all
+
+**Cause:** Redis is down and `RATE_LIMIT_FAIL_MODE=open` (fail-open), so all
+requests are allowed.
+
+**Fix:**
+
+```bash
+# Check Redis connectivity
+docker exec ggid-gateway redis-cli -h redis ping
+# Expected: PONG
+
+# Check fail mode setting
+docker exec ggid-gateway env | grep RATE_LIMIT_FAIL_MODE
+
+# For strict enforcement, set fail-closed mode
+# In docker-compose.yaml:
+#   RATE_LIMIT_FAIL_MODE=closed
+```
+
+### Q: Different tenants hitting each other's rate limits
+
+**Cause:** Rate limit key strategy is set to `ip` instead of `jwt_sub` or
+`tenant_id`, so requests from the same IP (e.g., behind a corporate proxy)
+share a bucket.
+
+**Fix:**
+
+```bash
+# Check current rate limit configuration
+curl $API/api/v1/settings/rate-limits \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Update key strategy per endpoint
+curl -X PUT $API/api/v1/settings/rate-limits \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "endpoints": {
+      "/api/v1/auth/login": { "key": "ip_username" },
+      "/api/v1/users": { "key": "jwt_sub" }
+    }
+  }'
+```
+
+---
+
 ## Diagnostic Flowchart
 
 When experiencing issues, follow this diagnostic flow:
