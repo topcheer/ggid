@@ -92,6 +92,7 @@ type ListUsersFilter struct {
 	LastLoginAfter  *time.Time // filter: users who logged in after this time
 	OrgID           *uuid.UUID // filter: users in this org
 	RoleID          *uuid.UUID // filter: users with this role
+	ExternalID      string     // SCIM: filter by externalId
 	PageSize        int
 	Offset          int
 	SortBy          string // username, email, created_at, last_login_at
