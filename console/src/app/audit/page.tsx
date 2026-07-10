@@ -123,6 +123,17 @@ export default function AuditPage() {
         .sort((a, b) => b.count - a.count)
     : [];
 
+  // Action bar chart data (top actions as bars)
+  const actionBarData = actionData.slice(0, 6);
+
+  // Failed vs success comparison
+  const failedVsSuccess = stats
+    ? [
+        { name: "Success", count: stats.total_events_24h - stats.failed_logins_24h, fill: "#10b981" },
+        { name: "Failed Logins", count: stats.failed_logins_24h, fill: "#ef4444" },
+      ].filter((d) => d.count > 0)
+    : [];
+
   return (
     <div>
       {/* Header */}
@@ -309,6 +320,42 @@ export default function AuditPage() {
                 </ResponsiveContainer>
               </div>
             )}
+
+            {/* Action bar chart + Failed logins */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              {actionBarData.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-semibold">Top Event Actions</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={actionBarData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={50} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                      <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              {failedVsSuccess.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-semibold">Success vs Failed Logins</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={failedVsSuccess}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                      <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                        {failedVsSuccess.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
           </div>
         )
       ) : (
