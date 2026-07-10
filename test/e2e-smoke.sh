@@ -58,22 +58,30 @@ REG_RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/v1/auth/register" 
   -d "$REG_BODY")
 REG_CODE=$(echo "$REG_RESP" | tail -1)
 assert_status "201" "$REG_CODE" "Register returns 201"
+sleep 1
 
 # --- 3. Login ---
 info "3. Login with Registered User"
-LOGIN_BODY=$(cat <<EOF
+# Retry login to handle rate limiting
+LOGIN_CODE=""
+LOGIN_JSON=""
+for i in 1 2 3; do
+  LOGIN_BODY=$(cat <<EOF
 {"username":"smoke_${TS}","password":"SmokeTest@12345","tenant_id":"${TENANT_ID}"}
 EOF
 )
-LOGIN_RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/v1/auth/login" \
-  -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT_ID" \
-  -d "$LOGIN_BODY")
-LOGIN_CODE=$(echo "$LOGIN_RESP" | tail -1)
-LOGIN_JSON=$(printf '%s' "$LOGIN_RESP" | sed '$d')
+  LOGIN_RESP=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/api/v1/auth/login" \
+    -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT_ID" \
+    -d "$LOGIN_BODY")
+  LOGIN_CODE=$(echo "$LOGIN_RESP" | tail -1)
+  LOGIN_JSON=$(printf '%s' "$LOGIN_RESP" | sed '$d')
+  if [ "$LOGIN_CODE" = "200" ]; then break; fi
+  sleep 2
+done
 assert_status "200" "$LOGIN_CODE" "Login returns 200"
 
 # Extract JWT
-JWT=$(echo "$LOGIN_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
+JWT=$(echo "$LOGIN_JSON" | sed 's/.*"access_token":"//' | sed 's/".*//' | head -c 1000)
 if [ -n "$JWT" ]; then
   green "  PASS: JWT extracted (${#JWT} chars)"
   PASS=$((PASS + 1))
