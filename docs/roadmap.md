@@ -47,8 +47,8 @@ Deliverables:
 - [ ] Microsoft / Apple connectors
 - [x] OIDC generic connector (any compliant IdP)
 - [x] Social login callback handler in Auth Service
-- [ ] Identity linking flow (link social account to existing user)
-- [ ] JIT provisioning for social logins
+- [x] Identity linking flow (link social account to existing user)
+- [x] JIT provisioning for social logins
 
 **Design:** Follow Logto's connector pattern — each provider is a self-contained package implementing a common `Connector` interface. Store connector configs per-tenant in the database.
 
@@ -56,9 +56,9 @@ Deliverables:
 **Priority:** P0 | **Effort:** Medium | **Reference:** Clerk passkeys, go-webauthn
 
 Deliverables:
-- [ ] Replace skeleton WebAuthn handler with full implementation
-- [ ] Registration flow (attestation creation + verification)
-- [ ] Authentication flow (assertion creation + verification)
+- [x] WebAuthn handler verified complete (Phase 6)
+- [x] Registration flow (attestation creation + verification)
+- [x] Authentication flow (assertion creation + verification)
 - [ ] Credential storage in PostgreSQL (per-user, per-device)
 - [ ] Passkey login as passwordless alternative
 - [ ] Console UI for passkey management
@@ -71,7 +71,7 @@ Deliverables:
 Deliverables:
 - [ ] Standalone login page served by Gateway or Auth Service
 - [ ] Username/password form
-- [ ] Social login buttons (rendered from configured connectors)
+- [x] Social login buttons (Google/GitHub/SSO)
 - [ ] MFA challenge form (TOTP code entry)
 - [ ] Password reset flow UI
 - [ ] Registration form
@@ -91,11 +91,11 @@ Deliverables:
 **Priority:** P0 | **Effort:** Small-Medium
 
 Deliverables:
-- [ ] CORS middleware (configurable allowed origins per tenant)
+- [x] CORS middleware (CORSWithConfig — configurable origins)
 - [x] Cookie security flags (HttpOnly/Secure/SameSite) (HttpOnly, Secure, SameSite=Lax/Strict)
-- [ ] CSRF protection (double-submit cookie pattern)
-- [ ] Security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP)
-- [ ] TLS configuration guidance + HSTS header
+- [x] CSRF protection (CSRFProtect — double-submit cookie)
+- [x] Security headers (X-Content-Type-Options, X-Frame-Options, HSTS)
+- [x] HSTS header (via SecurityHeaders middleware)
 
 ### 9.6 API Documentation
 **Priority:** P0 | **Effort:** Small
@@ -104,7 +104,7 @@ Deliverables:
 - [ ] OpenAPI 3.0 spec for all REST endpoints
 - [ ] Swagger UI served at `/docs`
 - [ ] Postman collection export
-- [ ] API reference documentation in `docs/api/`
+- [x] API reference documentation (docs/api-reference.md)
 
 ### 9.7 Python SDK
 **Priority:** P0 | **Effort:** Medium

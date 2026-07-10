@@ -24,9 +24,12 @@ var publicPaths = []string{
 	"/api/v1/auth/refresh",
 	"/api/v1/auth/password/forgot",
 	"/api/v1/auth/password/reset",
+	"/api/v1/auth/social/",
 	"/oauth/",
 	"/saml/",
 	"/.well-known/",
+	"/docs",
+	"/api-docs",
 }
 
 // Gateway is the API Gateway HTTP handler.
@@ -100,6 +103,19 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// JWKS endpoint
 	if r.URL.Path == "/.well-known/jwks.json" {
 		gw.jwks.JWKSHandler()(w, r)
+		return
+	}
+
+	// API documentation (Swagger UI)
+	if r.URL.Path == "/docs" || r.URL.Path == "/docs/" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte(swaggerHTML))
+		return
+	}
+
+	// OpenAPI JSON spec
+	if r.URL.Path == "/api-docs" {
+		serveOpenAPISpec(w, r)
 		return
 	}
 
@@ -226,4 +242,113 @@ func (gw *Gateway) PrintRoutes() {
 	for prefix, backend := range gw.cfg.Routes {
 		log.Printf("  %s -> %s", prefix, backend)
 	}
+	log.Println("  /docs -> Swagger UI")
+	log.Println("  /api-docs -> OpenAPI JSON spec")
 }
+
+// serveSwaggerUI writes the Swagger UI HTML page.
+func serveSwaggerUI(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = w.Write([]byte(swaggerHTML))
+}
+
+// serveOpenAPISpec writes the OpenAPI 3.0 JSON spec.
+func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte(openAPISpec))
+}
+
+const swaggerHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GGID API Documentation</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+  <style>body{margin:0}</style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload=function(){
+      SwaggerUIBundle({
+        url:'/api-docs',
+        dom_id:'#swagger-ui',
+        deepLinking:true,
+        presets:[SwaggerUIBundle.presets.apis],
+        layout:'BaseLayout',
+        requestInterceptor:function(req){
+          req.headers['X-Tenant-ID']='00000000-0000-0000-0000-000000000001';
+          return req;
+        }
+      })
+    }
+  </script>
+</body>
+</html>`
+
+const openAPISpec = `{
+  "openapi": "3.0.3",
+  "info": {"title": "GGID IAM API", "version": "1.0.0", "license": {"name": "Apache 2.0"}},
+  "servers": [{"url": "http://localhost:8080"}],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {"type": "http", "scheme": "bearer"},
+      "TenantID": {"type": "apiKey", "in": "header", "name": "X-Tenant-ID"}
+    }
+  },
+  "security": [{"BearerAuth": [], "TenantID": []}],
+  "tags": [
+    {"name": "Auth", "description": "Authentication endpoints"},
+    {"name": "Users", "description": "User management"},
+    {"name": "Roles", "description": "Roles and permissions"},
+    {"name": "Organizations", "description": "Organization management"},
+    {"name": "Audit", "description": "Audit logs"},
+    {"name": "OAuth2", "description": "OAuth2/OIDC endpoints"}
+  ],
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {"tags":["Auth"],"summary":"Register new user","security":[],"requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"username":{"type":"string"},"email":{"type":"string"},"password":{"type":"string"}}}}}},"responses":{"201":{"description":"Created"},"409":{"description":"Conflict"}}}
+    },
+    "/api/v1/auth/login": {
+      "post": {"tags":["Auth"],"summary":"Login","security":[],"requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"username":{"type":"string"},"password":{"type":"string"}}}}}},"responses":{"200":{"description":"OK"},"401":{"description":"Unauthorized"}}}
+    },
+    "/api/v1/auth/social/{provider}": {
+      "get": {"tags":["Auth"],"summary":"Begin social login","security":[],"parameters":[{"name":"provider","in":"path","required":true,"schema":{"type":"string","enum":["google","github","oidc"]}}],"responses":{"200":{"description":"Auth URL"}}}
+    },
+    "/api/v1/users": {
+      "get": {"tags":["Users"],"summary":"List users","responses":{"200":{"description":"OK"}}}
+    },
+    "/api/v1/users/{id}": {
+      "get": {"tags":["Users"],"summary":"Get user by ID","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}},
+      "delete": {"tags":["Users"],"summary":"Delete user","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"204":{"description":"Deleted"}}}
+    },
+    "/api/v1/roles": {
+      "get": {"tags":["Roles"],"summary":"List roles","responses":{"200":{"description":"OK"}}},
+      "post": {"tags":["Roles"],"summary":"Create role","requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"name":{"type":"string"},"key":{"type":"string"},"description":{"type":"string"}}}}}},"responses":{"201":{"description":"Created"}}}
+    },
+    "/api/v1/orgs": {
+      "get": {"tags":["Organizations"],"summary":"List organizations","responses":{"200":{"description":"OK"}}},
+      "post": {"tags":["Organizations"],"summary":"Create organization","requestBody":{"content":{"application/json":{"schema":{"type":"object","properties":{"name":{"type":"string"},"slug":{"type":"string"}}}}}},"responses":{"201":{"description":"Created"}}}
+    },
+    "/api/v1/orgs/{id}/tree": {
+      "get": {"tags":["Organizations"],"summary":"Get org tree","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"OK"}}}
+    },
+    "/api/v1/audit": {
+      "get": {"tags":["Audit"],"summary":"Query audit events","parameters":[{"name":"limit","in":"query","schema":{"type":"integer"}},{"name":"offset","in":"query","schema":{"type":"integer"}}],"responses":{"200":{"description":"OK"}}}
+    },
+    "/oauth/authorize": {
+      "get": {"tags":["OAuth2"],"summary":"OAuth2 authorize","security":[],"parameters":[{"name":"client_id","in":"query","required":true,"schema":{"type":"string"}},{"name":"redirect_uri","in":"query","required":true,"schema":{"type":"string"}},{"name":"response_type","in":"query","required":true,"schema":{"type":"string"}}],"responses":{"302":{"description":"Redirect"}}}
+    },
+    "/oauth/token": {
+      "post": {"tags":["OAuth2"],"summary":"OAuth2 token exchange","security":[],"requestBody":{"content":{"application/x-www-form-urlencoded":{"schema":{"type":"object","properties":{"grant_type":{"type":"string"},"code":{"type":"string"},"client_id":{"type":"string"},"client_secret":{"type":"string"}}}}}},"responses":{"200":{"description":"Token"}}}
+    },
+    "/oauth/.well-known/openid-configuration": {
+      "get": {"tags":["OAuth2"],"summary":"OIDC discovery","security":[],"responses":{"200":{"description":"Discovery document"}}}
+    },
+    "/healthz": {
+      "get": {"tags":["Auth"],"summary":"Health check","security":[],"responses":{"200":{"description":"OK"}}}
+    }
+  }
+}`
