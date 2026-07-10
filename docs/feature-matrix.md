@@ -408,3 +408,59 @@ These are P0 features that GGID currently does NOT implement and are table stake
 - **Copy:** ReBAC (Google Zanzibar model) in Ory Keto
 - **Copy:** Risk-based authentication (Ory Kratos risk score)
 - **Copy:** Kubernetes-native deployment
+
+---
+
+## Gap Resolution Status (vs Auth0/Keycloak Matrix)
+
+Based on the [competitive research matrix](./research/auth0-keycloak-ggid-matrix.md),
+31 gaps were identified. Resolution status:
+
+### Resolved Gaps (21/31)
+
+| # | Gap | Resolution | Phase |
+|---|-----|-----------|-------|
+| 1 | OpenAPI 3.1 spec | Complete spec (2400+ lines) | 10 |
+| 2 | API reference docs | 561-line reference + examples | 10 |
+| 3 | Architecture docs | C4 model with Mermaid | 10 |
+| 4 | Security whitepaper | STRIDE + compliance mapping | 10 |
+| 5 | Helm Chart | Full K8s deployment guide | 10 |
+| 6 | Performance benchmarks | k6 scripts + baselines | 10 |
+| 7 | Migration guides | Auth0 + Keycloak + Clerk | 10 |
+| 8 | SDK documentation | Go + Node + Java + Python | 10 |
+| 9 | Circuit breaker | Gateway middleware | 9 |
+| 10 | Rate limiting (sliding window) | Redis sorted sets + Lua | 9 |
+| 11 | Shadow traffic | Gateway middleware | 9 |
+| 12 | IP allowlist | Gateway middleware | 9 |
+| 13 | WASM plugins | Plugin SDK + TinyGo | 9 |
+| 14 | Request ID propagation | Middleware | 9 |
+| 15 | Audit SSE streaming | Real-time audit events | 9 |
+| 16 | Role hierarchy | Effective permissions recursion | 9 |
+| 17 | Webhook HMAC signing | Signed webhooks + retry | 9 |
+| 18 | Custom JWT claims | Claim hooks + rules engine | 9 |
+| 19 | Observability docs | Structured logging + SIEM | 10 |
+| 20 | Password policy docs | NIST compliance + breach check | 10 |
+| 21 | Multi-tenant docs | RLS deep dive | 10 |
+
+### Pending Gaps (10/31)
+
+| # | Gap | Plan | Phase |
+|---|-----|------|-------|
+| 22 | Token introspection (RFC 7662) | OAuth service | 11 |
+| 23 | Token revocation (RFC 7009) | OAuth service | 11 |
+| 24 | OIDC back-channel logout | Session management | 11 |
+| 25 | DPoP (proof-of-possession) | OAuth enhancement | 11 |
+| 26 | PAR (pushed auth requests) | OAuth enhancement | 11 |
+| 27 | Risk-based authentication | Adaptive MFA | 11 |
+| 28 | Passwordless (magic link) | Auth service | 11 |
+| 29 | GDPR data export automation | Compliance | 11 |
+| 30 | Key rotation automation | JWKS management | 11 |
+| 31 | Step-up enforcement | Policy engine | 11 |
+
+### Gap Closure Rate
+
+```
+Resolved:     21 / 31  (67.7%)
+Pending:      10 / 31  (32.3%)
+Target:       28 / 31  (90%) by end of Phase 11
+```
