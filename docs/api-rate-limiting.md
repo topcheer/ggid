@@ -277,6 +277,256 @@ groups:
 
 ---
 
+## Custom Rate Limit Overrides
+
+Administrators can override default limits for specific tenants, endpoints,
+or IP ranges without changing global configuration.
+
+### Per-Tenant Custom Limits
+
+```bash
+curl -X PUT $API/api/v1/settings/rate-limits/tenants/$TENANT_ID \
+  -H "Authorization: Bearer $SUPERADMIN_TOKEN" \
+  -d '{
+    "overrides": {
+      "/api/v1/auth/login": {
+        "rate": "100/min",
+        "burst": 150
+      },
+      "/api/v1/users": {
+        "rate": "200/min",
+        "burst": 250
+      }
+    }
+  }'
+```
+
+### Per-IP-Range Overrides
+
+Whitelist or throttle specific IP ranges (useful for trusted API integrations
+or known abusive networks):
+
+```bash
+curl -X PUT $API/api/v1/settings/rate-limits/ip-overrides \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "overrides": [
+      {
+        "cidr": "10.0.0.0/8",
+        "limit_multiplier": 10,
+        "comment": "Internal network - 10x limits"
+      },
+      {
+        "cidr": "192.168.1.0/24",
+        "rate": "unlimited",
+        "comment": "Trusted automation IPs"
+      },
+      {
+        "cidr": "203.0.113.0/24",
+        "rate": "1/min",
+        "burst": 2,
+        "comment": "Known abuse range"
+      }
+    ]
+  }'
+```
+
+### Per-Endpoint Custom Limits
+
+Override limits for individual endpoints without affecting others:
+
+```bash
+curl -X PATCH $API/api/v1/settings/rate-limits/endpoints \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "/api/v1/auth/login": {
+      "default": {"rate": "10/min", "burst": 15},
+      "tenant_tier_override": {
+        "enterprise": {"rate": "100/min", "burst": 120}
+      }
+    },
+    "/api/v1/policies/check": {
+      "default": {"rate": "100/min", "burst": 120},
+      "tenant_tier_override": {
+        "enterprise": {"rate": "500/min", "burst": 600}
+      }
+    }
+  }'
+```
+
+---
+
+## Rate Limit Bypass
+
+### mTLS Bypass
+
+Service-to-service calls authenticated via mutual TLS bypass rate limiting:
+
+```bash
+curl -X PUT $API/api/v1/settings/rate-limits/bypass \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "mtls_cert_cn": ["ggid-internal/*"],
+    "comment": "Internal service mesh calls are not rate limited"
+  }'
+```
+
+Requests presenting a valid client certificate with a CN matching the pattern
+are exempt from rate limiting. This is verified at the Gateway middleware level.
+
+### API Key Bypass
+
+Long-lived API keys (e.g., SCIM provisioning, webhook deliveries) can have
+custom or unlimited limits:
+
+```bash
+# Create API key with custom limits
+curl -X POST $API/api/v1/api-keys \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "name": "SCIM Provisioning",
+    "scopes": ["scim:read", "scim:write"],
+    "rate_limit": {
+      "rate": "500/min",
+      "burst": 600
+    },
+    "expires_in_days": 365
+  }'
+
+# Create unlimited API key (enterprise only)
+curl -X POST $API/api/v1/api-keys \
+  -H "Authorization: Bearer $SUPERADMIN_TOKEN" \
+  -d '{
+    "name": "Audit Log Exporter",
+    "scopes": ["audit:read"],
+    "rate_limit": "unlimited",
+    "expires_in_days": 90
+  }'
+```
+
+### Health Check Bypass
+
+`/healthz` and `/readyz` endpoints are never rate limited. This ensures
+load balancer and Kubernetes probes always succeed.
+
+---
+
+## Redis Implementation Details
+
+GGID uses a **sliding window** rate limiter backed by Redis for distributed
+rate limiting across multiple Gateway instances.
+
+### Algorithm: Sliding Window with Lua Script
+
+The rate limiter uses an atomic Redis Lua script to check and decrement tokens
+in a single round trip:
+
+```lua
+-- KEYS[1] = rate limit key (e.g., "rl:login:ip:192.168.1.1")
+-- ARGV[1] = max tokens (capacity)
+-- ARGV[2] = refill rate (tokens per second)
+-- ARGV[3] = current timestamp (seconds)
+-- ARGV[4] = key TTL (seconds)
+
+local key = KEYS[1]
+local capacity = tonumber(ARGV[1])
+local refill_rate = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+local ttl = tonumber(ARGV[4])
+
+local bucket = redis.call('HMGET', key, 'tokens', 'last_refill')
+local tokens = tonumber(bucket[1]) or capacity
+local last_refill = tonumber(bucket[2]) or now
+
+-- Refill tokens based on elapsed time
+local elapsed = math.max(0, now - last_refill)
+tokens = math.min(capacity, tokens + (elapsed * refill_rate))
+
+local allowed = 0
+local remaining = tokens
+
+if tokens >= 1 then
+    tokens = tokens - 1
+    allowed = 1
+    remaining = tokens
+end
+
+-- Update bucket
+redis.call('HMSET', key, 'tokens', tokens, 'last_refill', now)
+redis.call('EXPIRE', key, ttl)
+
+-- Return: allowed, remaining, retry_after_seconds
+local retry_after = 0
+if allowed == 0 then
+    retry_after = math.ceil((1 - tokens) / refill_rate)
+end
+
+return {allowed, remaining, retry_after}
+```
+
+### Redis Key Structure
+
+| Key Pattern | TTL | Purpose |
+|------------|-----|---------|
+| `rl:{endpoint}:{key_strategy}:{identifier}` | 60-3600s | Token bucket state |
+| `rl:lockout:{username}` | 900s (15min) | Account lockout after failed logins |
+| `rl:tenant:{tenant_id}:quota` | 86400s | Daily tenant quota counter |
+
+### Lua Script Registration
+
+```go
+// Scripts are registered once on startup via EVALSHA
+var rateLimitScript = redis.NewScript(`
+    -- (Lua script from above)
+`)
+
+// Each request: single round-trip EVALSHA
+result, err := rateLimitScript.Run(ctx, rdb, keys, args).Slice()
+// result[0] = allowed (0 or 1)
+// result[1] = remaining tokens
+// result[2] = retry_after seconds
+```
+
+### Distributed Consistency
+
+All Gateway instances share the same Redis cluster, ensuring rate limits are
+enforced globally regardless of which instance receives the request.
+
+```
+Gateway-1 ─┐
+Gateway-2 ─┼──► Redis Cluster (3 shards)
+Gateway-3 ─┘
+
+Token bucket state is shared across all instances.
+No local in-memory rate counting.
+```
+
+### Fallback Behavior
+
+If Redis is unavailable:
+
+| Mode | Behavior | Risk |
+|------|----------|------|
+| **Fail-open** (default) | Allow all requests, log warning | Rate limits not enforced temporarily |
+| **Fail-closed** | Deny all rate-limited endpoints | Availability impact |
+
+```bash
+# Configure failover mode
+RATE_LIMIT_FAIL_MODE=open   # 'open' or 'closed'
+```
+
+### Performance Characteristics
+
+| Metric | Value |
+|--------|-------|
+| Rate limit check latency | 0.8-1.8ms (single Redis call) |
+| Lua script execution | <0.1ms (in-process on Redis) |
+| Memory per bucket | ~80 bytes |
+| Max buckets per GB Redis | ~12 million |
+| Network round trips per check | 1 (EVALSHA) |
+
+---
+
 ## References
 
 - [Rate Limiting Guide](./rate-limiting.md) — Detailed algorithm explanation

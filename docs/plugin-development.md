@@ -723,6 +723,302 @@ func buildProviderChain(cfg *conf.Config) authprovider.Chain {
 
 ---
 
+## Event Subscriber Plugin
+
+Event subscribers listen to the GGID event bus (NATS JetStream) and react to
+lifecycle events asynchronously. Unlike hooks (synchronous, can block the auth
+flow), event subscribers are **fire-and-forget** — GGID publishes the event and
+continues without waiting for a response.
+
+### Event Bus Architecture
+
+```
+GGID Service (auth/policy/org)
+    |
+    +--> Publish event to NATS JetStream
+    |      Subject: ggid.events.{event_type}
+    |      Payload: JSON with event + context
+    |
+    +--> Your subscriber receives the event
+           +--> No ACK needed for auth flow (at-least-once delivery)
+           +--> Processing is async (doesn't block auth flow)
+           +--> Failed deliveries are retried by JetStream
+```
+
+### Available Events
+
+| Event Type | NATS Subject | Published When |
+|------------|-------------|----------------|
+| `user.created` | `ggid.events.user.created` | User registered via API or SCIM |
+| `user.updated` | `ggid.events.user.updated` | Profile fields modified |
+| `user.deleted` | `ggid.events.user.deleted` | User soft-deleted or purged |
+| `user.locked` | `ggid.events.user.locked` | Account locked (brute force) |
+| `user.unlocked` | `ggid.events.user.unlocked` | Admin unlock or TTL expiry |
+| `auth.login` | `ggid.events.auth.login` | Successful login |
+| `auth.login_failed` | `ggid.events.auth.login_failed` | Failed login attempt |
+| `auth.logout` | `ggid.events.auth.logout` | Explicit logout / token revoked |
+| `auth.token_refreshed` | `ggid.events.auth.token_refreshed` | Refresh token used |
+| `auth.mfa_enabled` | `ggid.events.auth.mfa_enabled` | MFA setup completed |
+| `auth.mfa_disabled` | `ggid.events.auth.mfa_disabled` | MFA removed |
+| `role.assigned` | `ggid.events.role.assigned` | Role granted to user |
+| `role.revoked` | `ggid.events.role.revoked` | Role revoked from user |
+| `org.member_added` | `ggid.events.org.member_added` | User added to org |
+| `org.member_removed` | `ggid.events.org.member_removed` | User removed from org |
+| `policy.denied` | `ggid.events.policy.denied` | Policy check denied access |
+
+### Event Payload Schema
+
+All events share a common envelope:
+
+```json
+{
+  "event_id": "evt-uuid-unique",
+  "event_type": "user.created",
+  "timestamp": "2024-07-10T12:00:00.123Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "actor": {
+    "user_id": "uuid-of-actor",
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0..."
+  },
+  "data": {}
+}
+```
+
+#### `user.created` payload
+
+```json
+{
+  "event_type": "user.created",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john.doe",
+    "email": "john@example.com",
+    "status": "active",
+    "created_by": "system"
+  }
+}
+```
+
+#### `auth.login` payload
+
+```json
+{
+  "event_type": "auth.login",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "john.doe",
+    "method": "password",
+    "mfa_used": false,
+    "session_id": "sess-abc123"
+  }
+}
+```
+
+#### `role.assigned` payload
+
+```json
+{
+  "event_type": "role.assigned",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "role_id": "uuid-of-role",
+    "role_key": "admin",
+    "assigned_by": "uuid-of-admin"
+  }
+}
+```
+
+### Go Event Subscriber Example
+
+```go
+// subscriber/main.go
+package main
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "log"
+
+    "github.com/nats-io/nats.go/jetstream"
+    "github.com/nats-io/nats.go"
+)
+
+type Event struct {
+    EventID   string          `json:"event_id"`
+    EventType string          `json:"event_type"`
+    Timestamp string          `json:"timestamp"`
+    TenantID  string          `json:"tenant_id"`
+    Actor     json.RawMessage `json:"actor"`
+    Data      json.RawMessage `json:"data"`
+}
+
+func main() {
+    nc, _ := nats.Connect("nats://nats:4222")
+    js, _ := jetstream.New(nc)
+    ctx := context.Background()
+
+    // Create or get a durable consumer
+    cons, _ := js.CreateOrUpdateConsumer(ctx, "GGID_EVENTS",
+        jetstream.ConsumerConfig{
+            DurableName:   "crm-sync",
+            FilterSubject: "ggid.events.user.>",
+            AckPolicy:     jetstream.AckExplicitPolicy,
+            MaxDeliveries: 3,
+            AckWait:       30_000_000_000, // 30s
+            MaxAckPending: 100,
+        },
+    )
+
+    // Consume events
+    iter, _ := cons.Messages(ctx)
+    for {
+        msg, err := iter.Next()
+        if err != nil {
+            log.Printf("consumer error: %v", err)
+            break
+        }
+
+        var event Event
+        json.Unmarshal(msg.Data(), &event)
+
+        switch event.EventType {
+        case "user.created":
+            syncUserToCRM(event)
+        case "user.deleted":
+            removeUserFromCRM(event)
+        case "user.updated":
+            updateUserInCRM(event)
+        }
+
+        msg.Ack()
+    }
+}
+
+func syncUserToCRM(event Event) {
+    fmt.Printf("[CRM] Syncing new user: %s\n", event.EventID)
+    // Your CRM integration logic here
+}
+```
+
+### Node.js Event Subscriber Example
+
+```typescript
+// subscriber.ts
+import { connect, JSONCodec, headers } from 'nats';
+
+const nc = await connect({ servers: 'nats://nats:4222' });
+const jc = JSONCodec();
+
+// Subscribe to all user events (queue group for load balancing)
+const sub = nc.subscribe('ggid.events.user.>',', { queue: 'crm-sync-group' });
+
+for await (const msg of sub) {
+  const event = jc.decode(msg) as Event;
+
+  switch (event.event_type) {
+    case 'user.created':
+      await syncToCRM(event);
+      break;
+    case 'user.deleted':
+      await removeFromCRM(event);
+      break;
+    case 'user.updated':
+      await updateInCRM(event);
+      break;
+  }
+}
+```
+
+### Python Event Subscriber Example
+
+```python
+# subscriber.py
+import asyncio
+import json
+from nats import NATS
+
+async def main():
+    nc = await NATS().connect("nats://nats:4222")
+    js = nc.jetstream()
+
+    # Bind to durable consumer
+    sub = await js.subscribe(
+        "ggid.events.user.>",
+        durable="crm-sync",
+        manual_ack=True,
+        max_msgs=100,
+    )
+
+    async for msg in sub.messages:
+        event = json.loads(msg.data)
+        event_type = event.get("event_type")
+
+        if event_type == "user.created":
+            await sync_to_crm(event)
+        elif event_type == "user.deleted":
+            await remove_from_crm(event)
+
+        await msg.ack()
+
+asyncio.run(main())
+```
+
+### Delivery Guarantees
+
+| Property | Guarantee |
+|----------|-----------|
+| Delivery | At-least-once |
+| Ordering | Per-subject (per event type) |
+| Persistence | JetStream file-based |
+| Retention | 7 days (configurable via stream config) |
+| Max retries | 3 with exponential backoff (1s, 4s, 16s) |
+| Dead letter | After max retries, moved to DLQ |
+
+### Subscriber Best Practices
+
+1. **Use durable consumers** — Survive restarts, resume from last acknowledged position
+2. **Set `MaxAckPending`** — Control concurrency (100 is a good default)
+3. **Be idempotent** — Duplicate delivery is possible; deduplicate by `event_id`
+4. **Use queue groups** — For horizontal scaling (load-balanced delivery)
+5. **Handle poison messages** — Catch panics in handlers, nack malformed events after 3 retries
+6. **Monitor consumer lag** — Alert if `pending > 1000`
+
+### Registering Subscribers
+
+Unlike hooks, event subscribers don't need to be registered with GGID — they
+connect directly to NATS JetStream. Simply ensure your subscriber has:
+
+1. Network access to NATS (`nats://nats:4222`)
+2. NATS credentials if auth is enabled
+3. A durable consumer name unique to your application
+
+```bash
+# Verify NATS connectivity
+nats stream info GGID_EVENTS --server nats://nats:4222
+
+# List active consumers
+nats consumer list GGID_EVENTS --server nats://nats:4222
+```
+
+---
+
+## Webhook Hook vs Event Subscriber
+
+| Aspect | Webhook Hook | Event Subscriber |
+|--------|-------------|-----------------|
+| **Delivery** | Synchronous HTTP POST | Async NATS JetStream |
+| **Timing** | Blocks the auth flow | Fire-and-forget |
+| **Can modify?** | Yes (claims, metadata) | No (read-only) |
+| **Can deny?** | Yes | No |
+| **Latency impact** | 5-50ms per hook | 0ms (async) |
+| **Retries** | No (fail-open) | Yes (JetStream redelivery) |
+| **Use case** | Validation, token customization | Sync to CRM, notifications, analytics |
+| **Failure mode** | Fail-open (flow continues) | Event persists, retried later |
+
+---
+
 ## Debugging Plugins
 
 ### Enable Debug Logging

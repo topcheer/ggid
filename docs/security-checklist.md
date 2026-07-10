@@ -260,6 +260,192 @@ trivy image ghcr.io/ggid/gateway:latest
 
 ---
 
+## SQL Injection Prevention
+
+All GGID database queries use parameterized statements. Never concatenate user
+input into SQL strings.
+
+- [ ] **Parameterized queries everywhere** — pgx prepared statements, no `fmt.Sprintf` for values
+- [ ] **No raw SQL in handlers** — All queries go through repository layer
+- [ ] **Input validation** — Validate type, length, format before DB layer
+- [ ] **Column allow-list** — Sort/filter columns validated against allow-list
+- [ ] **No dynamic table/column names** — Schema is static, no user-controlled DDL
+- [ ] **Query timeout** — All queries have context timeout (default 5s)
+- [ ] **Connection-level RLS** — PostgreSQL Row-Level Security enforced per-tenant
+
+```go
+// CORRECT: parameterized query
+err := pool.QueryRow(ctx,
+    "SELECT id, email FROM users WHERE tenant_id = $1 AND email = $2",
+    tenantID, email,
+).Scan(&id, &email)
+
+// WRONG: string concatenation (SQL injection risk)
+query := fmt.Sprintf("SELECT id FROM users WHERE email = '%s'", email) // NEVER DO THIS
+```
+
+### PostgreSQL Row-Level Security
+
+RLS ensures tenant isolation at the database level — even if a query omits the
+`tenant_id` filter, PostgreSQL enforces it:
+
+```sql
+-- Enable RLS on all tenant-scoped tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_events ENABLE ROW LEVEL SECURITY;
+
+-- Policy: users can only see their own tenant's rows
+CREATE POLICY tenant_isolation ON users
+  FOR ALL
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+
+-- Set tenant context per connection
+SET LOCAL app.tenant_id = '00000000-0000-0000-0000-000000000001';
+```
+
+### Dynamic Sort/Filter Safety
+
+When users specify sort columns or filter fields, validate against an allow-list:
+
+```go
+var allowedSortColumns = map[string]string{
+    "created_at": "created_at",
+    "email":      "email",
+    "username":   "username",
+    "updated_at": "updated_at",
+}
+
+func safeSortColumn(input string) string {
+    if col, ok := allowedSortColumns[input]; ok {
+        return col
+    }
+    return "created_at" // safe default
+}
+```
+
+---
+
+## XSS Prevention
+
+Cross-Site Scripting (XSS) is mitigated through defense-in-depth.
+
+- [ ] **Content-Security-Policy header** — Strict `script-src 'self'` with nonce
+- [ ] **Output encoding** — All user-generated content HTML-escaped on render
+- [ ] **React auto-escaping** — Console uses React (auto-escapes by default)
+- [ ] **`dangerouslySetInnerHTML` audit** — No raw HTML injection in Console code
+- [ ] **HttpOnly cookies** — Session cookies inaccessible to JavaScript
+- [ ] **Input sanitization** — Email, username validated against allow-list regex
+- [ ] **SVG sanitization** — Logo uploads sanitized (no `<script>` tags in SVG)
+
+### Content-Security-Policy Configuration
+
+```yaml
+# Recommended CSP for production
+Content-Security-Policy: >
+  default-src 'self';
+  script-src 'self' 'nonce-{RANDOM_NONCE}';
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data: https:;
+  connect-src 'self' https://iam.yourcompany.com;
+  frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'self';
+  object-src 'none';
+```
+
+### CSP Nonce (Per-Request)
+
+```go
+// Generate a unique nonce per request
+func cspMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        nonce := generateNonce(32) // base64 encoded random bytes
+        csp := fmt.Sprintf(
+            "default-src 'self'; script-src 'self' 'nonce-%s';",
+            nonce,
+        )
+        w.Header().Set("Content-Security-Policy", csp)
+        ctx := context.WithValue(r.Context(), nonceKey, nonce)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+
+// In templates: <script nonce="{{.Nonce}}">...</script>
+```
+
+### XSS in Email Templates
+
+Email HTML is sandboxed — email clients strip JavaScript. Still sanitize:
+
+```go
+import "html"
+
+func sanitizeEmailTemplate(raw string) string {
+    // Escape user-provided variables before interpolation
+    return html.EscapeString(raw)
+}
+```
+
+---
+
+## JWT Secret Rotation
+
+JWT signing keys must be rotated regularly without invalidating active sessions.
+
+- [ ] **RS256 or EdDSA keys** — Never use symmetric HS256 in production
+- [ ] **JWKS endpoint** — Public keys published at `/.well-known/jwks.json`
+- [ ] **Overlap window** — Old key remains valid for 24h after new key is active
+- [ ] **Key ID (`kid`)** — Each key has a unique ID for selection during verification
+- [ ] **Automated rotation** — 90-day rotation via Vault Transcrypt or KMS
+- [ ] **Key storage** — Private keys in Vault/KMS, never in container images
+
+### Rotation Process
+
+```
+1. Generate new key pair (kid: "2024-07-key")
+      |
+2. Add new key to JWKS (both keys now valid)
+      |
+3. Switch signing to new key (new tokens use "2024-07-key")
+      |
+4. Wait 24h (overlap window)
+      |
+5. Remove old key from JWKS
+      |
+6. Old tokens expire naturally (access: 15min, refresh: 7d)
+```
+
+### Configuration
+
+```bash
+# Vault Transit Engine for key management
+vault secrets enable transit
+vault write -f transit/keys/ggid-jwt type=rsa-2048
+
+# Auto-rotate every 90 days
+vault write transit/keys/ggid-jwt/config min_decryption_version=1 \
+  auto_rotate_period=7776000  # 90 days in seconds
+```
+
+### Verification with Multiple Keys
+
+```go
+// GGID verifies JWTs against all keys in JWKS
+keySet := jwk.NewSet()
+// Fetch from /.well-known/jwks.json
+// Keys with matching kid are tried first
+
+token, err := jwt.Parse(
+    tokenString,
+    jwt.WithKeySet(keySet),
+    jwt.WithAcceptableSkew(30*time.Second),
+)
+```
+
+---
+
 ## Final Sign-off
 
 | Category | Checked By | Date | Notes |

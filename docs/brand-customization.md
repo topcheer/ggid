@@ -424,3 +424,245 @@ curl -X PUT $API/api/v1/settings/i18n \
 ```
 
 The Console automatically switches to RTL layout for configured locales.
+
+---
+
+## Font Configuration
+
+Customize the typography of the Admin Console and hosted login pages to align
+with your brand guidelines.
+
+### Available Font Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `font_family` | Primary font family CSS declaration | `'Inter', -apple-system, sans-serif` |
+| `font_url` | Google Fonts or self-hosted CSS URL | Inter from Google Fonts |
+| `heading_font` | Font for headings (h1-h6) | Same as `font_family` |
+| `mono_font` | Monospace font for code blocks | `'JetBrains Mono', monospace` |
+| `base_font_size` | Root font size | `16px` |
+| `heading_weight` | Font weight for headings (300-900) | `600` |
+| `body_weight` | Font weight for body text (300-900) | `400` |
+
+### Configure via API
+
+```bash
+PUT /api/v1/settings/branding/fonts
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+{
+  "font_family": "'Poppins', 'Helvetica Neue', sans-serif",
+  "font_url": "https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap",
+  "heading_font": "'Poppins', sans-serif",
+  "heading_weight": 600,
+  "body_weight": 400
+}
+```
+
+Changes take effect immediately. The Console dynamically injects the `<link>`
+tag for the font URL and updates CSS variables.
+
+### Google Fonts Example
+
+```json
+{
+  "font_family": "'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif",
+  "font_url": "https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap",
+  "heading_font": "'Nunito Sans', sans-serif",
+  "heading_weight": 800
+}
+```
+
+### Self-Hosted Fonts
+
+For air-gapped or compliance-restricted deployments, self-host font files:
+
+```bash
+# Upload font files
+curl -X POST $API/api/v1/assets/fonts \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -F "regular=@/path/to/brand-regular.woff2" \
+  -F "bold=@/path/to/brand-bold.woff2" \
+  -F "name=my-brand"
+
+# Reference self-hosted font
+curl -X PUT $API/api/v1/settings/branding/fonts \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "font_family": "MyBrand, sans-serif",
+    "font_url": "/api/v1/assets/fonts/my-brand.css"
+  }'
+```
+
+The self-hosted CSS is automatically generated:
+
+```css
+@font-face {
+  font-family: 'MyBrand';
+  src: url('/api/v1/assets/fonts/brand-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MyBrand';
+  src: url('/api/v1/assets/fonts/brand-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+```
+
+### Recommended Font Pairings
+
+| Heading Font | Body Font | Style |
+|--------------|-----------|-------|
+| Poppins | Inter | Modern, friendly |
+| Montserrat | Open Sans | Corporate, clean |
+| Playfair Display | Source Sans Pro | Elegant, premium |
+| Space Grotesk | Inter | Tech, startup |
+| IBM Plex Sans | IBM Plex Sans | Enterprise, trustworthy |
+| Noto Sans | Noto Sans | International, neutral |
+
+---
+
+## White-Label Login Widget
+
+Embed a fully branded login experience in your own application using the GGID
+login widget. The widget handles authentication flows (password, social, MFA)
+while respecting your brand settings.
+
+### Embedding the Widget
+
+```html
+<!-- Add the GGID widget script -->
+<script src="https://iam.yourcompany.com/widget/ggid-login.js"></script>
+
+<!-- Mount point -->
+<div id="ggid-login"></div>
+
+<script>
+  GGIDLogin.mount('#ggid-login', {
+    tenantId: '00000000-0000-0000-0000-000000000001',
+
+    // Brand overrides (optional, defaults from tenant settings)
+    primaryColor: '#7c3aed',
+    logoUrl: 'https://cdn.acme.com/logo.svg',
+    platformName: 'Acme Portal',
+
+    // Login configuration
+    defaultMethod: 'password',         // 'password' | 'magic-link' | 'sso'
+    socialProviders: ['google', 'github'],
+
+    // Callbacks
+    onSuccess: function(token) {
+      console.log('JWT:', token.access_token);
+      window.location.href = '/dashboard';
+    },
+    onError: function(err) {
+      console.error('Login failed:', err.message);
+    },
+
+    // Styling
+    containerClass: 'acme-login-card',
+    width: '400px',
+    borderRadius: '12px',
+  });
+</script>
+```
+
+### Widget Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `tenantId` | string | _(required)_ | Tenant UUID for multi-tenant |
+| `primaryColor` | string | From branding settings | Hex color |
+| `logoUrl` | string | From branding settings | Logo image URL |
+| `platformName` | string | From branding settings | Display name |
+| `defaultMethod` | string | `password` | Default auth method shown |
+| `socialProviders` | string[] | From branding settings | Social login buttons |
+| `showRememberMe` | boolean | `true` | "Remember me" checkbox |
+| `showForgotPassword` | boolean | `true` | Forgot password link |
+| `containerClass` | string | — | Custom CSS class for container |
+| `width` | string | `400px` | Widget width |
+| `borderRadius` | string | `8px` | Border radius for inputs/buttons |
+
+### React Component
+
+```tsx
+import { GGIDLoginWidget } from '@ggid/react-widget';
+
+function LoginPage() {
+  return (
+    <GGIDLoginWidget
+      tenantId="00000000-0000-0000-0000-000000000001"
+      primaryColor="#7c3aed"
+      logoUrl="/logo.svg"
+      platformName="Acme Portal"
+      socialProviders={['google', 'github']}
+      onSuccess={(token) => {
+        localStorage.setItem('token', token.access_token);
+        router.push('/dashboard');
+      }}
+      onError={(err) => setLoginError(err.message)}
+    />
+  );
+}
+```
+
+### Widget Theming via CSS
+
+Override widget styles with CSS custom properties:
+
+```css
+:root {
+  --ggid-primary: #7c3aed;
+  --ggid-primary-hover: #6d28d9;
+  --ggid-bg: #f8fafc;
+  --ggid-card-bg: #ffffff;
+  --ggid-text: #1e293b;
+  --ggid-text-muted: #64748b;
+  --ggid-border: #e2e8f0;
+  --ggid-radius: 12px;
+  --ggid-font: 'Poppins', sans-serif;
+  --ggid-input-height: 48px;
+}
+
+#ggid-login {
+  max-width: 400px;
+  margin: 0 auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+}
+```
+
+### Headless Mode
+
+For full control over the UI, use the headless SDK (no rendered widget):
+
+```typescript
+import { GGIDAuth } from '@ggid/sdk';
+
+const auth = new GGIDAuth({
+  baseUrl: 'https://iam.yourcompany.com',
+  tenantId: '00000000-0000-0000-0000-000000000001',
+});
+
+// Custom login form
+const result = await auth.login({
+  username: emailInput.value,
+  password: passwordInput.value,
+});
+
+if (result.success) {
+  // Build your own UI, navigate, etc.
+  localStorage.setItem('jwt', result.access_token);
+} else {
+  showCustomError(result.error.message);
+}
+```
+
+### Embedded Login Security
+
+- The widget communicates with GGID via CORS-configured origins only
+- Tokens are returned to the configured `redirect_uri` or via the `onSuccess` callback
+- CSRF protection via double-submit cookie pattern
+- The widget script is served with `integrity` hashes (SRI) for tamper detection
