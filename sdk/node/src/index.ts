@@ -1,15 +1,39 @@
 /**
  * GGID IAM Platform Node.js SDK
  *
- * JWT verification, user management, and RBAC permission checking
- * for Express, Fastify, Next.js, and other Node.js frameworks.
+ * JWT verification, user management, RBAC permission checking,
+ * and Express middleware for authentication and authorization.
  */
 
-export { GGIDClient } from './client';
-export { JWTVerifier, JWTClaims, JWTError } from './jwt';
+// Client + errors
+export { GGIDClient, GGIDError } from './client';
+
+// JWT verifier
+export { JWTVerifier, JWTError } from './jwt';
+export type { JWTClaims } from './jwt';
+
+// Express middleware
 export {
   expressAuth,
+  requireRole,
   requirePermission,
   getClaims,
 } from './middleware';
-export { GGIDConfig } from './types';
+export type { GGIDRequest, MiddlewareConfig } from './middleware';
+
+// Types
+export type {
+  GGIDConfig,
+  User,
+  TokenSet,
+  Role,
+  Organization,
+  PolicyCheckResult,
+  PageResult,
+  ListOptions,
+  LoginInput,
+  CreateUserInput,
+  UpdateUserInput,
+  CreateRoleInput,
+  CreateOrgInput,
+} from './types';

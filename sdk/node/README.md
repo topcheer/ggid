@@ -1,50 +1,57 @@
-# @ggid/node
+# GGID Node.js SDK
 
-GGID IAM Platform SDK for Node.js — JWT verification, user management, and RBAC.
+A production-ready Node.js/TypeScript client SDK for the [GGID](https://github.com/ggid/ggid) IAM platform.
 
 ## Installation
 
 ```bash
-npm install @ggid/node jose
+npm install @ggid/node
+# or
+yarn add @ggid/node
 ```
 
-> Requires Node.js 18+ (uses native `fetch`).
+### Peer Dependencies
+
+The Express middleware requires `express`:
+
+```bash
+npm install express
+```
 
 ## Quick Start
 
-### Express Middleware
-
-Protect routes with JWT verification:
-
 ```typescript
-import express from 'express';
-import { expressAuth, getClaims } from '@ggid/node';
+import { GGIDClient } from '@ggid/node';
 
-const app = express();
-
-app.use(expressAuth({
-  jwksUrl: 'https://iam.example.com/.well-known/jwks.json',
-  issuer: 'ggid',
-}));
-
-app.get('/profile', (req, res) => {
-  const user = getClaims(req); // throws if not authenticated
-  res.json({
-    id: user.sub,
-    email: user.email,
-    roles: user.roles,
-  });
+// Create a client.
+const client = new GGIDClient({
+  gatewayUrl: 'https://iam.example.com',
+  apiKey: 'your-api-key',
 });
 
-app.listen(3001);
+// Login.
+const tokens = await client.login({
+  username: 'alice',
+  password: 'SecurePass@123',
+});
+console.log('Access token:', tokens.access_token);
+
+// Create a user.
+const user = await client.createUser({
+  username: 'bob',
+  email: 'bob@example.com',
+  password: 'SecurePass@123',
+});
+console.log('Created user:', user.id);
+
+// Check permission.
+const result = await client.checkPermission(user.id, 'documents', 'read');
+console.log('Allowed:', result.allowed);
 ```
 
-The middleware automatically skips authentication for public paths
-(`/healthz`, `/api/v1/auth/*`, `/oauth/*`).
+## Authentication
 
-### Client API
-
-Server-side management operations:
+### JWT Verification
 
 ```typescript
 import { GGIDClient } from '@ggid/node';
@@ -52,211 +59,146 @@ import { GGIDClient } from '@ggid/node';
 const client = new GGIDClient({
   gatewayUrl: 'https://iam.example.com',
   jwksUrl: 'https://iam.example.com/.well-known/jwks.json',
-  tenantId: '00000000-0000-0000-0000-000000000001',
-  issuer: 'ggid',
+  issuer: 'https://iam.example.com',
 });
 
-// Login
-const tokens = await client.login('admin', 'Admin@123456');
-
-// List users (requires access token)
-const { users } = await client.listUsers(tokens.access_token);
-
-// Check permission
-const result = await client.checkPermission(
-  tokens.access_token,
-  'documents:sensitive',
-  'read',
-);
-console.log(result.allowed); // true/false
-```
-
-## Authentication
-
-### Login
-
-```typescript
-const tokens = await client.login('username', 'password');
-// tokens.access_token — JWT (1h TTL)
-// tokens.refresh_token — for token rotation
-// tokens.expires_in — TTL in seconds
-```
-
-### Register
-
-```typescript
-const { user_id } = await client.register(
-  'john.doe',
-  'john@example.com',
-  'SecurePass@123',
-  'John Doe', // optional display name
-);
-```
-
-### Verify JWT
-
-```typescript
-// Uses jose library with JWKS caching
+// Verify a JWT (signature checked via JWKS).
 const claims = await client.verifyToken(accessToken);
-console.log(claims.sub);       // user ID
-console.log(claims.email);     // email
-console.log(claims.roles);     // role array
-console.log(claims.tenant_id); // tenant UUID
+console.log('User:', claims.sub, claims.email);
+```
+
+### Token Refresh
+
+```typescript
+const tokens = await client.refreshToken(refreshToken);
+// tokens.access_token + tokens.refresh_token (rotated)
 ```
 
 ## User Management
 
 ```typescript
-// List users
-const { users } = await client.listUsers(accessToken, 50);
+// Create
+const user = await client.createUser({
+  username: 'alice',
+  email: 'alice@example.com',
+  password: 'SecurePass@123',
+});
 
-// Get user by ID
-const user = await client.getUser(accessToken, userId);
+// Get
+const user = await client.getUser('user-id');
 
-// Delete user
-await client.deleteUser(accessToken, userId);
+// Update
+const updated = await client.updateUser('user-id', {
+  email: 'new@example.com',
+});
+
+// Delete
+await client.deleteUser('user-id');
+
+// List with pagination
+const result = await client.listUsers({
+  page: 1,
+  page_size: 20,
+  search: 'alice',
+});
+
+// Role assignment
+await client.assignRole('user-id', 'role-id');
+await client.removeRole('user-id', 'role-id');
 ```
 
-## Role & Permission Management
+## Express Middleware
+
+### JWT Authentication
 
 ```typescript
-// List roles
-const { roles } = await client.listRoles(accessToken);
+import express from 'express';
+import { expressAuth } from '@ggid/node';
 
-// Check permission (calls the policy engine)
-const result = await client.checkPermission(
-  accessToken,
-  'documents:sensitive',
-  'read',
-  userId, // optional, defaults to token's user
-);
-```
+const app = express();
 
-## Middleware
-
-### `expressAuth(config)`
-
-Express middleware that verifies JWT on every request (except public paths).
-
-```typescript
+// Protect all routes with JWT verification.
 app.use(expressAuth({
   jwksUrl: 'https://iam.example.com/.well-known/jwks.json',
-  issuer: 'ggid',
+  issuer: 'https://iam.example.com',
 }));
 ```
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `jwksUrl` | `string` | Yes | JWKS endpoint URL |
-| `issuer` | `string` | No | Expected JWT issuer (verified if set) |
-
-### `requirePermission(resource, action)`
-
-Route-level middleware for permission checks:
+### Role-Based Access Control
 
 ```typescript
-app.delete('/api/users/:id',
-  requirePermission('iam:users', 'delete'),
-  async (req, res) => {
-    await client.deleteUser(token, req.params.id);
-    res.json({ status: 'deleted' });
-  },
-);
+import { requireRole } from '@ggid/node';
+
+// Require 'admin' role (checked from JWT claims, no API call).
+app.delete('/api/users/:id', requireRole('admin'), deleteUserHandler);
 ```
 
-### `getClaims(req)`
-
-Extract JWT claims from the request:
+### Permission-Based Access Control
 
 ```typescript
-const claims = getClaims(req);
-// claims.sub, claims.email, claims.roles, claims.tenant_id
+import { requirePermission } from '@ggid/node';
+
+// Check permission via the GGID policy engine.
+app.get('/api/documents', requirePermission(
+  { gatewayUrl: 'https://iam.example.com' },
+  'documents',
+  'read',
+), listDocumentsHandler);
 ```
 
-## Types Reference
-
-### `GGIDConfig`
-
-| Field | Type | Required | Default |
-|-------|------|----------|---------|
-| `gatewayUrl` | `string` | Yes | — |
-| `jwksUrl` | `string` | No | — |
-| `tenantId` | `string` | No | `00000000-...-001` |
-| `issuer` | `string` | No | — |
-| `timeout` | `number` | No | `30000` |
-
-### `JWTClaims`
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `sub` | `string` | User UUID |
-| `email` | `string?` | Email |
-| `tenant_id` | `string?` | Tenant UUID |
-| `roles` | `string[]?` | Role keys |
-| `exp` | `number?` | Expiry timestamp |
-| `iat` | `number?` | Issued-at timestamp |
-| `iss` | `string?` | Issuer |
-
-### `TokenSet`
-
-| Field | Type |
-|-------|------|
-| `access_token` | `string` |
-| `refresh_token` | `string?` |
-| `id_token` | `string?` |
-| `token_type` | `string` |
-| `expires_in` | `number` |
-
-## Framework Integrations
-
-### Fastify
+### Access User Info in Handlers
 
 ```typescript
-import Fastify from 'fastify';
+import { getClaims } from '@ggid/node';
 
-const app = Fastify();
-
-// Use as a preHandler hook
-app.addHook('preHandler', async (request, reply) => {
-  // Skip public paths
-  if (request.url.startsWith('/healthz')) return;
-
-  const auth = request.headers.authorization;
-  if (!auth?.startsWith('Bearer ')) {
-    return reply.code(401).send({ error: 'missing token' });
-  }
-
-  const verifier = new JWTVerifier({
-    jwksUrl: 'https://iam.example.com/.well-known/jwks.json',
-  });
-  try {
-    const claims = await verifier.verify(auth.slice(7));
-    request.ggUser = claims;
-  } catch {
-    return reply.code(401).send({ error: 'invalid token' });
-  }
+app.get('/api/me', (req, res) => {
+  const claims = getClaims(req);
+  res.json({ userId: claims.sub, email: claims.email });
 });
 ```
 
-### Next.js API Routes
+## Error Handling
 
 ```typescript
-// app/api/profile/route.ts
-import { JWTVerifier } from '@ggid/node';
+import { GGIDError } from '@ggid/node';
 
-const verifier = new JWTVerifier({
-  jwksUrl: process.env.GGID_JWKS_URL!,
-});
-
-export async function GET(request: Request) {
-  const auth = request.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) {
-    return Response.json({ error: 'unauthorized' }, { status: 401 });
+try {
+  await client.getUser('nonexistent');
+} catch (err) {
+  if (err instanceof GGIDError) {
+    if (err.isNotFound) {
+      // 404
+    } else if (err.isRateLimited) {
+      // 429
+    } else if (err.isConflict) {
+      // 409
+    }
+    console.log(err.statusCode, err.code, err.message);
   }
-  const claims = await verifier.verify(auth.slice(7));
-  return Response.json({ user: claims.sub, email: claims.email });
 }
 ```
+
+## API Reference
+
+| Method | Description |
+|--------|-------------|
+| `login(input)` | Authenticate with username/password |
+| `register(username, email, password)` | Register a new user |
+| `logout(accessToken)` | Invalidate an access token |
+| `refreshToken(refreshToken)` | Refresh an access token |
+| `verifyToken(token)` | Verify JWT and return claims |
+| `createUser(input)` | Create a new user |
+| `getUser(userId)` | Get user by ID |
+| `updateUser(userId, input)` | Update user fields |
+| `deleteUser(userId)` | Delete a user |
+| `listUsers(opts?)` | List users with pagination |
+| `assignRole(userId, roleId)` | Assign role to user |
+| `removeRole(userId, roleId)` | Remove role from user |
+| `createRole(input)` | Create a role |
+| `listRoles(opts?)` | List roles |
+| `createOrg(input)` | Create an organization |
+| `listOrgs(opts?)` | List organizations |
+| `checkPermission(userId, resource, action)` | Check authorization |
 
 ## License
 

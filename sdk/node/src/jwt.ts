@@ -29,6 +29,9 @@ export class JWTVerifier {
   private issuer?: string;
 
   constructor(config: Pick<GGIDConfig, 'jwksUrl' | 'issuer'>) {
+    if (!config.jwksUrl) {
+      throw new Error('jwksUrl is required for JWTVerifier');
+    }
     this.jwks = createRemoteJWKSet(new URL(config.jwksUrl));
     this.issuer = config.issuer;
   }
