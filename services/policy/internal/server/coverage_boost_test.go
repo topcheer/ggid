@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -23,11 +24,15 @@ import (
 
 // testRoleRepo implements service.RoleRepo + service.RoleReader.
 type testRoleRepo struct {
-	mu        sync.Mutex
-	roles     map[uuid.UUID]*domain.Role
-	rolePerms map[uuid.UUID][]*domain.Permission
-	getErr    error
-	createErr error
+	mu             sync.Mutex
+	roles          map[uuid.UUID]*domain.Role
+	rolePerms      map[uuid.UUID][]*domain.Permission
+	getErr         error
+	createErr      error
+	getRolePermErr error
+	grantErr       error
+	revokeErr      error
+	listErr        error
 }
 
 func (m *testRoleRepo) Create(_ context.Context, r *domain.Role) error {
@@ -54,6 +59,9 @@ func (m *testRoleRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Role, e
 }
 
 func (m *testRoleRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, offset int) ([]*domain.Role, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
 	var res []*domain.Role
 	n := 0
 	for _, r := range m.roles {
@@ -84,14 +92,23 @@ func (m *testRoleRepo) Delete(_ context.Context, id uuid.UUID) error {
 }
 
 func (m *testRoleRepo) GrantPermissions(_ context.Context, _ uuid.UUID, _ []uuid.UUID, _ map[string]any) error {
+	if m.grantErr != nil {
+		return m.grantErr
+	}
 	return nil
 }
 
 func (m *testRoleRepo) RevokePermissions(_ context.Context, _ uuid.UUID, _ []uuid.UUID) error {
+	if m.revokeErr != nil {
+		return m.revokeErr
+	}
 	return nil
 }
 
 func (m *testRoleRepo) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error) {
+	if m.getRolePermErr != nil {
+		return nil, m.getRolePermErr
+	}
 	if m.rolePerms == nil {
 		return nil, nil
 	}
@@ -121,7 +138,8 @@ func (m *testRoleRepo) GetAncestorChain(_ context.Context, roleID uuid.UUID) ([]
 
 // testPermRepo implements service.PermRepo.
 type testPermRepo struct {
-	perms map[uuid.UUID]*domain.Permission
+	perms   map[uuid.UUID]*domain.Permission
+	listErr error
 }
 
 func (m *testPermRepo) Create(_ context.Context, p *domain.Permission) error {
@@ -134,6 +152,9 @@ func (m *testPermRepo) Create(_ context.Context, p *domain.Permission) error {
 }
 
 func (m *testPermRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, offset int) ([]*domain.Permission, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
 	var res []*domain.Permission
 	n := 0
 	for _, p := range m.perms {
@@ -162,6 +183,8 @@ func (m *testUserRoleRepo) ListByUser(_ context.Context, _ uuid.UUID) ([]*domain
 type testPolicyRepo struct {
 	policies  map[uuid.UUID]*domain.Policy
 	createErr error
+	deleteErr error
+	listErr   error
 }
 
 func (m *testPolicyRepo) Create(_ context.Context, p *domain.Policy) error {
@@ -185,6 +208,9 @@ func (m *testPolicyRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Polic
 }
 
 func (m *testPolicyRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, offset int) ([]*domain.Policy, error) {
+	if m.listErr != nil {
+		return nil, m.listErr
+	}
 	var res []*domain.Policy
 	n := 0
 	for _, p := range m.policies {
@@ -199,6 +225,9 @@ func (m *testPolicyRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, o
 }
 
 func (m *testPolicyRepo) Delete(_ context.Context, id uuid.UUID) error {
+	if m.deleteErr != nil {
+		return m.deleteErr
+	}
 	delete(m.policies, id)
 	return nil
 }
@@ -1209,4 +1238,208 @@ func TestToStringSlice(t *testing.T) {
 	if got := toStringSlice("not-a-slice"); got != nil {
 		t.Errorf("expected nil, got %v", got)
 	}
+}
+
+// ===== writeServiceError direct tests =====
+
+func TestWriteServiceError_AllTypes(t *testing.T) {
+	tests := []struct {
+		name     string
+		err      error
+		expected int
+	}{
+		{"not_found", pkgerrors.NotFound("role", "123"), http.StatusNotFound},
+		{"already_exists", pkgerrors.AlreadyExists("role", "123"), http.StatusConflict},
+		{"invalid_argument", pkgerrors.InvalidArgument("bad input"), http.StatusBadRequest},
+		{"permission_denied", pkgerrors.PermissionDenied("forbidden"), http.StatusForbidden},
+		{"failed_precondition", pkgerrors.New(pkgerrors.ErrFailedPrecondition, "precondition"), http.StatusPreconditionFailed},
+		{"internal_ggid", pkgerrors.New(pkgerrors.ErrInternal, "internal"), http.StatusInternalServerError},
+		{"unauthenticated", pkgerrors.New(pkgerrors.ErrUnauthenticated, "no auth"), http.StatusInternalServerError},
+		{"resource_exhausted", pkgerrors.New(pkgerrors.ErrResourceExhausted, "exhausted"), http.StatusInternalServerError},
+		{"plain_error", fmt.Errorf("plain error"), http.StatusInternalServerError},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			writeServiceError(w, tt.err)
+			if w.Code != tt.expected {
+				t.Errorf("expected %d, got %d", tt.expected, w.Code)
+			}
+		})
+	}
+}
+
+// ===== NewHTTPServer test =====
+
+func TestNewHTTPServer(t *testing.T) {
+	roleRepo := &testRoleRepo{roles: map[uuid.UUID]*domain.Role{}}
+	permRepo := &testPermRepo{perms: map[uuid.UUID]*domain.Permission{}}
+	policyRepo := &testPolicyRepo{policies: map[uuid.UUID]*domain.Policy{}}
+	roleSvc := service.NewRoleService(roleRepo, permRepo, &testUserRoleRepo{})
+	policySvc := service.NewPolicyService(policyRepo)
+	evaluator := service.NewEvaluator(roleRepo, &testUserRoleReader{}, &testPolicyReader{})
+	srv := NewHTTPServer(roleSvc, policySvc, evaluator)
+	if srv == nil {
+		t.Fatal("expected non-nil server")
+	}
+}
+
+// ===== Error path coverage for handleAnalyze =====
+
+func TestHandleAnalyze_RoleNotFound(t *testing.T) {
+	newTestHarness()
+	w := doReq("GET", "/api/v1/policies/analyze?role_id="+uuid.New().String(), "")
+	assertStatus(t, w, http.StatusNotFound)
+}
+
+func TestHandleAnalyze_PermissionError(t *testing.T) {
+	h := newTestHarness()
+	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "admin", "Admin", "", nil)
+	h.roleRepo.getRolePermErr = fmt.Errorf("db error")
+	w := doReq("GET", "/api/v1/policies/analyze?role_id="+role.ID.String(), "")
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+// ===== Error path coverage for handleRolePermissions =====
+
+func TestHandleRolePermissions_GrantError(t *testing.T) {
+	h := newTestHarness()
+	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
+	h.roleRepo.grantErr = fmt.Errorf("grant failed")
+	body := `{"permission_ids":["` + uuid.New().String() + `"]}`
+	w := doReq("POST", "/api/v1/roles/"+role.ID.String()+"/permissions", body)
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+func TestHandleRolePermissions_RevokeError(t *testing.T) {
+	h := newTestHarness()
+	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
+	h.roleRepo.revokeErr = fmt.Errorf("revoke failed")
+	body := `{"permission_ids":["` + uuid.New().String() + `"]}`
+	w := doReq("DELETE", "/api/v1/roles/"+role.ID.String()+"/permissions", body)
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+func TestHandleRolePermissions_GetError(t *testing.T) {
+	h := newTestHarness()
+	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
+	h.roleRepo.getRolePermErr = fmt.Errorf("get failed")
+	w := doReq("GET", "/api/v1/roles/"+role.ID.String()+"/permissions", "")
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+// ===== Error path coverage for handleEffectivePermissions =====
+
+func TestHandleEffectivePermissions_RoleNotFound(t *testing.T) {
+	newTestHarness()
+	w := doReq("GET", "/api/v1/roles/"+uuid.New().String()+"/effective-permissions", "")
+	assertStatus(t, w, http.StatusNotFound)
+}
+
+func TestHandleEffectivePermissions_EffectiveError(t *testing.T) {
+	h := newTestHarness()
+	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
+	h.roleRepo.listErr = fmt.Errorf("list failed")
+	w := doReq("GET", "/api/v1/roles/"+role.ID.String()+"/effective-permissions", "")
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+// ===== Error path coverage for handlePolicyByID =====
+
+func TestHandlePolicyByID_DeleteError(t *testing.T) {
+	h := newTestHarness()
+	policy, _ := h.policySvc.CreatePolicy(context.Background(), &domain.Policy{
+		TenantID: h.tenantID, Name: "P1", Effect: domain.EffectAllow,
+	})
+	h.policyRepo.deleteErr = fmt.Errorf("delete failed")
+	w := doReq("DELETE", "/api/v1/policies/"+policy.ID.String(), "")
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+// ===== Error path coverage for listPolicies =====
+
+func TestListPolicies_RepoError(t *testing.T) {
+	h := newTestHarness()
+	h.policyRepo.listErr = fmt.Errorf("list failed")
+	w := doReq("GET", "/api/v1/policies?tenant_id="+h.tenantID.String(), "")
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+// ===== Error path coverage for handleFromTemplate =====
+
+func TestHandleFromTemplate_InvalidJSON(t *testing.T) {
+	newTestHarness()
+	w := doReq("POST", "/api/v1/policies/from-template/pci-dss", "bad-json")
+	assertStatus(t, w, http.StatusBadRequest)
+}
+
+func TestHandleFromTemplate_RepoError(t *testing.T) {
+	h := newTestHarness()
+	h.policyRepo.createErr = fmt.Errorf("create failed")
+	body := `{"tenant_id":"` + h.tenantID.String() + `"}`
+	w := doReq("POST", "/api/v1/policies/from-template/pci-dss", body)
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+// ===== Error path coverage for handleSetRoleParent =====
+
+func TestHandleSetRoleParent_CycleDetection(t *testing.T) {
+	h := newTestHarness()
+	roleA, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "a", "A", "", nil)
+	roleB, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "b", "B", "", nil)
+	// Set B's parent to A
+	_, _ = h.roleSvc.SetParent(context.Background(), roleB.ID, roleA.ID)
+	// Try to set A's parent to B — creates cycle
+	body := `{"parent_role_id":"` + roleB.ID.String() + `"}`
+	w := doReq("POST", "/api/v1/roles/"+roleA.ID.String()+"/parent", body)
+	assertStatus(t, w, http.StatusPreconditionFailed)
+}
+
+func TestHandleSetRoleParent_SameID(t *testing.T) {
+	h := newTestHarness()
+	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
+	body := `{"parent_role_id":"` + role.ID.String() + `"}`
+	w := doReq("POST", "/api/v1/roles/"+role.ID.String()+"/parent", body)
+	assertStatus(t, w, http.StatusBadRequest)
+}
+
+// ===== Additional error path coverage =====
+
+func TestHandleRoles_CreateRepoError(t *testing.T) {
+	h := newTestHarness()
+	h.roleRepo.createErr = fmt.Errorf("create failed")
+	body := `{"tenant_id":"` + h.tenantID.String() + `","key":"k","name":"N"}`
+	w := doReq("POST", "/api/v1/roles", body)
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+func TestHandleRoles_ListRepoError(t *testing.T) {
+	h := newTestHarness()
+	h.roleRepo.listErr = fmt.Errorf("list failed")
+	w := doReq("GET", "/api/v1/roles?tenant_id="+h.tenantID.String(), "")
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+func TestHandlePolicies_CreateRepoError(t *testing.T) {
+	h := newTestHarness()
+	h.policyRepo.createErr = fmt.Errorf("create failed")
+	body := `{"tenant_id":"` + h.tenantID.String() + `","name":"X","effect":"allow"}`
+	w := doReq("POST", "/api/v1/policies", body)
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+func TestHandlePermissions_ListRepoError(t *testing.T) {
+	h := newTestHarness()
+	h.permRepo.listErr = fmt.Errorf("list failed")
+	w := doReq("GET", "/api/v1/permissions?tenant_id="+h.tenantID.String(), "")
+	assertStatus(t, w, http.StatusInternalServerError)
+}
+
+// ===== handleRoleByID unknown sub-path fallthrough =====
+
+func TestHandleRoleByID_UnknownSubPath(t *testing.T) {
+	h := newTestHarness()
+	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
+	w := doReq("PUT", "/api/v1/roles/"+role.ID.String()+"/unknown", "")
+	assertStatus(t, w, http.StatusMethodNotAllowed)
 }
