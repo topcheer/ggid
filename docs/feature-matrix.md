@@ -464,3 +464,83 @@ Resolved:     21 / 31  (67.7%)
 Pending:      10 / 31  (32.3%)
 Target:       28 / 31  (90%) by end of Phase 11
 ```
+
+---
+
+## Quick Comparison: GGID vs Key Competitors
+
+A focused comparison against the 5 most comparable IAM platforms.
+
+### Feature Summary (30+ rows)
+
+| # | Feature | GGID | Auth0 | Keycloak | Clerk | Logto | Casdoor |
+|---|---------|------|-------|----------|-------|-------|---------|
+| **Authentication** | | | | | | | |
+| 1 | Username/Password | Yes | Yes | Yes | Yes | Yes | Yes |
+| 2 | MFA (TOTP) | Yes | Yes | Yes | Yes | Yes | Yes |
+| 3 | WebAuthn / Passkeys | Yes | Yes | Beta | Yes | Beta | No |
+| 4 | Social Login (9 providers) | Yes | Yes | Yes | Yes | Yes | Yes |
+| 5 | Passwordless (magic link) | Phase 11 | Yes | Yes | Yes | Yes | No |
+| 6 | LDAP/Active Directory | Yes | Yes (Enterprise) | Yes | No | No | No |
+| 7 | Step-up authentication | Yes | Yes (Actions) | No | No | No | No |
+| | | | | | | | |
+| **Standards & Protocols** | | | | | | | |
+| 8 | OAuth 2.0 / OIDC | Yes | Yes | Yes | Yes | Yes | Yes |
+| 9 | OAuth 2.1 alignment | Yes | Partial | No | No | Partial | No |
+| 10 | SAML 2.0 SSO | Yes | Yes (Enterprise) | Yes | No | No | No |
+| 11 | SCIM 2.0 provisioning | Yes | Yes (Enterprise) | Yes | No | No | No |
+| 12 | PKCE enforcement | Yes | Yes | Optional | Yes | Yes | No |
+| 13 | DPoP (RFC 9449) | Phase 11 | No | No | No | No | No |
+| | | | | | | | |
+| **Access Control** | | | | | | | |
+| 14 | RBAC | Yes | Yes | Yes | Yes | Yes | Yes |
+| 15 | ABAC | Yes | Custom rules | Yes | No | No | No |
+| 16 | Role hierarchy | Yes | No | Yes | No | No | No |
+| 17 | Custom JWT claims | Yes (hooks) | Yes (Actions) | Yes (mappers) | No | Yes | No |
+| | | | | | | | |
+| **Multi-Tenancy** | | | | | | | |
+| 18 | Tenant isolation (RLS) | Yes (PostgreSQL) | Orgs | Realms | Orgs | No | No |
+| 19 | Per-tenant branding | Yes | Yes | Yes (themes) | Yes | No | No |
+| 20 | Per-tenant rate limits | Yes | No | No | No | No | No |
+| 21 | Per-tenant config | Yes | Yes | Yes (realm) | Yes | No | No |
+| | | | | | | | |
+| **Developer Experience** | | | | | | | |
+| 22 | Go SDK | Yes | No | No | No | No | Yes |
+| 23 | Node.js SDK | Yes | Yes | No | Yes | Yes | Yes |
+| 24 | Java SDK | Yes | Yes | No | No | No | No |
+| 25 | Admin Console (Web UI) | Yes (Next.js) | Yes | Yes | Yes | Yes | Yes |
+| 26 | OpenAPI 3.1 spec | Yes | Yes | Yes | Yes | Yes | No |
+| 27 | GraphQL API | No | No | No | No | No | No |
+| | | | | | | | |
+| **Infrastructure** | | | | | | | |
+| 28 | Docker / Docker Compose | Yes | N/A (SaaS) | Yes | N/A | Yes | Yes |
+| 29 | Kubernetes / Helm | Yes | N/A | Yes (Operator) | N/A | Yes | Yes |
+| 30 | Horizontal scaling (stateless) | Yes | N/A | Yes | N/A | Yes | Yes |
+| 31 | PostgreSQL (RLS) | Yes | N/A | Yes | N/A | Yes | Yes |
+| | | | | | | | |
+| **Security & Compliance** | | | | | | | |
+| 32 | Audit log (immutable) | Yes (NATS + hash chain) | Yes | Yes | Yes | Yes | Yes |
+| 33 | Webhooks (HMAC signed) | Yes | Yes | Yes (events) | Yes | Yes | No |
+| 34 | GDPR tools | Phase 11 | Yes | Manual | Manual | Manual | Manual |
+| 35 | License | Apache 2.0 | Commercial | Apache 2.0 | Commercial | MIT | Apache 2.0 |
+
+### Competitive Positioning
+
+| Strength | GGID Advantage |
+|----------|---------------|
+| **Open Source** | Apache 2.0 (vs Auth0/Clerk commercial) |
+| **Multi-Tenancy** | PostgreSQL RLS at DB level (strongest isolation) |
+| **Policy Engine** | RBAC + ABAC in one engine (most competitors only RBAC) |
+| **Go-Native** | Built in Go, SDK in Go (Auth0/Keycloak are Java) |
+| **Self-Hosted** | Full self-host with Docker/K8s (vs SaaS lock-in) |
+| **Audit Pipeline** | NATS JetStream with hash chaining (tamper-evident) |
+
+### Where Competitors Excel
+
+| Gap | Best Alternative | GGID Plan |
+|-----|-----------------|-----------|
+| Marketplace/Integrations | Auth0 (400+ connections) | Build connector framework |
+| Hosted UI customization | Clerk (best-in-class) | Expand white-label widget |
+| Community size | Keycloak (large ecosystem) | Grow open-source community |
+| Enterprise SSO breadth | Auth0 (all protocols) | SAML done, add CAS/WS-Fed |
+| Analytics dashboard | Clerk (beautiful insights) | Expand Console analytics |
