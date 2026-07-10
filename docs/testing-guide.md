@@ -246,4 +246,231 @@ Coverage results are uploaded as artifacts for each PR.
 
 ---
 
+## Package Coverage Table
+
+Current test coverage by package (updated Phase 10):
+
+| Package | Coverage | Target | Notes |
+|---------|----------|--------|-------|
+| `pkg/errors` | 100% | 100% | Complete |
+| `pkg/tenant` | 100% | 100% | Complete |
+| `pkg/i18n` | 100% | 100% | Complete |
+| `pkg/saml` | 100% | 100% | Complete |
+| `services/audit/internal/service` | 100% | 95%+ | Complete |
+| `services/gateway/internal/transport` | 100% | 100% | Complete |
+| `services/gateway/internal/webhooks` | 100% | 100% | Complete |
+| `pkg/authprovider` | 97% | 95%+ | |
+| `services/gateway/internal/config` | 97% | 95%+ | |
+| `services/gateway/internal/healthcheck` | 97% | 95%+ | |
+| `services/identity/internal/service` | 98.5% | 95%+ | |
+| `services/org/internal/service` | 98.7% | 95%+ | |
+| `services/auth/internal/domain` | 98.5% | 95%+ | |
+| `pkg/pii` | 96.6% | 95%+ | |
+| `services/policy/internal/service` | 97.1% | 95%+ | |
+| `services/oauth/internal/service` | 95.7% | 95%+ | |
+| `services/gateway/internal/router` | 95.1% | 95%+ | |
+| `pkg/social` | 93.5% | 95% | |
+| `services/policy/internal/server` | 90.9% | 90%+ | |
+| `pkg/notification` | 91.5% | 90%+ | |
+| `services/auth/internal/webauthn` | 81.7% | 90%+ | Working towards 90% |
+| `services/gateway/internal/http3` | 90.0% | 90%+ | |
+| `pkg/crypto` | 89.4% | 90%+ | |
+| `services/audit/internal/server` | 93.2% | 90%+ | |
+| `services/auth/internal/service` | 86.0% | 85%+ | Target hit |
+| `services/gateway/internal/middleware` | 86.7% | 85%+ | |
+| `services/audit/internal/handler` | 83.3% | 85% | |
+| `pkg/email` | 80.2% | 85% | SMTP tests need real server |
+| `pkg/audit` | 82.4% | 85% | |
+
+---
+
+## How to Write Integration Tests
+
+### Integration Test Structure
+
+Integration tests live in `test/integration/` and use the `integration` build tag:
+
+```go
+//go:build integration
+
+package integration
+
+import (
+    "context"
+    "testing"
+)
+
+func TestGatewayE2E_RegisterLogin(t *testing.T) {
+    // Full flow: register → login → JWT → API call → 401 check
+}
+```
+
+### Running Integration Tests
+
+```bash
+# Start infrastructure
+cd deploy && docker compose up -d postgres redis nats
+
+# Run integration tests
+go test -tags=integration -v ./test/integration/...
+
+# Run a specific integration test
+go test -tags=integration -run TestGatewayE2E_RegisterLogin -v ./test/integration/...
+```
+
+### Integration Test Patterns
+
+#### Test via Gateway (E2E)
+
+```go
+func TestE2E_RegisterUser(t *testing.T) {
+    gatewayURL := "http://localhost:8080"
+    tenantID := "00000000-0000-0000-0000-000000000001"
+
+    // Register
+    resp, err := http.Post(gatewayURL+"/api/v1/auth/register",
+        "application/json",
+        strings.NewReader(`{
+            "username": "testuser",
+            "email": "test@example.com",
+            "password": "TestPass123!"
+        }`))
+    require.NoError(t, err)
+    assert.Equal(t, 201, resp.StatusCode)
+}
+```
+
+#### Test Service Directly (Component)
+
+```go
+//go:build integration
+
+package integration
+
+import (
+    "services/auth/internal/service"
+    "testing"
+)
+
+func TestAuthService_Login_Integration(t *testing.T) {
+    // Use real repository (connected to test database)
+    repo := newTestRepo(t) // helper that sets up test DB
+    svc := service.NewAuthService(repo, mockCache)
+
+    // Test actual behavior
+    token, err := svc.Login(ctx, "user", "pass")
+    require.NoError(t, err)
+    assert.NotEmpty(t, token.AccessToken)
+}
+```
+
+---
+
+## Mock Patterns
+
+### Interface-Based Mocks
+
+GGID uses interfaces for all external dependencies, making mocking straightforward:
+
+```go
+// Define interface at consumer
+type UserRepository interface {
+    GetByID(ctx context.Context, id uuid.UUID) (*User, error)
+    Create(ctx context.Context, user *User) error
+}
+
+// In tests, create a mock implementation
+type mockUserRepo struct {
+    users map[uuid.UUID]*User
+    err   error
+}
+
+func (m *mockUserRepo) GetByID(ctx context.Context, id uuid.UUID) (*User, error) {
+    if m.err != nil {
+        return nil, m.err
+    }
+    if u, ok := m.users[id]; ok {
+        return u, nil
+    }
+    return nil, ErrNotFound
+}
+```
+
+### Mock HTTP Server
+
+For testing HTTP clients and webhook delivery:
+
+```go
+func setupMockServer(t *testing.T, status int, body string) *httptest.Server {
+    return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(status)
+        w.Write([]byte(body))
+    }))
+}
+
+func TestWebhookDelivery(t *testing.T) {
+    srv := setupMockServer(t, 200, `{"ok":true}`)
+    defer srv.Close()
+
+    // Test webhook delivery against mock
+    err := webhookSender.Send(srv.URL, event)
+    require.NoError(t, err)
+}
+```
+
+### Mock Redis
+
+```go
+func newMockRedis() *miniredis.Miniredis {
+    mr, _ := miniredis.NewMiniRedis()
+    mr.Start()
+    return mr
+}
+
+// Use in tests
+mr := newMockRedis(t)
+defer mr.Close()
+rdb := redis.NewClient(&redis.Options{Addr: mr.Addr()})
+```
+
+---
+
+## Test Naming Conventions
+
+GGID follows a consistent naming convention:
+
+| Pattern | Example | Use Case |
+|---------|---------|----------|
+| `Test<Type>_<Method>` | `TestAuthService_Login` | Basic test |
+| `Test<Type>_<Method>_<Scenario>` | `TestAuthService_Login_InvalidPassword` | Specific scenario |
+| `Test<Type>_<Method>_<Condition>` | `TestUserRepo_Create_DuplicateEmail` | Error condition |
+| `Test<Type>_<Method>_Concurrent` | `TestTokenStore_Revoke_Concurrent` | Race condition test |
+| `Benchmark<Function>` | `BenchmarkRBACCheck_10Roles` | Performance benchmark |
+
+---
+
+## Coverage Targets Per Package
+
+| Package Category | Minimum | Target | Rationale |
+|-----------------|---------|--------|-----------|
+| `pkg/` shared utilities | 85% | 95%+ | Used by all services, high impact |
+| `services/*/internal/service/` | 80% | 90%+ | Business logic, must be correct |
+| `services/*/internal/server/` | 75% | 85%+ | HTTP handlers, thinner logic |
+| `services/*/internal/handler/` | 75% | 85%+ | gRPC handlers |
+| `services/*/internal/repository/` | 60% | 80%+ | Data access, harder to test |
+| `services/*/cmd/` | N/A | — | Thin main(), not tested |
+| `console/` (TypeScript) | 60% | 80%+ | UI components |
+
+```bash
+# Check coverage against thresholds
+make test
+
+# Generate detailed HTML report
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out -o coverage.html
+open coverage.html
+```
+
+---
+
 *Last updated: Phase 10*
