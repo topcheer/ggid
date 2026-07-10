@@ -202,6 +202,49 @@ func verify(body []byte, sig, secret string) bool {
 | 3 | 2 min | Second retry |
 | Max | 3 | After 3 failures, event is dropped |
 
+### Extended Retry with Exponential Backoff (Enterprise)
+
+Enterprise tenants can configure extended retry with exponential backoff:
+
+```bash
+curl -X PUT $API/api/v1/webhooks/$WEBHOOK_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "retry_config": {
+      "strategy": "exponential",
+      "max_attempts": 7,
+      "initial_delay_seconds": 30,
+      "max_delay_seconds": 86400,
+      "backoff_multiplier": 2.5,
+      "jitter": true
+    }
+  }'
+```
+
+| Attempt | Delay | Cumulative |
+|---------|-------|------------|
+| 1 | 0s | 0s |
+| 2 | 30s | 30s |
+| 3 | 75s | 1m45s |
+| 4 | 3m8s | 4m53s |
+| 5 | 7m51s | 12m44s |
+| 6 | 19m38s | 32m22s |
+| 7 | 49m14s | 1h21m |
+
+### Dead-Letter Queue
+
+After max retries, failed deliveries are stored for 7 days:
+
+```bash
+# View failed deliveries
+curl $API/api/v1/webhooks/$WEBHOOK_ID/dlq \
+  -H "Authorization: Bearer $TOKEN"
+
+# Replay a failed delivery
+curl -X POST $API/api/v1/webhooks/$WEBHOOK_ID/dlq/$DELIVERY_ID/replay \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ### Fail-Open Behavior
 
 If your webhook endpoint is unreachable or times out, GGID continues the
@@ -294,4 +337,159 @@ ngrok http 5000
 curl -X POST "$GW/api/v1/auth/hooks" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"event": "post-login", "url": "https://abc123.ngrok.io/hooks/ggid", "secret": "test-secret"}'
+```
+
+---
+
+## Event Payload Catalog
+
+Complete reference for every webhook event payload.
+
+### user.created
+
+```json
+{
+  "event": "user.created",
+  "delivery_id": "dlv-abc123",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "alice",
+    "email": "alice@test.com",
+    "created_by": "admin@test.com"
+  }
+}
+```
+
+### user.updated
+
+```json
+{
+  "event": "user.updated",
+  "delivery_id": "dlv-def456",
+  "timestamp": "2024-01-15T10:31:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "changes": {
+      "email": { "old": "alice@old.com", "new": "alice@new.com" }
+    }
+  }
+}
+```
+
+### user.deleted
+
+```json
+{
+  "event": "user.deleted",
+  "delivery_id": "dlv-ghi789",
+  "timestamp": "2024-01-15T10:32:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "username": "alice",
+    "deleted_by": "admin@test.com",
+    "soft_delete": true
+  }
+}
+```
+
+### role.assigned
+
+```json
+{
+  "event": "role.assigned",
+  "delivery_id": "dlv-jkl012",
+  "timestamp": "2024-01-15T10:33:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "role_key": "admin",
+    "role_id": "660e8400-e29b-41d4-a716-446655440001",
+    "assigned_by": "superadmin@test.com"
+  }
+}
+```
+
+### role.revoked
+
+```json
+{
+  "event": "role.revoked",
+  "delivery_id": "dlv-mno345",
+  "timestamp": "2024-01-15T10:34:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "role_key": "admin",
+    "revoked_by": "superadmin@test.com",
+    "reason": "policy_violation"
+  }
+}
+```
+
+### policy.changed
+
+```json
+{
+  "event": "policy.changed",
+  "delivery_id": "dlv-pqr678",
+  "timestamp": "2024-01-15T10:35:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "policy_id": "770e8400-e29b-41d4-a716-446655440002",
+    "action": "updated",
+    "changes": ["effect", "conditions"],
+    "changed_by": "admin@test.com"
+  }
+}
+```
+
+### session.expired
+
+```json
+{
+  "event": "session.expired",
+  "delivery_id": "dlv-stu901",
+  "timestamp": "2024-01-15T10:36:00Z",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "session_id": "sess-xyz789",
+    "reason": "timeout"
+  }
+}
+```
+
+---
+
+## Webhook Debugging
+
+### Check Delivery Status
+
+```bash
+# View delivery history
+curl $API/api/v1/webhooks/$WEBHOOK_ID/deliveries \
+  -H "Authorization: Bearer $TOKEN" | jq .
+
+# Response
+[
+  {
+    "delivery_id": "dlv-abc123",
+    "event": "user.created",
+    "status": "delivered",
+    "response_code": 200,
+    "delivered_at": "2024-01-15T10:30:01Z"
+  },
+  {
+    "delivery_id": "dlv-def456",
+    "event": "user.updated",
+    "status": "failed",
+    "response_code": 500,
+    "attempts": 3,
+    "last_attempt": "2024-01-15T10:33:00Z"
+  }
+]
 ```

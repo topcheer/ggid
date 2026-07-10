@@ -237,3 +237,263 @@ groups:
         annotations:
           summary: "Possible brute-force attack (>10 failed logins/min)"
 ```
+
+---
+
+## Structured Logging
+
+GGID emits JSON-formatted structured logs for machine parsing.
+
+### Log Format
+
+```json
+{
+  "time": "2024-01-15T10:30:00.123Z",
+  "level": "info",
+  "service": "auth",
+  "message": "user login successful",
+  "request_id": "req-abc123def456",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "remote_ip": "192.168.1.100",
+  "user_agent": "Mozilla/5.0 ...",
+  "duration_ms": 8,
+  "method": "POST",
+  "path": "/api/v1/auth/login",
+  "status": 200
+}
+```
+
+### Standard Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `time` | ISO 8601 | Timestamp in UTC |
+| `level` | string | trace, debug, info, warn, error |
+| `service` | string | Service name (gateway, auth, etc.) |
+| `message` | string | Human-readable message |
+| `request_id` | string | Unique request identifier for tracing |
+| `tenant_id` | uuid | Tenant context |
+| `user_id` | uuid | Actor (if authenticated) |
+| `remote_ip` | string | Client IP address |
+| `duration_ms` | int | Request duration in milliseconds |
+
+### PII Redaction
+
+Sensitive data is automatically redacted in logs:
+
+```json
+// Input: password=MySecret123
+// Logged: "password": "***REDACTED***"
+
+// Input: email=alice@test.com
+// Logged: "email": "a***@t***.com"
+
+// Input: token=eyJhbGci...
+// Logged: "token": "***REDACTED***"
+```
+
+### Log Aggregation with Loki
+
+```yaml
+# loki-promtail-config.yaml
+server:
+  http_listen_port: 9080
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: ggid
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        filters:
+          - name: label
+            values: ["com.docker.compose.project=ggid"]
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            service: service
+            request_id: request_id
+      - labels:
+          level:
+          service:
+```
+
+### Querying Logs in Loki/LogQL
+
+```logql
+# All errors in the last hour
+{service="auth", level="error"}
+
+# Requests for a specific user
+{service="gateway"} |= "550e8400-e29b-41d4-a716-446655440000"
+
+# Slow requests (>100ms)
+{service="gateway"} | json | duration_ms > 100
+
+# Failed logins from a specific IP
+{service="auth", level="warn"} |= "login failed" |= "192.168.1.100"
+
+# Trace a request across services
+{request_id="req-abc123def456"}
+```
+
+---
+
+## SIEM Integration
+
+GGID audit events integrate with Security Information and Event Management (SIEM)
+systems for compliance and threat detection.
+
+### Audit → SIEM Flow
+
+```mermaid
+graph LR
+    SVC[GGID Services] -->|publish| NATS[NATS JetStream]
+    NATS -->|consume| AUDIT[Audit Service]
+    AUDIT -->|write| PG[(PostgreSQL)]
+    AUDIT -->|forward| SYSLOG[Syslog / CEF]
+    SYSLOG -->|collect| SIEM[Splunk / QRadar / Sentinel]
+
+    style SIEM fill:#8e44ad,color:#fff
+```
+
+### Splunk Integration (HEC)
+
+```bash
+# Configure audit service to forward to Splunk HTTP Event Collector
+AUDIT_SIEM_ENABLED=true
+AUDIT_SIEM_TYPE=splunk
+AUDIT_SIEM_URL=https://splunk.example.com:8088/services/collector
+AUDIT_SIEM_TOKEN=your-hec-token-here
+```
+
+Splunk receives events in CEF format:
+
+```
+CEF:0|GGID|IAM|1.0|100|User Login|3|suser=alice act=user.login dst=192.168.1.100 rt=Jan 15 2024 10:30:00
+```
+
+### Splunk SPL Queries
+
+```splunk
+# Count logins by user in the last 24 hours
+index=ggid act=user.login
+| stats count by suser
+| sort -count
+
+# Detect brute force: >5 failed logins from same IP in 10 min
+index=ggid act=user.login outcome=failure
+| stats count by src_ip
+| where count > 5
+| sort -count
+
+# Track admin actions
+index=ggid suser=*
+| where match(act, "(create|delete|update|assign|revoke)")
+| table _time, suser, act, object, outcome
+```
+
+### Microsoft Sentinel Integration
+
+```bash
+# Forward via Log Analytics API
+AUDIT_SIEM_TYPE=azure_sentinel
+AUDIT_SIEM_WORKSPACE_ID=your-workspace-id
+AUDIT_SIEM_SHARED_KEY=your-shared-key
+AUDIT_SIEM_LOG_TYPE=GGIDAudit
+```
+
+### Audit Integrity Verification
+
+GGID periodically verifies audit log integrity using hash chaining:
+
+```bash
+# Each audit event includes a hash of the previous event
+# This creates a tamper-evident chain
+
+# Verify chain integrity
+curl $API/api/v1/audit/verify-integrity \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Response
+{
+  "verified": true,
+  "events_checked": 1542832,
+  "chain_broken_at": null,
+  "last_verified": "2024-01-15T10:30:00Z"
+}
+```
+
+---
+
+## Health Endpoint Design
+
+GGID exposes three health endpoint variants:
+
+### /healthz — Liveness
+
+Returns 200 if the process is alive. No dependency checks.
+
+```bash
+$ curl localhost:8080/healthz
+{ "status": "ok" }
+```
+
+### /readyz — Readiness
+
+Returns 200 only if the service can serve requests (all dependencies reachable).
+
+```bash
+$ curl localhost:8080/readyz
+{
+  "status": "ok",
+  "checks": {
+    "database": "ok",
+    "redis": "ok",
+    "nats": "ok"
+  }
+}
+```
+
+If any dependency is down:
+
+```json
+{
+  "status": "unhealthy",
+  "checks": {
+    "database": "ok",
+    "redis": "fail: connection refused",
+    "nats": "ok"
+  }
+}
+```
+
+### /healthz/deep — Deep Health
+
+Returns detailed health status including replication lag, connection pool stats, and latency probes:
+
+```json
+{
+  "status": "ok",
+  "checks": {
+    "database": {
+      "status": "ok",
+      "latency_ms": 0.3,
+      "pool_active": 5,
+      "pool_idle": 20,
+      "replication_lag_s": 0
+    },
+    "redis": {
+      "status": "ok",
+      "latency_ms": 0.1,
+      "connected_clients": 3
+    }
+  }
+}
+```
