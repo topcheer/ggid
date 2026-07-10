@@ -661,9 +661,22 @@ function UnifiedOrgNode({
   return (
     <>
       <div
-        className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50"
-        style={{ paddingLeft: `${depth * 20 + 8}px` }}
+        className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-gray-50 relative"
+        style={{ paddingLeft: `${depth * 24 + 8}px` }}
       >
+        {/* Tree connector lines */}
+        {depth > 0 && (
+          <span
+            className="absolute left-0 top-0 bottom-1/2 w-px bg-gray-200"
+            style={{ left: `${(depth - 1) * 24 + 16}px` }}
+          />
+        )}
+        {depth > 0 && (
+          <span
+            className="absolute h-px bg-gray-200"
+            style={{ left: `${(depth - 1) * 24 + 16}px`, width: "12px", top: "50%" }}
+          />
+        )}
         <button
           onClick={() => hasContent && onToggle(org.id)}
           className={`flex h-4 w-4 items-center justify-center ${hasContent ? "cursor-pointer text-gray-400" : "invisible"}`}
