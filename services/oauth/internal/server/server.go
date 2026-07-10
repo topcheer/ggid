@@ -322,7 +322,28 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 
 	// UserInfo endpoint (GET)
 	mux.HandleFunc("/oauth/userinfo", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "requires_bearer_token"})
+		if r.Method != http.MethodGet && r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+
+		// Extract Bearer token from Authorization header.
+		authHeader := r.Header.Get("Authorization")
+		token := extractBearerToken(authHeader)
+		if token == "" {
+			w.Header().Set("WWW-Authenticate", "Bearer")
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_token", "error_description": "bearer token required"})
+			return
+		}
+
+		userInfo, err := oauthSvc.GetUserInfo(token)
+		if err != nil {
+			w.Header().Set("WWW-Authenticate", "Bearer error=\"invalid_token\"")
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_token", "error_description": err.Error()})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, userInfo)
 	})
 
 	// Token revocation
@@ -340,7 +361,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
 			return
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"active": false})
+		_ = r.ParseForm()
+
+		token := r.FormValue("token")
+		if token == "" {
+			writeJSON(w, http.StatusOK, map[string]bool{"active": false})
+			return
+		}
+
+		result := oauthSvc.IntrospectToken(token)
+		writeJSON(w, http.StatusOK, result)
 	})
 
 	// --- SAML 2.0 IdP skeleton ---
@@ -525,6 +555,18 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// extractBearerToken extracts the token from an "Authorization: Bearer <token>" header.
+func extractBearerToken(authHeader string) string {
+	if authHeader == "" {
+		return ""
+	}
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) == 2 && strings.EqualFold(parts[0], "Bearer") {
+		return strings.TrimSpace(parts[1])
+	}
+	return ""
 }
 
 // loadOrCreateKeyProvider loads RSA keys from disk, or generates them if missing.
