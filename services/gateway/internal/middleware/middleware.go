@@ -516,17 +516,28 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				return
 			}
 
-			tokenStr := strings.TrimSpace(parts[1])
-			token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
-				if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-				}
-				keyID, _ := token.Header["kid"].(string)
-				if keyID == "" {
-					keyID = jwks.KeyID()
-				}
-				return jwks.GetKey(keyID)
-			})
+		tokenStr := strings.TrimSpace(parts[1])
+		// Build validation options: jwt/v5 validates exp/nbf/iat by default
+		// when claims are present. We add issuer, audience, and method restrictions.
+		parseOpts := []jwt.ParserOption{
+			jwt.WithValidMethods([]string{"RS256"}),
+		}
+		if issuer != "" {
+			parseOpts = append(parseOpts, jwt.WithIssuer(issuer))
+		}
+		if audience != "" {
+			parseOpts = append(parseOpts, jwt.WithAudience(audience))
+		}
+		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			keyID, _ := token.Header["kid"].(string)
+			if keyID == "" {
+				keyID = jwks.KeyID()
+			}
+			return jwks.GetKey(keyID)
+		}, parseOpts...)
 
 			if err != nil || !token.Valid {
 				if required {
@@ -547,17 +558,7 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				return
 			}
 
-			// Validate issuer
-			if issuer != "" {
-				if iss, _ := claims["iss"].(string); iss != issuer {
-					if required {
-						writeUnauthorized(w, "invalid token issuer")
-						return
-					}
-					next.ServeHTTP(w, r)
-					return
-				}
-			}
+			// Issuer and audience are validated by jwt.Parse via parseOpts above.
 
 			// Extract user ID and tenant ID from claims, inject into context
 			ctx := r.Context()
