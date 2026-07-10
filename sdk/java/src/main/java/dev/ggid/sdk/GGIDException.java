@@ -1,12 +1,53 @@
 package dev.ggid.sdk;
 
-/** Thrown when GGID API calls fail. */
+/**
+ * Exception thrown when a GGID API call fails.
+ */
 public class GGIDException extends Exception {
-    public GGIDException(String message) {
+
+    private final int statusCode;
+    private final String code;
+
+    public GGIDException(int statusCode, String message, String code) {
         super(message);
+        this.statusCode = statusCode;
+        this.code = code;
     }
 
-    public GGIDException(String message, Throwable cause) {
-        super(message, cause);
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public boolean isNotFound() {
+        return statusCode == 404;
+    }
+
+    public boolean isUnauthorized() {
+        return statusCode == 401;
+    }
+
+    public boolean isForbidden() {
+        return statusCode == 403;
+    }
+
+    public boolean isConflict() {
+        return statusCode == 409;
+    }
+
+    public boolean isRateLimited() {
+        return statusCode == 429;
+    }
+
+    @Override
+    public String toString() {
+        return "GGIDException{" +
+                "statusCode=" + statusCode +
+                ", code='" + code + '\'' +
+                ", message='" + getMessage() + '\'' +
+                '}';
     }
 }

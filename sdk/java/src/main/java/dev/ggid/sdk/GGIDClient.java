@@ -1,136 +1,248 @@
 package dev.ggid.sdk;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 /**
  * GGID IAM Platform Java SDK client.
- *
- * Usage:
- *   GGIDClient client = new GGIDClient("https://iam.example.com");
- *   TokenSet tokens = client.login("admin", "Admin@123456");
- *   JsonNode users = client.listUsers(tokens.getAccessToken());
+ * Provides user management, authentication, RBAC, and organization APIs.
  */
 public class GGIDClient {
+
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final String gatewayUrl;
     private final String tenantId;
+    private final String apiKey;
     private final OkHttpClient httpClient;
-    private final ObjectMapper mapper;
 
-    public GGIDClient(String gatewayUrl) {
-        this(gatewayUrl, "00000000-0000-0000-0000-000000000001");
-    }
-
-    public GGIDClient(String gatewayUrl, String tenantId) {
-        this.gatewayUrl = gatewayUrl.replaceAll("/+$", "");
-        this.tenantId = tenantId;
+    public GGIDClient(Config config) {
+        this.gatewayUrl = config.gatewayUrl.replaceAll("/$", "");
+        this.tenantId = config.tenantId != null ? config.tenantId : "00000000-0000-0000-0000-000000000001";
+        this.apiKey = config.apiKey;
         this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
-                .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                .connectTimeout(Duration.ofSeconds(10))
+                .readTimeout(Duration.ofSeconds(30))
+                .writeTimeout(Duration.ofSeconds(10))
                 .build();
-        this.mapper = new ObjectMapper();
     }
 
-    // --- Auth ---
+    // -----------------------------------------------------------------------
+    // Auth
+    // -----------------------------------------------------------------------
 
-    public TokenSet login(String username, String password) throws GGIDException {
-        Map<String, String> body = new HashMap<>();
-        body.put("username", username);
-        body.put("password", password);
-        JsonNode resp = post("/api/v1/auth/login", body, null);
-        return new TokenSet(
-                resp.path("access_token").asText(),
-                resp.path("refresh_token").asText(""),
-                resp.path("token_type").asText("Bearer"),
-                resp.path("expires_in").asInt(3600)
-        );
+    public TokenSet login(String username, String password) throws GGIDException, IOException {
+        return post("/api/v1/auth/login", Map.of("username", username, "password", password),
+                TokenSet.class);
     }
 
-    public String register(String username, String email, String password, String name) throws GGIDException {
-        Map<String, String> body = new HashMap<>();
-        body.put("username", username);
-        body.put("email", email);
-        body.put("password", password);
-        body.put("name", name != null ? name : "");
-        JsonNode resp = post("/api/v1/auth/register", body, null);
-        return resp.path("user_id").asText("");
+    public TokenSet refreshToken(String refreshToken) throws GGIDException, IOException {
+        return post("/api/v1/auth/refresh", Map.of("refresh_token", refreshToken),
+                TokenSet.class);
     }
 
-    // --- Users ---
-
-    public JsonNode listUsers(String token) throws GGIDException {
-        return get("/api/v1/users", token);
+    public void logout(String accessToken) throws GGIDException, IOException {
+        post("/api/v1/auth/logout", Map.of("access_token", accessToken), Void.class);
     }
 
-    public JsonNode getUser(String token, String userId) throws GGIDException {
-        return get("/api/v1/users/" + userId, token);
+    // -----------------------------------------------------------------------
+    // Users
+    // -----------------------------------------------------------------------
+
+    public User createUser(String username, String email, String password)
+            throws GGIDException, IOException {
+        return post("/api/v1/users", Map.of("username", username, "email", email,
+                "password", password), User.class);
     }
 
-    public void deleteUser(String token, String userId) throws GGIDException {
-        delete("/api/v1/users/" + userId, token);
+    public User getUser(String userId) throws GGIDException, IOException {
+        return get("/api/v1/users/" + userId, User.class);
     }
 
-    // --- RBAC ---
-
-    public JsonNode listRoles(String token) throws GGIDException {
-        return get("/api/v1/roles", token);
+    public void deleteUser(String userId) throws GGIDException, IOException {
+        delete("/api/v1/users/" + userId);
     }
 
-    public JsonNode checkPermission(String token, String resource, String action) throws GGIDException {
-        Map<String, String> body = new HashMap<>();
-        body.put("resource", resource);
-        body.put("action", action);
-        return post("/api/v1/policies/check", body, token);
+    public PageResult<User> listUsers(int page, int pageSize) throws GGIDException, IOException {
+        return get("/api/v1/users?page=" + page + "&page_size=" + pageSize,
+                new TypeReference<PageResult<User>>() {});
     }
 
-    // --- Internal HTTP ---
-
-    private JsonNode get(String path, String token) throws GGIDException {
-        return execute("GET", path, null, token);
+    public void assignRole(String userId, String roleId) throws GGIDException, IOException {
+        post("/api/v1/users/" + userId + "/roles", Map.of("role_id", roleId), Void.class);
     }
 
-    private JsonNode post(String path, Object body, String token) throws GGIDException {
-        return execute("POST", path, body, token);
+    // -----------------------------------------------------------------------
+    // Roles
+    // -----------------------------------------------------------------------
+
+    public Role createRole(String key, String name) throws GGIDException, IOException {
+        return post("/api/v1/roles", Map.of("key", key, "name", name), Role.class);
     }
 
-    private void delete(String path, String token) throws GGIDException {
-        execute("DELETE", path, null, token);
+    public PageResult<Role> listRoles() throws GGIDException, IOException {
+        return get("/api/v1/roles", new TypeReference<PageResult<Role>>() {});
     }
 
-    private JsonNode execute(String method, String path, Object body, String token) throws GGIDException {
-        try {
-            Request.Builder reqBuilder = new Request.Builder()
-                    .url(gatewayUrl + path)
-                    .header("X-Tenant-ID", tenantId)
-                    .header("Content-Type", "application/json");
+    // -----------------------------------------------------------------------
+    // Organizations
+    // -----------------------------------------------------------------------
 
-            if (token != null && !token.isEmpty()) {
-                reqBuilder.header("Authorization", "Bearer " + token);
-            }
+    public Organization createOrg(String name) throws GGIDException, IOException {
+        return post("/api/v1/organizations", Map.of("name", name), Organization.class);
+    }
 
-            if (body != null) {
-                String json = mapper.writeValueAsString(body);
-                reqBuilder.method(method, RequestBody.create(json, JSON));
-            } else {
-                reqBuilder.method(method, null);
-            }
+    public PageResult<Organization> listOrgs() throws GGIDException, IOException {
+        return get("/api/v1/organizations", new TypeReference<PageResult<Organization>>() {});
+    }
 
-            try (Response response = httpClient.newCall(reqBuilder.build()).execute()) {
-                String respBody = response.body() != null ? response.body().string() : "{}";
-                if (response.code() >= 400) {
-                    throw new GGIDException("API error: " + response.code() + " - " + respBody);
-                }
-                return mapper.readTree(respBody);
-            }
-        } catch (IOException e) {
-            throw new GGIDException("Request failed: " + e.getMessage(), e);
+    // -----------------------------------------------------------------------
+    // Policy
+    // -----------------------------------------------------------------------
+
+    public PermissionResult checkPermission(String userId, String resource, String action)
+            throws GGIDException, IOException {
+        return post("/api/v1/policies/check", Map.of("user_id", userId,
+                "resource", resource, "action", action), PermissionResult.class);
+    }
+
+    // -----------------------------------------------------------------------
+    // Internal HTTP helpers
+    // -----------------------------------------------------------------------
+
+    private <T> T get(String path, Class<T> type) throws GGIDException, IOException {
+        Request request = buildRequest("GET", path, null);
+        return execute(request, type);
+    }
+
+    private <T> T get(String path, TypeReference<T> typeRef) throws GGIDException, IOException {
+        Request request = buildRequest("GET", path, null);
+        return execute(request, typeRef);
+    }
+
+    private <T> T post(String path, Object body, Class<T> type) throws GGIDException, IOException {
+        Request request = buildRequest("POST", path, body);
+        return execute(request, type);
+    }
+
+    private void delete(String path) throws GGIDException, IOException {
+        Request request = buildRequest("DELETE", path, null);
+        execute(request, Void.class);
+    }
+
+    private Request buildRequest(String method, String path, Object body) throws IOException {
+        RequestBody reqBody = body != null && !body.equals(Void.class)
+                ? RequestBody.create(mapper.writeValueAsString(body), JSON)
+                : RequestBody.create("", null);
+
+        Request.Builder builder = new Request.Builder()
+                .url(gatewayUrl + path)
+                .header("X-Tenant-ID", tenantId)
+                .header("Content-Type", "application/json");
+
+        if (apiKey != null && !apiKey.isEmpty()) {
+            builder.header("X-API-Key", apiKey);
         }
+
+        return builder.method(method, reqBody).build();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T execute(Request request, Class<T> type) throws GGIDException, IOException {
+        try (Response response = httpClient.newCall(request).execute()) {
+            String bodyStr = response.body() != null ? response.body().string() : "";
+            if (!response.isSuccessful()) {
+                String code = "";
+                String message = bodyStr;
+                try {
+                    Map<String, Object> parsed = mapper.readValue(bodyStr, Map.class);
+                    code = (String) parsed.getOrDefault("code", "");
+                    message = (String) parsed.getOrDefault("message", bodyStr);
+                } catch (Exception ignored) {}
+                throw new GGIDException(response.code(), message, code);
+            }
+            if (type == Void.class || bodyStr.isEmpty()) return null;
+            return mapper.readValue(bodyStr, type);
+        }
+    }
+
+    private <T> T execute(Request request, TypeReference<T> typeRef) throws GGIDException, IOException {
+        try (Response response = httpClient.newCall(request).execute()) {
+            String bodyStr = response.body() != null ? response.body().string() : "";
+            if (!response.isSuccessful()) {
+                throw new GGIDException(response.code(), bodyStr, "");
+            }
+            if (bodyStr.isEmpty()) return null;
+            return mapper.readValue(bodyStr, typeRef);
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Inner classes
+    // -----------------------------------------------------------------------
+
+    public static class Config {
+        public String gatewayUrl;
+        public String tenantId;
+        public String apiKey;
+
+        public Config(String gatewayUrl) {
+            this.gatewayUrl = gatewayUrl;
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class TokenSet {
+        @JsonProperty("access_token") public String accessToken;
+        @JsonProperty("refresh_token") public String refreshToken;
+        @JsonProperty("token_type") public String tokenType;
+        @JsonProperty("expires_in") public int expiresIn;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class User {
+        public String id;
+        public String username;
+        public String email;
+        public String status;
+        @JsonProperty("display_name") public String displayName;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Role {
+        public String id;
+        public String key;
+        public String name;
+        public String description;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Organization {
+        public String id;
+        public String name;
+        @JsonProperty("parent_id") public String parentId;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class PermissionResult {
+        public boolean allowed;
+        public String reason;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class PageResult<T> {
+        public List<T> items;
+        @JsonProperty("total_count") public int totalCount;
+        public int page;
+        @JsonProperty("page_size") public int pageSize;
     }
 }

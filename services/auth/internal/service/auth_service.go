@@ -14,6 +14,7 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/redis/go-redis/v9"
 )
 
 // suppress unused import warnings — crypto is used in SocialLogin path.
@@ -646,4 +647,73 @@ func (s *AuthService) SocialLogin(ctx context.Context, provider, externalID, ema
 		ExpiresIn:    expiresIn,
 		SessionID:    session.ID.String(),
 	}, nil
+}
+
+// --- Session Timeout Policy ---
+
+// CheckSessionTimeout validates that a session is still within the configured
+// absolute and idle timeout limits. Returns ErrSessionExpired if timed out.
+// On success, updates the last-activity timestamp in Redis.
+func (s *AuthService) CheckSessionTimeout(ctx context.Context, sessionID uuid.UUID, createdAt time.Time) error {
+	if s.cfg.SessionTimeout.AbsoluteTimeout > 0 {
+		if time.Since(createdAt) > s.cfg.SessionTimeout.AbsoluteTimeout {
+			return ErrSessionExpired
+		}
+	}
+
+	if s.cfg.SessionTimeout.IdleTimeout > 0 {
+		activityKey := fmt.Sprintf("ggid:session_activity:%s", sessionID)
+		lastActiveStr, err := s.rateLimiter.rdb.Get(ctx, activityKey).Result()
+		if err == nil {
+			lastActive, err := time.Parse(time.RFC3339, lastActiveStr)
+			if err == nil && time.Since(lastActive) > s.cfg.SessionTimeout.IdleTimeout {
+				return ErrSessionExpired
+			}
+		}
+		now := time.Now().Format(time.RFC3339)
+		ttl := s.cfg.SessionTimeout.IdleTimeout
+		if ttl == 0 {
+			ttl = 30 * time.Minute
+		}
+		s.rateLimiter.rdb.Set(ctx, activityKey, now, ttl)
+	}
+	return nil
+}
+
+// --- Brute Force Protection (Sliding Window) ---
+
+// CheckBruteForce validates login frequency using a dual-dimension sliding window:
+//   - Per IP: max 20 requests per minute
+//   - Per username: max 10 requests per hour
+func (s *AuthService) CheckBruteForce(ctx context.Context, tenantID uuid.UUID, ip, username string) error {
+	ipKey := fmt.Sprintf("ggid:bf:ip:%s", ip)
+	if err := s.slidingWindowCheck(ctx, ipKey, 20, time.Minute); err != nil {
+		return err
+	}
+	userKey := fmt.Sprintf("ggid:bf:user:%s:%s", tenantID, username)
+	if err := s.slidingWindowCheck(ctx, userKey, 10, time.Hour); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AuthService) slidingWindowCheck(ctx context.Context, key string, limit int, window time.Duration) error {
+	now := time.Now().UnixNano()
+	cutoff := now - window.Nanoseconds()
+
+	pipe := s.rateLimiter.rdb.Pipeline()
+	pipe.ZRemRangeByScore(ctx, key, "0", fmt.Sprintf("%d", cutoff))
+	pipe.ZAdd(ctx, key, redis.Z{Score: float64(now), Member: now})
+	countCmd := pipe.ZCard(ctx, key)
+	pipe.Expire(ctx, key, window+time.Second)
+
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("sliding window rate limit: %w", err)
+	}
+
+	if countCmd.Val() > int64(limit) {
+		return ErrRateLimited
+	}
+	return nil
 }

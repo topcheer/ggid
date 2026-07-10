@@ -8,12 +8,13 @@ import (
 
 // Config is the root configuration for the Auth Service.
 type Config struct {
-	Server    ServerConfig    `yaml:"server"`
-	Database  DatabaseConfig  `yaml:"database"`
-	Redis     RedisConfig     `yaml:"redis"`
-	JWT       JWTConfig       `yaml:"jwt"`
-	Password  PasswordPolicy  `yaml:"password_policy"`
-	RateLimit RateLimitConfig `yaml:"rate_limit"`
+	Server          ServerConfig       `yaml:"server"`
+	Database        DatabaseConfig     `yaml:"database"`
+	Redis           RedisConfig        `yaml:"redis"`
+	JWT             JWTConfig          `yaml:"jwt"`
+	Password        PasswordPolicy     `yaml:"password_policy"`
+	RateLimit       RateLimitConfig    `yaml:"rate_limit"`
+	SessionTimeout  SessionTimeoutConfig `yaml:"session_timeout"`
 }
 
 type ServerConfig struct {
@@ -63,6 +64,12 @@ type RateLimitConfig struct {
 	LoginPerMinute int `yaml:"login_per_minute"`
 }
 
+// SessionTimeoutConfig controls session expiration policy.
+type SessionTimeoutConfig struct {
+	AbsoluteTimeout time.Duration `yaml:"absolute_timeout"` // max session lifetime (e.g. 8h)
+	IdleTimeout     time.Duration `yaml:"idle_timeout"`     // inactivity timeout (e.g. 30m)
+}
+
 // Default returns the default configuration with sensible production values.
 func Default() *Config {
 	return &Config{
@@ -101,6 +108,10 @@ func Default() *Config {
 		},
 		RateLimit: RateLimitConfig{
 			LoginPerMinute: 5,
+		},
+		SessionTimeout: SessionTimeoutConfig{
+			AbsoluteTimeout: 8 * time.Hour,
+			IdleTimeout:     30 * time.Minute,
 		},
 	}
 }

@@ -51,6 +51,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/metrics", s.handleMetrics)
 	mux.HandleFunc("/api/v1/audit/retention", s.handleRetention)
 	mux.HandleFunc("/api/v1/audit/rules", s.handleAnomalyRules)
+	mux.HandleFunc("/api/v1/audit/correlate", s.handleCorrelate)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -453,6 +454,110 @@ func (s *HTTPServer) handleStream(w http.ResponseWriter, r *http.Request) {
 			lastCheck = t.UTC()
 		}
 	}
+}
+
+// GET /api/v1/audit/correlate?actor=X&time_range=1h&tenant_id=Y
+// Returns correlated event chains for security analysis.
+func (s *HTTPServer) handleCorrelate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	actorFilter := r.URL.Query().Get("actor")
+
+	// Parse time range (default 1h)
+	timeRangeStr := r.URL.Query().Get("time_range")
+	if timeRangeStr == "" {
+		timeRangeStr = "1h"
+	}
+	dur, err := time.ParseDuration(timeRangeStr)
+	if err != nil || dur <= 0 {
+		dur = time.Hour
+	}
+
+	// Fetch events
+	events, _, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
+		TenantID: tenantID,
+	}, 500, 0)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Filter by time range + actor, group into chains
+	cutoff := time.Now().UTC().Add(-dur)
+	chains := map[string][]map[string]any{}
+	for _, e := range events {
+		if !e.CreatedAt.After(cutoff) {
+			continue
+		}
+		if actorFilter != "" && e.ActorName != actorFilter && e.ActorID.String() != actorFilter {
+			continue
+		}
+		key := e.ActorName
+		if key == "" {
+			if e.ActorID != nil {
+				key = e.ActorID.String()[:8]
+			} else {
+				key = "system"
+			}
+		}
+		chains[key] = append(chains[key], eventToJSON(e))
+	}
+
+	// Build response with risk indicators
+	result := make([]map[string]any, 0, len(chains))
+	for actor, eventList := range chains {
+		failedCount := 0
+		uniqueIPs := map[string]bool{}
+		deniedCount := 0
+		for _, ev := range eventList {
+			if ev["result"] != "success" {
+				failedCount++
+			}
+			if ev["result"] == "denied" {
+				deniedCount++
+			}
+			if ip, ok := ev["ip_address"].(string); ok && ip != "" {
+				uniqueIPs[ip] = true
+			}
+		}
+
+		riskLevel := "low"
+		if failedCount >= 5 || deniedCount >= 3 || len(uniqueIPs) > 3 {
+			riskLevel = "high"
+		} else if failedCount >= 2 || deniedCount >= 1 || len(uniqueIPs) > 1 {
+			riskLevel = "medium"
+		}
+
+		result = append(result, map[string]any{
+			"actor":        actor,
+			"event_count":  len(eventList),
+			"failed_count": failedCount,
+			"denied_count": deniedCount,
+			"unique_ips":   len(uniqueIPs),
+			"risk_level":   riskLevel,
+			"events":       eventList,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"time_range":   timeRangeStr,
+		"total_chains": len(result),
+		"chains":       result,
+	})
 }
 
 // POST /api/v1/audit/retention?action=cleanup&days=90

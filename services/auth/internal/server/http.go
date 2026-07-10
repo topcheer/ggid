@@ -164,6 +164,14 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	ip := clientIP(r)
 	userAgent := r.Header.Get("User-Agent")
 
+	// Brute force protection: dual-dimension sliding window rate limit.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		if err := h.authSvc.CheckBruteForce(r.Context(), tc.TenantID, ip, req.Username); err != nil {
+			writeError(w, http.StatusTooManyRequests, "too many login attempts")
+			return
+		}
+	}
+
 	// Check if the account is locked before attempting login.
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
 		if h.authSvc.IsAccountLocked(r.Context(), tc.TenantID, req.Username) {

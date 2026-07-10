@@ -43,6 +43,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/import", s.handlePolicyImport)
 	mux.HandleFunc("/api/v1/policies/attribute-mapping", s.handleAttributeMapping)
 	mux.HandleFunc("/api/v1/policies/versions", s.handlePolicyVersions)
+	mux.HandleFunc("/api/v1/policies/templates", s.handlePolicyTemplates)
+	mux.HandleFunc("/api/v1/policies/from-template/", s.handleFromTemplate)
 }
 
 // --- Roles ---
@@ -521,6 +523,169 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 }
 
 // --- Policy Version Management ---
+
+// --- Policy Templates ---
+
+var policyTemplates = []map[string]any{
+	{
+		"id":          "pci-dss",
+		"name":        "PCI-DSS Access Control",
+		"description": "Payment Card Industry Data Security Standard baseline policies",
+		"compliance":  "PCI-DSS v4.0",
+		"policies": []map[string]any{
+			{"name": "Deny card data access outside business hours", "effect": "deny", "actions": []string{"read", "write"}, "resources": []string{"card_data"}, "conditions": map[string]any{"env.time": "not_in(business_hours)"}},
+			{"name": "Require MFA for card data access", "effect": "deny", "actions": []string{"read"}, "resources": []string{"card_data"}, "conditions": map[string]any{"user.mfa_verified": false}},
+		},
+	},
+	{
+		"id":          "hipaa",
+		"name":        "HIPAA Healthcare Privacy",
+		"description": "Health Insurance Portability and Accountability Act policies",
+		"compliance":  "HIPAA 2023",
+		"policies": []map[string]any{
+			{"name": "Deny PHI access without role", "effect": "deny", "actions": []string{"read", "write"}, "resources": []string{"patient_records"}, "conditions": map[string]any{"user.role": "not_in(doctor,nurse,admin)"}},
+			{"name": "Deny PHI export to external", "effect": "deny", "actions": []string{"export"}, "resources": []string{"patient_records"}, "conditions": map[string]any{"request.external": true}},
+		},
+	},
+	{
+		"id":          "soc2",
+		"name":        "SOC 2 Security",
+		"description": "Service Organization Control 2 Type II baseline",
+		"compliance":  "SOC 2 Type II",
+		"policies": []map[string]any{
+			{"name": "Require strong auth for production", "effect": "deny", "actions": []string{"*"}, "resources": []string{"production:*"}, "conditions": map[string]any{"user.auth_strength": "<strong"}},
+			{"name": "Deny production write without approval", "effect": "deny", "actions": []string{"write", "delete"}, "resources": []string{"production:*"}, "conditions": map[string]any{"request.approved": false}},
+		},
+	},
+	{
+		"id":          "gdpr",
+		"name":        "GDPR Data Protection",
+		"description": "General Data Protection Regulation privacy policies",
+		"compliance":  "GDPR 2024",
+		"policies": []map[string]any{
+			{"name": "Deny personal data access without consent", "effect": "deny", "actions": []string{"read", "write"}, "resources": []string{"personal_data"}, "conditions": map[string]any{"user.consent": false}},
+			{"name": "Right to erasure - allow delete", "effect": "allow", "actions": []string{"delete"}, "resources": []string{"personal_data"}, "conditions": map[string]any{"user.is_owner": true}},
+		},
+	},
+}
+
+// GET /api/v1/policies/templates — list all compliance templates
+func (s *HTTPServer) handlePolicyTemplates(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	search := r.URL.Query().Get("search")
+	result := []map[string]any{}
+	for _, tmpl := range policyTemplates {
+		if search != "" {
+			name := tmpl["name"].(string)
+			id := tmpl["id"].(string)
+			if !strings.Contains(strings.ToLower(name), strings.ToLower(search)) &&
+				!strings.Contains(strings.ToLower(id), strings.ToLower(search)) {
+				continue
+			}
+		}
+		result = append(result, map[string]any{
+			"id":           tmpl["id"],
+			"name":         tmpl["name"],
+			"description":  tmpl["description"],
+			"compliance":   tmpl["compliance"],
+			"policy_count": len(tmpl["policies"].([]map[string]any)),
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"templates": result,
+		"count":     len(result),
+	})
+}
+
+// POST /api/v1/policies/from-template/{template_id} — create policies from template
+func (s *HTTPServer) handleFromTemplate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	templateID := strings.TrimPrefix(r.URL.Path, "/api/v1/policies/from-template/")
+	if templateID == "" {
+		writeJSONError(w, http.StatusBadRequest, "template_id is required")
+		return
+	}
+
+	var selected map[string]any
+	for _, tmpl := range policyTemplates {
+		if tmpl["id"] == templateID {
+			selected = tmpl
+			break
+		}
+	}
+	if selected == nil {
+		writeJSONError(w, http.StatusNotFound, "template not found: "+templateID)
+		return
+	}
+
+	var req struct {
+		TenantID string `json:"tenant_id"`
+	}
+	if r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+	}
+
+	tenantID, err := uuid.Parse(req.TenantID)
+	if err != nil {
+		tenantID = uuid.New()
+	}
+
+	policies := selected["policies"].([]map[string]any)
+	created := make([]map[string]any, 0, len(policies))
+	for _, p := range policies {
+		policy := &domain.Policy{
+			ID:       uuid.New(),
+			TenantID: tenantID,
+			Name:     fmt.Sprintf("[%s] %s", selected["compliance"], p["name"]),
+			Effect:   domain.Effect(p["effect"].(string)),
+			Actions:  toStringSlice(p["actions"]),
+			Resources: toStringSlice(p["resources"]),
+		}
+		createdPolicy, err := s.policySvc.CreatePolicy(r.Context(), policy)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		created = append(created, map[string]any{
+			"id":   createdPolicy.ID.String(),
+			"name": createdPolicy.Name,
+		})
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"status":            "created",
+		"template_id":       templateID,
+		"template_name":     selected["name"],
+		"policies_created":  len(created),
+		"policies":          created,
+	})
+}
+
+func toStringSlice(v any) []string {
+	if arr, ok := v.([]string); ok {
+		return arr
+	}
+	if arr, ok := v.([]any); ok {
+		result := make([]string, len(arr))
+		for i, item := range arr {
+			result[i] = fmt.Sprintf("%v", item)
+		}
+		return result
+	}
+	return nil
+}
 
 // policyVersions tracks version history per policy (in-memory for now).
 var policyVersions = map[string][]map[string]any{} // policyID → versions
