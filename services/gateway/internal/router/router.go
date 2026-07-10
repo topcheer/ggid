@@ -2,11 +2,14 @@
 package router
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -65,12 +68,14 @@ func (gw *Gateway) buildProxies() {
 			}
 			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
 				req.Header.Set("X-Tenant-ID", tenantID)
-				// Also inject as query param for backend services that read tenant_id from URL
+				// Inject as query param for GET requests
 				q := req.URL.Query()
 				if q.Get("tenant_id") == "" {
 					q.Set("tenant_id", tenantID)
 					req.URL.RawQuery = q.Encode()
 				}
+				// Inject into JSON body for POST/PUT/PATCH requests
+				injectTenantIntoBody(req, tenantID)
 			}
 		}
 		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -165,6 +170,54 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = middleware.CORS(handler)
 
 	return handler
+}
+
+// injectTenantIntoBody injects tenant_id into the JSON body of POST/PUT/PATCH requests.
+// It only modifies flat JSON objects and preserves the original body if it's not JSON
+// or already contains a tenant_id field.
+func injectTenantIntoBody(req *http.Request, tenantID string) {
+	if req.Body == nil || tenantID == "" {
+		return
+	}
+	// Only modify JSON bodies for write methods
+	if req.Method != http.MethodPost && req.Method != http.MethodPut && req.Method != http.MethodPatch {
+		return
+	}
+	ct := req.Header.Get("Content-Type")
+	if !strings.Contains(ct, "application/json") {
+		return
+	}
+
+	bodyBytes, err := io.ReadAll(req.Body)
+	req.Body.Close()
+	if err != nil {
+		return
+	}
+	// Restore body if anything fails
+	restore := func() {
+		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	}
+
+	var bodyMap map[string]any
+	if json.Unmarshal(bodyBytes, &bodyMap) != nil {
+		restore()
+		return
+	}
+	// Skip if tenant_id already present
+	if _, exists := bodyMap["tenant_id"]; exists {
+		restore()
+		return
+	}
+
+	bodyMap["tenant_id"] = tenantID
+	newBody, err := json.Marshal(bodyMap)
+	if err != nil {
+		restore()
+		return
+	}
+	req.Body = io.NopCloser(bytes.NewReader(newBody))
+	req.ContentLength = int64(len(newBody))
+	req.Header.Set("Content-Length", strconv.Itoa(len(newBody)))
 }
 
 // PrintRoutes logs the configured routes at startup.
