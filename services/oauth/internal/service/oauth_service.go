@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	crand "crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
@@ -941,4 +942,221 @@ func defaultIfEmpty2(s, def string) string {
 		return def
 	}
 	return s
+}
+
+// --- Device Authorization Flow (RFC 8628) ---
+
+// DeviceAuthorizationRequest holds the parameters for POST /device_authorization.
+type DeviceAuthorizationRequest struct {
+	TenantID    uuid.UUID
+	ClientID    string
+	Scope       []string
+	Issuer      string
+}
+
+// DeviceAuthorizationResponse is the RFC 8628 §3.2 response.
+type DeviceAuthorizationResponse struct {
+	DeviceCode      string `json:"device_code"`
+	UserCode        string `json:"user_code"`
+	VerificationURI string `json:"verification_uri"`
+	ExpiresIn       int    `json:"expires_in"`
+	Interval        int    `json:"interval"`
+}
+
+// DeviceCodeInfo is the internal representation of a pending device code.
+type DeviceCodeInfo struct {
+	DeviceCode string
+	UserCode   string
+	ClientID   string
+	TenantID   uuid.UUID
+	UserID     *uuid.UUID // set when user authorizes
+	Scope      []string
+	Status     string // "pending", "approved", "denied", "expired"
+	CreatedAt  time.Time
+	ExpiresAt  time.Time
+}
+
+// deviceCodeStore holds pending device codes in-memory (production would use Redis).
+var (
+	deviceCodeMu    sync.RWMutex
+	deviceCodeStore = make(map[string]*DeviceCodeInfo) // keyed by device_code
+	userCodeIndex   = make(map[string]string)          // user_code -> device_code
+)
+
+// CreateDeviceAuthorization generates device_code + user_code and stores them.
+func (s *OAuthService) CreateDeviceAuthorization(req *DeviceAuthorizationRequest) (*DeviceAuthorizationResponse, error) {
+	deviceCode := generateDeviceCode(40)
+	userCode := generateUserCode()
+
+	info := &DeviceCodeInfo{
+		DeviceCode: deviceCode,
+		UserCode:   userCode,
+		ClientID:   req.ClientID,
+		TenantID:   req.TenantID,
+		Scope:      req.Scope,
+		Status:     "pending",
+		CreatedAt:  time.Now(),
+		ExpiresAt:  time.Now().Add(15 * time.Minute),
+	}
+
+	deviceCodeMu.Lock()
+	deviceCodeStore[deviceCode] = info
+	userCodeIndex[userCode] = deviceCode
+	deviceCodeMu.Unlock()
+
+	verificationURI := req.Issuer + "/device"
+	if req.Issuer == "" {
+		verificationURI = "/device"
+	}
+
+	return &DeviceAuthorizationResponse{
+		DeviceCode:      deviceCode,
+		UserCode:        userCode,
+		VerificationURI: verificationURI,
+		ExpiresIn:       900, // 15 minutes
+		Interval:        5,   // 5 seconds between polls
+	}, nil
+}
+
+// PollDeviceToken is called by the device with grant_type=device_code.
+// Returns a token if the user has approved, or an error indicating pending/denied/expired.
+func (s *OAuthService) PollDeviceToken(ctx context.Context, deviceCode, clientID string) (*TokenResponse, error) {
+	deviceCodeMu.RLock()
+	info, ok := deviceCodeStore[deviceCode]
+	deviceCodeMu.RUnlock()
+
+	if !ok {
+		return nil, fmt.Errorf("invalid_device_code")
+	}
+
+	if time.Now().After(info.ExpiresAt) {
+		deviceCodeMu.Lock()
+		delete(deviceCodeStore, deviceCode)
+		delete(userCodeIndex, info.UserCode)
+		deviceCodeMu.Unlock()
+		return nil, fmt.Errorf("expired_token")
+	}
+
+	if info.Status == "pending" {
+		return nil, fmt.Errorf("authorization_pending")
+	}
+
+	if info.Status == "denied" {
+		return nil, fmt.Errorf("access_denied")
+	}
+
+	if info.Status == "approved" && info.UserID != nil {
+		// Issue tokens for the authorized user.
+		accessToken, expiresIn, err := s.issueDeviceAccessToken(info.TenantID, *info.UserID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Clean up.
+		deviceCodeMu.Lock()
+		delete(deviceCodeStore, deviceCode)
+		delete(userCodeIndex, info.UserCode)
+		deviceCodeMu.Unlock()
+
+		scopeStr := ""
+		if len(info.Scope) > 0 {
+			scopeStr = strings.Join(info.Scope, " ")
+		}
+
+		return &TokenResponse{
+			AccessToken: accessToken,
+			TokenType:   "Bearer",
+			ExpiresIn:   expiresIn,
+			Scope:       scopeStr,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("authorization_pending")
+}
+
+// ApproveDeviceCode is called when the user enters their user_code and approves.
+func (s *OAuthService) ApproveDeviceCode(userCode string, userID uuid.UUID) error {
+	deviceCodeMu.Lock()
+	defer deviceCodeMu.Unlock()
+
+	deviceCode, ok := userCodeIndex[userCode]
+	if !ok {
+		return fmt.Errorf("invalid user_code")
+	}
+
+	info, ok := deviceCodeStore[deviceCode]
+	if !ok {
+		return fmt.Errorf("device code not found")
+	}
+
+	if time.Now().After(info.ExpiresAt) {
+		delete(deviceCodeStore, deviceCode)
+		delete(userCodeIndex, userCode)
+		return fmt.Errorf("expired user_code")
+	}
+
+	info.Status = "approved"
+	info.UserID = &userID
+	return nil
+}
+
+// issueDeviceAccessToken signs a JWT for a device flow user.
+func (s *OAuthService) issueDeviceAccessToken(tenantID, userID uuid.UUID) (string, int, error) {
+	now := time.Now()
+	expiresAt := now.Add(1 * time.Hour)
+
+	claims := jwt.MapClaims{
+		"iss":       s.issuer,
+		"sub":       userID.String(),
+		"aud":       "ggid",
+		"tenant_id": tenantID.String(),
+		"iat":       now.Unix(),
+		"exp":       expiresAt.Unix(),
+		"jti":       uuid.New().String(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	token.Header["kid"] = s.keyProvider.KeyID()
+
+	signed, err := token.SignedString(s.keyProvider.PrivateKey())
+	if err != nil {
+		return "", 0, fmt.Errorf("sign device token: %w", err)
+	}
+
+	return signed, int(time.Until(expiresAt).Seconds()), nil
+}
+
+// generateDeviceCode creates a random alphanumeric device code.
+func generateDeviceCode(length int) string {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[cryptoRandInt(len(charset))]
+	}
+	return string(b)
+}
+
+// generateUserCode creates an 8-character user code in XXXX-XXXX format.
+func generateUserCode() string {
+	const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no confusing chars
+	part1 := make([]byte, 4)
+	part2 := make([]byte, 4)
+	for i := range part1 {
+		part1[i] = charset[cryptoRandInt(len(charset))]
+	}
+	for i := range part2 {
+		part2[i] = charset[cryptoRandInt(len(charset))]
+	}
+	return string(part1) + "-" + string(part2)
+}
+
+func cryptoRandInt(max int) int {
+	if max <= 0 {
+		return 0
+	}
+	bigN, err := crand.Int(crand.Reader, big.NewInt(int64(max)))
+	if err != nil {
+		return 0
+	}
+	return int(bigN.Int64())
 }

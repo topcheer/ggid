@@ -179,6 +179,24 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			return
 		}
 
+		// PKCE enforcement: if RequirePKCE is enabled, or the client is public
+		// (no client_secret), code_challenge is mandatory.
+		if cfg.RequirePKCE && codeChallenge == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error":             "invalid_request",
+				"error_description": "PKCE is required: code_challenge parameter is mandatory",
+			})
+			return
+		}
+		// Validate S256 method is used when challenge is provided.
+		if codeChallenge != "" && codeChallengeMethod != "" && codeChallengeMethod != "S256" && codeChallengeMethod != "plain" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error":             "invalid_request",
+				"error_description": "unsupported code_challenge_method: use S256 or plain",
+			})
+			return
+		}
+
 		// Inject tenant context from header.
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		tenantID, err := uuid.Parse(tenantIDStr)
@@ -330,6 +348,25 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 				ClientSecret: clientSecret,
 				Scope:        scopes,
 			})
+		case "urn:ietf:params:oauth:grant-type:device_code":
+			resp, tokenErr = oauthSvc.PollDeviceToken(ctx, r.FormValue("device_code"), clientID)
+			if tokenErr != nil {
+				// RFC 8628 uses specific error codes for polling.
+				errMsg := tokenErr.Error()
+				switch errMsg {
+				case "authorization_pending":
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "authorization_pending"})
+				case "slow_down":
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "slow_down"})
+				case "expired_token":
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "expired_token"})
+				case "access_denied":
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "access_denied"})
+				default:
+					writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": errMsg})
+				}
+				return
+			}
 		default:
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_grant_type"})
 			return
@@ -700,6 +737,77 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		default:
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
 		}
+	})
+
+	// Device Authorization Flow (RFC 8628)
+	mux.HandleFunc("/api/v1/oauth/device_authorization", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		_ = r.ParseForm()
+
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			return
+		}
+
+		clientID := r.FormValue("client_id")
+		if clientID == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "client_id is required"})
+			return
+		}
+
+		scopeParam := r.FormValue("scope")
+		var scopes []string
+		if scopeParam != "" {
+			scopes = strings.Split(scopeParam, " ")
+		}
+
+		resp, err := oauthSvc.CreateDeviceAuthorization(&service.DeviceAuthorizationRequest{
+			TenantID: tenantID,
+			ClientID: clientID,
+			Scope:    scopes,
+			Issuer:   cfg.Issuer,
+		})
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, resp)
+	})
+
+	// Device code approval endpoint (user visits verification_uri and enters user_code)
+	mux.HandleFunc("/api/v1/oauth/device/approve", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		_ = r.ParseForm()
+
+		userCode := r.FormValue("user_code")
+		if userCode == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "user_code is required"})
+			return
+		}
+
+		userIDStr := r.FormValue("user_id")
+		if userIDStr == "" {
+			userIDStr = r.Header.Get("X-User-ID")
+		}
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid user_id or X-User-ID header required"})
+			return
+		}
+
+		if err := oauthSvc.ApproveDeviceCode(userCode, userID); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "approved"})
 	})
 
 	// Health check

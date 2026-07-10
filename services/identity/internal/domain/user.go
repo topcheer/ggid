@@ -80,13 +80,18 @@ type UpdateUserInput struct {
 
 // ListUsersFilter holds query parameters for listing users.
 type ListUsersFilter struct {
-	TenantID uuid.UUID
-	Search   string // matches username or email (ILIKE)
-	Status   *UserStatus
-	PageSize int
-	Offset   int
-	SortBy   string // username, email, created_at
-	SortDesc bool
+	TenantID        uuid.UUID
+	Search          string     // matches username or email (ILIKE)
+	Status          *UserStatus
+	CreatedAfter    *time.Time // filter: users created after this time
+	CreatedBefore   *time.Time // filter: users created before this time
+	LastLoginAfter  *time.Time // filter: users who logged in after this time
+	OrgID           *uuid.UUID // filter: users in this org
+	RoleID          *uuid.UUID // filter: users with this role
+	PageSize        int
+	Offset          int
+	SortBy          string // username, email, created_at, last_login_at
+	SortDesc        bool
 }
 
 // ListUsersResult holds paginated results.

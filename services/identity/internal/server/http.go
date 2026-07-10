@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"time"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
@@ -227,15 +228,59 @@ func (h *HTTPHandler) listUsers(ctx context.Context, w http.ResponseWriter, r *h
 		PageSize: 50,
 		Offset:   0,
 	}
-	if s := r.URL.Query().Get("search"); s != "" {
+	q := r.URL.Query()
+	if s := q.Get("search"); s != "" {
 		filter.Search = s
 	}
-	if ps := r.URL.Query().Get("page_size"); ps != "" {
+	if ps := q.Get("page_size"); ps != "" {
 		var n int
 		fmt.Sscanf(ps, "%d", &n)
 		if n > 0 {
 			filter.PageSize = n
 		}
+	}
+
+	// Multi-criteria filtering.
+	if st := q.Get("status"); st != "" {
+		ws := domain.UserStatus(st)
+		if ws.IsValid() {
+			filter.Status = &ws
+		}
+	}
+	if ca := q.Get("created_after"); ca != "" {
+		if t, err := time.Parse(time.RFC3339, ca); err == nil {
+			filter.CreatedAfter = &t
+		}
+	}
+	if cb := q.Get("created_before"); cb != "" {
+		if t, err := time.Parse(time.RFC3339, cb); err == nil {
+			filter.CreatedBefore = &t
+		}
+	}
+	if la := q.Get("last_login_after"); la != "" {
+		if t, err := time.Parse(time.RFC3339, la); err == nil {
+			filter.LastLoginAfter = &t
+		}
+	}
+	if oid := q.Get("org_id"); oid != "" {
+		if id, err := uuid.Parse(oid); err == nil {
+			filter.OrgID = &id
+		}
+	}
+	if rid := q.Get("role_id"); rid != "" {
+		if id, err := uuid.Parse(rid); err == nil {
+			filter.RoleID = &id
+		}
+	}
+
+	// Sorting.
+	if sb := q.Get("sort_by"); sb != "" {
+		filter.SortBy = sb
+	}
+	if so := q.Get("sort_order"); so == "desc" {
+		filter.SortDesc = true
+	} else if so == "asc" {
+		filter.SortDesc = false
 	}
 
 	result, err := h.svc.ListUsers(ctx, filter)

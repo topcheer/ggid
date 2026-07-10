@@ -24,6 +24,7 @@ type Config struct {
 	PrivateKeyPath string `yaml:"private_key_path"` // RSA private key for signing
 	PublicKeyPath  string `yaml:"public_key_path"`  // RSA public key for JWKS
 	CodeTTL        time.Duration `yaml:"code_ttl"`   // authorization code lifetime
+	RequirePKCE    bool `yaml:"require_pkce"`        // force PKCE for all authorization_code flows
 }
 
 // DBConfig holds database connection parameters.

@@ -89,6 +89,20 @@ func (h *Handler) registerRoutes() {
 	// Auth hooks (Auth0 Actions equivalent)
 	h.mux.HandleFunc("/api/v1/auth/hooks", h.manageHooks)
 
+	// WebAuthn route aliases under /api/v1/auth/webauthn/
+	h.mux.HandleFunc("/api/v1/auth/webauthn/register/begin", func(w http.ResponseWriter, r *http.Request) {
+		h.mux.ServeHTTP(w, r) // delegate to registered /api/v1/webauthn/register/begin
+	})
+	h.mux.HandleFunc("/api/v1/auth/webauthn/register/finish", func(w http.ResponseWriter, r *http.Request) {
+		h.mux.ServeHTTP(w, r)
+	})
+	h.mux.HandleFunc("/api/v1/auth/webauthn/login/begin", func(w http.ResponseWriter, r *http.Request) {
+		h.mux.ServeHTTP(w, r)
+	})
+	h.mux.HandleFunc("/api/v1/auth/webauthn/login/finish", func(w http.ResponseWriter, r *http.Request) {
+		h.mux.ServeHTTP(w, r)
+	})
+
 	// Passwordless (WebAuthn-only) registration + login
 	h.mux.HandleFunc("/api/v1/auth/passwordless/register", h.passwordlessRegister)
 
@@ -110,6 +124,10 @@ func (h *Handler) registerRoutes() {
 
 	// Social login endpoints
 	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
+
+	// Step-up check endpoint
+	h.mux.HandleFunc("/api/v1/auth/step-up-check", h.stepUpCheck)
+	h.mux.HandleFunc("/api/v1/auth/step-up", h.stepUpTrigger)
 
 	// WebAuthn / Passkey endpoints (nil credential store = skeleton mode)
 	webauthnHandler, err := webauthn.NewHandler("ggid.dev", "GGID Platform", nil)
@@ -1005,6 +1023,82 @@ func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 	result, err := h.authSvc.VerifyStepUp(r.Context(), body.Challenge, body.Code, body.Password)
 	if err != nil {
 		writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+// stepUpCheck checks if the current session requires step-up authentication
+// for sensitive operations (e.g. password change within last 5 minutes).
+func (h *Handler) stepUpCheck(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid user identity")
+		return
+	}
+
+	// Check if the user has a valid step-up token.
+	token := r.Header.Get("X-Step-Up-Token")
+	if token != "" {
+		if err := h.authSvc.ValidateStepUpToken(r.Context(), token, userID); err == nil {
+			writeJSON(w, http.StatusOK, map[string]any{
+				"step_up_required": false,
+				"message":          "step-up token valid",
+			})
+			return
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"step_up_required": true,
+		"message":          "recent authentication required for this action",
+		"trigger_url":      "/api/v1/auth/step-up",
+	})
+}
+
+// stepUpTrigger initiates step-up authentication (alias for stepUpChallenge).
+func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		UserID string `json:"user_id"`
+		Method string `json:"method"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		// If user_id not in body, try X-User-ID header.
+		userIDStr := r.Header.Get("X-User-ID")
+		body.UserID = userIDStr
+	}
+	if body.UserID == "" {
+		body.UserID = r.Header.Get("X-User-ID")
+	}
+
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid or missing user_id")
+		return
+	}
+	if body.Method == "" {
+		body.Method = "mfa"
+	}
+
+	result, err := h.authSvc.InitStepUp(r.Context(), userID, body.Method)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
