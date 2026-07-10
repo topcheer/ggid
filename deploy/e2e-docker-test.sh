@@ -25,7 +25,7 @@ echo -n "2. Register user:          "
 STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY/api/v1/auth/register" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT_ID" \
-  -d "{\"email\":\"e2e-${TS}@docker.test\",\"password\":\"TestPass123!\",\"name\":\"E2E Docker Test\"}")
+  -d "{\"username\":\"e2e-${TS}\",\"email\":\"e2e-${TS}@docker.test\",\"password\":\"TestPass123!\",\"name\":\"E2E Docker Test\"}")
 if [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then echo "PASS ($STATUS)"; PASS=$((PASS+1)); else echo "FAIL ($STATUS)"; FAIL=$((FAIL+1)); fi
 
 # 3. Login + JWT
@@ -55,7 +55,7 @@ STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY/api/v1/roles" 
   -H "Authorization: Bearer $JWT" \
   -H "X-Tenant-ID: $TENANT_ID" \
   -H "Content-Type: application/json" \
-  -d "{\"name\":\"e2e-role-${TS}\",\"description\":\"E2E test role\",\"tenant_id\":\"$TENANT_ID\"}")
+  -d "{\"name\":\"e2e-role-${TS}\",\"key\":\"e2e_role_${TS}\",\"description\":\"E2E test role\",\"tenant_id\":\"$TENANT_ID\"}")
 if [ "$STATUS" = "200" ] || [ "$STATUS" = "201" ]; then echo "PASS ($STATUS)"; PASS=$((PASS+1)); else echo "FAIL ($STATUS)"; FAIL=$((FAIL+1)); fi
 
 # 7. List roles
@@ -94,7 +94,7 @@ echo -n "11. Dup register 409:      "
 STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY/api/v1/auth/register" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT_ID" \
-  -d "{\"email\":\"e2e-${TS}@docker.test\",\"password\":\"TestPass123!\",\"name\":\"E2E Docker Test\"}")
+  -d "{\"username\":\"e2e-${TS}\",\"email\":\"e2e-${TS}@docker.test\",\"password\":\"TestPass123!\",\"name\":\"E2E Docker Test\"}")
 if [ "$STATUS" = "409" ]; then echo "PASS ($STATUS)"; PASS=$((PASS+1)); else echo "FAIL ($STATUS)"; FAIL=$((FAIL+1)); fi
 
 echo ""
