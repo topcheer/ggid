@@ -319,7 +319,43 @@ export default function AuditPage() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            )}
+              )}
+
+              {/* Top 10 active users table */}
+              {stats?.top_actors && stats.top_actors.length > 0 && (
+                <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                  <h3 className="mb-4 text-sm font-semibold">Top 10 Active Users (24h)</h3>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-100">
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">#</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">User</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Events</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Activity</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {stats.top_actors.slice(0, 10).map((actor, i) => (
+                        <tr key={actor.actor_id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-sm text-gray-400">{i + 1}</td>
+                          <td className="px-3 py-2 text-sm font-medium">
+                            {actor.actor_name || actor.actor_id.slice(0, 8)}
+                          </td>
+                          <td className="px-3 py-2 text-sm">{actor.count}</td>
+                          <td className="px-3 py-2">
+                            <div className="h-2 w-full max-w-[120px] rounded-full bg-gray-100">
+                              <div
+                                className="h-2 rounded-full bg-purple-500"
+                                style={{ width: `${Math.min(100, (actor.count / Math.max(...stats.top_actors.map(a => a.count))) * 100)}%` }}
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
             {/* Action bar chart + Failed logins */}
             <div className="grid gap-6 lg:grid-cols-2">
@@ -358,7 +394,7 @@ export default function AuditPage() {
             </div>
           </div>
         )
-      ) : (
+      ) : tab === "events" ? (
         /* ===== Event Log Table ===== */
         <>
           <div className="mb-4 flex items-center gap-2">
@@ -416,7 +452,8 @@ export default function AuditPage() {
             </div>
           )}
         </>
-      )}
+      )
+      : null}
     </div>
   );
 }
