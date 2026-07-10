@@ -16,6 +16,7 @@ import {
   Moon,
   Globe,
   Server,
+  Send,
   X,
   Menu,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export function Sidebar() {
     { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
     { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
     { href: "/monitoring", label: "Monitoring", icon: Server },
+    { href: "/api-explorer", label: "API Explorer", icon: Send },
     { href: "/settings", label: t("nav.settings"), icon: Settings },
   ];
 
