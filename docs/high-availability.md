@@ -259,3 +259,227 @@ Use backward-compatible migrations:
 ## Disaster Recovery
 
 See [Disaster Recovery Guide](./disaster-recovery.md) for RPO/RTO targets, backup strategy, cross-region replication, and DR runbook.
+
+---
+
+## Pod Disruption Budgets
+
+Ensure minimum available replicas during voluntary disruptions (node drain, cluster upgrade).
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ggid-gateway-pdb
+  namespace: ggid
+spec:
+  minAvailable: 2              # Always keep at least 2 pods running
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ggid-auth-pdb
+  namespace: ggid
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: auth
+```
+
+### Recommended PDB Settings
+
+| Service | minAvailable | Rationale |
+|---------|-------------|-----------|
+| Gateway | 2 | Single point of entry; always need redundancy |
+| Auth | 2 | Login traffic cannot stop |
+| Identity | 1 | Lower traffic, 1 replica sufficient during disruption |
+| OAuth | 1 | Only used for OAuth flows |
+| Policy | 1 | Fast in-process check |
+| Org | 1 | Lower traffic volume |
+| Audit | 1 | Async, can tolerate brief gaps |
+
+---
+
+## Health Probes (Kubernetes)
+
+### Liveness Probe
+
+Detects deadlocked or hung processes. If liveness fails, the pod is restarted.
+
+```yaml
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  failureThreshold: 3      # Restart after 3 consecutive failures (30s)
+  timeoutSeconds: 3
+```
+
+### Readiness Probe
+
+Determines if the pod can serve traffic. If readiness fails, the pod is removed
+from the Service's endpoint list but NOT restarted.
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  failureThreshold: 2
+  timeoutSeconds: 2
+```
+
+### Startup Probe
+
+For services with slow initialization (e.g., DB connection, key loading):
+
+```yaml
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  failureThreshold: 30
+  periodSeconds: 5          # Allow up to 150 seconds for startup
+```
+
+---
+
+## Circuit Breakers
+
+The Gateway implements circuit breakers for each backend service to prevent
+cascade failures.
+
+```mermaid
+graph LR
+    GW[Gateway] --> CB{Circuit Breaker}
+    CB -->|Closed| Backend[Backend Service<br/>requests flow normally]
+    CB -->|Open| Fail[Fail Fast<br/>return 503 immediately]
+    CB -->|Half-Open| Probe[Test with 1 request<br/>if ok → Closed]
+    Backend -->|5 failures<br/>in 10s| CB
+    CB -->|after 30s| Probe
+
+    style CB fill:#e74c3c,color:#fff
+    style Backend fill:#27ae60,color:#fff
+    style Fail fill:#95a5a6,color:#fff
+```
+
+### Circuit Breaker Configuration
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `CB_ENABLED` | true | Enable circuit breakers |
+| `CB_FAILURE_THRESHOLD` | 5 | Failures before opening circuit |
+| `CB_RESET_TIMEOUT` | 30s | Time before half-open probe |
+| `CB_HALF_OPEN_MAX` | 1 | Max requests in half-open state |
+| `CB_WINDOW` | 10s | Sliding window for failure counting |
+
+```bash
+# Environment variables
+CB_ENABLED=true
+CB_FAILURE_THRESHOLD=5
+CB_RESET_TIMEOUT=30s
+```
+
+---
+
+## Graceful Shutdown
+
+When a pod receives SIGTERM (e.g., during rolling update):
+
+```mermaid
+sequenceDiagram
+    participant K8s as Kubernetes
+    participant Pod as Service Pod
+    participant LB as Load Balancer
+
+    K8s->>Pod: SIGTERM
+    Pod->>Pod: Stop accepting new connections
+    K8s->>LB: Remove from endpoints (concurrent)
+    Pod->>Pod: Wait for in-flight requests (grace period: 30s)
+    Pod->>Pod: Close DB/Redis/NATS connections
+    Pod->>K8s: Exit 0
+```
+
+### Grace Period Configuration
+
+```yaml
+spec:
+  terminationGracePeriodSeconds: 45   # Allow 45s for in-flight requests
+  containers:
+    - name: gateway
+      lifecycle:
+        preStop:
+          exec:
+            command: ["sh", "-c", "sleep 10"]  # Give LB time to deregister
+```
+
+---
+
+## Multi-Region Deployment
+
+For active-active multi-region deployments:
+
+```mermaid
+graph TB
+    subgraph "Region: us-east-1"
+        GW1[Gateway ×3] --> PG1[(PG Primary)]
+        GW1 --> RD1[(Redis Primary)]
+        GW1 --> NT1[(NATS ×3)]
+    end
+
+    subgraph "Region: eu-west-1"
+        GW2[Gateway ×3] --> PG2[(PG Replica → Primary)]
+        GW2 --> RD2[(Redis Replica)]
+        GW2 --> NT2[(NATS ×3)]
+    end
+
+    subgraph "Replication"
+        PG1 -->|async streaming| PG2
+        RD1 -->|replication| RD2
+        NT1 -->|leaf node| NT2
+    end
+
+    DNS[GeoDNS<br/>Route 53] --> GW1
+    DNS --> GW2
+```
+
+### Failover Procedure
+
+1. **Database:** Promote eu-west-1 replica to primary (`pg_ctl promote`)
+2. **Redis:** Promote eu-west-1 replica, update Sentinel
+3. **NATS:** Update DNS to point to eu-west-1 cluster
+4. **DNS:** Switch GeoDNS weight to eu-west-1 (100%)
+5. **Verify:** Run smoke tests against new region
+6. **Reroute:** Application clients reconnect via DNS TTL
+
+---
+
+## HA Monitoring Checklist
+
+| Component | Metric to Watch | Alert Threshold |
+|-----------|----------------|-----------------|
+| Gateway pods | `kube_deployment_status_replicas_available` | < 2 for 2m |
+| Auth pods | `kube_deployment_status_replicas_available` | < 2 for 2m |
+| PostgreSQL | `pg_replication_lag_seconds` | > 10s |
+| Redis | `redis_connected_clients` | < 1 for 1m |
+| NATS | `nats_jetstream_stream_messages` | consumer lag > 1000 |
+| Load balancer | `nginx_upstream_health_status` | any upstream down |
+
+```promql
+# Alert: insufficient replicas
+kube_deployment_status_replicas_available{deployment="ggid-gateway"} < 2
+
+# Alert: replication lag
+pg_replication_lag_seconds > 10
+
+# Alert: NATS consumer lag
+nats_jetstream_consumer_num_ack_pending > 100
+```

@@ -253,3 +253,227 @@ const department = claims.department;
 const payload = JSON.parse(atob(token.split('.')[1]));
 console.log(payload.department);
 ```
+
+---
+
+## JWT Claim Processing Pipeline
+
+Claims are assembled through a multi-stage pipeline:
+
+```mermaid
+graph LR
+    subgraph "Claim Pipeline"
+        Std[1. Standard Claims<br/>iss, sub, aud, exp, iat, jti]
+        Ident[2. Identity Claims<br/>email, name, tenant_id, roles]
+        Attr[3. Attribute Mapping<br/>DB fields → custom claims]
+        Hook[4. Hook Claims<br/>External webhook response]
+        Rule[5. Claim Rules<br/>Conditional add/remove]
+        Scope[6. Scope Filter<br/>Only requested scopes]
+    end
+
+    Std --> Ident --> Attr --> Hook --> Rule --> Scope --> JWT[Signed JWT]
+
+    style JWT fill:#27ae60,color:#fff
+```
+
+### Stage Details
+
+| Stage | Source | Example Claims |
+|-------|--------|---------------|
+| Standard | Internal (Auth Service) | `iss`, `sub`, `aud`, `exp`, `iat`, `jti` |
+| Identity | User record | `email`, `name`, `tenant_id`, `roles`, `groups` |
+| Attribute Mapping | Configured DB fields | `department`, `employee_id`, `cost_center` |
+| Hook | External webhook | `clearance_level`, `region`, `permissions[]` |
+| Claim Rules | Rule engine | Conditional claims based on tenant/user attributes |
+| Scope Filter | OAuth scopes | Only include claims allowed by granted scopes |
+
+---
+
+## Conditional Claims (Rules Engine)
+
+Add claims conditionally based on user attributes:
+
+```json
+// PUT /api/v1/settings/claim-rules
+{
+  "rules": [
+    {
+      "name": "admin_clearance",
+      "condition": {
+        "roles": ["admin", "superadmin"]
+      },
+      "claims": {
+        "clearance_level": "top-secret",
+        "can_access_audit": true
+      }
+    },
+    {
+      "name": "enterprise_features",
+      "condition": {
+        "tenant_tier": "enterprise"
+      },
+      "claims": {
+        "api_rate_limit": 1000,
+        "features": ["sso", "scim", "webhooks", "custom_claims"]
+      }
+    },
+    {
+      "name": "region_restriction",
+      "condition": {
+        "user_metadata.country": "EU"
+      },
+      "claims": {
+        "data_region": "eu-west-1",
+        "gdpr_consent_required": true
+      }
+    }
+  ]
+}
+```
+
+### Rule Evaluation Order
+
+Rules are evaluated in order. Later rules can override earlier claims:
+
+```
+1. admin_clearance       → clearance_level: "top-secret"
+2. enterprise_features   → features: ["sso", "scim", ...]
+3. region_restriction    → data_region: "eu-west-1"
+
+Final JWT contains ALL matched claims, with later rules taking precedence.
+```
+
+---
+
+## SAML Claim Mapping
+
+For SAML SP-initiated SSO, claims map to SAML attributes:
+
+```xml
+<!-- SAML Assertion Attributes -->
+<saml:Attribute Name="email">
+  <saml:AttributeValue>user@test.com</saml:AttributeValue>
+</saml:Attribute>
+<saml:Attribute Name="department">
+  <saml:AttributeValue>Engineering</saml:AttributeValue>
+</saml:Attribute>
+<saml:Attribute Name="roles">
+  <saml:AttributeValue>admin</saml:AttributeValue>
+  <saml:AttributeValue>viewer</saml:AttributeValue>
+</saml:Attribute>
+```
+
+### SAML Attribute Mapping Config
+
+```bash
+# Configure attribute mapping for SAML responses
+PUT /api/v1/saml/attribute-mapping
+{
+  "mappings": [
+    {
+      "saml_attribute": "email",
+      "source": "user.email"
+    },
+    {
+      "saml_attribute": "department",
+      "source": "user_metadata.department"
+    },
+    {
+      "saml_attribute": "roles",
+      "source": "user.roles",
+      "multi_value": true
+    }
+  ]
+}
+```
+
+---
+
+## Scope-Based Claim Filtering
+
+Not all claims are included in every token. Claims are filtered by the OAuth scopes granted:
+
+| Scope | Claims Included |
+|-------|----------------|
+| `openid` | `sub`, `iss`, `aud`, `exp`, `iat` |
+| `profile` | `name`, `family_name`, `given_name`, `picture` |
+| `email` | `email`, `email_verified` |
+| `roles` | `roles[]`, `groups[]`, `permissions[]` |
+| `custom.department` | `department`, `cost_center` |
+| `offline_access` | Issues refresh token |
+
+### Scope Validation
+
+```go
+// Example: only include department claim if scope is granted
+func buildClaims(user User, scopes []string) jwt.MapClaims {
+    claims := jwt.MapClaims{
+        "sub":   user.ID,
+        "email": user.Email,
+        "name":  user.Name,
+    }
+
+    if contains(scopes, "roles") {
+        claims["roles"] = user.Roles
+        claims["groups"] = user.Groups
+    }
+
+    if contains(scopes, "custom.department") {
+        claims["department"] = user.Metadata["department"]
+        claims["cost_center"] = user.Metadata["cost_center"]
+    }
+
+    return claims
+}
+```
+
+---
+
+## Testing Custom Claims
+
+### Verify Token Contents
+
+```bash
+# Get a token
+TOKEN=$(curl -sX POST $API/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"alice","password":"..."}' | jq -r .access_token)
+
+# Decode and inspect claims (no verification)
+echo $TOKEN | cut -d. -f2 | base64 -d 2>/dev/null | jq .
+
+# Expected output:
+# {
+#   "sub": "uuid-here",
+#   "email": "alice@test.com",
+#   "tenant_id": "00000000-0000-0000-0000-000000000001",
+#   "roles": ["admin"],
+#   "department": "Engineering",
+#   "clearance_level": "top-secret",
+#   "exp": 1699999999,
+#   "iat": 1699999099
+# }
+```
+
+### Test via Hook Server
+
+```go
+// Simple test hook server that adds claims
+func main() {
+    http.HandleFunc("/claims", func(w http.ResponseWriter, r *http.Request) {
+        var req struct {
+            UserID   string `json:"user_id"`
+            TenantID string `json:"tenant_id"`
+        }
+        json.NewDecoder(r.Body).Decode(&req)
+
+        // Add custom claims
+        json.NewEncoder(w).Encode(map[string]interface{}{
+            "department":     "Engineering",
+            "clearance":      "level-5",
+            "cost_center":    "CC-1234",
+        })
+    })
+    http.ListenAndServe(":9999", nil)
+}
+```
