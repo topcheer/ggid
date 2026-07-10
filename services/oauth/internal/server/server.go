@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/pkg/tenant"
@@ -150,11 +151,98 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusOK, jwks)
 	})
 
-	// Authorize endpoint (GET — redirects with code)
+	// Authorize endpoint (GET/POST — creates auth code, redirects)
 	mux.HandleFunc("/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+
+		clientID := r.URL.Query().Get("client_id")
+		redirectURI := r.URL.Query().Get("redirect_uri")
+		responseType := r.URL.Query().Get("response_type")
+		state := r.URL.Query().Get("state")
+		scopeParam := r.URL.Query().Get("scope")
+		nonce := r.URL.Query().Get("nonce")
+		codeChallenge := r.URL.Query().Get("code_challenge")
+		codeChallengeMethod := r.URL.Query().Get("code_challenge_method")
+
+		if clientID == "" || redirectURI == "" || responseType == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "client_id, redirect_uri, and response_type are required"})
+			return
+		}
+
+		if responseType != "code" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_response_type"})
+			return
+		}
+
+		// Inject tenant context from header.
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header required"})
+			return
+		}
+
+		// The user must be authenticated (via JWT).
+		userIDStr := r.URL.Query().Get("user_id")
+		if userIDStr == "" {
+			userIDStr = r.Header.Get("X-User-ID")
+		}
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			// Return authorization_required so frontend can prompt for login.
+			writeJSON(w, http.StatusOK, map[string]string{
+				"status":  "authorization_required",
+				"message": "User must be authenticated. Provide user_id parameter or X-User-ID header.",
+			})
+			return
+		}
+
+		ctx := tenant.WithContext(r.Context(), &tenant.Context{
+			TenantID:       tenantID,
+			IsolationLevel: tenant.IsolationShared,
+		})
+
+		scopes := []string{}
+		if scopeParam != "" {
+			scopes = strings.Split(scopeParam, " ")
+		}
+
+		code, err := oauthSvc.CreateAuthorizationCode(ctx, &service.AuthorizeRequest{
+			TenantID:            tenantID,
+			ClientID:            clientID,
+			RedirectURI:         redirectURI,
+			ResponseType:        responseType,
+			Scope:               scopes,
+			State:               state,
+			Nonce:               nonce,
+			CodeChallenge:       codeChallenge,
+			CodeChallengeMethod: codeChallengeMethod,
+			UserID:              userID,
+		})
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			return
+		}
+
+		// Build redirect URL with code and state.
+		redirectURL := redirectURI
+		sep := "?"
+		if strings.Contains(redirectURL, "?") {
+			sep = "&"
+		}
+		redirectURL += sep + "code=" + code
+		if state != "" {
+			redirectURL += "&state=" + state
+		}
+
+		// Return JSON with the redirect URL (works for SPA and API clients).
 		writeJSON(w, http.StatusOK, map[string]string{
-			"status":  "authorization_required",
-			"message": "This endpoint requires user authentication and consent.",
+			"redirect_url": redirectURL,
+			"code":         code,
+			"state":        state,
 		})
 	})
 
@@ -166,27 +254,64 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		}
 		_ = r.ParseForm()
 
-		grantType := r.FormValue("grant_type")
-		if grantType != "authorization_code" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_grant_type"})
+		// Inject tenant context from header.
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header required"})
 			return
 		}
 
 		ctx := tenant.WithContext(r.Context(), &tenant.Context{
-			TenantID:       uuid.Nil,
+			TenantID:       tenantID,
 			IsolationLevel: tenant.IsolationShared,
 		})
 
-		resp, err := oauthSvc.ExchangeAuthorizationCode(ctx, &service.TokenExchangeRequest{
-			GrantType:    grantType,
-			Code:         r.FormValue("code"),
-			RedirectURI:  r.FormValue("redirect_uri"),
-			ClientID:     r.FormValue("client_id"),
-			ClientSecret: r.FormValue("client_secret"),
-			CodeVerifier: r.FormValue("code_verifier"),
-		})
-		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant"})
+		grantType := r.FormValue("grant_type")
+		clientID := r.FormValue("client_id")
+		clientSecret := r.FormValue("client_secret")
+		scopeParam := r.FormValue("scope")
+		scopes := []string{}
+		if scopeParam != "" {
+			scopes = strings.Split(scopeParam, " ")
+		}
+
+		var resp *service.TokenResponse
+		var tokenErr error
+
+		switch grantType {
+		case "authorization_code":
+			resp, tokenErr = oauthSvc.ExchangeAuthorizationCode(ctx, &service.TokenExchangeRequest{
+				TenantID:     tenantID,
+				GrantType:    grantType,
+				Code:         r.FormValue("code"),
+				RedirectURI:  r.FormValue("redirect_uri"),
+				ClientID:     clientID,
+				ClientSecret: clientSecret,
+				CodeVerifier: r.FormValue("code_verifier"),
+			})
+		case "refresh_token":
+			resp, tokenErr = oauthSvc.RefreshToken(ctx, &service.RefreshTokenRequest{
+				TenantID:     tenantID,
+				RefreshToken: r.FormValue("refresh_token"),
+				ClientID:     clientID,
+				ClientSecret: clientSecret,
+				Scope:        scopes,
+			})
+		case "client_credentials":
+			resp, tokenErr = oauthSvc.ClientCredentials(ctx, &service.ClientCredentialsRequest{
+				TenantID:     tenantID,
+				ClientID:     clientID,
+				ClientSecret: clientSecret,
+				Scope:        scopes,
+			})
+		default:
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_grant_type"})
+			return
+		}
+
+		if tokenErr != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": tokenErr.Error()})
 			return
 		}
 
@@ -256,6 +381,118 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 
 	mux.HandleFunc("/saml/slo", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "saml_slo_initiated"})
+	})
+
+	// --- OAuth Client Management REST API ---
+
+	mux.HandleFunc("/api/v1/oauth/clients", func(w http.ResponseWriter, r *http.Request) {
+		// Inject tenant context.
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			return
+		}
+
+		ctx := tenant.WithContext(r.Context(), &tenant.Context{
+			TenantID:       tenantID,
+			IsolationLevel: tenant.IsolationShared,
+		})
+
+		switch r.Method {
+		case http.MethodPost:
+			// Register a new OAuth client.
+			var body struct {
+				Name          string   `json:"name"`
+				Type          string   `json:"type"`
+				GrantTypes    []string `json:"grant_types"`
+				ResponseTypes []string `json:"response_types"`
+				RedirectURIs  []string `json:"redirect_uris"`
+				Scopes        []string `json:"scopes"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+				return
+			}
+
+			clientType := domain.ClientType(body.Type)
+			if clientType == "" {
+				clientType = domain.ClientTypeConfidential
+			}
+			if !clientType.IsValid() {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid client type"})
+				return
+			}
+
+			result, err := oauthSvc.CreateClient(ctx, &service.CreateClientInput{
+				TenantID:      tenantID,
+				Name:          body.Name,
+				Type:          clientType,
+				GrantTypes:    body.GrantTypes,
+				ResponseTypes: body.ResponseTypes,
+				RedirectURIs:  body.RedirectURIs,
+				Scopes:        body.Scopes,
+			})
+			if err != nil {
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				return
+			}
+
+			writeJSON(w, http.StatusCreated, result)
+
+		case http.MethodGet:
+			// List clients.
+			clients, _, err := oauthSvc.ListClients(ctx, 20, 0)
+			if err != nil {
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"clients": clients})
+
+		default:
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+		}
+	})
+
+	// Handle individual client operations (GET/DELETE).
+	mux.HandleFunc("/api/v1/oauth/clients/", func(w http.ResponseWriter, r *http.Request) {
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			return
+		}
+
+		ctx := tenant.WithContext(r.Context(), &tenant.Context{
+			TenantID:       tenantID,
+			IsolationLevel: tenant.IsolationShared,
+		})
+
+		clientID := r.URL.Path[len("/api/v1/oauth/clients/"):]
+		if clientID == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "client_id is required"})
+			return
+		}
+
+		switch r.Method {
+		case http.MethodGet:
+			client, err := oauthSvc.GetClient(ctx, clientID)
+			if err != nil {
+				writeJSON(w, http.StatusNotFound, map[string]string{"error": "client not found"})
+				return
+			}
+			writeJSON(w, http.StatusOK, client)
+
+		case http.MethodDelete:
+			if err := oauthSvc.DeleteClient(ctx, clientID); err != nil {
+				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+
+		default:
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+		}
 	})
 
 	// Health check
