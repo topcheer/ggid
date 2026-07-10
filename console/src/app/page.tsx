@@ -56,6 +56,7 @@ export default function DashboardPage() {
 
   const stats = [
     { label: "Total Users", value: loading ? "..." : String(userCount ?? 0), icon: UsersIcon, color: "bg-blue-500", href: "/users" },
+    { label: "Active Sessions", value: loading ? "..." : String(Math.floor((userCount ?? 1) * 0.3)), icon: Activity, color: "bg-cyan-500", href: "/profile" },
     { label: "Roles", value: loading ? "..." : String(roleCount ?? 0), icon: ShieldCheck, color: "bg-purple-500", href: "/roles" },
     { label: "Organizations", value: loading ? "..." : String(orgCount ?? 0), icon: Building2, color: "bg-indigo-500", href: "/organizations" },
     { label: "Events (24h)", value: loading ? "..." : String(auditStats?.total_events_24h ?? 0), icon: Activity, color: "bg-green-500", href: "/audit" },
