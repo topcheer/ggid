@@ -263,4 +263,5 @@ ldapsearch -x -H ldap://dc01.corp.local:389 \
 
 - [Configuration Reference](./configuration-reference.md) — All env vars
 - [Auth Provider Guide](./plugin-development.md) — Custom auth providers
+- [LDAP Directory Sync](./ldap-directory-sync.md) — Real-time/delta/full sync
 - [Multi-Tenancy Guide](./multi-tenancy-guide.md) — Tenant isolation

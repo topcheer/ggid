@@ -460,4 +460,122 @@ graph TB
 - [High Availability](./high-availability.md) — Multi-instance deployment
 - [Deployment Guide](./deployment.md) — Production setup
 - [Helm Chart Guide](./helm-chart.md) — Kubernetes deployment
+
+---
+
+## RTO/RPO Targets
+
+| Scenario | RPO (Data Loss) | RTO (Downtime) | Strategy |
+|----------|:---------------:|:---------------:|----------|
+| Single service crash | 0 | < 30s | Auto-restart (Docker/K8s) |
+| Database failover | < 1s | < 30s | Streaming replication |
+| AZ failure | < 1s | < 2m | Multi-AZ deployment |
+| Region failure | < 5m | < 15m | Cross-region replica |
+| Data corruption | < 15m | < 1h | PITR (Point-in-Time Recovery) |
+| Ransomware | < 15m | < 4h | Immutable backups (S3 Object Lock) |
+
+---
+
+## DR Runbook
+
+### Phase 1: Declare Incident (0-5 min)
+
+```bash
+# 1. Verify the scope of the disaster
+docker ps --format '{{.Names}}: {{.Status}}'    # Docker
+kubectl get pods -n ggid                          # Kubernetes
+
+# 2. Check database connectivity
+docker exec ggid-postgres pg_isready -U ggid
+
+# 3. Declare incident and assemble response team
+```
+
+### Phase 2: Database Recovery (5-30 min)
+
+```bash
+# Option A: Failover to replica (if available)
+# On the replica:
+pg_ctl promote -D /var/lib/postgresql/data
+# Update app connection strings to point to new primary
+
+# Option B: Restore from backup (PITR)
+# 1. Stop all services
+docker compose stop
+
+# 2. Restore latest base backup
+wal-g backup-fetch /var/lib/postgresql/data LATEST
+
+# 3. Create recovery config
+cat > /var/lib/postgresql/data/recovery.signal << 'EOF'
+EOF
+cat >> /var/lib/postgresql/data/postgresql.conf << 'EOF'
+restore_command = 'wal-g wal-fetch %f %p'
+recovery_target_time = '2024-01-15T10:30:00Z'
+recovery_target_action = 'promote'
+EOF
+
+# 4. Start PostgreSQL
+pg_ctl start -D /var/lib/postgresql/data
+
+# 5. Wait for recovery to complete (check logs)
+tail -f /var/log/postgresql/postgresql.log | grep "recovery complete"
+```
+
+### Phase 3: Service Recovery (30-60 min)
+
+```bash
+# 1. Start infrastructure
+docker compose up -d postgres redis nats
+
+# 2. Wait for healthy
+until docker exec ggid-postgres pg_isready; do sleep 2; done
+until docker exec ggid-redis redis-cli ping; do sleep 2; done
+
+# 3. Run migrations (idempotent — skips if up to date)
+make migrate-up
+
+# 4. Start services in dependency order
+docker compose up -d auth identity oauth
+sleep 10
+docker compose up -d policy org audit
+sleep 5
+docker compose up -d gateway
+
+# 5. Verify health
+curl http://localhost:8080/healthz
+```
+
+### Phase 4: Validation (60-90 min)
+
+```bash
+# 1. Run E2E smoke tests
+bash deploy/e2e-docker-test.sh
+
+# 2. Verify audit log integrity
+docker exec ggid-postgres psql -U ggid -c "
+  SELECT COUNT(*) FROM audit_events WHERE created_at > NOW() - INTERVAL '1 hour';
+"
+
+# 3. Verify user count matches pre-disaster
+docker exec ggid-postgres psql -U ggid -c "
+  SELECT COUNT(*) FROM users WHERE status = 'active';
+"
+
+# 4. Check for data gaps
+docker exec ggid-postgres psql -U ggid -c "
+  SELECT DATE_TRUNC('hour', created_at), COUNT(*)
+  FROM audit_events
+  WHERE created_at > NOW() - INTERVAL '24 hours'
+  GROUP BY 1 ORDER BY 1;
+"
+```
+
+### Phase 5: Post-Incident (90+ min)
+
+1. Document root cause and timeline
+2. Verify all backups are functioning
+3. Set up monitoring alerts for the failure mode
+4. Schedule post-mortem review
+5. Update DR runbook with lessons learned
 - [Disaster Recovery](./disaster-recovery.md) — DR runbook

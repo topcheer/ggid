@@ -273,4 +273,64 @@ SCIM errors use a standard format:
 3. **Use `externalId`** — Store the IdP's user ID for cross-referencing
 4. **Monitor sync** — Check audit events for provisioning/deprovisioning activity
 5. **Test deprovisioning** — Ensure users are locked (not deleted) on removal
+
+---
+
+## Deprovisioning
+
+When a user is removed from the IdP, GGID deprovisions them:
+
+| IdP Action | SCIM Request | GGID Action |
+|------------|-------------|-------------|
+| User deleted | `DELETE /Users/{id}` | Deactivate user, revoke sessions |
+| User disabled | `PATCH active = false` | Deactivate, keep data |
+| Group removed | `PATCH members` | Revoke role assignment |
+
+### Deprovisioning Webhooks
+
+```json
+{
+  "event": "user.deactivated",
+  "data": {
+    "user_id": "550e8400-...",
+    "source": "scim_deprovision",
+    "idp": "okta",
+    "sessions_revoked": 3
+  }
+}
+```
+
+## Bulk Operations
+
+### Bulk User Creation
+
+```bash
+curl -X POST https://iam.example.com/scim/v2/Bulk \
+  -d '{
+    "schemas": ["urn:ietf:params:scim:api:messages:2.0:BulkRequest"],
+    "failOnErrors": 1,
+    "Operations": [
+      {"method": "POST", "path": "/Users", "bulkId": "u1", "data": {"userName": "alice@example.com", "name": {"givenName": "Alice"}}},
+      {"method": "POST", "path": "/Users", "bulkId": "u2", "data": {"userName": "bob@example.com", "name": {"givenName": "Bob"}}},
+      {"method": "POST", "path": "/Groups", "bulkId": "g1", "data": {"displayName": "Eng Team"}},
+      {"method": "PATCH", "path": "/Groups/bulkId:g1", "data": {"Operations": [{"op": "add", "path": "members", "value": [{"value": "bulkId:u1"}, {"value": "bulkId:u2"}]}]}}
+    ]
+  }'
+```
+
+## Attribute Mapping
+
+Map IdP attributes to GGID user fields via SCIM schema extensions:
+
+| SCIM Attribute | GGID Field | Example |
+|----------------|------------|---------|
+| `userName` | `username` | `jane.doe` |
+| `emails[0].value` | `email` | `jane@example.com` |
+| `name.givenName` | `first_name` | `Jane` |
+| `name.familyName` | `last_name` | `Doe` |
+| `displayName` | `display_name` | `Jane Doe` |
+| `active` | `status` | `true` |
+| `externalId` | `external_id` | `okta-001` |
+| Enterprise `department` | `department` | `Engineering` |
+| Enterprise `manager.value` | `manager_id` | `manager-uuid` |
 6. **Rate limit awareness** — SCIM endpoints share the 100 req/min API limit
