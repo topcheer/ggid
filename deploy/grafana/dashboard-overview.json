@@ -1,0 +1,127 @@
+{
+  "annotations": { "list": [] },
+  "title": "GGID IAM Platform Overview",
+  "uid": "ggid-overview",
+  "version": 1,
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Request Rate (req/sec)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{job=\"gateway\"}[1m]))", "legendFormat": "req/s" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "id": 2,
+      "title": "Error Rate (%)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{job=\"gateway\",status=~\"5..\"}[5m])) / sum(rate(http_requests_total{job=\"gateway\"}[5m])) * 100", "legendFormat": "errors" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "thresholds": { "steps": [{"color":"green","value":null},{"color":"yellow","value":1},{"color":"red","value":5}] } } }
+    },
+    {
+      "id": 3,
+      "title": "Active Sessions",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "ggid_active_sessions", "legendFormat": "sessions" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Registered Users",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "ggid_total_users", "legendFormat": "users" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Request Latency (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_ms_bucket{job=\"gateway\"}[5m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_ms_bucket{job=\"gateway\"}[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_ms_bucket{job=\"gateway\"}[5m])) by (le))", "legendFormat": "p99" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "id": 6,
+      "title": "Login Success vs Failure",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "sum(rate(auth_login_attempts_total{result=\"success\"}[5m]))", "legendFormat": "Success" },
+        { "expr": "sum(rate(auth_login_attempts_total{result=\"failure\"}[5m]))", "legendFormat": "Failure" }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Requests by Status Code",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "expr": "sum(rate(http_requests_total{job=\"gateway\"}[5m])) by (status)", "legendFormat": "{{status}}" }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Database Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 20 },
+      "targets": [
+        { "expr": "pg_stat_database_numbackends", "legendFormat": "connections" }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Redis Memory Usage",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 20 },
+      "targets": [
+        { "expr": "redis_memory_used_bytes / redis_memory_max_bytes * 100", "legendFormat": "memory" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100, "thresholds": { "steps":[{"color":"green","value":null},{"color":"yellow","value":70},{"color":"red","value":90}] } } }
+    },
+    {
+      "id": 10,
+      "title": "NATS Consumer Lag (Audit)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 20 },
+      "targets": [
+        { "expr": "nats_consumer_num_ack_pending", "legendFormat": "pending" }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Top 10 Endpoints by Traffic",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "targets": [
+        { "expr": "topk(10, sum(rate(http_requests_total{job=\"gateway\"}[5m])) by (path))", "legendFormat": "{{path}}" }
+      ]
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": { "text": "Prometheus", "value": "Prometheus" }
+      }
+    ]
+  }
+}
