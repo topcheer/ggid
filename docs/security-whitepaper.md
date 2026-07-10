@@ -327,6 +327,139 @@ graph LR
 
 ---
 
+## 9. Attack Surface Map
+
+The GGID attack surface comprises all external and internal entry points where
+an attacker could attempt to compromise the system.
+
+### External Attack Surface
+
+| Component | Port | Protocol | Exposed To | Risk Level |
+|-----------|------|----------|-----------|------------|
+| Gateway HTTP | 8080 | HTTP/HTTPS | Internet | High |
+| OAuth Authorize | 8080 | HTTP/HTTPS | Internet | High |
+| OAuth Token | 8080 | HTTP/HTTPS | Internet | High |
+| JWKS Endpoint | 8080 | HTTP | Internet | Low (read-only) |
+| OIDC Discovery | 8080 | HTTP | Internet | Low (read-only) |
+| SCIM API | 8080 | HTTP/HTTPS | Partner IdPs | Medium |
+| Webhook Delivery | Outbound | HTTPS | Customer servers | Medium |
+
+### Internal Attack Surface
+
+| Component | Port | Protocol | Exposed To | Risk Level |
+|-----------|------|----------|-----------|------------|
+| Auth gRPC | 9001 | HTTP | Gateway only | Medium |
+| Identity gRPC | 50051 | gRPC | Gateway only | Medium |
+| Policy gRPC | 9070 | gRPC | Gateway only | Medium |
+| PostgreSQL | 5432 | TCP | Services only | Critical |
+| Redis | 6379 | TCP | Services only | High |
+| NATS | 4222 | TCP | Services only | Medium |
+| LDAP | 389 | TCP | Auth only | Medium |
+
+### Attack Surface Reduction
+
+```mermaid
+graph LR
+    INTERNET[Internet] --> LB[Load Balancer<br/>WAF + TLS]
+    LB --> GW[Gateway<br/>8080 only]
+    GW --> INTERNAL[Internal Network<br/>private subnet]
+    INTERNAL --> SVC[Services]
+    SVC --> DB[(PostgreSQL)]
+    SVC --> CACHE[(Redis)]
+    SVC --> MQ[(NATS)]
+
+    style LB fill:#e74c3c,color:#fff
+    style GW fill:#e67e22,color:#fff
+    style DB fill:#27ae60,color:#fff
+    style INTERNAL fill:#3498db,color:#fff
+```
+
+Mitigation: Only the Gateway (port 8080) is exposed to the internet. All
+internal services communicate over a private subnet. PostgreSQL, Redis, and
+NATS are not accessible from outside the VPC.
+
+### Component Threat Matrix
+
+| Component | S | T | R | I | D | E | Priority Mitigation |
+|-----------|---|---|---|---|---|---|----|
+| Gateway | H | H | M | H | H | M | JWT verification, rate limiting, WAF |
+| Auth Service | H | M | M | H | H | H | bcrypt, lockout, token rotation |
+| OAuth Service | H | H | M | H | H | M | PKCE, redirect_uri validation, state |
+| Identity Service | M | L | M | H | M | M | RLS, parameterized queries |
+| Policy Service | M | L | L | H | L | M | RBAC check caching, deny-by-default |
+| Org Service | M | L | L | H | L | L | RLS, tenant scoping |
+| Audit Service | L | L | H | M | H | H | Append-only table, hash chaining |
+| PostgreSQL | H | L | H | H | H | M | RLS, least-privilege role, TLS |
+| Redis | M | L | M | M | H | M | AUTH password, network isolation |
+| NATS | M | L | L | L | M | M | Credentials, TLS |
+
+*S=Spoofing, T=Tampering, R=Repudiation, I=Info Disclosure, D=DoS, E=Elevation of Privilege*
+
+---
+
+## 10. Detailed Mitigation Catalog
+
+### SQL Injection Prevention
+
+| Layer | Mechanism | Implementation |
+|-------|-----------|---------------|
+| Code | Parameterized queries | `pgx.QueryRow(ctx, "...WHERE id = $1", id)` — never `fmt.Sprintf` |
+| Code | Column allow-list | Sort/filter columns validated against a static map |
+| Database | RLS policies | `CREATE POLICY ... USING (tenant_id = current_setting('app.tenant_id')::uuid)` |
+| Database | Least-privilege role | `ggid_app` role has only `SELECT, INSERT, UPDATE, DELETE` — no DDL |
+| Database | Query timeout | All queries have `context.WithTimeout(ctx, 5*time.Second)` |
+
+### XSS Prevention
+
+| Layer | Mechanism | Implementation |
+|-------|-----------|---------------|
+| HTTP | Content-Security-Policy | `script-src 'self' 'nonce-{nonce}'` — no inline scripts without nonce |
+| HTTP | X-Content-Type-Options | `nosniff` header on all responses |
+| HTTP | X-Frame-Options | `DENY` — prevents clickjacking |
+| Console | React auto-escaping | JSX expressions are escaped by default |
+| Email | HTML sanitization | User-provided variables escaped with `html.EscapeString` |
+
+### CSRF Prevention
+
+| Layer | Mechanism | Implementation |
+|-------|-----------|---------------|
+| Cookie | SameSite=Strict | Session cookies set with `SameSite: http.SameSiteStrictMode` |
+| API | JWT in Authorization header | Not vulnerable to CSRF (no cookie-based auth for APIs) |
+| OAuth | state parameter | Random `state` value validated on callback |
+| OAuth | PKCE (S256) | Code challenge/verifier prevents authorization code interception |
+
+### Brute Force Prevention
+
+| Layer | Mechanism | Implementation |
+|-------|-----------|---------------|
+| Gateway | Rate limiting | 10 login attempts/min per IP, token bucket via Redis Lua script |
+| Auth | Account lockout | 5 failed attempts → 15-minute lockout (Redis TTL key) |
+| Auth | Progressive delays | Exponential backoff: 1s, 2s, 4s, 8s, 16s per consecutive failure |
+| Auth | Breach detection | HIBP k-anonymity API check on registration and password change |
+
+### Session Hijacking Prevention
+
+| Layer | Mechanism | Implementation |
+|-------|-----------|---------------|
+| Token | Short-lived access tokens | 15-minute expiry limits window of opportunity |
+| Token | JWT binding | Access token includes `jti`, `session_id`, and `token_id` claims |
+| Token | Refresh rotation | One-time-use refresh tokens; reuse triggers immediate revocation |
+| Redis | Session store | Session data in Redis with TTL; revocation is immediate |
+| Redis | IP binding | Optional: session bound to client IP (configurable) |
+| Cookie | Secure + HttpOnly | `Secure; HttpOnly; SameSite=Strict` prevents JS access |
+
+### Supply Chain Protection
+
+| Layer | Mechanism | Implementation |
+|-------|-----------|---------------|
+| Dependencies | govulncheck | CI gate: block on High+ CVEs |
+| Dependencies | Go modules hash | `go.sum` verifies module integrity |
+| Container | Distroless base | No shell, no package manager in production images |
+| Container | Image scanning | Trivy scan in CI, Cosign signing for verification |
+| Build | Reproducible builds | `go build -trimpath` for deterministic output |
+
+---
+
 ## References
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)

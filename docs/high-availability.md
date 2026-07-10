@@ -462,6 +462,335 @@ graph TB
 
 ---
 
+## PgBouncer Connection Pooling
+
+PgBouncer sits between GGID services and PostgreSQL, pooling connections to
+reduce connection overhead.
+
+### Architecture
+
+```
+GGID Services (each with 25 pool conns)
+    │
+    ├── Gateway ×3 ──┐
+    ├── Auth ×3 ─────┤
+    ├── Identity ×2 ─┤── PgBouncer (100 server conns) ── PostgreSQL
+    ├── Policy ×2 ───┤
+    ├── Org ×2 ──────┤
+    └── Audit ×2 ────┘
+
+Without PgBouncer: 14 pods × 25 conns = 350 PostgreSQL connections
+With PgBouncer: 350 client conns → pooled to 100 server conns
+```
+
+### PgBouncer Configuration
+
+```ini
+# /etc/pgbouncer/pgbouncer.ini
+[databases]
+ggid = host=postgres-primary port=5432 dbname=ggid
+
+dbname = ggid
+listen_port = 6432
+listen_addr = 0.0.0.0
+
+auth_type = scram-sha-256
+auth_file = /etc/pgbouncer/userlist.txt
+
+; Connection pool sizing
+pool_mode = transaction
+max_client_conn = 500
+default_pool_size = 20
+min_pool_size = 5
+reserve_pool_size = 5
+reserve_pool_timeout = 3
+
+; Timeouts
+server_idle_timeout = 300
+server_lifetime = 3600
+query_wait_timeout = 30
+
+; Logging
+log_connections = 1
+log_disconnections = 1
+log_pooler_errors = 1
+```
+
+### Transaction Mode and Session State
+
+GGID uses `SET LOCAL app.tenant_id` for RLS, which requires transaction-mode
+pooling. `SET LOCAL` is scoped to the current transaction and automatically
+cleared on COMMIT/ROLLBACK:
+
+```go
+// Correct: SET LOCAL within transaction
+tx, _ := pool.Begin(ctx)
+defer tx.Rollback(ctx)
+
+tx.Exec(ctx, "SET LOCAL app.tenant_id = $1", tenantID)
+// Queries within this tx are tenant-scoped
+tx.Commit(ctx)
+// tenant_id is now cleared
+```
+
+> **Important:** Never use `SET app.tenant_id` (without LOCAL) — it persists
+> across transactions and breaks with PgBouncer connection reuse.
+
+### Deploy PgBouncer
+
+```yaml
+# docker-compose.yaml
+pgbouncer:
+  image: edoburu/pgbouncer:1.22.0
+  environment:
+    DB_USER: ggid
+    DB_PASSWORD: ${DB_PASSWORD}
+    DB_HOST: postgres
+    DB_NAME: ggid
+    POOL_MODE: transaction
+    MAX_CLIENT_CONN: 500
+    DEFAULT_POOL_SIZE: 20
+  ports:
+    - "6432:6432"
+  depends_on:
+    postgres:
+      condition: service_healthy
+```
+
+Point GGID services at PgBouncer instead of PostgreSQL directly:
+
+```bash
+# Update DATABASE_URL to use PgBouncer port
+DATABASE_URL=postgres://ggid:password@pgbouncer:6432/ggid?sslmode=disable
+
+# For services using individual DB env vars:
+DB_HOST=pgbouncer
+DB_PORT=6432
+```
+
+---
+
+## Redis Sentinel / Cluster
+
+### Redis Sentinel (HA Failover)
+
+Sentinel monitors the Redis primary and automatically promotes a replica if it
+goes down.
+
+```
+┌───────────────────────────────────────────┐
+│ Redis Sentinel Architecture               │
+├───────────────────────────────────────────┤
+│                                           │
+│  Sentinel-1    Sentinel-2    Sentinel-3  │
+│     │             │             │         │
+│     └──── quorum ─┴──── vote ───┘         │
+│                     │                     │
+│               ┌─────┴─────┐               │
+│               │           │               │
+│          ┌────▼───┐  ┌───▼────┐           │
+│          │ Redis  │  │ Redis  │           │
+│          │PRIMARY │──│REPLICA │           │
+│          └────────┘  └────────┘           │
+└───────────────────────────────────────────┘
+```
+
+#### Sentinel Configuration
+
+```ini
+# /etc/redis/sentinel.conf
+sentinel monitor ggid redis-primary 6379 2
+sentinel down-after-milliseconds ggid 3000
+sentinel parallel-syncs ggid 1
+sentinel failover-timeout ggid 30000
+```
+
+#### Go Client with Sentinel
+
+```go
+import "github.com/redis/go-redis/v9"
+
+rdb := redis.NewFailoverClient(&redis.FailoverOptions{
+    MasterName:       "ggid",
+    SentinelAddrs:    []string{":26379", ":26380", ":26381"},
+    Password:         os.Getenv("REDIS_PASSWORD"),
+    DB:               0,
+    PoolSize:         25,
+    MinIdleConns:     5,
+    MaxRetryAttempts: 3,
+})
+```
+
+### Redis Cluster (Sharding)
+
+For workloads exceeding single-node Redis capacity (>50GB, >100k ops/sec):
+
+```go
+rdb := redis.NewClusterClient(&redis.ClusterOptions{
+    Addrs:        []string{":7000", ":7001", ":7002", ":7003", ":7004", ":7005"},
+    Password:     os.Getenv("REDIS_PASSWORD"),
+    PoolSize:     25,
+    MinIdleConns: 5,
+    MaxRedirects: 3,
+    ReadOnly:     true, // Allow reads from replicas
+})
+```
+
+> **Note:** Redis Cluster uses hash-slot sharding. Multi-key operations
+> (MGET, pipeline) require keys to be in the same slot. GGID's tenant-prefixed
+> key naming (`tid:{tenant_id}:...`) may need hash tags: `tid:{tenant_id}:session:*`
+
+### Choosing Sentinel vs Cluster
+
+| Aspect | Sentinel | Cluster |
+|--------|----------|--------|
+| Use case | HA failover (single shard) | Horizontal scaling |
+| Max data | Single node limit | Sharded across nodes |
+| Complexity | Low | Medium |
+| Multi-key ops | Yes (all keys on primary) | Only same hash slot |
+| Best for | GGID sessions & rate limits | Large-scale multi-tenant |
+
+---
+
+## NATS JetStream Clustering
+
+### JetStream Raft Consensus
+
+JetStream uses Raft consensus for replicated streams across a NATS cluster:
+
+```
+┌───────────────────────────────────────────────────────┐
+│ NATS JetStream Cluster (3 nodes)                     │
+├───────────────────────────────────────────────────────┤
+│                                                       │
+│   Node-1  ←──raft──→  Node-2  ←──raft──→  Node-3    │
+│     │                    │                    │       │
+│     └─────── GGID_EVENTS stream (replicated) ──┘     │
+│                                                       │
+│   Stream config: R3 (replicate to 3 nodes)            │
+│   Consumer: audit-consumer (durable, replicated)      │
+└───────────────────────────────────────────────────────┘
+```
+
+### Cluster Configuration
+
+```conf
+# nats-server.conf (node 1 of 3)
+port: 4222
+http_port: 8222
+
+jetstream {
+    store_dir: /data
+    max_memory_store: 1GB
+    max_file_store: 10GB
+}
+
+cluster {
+    name: ggid-cluster
+    routes: [
+        nats-route://nats-2:4222
+        nats-route://nats-3:4222
+    ]
+}
+``n
+### Stream Replication
+
+```bash
+# Create stream with R=3 (replicated to all 3 nodes)
+nats stream add GGID_EVENTS \
+  --subjects "ggid.events.>" \
+  --storage file \
+  --replicas 3 \
+  --retention limits \
+  --max-age 7d \
+  --server nats://nats-1:4222
+```
+
+### Consumer Availability
+
+Durable consumers are also replicated. If a node fails, the consumer
+continues processing from the last acknowledged message on another node.
+
+---
+
+## Rolling Updates
+
+### Kubernetes Rolling Update
+
+```bash
+# Update image and trigger rolling update
+kubectl set image deployment/ggid-gateway \
+  gateway=ghcr.io/ggid/gateway:v1.3.1 \
+  -n ggid
+
+# Watch the rollout
+kubectl rollout status deployment/ggid-gateway -n ggid
+
+# Rollback if needed
+kubectl rollout undo deployment/ggid-gateway -n ggid
+```
+
+### Rolling Update Strategy
+
+```yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0     # Never go below desired replicas
+      maxSurge: 1           # Allow 1 extra pod during update
+```
+
+### Update Order (Dependency-Aware)
+
+The correct order for rolling updates respects service dependencies:
+
+```
+1. Audit Service     (consumers, safe to update first)
+2. Org Service       (no downstream dependencies)
+3. Policy Service    (no downstream dependencies)
+4. OAuth Service     (no downstream dependencies)
+5. Identity Service  (provides data to Auth)
+6. Auth Service      (depends on Identity)
+7. Gateway           (depends on all services)
+8. Console           (depends on Gateway)
+```
+
+### Database Migration Safety
+
+```bash
+# Before deploying new code that requires schema changes:
+# 1. Run migrations (backward compatible — additive only)
+bash deploy/migrate.sh
+
+# 2. Deploy new code (reads new columns, ignores old ones)
+kubectl rollout restart deployment/ggid-auth -n ggid
+
+# 3. In a later release, remove deprecated columns
+# (never in the same release as the additive migration)
+```
+
+### Session Affinity and Rolling Updates
+
+GGID services are **stateless** — any instance can serve any request. No
+session affinity (sticky sessions) is required.
+
+- Session data lives in Redis (shared across all instances)
+- JWTs are self-contained (no server-side state needed for verification)
+- Rate limiting is shared via Redis token buckets
+- The only consideration: in-flight requests during pod termination
+
+```yaml
+# Give in-flight requests time to complete
+terminationGracePeriodSeconds: 45
+
+preStop:
+  exec:
+    command: ["sh", "-c", "sleep 10"]  # LB deregister delay
+```
+
+---
+
 ## HA Monitoring Checklist
 
 | Component | Metric to Watch | Alert Threshold |

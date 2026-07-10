@@ -331,6 +331,193 @@ SET search_path TO tenant_aaa, public;
 
 ---
 
+## Redis Per-Tenant Isolation
+
+GGID uses Redis key namespacing to isolate tenant data:
+
+### Key Naming Convention
+
+All Redis keys are prefixed with the tenant ID to prevent cross-tenant data
+access:
+
+```
+tid:{tenant_id}:{key_type}:{identifier}
+
+Examples:
+  tid:aaa-111:session:sess-abc123       # Session data
+  tid:aaa-111:rl:login:ip:192.168.1.1   # Rate limit bucket
+  tid:aaa-111:lockout:user:johndoe       # Account lockout
+  tid:aaa-111:refresh:rt-uuid-456        # Refresh token (one-time-use)
+  tid:aaa-111:apikey:key-xyz789          # API key cache
+```
+
+### Isolation Guarantees
+
+| Mechanism | Implementation |
+|-----------|---------------|
+| Key prefix | Every Redis operation includes `tid:{tenant_id}:` prefix |
+| TTL isolation | Rate limit buckets and sessions have per-tenant TTLs |
+| SCAN safety | `SCAN` operations are scoped by tenant prefix pattern |
+| Flush protection | `FLUSHDB` is disabled; only `DEL` with explicit key patterns |
+
+### Tenant Data Cleanup
+
+When a tenant is deleted, GGID removes all tenant-scoped Redis keys:
+
+```bash
+# Soft-delete: suspend tenant (keep data)
+curl -X PATCH $API/api/v1/tenants/$TENANT_ID -d '{"status":"suspended"}'
+
+# Hard-delete: purge all tenant data
+# 1. Delete Redis keys
+redis-cli --scan --pattern "tid:$TENANT_ID:*" | xargs redis-cli DEL
+
+# 2. Delete database rows (cascaded by RLS policy)
+DELETE FROM tenants WHERE id = $TENANT_ID;
+```
+
+---
+
+## NATS Per-Tenant Isolation
+
+Audit events are published to NATS JetStream with tenant-scoped subjects:
+
+### Subject Hierarchy
+
+```
+ggid.events.{tenant_id}.{event_type}
+
+Examples:
+  ggid.events.aaa-111.user.created     # Tenant aaa-111 user creation
+  ggid.events.aaa-111.auth.login        # Tenant aaa-111 login event
+  ggid.events.bbb-222.user.created      # Tenant bbb-222 user creation
+```
+
+### Consumer Filtering
+
+Event subscribers can filter by tenant:
+
+```go
+// Subscribe to events for a single tenant only
+cons, _ := js.CreateOrUpdateConsumer(ctx, "GGID_EVENTS",
+    jetstream.ConsumerConfig{
+        DurableName:   "crm-sync-aaa",
+        FilterSubject: fmt.Sprintf("ggid.events.%s.>", tenantID),
+    },
+)
+
+// Subscribe to events for all tenants (superadmin/multi-tenant apps)
+cons, _ := js.CreateOrUpdateConsumer(ctx, "GGID_EVENTS",
+    jetstream.ConsumerConfig{
+        DurableName:   "cross-tenant-analytics",
+        FilterSubject: "ggid.events.>",
+    },
+)
+```
+
+### Audit Query Isolation
+
+The audit SSE stream filters events by the requesting user's tenant_id. A user
+from tenant A cannot subscribe to events from tenant B:
+
+```sql
+-- RLS automatically adds: AND tenant_id = current_setting('app.tenant_id')::uuid
+SELECT * FROM audit_events
+WHERE created_at > $1
+ORDER BY created_at DESC
+LIMIT 100;
+```
+
+---
+
+## Tenant Onboarding Flow
+
+### Automated Onboarding
+
+```mermaid
+sequenceDiagram
+    participant Admin as Super Admin
+    participant API as GGID API
+    participant DB as PostgreSQL
+    participant Redis as Redis
+    participant NATS as NATS
+
+    Admin->>API: POST /api/v1/tenants
+    Note over API: {"name":"Acme Corp","tier":"pro","admin_email":"admin@acme.com"}
+    API->>DB: INSERT INTO tenants (id, name, tier, status)
+    API->>DB: INSERT INTO users (tenant_id, email, role=admin)
+    API->>DB: INSERT INTO roles (tenant_id, key='admin', permissions=[...])
+    API->>Redis: Set tenant config cache
+    API->>NATS: Publish tenant.created event
+    API-->>Admin: 201 Created {tenant_id, admin_user_id}
+    Admin->>API: POST /api/v1/auth/register (admin user)
+    Admin->>API: POST /api/v1/auth/login (get JWT)
+```
+
+### Onboarding Steps
+
+| Step | Action | API Call |
+|------|--------|----------|
+| 1 | Create tenant | `POST /api/v1/tenants` |
+| 2 | Create admin user | `POST /api/v1/auth/register` |
+| 3 | Assign admin role | `POST /api/v1/roles/assign` |
+| 4 | Configure branding | `PUT /api/v1/settings/branding` |
+| 5 | Set rate limits | `PUT /api/v1/settings/rate-limits` |
+| 6 | Enable features | `PUT /api/v1/settings/features` |
+| 7 | Configure auth providers | `PUT /api/v1/settings/auth-providers` |
+| 8 | Verify setup | `GET /healthz` |
+
+### Automated Onboarding Script
+
+```bash
+#!/bin/bash
+# onboard-tenant.sh
+TENANT_NAME=$1
+ADMIN_EMAIL=$2
+API=https://iam.example.com
+
+# Step 1: Create tenant
+TENANT=$(curl -s -X POST $API/api/v1/tenants \
+  -H "Authorization: Bearer $SUPERADMIN_TOKEN" \
+  -d "{\"name\":\"$TENANT_NAME\",\"tier\":\"pro\",\"admin_email\":\"$ADMIN_EMAIL\"}")
+TENANT_ID=$(echo $TENANT | jq -r '.id')
+echo "Tenant created: $TENANT_ID"
+
+# Step 2: Register admin user
+curl -s -X POST $API/api/v1/auth/register \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d "{\"username\":\"admin\",\"email\":\"$ADMIN_EMAIL\",\"password\":\"TempPass123!\"}"
+
+# Step 3: Login to get JWT
+JWT=$(curl -s -X POST $API/api/v1/auth/login \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d "{\"username\":\"admin\",\"password\":\"TempPass123!\"}" | jq -r '.access_token')
+
+echo "Tenant $TENANT_NAME onboarded. Admin JWT: ${JWT:0:20}..."
+```
+
+### Tenant Lifecycle States
+
+```mermaid
+stateDiagram-v2
+    [*] --> provisioning: POST /tenants
+    provisioning --> active: Admin user created
+    active --> suspended: PATCH {"status":"suspended"}
+    suspended --> active: PATCH {"status":"active"}
+    suspended --> deleted: DELETE /tenants/{id}
+    active --> deleted: DELETE /tenants/{id}
+    deleted --> [*]
+```
+
+| State | Login | New Users | Data Retained |
+|-------|-------|-----------|---------------|
+| provisioning | Blocked | Allowed (admin) | N/A |
+| active | Allowed | Allowed | Yes |
+| suspended | Blocked | Blocked | Yes |
+| deleted | Blocked | Blocked | Purged (30-day grace) |
+
+---
+
 ## References
 
 - [Architecture](./architecture.md) — Overall system design
