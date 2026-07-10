@@ -1,0 +1,2136 @@
+openapi: 3.1.0
+info:
+  title: GGID IAM Platform API
+  version: 1.0.0
+  description: |
+    Production-grade Identity and Access Management (IAM) platform.
+    Provides authentication, user management, RBAC/ABAC policy engine,
+    organization management, and audit logging via REST API.
+
+    ## Authentication
+    All endpoints except auth/login, auth/register, auth/refresh, and
+    password reset require a Bearer JWT token in the Authorization header.
+
+    ## Multi-Tenancy
+    Every request must include an `X-Tenant-ID` header with a valid UUID.
+    The gateway also injects `tenant_id` into query parameters and JSON bodies.
+
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  contact:
+    name: GGID
+    url: https://github.com/ggid/ggid
+
+servers:
+  - url: http://localhost:8080
+    description: Local development (Docker Compose Gateway)
+  - url: https://iam.example.com
+    description: Production
+
+tags:
+  - name: Auth
+    description: Registration, login, token management, MFA, passwordless
+  - name: Users
+    description: User CRUD, lock/unlock, activation, import
+  - name: Roles
+    description: Role management and hierarchy
+  - name: Permissions
+    description: Permission listing
+  - name: Policies
+    description: Policy engine, ABAC rules, policy check
+  - name: Organizations
+    description: Org CRUD, org tree, departments, teams, memberships
+  - name: Audit
+    description: Audit event query, statistics, export
+  - name: OAuth
+    description: OAuth2/OIDC flows
+  - name: SCIM
+    description: SCIM 2.0 user provisioning
+  - name: Health
+    description: Service health checks
+
+paths:
+  # ---------------------------------------------------------------------------
+  # Health
+  # ---------------------------------------------------------------------------
+  /healthz:
+    get:
+      tags: [Health]
+      summary: Gateway health check
+      description: Returns 200 if the gateway is running.
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /healthz/live:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      description: Kubernetes liveness — process is alive.
+      security: []
+      responses:
+        '200':
+          description: OK
+
+  /healthz/ready:
+    get:
+      tags: [Health]
+      summary: Readiness probe
+      description: Kubernetes readiness — all backends reachable.
+      security: []
+      responses:
+        '200':
+          description: All backends healthy
+        '503':
+          description: One or more backends unhealthy
+
+  # ---------------------------------------------------------------------------
+  # Auth
+  # ---------------------------------------------------------------------------
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with username/password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (invalidate access token)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                access_token:
+                  type: string
+      responses:
+        '200':
+          description: Logged out
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New token set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/password/forgot:
+    post:
+      tags: [Auth]
+      summary: Request password reset email
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset email sent (if account exists)
+
+  /api/v1/auth/password/reset:
+    post:
+      tags: [Auth]
+      summary: Reset password with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '200':
+          description: Password reset successful
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/auth/password/change:
+    post:
+      tags: [Auth]
+      summary: Change password (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '200':
+          description: Password changed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/mfa/setup:
+    post:
+      tags: [Auth]
+      summary: Set up MFA (TOTP)
+      description: Returns a QR code secret for TOTP apps like Google Authenticator.
+      responses:
+        '200':
+          description: MFA setup data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MFASetupResponse'
+
+  /api/v1/auth/mfa/verify:
+    post:
+      tags: [Auth]
+      summary: Verify MFA TOTP code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  description: 6-digit TOTP code
+      responses:
+        '200':
+          description: MFA enabled
+
+  /api/v1/auth/mfa/disable:
+    post:
+      tags: [Auth]
+      summary: Disable MFA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+      responses:
+        '200':
+          description: MFA disabled
+
+  /api/v1/auth/mfa/login:
+    post:
+      tags: [Auth]
+      summary: Complete MFA login step
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFALoginRequest'
+      responses:
+        '200':
+          description: MFA login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+
+  /api/v1/auth/password/policy:
+    get:
+      tags: [Auth]
+      summary: Get password policy configuration
+      responses:
+        '200':
+          description: Password policy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordPolicy'
+
+  /api/v1/auth/magic-link:
+    post:
+      tags: [Auth]
+      summary: Send magic link (passwordless login)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Magic link sent
+
+  /api/v1/auth/magic-link/verify:
+    post:
+      tags: [Auth]
+      summary: Verify magic link token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+
+  /api/v1/auth/email/verify:
+    post:
+      tags: [Auth]
+      summary: Verify email address with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Email verified
+
+  /api/v1/auth/email/resend:
+    post:
+      tags: [Auth]
+      summary: Resend email verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Verification email sent
+
+  /api/v1/auth/phone/send:
+    post:
+      tags: [Auth]
+      summary: Send phone OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: OTP sent
+
+  /api/v1/auth/phone/verify:
+    post:
+      tags: [Auth]
+      summary: Verify phone OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Phone verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+
+  /api/v1/auth/stepup/challenge:
+    post:
+      tags: [Auth]
+      summary: Initiate step-up authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                methods:
+                  type: array
+                  items:
+                    type: string
+                    enum: [totp, webauthn, email, sms]
+      responses:
+        '200':
+          description: Challenge created
+
+  /api/v1/auth/stepup/verify:
+    post:
+      tags: [Auth]
+      summary: Verify step-up authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                challenge_id:
+                  type: string
+                code:
+                  type: string
+      responses:
+        '200':
+          description: Step-up verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+
+  /api/v1/auth/sessions:
+    get:
+      tags: [Auth]
+      summary: List active sessions
+      responses:
+        '200':
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Session'
+    delete:
+      tags: [Auth]
+      summary: Revoke session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                session_id:
+                  type: string
+      responses:
+        '200':
+          description: Session revoked
+
+  /api/v1/auth/logout-all:
+    post:
+      tags: [Auth]
+      summary: Logout from all devices
+      responses:
+        '200':
+          description: All sessions invalidated
+
+  /api/v1/auth/hooks:
+    get:
+      tags: [Auth]
+      summary: List auth hooks
+      responses:
+        '200':
+          description: Hook list
+    post:
+      tags: [Auth]
+      summary: Create auth hook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthHook'
+      responses:
+        '201':
+          description: Hook created
+
+  /api/v1/auth/passwordless/register:
+    post:
+      tags: [Auth]
+      summary: Register passwordless (WebAuthn-only) account
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '200':
+          description: WebAuthn registration challenge
+
+  /api/v1/auth/mfa/webauthn/begin:
+    post:
+      tags: [Auth]
+      summary: Begin MFA WebAuthn registration
+      responses:
+        '200':
+          description: Credential creation options
+
+  /api/v1/auth/mfa/webauthn/finish:
+    post:
+      tags: [Auth]
+      summary: Finish MFA WebAuthn registration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: WebAuthn credential registered
+
+  /api/v1/idp/config:
+    get:
+      tags: [Auth]
+      summary: List IdP federation configs
+      responses:
+        '200':
+          description: IdP configs list
+    post:
+      tags: [Auth]
+      summary: Create IdP federation config
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IdPConfig'
+      responses:
+        '201':
+          description: Config created
+
+  /api/v1/auth/email/change:
+    post:
+      tags: [Auth]
+      summary: Request email change (sends confirmation to both addresses)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [new_email]
+              properties:
+                new_email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Confirmation emails sent
+
+  /api/v1/auth/email/change/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm email change with token
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Email changed
+
+  /api/v1/auth/social/{provider}:
+    get:
+      tags: [Auth]
+      summary: Initiate social login
+      description: Redirects to the OAuth provider (Google, GitHub, etc.).
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github, microsoft, apple]
+      responses:
+        '302':
+          description: Redirect to provider
+
+  # ---------------------------------------------------------------------------
+  # Users (Identity)
+  # ---------------------------------------------------------------------------
+  /api/v1/users:
+    get:
+      tags: [Users]
+      summary: List users
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+    post:
+      tags: [Users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /api/v1/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UserIDPath'
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Users]
+      summary: Delete user
+      responses:
+        '200':
+          description: Deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Users]
+      summary: Update user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /api/v1/users/{id}/lock:
+    parameters:
+      - $ref: '#/components/parameters/UserIDPath'
+    post:
+      tags: [Users]
+      summary: Lock user account
+      responses:
+        '200':
+          description: User locked
+
+  /api/v1/users/{id}/unlock:
+    parameters:
+      - $ref: '#/components/parameters/UserIDPath'
+    post:
+      tags: [Users]
+      summary: Unlock user account
+      responses:
+        '200':
+          description: User unlocked
+
+  /api/v1/users/{id}/deactivate:
+    parameters:
+      - $ref: '#/components/parameters/UserIDPath'
+    post:
+      tags: [Users]
+      summary: Deactivate user
+      responses:
+        '200':
+          description: User deactivated
+
+  /api/v1/users/{id}/activate:
+    parameters:
+      - $ref: '#/components/parameters/UserIDPath'
+    post:
+      tags: [Users]
+      summary: Activate user
+      responses:
+        '200':
+          description: User activated
+
+  /api/v1/users/import:
+    post:
+      tags: [Users]
+      summary: Bulk import users via CSV
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Import results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imported:
+                    type: integer
+                  failed:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  # ---------------------------------------------------------------------------
+  # SCIM 2.0
+  # ---------------------------------------------------------------------------
+  /scim/v2/Users:
+    get:
+      tags: [SCIM]
+      summary: List users (SCIM 2.0)
+      parameters:
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: SCIM filter expression (e.g. userName eq "john")
+        - name: startIndex
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: SCIM list response
+          content:
+            application/scim+json:
+              schema:
+                $ref: '#/components/schemas/SCIMListResponse'
+    post:
+      tags: [SCIM]
+      summary: Create user (SCIM 2.0)
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: User created
+
+  /scim/v2/Users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UserIDPath'
+    get:
+      tags: [SCIM]
+      summary: Get user (SCIM 2.0)
+      responses:
+        '200':
+          description: SCIM user
+    put:
+      tags: [SCIM]
+      summary: Update user (SCIM 2.0)
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [SCIM]
+      summary: Delete user (SCIM 2.0)
+      responses:
+        '204':
+          description: Deleted
+
+  # ---------------------------------------------------------------------------
+  # Roles (Policy)
+  # ---------------------------------------------------------------------------
+  /api/v1/roles:
+    get:
+      tags: [Roles]
+      summary: List roles
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Role list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  roles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+    post:
+      tags: [Roles]
+      summary: Create role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          description: Role created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/v1/roles/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Roles]
+      summary: Get role by ID
+      responses:
+        '200':
+          description: Role details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Roles]
+      summary: Delete role
+      responses:
+        '200':
+          description: Deleted
+
+  /api/v1/roles/{id}/permissions:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Roles]
+      summary: List role permissions
+      responses:
+        '200':
+          description: Permission list
+    post:
+      tags: [Roles]
+      summary: Add permission to role
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resource:
+                  type: string
+                action:
+                  type: string
+      responses:
+        '201':
+          description: Permission added
+
+  /api/v1/roles/{id}/parent:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      tags: [Roles]
+      summary: Set parent role (inheritance hierarchy)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parent_role_id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Parent set
+
+  # ---------------------------------------------------------------------------
+  # Permissions
+  # ---------------------------------------------------------------------------
+  /api/v1/permissions:
+    get:
+      tags: [Permissions]
+      summary: List all permissions
+      responses:
+        '200':
+          description: Permission list
+
+  # ---------------------------------------------------------------------------
+  # Policies
+  # ---------------------------------------------------------------------------
+  /api/v1/policies:
+    get:
+      tags: [Policies]
+      summary: List policies
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Policy list
+    post:
+      tags: [Policies]
+      summary: Create policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePolicyRequest'
+      responses:
+        '201':
+          description: Policy created
+
+  /api/v1/policies/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Policies]
+      summary: Get policy by ID
+      responses:
+        '200':
+          description: Policy details
+    delete:
+      tags: [Policies]
+      summary: Delete policy
+      responses:
+        '200':
+          description: Deleted
+
+  /api/v1/policies/check:
+    post:
+      tags: [Policies]
+      summary: Check permission (policy evaluation)
+      description: |
+        Evaluates whether a user is allowed to perform an action on a resource.
+        Checks RBAC roles, ABAC rules, and policy conditions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCheckRequest'
+      responses:
+        '200':
+          description: Policy decision
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyCheckResponse'
+
+  /api/v1/policies/export:
+    get:
+      tags: [Policies]
+      summary: Export policies (JSON)
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Exported policies
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/policies/import:
+    post:
+      tags: [Policies]
+      summary: Import policies (JSON)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Import results
+
+  /api/v1/policies/attribute-mapping:
+    get:
+      tags: [Policies]
+      summary: List ABAC attribute mappings
+      responses:
+        '200':
+          description: Attribute mappings
+
+  /api/v1/policies/versions:
+    get:
+      tags: [Policies]
+      summary: List policy versions
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Version list
+
+  # ---------------------------------------------------------------------------
+  # Organizations
+  # ---------------------------------------------------------------------------
+  /api/v1/orgs:
+    get:
+      tags: [Organizations]
+      summary: List organizations
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Org list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orgs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Organization'
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrgRequest'
+      responses:
+        '201':
+          description: Org created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+
+  /api/v1/orgs/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Organizations]
+      summary: Get organization by ID
+      responses:
+        '200':
+          description: Org details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+    put:
+      tags: [Organizations]
+      summary: Update organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Organizations]
+      summary: Delete organization
+      responses:
+        '200':
+          description: Deleted
+
+  /api/v1/orgs/{id}/members:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Organizations]
+      summary: List org members
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Member list
+    post:
+      tags: [Organizations]
+      summary: Add member to org
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+      responses:
+        '201':
+          description: Member added
+
+  /api/v1/orgs/{id}/tree:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Organizations]
+      summary: Get organization tree (sub-orgs)
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Org tree
+
+  /api/v1/departments:
+    get:
+      tags: [Organizations]
+      summary: List departments
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+        - name: org_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Department list
+    post:
+      tags: [Organizations]
+      summary: Create department
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                org_id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+                parent_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Created
+
+  /api/v1/teams:
+    get:
+      tags: [Organizations]
+      summary: List teams
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Team list
+    post:
+      tags: [Organizations]
+      summary: Create team
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                org_id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Created
+
+  # ---------------------------------------------------------------------------
+  # Audit
+  # ---------------------------------------------------------------------------
+  /api/v1/audit/events:
+    get:
+      tags: [Audit]
+      summary: Query audit events
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+        - name: action
+          in: query
+          schema:
+            type: string
+          description: Filter by action (e.g. user.login, role.create)
+        - name: result
+          in: query
+          schema:
+            type: string
+            enum: [success, failure]
+        - name: resource_type
+          in: query
+          schema:
+            type: string
+        - name: actor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 500
+      responses:
+        '200':
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventList'
+
+  /api/v1/audit/events/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags: [Audit]
+      summary: Get single audit event
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEvent'
+
+  /api/v1/audit/stats:
+    get:
+      tags: [Audit]
+      summary: Get audit statistics
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: Aggregated statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditStats'
+
+  /api/v1/audit/export:
+    get:
+      tags: [Audit]
+      summary: Export audit events (CSV)
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: CSV export
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /api/v1/audit/stream:
+    get:
+      tags: [Audit]
+      summary: Stream audit events (Server-Sent Events)
+      parameters:
+        - $ref: '#/components/parameters/TenantIDQuery'
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /api/v1/audit/retention:
+    get:
+      tags: [Audit]
+      summary: Get retention configuration
+      responses:
+        '200':
+          description: Retention settings
+    put:
+      tags: [Audit]
+      summary: Update retention configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                days:
+                  type: integer
+                enabled:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated
+
+  /api/v1/audit/rules:
+    get:
+      tags: [Audit]
+      summary: List anomaly detection rules
+      responses:
+        '200':
+          description: Rules list
+    post:
+      tags: [Audit]
+      summary: Create anomaly detection rule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Created
+
+  # ---------------------------------------------------------------------------
+  # OAuth / OIDC
+  # ---------------------------------------------------------------------------
+  /.well-known/jwks.json:
+    get:
+      tags: [OAuth]
+      summary: JWKS endpoint
+      security: []
+      description: Returns RSA public keys for JWT signature verification.
+      responses:
+        '200':
+          description: JWKS
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JWKS'
+
+  /.well-known/openid-configuration:
+    get:
+      tags: [OAuth]
+      summary: OIDC discovery document
+      security: []
+      responses:
+        '200':
+          description: OIDC configuration
+
+  /oauth/authorize:
+    get:
+      tags: [OAuth]
+      summary: OAuth2 authorize endpoint
+      security: []
+      parameters:
+        - name: response_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [code, token]
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: scope
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to login or callback
+
+  /oauth/token:
+    post:
+      tags: [OAuth]
+      summary: OAuth2 token endpoint
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  enum: [authorization_code, refresh_token, client_credentials]
+                code:
+                  type: string
+                refresh_token:
+                  type: string
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        '200':
+          description: Token response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenSet'
+
+# =============================================================================
+# Components
+# =============================================================================
+components:
+  parameters:
+    TenantIDQuery:
+      name: tenant_id
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Tenant ID (injected by gateway from X-Tenant-ID header)
+
+    UserIDPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required or failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    RateLimited:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT access token obtained from /api/v1/auth/login or /oauth/token.
+        Must be included as `Authorization: Bearer <token>`.
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+        code:
+          type: string
+          description: Error code (e.g. INVALID_ARGUMENT, NOT_FOUND)
+          example: INVALID_ARGUMENT
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: admin
+        password:
+          type: string
+          format: password
+          example: Admin@123456
+
+    RegisterRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+          example: john.doe
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: SecurePass@123
+
+    RegisterResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    PasswordResetRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token:
+          type: string
+        password:
+          type: string
+          format: password
+
+    PasswordChangeRequest:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password:
+          type: string
+        new_password:
+          type: string
+
+    TokenSet:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token (RS256 signed)
+        refresh_token:
+          type: string
+        id_token:
+          type: string
+          description: OIDC ID token (if OIDC scope requested)
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Access token TTL in seconds
+          example: 3600
+
+    MFALoginRequest:
+      type: object
+      required: [mfa_token, code]
+      properties:
+        mfa_token:
+          type: string
+          description: Temporary token from login step when MFA is required
+        code:
+          type: string
+          description: 6-digit TOTP code
+
+    MFASetupResponse:
+      type: object
+      properties:
+        secret:
+          type: string
+        qr_code:
+          type: string
+          description: QR code data URI for authenticator apps
+
+    PasswordPolicy:
+      type: object
+      properties:
+        min_length:
+          type: integer
+          example: 8
+        require_uppercase:
+          type: boolean
+        require_lowercase:
+          type: boolean
+        require_numbers:
+          type: boolean
+        require_special:
+          type: boolean
+        history_count:
+          type: integer
+          description: Number of previous passwords to check against
+          example: 5
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        status:
+          type: string
+          enum: [active, locked, inactive, suspended]
+          example: active
+        email_verified:
+          type: boolean
+        display_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateUserRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+        phone:
+          type: string
+        display_name:
+          type: string
+        locale:
+          type: string
+          example: en-US
+        timezone:
+          type: string
+          example: America/New_York
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        display_name:
+          type: string
+        status:
+          type: string
+
+    UserListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        total:
+          type: integer
+        next_offset:
+          type: integer
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        key:
+          type: string
+          description: Unique role key within tenant
+          example: admin
+        name:
+          type: string
+          example: Administrator
+        description:
+          type: string
+        parent_role_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateRoleRequest:
+      type: object
+      required: [key, name]
+      properties:
+        key:
+          type: string
+          example: editor
+        name:
+          type: string
+          example: Content Editor
+        description:
+          type: string
+        parent_role_id:
+          type: string
+          format: uuid
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        parent_id:
+          type: string
+          format: uuid
+          nullable: true
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CreateOrgRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Engineering
+        parent_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+
+    CreatePolicyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        effect:
+          type: string
+          enum: [allow, deny]
+        actions:
+          type: array
+          items:
+            type: string
+        resources:
+          type: array
+          items:
+            type: string
+        conditions:
+          type: object
+          description: ABAC conditions (JSON)
+
+    PolicyCheckRequest:
+      type: object
+      required: [user_id, resource, action]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        resource:
+          type: string
+          example: documents:sensitive
+        action:
+          type: string
+          example: read
+        context:
+          type: object
+          description: Additional ABAC attributes
+
+    PolicyCheckResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          example: true
+        reason:
+          type: string
+          description: Why the decision was made
+          example: Role 'admin' grants 'read' on 'documents:sensitive'
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+        ip:
+          type: string
+        user_agent:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_active:
+          type: string
+          format: date-time
+
+    AuthHook:
+      type: object
+      properties:
+        event:
+          type: string
+          enum: [pre-registration, post-registration, post-login, pre-token-issue]
+        url:
+          type: string
+          description: Webhook URL to call
+        method:
+          type: string
+          default: POST
+
+    IdPConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        protocol:
+          type: string
+          enum: [saml, oidc]
+        metadata_url:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        actor_id:
+          type: string
+          format: uuid
+        actor_name:
+          type: string
+        action:
+          type: string
+          example: user.login
+        result:
+          type: string
+          enum: [success, failure]
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+
+    AuditEventList:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        total:
+          type: integer
+
+    AuditStats:
+      type: object
+      properties:
+        total_events:
+          type: integer
+        events_by_action:
+          type: object
+          additionalProperties:
+            type: integer
+        events_by_result:
+          type: object
+          additionalProperties:
+            type: integer
+        hourly_distribution:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: string
+                format: date-time
+              count:
+                type: integer
+        top_actors:
+          type: array
+          items:
+            type: object
+            properties:
+              actor_id:
+                type: string
+              actor_name:
+                type: string
+              count:
+                type: integer
+
+    SCIMListResponse:
+      type: object
+      properties:
+        schemas:
+          type: array
+          items:
+            type: string
+          example: ["urn:ietf:params:scim:api:messages:2.0:ListResponse"]
+        totalResults:
+          type: integer
+        startIndex:
+          type: integer
+        itemsPerPage:
+          type: integer
+        Resources:
+          type: array
+          items:
+            type: object
+
+    JWKS:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            type: object
+            properties:
+              kty:
+                type: string
+                example: RSA
+              kid:
+                type: string
+              use:
+                type: string
+                example: sig
+              alg:
+                type: string
+                example: RS256
+              n:
+                type: string
+              e:
+                type: string
+
+security:
+  - BearerAuth: []
