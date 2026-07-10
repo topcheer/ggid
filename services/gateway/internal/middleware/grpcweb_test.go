@@ -167,7 +167,7 @@ func TestGRPCWebResponseWriter_NilHeaders(t *testing.T) {
 
 func TestGzipResponseWriter_WriteHeader_Normal(t *testing.T) {
 	inner := httptest.NewRecorder()
-	gw := &gzipResponseWriter{ResponseWriter: inner}
+	gw := &compressWriter{ResponseWriter: inner}
 	gw.WriteHeader(http.StatusTeapot)
 	if inner.Code != http.StatusTeapot {
 		t.Errorf("expected 418, got %d", inner.Code)
@@ -176,7 +176,7 @@ func TestGzipResponseWriter_WriteHeader_Normal(t *testing.T) {
 
 func TestGzipResponseWriter_WriteHeader_SkipCompression(t *testing.T) {
 	inner := httptest.NewRecorder()
-	gw := &gzipResponseWriter{ResponseWriter: inner}
+	gw := &compressWriter{ResponseWriter: inner}
 	gw.Header().Set("Content-Type", "image/png")
 	gw.WriteHeader(http.StatusOK)
 	if inner.Code != http.StatusOK {

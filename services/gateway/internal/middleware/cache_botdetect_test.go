@@ -186,7 +186,7 @@ func TestBehavioralBotDetect_BlocksHighRate(t *testing.T) {
 // --- Gzip Coverage (additional) ---
 
 func TestGzip_CompressesSVG(t *testing.T) {
-	handler := Gzip(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := GzipBrotli(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/svg+xml")
 		w.Write([]byte(`<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>`))
 	}))
@@ -202,7 +202,7 @@ func TestGzip_CompressesSVG(t *testing.T) {
 }
 
 func TestGzip_SkipsOctetStream(t *testing.T) {
-	handler := Gzip(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := GzipBrotli(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Write(make([]byte, 512))
 	}))
