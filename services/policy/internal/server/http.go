@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +41,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
 	mux.HandleFunc("/api/v1/policies/import", s.handlePolicyImport)
 	mux.HandleFunc("/api/v1/policies/attribute-mapping", s.handleAttributeMapping)
+	mux.HandleFunc("/api/v1/policies/versions", s.handlePolicyVersions)
 }
 
 // --- Roles ---
@@ -391,6 +393,97 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// --- Policy Version Management ---
+
+// policyVersions tracks version history per policy (in-memory for now).
+var policyVersions = map[string][]map[string]any{} // policyID → versions
+
+// GET /api/v1/policies/versions?policy_id=X — list versions
+// POST /api/v1/policies/versions?policy_id=X — snapshot current policy as new version
+// POST /api/v1/policies/versions/rollback?policy_id=X&version=N — rollback to version
+func (s *HTTPServer) handlePolicyVersions(w http.ResponseWriter, r *http.Request) {
+	policyID := r.URL.Query().Get("policy_id")
+	if policyID == "" {
+		writeJSONError(w, http.StatusBadRequest, "policy_id is required")
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		versions := policyVersions[policyID]
+		if versions == nil {
+			versions = []map[string]any{}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"policy_id": policyID,
+			"versions":  versions,
+			"total":     len(versions),
+		})
+
+	case http.MethodPost:
+		action := r.URL.Query().Get("action")
+		if action == "rollback" {
+			versionStr := r.URL.Query().Get("version")
+			if versionStr == "" {
+				writeJSONError(w, http.StatusBadRequest, "version is required for rollback")
+				return
+			}
+			versions := policyVersions[policyID]
+			versionNum, err := strconv.Atoi(versionStr)
+			if err != nil || versionNum < 1 || versionNum > len(versions) {
+				writeJSONError(w, http.StatusBadRequest, "invalid version number")
+				return
+			}
+			// Restore policy from snapshot via Delete+Create
+			target := versions[versionNum-1]
+			actions, _ := target["actions"].([]string)
+			resources, _ := target["resources"].([]string)
+			effect := domain.EffectAllow
+			if target["effect"] == "deny" {
+				effect = domain.EffectDeny
+			}
+			_, err = s.policySvc.CreatePolicy(r.Context(), &domain.Policy{
+				Name:      target["name"].(string),
+				Effect:    effect,
+				Actions:   actions,
+				Resources: resources,
+			})
+			if err != nil {
+				writeServiceError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]any{
+				"status":        "rolled_back",
+				"policy_id":     policyID,
+				"version":       versionNum,
+				"restored_from": target["created_at"],
+			})
+			return
+		}
+
+		// Create a new version snapshot
+		policy, err := s.policySvc.GetPolicy(r.Context(), uuid.MustParse(policyID))
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+
+		version := map[string]any{
+			"version":    len(policyVersions[policyID]) + 1,
+			"name":       policy.Name,
+			"effect":     string(policy.Effect),
+			"actions":    policy.Actions,
+			"resources":  policy.Resources,
+			"created_at": time.Now().UTC().Format(time.RFC3339),
+		}
+		policyVersions[policyID] = append(policyVersions[policyID], version)
+		writeJSON(w, http.StatusCreated, version)
+
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
