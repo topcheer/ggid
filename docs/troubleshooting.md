@@ -591,3 +591,250 @@ docker compose logs -f auth
 # Gateway access logs
 docker compose logs -f gateway | grep "status"
 ```
+
+---
+
+## Redis Issues
+
+### Q: Auth service crashes with "redis: connection refused"
+
+**Cause:** Redis container is not running or the Auth service can't reach it.
+
+**Fix:**
+
+```bash
+# Check if Redis is running
+docker compose ps redis
+docker compose logs redis
+
+# Test connectivity from auth container
+docker exec -it ggid-auth redis-cli -h redis ping
+# Expected: PONG
+
+# If Redis data is corrupted, reset it
+docker compose down redis
+docker volume rm deploy_redis_data
+docker compose up -d redis
+```
+
+Common env var issues:
+```bash
+# Verify auth service has correct Redis URL
+docker exec ggid-auth env | grep REDIS
+# Should show: REDIS_URL=redis://redis:6379
+```
+
+---
+
+### Q: Sessions expire immediately or tokens don't persist
+
+**Cause:** Redis `maxmemory-policy` is not set to `allkeys-lru`, or memory is full.
+
+**Fix:**
+
+```bash
+# Check Redis memory usage
+docker exec ggid-redis redis-cli INFO memory | grep used_memory_human
+
+# Check eviction policy
+docker exec ggid-redis redis-cli CONFIG GET maxmemory-policy
+# Should be: allkeys-lru
+
+# Fix: set in redis.conf or via CONFIG SET
+docker exec ggid-redis redis-cli CONFIG SET maxmemory-policy allkeys-lru
+```
+
+---
+
+### Q: Rate limiting doesn't work (429 never returned)
+
+**Cause:** Redis not reachable by Gateway, or rate limiter disabled.
+
+**Fix:**
+
+```bash
+# Check Gateway logs for Redis connection errors
+docker compose logs gateway | grep -i redis
+
+# Verify rate limiter is enabled
+docker exec ggid-gateway env | grep RATE_LIMIT
+# RATE_LIMIT_ENABLED=true
+# RATE_LIMIT_RPM=60
+```
+
+---
+
+## OAuth / OIDC Issues
+
+### Q: Social login callback returns "invalid state"
+
+**Cause:** The `state` parameter from the OAuth flow doesn't match the one stored in the session.
+
+**Fix:**
+
+```bash
+# Check OAuth service logs
+docker compose logs oauth | grep -i state
+
+# Common causes:
+# 1. Cookie domain mismatch (check OIDC_COOKIE_DOMAIN env)
+# 2. Clock skew between services (ensure NTP is running)
+# 3. Load balancer stripping cookies (check sticky session config)
+
+# Verify redirect URI matches exactly
+docker exec ggid-oauth env | grep REDIRECT
+```
+
+---
+
+### Q: OIDC discovery endpoint returns 404
+
+**Cause:** OAuth service not registered in Gateway, or wrong path.
+
+**Fix:**
+
+```bash
+# Test directly against OAuth service
+curl http://localhost:9005/.well-known/openid-configuration
+
+# Test through Gateway
+curl http://localhost:8080/.well-known/openid-configuration
+
+# If Gateway returns 404, check route registration
+docker compose logs gateway | grep -i oauth
+```
+
+---
+
+### Q: JWT issued by GGID fails verification in third-party app
+
+**Cause:** Third-party app uses wrong JWKS endpoint or cached old keys.
+
+**Fix:**
+
+```bash
+# Verify JWKS endpoint is accessible
+curl http://localhost:8080/.well-known/jwks.json
+
+# Check current signing key ID
+docker exec ggid-auth cat /keys/active_kid.txt
+
+# Ensure third-party app fetches JWKS from:
+#   https://api.your-domain.com/.well-known/jwks.json
+# And does NOT hardcode the public key (always use JWKS endpoint)
+```
+
+---
+
+## Diagnostic Flowchart
+
+When experiencing issues, follow this diagnostic flow:
+
+```mermaid
+graph TD
+    Start[Issue Reported] --> CheckHealth{All services healthy?}
+    CheckHealth -->|No| StartDocker[docker compose ps<br/>docker compose logs]
+    CheckHealth -->|Yes| CheckNetwork{Can Gateway reach backends?}
+    StartDocker --> FixDocker[Fix container issues]
+    FixDocker --> CheckHealth
+
+    CheckNetwork -->|No| CheckDNS[Check service DNS<br/>and network policies]
+    CheckNetwork -->|Yes| CheckAuth{Auth working?}
+    CheckDNS --> FixDNS[Fix networking]
+    FixDNS --> CheckNetwork
+
+    CheckAuth -->|No| CheckDB{DB reachable?}
+    CheckAuth -->|Yes| CheckPolicy{Policy engine returns<br/>expected decision?}
+    CheckDB -->|No| FixDB[Fix DB connection<br/>RLS, migrations]
+    CheckDB -->|Yes| CheckRedis{Redis reachable?}
+    FixDB --> CheckAuth
+    CheckRedis -->|No| FixRedis[Fix Redis connection]
+    CheckRedis -->|Yes| CheckAuthLog[Check auth service logs]
+    FixRedis --> CheckAuth
+
+    CheckPolicy -->|No| CheckPolicyDB[Check policy DB<br/>and RBAC rules]
+    CheckPolicy -->|Yes| CheckTenant{Tenant ID correct?}
+    CheckPolicyDB --> FixPolicy[Fix policy rules]
+    FixPolicy --> CheckPolicy
+
+    CheckTenant -->|No| FixTenant[Fix X-Tenant-ID<br/>header]
+    CheckTenant -->|Yes| CheckAudit[Check audit logs<br/>for clues]
+    FixTenant --> CheckPolicy
+
+    CheckAudit --> Found[Root cause found]
+```
+
+---
+
+## Log Locations
+
+| Environment | Location |
+|-------------|----------|
+| Docker | `docker compose logs <service>` |
+| Kubernetes | `kubectl logs -n ggid deploy/<service>` |
+| Systemd | `journalctl -u ggid-<service>` |
+| Direct binary | stdout (structured JSON) |
+
+### Log Level Configuration
+
+```bash
+# Set log level via environment variable
+LOG_LEVEL=debug  # trace, debug, info, warn, error (default: info)
+
+# Docker
+docker compose up -d auth
+# Override:
+docker compose run -e LOG_LEVEL=debug auth
+
+# Kubernetes
+kubectl set env deploy/ggid-auth LOG_LEVEL=debug -n ggid
+```
+
+### Structured Log Format
+
+```json
+{
+  "time": "2024-01-15T10:30:00Z",
+  "level": "info",
+  "service": "auth",
+  "message": "user login successful",
+  "request_id": "req-abc123",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "user_id": "...",
+  "duration_ms": 8,
+  "remote_ip": "192.168.1.100"
+}
+```
+
+---
+
+## Diagnostic Commands Quick Reference
+
+```bash
+# === Health Status ===
+curl -s http://localhost:8080/healthz | jq .
+
+# === Check Database ===
+docker exec ggid-postgres psql -U ggid -c "SELECT count(*) FROM users;"
+docker exec ggid-postgres psql -U ggid -c "SELECT tenant_id, count(*) FROM users GROUP BY tenant_id;"
+
+# === Check Redis ===
+docker exec ggid-redis redis-cli DBSIZE
+docker exec ggid-redis redis-cli KEYS "session:*" | head -10
+
+# === Check NATS ===
+curl -s http://localhost:8222/jsz?streams=true | jq '.streams[]'
+
+# === Decode JWT ===
+echo $TOKEN | cut -d. -f2 | base64 -d | jq .
+
+# === Test gRPC ===
+grpcurl -plaintext localhost:50051 list
+
+# === Network connectivity ===
+docker exec ggid-gateway wget -qO- http://auth:9001/healthz
+docker exec ggid-gateway wget -qO- http://identity:8080/healthz
+
+# === Container resource usage ===
+docker stats --no-stream $(docker compose ps -q)
+```
