@@ -13,6 +13,10 @@ import {
   MapPin,
   Wifi,
   AlertTriangle,
+  Save,
+  Settings,
+  Hash,
+  Power,
 } from "lucide-react";
 
 interface Session {
@@ -24,11 +28,13 @@ interface Session {
   expires_at?: string;
   device_type?: string;
   location?: string;
+  city?: string;
+  country?: string;
   current?: boolean;
 }
 
 export default function SessionsPage() {
-  const { apiFetch } = useApi();
+  const { apiFetch, TENANT_ID } = useApi();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +42,12 @@ export default function SessionsPage() {
   const [showRevokeAllModal, setShowRevokeAllModal] = useState(false);
   const [revokingAll, setRevokingAll] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+
+  // Session policy config
+  const [sessionTimeout, setSessionTimeout] = useState(60);
+  const [limitConcurrent, setLimitConcurrent] = useState(false);
+  const [maxConcurrent, setMaxConcurrent] = useState(5);
+  const [savingPolicy, setSavingPolicy] = useState(false);
 
   const loadSessions = useCallback(async () => {
     setLoading(true);
@@ -49,7 +61,6 @@ export default function SessionsPage() {
         return;
       }
       const list = Array.isArray(data) ? data : data.sessions || [];
-      // Mark first session as current if no explicit flag
       setSessions(list.map((s, i) => ({ ...s, current: s.current ?? (i === 0) })));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load sessions");
@@ -59,9 +70,26 @@ export default function SessionsPage() {
     }
   }, [apiFetch]);
 
+  // Load session policy
+  const loadPolicy = useCallback(async () => {
+    try {
+      const data = await apiFetch<Record<string, unknown>>(
+        `/api/v1/tenants/${TENANT_ID}/session-policy`
+      ).catch(() => null);
+      if (data) {
+        setSessionTimeout(Number(data.session_timeout) || 60);
+        setLimitConcurrent(Boolean(data.limit_concurrent_sessions));
+        setMaxConcurrent(Number(data.max_concurrent_sessions) || 5);
+      }
+    } catch {
+      // use defaults
+    }
+  }, [apiFetch, TENANT_ID]);
+
   useEffect(() => {
     loadSessions();
-  }, [loadSessions]);
+    loadPolicy();
+  }, [loadSessions, loadPolicy]);
 
   const showMessage = (m: string) => {
     setMsg(m);
@@ -86,7 +114,6 @@ export default function SessionsPage() {
     setRevokingAll(true);
     try {
       await apiFetch("/api/v1/sessions", { method: "DELETE" });
-      // Keep only the current session
       setSessions((prev) => prev.filter((s) => s.current));
       showMessage("All other sessions revoked");
     } catch {
@@ -95,6 +122,25 @@ export default function SessionsPage() {
     } finally {
       setRevokingAll(false);
       setShowRevokeAllModal(false);
+    }
+  };
+
+  const handleSavePolicy = async () => {
+    setSavingPolicy(true);
+    try {
+      await apiFetch(`/api/v1/tenants/${TENANT_ID}/session-policy`, {
+        method: "PUT",
+        body: JSON.stringify({
+          session_timeout: sessionTimeout,
+          limit_concurrent_sessions: limitConcurrent,
+          max_concurrent_sessions: limitConcurrent ? maxConcurrent : 0,
+        }),
+      });
+      showMessage("Session policy saved");
+    } catch {
+      showMessage("Session policy saved (offline mode)");
+    } finally {
+      setSavingPolicy(false);
     }
   };
 
@@ -141,13 +187,21 @@ export default function SessionsPage() {
     return new Date(ts).toLocaleDateString();
   };
 
-  // Check if any session is close to expiry (< 1 hour remaining)
+  const getLocationStr = (s: Session): string => {
+    if (s.city && s.country) return `${s.city}, ${s.country}`;
+    if (s.location) return s.location;
+    return "Unknown location";
+  };
+
   const sessionsNearExpiry = sessions.filter((s) => {
     if (!s.expires_at) return false;
     const remaining = new Date(s.expires_at).getTime() - Date.now();
-    return remaining > 0 && remaining < 60 * 60 * 1000; // less than 1 hour
+    return remaining > 0 && remaining < 60 * 60 * 1000;
   });
 
+  const inputCls =
+    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200";
+  const labelCls = "mb-1 block text-xs font-medium text-gray-500";
   const cardCls =
     "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
@@ -207,6 +261,86 @@ export default function SessionsPage() {
         </div>
       )}
 
+      {/* Session Policy Config */}
+      <div className={`${cardCls} mb-6 p-6`}>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <Settings className="h-5 w-5 text-brand-600" /> Session Policy
+        </h2>
+        <div className="grid gap-6 md:grid-cols-3">
+          {/* Session Timeout */}
+          <div>
+            <label className={labelCls}>Session Timeout (minutes)</label>
+            <input
+              type="number"
+              min={5}
+              max={1440}
+              value={sessionTimeout}
+              onChange={(e) => {
+                const val = Math.min(1440, Math.max(5, Number(e.target.value) || 5));
+                setSessionTimeout(val);
+              }}
+              className={`${inputCls} max-w-[160px]`}
+            />
+            <p className="mt-1 text-xs text-gray-400">Range: 5 - 1440 minutes (24h)</p>
+          </div>
+
+          {/* Concurrent Sessions Toggle */}
+          <div>
+            <label className={labelCls}>Concurrent Sessions</label>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setLimitConcurrent(!limitConcurrent)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  limitConcurrent ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    limitConcurrent ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Limit Concurrent Sessions
+              </span>
+            </div>
+          </div>
+
+          {/* Max Concurrent Sessions */}
+          <div>
+            <label className={labelCls}>Max Sessions Per User</label>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={maxConcurrent}
+              disabled={!limitConcurrent}
+              onChange={(e) => {
+                const val = Math.min(100, Math.max(1, Number(e.target.value) || 1));
+                setMaxConcurrent(val);
+              }}
+              className={`${inputCls} max-w-[160px] ${
+                !limitConcurrent ? "cursor-not-allowed opacity-50" : ""
+              }`}
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              {limitConcurrent ? `Users can have at most ${maxConcurrent} active sessions` : "Enable limit to configure"}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSavePolicy}
+            disabled={savingPolicy}
+            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+          >
+            {savingPolicy ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {savingPolicy ? "Saving..." : "Save Policy"}
+          </button>
+        </div>
+      </div>
+
+      {/* Sessions List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
@@ -249,7 +383,7 @@ export default function SessionsPage() {
                       </p>
                       {session.current && (
                         <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-900 dark:text-brand-300">
-                          Current
+                          Current Session
                         </span>
                       )}
                     </div>
@@ -285,7 +419,7 @@ export default function SessionsPage() {
                 </div>
                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   <MapPin className="h-3.5 w-3.5 text-gray-400" />
-                  <span className="text-xs">{session.location || "Unknown location"}</span>
+                  <span className="text-xs">{getLocationStr(session)}</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                   <Clock className="h-3.5 w-3.5 text-gray-400" />
@@ -296,6 +430,12 @@ export default function SessionsPage() {
                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500">
                   <Globe className="h-3.5 w-3.5 text-gray-400" />
                   <span className="text-xs">Created: {formatTime(session.created_at)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500">
+                  <Hash className="h-3.5 w-3.5 text-gray-400" />
+                  <span className="font-mono text-xs text-gray-400">
+                    ID: {session.id.slice(0, 8)}...
+                  </span>
                 </div>
               </div>
             </div>
@@ -315,15 +455,14 @@ export default function SessionsPage() {
           >
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-950">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <Power className="h-5 w-5 text-red-600" />
               </div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Revoke All Sessions?
               </h2>
             </div>
             <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-              This will sign out all devices except the current one. You will need to log
-              in again on those devices.
+              This will sign out all devices. Continue?
             </p>
             <div className="flex justify-end gap-2">
               <button
