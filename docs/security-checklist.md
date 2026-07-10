@@ -446,6 +446,104 @@ token, err := jwt.Parse(
 
 ---
 
+## Consolidated Hardening Checklist
+
+A quick-reference production hardening audit. All items should be verified
+before going live.
+
+### TLS / Encryption in Transit
+
+- [ ] TLS 1.2+ enforced everywhere (no TLS 1.0/1.1)
+- [ ] TLS 1.3 preferred
+- [ ] HSTS header: `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+- [ ] Internal service-to-service traffic encrypted (mTLS or private subnet)
+- [ ] PostgreSQL connections use `sslmode=require` or `verify-full`
+- [ ] Redis connections use TLS (if traversing untrusted network)
+- [ ] LDAP connections use StartTLS or LDAPS (`ldaps://`)
+- [ ] Certificate auto-renewal configured (Let's Encrypt / cert-manager)
+
+### JWT Configuration
+
+- [ ] **RS256 or EdDSA signing** (never HS256 in production)
+- [ ] JWKS endpoint published (`/.well-known/jwks.json`)
+- [ ] Access token TTL: 15 minutes or less
+- [ ] Refresh token TTL: 7 days maximum
+- [ ] **Refresh token rotation enabled** (one-time-use, detect reuse)
+- [ ] JWT includes `jti` (unique token ID) for revocation
+- [ ] JWT includes `tenant_id` for multi-tenant isolation
+- [ ] Key rotation process documented (90-day cycle)
+- [ ] Private key stored in Vault/KMS (not in container image)
+
+### OAuth / OIDC Hardening
+
+- [ ] **PKCE required for all public clients** (SPAs, mobile apps)
+- [ ] `redirect_uri` exact match enforced (no wildcards)
+- [ ] `state` parameter validated on authorization callback
+- [ ] Authorization code TTL: 60 seconds or less
+- [ ] Client secrets rotated annually
+- [ ] Token introspection endpoint protected (client credentials required)
+- [ ] Consent screen shown for third-party clients
+
+### CORS Policy
+
+- [ ] **CORS allowlist configured** (never `Access-Control-Allow-Origin: *` in production)
+- [ ] `Access-Control-Allow-Credentials: true` only for trusted origins
+- [ ] `Access-Control-Allow-Methods` restricted to needed methods only
+- [ ] Preflight cache (`Access-Control-Max-Age`) set to 24h
+- [ ] Per-tenant CORS origins configurable
+
+### Rate Limiting
+
+- [ ] **Per-tenant rate limits configured** (not just per-IP)
+- [ ] Auth endpoints: 10 requests/min per IP+username
+- [ ] Login brute-force protection: 5 attempts → 15-minute lockout
+- [ ] API endpoints: 60 requests/min per user
+- [ ] `X-RateLimit-*` headers returned on all responses
+- [ ] 429 response includes `Retry-After` header
+- [ ] Redis fail-open mode configured (or fail-closed for strict environments)
+
+### Audit & Logging
+
+- [ ] **Audit log retention policy set** (minimum 90 days hot, 1 year cold)
+- [ ] Audit events include: timestamp, user_id, tenant_id, action, IP, user_agent
+- [ ] PII redaction enabled in logs (`email`, `password`, `token` fields)
+- [ ] NATS JetStream retention: 7 days for event stream
+- [ ] Log shipping to external SIEM (Splunk, ELK, Datadog)
+- [ ] Alert on suspicious patterns (mass login failures, privilege escalation)
+
+### Database Security
+
+- [ ] **RLS enabled on all multi-tenant tables** (users, roles, orgs, audit_events)
+- [ ] Database user has least privilege (SELECT/INSERT/UPDATE/DELETE only, no DDL)
+- [ ] Connection pooling via PgBouncer (transaction mode)
+- [ ] Query timeout: 5 seconds maximum
+- [ ] Parameterized queries everywhere (no string concatenation)
+- [ ] Connection encryption (SSL/TLS)
+- [ ] Automated daily backups with retention policy
+- [ ] PITR (Point-in-Time Recovery) enabled for production
+
+### Session Security
+
+- [ ] Session cookies: `Secure; HttpOnly; SameSite=Strict`
+- [ ] Session data stored in Redis (not local memory)
+- [ | Maximum concurrent sessions per user: 5 (configurable)
+- [ ] Session idle timeout: 30 minutes
+- [ ] Logout invalidates both JWT (via jti revocation) and Redis session
+- [ ] "Remember me" extends refresh token TTL only (not access token)
+
+### Container & Infrastructure
+
+- [ ] Distroless or Alpine base images (no shell in production)
+- [ ] Container runs as non-root user
+- [ ] Read-only root filesystem (`readOnlyRootFilesystem: true`)
+- [ ] Resource limits set (CPU and memory)
+- [ ] Image vulnerability scanning in CI (Trivy)
+- [ ] Images signed (Cosign) and verified on deploy
+- [ ] Network policies restrict pod-to-pod communication
+- [ ] No secrets in environment variables (use Docker Secrets or Vault)
+
+---
+
 ## Final Sign-off
 
 | Category | Checked By | Date | Notes |
