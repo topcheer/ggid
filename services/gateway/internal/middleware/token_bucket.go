@@ -62,6 +62,9 @@ func (tb *TokenBucket) RetryAfter() int {
 	if tb.tokens >= 1 {
 		return 0
 	}
+	if tb.refillRate <= 0 {
+		return 1 // minimum retry window when no refill configured
+	}
 	deficit := 1 - tb.tokens
 	secs := deficit / tb.refillRate
 	return int(secs) + 1
