@@ -68,16 +68,22 @@ func coalesceKey(method, path, query string) string {
 
 // CoalesceMiddleware deduplicates concurrent identical GET requests.
 // Only GET requests are coalesced; other methods pass through.
+// POST/PUT/PATCH requests with an Idempotency-Key header are also coalesced.
 func CoalesceMiddleware(rc *RequestCoalescer) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Only coalesce safe GET requests
-			if r.Method != http.MethodGet {
+			// Only coalesce safe GET requests or POST with idempotency key
+			var key string
+			if r.Method == http.MethodGet {
+				key = coalesceKey(r.Method, r.URL.Path, r.URL.RawQuery)
+			} else if idemKey := r.Header.Get("Idempotency-Key"); idemKey != "" {
+				// POST/PUT/PATCH with Idempotency-Key header (RFC draft)
+				// Key includes method + path + idempotency key to ensure uniqueness
+				key = coalesceKey(r.Method, r.URL.Path, "") + "&idem=" + idemKey
+			} else {
 				next.ServeHTTP(w, r)
 				return
 			}
-
-			key := coalesceKey(r.Method, r.URL.Path, r.URL.RawQuery)
 
 			// Check cache first
 			rc.mu.Lock()
