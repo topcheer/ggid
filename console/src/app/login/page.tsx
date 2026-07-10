@@ -36,7 +36,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Store tokens
       if (typeof window !== "undefined") {
         localStorage.setItem("ggid_access_token", data.access_token);
         localStorage.setItem("ggid_refresh_token", data.refresh_token);
@@ -53,6 +52,24 @@ export default function LoginPage() {
     }
   };
 
+  const handleSocialLogin = async (provider: string) => {
+    setError("");
+    try {
+      const resp = await fetch(
+        `${API_BASE}/api/v1/auth/social/${provider}?redirect_uri=/`,
+        {
+          headers: { "X-Tenant-ID": TENANT_ID },
+        },
+      );
+      const data = await resp.json();
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch {
+      setError(`${provider} login not configured`);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md">
@@ -62,7 +79,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold">GGID Console</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Identity & Access Management
+            Identity &amp; Access Management
           </p>
         </div>
 
@@ -107,6 +124,42 @@ export default function LoginPage() {
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
+
+          {/* Social Login */}
+          <div className="my-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs text-gray-400">or continue with</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("google")}
+              className="flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Google
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("github")}
+              className="flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              GitHub
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("oidc")}
+              className="flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              SSO
+            </button>
+          </div>
+
+          {/* Default credentials hint */}
+          <div className="mt-5 rounded-lg bg-blue-50 px-3 py-2 text-center text-xs text-blue-600">
+            Default: admin / Admin@123456
+          </div>
         </form>
 
         <p className="mt-4 text-center text-xs text-gray-400">
