@@ -327,3 +327,45 @@ func (r *pgIDTokenRepo) RecordIDToken(ctx context.Context, record *domain.IDToke
 
 // Unused import guard
 var _ = time.Now
+
+func (r *pgIDTokenRepo) GetRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) (*domain.RefreshTokenRecord, error) {
+	row := r.pool.QueryRow(ctx, `
+		SELECT id, tenant_id, user_id, client_id, token_hash, scope, expires_at, revoked, created_at
+		FROM oidc_refresh_tokens
+		WHERE tenant_id = $1 AND token_hash = $2`,
+		tenantID, tokenHash)
+	var rec domain.RefreshTokenRecord
+	err := row.Scan(&rec.ID, &rec.TenantID, &rec.UserID, &rec.ClientID, &rec.TokenHash, &rec.Scope, &rec.ExpiresAt, &rec.Revoked, &rec.CreatedAt)
+	if err != nil {
+		return nil, ggiderrors.Wrap(ggiderrors.ErrNotFound, "refresh token not found", err)
+	}
+	return &rec, nil
+}
+
+func (r *pgIDTokenRepo) RevokeAllRefreshTokens(ctx context.Context, tenantID, clientID uuid.UUID) error {
+	_, err := r.pool.Exec(ctx, `UPDATE oidc_refresh_tokens SET revoked = true WHERE tenant_id = $1 AND client_id = $2`, tenantID, clientID)
+	if err != nil {
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "revoke all refresh tokens", err)
+	}
+	return nil
+}
+
+func (r *pgIDTokenRepo) StoreRefreshToken(ctx context.Context, record *domain.RefreshTokenRecord) error {
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO oidc_refresh_tokens (id, tenant_id, user_id, client_id, token_hash, scope, expires_at, revoked, used, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, false, false, $8)`,
+		record.ID, record.TenantID, record.UserID, record.ClientID, record.TokenHash,
+		record.Scope, record.ExpiresAt, record.CreatedAt)
+	if err != nil {
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "store refresh token", err)
+	}
+	return nil
+}
+
+func (r *pgIDTokenRepo) RevokeRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash string) error {
+	_, err := r.pool.Exec(ctx, `UPDATE oidc_refresh_tokens SET revoked = true, used = true WHERE tenant_id = $1 AND token_hash = $2`, tenantID, tokenHash)
+	if err != nil {
+		return ggiderrors.Wrap(ggiderrors.ErrInternal, "revoke refresh token", err)
+	}
+	return nil
+}

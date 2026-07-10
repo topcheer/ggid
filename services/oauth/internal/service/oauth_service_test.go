@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -93,13 +94,35 @@ func (m *mockCodeRepo) ConsumeCode(_ context.Context, codeHash string) (*domain.
 }
 
 type mockTokenRepo struct {
-	tokens []*domain.IDTokenRecord
+	tokens         []*domain.IDTokenRecord
+	refreshTokens  []*domain.RefreshTokenRecord
 }
 
 func (m *mockTokenRepo) RecordIDToken(_ context.Context, record *domain.IDTokenRecord) error {
 	m.tokens = append(m.tokens, record)
 	return nil
 }
+func (m *mockTokenRepo) StoreRefreshToken(_ context.Context, record *domain.RefreshTokenRecord) error {
+	m.refreshTokens = append(m.refreshTokens, record)
+	return nil
+}
+func (m *mockTokenRepo) GetRefreshToken(_ context.Context, _ uuid.UUID, tokenHash string) (*domain.RefreshTokenRecord, error) {
+	for _, rt := range m.refreshTokens {
+		if rt.TokenHash == tokenHash {
+			return rt, nil
+		}
+	}
+	return nil, fmt.Errorf("refresh token not found")
+}
+func (m *mockTokenRepo) RevokeRefreshToken(_ context.Context, _ uuid.UUID, tokenHash string) error {
+	for _, rt := range m.refreshTokens {
+		if rt.TokenHash == tokenHash {
+			rt.Revoked = true
+		}
+	}
+	return nil
+}
+func (m *mockTokenRepo) RevokeAllRefreshTokens(_ context.Context, _ uuid.UUID, _ uuid.UUID) error { return nil }
 
 // --- Mock KeyProvider ---
 

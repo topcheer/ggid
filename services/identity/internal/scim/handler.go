@@ -34,6 +34,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/scim/v2/Users/", h.handleUserResource)
 	mux.HandleFunc("/scim/v2/Groups", h.handleGroupsCollection)
 	mux.HandleFunc("/scim/v2/Groups/", h.HandleGroupResource)
+	mux.HandleFunc("/scim/v2/Bulk", h.handleBulk)
 	mux.HandleFunc("/scim/v2/ServiceProviderConfig", h.handleServiceProviderConfig)
 	mux.HandleFunc("/scim/v2/ResourceTypes", h.handleResourceTypes)
 }
@@ -153,6 +154,16 @@ func writeSCIMErrorWithType(w http.ResponseWriter, status int, scimType, detail 
 		Status:   strconv.Itoa(status),
 		ScimType: scimType,
 	})
+}
+
+// handleBulk is the HTTP handler wrapper for bulk operations.
+func (h *Handler) handleBulk(w http.ResponseWriter, r *http.Request) {
+	ok, ctx := injectTenant(r)
+	if !ok {
+		writeSCIMError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		return
+	}
+	h.HandleBulk(ctx, w, r)
 }
 
 func injectTenant(r *http.Request) (bool, context.Context) {
@@ -279,8 +290,10 @@ func (h *Handler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.
 	}
 
 	resources := make([]SCIMUser, 0, len(result.Users))
+	attrs := r.URL.Query().Get("attributes")
+	excludedAttrs := r.URL.Query().Get("excludedAttributes")
 	for _, u := range result.Users {
-		resources = append(resources, toSCIMUser(u))
+		resources = append(resources, applyAttributeFilter(toSCIMUser(u), attrs, excludedAttrs))
 	}
 
 	writeSCIMJSON(w, http.StatusOK, ListResponse{
@@ -372,7 +385,8 @@ func (h *Handler) getUser(ctx context.Context, w http.ResponseWriter, r *http.Re
 		writeSCIMError(w, http.StatusNotFound, "user not found")
 		return
 	}
-	writeSCIMJSON(w, http.StatusOK, toSCIMUser(user))
+	resp := applyAttributeFilter(toSCIMUser(user), r.URL.Query().Get("attributes"), r.URL.Query().Get("excludedAttributes"))
+	writeSCIMJSON(w, http.StatusOK, resp)
 }
 
 func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
@@ -526,4 +540,57 @@ func (h *Handler) handleResourceTypes(w http.ResponseWriter, r *http.Request) {
 			"schema":       "urn:ietf:params:scim:schemas:core:2.0:Group",
 		},
 	})
+}
+
+// applyAttributeFilter implements SCIM-11: ?attributes= and ?excludedAttributes= query params.
+func applyAttributeFilter(u SCIMUser, attributes, excludedAttributes string) SCIMUser {
+	if attributes == "" && excludedAttributes == "" {
+		return u
+	}
+	data, err := json.Marshal(u)
+	if err != nil {
+		return u
+	}
+	var m map[string]any
+	if err := json.Unmarshal(data, &m); err != nil {
+		return u
+	}
+	if attributes != "" {
+		allowed := parseAttrList(attributes)
+		allowed["schemas"] = true
+		allowed["id"] = true
+		allowed["userName"] = true
+		for k := range m {
+			if !allowed[k] {
+				delete(m, k)
+			}
+		}
+	}
+	if excludedAttributes != "" {
+		excluded := parseAttrList(excludedAttributes)
+		for k := range m {
+			if excluded[k] {
+				delete(m, k)
+			}
+		}
+	}
+	filtered, err := json.Marshal(m)
+	if err != nil {
+		return u
+	}
+	var result SCIMUser
+	json.Unmarshal(filtered, &result)
+	return result
+}
+
+// parseAttrList parses a comma-separated attribute list into a set.
+func parseAttrList(s string) map[string]bool {
+	result := make(map[string]bool)
+	for _, part := range strings.Split(s, ",") {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			result[part] = true
+		}
+	}
+	return result
 }
