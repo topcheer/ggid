@@ -32,6 +32,8 @@ interface Policy {
   name: string;
   description?: string;
   rules: PolicyRule[];
+  priority?: number;
+  effect?: "allow" | "deny";
 }
 
 // --- ABAC visual rule builder types ---
@@ -105,6 +107,10 @@ export default function PoliciesPage() {
   const [dryRunResult, setDryRunResult] = useState<{ allow: boolean; detail?: string } | null>(null);
   const [dryRunLoading, setDryRunLoading] = useState(false);
 
+  // Policy-level priority and effect
+  const [policyPriority, setPolicyPriority] = useState(50);
+  const [policyEffect, setPolicyEffect] = useState<"allow" | "deny">("allow");
+
   // RBAC matrix state
   const [rbacEntries, setRbacEntries] = useState<RbacEntry[]>([
     { role: "admin", permissions: { read: true, write: true, delete: true, admin: true } },
@@ -148,6 +154,8 @@ export default function PoliciesPage() {
     setSelectedPolicy(p);
     setPolicyName(p.name);
     setRules(p.rules || []);
+    setPolicyPriority(p.priority ?? 50);
+    setPolicyEffect(p.effect ?? "allow");
     setPolicyJson(JSON.stringify(p, null, 2));
   };
 
@@ -155,6 +163,8 @@ export default function PoliciesPage() {
     const payload = {
       name: policyName || "Untitled Policy",
       rules: rules,
+      priority: policyPriority,
+      effect: policyEffect,
     };
     try {
       await apiFetch("/api/v1/policies", {
@@ -236,13 +246,33 @@ export default function PoliciesPage() {
     setPolicyName("");
     setRules([]);
     setPolicyJson("");
+    setPolicyPriority(50);
+    setPolicyEffect("allow");
   };
 
-  // --- JSON export ---
+  // --- Export ALL policies as JSON ---
+  const handleExportAllJson = () => {
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      policies,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `all_policies_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMsg("All policies exported as JSON");
+  };
+
+  // --- JSON export (current policy) ---
   const handleExportJson = () => {
     const exportData = {
       name: policyName || "Untitled Policy",
       rules,
+      priority: policyPriority,
+      effect: policyEffect,
       rbac: rbacEntries,
       abac: abacRules,
     };
@@ -267,6 +297,8 @@ export default function PoliciesPage() {
         const parsed = JSON.parse(text);
         setPolicyName(parsed.name || "Imported Policy");
         setRules(parsed.rules || []);
+        setPolicyPriority(typeof parsed.priority === "number" ? parsed.priority : 50);
+        setPolicyEffect(parsed.effect === "deny" ? "deny" : "allow");
         setPolicyJson(JSON.stringify(parsed, null, 2));
         if (parsed.rbac && Array.isArray(parsed.rbac)) {
           setRbacEntries(parsed.rbac);
@@ -386,6 +418,13 @@ export default function PoliciesPage() {
           >
             <Download className="h-4 w-4" /> Export
           </button>
+          <button
+            onClick={handleExportAllJson}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
+            title="Export ALL policies as JSON file"
+          >
+            <FileJson className="h-4 w-4" /> Export All
+          </button>
           {selectedPolicy && (
             <button
               onClick={resetEditor}
@@ -426,8 +465,24 @@ export default function PoliciesPage() {
                   {policies.map((p) => (
                     <li key={p.id || p.name} className="group flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
                       <button onClick={() => selectPolicy(p)} className="flex-1 text-left">
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{p.name}</p>
-                        <p className="text-xs text-gray-500">{p.rules?.length || 0} rules</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">{p.name}</p>
+                          {p.effect && (
+                            <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                              p.effect === "allow"
+                                ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400"
+                                : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400"
+                            }`}>
+                              {p.effect}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-gray-500">{p.rules?.length || 0} rules</p>
+                          {typeof p.priority === "number" && (
+                            <span className="text-xs text-gray-400">· P:{p.priority}</span>
+                          )}
+                        </div>
                       </button>
                       {p.id && (
                         <button
@@ -473,6 +528,42 @@ export default function PoliciesPage() {
                 placeholder="e.g. admin-full-access"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               />
+            </div>
+
+            {/* Priority Slider & Effect Toggle */}
+            <div className="mb-4 grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">
+                  Priority: <span className="font-bold text-brand-600">{policyPriority}</span>
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={policyPriority}
+                  onChange={(e) => setPolicyPriority(Number(e.target.value))}
+                  className="w-full accent-brand-600"
+                />
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>Low (0)</span>
+                  <span>High (100)</span>
+                </div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-500">Default Effect</label>
+                <select
+                  value={policyEffect}
+                  onChange={(e) => setPolicyEffect(e.target.value as "allow" | "deny")}
+                  className={`w-full rounded-lg border px-3 py-2 text-sm font-medium ${
+                    policyEffect === "allow"
+                      ? "border-green-300 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400"
+                      : "border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+                  }`}
+                >
+                  <option value="allow">Allow</option>
+                  <option value="deny">Deny</option>
+                </select>
+              </div>
             </div>
 
             {/* Basic Rules */}
