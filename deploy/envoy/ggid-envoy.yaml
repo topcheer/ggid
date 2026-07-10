@@ -1,0 +1,198 @@
+# GGID Gateway — Envoy Sidecar Configuration Template
+# This file demonstrates how to integrate GGID gateway as a service mesh sidecar.
+# Deploy alongside your service containers, with Envoy intercepting traffic.
+
+admin:
+  address:
+    socket_address: { address: 0.0.0.0, port_value: 9901 }
+
+static_resources:
+  listeners:
+  - name: ingress_listener
+    address:
+      socket_address: { address: 0.0.0.0, port_value: 15000 }
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          codec_type: AUTO
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: backend
+              domains: ["*"]
+              routes:
+              - match:
+                  prefix: "/api/v1/auth"
+                route:
+                  cluster: ggid_auth
+              - match:
+                  prefix: "/api/v1/users"
+                route:
+                  cluster: ggid_identity
+              - match:
+                  prefix: "/api/v1/roles"
+                route:
+                  cluster: ggid_policy
+              - match:
+                  prefix: "/api/v1/orgs"
+                route:
+                  cluster: ggid_org
+              - match:
+                  prefix: "/api/v1/audit"
+                route:
+                  cluster: ggid_audit
+              - match:
+                  prefix: "/oauth"
+                route:
+                  cluster: ggid_oauth
+          http_filters:
+          # JWT authentication via GGID JWKS
+          - name: envoy.filters.http.jwt_authn
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+              providers:
+                ggid_jwt:
+                  issuer: "https://ggid.example.com"
+                  audiences:
+                  - "ggid-api"
+                  remote_jwks:
+                    http_uri:
+                      uri: "http://ggid-gateway:8080/.well-known/jwks.json"
+                      cluster: ggid_gateway
+                      timeout: 5s
+                  cache_duration: 300s
+              rules:
+              - match:
+                  prefix: "/api/v1/auth/login"
+                # Public path — no JWT required
+              - match:
+                  prefix: "/api/v1"
+                requires:
+                  provider_name: ggid_jwt
+          # Rate limiting
+          - name: envoy.filters.http.ratelimit
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+              domain: ggid_gateway
+              request_headers_to_add_when_not_rate_limited:
+              - header:
+                  key: X-RateLimit-Status
+                  value: "ok"
+              failure_mode_deny: false
+              rate_limit_service:
+                grpc_service:
+                  envoy_grpc:
+                    cluster_name: ggid_ratelimit
+          # CORS
+          - name: envoy.filters.http.cors
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
+          # Router (must be last)
+          - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+  - name: ggid_auth
+    type: STRICT_DNS
+    connect_timeout: 5s
+    lb_policy: ROUND_ROBIN
+    circuit_breakers:
+      thresholds:
+      - priority: DEFAULT
+        max_connections: 100
+        max_pending_requests: 50
+        max_requests: 100
+        max_retries: 3
+    outlier_detection:
+      consecutive_5xx: 5
+      interval: 10s
+      base_ejection_time: 30s
+    load_assignment:
+      cluster_name: ggid_auth
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-auth, port_value: 9001 }
+
+  - name: ggid_identity
+    type: STRICT_DNS
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: ggid_identity
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-identity, port_value: 8080 }
+
+  - name: ggid_policy
+    type: STRICT_DNS
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: ggid_policy
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-policy, port_value: 8070 }
+
+  - name: ggid_org
+    type: STRICT_DNS
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: ggid_org
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-org, port_value: 8071 }
+
+  - name: ggid_audit
+    type: STRICT_DNS
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: ggid_audit
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-audit, port_value: 8072 }
+
+  - name: ggid_oauth
+    type: STRICT_DNS
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: ggid_oauth
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-oauth, port_value: 9005 }
+
+  - name: ggid_gateway
+    type: STRICT_DNS
+    connect_timeout: 5s
+    load_assignment:
+      cluster_name: ggid_gateway
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-gateway, port_value: 8080 }
+
+  - name: ggid_ratelimit
+    type: STRICT_DNS
+    connect_timeout: 5s
+    http2_protocol_options: {}
+    load_assignment:
+      cluster_name: ggid_ratelimit
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address: { address: ggid-ratelimit, port_value: 8081 }
