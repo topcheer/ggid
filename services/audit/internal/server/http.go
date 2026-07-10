@@ -6,6 +6,7 @@ package httpserver
 import (
 	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -33,6 +34,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/events/", s.handleEventByID)
 	mux.HandleFunc("/api/v1/audit/stats", s.handleStats)
 	mux.HandleFunc("/api/v1/audit/export", s.handleExport)
+	mux.HandleFunc("/api/v1/audit/stream", s.handleStream)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -301,6 +303,70 @@ func writeAuditCSV(w http.ResponseWriter, events []*domain.AuditEvent) {
 		})
 	}
 	wr.Flush()
+}
+
+// GET /api/v1/audit/stream?tenant_id=X — Server-Sent Events for real-time audit events
+func (s *HTTPServer) handleStream(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		writeJSONError(w, http.StatusInternalServerError, "streaming not supported")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Send initial connection confirmation
+	fmt.Fprintf(w, "event: connected\ndata: {\"status\":\"ok\",\"tenant_id\":\"%s\"}\n\n", tenantID)
+	flusher.Flush()
+
+	// Poll for new events every 2 seconds
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	var lastCheck = time.Now().UTC()
+
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case t := <-ticker.C:
+			// Query events since last check
+			events, _, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
+				TenantID:   tenantID,
+				StartTime:  &lastCheck,
+				Descending: true,
+			}, 1, 50)
+			if err != nil {
+				continue
+			}
+
+			for _, e := range events {
+				data, _ := json.Marshal(eventToJSON(e))
+				fmt.Fprintf(w, "event: audit_event\ndata: %s\n\n", data)
+			}
+			flusher.Flush()
+			lastCheck = t.UTC()
+		}
+	}
 }
 
 // --- Helpers ---
