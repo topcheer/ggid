@@ -292,10 +292,11 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		UserID       string `json:"user_id"`
-		ResourceType string `json:"resource_type"`
-		Action       string `json:"action"`
-		Resource     string `json:"resource"`
+		UserID       string         `json:"user_id"`
+		ResourceType string         `json:"resource_type"`
+		Action       string         `json:"action"`
+		Resource     string         `json:"resource"`
+		Conditions   map[string]any `json:"conditions"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -313,6 +314,7 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 		ResourceType: req.ResourceType,
 		Action:       req.Action,
 		Resource:     req.Resource,
+		Conditions:   req.Conditions,
 	})
 	if err != nil {
 		writeServiceError(w, err)
