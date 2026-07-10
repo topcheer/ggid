@@ -103,6 +103,12 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Prometheus metrics
+	if r.URL.Path == "/metrics" {
+		middleware.MetricsHandler().ServeHTTP(w, r)
+		return
+	}
+
 	// JWKS endpoint
 	if r.URL.Path == "/.well-known/jwks.json" {
 		gw.jwks.JWKSHandler()(w, r)
@@ -188,7 +194,7 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 		}
 		// Health check and JWKS are always public
-		if r.URL.Path == "/healthz" || r.URL.Path == "/.well-known/jwks.json" {
+		if r.URL.Path == "/healthz" || r.URL.Path == "/.well-known/jwks.json" || r.URL.Path == "/metrics" {
 			isPublic = true
 		}
 
