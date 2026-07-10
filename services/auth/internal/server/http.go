@@ -12,7 +12,6 @@ import (
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/social"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
-	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
 	"github.com/google/uuid"
@@ -514,7 +513,7 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := tenant.WithContext(r.Context(), &tenant.Context{
+	ctx := ggidtenant.WithContext(r.Context(), &ggidtenant.Context{
 		TenantID:       tenantID,
 		IsolationLevel: tenant.IsolationShared,
 	})
