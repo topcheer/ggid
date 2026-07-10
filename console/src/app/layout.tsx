@@ -18,12 +18,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{
+          __html: `(function(){try{var d=localStorage.getItem('darkMode');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(d==='dark'||(!d&&m)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+        }} />
+      </head>
       <body>
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
             <AuthGuard>
-              <div className="flex h-screen">
+              <div className="flex h-screen dark:bg-gray-950">
                 <Sidebar />
                 <main className="flex-1 overflow-auto">
                   <div className="p-4 md:p-6">{children}</div>

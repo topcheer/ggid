@@ -315,7 +315,7 @@ export default function OrganizationsPage() {
     <div>
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Organizations</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">Organizations</h1>
         <button
           onClick={() => {
             setShowCreate(!showCreate);
@@ -418,7 +418,7 @@ export default function OrganizationsPage() {
           <select
             value={selectedOrgId || ""}
             onChange={(e) => setSelectedOrgId(e.target.value || null)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
           >
             <option value="">-- Select org --</option>
             {orgs.map((o) => (
@@ -437,7 +437,7 @@ export default function OrganizationsPage() {
           <select
             value={treeRootId || ""}
             onChange={(e) => setTreeRootId(e.target.value || null)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
           >
             <option value="">-- Select org --</option>
             {orgs.map((o) => (
@@ -498,7 +498,7 @@ export default function OrganizationsPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {depts.map((d) => (
-                  <tr key={d.id} className="hover:bg-gray-50">
+                  <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Network className="h-4 w-4 text-blue-500" />
@@ -534,7 +534,7 @@ export default function OrganizationsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {teams.map((t) => (
-              <div key={t.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div key={t.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="mb-3 flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
@@ -639,7 +639,7 @@ function MembersDetail({
         <p className="p-8 text-center text-gray-500">No members in this organization</p>
       ) : (
         <table className="w-full">
-          <thead className="border-b border-gray-100 bg-gray-50">
+          <thead className="border-b border-gray-100 dark:border-gray-700 bg-gray-50">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">User ID</th>
               <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Title</th>
@@ -649,7 +649,7 @@ function MembersDetail({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {members.map((m) => (
-              <tr key={m.id} className="hover:bg-gray-50">
+              <tr key={m.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-4 py-2">
                   <Link href={`/users/${m.user_id}`} className="font-mono text-xs text-brand-600 hover:underline">
                     {m.user_id.slice(0, 12)}...
@@ -810,7 +810,7 @@ function UnifiedOrgNode({
               style={{ paddingLeft: `${(depth + 1) * 20 + 28}px` }}
             >
               <Network className="h-3.5 w-3.5 text-blue-400" />
-              <span className="text-sm text-gray-600">{dept.name}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{dept.name}</span>
               {dept.path && (
                 <span className="font-mono text-xs text-gray-300">{dept.path}</span>
               )}
@@ -877,7 +877,7 @@ function OrgTreeNode({
   return (
     <>
       <div
-        className={`flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50 ${depth === 0 ? "border-b border-gray-100" : ""}`}
+        className={`flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-gray-50 ${depth === 0 ? "border-b border-gray-100 dark:border-gray-700" : ""}`}
         style={{ paddingLeft: `${depth * 24 + 12}px` }}
       >
         {/* Expand/Collapse toggle */}
@@ -959,7 +959,7 @@ function CreateForm({
   return (
     <form
       onSubmit={onSubmit}
-      className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+      className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
     >
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold">{title}</h3>
@@ -997,7 +997,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-gray-500">
+      <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
         {label}
         {required && <span className="text-red-500"> *</span>}
       </label>
@@ -1005,7 +1005,7 @@ function FormField({
         <select
           name={name}
           defaultValue={value || ""}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         >
           <option value="">{placeholder || "-- Select --"}</option>
           {options?.map((opt) => (
@@ -1019,7 +1019,7 @@ function FormField({
           name={name}
           required={required}
           placeholder={placeholder}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         />
       )}
     </div>

@@ -189,7 +189,7 @@ export default function RolesPage() {
     <div>
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Roles & Permissions</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">Roles & Permissions</h1>
         <div className="flex gap-2">
           <button
             onClick={() => setShowCreate(!showCreate)}
@@ -211,30 +211,30 @@ export default function RolesPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Key</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Key</label>
               <input
                 value={createForm.key}
                 onChange={(e) => setCreateForm({ ...createForm, key: e.target.value })}
                 placeholder="e.g. editor"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Name</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Name</label>
               <input
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
                 placeholder="e.g. Editor"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
               <input
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                 placeholder="Optional"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
               />
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function RolesPage() {
         /* ===== Roles Grid ===== */
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {roles.map((role) => (
-            <div key={role.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div key={role.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <div className="mb-3 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-100">
@@ -305,7 +305,7 @@ export default function RolesPage() {
                   )}
                 </div>
               </div>
-              <p className="mb-3 text-sm text-gray-600">{role.description || "No description"}</p>
+              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{role.description || "No description"}</p>
               <div className="flex flex-wrap gap-1">
                 {role.system_role && (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
@@ -397,7 +397,7 @@ function PolicyChecker({
 
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <div className="mb-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold">
             <Search className="h-5 w-5 text-brand-600" />
@@ -410,36 +410,36 @@ function PolicyChecker({
 
         <div className="grid gap-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">
+            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
               User ID <span className="text-red-500">*</span>
             </label>
             <input
               value={form.user_id}
               onChange={(e) => setForm({ ...form, user_id: e.target.value })}
               placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 font-mono focus:border-brand-500 focus:outline-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
                 Resource Type <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.resource_type}
                 onChange={(e) => setForm({ ...form, resource_type: e.target.value })}
                 placeholder="e.g. users, roles, documents"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
                 Action <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.action}
                 onChange={(e) => setForm({ ...form, action: e.target.value })}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
               >
                 <option value="">-- Select --</option>
                 <option value="read">read</option>
@@ -452,14 +452,14 @@ function PolicyChecker({
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">
+            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
               Resource (optional)
             </label>
             <input
               value={form.resource}
               onChange={(e) => setForm({ ...form, resource: e.target.value })}
               placeholder="e.g. specific resource ID or path"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
             />
           </div>
 
@@ -499,7 +499,7 @@ function PolicyChecker({
                 <p className={`font-semibold ${result.allowed ? "text-green-700" : "text-red-700"}`}>
                   {result.allowed ? "ALLOWED" : "DENIED"}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {result.reason || (result.allowed ? "Access granted" : "Access denied")}
                 </p>
                 {result.matched_by && (
@@ -566,7 +566,7 @@ function PermissionAssignment({
         <select
           value={selectedRole}
           onChange={(e) => onSelectRole(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         >
           <option value="">-- Choose a role --</option>
           {roles.map((r) => (
@@ -659,7 +659,7 @@ function PermissionAssignment({
             <div className="max-h-96 overflow-y-auto">
               {resourceGroups.map((resource) => (
                 <div key={resource}>
-                  <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 bg-gray-50 px-4 py-1.5">
+                  <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 dark:border-gray-700 bg-gray-50 px-4 py-1.5">
                     <span className="text-xs font-bold uppercase tracking-wide text-gray-600">{resource}</span>
                     <span className="text-xs text-gray-400">{groupedPerms[resource].length} permission{groupedPerms[resource].length !== 1 ? "s" : ""}</span>
                   </div>
@@ -669,7 +669,7 @@ function PermissionAssignment({
                     return (
                       <div
                         key={p.id}
-                        className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5 hover:bg-gray-50"
+                        className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700"
                       >
                         <div className="flex items-center gap-3">
                           {!assigned && (
@@ -712,7 +712,7 @@ function PermissionAssignment({
                 </div>
               ))}
               {filteredPerms.length === 0 && (
-                <p className="px-4 py-8 text-center text-sm text-gray-400">
+                <p className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
                   No permissions available
                 </p>
               )}
@@ -811,7 +811,7 @@ function RolePermissionMatrix({
         </thead>
         <tbody className="divide-y divide-gray-100">
           {roles.map((role) => (
-            <tr key={role.id} className="hover:bg-gray-50">
+            <tr key={role.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
               <td className="px-3 py-2 font-medium">
                 {role.name}
                 {role.system_role && <span className="ml-1 text-xs text-gray-400">(system)</span>}
@@ -936,7 +936,7 @@ function RoleHierarchyTree({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
         <GitBranch className="h-4 w-4 text-brand-600" />
         Role Hierarchy & Inheritance
@@ -945,7 +945,7 @@ function RoleHierarchyTree({
         Parent roles inherit permissions from child roles. Click to expand and view effective permissions.
       </p>
       {roots.length === 0 ? (
-        <p className="py-8 text-center text-sm text-gray-400">
+        <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
           No roles with hierarchy. Set <code className="rounded bg-gray-100 px-1">parent_role_id</code> when creating roles to build inheritance chains.
         </p>
       ) : (
@@ -1026,7 +1026,7 @@ function ABACConditionBuilder({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
           <Layers className="h-4 w-4 text-brand-600" />
           ABAC Condition Builder
@@ -1038,31 +1038,31 @@ function ABACConditionBuilder({
         {/* Policy metadata */}
         <div className="mb-4 grid gap-3 sm:grid-cols-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Policy Name</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Policy Name</label>
             <input
               value={policyName}
               onChange={(e) => setPolicyName(e.target.value)}
               placeholder="e.g. restrict_admin_access"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Combine Mode</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Combine Mode</label>
             <select
               value={combineMode}
               onChange={(e) => setCombineMode(e.target.value as "AND" | "OR")}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             >
               <option value="AND">AND (all must match)</option>
               <option value="OR">OR (any can match)</option>
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Effect</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Effect</label>
             <select
               value={effect}
               onChange={(e) => setEffect(e.target.value as "allow" | "deny")}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             >
               <option value="allow">Allow</option>
               <option value="deny">Deny</option>
@@ -1074,7 +1074,7 @@ function ABACConditionBuilder({
         <div className="space-y-2">
           {rules.map((rule, idx) => (
             <div key={idx} className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-500">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-500 dark:text-gray-400">
                 {idx + 1}
               </span>
               <select
@@ -1114,7 +1114,7 @@ function ABACConditionBuilder({
         <div className="mt-3 flex items-center gap-2">
           <button
             onClick={addRule}
-            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             <Plus className="h-3.5 w-3.5" /> Add Condition
           </button>
@@ -1122,7 +1122,7 @@ function ABACConditionBuilder({
 
         {/* Generated JSON */}
         <div className="mt-4">
-          <label className="mb-1 block text-xs font-medium text-gray-500">Generated Policy JSON</label>
+          <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Generated Policy JSON</label>
           <pre className="max-h-48 overflow-auto rounded-lg bg-gray-900 p-4 text-xs text-green-400">
             {generatedJSON}
           </pre>
@@ -1137,7 +1137,7 @@ function ABACConditionBuilder({
           </button>
           <button
             onClick={() => navigator.clipboard.writeText(generatedJSON)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
             Copy JSON
           </button>

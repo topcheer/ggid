@@ -158,12 +158,12 @@ export default function UsersPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Users</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">Users</h1>
         <div className="flex gap-2">
-          <button onClick={handleExportCSV} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
+          <button onClick={handleExportCSV} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
             <Download className="h-4 w-4" /> Export
           </button>
-          <button onClick={() => setShowImport(!showImport)} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
+          <button onClick={() => setShowImport(!showImport)} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700">
             <Upload className="h-4 w-4" /> Import
           </button>
           <button
@@ -180,7 +180,7 @@ export default function UsersPage() {
       )}
 
       {showImport && (
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Import Users (CSV)</h2>
             <button onClick={() => setShowImport(false)}><X className="h-4 w-4 text-gray-400" /></button>
@@ -196,12 +196,12 @@ export default function UsersPage() {
           <button onClick={handleImportCSV} disabled={!importText.trim()} className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50">
             Import Users
           </button>
-          {importResult && <p className="mt-3 text-sm text-gray-600">{importResult}</p>}
+          {importResult && <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{importResult}</p>}
         </div>
       )}
 
       {showCreate && (
-        <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 text-lg font-semibold">Create New User</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -219,7 +219,7 @@ export default function UsersPage() {
           </div>
           <div className="mt-4 flex gap-2">
             <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Create</button>
-            <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
           </div>
         </form>
       )}

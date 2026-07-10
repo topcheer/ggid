@@ -83,7 +83,7 @@ export default function DashboardPage() {
             <Link
               key={stat.label}
               href={stat.href}
-              className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow dark:border-gray-700 dark:bg-gray-800"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -101,7 +101,7 @@ export default function DashboardPage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         {/* Login activity chart */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <Activity className="h-4 w-4 text-brand-600" />
             Activity Timeline (24h)
@@ -130,8 +130,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent activity feed */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold dark:text-gray-200">
             <ScrollText className="h-4 w-4 text-brand-600" />
             Recent Activity
           </h2>
@@ -165,8 +165,8 @@ export default function DashboardPage() {
       {/* Top Actors + Action Breakdown */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* Top Active Users */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold dark:text-gray-200">
             <UsersIcon className="h-4 w-4 text-brand-600" />
             Top Active Users
           </h2>
@@ -190,8 +190,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Action Breakdown */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold dark:text-gray-200">
             <ScrollText className="h-4 w-4 text-brand-600" />
             Actions Breakdown
           </h2>

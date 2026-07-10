@@ -145,21 +145,21 @@ export default function LoginPage() {
       ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white text-xl font-bold">
             G
           </div>
-          <h1 className="text-2xl font-bold">GGID Console</h1>
-          <p className="mt-1 text-sm text-gray-500">Identity &amp; Access Management</p>
+          <h1 className="text-2xl font-bold dark:text-gray-100">GGID Console</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Identity &amp; Access Management</p>
         </div>
 
         {step === "credentials" ? (
           /* ===== Step 1: Credentials ===== */
-          <form onSubmit={handleCredentials} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+          <form onSubmit={handleCredentials} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             {error && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -171,7 +171,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 placeholder="admin"
               />
             </div>
@@ -183,13 +183,13 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 placeholder="••••••••••••"
               />
             </div>
 
             <div className="mb-6 flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm text-gray-600">
+              <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="rounded border-gray-300" />
                 Remember me
               </label>
@@ -206,9 +206,9 @@ export default function LoginPage() {
 
             {/* Social Login */}
             <div className="my-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-gray-200" />
-              <span className="text-xs text-gray-400">or continue with</span>
-              <div className="h-px flex-1 bg-gray-200" />
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+              <span className="text-xs text-gray-400 dark:text-gray-500">or continue with</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
             </div>
 
             <div className="grid grid-cols-3 gap-2">
@@ -217,7 +217,7 @@ export default function LoginPage() {
                   key={conn.id}
                   type="button"
                   onClick={() => handleSocialLogin(conn.provider)}
-                  className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-950"
                 >
                   <SocialIcon provider={conn.provider} />
                   {conn.name}
@@ -229,26 +229,26 @@ export default function LoginPage() {
               Demo: admin / Admin@123456
             </div>
 
-            <p className="mt-4 text-center text-sm text-gray-500">
+            <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
               Don&apos;t have an account?{" "}
               <a href="/register" className="font-medium text-brand-600 hover:underline">Sign up</a>
             </p>
           </form>
         ) : (
           /* ===== Step 2: MFA Verification ===== */
-          <form onSubmit={handleMfa} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+          <form onSubmit={handleMfa} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-6 text-center">
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
                 <Shield className="h-6 w-6 text-brand-600" />
               </div>
               <h2 className="text-lg font-semibold">Two-Factor Authentication</h2>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Enter the 6-digit code from your authenticator app
               </p>
             </div>
 
             {error && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {error}
               </div>
             )}
@@ -289,7 +289,7 @@ export default function LoginPage() {
           </form>
         )}
 
-        <p className="mt-4 text-center text-xs text-gray-400">GGID IAM Suite · Apache 2.0</p>
+        <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">GGID IAM Suite · Apache 2.0</p>
       </div>
     </div>
   );

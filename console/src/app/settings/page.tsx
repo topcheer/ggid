@@ -108,7 +108,7 @@ export default function SettingsPage() {
             key={t.id}
             onClick={() => setTab(t.id)}
             className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${
-              tab === t.id ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500 hover:text-gray-700"
+              tab === t.id ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             }`}
           >
             <t.icon className="h-4 w-4" /> {t.label}
@@ -131,21 +131,21 @@ export default function SettingsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Issuer</label>
-                <input value={jwtConfig.issuer} onChange={(e) => setJwtConfig({ ...jwtConfig, issuer: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                <input value={jwtConfig.issuer} onChange={(e) => setJwtConfig({ ...jwtConfig, issuer: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Signing Algorithm</label>
-                <select value={jwtConfig.algorithm} onChange={(e) => setJwtConfig({ ...jwtConfig, algorithm: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <select value={jwtConfig.algorithm} onChange={(e) => setJwtConfig({ ...jwtConfig, algorithm: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200">
                   <option>RS256</option><option>RS384</option><option>RS512</option><option>ES256</option><option>HS256</option>
                 </select>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Access Token TTL</label>
-                <input value={jwtConfig.access_token_ttl} onChange={(e) => setJwtConfig({ ...jwtConfig, access_token_ttl: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" />
+                <input value={jwtConfig.access_token_ttl} onChange={(e) => setJwtConfig({ ...jwtConfig, access_token_ttl: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Refresh Token TTL</label>
-                <input value={jwtConfig.refresh_token_ttl} onChange={(e) => setJwtConfig({ ...jwtConfig, refresh_token_ttl: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" />
+                <input value={jwtConfig.refresh_token_ttl} onChange={(e) => setJwtConfig({ ...jwtConfig, refresh_token_ttl: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
               </div>
             </div>
           </div>
@@ -163,16 +163,16 @@ export default function SettingsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Minimum Length</label>
-                <input type="number" value={passwordPolicy.min_length} onChange={(e) => setPasswordPolicy({ ...passwordPolicy, min_length: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                <input type="number" value={passwordPolicy.min_length} onChange={(e) => setPasswordPolicy({ ...passwordPolicy, min_length: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Password History</label>
-                <input type="number" value={passwordPolicy.history_count} onChange={(e) => setPasswordPolicy({ ...passwordPolicy, history_count: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                <input type="number" value={passwordPolicy.history_count} onChange={(e) => setPasswordPolicy({ ...passwordPolicy, history_count: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
                 <p className="mt-1 text-xs text-gray-400">Prevent reusing last N passwords</p>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Expiry (days)</label>
-                <input type="number" value={passwordPolicy.expiry_days} onChange={(e) => setPasswordPolicy({ ...passwordPolicy, expiry_days: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+                <input type="number" value={passwordPolicy.expiry_days} onChange={(e) => setPasswordPolicy({ ...passwordPolicy, expiry_days: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
               </div>
             </div>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                     onChange={(e) => setPasswordPolicy({ ...passwordPolicy, [req.key]: e.target.checked })}
                     className="rounded"
                   />
-                  <span className="text-sm text-gray-700">{req.label}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{req.label}</span>
                 </label>
               ))}
             </div>
@@ -210,29 +210,29 @@ export default function SettingsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">LDAP URL</label>
-              <input value={ldapConfig.url} onChange={(e) => setLdapConfig({ ...ldapConfig, url: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" />
+              <input value={ldapConfig.url} onChange={(e) => setLdapConfig({ ...ldapConfig, url: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Base DN</label>
-              <input value={ldapConfig.base_dn} onChange={(e) => setLdapConfig({ ...ldapConfig, base_dn: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" />
+              <input value={ldapConfig.base_dn} onChange={(e) => setLdapConfig({ ...ldapConfig, base_dn: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Bind DN</label>
-              <input value={ldapConfig.bind_dn} onChange={(e) => setLdapConfig({ ...ldapConfig, bind_dn: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" />
+              <input value={ldapConfig.bind_dn} onChange={(e) => setLdapConfig({ ...ldapConfig, bind_dn: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">User Filter</label>
-              <input value={ldapConfig.user_filter} onChange={(e) => setLdapConfig({ ...ldapConfig, user_filter: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" />
+              <input value={ldapConfig.user_filter} onChange={(e) => setLdapConfig({ ...ldapConfig, user_filter: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
           </div>
           <div className="mt-4 flex gap-6">
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={ldapConfig.start_tls} onChange={(e) => setLdapConfig({ ...ldapConfig, start_tls: e.target.checked })} className="rounded" />
-              <span className="text-sm text-gray-700">Start TLS</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Start TLS</span>
             </label>
             <label className="flex items-center gap-2">
               <input type="checkbox" checked={ldapConfig.auto_provision} onChange={(e) => setLdapConfig({ ...ldapConfig, auto_provision: e.target.checked })} className="rounded" />
-              <span className="text-sm text-gray-700">Auto-provision users on first login</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Auto-provision users on first login</span>
             </label>
           </div>
           <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-500">
@@ -253,12 +253,12 @@ export default function SettingsPage() {
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div><label className="mb-1 block text-xs font-medium text-gray-500">SMTP Host</label><input value={smtpConfig.host} onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div><label className="mb-1 block text-xs font-medium text-gray-500">Port</label><input value={smtpConfig.port} onChange={(e) => setSmtpConfig({ ...smtpConfig, port: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div><label className="mb-1 block text-xs font-medium text-gray-500">Username</label><input value={smtpConfig.username} onChange={(e) => setSmtpConfig({ ...smtpConfig, username: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div><label className="mb-1 block text-xs font-medium text-gray-500">Password</label><input type="password" value={smtpConfig.password} onChange={(e) => setSmtpConfig({ ...smtpConfig, password: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div><label className="mb-1 block text-xs font-medium text-gray-500">From Email</label><input value={smtpConfig.from_email} onChange={(e) => setSmtpConfig({ ...smtpConfig, from_email: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div><label className="mb-1 flex items-center gap-2 pt-6"><input type="checkbox" checked={smtpConfig.use_tls} onChange={(e) => setSmtpConfig({ ...smtpConfig, use_tls: e.target.checked })} className="rounded" /><span className="text-sm text-gray-700">Use TLS</span></label></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">SMTP Host</label><input value={smtpConfig.host} onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Port</label><input value={smtpConfig.port} onChange={(e) => setSmtpConfig({ ...smtpConfig, port: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Username</label><input value={smtpConfig.username} onChange={(e) => setSmtpConfig({ ...smtpConfig, username: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Password</label><input type="password" value={smtpConfig.password} onChange={(e) => setSmtpConfig({ ...smtpConfig, password: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">From Email</label><input value={smtpConfig.from_email} onChange={(e) => setSmtpConfig({ ...smtpConfig, from_email: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
+            <div><label className="mb-1 flex items-center gap-2 pt-6"><input type="checkbox" checked={smtpConfig.use_tls} onChange={(e) => setSmtpConfig({ ...smtpConfig, use_tls: e.target.checked })} className="rounded" /><span className="text-sm text-gray-700 dark:text-gray-300">Use TLS</span></label></div>
           </div>
         </div>
       )}
@@ -272,10 +272,10 @@ export default function SettingsPage() {
             <button onClick={() => setMsg("Branding saved")} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"><Save className="h-4 w-4" /> Save</button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-medium text-gray-500">Logo URL</label><input value={branding.logo_url} onChange={(e) => setBranding({ ...branding, logo_url: e.target.value })} placeholder="https://example.com/logo.png" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div><label className="mb-1 block text-xs font-medium text-gray-500">Primary Color</label><div className="flex items-center gap-2"><input type="color" value={branding.primary_color} onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })} className="h-9 w-12 rounded border border-gray-300" /><input value={branding.primary_color} onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })} className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" /></div></div>
-            <div><label className="mb-1 block text-xs font-medium text-gray-500">Login Title</label><input value={branding.login_title} onChange={(e) => setBranding({ ...branding, login_title: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-medium text-gray-500">Login Subtitle</label><input value={branding.login_subtitle} onChange={(e) => setBranding({ ...branding, login_subtitle: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-medium text-gray-500">Logo URL</label><input value={branding.logo_url} onChange={(e) => setBranding({ ...branding, logo_url: e.target.value })} placeholder="https://example.com/logo.png" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Primary Color</label><div className="flex items-center gap-2"><input type="color" value={branding.primary_color} onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })} className="h-9 w-12 rounded border border-gray-300" /><input value={branding.primary_color} onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })} className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Login Title</label><input value={branding.login_title} onChange={(e) => setBranding({ ...branding, login_title: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
+            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-medium text-gray-500">Login Subtitle</label><input value={branding.login_subtitle} onChange={(e) => setBranding({ ...branding, login_subtitle: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" /></div>
           </div>
           <div className="mt-4 rounded-lg border border-gray-200 p-4 text-center">
             <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-white font-bold" style={{ backgroundColor: branding.primary_color }}>G</div>
@@ -318,7 +318,7 @@ export default function SettingsPage() {
                 { label: "Plan", value: "Enterprise" },
                 { label: "Status", value: "Active" },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0">
+                <div key={item.label} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0">
                   <span className="text-sm text-gray-500">{item.label}</span>
                   <span className="text-sm font-medium">{item.value}</span>
                 </div>
@@ -333,7 +333,7 @@ export default function SettingsPage() {
                 { label: "License", value: "Apache 2.0" },
                 { label: "API Gateway", value: API_BASE },
               ].map((item) => (
-                <div key={item.label} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0">
+                <div key={item.label} className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0">
                   <span className="text-sm text-gray-500">{item.label}</span>
                   <span className="text-sm font-medium">{item.value}</span>
                 </div>
@@ -370,19 +370,19 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">Entity ID</span>
-                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.entity_id} onChange={(e) => setSamlConfig({ ...samlConfig, entity_id: e.target.value })} />
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" value={samlConfig.entity_id} onChange={(e) => setSamlConfig({ ...samlConfig, entity_id: e.target.value })} />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">ACS URL</span>
-                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.acs_url} onChange={(e) => setSamlConfig({ ...samlConfig, acs_url: e.target.value })} />
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" value={samlConfig.acs_url} onChange={(e) => setSamlConfig({ ...samlConfig, acs_url: e.target.value })} />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">SLO URL</span>
-                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.slo_url} onChange={(e) => setSamlConfig({ ...samlConfig, slo_url: e.target.value })} />
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" value={samlConfig.slo_url} onChange={(e) => setSamlConfig({ ...samlConfig, slo_url: e.target.value })} />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">Name ID Format</span>
-                  <select className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.name_id_format} onChange={(e) => setSamlConfig({ ...samlConfig, name_id_format: e.target.value })}>
+                  <select className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" value={samlConfig.name_id_format} onChange={(e) => setSamlConfig({ ...samlConfig, name_id_format: e.target.value })}>
                     <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">Email Address</option>
                     <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">Unspecified</option>
                     <option value="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">Persistent</option>
@@ -396,19 +396,19 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">IdP Entity ID</span>
-                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.idp_entity_id} onChange={(e) => setSamlConfig({ ...samlConfig, idp_entity_id: e.target.value })} placeholder="https://idp.example.com/entity" />
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" value={samlConfig.idp_entity_id} onChange={(e) => setSamlConfig({ ...samlConfig, idp_entity_id: e.target.value })} placeholder="https://idp.example.com/entity" />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">IdP SSO URL</span>
-                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.idp_sso_url} onChange={(e) => setSamlConfig({ ...samlConfig, idp_sso_url: e.target.value })} placeholder="https://idp.example.com/sso" />
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" value={samlConfig.idp_sso_url} onChange={(e) => setSamlConfig({ ...samlConfig, idp_sso_url: e.target.value })} placeholder="https://idp.example.com/sso" />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">IdP SLO URL</span>
-                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.idp_slo_url} onChange={(e) => setSamlConfig({ ...samlConfig, idp_slo_url: e.target.value })} placeholder="https://idp.example.com/slo" />
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" value={samlConfig.idp_slo_url} onChange={(e) => setSamlConfig({ ...samlConfig, idp_slo_url: e.target.value })} placeholder="https://idp.example.com/slo" />
                 </label>
                 <label className="block">
                   <span className="mb-1 block text-xs font-medium text-gray-500">IdP Certificate (PEM)</span>
-                  <textarea className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" rows={3} value={samlConfig.idp_cert} onChange={(e) => setSamlConfig({ ...samlConfig, idp_cert: e.target.value })} placeholder="-----BEGIN CERTIFICATE-----" />
+                  <textarea className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" rows={3} value={samlConfig.idp_cert} onChange={(e) => setSamlConfig({ ...samlConfig, idp_cert: e.target.value })} placeholder="-----BEGIN CERTIFICATE-----" />
                 </label>
               </div>
             </div>
@@ -417,17 +417,17 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={samlConfig.want_assertions_signed} onChange={(e) => setSamlConfig({ ...samlConfig, want_assertions_signed: e.target.checked })} />
-                  <span className="text-sm text-gray-700">Require signed assertions</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Require signed assertions</span>
                 </label>
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={samlConfig.want_responses_signed} onChange={(e) => setSamlConfig({ ...samlConfig, want_responses_signed: e.target.checked })} />
-                  <span className="text-sm text-gray-700">Require signed responses</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Require signed responses</span>
                 </label>
               </div>
             </div>
             <label className="block">
               <span className="mb-1 block text-xs font-medium text-gray-500">SP Signing Certificate (PEM)</span>
-              <textarea className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" rows={3} value={samlConfig.signing_cert} onChange={(e) => setSamlConfig({ ...samlConfig, signing_cert: e.target.value })} placeholder="-----BEGIN CERTIFICATE-----" />
+              <textarea className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" rows={3} value={samlConfig.signing_cert} onChange={(e) => setSamlConfig({ ...samlConfig, signing_cert: e.target.value })} placeholder="-----BEGIN CERTIFICATE-----" />
             </label>
             <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700" onClick={() => setMsg("SAML configuration saved (demo)")}>
               <Save className="mr-2 inline-block h-4 w-4" />

@@ -20,7 +20,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("ggid_theme") as Theme;
+    const saved = localStorage.getItem("darkMode") as Theme;
     if (saved === "dark" || saved === "light") {
       setTheme(saved);
     } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
@@ -37,7 +37,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       } else {
         root.classList.remove("dark");
       }
-      localStorage.setItem("ggid_theme", theme);
+      localStorage.setItem("darkMode", theme);
     }
   }, [theme, mounted]);
 
