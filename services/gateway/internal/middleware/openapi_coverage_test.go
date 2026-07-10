@@ -173,6 +173,7 @@ func TestOpenAPIAggregator_FetchSpec_InvalidJSON(t *testing.T) {
 		t.Logf("got expected error: %v", err)
 	}
 	_ = spec
+}
 
 func TestOpenAPIAggregator_FetchSpec_Non200Status(t *testing.T) {
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -187,6 +188,7 @@ func TestOpenAPIAggregator_FetchSpec_Non200Status(t *testing.T) {
 		t.Logf("got expected error: %v", err)
 	}
 	_ = spec
+}
 
 // --- SortedPaths ---
 
