@@ -30,6 +30,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/scim/v2/Users", h.handleUsersCollection)
 	mux.HandleFunc("/scim/v2/Users/", h.handleUserResource)
 	mux.HandleFunc("/scim/v2/Groups", h.handleGroupsCollection)
+	mux.HandleFunc("/scim/v2/Groups/", h.HandleGroupResource)
 	mux.HandleFunc("/scim/v2/ServiceProviderConfig", h.handleServiceProviderConfig)
 	mux.HandleFunc("/scim/v2/ResourceTypes", h.handleResourceTypes)
 }
@@ -373,17 +374,7 @@ func (h *Handler) deleteUser(ctx context.Context, w http.ResponseWriter, r *http
 }
 
 // --- Skeleton endpoints ---
-
-func (h *Handler) handleGroupsCollection(w http.ResponseWriter, r *http.Request) {
-	// SCIM Groups — skeleton, returns empty list.
-	writeSCIMJSON(w, http.StatusOK, ListResponse{
-		Schemas:      []string{scimListSchema},
-		TotalResults: 0,
-		ItemsPerPage: 0,
-		StartIndex:   1,
-		Resources:    []SCIMUser{},
-	})
-}
+// handleGroupsCollection is implemented in groups.go
 
 func (h *Handler) handleServiceProviderConfig(w http.ResponseWriter, r *http.Request) {
 	writeSCIMJSON(w, http.StatusOK, map[string]any{
