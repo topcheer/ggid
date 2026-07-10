@@ -180,6 +180,8 @@ func generateCredentialName(userAgent string) string {
 	switch {
 	case strings.Contains(ua, "edg/"):
 		browser = "Edge"
+	case strings.Contains(ua, "edge/"):
+		browser = "Edge"
 	case strings.Contains(ua, "chrome/") || strings.Contains(ua, "crios/"):
 		browser = "Chrome"
 	case strings.Contains(ua, "firefox/") || strings.Contains(ua, "fxios/"):
@@ -194,12 +196,12 @@ func generateCredentialName(userAgent string) string {
 	switch {
 	case strings.Contains(ua, "windows"):
 		platform = "Windows"
-	case strings.Contains(ua, "mac os") || strings.Contains(ua, "macintosh"):
-		platform = "macOS"
 	case strings.Contains(ua, "android"):
 		platform = "Android"
 	case strings.Contains(ua, "iphone") || strings.Contains(ua, "ipad"):
 		platform = "iOS"
+	case strings.Contains(ua, "mac os") || strings.Contains(ua, "macintosh"):
+		platform = "macOS"
 	case strings.Contains(ua, "linux"):
 		platform = "Linux"
 	default:

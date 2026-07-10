@@ -13,7 +13,7 @@ func TestGenerateCredentialName(t *testing.T) {
 		{"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0", "Chrome on Windows"},
 		{"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) Safari/605", "Safari on macOS"},
 		{"Mozilla/5.0 (iPhone; CPU iPhone OS 17_0) FxiOS/120.0", "Firefox on iOS"},
-		{"Mozilla/5.0 (Linux; Android 14) Edge/120.0", "Edge on Android"},
+		{"Mozilla/5.0 (Linux; Android 14) Edg/120.0", "Edge on Android"},
 		{"Mozilla/5.0 (X11; Linux x86_64) Firefox/121.0", "Firefox on Linux"},
 		{"UnknownBot/1.0", "Browser on Device"},
 	}
