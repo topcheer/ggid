@@ -41,12 +41,12 @@
 **Priority:** P0 | **Effort:** Medium | **Reference:** Logto connectors, Clerk social
 
 Deliverables:
-- [ ] Pluggable connector interface (`pkg/social/connector.go`)
-- [ ] Google OAuth2 connector
-- [ ] GitHub OAuth2 connector
+- [x] Pluggable connector interface (`pkg/social/connector.go`)
+- [x] Google OAuth2 connector
+- [x] GitHub OAuth2 connector
 - [ ] Microsoft / Apple connectors
-- [ ] OIDC generic connector (any compliant IdP)
-- [ ] Social login callback handler in Auth Service
+- [x] OIDC generic connector (any compliant IdP)
+- [x] Social login callback handler in Auth Service
 - [ ] Identity linking flow (link social account to existing user)
 - [ ] JIT provisioning for social logins
 
