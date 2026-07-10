@@ -224,7 +224,7 @@ func TestParseMaxBodySize16(t *testing.T) {
 		{"10MB", 10 * 1024 * 1024},
 		{"1GB", 1024 * 1024 * 1024},
 		{"512KB", 512 * 1024},
-		{"invalid", 0},
+		{"invalid", 10 << 20}, // invalid returns default 10MB
 	}
 	for _, tt := range tests {
 		if got := ParseMaxBodySize(tt.input); got != tt.want {
