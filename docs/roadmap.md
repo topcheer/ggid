@@ -92,7 +92,7 @@ Deliverables:
 
 Deliverables:
 - [ ] CORS middleware (configurable allowed origins per tenant)
-- [ ] Cookie security flags (HttpOnly, Secure, SameSite=Lax/Strict)
+- [x] Cookie security flags (HttpOnly/Secure/SameSite) (HttpOnly, Secure, SameSite=Lax/Strict)
 - [ ] CSRF protection (double-submit cookie pattern)
 - [ ] Security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP)
 - [ ] TLS configuration guidance + HSTS header
