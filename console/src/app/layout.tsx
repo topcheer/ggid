@@ -20,7 +20,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{
-          __html: `(function(){try{var d=localStorage.getItem('darkMode');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(d==='dark'||(!d&&m)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
+          __html: `(function(){try{var d=localStorage.getItem('darkMode');var m=window.matchMedia('(prefers-color-scheme: dark)').matches;if(d==='dark'||((!d||d==='system')&&m)){document.documentElement.classList.add('dark')}}catch(e){}})()`,
         }} />
       </head>
       <body>

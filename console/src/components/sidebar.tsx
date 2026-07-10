@@ -28,7 +28,7 @@ import { useI18n } from "@/lib/i18n";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { theme, toggle } = useTheme();
+  const { mode, toggle } = useTheme();
   const { locale, setLocale, t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -102,9 +102,15 @@ export function Sidebar() {
           <button
             onClick={toggle}
             className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-            title={theme === "light" ? "Switch to dark" : "Switch to light"}
+            title={`Theme: ${mode} (click to cycle)`}
           >
-            {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            {mode === "light" ? (
+              <Sun className="h-4 w-4" />
+            ) : mode === "dark" ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Monitor className="h-4 w-4" />
+            )}
           </button>
           <button
             onClick={() => setLocale(locale === "en" ? "zh" : "en")}
