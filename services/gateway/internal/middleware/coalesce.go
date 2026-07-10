@@ -154,7 +154,11 @@ func (c *coalesceRecorder) Header() http.Header {
 	if c.header != nil {
 		return c.header
 	}
-	return c.ResponseWriter.Header()
+	if c.ResponseWriter != nil {
+		return c.ResponseWriter.Header()
+	}
+	c.header = http.Header{}
+	return c.header
 }
 
 func (c *coalesceRecorder) WriteHeader(code int) {

@@ -56,13 +56,22 @@ func NewNATSAuditPublisher(nc NATSConn, subject string) *NATSAuditPublisher {
 // Publish sends an audit event as JSON to the NATS subject.
 func (p *NATSAuditPublisher) Publish(event *AuditEvent) error {
 	if p.nc == nil {
+		p.mu.Lock()
+		p.dropped++
+		p.mu.Unlock()
 		return nil // no-op when NATS is not configured
 	}
 	data, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
-	return p.nc.Publish(p.subject, data)
+	if err := p.nc.Publish(p.subject, data); err != nil {
+		p.mu.Lock()
+		p.dropped++
+		p.mu.Unlock()
+		return err
+	}
+	return nil
 }
 
 // DroppedCount returns the number of events that failed to publish.
