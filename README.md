@@ -3,10 +3,38 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
 [![Go Version](https://img.shields.io/badge/Go-1.25%2B-00ADD8)](#)
+[![Tests](https://img.shields.io/badge/tests-19%20packages%2C%200%20FAIL-brightgreen)](#)
+[![Docker](https://img.shields.io/badge/Docker-13%20containers-blue)](#)
+[![Coverage](https://img.shields.io/badge/coverage-75%25%2B-green)](#)
 
 **GGID** is a full-stack IAM platform: authentication, authorization, SSO, multi-tenancy, audit logging, and admin console. Built with Go microservices and React.
 
 ## Quick Start
+
+### Option A: Docker Compose (Recommended)
+
+```bash
+# Start all services (PostgreSQL, Redis, NATS, LDAP, 7 microservices, Console)
+cd deploy && docker compose up -d
+
+# Wait for healthchecks
+sleep 30
+
+# Run E2E tests
+bash deploy/e2e-docker-test.sh
+```
+
+Access points:
+| Service | URL |
+|---------|-----|
+| Admin Console | http://127.0.0.1:3000 |
+| Hosted Login | http://127.0.0.1:8080/login |
+| API Gateway | http://127.0.0.1:8080 |
+| Swagger UI | http://127.0.0.1:8080/docs |
+
+Default credentials: `admin / Admin@123456`
+
+### Option B: From Source
 
 ### 1. Start Infrastructure
 
@@ -90,8 +118,26 @@ npm run dev
 - **API Gateway** — JWT verification + reverse proxy to all services
 - **Audit** — NATS JetStream event streaming + queryable audit log
 - **Admin Console** — Next.js 15 + Tailwind CSS
-- **SDK** — Go / Node.js / Java
+- **SDK** — Go / Node.js / Java / Python
 - **SCIM 2.0** — Standard user provisioning protocol
+- **Social Login** — Google, GitHub, Microsoft, Apple, GitLab, Discord, LinkedIn
+- **MFA** — TOTP, WebAuthn/Passkey, Email OTP
+- **Enterprise SSO** — SAML 2.0, OIDC federation, LDAP/AD sync
+- **Audit** — NATS JetStream streaming + anomaly detection
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/architecture.md) | C4 model diagrams, data flows, component views |
+| [Security Whitepaper](docs/security-whitepaper.md) | Threat model (STRIDE), auth/authz security, compliance |
+| [Migration Guide](docs/migration-guide.md) | Migrate from Auth0 / Keycloak / Clerk |
+| [Production Hardening](docs/production-hardening.md) | TLS, secrets, network isolation, backups |
+| [Plugin System](docs/plugin-system.md) | Webhook hooks, Go plugins, gRPC extensions |
+| [Quick Start Guide](docs/quick-start.md) | 5-minute integration tutorial |
+| [Feature Matrix](docs/feature-matrix.md) | 157 features compared across 10 IAM platforms |
+| [Roadmap](docs/roadmap.md) | Phase 9-12 development roadmap |
+| [Performance Benchmarks](deploy/k6/README.md) | k6 load test scripts |
 
 ## Architecture
 
