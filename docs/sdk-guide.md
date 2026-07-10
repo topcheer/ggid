@@ -528,3 +528,339 @@ app.wsgi_app = GGIDAuthMiddleware(
     public_paths=["/healthz", "/public"],
 )
 ```
+
+---
+
+## Token Refresh Automation
+
+### Go — Auto-Refreshing Token Manager
+
+```go
+package main
+
+import (
+    "context"
+    "sync"
+    "time"
+
+    "github.com/ggid/ggid/sdk/go"
+)
+
+type TokenManager struct {
+    client       *ggid.Client
+    refreshTok   string
+    accessTok    string
+    expiresAt    time.Time
+    mu           sync.RWMutex
+}
+
+func NewTokenManager(client *ggid.Client, refreshToken string) *TokenManager {
+    return &TokenManager{
+        client:     client,
+        refreshTok: refreshToken,
+    }
+}
+
+// GetToken returns a valid access token, refreshing if needed.
+func (tm *TokenManager) GetToken(ctx context.Context) (string, error) {
+    tm.mu.RLock()
+    if time.Now().Before(tm.expiresAt.Add(-30 * time.Second)) {
+        tok := tm.accessTok
+        tm.mu.RUnlock()
+        return tok, nil
+    }
+    tm.mu.RUnlock()
+
+    // Refresh
+    tm.mu.Lock()
+    defer tm.mu.Unlock()
+
+    // Double-check after acquiring write lock
+    if time.Now().Before(tm.expiresAt.Add(-30 * time.Second)) {
+        return tm.accessTok, nil
+    }
+
+    resp, err := tm.client.Auth.Refresh(ctx, tm.refreshTok)
+    if err != nil {
+        return "", fmt.Errorf("token refresh failed: %w", err)
+    }
+
+    tm.accessTok = resp.AccessToken
+    tm.refreshTok = resp.RefreshToken
+    tm.expiresAt = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+    return tm.accessTok, nil
+}
+
+// Usage
+func main() {
+    client := ggid.New("https://iam.example.com", "tenant-uuid")
+    tm := NewTokenManager(client, "initial-refresh-token")
+
+    // The token manager auto-refreshes before expiry
+    tok, _ := tm.GetToken(context.Background())
+    fmt.Println("Using token:", tok[:20], "...")
+}
+```
+
+### Node.js — Auto-Refresh Interceptor
+
+```typescript
+import { GGIDClient } from '@ggid/node-sdk';
+
+class AutoRefreshClient {
+  private client: GGIDClient;
+  private accessToken: string | null = null;
+  private refreshToken: string;
+  private expiresAt: number = 0;
+
+  constructor(baseUrl: string, tenantId: string, refreshToken: string) {
+    this.client = new GGIDClient({ baseUrl, tenantId });
+    this.refreshToken = refreshToken;
+  }
+
+  async getToken(): Promise<string> {
+    // Refresh if token expires in < 30 seconds
+    if (this.accessToken && Date.now() < this.expiresAt - 30_000) {
+      return this.accessToken;
+    }
+
+    const resp = await this.client.auth.refresh(this.refreshToken);
+    this.accessToken = resp.access_token;
+    this.refreshToken = resp.refresh_token;
+    this.expiresAt = Date.now() + resp.expires_in * 1000;
+    return this.accessToken;
+  }
+
+  // Drop-in replacement for authenticated API calls
+  async getUsers() {
+    const token = await this.getToken();
+    return this.client.users.list({ headers: { Authorization: `Bearer ${token}` } });
+  }
+}
+```
+
+---
+
+## Webhook Handling
+
+GGID sends HMAC-signed webhooks for events like `user.created`, `user.deleted`,
+`role.assigned`. This section shows how to verify and process webhooks.
+
+### Webhook Payload Structure
+
+```json
+{
+  "event_id": "evt-abc123",
+  "event_type": "user.created",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "data": {
+    "user_id": "...",
+    "username": "newuser",
+    "email": "user@test.com"
+  }
+}
+```
+
+### Headers
+
+```
+X-GGID-Signature: sha256=<hex-hmac>
+X-GGID-Timestamp: 1699999999
+X-GGID-Event-Type: user.created
+```
+
+### Go — Webhook Verification
+
+```go
+package main
+
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+    "encoding/json"
+    "fmt"
+    "io"
+    "net/http"
+    "time"
+)
+
+const webhookSecret = "your-webhook-secret"
+
+type WebhookEvent struct {
+    EventID   string          `json:"event_id"`
+    EventType string          `json:"event_type"`
+    TenantID  string          `json:"tenant_id"`
+    Timestamp time.Time      `json:"timestamp"`
+    Data      json.RawMessage `json:"data"`
+}
+
+func verifySignature(body []byte, signature string, timestamp string, secret string) bool {
+    // Check timestamp freshness (5-minute window)
+    ts, err := strconv.ParseInt(timestamp, 10, 64)
+    if err != nil || time.Now().Unix()-ts > 300 {
+        return false
+    }
+
+    // Compute HMAC-SHA256
+    mac := hmac.New(sha256.New, []byte(secret))
+    mac.Write([]byte(timestamp + "." + string(body)))
+    expectedSig := "sha256=" + hex.EncodeToString(mac.Sum(nil))
+
+    return hmac.Equal([]byte(signature), []byte(expectedSig))
+}
+
+func webhookHandler(w http.ResponseWriter, r *http.Request) {
+    body, err := io.ReadAll(r.Body)
+    if err != nil {
+        http.Error(w, "bad request", http.StatusBadRequest)
+        return
+    }
+
+    signature := r.Header.Get("X-GGID-Signature")
+    timestamp := r.Header.Get("X-GGID-Timestamp")
+
+    if !verifySignature(body, signature, timestamp, webhookSecret) {
+        http.Error(w, "invalid signature", http.StatusUnauthorized)
+        return
+    }
+
+    var event WebhookEvent
+    if err := json.Unmarshal(body, &event); err != nil {
+        http.Error(w, "bad json", http.StatusBadRequest)
+        return
+    }
+
+    // Process event
+    switch event.EventType {
+    case "user.created":
+        var data struct {
+            UserID string `json:"user_id"`
+            Email  string `json:"email"`
+        }
+        json.Unmarshal(event.Data, &data)
+        fmt.Printf("New user: %s (%s)\n", data.UserID, data.Email)
+
+    case "user.deleted":
+        fmt.Println("User deleted")
+
+    case "role.assigned":
+        fmt.Println("Role assigned")
+
+    default:
+        fmt.Printf("Unknown event: %s\n", event.EventType)
+    }
+
+    w.WriteHeader(http.StatusOK)
+}
+```
+
+### Node.js — Webhook Verification (Express)
+
+```typescript
+import express from 'express';
+import crypto from 'crypto';
+
+const app = express();
+const WEBHOOK_SECRET = process.env.GGID_WEBHOOK_SECRET!;
+
+// Raw body for signature verification
+app.use('/webhook', express.raw({ type: 'application/json' }));
+
+app.post('/webhook', (req, res) => {
+  const signature = req.headers['x-ggid-signature'] as string;
+  const timestamp = req.headers['x-ggid-timestamp'] as string;
+
+  // Verify timestamp (5-minute window)
+  const ts = parseInt(timestamp, 10);
+  if (Math.floor(Date.now() / 1000) - ts > 300) {
+    return res.status(401).json({ error: 'stale webhook' });
+  }
+
+  // Verify HMAC
+  const body = `${timestamp}.${req.body.toString()}`;
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(body)
+    .digest('hex');
+
+  if (!crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  )) {
+    return res.status(401).json({ error: 'invalid signature' });
+  }
+
+  const event = JSON.parse(req.body.toString());
+
+  switch (event.event_type) {
+    case 'user.created':
+      console.log('User created:', event.data.user_id);
+      break;
+    case 'user.deleted':
+      console.log('User deleted:', event.data.user_id);
+      break;
+    case 'role.assigned':
+      console.log('Role assigned:', event.data);
+      break;
+  }
+
+  res.status(200).json({ received: true });
+});
+
+app.listen(3000, () => console.log('Webhook server on :3000'));
+```
+
+### Webhook Retry Strategy
+
+GGID retries failed webhooks with exponential backoff:
+
+| Attempt | Delay | Total Elapsed |
+|---------|-------|---------------|
+| 1 | 0s | 0s |
+| 2 | 30s | 30s |
+| 3 | 2m | 2m30s |
+| 4 | 10m | 12m30s |
+| 5 | 1h | 1h12m30s |
+| 6 | 6h | 7h12m30s |
+| 7 | 24h | 31h12m30s |
+
+After 7 failed attempts, the webhook is placed in a dead-letter queue for
+manual inspection.
+
+**Best practices:**
+1. Return `200 OK` immediately, process asynchronously
+2. Use idempotency (deduplicate by `event_id`)
+3. Handle events in order (use `timestamp` for ordering)
+4. Log all webhook receipts for audit trail
+
+---
+
+## SDK Feature Comparison (Updated)
+
+| Feature | Go | Node.js | Java | Python |
+|---------|-----|---------|------|--------|
+| Client init | Full | Full | Full | Full |
+| Login/Register | Full | Full | Full | Full |
+| JWT verify | Full | Full | Full | Full |
+| User CRUD | Full | Full | Full | Full |
+| Role management | Full | Full | Full | Full |
+| Policy check | Full | Full | Full | Full |
+| Org management | Full | Full | Full | Full |
+| HTTP middleware | Full | Express | Servlet | Flask |
+| Token refresh (auto) | Full | Full | Manual | Manual |
+| Webhook verification | Example | Example | — | — |
+| gRPC client | Full | — | — | — |
+| Error types | Typed | Typed | Exceptions | Exceptions |
+
+---
+
+## References
+
+- [Go SDK Source](../sdk/go/) — `github.com/ggid/ggid/sdk/go`
+- [Node.js SDK Source](../sdk/node/) — `@ggid/node-sdk`
+- [Java SDK Source](../sdk/java/) — `io.ggid:sdk`
+- [API Reference](./api-reference.md) — REST endpoint documentation
+- [Webhooks Guide](./webhooks-guide.md) — Webhook event types and configuration
+- [Integration Guide](./integration-guide.md) — App integration patterns
