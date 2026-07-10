@@ -105,8 +105,8 @@ export default function AuditPage() {
         if (actorFilter) params.set("actor_id", actorFilter);
         if (resultFilter) params.set("result", resultFilter);
         if (ipFilter) params.set("ip_address", ipFilter);
-        if (dateFrom) params.set("start_time", dateFrom + "T00:00:00Z");
-        if (dateTo) params.set("end_time", dateTo + "T23:59:59Z");
+        if (dateFrom) params.set("from", dateFrom + "T00:00:00Z");
+        if (dateTo) params.set("to", dateTo + "T23:59:59Z");
         params.set("page_size", "50");
         const data = await apiFetch<{ events?: AuditEvent[] }>(
           `/api/v1/audit/events?${params}`,
@@ -471,13 +471,25 @@ export default function AuditPage() {
         /* ===== Event Log Table ===== */
         <>
           <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
-            <input
-              type="text"
-              placeholder="Action (e.g. user.login)"
+            <select
               value={actionFilter}
               onChange={(e) => setActionFilter(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-            />
+            >
+              <option value="">All Actions</option>
+              <option value="user.login">user.login</option>
+              <option value="user.register">user.register</option>
+              <option value="user.logout">user.logout</option>
+              <option value="role.create">role.create</option>
+              <option value="role.update">role.update</option>
+              <option value="role.delete">role.delete</option>
+              <option value="org.create">org.create</option>
+              <option value="org.update">org.update</option>
+              <option value="org.delete">org.delete</option>
+              <option value="member.add">member.add</option>
+              <option value="member.remove">member.remove</option>
+              <option value="policy.evaluate">policy.evaluate</option>
+            </select>
             <input
               type="text"
               placeholder="Actor ID/Name"
@@ -514,6 +526,13 @@ export default function AuditPage() {
               onChange={(e) => setDateTo(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             />
+            <button
+              onClick={loadData}
+              className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Apply Filters
+            </button>
           </div>
           {events.length === 0 ? (
             <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">

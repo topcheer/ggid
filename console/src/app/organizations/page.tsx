@@ -87,6 +87,48 @@ export default function OrganizationsPage() {
   const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set());
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
 
+  // Lazy-loading tree state: maps orgId → its children (fetched on expand)
+  const [treeChildren, setTreeChildren] = useState<Record<string, Organization[]>>({});
+  const [treeLoadingIds, setTreeLoadingIds] = useState<Set<string>>(new Set());
+
+  const fetchChildren = useCallback(
+    async (orgId: string) => {
+      if (treeChildren[orgId]) return; // already loaded
+      setTreeLoadingIds((prev) => new Set(prev).add(orgId));
+      try {
+        const data = await apiFetch<{ organizations?: Organization[] }>(
+          `/api/v1/orgs?parent_id=${orgId}`,
+        );
+        const children = data.organizations || [];
+        // Fetch member counts for newly loaded children
+        const counts: Record<string, number> = {};
+        await Promise.all(
+          children.map(async (org) => {
+            try {
+              const memData = await apiFetch<{ members?: Member[] }>(
+                `/api/v1/orgs/${org.id}/members`,
+              );
+              counts[org.id] = memData.members?.length || 0;
+            } catch {
+              counts[org.id] = 0;
+            }
+          }),
+        );
+        setMemberCounts((prev) => ({ ...prev, ...counts }));
+        setTreeChildren((prev) => ({ ...prev, [orgId]: children }));
+      } catch {
+        setTreeChildren((prev) => ({ ...prev, [orgId]: [] }));
+      } finally {
+        setTreeLoadingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(orgId);
+          return next;
+        });
+      }
+    },
+    [apiFetch, treeChildren],
+  );
+
   const loadOrgs = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -155,8 +197,15 @@ export default function OrganizationsPage() {
     if (orgs.length > 0 && expandedOrgs.size === 0) {
       const roots = orgs.filter((o) => !o.parent_id);
       setExpandedOrgs(new Set(roots.map((r) => r.id)));
+      // Fetch children for each root automatically
+      roots.forEach((r) => {
+        const childData = treeChildren[r.id];
+        if (!childData) {
+          fetchChildren(r.id);
+        }
+      });
     }
-  }, [orgs, expandedOrgs.size]);
+  }, [orgs, expandedOrgs.size, treeChildren, fetchChildren]);
 
   // Load depts/teams when switching tabs or selecting an org
   useEffect(() => {
@@ -204,6 +253,10 @@ export default function OrganizationsPage() {
         next.delete(id);
       } else {
         next.add(id);
+        // Lazy-load children when expanding
+        if (!treeChildren[id]) {
+          fetchChildren(id);
+        }
       }
       return next;
     });
@@ -300,8 +353,16 @@ export default function OrganizationsPage() {
   };
 
   // ===== Build Tree =====
-  const tree = buildTree(orgs);
-  const orgMap = new Map(orgs.map((o) => [o.id, o]));
+  // Build tree from root orgs + lazily-loaded children
+  const allOrgs = [
+    ...orgs,
+    ...Object.values(treeChildren).flat(),
+  ];
+  const uniqueOrgs = Array.from(
+    new Map(allOrgs.map((o) => [o.id, o])).values(),
+  );
+  const tree = buildTree(uniqueOrgs);
+  const orgMap = new Map(uniqueOrgs.map((o) => [o.id, o]));
 
   // Auto-dismiss messages
   useEffect(() => {
@@ -476,6 +537,7 @@ export default function OrganizationsPage() {
                 onToggle={toggleExpand}
                 memberCount={memberCounts[org.id] || 0}
                 onDelete={handleDeleteOrg}
+                isLoading={treeLoadingIds.has(org.id)}
               />
             ))}
           </div>
@@ -863,6 +925,7 @@ function OrgTreeNode({
   onToggle,
   memberCount,
   onDelete,
+  isLoading,
 }: {
   org: OrgNode;
   depth: number;
@@ -870,6 +933,7 @@ function OrgTreeNode({
   onToggle: (id: string) => void;
   memberCount: number;
   onDelete: (id: string) => void;
+  isLoading?: boolean;
 }) {
   const isExpanded = expanded.has(org.id);
   const hasChildren = org.children.length > 0;
@@ -924,9 +988,22 @@ function OrgTreeNode({
         >
           <Trash2 className="h-4 w-4" />
         </button>
+
+        {/* View Details button */}
+        <Link
+          href={`/organizations/${org.id}`}
+          className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          View Details
+        </Link>
       </div>
 
       {/* Render children */}
+      {isExpanded && isLoading && org.children.length === 0 && (
+        <div style={{ paddingLeft: `${(depth + 1) * 24 + 12}px` }} className="py-2 text-xs text-gray-400">
+          Loading children...
+        </div>
+      )}
       {isExpanded &&
         org.children.map((child) => (
           <OrgTreeNode
@@ -937,6 +1014,7 @@ function OrgTreeNode({
             onToggle={onToggle}
             memberCount={0}
             onDelete={onDelete}
+            isLoading={false}
           />
         ))}
     </>
