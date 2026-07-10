@@ -1,4 +1,4 @@
-.PHONY: help proto build test lint docker-run docker-stop migrate-up migrate-down clean
+.PHONY: help proto build test test-short test-race coverage lint docker-run docker-stop migrate-up migrate-down clean
 
 GGID_ROOT := $(shell pwd)
 PROTO_DIR := $(GGID_ROOT)/api/proto
@@ -31,6 +31,15 @@ build:
 
 test:
 	go test -timeout 10m -cover ./...
+
+test-short:
+	go test -timeout 2m -short ./...
+
+coverage:
+	go test -timeout 10m -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out | grep total
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"
 
 test-race:
 	go test -race -timeout 20m -cover ./...
