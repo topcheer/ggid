@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // AuthService orchestrates the authentication workflow:
@@ -145,7 +147,7 @@ func (s *AuthService) Register(ctx context.Context, tenantID uuid.UUID, userID u
 		return fmt.Errorf("check existing credential: %w", err)
 	}
 	if existing != nil {
-		return fmt.Errorf("username already registered")
+		return ErrCredentialAlreadyExists
 	}
 
 	// 3. Hash password and create credential
@@ -162,7 +164,16 @@ func (s *AuthService) Register(ctx context.Context, tenantID uuid.UUID, userID u
 		Secret:     hash,
 		Enabled:    true,
 	}
-	return s.credentialRepo.Create(ctx, cred)
+	if err := s.credentialRepo.Create(ctx, cred); err != nil {
+		// Catch DB unique constraint violation (race condition between
+		// check and create). PostgreSQL SQLSTATE 23505 = unique_violation.
+		var pgErr *pgconn.PgError
+		if stderrors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return ErrCredentialAlreadyExists
+		}
+		return fmt.Errorf("create credential: %w", err)
+	}
+	return nil
 }
 
 // Refresh validates a refresh token, rotates it, and issues a new access token.

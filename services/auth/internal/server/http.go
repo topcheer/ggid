@@ -492,6 +492,8 @@ func writeAuthError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, err.Error())
 	case stderrors.Is(err, service.ErrPasswordReused):
 		writeError(w, http.StatusConflict, err.Error())
+	case stderrors.Is(err, service.ErrCredentialAlreadyExists):
+		writeError(w, http.StatusConflict, "username or email already registered")
 	case stderrors.Is(err, service.ErrInvalidResetToken):
 		writeError(w, http.StatusBadRequest, "invalid or expired reset token")
 	default:
