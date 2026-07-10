@@ -236,3 +236,246 @@ The GGID dashboard includes a "Rate Limit Hits" panel showing:
   annotations:
     summary: "High rate limit rejections — possible abuse or misconfigured client"
 ```
+
+---
+
+## Per-Endpoint Rate Limits
+
+Each endpoint has specific rate limits tuned for its expected usage pattern:
+
+| Endpoint | Method | Tier Limit | Burst | Window | Notes |
+|----------|--------|-----------|-------|--------|-------|
+| `/api/v1/auth/login` | POST | 10 | 5 | 1 min | Brute force protection |
+| `/api/v1/auth/register` | POST | 5 | 3 | 1 min | Spam prevention |
+| `/api/v1/auth/refresh` | POST | 30 | 10 | 1 min | Token refresh |
+| `/api/v1/auth/password-reset` | POST | 3 | 2 | 1 min | Reset spam prevention |
+| `/api/v1/auth/mfa/verify` | POST | 5 | 3 | 1 min | MFA brute force |
+| `/api/v1/users` | GET | 60 | 20 | 1 min | List queries |
+| `/api/v1/users` | POST | 20 | 10 | 1 min | User creation |
+| `/api/v1/users/{id}` | GET | 120 | 40 | 1 min | Read operations |
+| `/api/v1/users/{id}` | PUT | 30 | 10 | 1 min | Updates |
+| `/api/v1/users/{id}` | DELETE | 10 | 5 | 1 min | Deletions |
+| `/api/v1/roles` | GET | 60 | 20 | 1 min | Role queries |
+| `/api/v1/roles` | POST | 20 | 10 | 1 min | Role creation |
+| `/api/v1/orgs` | GET | 60 | 20 | 1 min | Org queries |
+| `/api/v1/audit/events` | GET | 30 | 10 | 1 min | Audit queries (heavy) |
+| `/api/v1/audit/stream` | GET (SSE) | 5 | 2 | 1 min | SSE connections |
+| `/oauth/token` | POST | 30 | 10 | 1 min | Token endpoint |
+| `/oauth/authorize` | GET | 60 | 20 | 1 min | Authorization |
+| `/scim/v2/Users` | GET | 100 | 50 | 1 min | SCIM provisioning |
+| `/scim/v2/Users` | POST | 20 | 10 | 1 min | SCIM user creation |
+| `/saml/sso` | GET/POST | 30 | 10 | 1 min | SAML SSO |
+
+---
+
+## 429 Response Format
+
+When rate limited, GGID returns HTTP 429 with standardized headers:
+
+### Response Headers
+
+```
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1721034600
+Retry-After: 42
+```
+
+### Response Body
+
+```json
+{
+  "error": "rate_limit_exceeded",
+  "error_description": "Rate limit of 10 requests per minute exceeded for this endpoint.",
+  "code": "RATE_LIMITED",
+  "retry_after_seconds": 42,
+  "limit": 10,
+  "window_seconds": 60,
+  "reset_at": "2024-07-15T10:31:00Z"
+}
+```
+
+### Header Reference
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the window |
+| `X-RateLimit-Remaining` | Requests remaining in current window |
+| `X-RateLimit-Reset` | Unix timestamp when the window resets |
+| `Retry-After` | Seconds to wait before retrying |
+
+---
+
+## Client-Side Handling
+
+### Axios Interceptor (JavaScript)
+
+```typescript
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 429) {
+      const retryAfter = error.response.headers['retry-after'];
+      const retryAfterSeconds = parseInt(retryAfter) || 60;
+
+      console.warn(`Rate limited. Retrying in ${retryAfterSeconds}s...`);
+
+      // Wait and retry
+      await new Promise(resolve => setTimeout(resolve, retryAfterSeconds * 1000));
+      return axios.request(error.config);
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+### Go HTTP Client
+
+```go
+func doWithRetry(client *http.Client, req *http.Request, maxRetries int) (*http.Response, error) {
+    for i := 0; i < maxRetries; i++ {
+        resp, err := client.Do(req)
+        if err != nil {
+            return nil, err
+        }
+
+        if resp.StatusCode == http.StatusTooManyRequests {
+            retryAfter := resp.Header.Get("Retry-After")
+            seconds, _ := strconv.Atoi(retryAfter)
+            if seconds == 0 {
+                seconds = 60
+            }
+            resp.Body.Close()
+
+            log.Printf("Rate limited, waiting %ds (attempt %d/%d)", seconds, i+1, maxRetries)
+            time.Sleep(time.Duration(seconds) * time.Second)
+            continue
+        }
+
+        return resp, nil
+    }
+    return nil, fmt.Errorf("max retries exceeded")
+}
+```
+
+---
+
+## Custom Rate Limit Overrides
+
+Administrators can override default limits per tenant:
+
+```bash
+# Set custom limits for a tenant
+curl -X PUT $API/api/v1/settings/rate-limits \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "X-Tenant-ID: $TENANT_ID" \
+    -d '{
+        "overrides": {
+            "/api/v1/auth/login": { "limit": 20, "window": 60 },
+            "/api/v1/users": { "limit": 200, "window": 60 },
+            "/api/v1/audit/events": { "limit": 100, "window": 60 }
+        }
+    }'
+```
+
+### Per-IP-Range Overrides
+
+```bash
+# Unlimited API access for internal IPs
+curl -X PUT $API/api/v1/settings/rate-limits/ip-range \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "cidr": "10.0.0.0/8",
+        "multiplier": 10
+    }'
+```
+
+### Bypass for Trusted Clients
+
+```bash
+# Create an unlimited API key for trusted internal services
+curl -X POST $API/api/v1/api-keys \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "name": "internal-service",
+        "rate_limit_bypass": true,
+        "scopes": ["users:read", "users:write"]
+    }'
+```
+
+---
+
+## Redis Implementation
+
+GGID uses a sliding window rate limiter implemented as a Redis Lua script
+for atomicity:
+
+```lua
+-- ratelimit.lua
+local key = KEYS[1]
+local limit = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+local now = tonumber(ARGV[3])
+
+-- Remove entries outside the window
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+
+-- Count current entries
+local count = redis.call('ZCARD', key)
+
+if count < limit then
+    -- Allow: add current request
+    redis.call('ZADD', key, now, now .. '-' .. math.random())
+    redis.call('EXPIRE', key, window)
+    return {1, limit - count - 1, now + window}
+else
+    -- Deny
+    return {0, 0, now + window}
+end
+```
+
+### Key Structure
+
+```
+tid:{tenant_id}:rl:{endpoint}:{ip_address}
+```
+
+This ensures rate limits are scoped per-tenant, per-endpoint, per-IP.
+
+### Fail-Open vs Fail-Closed
+
+When Redis is unavailable:
+
+| Mode | Behavior | Config |
+|------|----------|--------|
+| Fail-open (default) | Allow all requests | `RATELIMIT_FAIL_MODE=open` |
+| Fail-closed | Deny all requests | `RATELIMIT_FAIL_MODE=closed` |
+
+```bash
+# Configure fail mode
+RATELIMIT_FAIL_MODE=open
+```
+
+---
+
+## Monitoring Rate Limits
+
+### Prometheus Metrics
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `ggid_ratelimit_checks_total` | Counter | `endpoint`, `result` | Total rate limit checks |
+| `ggid_ratelimit_denied_total` | Counter | `endpoint`, `tenant_id` | Denied requests |
+| `ggid_ratelimit_remaining` | Gauge | `endpoint` | Remaining quota |
+| `ggid_ratelimit_window_seconds` | Gauge | `endpoint` | Window size |
+
+### Key Queries
+
+```promql
+# Denial rate by endpoint
+sum(rate(ggid_ratelimit_denied_total[5m])) by (endpoint)
+
+# Top rate-limited tenants
+topk(10, sum(rate(ggid_ratelimit_denied_total[5m])) by (tenant_id))
