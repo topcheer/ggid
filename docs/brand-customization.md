@@ -662,7 +662,196 @@ if (result.success) {
 
 ### Embedded Login Security
 
-- The widget communicates with GGID via CORS-configured origins only
-- Tokens are returned to the configured `redirect_uri` or via the `onSuccess` callback
-- CSRF protection via double-submit cookie pattern
 - The widget script is served with `integrity` hashes (SRI) for tamper detection
+
+---
+
+## Custom Domain Mapping
+
+Map custom domains (e.g., `login.acme.com`) to your GGID tenant for a fully
+white-labeled experience. Users see your brand in the URL bar, not GGID.
+
+### Architecture
+
+```
+User browses to login.acme.com
+        │
+        ▼
+  DNS CNAME → ggid.example.com
+        │
+        ▼
+  GGID Gateway (checks Host header)
+        │
+        ├── Matches login.acme.com → Tenant: acme
+        ├── Loads acme branding (logo, colors, fonts)
+        └── Serves hosted login page with acme theme
+```
+
+### Configure Custom Domain
+
+```bash
+# Step 1: Register the custom domain in GGID
+curl -X POST $API/api/v1/settings/custom-domain \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "X-Tenant-ID: $TENANT_ID" \
+    -d '{
+        "domain": "login.acme.com",
+        "type": "login_page",
+        "ssl_mode": "managed"
+    }'
+
+# Response includes DNS verification records
+# {
+#   "domain": "login.acme.com",
+#   "verification_status": "pending",
+#   "dns_records": [
+#     { "type": "CNAME", "name": "login.acme.com", "value": "ggid.example.com" },
+#     { "type": "TXT", "name": "_ggid.login.acme.com", "value": "ggid-verify=abc123..." }
+#   ]
+# }
+```
+
+### Step 2: Configure DNS
+
+Add the DNS records returned by the API to your DNS provider:
+
+```
+# CNAME: point custom domain to GGID
+login.acme.com.  CNAME  ggid.example.com.
+
+# TXT: verify domain ownership
+_ggid.login.acme.com.  TXT  "ggid-verify=abc123def456"
+```
+
+### Step 3: Verify Domain
+
+```bash
+# Check verification status
+curl $API/api/v1/settings/custom-domain/login.acme.com \
+    -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Or trigger manual verification
+curl -X POST $API/api/v1/settings/custom-domain/login.acme.com/verify \
+    -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Expected: { "status": "verified", "ssl_status": "active" }
+```
+
+### TLS/SSL for Custom Domains
+
+GGID supports three SSL modes for custom domains:
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `managed` | GGID provisions and renews certs automatically via Let's Encrypt | Recommended |
+| `custom` | You provide a certificate (upload PEM) | Enterprise with private CA |
+| `disabled` | No TLS (use external load balancer for TLS) | Behind nginx/Caddy |
+
+#### Managed SSL (Automatic)
+
+```bash
+# GGID automatically provisions Let's Encrypt cert
+# Just set ssl_mode=managed — no manual steps needed
+# Certificate renews automatically 30 days before expiry
+```
+
+#### Custom SSL (Bring Your Own Certificate)
+
+```bash
+# Upload certificate
+curl -X POST $API/api/v1/settings/custom-domain/login.acme.com/ssl \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -F "certificate=@/path/to/fullchain.pem" \
+    -F "private_key=@/path/to/privkey.pem"
+
+# Certificate must be valid for login.acme.com
+# GGID will use this certificate for TLS termination
+```
+
+### Multiple Custom Domains
+
+A single tenant can have multiple custom domains:
+
+```bash
+# Login page on one domain
+POST /api/v1/settings/custom-domain
+{ "domain": "login.acme.com", "type": "login_page" }
+
+# Console on another domain
+POST /api/v1/settings/custom-domain
+{ "domain": "admin.acme.com", "type": "console" }
+
+# OAuth callback on a third
+POST /api/v1/settings/custom-domain
+{ "domain": "auth.acme.com", "type": "oauth" }
+```
+
+### Branding Per Domain
+
+Each custom domain can have different branding:
+
+```bash
+# Set branding for login.acme.com
+curl -X PUT $API/api/v1/settings/branding \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "X-Tenant-ID: $TENANT_ID" \
+    -H "X-Domain: login.acme.com" \
+    -d '{
+        "logo_url": "https://cdn.acme.com/login-logo.svg",
+        "primary_color": "#7c3aed",
+        "platform_name": "Acme Portal"
+    }'
+
+# Set different branding for admin.acme.com
+curl -X PUT $API/api/v1/settings/branding \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "X-Tenant-ID: $TENANT_ID" \
+    -H "X-Domain: admin.acme.com" \
+    -d '{
+        "logo_url": "https://cdn.acme.com/admin-logo.svg",
+        "primary_color": "#1e40af",
+        "platform_name": "Acme Admin"
+    }'
+```
+
+### OAuth Redirect URIs with Custom Domains
+
+When using custom domains, update OAuth client redirect URIs:
+
+```bash
+# Register OAuth client with custom domain callback
+curl -X PUT $API/api/v1/oauth/clients/$CLIENT_ID \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "redirect_uris": [
+            "https://app.acme.com/callback",
+            "https://login.acme.com/callback"
+        ]
+    }'
+```
+
+### Cookie Domain Configuration
+
+For cross-subdomain authentication (e.g., `login.acme.com` and `app.acme.com`):
+
+```bash
+# Set cookie domain to parent domain
+curl -X PUT $API/api/v1/settings/cookies \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -d '{
+        "domain": ".acme.com",
+        "same_site": "lax"
+    }'
+```
+
+This allows session cookies to be shared across all `*.acme.com` subdomains.
+
+### Custom Domain Troubleshooting
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Domain stuck in `pending` | DNS not propagated | Wait 5-15 min, run `dig login.acme.com` |
+| SSL provisioning failed | DNS not verified first | Verify domain ownership TXT record |
+| 404 on custom domain | Domain not registered in GGID | Add via `POST /settings/custom-domain` |
+| Cookie not shared | Cookie domain mismatch | Set cookie domain to `.acme.com` |
+| Redirect loop | TLS mode conflict | Use `managed` SSL or configure LB correctly |
