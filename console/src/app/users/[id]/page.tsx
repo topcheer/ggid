@@ -12,6 +12,9 @@ import {
   Shield,
   Trash2,
   Activity,
+  Building2,
+  UserMinus,
+  UserPlus,
 } from "lucide-react";
 
 interface User {
@@ -35,6 +38,14 @@ interface Role {
   system_role: boolean;
 }
 
+interface OrgMembership {
+  id: string;
+  name: string;
+  path: string;
+  role: string;
+  parent_id?: string;
+}
+
 interface AuditEvent {
   id: string;
   action: string;
@@ -44,7 +55,7 @@ interface AuditEvent {
   ip_address: string;
 }
 
-type DetailTab = "info" | "activity";
+type DetailTab = "info" | "roles" | "organizations" | "activity";
 
 export default function UserDetailPage({ params }: { params: { id: string } }) {
   const { apiFetch } = useApi();
@@ -52,6 +63,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [userRoles, setUserRoles] = useState<Role[]>([]);
+  const [orgs, setOrgs] = useState<OrgMembership[]>([]);
+  const [orgsLoading, setOrgsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -76,9 +89,36 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     }
   }, [apiFetch, params.id]);
 
+  const loadUserRoles = useCallback(async () => {
+    try {
+      const data = await apiFetch<{ roles?: Role[] }>(
+        `/api/v1/users/${params.id}/roles`,
+      ).catch(() => ({ roles: [] }));
+      setUserRoles(data.roles || []);
+    } catch {
+      setUserRoles([]);
+    }
+  }, [apiFetch, params.id]);
+
+  const loadOrgs = useCallback(async () => {
+    setOrgsLoading(true);
+    try {
+      const data = await apiFetch<{ organizations?: OrgMembership[] }>(
+        `/api/v1/org/memberships?user_id=${params.id}`,
+      ).catch(() => ({ organizations: [] }));
+      setOrgs(data.organizations || []);
+    } catch {
+      setOrgs([]);
+    } finally {
+      setOrgsLoading(false);
+    }
+  }, [apiFetch, params.id]);
+
   useEffect(() => {
     if (detailTab === "activity") loadActivity();
-  }, [detailTab, loadActivity]);
+    if (detailTab === "roles") loadUserRoles();
+    if (detailTab === "organizations") loadOrgs();
+  }, [detailTab, loadActivity, loadUserRoles, loadOrgs]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -148,9 +188,22 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         method: "POST",
         body: JSON.stringify({ role_id: roleId }),
       });
-      setMsg("Role assigned");
+      setMsg("Role assigned successfully");
+      loadUserRoles();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to assign role");
+    }
+  };
+
+  const handleRevokeRole = async (roleId: string) => {
+    try {
+      await apiFetch(`/api/v1/users/${params.id}/roles/${roleId}`, {
+        method: "DELETE",
+      });
+      setMsg("Role revoked successfully");
+      loadUserRoles();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to revoke role");
     }
   };
 
@@ -170,6 +223,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>
     );
   if (!user) return <p className="py-8 text-center text-gray-500">User not found</p>;
+
+  const assignedRoleIds = new Set(userRoles.map((r) => r.id));
 
   return (
     <div>
@@ -204,6 +259,18 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
           Profile
         </button>
         <button
+          onClick={() => setDetailTab("roles")}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${detailTab === "roles" ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500"}`}
+        >
+          <Shield className="h-4 w-4" /> Roles
+        </button>
+        <button
+          onClick={() => setDetailTab("organizations")}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${detailTab === "organizations" ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500"}`}
+        >
+          <Building2 className="h-4 w-4" /> Organizations
+        </button>
+        <button
           onClick={() => setDetailTab("activity")}
           className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${detailTab === "activity" ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500"}`}
         >
@@ -211,8 +278,8 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
         </button>
       </div>
 
-      {detailTab === "activity" ? (
-        /* ===== Activity Timeline ===== */
+      {/* ===== Activity Tab ===== */}
+      {detailTab === "activity" && (
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h3 className="mb-4 text-sm font-semibold">Recent Activity</h3>
           {activityLoading ? (
@@ -231,7 +298,6 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 };
                 return (
                   <div key={event.id} className="flex gap-3">
-                    {/* Timeline line */}
                     {idx < activity.length - 1 && (
                       <div className="absolute left-[19px] mt-8 h-[calc(100%-2rem)] w-px bg-gray-100" />
                     )}
@@ -263,171 +329,302 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
             </div>
           )}
         </div>
-      ) : (
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* User Info Card */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">User Information</h2>
-            <button
-              onClick={() => setEditing(!editing)}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
-            >
-              {editing ? "Cancel" : "Edit"}
-            </button>
-          </div>
+      )}
 
-          {editing ? (
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Display Name</label>
-                <input
-                  value={editForm.display_name}
-                  onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Email</label>
-                <input
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Phone</label>
-                <input
-                  value={editForm.phone}
-                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-                />
-              </div>
-              <button
-                onClick={handleSave}
-                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-              >
-                <Save className="h-4 w-4" /> Save Changes
-              </button>
-            </div>
-          ) : (
-            <dl className="space-y-3">
-              <div className="flex justify-between">
-                <dt className="text-sm text-gray-500">Username</dt>
-                <dd className="text-sm font-medium">{user.username}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-gray-500">Email</dt>
-                <dd className="text-sm font-medium">{user.email}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-gray-500">Display Name</dt>
-                <dd className="text-sm font-medium">{user.display_name || "-"}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-gray-500">Status</dt>
-                <dd>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      user.status === "active"
-                        ? "bg-green-50 text-green-700"
-                        : "bg-red-50 text-red-700"
-                    }`}
+      {/* ===== Roles Tab ===== */}
+      {detailTab === "roles" && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Assigned Roles */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+              <Shield className="h-4 w-4 text-brand-600" />
+              Assigned Roles ({userRoles.length})
+            </h3>
+            {userRoles.length === 0 ? (
+              <p className="py-6 text-center text-sm text-gray-400">No roles assigned</p>
+            ) : (
+              <div className="space-y-2">
+                {userRoles.map((role) => (
+                  <div
+                    key={role.id}
+                    className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2"
                   >
-                    {user.status}
-                  </span>
-                </dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-gray-500">Email Verified</dt>
-                <dd className="text-sm font-medium">{user.email_verified ? "Yes" : "No"}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-gray-500">Created</dt>
-                <dd className="text-sm font-medium">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </dd>
-              </div>
-            </dl>
-          )}
-        </div>
-
-        {/* Actions Card */}
-        <div className="space-y-4">
-          {/* Lock/Unlock */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold">Account Actions</h3>
-            <div className="flex gap-2">
-              {user.status === "locked" ? (
-                <button
-                  onClick={() => handleLock(false)}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50"
-                >
-                  <Unlock className="h-4 w-4" /> Unlock
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleLock(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50"
-                >
-                  <Lock className="h-4 w-4" /> Lock
-                </button>
-              )}
-              <button
-                onClick={handleDelete}
-                className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" /> Delete
-              </button>
-            </div>
-          </div>
-
-          {/* Reset Password */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold">Reset Password</h3>
-            <div className="flex gap-2">
-              <input
-                type="password"
-                value={resetPassword}
-                onChange={(e) => setResetPassword(e.target.value)}
-                placeholder="New password"
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
-              />
-              <button
-                onClick={handleResetPassword}
-                disabled={!resetPassword}
-                className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-              >
-                <KeyRound className="h-4 w-4" /> Reset
-              </button>
-            </div>
-          </div>
-
-          {/* Role Assignment */}
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="mb-3 text-sm font-semibold">Assign Role</h3>
-            <div className="space-y-2">
-              {roles.map((role) => (
-                <div key={role.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm font-medium">{role.name || role.key}</span>
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm font-medium">{role.name || role.key}</span>
+                        {role.system_role && (
+                          <span className="ml-2 rounded-full bg-amber-50 px-1.5 py-0.5 text-xs text-amber-600">
+                            System
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {!role.system_role && (
+                      <button
+                        onClick={() => handleRevokeRole(role.id)}
+                        className="flex items-center gap-1 rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                      >
+                        <UserMinus className="h-3.5 w-3.5" /> Revoke
+                      </button>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleAssignRole(role.id)}
-                    className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50"
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Available Roles */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+              <UserPlus className="h-4 w-4 text-brand-600" />
+              Available Roles
+            </h3>
+            <div className="space-y-2">
+              {roles
+                .filter((r) => !assignedRoleIds.has(r.id))
+                .map((role) => (
+                  <div
+                    key={role.id}
+                    className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2"
                   >
-                    Assign
-                  </button>
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <span className="text-sm font-medium">{role.name || role.key}</span>
+                        {role.description && (
+                          <p className="text-xs text-gray-400">{role.description}</p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleAssignRole(role.id)}
+                      className="flex items-center gap-1 rounded-lg border border-brand-300 px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50"
+                    >
+                      <UserPlus className="h-3.5 w-3.5" /> Assign
+                    </button>
+                  </div>
+                ))}
+              {roles.filter((r) => !assignedRoleIds.has(r.id)).length === 0 && (
+                <p className="py-6 text-center text-sm text-gray-400">
+                  All roles already assigned
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Organizations Tab ===== */}
+      {detailTab === "organizations" && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+            <Building2 className="h-4 w-4 text-brand-600" />
+            Organization Memberships ({orgs.length})
+          </h3>
+          {orgsLoading ? (
+            <p className="py-8 text-center text-sm text-gray-500">Loading...</p>
+          ) : orgs.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-400">
+              Not a member of any organization
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {orgs.map((org) => (
+                <div
+                  key={org.id}
+                  className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50">
+                      <Building2 className="h-5 w-5 text-brand-600" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">{org.name}</span>
+                      <p className="font-mono text-xs text-gray-400">{org.path}</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                    {org.role || "member"}
+                  </span>
                 </div>
               ))}
-              {roles.length === 0 && (
-                <p className="text-sm text-gray-500">No roles available</p>
-              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ===== Profile Tab (default) ===== */}
+      {detailTab === "info" && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* User Info Card */}
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">User Information</h2>
+              <button
+                onClick={() => setEditing(!editing)}
+                className="rounded-lg px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50"
+              >
+                {editing ? "Cancel" : "Edit"}
+              </button>
+            </div>
+
+            {editing ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Display Name</label>
+                  <input
+                    value={editForm.display_name}
+                    onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Email</label>
+                  <input
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Phone</label>
+                  <input
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
+                <button
+                  onClick={handleSave}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                >
+                  <Save className="h-4 w-4" /> Save Changes
+                </button>
+              </div>
+            ) : (
+              <dl className="space-y-3">
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Username</dt>
+                  <dd className="text-sm font-medium">{user.username}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Email</dt>
+                  <dd className="text-sm font-medium">{user.email}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Display Name</dt>
+                  <dd className="text-sm font-medium">{user.display_name || "-"}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Status</dt>
+                  <dd>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        user.status === "active"
+                          ? "bg-green-50 text-green-700"
+                          : "bg-red-50 text-red-700"
+                      }`}
+                    >
+                      {user.status}
+                    </span>
+                  </dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Email Verified</dt>
+                  <dd className="text-sm font-medium">{user.email_verified ? "Yes" : "No"}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-500">Created</dt>
+                  <dd className="text-sm font-medium">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </dd>
+                </div>
+              </dl>
+            )}
+          </div>
+
+          {/* Actions Card */}
+          <div className="space-y-4">
+            {/* Lock/Unlock */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold">Account Actions</h3>
+              <div className="flex gap-2">
+                {user.status === "locked" ? (
+                  <button
+                    onClick={() => handleLock(false)}
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                  >
+                    <Unlock className="h-4 w-4" /> Unlock
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleLock(true)}
+                    className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+                  >
+                    <Lock className="h-4 w-4" /> Lock
+                  </button>
+                )}
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center gap-1.5 rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" /> Delete
+                </button>
+              </div>
+            </div>
+
+            {/* Reset Password */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 text-sm font-semibold">Reset Password</h3>
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  placeholder="New password"
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+                <button
+                  onClick={handleResetPassword}
+                  disabled={!resetPassword}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                >
+                  <KeyRound className="h-4 w-4" /> Reset
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Roles Summary */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+                  <Shield className="h-4 w-4 text-gray-400" /> Roles
+                </h3>
+                <button
+                  onClick={() => setDetailTab("roles")}
+                  className="text-xs font-medium text-brand-600 hover:underline"
+                >
+                  Manage →
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {userRoles.length === 0 ? (
+                  <span className="text-sm text-gray-400">No roles assigned</span>
+                ) : (
+                  userRoles.map((role) => (
+                    <span
+                      key={role.id}
+                      className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700"
+                    >
+                      {role.name || role.key}
+                    </span>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   );

@@ -103,6 +103,43 @@ func (s *RoleService) UpdateRole(ctx context.Context, id uuid.UUID, name, descri
 	return role, nil
 }
 
+// SetParent sets the parent role and validates that no cycle is created.
+// A role cannot be its own parent (directly or transitively).
+func (s *RoleService) SetParent(ctx context.Context, roleID, parentID uuid.UUID) (*domain.Role, error) {
+	if roleID == parentID {
+		return nil, errors.New(errors.ErrInvalidArgument, "a role cannot be its own parent")
+	}
+
+	// Walk up the parent chain from parentID to detect cycles.
+	visited := map[uuid.UUID]bool{roleID: true}
+	current := parentID
+	const maxDepth = 100
+	for i := 0; i < maxDepth; i++ {
+		if visited[current] {
+			return nil, errors.New(errors.ErrFailedPrecondition, "cycle detected in role hierarchy")
+		}
+		visited[current] = true
+		p, err := s.roleRepo.GetByID(ctx, current)
+		if err != nil {
+			return nil, errors.Wrap(errors.ErrNotFound, "parent role not found", err)
+		}
+		if p.ParentRoleID == nil {
+			break // reached root
+		}
+		current = *p.ParentRoleID
+	}
+
+	role, err := s.roleRepo.GetByID(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+	role.ParentRoleID = &parentID
+	if err := s.roleRepo.Update(ctx, role); err != nil {
+		return nil, errors.Wrap(errors.ErrInternal, "update role parent", err)
+	}
+	return role, nil
+}
+
 // DeleteRole deletes a non-system role.
 func (s *RoleService) DeleteRole(ctx context.Context, id uuid.UUID) error {
 	role, err := s.roleRepo.GetByID(ctx, id)

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
@@ -18,14 +19,26 @@ import (
 	"github.com/google/uuid"
 )
 
+// retentionConfig holds audit log retention settings.
+type retentionConfig struct {
+	mu         sync.RWMutex
+	days       int
+	lastRun    time.Time
+	enabled    bool
+}
+
 // HTTPServer exposes the Audit Service as a REST API.
 type HTTPServer struct {
-	svc *service.AuditService
+	svc      *service.AuditService
+	retention retentionConfig
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.
 func NewHTTPServer(svc *service.AuditService) *HTTPServer {
-	return &HTTPServer{svc: svc}
+	h := &HTTPServer{svc: svc}
+	h.retention.days = 90 // default 90-day retention
+	h.retention.enabled = true
+	return h
 }
 
 // RegisterRoutes registers all Audit Service HTTP routes on the given mux.
@@ -372,32 +385,75 @@ func (s *HTTPServer) handleStream(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/v1/audit/retention?action=cleanup&days=90
+// GET  /api/v1/audit/retention          — get current retention config
+// PUT  /api/v1/audit/retention          — update retention days (JSON: {"retention_days": N, "enabled": true})
+// POST /api/v1/audit/retention?days=N   — trigger immediate cleanup
 func (s *HTTPServer) handleRetention(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	daysStr := r.URL.Query().Get("days")
-	days := 90 // default retention
-	if daysStr != "" {
-		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
-			days = d
+	switch r.Method {
+	case http.MethodGet:
+		s.retention.mu.RLock()
+		defer s.retention.mu.RUnlock()
+		resp := map[string]any{
+			"retention_days": s.retention.days,
+			"enabled":        s.retention.enabled,
 		}
-	}
+		if !s.retention.lastRun.IsZero() {
+			resp["last_cleanup"] = s.retention.lastRun.UTC().Format(time.RFC3339)
+		}
+		writeJSON(w, http.StatusOK, resp)
 
-	deleted, err := s.svc.CleanupOldEvents(r.Context(), days)
-	if err != nil {
-		writeServiceError(w, err)
-		return
-	}
+	case http.MethodPut:
+		var req struct {
+			RetentionDays int  `json:"retention_days"`
+			Enabled       *bool `json:"enabled"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		s.retention.mu.Lock()
+		if req.RetentionDays > 0 {
+			s.retention.days = req.RetentionDays
+		}
+		if req.Enabled != nil {
+			s.retention.enabled = *req.Enabled
+		}
+		s.retention.mu.Unlock()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":         "updated",
+			"retention_days": s.retention.days,
+			"enabled":        s.retention.enabled,
+		})
 
-	writeJSON(w, http.StatusOK, map[string]any{
-		"status":             "completed",
-		"retention_days":     days,
-		"deleted_count":      deleted,
-		"cleanup_timestamp":  time.Now().UTC().Format(time.RFC3339),
-	})
+	case http.MethodPost:
+		daysStr := r.URL.Query().Get("days")
+		days := s.retention.days
+		if daysStr != "" {
+			if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
+				days = d
+			}
+		}
+
+		deleted, err := s.svc.CleanupOldEvents(r.Context(), days)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+
+		s.retention.mu.Lock()
+		s.retention.lastRun = time.Now().UTC()
+		s.retention.mu.Unlock()
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":            "completed",
+			"retention_days":    days,
+			"deleted_count":     deleted,
+			"cleanup_timestamp": time.Now().UTC().Format(time.RFC3339),
+		})
+
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }
 
 // --- Anomaly Detection Rules ---
