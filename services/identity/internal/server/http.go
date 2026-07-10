@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -37,6 +38,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/healthz", h.healthz)
 	h.mux.HandleFunc("/api/v1/users", h.handleUsers)
 	h.mux.HandleFunc("/api/v1/users/", h.handleUserByID)
+	h.mux.HandleFunc("/api/v1/users/import", h.handleImportCSV)
 
 	// SCIM 2.0 endpoints
 	scimHandler := scim.NewHandler(h.svc)
@@ -309,4 +311,83 @@ func writeServiceError(w http.ResponseWriter, err error) {
 		return
 	}
 	writeError(w, http.StatusInternalServerError, err.Error())
+}
+
+// handleImportCSV handles POST /api/v1/users/import
+// Accepts CSV body with columns: username,email,password
+func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "failed to read body")
+		return
+	}
+	defer r.Body.Close()
+
+	lines := strings.Split(strings.TrimSpace(string(body)), "\n")
+	if len(lines) == 0 {
+		writeError(w, http.StatusBadRequest, "empty CSV")
+		return
+	}
+
+	// Skip header row if it looks like a header.
+	startIdx := 0
+	if strings.Contains(strings.ToLower(lines[0]), "username") {
+		startIdx = 1
+	}
+
+	type importResult struct {
+		Line    int    `json:"line"`
+		Status  string `json:"status"`
+		Message string `json:"message,omitempty"`
+	}
+
+	var results []importResult
+	successCount := 0
+
+	for i := startIdx; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
+		if line == "" {
+			continue
+		}
+
+		fields := strings.Split(line, ",")
+		if len(fields) < 3 {
+			results = append(results, importResult{Line: i + 1, Status: "error", Message: "need username,email,password"})
+			continue
+		}
+
+		username := strings.TrimSpace(fields[0])
+		email := strings.TrimSpace(fields[1])
+		password := strings.TrimSpace(fields[2])
+
+		if username == "" || email == "" || password == "" {
+			results = append(results, importResult{Line: i + 1, Status: "error", Message: "empty fields"})
+			continue
+		}
+
+		_, err := h.svc.CreateUser(r.Context(), &domain.CreateUserInput{
+			Username: username,
+			Email:    email,
+			Password: password,
+		})
+		if err != nil {
+			results = append(results, importResult{Line: i + 1, Status: "error", Message: err.Error()})
+			continue
+		}
+
+		results = append(results, importResult{Line: i + 1, Status: "created"})
+		successCount++
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"total":   len(lines) - startIdx,
+		"success": successCount,
+		"failed":  len(lines) - startIdx - successCount,
+		"results": results,
+	})
 }
