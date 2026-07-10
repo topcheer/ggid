@@ -87,6 +87,12 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Handle /api/v1/users/me — current user profile.
+	if parts[0] == "me" {
+		h.handleMe(ctx, w, r)
+		return
+	}
+
 	userID, err := uuid.Parse(parts[0])
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user ID")
@@ -114,6 +120,57 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.deactivateUser(ctx, userID, w, r)
 	case action == "activate" && r.Method == http.MethodPost:
 		h.activateUser(ctx, userID, w, r)
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// handleMe handles GET/POST /api/v1/users/me — current user profile.
+// GET returns the user's full profile. POST updates limited fields.
+// Uses X-User-ID header (set by Gateway after JWT verification) to identify the user.
+func (h *HTTPHandler) handleMe(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid user identity")
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		user, err := h.svc.GetUser(ctx, userID)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, userToJSON(user))
+
+	case http.MethodPost, http.MethodPatch:
+		// Limited self-update: only display_name, phone, avatar_url.
+		var body struct {
+			DisplayName *string `json:"display_name"`
+			Phone       *string `json:"phone"`
+			AvatarURL   *string `json:"avatar_url"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		user, err := h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{
+			DisplayName: body.DisplayName,
+			Phone:       body.Phone,
+			AvatarURL:   body.AvatarURL,
+		})
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, userToJSON(user))
+
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
