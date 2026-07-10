@@ -1,0 +1,36 @@
+{{- range $name, $svc := dict "gateway" .Values.gateway "identity" .Values.identity "auth" .Values.auth "oauth" .Values.oauth "policy" .Values.policy "org" .Values.org "audit" .Values.audit -}}
+{{- if $svc.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ggid.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "ggid.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  type: {{ $svc.service.type | default "ClusterIP" }}
+  ports:
+    {{- if $svc.service.httpPort }}
+    - port: {{ $svc.service.httpPort }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    {{- end }}
+    {{- if $svc.service.port }}
+    - port: {{ $svc.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    {{- end }}
+    {{- if $svc.service.grpcPort }}
+    - port: {{ $svc.service.grpcPort }}
+      targetPort: grpc
+      protocol: TCP
+      name: grpc
+    {{- end }}
+  selector:
+    {{- include "ggid.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+{{- end }}
+{{- end }}

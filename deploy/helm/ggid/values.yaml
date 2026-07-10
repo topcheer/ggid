@@ -172,7 +172,34 @@ audit:
       cpu: 100m
       memory: 128Mi
 
-# Ingress ningress:
+# JWT signing secret (auto-generated if empty)
+jwt:
+  secret: ""
+
+# Global config
+config:
+  defaultTenantId: "00000000-0000-0000-0000-000000000001"
+  logLevel: info
+
+# External databases (used when postgresql/redis/nats.enabled=false)
+externalDatabase:
+  host: ""
+  port: 5432
+  username: ggid
+  password: ""
+  database: ggid
+
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+
+externalNats:
+  host: ""
+  port: 4222
+
+# Ingress
+ingress:
   enabled: false
   className: nginx
   annotations: {}

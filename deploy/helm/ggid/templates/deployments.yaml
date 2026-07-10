@@ -1,0 +1,91 @@
+{{- range $name, $svc := dict "gateway" .Values.gateway "identity" .Values.identity "auth" .Values.auth "oauth" .Values.oauth "policy" .Values.policy "org" .Values.org "audit" .Values.audit -}}
+{{- if $svc.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ggid.fullname" $ }}-{{ $name }}
+  labels:
+    {{- include "ggid.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $name }}
+spec:
+  replicas: {{ $svc.replicaCount | default 2 }}
+  selector:
+    matchLabels:
+      {{- include "ggid.selectorLabels" $ | nindent 6 }}
+      app.kubernetes.io/component: {{ $name }}
+  template:
+    metadata:
+      labels:
+        {{- include "ggid.selectorLabels" $ | nindent 8 }}
+        app.kubernetes.io/component: {{ $name }}
+    spec:
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: "{{ $svc.image.repository }}:{{ $svc.image.tag | default $.Chart.AppVersion }}"
+          imagePullPolicy: {{ $svc.image.pullPolicy | default "IfNotPresent" }}
+          ports:
+            {{- if $svc.service.httpPort }}
+            - name: http
+              containerPort: {{ $svc.service.httpPort }}
+              protocol: TCP
+            {{- end }}
+            {{- if $svc.service.port }}
+            - name: http
+              containerPort: {{ $svc.service.port }}
+              protocol: TCP
+            {{- end }}
+            {{- if $svc.service.grpcPort }}
+            - name: grpc
+              containerPort: {{ $svc.service.grpcPort }}
+              protocol: TCP
+            {{- end }}
+          env:
+            - name: DB_HOST
+              value: {{ include "ggid.dbHost" $ | quote }}
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: {{ $.Values.postgresql.auth.username | quote }}
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ggid.fullname" $ }}-db-secret
+                  key: password
+            - name: DB_NAME
+              value: {{ $.Values.postgresql.auth.database | quote }}
+            - name: REDIS_HOST
+              value: {{ include "ggid.redisHost" $ | quote }}
+            - name: REDIS_PORT
+              value: "6379"
+            - name: NATS_URL
+              value: {{ printf "nats://%s:4222" (include "ggid.natsHost" $) | quote }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ggid.fullname" $ }}-jwt-secret
+                  key: secret
+            {{- range $key, $val := $svc.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+{{- end }}
+{{- end }}

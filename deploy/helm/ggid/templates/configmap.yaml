@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ggid.fullname" . }}-config
+  labels:
+    {{- include "ggid.labels" . | nindent 4 }}
+data:
+  DEFAULT_TENANT_ID: {{ .Values.config.defaultTenantId | default "00000000-0000-0000-0000-000000000001" | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  GATEWAY_PORT: {{ .Values.gateway.service.port | default 8080 | quote }}
