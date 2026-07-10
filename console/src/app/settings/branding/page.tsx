@@ -15,31 +15,36 @@ import {
 interface BrandingConfig {
   logo_url: string;
   primary_color: string;
+  secondary_color: string;
   css_override: string;
   custom_domain: string;
 }
 
 const STORAGE_KEY = "ggid_branding_config";
+const MAX_LOGO_SIZE = 1024 * 1024; // 1MB
 
 const defaultConfig: BrandingConfig = {
   logo_url: "",
   primary_color: "#6366f1",
+  secondary_color: "#8b5cf6",
   css_override: "",
   custom_domain: "",
 };
 
-type EmailTemplate = "welcome" | "password-reset" | "magic-link";
+type EmailTemplate = "welcome" | "password-reset" | "magic-link" | "mfa-enroll";
 
 const EMAIL_TEMPLATES: { value: EmailTemplate; label: string }[] = [
   { value: "welcome", label: "Welcome Email" },
   { value: "password-reset", label: "Password Reset" },
   { value: "magic-link", label: "Magic Link Login" },
+  { value: "mfa-enroll", label: "MFA Enrollment" },
 ];
 
 const EMAIL_SUBJECTS: Record<EmailTemplate, string> = {
   welcome: "Welcome to GGID!",
   "password-reset": "Reset your password",
   "magic-link": "Your magic sign-in link",
+  "mfa-enroll": "Enroll in Multi-Factor Authentication",
 };
 
 const EMAIL_BODIES: Record<EmailTemplate, string> = {
@@ -49,12 +54,15 @@ const EMAIL_BODIES: Record<EmailTemplate, string> = {
     "We received a request to reset your password. Click the button below to choose a new password.",
   "magic-link":
     "Use the button below to securely sign in to your account. This link expires in 15 minutes.",
+  "mfa-enroll":
+    "Enhance your account security by enrolling in multi-factor authentication. Click the button below to set up your authenticator app.",
 };
 
 const EMAIL_BUTTONS: Record<EmailTemplate, string> = {
   welcome: "Get Started",
   "password-reset": "Reset Password",
   "magic-link": "Sign In",
+  "mfa-enroll": "Set Up MFA",
 };
 
 export default function BrandingSettingsPage() {
@@ -111,8 +119,14 @@ export default function BrandingSettingsPage() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setMsg("Please upload an image file");
+    // Accept only SVG and PNG
+    if (!file.type.match(/image\/(svg\+xml|png)/) && !file.name.match(/\.(svg|png)$/i)) {
+      setMsg("Please upload an SVG or PNG file");
+      return;
+    }
+    // Enforce 1MB max size
+    if (file.size > MAX_LOGO_SIZE) {
+      setMsg("Logo file must be 1MB or less");
       return;
     }
     const reader = new FileReader();
@@ -184,13 +198,13 @@ export default function BrandingSettingsPage() {
                 >
                   <Upload className="mb-2 h-6 w-6 text-gray-400" />
                   <span className="text-xs text-gray-500">Click to upload logo image</span>
-                  <span className="mt-0.5 text-xs text-gray-400">PNG, JPG, SVG up to 1MB</span>
+                  <span className="mt-0.5 text-xs text-gray-400">SVG or PNG, up to 1MB</span>
                 </div>
               )}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/svg+xml,image/png,.svg,.png"
                 onChange={handleLogoUpload}
                 className="hidden"
               />
@@ -209,6 +223,24 @@ export default function BrandingSettingsPage() {
                 <input
                   value={config.primary_color}
                   onChange={(e) => setConfig({ ...config, primary_color: e.target.value })}
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                />
+              </div>
+            </div>
+
+            {/* Secondary Color */}
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">Secondary Color</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={config.secondary_color}
+                  onChange={(e) => setConfig({ ...config, secondary_color: e.target.value })}
+                  className="h-9 w-12 rounded border border-gray-300 dark:border-gray-600"
+                />
+                <input
+                  value={config.secondary_color}
+                  onChange={(e) => setConfig({ ...config, secondary_color: e.target.value })}
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                 />
               </div>
@@ -441,6 +473,10 @@ export default function BrandingSettingsPage() {
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">Primary Color</span>
               <span className="font-mono text-gray-700 dark:text-gray-300">{config.primary_color}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Secondary Color</span>
+              <span className="font-mono text-gray-700 dark:text-gray-300">{config.secondary_color}</span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">Logo</span>
