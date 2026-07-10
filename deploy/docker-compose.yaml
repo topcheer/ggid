@@ -41,7 +41,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # LDAP test server
   ldap:
     image: osixia/openldap:1.5.0
     container_name: ggid-ldap
@@ -61,15 +60,67 @@ services:
     image: osixia/openldap:1.5.0
     container_name: ggid-ldap-seed
     depends_on:
-      - ldap
+      ldap:
+        condition: service_started
     environment:
       LDAP_HOST: "ldap"
       LDAP_PORT: "389"
       LDAP_ADMIN_PASSWORD: "admin123"
     entrypoint: ""
-    command: ["sh", "-c", "sleep 5 && ldapadd -x -H ldap://ldap:389 -D cn=admin,dc=corp,dc=local -w admin123 -f /seed/users.ldif && ldapadd -x -H ldap://ldap:389 -D cn=admin,dc=corp,dc=local -w admin123 -f /seed/groups.ldif && echo 'LDAP seed done'"]
+    command:
+      - sh
+      - -c
+      - |
+        sleep 5
+        ldapadd -x -H ldap://ldap:389 -D cn=admin,dc=corp,dc=local -w admin123 -f /seed/users.ldif || true
+        ldapadd -x -H ldap://ldap:389 -D cn=admin,dc=corp,dc=local -w admin123 -f /seed/groups.ldif || true
+        echo 'LDAP seed done'
     volumes:
       - ./ldap-seed:/seed:ro
+    restart: "no"
+
+  # === RSA Key Generation ===
+  keygen:
+    image: alpine:3.20
+    container_name: ggid-keygen
+    entrypoint: ""
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /configs/rsa_private.pem ]; then
+          apk add --no-cache openssl
+          openssl genpkey -algorithm RSA -out /configs/rsa_private.pem -pkeyopt rsa_keygen_bits:2048
+          openssl rsa -pubout -in /configs/rsa_private.pem -out /configs/rsa_public.pem
+          echo 'RSA keys generated'
+        else
+          echo 'RSA keys already exist'
+        fi
+    volumes:
+      - ggid-configs:/configs
+    restart: "no"
+
+  # === Database Migrations ===
+  migrate:
+    image: golang:1.25-alpine
+    container_name: ggid-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /app
+    environment:
+      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+    entrypoint: ""
+    command:
+      - sh
+      - -c
+      - |
+        apk add --no-cache postgresql-client
+        cat /migrations/*.sql | psql "$$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+        echo 'Migrations complete'
+    volumes:
+      - ..:/app
+      - ./migrations:/migrations:ro
     restart: "no"
 
   # === Microservices ===
@@ -81,11 +132,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
     ports:
       - "8081:8080"
-      - "50051:9090"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   auth:
     build:
@@ -96,17 +153,32 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      keygen:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
       REDIS_ADDR: "redis:6379"
       AUTH_HTTP_ADDR: ":9001"
       JWT_PRIVATE_KEY_PATH: "/configs/rsa_private.pem"
       JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
+      LDAP_URL: "ldap://ldap:389"
+      LDAP_BIND_DN: "cn=admin,dc=corp,dc=local"
+      LDAP_BIND_PASSWORD: "admin123"
+      LDAP_BASE_DN: "dc=corp,dc=local"
+      LDAP_USER_FILTER: "(&(objectClass=inetOrgPerson)(cn=%s))"
+      LDAP_AUTO_PROVISION: "true"
     ports:
       - "9001:9001"
     volumes:
       - ggid-configs:/configs
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9001/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   gateway:
     build:
@@ -114,11 +186,16 @@ services:
       dockerfile: services/gateway/Dockerfile
     container_name: ggid-gateway
     depends_on:
-      - auth
-      - identity
-      - policy
-      - org
-      - audit
+      auth:
+        condition: service_started
+      identity:
+        condition: service_started
+      policy:
+        condition: service_started
+      org:
+        condition: service_started
+      audit:
+        condition: service_started
     environment:
       GATEWAY_ADDR: ":8080"
       JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
@@ -126,6 +203,7 @@ services:
       IDENTITY_SERVICE_URL: "http://identity:8080"
       POLICY_SERVICE_URL: "http://policy:8070"
       ROLES_SERVICE_URL: "http://policy:8070"
+      PERMISSIONS_SERVICE_URL: "http://policy:8070"
       ORG_SERVICE_URL: "http://org:8071"
       AUDIT_SERVICE_URL: "http://audit:8072"
       OAUTH_SERVICE_URL: "http://oauth:9005"
@@ -143,11 +221,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
+      POLICY_HTTP_ADDR: ":8070"
+      POLICY_GRPC_ADDR: ":9070"
+      NATS_URL: "nats://nats:4222"
     ports:
       - "8070:8070"
       - "9070:9070"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8070/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   org:
     build:
@@ -157,13 +245,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
       ORG_HTTP_ADDR: ":8071"
       ORG_GRPC_ADDR: ":9071"
+      NATS_URL: "nats://nats:4222"
     ports:
       - "8071:8071"
       - "9071:9071"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8071/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   audit:
     build:
@@ -175,6 +271,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_started
+      migrate:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
       NATS_URL: "nats://nats:4222"
@@ -183,6 +281,11 @@ services:
     ports:
       - "8072:8072"
       - "9072:9072"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8072/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   oauth:
     build:
@@ -193,12 +296,25 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      keygen:
+        condition: service_completed_successfully
     environment:
       DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
       REDIS_ADDR: "redis:6379"
+      OAUTH_PRIVATE_KEY_PATH: "/configs/rsa_private.pem"
+      OAUTH_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
     ports:
       - "9005:9005"
+    volumes:
+      - ggid-configs:/configs:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9005/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   console:
     build:
@@ -206,7 +322,8 @@ services:
       dockerfile: Dockerfile
     container_name: ggid-console
     depends_on:
-      - gateway
+      gateway:
+        condition: service_started
     environment:
       GATEWAY_URL: "http://gateway:8080"
       NEXTAUTH_URL: "http://localhost:3000"
