@@ -48,6 +48,8 @@ type Gateway struct {
 	healthChecker *healthcheck.Checker
 	reloadFunc    ReloadFunc
 	routeVersion  int64
+	stats         *middleware.StatsCollector
+	graphql       *middleware.GraphQLResolver
 	mu            sync.RWMutex
 }
 
@@ -226,6 +228,28 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.URL.Path == "/api/v1/gateway/routes/reload" && r.Method == http.MethodPost {
 		gw.handleReloadRoutes(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/gateway/middleware" && r.Method == http.MethodGet {
+		middleware.MiddlewareChainHandler().ServeHTTP(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/gateway/stats" && r.Method == http.MethodGet {
+		if gw.stats != nil {
+			gw.stats.StatsHandler().ServeHTTP(w, r)
+		} else {
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "stats not configured"})
+		}
+		return
+	}
+	if r.URL.Path == "/graphql" && r.Method == http.MethodPost {
+		if gw.graphql != nil {
+			gw.graphql.GraphQLHandler().ServeHTTP(w, r)
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "GraphQL not configured"})
+		}
 		return
 	}
 
