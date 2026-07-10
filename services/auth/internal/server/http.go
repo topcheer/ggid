@@ -180,6 +180,19 @@ func (h *Handler) registerRoutes() {
 		}
 		waOpts = append(waOpts, webauthn.WithOrigins(origins))
 	}
+
+	// WA-12: Mobile app integration env vars
+	if androidPkg := os.Getenv("WEBAUTHN_ANDROID_PACKAGE"); androidPkg != "" {
+		androidSHA := os.Getenv("WEBAUTHN_ANDROID_SHA256")
+		waOpts = append(waOpts, webauthn.WithAndroidAssetLinks(androidPkg, androidSHA))
+	}
+	if iosStr := os.Getenv("WEBAUTHN_IOS_APP_IDS"); iosStr != "" {
+		iosIDs := strings.Split(iosStr, ",")
+		for i := range iosIDs {
+			iosIDs[i] = strings.TrimSpace(iosIDs[i])
+		}
+		waOpts = append(waOpts, webauthn.WithIOSAppSiteAssociation(iosIDs))
+	}
 	webauthnHandler, err := webauthn.NewHandler(rpID, rpName, nil, waOpts...)
 	if err != nil {
 		log.Printf("warning: webauthn init failed: %v", err)

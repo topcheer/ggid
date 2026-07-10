@@ -118,22 +118,44 @@ type CredentialStore interface {
 
 // Handler implements WebAuthn HTTP endpoints with full go-webauthn verification.
 type Handler struct {
-	wbn      *webauthn.WebAuthn
-	creds    CredentialStore
-	sessions *sessionStore
+	wbn           *webauthn.WebAuthn
+	creds         CredentialStore
+	sessions      *sessionStore
+	origins       []string       // WA-11: allowed RP origins for ROR
+	androidPkg    string         // WA-12: Android package name for asset links
+	androidSHA256 string         // WA-12: Android app SHA-256 fingerprint
+	iosAppIDs     []string       // WA-12: iOS app IDs for universal links
 }
 
 // HandlerOption configures a Handler at construction time.
 type HandlerOption func(*handlerConfig)
 
 type handlerConfig struct {
-	origins []string
+	origins       []string
+	androidPkg    string   // WA-12
+	androidSHA256 string   // WA-12
+	iosAppIDs     []string // WA-12
 }
 
 // WithOrigins sets the allowed RP origins for WebAuthn (WA-9).
 func WithOrigins(origins []string) HandlerOption {
 	return func(c *handlerConfig) {
 		c.origins = origins
+	}
+}
+
+// WithAndroidAssetLinks configures Android Digital Asset Links (WA-12).
+func WithAndroidAssetLinks(pkg, sha256 string) HandlerOption {
+	return func(c *handlerConfig) {
+		c.androidPkg = pkg
+		c.androidSHA256 = sha256
+	}
+}
+
+// WithIOSAppSiteAssociation configures iOS Universal Links app IDs (WA-12).
+func WithIOSAppSiteAssociation(appIDs []string) HandlerOption {
+	return func(c *handlerConfig) {
+		c.iosAppIDs = appIDs
 	}
 }
 
@@ -162,9 +184,13 @@ func NewHandler(rpID, rpName string, store CredentialStore, opts ...HandlerOptio
 	}
 
 	return &Handler{
-		wbn:      wbn,
-		creds:    store,
-		sessions: newSessionStore(),
+		wbn:           wbn,
+		creds:         store,
+		sessions:      newSessionStore(),
+		origins:       origins,
+		androidPkg:    cfg.androidPkg,
+		androidSHA256: cfg.androidSHA256,
+		iosAppIDs:     cfg.iosAppIDs,
 	}, nil
 }
 
@@ -219,6 +245,88 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/webauthn/auth/finish", h.finishAuthentication)
 	mux.HandleFunc("/api/v1/webauthn/credentials", h.listCredentials)
 	mux.HandleFunc("/api/v1/webauthn/credentials/", h.deleteCredential)
+
+	// WA-11: Related Origin Requests (ROR)
+	mux.HandleFunc("/.well-known/webauthn", h.wellKnownWebAuthn)
+
+	// WA-12: Mobile app integration
+	mux.HandleFunc("/.well-known/assetlinks.json", h.wellKnownAssetLinks)
+	mux.HandleFunc("/.well-known/apple-app-site-association", h.wellKnownAppleAppSiteAssociation)
+}
+
+// --- Well-Known Endpoints (WA-11, WA-12) ---
+
+// wellKnownWebAuthn returns Related Origin Requests (ROR) JSON (WA-11).
+// Browsers fetch this to discover which origins share the RP ID.
+func (h *Handler) wellKnownWebAuthn(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	origins := h.origins
+	if len(origins) == 0 {
+		origins = []string{"https://" + h.wbn.Config.RPID}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"origins": origins,
+	})
+}
+
+// wellKnownAssetLinks returns Android Digital Asset Links JSON (WA-12).
+// This allows Android apps to associate with the WebAuthn RP.
+func (h *Handler) wellKnownAssetLinks(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	if h.androidPkg == "" {
+		// Default empty response when not configured.
+		writeJSON(w, http.StatusOK, []any{})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, []map[string]any{
+		{
+			"relation": []string{"delegate_permission/common.get_login_creds"},
+			"target": map[string]any{
+				"namespace":          "android",
+				"package_name":       h.androidPkg,
+				"sha256_cert_fingerprints": []string{h.androidSHA256},
+			},
+		},
+	})
+}
+
+// wellKnownAppleAppSiteAssociation returns iOS Universal Links JSON (WA-12).
+// This allows iOS apps to associate with the WebAuthn RP.
+func (h *Handler) wellKnownAppleAppSiteAssociation(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	if len(h.iosAppIDs) == 0 {
+		// Default empty response when not configured.
+		writeJSON(w, http.StatusOK, map[string]any{
+			"applinks": map[string]any{"details": []any{}},
+		})
+		return
+	}
+
+	details := make([]map[string]any, 0, len(h.iosAppIDs))
+	for _, appID := range h.iosAppIDs {
+		details = append(details, map[string]any{
+			"apps": []string{appID},
+			"components": []string{"/*"},
+		})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"applinks": map[string]any{"details": details},
+	})
 }
 
 // --- Helpers ---

@@ -49,6 +49,13 @@ type SCIMUser struct {
 	UserName     string          `json:"userName"`
 	Name         SCIMName        `json:"name"`
 	DisplayName  string          `json:"displayName,omitempty"`
+	NickName     string          `json:"nickName,omitempty"`
+	ProfileURL   string          `json:"profileUrl,omitempty"`
+	Title        string          `json:"title,omitempty"`
+	UserType     string          `json:"userType,omitempty"`
+	PreferredLanguage string     `json:"preferredLanguage,omitempty"`
+	Locale       string          `json:"locale,omitempty"`
+	Timezone     string          `json:"timezone,omitempty"`
 	Emails       []SCIMEmail     `json:"emails,omitempty"`
 	PhoneNumbers []SCIMPhone     `json:"phoneNumbers,omitempty"`
 	Active       bool            `json:"active"`
@@ -242,6 +249,17 @@ func (h *Handler) handleUserResource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/scim/v2/Users/")
+
+	// SCIM-17: Handle POST /.search
+	if idStr == ".search" || idStr == ".search/" {
+		if r.Method != http.MethodPost {
+			writeSCIMError(w, http.StatusMethodNotAllowed, "POST required for .search")
+			return
+		}
+		h.searchUsers(ctx, w, r)
+		return
+	}
+
 	userID, err := uuid.Parse(idStr)
 	if err != nil {
 		writeSCIMError(w, http.StatusBadRequest, "invalid user ID")
@@ -323,6 +341,74 @@ func mapSCIMSortAttr(scimAttr string) string {
 	}
 }
 
+// SCIM-17: searchUsers handles POST /scim/v2/Users/.search.
+// The POST body contains filter, sortBy, sortOrder, startIndex, count.
+func (h *Handler) searchUsers(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Filter     string `json:"filter,omitempty"`
+		SortBy     string `json:"sortBy,omitempty"`
+		SortOrder  string `json:"sortOrder,omitempty"`
+		StartIndex int    `json:"startIndex,omitempty"`
+		Count      int    `json:"count,omitempty"`
+	}
+	// Body is optional — if decode fails, use defaults from query params
+	_ = json.NewDecoder(r.Body).Decode(&body)
+
+	// Fall back to query params if body fields are empty
+	if body.StartIndex == 0 {
+		body.StartIndex, _ = strconv.Atoi(r.URL.Query().Get("startIndex"))
+	}
+	if body.Count == 0 {
+		body.Count, _ = strconv.Atoi(r.URL.Query().Get("count"))
+	}
+	if body.SortBy == "" {
+		body.SortBy = r.URL.Query().Get("sortBy")
+	}
+	if body.SortOrder == "" {
+		body.SortOrder = r.URL.Query().Get("sortOrder")
+	}
+	if body.Filter == "" {
+		body.Filter = r.URL.Query().Get("filter")
+	}
+
+	if body.StartIndex <= 0 {
+		body.StartIndex = 1
+	}
+	if body.Count <= 0 || body.Count > 100 {
+		body.Count = 20
+	}
+
+	sortBy := mapSCIMSortAttr(body.SortBy)
+	sortDesc := strings.ToLower(body.SortOrder) == "descending"
+	offset := body.StartIndex - 1
+
+	result, err := h.svc.ListUsers(ctx, &domain.ListUsersFilter{
+		PageSize: body.Count,
+		Offset:   offset,
+		SortBy:   sortBy,
+		SortDesc: sortDesc,
+	})
+	if err != nil {
+		writeSCIMError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	attrs := r.URL.Query().Get("attributes")
+	excludedAttrs := r.URL.Query().Get("excludedAttributes")
+	resources := make([]SCIMUser, 0, len(result.Users))
+	for _, u := range result.Users {
+		resources = append(resources, applyAttributeFilter(toSCIMUser(u), attrs, excludedAttrs))
+	}
+
+	writeSCIMJSON(w, http.StatusOK, ListResponse{
+		Schemas:      []string{scimListSchema},
+		TotalResults: result.Total,
+		ItemsPerPage: body.Count,
+		StartIndex:   body.StartIndex,
+		Resources:    resources,
+	})
+}
+
 func (h *Handler) createUser(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// Decode raw body first to detect EnterpriseUser extension schema
 	var rawBody map[string]json.RawMessage
@@ -385,35 +471,77 @@ func (h *Handler) getUser(ctx context.Context, w http.ResponseWriter, r *http.Re
 		writeSCIMError(w, http.StatusNotFound, "user not found")
 		return
 	}
+	// SCIM-15: ETag support
+	etag := ComputeETag(user)
+	SetETagHeader(w, etag)
+	if CheckIfNoneMatch(r, etag) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
 	resp := applyAttributeFilter(toSCIMUser(user), r.URL.Query().Get("attributes"), r.URL.Query().Get("excludedAttributes"))
 	writeSCIMJSON(w, http.StatusOK, resp)
 }
 
 func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	var scimUser SCIMUser
-	if err := json.NewDecoder(r.Body).Decode(&scimUser); err != nil {
-		writeSCIMError(w, http.StatusBadRequest, "invalid request body")
+	// SCIM-15: Check If-Match precondition
+	existing, err := h.svc.GetUser(ctx, userID)
+	if err != nil {
+		writeSCIMError(w, http.StatusNotFound, "user not found")
+		return
+	}
+	etag := ComputeETag(existing)
+	if ok, reason := CheckIfMatch(r, etag); !ok {
+		writeSCIMErrorWithType(w, http.StatusPreconditionFailed, ScimTypeInvalidValue, reason)
 		return
 	}
 
+	var scimUser SCIMUser
+	if err := json.NewDecoder(r.Body).Decode(&scimUser); err != nil {
+		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidSyntax, "invalid request body")
+		return
+	}
+
+	// SCIM-12: Full PUT replacement — update all writable attributes
 	input := &domain.UpdateUserInput{
 		DisplayName: &scimUser.DisplayName,
+	}
+	if scimUser.UserName != "" {
+		un := scimUser.UserName
+		input.Username = &un
+	}
+	if len(scimUser.Emails) > 0 && scimUser.Emails[0].Value != "" {
+		email := scimUser.Emails[0].Value
+		input.Email = &email
+	}
+	if len(scimUser.PhoneNumbers) > 0 && scimUser.PhoneNumbers[0].Value != "" {
+		phone := scimUser.PhoneNumbers[0].Value
+		input.Phone = &phone
+	}
+	if scimUser.Locale != "" {
+		locale := scimUser.Locale
+		input.Locale = &locale
+	}
+	if scimUser.ProfileURL != "" {
+		avatar := scimUser.ProfileURL
+		input.AvatarURL = &avatar
 	}
 
 	user, err := h.svc.UpdateUser(ctx, userID, input)
 	if err != nil {
-		writeSCIMError(w, http.StatusNotFound, err.Error())
+		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidValue, err.Error())
 		return
 	}
 
-	// Handle active/inactive
+	// Handle active/inactive status
 	if !scimUser.Active {
 		user, _ = h.svc.LockUser(ctx, userID)
 	} else {
 		user, _ = h.svc.UnlockUser(ctx, userID)
 	}
 
-	writeSCIMJSON(w, http.StatusOK, toSCIMUser(user))
+	SetETagHeader(w, ComputeETag(user))
+	resp := applyAttributeFilter(toSCIMUser(user), r.URL.Query().Get("attributes"), r.URL.Query().Get("excludedAttributes"))
+	writeSCIMJSON(w, http.StatusOK, resp)
 }
 
 // SCIMPatchOp represents a single PATCH operation (RFC 7644 Section 3.5.2).

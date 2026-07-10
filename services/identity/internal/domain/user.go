@@ -73,6 +73,8 @@ type CreateUserInput struct {
 // UpdateUserInput holds optional fields for updating a user.
 // Only non-nil fields will be applied.
 type UpdateUserInput struct {
+	Username    *string
+	Email       *string
 	Phone       *string
 	DisplayName *string
 	AvatarURL   *string

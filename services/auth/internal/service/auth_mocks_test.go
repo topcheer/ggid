@@ -143,6 +143,7 @@ func tNewAuthSvc(t *testing.T) (*AuthService, *tCredRepo, *tSessionRepo, *tRefre
 		tokenService: ts, sessionService: NewSessionService(sr),
 		passwordService: NewPasswordService(cfg.Password, cr, rdb),
 		rateLimiter:     NewRateLimiter(rdb), identityClient: &NoopIdentityClient{},
+		emailService:    NewEmailService(rdb),
 	}, cr, sr, rr
 }
 
