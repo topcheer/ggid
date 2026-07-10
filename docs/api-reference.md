@@ -334,3 +334,228 @@ All errors follow this structure:
 | 409 | Conflict — duplicate resource |
 | 429 | Too many requests — rate limited |
 | 500 | Internal server error |
+
+---
+
+## WebAuthn (Passkeys)
+
+### Begin Registration
+```http
+POST /api/v1/auth/webauthn/register/begin
+Authorization: Bearer <JWT>
+X-Tenant-ID: <tenant-uuid>
+```
+**Response 200:** `{ "challenge": "...", "rp": {...}, "user": {...} }`
+
+### Finish Registration
+```http
+POST /api/v1/auth/webauthn/register/finish
+Authorization: Bearer <JWT>
+Content-Type: application/json
+X-Tenant-ID: <tenant-uuid>
+
+{
+  "id": "...",
+  "rawId": "...",
+  "response": { "attestationObject": "...", "clientDataJSON": "..." }
+}
+```
+**Response 200:** `{ "credential_id": "...", "registered": true }`
+
+### Begin Authentication
+```http
+POST /api/v1/auth/webauthn/login/begin
+X-Tenant-ID: <tenant-uuid>
+
+{ "username": "user@example.com" }
+```
+**Response 200:** `{ "challenge": "...", "allowCredentials": [...] }`
+
+### Finish Authentication
+```http
+POST /api/v1/auth/webauthn/login/finish
+X-Tenant-ID: <tenant-uuid>
+
+{
+  "id": "...",
+  "rawId": "...",
+  "response": { "authenticatorData": "...", "signature": "...", "clientDataJSON": "..." }
+}
+```
+**Response 200:** `{ "access_token": "...", "refresh_token": "..." }`
+
+---
+
+## SCIM 2.0 Endpoints
+
+```http
+GET    /scim/v2/Users                  # List (paginated)
+POST   /scim/v2/Users                  # Create
+GET    /scim/v2/Users/:id              # Get by ID
+PUT    /scim/v2/Users/:id              # Replace
+PATCH  /scim/v2/Users/:id              # Partial update
+DELETE /scim/v2/Users/:id              # Deactivate
+GET    /scim/v2/Groups                 # List groups
+POST   /scim/v2/Groups                 # Create group
+GET    /scim/v2/Groups/:id             # Get group
+```
+
+**Headers:** `Authorization: Bearer <SCIM-API-Key>`, `X-Tenant-ID: <tenant-uuid>`
+
+**Example: Create User via SCIM**
+```bash
+curl -X POST http://localhost:8080/scim/v2/Users \
+  -H "Authorization: Bearer $SCIM_KEY" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -H "Content-Type: application/scim+json" \
+  -d '{
+    "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"],
+    "userName": "jane.doe@example.com",
+    "name": { "givenName": "Jane", "familyName": "Doe" },
+    "emails": [{ "value": "jane.doe@example.com", "primary": true }],
+    "active": true
+  }'
+```
+
+---
+
+## gRPC Endpoints
+
+GGID services expose gRPC APIs for high-performance internal communication.
+
+| Service | Port | Proto Package |
+|---------|------|---------------|
+| Identity | 50051 | `ggid.identity.v1` |
+| Policy | 9070 | `ggid.policy.v1` |
+| Org | 9071 | `ggid.org.v1` |
+| Audit | 9072 | `ggid.audit.v1` |
+
+**Example (grpcurl):**
+```bash
+# List identity service methods
+grpcurl -plaintext localhost:50051 list ggid.identity.v1.IdentityService
+
+# Call GetUser
+grpcurl -plaintext -d '{"tenant_id":"00000000-0000-0000-0000-000000000001","user_id":"..."}' \
+  localhost:50051 ggid.identity.v1.IdentityService/GetUser
+
+# Policy check
+grpcurl -plaintext -d '{"subject":"user-uuid","action":"read","resource":"users"}' \
+  localhost:9070 ggid.policy.v1.PolicyService/Check
+```
+
+**Proto files:** `api/proto/` — use `make proto` to generate Go code.
+
+---
+
+## Rate Limits
+
+| Endpoint Category | Rate Limit | Key |
+|-------------------|------------|-----|
+| `/api/v1/auth/login` | 10 req/min | Per IP + per username |
+| `/api/v1/auth/register` | 5 req/min | Per IP |
+| `/api/v1/auth/refresh` | 30 req/min | Per token |
+| All other authenticated endpoints | 60 req/min | Per user (JWT sub) |
+| SCIM endpoints | 100 req/min | Per API key |
+| Health checks | No limit | — |
+
+Rate limit headers:
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 42
+X-RateLimit-Reset: 1699999999
+```
+
+When exceeded: `429 Too Many Requests` with `Retry-After: <seconds>` header.
+
+---
+
+## Audit SSE Stream
+
+```http
+GET /api/v1/audit/stream?tenant_id=<uuid>
+Authorization: Bearer <JWT>
+Accept: text/event-stream
+```
+
+**Response (SSE):**
+```
+event: connected
+data: {"message":"connected to audit stream"}
+
+event: audit_event
+data: {"event_id":"...","action":"user.login","actor_id":"...","timestamp":"..."}
+
+event: audit_event
+data: {"event_id":"...","action":"role.create","actor_id":"...","timestamp":"..."}
+```
+
+Events are pushed in real-time as they are published to NATS JetStream.
+
+---
+
+## Curl Quick Reference
+
+```bash
+# Set common variables
+export API="http://localhost:8080"
+export TENANT="00000000-0000-0000-0000-000000000001"
+
+# Register
+curl -sX POST $API/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"alice","email":"alice@test.com","password":"StrongPass123!"}'
+
+# Login and capture JWT
+export TOKEN=$(curl -sX POST $API/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"alice","password":"StrongPass123!"}' | jq -r .access_token)
+
+# Authenticated request
+curl -s $API/api/v1/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT"
+
+# Create role
+curl -sX POST $API/api/v1/roles \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"key":"viewer","name":"Viewer","permissions":["read:users"]}'
+
+# Check policy
+curl -sX POST $API/api/v1/policies/check \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"subject":"alice","action":"read","resource":"users"}'
+
+# Query audit events
+curl -s "$API/api/v1/audit/events?limit=10&tenant_id=$TENANT" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## API Conventions
+
+- **Versioning:** All endpoints under `/api/v1/`. Breaking changes require `/api/v2/`.
+- **Pagination:** `?page=1&limit=20`. Response includes `total` and `items`.
+- **Sorting:** `?sort=created_at` (ascending) or `?sort=-created_at` (descending).
+- **Filtering:** Query params map to filters (e.g., `?active=true&role=admin`).
+- **ID format:** All resource IDs are UUID v4 strings.
+- **Timestamps:** ISO 8601 UTC (`2024-01-15T10:30:00Z`).
+- **Content-Type:** `application/json` for REST, `application/scim+json` for SCIM.
+- **Tenant scope:** `X-Tenant-ID` header required on all non-health endpoints.
+
+---
+
+## References
+
+- [OpenAPI Spec](./openapi.yaml) — Machine-readable API definition
+- [Postman Collection](./postman-collection.json) — Importable Postman collection
+- [API Conventions](./api-conventions.md) — Detailed API design conventions
+- [Error Codes](./error-codes.md) — Complete error code reference
+- [Rate Limiting](./rate-limiting.md) — Rate limit configuration
