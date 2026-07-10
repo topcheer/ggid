@@ -1,10 +1,16 @@
 # GGID Java SDK
 
-JWT verification, user management, and RBAC for Java / Spring Boot / Jakarta EE.
+A production-ready Java client SDK for the [GGID](https://github.com/ggid/ggid) IAM platform.
+
+## Requirements
+
+- Java 17+
+- Maven or Gradle
 
 ## Installation
 
 ### Maven
+
 ```xml
 <dependency>
     <groupId>dev.ggid</groupId>
@@ -14,51 +20,73 @@ JWT verification, user management, and RBAC for Java / Spring Boot / Jakarta EE.
 ```
 
 ### Gradle
+
 ```groovy
 implementation 'dev.ggid:ggid-sdk:1.0.0'
 ```
 
 ## Quick Start
 
-### API Client
-
 ```java
-GGIDClient client = new GGIDClient("https://iam.example.com");
+import dev.ggid.sdk.GGIDClient;
+
+GGIDClient client = new GGIDClient(new GGIDClient.Config("https://iam.example.com"));
 
 // Login
-TokenSet tokens = client.login("admin", "Admin@123456");
+GGIDClient.TokenSet tokens = client.login("alice", "SecurePass@123");
+System.out.println("Access token: " + tokens.accessToken);
 
-// List users
-JsonNode users = client.listUsers(tokens.getAccessToken());
+// Create user
+GGIDClient.User user = client.createUser("bob", "bob@example.com", "SecurePass@123");
 
 // Check permission
-JsonNode result = client.checkPermission(tokens.getAccessToken(), "documents", "read");
-boolean allowed = result.path("allowed").asBoolean();
+GGIDClient.PermissionResult result = client.checkPermission(user.id, "documents", "read");
+System.out.println("Allowed: " + result.allowed);
 ```
 
-### Spring Boot Security Filter
+## API Reference
+
+| Method | Description |
+|--------|-------------|
+| `login(username, password)` | Authenticate with username/password |
+| `refreshToken(refreshToken)` | Refresh an access token |
+| `logout(accessToken)` | Invalidate an access token |
+| `createUser(username, email, password)` | Create a new user |
+| `getUser(userId)` | Get user by ID |
+| `deleteUser(userId)` | Delete a user |
+| `listUsers(page, pageSize)` | List users with pagination |
+| `assignRole(userId, roleId)` | Assign role to user |
+| `createRole(key, name)` | Create a role |
+| `listRoles()` | List roles |
+| `createOrg(name)` | Create an organization |
+| `listOrgs()` | List organizations |
+| `checkPermission(userId, resource, action)` | Check authorization |
+
+## Error Handling
 
 ```java
-@Bean
-public FilterRegistrationBean<GGIDFilter> ggidFilter() {
-    FilterRegistrationBean<GGIDFilter> bean = new FilterRegistrationBean<>();
-    bean.setFilter(new GGIDFilter());
-    bean.addUrlPatterns("/api/*");
-    return bean;
+try {
+    client.getUser("nonexistent");
+} catch (GGIDException e) {
+    if (e.isNotFound()) {
+        // 404
+    } else if (e.isRateLimited()) {
+        // 429
+    } else if (e.isConflict()) {
+        // 409
+    }
+    System.out.println(e.getStatusCode() + ": " + e.getMessage());
 }
 ```
 
-### Get User from Request
+## Configuration
 
 ```java
-@GetMapping("/profile")
-public Map<String, String> profile(HttpServletRequest request) {
-    return Map.of(
-        "sub", (String) request.getAttribute("ggid.sub"),
-        "email", (String) request.getAttribute("ggid.email"),
-        "tenant_id", (String) request.getAttribute("ggid.tenant_id")
-    );
-}
+GGIDClient.Config config = new GGIDClient.Config("https://iam.example.com");
+config.tenantId = "your-tenant-uuid";
+config.apiKey = "your-api-key";
+
+GGIDClient client = new GGIDClient(config);
 ```
 
 ## License
