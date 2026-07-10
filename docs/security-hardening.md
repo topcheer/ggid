@@ -661,3 +661,80 @@ spec:
 | Review audit logs for anomalies | Daily |
 | Test backup restoration | Quarterly |
 | Penetration testing | Annually |
+
+---
+
+## TLS 1.3 Configuration
+
+GGID recommends TLS 1.3 for all external connections, with TLS 1.2 as fallback.
+
+### Recommended Cipher Suites
+
+```nginx
+# NGINX TLS configuration
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers off;
+
+# TLS 1.3 ciphers (automatically negotiated)
+ssl_ciphersuites 'tls_aes_256_gcm_sha384:tls_aes_128_gcm_sha256:tls_chacha20_poly1305_sha256';
+
+# TLS 1.2 ciphers (fallback)
+ssl_ciphers 'ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305';
+```
+
+### TLS Security Headers
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` | HSTS (2 years) |
+| `X-Content-Type-Options` | `nosniff` | Prevent MIME sniffing |
+| `X-Frame-Options` | `DENY` | Prevent clickjacking |
+| `X-XSS-Protection` | `1; mode=block` | Legacy XSS protection |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'nonce-{nonce}'` | CSP |
+
+---
+
+## OWASP Top 10 Mitigation Matrix
+
+| OWASP Risk | GGID Mitigation |
+|------------|----------------|
+| A01: Broken Access Control | RBAC + ABAC policy engine, PostgreSQL RLS, deny-by-default |
+| A02: Cryptographic Failures | AES-256-GCM at rest, TLS 1.3 in transit, Argon2id password hashing |
+| A03: Injection | Parameterized queries (pgx), column allow-lists, no dynamic SQL |
+| A04: Insecure Design | Threat modeling (STRIDE), secure-by-default config, least privilege |
+| A05: Security Misconfiguration | Distroless containers, non-root user, readOnlyRootFS |
+| A06: Vulnerable Components | govulncheck CI gate, Trivy image scan, Dependabot |
+| A07: Auth Failures | bcrypt cost 12, account lockout, MFA, rate limiting |
+| A08: Data Integrity Failures | Signed container images (Cosign), reproducible builds |
+| A09: Logging/Monitoring Failures | Structured JSON logging, NATS audit pipeline, SIEM integration |
+| A10: SSRF | Egress filtering, no user-controlled URLs for fetch, allowlist |
+
+---
+
+## Vault Integration
+
+### Secret Injection via Vault Agent
+
+```yaml
+# vault-agent-injector.yaml (Kubernetes)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ggid-auth
+spec:
+  template:
+    metadata:
+      annotations:
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-jwt-key: "secret/data/ggid/jwt"
+        vault.hashicorp.com/agent-inject-template-jwt-key: |
+          {{- with secret "secret/data/ggid/jwt" -}}
+          {{ .Data.data.private_key }}
+          {{- end }}
+    spec:
+      containers:
+        - name: auth
+          env:
+            - name: JWT_PRIVATE_KEY
+              value: /vault/secrets/jwt-key
+```
