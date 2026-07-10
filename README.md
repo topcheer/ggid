@@ -112,32 +112,43 @@ npm run dev
 
 ## Features
 
-- **Authentication** — Password (Argon2id), MFA (TOTP), LDAP/AD, OAuth2/OIDC, SAML 2.0
-- **Authorization** — RBAC + ABAC policy engine (AWS IAM style)
-- **Multi-Tenancy** — Three isolation levels (shared RLS / schema / database)
-- **API Gateway** — JWT verification + reverse proxy to all services
-- **Audit** — NATS JetStream event streaming + queryable audit log
-- **Admin Console** — Next.js 15 + Tailwind CSS
+- **Authentication** — Password (Argon2id), MFA (TOTP + WebAuthn/Passkey + Email OTP), Magic Link, LDAP/AD
+- **Social Login** — Google, GitHub, Microsoft, Discord, LinkedIn, Slack, GitLab
+- **Enterprise SSO** — OAuth2/OIDC, SAML 2.0, Generic OIDC federation
+- **Authorization** — RBAC + ABAC hybrid policy engine with wildcard matching and role hierarchy
+- **Multi-Tenancy** — PostgreSQL Row-Level Security (defense in depth)
+- **API Gateway** — JWT verification (RS256+JWKS), rate limiting, CORS, circuit breaker, compression, OTel tracing
+- **Audit** — NATS JetStream event pipeline + queryable log + CSV export + SSE streaming + anomaly detection
+- **Admin Console** — Next.js 15 + Tailwind CSS (10 pages)
 - **SDK** — Go / Node.js / Java / Python
 - **SCIM 2.0** — Standard user provisioning protocol
-- **Social Login** — Google, GitHub, Microsoft, Apple, GitLab, Discord, LinkedIn
-- **MFA** — TOTP, WebAuthn/Passkey, Email OTP
-- **Enterprise SSO** — SAML 2.0, OIDC federation, LDAP/AD sync
-- **Audit** — NATS JetStream streaming + anomaly detection
+- **Webhooks** — Pre/post auth hooks, HMAC-signed payloads
+- **Auth Hooks** — Extensible plugin system (pre-registration, post-login, pre-token-issue)
 
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
-| [Architecture](docs/architecture.md) | C4 model diagrams, data flows, component views |
-| [Security Whitepaper](docs/security-whitepaper.md) | Threat model (STRIDE), auth/authz security, compliance |
-| [Migration Guide](docs/migration-guide.md) | Migrate from Auth0 / Keycloak / Clerk |
-| [Production Hardening](docs/production-hardening.md) | TLS, secrets, network isolation, backups |
-| [Plugin System](docs/plugin-system.md) | Webhook hooks, Go plugins, gRPC extensions |
-| [Quick Start Guide](docs/quick-start.md) | 5-minute integration tutorial |
-| [Feature Matrix](docs/feature-matrix.md) | 157 features compared across 10 IAM platforms |
-| [Roadmap](docs/roadmap.md) | Phase 9-12 development roadmap |
-| [Performance Benchmarks](deploy/k6/README.md) | k6 load test scripts |
+| [Quick Start](docs/quick-start.md) | 5-min guide: Docker → register → login → JWT |
+| [Integration Guide](docs/integration-guide.md) | Third-party developer integration (SDK + JWT + middleware) |
+| [OpenAPI Spec](docs/openapi.yaml) | Complete REST API reference (Swagger/OpenAPI 3.1) |
+| [API Examples](docs/api-examples.md) | curl examples for every endpoint |
+| [SDK Guide](docs/sdk-guide.md) | Go / Node.js / Java / Python side-by-side comparison |
+| [Deployment Guide](docs/deployment.md) | Production deployment (Docker, K8s, TLS, backup) |
+| [Security Hardening](docs/security-hardening.md) | Production security checklist |
+| [Security Audit](docs/security-audit-checklist.md) | OWASP Top 10 alignment |
+| [Performance Tuning](docs/performance.md) | DB indexing, connection pools, pprof |
+| [Migration Guide](docs/migration-guide.md) | Auth0 / Keycloak → GGID |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and fixes |
+| [Plugin Development](docs/plugin-development.md) | Auth hooks and webhooks |
+| [Console Guide](docs/console-guide.md) | Admin Console user manual |
+| [Developer Guide](docs/developer-guide.md) | Code structure, testing, PR workflow |
+| [Contributing](docs/contributing-quickstart.md) | 5-min contributor quick start |
+| [Testing Guide](docs/testing-guide.md) | Unit / integration / E2E / k6 |
+| [FAQ](docs/faq.md) | Frequently asked questions |
+| [Changelog](docs/CHANGELOG.md) | v1.0 release notes |
+| [ADRs](docs/adr/) | Architecture Decision Records |
+| [Design Docs](docs/design/) | RLS, NATS audit, policy engine designs |
 
 ## Architecture
 

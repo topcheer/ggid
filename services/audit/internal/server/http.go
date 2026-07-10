@@ -57,6 +57,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/correlate", s.handleCorrelate)
 	mux.HandleFunc("/api/v1/audit/webhooks", s.handleAuditWebhooks)
 	mux.HandleFunc("/api/v1/audit/verify-integrity", s.handleVerifyIntegrity)
+	mux.HandleFunc("/api/v1/audit/search", s.handleSearch)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -648,6 +649,106 @@ func (s *HTTPServer) handleAuditWebhooks(w http.ResponseWriter, r *http.Request)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// GET /api/v1/audit/search?q=X&tenant_id=Y&logic=and
+// Full-text search across actor, resource, action, IP, event_type.
+// Supports AND/OR logic operator.
+func (s *HTTPServer) handleSearch(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		writeJSONError(w, http.StatusBadRequest, "q query parameter is required")
+		return
+	}
+	logic := r.URL.Query().Get("logic")
+	if logic != "or" {
+		logic = "and"
+	}
+
+	// Parse query terms (space-separated)
+	terms := strings.Fields(strings.ToLower(query))
+
+	// Fetch events
+	events, _, err := s.svc.ListEvents(r.Context(), domain.ListFilter{
+		TenantID: tenantID,
+	}, 500, 0)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Search across all fields
+	results := []map[string]any{}
+	for _, e := range events {
+		jsonEvent := eventToJSON(e)
+		// Build searchable text
+		searchableFields := []string{
+			strings.ToLower(e.Action),
+			strings.ToLower(e.ActorName),
+			strings.ToLower(e.ResourceType),
+			strings.ToLower(e.IPAddress),
+			strings.ToLower(string(e.Result)),
+			strings.ToLower(e.RequestID),
+		}
+		if e.ResourceName != "" {
+			searchableFields = append(searchableFields, strings.ToLower(e.ResourceName))
+		}
+
+		matched := false
+		if logic == "or" {
+			// OR: any term matches any field
+			for _, term := range terms {
+				for _, field := range searchableFields {
+					if strings.Contains(field, term) {
+						matched = true
+						break
+					}
+				}
+				if matched { break }
+			}
+		} else {
+			// AND: all terms must match at least one field
+			matched = true
+			for _, term := range terms {
+				termFound := false
+				for _, field := range searchableFields {
+					if strings.Contains(field, term) {
+						termFound = true
+						break
+					}
+				}
+				if !termFound { matched = false; break }
+			}
+		}
+
+		if matched {
+			jsonEvent["_matched"] = true
+			results = append(results, jsonEvent)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"query":   query,
+		"logic":   logic,
+		"count":   len(results),
+		"results": results,
+	})
 }
 
 // --- HMAC Chain Integrity Verification ---

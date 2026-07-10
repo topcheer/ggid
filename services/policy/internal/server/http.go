@@ -48,6 +48,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/from-template/", s.handleFromTemplate)
 	mux.HandleFunc("/api/v1/policies/default-action", s.handleDefaultAction)
 	mux.HandleFunc("/api/v1/policies/time-conditions", s.handleTimeConditions)
+	mux.HandleFunc("/api/v1/policies/dry-run", s.handleDryRun)
+	mux.HandleFunc("/api/v1/policies/diff", s.handlePolicyDiff)
 }
 
 // --- Roles ---
@@ -1140,6 +1142,162 @@ func (s *HTTPServer) handleTimeConditions(w http.ResponseWriter, r *http.Request
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// --- Dry-Run Mode ---
+//
+// POST /api/v1/policies/dry-run
+// Evaluates a hypothetical request against current policies without side effects.
+// {"user_id": "...", "resource": "documents:abc", "action": "read", "attributes": {"department": "eng"}}
+// Returns: {"decision": "WOULD_BE_ALLOWED|WOULD_BE_DENIED", "matched_rules": [...], "reason": "..."}
+func (s *HTTPServer) handleDryRun(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		UserID     string         `json:"user_id"`
+		Resource   string         `json:"resource"`
+		Action     string         `json:"action"`
+		Attributes map[string]any `json:"attributes"`
+		TenantID   string         `json:"tenant_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if req.Action == "" || req.Resource == "" {
+		writeJSONError(w, http.StatusBadRequest, "action and resource are required")
+		return
+	}
+
+	tenantID, err := uuid.Parse(req.TenantID)
+	if err != nil {
+		tenantID = uuid.New()
+	}
+
+	// Evaluate against policies using the evaluator
+	userID, _ := uuid.Parse(req.UserID)
+	evaluator := &service.Evaluator{}
+	checkResult, err := evaluator.Check(r.Context(), &domain.CheckRequest{
+		UserID:     userID,
+		TenantID:   tenantID,
+		Resource:   req.Resource,
+		Action:     req.Action,
+		Conditions: req.Attributes,
+	})
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	decision := "WOULD_BE_ALLOWED"
+	reason := "No matching deny policy found"
+	if !checkResult.Allowed {
+		decision = "WOULD_BE_DENIED"
+		if GetDefaultPolicyAction() == "deny" {
+			reason = "No matching allow policy (default: deny-all)"
+		} else {
+			reason = "Denied by matching policy"
+		}
+	}
+
+	matchedRules := []map[string]any{}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"decision":      decision,
+		"reason":        reason,
+		"matched_rules": matchedRules,
+		"dry_run":       true,
+		"request": map[string]any{
+			"user_id":   req.UserID,
+			"resource":  req.Resource,
+			"action":    req.Action,
+			"attributes": req.Attributes,
+		},
+	})
+}
+
+// --- Policy Diff ---
+//
+// GET /api/v1/policies/diff?policy_id=X&v1=1&v2=2
+// Compares two policy versions and returns the differences.
+func (s *HTTPServer) handlePolicyDiff(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	policyID := r.URL.Query().Get("policy_id")
+	if policyID == "" {
+		writeJSONError(w, http.StatusBadRequest, "policy_id is required")
+		return
+	}
+	v1Str := r.URL.Query().Get("v1")
+	v2Str := r.URL.Query().Get("v2")
+	if v1Str == "" || v2Str == "" {
+		writeJSONError(w, http.StatusBadRequest, "v1 and v2 are required")
+		return
+	}
+	v1, err := strconv.Atoi(v1Str)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid v1")
+		return
+	}
+	v2, err := strconv.Atoi(v2Str)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid v2")
+		return
+	}
+
+	versions := policyVersions[policyID]
+	if v1 < 1 || v1 > len(versions) || v2 < 1 || v2 > len(versions) {
+		writeJSONError(w, http.StatusBadRequest, "version out of range")
+		return
+	}
+
+	oldV := versions[v1-1]
+	newV := versions[v2-1]
+
+	// Compute diff
+	added := []string{}
+	removed := []string{}
+	modified := []map[string]any{}
+
+	// Compare fields
+	for key, newVal := range newV {
+		oldVal, exists := oldV[key]
+		if !exists {
+			added = append(added, key)
+		} else {
+			oldStr := fmt.Sprintf("%v", oldVal)
+			newStr := fmt.Sprintf("%v", newVal)
+			if oldStr != newStr {
+				modified = append(modified, map[string]any{
+					"field":  key,
+					"old":    oldVal,
+					"new":    newVal,
+				})
+			}
+		}
+	}
+	for key := range oldV {
+		if _, exists := newV[key]; !exists {
+			removed = append(removed, key)
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"policy_id": policyID,
+		"v1":        v1,
+		"v2":        v2,
+		"diff": map[string]any{
+			"added":    added,
+			"removed":  removed,
+			"modified": modified,
+		},
+		"summary": fmt.Sprintf("%d added, %d removed, %d modified", len(added), len(removed), len(modified)),
+	})
 }
 
 // Ensure context import is used.

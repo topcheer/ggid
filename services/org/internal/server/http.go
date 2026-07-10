@@ -198,6 +198,18 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 				s.handleOrgInherit(w, r, id, subParts[1])
 				return
 			}
+			if subParts[0] == "stats" {
+				s.handleOrgStats(w, r, id)
+				return
+			}
+			if subParts[0] == "members" && subParts[1] == "bulk" {
+				s.handleBulkAddMembers(w, r, id)
+				return
+			}
+			if subParts[0] == "members" && strings.HasPrefix(subParts[1], "bulk-remove") {
+				s.handleBulkRemoveMembers(w, r, id)
+				return
+			}
 		}
 		if subPath == "tree" {
 			s.handleOrgTree(w, r, id)
@@ -873,6 +885,159 @@ func (s *HTTPServer) handleOrgMemberByID(w http.ResponseWriter, r *http.Request,
 	}
 
 	writeJSONError(w, http.StatusNotFound, "member not found in this organization")
+}
+
+// GET /api/v1/orgs/{id}/stats — returns org statistics
+func (s *HTTPServer) handleOrgStats(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	tenantID, _ := uuid.Parse(tenantIDStr)
+
+	// Get org
+	org, err := s.orgSvc.Get(r.Context(), orgID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Count members
+	members, _ := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
+		TenantID: tenantID, OrgID: &orgID,
+	}, 1, 1000)
+
+	// Count child orgs
+	allOrgs, _ := s.orgSvc.List(r.Context(), tenantID, 1, 500)
+	childCount := 0
+	for _, o := range allOrgs {
+		if o.ParentID != nil && *o.ParentID == orgID {
+			childCount++
+		}
+	}
+
+	// Get role count from in-memory store
+	orgRoles.RLock()
+	roleCount := len(orgRoles.data[orgID])
+	orgRoles.RUnlock()
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"org_id":           orgID.String(),
+		"org_name":         org.Name,
+		"member_count":     len(members),
+		"child_org_count":  childCount,
+		"role_count":       roleCount,
+		"path":             org.Path,
+		"parent_id":        org.ParentID,
+	})
+}
+
+// POST /api/v1/orgs/{id}/members/bulk — bulk add members
+func (s *HTTPServer) handleBulkAddMembers(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		TenantID string   `json:"tenant_id"`
+		UserIDs  []string `json:"user_ids"`
+		Role     string   `json:"role"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if len(req.UserIDs) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "user_ids is required")
+		return
+	}
+
+	tenantID, _ := uuid.Parse(req.TenantID)
+	if req.Role == "" {
+		req.Role = "member"
+	}
+
+	added := 0
+	errors := []map[string]any{}
+	for _, uidStr := range req.UserIDs {
+		uid, err := uuid.Parse(uidStr)
+		if err != nil {
+			errors = append(errors, map[string]any{"user_id": uidStr, "error": "invalid UUID"})
+			continue
+		}
+		membership := &domain.Membership{
+			ID:       uuid.New(),
+			TenantID: tenantID,
+			OrgID:    orgID,
+			UserID:   uid,
+			Title:    req.Role,
+			Status:   domain.MembershipActive,
+		}
+		if _, err := s.memberSvc.Invite(r.Context(), membership); err != nil {
+			errors = append(errors, map[string]any{"user_id": uidStr, "error": err.Error()})
+			continue
+		}
+		added++
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{
+		"status":       "completed",
+		"added":        added,
+		"failed":       len(errors),
+		"errors":       errors,
+		"total_requested": len(req.UserIDs),
+	})
+}
+
+// POST /api/v1/orgs/{id}/members/bulk-remove — bulk remove members
+func (s *HTTPServer) handleBulkRemoveMembers(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var req struct {
+		TenantID string   `json:"tenant_id"`
+		UserIDs  []string `json:"user_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if len(req.UserIDs) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "user_ids is required")
+		return
+	}
+
+	tenantID, _ := uuid.Parse(req.TenantID)
+
+	// Get all members for this org
+	members, _ := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
+		TenantID: tenantID, OrgID: &orgID,
+	}, 1, 1000)
+
+	userIDSet := map[string]bool{}
+	for _, uid := range req.UserIDs {
+		userIDSet[uid] = true
+	}
+
+	removed := 0
+	for _, m := range members {
+		if userIDSet[m.UserID.String()] {
+			if err := s.memberSvc.Remove(r.Context(), m.ID); err == nil {
+				removed++
+			}
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":         "completed",
+		"removed":        removed,
+		"total_requested": len(req.UserIDs),
+	})
 }
 
 // ===== Org Role Inheritance =====
