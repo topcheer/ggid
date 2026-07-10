@@ -522,6 +522,129 @@ js.Subscribe("ggid.events.>", handler)
 
 ---
 
+## Tenant Admin Role
+
+Each tenant automatically gets an `admin` role with full management permissions
+scoped to that tenant. Tenant admins cannot access other tenants' data or
+manage platform-level settings.
+
+### Tenant Admin Permissions
+
+| Permission | Scope | Description |
+|------------|-------|-------------|
+| `users:read` | Tenant | List/view tenant users |
+| `users:write` | Tenant | Create/update/suspend users |
+| `users:delete` | Tenant | Delete users (soft-delete) |
+| `roles:read` | Tenant | List tenant roles |
+| `roles:write` | Tenant | Create/update roles |
+| `orgs:read` | Tenant | List tenant organizations |
+| `orgs:write` | Tenant | Create/update organizations |
+| `audit:read` | Tenant | Query tenant audit events |
+| `settings:read` | Tenant | View tenant config |
+| `settings:write` | Tenant | Update tenant config (branding, features) |
+| `api_keys:manage` | Tenant | Create/revoke API keys |
+| `webhooks:manage` | Tenant | Configure webhooks |
+
+### Super Admin (Platform Level)
+
+A super admin role exists outside tenant scoping for platform operations:
+
+```bash
+# Super admin can manage tenants themselves
+POST /api/v1/tenants          # Create tenant
+PATCH /api/v1/tenants/{id}    # Suspend/activate tenant
+DELETE /api/v1/tenants/{id}   # Delete tenant
+
+# Super admin bypasses RLS via SET ROLE
+SET ROLE postgres;  -- Platform operations only
+```
+
+### Assigning Tenant Admin
+
+```bash
+curl -X POST $API/api/v1/users/$USER_ID/roles \
+    -H "Authorization: Bearer $ADMIN_TOKEN" \
+    -H "X-Tenant-ID: $TENANT_ID" \
+    -d '{"role_key": "admin"}'
+```
+
+---
+
+## Cross-Tenant Data Segregation Verification
+
+### Automated Verification Script
+
+```bash
+#!/bin/bash
+# verify-tenant-isolation.sh
+# Verifies that RLS prevents cross-tenant data access
+
+TENANT_A="00000000-0000-0000-0000-000000000001"
+TENANT_B="00000000-0000-0000-0000-000000000002"
+
+psql <<SQL
+-- Test 1: Tenant A can only see own users
+SET ROLE ggid_app;
+SET LOCAL app.tenant_id = '$TENANT_A';
+SELECT count(*) AS tenant_a_users FROM users;
+-- Expected: Only Tenant A's users
+
+-- Test 2: Tenant B cannot see Tenant A's data
+RESET ROLE;
+SET ROLE ggid_app;
+SET LOCAL app.tenant_id = '$TENANT_B';
+SELECT count(*) AS tenant_b_users FROM users;
+-- Expected: Only Tenant B's users (different count)
+
+-- Test 3: Cross-tenant query returns empty
+SET LOCAL app.tenant_id = '$TENANT_B';
+SELECT * FROM users WHERE tenant_id = '$TENANT_A';
+-- Expected: 0 rows (RLS blocks this)
+
+-- Test 4: Audit events are isolated
+SET LOCAL app.tenant_id = '$TENANT_A';
+SELECT count(*) FROM audit_events WHERE tenant_id != '$TENANT_A';
+-- Expected: 0 rows
+SQL
+```
+
+### Verification via API
+
+```bash
+# Login as Tenant A user
+JWT_A=$(curl -s -X POST $API/api/v1/auth/login \
+    -H "X-Tenant-ID: $TENANT_A" \
+    -d '{"username":"alice","password":"pass"}' | jq -r '.access_token')
+
+# Try to access Tenant B's users (should fail)
+COUNT=$(curl -s $API/api/v1/users \
+    -H "Authorization: Bearer $JWT_A" \
+    -H "X-Tenant-ID: $TENANT_B" | jq '.data | length')
+
+echo "Cross-tenant access returned: $COUNT users"
+# Expected: 0 or 403 error
+```
+
+### RLS Audit Query
+
+```sql
+-- Verify all tenant-scoped tables have RLS enabled
+SELECT
+    relname AS table_name,
+    relrowsecurity AS rls_enabled,
+    relforcerowsecurity AS rls_forced
+FROM pg_class
+WHERE relname IN (
+    'users', 'credentials', 'roles', 'user_roles',
+    'sessions', 'refresh_tokens', 'api_keys',
+    'webauthn_credentials', 'audit_events',
+    'oauth_clients', 'oauth_consent', 'organizations'
+)
+ORDER BY relname;
+```
+
+---
+
 ## References
 
 - [Multi-Tenant Architecture](./multi-tenant-architecture.md) — Design document
