@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { useApi } from "@/lib/api";
 import {
   Building2,
@@ -52,7 +53,7 @@ interface Member {
   team_id?: string;
 }
 
-type Tab = "orgs" | "depts" | "teams" | "tree";
+type Tab = "orgs" | "depts" | "teams" | "tree" | "members";
 
 interface TreeData {
   organizations: Organization[];
@@ -73,6 +74,8 @@ export default function OrganizationsPage() {
   const [depts, setDepts] = useState<Department[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+  const [orgMembers, setOrgMembers] = useState<Member[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
 
   // Tree view state
   const [treeData, setTreeData] = useState<TreeData | null>(null);
@@ -452,6 +455,7 @@ export default function OrganizationsPage() {
         <TabButton active={tab === "depts"} onClick={() => setTab("depts")} icon={Network} label={`Departments (${depts.length})`} />
         <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Users} label={`Teams (${teams.length})`} />
         <TabButton active={tab === "tree"} onClick={() => setTab("tree")} icon={Layers} label="Tree View" />
+        <TabButton active={tab === "members"} onClick={() => setTab("members")} icon={Users} label="Members" />
       </div>
 
       {/* Content */}
@@ -568,7 +572,103 @@ export default function OrganizationsPage() {
         ) : (
           <UnifiedTreeView treeData={treeData} memberCounts={memberCounts} />
         )
+      ) : tab === "members" ? (
+        /* ===== Members Detail ===== */
+        !selectedOrgId ? (
+          <EmptyState icon={Users} title="Select an organization" subtitle="Choose an organization to view its members" />
+        ) : (
+          <MembersDetail
+            orgId={selectedOrgId}
+            orgName={orgs.find((o) => o.id === selectedOrgId)?.name || ""}
+            apiFetch={apiFetch}
+          />
+        )
       ) : null}
+    </div>
+  );
+}
+
+// ===== Members Detail Component =====
+
+function MembersDetail({
+  orgId,
+  orgName,
+  apiFetch,
+}: {
+  orgId: string;
+  orgName: string;
+  apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
+}) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const data = await apiFetch<{ members?: Member[] }>(`/api/v1/orgs/${orgId}/members`);
+        setMembers(data.members || []);
+      } catch {
+        setMembers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [orgId, apiFetch]);
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case "active": return "bg-green-100 text-green-700";
+      case "invited": return "bg-blue-100 text-blue-700";
+      case "suspended": return "bg-red-100 text-red-700";
+      default: return "bg-gray-100 text-gray-600";
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="border-b border-gray-200 p-4">
+        <h3 className="text-sm font-semibold">
+          Members of {orgName} ({members.length})
+        </h3>
+      </div>
+      {loading ? (
+        <p className="p-8 text-center text-gray-500">Loading...</p>
+      ) : members.length === 0 ? (
+        <p className="p-8 text-center text-gray-500">No members in this organization</p>
+      ) : (
+        <table className="w-full">
+          <thead className="border-b border-gray-100 bg-gray-50">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">User ID</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Title</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Department</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {members.map((m) => (
+              <tr key={m.id} className="hover:bg-gray-50">
+                <td className="px-4 py-2">
+                  <Link href={`/users/${m.user_id}`} className="font-mono text-xs text-brand-600 hover:underline">
+                    {m.user_id.slice(0, 12)}...
+                  </Link>
+                </td>
+                <td className="px-4 py-2 text-sm">{m.title || "-"}</td>
+                <td className="px-4 py-2">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColor(m.status)}`}>
+                    {m.status}
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-sm text-gray-500">
+                  {m.dept_id ? m.dept_id.slice(0, 8) + "..." : "-"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
