@@ -1,312 +1,249 @@
 # GGID Testing Guide
 
-Comprehensive testing strategy for the GGID IAM Platform.
-
-## Test Pyramid
-
-```
-                    /\
-                   /E2E\          deploy/e2e-docker-test.sh
-                  /------\        (requires Docker stack)
-                 /Integration\    //go:build integration
-                /--------------\  (requires running services)
-               /  Unit Tests   \  service/internal/*_test.go
-              /------------------\ (mock-based, no external deps)
-```
-
-## Unit Tests
-
-The primary test type — fast, isolated, mock-based.
-
-### Running
-
-```bash
-make test                    # all packages
-go test -v ./services/auth/internal/service/...
-go test -race -cover ./...   # with race detector + coverage
-```
-
-### Mock Strategy
-
-Services depend on **repo interfaces**, enabling mock substitution:
-
-```go
-// Interface in service package
-type CredentialRepo interface {
-    GetByUserID(ctx context.Context, tenantID, userID uuid.UUID) (*domain.Credential, error)
-}
-
-// Mock in test file
-type mockCredentialRepo struct {
-    creds map[uuid.UUID]*domain.Credential
-    err   error
-}
-
-func (m *mockCredentialRepo) GetByUserID(ctx context.Context, tenantID, userID uuid.UUID) (*domain.Credential, error) {
-    if m.err != nil { return nil, m.err }
-    return m.creds[userID], nil
-}
-
-// Test uses mock
-func TestLogin(t *testing.T) {
-    repo := &mockCredentialRepo{creds: map[uuid.UUID]*domain.Credential{...}}
-    svc := NewAuthService(repo)
-    _, err := svc.Login(ctx, "user", "pass")
-    assert.NoError(t, err)
-}
-```
-
-### Coverage Targets
-
-| Package | Current | Target |
-|---------|---------|--------|
-| pkg/errors | 100% | Maintain |
-| pkg/tenant | 100% | Maintain |
-| audit/service | 100% | Maintain |
-| policy/service | 93.9% | >90% |
-| auth/domain | 92.9% | >90% |
-| authprovider | 88.1% | >85% |
-| auth/service | 72.2% | >75% |
-| identity/service | 72.3% | >75% |
-| policy | 54.6% | >60% |
-
-## Integration Tests
-
-Tagged with `//go:build integration` — require running services.
-
-```bash
-# Start Docker stack
-cd deploy && docker compose up -d
-sleep 30
-
-# Run integration tests
-go test -tags=integration -v ./test/integration/...
-```
-
-Tests gracefully skip if services are unavailable.
-
-## E2E Tests (Docker)
-
-Full end-to-end through the Gateway:
-
-```bash
-bash deploy/e2e-docker-test.sh
-```
-
-**11 tests:**
-
-| # | Test | Expected |
-|---|------|----------|
-| 1 | Gateway healthz | 200 |
-| 2 | Register user | 201 |
-| 3 | Login + JWT | 693+ chars |
-| 4 | 401 without JWT | 401 |
-| 5 | List users | 200 |
-| 6 | Create role | 201 |
-| 7 | List roles | 200 |
-| 8 | Create org | 201 |
-| 9 | Audit query | 200 |
-| 10 | Wrong password | 401 |
-| 11 | Duplicate register | 409 |
-
-## k6 Performance Tests
-
-```bash
-k6 run deploy/k6/login-bench.js      # login benchmark
-k6 run deploy/k6/api-bench.js        # full API benchmark
-k6 run deploy/k6/mixed-workload.js   # mixed read/write
-```
-
-Key thresholds: p95 < 100ms, error rate < 1%.
-
-## Test Conventions
-
-1. **Run `go build ./...` before `go test`** — catch compilation errors first
-2. **Use interface mocks** — never connect to real DB in unit tests
-3. **Table-driven tests** for multi-scenario logic
-4. **`t.Helper()`** in assertion helpers
-5. **No `time.Sleep`** — use channels or `eventually` patterns
-6. **Test file naming:** `*_test.go` in same package as code under test
-
-## Debugging Test Failures
-
-```bash
-# Verbose output
-go test -v ./services/auth/internal/service/... -run TestLogin
-
-# No cache
-go test -count=1 ./...
-
-# Race detector
-go test -race ./services/gateway/...
-
-# Specific test with timeout
-go test -v -timeout 30s -run TestCreateUser ./services/identity/...
-```
+This guide covers how to write, run, and maintain tests for the GGID IAM platform.
 
 ---
 
-## Test Strategy
-
-### Test Pyramid
-
-```mermaid
-graph TB
-    E2E[E2E Tests<br/>10 tests<br/>Full stack via Docker]
-    INT[Integration Tests<br/>10 tests<br/>Real DB/Redis/NATS]
-    UNIT[Unit Tests<br/>250+ tests<br/>Mock repos, fast]
-
-    E2E --> INT --> UNIT
-
-    style E2E fill:#e74c3c,color:#fff
-    style INT fill:#e67e22,color:#fff
-    style UNIT fill:#27ae60,color:#fff
-```
-
-### Unit Tests
-
-- **What:** Service-layer logic with mocked repositories
-- **Speed:** <1ms per test
-- **Coverage target:** 85%+ per package
-- **Mocking:** Interface-based — each service defines its repo interfaces, tests
-  provide mock implementations
+## Quick Start
 
 ```bash
-# Run unit tests for one package
-go test -count=1 -v ./services/auth/internal/service/
+# Run all tests with coverage
+make test
 
-# Run a single test function
-go test -count=1 -v -run TestAuthService_Login ./services/auth/internal/service/
-```
+# Run a specific package
+go test -v ./pkg/crypto/
 
-### Integration Tests
+# Run a specific test
+go test -v -run TestCrypto_AES ./pkg/crypto/
 
-- **What:** Tests that exercise real database, Redis, NATS connections
-- **Build tag:** `//go:build integration`
-- **Speed:** 1-5 seconds per test (includes setup/teardown)
-- **Requirements:** Running PostgreSQL, Redis, NATS (via Docker)
+# Run with race detector
+go test -race ./...
 
-```bash
-# Start infrastructure
-docker compose -f deploy/docker-compose.yaml up -d postgres redis nats
-
-# Run integration tests
+# Run integration tests (requires NATS, PostgreSQL)
 go test -tags=integration -v ./test/integration/
-
-# Run Gateway E2E tests
-go test -tags=integration -v ./test/integration/ -run TestGatewayE2E
-```
-
-### E2E Tests
-
-- **What:** Full stack tests through the API Gateway
-- **Requirements:** All 12 Docker containers running
-- **Speed:** 30-60 seconds total
-
-```bash
-# Start full stack
-docker compose -f deploy/docker-compose.yaml up -d
-sleep 30  # wait for healthchecks
-
-# Run E2E test suite
-bash deploy/e2e-docker-test.sh
 ```
 
 ---
 
-## Mock Strategy
+## Test Commands
 
-GGID uses interface-based mocking. Services depend on interfaces, not
-concrete repository types:
-
-```go
-// Service depends on interface
-type AuthService struct {
-    credRepo CredentialRepo  // interface, not *repository.CredentialRepository
-}
-
-// Interface
-type CredentialRepo interface {
-    FindByIDentifier(ctx context.Context, tenantID, identifier string) (*domain.Credential, error)
-}
-
-// Test provides mock
-type mockCredentialRepo struct {
-    creds map[string]*domain.Credential
-    err   error
-}
-
-func (m *mockCredentialRepo) FindByIDentifier(ctx context.Context, tenantID, id string) (*domain.Credential, error) {
-    if m.err != nil { return nil, m.err }
-    return m.creds[id], nil
-}
-```
-
-### Mock Components
-
-| Component | Mock Method | Library |
-|-----------|-------------|---------|
-| PostgreSQL | Interface mock | Hand-written |
-| Redis | `miniredis` | `github.com/alicebob/miniredis/v2` |
-| NATS | Embedded test server | `natsserver.RunServer` |
-| LDAP | `fakeLDAPServer` | Hand-written |
-| HTTP client | `httptest.Server` | stdlib |
-| OAuth provider | Override `oauth2.Endpoint` | stdlib |
+| Command | Description |
+|---------|-------------|
+| `make test` | Run all unit tests with coverage |
+| `go test -race ./...` | Run with race detector |
+| `go test -coverprofile=coverage.out ./...` | Generate coverage profile |
+| `go tool cover -html=coverage.out` | View coverage in browser |
+| `go test -tags=integration ./...` | Run integration tests |
+| `bash deploy/e2e-docker-test.sh` | Run Docker E2E tests |
 
 ---
 
 ## Coverage Targets
 
-| Package Tier | Target | Current |
-|-------------|--------|---------|
-| Core (errors, tenant, crypto) | 100% | 89-100% |
-| Shared (authprovider, social, saml) | 90%+ | 70-97% |
-| Services (auth, oauth, policy) | 85%+ | 83-97% |
-| Gateway (middleware, router) | 85%+ | 84-93% |
-| Infra (http3, config, healthcheck) | 90%+ | 90-97% |
-
-```bash
-# Check coverage for a specific package
-go test -cover ./services/auth/internal/service/
-
-# Generate HTML coverage report
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out -o coverage.html
-open coverage.html
-```
+| Package | Current | Target | Owner |
+|---------|---------|--------|-------|
+| pkg/errors | 100% | 100% | arch |
+| pkg/tenant | 100% | 100% | arch |
+| pkg/saml | 100% | 100% | dev |
+| pkg/i18n | 100% | 100% | arch |
+| pkg/authprovider | 97% | 95% | dev |
+| pkg/config | 97% | 95% | arch |
+| pkg/healthcheck | 97% | 95% | arch |
+| pkg/pii | 96.6% | 95% | arch |
+| pkg/social | 92.8% | 95% | dev |
+| pkg/notification | 91.5% | 90% | arch |
+| pkg/crypto | 89.4% | 90% | arch |
+| pkg/audit | 82.4% | 85% | arch |
+| pkg/email | 80.2% | 80% | arch |
+| services/audit/service | 100% | 100% | dev3 |
+| services/audit/server | 93.2% | 90% | dev3 |
+| services/auth/domain | 98.5% | 95% | dev |
+| services/auth/service | 86.0% | 85% | dev |
+| services/auth/webauthn | 81.7% | 85% | dev |
+| services/gateway/middleware | 86.7% | 90% | dev2 |
+| services/gateway/router | 95.1% | 95% | dev2 |
+| services/gateway/transport | 100% | 100% | dev2 |
+| services/gateway/webhooks | 100% | 100% | dev2 |
+| services/identity/service | 98.5% | 95% | dev |
+| services/oauth/service | 95.7% | 95% | dev |
+| services/org/service | 98.7% | 95% | dev3 |
+| services/policy/service | 97.1% | 95% | dev3 |
+| services/policy/server | 90.9% | 90% | dev3 |
 
 ---
 
-## Adding New Tests
+## Test Naming Conventions
 
-1. **Create test file** in the same package: `service_test.go`
-2. **Define mock** for any repo interfaces the service needs
-3. **Write test functions** following `Test<ServiceName>_<Scenario>` convention
-4. **Use table-driven tests** for multiple scenarios:
+Follow Go community conventions:
 
 ```go
-func TestAuthService_Login(t *testing.T) {
-    tests := []struct {
-        name      string
-        username  string
-        password  string
-        wantErr   bool
-    }{
-        {"valid login", "alice", "correct-pass", false},
-        {"wrong password", "alice", "wrong-pass", true},
-        {"user not found", "unknown", "any", true},
-        {"empty username", "", "pass", true},
-    }
+// Unit tests
+func TestFunctionName_Scenario(t *testing.T) { }
 
+// Table-driven tests
+func TestVerifyPassword(t *testing.T) {
+    tests := []struct {
+        name     string
+        password string
+        hash     string
+        want     bool
+        wantErr  bool
+    }{
+        {"valid", "pw", hash, true, false},
+        {"invalid", "wrong", hash, false, false},
+    }
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            // Setup mock, call service, assert
+            got, err := VerifyPassword(tt.password, tt.hash)
+            if (err != nil) != tt.wantErr {
+                t.Errorf("error = %v, wantErr %v", err, tt.wantErr)
+            }
+            if got != tt.want {
+                t.Errorf("got %v, want %v", got, tt.want)
+            }
         })
     }
 }
 ```
 
-5. **Run tests** before committing:
-   ```bash
-   go build ./... && go test -count=1 -race ./your/package/...
-   ```
+### Naming Patterns
+
+| Pattern | Example | When to use |
+|---------|---------|-------------|
+| `TestFunc_Success` | `TestHashPassword_Success` | Happy path |
+| `TestFunc_ErrorCase` | `TestVerifyPassword_InvalidFormat` | Error path |
+| `TestFunc_EdgeCase` | `TestGenerateRandomToken_ZeroLength` | Boundary |
+| `TestFunc_RoundTrip` | `TestAES_RoundTrip` | Serialize/deserialize |
+| `TestFunc_Concurrency` | `TestJWKS_ConcurrentAccess` | Race conditions |
+
+---
+
+## Mock Patterns
+
+### Interface-based mocks
+
+GGID uses interface-based mocking. Define interfaces for external dependencies:
+
+```go
+// Production code
+type CredentialStore interface {
+    GetCredential(id uuid.UUID) (*Credential, error)
+    SaveCredential(cred *Credential) error
+}
+
+// Test code — implement the interface inline
+type mockCredentialStore struct {
+    credentials map[uuid.UUID]*Credential
+    err         error
+}
+
+func (m *mockCredentialStore) GetCredential(id uuid.UUID) (*Credential, error) {
+    if m.err != nil {
+        return nil, m.err
+    }
+    return m.credentials[id], nil
+}
+```
+
+### HTTP mock server
+
+For OAuth/social connector tests, use `httptest.Server`:
+
+```go
+ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    if r.Method == http.MethodPost {
+        json.NewEncoder(w).Encode(map[string]string{
+            "access_token": "mock-token",
+            "token_type":   "Bearer",
+        })
+        return
+    }
+    json.NewEncoder(w).Encode(map[string]any{
+        "id":    "12345",
+        "email": "user@example.com",
+    })
+}))
+defer ts.Close()
+
+// Override the connector's endpoint to point to mock server
+connector.(*googleConnector).config.Endpoint = oauth2.Endpoint{
+    AuthURL:  ts.URL + "/auth",
+    TokenURL: ts.URL + "/token",
+}
+```
+
+### Embedded NATS server
+
+For audit/integration tests requiring NATS:
+
+```go
+func startTestServer(t *testing.T) (*server.Server, *nats.Conn) {
+    t.Helper()
+    opts := &server.Options{
+        Port:      -1,
+        JetStream: true,
+        StoreDir:  t.TempDir(),
+    }
+    s := natsserver.RunServer(opts)
+    t.Cleanup(s.Shutdown)
+    // ...
+    return s, nc
+}
+```
+
+---
+
+## Integration Tests
+
+Integration tests live in `test/integration/` and use the `integration` build tag:
+
+```bash
+go test -tags=integration -v ./test/integration/
+```
+
+These tests require:
+- PostgreSQL 16 (with RLS enabled)
+- Redis 7
+- NATS JetStream
+- OpenLDAP (optional)
+
+### Gateway E2E Tests
+
+The Gateway E2E test suite verifies the full request flow:
+register → login → JWT → CRUD → 401 → revoke.
+
+```bash
+bash deploy/e2e-docker-test.sh
+```
+
+---
+
+## Common Pitfalls
+
+1. **Duplicate test names** — Go does not allow two `func TestXxx` in the same package across files. Use suffixes like `_V2`, `_Sprint9`.
+
+2. **API signature mismatches** — Always run `go build ./...` before `make test` after editing production code.
+
+3. **Unsealed mocks** — If your mock implements an interface, ensure ALL methods are implemented. Missing methods cause compile errors.
+
+4. **Goroutine leaks** — Always use `defer cancel()` for contexts, `defer ts.Close()` for test servers, and `t.Cleanup()` for resources.
+
+5. **Time-sensitive tests** — Use `time.Sleep` sparingly. Prefer channels with timeouts for async assertions.
+
+---
+
+## CI/CD Integration
+
+The GitHub Actions CI pipeline (`.github/workflows/ci.yml`) runs:
+
+1. **Go Build & Test** — `go build ./... && go test -race -cover`
+2. **Security Scan** — Trivy vulnerability scanner
+3. **Helm Chart Lint** — `helm lint deploy/helm/ggid`
+4. **Console Build** — `npm run build` for Next.js
+5. **Docker E2E** — Full stack deployment and E2E test suite
+
+Coverage results are uploaded as artifacts for each PR.
+
+---
+
+*Last updated: Phase 10*
