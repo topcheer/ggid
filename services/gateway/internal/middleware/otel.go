@@ -2,9 +2,11 @@
 package middleware
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -66,6 +68,12 @@ type TraceExporter struct {
 // NewTraceExporter creates a background span exporter.
 // If OTLPEndpoint is empty, spans are logged to stderr instead.
 func NewTraceExporter(cfg TracingConfig) *TraceExporter {
+	if cfg.ExportInterval <= 0 {
+		cfg.ExportInterval = 5 * time.Second
+	}
+	if cfg.TraceIDHeader == "" {
+		cfg.TraceIDHeader = "traceparent"
+	}
 	exp := &TraceExporter{
 		spans:  make(chan *Span, 1000),
 		config: cfg,
@@ -122,16 +130,115 @@ func (e *TraceExporter) export(spans []*Span) {
 		}
 		return
 	}
-	// In production, this would send OTLP gRPC/HTTP to collector
-	// For now, we format as OTLP-compatible JSON
-	for _, s := range spans {
-		fmt.Fprintf(os.Stderr,
-			`{"otel":"trace","trace_id":"%s","span_id":"%s","name":"%s","duration_ms":%d,"endpoint":"%s"}`+"\n",
-			s.TraceID, s.SpanID, s.Name,
-			s.EndTime.Sub(s.StartTime).Milliseconds(),
-			e.config.OTLPEndpoint,
-		)
+	// Send OTLP/HTTP JSON to collector (Jaeger, Tempo, etc.)
+	// OTLP endpoint format: http://host:4318/v1/traces
+	endpoint := e.config.OTLPEndpoint
+	if !strings.HasPrefix(endpoint, "http") {
+		endpoint = "http://" + endpoint
 	}
+	if !strings.HasSuffix(endpoint, "/v1/traces") {
+		endpoint = strings.TrimSuffix(endpoint, "/") + "/v1/traces"
+	}
+
+	payload := otlpTracesRequest{
+		ResourceSpans: []otlpResourceSpans{{
+			Resource: otlpResource{Attributes: []otlpKV{
+				{Key: "service.name", Value: otlpValue{StringValue: e.config.ServiceName}},
+			}},
+			ScopeSpans: []otlpScopeSpans{{
+				Spans: e.toOTLPSpans(spans),
+			}},
+		}},
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+	req, err := http.NewRequest("POST", endpoint, bytes.NewReader(body))
+	if err != nil {
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		// Fallback: log to stderr
+		for _, s := range spans {
+			fmt.Fprintf(os.Stderr, `{"otel":"fallback","trace_id":"%s","name":"%s","err":"%v"}`+"\n", s.TraceID, s.Name, err)
+		}
+		return
+	}
+	resp.Body.Close()
+}
+
+// toOTLPSpans converts internal spans to OTLP format.
+func (e *TraceExporter) toOTLPSpans(spans []*Span) []otlpSpan {
+	result := make([]otlpSpan, 0, len(spans))
+	for _, s := range spans {
+		attrs := make([]otlpKV, 0, len(s.Attributes))
+		for k, v := range s.Attributes {
+			attrs = append(attrs, otlpKV{Key: k, Value: otlpValue{StringValue: v}})
+		}
+		statusCode := otlpStatusOK
+		if s.StatusCode >= 400 {
+			statusCode = otlpStatusError
+		}
+		result = append(result, otlpSpan{
+			TraceID:    s.TraceID,
+			SpanID:     s.SpanID,
+			ParentID:   s.ParentID,
+			Name:       s.Name,
+			StartTime:  s.StartTime.UnixNano(),
+			EndTime:    s.EndTime.UnixNano(),
+			StatusCode: statusCode,
+			Attributes: attrs,
+		})
+	}
+	return result
+}
+
+// OTLP JSON types (OpenTelemetry Protocol HTTP/JSON encoding)
+const (
+	otlpStatusOK    = 1
+	otlpStatusError = 2
+)
+
+type otlpTracesRequest struct {
+	ResourceSpans []otlpResourceSpans `json:"resourceSpans"`
+}
+
+type otlpResourceSpans struct {
+	Resource   otlpResource     `json:"resource"`
+	ScopeSpans []otlpScopeSpans `json:"scopeSpans"`
+}
+
+type otlpResource struct {
+	Attributes []otlpKV `json:"attributes"`
+}
+
+type otlpScopeSpans struct {
+	Spans []otlpSpan `json:"spans"`
+}
+
+type otlpSpan struct {
+	TraceID    string   `json:"traceId"`
+	SpanID     string   `json:"spanId"`
+	ParentID   string   `json:"parentSpanId,omitempty"`
+	Name       string   `json:"name"`
+	StartTime  int64    `json:"startTimeUnixNano"`
+	EndTime    int64    `json:"endTimeUnixNano"`
+	StatusCode int      `json:"statusCode"`
+	Attributes []otlpKV `json:"attributes,omitempty"`
+}
+
+type otlpKV struct {
+	Key   string    `json:"key"`
+	Value otlpValue `json:"value"`
+}
+
+type otlpValue struct {
+	StringValue string `json:"stringValue,omitempty"`
 }
 
 // Export sends a span to the exporter.

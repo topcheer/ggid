@@ -157,7 +157,8 @@ type graphqlField struct {
 }
 
 // parseGraphQLFields extracts top-level field names from a GraphQL query.
-// This is a simple parser — not a full GraphQL engine.
+// This is a simple parser — not a full GraphQL engine. It tracks brace depth
+// to only return fields at depth 1 (direct children of the root operation).
 func parseGraphQLFields(query string) []graphqlField {
 	// Remove query wrapper
 	query = strings.TrimSpace(query)
@@ -169,33 +170,44 @@ func parseGraphQLFields(query string) []graphqlField {
 	}
 
 	var fields []graphqlField
-	// Simple regex-like extraction: { fieldName(args) { ... } }
 	lines := strings.Split(query, "\n")
+	depth := 0
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "{") || strings.HasPrefix(line, "}") {
-			continue
-		}
-		// Extract field name
-		fieldName := extractFieldName(line)
-		if fieldName == "" {
+		if line == "" {
 			continue
 		}
 
-		args := extractArgs(line)
-		gf := graphqlField{
-			Name: fieldName,
-			Type: fieldName,
-			Path: typeToPath(fieldName, args),
+		// Track brace depth.
+		opens := strings.Count(line, "{")
+		closes := strings.Count(line, "}")
+
+		// At depth 1 (after root "{"), extract the field.
+		if depth == 1 && !strings.HasPrefix(line, "{") && !strings.HasPrefix(line, "}") {
+			fieldName := extractFieldName(line)
+			if fieldName != "" {
+				args := extractArgs(line)
+				gf := graphqlField{
+					Name: fieldName,
+					Type: fieldName,
+					Path: typeToPath(fieldName, args),
+				}
+				fields = append(fields, gf)
+			}
 		}
-		fields = append(fields, gf)
+
+		depth += opens - closes
 	}
 	return fields
 }
 
 func extractFieldName(line string) string {
-	// Remove leading/trailing braces
+	// Remove leading/trailing braces and spaces
 	line = strings.Trim(line, " {}")
+	// Stop at "(" for argument lists
+	if idx := strings.Index(line, "("); idx >= 0 {
+		line = line[:idx]
+	}
 	// Get the first word
 	parts := strings.Fields(line)
 	if len(parts) == 0 {
