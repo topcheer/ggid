@@ -770,3 +770,240 @@ All errors follow the same format:
 | 500 | Internal Error | Server bug (check logs) |
 | 502 | Bad Gateway | Backend service down |
 | 503 | Service Unavailable | Backend unhealthy |
+
+---
+
+## Complete End-to-End Walkthrough
+
+A full real-world scenario: register admin → login → create role → assign
+permissions → create organization → create user → assign role → query audit.
+
+### Setup
+
+```bash
+export GW="http://localhost:8080"
+export TENANT="00000000-0000-0000-0000-000000000001"
+```
+
+### Step 1: Register Admin User
+
+```bash
+# Register the first admin user
+curl -sX POST "$GW/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "username": "admin.alice",
+    "email": "alice@acme.com",
+    "password": "Sup3rSecure!Pass"
+  }' | jq .
+
+# Response: 201 Created
+# { "user_id": "550e8400-...", "message": "user registered" }
+```
+
+### Step 2: Login and Get JWT
+
+```bash
+export TOKEN=$(curl -sX POST "$GW/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "username": "admin.alice",
+    "password": "Sup3rSecure!Pass"
+  }' | jq -r '.access_token')
+
+echo "JWT length: ${#TOKEN}"
+# JWT length: 693
+```
+
+### Step 3: Create a Role with Permissions
+
+```bash
+curl -sX POST "$GW/api/v1/roles" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "key": "hr-manager",
+    "name": "HR Manager",
+    "description": "Manages user accounts and roles",
+    "permissions": ["read:users", "write:users", "read:roles", "assign:roles"]
+  }' | jq .
+
+# Response: 201 Created
+# { "id": "role-uuid", "key": "hr-manager", ... }
+```
+
+### Step 4: Create an Organization
+
+```bash
+curl -sX POST "$GW/api/v1/organizations" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "name": "Acme Corporation",
+    "type": "company",
+    "parent_id": null
+  }' | jq .
+
+# Response: 201 Created
+# { "id": "org-uuid", "name": "Acme Corporation", ... }
+
+# Create a department under the org
+export ORG_ID=$(curl -s "$GW/api/v1/organizations" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq -r '.items[0].id')
+
+curl -sX POST "$GW/api/v1/organizations" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d "{
+    \"name\": \"Engineering Department\",
+    \"type\": \"department\",
+    \"parent_id\": \"$ORG_ID\"
+  }" | jq .
+```
+
+### Step 5: Create a New User
+
+```bash
+curl -sX POST "$GW/api/v1/users" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "username": "bob.engineer",
+    "email": "bob@acme.com",
+    "first_name": "Bob",
+    "last_name": "Smith",
+    "active": true
+  }' | jq .
+
+# Response: 201 Created
+# { "id": "user-bob-uuid", ... }
+
+export BOB_ID=$(curl -s "$GW/api/v1/users?username=bob.engineer" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq -r '.items[0].id')
+```
+
+### Step 6: Assign Role to User
+
+```bash
+curl -sX POST "$GW/api/v1/users/$BOB_ID/roles" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "role_key": "hr-manager"
+  }' | jq .
+
+# Response: 200 OK
+# { "message": "role assigned" }
+```
+
+### Step 7: Verify Permissions (Policy Check)
+
+```bash
+curl -sX POST "$GW/api/v1/policies/check" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d "{
+    \"subject\": \"$BOB_ID\",
+    \"action\": \"write\",
+    \"resource\": \"users\"
+  }" | jq .
+
+# Response: 200 OK
+# { "allowed": true, "reason": "role hr-manager grants write:users" }
+```
+
+### Step 8: Query Audit Trail
+
+```bash
+# All events in the last hour
+curl -s "$GW/api/v1/audit/events?limit=20&sort=-timestamp" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" | jq '.events[] | {
+    action: .action,
+    actor: .actor_name,
+    time: .timestamp
+  }'
+
+# Response:
+# {
+#   "action": "role.assign",
+#   "actor": "admin.alice",
+#   "time": "2024-01-15T10:35:00Z"
+# }
+# {
+#   "action": "user.create",
+#   "actor": "admin.alice",
+#   "time": "2024-01-15T10:33:00Z"
+# }
+# {
+#   "action": "user.login",
+#   "actor": "admin.alice",
+#   "time": "2024-01-15T10:30:00Z"
+# }
+# {
+#   "action": "user.register",
+#   "actor": "admin.alice",
+#   "time": "2024-01-15T10:28:00Z"
+# }
+```
+
+### Full Script
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+GW="${GW:-http://localhost:8080}"
+TENANT="${TENANT:-00000000-0000-0000-0000-000000000001}"
+
+echo "=== 1. Register ==="
+curl -sfX POST "$GW/api/v1/auth/register" \
+  -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"admin.alice","email":"alice@acme.com","password":"Sup3rSecure!Pass"}' | jq .
+
+echo "=== 2. Login ==="
+TOKEN=$(curl -sfX POST "$GW/api/v1/auth/login" \
+  -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"admin.alice","password":"Sup3rSecure!Pass"}' | jq -r '.access_token')
+
+echo "=== 3. Create Role ==="
+curl -sfX POST "$GW/api/v1/roles" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d '{"key":"hr-manager","name":"HR Manager","permissions":["read:users","write:users"]}' | jq .
+
+echo "=== 4. Create Org ==="
+curl -sfX POST "$GW/api/v1/organizations" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d '{"name":"Acme Corp","type":"company"}' | jq .
+
+echo "=== 5. Create User ==="
+BOB_ID=$(curl -sfX POST "$GW/api/v1/users" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"bob","email":"bob@acme.com","first_name":"Bob"}' | jq -r '.id')
+
+echo "=== 6. Assign Role ==="
+curl -sfX POST "$GW/api/v1/users/$BOB_ID/roles" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d '{"role_key":"hr-manager"}' | jq .
+
+echo "=== 7. Policy Check ==="
+curl -sfX POST "$GW/api/v1/policies/check" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d "{\"subject\":\"$BOB_ID\",\"action\":\"write\",\"resource\":\"users\"}" | jq .
+
+echo "=== 8. Audit Trail ==="
+curl -sf "$GW/api/v1/audit/events?limit=10" \
+  -H "Authorization: Bearer $TOKEN" -H "X-Tenant-ID: $TENANT" | jq -c '.events[] | {action,actor:.actor_name,time:.timestamp}'
+
+echo "=== Done ==="
+```
