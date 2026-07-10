@@ -148,8 +148,16 @@ func (ts *TokenService) RotateRefreshToken(ctx context.Context, plaintext string
 	if err != nil {
 		return "", nil, fmt.Errorf("find refresh token: %w", err)
 	}
-	if oldToken == nil || !oldToken.IsActive() {
+	if oldToken == nil {
 		return "", nil, fmt.Errorf("refresh token is invalid or expired")
+	}
+
+	// Replay attack detection: if the token has already been revoked,
+	// an attacker may be reusing a stolen old token. Revoke ALL tokens
+	// for the same session to invalidate the entire chain (RFC 6749 §10.4).
+	if !oldToken.IsActive() {
+		_ = ts.refreshRepo.RevokeAllForSession(ctx, oldToken.SessionID)
+		return "", nil, fmt.Errorf("refresh token replay detected — session revoked")
 	}
 
 	// Revoke the old token

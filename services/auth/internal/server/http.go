@@ -49,6 +49,10 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/refresh", h.refresh)
 	h.mux.HandleFunc("/api/v1/auth/password/forgot", h.forgotPassword)
 	h.mux.HandleFunc("/api/v1/auth/password/reset", h.resetPassword)
+
+	// Password reset — arch-spec routes (aliases)
+	h.mux.HandleFunc("/api/v1/auth/forgot-password", h.forgotPassword)
+	h.mux.HandleFunc("/api/v1/auth/reset-password", h.resetPassword)
 	h.mux.HandleFunc("/api/v1/auth/password/change", h.changePassword)
 	h.mux.HandleFunc("/api/v1/auth/sessions", h.handleSessions)
 	h.mux.HandleFunc("/api/v1/auth/mfa/setup", h.mfaSetup)
@@ -66,6 +70,10 @@ func (h *Handler) registerRoutes() {
 	// Email verification
 	h.mux.HandleFunc("/api/v1/auth/email/verify", h.emailVerify)
 	h.mux.HandleFunc("/api/v1/auth/email/resend", h.emailResend)
+
+	// Email verification — arch-spec routes
+	h.mux.HandleFunc("/api/v1/auth/send-verification", h.sendVerification)
+	h.mux.HandleFunc("/api/v1/auth/verify-email", h.verifyEmail)
 
 	// Phone OTP authentication
 	h.mux.HandleFunc("/api/v1/auth/phone/send", h.phoneOTPSend)
@@ -649,28 +657,103 @@ func (h *Handler) emailVerify(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) emailResend(w http.ResponseWriter, r *http.Request) {
+	h.sendVerification(w, r)
+}
+
+// sendVerification handles POST /api/v1/auth/send-verification and /api/v1/auth/email/resend.
+// Generates a verification token, stores it in Redis (24h TTL), and returns it in dev mode.
+func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var body struct {
-		Email string `json:"email"`
+		Email   string `json:"email"`
+		UserID  string `json:"user_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	if body.Email == "" {
-		writeError(w, http.StatusBadRequest, "email is required")
+	if body.Email == "" && body.UserID == "" {
+		writeError(w, http.StatusBadRequest, "email or user_id is required")
 		return
 	}
 
-	// Don't reveal whether email exists.
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+
+	// If only email is provided, look up the user.
+	var userID uuid.UUID
+	if body.UserID != "" {
+		userID, err = uuid.Parse(body.UserID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid user_id")
+			return
+		}
+	} else {
+		user, err := h.authSvc.LookupUser(r.Context(), tc.TenantID, body.Email)
+		if err != nil || user == nil {
+			// Don't reveal whether email exists.
+			writeJSON(w, http.StatusOK, map[string]string{
+				"status":  "sent",
+				"message": "If the email exists, a verification link has been sent.",
+			})
+			return
+		}
+		userID = user.ID
+		if body.Email == "" {
+			body.Email = user.Email
+		}
+	}
+
+	token, err := h.authSvc.SendVerificationEmail(r.Context(), tc.TenantID, userID, body.Email)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to send verification email")
+		return
+	}
+
+	// Don't reveal whether email exists — but return token in dev mode.
 	writeJSON(w, http.StatusOK, map[string]string{
 		"status":  "sent",
 		"message": "If the email exists, a verification link has been sent.",
+		"token":   token, // dev mode only
 	})
+}
+
+// verifyEmail handles GET /api/v1/auth/verify-email?token=xxx.
+// Also supports POST with JSON body for API clients.
+func (h *Handler) verifyEmail(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	token := r.URL.Query().Get("token")
+	if token == "" && r.Method == http.MethodPost {
+		var body struct {
+			Token string `json:"token"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err == nil {
+			token = body.Token
+		}
+	}
+	if token == "" {
+		writeError(w, http.StatusBadRequest, "token is required")
+		return
+	}
+
+	_, _, _, err := h.authSvc.VerifyEmailToken(r.Context(), token)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid or expired verification token")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "verified"})
 }
 
 // --- Helpers ---

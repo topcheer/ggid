@@ -138,6 +138,17 @@ func (s *IdentityService) DisableUser(ctx context.Context, id uuid.UUID) (*domai
 	return s.setStatus(ctx, id, domain.UserStatusDisabled)
 }
 
+// DeactivateUser deactivates a user account (sets status to inactive/disabled,
+// prevents authentication). Alias for DisableUser with semantic clarity.
+func (s *IdentityService) DeactivateUser(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	return s.setStatus(ctx, id, domain.UserStatusDisabled)
+}
+
+// ActivateUser re-activates a deactivated user (sets status to active).
+func (s *IdentityService) ActivateUser(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	return s.setStatus(ctx, id, domain.UserStatusActive)
+}
+
 func (s *IdentityService) setStatus(ctx context.Context, id uuid.UUID, status domain.UserStatus) (*domain.User, error) {
 	tc, err := tenant.FromContext(ctx)
 	if err != nil {

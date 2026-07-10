@@ -386,6 +386,13 @@ func (s *AuthService) VerifyEmailToken(ctx context.Context, token string) (uuid.
 // PasswordPolicy returns the current password policy configuration.
 func (s *AuthService) PasswordPolicy() conf.PasswordPolicy { return s.cfg.Password }
 
+// SendVerificationEmail generates an email verification token (24h TTL) and
+// returns the plaintext token. In production the token is sent via email;
+// in dev mode it is returned for direct use.
+func (s *AuthService) SendVerificationEmail(ctx context.Context, tenantID, userID uuid.UUID, email string) (string, error) {
+	return s.emailService.IssueVerificationToken(ctx, tenantID, userID, email)
+}
+
 // --- Magic Link (Passwordless Login) ---
 
 // IssueMagicLink generates a one-time magic link token for passwordless login.

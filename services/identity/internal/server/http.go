@@ -109,6 +109,10 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.lockUser(ctx, userID, w, r)
 	case action == "unlock" && r.Method == http.MethodPost:
 		h.unlockUser(ctx, userID, w, r)
+	case action == "deactivate" && r.Method == http.MethodPost:
+		h.deactivateUser(ctx, userID, w, r)
+	case action == "activate" && r.Method == http.MethodPost:
+		h.activateUser(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -236,6 +240,24 @@ func (h *HTTPHandler) lockUser(ctx context.Context, userID uuid.UUID, w http.Res
 
 func (h *HTTPHandler) unlockUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	user, err := h.svc.UnlockUser(ctx, userID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, userToJSON(user))
+}
+
+func (h *HTTPHandler) deactivateUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	user, err := h.svc.DeactivateUser(ctx, userID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, userToJSON(user))
+}
+
+func (h *HTTPHandler) activateUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	user, err := h.svc.ActivateUser(ctx, userID)
 	if err != nil {
 		writeServiceError(w, err)
 		return
