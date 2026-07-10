@@ -52,6 +52,7 @@ type PasswordPolicy struct {
 	RequireLower   bool          `yaml:"require_lower"`
 	RequireDigit   bool          `yaml:"require_digit"`
 	RequireSpecial bool          `yaml:"require_special"`
+	Blacklist      []string      `yaml:"blacklist"`
 	HistoryCount   int           `yaml:"history_count"`
 	MaxAttempts    int           `yaml:"max_attempts"`
 	LockDuration   time.Duration `yaml:"lock_duration"`

@@ -164,11 +164,28 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	ip := clientIP(r)
 	userAgent := r.Header.Get("User-Agent")
 
+	// Check if the account is locked before attempting login.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		if h.authSvc.IsAccountLocked(r.Context(), tc.TenantID, req.Username) {
+			writeError(w, http.StatusLocked, "account is locked due to too many failed attempts")
+			return
+		}
+	}
+
 	tokens, err := h.authSvc.Login(r.Context(), req.Username, req.Password, ip, userAgent)
 	if err != nil {
+		// Record failed login attempt for lockout tracking.
+		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
+			_ = h.authSvc.RecordFailedLogin(r.Context(), tc.TenantID, req.Username)
+		}
 		log.Printf("login error for user %s: %v", req.Username, err)
 		writeAuthError(w, err)
 		return
+	}
+
+	// Reset failed login counter on success.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		h.authSvc.ResetFailedLogins(r.Context(), tc.TenantID, req.Username)
 	}
 
 	writeJSON(w, http.StatusOK, tokens)
@@ -534,9 +551,36 @@ func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
 
 // --- Password Policy ---
 
+// PasswordPolicyConfigRequest is the body for POST /api/v1/auth/password-policy.
+type PasswordPolicyConfigRequest struct {
+	MinLength      *int     `json:"min_length,omitempty"`
+	RequireUpper   *bool    `json:"require_uppercase,omitempty"`
+	RequireLower   *bool    `json:"require_lowercase,omitempty"`
+	RequireDigit   *bool    `json:"require_digit,omitempty"`
+	RequireSpecial *bool    `json:"require_special,omitempty"`
+	Blacklist      []string `json:"blacklist,omitempty"`
+}
+
 func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
-	policy := h.authSvc.PasswordPolicy()
-	writeJSON(w, http.StatusOK, policy)
+	switch r.Method {
+	case http.MethodGet:
+		policy := h.authSvc.PasswordPolicy()
+		writeJSON(w, http.StatusOK, policy)
+	case http.MethodPost:
+		var req PasswordPolicyConfigRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if err := h.authSvc.UpdatePasswordPolicy(req.MinLength, req.RequireUpper, req.RequireLower, req.RequireDigit, req.RequireSpecial, req.Blacklist); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		policy := h.authSvc.PasswordPolicy()
+		writeJSON(w, http.StatusOK, policy)
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }
 
 // --- Magic Link (Passwordless Login) ---
@@ -773,7 +817,9 @@ func writeAuthError(w http.ResponseWriter, err error) {
 	case stderrors.Is(err, service.ErrInvalidCredentials):
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 	case stderrors.Is(err, service.ErrAccountLocked):
-		writeError(w, http.StatusTooManyRequests, "account temporarily locked")
+		writeError(w, http.StatusLocked, "account temporarily locked")
+	case stderrors.Is(err, service.ErrMFASetupRequired):
+		writeError(w, http.StatusForbidden, err.Error())
 	case stderrors.Is(err, service.ErrRateLimited):
 		writeError(w, http.StatusTooManyRequests, "rate limit exceeded")
 	case stderrors.Is(err, service.ErrSessionNotFound):

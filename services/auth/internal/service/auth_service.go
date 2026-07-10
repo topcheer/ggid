@@ -109,6 +109,12 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 		}, nil
 	}
 
+	// 4c. Per-tenant MFA enforcement: if the tenant has force_mfa enabled,
+	// and the user has not set up MFA, block login with a setup-required error.
+	if s.IsForceMFA(ctx, tc.TenantID) {
+		return nil, ErrMFASetupRequired
+	}
+
 	// 5. Create session
 	_, session, err := s.sessionService.Create(ctx, CreateSessionParams{
 		TenantID:  tc.TenantID,
@@ -386,11 +392,93 @@ func (s *AuthService) VerifyEmailToken(ctx context.Context, token string) (uuid.
 // PasswordPolicy returns the current password policy configuration.
 func (s *AuthService) PasswordPolicy() conf.PasswordPolicy { return s.cfg.Password }
 
+// UpdatePasswordPolicy updates runtime-configurable password policy fields.
+// Only non-nil fields are applied; nil fields keep their current value.
+func (s *AuthService) UpdatePasswordPolicy(minLen *int, reqUpper, reqLower, reqDigit, reqSpecial *bool, blacklist []string) error {
+	policy := s.passwordService.GetPolicy()
+	if minLen != nil {
+		if *minLen < 1 || *minLen > 128 {
+			return fmt.Errorf("min_length must be between 1 and 128")
+		}
+		policy.MinLength = *minLen
+	}
+	if reqUpper != nil {
+		policy.RequireUpper = *reqUpper
+	}
+	if reqLower != nil {
+		policy.RequireLower = *reqLower
+	}
+	if reqDigit != nil {
+		policy.RequireDigit = *reqDigit
+	}
+	if reqSpecial != nil {
+		policy.RequireSpecial = *reqSpecial
+	}
+	if blacklist != nil {
+		policy.Blacklist = blacklist
+	}
+	s.passwordService.UpdatePolicy(policy)
+	s.cfg.Password = policy
+	return nil
+}
+
 // SendVerificationEmail generates an email verification token (24h TTL) and
 // returns the plaintext token. In production the token is sent via email;
 // in dev mode it is returned for direct use.
 func (s *AuthService) SendVerificationEmail(ctx context.Context, tenantID, userID uuid.UUID, email string) (string, error) {
 	return s.emailService.IssueVerificationToken(ctx, tenantID, userID, email)
+}
+
+// --- Per-Tenant MFA Enforcement ---
+
+// IsForceMFA checks if a tenant enforces MFA for all users.
+func (s *AuthService) IsForceMFA(ctx context.Context, tenantID uuid.UUID) bool {
+	key := fmt.Sprintf("ggid:force_mfa:%s", tenantID)
+	val, err := s.rateLimiter.rdb.Get(ctx, key).Result()
+	if err != nil {
+		return false
+	}
+	return val == "true"
+}
+
+// SetForceMFA enables or disables per-tenant MFA enforcement.
+func (s *AuthService) SetForceMFA(ctx context.Context, tenantID uuid.UUID, enabled bool) error {
+	key := fmt.Sprintf("ggid:force_mfa:%s", tenantID)
+	if enabled {
+		return s.rateLimiter.rdb.Set(ctx, key, "true", 0).Err()
+	}
+	return s.rateLimiter.rdb.Del(ctx, key).Err()
+}
+
+// --- Account Lockout ---
+
+// IsAccountLocked checks if an account is locked due to too many failed attempts.
+func (s *AuthService) IsAccountLocked(ctx context.Context, tenantID uuid.UUID, identifier string) bool {
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	count, err := s.rateLimiter.rdb.Get(ctx, key).Int()
+	if err != nil {
+		return false
+	}
+	return count >= s.cfg.Password.MaxAttempts
+}
+
+// RecordFailedLogin increments the failed attempt counter and locks if threshold reached.
+func (s *AuthService) RecordFailedLogin(ctx context.Context, tenantID uuid.UUID, identifier string) error {
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	count, err := s.rateLimiter.rdb.Incr(ctx, key).Result()
+	if err != nil {
+		return fmt.Errorf("increment lockout counter: %w", err)
+	}
+	if count == 1 {
+		s.rateLimiter.rdb.Expire(ctx, key, s.cfg.Password.LockDuration)
+	}
+	return nil
+}
+
+// ResetFailedLogins clears the failed attempt counter after successful login.
+func (s *AuthService) ResetFailedLogins(ctx context.Context, tenantID uuid.UUID, identifier string) {
+	key := fmt.Sprintf("ggid:lockout:%s:%s", tenantID, identifier)
+	s.rateLimiter.rdb.Del(ctx, key)
 }
 
 // --- Magic Link (Passwordless Login) ---

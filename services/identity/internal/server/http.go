@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/mail"
 	"strings"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
@@ -389,6 +390,33 @@ func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 
 		if username == "" || email == "" || password == "" {
 			results = append(results, importResult{Line: i + 1, Status: "error", Message: "empty fields"})
+			continue
+		}
+
+		// Email format validation.
+		if _, err := mail.ParseAddress(email); err != nil {
+			results = append(results, importResult{Line: i + 1, Status: "error", Message: "invalid email format"})
+			continue
+		}
+
+		// Password strength check (min 8 chars, must have upper+lower+digit).
+		if len(password) < 8 {
+			results = append(results, importResult{Line: i + 1, Status: "error", Message: "password must be at least 8 characters"})
+			continue
+		}
+		var hasUpper, hasLower, hasDigit bool
+		for _, ch := range password {
+			switch {
+			case 'A' <= ch && ch <= 'Z':
+				hasUpper = true
+			case 'a' <= ch && ch <= 'z':
+				hasLower = true
+			case '0' <= ch && ch <= '9':
+				hasDigit = true
+			}
+		}
+		if !hasUpper || !hasLower || !hasDigit {
+			results = append(results, importResult{Line: i + 1, Status: "error", Message: "password must contain uppercase, lowercase, and digit"})
 			continue
 		}
 
