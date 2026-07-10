@@ -69,12 +69,12 @@ Deliverables:
 **Priority:** P0 | **Effort:** Medium | **Reference:** Auth0 Universal Login, Clerk
 
 Deliverables:
-- [ ] Standalone login page served by Gateway or Auth Service
-- [ ] Username/password form
+- [x] Hosted login page at /login (Gateway)
+- [x] Username/password form (hosted)
 - [x] Social login buttons (Google/GitHub/SSO)
-- [ ] MFA challenge form (TOTP code entry)
-- [ ] Password reset flow UI
-- [ ] Registration form
+- [x] MFA challenge form (TOTP in hosted login)
+- [x] Password reset flow UI (/forgot-password)
+- [x] Registration form (/register)
 - [ ] Customizable branding (logo, colors, CSS per tenant)
 - [ ] Localization framework (Chinese + English)
 
@@ -101,8 +101,8 @@ Deliverables:
 **Priority:** P0 | **Effort:** Small
 
 Deliverables:
-- [ ] OpenAPI 3.0 spec for all REST endpoints
-- [ ] Swagger UI served at `/docs`
+- [x] OpenAPI 3.0 spec at /api-docs
+- [x] Swagger UI served at /docs
 - [ ] Postman collection export
 - [x] API reference documentation (docs/api-reference.md)
 
