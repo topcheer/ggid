@@ -80,3 +80,24 @@ type compressWriter = gzipResponseWriter
 
 // GzipBrotli is an alias for Gzip for backward compatibility.
 func GzipBrotli(next http.Handler) http.Handler { return Gzip(next) }
+
+// shouldSkipCompression returns true for content types that should not be compressed.
+func shouldSkipCompression(contentType string) bool {
+	ct := strings.ToLower(strings.TrimSpace(contentType))
+	if ct == "" {
+		return false
+	}
+	skipPrefixes := []string{
+		"image/", "video/", "audio/",
+		"application/zip", "application/gzip", "application/x-gzip",
+		"application/x-brotli", "application/x-bzip2",
+		"application/x-7z-compressed", "application/x-rar-compressed",
+		"application/pdf", "application/octet-stream",
+	}
+	for _, prefix := range skipPrefixes {
+		if strings.HasPrefix(ct, prefix) {
+			return true
+		}
+	}
+	return false
+}
