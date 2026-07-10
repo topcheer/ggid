@@ -296,14 +296,26 @@ func (h *Handler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.
 	sortDesc := sortOrder == "descending"
 
 	offset := startIndex - 1
+
+	// SCIM-01: Parse externalId filter from query param
+	filterParam := r.URL.Query().Get("filter")
+	externalID := ""
+	if filterParam != "" {
+		// Parse: externalId eq "value"
+		if matched := parseExternalIdFilter(filterParam); matched != "" {
+			externalID = matched
+		}
+	}
+
 	result, err := h.svc.ListUsers(ctx, &domain.ListUsersFilter{
-		PageSize: pageSize,
-		Offset:   offset,
-		SortBy:   sortBy,
-		SortDesc: sortDesc,
+		PageSize:   pageSize,
+		Offset:     offset,
+		SortBy:     sortBy,
+		SortDesc:   sortDesc,
+		ExternalID: externalID,
 	})
 	if err != nil {
-		writeSCIMError(w, http.StatusInternalServerError, err.Error())
+		writeSCIMErrorWithType(w, http.StatusInternalServerError, ScimTypeInvalidFilter, err.Error())
 		return
 	}
 
@@ -673,6 +685,12 @@ func (h *Handler) handleResourceTypes(w http.ResponseWriter, r *http.Request) {
 			"endpoint":     "/Users",
 			"description":  "User Account",
 			"schema":       "urn:ietf:params:scim:schemas:core:2.0:User",
+			"schemaExtensions": []map[string]string{
+				{
+					"schema":   "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User",
+					"required": "false",
+				},
+			},
 		},
 		{
 			"schemas":      []string{"urn:ietf:params:scim:schemas:core:2.0:ResourceType"},
@@ -736,4 +754,23 @@ func parseAttrList(s string) map[string]bool {
 		}
 	}
 	return result
+}
+
+// parseExternalIdFilter extracts the externalId value from a SCIM filter like
+// externalId eq "value" or externalId eq "value" and userName eq "x".
+func parseExternalIdFilter(filter string) string {
+	lower := strings.ToLower(filter)
+	idx := strings.Index(lower, "externalid eq")
+	if idx < 0 {
+		return ""
+	}
+	rest := filter[idx+len("externalid eq"):]
+	rest = strings.TrimSpace(rest)
+	if strings.HasPrefix(rest, "\"") {
+		end := strings.Index(rest[1:], "\"")
+		if end >= 0 {
+			return rest[1 : 1+end]
+		}
+	}
+	return ""
 }
