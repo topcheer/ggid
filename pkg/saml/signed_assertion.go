@@ -170,29 +170,6 @@ func buildSigInfoNS(sig *xmlSignatureNS, rawXML []byte) (*signatureInfo, error) 
 	}, nil
 }
 
-// extractSignedInfoBytes extracts the raw bytes of the <ds:SignedInfo> element
-// from the XML. This is needed for signature verification because the signature
-// is computed over the canonicalized SignedInfo element.
-func extractSignedInfoBytes(rawXML []byte) []byte {
-	start := strings.Index(string(rawXML), "<ds:SignedInfo")
-	if start < 0 {
-		start = strings.Index(string(rawXML), "<SignedInfo")
-	}
-	if start < 0 {
-		return nil
-	}
-	endTag := "</ds:SignedInfo>"
-	end := strings.Index(string(rawXML), endTag)
-	if end < 0 {
-		endTag = "</SignedInfo>"
-		end = strings.Index(string(rawXML), endTag)
-	}
-	if end < 0 {
-		return nil
-	}
-	return rawXML[start : end+len(endTag)]
-}
-
 // hashForAlgorithm returns the hash.Hash for a given XMLDSig digest algorithm URI.
 func hashForAlgorithm(algorithmURI string) (hash.Hash, error) {
 	switch algorithmURI {
