@@ -69,6 +69,9 @@ func (m *mockRoleRepo) RevokePermissions(_ context.Context, _ uuid.UUID, _ []uui
 func (m *mockRoleRepo) GetRolePermissions(_ context.Context, _ []uuid.UUID) ([]*domain.Permission, error) {
 	return nil, nil
 }
+func (m *mockRoleRepo) GetAncestorChain(_ context.Context, _ uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
 
 type mockPermRepo struct {
 	perms     map[uuid.UUID]*domain.Permission
