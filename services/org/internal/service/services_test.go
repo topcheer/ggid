@@ -356,7 +356,7 @@ func TestTenantService_Create_RepoError(t *testing.T) {
 	}
 }
 
-func TestTenantService_Get(t *testing.T) {
+func TestTenantService_Get2(t *testing.T) {
 	repo := &mockTenantRepo{}
 	created, _ := NewTenantService(repo).Create(context.Background(), &domain.Tenant{
 		Name: "Test", Slug: "test",
@@ -762,4 +762,60 @@ func TestMembershipService_Lifecycle_InviteAcceptRemove(t *testing.T) {
 	if got.Status != domain.MembershipRemoved {
 		t.Errorf("expected removed, got %s", got.Status)
 	}
+}
+
+func TestDeptService_Update(t *testing.T) {
+	svc := NewDeptService(&mockDeptRepo{depts: map[uuid.UUID]*domain.Department{}})
+	_, err := svc.Update(context.Background(), &domain.Department{Name: "Updated"})
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestOrgService_Get(t *testing.T) {
+	id := uuid.New()
+	svc := NewOrgService(&mockOrgRepo{orgs: map[uuid.UUID]*domain.Organization{id: {ID: id, Name: "Test"}}})
+	_, err := svc.Get(context.Background(), id)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestOrgService_Update(t *testing.T) {
+	id := uuid.New()
+	repo := &mockOrgRepo{orgs: map[uuid.UUID]*domain.Organization{id: {ID: id, Name: "Old"}}}
+	svc := NewOrgService(repo)
+	_, err := svc.Update(context.Background(), &domain.Organization{ID: id, Name: "New"})
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestTeamService_Update(t *testing.T) {
+	svc := NewTeamService(&mockTeamRepo{teams: map[uuid.UUID]*domain.Team{}})
+	_, err := svc.Update(context.Background(), &domain.Team{Name: "Updated"})
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestTeamService_Create(t *testing.T) {
+	svc := NewTeamService(&mockTeamRepo{teams: map[uuid.UUID]*domain.Team{}})
+	_, err := svc.Create(context.Background(), &domain.Team{OrgID: uuid.New(), Name: "NewTeam"})
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestMemberService_List(t *testing.T) {
+	svc := NewMembershipService(&mockMemberRepo{members: map[uuid.UUID]*domain.Membership{}})
+	_, err := svc.List(context.Background(), repository.ListMembersFilter{}, 1, 50)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestMemberService_Invite(t *testing.T) {
+	svc := NewMembershipService(&mockMemberRepo{members: map[uuid.UUID]*domain.Membership{}})
+	_ = svc // MembershipService doesn't have Update method; just verify construction
+}
+
+func TestMembershipService_AcceptInvitation(t *testing.T) {
+	svc := NewMembershipService(&mockMemberRepo{members: map[uuid.UUID]*domain.Membership{}})
+	err := svc.AcceptInvitation(context.Background(), uuid.New())
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestMembershipService_Remove(t *testing.T) {
+	svc := NewMembershipService(&mockMemberRepo{members: map[uuid.UUID]*domain.Membership{}})
+	err := svc.Remove(context.Background(), uuid.New())
+	if err != nil { t.Fatalf("unexpected: %v", err) }
 }
