@@ -4,6 +4,7 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ggid/ggid/pkg/authprovider"
@@ -358,8 +359,94 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 // MFAService returns the MFA service for direct access (setup, verify, disable).
 func (s *AuthService) MFAService() *MFAService { return s.mfaService }
 
+// LookupUser looks up a user by identifier (email or username) via the identity client.
+func (s *AuthService) LookupUser(ctx context.Context, tenantID uuid.UUID, identifier string) (*UserInfo, error) {
+	return s.identityClient.GetUser(ctx, tenantID, identifier)
+}
+
 // PasswordPolicy returns the current password policy configuration.
 func (s *AuthService) PasswordPolicy() conf.PasswordPolicy { return s.cfg.Password }
+
+// --- Magic Link (Passwordless Login) ---
+
+// IssueMagicLink generates a one-time magic link token for passwordless login.
+// The token is stored in Redis with a 15-minute TTL.
+// Returns the plaintext token (to be embedded in an email link).
+func (s *AuthService) IssueMagicLink(ctx context.Context, tenantID, userID uuid.UUID, email string) (string, error) {
+	token, err := crypto.GenerateRandomToken(32)
+	if err != nil {
+		return "", fmt.Errorf("generate magic link token: %w", err)
+	}
+
+	tokenHash := hashToken(token)
+	key := fmt.Sprintf("ggid:magiclink:%s", tokenHash)
+	val := fmt.Sprintf("%s:%s:%s", tenantID, userID, email)
+
+	if err := s.rateLimiter.rdb.Set(ctx, key, val, 15*time.Minute).Err(); err != nil {
+		return "", fmt.Errorf("store magic link token: %w", err)
+	}
+
+	return token, nil
+}
+
+// VerifyMagicLink validates a magic link token and issues JWT tokens.
+func (s *AuthService) VerifyMagicLink(ctx context.Context, token, ip, userAgent string) (*domain.TokenSet, error) {
+	tokenHash := hashToken(token)
+	key := fmt.Sprintf("ggid:magiclink:%s", tokenHash)
+
+	val, err := s.rateLimiter.rdb.Get(ctx, key).Result()
+	if err != nil {
+		return nil, fmt.Errorf("invalid or expired magic link token")
+	}
+
+	// Delete the token (one-time use).
+	s.rateLimiter.rdb.Del(ctx, key)
+
+	parts := strings.SplitN(val, ":", 3)
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("corrupted magic link token")
+	}
+
+	tenantID, err := uuid.Parse(parts[0])
+	if err != nil {
+		return nil, fmt.Errorf("invalid tenant ID in token")
+	}
+	userID, err := uuid.Parse(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID in token")
+	}
+
+	// Create session.
+	_, session, err := s.sessionService.Create(ctx, CreateSessionParams{
+		TenantID:  tenantID,
+		UserID:    userID,
+		IPAddress: ip,
+		UserAgent: userAgent,
+		TTL:       24 * time.Hour,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+
+	// Issue JWT tokens.
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tenantID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("issue access token: %w", err)
+	}
+
+	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tenantID, userID, session.ID)
+	if err != nil {
+		return nil, fmt.Errorf("issue refresh token: %w", err)
+	}
+
+	return &domain.TokenSet{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    expiresIn,
+		SessionID:    session.ID.String(),
+	}, nil
+}
 
 // SocialLogin authenticates a user via a social provider's UserInfo.
 // It handles three cases:

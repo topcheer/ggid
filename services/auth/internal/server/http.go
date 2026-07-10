@@ -12,6 +12,7 @@ import (
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/social"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
 	"github.com/google/uuid"
@@ -49,6 +50,10 @@ func (h *Handler) registerRoutes() {
 
 	// Password policy config endpoint
 	h.mux.HandleFunc("/api/v1/auth/password/policy", h.passwordPolicy)
+
+	// Magic Link (passwordless login)
+	h.mux.HandleFunc("/api/v1/auth/magic-link", h.magicLink)
+	h.mux.HandleFunc("/api/v1/auth/magic-link/verify", h.magicLinkVerify)
 
 	// Social login endpoints
 	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
@@ -479,6 +484,91 @@ func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
 	policy := h.authSvc.PasswordPolicy()
 	writeJSON(w, http.StatusOK, policy)
+}
+
+// --- Magic Link (Passwordless Login) ---
+
+func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.Email == "" {
+		writeError(w, http.StatusBadRequest, "email is required")
+		return
+	}
+
+	// Look up user by email via identity client.
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing valid X-Tenant-ID header")
+		return
+	}
+
+	ctx := tenant.WithContext(r.Context(), &tenant.Context{
+		TenantID:       tenantID,
+		IsolationLevel: tenant.IsolationShared,
+	})
+
+	user, err := h.authSvc.LookupUser(ctx, tenantID, body.Email)
+	if err != nil || user == nil {
+		// Don't reveal whether email exists — return 200.
+		writeJSON(w, http.StatusOK, map[string]string{
+			"status":  "sent",
+			"message": "If the email exists, a magic link has been sent.",
+		})
+		return
+	}
+
+	token, err := h.authSvc.IssueMagicLink(r.Context(), tenantID, user.ID, body.Email)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to issue magic link")
+		return
+	}
+
+	// In production, send email. In dev, return the token.
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":  "sent",
+		"message": "If the email exists, a magic link has been sent.",
+		"token":   token, // dev mode only
+	})
+}
+
+func (h *Handler) magicLinkVerify(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	token := r.URL.Query().Get("token")
+	if token == "" && r.Method == http.MethodPost {
+		_ = r.ParseForm()
+		token = r.FormValue("token")
+	}
+	if token == "" {
+		writeError(w, http.StatusBadRequest, "token is required")
+		return
+	}
+
+	ip := clientIP(r)
+	userAgent := r.Header.Get("User-Agent")
+
+	tokens, err := h.authSvc.VerifyMagicLink(r.Context(), token, ip, userAgent)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "invalid or expired magic link")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, tokens)
 }
 
 // --- Helpers ---
