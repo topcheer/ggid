@@ -64,10 +64,11 @@ type RateLimitConfig struct {
 	LoginPerMinute int `yaml:"login_per_minute"`
 }
 
-// SessionTimeoutConfig controls session expiration policy.
+// SessionTimeoutConfig controls session expiration and concurrency policy.
 type SessionTimeoutConfig struct {
-	AbsoluteTimeout time.Duration `yaml:"absolute_timeout"` // max session lifetime (e.g. 8h)
-	IdleTimeout     time.Duration `yaml:"idle_timeout"`     // inactivity timeout (e.g. 30m)
+	AbsoluteTimeout time.Duration `yaml:"absolute_timeout"`   // max session lifetime (e.g. 8h)
+	IdleTimeout     time.Duration `yaml:"idle_timeout"`       // inactivity timeout (e.g. 30m)
+	MaxSessions     int           `yaml:"max_sessions"`       // max concurrent sessions per user (0 = unlimited)
 }
 
 // Default returns the default configuration with sensible production values.
