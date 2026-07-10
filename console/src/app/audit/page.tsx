@@ -63,8 +63,34 @@ export default function AuditPage() {
   const [actionFilter, setActionFilter] = useState("");
   const [actorFilter, setActorFilter] = useState("");
   const [resultFilter, setResultFilter] = useState("");
+  const [ipFilter, setIpFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+
+  // Sync filters to URL query params
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (actionFilter) params.set("action", actionFilter);
+    if (actorFilter) params.set("actor", actorFilter);
+    if (resultFilter) params.set("result", resultFilter);
+    if (ipFilter) params.set("ip", ipFilter);
+    if (dateFrom) params.set("from", dateFrom);
+    if (dateTo) params.set("to", dateTo);
+    const qs = params.toString();
+    const newUrl = qs ? `?${qs}` : window.location.pathname;
+    window.history.replaceState(null, "", newUrl);
+  }, [actionFilter, actorFilter, resultFilter, ipFilter, dateFrom, dateTo]);
+
+  // Read filters from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("action")) setActionFilter(params.get("action")!);
+    if (params.get("actor")) setActorFilter(params.get("actor")!);
+    if (params.get("result")) setResultFilter(params.get("result")!);
+    if (params.get("ip")) setIpFilter(params.get("ip")!);
+    if (params.get("from")) setDateFrom(params.get("from")!);
+    if (params.get("to")) setDateTo(params.get("to")!);
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -78,20 +104,26 @@ export default function AuditPage() {
         if (actionFilter) params.set("action", actionFilter);
         if (actorFilter) params.set("actor_id", actorFilter);
         if (resultFilter) params.set("result", resultFilter);
+        if (ipFilter) params.set("ip_address", ipFilter);
         if (dateFrom) params.set("start_time", dateFrom + "T00:00:00Z");
         if (dateTo) params.set("end_time", dateTo + "T23:59:59Z");
         params.set("page_size", "50");
         const data = await apiFetch<{ events?: AuditEvent[] }>(
           `/api/v1/audit/events?${params}`,
         );
-        setEvents(data.events || []);
+        let filtered = data.events || [];
+        // Client-side IP filter fallback if API doesn't support it
+        if (ipFilter && filtered.length > 0) {
+          filtered = filtered.filter((e) => e.ip_address?.includes(ipFilter));
+        }
+        setEvents(filtered);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load");
     } finally {
       setLoading(false);
     }
-  }, [apiFetch, tab, actionFilter, actorFilter, resultFilter, dateFrom, dateTo]);
+  }, [apiFetch, tab, actionFilter, actorFilter, resultFilter, ipFilter, dateFrom, dateTo]);
 
   useEffect(() => {
     loadData();
@@ -438,7 +470,7 @@ export default function AuditPage() {
       ) : tab === "events" ? (
         /* ===== Event Log Table ===== */
         <>
-          <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
             <input
               type="text"
               placeholder="Action (e.g. user.login)"
@@ -452,6 +484,13 @@ export default function AuditPage() {
               value={actorFilter}
               onChange={(e) => setActorFilter(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+            <input
+              type="text"
+              placeholder="IP Address"
+              value={ipFilter}
+              onChange={(e) => setIpFilter(e.target.value)}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
             />
             <select
               value={resultFilter}

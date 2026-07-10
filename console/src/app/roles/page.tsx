@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
-import { Shield, Plus, Trash2, X, CheckCircle2, XCircle, Search } from "lucide-react";
+import { Shield, Plus, Trash2, X, CheckCircle2, XCircle, Search, Copy, GitBranch, Layers } from "lucide-react";
 
 interface Role {
   id: string;
@@ -10,6 +10,7 @@ interface Role {
   name: string;
   description: string;
   system_role: boolean;
+  parent_role_id?: string;
 }
 
 interface Permission {
@@ -20,7 +21,7 @@ interface Permission {
   action: string;
 }
 
-type Tab = "roles" | "permissions" | "checker" | "matrix";
+type Tab = "roles" | "permissions" | "checker" | "matrix" | "hierarchy" | "abac";
 
 export default function RolesPage() {
   const { apiFetch } = useApi();
@@ -143,6 +144,39 @@ export default function RolesPage() {
     }
   };
 
+  const handleCloneRole = async (role: Role) => {
+    try {
+      const cloneKey = `${role.key}-copy-${Date.now().toString(36)}`;
+      await apiFetch("/api/v1/roles", {
+        method: "POST",
+        body: JSON.stringify({
+          key: cloneKey,
+          name: `${role.name} (Copy)`,
+          description: role.description || "",
+          parent_role_id: role.id,
+        }),
+      });
+      setMsg(`Role cloned as ${cloneKey}`);
+      loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clone role");
+    }
+  };
+
+  const handleBatchAssign = async (permIds: string[]) => {
+    if (!selectedRole || permIds.length === 0) return;
+    try {
+      await apiFetch(`/api/v1/roles/${selectedRole}/permissions`, {
+        method: "POST",
+        body: JSON.stringify({ permission_ids: permIds }),
+      });
+      setMsg(`${permIds.length} permissions assigned`);
+      loadRolePerms(selectedRole);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to assign permissions");
+    }
+  };
+
   // Auto-dismiss messages
   useEffect(() => {
     if (msg) {
@@ -227,11 +261,13 @@ export default function RolesPage() {
       )}
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-2 border-b border-gray-200">
+      <div className="mb-4 flex gap-2 border-b border-gray-200 overflow-x-auto">
         <TabButton active={tab === "roles"} onClick={() => setTab("roles")} label={`Roles (${roles.length})`} />
-        <TabButton active={tab === "permissions"} onClick={() => setTab("permissions")} label="Permission Assignment" />
-        <TabButton active={tab === "checker"} onClick={() => setTab("checker")} label="Policy Checker" />
+        <TabButton active={tab === "permissions"} onClick={() => setTab("permissions")} label="Permissions" />
+        <TabButton active={tab === "hierarchy"} onClick={() => setTab("hierarchy")} label="Hierarchy" />
         <TabButton active={tab === "matrix"} onClick={() => setTab("matrix")} label="Matrix" />
+        <TabButton active={tab === "checker"} onClick={() => setTab("checker")} label="Checker" />
+        <TabButton active={tab === "abac"} onClick={() => setTab("abac")} label="ABAC Builder" />
       </div>
 
       {loading ? (
@@ -251,27 +287,47 @@ export default function RolesPage() {
                     <p className="text-xs text-gray-500">{role.key}</p>
                   </div>
                 </div>
-                {!role.system_role && (
+                <div className="flex items-center gap-1">
                   <button
-                    onClick={() => handleDelete(role.id, role.system_role)}
-                    className="text-gray-400 hover:text-red-500"
+                    onClick={() => handleCloneRole(role)}
+                    className="text-gray-400 hover:text-brand-500"
+                    title="Clone role"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Copy className="h-4 w-4" />
                   </button>
-                )}
+                  {!role.system_role && (
+                    <button
+                      onClick={() => handleDelete(role.id, role.system_role)}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
               </div>
               <p className="mb-3 text-sm text-gray-600">{role.description || "No description"}</p>
-              {role.system_role && (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                  System
-                </span>
-              )}
+              <div className="flex flex-wrap gap-1">
+                {role.system_role && (
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    System
+                  </span>
+                )}
+                {role.parent_role_id && (
+                  <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                    <GitBranch className="h-3 w-3" />
+                    Inherits
+                  </span>
+                )}
+              </div>
             </div>
           ))}
           {roles.length === 0 && (
             <p className="col-span-full text-center text-gray-500">No roles found</p>
           )}
         </div>
+      ) : tab === "hierarchy" ? (
+        /* ===== Role Hierarchy Tree ===== */
+        <RoleHierarchyTree roles={roles} apiFetch={apiFetch} />
       ) : tab === "permissions" ? (
         /* ===== Permission Assignment ===== */
         <PermissionAssignment
@@ -282,10 +338,14 @@ export default function RolesPage() {
           onSelectRole={setSelectedRole}
           onAssign={handleAssignPerm}
           onRevoke={handleRevokePerm}
+          onBatchAssign={handleBatchAssign}
           loading={permLoading}
         />
       ) : tab === "matrix" ? (
         <RolePermissionMatrix roles={roles} permissions={permissions} apiFetch={apiFetch} />
+      ) : tab === "abac" ? (
+        /* ===== ABAC Condition Builder ===== */
+        <ABACConditionBuilder apiFetch={apiFetch} />
       ) : (
         /* ===== Policy Checker ===== */
         <PolicyChecker apiFetch={apiFetch} />
@@ -464,6 +524,7 @@ function PermissionAssignment({
   onSelectRole,
   onAssign,
   onRevoke,
+  onBatchAssign,
   loading,
 }: {
   roles: Role[];
@@ -473,9 +534,11 @@ function PermissionAssignment({
   onSelectRole: (id: string) => void;
   onAssign: (permId: string) => void;
   onRevoke: (permId: string) => void;
+  onBatchAssign: (permIds: string[]) => void;
   loading: boolean;
 }) {
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const rolePermIds = new Set(rolePerms.map((p) => p.id));
 
   const filteredPerms = permissions.filter(
@@ -557,15 +620,40 @@ function PermissionAssignment({
           {/* Available permissions */}
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-gray-200 p-4">
-              <h3 className="text-sm font-semibold">Available Permissions ({filteredPerms.length})</h3>
-              <div className="relative">
-                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search..."
-                  className="rounded-lg border border-gray-300 py-1.5 pl-8 pr-3 text-sm focus:border-brand-500 focus:outline-none"
-                />
+              <div className="flex items-center gap-3">
+                <h3 className="text-sm font-semibold">Available Permissions ({filteredPerms.length})</h3>
+                {selected.size > 0 && (
+                  <button
+                    onClick={() => { onBatchAssign([...selected]); setSelected(new Set()); }}
+                    className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
+                  >
+                    <Layers className="h-3.5 w-3.5" />
+                    Assign {selected.size} selected
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (selected.size === filteredPerms.length) {
+                      setSelected(new Set());
+                    } else {
+                      setSelected(new Set(filteredPerms.map((p) => p.id)));
+                    }
+                  }}
+                  className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                >
+                  {selected.size === filteredPerms.length && selected.size > 0 ? "Deselect all" : "Select all"}
+                </button>
+                <div className="relative">
+                  <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search..."
+                    className="rounded-lg border border-gray-300 py-1.5 pl-8 pr-3 text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
             <div className="max-h-96 overflow-y-auto">
@@ -577,12 +665,25 @@ function PermissionAssignment({
                   </div>
                   {groupedPerms[resource].map((p) => {
                     const assigned = rolePermIds.has(p.id);
+                    const isChecked = selected.has(p.id);
                     return (
                       <div
                         key={p.id}
                         className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5 hover:bg-gray-50"
                       >
                         <div className="flex items-center gap-3">
+                          {!assigned && (
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                const next = new Set(selected);
+                                if (isChecked) { next.delete(p.id); } else { next.add(p.id); }
+                                setSelected(next);
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                            />
+                          )}
                           <div>
                             <p className="text-sm font-medium">{p.name || p.key}</p>
                             <p className="text-xs text-gray-500">
@@ -735,6 +836,314 @@ function RolePermissionMatrix({
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// ===== Role Hierarchy Tree =====
+
+function RoleHierarchyTree({
+  roles,
+  apiFetch,
+}: {
+  roles: Role[];
+  apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
+}) {
+  const [effectivePerms, setEffectivePerms] = useState<Record<string, string[]>>({});
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  // Build parent->children map
+  const childMap = roles.reduce<Record<string, Role[]>>((acc, role) => {
+    if (role.parent_role_id) {
+      if (!acc[role.parent_role_id]) acc[role.parent_role_id] = [];
+      acc[role.parent_role_id].push(role);
+    }
+    return acc;
+  }, {});
+
+  const roots = roles.filter((r) => !r.parent_role_id);
+
+  const loadEffective = async (roleId: string) => {
+    try {
+      const data = await apiFetch<{ permissions?: { key: string }[] }>(
+        `/api/v1/roles/${roleId}/effective-permissions`,
+      ).catch(() => ({ permissions: [] }));
+      setEffectivePerms((prev) => ({
+        ...prev,
+        [roleId]: (data.permissions || []).map((p) => p.key),
+      }));
+    } catch { /* ignore */ }
+  };
+
+  const toggleExpand = (roleId: string) => {
+    const next = new Set(expanded);
+    if (next.has(roleId)) {
+      next.delete(roleId);
+    } else {
+      next.add(roleId);
+      loadEffective(roleId);
+    }
+    setExpanded(next);
+  };
+
+  const renderNode = (role: Role, depth: number): React.ReactElement => {
+    const children = childMap[role.id] || [];
+    const isExpanded = expanded.has(role.id);
+    const perms = effectivePerms[role.id] || [];
+
+    return (
+      <div key={role.id} style={{ marginLeft: depth * 24 }}>
+        <div className="flex items-center gap-2 py-2">
+          {children.length > 0 ? (
+            <button
+              onClick={() => toggleExpand(role.id)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              {isExpanded ? "▼" : "▶"}
+            </button>
+          ) : (
+            <span className="w-4" />
+          )}
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-100">
+            <Shield className="h-4 w-4 text-brand-600" />
+          </div>
+          <div className="flex-1">
+            <span className="font-medium">{role.name || role.key}</span>
+            {role.system_role && (
+              <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">System</span>
+            )}
+            <span className="ml-2 text-xs text-gray-400">{role.key}</span>
+          </div>
+          {perms.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {perms.slice(0, 5).map((p) => (
+                <span key={p} className="rounded bg-blue-50 px-1.5 py-0.5 text-xs text-blue-600">{p}</span>
+              ))}
+              {perms.length > 5 && <span className="text-xs text-gray-400">+{perms.length - 5} more</span>}
+            </div>
+          )}
+          {children.length > 0 && (
+            <span className="text-xs text-gray-400">{children.length} child{children.length !== 1 ? "ren" : ""}</span>
+          )}
+        </div>
+        {isExpanded && children.length > 0 && (
+          <div className="border-l border-gray-200">
+            {children.map((child) => renderNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+        <GitBranch className="h-4 w-4 text-brand-600" />
+        Role Hierarchy & Inheritance
+      </h3>
+      <p className="mb-4 text-xs text-gray-500">
+        Parent roles inherit permissions from child roles. Click to expand and view effective permissions.
+      </p>
+      {roots.length === 0 ? (
+        <p className="py-8 text-center text-sm text-gray-400">
+          No roles with hierarchy. Set <code className="rounded bg-gray-100 px-1">parent_role_id</code> when creating roles to build inheritance chains.
+        </p>
+      ) : (
+        <div>
+          {roots.map((root) => renderNode(root, 0))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ===== ABAC Condition Builder =====
+
+interface ConditionRule {
+  attribute: string;
+  operator: string;
+  value: string;
+}
+
+const ABAC_ATTRIBUTES = [
+  "user.role", "user.department", "user.location", "user.clearance_level",
+  "resource.type", "resource.owner", "resource.department", "resource.classification",
+  "request.ip", "request.time", "request.method", "request.user_agent",
+  "environment.risk_score", "environment.device_type",
+];
+
+const ABAC_OPERATORS = ["eq", "ne", "in", "not_in", "gt", "lt", "gte", "lte", "contains", "regex"];
+
+function ABACConditionBuilder({
+  apiFetch,
+}: {
+  apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
+}) {
+  const [rules, setRules] = useState<ConditionRule[]>([
+    { attribute: "user.role", operator: "eq", value: "admin" },
+  ]);
+  const [combineMode, setCombineMode] = useState<"AND" | "OR">("AND");
+  const [effect, setEffect] = useState<"allow" | "deny">("allow");
+  const [policyName, setPolicyName] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const addRule = () => {
+    setRules([...rules, { attribute: "request.ip", operator: "eq", value: "" }]);
+  };
+
+  const removeRule = (idx: number) => {
+    setRules(rules.filter((_, i) => i !== idx));
+  };
+
+  const updateRule = (idx: number, field: keyof ConditionRule, value: string) => {
+    setRules(rules.map((r, i) => i === idx ? { ...r, [field]: value } : r));
+  };
+
+  const generatedJSON = JSON.stringify({
+    name: policyName || "abac_policy",
+    effect: effect,
+    combine: combineMode,
+    conditions: rules.map((r) => ({
+      attribute: r.attribute,
+      operator: r.operator,
+      value: r.value,
+    })),
+  }, null, 2);
+
+  const handleSave = async () => {
+    try {
+      await apiFetch("/api/v1/policies", {
+        method: "POST",
+        body: generatedJSON,
+      });
+      setMsg("ABAC policy saved successfully");
+      setTimeout(() => setMsg(null), 3000);
+    } catch {
+      setMsg("Failed to save policy (policy API may not be available)");
+      setTimeout(() => setMsg(null), 3000);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+          <Layers className="h-4 w-4 text-brand-600" />
+          ABAC Condition Builder
+        </h3>
+        <p className="mb-4 text-xs text-gray-500">
+          Build attribute-based access control rules visually. The generated JSON can be saved as a policy.
+        </p>
+
+        {/* Policy metadata */}
+        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Policy Name</label>
+            <input
+              value={policyName}
+              onChange={(e) => setPolicyName(e.target.value)}
+              placeholder="e.g. restrict_admin_access"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Combine Mode</label>
+            <select
+              value={combineMode}
+              onChange={(e) => setCombineMode(e.target.value as "AND" | "OR")}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="AND">AND (all must match)</option>
+              <option value="OR">OR (any can match)</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Effect</label>
+            <select
+              value={effect}
+              onChange={(e) => setEffect(e.target.value as "allow" | "deny")}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="allow">Allow</option>
+              <option value="deny">Deny</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Condition rules */}
+        <div className="space-y-2">
+          {rules.map((rule, idx) => (
+            <div key={idx} className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-500">
+                {idx + 1}
+              </span>
+              <select
+                value={rule.attribute}
+                onChange={(e) => updateRule(idx, "attribute", e.target.value)}
+                className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+              >
+                {ABAC_ATTRIBUTES.map((attr) => (
+                  <option key={attr} value={attr}>{attr}</option>
+                ))}
+              </select>
+              <select
+                value={rule.operator}
+                onChange={(e) => updateRule(idx, "operator", e.target.value)}
+                className="w-28 rounded-lg border border-gray-300 px-2 py-1.5 text-sm font-mono"
+              >
+                {ABAC_OPERATORS.map((op) => (
+                  <option key={op} value={op}>{op}</option>
+                ))}
+              </select>
+              <input
+                value={rule.value}
+                onChange={(e) => updateRule(idx, "value", e.target.value)}
+                placeholder="value"
+                className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm"
+              />
+              <button
+                onClick={() => removeRule(idx)}
+                className="text-gray-400 hover:text-red-500"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            onClick={addRule}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Condition
+          </button>
+        </div>
+
+        {/* Generated JSON */}
+        <div className="mt-4">
+          <label className="mb-1 block text-xs font-medium text-gray-500">Generated Policy JSON</label>
+          <pre className="max-h-48 overflow-auto rounded-lg bg-gray-900 p-4 text-xs text-green-400">
+            {generatedJSON}
+          </pre>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            onClick={handleSave}
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            Save Policy
+          </button>
+          <button
+            onClick={() => navigator.clipboard.writeText(generatedJSON)}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            Copy JSON
+          </button>
+          {msg && <span className="text-sm text-green-600">{msg}</span>}
+        </div>
+      </div>
     </div>
   );
 }

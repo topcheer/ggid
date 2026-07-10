@@ -97,6 +97,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/webhooks", s.handleAuditWebhooks)
 	mux.HandleFunc("/api/v1/audit/verify-integrity", s.handleVerifyIntegrity)
 	mux.HandleFunc("/api/v1/audit/search", s.handleSearch)
+	mux.HandleFunc("/api/v1/audit/alerts/config", s.handleAlertConfig)
+	mux.HandleFunc("/api/v1/audit/alerts/test", s.handleAlertTest)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -1065,7 +1067,141 @@ func (s *HTTPServer) detectAnomalies(r *http.Request) []map[string]any {
 		}
 	}
 
+	// Dispatch real-time notifications for triggered alerts
+	for _, alert := range alerts {
+		s.dispatchAlert(alert)
+	}
+
 	return alerts
+}
+
+// --- Real-time Alert Configuration ---
+
+// AlertConfig defines how and when to send anomaly notifications.
+type AlertConfig struct {
+	mu          sync.RWMutex
+	webhookURL  string
+	emailTo     string
+	enabled     bool
+	minSeverity string // "info", "warning", "critical"
+}
+
+var alertCfg = &AlertConfig{minSeverity: "warning"}
+
+// severityRank maps severity names to comparable numeric values.
+var severityRank = map[string]int{"info": 1, "warning": 2, "critical": 3}
+
+// dispatchAlert sends webhook + email notifications when anomaly rules trigger.
+func (s *HTTPServer) dispatchAlert(alert map[string]any) {
+	alertCfg.mu.RLock()
+	enabled := alertCfg.enabled
+	webhookURL := alertCfg.webhookURL
+	emailTo := alertCfg.emailTo
+	minSev := alertCfg.minSeverity
+	alertCfg.mu.RUnlock()
+
+	if !enabled {
+		return
+	}
+
+	sev, _ := alert["severity"].(string)
+	if severityRank[sev] < severityRank[minSev] {
+		return
+	}
+
+	payload, _ := json.Marshal(alert)
+
+	// Fire webhook (async, non-blocking)
+	if webhookURL != "" {
+		go func() {
+			resp, err := http.Post(webhookURL, "application/json", strings.NewReader(string(payload)))
+			if err != nil {
+				return
+			}
+			resp.Body.Close()
+		}()
+	}
+
+	// Email notification would use the email package; log for now
+	if emailTo != "" {
+		go func() {
+			// In production: use pkg/email to send notification
+			fmt.Printf("[ALERT EMAIL] To: %s, Alert: %s\n", emailTo, string(payload))
+		}()
+	}
+}
+
+// GET/POST /api/v1/audit/alerts/config
+func (s *HTTPServer) handleAlertConfig(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		alertCfg.mu.RLock()
+		defer alertCfg.mu.RUnlock()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"enabled":      alertCfg.enabled,
+			"webhook_url":  alertCfg.webhookURL,
+			"email_to":     alertCfg.emailTo,
+			"min_severity": alertCfg.minSeverity,
+		})
+
+	case http.MethodPost, http.MethodPut:
+		var req struct {
+			Enabled     *bool  `json:"enabled"`
+			WebhookURL  string `json:"webhook_url"`
+			EmailTo     string `json:"email_to"`
+			MinSeverity string `json:"min_severity"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		alertCfg.mu.Lock()
+		if req.Enabled != nil {
+			alertCfg.enabled = *req.Enabled
+		}
+		if req.WebhookURL != "" {
+			alertCfg.webhookURL = req.WebhookURL
+		}
+		if req.EmailTo != "" {
+			alertCfg.emailTo = req.EmailTo
+		}
+		if req.MinSeverity != "" {
+			if _, ok := severityRank[req.MinSeverity]; ok {
+				alertCfg.minSeverity = req.MinSeverity
+			}
+		}
+		alertCfg.mu.Unlock()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"status":       "updated",
+			"enabled":      alertCfg.enabled,
+			"webhook_url":  alertCfg.webhookURL,
+			"email_to":     alertCfg.emailTo,
+			"min_severity": alertCfg.minSeverity,
+		})
+
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// POST /api/v1/audit/alerts/test — triggers a test alert to verify config
+func (s *HTTPServer) handleAlertTest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	testAlert := map[string]any{
+		"rule_id":   "test",
+		"rule_name": "Test Alert",
+		"severity":  "warning",
+		"message":   "This is a test alert to verify your notification configuration.",
+		"triggered": time.Now().UTC().Format(time.RFC3339),
+	}
+	s.dispatchAlert(testAlert)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":  "test_alert_dispatched",
+		"alert":   testAlert,
+	})
 }
 
 // --- Helpers ---

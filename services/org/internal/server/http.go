@@ -4,7 +4,10 @@
 package httpserver
 
 import (
+	"encoding/csv"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -177,6 +180,14 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 		subPath := parts[1]
 		if subPath == "members" {
 			s.handleOrgMembers(w, r, id)
+			return
+		}
+		if subPath == "members/import" {
+			s.handleMemberImport(w, r, id)
+			return
+		}
+		if subPath == "members/export" {
+			s.handleMemberExport(w, r, id)
 			return
 		}
 		if subPath == "roles" {
@@ -1116,6 +1127,165 @@ func (s *HTTPServer) handleOrgInherit(w http.ResponseWriter, r *http.Request, or
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// ===== Membership CSV Import/Export =====
+//
+// POST /api/v1/orgs/{id}/members/import  — bulk import from CSV
+// GET  /api/v1/orgs/{id}/members/export  — export as CSV or JSON
+
+func (s *HTTPServer) handleMemberImport(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "failed to read request body")
+		return
+	}
+
+	reader := csv.NewReader(strings.NewReader(string(body)))
+	records, err := reader.ReadAll()
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "failed to parse CSV: "+err.Error())
+		return
+	}
+
+	if len(records) == 0 {
+		writeJSONError(w, http.StatusBadRequest, "CSV is empty")
+		return
+	}
+
+	// First row is header: user_id, title (optional), dept_id (optional), team_id (optional)
+	header := records[0]
+	headerMap := make(map[string]int)
+	for i, col := range header {
+		headerMap[strings.ToLower(strings.TrimSpace(col))] = i
+	}
+
+	userIdx, hasUser := headerMap["user_id"]
+	if !hasUser {
+		writeJSONError(w, http.StatusBadRequest, "CSV must have a user_id column")
+		return
+	}
+
+	titleIdx, hasTitle := headerMap["title"]
+	_ = hasTitle
+
+	imported := 0
+	var importErrors []map[string]any
+	for lineNo, record := range records[1:] {
+		if len(record) <= userIdx {
+			importErrors = append(importErrors, map[string]any{"line": lineNo + 2, "error": "missing user_id"})
+			continue
+		}
+		uidStr := strings.TrimSpace(record[userIdx])
+		if uidStr == "" {
+			continue
+		}
+		uid, err := uuid.Parse(uidStr)
+		if err != nil {
+			importErrors = append(importErrors, map[string]any{"line": lineNo + 2, "user_id": uidStr, "error": "invalid UUID"})
+			continue
+		}
+		title := "member"
+		if hasTitle && titleIdx < len(record) {
+			t := strings.TrimSpace(record[titleIdx])
+			if t != "" {
+				title = t
+			}
+		}
+		membership := &domain.Membership{
+			ID:       uuid.New(),
+			TenantID: tenantID,
+			OrgID:    orgID,
+			UserID:   uid,
+			Title:    title,
+			Status:   domain.MembershipActive,
+		}
+		if _, err := s.memberSvc.Invite(r.Context(), membership); err != nil {
+			importErrors = append(importErrors, map[string]any{"line": lineNo + 2, "user_id": uidStr, "error": err.Error()})
+			continue
+		}
+		imported++
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":   "completed",
+		"imported": imported,
+		"failed":   len(importErrors),
+		"errors":   importErrors,
+		"total":    len(records) - 1,
+	})
+}
+
+func (s *HTTPServer) handleMemberExport(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	members, err := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
+		TenantID: tenantID, OrgID: &orgID,
+	}, 1, 10000)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "csv"
+	}
+
+	if format == "json" {
+		result := make([]map[string]any, len(members))
+		for i, m := range members {
+			result[i] = membershipToJSON(m)
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"members": result})
+		return
+	}
+
+	// CSV export
+	w.Header().Set("Content-Type", "text/csv")
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="org-%s-members.csv"`, orgID.String()))
+	writer := csv.NewWriter(w)
+	writer.Write([]string{"user_id", "tenant_id", "org_id", "title", "status"})
+	for _, m := range members {
+		writer.Write([]string{
+			m.UserID.String(),
+			m.TenantID.String(),
+			m.OrgID.String(),
+			m.Title,
+			string(m.Status),
+		})
+	}
+	writer.Flush()
 }
 
 // ===== Helpers =====
