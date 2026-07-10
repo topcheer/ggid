@@ -27,14 +27,16 @@ func TestVerifyAttestationFormat_None(t *testing.T) {
 }
 
 func TestVerifyAttestationFormat_FidoU2F(t *testing.T) {
-	if err := VerifyAttestationFormat("fido-u2f", nil, nil, 0, nil, nil); err != nil {
-		t.Fatalf("fido-u2f should pass: %v", err)
+	// Now properly validates cert presence instead of returning nil
+	if err := VerifyAttestationFormat("fido-u2f", nil, nil, 0, nil, nil); err == nil {
+		t.Fatal("fido-u2f should fail with missing cert (no longer silently accepts)")
 	}
 }
 
 func TestVerifyAttestationFormat_Apple(t *testing.T) {
-	if err := VerifyAttestationFormat("apple", nil, nil, 0, nil, nil); err != nil {
-		t.Fatalf("apple should pass: %v", err)
+	// Now properly validates cert presence instead of returning nil
+	if err := VerifyAttestationFormat("apple", nil, nil, 0, nil, nil); err == nil {
+		t.Fatal("apple should fail with missing cert (no longer silently accepts)")
 	}
 }
 

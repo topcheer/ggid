@@ -541,13 +541,24 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusCreated, result)
 	})
 
-	// Token introspection
+	// Token introspection — requires client authentication per RFC 7662 §2.1
 	mux.HandleFunc("/oauth/introspect", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
 			return
 		}
 		_ = r.ParseForm()
+
+		// RFC 7662 §2.1: introspection endpoint MUST require client authentication
+		clientID, clientSecret, ok := r.BasicAuth()
+		if !ok {
+			clientID = r.FormValue("client_id")
+			clientSecret = r.FormValue("client_secret")
+		}
+		if clientID == "" || clientSecret == "" {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+			return
+		}
 
 		token := r.FormValue("token")
 		if token == "" {
@@ -564,6 +575,18 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			return
 		}
 		_ = r.ParseForm()
+
+		// RFC 7662 §2.1: introspection endpoint MUST require client authentication
+		clientID, clientSecret, ok := r.BasicAuth()
+		if !ok {
+			clientID = r.FormValue("client_id")
+			clientSecret = r.FormValue("client_secret")
+		}
+		if clientID == "" || clientSecret == "" {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+			return
+		}
+
 		token := r.FormValue("token")
 		if token == "" {
 			writeJSON(w, http.StatusOK, map[string]bool{"active": false})

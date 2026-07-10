@@ -79,8 +79,16 @@ func VerifyAttestationFormat(format string, authData, clientDataHash []byte, alg
 		return VerifyNoneAttestation()
 	case "packed":
 		return VerifyPackedAttestation(authData, clientDataHash, alg, sig, certBytes)
-	case "fido-u2f", "android-key", "android-safetynet", "tpm", "apple":
-		return nil // Platform-specific: accept without full chain verification
+	case "fido-u2f":
+		return verifyFidoU2FAttestation(authData, clientDataHash, sig, certBytes)
+	case "android-key":
+		return verifyAndroidKeyAttestation(authData, clientDataHash, sig, certBytes)
+	case "android-safetynet":
+		return verifyAndroidSafetynetAttestation(authData, clientDataHash, sig, certBytes)
+	case "tpm":
+		return verifyTPMAttestation(authData, clientDataHash, sig, certBytes)
+	case "apple":
+		return verifyAppleAttestation(authData, clientDataHash, sig, certBytes)
 	case "":
 		return fmt.Errorf("missing attestation format")
 	default:

@@ -5,6 +5,7 @@ package crypto
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
@@ -24,7 +25,34 @@ const (
 	argonSaltLength  = 16
 )
 
+// pepper is an optional HMAC-SHA256 pre-hash pepper.
+// When set, passwords are HMAC'd before Argon2id, adding a server-side secret.
+// Configure via SetPepper() at startup from environment variable.
+var pepper []byte
+
+// SetPepper configures the password pepper. Must be called once at startup
+// before any HashPassword/VerifyPassword calls. The pepper adds a server-side
+// HMAC-SHA256 step before Argon2id hashing, protecting against rainbow table
+// attacks even if the database is compromised without the app config.
+func SetPepper(p string) {
+	if p != "" {
+		pepper = []byte(p)
+	}
+}
+
+// applyPepper applies HMAC-SHA256 pepper if configured.
+func applyPepper(password string) []byte {
+	pw := []byte(password)
+	if len(pepper) > 0 {
+		mac := hmac.New(sha256.New, pepper)
+		mac.Write(pw)
+		pw = mac.Sum(nil)
+	}
+	return pw
+}
+
 // HashPassword hashes a plaintext password using Argon2id.
+// If pepper is set via SetPepper(), the password is HMAC-SHA256'd first.
 // Returns a base64-encoded string: salt + hash, prefixed with algorithm info.
 func HashPassword(password string) (string, error) {
 	salt := make([]byte, argonSaltLength)
@@ -32,7 +60,7 @@ func HashPassword(password string) (string, error) {
 		return "", fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	hash := argon2.IDKey([]byte(password), salt, argonIterations, argonMemory, argonParallelism, argonKeyLength)
+	hash := argon2.IDKey(applyPepper(password), salt, argonIterations, argonMemory, argonParallelism, argonKeyLength)
 
 	// Format: argon2id$iterations$memory$parallelism$salt.hash
 	encoded := fmt.Sprintf("argon2id$%d$%d$%d$%s.%s",
@@ -73,7 +101,7 @@ func VerifyPassword(password, encoded string) (bool, error) {
 		return false, fmt.Errorf("failed to decode hash: %w", err)
 	}
 
-	computedHash := argon2.IDKey([]byte(password), salt, iter, mem, par, uint32(len(expectedHash)))
+	computedHash := argon2.IDKey(applyPepper(password), salt, iter, mem, par, uint32(len(expectedHash)))
 
 	// Constant-time comparison
 	return constantTimeCompare(computedHash, expectedHash), nil
