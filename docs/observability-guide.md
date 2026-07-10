@@ -682,6 +682,117 @@ docker compose -f docker-compose.yaml -f docker-compose.observability.yaml up -d
 
 ---
 
+---
+
+## Alerting Integrations
+
+### PagerDuty Integration
+
+Route critical alerts to PagerDuty for on-call escalation:
+
+```yaml
+# alertmanager.yml
+receivers:
+  - name: pagerduty-critical
+    pagerduty_configs:
+      - service_key: YOUR_PAGERDUTY_KEY
+        description: "{{ .GroupLabels.alertname }}: {{ .GroupLabels.service }}"
+        severity: critical
+
+route:
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 5m
+  repeat_interval: 30m
+  receiver: pagerduty-critical
+  routes:
+    - matchers: ['severity="critical"']
+      receiver: pagerduty-critical
+    - matchers: ['severity="warning"']
+      receiver: slack-warnings
+```
+
+### Slack Notifications
+
+```yaml
+receivers:
+  - name: slack-warnings
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK'
+        channel: '#ggid-alerts'
+        title: '[{{ .Status }}] {{ .GroupLabels.alertname }}'
+        text: >-
+          {{ range .Alerts }}
+          *Service:* {{ .Labels.service }}
+          *Severity:* {{ .Labels.severity }}
+          *Description:* {{ .Annotations.description }}
+          {{ end }}
+```
+
+### Alert Severity Mapping
+
+| Severity | Examples | Notification | Escalation |
+|----------|----------|-------------|------------|
+| Critical | Service down, DB unreachable | PagerDuty + Slack | Immediate page |
+| Warning | High error rate, slow queries | Slack only | During business hours |
+| Info | Deployment complete, config change | Slack (optional) | No escalation |
+
+---
+
+## Distributed Tracing Across 7 Microservices
+
+### Request Flow (Gateway → 6 services)
+
+```
+Client → Gateway (span: HTTP request)
+         → Auth (span: gRPC VerifyToken)
+         → Identity (span: gRPC GetUser)
+            → PostgreSQL (span: SELECT users)
+         → Policy (span: gRPC CheckPermission)
+            → Redis (span: GET policy cache)
+         → Audit (span: gRPC PublishEvent)
+            → NATS (span: JetStream publish)
+```
+
+Each span carries the same `trace_id`. The Jaeger UI shows the full waterfall:
+
+```
+[Gateway: 45ms] ────────────────────────────────────────────────
+  [Auth VerifyToken: 2ms] ██
+  [Identity GetUser: 8ms] ████
+    [PostgreSQL: 3ms] ██
+  [Policy Check: 4ms] ██
+    [Redis: 0.5ms] ▏
+  [Audit Publish: 1ms] ▏
+```
+
+### Adding Custom Spans
+
+```go
+import "go.opentelemetry.io/otel"
+
+func (s *AuthService) Login(ctx context.Context, username, password string) (*Token, error) {
+    ctx, span := otel.Tracer("auth").Start(ctx, "AuthService.Login")
+    defer span.End()
+
+    span.SetAttributes(
+        attribute.String("user.username", username),
+    )
+
+    // ... authentication logic ...
+
+    if err != nil {
+        span.RecordError(err)
+        return nil, err
+    }
+
+    span.SetAttributes(attribute.Bool("auth.success", true))
+    return token, nil
+}
+```
+
+---
+
 ## References
 
 - [Prometheus Documentation](https://prometheus.io/docs/)
