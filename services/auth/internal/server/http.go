@@ -86,6 +86,9 @@ func (h *Handler) registerRoutes() {
 	// Logout all devices
 	h.mux.HandleFunc("/api/v1/auth/logout-all", h.logoutAll)
 
+	// Login attempt logging
+	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
+
 	// Auth hooks (Auth0 Actions equivalent)
 	h.mux.HandleFunc("/api/v1/auth/hooks", h.manageHooks)
 
@@ -211,6 +214,8 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
 			_ = h.authSvc.RecordFailedLogin(r.Context(), tc.TenantID, req.Username)
 		}
+		// Log the failed attempt for security audit.
+		h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, false, err.Error())
 		log.Printf("login error for user %s: %v", req.Username, err)
 		writeAuthError(w, err)
 		return
@@ -220,6 +225,8 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
 		h.authSvc.ResetFailedLogins(r.Context(), tc.TenantID, req.Username)
 	}
+	// Log the successful attempt.
+	h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, true, "")
 
 	writeJSON(w, http.StatusOK, tokens)
 }
@@ -1200,6 +1207,44 @@ func (h *Handler) verifyEmailChange(w http.ResponseWriter, r *http.Request) {
 			"message": "One side confirmed. Waiting for the other email confirmation.",
 		})
 	}
+}
+
+// loginAttempts handles GET /api/v1/auth/login-attempts?username=xxx&limit=50
+func (h *Handler) loginAttempts(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+	if username == "" {
+		username = r.Header.Get("X-User-ID")
+	}
+	if username == "" {
+		writeError(w, http.StatusBadRequest, "username query parameter is required")
+		return
+	}
+
+	limit := 50
+	if l := r.URL.Query().Get("limit"); l != "" {
+		var n int
+		fmt.Sscanf(l, "%d", &n)
+		if n > 0 {
+			limit = n
+		}
+	}
+
+	attempts, err := h.authSvc.GetLoginAttempts(r.Context(), username, limit)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to query login attempts")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"username": username,
+		"count":    len(attempts),
+		"attempts": attempts,
+	})
 }
 
 // rememberDevice handles POST /api/v1/auth/device.

@@ -123,6 +123,11 @@ func (s *IdentityService) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return s.repo.DeleteUser(ctx, tc.TenantID, id)
 }
 
+// RestoreUser restores a soft-deleted user (status → active).
+func (s *IdentityService) RestoreUser(ctx context.Context, id uuid.UUID) (*domain.User, error) {
+	return s.setStatus(ctx, id, domain.UserStatusActive)
+}
+
 // LockUser locks a user account.
 func (s *IdentityService) LockUser(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	return s.setStatus(ctx, id, domain.UserStatusLocked)

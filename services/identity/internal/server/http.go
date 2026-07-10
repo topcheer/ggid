@@ -123,6 +123,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.deactivateUser(ctx, userID, w, r)
 	case action == "activate" && r.Method == http.MethodPost:
 		h.activateUser(ctx, userID, w, r)
+	case action == "restore" && r.Method == http.MethodPost:
+		h.restoreUser(ctx, userID, w, r)
 	case action == "avatar" && r.Method == http.MethodPost:
 		h.uploadAvatar(ctx, userID, w, r)
 	default:
@@ -365,6 +367,15 @@ func (h *HTTPHandler) deactivateUser(ctx context.Context, userID uuid.UUID, w ht
 
 func (h *HTTPHandler) activateUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	user, err := h.svc.ActivateUser(ctx, userID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, userToJSON(user))
+}
+
+func (h *HTTPHandler) restoreUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	user, err := h.svc.RestoreUser(ctx, userID)
 	if err != nil {
 		writeServiceError(w, err)
 		return

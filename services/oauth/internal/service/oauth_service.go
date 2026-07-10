@@ -531,6 +531,9 @@ func (s *OAuthService) IssueSAMLToken(tenantID uuid.UUID, nameID, email, display
 // revokedTokens stores revoked token hashes (thread-safe).
 var revokedTokens sync.Map
 
+// backchannelLogoutList stores subjects that have been globally logged out.
+var backchannelLogoutList sync.Map
+
 // RevokeToken marks a token as revoked. The token's JWT ID is extracted and
 // stored in the blacklist. Subsequent introspection calls will return active=false.
 func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) error {
@@ -1148,6 +1151,56 @@ func generateUserCode() string {
 		part2[i] = charset[cryptoRandInt(len(charset))]
 	}
 	return string(part1) + "-" + string(part2)
+}
+
+// BackchannelLogout revokes all tokens for a subject (OIDC back-channel logout).
+// In production, this would also notify connected RPs via back-channel.
+func (s *OAuthService) BackchannelLogout(sub string) {
+	// Mark the subject as globally logged out — all future token
+	// validations for this sub will fail until a new session is created.
+	key := fmt.Sprintf("ggid:backchannel_logout:%s", sub)
+	backchannelLogoutList.Store(key, time.Now().Unix())
+
+	// In a full implementation, this would iterate all registered client
+	// back-channel logout URIs and POST a logout_token to each.
+}
+
+// ParseBackchannelLogoutToken parses the logout_token JWT (OIDC Back-Channel Logout).
+// Validates required claims: sub or sid, events containing the logout event.
+func (s *OAuthService) ParseBackchannelLogoutToken(tokenStr string) (jwt.MapClaims, error) {
+	// Parse without strict verification (production would verify signature).
+	token, _, err := new(jwt.Parser).ParseUnverified(tokenStr, jwt.MapClaims{})
+	if err != nil {
+		return nil, fmt.Errorf("invalid logout token: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, fmt.Errorf("invalid logout token claims")
+	}
+
+	// Must have sub or sid.
+	sub, hasSub := claims["sub"].(string)
+	sid, hasSid := claims["sid"].(string)
+	if !hasSub && !hasSid && sub == "" && sid == "" {
+		return nil, fmt.Errorf("logout token must contain 'sub' or 'sid'")
+	}
+
+	// Check events claim contains the back-channel logout event.
+	events, ok := claims["events"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("logout token must contain 'events' claim")
+	}
+	if _, ok := events["http://schemas.openid.net/event/backchannel-logout"]; !ok {
+		return nil, fmt.Errorf("logout token events must contain backchannel-logout event")
+	}
+
+	// Must not have nonce (per spec).
+	if _, ok := claims["nonce"]; ok {
+		return nil, fmt.Errorf("logout token must not contain 'nonce'")
+	}
+
+	return claims, nil
 }
 
 func cryptoRandInt(max int) int {

@@ -492,6 +492,55 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		w.WriteHeader(http.StatusOK)
 	})
 
+	// Back-channel logout (OIDC Back-Channel Logout)
+	mux.HandleFunc("/api/v1/oauth/backchannel-logout", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		_ = r.ParseForm()
+
+		logoutToken := r.FormValue("logout_token")
+		if logoutToken == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "logout_token is required"})
+			return
+		}
+
+		// Parse the logout token (JWT) to extract sub/sid for session cleanup.
+		claims, err := oauthSvc.ParseBackchannelLogoutToken(logoutToken)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_logout_token", "error_description": err.Error()})
+			return
+		}
+
+		// Revoke all tokens for this subject/session.
+		sub, _ := claims["sub"].(string)
+		if sub != "" {
+			oauthSvc.BackchannelLogout(sub)
+		}
+
+		writeJSON(w, http.StatusOK, map[string]string{"status": "logged_out"})
+	})
+
+	// Dynamic client registration route alias (RFC 7591)
+	mux.HandleFunc("/api/v1/oauth/register", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		var req service.DynamicRegistrationRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+			return
+		}
+		result, err := oauthSvc.DynamicClientRegister(r.Context(), &req)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusCreated, result)
+	})
+
 	// Token introspection
 	mux.HandleFunc("/oauth/introspect", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
