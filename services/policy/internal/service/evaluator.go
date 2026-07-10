@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
@@ -42,6 +43,81 @@ type PolicyReader interface {
 //  3. Collect ABAC policies attached to the user and their roles.
 //  4. Deny policies always override allow.
 //  5. Default deny if no explicit allow.
+// DecisionLogger is an optional callback invoked after every Check() call
+// to record the policy decision (e.g. to an audit pipeline).
+type DecisionLogger func(ctx context.Context, req *domain.CheckRequest, result *domain.CheckResult)
+
+// LogDecisions is an in-memory store of recent decisions for inspection.
+var (
+	decisionMu       sync.Mutex
+	decisionLog      []DecisionEntry
+	decisionLoggerFn DecisionLogger
+	maxDecisions     = 1000
+)
+
+// DecisionEntry records a single policy evaluation.
+type DecisionEntry struct {
+	Timestamp  time.Time
+	UserID     uuid.UUID
+	TenantID   uuid.UUID
+	Action     string
+	Resource   string
+	Allowed    bool
+	Reason     string
+	MatchedBy  string
+}
+
+// SetDecisionLogger installs a custom decision logger callback.
+func SetDecisionLogger(fn DecisionLogger) {
+	decisionMu.Lock()
+	defer decisionMu.Unlock()
+	decisionLoggerFn = fn
+}
+
+// GetRecentDecisions returns up to limit recent decision entries (most recent first).
+func GetRecentDecisions(limit int) []DecisionEntry {
+	decisionMu.Lock()
+	defer decisionMu.Unlock()
+	if limit > len(decisionLog) {
+		limit = len(decisionLog)
+	}
+	// Return most recent entries
+	start := len(decisionLog) - limit
+	result := make([]DecisionEntry, limit)
+	copy(result, decisionLog[start:])
+	// Reverse for most-recent-first
+	for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
+		result[i], result[j] = result[j], result[i]
+	}
+	return result
+}
+
+// logDecision records a decision to the in-memory store + invokes the callback.
+func logDecision(ctx context.Context, req *domain.CheckRequest, result *domain.CheckResult) {
+	entry := DecisionEntry{
+		Timestamp: time.Now().UTC(),
+		UserID:    req.UserID,
+		TenantID:  req.TenantID,
+		Action:    req.Action,
+		Resource:  req.Resource,
+		Allowed:   result.Allowed,
+		Reason:    result.Reason,
+		MatchedBy: result.MatchedBy,
+	}
+
+	decisionMu.Lock()
+	decisionLog = append(decisionLog, entry)
+	if len(decisionLog) > maxDecisions {
+		decisionLog = decisionLog[len(decisionLog)-maxDecisions:]
+	}
+	logger := decisionLoggerFn
+	decisionMu.Unlock()
+
+	if logger != nil {
+		logger(ctx, req, result)
+	}
+}
+
 type Evaluator struct {
 	roleReader     RoleReader
 	userRoleReader UserRoleReader
@@ -146,33 +222,41 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 
 	// Step 5: Combine decisions. Deny always wins.
 	if abacDenied {
-		return &domain.CheckResult{
+		result := &domain.CheckResult{
 			Allowed:   false,
 			Reason:    fmt.Sprintf("explicitly denied by %s", denyReason),
 			MatchedBy: denyReason,
-		}, nil
+		}
+		logDecision(ctx, req, result)
+		return result, nil
 	}
 
 	if rbacAllowed {
-		return &domain.CheckResult{
+		result := &domain.CheckResult{
 			Allowed:   true,
 			Reason:    "allowed by RBAC role permission",
 			MatchedBy: "rbac",
-		}, nil
+		}
+		logDecision(ctx, req, result)
+		return result, nil
 	}
 
 	if abacAllowed {
-		return &domain.CheckResult{
+		result := &domain.CheckResult{
 			Allowed:   true,
 			Reason:    fmt.Sprintf("allowed by %s", allowReason),
 			MatchedBy: allowReason,
-		}, nil
+		}
+		logDecision(ctx, req, result)
+		return result, nil
 	}
 
-	return &domain.CheckResult{
+	result := &domain.CheckResult{
 		Allowed: false,
 		Reason:  "no matching allow rule found",
-	}, nil
+	}
+	logDecision(ctx, req, result)
+	return result, nil
 }
 
 // matchActions checks if any pattern in actions matches the given action.
