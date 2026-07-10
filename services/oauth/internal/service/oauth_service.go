@@ -469,6 +469,16 @@ func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
 	return resp
 }
 
+// --- SAML Token Issuance ---
+
+// IssueSAMLToken issues a JWT for a user authenticated via SAML assertion.
+// The SAML NameID is used as the user identifier.
+func (s *OAuthService) IssueSAMLToken(tenantID uuid.UUID, nameID, email, displayName string) (string, int, error) {
+	// Use nameID as a synthetic user ID hash for the JWT subject.
+	userID := uuid.NewSHA1(uuid.NameSpaceOID, []byte("saml:"+nameID))
+	return s.issueAccessToken(userID, tenantID, "saml")
+}
+
 // --- Token Revocation (RFC 7009) ---
 
 // revokedTokens stores revoked token hashes (thread-safe).

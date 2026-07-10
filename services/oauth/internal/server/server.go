@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/saml"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/conf"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
@@ -391,17 +393,58 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
 			return
 		}
-		// POST Binding: SAMLResponse in form body
 		_ = r.ParseForm()
-		samlResponse := r.FormValue("SAMLResponse")
-		if samlResponse == "" {
+		samlResponseB64 := r.FormValue("SAMLResponse")
+		if samlResponseB64 == "" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLResponse"})
 			return
 		}
-		// Skeleton: in production, parse and validate SAML assertion here.
-		writeJSON(w, http.StatusOK, map[string]string{
-			"status": "saml_response_received",
-			"note":   "SAML assertion processing not yet implemented",
+
+		rawXML, err := base64.StdEncoding.DecodeString(samlResponseB64)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid base64 encoding"})
+			return
+		}
+
+		assertion, err := saml.ParseAssertion(rawXML)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to parse SAML assertion", "detail": err.Error()})
+			return
+		}
+
+		if err := assertion.ValidateConditions(); err != nil {
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "assertion validation failed", "detail": err.Error()})
+			return
+		}
+
+		attrs := saml.ExtractAttributes(assertion)
+		nameID := assertion.Subject.NameID
+
+		email := nameID
+		if vals, ok := attrs["mail"]; ok && len(vals) > 0 {
+			email = vals[0]
+		}
+		displayName := ""
+		if vals, ok := attrs["displayName"]; ok && len(vals) > 0 {
+			displayName = vals[0]
+		}
+
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		tenantID, _ := uuid.Parse(tenantIDStr)
+
+		accessToken, expiresIn, err := oauthSvc.IssueSAMLToken(tenantID, nameID, email, displayName)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to issue token", "detail": err.Error()})
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"access_token": accessToken,
+			"token_type":   "Bearer",
+			"expires_in":   expiresIn,
+			"saml_subject": nameID,
+			"email":        email,
+			"name":         displayName,
 		})
 	})
 
