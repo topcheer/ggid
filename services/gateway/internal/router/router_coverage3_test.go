@@ -2,156 +2,214 @@ package router
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
-	"time"
 
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
 )
 
-// Test buildProxiesLocked director callback with identity headers
-func TestBuildProxiesLocked_DirectorForwardsHeaders(t *testing.T) {
-	gw := newTestGateway(t)
-	gw.mu.RLock()
-	proxy, ok := gw.proxies["/api/v1/users"]
-	gw.mu.RUnlock()
-	if !ok {
-		t.Fatal("expected proxy for /api/v1/users")
+func TestRouter_ProxyErrorBackend(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/test": "http://127.0.0.1:1", // unreachable
+		},
 	}
+	gw := New(cfg, nil)
+	req := httptest.NewRequest("GET", "/api/v1/test/data", nil)
+	rr := httptest.NewRecorder()
+	gw.ServeHTTP(rr, req)
+	if rr.Code != http.StatusBadGateway {
+		t.Errorf("want 502, got %d", rr.Code)
+	}
+	body, _ := io.ReadAll(rr.Body)
+	var resp map[string]string
+	json.Unmarshal(body, &resp)
+	if resp["error"] == "" {
+		t.Error("Should have error message")
+	}
+}
+
+func TestRouter_InvalidBackendURL(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/bad": "://invalid-url",
+		},
+	}
+	gw := New(cfg, nil)
+	// Should not panic
+	req := httptest.NewRequest("GET", "/api/v1/bad/data", nil)
+	rr := httptest.NewRecorder()
+	gw.ServeHTTP(rr, req)
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("invalid backend: want 404, got %d", rr.Code)
+	}
+}
+
+func TestRouter_BuildHealthChecker(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/users": "http://localhost:8081",
+			"/api/v1/orgs":  "http://localhost:8071",
+		},
+	}
+	gw := New(cfg, nil)
+	gw.buildHealthChecker()
+	if gw.healthChecker == nil {
+		t.Error("healthChecker should be set")
+	}
+}
+
+func TestRouter_ServeHTTPHealthz(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{},
+	}
+	gw := New(cfg, nil)
+	req := httptest.NewRequest("GET", "/healthz", nil)
+	rr := httptest.NewRecorder()
+	gw.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("healthz: want 200, got %d", rr.Code)
+	}
+}
+
+func TestRouter_ServeHTTPRouteNotFound(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/users": "http://localhost:8081",
+		},
+	}
+	gw := New(cfg, nil)
+	req := httptest.NewRequest("GET", "/api/v1/nonexistent", nil)
+	rr := httptest.NewRecorder()
+	gw.ServeHTTP(rr, req)
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("not found: want 404, got %d", rr.Code)
+	}
+}
+
+func TestRouter_TenantIDInjectionInBody(t *testing.T) {
+	var capturedBody []byte
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedBody, _ = io.ReadAll(r.Body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/test": backend.URL,
+		},
+	}
+	gw := New(cfg, nil)
+
+	body := `{"name":"test"}`
+	req := httptest.NewRequest("POST", "/api/v1/test/create", io.NopCloser(io.Reader(nil)))
+	req.Body = io.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	ctx := context.WithValue(req.Context(), middleware.TenantIDKey, "tenant-123")
+	req = req.WithContext(ctx)
+	rr := httptest.NewRecorder()
+	gw.ServeHTTP(rr, req)
+
+	var data map[string]any
+	json.Unmarshal(capturedBody, &data)
+	if data["tenant_id"] != "tenant-123" {
+		t.Errorf("tenant_id not injected: got %v", data["tenant_id"])
+	}
+}
+
+func TestRouter_RouteMatchBackend(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	}))
+	defer backend.Close()
+
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/test": backend.URL,
+		},
+	}
+	gw := New(cfg, nil)
+	req := httptest.NewRequest("GET", "/api/v1/test/path", nil)
+	rr := httptest.NewRecorder()
+	gw.ServeHTTP(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("want 200, got %d", rr.Code)
+	}
+}
+
+func TestRouter_HandleGetRoutes(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/users": "http://localhost:8081",
+		},
+	}
+	gw := New(cfg, nil)
+	req := httptest.NewRequest("GET", "/admin/routes", nil)
+	rr := httptest.NewRecorder()
+	gw.handleGetRoutes(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("want 200, got %d", rr.Code)
+	}
+}
+
+func TestRouter_HandleReloadRoutes(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/users": "http://localhost:8081",
+		},
+	}
+	gw := New(cfg, nil)
+	gw.SetReloadFunc(func() (*config.Config, error) {
+		return cfg, nil
+	})
+	req := httptest.NewRequest("POST", "/admin/reload", nil)
+	rr := httptest.NewRecorder()
+	gw.handleReloadRoutes(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Errorf("want 200, got %d", rr.Code)
+	}
+}
+
+func TestRouter_MatchBackend(t *testing.T) {
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer backend.Close()
+
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/users": backend.URL,
+		},
+	}
+	gw := New(cfg, nil)
+
+	proxy, prefix := gw.matchBackend("/api/v1/users/123")
 	if proxy == nil {
-		t.Fatal("proxy is nil")
+		t.Error("Should match backend")
+	}
+	if prefix != "/api/v1/users" {
+		t.Errorf("prefix: want '/api/v1/users', got '%s'", prefix)
 	}
 
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/api/v1/users", nil)
-	ctx := context.WithValue(r.Context(), middleware.RequestIDKey, "req-123")
-	r = r.WithContext(ctx)
-	gw.ServeHTTP(w, r)
-}
-
-// Test buildProxiesLocked with per-route timeout configured
-func TestBuildProxiesLocked_WithTimeouts(t *testing.T) {
-	cfg := config.Default()
-	cfg.Routes = map[string]string{
-		"/api/v1/slow": "http://localhost:39000",
-	}
-	cfg.RouteConfigs = map[string]config.RouteConfig{
-		"/api/v1/slow": {Timeout: config.RouteTimeout{Read: 5 * time.Second}},
-	}
-	jwks, _ := middleware.NewJWKSClient("", "")
-	gw := New(cfg, jwks)
-
-	gw.mu.Lock()
-	gw.buildProxiesLocked()
-	gw.mu.Unlock()
-
-	gw.mu.RLock()
-	defer gw.mu.RUnlock()
-	to, ok := gw.timeouts["/api/v1/slow"]
-	if !ok {
-		t.Fatal("expected timeout to be configured")
-	}
-	if to <= 0 {
-		t.Errorf("expected positive timeout, got %v", to)
+	proxy2, _ := gw.matchBackend("/unknown")
+	if proxy2 != nil {
+		t.Error("Should not match unknown route")
 	}
 }
 
-// Test buildProxiesLocked with empty routes
-func TestBuildProxiesLocked_EmptyRoutes(t *testing.T) {
-	cfg := config.Default()
-	cfg.Routes = map[string]string{}
-	jwks, _ := middleware.NewJWKSClient("", "")
-	gw := New(cfg, jwks)
-
-	gw.mu.Lock()
-	gw.buildProxiesLocked()
-	gw.mu.Unlock()
-
-	if len(gw.proxies) != 0 {
-		t.Errorf("expected 0 proxies, got %d", len(gw.proxies))
+func TestRouter_PrintRoutes(t *testing.T) {
+	cfg := &config.Config{
+		Routes: map[string]string{
+			"/api/v1/users": "http://localhost:8081",
+		},
 	}
-}
-
-// Test proxy error handler returns 502 JSON
-func TestProxyErrorHandler_JSONResponse(t *testing.T) {
-	gw := newTestGateway(t)
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/api/v1/users", nil)
-	gw.ServeHTTP(w, r)
-	if w.Code != http.StatusBadGateway {
-		t.Logf("got status %d (expected 502 for non-existent backend)", w.Code)
-	}
-}
-
-// Test ServeHTTP with tenant resolution from header
-func TestServeHTTP_TenantResolutionFromHeader(t *testing.T) {
-	gw := newTestGateway(t)
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("POST", "/api/v1/users", stringBody(`{"name":"test"}`))
-	r.Header.Set("Content-Type", "application/json")
-	r.Header.Set("X-Tenant-ID", "resolved-tenant")
-	gw.ServeHTTP(w, r)
-}
-
-// Test serveSwaggerUI directly
-func TestServeSwaggerUI_DirectCall(t *testing.T) {
-	w := httptest.NewRecorder()
-	serveSwaggerUI(w, nil)
-	if w.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", w.Code)
-	}
-	if w.Header().Get("Content-Type") != "text/html; charset=utf-8" {
-		t.Errorf("expected text/html, got %s", w.Header().Get("Content-Type"))
-	}
-}
-
-// Test serveOpenAPISpec directly
-func TestServeOpenAPISpec_DirectCall(t *testing.T) {
-	w := httptest.NewRecorder()
-	serveOpenAPISpec(w, nil)
-	if w.Code != http.StatusOK {
-		t.Errorf("expected 200, got %d", w.Code)
-	}
-	if w.Header().Get("Content-Type") != "application/json" {
-		t.Errorf("expected application/json, got %s", w.Header().Get("Content-Type"))
-	}
-}
-
-// Test healthz ready returns proper status
-func TestHealthzReady_Structure(t *testing.T) {
-	gw := newTestGateway(t)
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/healthz/ready", nil)
-	gw.ServeHTTP(w, r)
-	if w.Code != http.StatusOK && w.Code != http.StatusServiceUnavailable {
-		t.Errorf("expected 200 or 503, got %d", w.Code)
-	}
-}
-
-// Test docs endpoint
-func TestDocs_TrailingSlash(t *testing.T) {
-	gw := newTestGateway(t)
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("GET", "/docs/", nil)
-	gw.ServeHTTP(w, r)
-	if w.Code == 0 {
-		t.Error("expected non-zero status")
-	}
-}
-
-// Test OPTIONS preflight
-func TestOPTIONS_Preflight(t *testing.T) {
-	gw := newTestGateway(t)
-	w := httptest.NewRecorder()
-	r := httptest.NewRequest("OPTIONS", "/api/v1/users", nil)
-	r.Header.Set("Origin", "https://example.com")
-	r.Header.Set("Access-Control-Request-Method", "GET")
-	gw.ServeHTTP(w, r)
-	// CORS preflight returns 204 or 200 or may pass through to JWT auth (401)
-	// Just verify it doesn't panic
-	if w.Code == 0 {
-		t.Error("expected non-zero status")
-	}
+	gw := New(cfg, nil)
+	gw.PrintRoutes() // Should not panic
 }
