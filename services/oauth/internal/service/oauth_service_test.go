@@ -934,7 +934,7 @@ func TestIssueIDToken(t *testing.T) {
 	tenantID := uuid.New()
 	userID := uuid.New()
 
-	token, err := svc.issueIDToken(userID, tenantID, "test-client", "nonce123")
+	token, err := svc.issueIDToken(userID, tenantID, "test-client", "nonce123", nil)
 	if err != nil {
 		t.Fatalf("issueIDToken: %v", err)
 	}
