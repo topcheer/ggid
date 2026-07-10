@@ -1,202 +1,694 @@
-# Migration Guide: Auth0 / Keycloak / Clerk → GGID
+# GGID Migration Guide
 
-> Step-by-step migration from existing IAM platforms to GGID.
-
----
-
-## 1. Concept Mapping
-
-| Concept | Auth0 | Keycloak | Clerk | GGID |
-|---------|-------|----------|-------|------|
-| Tenant | Tenant | Realm | Instance | Tenant (UUID) |
-| User | User | User | User | User (Identity Service) |
-| Role | Role | Role | Role | Role (Policy Service) |
-| Permission | Scope | Role/Scope | Permission | Permission (Policy Service) |
-| Organization | Organization | Group | Organization | Organization (Org Service) |
-| OAuth Client | Application | Client | Instance | OAuth Client (OAuth Service) |
-| Hosted Login | Universal Login | Login Theme | SignIn | Hosted Login Pages (Gateway) |
-| Token Format | JWT (RS256) | JWT (RS256) | JWT | JWT (RS256) |
-| MFA | Guardian | OTP | MFA | TOTP + WebAuthn |
-| Social Login | Connections | Identity Providers | Social | Social Connectors |
-| Audit Log | Log Streams | Events | Audit | Audit Service (NATS) |
-| SCIM | Provisioning | SCIM 2.0 | — | SCIM 2.0 (Identity Service) |
+How to migrate from Auth0, Keycloak, or other IAM platforms to GGID.
 
 ---
 
-## 2. Auth0 Migration
+## Table of Contents
 
-### 2.1 Export Users
+- [Migration Overview](#migration-overview)
+- [Phase 1: Assessment](#phase-1-assessment)
+- [Phase 2: Export Source Data](#phase-2-export-source-data)
+- [Phase 3: Transform & Import](#phase-3-transform--import)
+- [Phase 4: SSO / Federation Migration](#phase-4-sso--federation-migration)
+- [Phase 5: Cutover](#phase-5-cutover)
+- [Auth0 → GGID](#auth0--ggid)
+- [Keycloak → GGID](#keycloak--ggid)
+- [API Endpoint Mapping](#api-endpoint-mapping)
+- [Post-Migration Validation](#post-migration-validation)
 
-Use the Auth0 Management API:
+---
+
+## Migration Overview
+
+```
+┌─────────────┐    Export     ┌──────────────┐    Transform    ┌───────────┐
+│  Source IAM  │ ──────────► │  JSON / CSV   │ ──────────────► │   GGID    │
+│  (Auth0/KC) │              │  Intermediate │                 │  Import   │
+└─────────────┘              └──────────────┘                 └───────────┘
+```
+
+### Timeline
+
+| Phase | Duration (1K users) | Duration (10K users) |
+|-------|--------------------|--------------------|
+| Assessment | 1 day | 2 days |
+| Export | 1 hour | 4 hours |
+| Transform | 2 hours | 1 day |
+| Import | 30 minutes | 2 hours |
+| Validation | 1 day | 2 days |
+| SSO migration | 1 day | 2 days |
+| Cutover | 1 hour | 2 hours |
+
+---
+
+## Phase 1: Assessment
+
+### Inventory Your Current Setup
+
+Document before migrating:
+
+- [ ] Total users count
+- [ ] User attributes used (email, phone, custom fields)
+- [ ] Authentication methods (password, social, LDAP, SAML)
+- [ ] Roles and permissions structure
+- [ ] SSO/OAuth clients (client_id, redirect URIs, grant types)
+- [ ] SAML federation / IdP connections
+- [ ] MFA enrollment status
+- [ ] Custom claims / hooks / rules / actions
+- [ ] API endpoints your application calls
+
+### Compatibility Check
+
+| Feature | Auth0 | Keycloak | GGID |
+|---------|-------|----------|------|
+| Password login | ✅ | ✅ | ✅ |
+| Social login (Google, GitHub) | ✅ | ✅ | ✅ |
+| LDAP/AD | ✅ | ✅ | ✅ |
+| SAML 2.0 SP | ✅ | ✅ | ✅ |
+| OIDC IdP | ✅ | ✅ | ✅ |
+| MFA TOTP | ✅ | ✅ | ✅ |
+| WebAuthn/Passkey | ✅ | ❌ | ✅ |
+| RBAC | ✅ (Actions) | ✅ | ✅ |
+| ABAC | ❌ | ❌ | ✅ |
+| SCIM 2.0 | ✅ | ✅ | ✅ |
+| Multi-tenant | ✅ (Organizations) | ✅ (Realms) | ✅ (RLS) |
+
+---
+
+## Phase 2: Export Source Data
+
+### From Auth0
+
+#### Export Users
 
 ```bash
-curl "https://YOUR_DOMAIN/api/v2/users" \
-  -H "Authorization: Bearer MGMT_TOKEN" \
-  -o users.json
+# Use the Auth0 Management API
+# Requires: npm install -g auth0-deploy-cli
+
+# Export configuration
+cat > config.json << 'EOF'
+{
+  "AUTH0_DOMAIN": "YOUR tenant.auth0.com",
+  "AUTH0_CLIENT_ID": "YOUR_M2M_CLIENT_ID",
+  "AUTH0_CLIENT_SECRET": "YOUR_M2M_CLIENT_SECRET"
+}
+EOF
+
+# Export all users
+a0cli export users --config config.json --output users.json
 ```
 
-### 2.2 Import to GGID
+Or via Management API directly:
 
 ```bash
-# Transform and bulk import
-curl -X POST http://localhost:8080/api/v1/users/import \
-  -H "Authorization: Bearer $GGID_JWT" \
-  -H "X-Tenant-ID: $TENANT_ID" \
-  -F "file=@users.csv"
+# Get all users (paginated)
+curl "https://YOUR_TENANT.auth0.com/api/v2/users?per_page=100&page=0" \
+  -H "Authorization: Bearer YOUR_MGMT_API_TOKEN" \
+  | jq '.[] | {
+      user_id, email, email_verified, name,
+      nickname, given_name, family_name,
+      created_at, last_login, app_metadata, user_metadata
+    }' > auth0_users.json
 ```
 
-CSV format:
-```csv
-username,email,full_name
-john.doe,john@example.com,John Doe
-jane.smith,jane@example.com,Jane Smith
+#### Export Roles
+
+```bash
+curl "https://YOUR_TENANT.auth0.com/api/v2/roles" \
+  -H "Authorization: Bearer YOUR_MGMT_API_TOKEN" \
+  | jq '.[] | {id, name, description, permissions}' > auth0_roles.json
 ```
 
-### 2.3 Key Differences
+#### Export Connections (SSO)
 
-| Feature | Auth0 | GGID |
-|---------|-------|------|
-| Password hashing | PBKDF2 | bcrypt (cost 12) |
-| Token lifetime | Configurable per API | Configurable per tenant |
-| JWKS URL | `tenant.auth0.com/.well-known/jwks.json` | `your-host/.well-known/jwks.json` |
-| Rate limits | Tenant-level | Per-tenant configurable |
-| Rules | JavaScript | Go webhook hooks |
-| Connections | Per-tenant | Social connectors per tenant |
+```bash
+curl "https://YOUR_TENANT.auth0.com/api/v2/connections" \
+  -H "Authorization: Bearer YOUR_MGMT_API_TOKEN" \
+  | jq '.[] | {name, strategy, options}' > auth0_connections.json
+```
 
-> **Password migration**: Auth0 uses PBKDF2, GGID uses bcrypt. Send password-reset emails after migration.
+### From Keycloak
 
-### 2.4 Rules → Hooks
+#### Export Realm Data
 
-Auth0 Rules run JavaScript inline. GGID uses configurable webhook hooks:
+```bash
+# Using Keycloak CLI (inside the Keycloak container)
+docker exec keycloak /opt/keycloak/bin/kc.sh export \
+  --dir /tmp/export \
+  --realm my-realm \
+  --users realm_file
 
+# Or via REST API
+curl "http://localhost:8080/admin/realms/my-realm/users" \
+  -H "Authorization: Bearer $KEYCLOAK_TOKEN" > kc_users.json
+
+curl "http://localhost:8080/admin/realms/my-realm/roles" \
+  -H "Authorization: Bearer $KEYCLOAK_TOKEN" > kc_roles.json
+```
+
+#### Export Full Realm (JSON)
+
+```bash
+# Full realm export includes users, roles, clients, identity providers
+docker exec keycloak /opt/keycloak/bin/kc.sh export \
+  --dir /tmp/export \
+  --realm my-realm \
+  --users same_file
+
+# Copy the export out
+docker cp keycloak:/tmp/export/my-realm-realm.json ./keycloak_realm.json
+```
+
+---
+
+## Phase 3: Transform & Import
+
+### User Data Transformation
+
+#### Auth0 → GGID Format
+
+**Auth0 user JSON:**
 ```json
 {
-  "event": "post_login",
-  "url": "https://your-app.com/webhooks/ggid-post-login",
-  "method": "POST",
-  "headers": { "Authorization": "Bearer WEBHOOK_SECRET" }
+  "user_id": "auth0|abc123",
+  "email": "user@example.com",
+  "email_verified": true,
+  "name": "John Doe",
+  "created_at": "2023-01-15T10:00:00.000Z",
+  "app_metadata": { "roles": ["admin"] },
+  "user_metadata": { "department": "engineering" }
 }
 ```
 
----
-
-## 3. Keycloak Migration
-
-### 3.1 Export Realm
-
-```bash
-# Keycloak admin CLI
-/opt/keycloak/bin/kcadm.sh export \
-  --realm my-realm \
-  --dir ./export/
+**Transform to GGID format:**
+```json
+{
+  "username": "user@example.com",
+  "email": "user@example.com",
+  "display_name": "John Doe",
+  "status": "active",
+  "email_verified": true,
+  "password": "TEMPORARY_PASSWORD_MUST_RESET",
+  "tenant_id": "00000000-0000-0000-0000-000000000001"
+}
 ```
 
-### 3.2 Transform and Import
+**Transform script (Python):**
+```python
+import json
 
-```bash
-# Keycloak JSON → GGID CSV
-go run scripts/keycloak-to-ggid.go \
-  --input export/my-realm-users-0.json \
-  --output users.csv
+with open('auth0_users.json') as f:
+    auth0_users = json.load(f)
+
+ggid_users = []
+for u in auth0_users:
+    ggid_users.append({
+        "username": u.get("email", u.get("user_id")),
+        "email": u["email"],
+        "display_name": u.get("name", u.get("nickname", "")),
+        "status": "active",
+        "email_verified": u.get("email_verified", False),
+        "password": "TempPass@123Reset",  # forces password reset on first login
+        "tenant_id": "00000000-0000-0000-0000-000000000001"
+    })
+
+with open('ggid_users_import.json', 'w') as f:
+    json.dump(ggid_users, f, indent=2)
+
+print(f"Transformed {len(ggid_users)} users")
 ```
 
-### 3.3 Role Mapping
+#### Keycloak → GGID Format
 
-| Keycloak Role | GGID Equivalent |
+**Keycloak user JSON:**
+```json
+{
+  "id": "kc-uuid-here",
+  "username": "jdoe",
+  "email": "jdoe@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "enabled": true,
+  "emailVerified": true,
+  "attributes": {"department": ["engineering"]}
+}
+```
+
+**Transform:**
+```json
+{
+  "username": "jdoe",
+  "email": "jdoe@example.com",
+  "display_name": "John Doe",
+  "status": "active",
+  "email_verified": true,
+  "password": "TempPass@123Reset"
+}
+```
+
+### Import Users to GGID
+
+```bash
+TOKEN="your-admin-jwt"
+GW="http://localhost:8080"
+TENANT="00000000-0000-0000-0000-000000000001"
+
+# Method 1: Bulk import via CSV
+python3 transform_users.py  # converts to CSV
+curl -X POST "$GW/api/v1/users/import" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT" \
+  -H "Content-Type: text/csv" \
+  --data-binary @ggid_users.csv
+
+# Method 2: Individual registration (for small batches)
+for user in $(jq -c '.[]' ggid_users_import.json); do
+  curl -s -X POST "$GW/api/v1/auth/register" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $TENANT" \
+    -d "$user"
+done
+```
+
+### Role Mapping
+
+#### Auth0 → GGID
+
+| Auth0 Concept | GGID Equivalent |
 |---------------|-----------------|
-| `realm-admin` | `tenant_admin` |
-| `user` | `member` |
-| `manage-users` | `user_manager` |
-| `view-realm` | `auditor` |
-
-### 3.4 Client Migration
-
-| Keycloak | GGID |
-|----------|------|
-| Confidential Client | OAuth Client (client_credentials) |
-| Bearer-only Client | OAuth Client (service_account) |
-| Public Client | OAuth Client (authorization_code + PKCE) |
-
----
-
-## 4. Clerk Migration
-
-### 4.1 Export via Clerk API
+| Role | Role (key = Auth0 role name) |
+| Permission | Role permission (resource:action) |
+| App Metadata `roles` | Role assignment via API |
 
 ```bash
-curl "https://api.clerk.com/v1/users" \
-  -H "Authorization: Bearer sk_test_CLERK_KEY" \
-  | jq '.data' > users.json
+# Create roles from Auth0 export
+for role in $(jq -c '.[]' auth0_roles.json); do
+  ROLE_NAME=$(echo $role | jq -r .name)
+  ROLE_DESC=$(echo $role | jq -r .description)
+
+  curl -s -X POST "$GW/api/v1/roles" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $TENANT" \
+    -d "{
+      \"key\": \"$(echo $ROLE_NAME | tr ' ' '_' | tr '[:upper:]' '[:lower:]')\",
+      \"name\": \"$ROLE_NAME\",
+      \"description\": \"$ROLE_DESC\"
+    }"
+done
 ```
 
-### 4.2 Key Differences
+#### Keycloak → GGID
 
-| Feature | Clerk | GGID |
-|---------|-------|------|
-| Multi-tenant | Instances | Tenant UUID + RLS |
-| Organizations | Built-in | Org Service (tree structure) |
-| session_token | JWT (RS256) | JWT (RS256) |
-| Webhooks | Svix | Webhook system (HMAC delivery) |
+| Keycloak Concept | GGID Equivalent |
+|------------------|-----------------|
+| Realm Role | Role |
+| Client Role | Role (prefixed with client name) |
+| Composite Role | Role hierarchy (parent_role_id) |
+| Group | Organization |
+| Group Membership | Org membership |
+
+```bash
+# Map Keycloak groups to GGID organizations
+for group in $(jq -c '.[]' kc_groups.json); do
+  GROUP_NAME=$(echo $group | jq -r .name)
+
+  curl -s -X POST "$GW/api/v1/orgs" \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $TENANT" \
+    -d "{\"name\": \"$GROUP_NAME\"}"
+done
+```
+
+### Password Migration
+
+**Option A: Force Password Reset (Recommended)**
+
+Set all imported users with a temporary password. On first login, GGID
+prompts for a password change:
+
+```json
+{
+  "password": "TempPass@123Reset",
+  "require_change": true
+}
+```
+
+**Option B: Migrate Password Hashes (Advanced)**
+
+If you have access to password hashes:
+
+1. Write a custom migration script that inserts directly into PostgreSQL:
+
+```sql
+-- Auth0 uses bcrypt; GGID uses Argon2id
+-- Passwords cannot be directly converted between hash algorithms
+
+-- Instead, store the old hash temporarily and do lazy migration:
+INSERT INTO credentials (id, tenant_id, user_id, type, secret, created_at)
+VALUES (
+  gen_random_uuid(),
+  '00000000-0000-0000-0000-000000000001',
+  'user-uuid-here',
+  'password',
+  'BCRYPT_HASH_HERE',   -- old hash, verified on first login
+  NOW()
+);
+```
+
+2. On first login, verify against the old hash. If successful, re-hash with
+   Argon2id and update the record:
+
+```sql
+UPDATE credentials SET secret = 'NEW_ARGON2ID_HASH' WHERE user_id = '...';
+```
+
+> **Note:** GGID uses Argon2id by default. Auth0 uses bcrypt. Keycloak uses
+> PBKDF2. None are directly compatible, so lazy migration is the only option
+> that preserves passwords.
 
 ---
 
-## 5. DNS Cutover Strategy
+## Phase 4: SSO / Federation Migration
 
-### Phase 1: Parallel Run (1-2 weeks)
+### Social Login Connections
 
-```
-auth.example.com → Auth0 (existing)
-auth-new.example.com → GGID (new, tested in parallel)
+| Provider | Auth0 Config | GGID Config |
+|----------|-------------|-------------|
+| Google | Connection (strategy: google-oauth2) | `AUTH_GOOGLE_CLIENT_ID` / `AUTH_GOOGLE_CLIENT_SECRET` |
+| GitHub | Connection (strategy: github) | `AUTH_GITHUB_CLIENT_ID` / `AUTH_GITHUB_CLIENT_SECRET` |
+| Microsoft | Connection (strategy: microsoft) | `AUTH_MICROSOFT_CLIENT_ID` / `AUTH_MICROSOFT_CLIENT_SECRET` |
+
+```bash
+# Set social login credentials as environment variables in Auth service
+AUTH_GOOGLE_CLIENT_ID=your_google_client_id
+AUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
+AUTH_GOOGLE_REDIRECT_URL=https://iam.example.com/api/v1/auth/social/google/callback
 ```
 
-### Phase 2: Gradual Migration (1 week)
+### SAML Federation
 
-```
-auth.example.com → Load Balancer → 90% Auth0, 10% GGID
+Migrate SAML IdP connections:
+
+```bash
+# Create IdP federation config in GGID
+curl -X POST "$GW/api/v1/idp/config" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "name": "Corporate ADFS",
+    "protocol": "saml",
+    "metadata_url": "https://adfs.corp.example.com/FederationMetadata/2007-06/FederationMetadata.xml"
+  }'
 ```
 
-### Phase 3: Full Cutover
+### OAuth Client Migration
 
+Migrate OAuth clients from Auth0/Keycloak:
+
+| Auth0/Keycloak | GGID |
+|----------------|------|
+| Application (client_id + client_secret) | OAuth client registration |
+| Callback URLs | Redirect URIs |
+| Scopes | OIDC scopes (openid profile email) |
+
+```bash
+# Register OAuth client in GGID
+curl -X POST "$GW/api/v1/oauth/clients" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{
+    "name": "My Web App",
+    "redirect_uris": ["https://myapp.com/callback"],
+    "grant_types": ["authorization_code", "refresh_token"],
+    "scopes": ["openid", "profile", "email"]
+  }'
 ```
-auth.example.com → GGID (100%)
-```
+
+---
+
+## Phase 5: Cutover
+
+### Cutover Strategy
+
+1. **Freeze writes** on the source IAM (maintenance window)
+2. **Export final delta** (users created since last export)
+3. **Import delta** into GGID
+4. **Update DNS** to point to GGID Gateway
+5. **Update application config** to use new JWKS URL
+6. **Test login flow** end-to-end
+7. **Announce** migration complete
 
 ### Rollback Plan
 
-Keep Auth0/Keycloak running for 30 days post-migration. DNS TTL: 300s (5 min) for quick rollback.
+Keep the source IAM running for 48 hours as fallback:
+
+1. If critical issues arise, revert DNS to the source IAM
+2. Users who haven't logged in since cutover are unaffected
+3. Users who changed data in GGID may need re-sync
 
 ---
 
-## 6. SDK Integration Changes
+## Auth0 → GGID
 
-### Before (Auth0)
+### Quick Migration Script
 
-```javascript
-import { Auth0Client } from '@auth0/auth0-spa-js';
-const auth0 = new Auth0Client({
-  domain: 'your-tenant.auth0.com',
-  client_id: 'CLIENT_ID',
-});
+```bash
+#!/bin/bash
+# migrate-from-auth0.sh
+set -euo pipefail
+
+AUTH0_DOMAIN="${1:?Usage: $0 <auth0_domain> <mgmt_token> <ggid_gateway> <ggid_token>}"
+MGMT_TOKEN="$2"
+GW="$3"
+GGID_TOKEN="$4"
+TENANT="00000000-0000-0000-0000-000000000001"
+
+echo "=== Auth0 → GGID Migration ==="
+
+# Step 1: Export users from Auth0
+echo "[1/4] Exporting users..."
+curl -s "https://$AUTH0_DOMAIN/api/v2/users?per_page=100&page=0" \
+  -H "Authorization: Bearer $MGMT_TOKEN" > auth0_users_raw.json
+
+# Step 2: Transform to GGID format
+echo "[2/4] Transforming users..."
+python3 -c "
+import json, sys
+users = json.load(open('auth0_users_raw.json'))
+output = []
+for u in users:
+    output.append({
+        'username': u.get('email', ''),
+        'email': u['email'],
+        'display_name': u.get('name', ''),
+        'password': 'TempPass@123Reset',
+        'tenant_id': '$TENANT'
+    })
+json.dump(output, open('ggid_import.json', 'w'), indent=2)
+print(f'Transformed {len(output)} users')
+"
+
+# Step 3: Import to GGID
+echo "[3/4] Importing users..."
+SUCCESS=0; FAIL=0
+for user in $(jq -c '.[]' ggid_import.json); do
+  STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GW/api/v1/auth/register" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $TENANT" \
+    -d "$user")
+  if [ "$STATUS" = "201" ] || [ "$STATUS" = "409" ]; then
+    SUCCESS=$((SUCCESS + 1))
+  else
+    FAIL=$((FAIL + 1))
+  fi
+done
+echo "  Imported: $SUCCESS, Failed: $FAIL"
+
+# Step 4: Export & import roles
+echo "[4/4] Migrating roles..."
+curl -s "https://$AUTH0_DOMAIN/api/v2/roles" \
+  -H "Authorization: Bearer $MGMT_TOKEN" | \
+  jq -c '.[]' | while read -r role; do
+    KEY=$(echo "$role" | jq -r '.name' | tr ' ' '_' | tr '[:upper:]' '[:lower:]')
+    NAME=$(echo "$role" | jq -r '.name')
+    curl -s -X POST "$GW/api/v1/roles" \
+      -H "Authorization: Bearer $GGID_TOKEN" \
+      -H "Content-Type: application/json" \
+      -H "X-Tenant-ID: $TENANT" \
+      -d "{\"key\":\"$KEY\",\"name\":\"$NAME\"}"
+  done
+
+echo "=== Migration complete ==="
 ```
 
-### After (GGID)
+---
 
-```javascript
-import { GGIDClient } from '@ggid/node-sdk';
-const ggid = new GGIDClient({
-  baseUrl: 'https://auth.example.com',
-  clientId: 'CLIENT_ID',
-  tenantId: 'TENANT_UUID',
-});
+## Keycloak → GGID
+
+### Quick Migration Script
+
+```bash
+#!/bin/bash
+# migrate-from-keycloak.sh
+set -euo pipefail
+
+KC_URL="${1:?Usage: $0 <keycloak_url> <kc_admin> <kc_pass> <ggid_gateway> <ggid_token>}"
+KC_REALM="$2"
+KC_ADMIN="$3"
+KC_PASS="$4"
+GW="$5"
+GGID_TOKEN="$6"
+TENANT="00000000-0000-0000-0000-000000000001"
+
+echo "=== Keycloak → GGID Migration ==="
+
+# Get admin token
+KC_TOKEN=$(curl -s -X POST "$KC_URL/realms/master/protocol/openid-connect/token" \
+  -d "grant_type=password&username=$KC_ADMIN&password=$KC_PASS&client_id=admin-cli" \
+  | jq -r .access_token)
+
+# Export users
+echo "[1/3] Exporting users..."
+curl -s "$KC_URL/admin/realms/$KC_REALM/users?max=1000" \
+  -H "Authorization: Bearer $KC_TOKEN" > kc_users.json
+
+# Transform & import
+echo "[2/3] Importing users..."
+jq -c '.[]' kc_users.json | while read -r u; do
+  USERNAME=$(echo "$u" | jq -r '.username')
+  EMAIL=$(echo "$u" | jq -r '.email // empty')
+  FIRST=$(echo "$u" | jq -r '.firstName // empty')
+  LAST=$(echo "$u" | jq -r '.lastName // empty')
+
+  curl -s -X POST "$GW/api/v1/auth/register" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $TENANT" \
+    -d "{
+      \"username\": \"$USERNAME\",
+      \"email\": \"${EMAIL:-$USERNAME@example.com}\",
+      \"password\": \"TempPass@123Reset\",
+      \"display_name\": \"$FIRST $LAST\"
+    }" > /dev/null
+done
+
+# Export & map roles
+echo "[3/3] Migrating roles..."
+curl -s "$KC_URL/admin/realms/$KC_REALM/roles" \
+  -H "Authorization: Bearer $KC_TOKEN" | \
+  jq -c '.[]' | while read -r role; do
+    NAME=$(echo "$role" | jq -r '.name')
+    KEY=$(echo "$NAME" | tr '[:upper:]' '[:lower:]')
+    curl -s -X POST "$GW/api/v1/roles" \
+      -H "Authorization: Bearer $GGID_TOKEN" \
+      -H "Content-Type: application/json" \
+      -H "X-Tenant-ID: $TENANT" \
+      -d "{\"key\":\"$KEY\",\"name\":\"$NAME\"}" > /dev/null
+done
+
+echo "=== Migration complete ==="
 ```
 
-### Token validation
+---
 
-```javascript
-// GGID Node.js middleware
-import { ggidMiddleware } from '@ggid/node-sdk/middleware';
-app.use(ggidMiddleware({
-  jwksUri: 'https://auth.example.com/.well-known/jwks.json',
-  tenantId: 'TENANT_UUID',
-}));
+## API Endpoint Mapping
+
+### Auth0 → GGID
+
+| Auth0 API | GGID API |
+|-----------|----------|
+| `POST /api/v2/users` | `POST /api/v1/users` |
+| `GET /api/v2/users` | `GET /api/v1/users` |
+| `GET /api/v2/users/{id}` | `GET /api/v1/users/{id}` |
+| `PATCH /api/v2/users/{id}` | `PATCH /api/v1/users/{id}` |
+| `DELETE /api/v2/users/{id}` | `DELETE /api/v1/users/{id}` |
+| `POST /api/v2/roles` | `POST /api/v1/roles` |
+| `GET /api/v2/roles` | `GET /api/v1/roles` |
+| `POST /api/v2/users/{id}/roles` | Assign via `POST /api/v1/users/{id}` (role_ids) |
+| `POST /oauth/token` (login) | `POST /api/v1/auth/login` |
+| `POST /oauth/token` (refresh) | `POST /api/v1/auth/refresh` |
+| `POST /dbconnections/signup` | `POST /api/v1/auth/register` |
+| `POST /api/v2/tickets/password-reset` | `POST /api/v1/auth/password/forgot` |
+| `GET /.well-known/jwks.json` | `GET /.well-known/jwks.json` |
+
+### Keycloak → GGID
+
+| Keycloak API | GGID API |
+|--------------|----------|
+| `POST /admin/realms/{r}/users` | `POST /api/v1/users` |
+| `GET /admin/realms/{r}/users` | `GET /api/v1/users` |
+| `PUT /admin/realms/{r}/users/{id}` | `PATCH /api/v1/users/{id}` |
+| `DELETE /admin/realms/{r}/users/{id}` | `DELETE /api/v1/users/{id}` |
+| `POST /admin/realms/{r}/roles` | `POST /api/v1/roles` |
+| `GET /admin/realms/{r}/roles` | `GET /api/v1/roles` |
+| `POST /realms/{r}/protocol/openid-connect/token` | `POST /api/v1/auth/login` |
+| `POST /realms/{r}/protocol/openid-connect/token` (refresh) | `POST /api/v1/auth/refresh` |
+| `GET /realms/{r}/protocol/openid-connect/certs` | `GET /.well-known/jwks.json` |
+
+---
+
+## Post-Migration Validation
+
+### Test Checklist
+
+- [ ] All imported users can log in with temporary password
+- [ ] Password reset flow works for imported users
+- [ ] Role assignments match source IAM
+- [ ] Social login (Google/GitHub) works
+- [ ] SAML federation works (if applicable)
+- [ ] OAuth clients can complete authorization code flow
+- [ ] JWKS endpoint returns valid keys
+- [ ] Audit events are being recorded
+- [ ] Token refresh works
+- [ ] MFA enrollment works for imported users
+
+### Verification Script
+
+```bash
+#!/bin/bash
+# verify-migration.sh
+set -euo pipefail
+
+GW="http://localhost:8080"
+TENANT="00000000-0000-0000-0000-000000000001"
+
+echo "=== Migration Verification ==="
+
+# Count imported users
+USER_COUNT=$(curl -s "$GW/api/v1/users?page_size=1" \
+  -H "Authorization: Bearer $TOKEN" -H "X-Tenant-ID: $TENANT" \
+  | jq '.total')
+echo "Total users: $USER_COUNT"
+
+# Count roles
+ROLE_COUNT=$(curl -s "$GW/api/v1/roles?tenant_id=$TENANT" \
+  -H "Authorization: Bearer $TOKEN" | jq '.roles | length')
+echo "Total roles: $ROLE_COUNT"
+
+# Test login with a known user
+echo "Testing login..."
+LOGIN=$(curl -s -X POST "$GW/api/v1/auth/login" \
+  -H "Content-Type: application/json" -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"test_user","password":"TempPass@123Reset"}')
+
+if echo "$LOGIN" | jq -e '.access_token' > /dev/null 2>&1; then
+  echo "✓ Login successful"
+else
+  echo "✗ Login failed: $(echo $LOGIN | jq -r .error)"
+fi
+
+# Verify JWKS
+echo "Verifying JWKS..."
+JWKS=$(curl -s "$GW/.well-known/jwks.json")
+if echo "$JWKS" | jq -e '.keys[0]' > /dev/null 2>&1; then
+  echo "✓ JWKS endpoint returns valid keys"
+else
+  echo "✗ JWKS endpoint error"
+fi
+
+echo "=== Verification complete ==="
 ```
