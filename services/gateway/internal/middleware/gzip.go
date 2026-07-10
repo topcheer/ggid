@@ -98,6 +98,12 @@ func (g *gzipResponseWriter) Close() {
 
 func shouldSkipCompression(contentType string) bool {
 	contentType = strings.ToLower(contentType)
+
+	// SVG is compressible despite image/ prefix
+	if strings.HasPrefix(contentType, "image/svg+xml") {
+		return false
+	}
+
 	for _, prefix := range skipCompressionPrefixes {
 		if strings.HasPrefix(contentType, prefix) {
 			return true
