@@ -2,19 +2,53 @@
 
 import { useState, useCallback } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
-import { Search, Plus, Lock, Unlock, Trash2, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { Search, Plus, Lock, Unlock, Trash2, UserPlus, ChevronLeft, ChevronRight, Shield } from "lucide-react";
+
+const PAGE_SIZE = 10;
 
 export default function UsersPage() {
   const { users, loading, error, refresh } = useUsers();
   const { apiFetch } = useApi();
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [page, setPage] = useState(0);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [batchRole, setBatchRole] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [roles, setRoles] = useState<{ id: string; key: string; name: string }[]>([]);
+
+  // Load roles for batch assign
+  useCallback(async () => {
+    const data = await apiFetch<{ roles?: { id: string; key: string; name: string }[] }>("/api/v1/roles").catch(() => ({ roles: [] }));
+    setRoles(data.roles || []);
+  }, [apiFetch]);
 
   const filtered = users.filter(
     (u) =>
       u.username.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selected.size === paginated.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(paginated.map((u) => u.id)));
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -46,12 +80,41 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (userId: string, username: string) => {
-    if (!confirm(`Delete user "${username}"? This action cannot be undone.`)) return;
+    if (!confirm(`Delete user "${username}"?`)) return;
     try {
       await apiFetch(`/api/v1/users/${userId}`, { method: "DELETE" });
       refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete user");
+      alert(err instanceof Error ? err.message : "Failed");
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} selected users?`)) return;
+    try {
+      await Promise.all([...selected].map((id) => apiFetch(`/api/v1/users/${id}`, { method: "DELETE" })));
+      setSelected(new Set());
+      setMsg(`Deleted ${selected.size} users`);
+      refresh();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Batch delete failed");
+    }
+  };
+
+  const handleBatchAssignRole = async () => {
+    if (selected.size === 0 || !batchRole) return;
+    try {
+      await Promise.all(
+        [...selected].map((id) =>
+          apiFetch(`/api/v1/users/${id}/roles`, { method: "POST", body: JSON.stringify({ role_id: batchRole }) }),
+        ),
+      );
+      setMsg(`Role assigned to ${selected.size} users`);
+      setSelected(new Set());
+      setBatchRole("");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Batch assign failed");
     }
   };
 
@@ -63,88 +126,88 @@ export default function UsersPage() {
           onClick={() => setShowCreate(!showCreate)}
           className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
-          <UserPlus className="h-4 w-4" />
-          New User
+          <UserPlus className="h-4 w-4" /> New User
         </button>
       </div>
 
+      {msg && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{msg}</div>
+      )}
+
       {showCreate && (
-        <form
-          onSubmit={handleCreate}
-          className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
-        >
+        <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold">Create New User</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-medium">Username</label>
-              <input
-                name="username"
-                required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                placeholder="johndoe"
-              />
+              <input name="username" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="johndoe" />
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">Email</label>
-              <input
-                name="email"
-                type="email"
-                required
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                placeholder="john@example.com"
-              />
+              <input name="email" type="email" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="john@example.com" />
             </div>
             <div className="col-span-2">
               <label className="mb-1 block text-sm font-medium">Password</label>
-              <input
-                name="password"
-                type="password"
-                required
-                minLength={12}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                placeholder="At least 12 characters"
-              />
+              <input name="password" type="password" required minLength={12} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="At least 12 characters" />
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <button
-              type="submit"
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              Create
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCreate(false)}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
-            >
-              Cancel
-            </button>
+            <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Create</button>
+            <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       )}
 
-      {error && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
 
-      <div className="mb-4 flex items-center gap-2">
-        <Search className="h-4 w-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search users..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2"
-        />
+      {/* Search + Batch toolbar */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Search className="h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2"
+          />
+        </div>
+        {selected.size > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5">
+            <span className="text-sm font-medium text-amber-800">{selected.size} selected</span>
+            <select
+              value={batchRole}
+              onChange={(e) => setBatchRole(e.target.value)}
+              className="rounded border border-gray-300 px-2 py-1 text-xs"
+            >
+              <option value="">Assign role...</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>{r.name || r.key}</option>
+              ))}
+            </select>
+            <button onClick={handleBatchAssignRole} disabled={!batchRole} className="flex items-center gap-1 rounded bg-brand-600 px-2 py-1 text-xs text-white disabled:opacity-50">
+              <Shield className="h-3 w-3" /> Assign
+            </button>
+            <button onClick={handleBatchDelete} className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 text-xs text-white">
+              <Trash2 className="h-3 w-3" /> Delete
+            </button>
+          </div>
+        )}
       </div>
 
+      {/* Table */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
         <table className="w-full">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
+              <th className="px-4 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={selected.size === paginated.length && paginated.length > 0}
+                  onChange={toggleSelectAll}
+                  className="rounded"
+                />
+              </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">User</th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Created</th>
@@ -153,41 +216,35 @@ export default function UsersPage() {
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  Loading...
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  No users found
-                </td>
-              </tr>
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">Loading...</td></tr>
+            ) : paginated.length === 0 ? (
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No users found</td></tr>
             ) : (
-              filtered.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+              paginated.map((user) => (
+                <tr key={user.id} className={`hover:bg-gray-50 ${selected.has(user.id) ? "bg-blue-50/40" : ""}`}>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(user.id)}
+                      onChange={() => toggleSelect(user.id)}
+                      className="rounded"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/users/${user.id}`} className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium uppercase">
                         {user.username[0]}
                       </div>
                       <div>
-                        <p className="text-sm font-medium">{user.username}</p>
+                        <p className="text-sm font-medium hover:text-brand-600">{user.username}</p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        user.status === "active"
-                          ? "bg-green-100 text-green-700"
-                          : user.status === "locked"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      user.status === "active" ? "bg-green-100 text-green-700" : user.status === "locked" ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-600"
+                    }`}>
                       {user.status}
                     </span>
                   </td>
@@ -197,27 +254,15 @@ export default function UsersPage() {
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
                       {user.status === "active" ? (
-                        <button
-                          onClick={() => handleLock(user.id, user.status)}
-                          title="Lock"
-                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                        >
+                        <button onClick={() => handleLock(user.id, user.status)} title="Lock" className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
                           <Lock className="h-4 w-4" />
                         </button>
                       ) : (
-                        <button
-                          onClick={() => handleLock(user.id, user.status)}
-                          title="Unlock"
-                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                        >
+                        <button onClick={() => handleLock(user.id, user.status)} title="Unlock" className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
                           <Unlock className="h-4 w-4" />
                         </button>
                       )}
-                      <button
-                        onClick={() => handleDelete(user.id, user.username)}
-                        title="Delete"
-                        className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
-                      >
+                      <button onClick={() => handleDelete(user.id, user.username)} title="Delete" className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
@@ -228,6 +273,34 @@ export default function UsersPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+            >
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </button>
+            <span className="flex items-center px-3 text-sm text-gray-500">
+              {page + 1} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+              disabled={page >= totalPages - 1}
+              className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
