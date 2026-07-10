@@ -86,7 +86,7 @@ echo -n "10. Wrong password 401:    "
 STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$GATEWAY/api/v1/auth/login" \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT_ID" \
-  -d "{\"email\":\"e2e-${TS}@docker.test\",\"password\":\"wrong\"}")
+  -d "{\"username\":\"e2e-${TS}\",\"password\":\"wrong\"}")
 if [ "$STATUS" = "401" ]; then echo "PASS ($STATUS)"; PASS=$((PASS+1)); else echo "FAIL ($STATUS)"; FAIL=$((FAIL+1)); fi
 
 # 11. Duplicate register → 409 Conflict
