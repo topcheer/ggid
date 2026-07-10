@@ -85,6 +85,10 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+	mux.HandleFunc("/readyz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ready"))
+	})
 	// REST API endpoints
 	httpAPI := httpserver.NewHTTPServer(auditSvc)
 	httpAPI.RegisterRoutes(mux)

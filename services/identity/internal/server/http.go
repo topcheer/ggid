@@ -40,6 +40,7 @@ func NewHTTPHandler(svc *service.IdentityService) *HTTPHandler {
 func (h *HTTPHandler) registerRoutes() {
 	h.mux = http.NewServeMux()
 	h.mux.HandleFunc("/healthz", h.healthz)
+	h.mux.HandleFunc("/readyz", h.readyz)
 	h.mux.HandleFunc("/api/v1/users", h.handleUsers)
 	h.mux.HandleFunc("/api/v1/users/", h.handleUserByID)
 	h.mux.HandleFunc("/api/v1/users/import", h.handleImportCSV)
@@ -57,6 +58,12 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *HTTPHandler) healthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// readyz checks readiness for serving requests (readiness probe).
+func (h *HTTPHandler) readyz(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
 }
 
 func (h *HTTPHandler) handleUsers(w http.ResponseWriter, r *http.Request) {

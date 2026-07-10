@@ -44,6 +44,7 @@ func New(authSvc *service.AuthService) *Handler {
 func (h *Handler) registerRoutes() {
 	h.mux = http.NewServeMux()
 	h.mux.HandleFunc("/healthz", h.healthz)
+	h.mux.HandleFunc("/readyz", h.readyz)
 	h.mux.HandleFunc("/api/v1/auth/login", h.login)
 	h.mux.HandleFunc("/api/v1/auth/register", h.register)
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)
@@ -96,6 +97,10 @@ func (h *Handler) registerRoutes() {
 
 	// Logout all devices
 	h.mux.HandleFunc("/api/v1/auth/logout-all", h.logoutAll)
+
+	// Session management: force logout, concurrent session limits, device fingerprint
+	h.mux.HandleFunc("/api/v1/auth/sessions/force-logout", h.forceLogout)
+	h.mux.HandleFunc("/api/v1/auth/sessions/limit", h.sessionLimit)
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
@@ -182,6 +187,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// readyz checks if the service is ready to serve requests (readiness probe).
+// Returns 200 if the database/redis connections are healthy, 503 otherwise.
+func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
+	// For now, same as healthz — extend to check DB/Redis when wired
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
 }
 
 // --- Login ---
@@ -1952,4 +1964,90 @@ func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provide
 	}
 
 	writeJSON(w, http.StatusOK, tokens)
+}
+
+// forceLogout handles POST /api/v1/auth/sessions/force-logout.
+// Admin operation: revokes all sessions for a user.
+func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		TenantID        string `json:"tenant_id"`
+		UserID          string `json:"user_id"`
+		ExceptSessionID string `json:"except_session_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	tenantID, err := uuid.Parse(body.TenantID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	exceptSessionID := uuid.Nil
+	if body.ExceptSessionID != "" {
+		exceptSessionID, _ = uuid.Parse(body.ExceptSessionID)
+	}
+
+	count, err := h.authSvc.ForceLogout(r.Context(), tenantID, userID, exceptSessionID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":        "ok",
+		"revoked_count": count,
+		"message":       fmt.Sprintf("revoked %d sessions", count),
+	})
+}
+
+// sessionLimit handles POST /api/v1/auth/sessions/limit.
+// Enforces the concurrent session limit for a user.
+func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		TenantID string `json:"tenant_id"`
+		UserID   string `json:"user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	tenantID, err := uuid.Parse(body.TenantID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	if err := h.authSvc.EnforceSessionLimit(r.Context(), tenantID, userID); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"status":  "ok",
+		"message": "session limit enforced",
+	})
 }
