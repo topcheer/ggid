@@ -37,6 +37,8 @@ interface AuditEvent {
   resource_type: string;
   result: string;
   created_at: string;
+  ip_address?: string;
+  user_agent?: string;
 }
 
 interface Stats {
@@ -109,6 +111,37 @@ export default function AuditPage() {
       default: return "bg-gray-100 text-gray-600";
     }
   };
+
+  // Check if a specific event row should be highlighted as anomalous
+  const isAnomalousEvent = (event: AuditEvent): string | null => {
+    // Failed login from same actor > 3 times
+    if (event.action === "user.login" && event.result !== "success") {
+      const failuresFromActor = events.filter(
+        (e) => e.actor_id === event.actor_id && e.action === "user.login" && e.result !== "success",
+      ).length;
+      if (failuresFromActor >= 3) {
+        return "Brute force: " + failuresFromActor + " failed logins";
+      }
+    }
+    // Denied access from unusual action type
+    if (event.result === "denied") {
+      const deniedFromActor = events.filter(
+        (e) => e.actor_id === event.actor_id && e.result === "denied",
+      ).length;
+      if (deniedFromActor >= 3) {
+        return "Repeated access denied: " + deniedFromActor + " attempts";
+      }
+    }
+    // Off-hours activity (between 2am-5am UTC)
+    const hour = new Date(event.created_at).getUTCHours();
+    if (hour >= 2 && hour < 5 && event.result !== "success") {
+      return "Off-hours suspicious activity";
+    }
+    return null;
+  };
+
+  // Detect anomalies in the current event set
+  const anomalyAlerts = detectAnomalies(events);
 
   // Prepare chart data
   const actionData = stats
@@ -452,6 +485,42 @@ export default function AuditPage() {
               </p>
             </div>
           ) : (
+            <>
+            {/* Anomaly Alerts */}
+            {anomalyAlerts.length > 0 && (
+              <div className="mb-4 space-y-2">
+                {anomalyAlerts.map((alert, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${
+                      alert.severity === "critical"
+                        ? "border-red-300 bg-red-50"
+                        : alert.severity === "warning"
+                          ? "border-amber-300 bg-amber-50"
+                          : "border-blue-300 bg-blue-50"
+                    }`}
+                  >
+                    <AlertTriangle
+                      className={`h-5 w-5 ${
+                        alert.severity === "critical"
+                          ? "text-red-500"
+                          : alert.severity === "warning"
+                            ? "text-amber-500"
+                            : "text-blue-500"
+                      }`}
+                    />
+                    <div>
+                      <p className={`text-sm font-semibold ${
+                        alert.severity === "critical" ? "text-red-700" : alert.severity === "warning" ? "text-amber-700" : "text-blue-700"
+                      }`}>
+                        {alert.title}
+                      </p>
+                      <p className="text-xs text-gray-600">{alert.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
               <table className="w-full">
                 <thead className="border-b border-gray-200 bg-gray-50">
@@ -464,16 +533,28 @@ export default function AuditPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {events.map((event) => (
-                    <tr key={event.id} className="hover:bg-gray-50">
+                  {events.map((event) => {
+                    const anomaly = isAnomalousEvent(event);
+                    return (
+                    <tr key={event.id} className={`hover:bg-gray-50 ${anomaly ? "border-l-4 border-l-red-400 bg-red-50/40" : ""}`}>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {event.created_at ? new Date(event.created_at).toLocaleString() : "-"}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs">{event.action}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs">{event.action}</span>
+                          {anomaly && (
+                            <span className="flex items-center gap-0.5 rounded-full bg-red-100 px-1.5 py-0.5 text-xs text-red-600" title={anomaly}>
+                              <AlertTriangle className="h-3 w-3" />
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {event.actor_name || (event.actor_id ? event.actor_id.substring(0, 8) : "system")}
+                        {event.ip_address && (
+                          <span className="ml-1 font-mono text-xs text-gray-400">{event.ip_address}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{event.resource_type || "-"}</td>
                       <td className="px-4 py-3">
@@ -482,10 +563,12 @@ export default function AuditPage() {
                         </span>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </>
       )
@@ -524,4 +607,87 @@ function StatCard({
       </div>
     </div>
   );
+}
+
+// --- Anomaly Detection ---
+
+interface AnomalyAlert {
+  severity: "critical" | "warning" | "info";
+  title: string;
+  description: string;
+}
+
+// Detect anomalies in a set of audit events
+function detectAnomalies(events: AuditEvent[]): AnomalyAlert[] {
+  const alerts: AnomalyAlert[] = [];
+  if (events.length === 0) return alerts;
+
+  // 1. Brute force: same actor with >= 5 failed logins
+  const failedLoginsByActor: Record<string, AuditEvent[]> = {};
+  events.forEach((e) => {
+    if (e.action === "user.login" && e.result !== "success") {
+      const key = e.actor_id || e.actor_name || "unknown";
+      if (!failedLoginsByActor[key]) failedLoginsByActor[key] = [];
+      failedLoginsByActor[key].push(e);
+    }
+  });
+  Object.entries(failedLoginsByActor).forEach(([actor, fails]) => {
+    if (fails.length >= 5) {
+      alerts.push({
+        severity: "critical",
+        title: `Brute Force Suspected: ${fails[0].actor_name || actor.substring(0, 8)}`,
+        description: `${fails.length} failed login attempts detected. IP: ${fails[0].ip_address || "unknown"}.`,
+      });
+    } else if (fails.length >= 3) {
+      alerts.push({
+        severity: "warning",
+        title: `Login Failures: ${fails[0].actor_name || actor.substring(0, 8)}`,
+        description: `${fails.length} failed login attempts in current view.`,
+      });
+    }
+  });
+
+  // 2. Unusual IP: same actor from > 3 unique IPs
+  const ipsByActor: Record<string, Set<string>> = {};
+  events.forEach((e) => {
+    if (e.ip_address) {
+      const key = e.actor_id || e.actor_name || "unknown";
+      if (!ipsByActor[key]) ipsByActor[key] = new Set();
+      ipsByActor[key].add(e.ip_address);
+    }
+  });
+  Object.entries(ipsByActor).forEach(([actor, ips]) => {
+    if (ips.size > 3) {
+      alerts.push({
+        severity: "warning",
+        title: `Multiple IP Addresses: ${events.find((e) => e.actor_id === actor)?.actor_name || actor.substring(0, 8)}`,
+        description: `Activity from ${ips.size} unique IP addresses: ${[...ips].join(", ")}.`,
+      });
+    }
+  });
+
+  // 3. Access denied spike
+  const deniedCount = events.filter((e) => e.result === "denied").length;
+  if (deniedCount >= 5) {
+    alerts.push({
+      severity: "warning",
+      title: "Access Denied Spike",
+      description: `${deniedCount} access denied events in current view. Possible permission misconfiguration or unauthorized access attempt.`,
+    });
+  }
+
+  // 4. Off-hours activity (2am-5am UTC)
+  const offHours = events.filter((e) => {
+    const h = new Date(e.created_at).getUTCHours();
+    return h >= 2 && h < 5 && e.result !== "success";
+  });
+  if (offHours.length >= 3) {
+    alerts.push({
+      severity: "info",
+      title: "Off-Hours Suspicious Activity",
+      description: `${offHours.length} failed/denied events between 2-5 AM UTC. Potential unauthorized access attempt.`,
+    });
+  }
+
+  return alerts;
 }

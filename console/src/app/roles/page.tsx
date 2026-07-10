@@ -486,6 +486,15 @@ function PermissionAssignment({
       p.resource_type.toLowerCase().includes(search.toLowerCase()),
   );
 
+  // Group permissions by resource_type
+  const groupedPerms = filteredPerms.reduce<Record<string, typeof permissions>>((acc, p) => {
+    const key = p.resource_type || "other";
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(p);
+    return acc;
+  }, {});
+  const resourceGroups = Object.keys(groupedPerms).sort();
+
   return (
     <div className="space-y-4">
       {/* Role selector */}
@@ -560,39 +569,47 @@ function PermissionAssignment({
               </div>
             </div>
             <div className="max-h-96 overflow-y-auto">
-              {filteredPerms.map((p) => {
-                const assigned = rolePermIds.has(p.id);
-                return (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5 hover:bg-gray-50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <p className="text-sm font-medium">{p.name || p.key}</p>
-                        <p className="text-xs text-gray-500">
-                          {p.resource_type} : {p.action}
-                        </p>
-                      </div>
-                    </div>
-                    {assigned ? (
-                      <button
-                        onClick={() => onRevoke(p.id)}
-                        className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
-                      >
-                        Revoke
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => onAssign(p.id)}
-                        className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 hover:bg-brand-100"
-                      >
-                        + Assign
-                      </button>
-                    )}
+              {resourceGroups.map((resource) => (
+                <div key={resource}>
+                  <div className="sticky top-0 flex items-center justify-between border-b border-gray-100 bg-gray-50 px-4 py-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wide text-gray-600">{resource}</span>
+                    <span className="text-xs text-gray-400">{groupedPerms[resource].length} permission{groupedPerms[resource].length !== 1 ? "s" : ""}</span>
                   </div>
-                );
-              })}
+                  {groupedPerms[resource].map((p) => {
+                    const assigned = rolePermIds.has(p.id);
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5 hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="text-sm font-medium">{p.name || p.key}</p>
+                            <p className="text-xs text-gray-500">
+                              {p.resource_type} : {p.action}
+                            </p>
+                          </div>
+                        </div>
+                        {assigned ? (
+                          <button
+                            onClick={() => onRevoke(p.id)}
+                            className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                          >
+                            Revoke
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => onAssign(p.id)}
+                            className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 hover:bg-brand-100"
+                          >
+                            + Assign
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
               {filteredPerms.length === 0 && (
                 <p className="px-4 py-8 text-center text-sm text-gray-400">
                   No permissions available
