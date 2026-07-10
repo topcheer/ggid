@@ -1,0 +1,117 @@
+package middleware
+
+import (
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"net/http"
+	"strings"
+)
+
+// jwtClaimsCtxKey is the context key for extracted JWT claims.
+type jwtClaimsCtxKey string
+
+const claimsKey jwtClaimsCtxKey = "jwt_claims"
+
+// JWTCClaims holds extracted JWT claims relevant to routing.
+type JWTCClaims struct {
+	Subject  string   `json:"sub"`
+	TenantID string   `json:"tenant_id"`
+	Scopes   []string `json:"scopes"`
+	Email    string   `json:"email"`
+	Issuer   string   `json:"iss"`
+}
+
+// ExtractJWTClaims parses the Bearer JWT from Authorization header
+// without signature verification (the JWT middleware already verified it).
+// Returns empty struct if no JWT is present.
+func ExtractJWTClaims(r *http.Request) JWTCClaims {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return JWTCClaims{}
+	}
+
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return JWTCClaims{}
+	}
+
+	token := parts[1]
+	tokenParts := strings.Split(token, ".")
+	if len(tokenParts) != 3 {
+		return JWTCClaims{}
+	}
+
+	// Decode the payload (second part)
+	payload, err := base64.RawURLEncoding.DecodeString(tokenParts[1])
+	if err != nil {
+		return JWTCClaims{}
+	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(payload, &raw); err != nil {
+		return JWTCClaims{}
+	}
+
+	claims := JWTCClaims{}
+	if v, ok := raw["sub"].(string); ok {
+		claims.Subject = v
+	}
+	if v, ok := raw["tenant_id"].(string); ok {
+		claims.TenantID = v
+	}
+	if v, ok := raw["email"].(string); ok {
+		claims.Email = v
+	}
+	if v, ok := raw["iss"].(string); ok {
+		claims.Issuer = v
+	}
+	// Scopes can be a string or array
+	switch v := raw["scope"].(type) {
+	case string:
+		claims.Scopes = strings.Fields(v)
+	case []any:
+		for _, s := range v {
+			if str, ok := s.(string); ok {
+				claims.Scopes = append(claims.Scopes, str)
+			}
+		}
+	}
+	// Also check "scopes" (array)
+	if v, ok := raw["scopes"].([]any); ok {
+		for _, s := range v {
+			if str, ok := s.(string); ok {
+				claims.Scopes = append(claims.Scopes, str)
+			}
+		}
+	}
+	return claims
+}
+
+// ClaimsFromContext retrieves JWT claims from context.
+func ClaimsFromContext(ctx context.Context) JWTCClaims {
+	if c, ok := ctx.Value(claimsKey).(JWTCClaims); ok {
+		return c
+	}
+	return JWTCClaims{}
+}
+
+// JWTClaimExtraction middleware extracts JWT claims and sets downstream headers
+// (X-User-ID, X-Tenant-ID, X-Scopes) for backend services.
+func JWTClaimExtraction(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims := ExtractJWTClaims(r)
+		if claims.Subject != "" {
+			r.Header.Set("X-User-ID", claims.Subject)
+		}
+		if claims.TenantID != "" {
+			r.Header.Set("X-Tenant-ID", claims.TenantID)
+		}
+		if len(claims.Scopes) > 0 {
+			r.Header.Set("X-Scopes", strings.Join(claims.Scopes, ","))
+		}
+		// Store in context
+		ctx := context.WithValue(r.Context(), claimsKey, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
