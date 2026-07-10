@@ -3,6 +3,7 @@ package middleware
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -202,8 +203,10 @@ func setCSRFCookie(w http.ResponseWriter) {
 
 func generateCSRFToken() string {
 	b := make([]byte, 32)
-	for i := range b {
-		b[i] = byte(time.Now().UnixNano() >> uint(i))
+	if _, err := rand.Read(b); err != nil {
+		// Fallback should never happen with crypto/rand on modern systems,
+		// but if it does, fail closed with a panic rather than using weak entropy.
+		panic("crypto/rand failed: " + err.Error())
 	}
 	hash := sha256.Sum256(b)
 	return base64.RawURLEncoding.EncodeToString(hash[:])
