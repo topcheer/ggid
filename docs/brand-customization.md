@@ -337,3 +337,90 @@ Content-Type: application/json
 
 Changes take effect immediately — the Console and login pages re-fetch branding
 on each page load.
+
+---
+
+## Internationalization (i18n)
+
+GGID supports multi-language UI with runtime language switching.
+
+### Supported Languages
+
+| Code | Language | Status |
+|------|----------|--------|
+| `en` | English | Default |
+| `zh-CN` | Simplified Chinese | Full |
+| `zh-TW` | Traditional Chinese | Full |
+| `ja` | Japanese | Full |
+| `ko` | Korean | Full |
+| `es` | Spanish | Full |
+| `de` | German | Full |
+| `fr` | French | Full |
+| `pt-BR` | Portuguese (Brazil) | Full |
+
+### Configure Default Language
+
+```bash
+curl -X PUT $API/api/v1/settings/i18n \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "default_locale": "zh-CN",
+    "fallback_locale": "en",
+    "available_locales": ["en", "zh-CN", "ja"]
+  }'
+```
+
+### Login Page Language Detection
+
+GGID detects the user's preferred language in this order:
+
+1. `?lang=zh-CN` query parameter
+2. `Accept-Language` header
+3. User's `preferred_locale` field (if logged in)
+4. Tenant's `default_locale` setting
+5. System fallback (`en`)
+
+### Translation File Format
+
+```json
+// locales/zh-CN.json
+{
+  "login.title": "登录",
+  "login.username": "用户名",
+  "login.password": "密码",
+  "login.submit": "登录",
+  "login.forgot_password": "忘记密码？",
+  "login.mfa_code": "请输入验证码",
+  "register.title": "注册",
+  "register.email": "邮箱地址",
+  "error.invalid_credentials": "用户名或密码错误",
+  "error.account_locked": "账户已被锁定，请15分钟后重试"
+}
+```
+
+### Custom Translations
+
+```bash
+# Add custom translations for a tenant
+curl -X PUT $API/api/v1/tenants/$TENANT_ID/i18n/zh-CN \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "login.title": "员工登录",
+    "login.welcome": "欢迎使用 Acme 内部系统"
+  }'
+```
+
+### RTL (Right-to-Left) Support
+
+For Arabic and Hebrew:
+
+```bash
+curl -X PUT $API/api/v1/settings/i18n \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "available_locales": ["en", "ar", "he"],
+    "rtl_locales": ["ar", "he"]
+  }'
+```
+
+The Console automatically switches to RTL layout for configured locales.
