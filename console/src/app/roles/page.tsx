@@ -32,8 +32,8 @@ export default function RolesPage() {
     setLoading(true);
     try {
       const [rolesResp, permsResp] = await Promise.all([
-        apiFetch<{ roles?: Role[]; items?: Role[] }>("/api/v1/roles").catch(() => ({ roles: [] })),
-        apiFetch<{ permissions?: Permission[]; items?: Permission[] }>("/api/v1/permissions").catch(() => ({ permissions: [] })),
+        apiFetch<{ roles?: Role[]; items?: Role[] }>("/api/v1/roles").catch((): { roles: Role[]; items?: Role[] } => ({ roles: [] })),
+        apiFetch<{ permissions?: Permission[]; items?: Permission[] }>("/api/v1/permissions").catch((): { permissions: Permission[]; items?: Permission[] } => ({ permissions: [] })),
       ]);
       setRoles(rolesResp.roles || rolesResp.items || []);
       setPermissions(permsResp.permissions || permsResp.items || []);
