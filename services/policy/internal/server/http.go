@@ -80,8 +80,7 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 
 	// Route to parent sub-resource: POST /api/v1/roles/{id}/parent
 	if len(parts) == 2 && parts[1] == "parent" {
-		// TODO: implement handleSetRoleParent
-		w.WriteHeader(http.StatusNotImplemented)
+		s.handleSetRoleParent(w, r, id)
 		return
 	}
 
