@@ -163,7 +163,23 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/security/password-policy", h.securityPasswordPolicy)
 
 	// WebAuthn / Passkey endpoints (nil credential store = skeleton mode)
-	webauthnHandler, err := webauthn.NewHandler("ggid.dev", "GGID Platform", nil)
+	rpID := os.Getenv("WEBAUTHN_RP_ID")
+	if rpID == "" {
+		rpID = "ggid.dev"
+	}
+	rpName := os.Getenv("WEBAUTHN_RP_NAME")
+	if rpName == "" {
+		rpName = "GGID Platform"
+	}
+	var waOpts []webauthn.HandlerOption
+	if originsStr := os.Getenv("WEBAUTHN_RP_ORIGINS"); originsStr != "" {
+		origins := strings.Split(originsStr, ",")
+		for i := range origins {
+			origins[i] = strings.TrimSpace(origins[i])
+		}
+		waOpts = append(waOpts, webauthn.WithOrigins(origins))
+	}
+	webauthnHandler, err := webauthn.NewHandler(rpID, rpName, nil, waOpts...)
 	if err != nil {
 		log.Printf("warning: webauthn init failed: %v", err)
 	} else {

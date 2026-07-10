@@ -110,6 +110,7 @@ type CredentialStore interface {
 	GetCredentialsByUser(ctx context.Context, tenantID, userID uuid.UUID) ([]*Credential, error)
 	GetCredentialByID(ctx context.Context, tenantID uuid.UUID, credID []byte) (*Credential, error)
 	UpdateCounter(ctx context.Context, tenantID uuid.UUID, credID []byte, counter uint32) error
+	UpdateLastUsed(ctx context.Context, tenantID uuid.UUID, credID []byte, lastUsedAt time.Time) error
 	DeleteCredential(ctx context.Context, tenantID uuid.UUID, credID []byte) error
 }
 
@@ -117,18 +118,42 @@ type CredentialStore interface {
 
 // Handler implements WebAuthn HTTP endpoints with full go-webauthn verification.
 type Handler struct {
-	wbn          *webauthn.WebAuthn
-	creds        CredentialStore
-	sessions     *sessionStore
+	wbn      *webauthn.WebAuthn
+	creds    CredentialStore
+	sessions *sessionStore
+}
+
+// HandlerOption configures a Handler at construction time.
+type HandlerOption func(*handlerConfig)
+
+type handlerConfig struct {
+	origins []string
+}
+
+// WithOrigins sets the allowed RP origins for WebAuthn (WA-9).
+func WithOrigins(origins []string) HandlerOption {
+	return func(c *handlerConfig) {
+		c.origins = origins
+	}
 }
 
 // NewHandler creates a new WebAuthn handler with full verification support.
 // CredentialStore can be nil for skeleton mode (credentials are not persisted).
-func NewHandler(rpID, rpName string, store CredentialStore) (*Handler, error) {
+func NewHandler(rpID, rpName string, store CredentialStore, opts ...HandlerOption) (*Handler, error) {
+	cfg := &handlerConfig{}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	origins := cfg.origins
+	if len(origins) == 0 {
+		origins = []string{"https://" + rpID, "http://localhost:3000"}
+	}
+
 	wconfig := &webauthn.Config{
 		RPDisplayName: rpName,
 		RPID:          rpID,
-		RPOrigins:     []string{"https://" + rpID, "http://localhost:3000"},
+		RPOrigins:     origins,
 	}
 
 	wbn, err := webauthn.New(wconfig)
@@ -141,6 +166,47 @@ func NewHandler(rpID, rpName string, store CredentialStore) (*Handler, error) {
 		creds:    store,
 		sessions: newSessionStore(),
 	}, nil
+}
+
+// generateCredentialName derives a human-readable credential name from the
+// User-Agent header when no explicit name is provided (WA-7).
+func generateCredentialName(userAgent string) string {
+	if userAgent == "" {
+		return "Passkey"
+	}
+	ua := strings.ToLower(userAgent)
+
+	var browser string
+	switch {
+	case strings.Contains(ua, "edg/"):
+		browser = "Edge"
+	case strings.Contains(ua, "chrome/") || strings.Contains(ua, "crios/"):
+		browser = "Chrome"
+	case strings.Contains(ua, "firefox/") || strings.Contains(ua, "fxios/"):
+		browser = "Firefox"
+	case strings.Contains(ua, "safari/"):
+		browser = "Safari"
+	default:
+		browser = "Browser"
+	}
+
+	var platform string
+	switch {
+	case strings.Contains(ua, "windows"):
+		platform = "Windows"
+	case strings.Contains(ua, "mac os") || strings.Contains(ua, "macintosh"):
+		platform = "macOS"
+	case strings.Contains(ua, "android"):
+		platform = "Android"
+	case strings.Contains(ua, "iphone") || strings.Contains(ua, "ipad"):
+		platform = "iOS"
+	case strings.Contains(ua, "linux"):
+		platform = "Linux"
+	default:
+		platform = "Device"
+	}
+
+	return browser + " on " + platform
 }
 
 // RegisterRoutes registers WebAuthn endpoints on the given mux.
@@ -331,16 +397,31 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Persist the credential if store is available.
+		// Persist the credential if store is available.
 	if h.creds != nil {
+		// WA-7: auto-generate credential name from User-Agent if not provided.
+		name := r.URL.Query().Get("name")
+		if name == "" {
+			name = generateCredentialName(r.Header.Get("User-Agent"))
+		}
+
+		// WA-8: persist actual transports from credential.Transport.
+		var transports []string
+		for _, t := range credential.Transport {
+			transports = append(transports, string(t))
+		}
+		if len(transports) == 0 {
+			transports = []string{string(credential.Authenticator.Attachment)}
+		}
+
 		cred := &Credential{
 			ID:              uuid.New(),
 			TenantID:        tenantID,
 			UserID:          userID,
-			Name:            r.URL.Query().Get("name"),
+			Name:            name,
 			CredentialID:    credential.ID,
 			PublicKey:       credential.PublicKey,
-			Transports:      []string{string(credential.Authenticator.Attachment)},
+			Transports:      transports,
 			Counter:         credential.Authenticator.SignCount,
 			BackupEligible:  credential.Flags.BackupEligible,
 			BackupState:     credential.Flags.BackupState,
@@ -382,15 +463,51 @@ func (h *Handler) beginAuthentication(w http.ResponseWriter, r *http.Request) {
 		IsolationLevel: ggidtenant.IsolationShared,
 	})
 
-	// For discoverable credentials (passkeys), we don't need the user upfront.
-	// Create an ephemeral user with no credentials — go-webauthn will handle it.
-	ephemeralUser := &webAuthnUser{
-		id:          uuid.New(),
-		username:    "discoverable",
-		displayName: "Discoverable Credential",
+	userIDStr := r.URL.Query().Get("user_id")
+
+	// WA-15: If user_id is provided, populate allowCredentials with stored transports.
+	var loginOpts []webauthn.LoginOption
+	var sessionUserID uuid.UUID
+
+	if userIDStr != "" {
+		uid, parseErr := uuid.Parse(userIDStr)
+		if parseErr == nil {
+			sessionUserID = uid
+			user, buildErr := h.buildWebAuthnUser(ctx, tenantID, uid)
+			if buildErr == nil && len(user.credentials) > 0 {
+				var allowCreds []protocol.CredentialDescriptor
+				for _, wc := range user.credentials {
+					var transports []protocol.AuthenticatorTransport
+					for _, t := range wc.Transport {
+						transports = append(transports, t)
+					}
+					allowCreds = append(allowCreds, protocol.CredentialDescriptor{
+						Type:         protocol.PublicKeyCredentialType,
+						CredentialID: wc.ID,
+						Transport:    transports,
+					})
+				}
+				if len(allowCreds) > 0 {
+					loginOpts = append(loginOpts, webauthn.WithAllowedCredentials(allowCreds))
+				}
+			}
+		}
 	}
 
-	options, sessData, err := h.wbn.BeginLogin(ephemeralUser)
+	// If no user_id, use ephemeral user for discoverable credential flow.
+	var loginUser webauthn.User
+	if sessionUserID != uuid.Nil {
+		u, _ := h.buildWebAuthnUser(ctx, tenantID, sessionUserID)
+		loginUser = u
+	} else {
+		loginUser = &webAuthnUser{
+			id:          uuid.New(),
+			username:    "discoverable",
+			displayName: "Discoverable Credential",
+		}
+	}
+
+	options, sessData, err := h.wbn.BeginLogin(loginUser, loginOpts...)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("begin login: %v", err))
 		return
@@ -398,12 +515,12 @@ func (h *Handler) beginAuthentication(w http.ResponseWriter, r *http.Request) {
 
 	challenge := options.Response.Challenge.String()
 	h.sessions.save("auth:"+challenge, &sessionData{
+		userID:    sessionUserID,
 		tenantID:  tenantID,
 		challenge: challenge,
 		data:      sessData,
 	})
 
-	_ = ctx // context for credential lookup in finish step
 	writeJSON(w, http.StatusOK, options)
 }
 
@@ -479,9 +596,11 @@ func (h *Handler) finishAuthentication(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Update credential counter.
+	// Update credential counter and LastUsedAt (WA-7).
 	if h.creds != nil {
+		now := time.Now()
 		_ = h.creds.UpdateCounter(ctx, tenantID, credential.ID, credential.Authenticator.SignCount)
+		_ = h.creds.UpdateLastUsed(ctx, tenantID, credential.ID, now)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -537,10 +656,13 @@ func (h *Handler) listCredentials(w http.ResponseWriter, r *http.Request) {
 	result := make([]map[string]any, 0, len(creds))
 	for _, c := range creds {
 		result = append(result, map[string]any{
-			"id":            c.ID.String(),
-			"name":          c.Name,
-			"credential_id": base64.RawURLEncoding.EncodeToString(c.CredentialID),
-			"created_at":    c.CreatedAt,
+			"id":             c.ID.String(),
+			"name":           c.Name,
+			"credential_id":  base64.RawURLEncoding.EncodeToString(c.CredentialID),
+			"created_at":     c.CreatedAt,
+			"transports":     c.Transports,
+			"backup_eligible": c.BackupEligible,
+			"backup_state":    c.BackupState,
 		})
 	}
 

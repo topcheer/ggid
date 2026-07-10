@@ -598,6 +598,587 @@ def verify_webhook(body: bytes, signature: str, timestamp: str, secret: str) -> 
 
 ---
 
+## 9. Next.js Middleware for Session Validation
+
+Validate GGID JWTs in Next.js middleware to protect pages and API routes
+without a round-trip to the auth server.
+
+### middleware.ts (App Router)
+
+```typescript
+// app/middleware.ts
+import { NextRequest, NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
+import jwksClient from 'jwks-rsa';
+
+const client = jwksClient({
+  jwksUri: process.env.GGID_JWKS_URL ||
+    'https://iam.example.com/.well-known/jwks.json',
+  cache: true,
+  cacheMaxAge: 600_000, // 10 min
+  rateLimit: true,
+});
+
+function getSigningKey(header: jwt.JwtHeader): Promise<string> {
+  return new Promise((resolve, reject) => {
+    client.getSigningKey(header.kid, (err, key) => {
+      if (err) reject(err);
+      else resolve(key.getPublicKey());
+    });
+  });
+}
+
+export async function middleware(request: NextRequest) {
+  // Skip public routes
+  if (request.nextUrl.pathname.startsWith('/login') ||
+      request.nextUrl.pathname.startsWith('/register') ||
+      request.nextUrl.pathname.startsWith('/api/health')) {
+    return NextResponse.next();
+  }
+
+  // Extract token from cookie or Authorization header
+  const token =
+    request.cookies.get('access_token')?.value ||
+    request.headers.get('authorization')?.replace('Bearer ', '');
+
+  if (!token) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  try {
+    const decoded = jwt.decode(token, { complete: true });
+    if (!decoded) throw new Error('invalid token');
+
+    const signingKey = await getSigningKey(decoded.header);
+
+    const payload = jwt.verify(token, signingKey, {
+      algorithms: ['RS256'],
+      issuer: process.env.GGID_ISSUER || 'https://iam.example.com',
+    }) as GGIDToken;
+
+    // Check tenant match
+    const tenantHeader = request.headers.get('x-tenant-id');
+    if (tenantHeader && tenantHeader !== payload.tenant_id) {
+      return NextResponse.json({ error: 'tenant mismatch' }, { status: 403 });
+    }
+
+    // Attach claims to headers for downstream handlers
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-ggid-user-id', payload.sub);
+    requestHeaders.set('x-ggid-tenant-id', payload.tenant_id);
+    requestHeaders.set('x-ggid-scopes', payload.scope || '');
+
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  } catch (err) {
+    // Token expired or invalid — redirect to refresh
+    const refreshUrl = new URL('/api/auth/refresh', request.url);
+    refreshUrl.searchParams.set('redirect', request.nextUrl.pathname);
+    return NextResponse.redirect(refreshUrl);
+  }
+}
+
+interface GGIDToken {
+  sub: string;
+  tenant_id: string;
+  scope: string;
+  exp: number;
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all paths except:
+     * - _next/static, _next/image, favicon.ico
+     * - Public assets
+     */
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+  ],
+};
+```
+
+### Token Refresh API Route
+
+```typescript
+// app/api/auth/refresh/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  const refreshToken = request.cookies.get('refresh_token')?.value;
+
+  if (!refreshToken) {
+    return NextResponse.json({ error: 'no refresh token' }, { status: 401 });
+  }
+
+  const res = await fetch(
+    `${process.env.GGID_GATEWAY_URL}/api/v1/auth/refresh`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-ID': process.env.GGID_TENANT_ID!,
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    }
+  );
+
+  if (!res.ok) {
+    return NextResponse.json({ error: 'refresh failed' }, { status: 401 });
+  }
+
+  const tokens = await res.json();
+
+  const response = NextResponse.json(tokens);
+  response.cookies.set('access_token', tokens.access_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 900, // 15 minutes
+    path: '/',
+  });
+  response.cookies.set('refresh_token', tokens.refresh_token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 604800, // 7 days
+    path: '/',
+  });
+
+  return response;
+}
+```
+
+---
+
+## 10. Express.js Token Refresh Interceptor
+
+Automatically refresh expired access tokens in an Express.js backend, caching
+the result to avoid duplicate refresh calls.
+
+### Token Refresh Middleware
+
+```typescript
+// middleware/token-refresh.ts
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+
+const refreshCache = new Map<string, { tokens: TokenResponse; expiry: number }>();
+
+interface TokenResponse {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+}
+
+export async function autoRefreshToken(
+  req: Request & { ggid?: { claims: any } },
+  res: Response,
+  next: NextFunction
+) {
+  const accessToken = req.headers.authorization?.replace('Bearer ', '');
+  const refreshToken = req.headers['x-refresh-token'] as string;
+  const tenantId = req.headers['x-tenant-id'] as string;
+
+  if (!accessToken) {
+    return next();
+  }
+
+  // Check if access token is still valid
+  try {
+    const decoded = jwt.decode(accessToken) as { exp: number };
+    const now = Date.now() / 1000;
+
+    // Token still valid for more than 60s — proceed
+    if (decoded.exp - now > 60) {
+      req.ggid = { claims: decoded };
+      return next();
+    }
+  } catch {
+    // Token malformed — let it fail downstream
+    return next();
+  }
+
+  // Token is expiring soon — try to refresh
+  if (!refreshToken) {
+    return res.status(401).json({
+      error: 'access token expired',
+      code: 'TOKEN_EXPIRED',
+    });
+  }
+
+  // Check cache to prevent concurrent refresh calls
+  const cached = refreshCache.get(refreshToken);
+  if (cached && cached.expiry > Date.now()) {
+    res.setHeader('X-New-Access-Token', cached.tokens.access_token);
+    req.headers.authorization = `Bearer ${cached.tokens.access_token}`;
+    req.ggid = { claims: jwt.decode(cached.tokens.access_token) };
+    return next();
+  }
+
+  // Call GGID refresh endpoint
+  try {
+    const response = await fetch(
+      `${process.env.GGID_GATEWAY_URL}/api/v1/auth/refresh`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': tenantId,
+        },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }
+    );
+
+    if (!response.ok) {
+      return res.status(401).json({
+        error: 'refresh token invalid',
+        code: 'REFRESH_FAILED',
+      });
+    }
+
+    const tokens: TokenResponse = await response.json();
+
+    // Cache for the lifetime of the access token
+    refreshCache.set(refreshToken, {
+      tokens,
+      expiry: Date.now() + tokens.expires_in * 1000 - 60_000, // 1 min before expiry
+    });
+
+    // Return new tokens to client via headers
+    res.setHeader('X-New-Access-Token', tokens.access_token);
+    res.setHeader('X-New-Refresh-Token', tokens.refresh_token);
+
+    req.headers.authorization = `Bearer ${tokens.access_token}`;
+    req.ggid = { claims: jwt.decode(tokens.access_token) };
+    next();
+  } catch (err) {
+    return res.status(502).json({
+      error: 'auth service unavailable',
+      code: 'AUTH_UNAVAILABLE',
+    });
+  }
+}
+```
+
+### Usage
+
+```typescript
+import express from 'express';
+import { autoRefreshToken } from './middleware/token-refresh';
+
+const app = express();
+
+// Apply to protected routes
+app.use('/api', autoRefreshToken);
+
+app.get('/api/profile', (req, res) => {
+  const userId = req.ggid?.claims.sub;
+  res.json({ userId });
+});
+
+// Client-side interceptor (Axios example)
+axios.interceptors.response.use(
+  (response) => {
+    // Check for rotated tokens in response headers
+    const newAccessToken = response.headers['x-new-access-token'];
+    const newRefreshToken = response.headers['x-new-refresh-token'];
+    if (newAccessToken) {
+      localStorage.setItem('access_token', newAccessToken);
+    }
+    if (newRefreshToken) {
+      localStorage.setItem('refresh_token', newRefreshToken);
+    }
+    return response;
+  },
+  async (error) => {
+    if (error.response?.status === 401 &&
+        error.response.data?.code === 'TOKEN_EXPIRED') {
+      // Redirect to login
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+---
+
+## 11. Go Service-to-Service Authentication
+
+For microservices calling each other through the GGID Gateway, use a shared
+service token or client credentials grant.
+
+### Client Credentials Flow
+
+```go
+// internal/auth/service_token.go
+package auth
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "net/url"
+    "sync"
+    "time"
+)
+
+type ServiceTokenProvider struct {
+    gatewayURL  string
+    clientID    string
+    clientSecret string
+    tenantID    string
+
+    mu          sync.Mutex
+    cachedToken string
+    expiresAt   time.Time
+}
+
+func NewServiceTokenProvider(gatewayURL, clientID, clientSecret, tenantID string) *ServiceTokenProvider {
+    return &ServiceTokenProvider{
+        gatewayURL:  gatewayURL,
+        clientID:    clientID,
+        clientSecret: clientSecret,
+        tenantID:    tenantID,
+    }
+}
+
+func (p *ServiceTokenProvider) GetToken(ctx context.Context) (string, error) {
+    p.mu.Lock()
+    defer p.mu.Unlock()
+
+    // Return cached token if still valid
+    if time.Now().Before(p.expiresAt.Add(-30 * time.Second)) {
+        return p.cachedToken, nil
+    }
+
+    // Request new token via client_credentials grant
+    data := url.Values{
+        "grant_type":    {"client_credentials"},
+        "client_id":     {p.clientID},
+        "client_secret": {p.clientSecret},
+        "scope":         {"users:read users:write policy:check"},
+    }
+
+    req, _ := http.NewRequestWithContext(ctx, "POST",
+        p.gatewayURL+"/oauth/token",
+        strings.NewReader(data.Encode()),
+    )
+    req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+    req.Header.Set("X-Tenant-ID", p.tenantID)
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return "", fmt.Errorf("requesting service token: %w", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return "", fmt.Errorf("token endpoint returned %d", resp.StatusCode)
+    }
+
+    var result struct {
+        AccessToken string `json:"access_token"`
+        ExpiresIn   int    `json:"expires_in"`
+    }
+    if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+        return "", fmt.Errorf("decoding token response: %w", err)
+    }
+
+    p.cachedToken = result.AccessToken
+    p.expiresAt = time.Now().Add(time.Duration(result.ExpiresIn) * time.Second)
+
+    return p.cachedToken, nil
+}
+
+// AuthenticatedHTTPClient wraps http.Client with automatic service token injection
+type AuthenticatedHTTPClient struct {
+    provider *ServiceTokenProvider
+    client   *http.Client
+}
+
+func (c *AuthenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
+    token, err := c.provider.GetToken(req.Context())
+    if err != nil {
+        return nil, fmt.Errorf("getting service token: %w", err)
+    }
+
+    req.Header.Set("Authorization", "Bearer "+token)
+    req.Header.Set("X-Tenant-ID", c.provider.tenantID)
+
+    return c.client.Do(req)
+}
+```
+
+### Usage
+
+```go
+func main() {
+    tokenProvider := auth.NewServiceTokenProvider(
+        "https://iam.example.com",
+        "my-service-client",
+        os.Getenv("OAUTH_CLIENT_SECRET"),
+        "00000000-0000-0000-0000-000000000001",
+    )
+
+    client := &auth.AuthenticatedHTTPClient{
+        provider: tokenProvider,
+        client:   &http.Client{Timeout: 30 * time.Second},
+    }
+
+    // Call another GGID service
+    req, _ := http.NewRequest("GET",
+        "https://iam.example.com/api/v1/users?limit=10", nil)
+
+    resp, err := client.Do(req)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer resp.Body.Close()
+
+    var users []User
+    json.NewDecoder(resp.Body).Decode(&users)
+    fmt.Printf("Retrieved %d users\n", len(users))
+}
+```
+
+---
+
+## 12. Spring Boot SSO Integration
+
+Integrate GGID as a SAML or OIDC identity provider for a Spring Boot
+application using Spring Security.
+
+### OIDC Integration (application.yml)
+
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          ggid:
+            client-id: my-spring-app
+            client-secret: ${OAUTH_CLIENT_SECRET}
+            scope: openid, profile, email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: GGID
+            authorization-grant-type: authorization_code
+        provider:
+          ggid:
+            issuer-uri: https://iam.example.com
+            authorization-uri: https://iam.example.com/oauth/authorize
+            token-uri: https://iam.example.com/oauth/token
+            user-info-uri: https://iam.example.com/oauth/userinfo
+            jwk-set-uri: https://iam.example.com/.well-known/jwks.json
+            user-name-attribute: sub
+```
+
+### Security Configuration
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/login**", "/webjars/**", "/error").permitAll()
+                .requestMatchers("/admin/**").hasAuthority("ROLE_admin")
+                .requestMatchers("/api/**").authenticated()
+                .anyRequest().authenticated()
+            )
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
+                .defaultSuccessUrl("/dashboard", true)
+                .userInfoEndpoint(userInfo -> userInfo
+                    .oidcUserService(new GGIDOidcUserService())
+                )
+            )
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt
+                    .jwkSetUri("https://iam.example.com/.well-known/jwks.json")
+                    .jwtAuthenticationConverter(new GGIDJwtConverter())
+                )
+            )
+            .logout(logout -> logout
+                .logoutSuccessUrl("https://iam.example.com/oauth/logout?redirect_uri=http://localhost:8080")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
+            )
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"))
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .maximumSessions(5)
+            );
+
+        return http.build();
+    }
+}
+```
+
+### Custom JWT Converter (Extract GGID Claims)
+
+```java
+public class GGIDJwtConverter implements Converter<Jwt, AbstractAuthenticationToken> {
+
+    @Override
+    public AbstractAuthenticationToken convert(Jwt jwt) {
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+
+        // Extract roles from GGID JWT
+        String roles = jwt.getClaimAsString("roles");
+        if (roles != null) {
+            for (String role : roles.split(",")) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.trim()));
+            }
+        }
+
+        // Extract scopes
+        String scope = jwt.getClaimAsString("scope");
+        if (scope != null) {
+            for (String s : scope.split(" ")) {
+                authorities.add(new SimpleGrantedAuthority("SCOPE_" + s));
+            }
+        }
+
+        return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
+    }
+}
+```
+
+### Controller Example
+
+```java
+@RestController
+@RequestMapping("/api")
+public class UserController {
+
+    @GetMapping("/me")
+    public Map<String, Object> getCurrentUser(@AuthenticationPrincipal Jwt jwt) {
+        return Map.of(
+            "user_id", jwt.getSubject(),
+            "email", jwt.getClaimAsString("email"),
+            "tenant_id", jwt.getClaimAsString("tenant_id"),
+            "roles", jwt.getClaimAsString("roles")
+        );
+    }
+
+    @GetMapping("/users")
+    @PreAuthorize("hasRole('admin')")
+    public List<User> listUsers() {
+        // Only accessible by users with admin role
+        return userService.findAll();
+    }
+}
+```
+
+---
+
 ## References
 
 - [SDK Guide](./sdk-guide.md) — Installation and basic usage

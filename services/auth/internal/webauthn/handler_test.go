@@ -61,6 +61,10 @@ func (m *mockStore) UpdateCounter(_ context.Context, _ uuid.UUID, _ []byte, _ ui
 	return m.updateErr
 }
 
+func (m *mockStore) UpdateLastUsed(_ context.Context, _ uuid.UUID, _ []byte, _ time.Time) error {
+	return nil
+}
+
 func (m *mockStore) DeleteCredential(_ context.Context, _ uuid.UUID, _ []byte) error {
 	return m.deleteErr
 }
