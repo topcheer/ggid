@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
-import { Save, Shield, Key, Lock, Globe, Server, Mail, Palette } from "lucide-react";
+import { useTheme } from "@/lib/theme";
+import { Save, Shield, Key, Lock, Globe, Server, Mail, Palette, Moon, Sun } from "lucide-react";
 
 type Tab = "general" | "security" | "ldap" | "oidc" | "saml" | "smtp" | "branding";
 
 export default function SettingsPage() {
   const { apiFetch, API_BASE, TENANT_ID } = useApi();
+  const { theme, toggle } = useTheme();
   const [tab, setTab] = useState<Tab>("security");
   const [msg, setMsg] = useState<string | null>(null);
   const [oidcConfig, setOidcConfig] = useState<Record<string, unknown> | null>(null);
@@ -95,12 +97,12 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">Settings</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
 
-      {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{msg}</div>}
+      {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">{msg}</div>}
 
       {/* Tabs */}
-      <div className="mb-4 flex gap-2 border-b border-gray-200">
+      <div className="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-700">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -285,8 +287,31 @@ export default function SettingsPage() {
 
       {tab === "general" && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">Tenant Information</h2>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Appearance</h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Switch between light and dark mode</p>
+              </div>
+              <button
+                onClick={toggle}
+                className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="h-4 w-4" /> Light Mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4" /> Dark Mode
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">Tenant Information</h2>
             <div className="space-y-3">
               {[
                 { label: "Tenant ID", value: TENANT_ID },
@@ -300,8 +325,8 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">System Information</h2>
+          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">System Information</h2>
             <div className="space-y-3">
               {[
                 { label: "Version", value: "1.0.0-dev" },

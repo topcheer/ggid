@@ -131,20 +131,33 @@ func TestCoalesce_PutWithIdempotencyKey(t *testing.T) {
 	rc := NewRequestCoalescer(0) // no cache, but inflight dedup works
 	mw := CoalesceMiddleware(rc)
 
+	// Barrier ensures all goroutines have entered the middleware before the
+	// handler starts, so they all find the inflight entry and coalesce.
+	const numGoroutines = 5
+	barrier := make(chan struct{})
+	var entered int32
+
 	handler := mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&callCount, 1)
-		time.Sleep(20 * time.Millisecond) // ensure overlap
+		time.Sleep(50 * time.Millisecond) // ensure overlap
 		w.WriteHeader(http.StatusOK)
 	}))
 
 	var wg sync.WaitGroup
-	for i := 0; i < 5; i++ {
+	for i := 0; i < numGoroutines; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			req := httptest.NewRequest(http.MethodPut, "/api/v1/resource/1", nil)
 			req.Header.Set("Idempotency-Key", "put-key-1")
 			w := httptest.NewRecorder()
+
+			// Signal that this goroutine is about to enter ServeHTTP
+			if atomic.AddInt32(&entered, 1) == numGoroutines {
+				close(barrier) // all goroutines are ready
+			}
+			<-barrier // wait for all goroutines to be ready
+
 			handler.ServeHTTP(w, req)
 		}()
 	}
