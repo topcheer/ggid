@@ -6,22 +6,45 @@ import (
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
-	"github.com/ggid/ggid/services/policy/internal/repository"
 	"github.com/google/uuid"
 )
 
+// RoleRepo provides role persistence operations.
+type RoleRepo interface {
+	Create(ctx context.Context, role *domain.Role) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Role, error)
+	ListByTenant(ctx context.Context, tenantID uuid.UUID, limit, offset int) ([]*domain.Role, error)
+	Update(ctx context.Context, role *domain.Role) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	GrantPermissions(ctx context.Context, roleID uuid.UUID, addIDs []uuid.UUID, conditions map[string]any) error
+	RevokePermissions(ctx context.Context, roleID uuid.UUID, permIDs []uuid.UUID) error
+}
+
+// PermRepo provides permission persistence operations.
+type PermRepo interface {
+	Create(ctx context.Context, perm *domain.Permission) error
+	ListByTenant(ctx context.Context, tenantID uuid.UUID, limit, offset int) ([]*domain.Permission, error)
+}
+
+// UserRoleRepo provides user-role assignment operations.
+type UserRoleRepo interface {
+	Assign(ctx context.Context, ur *domain.UserRole) error
+	Revoke(ctx context.Context, userID, roleID uuid.UUID, scopeType domain.ScopeType, scopeID uuid.UUID) error
+	ListByUser(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error)
+}
+
 // RoleService handles role CRUD and user-role assignment operations.
 type RoleService struct {
-	roleRepo     *repository.RoleRepository
-	permRepo     *repository.PermissionRepository
-	userRoleRepo *repository.UserRoleRepository
+	roleRepo     RoleRepo
+	permRepo     PermRepo
+	userRoleRepo UserRoleRepo
 }
 
 // NewRoleService creates a new RoleService.
 func NewRoleService(
-	roleRepo *repository.RoleRepository,
-	permRepo *repository.PermissionRepository,
-	userRoleRepo *repository.UserRoleRepository,
+	roleRepo RoleRepo,
+	permRepo PermRepo,
+	userRoleRepo UserRoleRepo,
 ) *RoleService {
 	return &RoleService{roleRepo: roleRepo, permRepo: permRepo, userRoleRepo: userRoleRepo}
 }

@@ -5,17 +5,26 @@ import (
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
-	"github.com/ggid/ggid/services/policy/internal/repository"
 	"github.com/google/uuid"
 )
 
+// PolicyRepo provides ABAC policy persistence operations.
+type PolicyRepo interface {
+	Create(ctx context.Context, p *domain.Policy) error
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Policy, error)
+	ListByTenant(ctx context.Context, tenantID uuid.UUID, limit, offset int) ([]*domain.Policy, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+	AttachPolicy(ctx context.Context, att *domain.PolicyAttachment) error
+	DetachPolicy(ctx context.Context, policyID uuid.UUID, pt domain.PrincipalType, principalID uuid.UUID) error
+}
+
 // PolicyService handles ABAC policy CRUD and attachment.
 type PolicyService struct {
-	policyRepo *repository.PolicyRepository
+	policyRepo PolicyRepo
 }
 
 // NewPolicyService creates a new PolicyService.
-func NewPolicyService(policyRepo *repository.PolicyRepository) *PolicyService {
+func NewPolicyService(policyRepo PolicyRepo) *PolicyService {
 	return &PolicyService{policyRepo: policyRepo}
 }
 
