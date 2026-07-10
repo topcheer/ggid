@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import { Save, Shield, Key, Lock, Globe, Server, Mail, Palette } from "lucide-react";
 
-type Tab = "general" | "security" | "ldap" | "oidc" | "smtp" | "branding";
+type Tab = "general" | "security" | "ldap" | "oidc" | "saml" | "smtp" | "branding";
 
 export default function SettingsPage() {
   const { apiFetch, API_BASE, TENANT_ID } = useApi();
@@ -55,6 +55,20 @@ export default function SettingsPage() {
     login_subtitle: "Identity & Access Management",
   });
 
+  const [samlConfig, setSamlConfig] = useState({
+    entity_id: "https://ggid.dev/saml/metadata",
+    acs_url: "https://ggid.dev/saml/acs",
+    slo_url: "https://ggid.dev/saml/slo",
+    idp_entity_id: "",
+    idp_sso_url: "",
+    idp_slo_url: "",
+    idp_cert: "",
+    name_id_format: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
+    signing_cert: "",
+    want_assertions_signed: true,
+    want_responses_signed: true,
+  });
+
   useEffect(() => {
     fetch(`${API_BASE}/oauth/.well-known/openid-configuration`)
       .then((r) => (r.ok ? r.json() : null))
@@ -76,6 +90,7 @@ export default function SettingsPage() {
     { id: "branding", label: "Branding", icon: Palette },
     { id: "general", label: "General", icon: Globe },
     { id: "oidc", label: "OIDC", icon: Key },
+    { id: "saml", label: "SAML SP", icon: Globe },
   ];
 
   return (
@@ -318,6 +333,82 @@ export default function SettingsPage() {
           ) : (
             <p className="text-sm text-gray-400">OIDC discovery endpoint not available</p>
           )}
+        </div>
+      )}
+
+      {tab === "saml" && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold">SAML Service Provider Configuration</h2>
+          <div className="space-y-4">
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">Service Provider</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">Entity ID</span>
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.entity_id} onChange={(e) => setSamlConfig({ ...samlConfig, entity_id: e.target.value })} />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">ACS URL</span>
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.acs_url} onChange={(e) => setSamlConfig({ ...samlConfig, acs_url: e.target.value })} />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">SLO URL</span>
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.slo_url} onChange={(e) => setSamlConfig({ ...samlConfig, slo_url: e.target.value })} />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">Name ID Format</span>
+                  <select className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.name_id_format} onChange={(e) => setSamlConfig({ ...samlConfig, name_id_format: e.target.value })}>
+                    <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">Email Address</option>
+                    <option value="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">Unspecified</option>
+                    <option value="urn:oasis:names:tc:SAML:2.0:nameid-format:persistent">Persistent</option>
+                    <option value="urn:oasis:names:tc:SAML:2.0:nameid-format:transient">Transient</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">Identity Provider</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">IdP Entity ID</span>
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.idp_entity_id} onChange={(e) => setSamlConfig({ ...samlConfig, idp_entity_id: e.target.value })} placeholder="https://idp.example.com/entity" />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">IdP SSO URL</span>
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.idp_sso_url} onChange={(e) => setSamlConfig({ ...samlConfig, idp_sso_url: e.target.value })} placeholder="https://idp.example.com/sso" />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">IdP SLO URL</span>
+                  <input className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" value={samlConfig.idp_slo_url} onChange={(e) => setSamlConfig({ ...samlConfig, idp_slo_url: e.target.value })} placeholder="https://idp.example.com/slo" />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-gray-500">IdP Certificate (PEM)</span>
+                  <textarea className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" rows={3} value={samlConfig.idp_cert} onChange={(e) => setSamlConfig({ ...samlConfig, idp_cert: e.target.value })} placeholder="-----BEGIN CERTIFICATE-----" />
+                </label>
+              </div>
+            </div>
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-gray-700">Security</h3>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={samlConfig.want_assertions_signed} onChange={(e) => setSamlConfig({ ...samlConfig, want_assertions_signed: e.target.checked })} />
+                  <span className="text-sm text-gray-700">Require signed assertions</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input type="checkbox" checked={samlConfig.want_responses_signed} onChange={(e) => setSamlConfig({ ...samlConfig, want_responses_signed: e.target.checked })} />
+                  <span className="text-sm text-gray-700">Require signed responses</span>
+                </label>
+              </div>
+            </div>
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-gray-500">SP Signing Certificate (PEM)</span>
+              <textarea className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" rows={3} value={samlConfig.signing_cert} onChange={(e) => setSamlConfig({ ...samlConfig, signing_cert: e.target.value })} placeholder="-----BEGIN CERTIFICATE-----" />
+            </label>
+            <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700" onClick={() => setMsg("SAML configuration saved (demo)")}>
+              <Save className="mr-2 inline-block h-4 w-4" />
+              Save SAML Config
+            </button>
+          </div>
         </div>
       )}
     </div>
