@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/social"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
@@ -18,13 +19,14 @@ import (
 
 // Handler is the HTTP handler for the Auth Service.
 type Handler struct {
-	authSvc *service.AuthService
-	mux     *http.ServeMux
+	authSvc   *service.AuthService
+	mux       *http.ServeMux
+	socialReg *social.Registry
 }
 
 // New creates a new Auth Service HTTP handler.
 func New(authSvc *service.AuthService) *Handler {
-	h := &Handler{authSvc: authSvc}
+	h := &Handler{authSvc: authSvc, socialReg: social.NewRegistry()}
 	h.registerRoutes()
 	return h
 }
@@ -44,6 +46,9 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/verify", h.mfaVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
+
+	// Social login endpoints
+	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
 
 	// WebAuthn / Passkey endpoints (nil credential store = skeleton mode)
 	webauthnHandler, err := webauthn.NewHandler("ggid.dev", "GGID Platform", nil)
@@ -520,4 +525,110 @@ func clientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// --- Social Login ---
+
+// handleSocial routes social login requests: /api/v1/auth/social/{provider} and /api/v1/auth/social/{provider}/callback
+func (h *Handler) handleSocial(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/social/")
+	parts := strings.SplitN(path, "/", 2)
+
+	provider := parts[0]
+	if provider == "" {
+		writeError(w, http.StatusBadRequest, "provider is required")
+		return
+	}
+
+	isCallback := len(parts) == 2 && parts[1] == "callback"
+
+	if isCallback {
+		h.socialCallback(w, r, provider)
+		return
+	}
+	h.socialBegin(w, r, provider)
+}
+
+func (h *Handler) socialBegin(w http.ResponseWriter, r *http.Request, provider string) {
+	// Validate the connector exists
+	conn, err := h.socialReg.Get(provider)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "unsupported provider: "+provider)
+		return
+	}
+
+	state := uuid.New().String()
+	redirectURI := r.URL.Query().Get("redirect_uri")
+	if redirectURI == "" {
+		redirectURI = "/login"
+	}
+
+	// Build callback URL
+	scheme := "https"
+	if r.TLS == nil {
+		scheme = "http"
+	}
+	// Use forwarded host if behind proxy
+	host := r.Host
+	if fh := r.Header.Get("X-Forwarded-Host"); fh != "" {
+		host = fh
+	}
+	callbackURL := scheme + "://" + host + "/api/v1/auth/social/" + provider + "/callback"
+
+	authURL, err := conn.GetAuthURL(r.Context(), state, callbackURL)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to build auth URL")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"provider":    provider,
+		"auth_url":    authURL,
+		"state":       state,
+		"redirect_to": redirectURI,
+	})
+}
+
+func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provider string) {
+	code := r.URL.Query().Get("code")
+	state := r.URL.Query().Get("state")
+	if code == "" {
+		writeError(w, http.StatusBadRequest, "missing authorization code")
+		return
+	}
+
+	conn, err := h.socialReg.Get(provider)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "unsupported provider: "+provider)
+		return
+	}
+
+	scheme := "https"
+	if r.TLS == nil {
+		scheme = "http"
+	}
+	host := r.Host
+	if fh := r.Header.Get("X-Forwarded-Host"); fh != "" {
+		host = fh
+	}
+	callbackURL := scheme + "://" + host + "/api/v1/auth/social/" + provider + "/callback"
+
+	userInfo, err := conn.HandleCallback(r.Context(), code, state, callbackURL)
+	if err != nil {
+		log.Printf("social callback error (%s): %v", provider, err)
+		writeError(w, http.StatusUnauthorized, "social authentication failed")
+		return
+	}
+
+	log.Printf("social login success: provider=%s external_id=%s email=%s", userInfo.Provider, userInfo.ExternalID, userInfo.Email)
+
+	// Return user info — the frontend will use this to complete login
+	// (either link to existing user or JIT-provision a new one)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"provider":   userInfo.Provider,
+		"external_id": userInfo.ExternalID,
+		"email":       userInfo.Email,
+		"name":        userInfo.Name,
+		"avatar_url":  userInfo.AvatarURL,
+	})
 }
