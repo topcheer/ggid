@@ -52,17 +52,23 @@ func main() {
 		}
 	}()
 
-	// Graceful shutdown
+	// Graceful shutdown: SIGTERM → stop accepting new requests →
+	// wait for in-flight requests (max 30s) → exit
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("shutting down API Gateway...")
+	log.Println("received shutdown signal, draining in-flight requests...")
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// srv.Shutdown closes the listener (no new connections accepted)
+	// and waits for active requests to complete.
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("forced shutdown: %v", err)
+		log.Printf("forced shutdown after 30s timeout: %v", err)
 	}
-	log.Println("API Gateway stopped")
+
+	// Cancel background context (JWKS refresh goroutines)
+	cancel()
+	log.Println("API Gateway stopped gracefully")
 }
