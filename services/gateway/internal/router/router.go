@@ -336,13 +336,14 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 	})
 
-	// Apply outer middleware: PanicRecovery → CORS → RequestID → StructuredLogging → RateLimit → TenantResolver → inner
+	// Apply outer middleware: PanicRecovery → SecurityHeaders → CORS → RequestID → StructuredLogging → RateLimit → TenantResolver → inner
 	logger := middleware.NewStructuredLogger("ggid-gateway")
 	handler := middleware.TenantResolver(gw.cfg.DomainSuffix)(inner)
 	handler = gw.rateLimiter.Middleware(handler)
 	handler = middleware.RequestLogger(logger)(handler)
 	handler = middleware.RequestID(handler)
 	handler = middleware.CORS(handler)
+	handler = middleware.SecurityHeaders(handler)
 	handler = middleware.PanicRecovery(logger)(handler)
 
 	return handler
