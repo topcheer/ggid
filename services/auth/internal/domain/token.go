@@ -42,4 +42,6 @@ type TokenSet struct {
 	// MFA challenge — populated when MFA is required but not yet completed.
 	MFARequired  bool   `json:"mfa_required,omitempty"`
 	MFAChallenge string `json:"mfa_challenge,omitempty"`
+	// Password expiration — populated when the user's password has expired.
+	MustChangePassword bool `json:"must_change_password,omitempty"`
 }

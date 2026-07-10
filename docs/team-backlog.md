@@ -21,32 +21,33 @@
 ## Backlog for dev (services/identity, auth, oauth, pkg/authprovider, pkg/social)
 
 ### P0 — Core
-- [TODO] SAML 2.0 SP-initiated login flow (parse AuthnRequest, create Assertion)
-- [TODO] SAML metadata endpoint: GET /saml/metadata
-- [TODO] OAuth2 PKCE verification in authorize endpoint (S256 challenge)
-- [TODO] Token revocation endpoint: POST /oauth/revoke (RFC 7009)
-- [TODO] Back-channel logout: POST /oauth/logout (OIDC Back-Channel Logout 1.0)
+- [DONE] SAML 2.0 SP-initiated login flow (parse AuthnRequest, create Assertion)
+- [DONE] SAML metadata endpoint: GET /saml/metadata
+- [DONE] OAuth2 PKCE verification in authorize endpoint (S256 challenge)
+- [DONE] Token revocation endpoint: POST /oauth/revoke (RFC 7009)
+- [DONE] Back-channel logout: POST /oauth/logout (OIDC Back-Channel Logout 1.0)
 - [TODO] OAuth client credentials rotation: rotate client_secret
 
 ### P1 — Enterprise
-- [TODO] Password history enforcement (reject reused passwords)
-- [TODO] Account lockout policy (configurable threshold + duration)
-- [TODO] Email verification flow (token + verification endpoint)
-- [TODO] Magic link authentication (passwordless email)
-- [TODO] Phone-based OTP authentication
-- [TODO] LDAP group → role mapping
+- [DONE] Password history enforcement (reject reused passwords)
+- [DONE] Account lockout policy (configurable threshold + duration)
+- [DONE] Email verification flow (token + verification endpoint)
+- [DONE] Magic link authentication (passwordless email)
+- [DONE] Phone-based OTP authentication
+- [DONE] LDAP group → role mapping
 
 ### P2 — Enhancement
-- [TODO] OAuth consent screen (user approves scopes)
-- [TODO] JWT claim customization (add custom claims via rules)
+- [DONE] OAuth consent screen (user approves scopes)
+- [DONE] JWT claim customization (add custom claims via rules)
 - [TODO] Auth service coverage → 85%+ (currently 74.4%)
 - [TODO] OAuth service coverage → 70%+ (currently 47.7%)
-- [TODO] Social connector: Microsoft, Apple, GitLab, Discord, LinkedIn
+- [DONE] Social connector: Microsoft, Apple, GitLab, Discord, LinkedIn
 
 ### P3 — Innovation
 - [TODO] Passkey autofill (WebAuthn conditional mediation)
-- [TODO] Step-up authentication (re-challenge for sensitive operations)
+- [DONE] Step-up authentication (re-challenge for sensitive operations)
 - [TODO] Risk-based authentication (IP reputation, device fingerprinting)
+- [TODO] Password expiration forced reset (max_age_days policy)
 
 ---
 

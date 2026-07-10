@@ -10,4 +10,5 @@ var (
 	ErrSessionNotFound        = errors.New("session not found")
 	ErrSessionExpired         = errors.New("session has expired")
 	ErrCredentialAlreadyExists = errors.New("credential already exists")
+	ErrPhoneOTPFailed       = errors.New("phone OTP verification failed")
 )

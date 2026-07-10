@@ -16,6 +16,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+// suppress unused import warnings — crypto is used in SocialLogin path.
+var _ = crypto.HashPassword
+
 // AuthService orchestrates the authentication workflow:
 // login, logout, register, refresh, password flows, session management, MFA.
 type AuthService struct {
@@ -86,7 +89,14 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 		return nil, fmt.Errorf("tenant context required: %w", err)
 	}
 
-	// 4a. Check if MFA is required for this user.
+	// 4a. Check if password has expired.
+	if err := s.passwordService.CheckPasswordExpiration(ctx, tc.TenantID, userID); err != nil {
+		return &domain.TokenSet{
+			MustChangePassword: true,
+		}, nil
+	}
+
+	// 4b. Check if MFA is required for this user.
 	if s.mfaService != nil && s.mfaService.HasMFAEnabled(ctx, tc.TenantID, userID) {
 		// Issue a short-lived MFA challenge instead of tokens.
 		challenge, err := crypto.GenerateRandomToken(32)

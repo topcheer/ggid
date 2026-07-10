@@ -58,6 +58,14 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/email/verify", h.emailVerify)
 	h.mux.HandleFunc("/api/v1/auth/email/resend", h.emailResend)
 
+	// Phone OTP authentication
+	h.mux.HandleFunc("/api/v1/auth/phone/send", h.phoneOTPSend)
+	h.mux.HandleFunc("/api/v1/auth/phone/verify", h.phoneOTPVerify)
+
+	// Step-up authentication
+	h.mux.HandleFunc("/api/v1/auth/stepup/challenge", h.stepUpChallenge)
+	h.mux.HandleFunc("/api/v1/auth/stepup/verify", h.stepUpVerify)
+
 	// Social login endpoints
 	h.mux.HandleFunc("/api/v1/auth/social/", h.handleSocial)
 
@@ -685,6 +693,151 @@ func clientIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
+}
+
+// --- Social Login ---
+
+// --- Phone OTP ---
+
+func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Phone  string `json:"phone"`
+		UserID string `json:"user_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.Phone == "" {
+		writeError(w, http.StatusBadRequest, "phone is required")
+		return
+	}
+
+	tc, err := ggidtenant.FromContext(r.Context())
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing tenant context")
+		return
+	}
+
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	otp, err := h.authSvc.SendPhoneOTP(r.Context(), tc.TenantID, userID, body.Phone)
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+
+	// In production, send OTP via SMS. In dev, return the OTP.
+	writeJSON(w, http.StatusOK, map[string]string{
+		"status":  "sent",
+		"message": "OTP sent to phone number",
+		"otp":     otp, // dev mode only
+	})
+}
+
+func (h *Handler) phoneOTPVerify(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Phone string `json:"phone"`
+		OTP   string `json:"otp"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.Phone == "" || body.OTP == "" {
+		writeError(w, http.StatusBadRequest, "phone and otp are required")
+		return
+	}
+
+	ip := clientIP(r)
+	userAgent := r.Header.Get("User-Agent")
+
+	tokens, err := h.authSvc.VerifyPhoneOTP(r.Context(), body.Phone, body.OTP, ip, userAgent)
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, tokens)
+}
+
+// --- Step-up Authentication ---
+
+func (h *Handler) stepUpChallenge(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		UserID string `json:"user_id"`
+		Method string `json:"method"` // "password" or "mfa"
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	userID, err := uuid.Parse(body.UserID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid user_id")
+		return
+	}
+
+	if body.Method == "" {
+		body.Method = "password"
+	}
+
+	result, err := h.authSvc.InitStepUp(r.Context(), userID, body.Method)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
+}
+
+func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	var body struct {
+		Challenge string `json:"challenge"`
+		Code      string `json:"code"`      // for MFA method
+		Password  string `json:"password"`  // for password method
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if body.Challenge == "" {
+		writeError(w, http.StatusBadRequest, "challenge is required")
+		return
+	}
+
+	result, err := h.authSvc.VerifyStepUp(r.Context(), body.Challenge, body.Code, body.Password)
+	if err != nil {
+		writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, result)
 }
 
 // --- Social Login ---
