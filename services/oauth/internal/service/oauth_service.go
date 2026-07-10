@@ -444,6 +444,9 @@ type IntrospectionResponse struct {
 
 // IntrospectToken validates a token and returns introspection data.
 func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
+	if s.IsTokenRevoked(tokenStr) {
+		return &IntrospectionResponse{Active: false}
+	}
 	claims, err := s.ParseAccessToken(tokenStr)
 	if err != nil {
 		return &IntrospectionResponse{Active: false}
