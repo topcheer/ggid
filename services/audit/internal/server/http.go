@@ -627,5 +627,11 @@ func writeServiceError(w http.ResponseWriter, err error) {
 		}
 		return
 	}
-	writeJSONError(w, http.StatusInternalServerError, err.Error())
+	// Fallback: inspect error message for common patterns
+	msg := err.Error()
+	if strings.Contains(msg, "not found") {
+		writeJSONError(w, http.StatusNotFound, msg)
+		return
+	}
+	writeJSONError(w, http.StatusInternalServerError, msg)
 }

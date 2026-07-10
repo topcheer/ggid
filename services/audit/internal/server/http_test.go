@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/service"
-	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/google/uuid"
 )
 
