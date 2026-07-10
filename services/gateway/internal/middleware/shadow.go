@@ -78,6 +78,11 @@ func ShadowMiddleware(mirror *ShadowTrafficMirror) func(http.Handler) http.Handl
 }
 
 func (m *ShadowTrafficMirror) shouldMirror(r *http.Request) bool {
+	// Check for per-request shadow backend via header
+	if backend := r.Header.Get("X-Shadow-Backend"); backend != "" {
+		return true
+	}
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -114,8 +119,18 @@ func (m *ShadowTrafficMirror) sendShadow(r *http.Request) {
 
 	start := time.Now()
 
-	// Clone the request for shadow backend
-	shadowURL := m.config.ShadowBackend + r.URL.Path
+	// Determine target: per-request header overrides config
+	shadowBackend := r.Header.Get("X-Shadow-Backend")
+	if shadowBackend == "" {
+		m.mu.RLock()
+		shadowBackend = m.config.ShadowBackend
+		m.mu.RUnlock()
+	}
+	if shadowBackend == "" {
+		return
+	}
+
+	shadowURL := shadowBackend + r.URL.Path
 	if r.URL.RawQuery != "" {
 		shadowURL += "?" + r.URL.RawQuery
 	}

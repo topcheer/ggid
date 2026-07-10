@@ -70,8 +70,8 @@ func (r *GraphQLResolver) GraphQLHandler() http.HandlerFunc {
 			return
 		}
 
-		// Resolve the query
-		data, errs := r.resolveQuery(req, gqlReq.Query)
+		// Resolve the query with variables
+		data, errs := r.resolveQuery(req, gqlReq.Query, gqlReq.Variables)
 		resp := GraphQLResponse{Data: data}
 		if len(errs) > 0 {
 			resp.Errors = errs
@@ -83,7 +83,11 @@ func (r *GraphQLResolver) GraphQLHandler() http.HandlerFunc {
 }
 
 // resolveQuery parses the GraphQL query and resolves top-level fields.
-func (r *GraphQLResolver) resolveQuery(req *http.Request, query string) (map[string]any, []GraphQLError) {
+// Supports variables substitution and fragment inlining.
+func (r *GraphQLResolver) resolveQuery(req *http.Request, query string, variables map[string]any) (map[string]any, []GraphQLError) {
+	// Inline fragments: replace ...FragmentName with their body
+	query = inlineFragments(query)
+
 	fields := parseGraphQLFields(query)
 	if len(fields) == 0 {
 		return nil, []GraphQLError{{Message: "no fields found in query"}}
@@ -96,6 +100,8 @@ func (r *GraphQLResolver) resolveQuery(req *http.Request, query string) (map[str
 	authHeader := req.Header.Get("Authorization")
 
 	for _, field := range fields {
+		// Substitute variables in field args (e.g., id: $userId → id: "actual_value")
+		field = substituteVariables(field, variables)
 		result, err := r.resolveField(req.Context(), field, tenantID, authHeader)
 		if err != nil {
 			errors = append(errors, GraphQLError{
@@ -272,4 +278,53 @@ func writeGraphQLError(w http.ResponseWriter, code int, msg string) {
 	json.NewEncoder(w).Encode(GraphQLResponse{
 		Errors: []GraphQLError{{Message: msg}},
 	})
+}
+
+// substituteVariables replaces $variable references in field args with actual values.
+func substituteVariables(field graphqlField, variables map[string]any) graphqlField {
+	if len(variables) == 0 {
+		return field
+	}
+	for k, v := range variables {
+		placeholder := "$" + k
+		if strings.Contains(field.Path, placeholder) {
+			field.Path = strings.ReplaceAll(field.Path, placeholder, fmt.Sprintf("%v", v))
+		}
+	}
+	return field
+}
+
+// inlineFragments replaces ...FragmentName spreads with their field body.
+func inlineFragments(query string) string {
+	fragments := make(map[string]string)
+	lines := strings.Split(query, "\n")
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "fragment ") {
+			parts := strings.Fields(trimmed)
+			if len(parts) >= 2 {
+				fragName := parts[1]
+				depth := 0
+				start := i
+				for j := i; j < len(lines); j++ {
+					for _, ch := range lines[j] {
+						if ch == '{' {
+							depth++
+						} else if ch == '}' {
+							depth--
+						}
+					}
+					if depth == 0 && j > start {
+						bodyLines := lines[start+1 : j]
+						fragments[fragName] = strings.Join(bodyLines, "\n")
+						break
+					}
+				}
+			}
+		}
+	}
+	for name, body := range fragments {
+		query = strings.ReplaceAll(query, "..."+name, body)
+	}
+	return query
 }
