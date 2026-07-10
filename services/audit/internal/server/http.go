@@ -5,6 +5,7 @@ package httpserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -31,6 +32,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/events", s.handleEvents)
 	mux.HandleFunc("/api/v1/audit/events/", s.handleEventByID)
 	mux.HandleFunc("/api/v1/audit/stats", s.handleStats)
+	mux.HandleFunc("/api/v1/audit/export", s.handleExport)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -217,6 +219,112 @@ func eventToJSON(e *domain.AuditEvent) map[string]any {
 		m["metadata"] = e.Metadata
 	}
 	return m
+}
+
+// GET /api/v1/audit/export?tenant_id=X&format=csv|json&action=Y&result=Z
+func (s *HTTPServer) handleExport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id query parameter is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "json"
+	}
+
+	filter := domain.ListFilter{
+		TenantID:   tenantID,
+		Descending: true,
+	}
+	if action := r.URL.Query().Get("action"); action != "" {
+		filter.Action = action
+	}
+	if result := r.URL.Query().Get("result"); result != "" {
+		filter.Result = domain.EventResult(result)
+	}
+	if startStr := r.URL.Query().Get("start_time"); startStr != "" {
+		if t, err := time.Parse(time.RFC3339, startStr); err == nil {
+			filter.StartTime = &t
+		}
+	}
+	if endStr := r.URL.Query().Get("end_time"); endStr != "" {
+		if t, err := time.Parse(time.RFC3339, endStr); err == nil {
+			filter.EndTime = &t
+		}
+	}
+
+	// Export up to 10000 events
+	events, _, err := s.svc.ListEvents(r.Context(), filter, 1, 10000)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	switch format {
+	case "csv":
+		w.Header().Set("Content-Type", "text/csv")
+		w.Header().Set("Content-Disposition", `attachment; filename="audit_export.csv"`)
+		writeCSV(w, events)
+	case "json":
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", `attachment; filename="audit_export.json"`)
+		result := make([]map[string]any, len(events))
+		for i, e := range events {
+			result[i] = eventToJSON(e)
+		}
+		json.NewEncoder(w).Encode(result)
+	default:
+		writeJSONError(w, http.StatusBadRequest, "unsupported format: use csv or json")
+	}
+}
+
+func writeCSV(w http.ResponseWriter, events []*domain.AuditEvent) {
+	// CSV header
+	w.Write([]byte("id,created_at,actor_type,actor_id,actor_name,action,resource_type,resource_id,resource_name,result,ip_address\n"))
+	for _, e := range events {
+		actorID := ""
+		if e.ActorID != nil {
+			actorID = e.ActorID.String()
+		}
+		resourceID := ""
+		if e.ResourceID != nil {
+			resourceID = e.ResourceID.String()
+		}
+		row := fmt.Sprintf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+			e.ID.String(),
+			e.CreatedAt.Format(time.RFC3339),
+			csvEscape(string(e.ActorType)),
+			actorID,
+			csvEscape(e.ActorName),
+			csvEscape(e.Action),
+			csvEscape(e.ResourceType),
+			resourceID,
+			csvEscape(e.ResourceName),
+			csvEscape(string(e.Result)),
+			csvEscape(e.IPAddress),
+		)
+		w.Write([]byte(row))
+	}
+}
+
+// csvEscape wraps a value in double quotes if it contains special characters.
+func csvEscape(s string) string {
+	if strings.ContainsAny(s, ",\"\n") {
+		return "\"" + strings.ReplaceAll(s, "\"", "\"\"") + "\""
+	}
+	return s
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {
