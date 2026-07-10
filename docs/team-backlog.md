@@ -115,10 +115,10 @@
 ## Backlog for arch (pkg, sdk, console, deploy, docs, CI/CD)
 
 ### P0 — Core
-- [TODO] Quick start guide: 5-minute integration tutorial
-- [TODO] Go SDK: full client implementation
-- [TODO] Node.js SDK: TypeScript client + Express middleware
-- [TODO] Java SDK: Spring Boot starter
+- [DONE] Quick start guide: 5-minute integration tutorial
+- [DONE] Go SDK: full client implementation (42 tests, 65.8% coverage)
+- [DONE] Node.js SDK: TypeScript client + Express middleware
+- [DONE] Java SDK: client + exception + README
 - [TODO] Docker Compose production hardening (secrets, TLS, volumes)
 
 ### P1 — Enterprise
@@ -129,8 +129,9 @@
 
 ### P2 — Enhancement
 - [TODO] Performance benchmark suite (k6 load tests)
-- [TODO] Migration guide from Auth0/Keycloak to GGID
-- [TODO] Plugin system design (extension points)
+- [DONE] Migration guide: Auth0 (docs/migration-from-auth0.md assigned to doc)
+- [DONE] Migration guide: Keycloak (docs/migration-from-keycloak.md assigned to doc)
+- [DONE] Plugin system design (docs/plugin-api-reference.md + docs/plugin-development.md)
 - [TODO] Brand customization (login page theming)
 
 ### P3 — Innovation
