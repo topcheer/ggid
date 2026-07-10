@@ -2,8 +2,16 @@ package service
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/auth/internal/conf"
@@ -230,4 +238,109 @@ func TestAuthService_Login_NoTenantContext(t *testing.T) {
 	}
 }
 
-var _ = crypto.HashPassword
+// === parsePublicKey tests ===
+
+func TestParsePublicKey_ValidPEM(t *testing.T) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pubDER, _ := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
+	pub, err := parsePublicKey(pubPEM)
+	if err != nil {
+		t.Fatalf("parsePublicKey: %v", err)
+	}
+	if pub == nil {
+		t.Error("expected non-nil key")
+	}
+}
+
+func TestParsePublicKey_ECDSANotRSA(t *testing.T) {
+	priv, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	pubDER, _ := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	pubPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubDER})
+	_, err := parsePublicKey(pubPEM)
+	if err == nil {
+		t.Error("expected error for ECDSA key (not RSA)")
+	}
+}
+
+// === VerifyStepUp tests ===
+
+func TestAuthService_VerifyStepUp_InvalidChallenge(t *testing.T) {
+	svc, _, _, _ := tNewAuthSvc(t)
+	_, err := svc.VerifyStepUp(context.Background(), "nonexistent", "", "")
+	if err == nil {
+		t.Error("expected error for invalid challenge")
+	}
+}
+
+func TestAuthService_VerifyStepUp_PasswordSuccess(t *testing.T) {
+	svc, credRepo, _, _ := tNewAuthSvc(t)
+	ctx, tid := tCtxTenant()
+	uid := uuid.New()
+	hashed, _ := crypto.HashPassword("CorrectPass123!")
+	credRepo.byUser[uid] = &domain.Credential{
+		ID: uuid.New(), TenantID: tid, UserID: uid,
+		Identifier: "user1", Secret: hashed,
+	}
+	challenge := "test-stepup-pass"
+	key := fmt.Sprintf("ggid:stepup:%s", challenge)
+	val := fmt.Sprintf("%s:%s:password", tid, uid)
+	svc.rateLimiter.rdb.Set(ctx, key, val, 5*time.Minute)
+
+	result, err := svc.VerifyStepUp(ctx, challenge, "", "CorrectPass123!")
+	if err != nil {
+		t.Fatalf("VerifyStepUp password: %v", err)
+	}
+	if result == nil {
+		t.Error("expected non-nil result")
+	}
+}
+
+func TestAuthService_VerifyStepUp_WrongPassword(t *testing.T) {
+	svc, credRepo, _, _ := tNewAuthSvc(t)
+	ctx, tid := tCtxTenant()
+	uid := uuid.New()
+	hashed, _ := crypto.HashPassword("CorrectPass123!")
+	credRepo.byUser[uid] = &domain.Credential{
+		ID: uuid.New(), TenantID: tid, UserID: uid,
+		Identifier: "user1", Secret: hashed,
+	}
+	challenge := "test-stepup-wrong"
+	key := fmt.Sprintf("ggid:stepup:%s", challenge)
+	val := fmt.Sprintf("%s:%s:password", tid, uid)
+	svc.rateLimiter.rdb.Set(ctx, key, val, 5*time.Minute)
+
+	_, err := svc.VerifyStepUp(ctx, challenge, "", "WrongPass")
+	if err == nil {
+		t.Error("expected error for wrong password")
+	}
+}
+
+// === RevokeSession success ===
+
+func TestAuthService_RevokeSession_Success(t *testing.T) {
+	svc, _, _, _ := tNewAuthSvc(t)
+	ctx := context.Background()
+	sessID := uuid.New()
+
+	// Create session via the service's own Create method
+	svc.sessionService.sessionRepo.(*tSessionRepo).s[sessID] = &domain.Session{ID: sessID, TenantID: uuid.New(), UserID: uuid.New()}
+
+	err := svc.RevokeSession(ctx, sessID)
+	if err != nil {
+		t.Errorf("RevokeSession: %v", err)
+	}
+}
+
+// === RotateRefreshToken invalid ===
+
+func TestTokenService_RotateRefreshToken_Invalid_V2(t *testing.T) {
+	svc, _, _, _ := tNewAuthSvc(t)
+	_, _, err := svc.tokenService.RotateRefreshToken(context.Background(), "invalid_xyz")
+	if err == nil {
+		t.Error("expected error for invalid refresh token")
+	}
+}
