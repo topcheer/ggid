@@ -11,5 +11,5 @@ FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /auth /auth
 
-EXPOSE 8082 50052
+EXPOSE 9001
 ENTRYPOINT ["/auth"]

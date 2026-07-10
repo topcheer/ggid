@@ -11,5 +11,5 @@ FROM alpine:3.20
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /policy /policy
 
-EXPOSE 8084 50054
+EXPOSE 8070 9070
 ENTRYPOINT ["/policy"]
