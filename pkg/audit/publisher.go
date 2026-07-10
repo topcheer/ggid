@@ -113,6 +113,9 @@ func (p *Publisher) Publish(ctx context.Context, event Event) error {
 // PublishAsync publishes an audit event without waiting for acknowledgment.
 // Errors are logged but not returned to the caller.
 func (p *Publisher) PublishAsync(event Event) {
+	if p.js == nil {
+		return
+	}
 	if event.ID == uuid.Nil {
 		event.ID = uuid.New()
 	}
