@@ -963,3 +963,101 @@ psql -c "SELECT pid, now() - query_start AS duration, query FROM pg_stat_activit
 # Check table locks
 psql -c "SELECT relation::regclass, mode, pid FROM pg_locks WHERE NOT granted;"
 ```
+
+---
+
+## Canary Deployment
+
+Canary releases route a small percentage of traffic to the new version,
+monitoring error rates before full rollout.
+
+### Kubernetes Canary (Weighted Service)
+
+```bash
+# 1. Deploy canary (1 replica of new version)
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ggid-gateway-canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: ggid-gateway, track: canary}
+  template:
+    metadata:
+      labels: {app: ggid-gateway, track: canary}
+    spec:
+      containers:
+        - name: gateway
+          image: ghcr.io/ggid/gateway:v1.4.0
+EOF
+
+# 2. Route 10% traffic to canary via Istio / NGINX weighted routing
+kubectl apply -f - <<EOF
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: ggid-gateway
+spec:
+  http:
+    - route:
+        - destination: {host: ggid-gateway-stable, weight: 90}
+        - destination: {host: ggid-gateway-canary, weight: 10}
+EOF
+
+# 3. Monitor error rate for 15 minutes
+watch 'kubectl exec ggid-gateway-canary -- curl -s localhost:8080/metrics | grep error_rate'
+
+# 4. Promote canary (if healthy)
+kubectl patch deployment ggid-gateway-stable \
+  -p '{"spec":{"template":{"spec":{"containers":[{"name":"gateway","image":"ghcr.io/ggid/gateway:v1.4.0"}]}}}}'
+
+# 5. Remove canary
+kubectl delete deployment ggid-gateway-canary
+kubectl delete virtualservice ggid-gateway
+
+# Or rollback (if issues):
+# kubectl delete deployment ggid-gateway-canary
+# kubectl delete virtualservice ggid-gateway
+```
+
+### Canary Promotion Criteria
+
+| Metric | Threshold | Action |
+|--------|-----------|--------|
+| Error rate | < 1% | Promote |
+| p95 latency | < 100ms | Promote |
+| Crash rate | 0 | Promote |
+| Error rate | 1-5% | Hold (investigate) |
+| Error rate | > 5% | Rollback immediately |
+
+### Automated Canary with Flagger
+
+```yaml
+# flagger.yaml
+apiVersion: flagger.app/v1
+kind: Canary
+metadata:
+  name: ggid-gateway
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ggid-gateway
+  service:
+    port: 8080
+  analysis:
+    interval: 1m
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: error-rate
+        threshold: 1
+        query: |
+          sum(rate(http_requests_total{status=~"5.."}[1m])) /
+          sum(rate(http_requests_total[1m]))
+```
+
+Flagger automatically promotes or rolls back based on error rate.
