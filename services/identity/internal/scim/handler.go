@@ -661,7 +661,7 @@ func (h *Handler) handleServiceProviderConfig(w http.ResponseWriter, r *http.Req
 	writeSCIMJSON(w, http.StatusOK, map[string]any{
 		"schemas":       []string{"urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"},
 		"patch":         map[string]any{"supported": true},
-		"bulk":          map[string]any{"supported": false, "maxOperations": 0, "maxPayloadSize": 0},
+		"bulk":          map[string]any{"supported": true, "maxOperations": 1000, "maxPayloadSize": 1048576},
 		"filter":        map[string]any{"supported": true, "maxResults": 100},
 		"changePassword": map[string]any{"supported": true},
 		"sort":          map[string]any{"supported": true},
