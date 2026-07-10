@@ -502,6 +502,92 @@ VPC 10.0.0.0/16
 
 ---
 
+## Database Strategy: Shared vs Per-Service
+
+GGID uses a **shared database** approach where all 7 microservices connect to
+the same PostgreSQL instance. Tenant isolation is enforced via RLS.
+
+### Why Shared Database
+
+| Aspect | Shared DB (GGID) | Per-Service DB |
+|--------|------------------|----------------|
+| Cross-service queries | Easy (JOINs) | Requires API calls or data sync |
+| Migrations | Single migration run | Coordinated per-service |
+| Transactions | ACID across services | Distributed transactions (hard) |
+| Connection pool | Shared (PgBouncer) | Each service has own pool |
+| Complexity | Low | High |
+| Scale | Vertical + RLS | Horizontal per service |
+| Best for | Microservices with shared data | Truly independent services |
+
+GGID services share `users`, `roles`, `audit_events` tables. A per-service
+DB would require expensive cross-service API calls for every auth check.
+
+### Connection Topology
+
+```
+                    PgBouncer (transaction pooling)
+                           │
+                    PostgreSQL (shared)
+                           │
+         ┌─────────────────┼─────────────────┐
+         │                 │                  │
+    tenant_id=A       tenant_id=B        tenant_id=C
+    (RLS filtered)    (RLS filtered)     (RLS filtered)
+```
+
+### When to Split
+
+Split databases only if:
+- A single service has dramatically different write patterns (e.g., audit at 10k events/sec)
+- Data residency requires separate storage for specific data types
+- A service needs a different DB engine (e.g., time-series for metrics)
+
+GGID Audit Service can optionally use a separate database for high-volume
+event ingestion while maintaining a summary table in the shared DB.
+
+---
+
+## Redis Patterns
+
+GGID uses Redis for three distinct purposes, each with different access patterns:
+
+### 1. Session Store
+
+```
+Key: tid:{tenant_id}:session:{session_id}
+Value: {user_id, device, ip, expires_at}
+TTL: 24h (sliding expiration)
+Pattern: Read-heavy (every API call), Write on login/logout
+```
+
+### 2. Rate Limiting (Token Bucket)
+
+```
+Key: tid:{tenant_id}:rl:{endpoint}:{ip}
+Value: Sorted set of request timestamps (sliding window)
+TTL: 60s (window duration)
+Pattern: Read + Write on every API call (ZADD + ZCARD via Lua script)
+```
+
+### 3. Policy Cache
+
+```
+Key: tid:{tenant_id}:policy:{user_id}:{resource}:{action}
+Value: allow/deny + computed_at timestamp
+TTL: 5min
+Pattern: Read-heavy (95%+ hit rate), Write on policy change (cache invalidation)
+```
+
+### Redis Configuration
+
+| Setting | Session | Rate Limit | Policy Cache |
+|---------|---------|------------|--------------|
+| Eviction | TTL | TTL | TTL + maxmemory-policy |
+| Persistence | RDB (optional) | AOF (recommended) | Not needed |
+| Consistency | Strong (read-after-write) | Strong (Lua atomic) | Eventually consistent |
+
+---
+
 ## References
 
 - [Deployment Guide](./deployment-guide.md) — Step-by-step deployment
