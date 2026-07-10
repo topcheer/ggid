@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/crypto"
@@ -62,6 +63,16 @@ func (h *Handler) registerRoutes() {
 
 	// Password policy config endpoint
 	h.mux.HandleFunc("/api/v1/auth/password/policy", h.passwordPolicy)
+	h.mux.HandleFunc("/api/v1/auth/password-policy", h.passwordPolicy)
+
+	// Password history summary
+	h.mux.HandleFunc("/api/v1/auth/password-history", h.passwordHistory)
+
+	// Account lockout policy config
+	h.mux.HandleFunc("/api/v1/auth/lockout-policy", h.lockoutPolicy)
+
+	// Passkey autofill (conditional mediation)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/autofill", h.passkeyAutofill)
 
 	// Magic Link (passwordless login)
 	h.mux.HandleFunc("/api/v1/auth/magic-link", h.magicLink)
@@ -621,6 +632,113 @@ func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// passwordHistory handles GET /api/v1/auth/password-history.
+// Returns a summary of the user's password history (count + last changed).
+func (h *Handler) passwordHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		userIDStr = r.Header.Get("X-User-ID")
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "valid user_id is required")
+		return
+	}
+
+	history, err := h.authSvc.GetPasswordHistory(r.Context(), userID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"user_id":    userID.String(),
+		"count":      len(history),
+		"history":    history,
+		"max_stored": h.authSvc.PasswordPolicy().HistoryCount,
+	})
+}
+
+// lockoutPolicy handles GET/PUT /api/v1/auth/lockout-policy.
+// Configures the account lockout threshold and duration.
+func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		policy := h.authSvc.PasswordPolicy()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"max_attempts":  policy.MaxAttempts,
+			"lock_duration": policy.LockDuration.String(),
+			"require_captcha_after": policy.MaxAttempts - 1,
+		})
+	case http.MethodPut, http.MethodPost:
+		var req struct {
+			MaxAttempts  *int `json:"max_attempts"`
+			LockDuration *string `json:"lock_duration"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		policy := h.authSvc.PasswordPolicy()
+		if req.MaxAttempts != nil {
+			if *req.MaxAttempts < 1 || *req.MaxAttempts > 100 {
+				writeError(w, http.StatusBadRequest, "max_attempts must be 1-100")
+				return
+			}
+			policy.MaxAttempts = *req.MaxAttempts
+		}
+		if req.LockDuration != nil {
+			d, err := time.ParseDuration(*req.LockDuration)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "invalid lock_duration format (e.g. '15m', '1h')")
+				return
+			}
+			policy.LockDuration = d
+		}
+		h.authSvc.SetPasswordPolicy(policy)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"max_attempts":  policy.MaxAttempts,
+			"lock_duration": policy.LockDuration.String(),
+			"require_captcha_after": policy.MaxAttempts - 1,
+		})
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// passkeyAutofill handles GET /api/v1/auth/webauthn/autofill.
+// Returns WebAuthn options with conditional mediation for browser autofill.
+// The browser will show available passkeys in the credential picker.
+func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	// Return a challenge + mediation=conditional for the browser to
+	// prompt passkey autofill. The actual assertion is sent to
+	// /api/v1/auth/webauthn/login/finish for verification.
+	challenge, err := h.authSvc.GenerateWebAuthnChallenge(r.Context())
+	if err != nil {
+		// Fall back to a simple random challenge.
+		challenge = uuid.New().String()
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"mediation":  "conditional",
+		"challenge":  challenge,
+		"rpId":       "ggid.dev",
+		"login_url":  "/api/v1/auth/webauthn/login/finish",
+		"timeout":    60000,
+		"userVerification": "preferred",
+	})
 }
 
 // --- Magic Link (Passwordless Login) ---

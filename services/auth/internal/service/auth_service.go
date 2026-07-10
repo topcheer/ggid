@@ -741,3 +741,43 @@ func (s *AuthService) IsTrustedDevice(ctx context.Context, tenantID, userID uuid
 	_, err := s.rateLimiter.rdb.Get(ctx, key).Result()
 	return err == nil
 }
+
+// --- Password History Summary ---
+
+// GetPasswordHistory returns a summary of stored password hashes for a user.
+func (s *AuthService) GetPasswordHistory(ctx context.Context, userID uuid.UUID) ([]map[string]any, error) {
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("tenant context required: %w", err)
+	}
+	policy := s.passwordService.GetPolicy()
+	history, err := s.passwordService.credentialRepo.GetHistory(ctx, tc.TenantID, userID, policy.HistoryCount)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]map[string]any, 0, len(history))
+	for _, h := range history {
+		hashPrefix := h.Secret
+		if len(hashPrefix) > 12 {
+			hashPrefix = hashPrefix[:12] + "..."
+		}
+		result = append(result, map[string]any{
+			"id":         h.ID.String(),
+			"created_at": h.CreatedAt.Format(time.RFC3339),
+			"hash_prefix": hashPrefix,
+		})
+	}
+	return result, nil
+}
+
+// SetPasswordPolicy replaces the entire password policy (admin operation).
+func (s *AuthService) SetPasswordPolicy(policy conf.PasswordPolicy) {
+	s.passwordService.UpdatePolicy(policy)
+	s.cfg.Password = policy
+}
+
+// GenerateWebAuthnChallenge generates a random challenge for WebAuthn flows.
+func (s *AuthService) GenerateWebAuthnChallenge(ctx context.Context) (string, error) {
+	return crypto.GenerateRandomToken(32)
+}
