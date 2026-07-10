@@ -1,398 +1,283 @@
 # GGID Glossary
 
-Key terms used throughout the GGID IAM Platform documentation.
+A comprehensive glossary of Identity and Access Management (IAM) terms used throughout the GGID platform.
 
 ---
 
 ## A
 
-**ABAC (Attribute-Based Access Control)**
-Access control model where permissions are granted based on attributes of the user, resource, action, and environment (e.g., department, clearance level, time of day). GGID supports ABAC via the policy engine with JSON conditions.
+### ABAC (Attribute-Based Access Control)
+An access control model where permissions are granted based on attributes of the user, resource, and environment (e.g., department, location, time of day). GGID implements ABAC alongside RBAC in its policy engine.
 
-**Access Token**
-A short-lived JWT (default 1 hour) containing user identity claims (`sub`, `tenant_id`, `roles`, `scopes`). Used to authenticate API requests via `Authorization: Bearer <token>`.
+### Access Token
+A credential that grants access to a protected resource. In GGID, access tokens are JWTs signed by the OAuth service, containing claims like `sub`, `tenant_id`, `roles`, and `scope`.
 
-**ACR (Authentication Context Class Reference)**
-An OIDC parameter that specifies the level of authentication required (e.g., `phr` for phishing-resistant, `mfa` for multi-factor).
+### ACID
+A set of transaction properties (Atomicity, Consistency, Isolation, Durability) guaranteeing reliable database operations. GGID uses PostgreSQL with ACID-compliant transactions for all data modifications.
 
-**Argon2id**
-Memory-hard password hashing algorithm (RFC 9106) resistant to GPU/ASIC brute-force. GGID uses it for all password storage.
+### ACR (Authentication Context Class Reference)
+An OIDC parameter indicating the level of authentication assurance (e.g., `urn:mace:incommon:iap:silver`). GGID supports ACR-based step-up authentication.
 
-**Attestation**
-In WebAuthn, the cryptographic proof from an authenticator device that it created a credential. Verified during registration.
+### AES-256-GCM
+Advanced Encryption Standard with 256-bit keys in Galois/Counter Mode. GGID uses AES-256-GCM for encrypting sensitive data at rest via `pkg/crypto`.
 
-**Audit Event**
-A structured record of a security-relevant action (e.g., `user.login`, `role.create`). Published via NATS JetStream and persisted to PostgreSQL.
+### Argon2id
+The winner of the Password Hashing Competition (2015). A memory-hard hashing algorithm resistant to GPU/ASIC attacks. GGID uses Argon2id with parameters: 64MB memory, 3 iterations, 2 parallelism.
 
-**Auth Hook**
-A configurable webhook that intercepts authentication flows at specific points (e.g., `pre-registration`, `post-login`, `pre-token-issue`). See [Plugin Development](./plugin-development.md).
+### Audit Event
+A record of a security-relevant action (e.g., user.login, role.assign). GGID publishes audit events via NATS JetStream and persists them for compliance.
 
-**Authenticator**
-A software or hardware component that performs WebAuthn authentication (e.g., YubiKey, Touch ID, Windows Hello).
+### Authentication
+The process of verifying the identity of a user or service. GGID supports: password, MFA (TOTP), LDAP, OAuth/OIDC, SAML, WebAuthn, social login.
+
+### Authorization
+The process of determining what actions an authenticated user is allowed to perform. GGID implements RBAC + ABAC policy enforcement.
 
 ---
 
 ## B
 
-**Bearer Token**
-A token type where possession of the token grants access (no additional proof required). GGID JWTs are bearer tokens.
+### Back-Channel Logout
+A server-to-server logout mechanism (OIDC Back-Channel Logout 1.0) where the OP sends a logout token to RPs via HTTP POST. GGID implements `POST /oauth/logout`.
+
+### Backup Eligible
+A WebAuthn flag indicating whether a credential can be synced via cloud services (iCloud Keychain, Google Password Manager). GGID stores this on the Credential struct.
 
 ---
 
 ## C
 
-**CORS (Cross-Origin Resource Sharing)**
-Browser security mechanism that controls which origins can make requests to the API. GGID Gateway enforces a configurable CORS whitelist.
+### CAEP (Continuous Access Evaluation Profile)
+A Shared Signals Framework event type for real-time security events (session revoked, credential change). GGID's audit pipeline supports CAEP event publication.
 
-**Circuit Breaker**
-A resilience pattern that stops sending requests to a failing backend after an error threshold is reached, allowing it to recover. GGID Gateway implements per-backend circuit breakers.
+### Circuit Breaker
+A resilience pattern that prevents cascading failures by temporarily blocking calls to a failing service. GGID's gateway middleware implements circuit breaking with configurable thresholds.
 
-**Claim**
-A key-value pair in a JWT payload (e.g., `sub`, `email`, `roles`). Claims represent assertions about the authenticated user.
+### Claims
+Key-value pairs in a JWT that provide information about the user (e.g., `sub`, `email`, `roles`). GGID allows custom claim customization via rules.
 
-**Client Credentials**
-An OAuth2 grant type for machine-to-machine authentication. A service exchanges its `client_id` + `client_secret` for an access token without user interaction.
+### Client Credentials Grant
+An OAuth 2.0 grant type for machine-to-machine authentication. GGID supports `grant_type=client_credentials` with secret rotation.
+
+### Clone Detection
+A WebAuthn security feature that detects if a credential has been cloned by checking sign count monotonicity. GGID rejects authentication if `signCount <= stored signCount`.
+
+### Consent
+User approval for an application to access specific scopes. GGID implements an OAuth consent screen for interactive flows.
 
 ---
 
 ## D
 
-**Deny-All Default**
-A policy engine mode where all access is denied unless an explicit allow rule matches. GGID supports configurable default-deny.
+### Device Flow (RFC 8628)
+An OAuth 2.0 extension for devices with limited input capabilities (TVs, IoT). Users authorize on a separate device. GGID implements device authorization endpoints.
 
-**Device Auth**
-Authentication using a registered device credential (WebAuthn/FIDO2) instead of a password.
+### DPoP (RFC 9449)
+Demonstrating Proof-of-Possession at the Application Layer. Binds access tokens to a sender's cryptographic key. GGID research identifies DPoP as a future enhancement.
 
 ---
 
 ## E
 
-**E2E (End-to-End) Test**
-Tests that verify the full request path from client through Gateway to backend services and back. GGID's E2E suite runs via `deploy/e2e-docker-test.sh`.
-
-**Event-Driven Architecture**
-A design where services communicate via events (messages) rather than direct calls. GGID's audit pipeline uses NATS JetStream for event-driven audit logging.
+### External ID
+An identifier from an external system (e.g., SCIM `externalId`, LDAP `dn`). GGID's SCIM implementation supports externalId mapping.
 
 ---
 
 ## F
 
-**FIDO2**
-An open authentication standard by the FIDO Alliance. Encompasses WebAuthn (browser API) and CTAP (client-to-authenticator protocol). Enables passwordless and phishing-resistant authentication.
-
-**Flows (OAuth2)**
-Standardized authorization flows: Authorization Code, Client Credentials, Refresh Token, Device Code, PKCE.
+### FIDO2
+An authentication standard developed by the FIDO Alliance, comprising WebAuthn (web API) and CTAP (client-to-authenticator protocol). GGID implements FIDO2 via WebAuthn.
 
 ---
 
 ## G
 
-**Gateway**
-The single entry point for all API requests. Verifies JWTs, applies rate limiting, routes to backend services. See [Gateway Architecture](./design/gateway-architecture.md).
+### Grant Type
+The method by which a client obtains an OAuth access token (e.g., authorization_code, client_credentials, refresh_token, device_code).
 
 ---
 
 ## I
 
-**IdP (Identity Provider)**
-A service that authenticates users and issues identity assertions. GGID can act as an IdP (via OIDC/SAML) or consume external IdPs (via federation).
+### IdP (Identity Provider)
+A service that authenticates users and issues identity assertions. GGID acts as both an IdP and an SP (Service Provider).
 
-**IdP Federation**
-Configuring GGID to trust an external identity provider (e.g., Azure AD, Okta) for authentication. Users authenticate at the external IdP and GGID accepts their assertion.
+### IdP-Initiated SSO
+An SSO flow where authentication starts at the IdP, which then redirects to the SP. GGID supports both SP-initiated and IdP-initiated SAML SSO.
 
-**Idempotency**
-A property where performing an operation multiple times produces the same result as performing it once. Important for retry-safe API calls.
+### IoT (Internet of Things)
+Network-connected devices. GGID's device flow grant is designed for IoT authentication scenarios.
 
-**Idempotency Key**
-A unique identifier sent by the client to ensure a request is processed only once, even if retried. Use the `Idempotency-Key` header for POST/PUT requests.
+### Issuer
+The URL that identifies the token-issuing party. In GGID, the issuer is the OAuth service URL (e.g., `https://auth.ggid.dev`).
 
-**IP Allowlist**
-A security feature restricting API access to specified IP ranges (CIDR notation). Configured at the Gateway level.
-
-**ISS (Issuer)**
-A JWT claim (`iss`) identifying who issued the token. GGID sets `iss: ggid-auth` by default.
+### JIT Provisioning (Just-In-Time)
+Automatic user account creation upon first SSO login. GGID creates user accounts on-the-fly from SAML/OIDC assertion data.
 
 ---
 
 ## J
 
-**JIT (Just-In-Time) Provisioning**
-Automatic user account creation on first login via SSO/LDAP. The user record is created from IdP attributes when they first authenticate, rather than being pre-created.
+### JWT (JSON Web Token)
+A compact, URL-safe token format (RFC 7519). GGID issues JWTs for access tokens and ID tokens, signed with RS256.
 
-**JWKS (JSON Web Key Set)**
-A JSON document at `/.well-known/jwks.json` containing RSA public keys for JWT signature verification. Cached by the Gateway and SDKs.
+### JWKS (JSON Web Key Set)
+An endpoint exposing public keys for JWT verification (RFC 7517). GGID exposes `/.well-known/jwks.json`.
 
-**JWT (JSON Web Token)**
-A compact, signed token format (RFC 7519) used for authentication. GGID signs JWTs with RS256 (RSA 2048-bit).
+---
+
+## K
+
+### Key Rotation
+The practice of periodically replacing cryptographic keys. GGID supports JWT signing key rotation and OAuth client secret rotation.
 
 ---
 
 ## L
 
-**LDAP (Lightweight Directory Access Protocol)**
-A protocol for accessing directory services (e.g., Active Directory). GGID integrates LDAP as an auth provider in the chain (Local + LDAP).
-
-**LTREE**
-A PostgreSQL extension for hierarchical tree data. Used by GGID for organization tree structures.
+### LDAP (Lightweight Directory Access Protocol)
+A protocol for accessing directory services. GGID integrates with LDAP/Active Directory for credential verification and group-to-role mapping.
 
 ---
 
 ## M
 
-**Magic Link**
-A passwordless login method where a one-time-use link is sent to the user's email. Clicking the link authenticates the user without a password.
+### MFA (Multi-Factor Authentication)
+Requiring more than one authentication factor. GGID supports TOTP (RFC 6238), WebAuthn as a second factor, and backup codes.
 
-**MFA (Multi-Factor Authentication)**
-Requiring two or more authentication factors. GGID supports TOTP, Email OTP, and WebAuthn as second factors.
-
-**Middleware**
-Software that intercepts requests in the Gateway pipeline (e.g., JWT verification, rate limiting, CORS). See [Gateway Middleware Chain](./design/gateway-architecture.md#middleware-chain).
+### Magic Link
+A passwordless authentication method where a one-time-use link is sent via email. GGID implements magic link authentication.
 
 ---
 
 ## N
 
-**NATS JetStream**
-A persistent streaming system built into NATS. GGID uses it as the durable transport for audit events. See [Event-Driven Audit Design](./design/event-driven-audit.md).
+### NATS JetStream
+A high-performance messaging system with persistence. GGID uses NATS JetStream for audit event delivery and webhooks.
 
-**Nonce**
-A single-use random value to prevent replay attacks. Used in OAuth2/OIDC flows.
+### Nonce
+A single-use random value to prevent replay attacks. GGID enforces nonce validation in OAuth flows.
 
 ---
 
 ## O
 
-**OIDC (OpenID Connect)**
-An identity layer on top of OAuth2. Provides user authentication and identity assertions via ID tokens. GGID is a full OIDC provider with discovery and JWKS.
+### OIDC (OpenID Connect)
+An identity layer on top of OAuth 2.0. GGID implements OIDC Core 1.0 with ID tokens, userinfo, and discovery endpoints.
 
-**OTLP (OpenTelemetry Protocol)**
-The standard protocol for exporting traces and metrics. GGID Gateway exports traces via OTLP HTTP.
+### OAuth 2.0
+An authorization framework (RFC 6749) for delegated access. GGID implements authorization code, client credentials, refresh token, and device flows.
+
+### OAuth 2.1
+The upcoming consolidated OAuth specification. GGID's research identifies gaps (PKCE not enforced, refresh token rotation needed) for future compliance.
 
 ---
 
 ## P
 
-**Passkey**
-A FIDO2 credential synced across a user's devices via cloud (e.g., Apple iCloud Keychain). Enables passwordless login without a hardware key.
+### Passkey
+A FIDO2/WebAuthn credential that replaces passwords. GGID implements passkey registration and authentication with backup eligibility tracking.
 
-**Passwordless**
-Authentication without a traditional password. GGID supports magic links and WebAuthn-only accounts.
+### PKCE (Proof Key for Code Exchange)
+An OAuth 2.0 extension (RFC 7636) protecting authorization code flow from interception. GGID supports PKCE with S256 challenge method.
 
-**PKCE (Proof Key for Code Exchange)**
-An OAuth2 extension (RFC 7636) that prevents authorization code interception. Recommended for SPAs and mobile apps.
+### Policy Engine
+The component that evaluates access control decisions. GGID's policy engine supports RBAC role checks and ABAC attribute rules.
 
-**Policy Engine**
-The GGID component that evaluates RBAC + ABAC rules to make allow/deny decisions. See [Policy Engine Design](./design/policy-engine.md).
+### PII (Personally Identifiable Information)
+Data that can identify an individual. GGID includes `pkg/pii` for PII detection and redaction in logs.
 
-**Provider Chain**
-GGID's auth provider architecture: Local (password) → LDAP → Social → WebAuthn. Each is tried in order until one succeeds.
+### PRF Extension
+A WebAuthn extension for deriving cryptographic secrets from authenticators. Useful for end-to-end encrypted data.
 
 ---
 
 ## R
 
-**RBAC (Role-Based Access Control)**
-Access control model where permissions are assigned to roles, and users inherit permissions through role assignment. GGID supports role hierarchy and wildcard matching.
+### RBAC (Role-Based Access Control)
+An access control model where permissions are assigned to roles, and users are assigned roles. GGID implements hierarchical RBAC with effective permission computation.
 
-**Rate Limiting**
-Restricting the number of API requests per time window. GGID Gateway enforces per-IP and per-tenant rate limits. See [API Rate Limits](./api-rate-limits.md).
+### Refresh Token
+A long-lived token used to obtain new access tokens without re-authentication. GGID issues refresh tokens with rotation.
 
-**ReBAC (Relationship-Based Access Control)**
-An access model based on relationships between entities (e.g., "user X is editor of document Y"). Planned for GGID Phase 16.
+### Resident Key
+A WebAuthn credential stored on the authenticator (discoverable credential), enabling usernameless login. GGID configures `residentKey: preferred`.
 
-**Refresh Token**
-A long-lived token (default 30 days) used to obtain new access tokens. GGID rotates refresh tokens on each use.
+### RLS (Row-Level Security)
+A PostgreSQL feature enforcing data isolation at the database level. GGID uses RLS policies to enforce tenant isolation.
 
-**Refresh Token Rotation**
-A security practice where each refresh produces a new refresh token, invalidating the old one. Detects token theft.
-
-**RLS (Row-Level Security)**
-A PostgreSQL feature that filters rows based on a session variable. GGID uses RLS for multi-tenant isolation. See [RLS Design](./design/multi-tenant-rls.md).
+### RP (Relying Party)
+A service that relies on an IdP for authentication. In WebAuthn, the RP is the website. GGID's WebAuthn RP ID is configurable.
 
 ---
 
 ## S
 
-**SAML 2.0 (Security Assertion Markup Language)**
-An XML-based SSO protocol. GGID acts as a SAML Service Provider.
+### SAML 2.0
+An XML-based SSO protocol (Security Assertion Markup Language). GGID implements SP-initiated and IdP-initiated SAML SSO with per-tenant metadata.
 
-**SCIM 2.0 (System for Cross-domain Identity Management)**
-A standard protocol (RFC 7643/7644) for automated user provisioning. GGID exposes `/scim/v2/Users`.
+### SCIM 2.0
+A provisioning protocol (System for Cross-domain Identity Management, RFC 7643/7644). GGID implements SCIM user and group CRUD with filter parsing.
 
-**Scope**
-A string defining the level of access requested in OAuth2/OIDC (e.g., `openid profile email`). Included in the JWT `scope` claim.
+### Sign Count
+A WebAuthn authenticator counter incremented on each use. GGID checks sign count monotonicity for clone detection.
 
-**Server-Sent Events (SSE)**
-A one-way streaming protocol from server to browser. GGID uses SSE for real-time audit event streaming.
+### SP-Initiated SSO
+An SSO flow where authentication starts at the Service Provider, which redirects to the IdP. GGID supports SP-initiated SAML SSO.
 
-**Session**
-A period of authenticated access. GGID sessions are JWT-based (stateless) with optional Redis blocklist for revocation.
+### Step-Up Authentication
+Requiring additional authentication for sensitive operations. GGID implements ACR-based step-up authentication.
 
-**Signing Key**
-The RSA private key used to sign JWTs. Must be kept secret and rotated regularly.
-
-**Single Sign-On (SSO)**
-A system where one login provides access to multiple applications. GGID supports SSO via SAML 2.0 and OIDC.
-
-**Step-Up Authentication**
-Requiring additional verification (e.g., MFA) for sensitive operations, even when the user is already logged in. GGID provides `/auth/step-up` endpoints.
+### Subject Identifier
+A unique identifier for the authenticated user (the `sub` claim in JWT).
 
 ---
 
 ## T
 
-**Tenant**
-An isolated customer or organization within GGID. Each tenant has its own users, roles, and data, separated by RLS.
+### Tenant
+An isolated organizational unit in multi-tenant GGID deployments. Each tenant has independent users, roles, policies, and IdP configurations.
 
-**Tenant ID**
-A UUID identifying a tenant. Required as `X-Tenant-ID` header on all API requests. Default: `00000000-0000-0000-0000-000000000001`.
+### TOTP (Time-based One-Time Password)
+An RFC 6238 algorithm generating 6-digit codes from a shared secret and timestamp. GGID implements TOTP for MFA.
 
-**TOTP (Time-Based One-Time Password)**
-A 6-digit code generated by an authenticator app (RFC 6238). Changes every 30 seconds. GGID's default MFA method.
+### Token Exchange (RFC 8693)
+An OAuth 2.0 extension for exchanging one token type for another (e.g., JWT for access token). GGID research identifies this for future implementation.
 
-**Token Blocklist**
-A Redis-based list of revoked JWT IDs (`jti`). Checked at refresh time to enforce immediate logout.
+### Token Revocation (RFC 7009)
+An endpoint for invalidating access and refresh tokens. GGID implements `POST /oauth/revoke`.
 
-**Token Theft Detection**
-When refresh token rotation detects reuse of an already-rotated token, indicating theft. GGID revokes all tokens for that user.
+---
+
+## V
+
+### Verification Flow
+The process of verifying ownership of an email or phone number. GGID implements email verification with signed tokens.
 
 ---
 
 ## W
 
-**WebAuthn**
-A browser API (W3C standard) for FIDO2 authentication. Enables registration and login with passkeys, security keys, and platform authenticators. GGID implements full WebAuthn flows.
+### WebAuthn
+A W3C standard for passwordless authentication using public-key cryptography. GGID implements WebAuthn registration and authentication with backup flags, clone detection, and transport persistence.
 
-**Wildcard Matching**
-In RBAC, resource patterns with `*` (e.g., `documents:*` matches `documents:drafts`, `documents:sensitive`). GGID supports wildcard suffixes.
+### Webhook
+An HTTP callback triggered by events. GGID's gateway supports configurable webhooks for audit events.
 
 ---
 
 ## X
 
-**X-Tenant-ID**
-An HTTP header containing the tenant UUID. Required on all GGID API requests. The Gateway also injects it as a query param and JSON body field for backend services.
+### X-API-Key
+An HTTP header used by the GGID SDK for server-to-server authentication with management APIs.
+
+### X-Correlation-ID
+An HTTP header for distributed tracing correlation across microservices.
+
+### X-Tenant-ID
+An HTTP header identifying the tenant context for a request. Required for all API calls through the GGID gateway.
 
 ---
 
-## References
-
-- [RFC 7519 — JWT](https://datatracker.ietf.org/doc/html/rfc7519)
-- [RFC 6238 — TOTP](https://datatracker.ietf.org/doc/html/rfc6238)
-- [RFC 7636 — PKCE](https://datatracker.ietf.org/doc/html/rfc7636)
-- [RFC 9100 — Argon2](https://datatracker.ietf.org/doc/html/rfc9100)
-- [W3C WebAuthn](https://www.w3.org/TR/webauthn/)
-- [OWASP Top 10](https://owasp.org/Top10/)
-
----
-
-## IAM Core Terminology
-
-### OIDC (OpenID Connect)
-
-**OIDC** is an identity layer built on top of OAuth 2.0. It enables clients to
-verify the identity of an end-user and obtain basic profile information via an
-ID Token (JWT).
-
-GGID implements OIDC with:
-- `/.well-known/openid-configuration` — Discovery endpoint
-- Authorization Code + PKCE flow
-- ID Token (RS256 signed JWT with user claims)
-- UserInfo endpoint
-
-### SCIM (System for Cross-domain Identity Management)
-
-**SCIM 2.0** (RFC 7643/7644) is a standardized REST API for user provisioning.
-It enables automated user lifecycle management across systems.
-
-GGID exposes SCIM endpoints:
-- `/scim/v2/Users` — CRUD with filtering (`?filter=userName eq "alice"`)
-- `/scim/v2/Groups` — Group management
-- Compatible with Okta, Azure AD, and other SCIM providers
-
-### SAML (Security Assertion Markup Language)
-
-**SAML 2.0** is an XML-based SSO protocol used primarily in enterprise
-environments. GGID supports both SP-initiated and IdP-initiated SSO flows
-with signed and encrypted assertions.
-
-### WebAuthn / Passkey
-
-**WebAuthn** (W3C standard) enables passwordless authentication using
-public-key cryptography. Users authenticate with biometrics (Touch ID, Face ID)
-or hardware security keys (YubiKey).
-
-A **Passkey** is a WebAuthn credential synchronized across devices via cloud
-( iCloud Keychain, Google Password Manager).
-
-GGID supports:
-- Platform authenticators (Touch ID, Windows Hello)
-- Roaming authenticators (YubiKey, Titan)
-- Registration and authentication flows
-
-### RBAC (Role-Based Access Control)
-
-**RBAC** assigns permissions to roles, and roles to users. Access decisions
-are based on the user's assigned roles.
-
-```
-User → Role → Permission → Resource
-alice → admin → write:users → /api/v1/users
-```
-
-### ABAC (Attribute-Based Access Control)
-
-**ABAC** makes access decisions based on attributes of the user, resource,
-action, and environment. More fine-grained than RBAC.
-
-```
-IF user.department == "HR"
-   AND resource.type == "salary"
-   AND action == "read"
-   AND time.weekday IN [Mon-Fri]
-THEN allow
-```
-
-GGID's policy engine supports both RBAC and ABAC, composable in a single policy.
-
-### Federation
-
-**Federation** allows users to authenticate through a trusted external Identity
-Provider (IdP) instead of maintaining local credentials.
-
-Examples:
-- Social login (Google, GitHub, Microsoft) — OAuth 2.0 federation
-- Enterprise SSO (Azure AD, Okta) — SAML federation
-- LDAP/AD — Directory federation
-
-### JIT (Just-In-Time) Provisioning
-
-**JIT provisioning** automatically creates a local user account the first time
-a user authenticates via federation (OAuth/SAML/LDAP), eliminating the need for
-pre-registration.
-
-GGID flow: User clicks "Login with Google" → Google authenticates → GGID checks
-if user exists → If not, creates account with data from Google → Issues JWT.
-
-### Step-up Authentication
-
-**Step-up authentication** requires additional verification for sensitive
-operations (e.g., changing password, deleting users) even when the user is
-already logged in.
-
-GGID implements step-up via:
-1. Short-lived step-up JWT (5 min TTL)
-2. Re-authentication required (password, MFA, or WebAuthn)
-3. `auth_time` claim in JWT verified by Policy engine
-
-### Back-channel Logout
-
-**Back-channel logout** (OIDC Session Management) sends a server-to-server
-logout notification to all registered applications when a user logs out,
-ensuring sessions are invalidated across all clients without relying on
-browser redirects.
-
-GGID publishes logout events via:
-- NATS JetStream (`session.expired` event)
-- Webhook notification to registered logout URLs
-- RFC-compliant back-channel logout token (JWT)
+*Last updated: Phase 10 — Enterprise Features*
