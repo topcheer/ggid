@@ -1015,3 +1015,106 @@ GET /api/v1/auth/social/:provider/callback?code=OAUTH_CODE&state=RANDOM
 - [API Conventions](./api-conventions.md) — Detailed API design conventions
 - [Error Codes](./error-codes.md) — Complete error code reference
 - [Rate Limiting](./rate-limiting.md) — Rate limit configuration
+
+---
+
+## Admin Endpoints
+
+> All admin endpoints require `admin` role JWT and `X-Tenant-ID` header.
+
+### User Management (Admin)
+
+```http
+POST   /api/v1/admin/users                    # Create user (admin)
+GET    /api/v1/admin/users                    # List users (paginated)
+GET    /api/v1/admin/users/{id}               # Get user details
+PATCH  /api/v1/admin/users/{id}               # Update user
+DELETE /api/v1/admin/users/{id}               # Delete user
+POST   /api/v1/admin/users/{id}/deactivate    # Deactivate user
+POST   /api/v1/admin/users/{id}/activate      # Activate user
+POST   /api/v1/admin/users/{id}/unlock        # Unlock account
+POST   /api/v1/admin/users/{id}/reset-password # Reset password
+GET    /api/v1/admin/users/{id}/sessions      # List active sessions
+DELETE /api/v1/admin/users/{id}/sessions      # Revoke all sessions
+GET    /api/v1/admin/users/{id}/mfa           # View MFA enrollment
+DELETE /api/v1/admin/users/{id}/mfa           # Reset MFA factors
+POST   /api/v1/admin/users/{id}/roles         # Assign role
+DELETE /api/v1/admin/users/{id}/roles/{rid}   # Revoke role
+```
+
+### Bulk Operations
+
+```http
+POST   /api/v1/admin/users/import             # CSV import
+GET    /api/v1/admin/users/export             # Export CSV/JSON
+POST   /api/v1/admin/roles/{id}/assign-bulk   # Bulk role assign
+```
+
+### Organization Management
+
+```http
+POST   /api/v1/admin/orgs                     # Create organization
+GET    /api/v1/admin/orgs                     # List organizations
+GET    /api/v1/admin/orgs/tree                # Org tree view
+PATCH  /api/v1/admin/orgs/{id}                # Update organization
+DELETE /api/v1/admin/orgs/{id}                # Delete organization
+POST   /api/v1/admin/users/{id}/orgs          # Assign user to org
+```
+
+### Tenant Configuration
+
+```http
+GET    /api/v1/admin/tenant                   # Get tenant settings
+PATCH  /api/v1/admin/tenant/settings/password-policy  # Update password policy
+PATCH  /api/v1/admin/tenant/settings/session-policy   # Update session policy
+PATCH  /api/v1/admin/tenant/settings/mfa-policy       # Update MFA policy
+```
+
+### Security & Audit
+
+```http
+GET    /api/v1/admin/security/failed-logins   # Failed login dashboard
+POST   /api/v1/admin/impersonate              # Start impersonation
+POST   /api/v1/admin/impersonate/end          # End impersonation
+GET    /api/v1/audit/events                   # Query audit events
+GET    /api/v1/audit/events/export            # Export audit logs
+GET    /api/v1/audit/events/stream            # SSE real-time stream
+```
+
+### Webhook Management
+
+```http
+POST   /api/v1/auth/hooks                     # Register webhook
+GET    /api/v1/auth/hooks                     # List webhooks
+PATCH  /api/v1/auth/hooks/{id}                # Update webhook
+DELETE /api/v1/auth/hooks/{id}                # Delete webhook
+POST   /api/v1/auth/hooks/{id}/test           # Send test event
+GET    /api/v1/auth/hooks/{id}/deliveries     # Delivery history
+```
+
+### Webhook Registration Example
+
+```http
+POST /api/v1/auth/hooks
+Authorization: Bearer <admin-jwt>
+X-Tenant-ID: <tenant-uuid>
+Content-Type: application/json
+
+{
+  "url": "https://your-app.example.com/webhooks/ggid",
+  "secret": "your-hmac-secret",
+  "events": ["user.created", "user.login", "user.deleted"],
+  "active": true
+}
+```
+
+**Response 201:**
+```json
+{
+  "id": "hook-uuid",
+  "url": "https://your-app.example.com/webhooks/ggid",
+  "events": ["user.created", "user.login", "user.deleted"],
+  "active": true,
+  "created_at": "2024-01-15T10:00:00Z"
+}
+```
