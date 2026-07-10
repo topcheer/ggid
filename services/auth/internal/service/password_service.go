@@ -78,6 +78,16 @@ func (ps *PasswordService) Validate(password string) error {
 		return ErrPasswordTooWeak
 	}
 
+	// Check against blacklist of common weak passwords.
+	if len(ps.policy.Blacklist) > 0 {
+		lowerPass := strings.ToLower(password)
+		for _, weak := range ps.policy.Blacklist {
+			if lowerPass == strings.ToLower(weak) {
+				return ErrPasswordTooWeak
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -178,6 +188,16 @@ func (ps *PasswordService) ConsumeResetToken(ctx context.Context, token string) 
 // VerifyOldPassword checks if the old password matches the stored hash.
 func (ps *PasswordService) VerifyOldPassword(_ context.Context, cred *domain.Credential, oldPassword string) (bool, error) {
 	return crypto.VerifyPassword(oldPassword, cred.Secret)
+}
+
+// UpdatePolicy updates the password policy at runtime.
+func (ps *PasswordService) UpdatePolicy(policy conf.PasswordPolicy) {
+	ps.policy = policy
+}
+
+// GetPolicy returns the current password policy.
+func (ps *PasswordService) GetPolicy() conf.PasswordPolicy {
+	return ps.policy
 }
 
 func passwordResetKey(hash string) string {
