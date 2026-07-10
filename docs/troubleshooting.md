@@ -1050,3 +1050,196 @@ docker exec ggid-gateway wget -qO- http://identity:8080/healthz
 # === Container resource usage ===
 docker stats --no-stream $(docker compose ps -q)
 ```
+
+---
+
+## SCIM 404 Issues
+
+### Q: SCIM API returns 404 for `/scim/v2/Users`
+
+**Cause:** The Gateway routes `/scim/` to the Identity service, but the Identity
+service registers endpoints under `/api/v1/scim/` internally. The route alias
+may not be configured.
+
+**Fix:**
+
+```bash
+# 1. Check that the Gateway has a SCIM route
+docker exec ggid-gateway sh -c 'wget -qO- http://localhost:8080/scim/v2/Users 2>&1 | head -5'
+
+# 2. Verify Identity service exposes SCIM endpoints
+docker exec ggid-identity wget -qO- http://localhost:8080/scim/v2/Users
+
+# 3. Check Gateway routing table
+curl -s http://localhost:8080/healthz/routes | jq '.routes[] | select(.path | contains("scim"))'
+
+# 4. If route alias is missing, add it in the Gateway router config
+# The Gateway should proxy /scim/ → identity:8080/scim/
+# Verify in services/gateway/internal/router/router.go
+```
+
+### Q: SCIM PATCH request returns 501 Not Implemented
+
+**Cause:** The SCIM handler may not fully implement RFC 7644 PATCH operations.
+
+**Fix:** Use PUT (full replace) instead of PATCH for now. PATCH support is
+tracked as a Phase 11 feature.
+
+### Q: SCIM bulk request fails with 413 Payload Too Large
+
+**Cause:** The default max bulk payload is 1MB. Large enterprise directories
+may exceed this.
+
+**Fix:**
+
+```bash
+# Increase the bulk payload limit
+SCIM_BULK_MAX_SIZE=5242880  # 5MB
+
+# Or split bulk requests into smaller batches
+# POST /scim/v2/Bulk with maxOperations: 50
+```
+
+---
+
+## Docker Container Unhealthy
+
+### Q: Container shows "unhealthy" in `docker compose ps`
+
+**Cause:** The healthcheck command is failing. This can be due to wrong port,
+wrong path, missing dependencies, or the service hasn't finished starting.
+
+**Fix:**
+
+```bash
+# 1. Check which containers are unhealthy
+docker compose ps | grep -i unhealthy
+
+# 2. Inspect the healthcheck definition
+docker inspect --format='{{json .Config.Healthcheck}}' ggid-auth | jq
+
+# 3. Run the healthcheck command manually inside the container
+docker exec ggid-auth wget -qO- http://localhost:9001/healthz
+# If this fails, the service inside the container is not responding
+
+# 4. Check container logs for startup errors
+docker logs ggid-auth --tail 50
+
+# 5. Common causes:
+#    - Wrong port in healthcheck (auth uses 9001, not 8080)
+#    - DATABASE_URL not set or wrong → service exits
+#    - Redis not ready → readiness probe fails
+#    - Migration init container didn't complete → tables missing
+```
+
+### Q: Healthcheck passes but Gateway still returns 502
+
+**Cause:** The Gateway may be proxying to the wrong upstream port, or the
+service is healthy internally but not listening on the expected interface.
+
+**Fix:**
+
+```bash
+# 1. Check service is listening on 0.0.0.0 (not 127.0.0.1)
+docker exec ggid-auth sh -c 'wget -qO- http://0.0.0.0:9001/healthz'
+# If 0.0.0.0 works but container IP doesn't, service is bound to loopback only
+
+# 2. Check the service's listen address env var
+docker exec ggid-auth env | grep -i listen
+# Should be 0.0.0.0:9001 or :9001, NOT 127.0.0.1:9001
+
+# 3. Verify network connectivity between containers
+docker exec ggid-gateway wget -qO- http://auth:9001/healthz
+
+# 4. Check Docker network
+docker network inspect ggid_default | jq '.[].Containers'
+```
+
+### Q: Container restarts repeatedly (CrashLoopBackOff)
+
+**Cause:** The service crashes on startup, typically due to missing config,
+failed migration, or port conflict.
+
+**Fix:**
+
+```bash
+# 1. Check exit code
+docker inspect ggid-auth --format='{{.State.ExitCode}}'
+# 0 = graceful, 1 = error, 137 = OOM killed
+
+# 2. Check if port is already in use on the host
+lsof -i :9001
+# If another process uses the port, stop it or change the mapping
+
+# 3. Check for OOM (Out of Memory)
+docker inspect ggid-auth --format='{{.State.OOMKilled}}'
+# If true, increase memory limit in docker-compose.yaml
+
+# 4. Check migration status (database may not be ready)
+docker logs ggid-migrate 2>&1 | tail -20
+
+# 5. Check all required env vars are set
+docker exec ggid-auth env | grep -E '(DATABASE_URL|REDIS_URL|JWT)'
+```
+
+---
+
+## JWT Clock Skew
+
+### Q: JWT validation fails with "token used before issued"
+
+**Cause:** The server clock of the service verifying the JWT is behind the
+clock of the service that issued it. This is common in distributed systems
+where NTP is not synchronized.
+
+**Fix:**
+
+```bash
+# 1. Check time sync on all nodes
+docker exec ggid-gateway date
+docker exec ggid-auth date
+docker exec ggid-postgres date
+# All should agree within 1-2 seconds
+
+# 2. If using Kubernetes, check node time sync
+kubectl get nodes -o wide
+ssh node1 date  # verify each node
+
+# 3. Install/configure NTP or chrony on the host
+# macOS: enabled by default via timed
+# Linux: sudo apt install chrony && sudo systemctl enable chronyd
+
+# 4. GGID allows 30 seconds of clock skew by default
+# To increase (not recommended for production):
+JWT_CLOCK_SKEW=60s
+
+# 5. In Docker Compose, ensure all containers use the host clock
+# docker-compose.yaml:
+#   services:
+#     gateway:
+#       environment:
+#         TZ: UTC
+```
+
+### Q: JWT validation fails after key rotation
+
+**Cause:** The JWKS cache on the Gateway hasn't refreshed yet, so it's trying
+to verify with the old key.
+
+**Fix:**
+
+```bash
+# 1. Force JWKS refresh
+curl http://localhost:8080/.well-known/jwks.json | jq '.keys[].kid'
+# Compare kid values with what's in the JWT header
+
+# 2. Check JWKS cache TTL
+docker exec ggid-gateway env | grep JWKS
+# Default: JWKS_CACHE_TTL=300 (5 minutes)
+
+# 3. Reduce TTL during rotation window
+JWKS_CACHE_TTL=60
+
+# 4. Restart the Gateway to clear JWKS cache immediately
+docker compose restart gateway
+```
