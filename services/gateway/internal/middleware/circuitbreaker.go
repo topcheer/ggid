@@ -95,7 +95,7 @@ func (cb *CircuitBreaker) Allow() bool {
 		// Check if cooldown has elapsed
 		if time.Since(cb.lastFailure) >= cb.config.Timeout {
 			cb.state = CircuitHalfOpen
-			cb.halfOpenReq = 0
+			cb.halfOpenReq = 1 // count this trial request
 			cb.successes = 0
 			return true
 		}
