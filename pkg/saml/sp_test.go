@@ -397,7 +397,8 @@ func TestVerifySignedAssertion_TamperedSignature(t *testing.T) {
 func TestVerifySignedAssertion_ExpiredAssertion(t *testing.T) {
 	// Build with expired conditions manually.
 	cert, key := genRSACertWithKey(t)
-	signedInfoXML := `<SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><Reference URI="#_expired-001"><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><DigestValue>` + base64.StdEncoding.EncodeToString([]byte("placeholder-digest-value-32-bytes!!")) + `</DigestValue></Reference></SignedInfo>`
+	validDigest := base64.StdEncoding.EncodeToString([]byte("placeholder-digest-val"))
+	signedInfoXML := `<ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference URI="#_expired-001"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>` + validDigest + `</ds:DigestValue></ds:Reference></ds:SignedInfo>`
 	h := sha256.New()
 	h.Write([]byte(signedInfoXML))
 	sig, _ := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, h.Sum(nil))

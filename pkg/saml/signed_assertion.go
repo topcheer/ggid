@@ -289,33 +289,7 @@ func constantTimeEqual(a, b []byte) bool {
 	return result == 0
 }
 
-// extractSignedInfoBytes extracts the raw <SignedInfo>...</SignedInfo> or
-// <ds:SignedInfo>...</ds:SignedInfo> bytes from the XML document. This is
-// necessary for XMLDSig because the signature is computed over the exact
-// byte sequence of the SignedInfo element as it appears in the document.
-func extractSignedInfoBytes(rawXML []byte) []byte {
-	xmlStr := string(rawXML)
-
-	// Try namespaced variant first.
-	startTag := "<ds:SignedInfo"
-	endTag := "</ds:SignedInfo>"
-	startIdx := strings.Index(xmlStr, startTag)
-	if startIdx == -1 {
-		// Fall back to non-namespaced.
-		startTag = "<SignedInfo"
-		endTag = "</SignedInfo>"
-		startIdx = strings.Index(xmlStr, startTag)
-	}
-	if startIdx == -1 {
-		return nil
-	}
-	endIdx := strings.Index(xmlStr[startIdx:], endTag)
-	if endIdx == -1 {
-		return nil
-	}
-	endIdx += startIdx + len(endTag)
-	return []byte(xmlStr[startIdx:endIdx])
-}
+// (extractSignedInfoBytes is defined above at line 176)
 
 // ---------------------------------------------------------------------------
 // Public API
