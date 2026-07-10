@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "ggid"
+version = "1.0.0"
+description = "GGID IAM Platform Python SDK — JWT verification, RBAC, user management"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.9"
+dependencies = [
+    "PyJWT>=2.8",
+    "httpx>=0.25",
+    "cryptography>=41.0",
+]
+
+[project.optional-dependencies]
+fastapi = ["fastapi", "starlette", "uvicorn"]
+flask = ["flask"]
+django = ["django"]
+dev = ["pytest", "pytest-asyncio", "respx"]
+
+[tool.setuptools.packages.find]
+include = ["ggid*"]
