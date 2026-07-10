@@ -34,13 +34,14 @@ type retentionConfig struct {
 
 // HTTPServer exposes the Audit Service as a REST API.
 type HTTPServer struct {
-	svc      *service.AuditService
+	svc       *service.AuditService
 	retention retentionConfig
+	hub       *StreamHub
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.
 func NewHTTPServer(svc *service.AuditService) *HTTPServer {
-	h := &HTTPServer{svc: svc}
+	h := &HTTPServer{svc: svc, hub: NewStreamHub()}
 	h.retention.days = 90 // default 90-day retention
 	h.retention.enabled = true
 	return h
@@ -88,6 +89,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/stats", s.handleStats)
 	mux.HandleFunc("/api/v1/audit/export", s.handleExport)
 	mux.HandleFunc("/api/v1/audit/stream", s.handleStream)
+	mux.HandleFunc("/api/v1/audit/ws", s.HandleWebSocket) // WebSocket real-time push
 	mux.HandleFunc("/api/v1/audit/metrics", s.handleMetrics)
 	mux.HandleFunc("/api/v1/audit/retention", s.handleRetention)
 	mux.HandleFunc("/api/v1/audit/rules", s.handleAnomalyRules)
