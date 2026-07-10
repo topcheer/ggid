@@ -555,6 +555,54 @@ Releases follow semantic versioning (`vMAJOR.MINOR.PATCH`):
 
 ---
 
+## File Ownership
+
+GGID uses a CODEOWNERS-style file ownership model. Each area of the codebase
+has designated maintainers. When submitting a PR, the relevant owner is
+automatically requested for review.
+
+### Ownership Table
+
+| Path | Area | Owner | Notes |
+|------|------|-------|-------|
+| `services/gateway/` | API Gateway | @ggcxf_dev2 | JWT verify, proxy, middleware |
+| `services/auth/` | Auth Service | @ggcxf_dev | Login, MFA, WebAuthn, LDAP |
+| `services/auth/internal/webauthn/` | WebAuthn | @ggcxf_dev | Passkey registration/auth |
+| `services/identity/` | Identity Service | @ggcxf_dev | User CRUD, SCIM |
+| `services/identity/internal/scim/` | SCIM 2.0 | @ggcxf_dev3 | Provisioning API |
+| `services/oauth/` | OAuth/OIDC | @ggcxf_dev | Token issuance, introspect |
+| `services/policy/` | Policy Engine | @ggcxf_dev3 | RBAC, ABAC, REST + gRPC |
+| `services/org/` | Organization | @ggcxf_dev3 | Orgs, groups, membership |
+| `services/audit/` | Audit Pipeline | @ggcxf_dev3 | NATS publisher, SSE stream |
+| `pkg/crypto/` | Crypto Utilities | @ggcxf_arch | Argon2id, AES, HMAC |
+| `pkg/authprovider/` | Auth Providers | @ggcxf_dev | Local, LDAP, OAuth chains |
+| `pkg/social/` | Social Connectors | @ggcxf_dev | Google, GitHub, MS, etc. |
+| `pkg/saml/` | SAML 2.0 | @ggcxf_dev | SSO assertions |
+| `pkg/tenant/` | Tenant Context | @ggcxf_arch | Multi-tenancy helpers |
+| `pkg/errors/` | Error Types | @ggcxf_arch | Standardized errors |
+| `pkg/i18n/` | Internationalization | @ggcxf_arch | Translations |
+| `pkg/pii/` | PII Redaction | @ggcxf_arch | Log sanitization |
+| `pkg/email/` | Email Service | @ggcxf_arch | SMTP, templates |
+| `pkg/notification/` | Notifications | @ggcxf_arch | Multi-channel |
+| `console/` | Admin Console | @ggcxf_arch | Next.js 15 UI |
+| `sdk/go/` | Go SDK | @ggcxf_arch | Client library |
+| `sdk/node/` | Node.js SDK | @ggcxf_arch | Client library |
+| `sdk/java/` | Java SDK | @ggcxf_dev | Client library |
+| `deploy/` | Docker/Helm | @ggcxf_arch | Deployment configs |
+| `docs/` | Documentation | @ggcxf_arch | All documentation |
+| `test/` | Integration Tests | All | Cross-cutting |
+
+### Rules
+
+1. **Don't modify another owner's files without coordination** — Open an issue
+   or DM the owner first
+2. **Shared packages (`pkg/`)** — Changes require review from `@ggcxf_arch`
+3. **Test files** — Anyone may add tests to any package, but the package owner
+   must review
+4. **Generated files** — `mocks/`, `*.pb.go`, OpenAPI spec — Don't edit manually
+
+---
+
 ## Getting Help
 
 - **GitHub Issues** — Bug reports and feature requests
