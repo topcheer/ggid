@@ -515,7 +515,7 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 
 	ctx := ggidtenant.WithContext(r.Context(), &ggidtenant.Context{
 		TenantID:       tenantID,
-		IsolationLevel: tenant.IsolationShared,
+		IsolationLevel: ggidtenant.IsolationShared,
 	})
 
 	user, err := h.authSvc.LookupUser(ctx, tenantID, body.Email)
