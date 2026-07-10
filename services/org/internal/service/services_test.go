@@ -236,6 +236,13 @@ func (m *mockTeamRepo) Delete(_ context.Context, id uuid.UUID) error {
 	return nil
 }
 
+func (m *mockTeamRepo) Update(_ context.Context, team *domain.Team) error {
+	if m.teams != nil {
+		m.teams[team.ID] = team
+	}
+	return nil
+}
+
 type mockMemberRepo struct {
 	members   map[uuid.UUID]*domain.Membership
 	createErr error

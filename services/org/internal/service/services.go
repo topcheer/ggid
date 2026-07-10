@@ -45,6 +45,7 @@ type TeamRepo interface {
 	Create(ctx context.Context, team *domain.Team) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Team, error)
 	ListByOrg(ctx context.Context, orgID uuid.UUID, limit, offset int) ([]*domain.Team, error)
+	Update(ctx context.Context, team *domain.Team) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -227,6 +228,13 @@ func (s *TeamService) List(ctx context.Context, orgID uuid.UUID, page, pageSize 
 		offset = 0
 	}
 	return s.repo.ListByOrg(ctx, orgID, pageSize, offset)
+}
+
+func (s *TeamService) Update(ctx context.Context, team *domain.Team) (*domain.Team, error) {
+	if err := s.repo.Update(ctx, team); err != nil {
+		return nil, err
+	}
+	return team, nil
 }
 
 func (s *TeamService) Delete(ctx context.Context, id uuid.UUID) error {

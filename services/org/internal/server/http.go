@@ -10,6 +10,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/org/internal/domain"
+	"github.com/ggid/ggid/services/org/internal/repository"
 	"github.com/ggid/ggid/services/org/internal/service"
 	"github.com/google/uuid"
 )
@@ -55,13 +56,31 @@ func (s *HTTPServer) handleOrgs(w http.ResponseWriter, r *http.Request) {
 
 func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/v1/orgs/")
-	if idStr == "" {
+	// Sub-paths: /api/v1/orgs/{id}/members, /api/v1/orgs/{id}/tree
+	parts := strings.SplitN(idStr, "/", 2)
+	orgIDStr := parts[0]
+	if orgIDStr == "" {
 		writeJSONError(w, http.StatusBadRequest, "organization ID is required")
 		return
 	}
-	id, err := uuid.Parse(idStr)
+	id, err := uuid.Parse(orgIDStr)
 	if err != nil {
 		writeJSONError(w, http.StatusBadRequest, "invalid organization ID")
+		return
+	}
+
+	// Handle sub-paths
+	if len(parts) == 2 {
+		subPath := parts[1]
+		if subPath == "members" {
+			s.handleOrgMembers(w, r, id)
+			return
+		}
+		if subPath == "tree" {
+			s.handleOrgTree(w, r, id)
+			return
+		}
+		writeJSONError(w, http.StatusNotFound, "unknown sub-path")
 		return
 	}
 
@@ -79,9 +98,124 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	case http.MethodPut:
+		s.updateOrg(w, r, id)
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+func (s *HTTPServer) updateOrg(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	org, err := s.orgSvc.Get(r.Context(), id)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	if req.Name != "" {
+		org.Name = req.Name
+	}
+	updated, err := s.orgSvc.Update(r.Context(), org)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, orgToJSON(updated))
+}
+
+func (s *HTTPServer) handleOrgMembers(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	switch r.Method {
+	case http.MethodPost:
+		var req struct {
+			UserID   string `json:"user_id"`
+			TenantID string `json:"tenant_id"`
+			Title    string `json:"title"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		userID, err := uuid.Parse(req.UserID)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+			return
+		}
+		tenantID, err := uuid.Parse(req.TenantID)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+			return
+		}
+		mem, err := s.memberSvc.Invite(r.Context(), &domain.Membership{
+			UserID:   userID,
+			TenantID: tenantID,
+			OrgID:    orgID,
+			Title:    req.Title,
+		})
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusCreated, membershipToJSON(mem))
+	case http.MethodGet:
+		tenantIDStr := r.URL.Query().Get("tenant_id")
+		if tenantIDStr == "" {
+			writeJSONError(w, http.StatusBadRequest, "tenant_id required")
+			return
+		}
+		tid, _ := uuid.Parse(tenantIDStr)
+		members, err := s.memberSvc.List(r.Context(), repository.ListMembersFilter{
+			TenantID: tid, OrgID: &orgID,
+		}, 1, 100)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		result := make([]map[string]any, len(members))
+		for i, m := range members {
+			result[i] = membershipToJSON(m)
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"members": result})
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+func (s *HTTPServer) handleOrgTree(w http.ResponseWriter, r *http.Request, orgID uuid.UUID) {
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+	subTree, err := s.orgSvc.GetSubTree(r.Context(), tenantID, orgID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	depts, _ := s.deptSvc.ListByOrg(r.Context(), orgID)
+
+	orgs := make([]map[string]any, len(subTree))
+	for i, o := range subTree {
+		orgs[i] = orgToJSON(o)
+	}
+	departments := make([]map[string]any, len(depts))
+	for i, d := range depts {
+		departments[i] = deptToJSON(d)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"organizations": orgs,
+		"departments":   departments,
+	})
 }
 
 func (s *HTTPServer) createOrg(w http.ResponseWriter, r *http.Request) {
@@ -176,6 +310,8 @@ func (s *HTTPServer) handleDepartmentByID(w http.ResponseWriter, r *http.Request
 			return
 		}
 		writeJSON(w, http.StatusOK, deptToJSON(dept))
+	case http.MethodPut:
+		s.updateDept(w, r, id)
 	case http.MethodDelete:
 		if err := s.deptSvc.Delete(r.Context(), id); err != nil {
 			writeServiceError(w, err)
@@ -288,6 +424,8 @@ func (s *HTTPServer) handleTeamByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, http.StatusOK, teamToJSON(team))
+	case http.MethodPut:
+		s.updateTeam(w, r, id)
 	case http.MethodDelete:
 		if err := s.teamSvc.Delete(r.Context(), id); err != nil {
 			writeServiceError(w, err)
@@ -357,6 +495,83 @@ func (s *HTTPServer) listTeams(w http.ResponseWriter, r *http.Request) {
 		result[i] = teamToJSON(t)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"teams": result})
+}
+
+func (s *HTTPServer) updateDept(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+	var req struct {
+		Name      string `json:"name"`
+		ManagerID string `json:"manager_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	dept, err := s.deptSvc.Get(r.Context(), id)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	if req.Name != "" {
+		dept.Name = req.Name
+	}
+	if req.ManagerID != "" {
+		mid, err := uuid.Parse(req.ManagerID)
+		if err == nil {
+			dept.ManagerID = &mid
+		}
+	}
+	updated, err := s.deptSvc.Update(r.Context(), dept)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, deptToJSON(updated))
+}
+
+func (s *HTTPServer) updateTeam(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+	var req struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	team, err := s.teamSvc.Get(r.Context(), id)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	if req.Name != "" {
+		team.Name = req.Name
+	}
+	if req.Description != "" {
+		team.Description = req.Description
+	}
+	updated, err := s.teamSvc.Update(r.Context(), team)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, teamToJSON(updated))
+}
+
+func membershipToJSON(m *domain.Membership) map[string]any {
+	result := map[string]any{
+		"id":        m.ID.String(),
+		"user_id":   m.UserID.String(),
+		"tenant_id": m.TenantID.String(),
+		"org_id":    m.OrgID.String(),
+		"status":    string(m.Status),
+		"title":     m.Title,
+	}
+	if m.DeptID != nil {
+		result["dept_id"] = m.DeptID.String()
+	}
+	if m.TeamID != nil {
+		result["team_id"] = m.TeamID.String()
+	}
+	return result
 }
 
 // ===== JSON converters =====

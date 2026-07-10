@@ -72,3 +72,16 @@ func (r *TeamRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *TeamRepository) Update(ctx context.Context, team *domain.Team) error {
+	cmd, err := r.db.Exec(ctx,
+		`UPDATE teams SET name = $1, description = $2 WHERE id = $3`,
+		team.Name, team.Description, team.ID)
+	if err != nil {
+		return fmt.Errorf("update team: %w", err)
+	}
+	if cmd.RowsAffected() == 0 {
+		return notFound("team", team.ID.String())
+	}
+	return nil
+}
