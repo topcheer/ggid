@@ -1224,3 +1224,130 @@ func TestHandleRetention_Get_LastDeletedCount(t *testing.T) {
 		t.Fatalf("expected last_deleted_count=7, got %v", resp["last_deleted_count"])
 	}
 }
+
+// --- Audit Server Coverage Boost Tests ---
+
+func TestHandleStream_MethodNotAllowed(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "POST", "/api/v1/audit/stream?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", w.Code)
+	}
+}
+
+func TestHandleStream_MissingTenantID(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/stream", "")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestHandleStream_InvalidTenantID(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/stream?tenant_id=invalid-uuid", "")
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %v", w.Code)
+	}
+}
+
+func TestHandleStream_ConnectAndCancel(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	mux := http.NewServeMux()
+	srv.RegisterRoutes(mux)
+
+	// Use a cancellable context to stop the SSE loop quickly
+	ctx, cancel := context.WithCancel(context.Background())
+	req := httptest.NewRequest("GET", "/api/v1/audit/stream?tenant_id="+testTenantID.String(), nil)
+	req = req.WithContext(ctx)
+	w := httptest.NewRecorder()
+
+	// Run handler in goroutine, cancel after short delay
+	go mux.ServeHTTP(w, req)
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+	time.Sleep(50 * time.Millisecond)
+
+	// Should have written the initial "connected" SSE event
+	body := w.Body.String()
+	if !strings.Contains(body, "event: connected") {
+		t.Fatalf("expected SSE connected event in body, got: %s", body)
+	}
+}
+
+func TestHandleCorrelate_NoFilters(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/correlate?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleCorrelate_WithActorAndTimeRange(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/correlate?actor=user-1&time_range=2h&tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleCorrelate_InvalidTimeRange(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/correlate?time_range=invalid&tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 with default range, got %d", w.Code)
+	}
+}
+
+func TestHandleAuditWebhooks_DeleteMissingID(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	// DELETE without webhook_id sub-path
+	w := doRequest(srv, "DELETE", "/api/v1/audit/webhooks?tenant_id="+testTenantID.String(), "")
+	// Should return method not allowed since DELETE on root webhook path isn't handled
+	if w.Code == 500 {
+		t.Fatal("should not return 500")
+	}
+}
+
+func TestHandleVerifyIntegrity_WithFilters(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/verify-integrity?tenant_id="+testTenantID.String()+"&limit=5", "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleVerifyIntegrity_PostRepair(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	// POST should return 405 since handler only supports GET
+	w := doRequest(srv, "POST", "/api/v1/audit/verify-integrity?tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", w.Code)
+	}
+	_ = w
+}
+
+func TestHandleAnomalyRules_Put(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	body := `{"name":"test_rule","action":"user.login.failed","threshold":10,"window_minutes":5,"severity":"high"}`
+	w := doRequest(srv, "POST", "/api/v1/audit/rules?tenant_id="+testTenantID.String(), body)
+	if w.Code != http.StatusOK && w.Code != http.StatusCreated {
+		t.Fatalf("expected 200 or 201, got %d", w.Code)
+	}
+}
+
+func TestHandleExport_JSONFormat(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/export?format=json&tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestHandleExport_CSVFormat(t *testing.T) {
+	srv := newTestServer(nil, nil)
+	w := doRequest(srv, "GET", "/api/v1/audit/export?format=csv&tenant_id="+testTenantID.String(), "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+}
