@@ -156,3 +156,16 @@ func TestRefreshToken_Revoke(t *testing.T) {
 		t.Error("should be inactive after revoke")
 	}
 }
+
+func TestMFAChallenge_IsExpired(t *testing.T) {
+	// Expired
+	c := &MFAChallenge{ExpiresAt: time.Now().Add(-1 * time.Hour)}
+	if !c.IsExpired() {
+		t.Error("expected expired challenge")
+	}
+	// Not expired
+	c2 := &MFAChallenge{ExpiresAt: time.Now().Add(1 * time.Hour)}
+	if c2.IsExpired() {
+		t.Error("expected non-expired challenge")
+	}
+}
