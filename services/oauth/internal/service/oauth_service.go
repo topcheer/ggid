@@ -372,6 +372,9 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 		ClaimsSupported:                   []string{"sub", "email", "name", "picture", "groups", "preferred_username", "updated_at"},
 		TokenEndpointAuthMethodsSupported: []string{"client_secret_basic", "client_secret_post", "none", "tls_client_auth", "self_signed_tls_client_auth"},
 		CodeChallengeMethodsSupported:     []string{"S256", "plain"},
+		CheckSessionIFrame:                base + "/oauth/check_session",
+		BackchannelLogoutSupported:        true,
+		EndSessionEndpoint:                base + "/oauth/logout",
 	}
 }
 
@@ -639,14 +642,18 @@ func (s *OAuthService) RevokeToken(tokenStr string, tokenTypeHint ...string) err
 		return nil // RFC 7009: return 200 even for empty token
 	}
 
+	// Store the token hash in the revocation list.
+	tokenHash := hashTokenSHA256(tokenStr)
+
 	// Parse the token to get its claims (don't fail on invalid tokens).
 	claims, err := s.ParseAccessToken(tokenStr)
 	if err != nil {
-		return nil // RFC 7009: invalid token → still return 200
+		// RFC 7009: invalid token → still return 200, but store hash
+		// so IsTokenRevoked can report it as revoked.
+		revokedTokens.Store(tokenHash, int64(0))
+		return nil
 	}
 
-	// Store the token hash in the revocation list.
-	tokenHash := hashTokenSHA256(tokenStr)
 	exp := getInt64Claim(claims, "exp")
 	revokedTokens.Store(tokenHash, exp)
 
