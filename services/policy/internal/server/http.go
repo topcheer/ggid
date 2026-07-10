@@ -6,8 +6,10 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
@@ -35,6 +37,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies", s.handlePolicies)
 	mux.HandleFunc("/api/v1/policies/", s.handlePolicyByID)
 	mux.HandleFunc("/api/v1/policies/check", s.handleCheck)
+	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
+	mux.HandleFunc("/api/v1/policies/import", s.handlePolicyImport)
 }
 
 // --- Roles ---
@@ -389,6 +393,111 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// --- Policy Export/Import ---
+
+// GET /api/v1/policies/export?tenant_id=X
+func (s *HTTPServer) handlePolicyExport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	policies, err := s.policySvc.ListPolicies(r.Context(), tenantID, 1, 10000)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	export := make([]map[string]any, len(policies))
+	for i, p := range policies {
+		export[i] = policyToJSON(p)
+	}
+
+	w.Header().Set("Content-Disposition", `attachment; filename="policies_export.json"`)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"version":   "1.0",
+		"exported_at": time.Now().UTC().Format(time.RFC3339),
+		"policies":  export,
+		"total":     len(export),
+	})
+}
+
+// POST /api/v1/policies/import?tenant_id=X
+func (s *HTTPServer) handlePolicyImport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		return
+	}
+
+	var req struct {
+		Policies []struct {
+			Name        string         `json:"name"`
+			Effect      string         `json:"effect"`
+			Actions     []string       `json:"actions"`
+			Resources   []string       `json:"resources"`
+			Conditions  map[string]any `json:"conditions"`
+			Description string         `json:"description"`
+		} `json:"policies"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	imported := 0
+	var errors []string
+	for i, p := range req.Policies {
+		if p.Name == "" {
+			errors = append(errors, fmt.Sprintf("policy %d: name is required", i))
+			continue
+		}
+		effect := domain.EffectAllow
+		if p.Effect == "deny" {
+			effect = domain.EffectDeny
+		}
+		_, err := s.policySvc.CreatePolicy(r.Context(), &domain.Policy{
+			TenantID:    tenantID,
+			Name:        p.Name,
+			Description: p.Description,
+			Effect:      effect,
+			Actions:     p.Actions,
+			Resources:   p.Resources,
+			Conditions:  p.Conditions,
+		})
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("policy %q: %v", p.Name, err))
+		} else {
+			imported++
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"imported": imported,
+		"errors":   errors,
+		"total":    len(req.Policies),
+	})
 }
 
 // --- Helpers ---
