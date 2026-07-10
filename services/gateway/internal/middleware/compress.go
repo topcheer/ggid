@@ -83,6 +83,25 @@ func compressionLevelForType(contentType string) int {
 	return 1
 }
 
+// shouldSkipCompression returns true for content types that are already
+// compressed (images, video, archives) and should not be gzip/brotli encoded.
+func shouldSkipCompression(contentType string) bool {
+	ct := strings.ToLower(contentType)
+	skipPrefixes := []string{
+		"image/", "video/", "audio/",
+		"application/zip", "application/gzip", "application/x-gzip",
+		"application/x-brotli", "application/x-bzip2",
+		"application/x-7z-compressed", "application/x-rar-compressed",
+		"application/pdf", "application/octet-stream",
+	}
+	for _, prefix := range skipPrefixes {
+		if strings.HasPrefix(ct, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
 // compressWriter handles brotli/gzip encoding transparently.
 type compressWriter struct {
 	http.ResponseWriter
