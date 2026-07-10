@@ -215,3 +215,51 @@ func (s *RoleService) RevokePermissionsFromRole(ctx context.Context, roleID uuid
 func (s *RoleService) GetRolePermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
 	return s.roleRepo.GetRolePermissions(ctx, []uuid.UUID{roleID})
 }
+
+// GetEffectivePermissions returns all permissions that a role effectively has,
+// including permissions inherited from all descendant (child) roles.
+// In standard RBAC, a parent role inherits all permissions of its children.
+// This recursively walks down the hierarchy collecting the union of permissions.
+func (s *RoleService) GetEffectivePermissions(ctx context.Context, roleID uuid.UUID) ([]*domain.Permission, error) {
+	// Get the target role to find its tenant.
+	role, err := s.roleRepo.GetByID(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get all roles in the tenant to build the hierarchy map.
+	allRoles, err := s.roleRepo.ListByTenant(ctx, role.TenantID, 500, 0)
+	if err != nil {
+		return nil, errors.Wrap(errors.ErrInternal, "list roles for hierarchy", err)
+	}
+
+	// Build parent → children map.
+	children := map[uuid.UUID][]uuid.UUID{}
+	for _, r := range allRoles {
+		if r.ParentRoleID != nil {
+			children[*r.ParentRoleID] = append(children[*r.ParentRoleID], r.ID)
+		}
+	}
+
+	// DFS from the target role through all descendants.
+	visited := map[uuid.UUID]bool{}
+	var allRoleIDs []uuid.UUID
+	var collect func(id uuid.UUID)
+	collect = func(id uuid.UUID) {
+		if visited[id] {
+			return
+		}
+		visited[id] = true
+		allRoleIDs = append(allRoleIDs, id)
+		for _, childID := range children[id] {
+			collect(childID)
+		}
+	}
+	collect(roleID)
+
+	if len(allRoleIDs) == 0 {
+		return []*domain.Permission{}, nil
+	}
+
+	return s.roleRepo.GetRolePermissions(ctx, allRoleIDs)
+}

@@ -93,6 +93,12 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Route to effective-permissions sub-resource: GET /api/v1/roles/{id}/effective-permissions
+	if len(parts) == 2 && parts[1] == "effective-permissions" {
+		s.handleEffectivePermissions(w, r, id)
+		return
+	}
+
 	// Route to bulk-assign sub-resource: POST /api/v1/roles/{id}/bulk-assign
 	if len(parts) == 2 && parts[1] == "bulk-assign" {
 		s.handleBulkAssign(w, r, id)
@@ -116,6 +122,84 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+// GET /api/v1/roles/{id}/effective-permissions — get all permissions including
+// inherited from child roles (recursive hierarchy walk).
+func (s *HTTPServer) handleEffectivePermissions(w http.ResponseWriter, r *http.Request, roleID uuid.UUID) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	role, err := s.roleSvc.GetRole(r.Context(), roleID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	effectivePerms, err := s.roleSvc.GetEffectivePermissions(r.Context(), roleID)
+	if err != nil {
+		writeServiceError(w, err)
+		return
+	}
+
+	// Count how many are direct vs inherited
+	directPerms, _ := s.roleSvc.GetRolePermissions(r.Context(), roleID)
+	directSet := map[uuid.UUID]bool{}
+	for _, p := range directPerms {
+		directSet[p.ID] = true
+	}
+
+	directCount := 0
+	inheritedCount := 0
+	permList := make([]map[string]any, 0, len(effectivePerms))
+	for _, p := range effectivePerms {
+		isDirect := directSet[p.ID]
+		if isDirect {
+			directCount++
+		} else {
+			inheritedCount++
+		}
+		permList = append(permList, map[string]any{
+			"id":            p.ID.String(),
+			"key":           p.Key,
+			"name":          p.Name,
+			"resource_type": p.ResourceType,
+			"action":        p.Action,
+			"source":        ternary(isDirect, "direct", "inherited"),
+		})
+	}
+
+	// Build hierarchy info
+	childCount := 0
+	if role.ParentRoleID != nil {
+		// Find all children of this role
+		allRoles, _ := s.roleSvc.ListRoles(r.Context(), role.TenantID, 1, 500)
+		for _, r2 := range allRoles {
+			if r2.ParentRoleID != nil && *r2.ParentRoleID == roleID {
+				childCount++
+			}
+		}
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"role_id":          roleID.String(),
+		"role_name":        role.Name,
+		"total_effective":  len(effectivePerms),
+		"total_direct":     directCount,
+		"total_inherited":  inheritedCount,
+		"child_roles":      childCount,
+		"permissions":      permList,
+	})
+}
+
+// ternary returns a if cond is true, otherwise b.
+func ternary(cond bool, a, b string) string {
+	if cond {
+		return a
+	}
+	return b
 }
 
 // POST /api/v1/roles/{id}/parent — set parent role for hierarchy/inheritance.

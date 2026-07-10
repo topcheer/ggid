@@ -687,3 +687,206 @@ func isErrorCode(err error, code errors.ErrorCode) bool {
 	}
 	return ggidErr.Code == code
 }
+
+// --- GetEffectivePermissions Tests ---
+
+// mockRoleRepoWithPerms extends mockRoleRepo with actual permission storage.
+type mockRoleRepoWithPerms struct {
+	mockRoleRepo
+	rolePerms map[uuid.UUID][]*domain.Permission
+}
+
+func (m *mockRoleRepoWithPerms) GetRolePermissions(_ context.Context, roleIDs []uuid.UUID) ([]*domain.Permission, error) {
+	if m.permErr != nil {
+		return nil, m.permErr
+	}
+	seen := map[uuid.UUID]bool{}
+	var result []*domain.Permission
+	for _, rid := range roleIDs {
+		for _, p := range m.rolePerms[rid] {
+			if !seen[p.ID] {
+				seen[p.ID] = true
+				result = append(result, p)
+			}
+		}
+	}
+	return result, nil
+}
+
+func TestGetEffectivePermissions_NoChildren(t *testing.T) {
+	tenantID := uuid.New()
+	roleID := uuid.New()
+	perm1 := &domain.Permission{ID: uuid.New(), Key: "read", Name: "Read", ResourceType: "docs", Action: "read"}
+	repo := &mockRoleRepoWithPerms{
+		mockRoleRepo: mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+			roleID: {ID: roleID, TenantID: tenantID, Key: "admin", Name: "Admin"},
+		}},
+		rolePerms: map[uuid.UUID][]*domain.Permission{roleID: {perm1}},
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	perms, err := svc.GetEffectivePermissions(context.Background(), roleID)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(perms) != 1 {
+		t.Fatalf("expected 1 perm, got %d", len(perms))
+	}
+	if perms[0].Key != "read" {
+		t.Fatalf("expected read perm, got %s", perms[0].Key)
+	}
+}
+
+func TestGetEffectivePermissions_WithChildren(t *testing.T) {
+	tenantID := uuid.New()
+	parentID := uuid.New()
+	childID := uuid.New()
+	grandchildID := uuid.New()
+
+	// Hierarchy: parent → child → grandchild
+	// parent has "admin.read", child has "docs.write", grandchild has "docs.read"
+	parent := &domain.Role{ID: parentID, TenantID: tenantID, Key: "admin", Name: "Admin"}
+	child := &domain.Role{ID: childID, TenantID: tenantID, Key: "editor", Name: "Editor", ParentRoleID: &parentID}
+	grandchild := &domain.Role{ID: grandchildID, TenantID: tenantID, Key: "viewer", Name: "Viewer", ParentRoleID: &childID}
+
+	perm1 := &domain.Permission{ID: uuid.New(), Key: "admin.read", Name: "Admin Read", ResourceType: "admin", Action: "read"}
+	perm2 := &domain.Permission{ID: uuid.New(), Key: "docs.write", Name: "Docs Write", ResourceType: "docs", Action: "write"}
+	perm3 := &domain.Permission{ID: uuid.New(), Key: "docs.read", Name: "Docs Read", ResourceType: "docs", Action: "read"}
+
+	repo := &mockRoleRepoWithPerms{
+		mockRoleRepo: mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+			parentID:     parent,
+			childID:      child,
+			grandchildID: grandchild,
+		}},
+		rolePerms: map[uuid.UUID][]*domain.Permission{
+			parentID:     {perm1},
+			childID:      {perm2},
+			grandchildID: {perm3},
+		},
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	// Parent should inherit all 3 (its own + child + grandchild)
+	perms, err := svc.GetEffectivePermissions(context.Background(), parentID)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(perms) != 3 {
+		t.Fatalf("expected 3 perms (direct + inherited), got %d", len(perms))
+	}
+
+	// Child should have 2 (its own + grandchild)
+	perms, err = svc.GetEffectivePermissions(context.Background(), childID)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(perms) != 2 {
+		t.Fatalf("expected 2 perms for child, got %d", len(perms))
+	}
+
+	// Grandchild should have 1 (its own only)
+	perms, err = svc.GetEffectivePermissions(context.Background(), grandchildID)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(perms) != 1 {
+		t.Fatalf("expected 1 perm for grandchild, got %d", len(perms))
+	}
+}
+
+func TestGetEffectivePermissions_RoleNotFound(t *testing.T) {
+	repo := &mockRoleRepoWithPerms{}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	_, err := svc.GetEffectivePermissions(context.Background(), uuid.New())
+	if err == nil {
+		t.Fatal("expected error for non-existent role")
+	}
+}
+
+func TestGetEffectivePermissions_ListError(t *testing.T) {
+	tenantID := uuid.New()
+	roleID := uuid.New()
+	repo := &mockRoleRepoWithPerms{
+		mockRoleRepo: mockRoleRepo{
+			roles:   map[uuid.UUID]*domain.Role{roleID: {ID: roleID, TenantID: tenantID, Key: "r", Name: "R"}},
+			listErr: errors.New(errors.ErrInternal, "db error"),
+		},
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	_, err := svc.GetEffectivePermissions(context.Background(), roleID)
+	if err == nil {
+		t.Fatal("expected error from list failure")
+	}
+	if !isErrorCode(err, errors.ErrInternal) {
+		t.Fatalf("expected ErrInternal, got: %v", err)
+	}
+}
+
+func TestGetEffectivePermissions_DeduplicatesPerms(t *testing.T) {
+	tenantID := uuid.New()
+	parentID := uuid.New()
+	childID := uuid.New()
+
+	parent := &domain.Role{ID: parentID, TenantID: tenantID, Key: "admin", Name: "Admin"}
+	child := &domain.Role{ID: childID, TenantID: tenantID, Key: "editor", Name: "Editor", ParentRoleID: &parentID}
+
+	// Both parent and child have the same permission
+	sharedPerm := &domain.Permission{ID: uuid.New(), Key: "shared", Name: "Shared", ResourceType: "docs", Action: "read"}
+
+	repo := &mockRoleRepoWithPerms{
+		mockRoleRepo: mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+			parentID: parent,
+			childID:  child,
+		}},
+		rolePerms: map[uuid.UUID][]*domain.Permission{
+			parentID: {sharedPerm},
+			childID:  {sharedPerm}, // same permission
+		},
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	// Should deduplicate: only 1 unique permission
+	perms, err := svc.GetEffectivePermissions(context.Background(), parentID)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(perms) != 1 {
+		t.Fatalf("expected 1 deduplicated perm, got %d", len(perms))
+	}
+}
+
+func TestGetEffectivePermissions_MultipleChildren(t *testing.T) {
+	tenantID := uuid.New()
+	parentID := uuid.New()
+	child1ID := uuid.New()
+	child2ID := uuid.New()
+
+	parent := &domain.Role{ID: parentID, TenantID: tenantID, Key: "admin", Name: "Admin"}
+	child1 := &domain.Role{ID: child1ID, TenantID: tenantID, Key: "editor", Name: "Editor", ParentRoleID: &parentID}
+	child2 := &domain.Role{ID: child2ID, TenantID: tenantID, Key: "auditor", Name: "Auditor", ParentRoleID: &parentID}
+
+	repo := &mockRoleRepoWithPerms{
+		mockRoleRepo: mockRoleRepo{roles: map[uuid.UUID]*domain.Role{
+			parentID: parent,
+			child1ID: child1,
+			child2ID: child2,
+		}},
+		rolePerms: map[uuid.UUID][]*domain.Permission{
+			child1ID: {{ID: uuid.New(), Key: "docs.write", ResourceType: "docs", Action: "write"}},
+			child2ID: {{ID: uuid.New(), Key: "audit.read", ResourceType: "audit", Action: "read"}},
+		},
+	}
+	svc := NewRoleService(repo, &mockPermRepo{}, nil)
+
+	// Parent should inherit from both children = 2 perms
+	perms, err := svc.GetEffectivePermissions(context.Background(), parentID)
+	if err != nil {
+		t.Fatalf("unexpected: %v", err)
+	}
+	if len(perms) != 2 {
+		t.Fatalf("expected 2 perms from 2 children, got %d", len(perms))
+	}
+}
