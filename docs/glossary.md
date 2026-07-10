@@ -283,3 +283,116 @@ An HTTP header containing the tenant UUID. Required on all GGID API requests. Th
 - [RFC 9100 — Argon2](https://datatracker.ietf.org/doc/html/rfc9100)
 - [W3C WebAuthn](https://www.w3.org/TR/webauthn/)
 - [OWASP Top 10](https://owasp.org/Top10/)
+
+---
+
+## IAM Core Terminology
+
+### OIDC (OpenID Connect)
+
+**OIDC** is an identity layer built on top of OAuth 2.0. It enables clients to
+verify the identity of an end-user and obtain basic profile information via an
+ID Token (JWT).
+
+GGID implements OIDC with:
+- `/.well-known/openid-configuration` — Discovery endpoint
+- Authorization Code + PKCE flow
+- ID Token (RS256 signed JWT with user claims)
+- UserInfo endpoint
+
+### SCIM (System for Cross-domain Identity Management)
+
+**SCIM 2.0** (RFC 7643/7644) is a standardized REST API for user provisioning.
+It enables automated user lifecycle management across systems.
+
+GGID exposes SCIM endpoints:
+- `/scim/v2/Users` — CRUD with filtering (`?filter=userName eq "alice"`)
+- `/scim/v2/Groups` — Group management
+- Compatible with Okta, Azure AD, and other SCIM providers
+
+### SAML (Security Assertion Markup Language)
+
+**SAML 2.0** is an XML-based SSO protocol used primarily in enterprise
+environments. GGID supports both SP-initiated and IdP-initiated SSO flows
+with signed and encrypted assertions.
+
+### WebAuthn / Passkey
+
+**WebAuthn** (W3C standard) enables passwordless authentication using
+public-key cryptography. Users authenticate with biometrics (Touch ID, Face ID)
+or hardware security keys (YubiKey).
+
+A **Passkey** is a WebAuthn credential synchronized across devices via cloud
+( iCloud Keychain, Google Password Manager).
+
+GGID supports:
+- Platform authenticators (Touch ID, Windows Hello)
+- Roaming authenticators (YubiKey, Titan)
+- Registration and authentication flows
+
+### RBAC (Role-Based Access Control)
+
+**RBAC** assigns permissions to roles, and roles to users. Access decisions
+are based on the user's assigned roles.
+
+```
+User → Role → Permission → Resource
+alice → admin → write:users → /api/v1/users
+```
+
+### ABAC (Attribute-Based Access Control)
+
+**ABAC** makes access decisions based on attributes of the user, resource,
+action, and environment. More fine-grained than RBAC.
+
+```
+IF user.department == "HR"
+   AND resource.type == "salary"
+   AND action == "read"
+   AND time.weekday IN [Mon-Fri]
+THEN allow
+```
+
+GGID's policy engine supports both RBAC and ABAC, composable in a single policy.
+
+### Federation
+
+**Federation** allows users to authenticate through a trusted external Identity
+Provider (IdP) instead of maintaining local credentials.
+
+Examples:
+- Social login (Google, GitHub, Microsoft) — OAuth 2.0 federation
+- Enterprise SSO (Azure AD, Okta) — SAML federation
+- LDAP/AD — Directory federation
+
+### JIT (Just-In-Time) Provisioning
+
+**JIT provisioning** automatically creates a local user account the first time
+a user authenticates via federation (OAuth/SAML/LDAP), eliminating the need for
+pre-registration.
+
+GGID flow: User clicks "Login with Google" → Google authenticates → GGID checks
+if user exists → If not, creates account with data from Google → Issues JWT.
+
+### Step-up Authentication
+
+**Step-up authentication** requires additional verification for sensitive
+operations (e.g., changing password, deleting users) even when the user is
+already logged in.
+
+GGID implements step-up via:
+1. Short-lived step-up JWT (5 min TTL)
+2. Re-authentication required (password, MFA, or WebAuthn)
+3. `auth_time` claim in JWT verified by Policy engine
+
+### Back-channel Logout
+
+**Back-channel logout** (OIDC Session Management) sends a server-to-server
+logout notification to all registered applications when a user logs out,
+ensuring sessions are invalidated across all clients without relying on
+browser redirects.
+
+GGID publishes logout events via:
+- NATS JetStream (`session.expired` event)
+- Webhook notification to registered logout URLs
+- RFC-compliant back-channel logout token (JWT)

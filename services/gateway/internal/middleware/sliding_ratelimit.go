@@ -40,12 +40,12 @@ func NewMemoryRateLimitStore() *MemoryRateLimitStore {
 
 func (s *MemoryRateLimitStore) CountAndAdd(_ context.Context, key string, windowStart, now time.Time) (int64, error) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	b, ok := s.buckets[key]
 	if !ok {
 		b = &memBucket{}
 		s.buckets[key] = b
 	}
-	s.mu.Unlock()
 
 	cutoff := windowStart.UnixNano()
 	nowNs := now.UnixNano()
