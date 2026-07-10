@@ -6,17 +6,33 @@ import (
 	"time"
 )
 
+// RouteTimeout holds per-route timeout configuration.
+// Zero-value fields fall back to the global defaults.
+type RouteTimeout struct {
+	Read    time.Duration `yaml:"read"`    // time to read the response headers from backend
+	Write   time.Duration `yaml:"write"`   // time to write the full request to backend
+	Idle    time.Duration `yaml:"idle"`    // idle timeout for keepalive connections
+	Dial    time.Duration `yaml:"dial"`    // dial timeout
+}
+
+// RouteConfig holds metadata for a single route.
+type RouteConfig struct {
+	URL     string       `yaml:"url"`
+	Timeout RouteTimeout `yaml:"timeout"`
+}
+
 // Config is the root configuration for the API Gateway.
 type Config struct {
-	Addr            string            `yaml:"addr"`
-	DomainSuffix    string            `yaml:"domain_suffix"`
-	JWKSURL         string            `yaml:"jwks_url"`
-	JWTIssuer       string            `yaml:"jwt_issuer"`
-	JWTAudience     string            `yaml:"jwt_audience"`
-	PublicKeyPath   string            `yaml:"public_key_path"`
-	Routes          map[string]string `yaml:"routes"` // path_prefix -> backend URL
-	ReadTimeout     time.Duration     `yaml:"read_timeout"`
-	WriteTimeout    time.Duration     `yaml:"write_timeout"`
+	Addr            string              `yaml:"addr"`
+	DomainSuffix    string              `yaml:"domain_suffix"`
+	JWKSURL         string              `yaml:"jwks_url"`
+	JWTIssuer       string              `yaml:"jwt_issuer"`
+	JWTAudience     string              `yaml:"jwt_audience"`
+	PublicKeyPath   string              `yaml:"public_key_path"`
+	Routes          map[string]string   `yaml:"routes"`      // path_prefix -> backend URL (backward compat)
+	RouteConfigs    map[string]RouteConfig `yaml:"route_configs"` // per-route advanced config
+	ReadTimeout     time.Duration       `yaml:"read_timeout"`
+	WriteTimeout    time.Duration       `yaml:"write_timeout"`
 }
 
 // Default returns the default gateway configuration.
@@ -38,6 +54,26 @@ func Default() *Config {
 			"/api/v1/audit":        "http://localhost:8072",
 			"/oauth":               "http://localhost:9005",
 			"/saml":                "http://localhost:9005",
+		},
+		RouteConfigs: map[string]RouteConfig{
+			// Auth needs short timeouts for fast failure on rate-limited requests
+			"/api/v1/auth": {
+				Timeout: RouteTimeout{
+					Read:  5 * time.Second,
+					Write: 10 * time.Second,
+					Idle:  60 * time.Second,
+					Dial:  3 * time.Second,
+				},
+			},
+			// Audit may return large datasets
+			"/api/v1/audit": {
+				Timeout: RouteTimeout{
+					Read:  30 * time.Second,
+					Write: 30 * time.Second,
+					Idle:  90 * time.Second,
+					Dial:  5 * time.Second,
+				},
+			},
 		},
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -82,4 +118,42 @@ func LoadFromEnv(cfg *Config) *Config {
 	}
 
 	return cfg
+}
+
+// GetRouteTimeout returns the timeout configuration for a given route prefix.
+// Falls back to global defaults (ReadTimeout / WriteTimeout) when the route
+// has no explicit timeout configured or a field is zero.
+func (c *Config) GetRouteTimeout(prefix string) RouteTimeout {
+	defaultRead := c.ReadTimeout
+	if defaultRead == 0 {
+		defaultRead = 15 * time.Second
+	}
+	defaultWrite := c.WriteTimeout
+	if defaultWrite == 0 {
+		defaultWrite = 15 * time.Second
+	}
+
+	rc, ok := c.RouteConfigs[prefix]
+	if !ok {
+		return RouteTimeout{
+			Read:  defaultRead,
+			Write: defaultWrite,
+			Idle:  90 * time.Second,
+			Dial:  5 * time.Second,
+		}
+	}
+	t := rc.Timeout
+	if t.Read == 0 {
+		t.Read = defaultRead
+	}
+	if t.Write == 0 {
+		t.Write = defaultWrite
+	}
+	if t.Idle == 0 {
+		t.Idle = 90 * time.Second
+	}
+	if t.Dial == 0 {
+		t.Dial = 5 * time.Second
+	}
+	return t
 }

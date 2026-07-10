@@ -56,6 +56,56 @@ func (c *Checker) Handler() http.HandlerFunc {
 	}
 }
 
+// LiveHandler returns a lightweight liveness probe (Kubernetes /healthz/live).
+// It does NOT check backends — it only verifies the gateway process itself is alive.
+func (c *Checker) LiveHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "alive",
+		})
+	}
+}
+
+// ReadyHandler returns a readiness probe (Kubernetes /healthz/ready).
+// It checks ALL backend services. Returns 200 only if every service is healthy.
+// During startup, this lets the load balancer hold traffic until backends are up.
+func (c *Checker) ReadyHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		status := c.CheckAll(r.Context())
+		code := http.StatusOK
+		if status.Unhealthy > 0 {
+			code = http.StatusServiceUnavailable
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(code)
+		// For readiness, include the full detail so operators can see what's down
+		json.NewEncoder(w).Encode(status)
+	}
+}
+
+// HandlerWithMode dispatches based on the "mode" query parameter.
+// mode=live  → liveness probe (process alive only)
+// mode=ready → readiness probe (all backends healthy)
+// default    → full aggregated health (backward compatible)
+func (c *Checker) HandlerWithMode() http.HandlerFunc {
+	live := c.LiveHandler()
+	ready := c.ReadyHandler()
+	full := c.Handler()
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Query().Get("mode") {
+		case "live":
+			live.ServeHTTP(w, r)
+		case "ready":
+			ready.ServeHTTP(w, r)
+		default:
+			full.ServeHTTP(w, r)
+		}
+	}
+}
+
 // CheckAll pings all services in parallel and returns aggregated status.
 func (c *Checker) CheckAll(ctx context.Context) *AggregatedStatus {
 	var mu sync.Mutex
