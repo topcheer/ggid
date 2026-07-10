@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
-import { Shield, Plus, Trash2, X, CheckCircle2, XCircle, Search, Copy, GitBranch, Layers } from "lucide-react";
+import { Shield, Plus, Trash2, X, CheckCircle2, XCircle, Search, Copy, GitBranch, Layers, Pencil, Users } from "lucide-react";
 
 interface Role {
   id: string;
@@ -33,6 +33,9 @@ export default function RolesPage() {
   const [tab, setTab] = useState<Tab>("roles");
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ key: "", name: "", description: "" });
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [editForm, setEditForm] = useState({ key: "", name: "", description: "" });
+  const [roleUsers, setRoleUsers] = useState<Record<string, { id: string; username: string; email: string }[]>>({});
 
   // Permission management state
   const [selectedRole, setSelectedRole] = useState<string>("");
@@ -177,6 +180,38 @@ export default function RolesPage() {
     }
   };
 
+  const handleEditRole = (role: Role) => {
+    setEditingRole(role);
+    setEditForm({ key: role.key, name: role.name, description: role.description || "" });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRole) return;
+    try {
+      await apiFetch(`/api/v1/roles/${editingRole.id}`, {
+        method: "PUT",
+        body: JSON.stringify(editForm),
+      });
+      setEditingRole(null);
+      setMsg("Role updated successfully");
+      loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update role");
+    }
+  };
+
+  const loadRoleUsers = async (roleId: string) => {
+    if (roleUsers[roleId]) return;
+    try {
+      const data = await apiFetch<{ users?: { id: string; username: string; email: string }[] }>(
+        `/api/v1/roles/${roleId}/users`,
+      ).catch(() => ({ users: [] }));
+      setRoleUsers((prev) => ({ ...prev, [roleId]: (data as { users?: { id: string; username: string; email: string }[] }).users || [] }));
+    } catch {
+      setRoleUsers((prev) => ({ ...prev, [roleId]: [] }));
+    }
+  };
+
   // Auto-dismiss messages
   useEffect(() => {
     if (msg) {
@@ -260,6 +295,50 @@ export default function RolesPage() {
         </div>
       )}
 
+      {/* Edit Role Form */}
+      {editingRole && (
+        <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Edit Role: {editingRole.name || editingRole.key}</h3>
+            <button onClick={() => setEditingRole(null)}>
+              <X className="h-4 w-4 text-gray-400" />
+            </button>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Key</label>
+              <input
+                value={editForm.key}
+                onChange={(e) => setEditForm({ ...editForm, key: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Name</label>
+              <input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+              <input
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleSaveEdit}
+            className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          >
+            <Pencil className="h-4 w-4" /> Save Changes
+          </button>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="mb-4 flex gap-2 border-b border-gray-200 overflow-x-auto">
         <TabButton active={tab === "roles"} onClick={() => setTab("roles")} label={`Roles (${roles.length})`} />
@@ -289,6 +368,20 @@ export default function RolesPage() {
                 </div>
                 <div className="flex items-center gap-1">
                   <button
+                    onClick={() => handleEditRole(role)}
+                    className="text-gray-400 hover:text-brand-500"
+                    title="Edit role"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => { loadRoleUsers(role.id); }}
+                    className="text-gray-400 hover:text-brand-500"
+                    title="View users with this role"
+                  >
+                    <Users className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => handleCloneRole(role)}
                     className="text-gray-400 hover:text-brand-500"
                     title="Clone role"
@@ -306,6 +399,28 @@ export default function RolesPage() {
                 </div>
               </div>
               <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{role.description || "No description"}</p>
+              {/* Users with this role */}
+              {roleUsers[role.id] && (
+                <div className="mb-3 rounded-lg bg-gray-50 p-2 dark:bg-gray-700">
+                  <p className="mb-1 text-xs font-medium text-gray-500">
+                    <Users className="mr-1 inline h-3 w-3" />Users with this role ({roleUsers[role.id].length})
+                  </p>
+                  {roleUsers[role.id].length === 0 ? (
+                    <p className="text-[10px] text-gray-400">No users assigned</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {roleUsers[role.id].slice(0, 5).map((u) => (
+                        <span key={u.id} className="rounded bg-white px-1.5 py-0.5 text-[10px] dark:bg-gray-600">
+                          {u.username}
+                        </span>
+                      ))}
+                      {roleUsers[role.id].length > 5 && (
+                        <span className="text-[10px] text-gray-400">+{roleUsers[role.id].length - 5} more</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex flex-wrap gap-1">
                 {role.system_role && (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">

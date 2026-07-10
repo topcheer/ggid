@@ -15,6 +15,8 @@ import {
   Building2,
   UserMinus,
   UserPlus,
+  Fingerprint,
+  Globe,
 } from "lucide-react";
 
 interface User {
@@ -55,6 +57,25 @@ interface AuditEvent {
   ip_address: string;
 }
 
+interface Credential {
+  id: string;
+  name: string;
+  type: string;
+  transports?: string[];
+  aaguid?: string;
+  created_at?: string;
+  last_used_at?: string;
+}
+
+interface SocialConnection {
+  id: string;
+  provider: string;
+  provider_user_id: string;
+  email?: string;
+  name?: string;
+  created_at?: string;
+}
+
 type DetailTab = "info" | "roles" | "organizations" | "activity";
 
 export default function UserDetailPage({ params }: { params: { id: string } }) {
@@ -68,12 +89,14 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ display_name: "", email: "", phone: "" });
+  const [editForm, setEditForm] = useState({ display_name: "", email: "", phone: "", status: "" });
   const [resetPassword, setResetPassword] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<DetailTab>("info");
   const [activity, setActivity] = useState<AuditEvent[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
 
   const loadActivity = useCallback(async () => {
     setActivityLoading(true);
@@ -125,10 +148,16 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
     try {
       const u = await apiFetch<User>(`/api/v1/users/${params.id}`);
       setUser(u);
-      setEditForm({ display_name: u.display_name || "", email: u.email || "", phone: u.phone || "" });
+      setEditForm({ display_name: u.display_name || "", email: u.email || "", phone: u.phone || "", status: u.status || "active" });
 
-      const rolesResp = await apiFetch<{ roles?: Role[] }>("/api/v1/roles").catch(() => ({ roles: [] }));
-      setRoles(rolesResp.roles || []);
+      const [rolesResp, credsResp, socialResp] = await Promise.all([
+        apiFetch<{ roles?: Role[] }>("/api/v1/roles").catch(() => ({ roles: [] })),
+        apiFetch<{ credentials?: Credential[] }>(`/api/v1/users/${params.id}/credentials`).catch(() => ({ credentials: [] })),
+        apiFetch<{ connections?: SocialConnection[] }>(`/api/v1/users/${params.id}/social`).catch(() => ({ connections: [] })),
+      ]);
+      setRoles((rolesResp as { roles?: Role[] }).roles || []);
+      setCredentials((credsResp as { credentials?: Credential[] }).credentials || []);
+      setSocialConnections((socialResp as { connections?: SocialConnection[] }).connections || []);
 
       setError(null);
     } catch (err) {
@@ -495,6 +524,18 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
                   />
                 </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="locked">Locked</option>
+                  </select>
+                </div>
                 <button
                   onClick={handleSave}
                   className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
@@ -622,6 +663,51 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   ))
                 )}
               </div>
+            </div>
+
+            {/* WebAuthn Credentials */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
+                <Fingerprint className="h-4 w-4 text-gray-400" /> WebAuthn Credentials ({credentials.length})
+              </h3>
+              {credentials.length === 0 ? (
+                <p className="text-sm text-gray-400">No WebAuthn credentials registered</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {credentials.map((cred) => (
+                    <div key={cred.id} className="flex items-center justify-between rounded border border-gray-100 px-2 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <Fingerprint className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs font-medium">{cred.name || cred.id.slice(0, 8)}</span>
+                        {cred.type && <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-600">{cred.type}</span>}
+                      </div>
+                      {cred.created_at && <span className="text-[10px] text-gray-400">{new Date(cred.created_at).toLocaleDateString()}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Social Connections */}
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold">
+                <Globe className="h-4 w-4 text-gray-400" /> Social Connections ({socialConnections.length})
+              </h3>
+              {socialConnections.length === 0 ? (
+                <p className="text-sm text-gray-400">No social providers connected</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {socialConnections.map((conn) => (
+                    <div key={conn.id} className="flex items-center justify-between rounded border border-gray-100 px-2 py-1.5">
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-3 w-3 text-gray-400" />
+                        <span className="text-xs font-medium capitalize">{conn.provider}</span>
+                      </div>
+                      {conn.email && <span className="text-[10px] text-gray-400">{conn.email}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
