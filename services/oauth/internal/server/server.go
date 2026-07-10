@@ -352,6 +352,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
 			return
 		}
+		_ = r.ParseForm()
+		token := r.FormValue("token")
+		_ = oauthSvc.RevokeToken(token)
 		w.WriteHeader(http.StatusOK)
 	})
 

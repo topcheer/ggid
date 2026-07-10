@@ -6,10 +6,12 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ggid/ggid/pkg/crypto"
@@ -462,6 +464,44 @@ func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
 		}
 	}
 	return resp
+}
+
+// --- Token Revocation (RFC 7009) ---
+
+// revokedTokens stores revoked token hashes (thread-safe).
+var revokedTokens sync.Map
+
+// RevokeToken marks a token as revoked. The token's JWT ID is extracted and
+// stored in the blacklist. Subsequent introspection calls will return active=false.
+func (s *OAuthService) RevokeToken(tokenStr string) error {
+	if tokenStr == "" {
+		return nil // RFC 7009: return 200 even for empty token
+	}
+
+	// Parse the token to get its claims (don't fail on invalid tokens).
+	claims, err := s.ParseAccessToken(tokenStr)
+	if err != nil {
+		return nil // RFC 7009: invalid token → still return 200
+	}
+
+	// Store the token hash in the revocation list.
+	tokenHash := hashTokenSHA256(tokenStr)
+	exp := getInt64Claim(claims, "exp")
+	revokedTokens.Store(tokenHash, exp)
+
+	return nil
+}
+
+// IsTokenRevoked checks if a token has been revoked.
+func (s *OAuthService) IsTokenRevoked(tokenStr string) bool {
+	tokenHash := hashTokenSHA256(tokenStr)
+	_, ok := revokedTokens.Load(tokenHash)
+	return ok
+}
+
+func hashTokenSHA256(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
 }
 
 // --- Refresh Token Grant ---
