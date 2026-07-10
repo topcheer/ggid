@@ -1,158 +1,161 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useUsers } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { useApi } from "@/lib/api";
+import Link from "next/link";
 import {
   Users as UsersIcon,
   ShieldCheck,
   Activity,
-  TrendingUp,
+  AlertTriangle,
+  Building2,
+  ScrollText,
 } from "lucide-react";
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_GGID_API || "http://localhost:8080";
-const TENANT_ID =
-  process.env.NEXT_PUBLIC_TENANT_ID ||
-  "00000000-0000-0000-0000-000000000001";
-
-function getToken() {
-  if (typeof window === "undefined") return "";
-  return localStorage.getItem("ggid_access_token") || "";
-}
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
 
 export default function DashboardPage() {
-  const { users, loading } = useUsers();
+  const { apiFetch } = useApi();
+  const [userCount, setUserCount] = useState<number | null>(null);
   const [roleCount, setRoleCount] = useState<number | null>(null);
-  const [auditCount, setAuditCount] = useState<number | null>(null);
+  const [orgCount, setOrgCount] = useState<number | null>(null);
+  const [auditStats, setAuditStats] = useState<{
+    total_events_24h: number;
+    failed_logins_24h: number;
+    hourly_distribution: { hour: string; count: number }[];
+  } | null>(null);
+  const [recentEvents, setRecentEvents] = useState<{ id: string; action: string; actor_name: string; result: string; created_at: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [usersResp, rolesResp, orgsResp, statsResp, eventsResp] = await Promise.all([
+        apiFetch<{ users?: unknown[]; items?: unknown[] }>("/api/v1/users").catch(() => ({ users: [] })),
+        apiFetch<{ roles?: unknown[] }>("/api/v1/roles").catch(() => ({ roles: [] })),
+        apiFetch<{ organizations?: unknown[] }>("/api/v1/orgs").catch(() => ({ organizations: [] })),
+        apiFetch<{ total_events_24h?: number; failed_logins_24h?: number; hourly_distribution?: { hour: string; count: number }[] }>("/api/v1/audit/stats").catch(() => ({})),
+        apiFetch<{ events?: { id: string; action: string; actor_name: string; result: string; created_at: string }[] }>("/api/v1/audit/events?page_size=5").catch(() => ({ events: [] })),
+      ]);
+      setUserCount((usersResp as { users?: unknown[] }).users?.length || 0);
+      setRoleCount((rolesResp as { roles?: unknown[] }).roles?.length || 0);
+      setOrgCount((orgsResp as { organizations?: unknown[] }).organizations?.length || 0);
+      setAuditStats(statsResp as { total_events_24h: number; failed_logins_24h: number; hourly_distribution: { hour: string; count: number }[] });
+      setRecentEvents((eventsResp as { events?: typeof recentEvents }).events || []);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  }, [apiFetch]);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
-
-    // Fetch roles count
-    fetch(`${API_BASE}/api/v1/roles`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "X-Tenant-ID": TENANT_ID,
-      },
-    })
-      .then((r) => (r.ok ? r.json() : Promise.resolve({ roles: [] })))
-      .then((d) => setRoleCount(Array.isArray(d.roles) ? d.roles.length : Array.isArray(d) ? d.length : 0))
-      .catch(() => setRoleCount(0));
-
-    // Fetch audit event count
-    fetch(`${API_BASE}/api/v1/audit?limit=100`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "X-Tenant-ID": TENANT_ID,
-      },
-    })
-      .then((r) => (r.ok ? r.json() : Promise.resolve({ events: [] })))
-      .then((d) =>
-        setAuditCount(
-          Array.isArray(d.events)
-            ? d.events.length
-            : Array.isArray(d.data)
-              ? d.data.length
-              : 0,
-        ),
-      )
-      .catch(() => setAuditCount(0));
-  }, []);
+    loadData();
+  }, [loadData]);
 
   const stats = [
-    {
-      label: "Total Users",
-      value: loading ? "..." : String(users.length),
-      icon: UsersIcon,
-      color: "bg-blue-500",
-    },
-    {
-      label: "Active Sessions",
-      value: "—",
-      icon: Activity,
-      color: "bg-green-500",
-    },
-    {
-      label: "Roles",
-      value: roleCount === null ? "..." : String(roleCount),
-      icon: ShieldCheck,
-      color: "bg-purple-500",
-    },
-    {
-      label: "Audit Events",
-      value: auditCount === null ? "..." : String(auditCount),
-      icon: TrendingUp,
-      color: "bg-orange-500",
-    },
+    { label: "Total Users", value: loading ? "..." : String(userCount ?? 0), icon: UsersIcon, color: "bg-blue-500", href: "/users" },
+    { label: "Roles", value: loading ? "..." : String(roleCount ?? 0), icon: ShieldCheck, color: "bg-purple-500", href: "/roles" },
+    { label: "Organizations", value: loading ? "..." : String(orgCount ?? 0), icon: Building2, color: "bg-indigo-500", href: "/organizations" },
+    { label: "Events (24h)", value: loading ? "..." : String(auditStats?.total_events_24h ?? 0), icon: Activity, color: "bg-green-500", href: "/audit" },
+    { label: "Failed Logins", value: loading ? "..." : String(auditStats?.failed_logins_24h ?? 0), icon: AlertTriangle, color: "bg-red-500", href: "/audit" },
   ];
+
+  const hourlyData = (auditStats?.hourly_distribution || []).map((h) => ({
+    time: new Date(h.hour).toLocaleTimeString("en-US", { hour: "numeric", hour12: true }),
+    events: h.count,
+  }));
 
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">Dashboard</h1>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div
+            <Link
               key={stat.label}
-              className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+              href={stat.href}
+              className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">
-                    {stat.label}
-                  </p>
+                  <p className="text-sm font-medium text-gray-500">{stat.label}</p>
                   <p className="mt-1 text-3xl font-bold">{stat.value}</p>
                 </div>
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-lg ${stat.color}`}
-                >
+                <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${stat.color}`}>
                   <Icon className="h-6 w-6 text-white" />
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
 
-      <div className="mt-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold">Recent Users</h2>
-        {loading ? (
-          <p className="text-gray-500">Loading...</p>
-        ) : (
-          <div className="space-y-2">
-            {users.slice(0, 5).map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium uppercase">
-                    {user.username[0]}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        {/* Login activity chart */}
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+            <Activity className="h-4 w-4 text-brand-600" />
+            Activity Timeline (24h)
+          </h2>
+          {hourlyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <AreaChart data={hourlyData}>
+                <defs>
+                  <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                <XAxis dataKey="time" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Area type="monotone" dataKey="events" stroke="#6366f1" strokeWidth={2} fill="url(#colorActivity)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-[220px] items-center justify-center text-sm text-gray-400">
+              No activity in the last 24 hours
+            </div>
+          )}
+        </div>
+
+        {/* Recent activity feed */}
+        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
+            <ScrollText className="h-4 w-4 text-brand-600" />
+            Recent Activity
+          </h2>
+          {recentEvents.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-400">No recent events</p>
+          ) : (
+            <div className="space-y-3">
+              {recentEvents.map((event) => (
+                <div key={event.id} className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{event.action}</p>
+                    <p className="text-xs text-gray-500">
+                      {event.actor_name || "system"} • {new Date(event.created_at).toLocaleTimeString()}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">{user.username}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </div>
+                  <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                    event.result === "success" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  }`}>
+                    {event.result}
+                  </span>
                 </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    user.status === "active"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {user.status}
-                </span>
-              </div>
-            ))}
-            {users.length === 0 && (
-              <p className="text-gray-500">No users found</p>
-            )}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+          <Link href="/audit" className="mt-3 block text-center text-xs text-brand-600 hover:underline">
+            View all events →
+          </Link>
+        </div>
       </div>
     </div>
   );
