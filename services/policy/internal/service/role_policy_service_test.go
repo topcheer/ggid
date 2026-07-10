@@ -433,3 +433,73 @@ func TestListRoles_Error(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+func TestCreateRole_Error(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{createErr: errors.New(errors.ErrInternal, "db error")}, &mockPermRepo{}, nil)
+	_, err := svc.CreateRole(context.Background(), uuid.New(), "test", "test", "", nil)
+	if err == nil { t.Fatal("expected error") }
+}
+
+func TestDeleteRole_Error(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{deleteErr: errors.New(errors.ErrInternal, "db error")}, &mockPermRepo{}, nil)
+	err := svc.DeleteRole(context.Background(), uuid.New())
+	if err == nil { t.Fatal("expected error") }
+}
+
+func TestCreatePolicy_Error(t *testing.T) {
+	svc := NewPolicyService(&mockPolicyRepo{createErr: errors.New(errors.ErrInternal, "db error")})
+	_, err := svc.CreatePolicy(context.Background(), &domain.Policy{Name: "test", TenantID: uuid.New()})
+	if err == nil { t.Fatal("expected error") }
+}
+
+func TestDeletePolicy_Error(t *testing.T) {
+	svc := NewPolicyService(&mockPolicyRepo{deleteErr: errors.New(errors.ErrInternal, "db error")})
+	err := svc.DeletePolicy(context.Background(), uuid.New())
+	if err == nil { t.Fatal("expected error") }
+}
+
+func TestGetPolicy_Error(t *testing.T) {
+	svc := NewPolicyService(&mockPolicyRepo{getErr: errors.New(errors.ErrNotFound, "not found")})
+	_, err := svc.GetPolicy(context.Background(), uuid.New())
+	if err == nil { t.Fatal("expected error") }
+}
+
+func TestUpdateRole_Error(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{updateErr: errors.New(errors.ErrInternal, "db error")}, &mockPermRepo{}, nil)
+	_, err := svc.UpdateRole(context.Background(), uuid.New(), nil, nil, nil)
+	if err == nil { t.Fatal("expected error") }
+}
+
+func TestListRoles_WithResults(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{roles: map[uuid.UUID]*domain.Role{{}: {ID: uuid.New(), Name: "r"}}}, &mockPermRepo{}, nil)
+	_, err := svc.ListRoles(context.Background(), uuid.New(), 1, 50)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestListPermissions_Success(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{perms: map[uuid.UUID]*domain.Permission{{}: {ID: uuid.New()}}}, nil)
+	_, err := svc.ListPermissions(context.Background(), uuid.New(), 1, 50)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestListPermissions_PageSizeNormalization(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
+	// pageSize=0 triggers default 50 path
+	_, err := svc.ListPermissions(context.Background(), uuid.New(), 1, 0)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+	// pageSize=300 triggers default 50 path
+	_, err = svc.ListPermissions(context.Background(), uuid.New(), 1, 300)
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestGrantPermissionsToRole_Success(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
+	err := svc.GrantPermissionsToRole(context.Background(), uuid.New(), []uuid.UUID{uuid.New()})
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}
+
+func TestRevokePermissionsFromRole_Success(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
+	err := svc.RevokePermissionsFromRole(context.Background(), uuid.New(), []uuid.UUID{uuid.New()})
+	if err != nil { t.Fatalf("unexpected: %v", err) }
+}

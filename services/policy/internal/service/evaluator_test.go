@@ -976,3 +976,37 @@ func TestTypeCoercionHelpers(t *testing.T) {
 	if !matchIP("10.0.0.0/8", "10.1.2.3") { t.Error("matchIP CIDR match failed") }
 	if matchIP("10.0.0.0/8", "192.168.1.1") { t.Error("matchIP CIDR no-match failed") }
 }
+
+func TestTypeCoercion_EdgeCases(t *testing.T) {
+	// toStr with various types
+	if toStr(int64(42)) != "42" { t.Error("toStr int64 failed") }
+	if toStr(false) != "false" { t.Error("toStr false failed") }
+	// toFloat64 error paths
+	if toFloat64("not_a_number") != 0 { t.Error("toFloat64 invalid string should be 0") }
+	// toBool error path
+	if toBool("") { t.Error("toBool empty should be false") }
+	if toBool("anything") { t.Error("toBool non-matching should be false") }
+	// toDate error path
+	d := toDate("invalid-date")
+	if !d.IsZero() { t.Error("toDate invalid should be zero") }
+	// matchIP error path
+	if matchIP("invalid-cidr", "1.2.3.4") { t.Error("matchIP invalid CIDR should be false") }
+	if matchIP("10.0.0.1", "10.0.0.2") { t.Error("matchIP exact mismatch should be false") }
+}
+
+func TestToFloat64_FloatInput(t *testing.T) {
+	if toFloat64(float64(3.14)) != 3.14 { t.Error("toFloat64 float64 passthrough failed") }
+}
+
+func TestMatchConditions_NoPolicyConditions(t *testing.T) {
+	got := matchConditions(nil, map[string]any{"dept": "eng"})
+	if !got { t.Error("nil policy conditions should match") }
+}
+
+func TestMatchConditions_MissingReqKey(t *testing.T) {
+	got := matchConditions(
+		map[string]any{"dept": map[string]any{"StringEquals": "eng"}},
+		map[string]any{},
+	)
+	if got { t.Error("missing required key should not match") }
+}
