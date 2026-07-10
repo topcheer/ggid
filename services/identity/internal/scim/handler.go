@@ -289,14 +289,79 @@ func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *htt
 	writeSCIMJSON(w, http.StatusOK, toSCIMUser(user))
 }
 
+// SCIMPatchOp represents a single PATCH operation (RFC 7644 Section 3.5.2).
+type SCIMPatchRequest struct {
+	Schemas    []string       `json:"schemas"`
+	Operations []SCIMPatchOp  `json:"Operations"`
+}
+
+type SCIMPatchOp struct {
+	Op    string          `json:"op"`     // add, replace, remove
+	Path  string          `json:"path"`   // attribute path (e.g. "displayName", "emails[type eq \"work\"]")
+	Value json.RawMessage `json:"value"`  // value to set (for add/replace)
+}
+
 func (h *Handler) patchUser(ctx context.Context, w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
-	// RFC 7644 PATCH is complex; skeleton returns the current user.
+	var patchReq SCIMPatchRequest
+	if err := json.NewDecoder(r.Body).Decode(&patchReq); err != nil {
+		writeSCIMError(w, http.StatusBadRequest, "invalid PATCH request body")
+		return
+	}
+
 	user, err := h.svc.GetUser(ctx, userID)
 	if err != nil {
 		writeSCIMError(w, http.StatusNotFound, "user not found")
 		return
 	}
-	writeSCIMJSON(w, http.StatusOK, toSCIMUser(user))
+
+	// Track changes to apply.
+	displayName := user.DisplayName
+	active := user.Status == domain.UserStatusActive
+
+	for _, op := range patchReq.Operations {
+		opLower := strings.ToLower(op.Op)
+		path := strings.ToLower(op.Path)
+
+		switch {
+		case path == "displayname" || path == "name.givenname":
+			if opLower == "replace" || opLower == "add" {
+				var val string
+				if err := json.Unmarshal(op.Value, &val); err == nil {
+					displayName = val
+				}
+			} else if opLower == "remove" {
+				displayName = ""
+			}
+
+		case path == "active":
+			if opLower == "replace" {
+				var val bool
+				if err := json.Unmarshal(op.Value, &val); err == nil {
+					active = val
+				}
+			}
+		}
+	}
+
+	// Apply updates.
+	input := &domain.UpdateUserInput{
+		DisplayName: &displayName,
+	}
+
+	updatedUser, err := h.svc.UpdateUser(ctx, userID, input)
+	if err != nil {
+		writeSCIMError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Handle active/inactive toggle.
+	if active && updatedUser.Status != domain.UserStatusActive {
+		updatedUser, _ = h.svc.UnlockUser(ctx, userID)
+	} else if !active && updatedUser.Status == domain.UserStatusActive {
+		updatedUser, _ = h.svc.LockUser(ctx, userID)
+	}
+
+	writeSCIMJSON(w, http.StatusOK, toSCIMUser(updatedUser))
 }
 
 func (h *Handler) deleteUser(ctx context.Context, w http.ResponseWriter, r *http.Request, userID uuid.UUID) {
