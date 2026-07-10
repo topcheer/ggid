@@ -497,3 +497,278 @@ Returns detailed health status including replication lag, connection pool stats,
   }
 }
 ```
+
+---
+
+## Grafana Dashboards
+
+### Importing Dashboards
+
+Reference dashboards are provided in `deploy/grafana/dashboards/`:
+
+```bash
+# Dashboard JSON files
+deploy/grafana/dashboards/
+  ggid-overview.json         # High-level platform health
+  ggid-auth-service.json     # Auth-specific metrics
+  ggid-gateway.json          # Gateway latency & throughput
+  ggid-policy-engine.json    # Policy check performance
+  ggid-infrastructure.json   # DB/Redis/NATS health
+```
+
+### Dashboard Panel Reference
+
+#### Overview Dashboard
+
+| Panel | PromQL Query | Visualization |
+|-------|-------------|---------------|
+| Request Rate | `rate(ggid_gateway_requests_total[1m])` | Time series |
+| Error Rate | `rate(ggid_gateway_requests_total{status=~"5.."}[5m]) / rate(ggid_gateway_requests_total[5m])` | Stat |
+| p95 Latency | `histogram_quantile(0.95, rate(ggid_gateway_request_duration_seconds_bucket[5m]))` | Time series |
+| Active Sessions | `ggid_auth_active_sessions` | Gauge |
+| NATS Lag | `nats_jetstream_consumer_num_pending` | Time series |
+
+#### Auth Service Dashboard
+
+| Panel | PromQL Query | Visualization |
+|-------|-------------|---------------|
+| Login Rate | `rate(ggid_auth_login_total{result="success"}[5m])` | Time series |
+| Login Failures | `rate(ggid_auth_login_total{result="failure"}[5m])` | Time series |
+| Token Issuance | `rate(ggid_auth_tokens_issued_total[5m])` | Time series |
+| JWT Verify Latency | `histogram_quantile(0.95, rate(ggid_auth_jwt_verify_seconds_bucket[5m]))` | Time series |
+| Account Lockouts | `rate(ggid_auth_lockouts_total[5m])` | Stat |
+| Rate Limit Denials | `rate(ggid_ratelimit_denied_total[5m])` by endpoint | Bar chart |
+
+#### Infrastructure Dashboard
+
+| Panel | PromQL Query | Visualization |
+|-------|-------------|---------------|
+| DB Connections | `pg_stat_activity_count` | Gauge |
+| DB Query Latency | `histogram_quantile(0.95, rate(pg_query_duration_seconds_bucket[5m]))` | Time series |
+| Redis Memory | `redis_memory_used_bytes / redis_memory_max_bytes` | Gauge |
+| Redis Hit Rate | `redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total)` | Stat |
+| NATS Messages | `rate(nats_jetstream_stream_messages[1m])` | Time series |
+
+### Provisioning Dashboards via ConfigMap
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ggid-grafana-dashboards
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  ggid-overview.json: |
+    {"dashboard": {"title": "GGID Overview", "panels": [...]}, ...}
+  ggid-auth-service.json: |
+    {"dashboard": {"title": "GGID Auth Service", ...}, ...}
+```
+
+---
+
+## Structured Logging
+
+### JSON Log Format
+
+All GGID services emit structured JSON logs. Every log entry includes:
+
+```json
+{
+  "timestamp": "2024-07-15T10:30:45.123Z",
+  "level": "info",
+  "service": "auth",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "request_id": "req-abc-123",
+  "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "span_id": "00f067aa0ba902b7",
+  "message": "login successful",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "method": "password",
+  "duration_ms": 8.2,
+  "metadata": {
+    "ip_address": "192.168.1.100",
+    "user_agent": "Mozilla/5.0...",
+    "mfa_used": false
+  }
+}
+```
+
+### Standard Fields
+
+| Field | Type | Required | Description |
+|------|------|----------|-------------|
+| `timestamp` | ISO 8601 | Yes | UTC timestamp with milliseconds |
+| `level` | string | Yes | `debug`, `info`, `warn`, `error` |
+| `service` | string | Yes | Service name (auth, gateway, etc.) |
+| `message` | string | Yes | Human-readable message |
+| `request_id` | string | Yes (HTTP) | Unique request identifier |
+| `trace_id` | string | Recommended | W3C traceparent trace ID |
+| `tenant_id` | UUID | Yes (multi-tenant) | Tenant context |
+| `duration_ms` | float | When applicable | Operation duration |
+
+### Log Level Guidelines
+
+| Level | Use For | Example |
+|------|---------|--------|
+| `debug` | Detailed diagnostic info | "cache miss for user 550e8400" |
+| `info` | Normal operations | "login successful for user 550e8400" |
+| `warn` | Unexpected but non-fatal | "rate limit threshold reached for IP" |
+| `error` | Errors requiring attention | "database connection failed: connection refused" |
+
+### PII Redaction
+
+GGID automatically redacts PII fields in logs:
+
+```json
+{
+  "message": "login attempt",
+  "email": "[REDACTED]",
+  "password": "[REDACTED]",
+  "token": "[REDACTED]"
+}
+```
+
+Fields redacted: `password`, `email`, `token`, `access_token`, `refresh_token`,
+`secret`, `api_key`, `ssn`, `credit_card`, `phone`.
+
+### Configuring Log Output
+
+```bash
+# JSON format (default, recommended for production)
+LOG_FORMAT=json
+
+# Text format (for local development)
+LOG_FORMAT=text
+
+# Log level
+LOG_LEVEL=info  # debug | info | warn | error
+```
+
+---
+
+## Distributed Tracing
+
+### W3C Trace Context
+
+GGID implements the W3C Trace Context standard. The Gateway generates a
+`traceparent` header for each incoming request and propagates it to all
+downstream services.
+
+```
+traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01
+              |  |                                   |                |
+              |  |                                   |                +- flags (01 = sampled)
+              |  |                                   +-- span ID (parent)
+              |  +-- trace ID (shared across all services)
+              +-- version (00 = W3C standard)
+```
+
+### Propagation Chain
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant Auth
+    participant DB
+
+    Client->>Gateway: GET /api/v1/users
+    Note over Gateway: Generate traceparent<br/>trace-id = 4bf92f...
+    Gateway->>Auth: gRPC GetUsers(traceparent)
+    Note over Auth: Extract trace-id<br/>Create child span
+    Auth->>DB: SELECT * FROM users
+    Note over DB: DB query span
+    DB-->>Auth: rows
+    Auth-->>Gateway: response
+    Gateway-->>Client: 200 OK
+```
+
+### OpenTelemetry Export
+
+GGID exports traces via OTLP (OpenTelemetry Protocol):
+
+```bash
+# Configure OTLP endpoint
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+OTEL_SERVICE_NAME=ggid
+
+# Sampling rate (1.0 = all traces, 0.1 = 10%)
+OTEL_TRACES_SAMPLER_ARG=0.1
+```
+
+### Jaeger / Tempo Integration
+
+```yaml
+# docker-compose.yaml — add OTLP collector
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "4317:4317"    # OTLP gRPC
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+```
+
+Access Jaeger UI at `http://localhost:16686` to search traces by service,
+operation, or trace ID.
+
+---
+
+## Health Check Endpoints Per Service
+
+### Summary Table
+
+| Service | Liveness | Readiness | Deep Health | Metrics |
+|---------|----------|-----------|-------------|---------|
+| Gateway | `:8080/healthz` | `:8080/readyz` | `:8080/healthz/deep` | `:8080/metrics` |
+| Identity | `:8081/healthz` | `:8081/readyz` | `:8081/healthz/deep` | `:8081/metrics` |
+| Auth | `:9001/healthz` | `:9001/readyz` | `:9001/healthz/deep` | `:9001/metrics` |
+| OAuth | `:9005/healthz` | `:9005/readyz` | `:9005/healthz/deep` | `:9005/metrics` |
+| Policy | `:8070/healthz` | `:8070/readyz` | `:8070/healthz/deep` | `:8070/metrics` |
+| Org | `:8071/healthz` | `:8071/readyz` | `:8071/healthz/deep` | `:8071/metrics` |
+| Audit | `:8072/healthz` | `:8072/readyz` | `:8072/healthz/deep` | `:8072/metrics` |
+
+### Kubernetes Probe Configuration
+
+```yaml
+spec:
+  containers:
+    - name: gateway
+      livenessProbe:
+        httpGet:
+          path: /healthz
+          port: 8080
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        failureThreshold: 3
+
+      readinessProbe:
+        httpGet:
+          path: /readyz
+          port: 8080
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        failureThreshold: 2
+
+      # Deep health as a startup probe (checks DB + Redis on first boot)
+      startupProbe:
+        httpGet:
+          path: /healthz/deep
+          port: 8080
+        failureThreshold: 30
+        periodSeconds: 10
+```
+
+---
+
+## References
+
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [OpenTelemetry Go SDK](https://opentelemetry.io/docs/instrumentation/go/)
+- [Benchmark Guide](./benchmark.md) — Performance metrics
+- [Deployment Guide](./deployment-guide.md) — Production setup
+- [High Availability](./high-availability.md) — HA monitoring
