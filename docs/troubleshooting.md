@@ -1243,3 +1243,156 @@ JWKS_CACHE_TTL=60
 # 4. Restart the Gateway to clear JWKS cache immediately
 docker compose restart gateway
 ```
+
+---
+
+## WebAuthn / Passkey Issues
+
+### Q: "NotAllowedError: The operation either timed out or is not permitted"
+
+**Cause:** User cancelled the prompt, or the RP ID / origin doesn't match.
+
+**Fix:**
+
+```bash
+# Check RP ID configuration
+docker exec ggid-auth env | grep WEBAUTHN_RP
+
+# WEBAUTHN_RP_ID must match the browser origin's registrable domain
+# If accessing via https://iam.example.com, RP_ID should be iam.example.com
+
+# Verify allowed origins
+docker exec ggid-auth env | grep WEBAUTHN_RP_ORIGINS
+# Must include https://iam.example.com (exact scheme + host + port)
+```
+
+### Q: "SecurityError: The operation is insecure"
+
+**Cause:** Origin not in allowed list, or using HTTP instead of HTTPS (except
+localhost).
+
+**Fix:** WebAuthn requires secure context (HTTPS or localhost). Ensure the
+load balancer terminates TLS and forwards `X-Forwarded-Proto: https`.
+
+### Q: Attestation verification fails with "fmt: unknown format"
+
+**Cause:** The authenticator uses an attestation format GGID doesn't support.
+
+**Fix:** Set `WEBAUTHN_ATTESTATION=none` to skip attestation verification
+(recommended for most deployments — privacy-preserving).
+
+### Q: "InvalidStateError: The authenticator was previously registered"
+
+**Cause:** User is trying to register the same authenticator twice.
+
+**Fix:** GGID's `excludeCredentials` list should prevent this. Verify it's
+populated from the user's existing credentials:
+
+```bash
+curl http://localhost:9001/api/v1/webauthn/credentials \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Q: Counter desync after authenticator firmware update
+
+**Cause:** Some authenticators reset their sign counter after firmware updates,
+triggering clone detection.
+
+**Fix:** Admin can reset the stored counter:
+
+```bash
+curl -X POST http://localhost:9001/api/v1/admin/webauthn/credentials/{id}/reset-counter \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+---
+
+## Tenant Context Errors
+
+### Q: "missing tenant context" / 412 Precondition Failed
+
+**Cause:** The `X-Tenant-ID` header is missing or empty.
+
+**Fix:**
+
+```bash
+# All API requests must include the tenant header
+curl http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001"
+```
+
+### Q: "tenant not found" / 404 Not Found
+
+**Cause:** The tenant ID doesn't exist in the database.
+
+**Fix:**
+
+```bash
+# Verify tenant exists
+docker exec ggid-postgres psql -U ggid -d ggid \
+  -c "SELECT id, name, status FROM tenants WHERE id = 'your-tenant-uuid';"
+
+# Create default tenant if missing
+docker exec ggid-postgres psql -U ggid -d ggid \
+  -c "INSERT INTO tenants (id, name, status) VALUES ('00000000-0000-0000-0000-000000000001', 'Default', 'active') ON CONFLICT DO NOTHING;"
+```
+
+### Q: "cross-tenant access denied" / 403 Forbidden
+
+**Cause:** JWT's `tenant_id` claim doesn't match the `X-Tenant-ID` header.
+
+**Fix:** Ensure the token was issued for the same tenant. Re-authenticate to
+get a new token for the correct tenant.
+
+---
+
+## OAuth Redirect Mismatch
+
+### Q: "redirect_uri not registered" / 400 Bad Request
+
+**Cause:** The `redirect_uri` in the authorization request doesn't exactly
+match any registered URI (OAuth 2.1 requires exact match).
+
+**Fix:**
+
+```bash
+# Check registered redirect URIs
+docker exec ggid-postgres psql -U ggid -d ggid \
+  -c "SELECT client_id, redirect_uris FROM oauth_clients WHERE client_id = 'your-client';"
+
+# Must be EXACT match (trailing slash, case, query params all matter)
+# Register additional URIs:
+curl -X PATCH http://localhost:9005/api/v1/oauth/clients/{id} \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{ "redirect_uris": ["https://app.example.com/callback", "https://app.example.com/callback?flow=login"] }'
+```
+
+### Q: "code_challenge is required" / 400 Bad Request
+
+**Cause:** OAuth 2.1 mode requires PKCE for all clients.
+
+**Fix:** Add `code_challenge` and `code_challenge_method=S256` to the
+authorization request. See [OAuth 2.1 Migration Guide](./oauth-2.1-migration-guide.md).
+
+---
+
+## Error Code Reference
+
+| HTTP Status | Error Code | Meaning | Common Cause |
+|-------------|------------|---------|--------------|
+| 400 | `invalid_request` | Malformed request | Missing required parameter |
+| 400 | `invalid_grant` | Invalid authorization grant | Expired auth code, bad PKCE verifier |
+| 400 | `invalid_scope` | Requested scope not allowed | Client doesn't have scope |
+| 400 | `invalid_redirect_uri` | Redirect URI mismatch | Not registered or not exact match |
+| 401 | `unauthorized` | Missing or invalid token | JWT expired, wrong tenant |
+| 403 | `forbidden` | Insufficient permissions | Role lacks required permission |
+| 403 | `cross_tenant_denied` | Tenant mismatch | JWT tenant ≠ header tenant |
+| 404 | `not_found` | Resource doesn't exist | Wrong ID, wrong tenant |
+| 409 | `conflict` | Duplicate resource | Username/email already exists |
+| 412 | `failed_precondition` | Required context missing | No `X-Tenant-ID` header |
+| 423 | `account_locked` | Too many failed attempts | 5+ failed logins |
+| 429 | `too_many_requests` | Rate limit exceeded | Per-IP or per-user limit |
+| 500 | `internal_error` | Server-side failure | Database down, bug |
+| 502 | `bad_gateway` | Backend unreachable | Service not started |
+| 503 | `service_unavailable` | Service overloaded | Connection pool exhausted |
