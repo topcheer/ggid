@@ -1,161 +1,47 @@
-# GGID Docker Compose — Production Hardening Guide
+# GGID Production Hardening Guide
 
-This guide describes how to harden the Docker Compose deployment for production use.
+> Security checklist and production deployment best practices.
 
 ---
 
-## 1. Secrets Management
+## 1. Docker Compose Production Hardening
 
-### 1.1 Use Docker Secrets (not plaintext env vars)
+### 1.1 Secrets Management
 
-Create a secrets file:
-
-```yaml
-# deploy/docker-compose.prod.yaml (overlay)
-services:
-  postgres:
-    environment:
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-    secrets:
-      - db_password
-
-  redis:
-    command: ["redis-server", "--requirepass", "$(cat /run/secrets/redis_password)"]
-    secrets:
-      - redis_password
-
-  gateway:
-    environment:
-      JWT_SIGNING_KEY_FILE: /run/secrets/jwt_signing_key
-    secrets:
-      - jwt_signing_key
-
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-  redis_password:
-    file: ./secrets/redis_password.txt
-  jwt_signing_key:
-    file: ./secrets/jwt_signing_key.pem
-```
-
-### 1.2 Generate Strong Secrets
+Replace plaintext passwords with Docker secrets or environment files:
 
 ```bash
-# Database password
-openssl rand -base64 32 > deploy/secrets/db_password.txt
+# Create a .env file (NEVER commit this)
+cat > deploy/.env << 'EOF'
+POSTGRES_PASSWORD=$(openssl rand -base64 32)
+REDIS_PASSWORD=$(openssl rand -base64 32)
+JWT_SIGNING_KEY=$(openssl rand -base64 48)
+NATS_PASSWORD=$(openssl rand -base64 32)
+LDAP_BIND_PASSWORD=$(openssl rand -base64 32)
+WEBHOOK_SECRET=$(openssl rand -base64 32)
+EOF
 
-# Redis password
-openssl rand -base64 32 > deploy/secrets/redis_password.txt
-
-# JWT signing key (RSA 2048)
-openssl genrsa -out deploy/secrets/jwt_signing_key.pem 2048
-openssl rsa -in deploy/secrets/jwt_signing_key.pem -pubout -out deploy/secrets/jwt_public_key.pem
+# Load in docker-compose
+# docker-compose --env-file deploy/.env up -d
 ```
 
----
+### 1.2 TLS Configuration
 
-## 2. Network Isolation
-
-### 2.1 Separate Networks
+Add a reverse proxy (Caddy/Traefik) for automatic TLS:
 
 ```yaml
-networks:
-  frontend:
-    driver: bridge
-  backend:
-    driver: bridge
-    internal: true  # No external access
-
-services:
-  gateway:
-    networks:
-      - frontend
-      - backend
-
-  identity:
-    networks:
-      - backend  # Not accessible from outside
-
-  auth:
-    networks:
-      - backend
-
-  postgres:
-    networks:
-      - backend
-
-  redis:
-    networks:
-      - backend
-```
-
-### 2.2 Remove Exposed Ports for Internal Services
-
-In production, only the gateway should expose ports:
-
-```yaml
-# Production: only expose gateway + console
-services:
-  gateway:
-    ports:
-      - "443:8080"  # TLS terminates at load balancer
-
-  console:
-    ports:
-      - "3000:3000"
-
-  # All other services: NO ports exposed
-  postgres:
-    # ports: REMOVED — only accessible within backend network
-
-  redis:
-    # ports: REMOVED
-
-  nats:
-    # ports: REMOVED
-```
-
----
-
-## 3. TLS Configuration
-
-### 3.1 Terminate TLS at Gateway
-
-```yaml
-services:
-  gateway:
-    environment:
-      TLS_ENABLED: "true"
-      TLS_CERT_FILE: /certs/fullchain.pem
-      TLS_KEY_FILE: /certs/privkey.pem
-    volumes:
-      - ./certs:/certs:ro
-    ports:
-      - "443:8080"
-      - "80:8080"  # Redirect to HTTPS
-```
-
-### 3.2 Using Let's Encrypt with Caddy
-
-```yaml
-services:
+# Add to docker-compose.yaml
   caddy:
     image: caddy:2-alpine
     ports:
-      - "80:80"
       - "443:443"
+      - "80:80"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
-    networks:
-      - frontend
-
-  gateway:
-    # No ports exposed — only accessible via Caddy
-    networks:
-      - frontend
-      - backend
+      - caddy_config:/config
+    depends_on:
+      - gateway
 ```
 
 Caddyfile:
@@ -164,50 +50,35 @@ iam.example.com {
     reverse_proxy gateway:8080
     encode gzip zstd
     header {
-        Strict-Transport-Security "max-age=63072000"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
         X-Content-Type-Options nosniff
         X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
     }
 }
 ```
 
----
+### 1.3 Resource Limits
 
-## 4. Resource Limits
+Add resource constraints to every service:
 
 ```yaml
 services:
   gateway:
+    # ... existing config ...
     deploy:
       resources:
         limits:
-          cpus: "2.0"
+          cpus: '2.0'
           memory: 512M
         reservations:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 128M
-
-  postgres:
-    deploy:
-      resources:
-        limits:
-          cpus: "4.0"
-          memory: 2G
-        reservations:
-          cpus: "1.0"
-          memory: 512M
-
-  redis:
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
 ```
 
----
+### 1.4 Persistent Volumes
 
-## 5. Persistent Volumes
+Ensure data survives container restarts:
 
 ```yaml
 volumes:
@@ -216,150 +87,218 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: /data/ggid/postgres  # Mounted from dedicated disk
-
-  ggid-nats:
+      device: /data/ggid/postgres  # Mount to fast SSD
+  ggid-redis-data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /data/ggid/nats
+  ggid-nats-data:
+    driver: local
+```
+
+### 1.5 Network Isolation
+
+```yaml
+networks:
+  frontend:
+    # Gateway, Console — exposed to host
+  backend:
+    # Services — internal only
+    internal: true
+  infrastructure:
+    # DB, Redis, NATS — internal only
+    internal: true
+```
+
+Assign services:
+- `gateway`: both `frontend` + `backend`
+- `console`: `frontend`
+- All other services: `backend` + `infrastructure`
+- DB/Redis/NATS: `infrastructure` only
+
+### 1.6 Health Check Tuning
+
+```yaml
+healthcheck:
+  test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 30s  # Give time for DB migration
 ```
 
 ---
 
-## 6. Logging
+## 2. Kubernetes Production Checklist
+
+### 2.1 Resource Management
 
 ```yaml
-services:
-  gateway:
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
+# values.yaml production overrides
+gateway:
+  replicaCount: 3  # Minimum 3 for HA
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 128Mi
 
-  postgres:
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "10"
+# Enable HPA
+hpa:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
 ```
 
-Or use a central log collector:
+### 2.2 Pod Security
 
 ```yaml
-services:
-  gateway:
-    logging:
-      driver: fluentd
-      options:
-        fluentd-address: localhost:24224
-        tag: ggid.gateway
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532  # nonroot user from distroleless image
+  fsGroup: 65532
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 ```
 
+### 2.3 Network Policies
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ggid-deny-all-default
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
 ---
-
-## 7. Health Check Tuning
-
-```yaml
-services:
-  gateway:
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-
-  postgres:
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ggid -d ggid"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ggid-allow-gateway-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: ggid
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - port: 8080
 ```
 
----
-
-## 8. Backup Strategy
-
-### 8.1 Database Backup Cron
-
-```yaml
-services:
-  db-backup:
-    image: postgres:16-alpine
-    environment:
-      PGHOST: postgres
-      PGUSER: ggid
-      PGDATABASE: ggid
-      PGPASSWORD_FILE: /run/secrets/db_password
-    volumes:
-      - ./backups:/backups
-    secrets:
-      - db_password
-    entrypoint: |
-      sh -c '
-        while true; do
-          pg_dump | gzip > /backups/ggid-$$(date +%Y%m%d-%H%M%S).sql.gz
-          find /backups -name "*.sql.gz" -mtime +30 -delete
-          sleep 86400
-        done
-      '
-    networks:
-      - backend
-```
-
-### 8.2 Redis Persistence
-
-```yaml
-services:
-  redis:
-    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
-    volumes:
-      - ggid-redis-data:/data
-```
-
----
-
-## 9. Production Deployment Commands
+### 2.4 Backup Strategy
 
 ```bash
-# Deploy with production overlay
-docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up -d
+# PostgreSQL backup (cron job)
+kubectl create cronjob pg-backup \
+  --schedule="0 2 * * *" \
+  --image=postgres:16-alpine \
+  --env="PGPASSWORD=$DB_PASSWORD" \
+  -- pg_dump -h ggid-postgresql -U ggid -Fc ggid > /backup/ggid-$(date +%Y%m%d).dump
 
-# View logs
-docker compose logs -f gateway
-
-# Scale gateway
-docker compose up -d --scale gateway=3
-
-# Rolling restart
-docker compose up -d --no-deps --build gateway
-
-# Backup database
-docker compose exec postgres pg_dump -U ggid ggid | gzip > backup.sql.gz
-
-# Restore database
-gunzip -c backup.sql.gz | docker compose exec -T postgres psql -U ggid ggid
+# Redis: Enable AOF persistence
+redis:
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+    configDatabase: |
+      appendonly yes
+      appendfsync everysec
 ```
 
 ---
 
-## 10. Production Checklist
+## 3. Monitoring & Alerting
 
-- [ ] All passwords replaced with Docker secrets
-- [ ] Internal services have no exposed ports
-- [ ] Networks separated (frontend + backend)
-- [ ] TLS configured (certificates + HSTS)
-- [ ] Resource limits set for all services
-- [ ] Persistent volumes on dedicated disk
-- [ ] Log rotation configured
-- [ ] Health check start_period tuned
-- [ ] Database backup cron running
-- [ ] Redis persistence enabled
-- [ ] Docker images scanned (Trivy)
-- [ ] No debug environment variables in production
+### 3.1 Prometheus Alerts
+
+```yaml
+groups:
+  - name: ggid-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(ggid_http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "GGID error rate > 5%"
+
+      - alert: HighLoginFailures
+        expr: rate(ggid_auth_login_failures_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High login failure rate — possible brute force"
+
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_database_numbackends > 150
+        for: 5m
+        labels:
+          severity: warning
+
+      - alert: NATSConsumerLag
+        expr: nats_consumer_num_ack_pending > 1000
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Audit consumer lag — events may be delayed"
+```
+
+### 3.2 Grafana Dashboard
+
+Import the GGID dashboard JSON from `deploy/grafana/dashboard.json`:
+- Request rate + latency (p50/p95/p99)
+- Error rate by endpoint
+- Login success/failure ratio
+- Active sessions
+- Database connection pool
+- NATS consumer lag
+- JWT verification latency
+
+---
+
+## 4. Secret Rotation
+
+| Secret | Rotation Frequency | Method |
+|--------|-------------------|--------|
+| JWT signing key | Quarterly | Generate new key → add to JWKS → remove old after 24h |
+| Database password | Bi-annually | Update Secret → rolling restart |
+| Redis password | Bi-annually | Update Secret → rolling restart |
+| OAuth client secrets | On demand | Rotate via Admin Console |
+| LDAP bind password | Annually | Update env var → restart auth service |
+| TLS certificates | Auto (cert-manager/Let's Encrypt) | 90 days, auto-renewed |
+
+---
+
+## 5. Production Checklist
+
+- [ ] All secrets in env files or K8s Secrets (not in git)
+- [ ] TLS enabled (Caddy/Traefik/cert-manager)
+- [ ] Resource limits set on all containers
+- [ ] Persistent volumes mounted for DB/Redis/NATS
+- [ ] Network isolation (internal networks for backend services)
+- [ ] Health checks configured for all services
+- [ ] Backup automation (daily PostgreSQL dump)
+- [ ] Monitoring + alerting (Prometheus + Grafana)
+- [ ] Log aggregation (Loki/ELK/Datadog)
+- [ ] HPA configured (min 3 replicas for HA)
+- [ ] Pod Disruption Budget set
+- [ ] Rate limits configured per tenant
+- [ ] MFA enforced for admin accounts
+- [ ] Audit log retention configured
+- [ ] Regular dependency scanning (Trivy/govulncheck)
