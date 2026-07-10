@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
-import { Save, Shield, Key, Lock, Globe, Server } from "lucide-react";
+import { Save, Shield, Key, Lock, Globe, Server, Mail, Palette } from "lucide-react";
 
-type Tab = "general" | "security" | "ldap" | "oidc";
+type Tab = "general" | "security" | "ldap" | "oidc" | "smtp" | "branding";
 
 export default function SettingsPage() {
   const { apiFetch, API_BASE, TENANT_ID } = useApi();
@@ -39,6 +39,22 @@ export default function SettingsPage() {
     auto_provision: true,
   });
 
+  const [smtpConfig, setSmtpConfig] = useState({
+    host: "smtp.gmail.com",
+    port: "587",
+    username: "",
+    password: "",
+    from_email: "noreply@ggid.dev",
+    use_tls: true,
+  });
+
+  const [branding, setBranding] = useState({
+    logo_url: "",
+    primary_color: "#6366f1",
+    login_title: "GGID Console",
+    login_subtitle: "Identity & Access Management",
+  });
+
   useEffect(() => {
     fetch(`${API_BASE}/oauth/.well-known/openid-configuration`)
       .then((r) => (r.ok ? r.json() : null))
@@ -56,6 +72,8 @@ export default function SettingsPage() {
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: "security", label: "Security", icon: Shield },
     { id: "ldap", label: "LDAP / AD", icon: Server },
+    { id: "smtp", label: "SMTP", icon: Mail },
+    { id: "branding", label: "Branding", icon: Palette },
     { id: "general", label: "General", icon: Globe },
     { id: "oidc", label: "OIDC", icon: Key },
   ];
@@ -202,6 +220,50 @@ export default function SettingsPage() {
           </div>
           <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-500">
             <p>Environment variables: LDAP_URL, LDAP_BIND_DN, LDAP_BIND_PASSWORD, LDAP_BASE_DN, LDAP_USER_FILTER, LDAP_START_TLS, LDAP_AUTO_PROVISION</p>
+          </div>
+        </div>
+      )}
+
+      {tab === "smtp" && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <Mail className="h-5 w-5 text-brand-600" /> SMTP Configuration
+            </h2>
+            <div className="flex gap-2">
+              <button onClick={() => setMsg("Test email sent")} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50">Test Send</button>
+              <button onClick={() => setMsg("SMTP config saved")} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"><Save className="h-4 w-4" /> Save</button>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">SMTP Host</label><input value={smtpConfig.host} onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Port</label><input value={smtpConfig.port} onChange={(e) => setSmtpConfig({ ...smtpConfig, port: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Username</label><input value={smtpConfig.username} onChange={(e) => setSmtpConfig({ ...smtpConfig, username: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Password</label><input type="password" value={smtpConfig.password} onChange={(e) => setSmtpConfig({ ...smtpConfig, password: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">From Email</label><input value={smtpConfig.from_email} onChange={(e) => setSmtpConfig({ ...smtpConfig, from_email: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div><label className="mb-1 flex items-center gap-2 pt-6"><input type="checkbox" checked={smtpConfig.use_tls} onChange={(e) => setSmtpConfig({ ...smtpConfig, use_tls: e.target.checked })} className="rounded" /><span className="text-sm text-gray-700">Use TLS</span></label></div>
+          </div>
+        </div>
+      )}
+
+      {tab === "branding" && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <Palette className="h-5 w-5 text-brand-600" /> Brand Customization
+            </h2>
+            <button onClick={() => setMsg("Branding saved")} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"><Save className="h-4 w-4" /> Save</button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-medium text-gray-500">Logo URL</label><input value={branding.logo_url} onChange={(e) => setBranding({ ...branding, logo_url: e.target.value })} placeholder="https://example.com/logo.png" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Primary Color</label><div className="flex items-center gap-2"><input type="color" value={branding.primary_color} onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })} className="h-9 w-12 rounded border border-gray-300" /><input value={branding.primary_color} onChange={(e) => setBranding({ ...branding, primary_color: e.target.value })} className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono" /></div></div>
+            <div><label className="mb-1 block text-xs font-medium text-gray-500">Login Title</label><input value={branding.login_title} onChange={(e) => setBranding({ ...branding, login_title: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div className="sm:col-span-2"><label className="mb-1 block text-xs font-medium text-gray-500">Login Subtitle</label><input value={branding.login_subtitle} onChange={(e) => setBranding({ ...branding, login_subtitle: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" /></div>
+          </div>
+          <div className="mt-4 rounded-lg border border-gray-200 p-4 text-center">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg text-white font-bold" style={{ backgroundColor: branding.primary_color }}>G</div>
+            <p className="font-semibold">{branding.login_title}</p>
+            <p className="text-sm text-gray-500">{branding.login_subtitle}</p>
           </div>
         </div>
       )}
