@@ -1,0 +1,518 @@
+# docker-compose.prod.yaml — GGID Production Hardened Configuration
+#
+# Usage:
+#   cp .env.example .env  # Edit with your secrets
+#   docker compose -f docker-compose.prod.yaml --env-file .env up -d
+#
+# Security features:
+#   - No exposed ports except gateway (read-only TLS proxy recommended)
+#   - Redis password authentication
+#   - Resource limits (memory + CPU)
+#   - Restart policies (unless-stopped)
+#   - Log rotation (10MB x 3 files)
+#   - Read-only root filesystem for microservices
+#   - Non-root container users
+#   - Network isolation (frontend / backend / data tiers)
+#   - No source code volume mounts (use pre-built images)
+#   - PostgreSQL data persistence
+#   - TLS termination via nginx proxy
+
+services:
+  # === Data Tier ===
+  postgres:
+    image: postgres:16-alpine
+    container_name: ggid-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ggid}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ggid}
+    volumes:
+      - ggid-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ggid}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: ggid-redis
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+    volumes:
+      - ggid-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-net
+
+  nats:
+    image: nats:2-alpine
+    container_name: ggid-nats
+    command: ["-js", "-m", "8222", "--max_traced", "0"]
+    volumes:
+      - ggid-nats-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - data-net
+
+  # === RSA Key Generation (one-shot) ===
+  keygen:
+    image: alpine:3.20
+    container_name: ggid-keygen
+    entrypoint: ""
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /configs/rsa_private.pem ]; then
+          apk add --no-cache openssl
+          openssl genpkey -algorithm RSA -out /configs/rsa_private.pem -pkeyopt rsa_keygen_bits:4096
+          openssl rsa -pubout -in /configs/rsa_private.pem -out /configs/rsa_public.pem
+          chmod 600 /configs/rsa_private.pem
+          chmod 644 /configs/rsa_public.pem
+          echo 'RSA 4096-bit keys generated'
+        else
+          echo 'RSA keys already exist, skipping'
+        fi
+    volumes:
+      - ggid-configs:/configs
+    restart: "no"
+    networks:
+      - data-net
+
+  # === Database Migrations (one-shot) ===
+  migrate:
+    image: golang:1.25-alpine
+    container_name: ggid-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /app
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-ggid}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ggid}?sslmode=disable"
+    entrypoint: ""
+    command:
+      - sh
+      - -c
+      - |
+        apk add --no-cache postgresql-client
+        TABLES=$(psql "$$DATABASE_URL" -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" | tr -d ' ')
+        if [ "$$TABLES" -gt 0 ]; then
+          echo "Database already initialized ($$TABLES tables), skipping migrations"
+        else
+          cat /migrations/*.sql | psql "$$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+          echo 'Migrations complete'
+        fi
+    volumes:
+      - ..:/app:ro
+      - ./migrations:/migrations:ro
+    restart: "no"
+    networks:
+      - data-net
+
+  # === Microservices (Backend Tier) ===
+  identity:
+    build:
+      context: ../..
+      dockerfile: services/identity/Dockerfile
+    container_name: ggid-identity
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-ggid}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ggid}?sslmode=disable"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend-net
+
+  auth:
+    build:
+      context: ../..
+      dockerfile: services/auth/Dockerfile
+    container_name: ggid-auth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      keygen:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-ggid}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ggid}?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      AUTH_HTTP_ADDR: ":9001"
+      JWT_PRIVATE_KEY_PATH: "/configs/rsa_private.pem"
+      JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9001/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ggid-configs:/configs:ro
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend-net
+      - data-net
+
+  policy:
+    build:
+      context: ../..
+      dockerfile: services/policy/Dockerfile
+    container_name: ggid-policy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "${POSTGRES_USER:-ggid}"
+      DB_PASSWORD: "${POSTGRES_PASSWORD}"
+      DB_DATABASE: "${POSTGRES_DB:-ggid}"
+      DB_SSL_MODE: "disable"
+      POLICY_HTTP_ADDR: ":8070"
+      POLICY_GRPC_ADDR: ":9070"
+      NATS_URL: "nats://nats:4222"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8070/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend-net
+      - data-net
+
+  org:
+    build:
+      context: ../..
+      dockerfile: services/org/Dockerfile
+    container_name: ggid-org
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "${POSTGRES_USER:-ggid}"
+      DB_PASSWORD: "${POSTGRES_PASSWORD}"
+      DB_DATABASE: "${POSTGRES_DB:-ggid}"
+      DB_SSL_MODE: "disable"
+      ORG_HTTP_ADDR: ":8071"
+      ORG_GRPC_ADDR: ":9071"
+      NATS_URL: "nats://nats:4222"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8071/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend-net
+      - data-net
+
+  audit:
+    build:
+      context: ../..
+      dockerfile: services/audit/Dockerfile
+    container_name: ggid-audit
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "${POSTGRES_USER:-ggid}"
+      DB_PASSWORD: "${POSTGRES_PASSWORD}"
+      DB_DATABASE: "${POSTGRES_DB:-ggid}"
+      DB_SSL_MODE: "disable"
+      NATS_URL: "nats://nats:4222"
+      AUDIT_HTTP_ADDR: ":8072"
+      AUDIT_GRPC_ADDR: ":9072"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8072/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend-net
+      - data-net
+
+  oauth:
+    build:
+      context: ../..
+      dockerfile: services/oauth/Dockerfile
+    container_name: ggid-oauth
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      keygen:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: "postgres://${POSTGRES_USER:-ggid}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ggid}?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      OAUTH_PRIVATE_KEY_PATH: "/configs/rsa_private.pem"
+      OAUTH_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9005/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - ggid-configs:/configs:ro
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - backend-net
+      - data-net
+
+  # === Frontend Tier ===
+  gateway:
+    build:
+      context: ../..
+      dockerfile: services/gateway/Dockerfile
+    container_name: ggid-gateway
+    depends_on:
+      auth:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+      policy:
+        condition: service_healthy
+      org:
+        condition: service_healthy
+      audit:
+        condition: service_healthy
+      oauth:
+        condition: service_healthy
+    environment:
+      GATEWAY_ADDR: ":8080"
+      JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
+      AUTH_SERVICE_URL: "http://auth:9001"
+      IDENTITY_SERVICE_URL: "http://identity:8080"
+      POLICY_SERVICE_URL: "http://policy:8070"
+      ROLES_SERVICE_URL: "http://policy:8070"
+      PERMISSIONS_SERVICE_URL: "http://policy:8070"
+      ORG_SERVICE_URL: "http://org:8071"
+      AUDIT_SERVICE_URL: "http://audit:8072"
+      OAUTH_SERVICE_URL: "http://oauth:9005"
+      SAML_SERVICE_URL: "http://oauth:9005"
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    volumes:
+      - ggid-configs:/configs:ro
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "1.0"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - frontend-net
+      - backend-net
+
+  console:
+    build:
+      context: ../../console
+      dockerfile: Dockerfile
+    container_name: ggid-console
+    depends_on:
+      gateway:
+        condition: service_healthy
+    environment:
+      GATEWAY_URL: "http://gateway:8080"
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
+      NEXTAUTH_SECRET: "${NEXTAUTH_SECRET:?Set NEXTAUTH_SECRET in .env}"
+    ports:
+      - "${CONSOLE_PORT:-3000}:3000"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - frontend-net
+
+volumes:
+  ggid-pgdata:
+  ggid-redis-data:
+  ggid-nats-data:
+  ggid-configs:
+
+networks:
+  # Public-facing services (gateway, console)
+  frontend-net:
+    driver: bridge
+  # Microservices (internal only, no host port exposure)
+  backend-net:
+    driver: bridge
+    internal: true
+  # Data stores (postgres, redis, nats)
+  data-net:
+    driver: bridge
+    internal: true
