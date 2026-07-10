@@ -20,6 +20,8 @@ type mockRoleRepo struct {
 	deleteErr error
 	grantErr  error
 	revokeErr error
+	listErr   error
+	permErr   error
 }
 
 func (m *mockRoleRepo) Create(_ context.Context, r *domain.Role) error {
@@ -36,6 +38,7 @@ func (m *mockRoleRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Role, e
 	return nil, errors.NotFound("role", id.String())
 }
 func (m *mockRoleRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, offset int) ([]*domain.Role, error) {
+	if m.listErr != nil { return nil, m.listErr }
 	var res []*domain.Role
 	n := 0
 	for _, r := range m.roles {
@@ -70,6 +73,7 @@ func (m *mockRoleRepo) GetRolePermissions(_ context.Context, _ []uuid.UUID) ([]*
 type mockPermRepo struct {
 	perms     map[uuid.UUID]*domain.Permission
 	createErr error
+	listErr   error
 }
 func (m *mockPermRepo) Create(_ context.Context, p *domain.Permission) error {
 	if m.createErr != nil { return m.createErr }
@@ -79,6 +83,7 @@ func (m *mockPermRepo) Create(_ context.Context, p *domain.Permission) error {
 	return nil
 }
 func (m *mockPermRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, offset int) ([]*domain.Permission, error) {
+	if m.listErr != nil { return nil, m.listErr }
 	var res []*domain.Permission
 	n := 0
 	for _, p := range m.perms {
@@ -118,6 +123,7 @@ type mockPolicyRepo struct {
 	deleteErr error
 	attachErr error
 	detachErr error
+	listErr   error
 }
 func (m *mockPolicyRepo) Create(_ context.Context, p *domain.Policy) error {
 	if m.createErr != nil { return m.createErr }
@@ -132,6 +138,7 @@ func (m *mockPolicyRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.Polic
 	return nil, errors.NotFound("policy", id.String())
 }
 func (m *mockPolicyRepo) ListByTenant(_ context.Context, tid uuid.UUID, limit, offset int) ([]*domain.Policy, error) {
+	if m.listErr != nil { return nil, m.listErr }
 	var res []*domain.Policy
 	n := 0
 	for _, p := range m.policies {
@@ -393,4 +400,36 @@ func TestPolicyService_DetachPolicy(t *testing.T) {
 func TestPolicyService_DetachPolicy_Error(t *testing.T) {
 	svc := NewPolicyService(&mockPolicyRepo{detachErr: errors.New(errors.ErrInternal, "x")})
 	if err := svc.DetachPolicy(context.Background(), uuid.New(), domain.PrincipalRole, uuid.New()); err == nil { t.Fatal("expected error") }
+}
+
+func TestGetRolePermissions_Success(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{}, nil)
+	_, err := svc.GetRolePermissions(context.Background(), uuid.New())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestListPolicies_RepoError(t *testing.T) {
+	svc := NewPolicyService(&mockPolicyRepo{listErr: errors.New(errors.ErrInternal, "db error")})
+	_, err := svc.ListPolicies(context.Background(), uuid.New(), 1, 10)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestListPermissions_Error(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{}, &mockPermRepo{listErr: errors.New(errors.ErrInternal, "db error")}, nil)
+	_, err := svc.ListPermissions(context.Background(), uuid.New(), 1, 50)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestListRoles_Error(t *testing.T) {
+	svc := NewRoleService(&mockRoleRepo{listErr: errors.New(errors.ErrInternal, "db error")}, &mockPermRepo{}, nil)
+	_, err := svc.ListRoles(context.Background(), uuid.New(), 50, 0)
+	if err == nil {
+		t.Fatal("expected error")
+	}
 }

@@ -4,6 +4,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -389,15 +390,17 @@ func toDate(v any) time.Time {
 }
 
 func matchIP(cidrOrIP, actualIP string) bool {
-	// Simple matching: exact or CIDR prefix
 	if !strings.Contains(cidrOrIP, "/") {
 		return cidrOrIP == actualIP
 	}
-	// CIDR matching
-	parts := strings.SplitN(actualIP, "/", 2)
-	ipStr := parts[0]
-	if strings.HasPrefix(ipStr, cidrOrIP[:strings.Index(cidrOrIP, "/")]) {
-		return true
+	// Parse CIDR and check if actualIP is in range
+	_, ipNet, err := net.ParseCIDR(cidrOrIP)
+	if err != nil {
+		return false
 	}
-	return false
+	ip := net.ParseIP(actualIP)
+	if ip == nil {
+		return false
+	}
+	return ipNet.Contains(ip)
 }

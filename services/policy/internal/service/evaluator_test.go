@@ -934,3 +934,45 @@ func TestMatchConditions(t *testing.T) {
 		})
 	}
 }
+
+func TestEvaluateOperator_EdgeCases(t *testing.T) {
+	tests := []struct {
+		op       string
+		expected any
+		actual   any
+		want     bool
+	}{
+		{"NumericNotEquals", float64(42), float64(43), true},
+		{"NumericLessThanEquals", float64(10), float64(10), true},
+		{"NumericGreaterThanEquals", float64(10), float64(10), true},
+		{"StringNotEquals", "a", "b", true},
+		{"DateLessThan", "2025-01-01T00:00:00Z", "2024-06-01T00:00:00Z", true},
+		{"DateGreaterThan", "2025-01-01T00:00:00Z", "2024-06-01T00:00:00Z", false},
+		{"IpAddress", "192.168.1.1", "192.168.1.1", true},
+		{"IpAddress", "192.168.1.0/24", "192.168.1.50", true},
+		{"NotIpAddress", "10.0.0.1", "192.168.1.1", true},
+		{"UnknownOp", "x", "y", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.op, func(t *testing.T) {
+			got := evaluateOperator(tt.op, tt.expected, tt.actual)
+			if got != tt.want {
+				t.Errorf("evaluateOperator(%q) = %v, want %v", tt.op, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTypeCoercionHelpers(t *testing.T) {
+	if toStr(float64(3.14)) != "3.14" { t.Error("toStr float64 failed") }
+	if toStr(true) != "true" { t.Error("toStr bool failed") }
+	if toFloat64("42") != float64(42) { t.Error("toFloat64 string failed") }
+	if toFloat64(int64(7)) != float64(7) { t.Error("toFloat64 int64 failed") }
+	if !toBool("true") { t.Error("toBool true failed") }
+	if !toBool("1") { t.Error("toBool 1 failed") }
+	if toBool("false") { t.Error("toBool false failed") }
+	d := toDate("2024-01-15T10:00:00Z")
+	if d.Year() != 2024 { t.Error("toDate year failed") }
+	if !matchIP("10.0.0.0/8", "10.1.2.3") { t.Error("matchIP CIDR match failed") }
+	if matchIP("10.0.0.0/8", "192.168.1.1") { t.Error("matchIP CIDR no-match failed") }
+}
