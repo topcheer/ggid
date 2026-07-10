@@ -1061,3 +1061,162 @@ spec:
 ```
 
 Flagger automatically promotes or rolls back based on error rate.
+
+---
+
+## Load Balancer: HAProxy Configuration
+
+### Active-Active with Health Checks
+
+```haproxy
+# /etc/haproxy/haproxy.cfg
+
+frontend ggid_frontend
+    bind *:443 ssl crt /etc/ssl/ggid.pem alpn h2,http/1.1
+    mode http
+    
+    # Security headers
+    http-response set-header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    http-response set-header X-Frame-Options "DENY"
+    http-response set-header X-Content-Type-Options "nosniff"
+    
+    # Rate limiting (40 req/s per IP)
+    stick-table type ip size 100k expire 30s store req_rate(1s)
+    http-request track-sc0 src
+    http-request deny if { sc_req_rate(0) gt 40 }
+    
+    # Route to backend
+    default_backend ggid_servers
+
+backend ggid_servers
+    mode http
+    balance leastconn
+    
+    # Health check: GET /healthz every 2s
+    option httpchk GET /healthz
+    http-check expect status 200
+    default-server inter 2s fall 3 rise 2
+    
+    # Graceful shutdown: respect Connection: close
+    server ggid-1 10.0.1.10:8080 check
+    server ggid-2 10.0.1.11:8080 check
+    server ggid-3 10.0.1.12:8080 check backup
+```
+
+### HAProxy vs NGINX Comparison
+
+| Feature | NGINX | HAProxy |
+|---------|-------|---------|
+| L7 load balancing | Yes | Yes |
+| L4 load balancing | Stream module | Native |
+| Health checks | Passive (OSS) / Active (Plus) | Active (native) |
+| Rate limiting | `limit_req` | `stick-table` |
+| Graceful shutdown | `max_fails` + `fail_timeout` | `observe` + `slowstart` |
+| SSL/TLS termination | Yes | Yes |
+| HTTP/2 | Yes (h2) | Yes (h2) |
+| Session affinity | `ip_hash` | `balance source` / cookie |
+| Metrics endpoint | Stub status | Built-in stats page |
+| Config reload | Zero-downtime (`nginx -s reload`) | Zero-downtime (`reload` / `cron` socket) |
+
+### Session Affinity (Sticky Sessions)
+
+For stateful operations that require session affinity:
+
+```haproxy
+backend ggid_stateful
+    balance roundrobin
+    cookie GGID_SERVER insert indirect nocache httponly samesite Strict
+    server ggid-1 10.0.1.10:8080 check cookie ggid-1
+    server ggid-2 10.0.1.11:8080 check cookie ggid-2
+```
+
+> GGID is designed stateless. Session affinity is only needed for specific
+> cases (e.g., WebAuthn ceremony with in-memory challenge state).
+
+---
+
+## Multi-Region Disaster Recovery
+
+### Architecture
+
+```
+                    ┌─────────────────────┐
+                    │   Global DNS / GSLB  │
+                    │   (health-based)     │
+                    └──────┬───────┬──────┘
+                           │       │
+              ┌────────────┘       └────────────┐
+              ▼                                  ▼
+    ┌─────────────────┐               ┌─────────────────┐
+    │  Region: Primary │               │  Region: DR      │
+    │  (Active)        │               │  (Standby)       │
+    │                  │               │                  │
+    │  ┌────────────┐  │   async       │  ┌────────────┐  │
+    │  │ PostgreSQL │───────────────────►│ PostgreSQL │  │
+    │  │ (Primary)  │  │  streaming    │  │ (Replica)  │  │
+    │  └────────────┘  │  replication  │  └────────────┘  │
+    │                  │               │                  │
+    │  ┌────────────┐  │   Redis       │  ┌────────────┐  │
+    │  │  Redis     │───────────────────►│  Redis     │  │
+    │  │  (Master)  │  │  replica      │  │  (Replica) │  │
+    │  └────────────┘  │               │  └────────────┘  │
+    └─────────────────┘               └─────────────────┘
+```
+
+### RPO / RTO Targets
+
+| Metric | Target | How |
+|--------|--------|-----|
+| RPO (data loss) | < 1 second | PostgreSQL synchronous streaming replication |
+| RPO (relaxed) | < 5 seconds | PostgreSQL async streaming replication |
+| RTO (recovery time) | < 5 minutes | DNS failover + promote replica |
+| RTO (blue-green) | < 30 seconds | Pre-warmed standby, DNS switch |
+
+### PostgreSQL Cross-Region Replication
+
+```ini
+# postgresql.conf (primary)
+wal_level = replica
+max_wal_senders = 10
+wal_keep_size = 1024
+synchronous_standby_names = 'dr_replica'
+```
+
+```ini
+# postgresql.conf (DR replica)
+hot_standby = on
+```
+
+```bash
+# Start DR replica from base backup
+pg_basebackup -h primary-db -U replicator -D /var/lib/postgresql/data -P -R -S dr_slot
+```
+
+### Failover Procedure
+
+```bash
+# 1. Promote DR PostgreSQL to primary
+ssh dr-db
+sudo -u postgres pg_ctl promote -D /var/lib/postgresql/data
+
+# 2. Update DNS to point to DR region
+# (Route53 / Cloudflare / Global Accelerator health check fails over automatically)
+
+# 3. Start GGID services in DR region
+docker compose -f deploy/docker-compose.dr.yaml up -d
+
+# 4. Verify health
+curl https://iam-dr.example.com/healthz
+
+# 5. Update Redis to DR replica
+redis-cli -h dr-redis SLAVEOF NO ONE
+```
+
+### Failback Procedure
+
+```bash
+# 1. Re-establish replication from DR → Primary (reverse direction)
+# 2. Wait for replication to catch up
+# 3. Switch DNS back to primary region
+# 4. Demote DR back to standby
+```
