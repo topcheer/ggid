@@ -1428,6 +1428,286 @@ func main() {
 
 ---
 
+## Sample Plugin: SMS OTP Provider
+
+A complete MFA plugin that sends one-time passcodes via SMS using Twilio.
+This plugin implements both the MFA Challenge Provider interface and the
+Event Subscriber interface (for auto-enrollment).
+
+### Plugin Interface
+
+```go
+// MFAProvider defines a multi-factor authentication challenge provider.
+type MFAProvider interface {
+    // Type returns the MFA method identifier
+    Type() string
+
+    // IssueChallenge generates a challenge and sends it to the user.
+    // For SMS OTP: generate 6-digit code, send via SMS, store in Redis.
+    IssueChallenge(ctx context.Context, userID uuid.UUID, identifier string) (challengeID string, err error)
+
+    // VerifyChallenge validates the user's response.
+    // For SMS OTP: compare submitted code with stored code.
+    VerifyChallenge(ctx context.Context, challengeID, code string) (valid bool, err error)
+}
+```
+
+### SMS OTP Provider Implementation
+
+```go
+// plugins/sms_otp/provider.go
+package main
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "log"
+    "math/rand"
+    "net/http"
+    "net/url"
+    "time"
+
+    "github.com/google/uuid"
+    "github.com/redis/go-redis/v9"
+)
+
+type SMSOTPProvider struct {
+    twilioAccountSID string
+    twilioAuthToken  string
+    twilioFromNumber string
+    rdb              *redis.Client
+    client           *http.Client
+}
+
+func NewSMSOTPProvider(sid, token, from string, rdb *redis.Client) *SMSOTPProvider {
+    return &SMSOTPProvider{
+        twilioAccountSID: sid,
+        twilioAuthToken:  token,
+        twilioFromNumber: from,
+        rdb:              rdb,
+        client:           &http.Client{Timeout: 10 * time.Second},
+    }
+}
+
+// --- MFAProvider Interface ---
+
+func (p *SMSOTPProvider) Type() string {
+    return "sms_otp"
+}
+
+func (p *SMSOTPProvider) IssueChallenge(ctx context.Context, userID uuid.UUID, phone string) (string, error) {
+    // Generate 6-digit code
+    code := fmt.Sprintf("%06d", rand.Intn(1000000))
+
+    // Store in Redis with 5-minute TTL
+    challengeID := uuid.New().String()
+    key := fmt.Sprintf("ggid:mfa:sms:%s", challengeID)
+    val := fmt.Sprintf("%s:%s", userID, code)
+
+    if err := p.rdb.Set(ctx, key, val, 5*time.Minute).Err(); err != nil {
+        return "", fmt.Errorf("store OTP code: %w", err)
+    }
+
+    // Send SMS via Twilio
+    if err := p.sendSMS(phone, fmt.Sprintf("Your GGID verification code is: %s. Expires in 5 minutes.", code)); err != nil {
+        return "", fmt.Errorf("send SMS: %w", err)
+    }
+
+    log.Printf("[SMSOTP] Challenge %s sent to phone ending %s", challengeID, phone[len(phone)-4:])
+    return challengeID, nil
+}
+
+func (p *SMSOTPProvider) VerifyChallenge(ctx context.Context, challengeID, code string) (bool, error) {
+    key := fmt.Sprintf("ggid:mfa:sms:%s", challengeID)
+
+    // Get stored code
+    stored, err := p.rdb.Get(ctx, key).Result()
+    if err == redis.Nil {
+        return false, fmt.Errorf("challenge expired or not found")
+    }
+    if err != nil {
+        return false, fmt.Errorf("retrieve OTP code: %w", err)
+    }
+
+    // Delete after use (one-time)
+    p.rdb.Del(ctx, key)
+
+    // Compare (constant-time comparison recommended)
+    _, expectedCode, _ := splitStored(stored)
+    if code != expectedCode {
+        return false, nil
+    }
+
+    return true, nil
+}
+
+// --- Twilio SMS Sending ---
+
+func (p *SMSOTPProvider) sendSMS(to, body string) error {
+    endpoint := fmt.Sprintf(
+        "https://api.twilio.com/2010-04-01/Accounts/%s/Messages.json",
+        p.twilioAccountSID,
+    )
+
+    data := url.Values{
+        "From": {p.twilioFromNumber},
+        "To":   {to},
+        "Body": {body},
+    }
+
+    req, _ := http.NewRequest("POST", endpoint, strings.NewReader(data.Encode()))
+    req.SetBasicAuth(p.twilioAccountSID, p.twilioAuthToken)
+    req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+    resp, err := p.client.Do(req)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusCreated {
+        var twilioErr struct {
+            Message string `json:"message"`
+        }
+        json.NewDecoder(resp.Body).Decode(&twilioErr)
+        return fmt.Errorf("twilio error: %s", twilioErr.Message)
+    }
+
+    return nil
+}
+
+// --- Event Subscriber Interface (Auto-Enrollment) ---
+
+func (p *SMSOTPProvider) HandleEvent(ctx context.Context, event Event) error {
+    // Auto-enroll SMS OTP for users with phone numbers
+    if event.EventType == "user.phone_verified" {
+        var data struct {
+            UserID string `json:"user_id"`
+            Phone  string `json:"phone"`
+        }
+        if err := json.Unmarshal(event.Data, &data); err != nil {
+            return err
+        }
+
+        // Register this MFA method for the user
+        log.Printf("[SMSOTP] Auto-enrolling user %s for SMS OTP", data.UserID)
+        // Call GGID API to register MFA factor...
+    }
+    return nil
+}
+
+// --- Helper ---
+
+func splitStored(stored string) (userID, code string, ok bool) {
+    parts := strings.SplitN(stored, ":", 2)
+    if len(parts) != 2 {
+        return "", "", false
+    }
+    return parts[0], parts[1], true
+}
+
+// === Plugin Registration ===
+
+var Plugin *SMSOTPProvider
+
+func Init(sid, token, from string, rdb *redis.Client) *SMSOTPProvider {
+    Plugin = NewSMSOTPProvider(sid, token, from, rdb)
+    log.Printf("[SMSOTP] Initialized with Twilio SID: %s", sid[:8]+"...")
+    return Plugin
+}
+```
+
+### Configuration
+
+```bash
+# Enable SMS OTP MFA
+SMS_OTP_ENABLED=true
+SMS_OTP_TWILIO_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+SMS_OTP_TWILIO_TOKEN=your_twilio_auth_token
+SMS_OTP_FROM_NUMBER=+15551234567
+
+# Code settings
+SMS_OTP_CODE_LENGTH=6
+SMS_OTP_CODE_TTL_SECONDS=300
+SMS_OTP_MAX_ATTEMPTS=3
+```
+
+### Registration in Gateway
+
+```go
+func main() {
+    // Initialize SMS OTP provider
+    smsOTP := smsotp.Init(
+        os.Getenv("SMS_OTP_TWILIO_SID"),
+        os.Getenv("SMS_OTP_TWILIO_TOKEN"),
+        os.Getenv("SMS_OTP_FROM_NUMBER"),
+        rdb,
+    )
+
+    // Register as MFA provider
+    authService.RegisterMFAProvider(smsOTP)
+
+    // Register as event subscriber (auto-enroll on phone verification)
+    eventBus.Subscribe("ggid.events.user.phone_verified", smsOTP)
+}
+```
+
+### User Flow
+
+```
+1. User logs in with password
+2. Auth service checks MFA enrollment
+   └── User has sms_otp factor → trigger challenge
+3. SMSOTPProvider.IssueChallenge()
+   ├── Generate 6-digit code
+   ├── Store in Redis (5 min TTL)
+   └── Send SMS via Twilio
+4. User enters code on login page
+5. SMSOTPProvider.VerifyChallenge()
+   ├── Compare code with Redis
+   ├── Delete code (one-time use)
+   └── Return valid/invalid
+6. If valid → issue JWT with amr: ["pwd", "sms"]
+```
+
+### Rate Limiting
+
+SMS OTP has additional rate limits to prevent abuse:
+
+| Check | Limit | Window |
+|-------|-------|--------|
+| Challenge per user | 3 | 5 min |
+| Challenge per phone | 5 | 1 hour |
+| Verify attempts per challenge | 3 | 5 min |
+
+### Alternative Providers
+
+The SMS OTP plugin supports pluggable SMS backends:
+
+| Provider | Env Var | Notes |
+|----------|---------|-------|
+| Twilio | `SMS_OTP_PROVIDER=twilio` | Default |
+| AWS SNS | `SMS_OTP_PROVIDER=sns` | AWS_REGION required |
+| Vonage | `SMS_OTP_PROVIDER=vonage` | Nexmo API |
+| Custom | `SMS_OTP_PROVIDER=custom` | Webhook to your endpoint |
+
+```go
+// Switch SMS backend
+switch os.Getenv("SMS_OTP_PROVIDER") {
+case "sns":
+    sender = sns.NewSender(awsSession, senderID)
+case "vonage":
+    sender = vonage.NewSender(apiKey, apiSecret)
+case "custom":
+    sender = webhook.NewSender(os.Getenv("SMS_OTP_WEBHOOK_URL"))
+default:
+    sender = twilio.NewSender(sid, token, from)
+}
+```
+
+---
+
 ## References
 
 - [Plugin API Reference](./plugin-api-reference.md) — Detailed API docs
