@@ -46,6 +46,8 @@ type Gateway struct {
 	proxies       map[string]*httputil.ReverseProxy
 	timeouts      map[string]time.Duration
 	healthChecker *healthcheck.Checker
+	reloadFunc    ReloadFunc
+	routeVersion  int64
 	mu            sync.RWMutex
 }
 
@@ -217,6 +219,16 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// --- Gateway management API ---
+	if r.URL.Path == "/api/v1/gateway/routes" && r.Method == http.MethodGet {
+		gw.handleGetRoutes(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/gateway/routes/reload" && r.Method == http.MethodPost {
+		gw.handleReloadRoutes(w, r)
+		return
+	}
+
 	// Find matching backend by longest prefix
 	backend, prefix := gw.matchBackend(r.URL.Path)
 	if backend == nil {
@@ -284,11 +296,13 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 	})
 
-	// Apply outer middleware: CORS → RequestID → Logging → TenantResolver → inner
+	// Apply outer middleware: PanicRecovery → CORS → RequestID → StructuredLogging → TenantResolver → inner
+	logger := middleware.NewStructuredLogger("ggid-gateway")
 	handler := middleware.TenantResolver(gw.cfg.DomainSuffix)(inner)
-	handler = middleware.Logging(handler)
+	handler = middleware.RequestLogger(logger)(handler)
 	handler = middleware.RequestID(handler)
 	handler = middleware.CORS(handler)
+	handler = middleware.PanicRecovery(logger)(handler)
 
 	return handler
 }
@@ -349,6 +363,160 @@ func (gw *Gateway) PrintRoutes() {
 	}
 	log.Println("  /docs -> Swagger UI")
 	log.Println("  /api-docs -> OpenAPI JSON spec")
+}
+
+// --- Gateway Admin API ---
+
+// RouteInfo describes a single route in the gateway.
+type RouteInfo struct {
+	Prefix      string `json:"prefix"`
+	Backend     string `json:"backend"`
+	HasTimeout  bool   `json:"has_timeout"`
+	ReadTimeout string `json:"read_timeout,omitempty"`
+}
+
+// RoutesResponse is the response for GET /api/v1/gateway/routes.
+type RoutesResponse struct {
+	Routes  []RouteInfo `json:"routes"`
+	Version int64       `json:"version"`
+}
+
+// ReloadResponse is the response for POST /api/v1/gateway/routes/reload.
+type ReloadResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Version int64  `json:"version"`
+}
+
+// ReloadFunc is a callback to reload the configuration at runtime.
+// If nil, reload returns an error.
+type ReloadFunc func() (*config.Config, error)
+
+// handleGetRoutes returns the current route table as JSON.
+func (gw *Gateway) handleGetRoutes(w http.ResponseWriter, _ *http.Request) {
+	gw.mu.RLock()
+	defer gw.mu.RUnlock()
+
+	routes := make([]RouteInfo, 0, len(gw.cfg.Routes))
+	for prefix, backend := range gw.cfg.Routes {
+		ri := RouteInfo{
+			Prefix:  prefix,
+			Backend: backend,
+		}
+		if to, ok := gw.timeouts[prefix]; ok && to > 0 {
+			ri.HasTimeout = true
+			ri.ReadTimeout = to.String()
+		}
+		routes = append(routes, ri)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(RoutesResponse{
+		Routes:  routes,
+		Version: gw.routeVersion,
+	})
+}
+
+// handleReloadRoutes triggers a route reload from the config source.
+func (gw *Gateway) handleReloadRoutes(w http.ResponseWriter, _ *http.Request) {
+	if gw.reloadFunc == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_ = json.NewEncoder(w).Encode(ReloadResponse{
+			Status:  "error",
+			Message: "reload not configured",
+		})
+		return
+	}
+
+	newCfg, err := gw.reloadFunc()
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(ReloadResponse{
+			Status:  "error",
+			Message: "reload failed: " + err.Error(),
+		})
+		return
+	}
+
+	gw.mu.Lock()
+	gw.cfg = newCfg
+	gw.proxies = make(map[string]*httputil.ReverseProxy)
+	gw.timeouts = make(map[string]time.Duration)
+	gw.buildProxiesLocked()
+	gw.buildHealthChecker()
+	gw.routeVersion++
+	gw.mu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(ReloadResponse{
+		Status:  "ok",
+		Message: "routes reloaded",
+		Version: gw.routeVersion,
+	})
+}
+
+// SetReloadFunc sets the callback used by the reload endpoint.
+func (gw *Gateway) SetReloadFunc(fn ReloadFunc) {
+	gw.reloadFunc = fn
+}
+
+// buildProxiesLocked builds proxies without acquiring the write lock.
+// Caller must hold gw.mu.
+func (gw *Gateway) buildProxiesLocked() {
+	for prefix, backendURL := range gw.cfg.Routes {
+		parsed, err := url.Parse(backendURL)
+		if err != nil {
+			log.Printf("invalid backend URL %s: %v", backendURL, err)
+			continue
+		}
+		proxy := httputil.NewSingleHostReverseProxy(parsed)
+
+		to := gw.cfg.GetRouteTimeout(prefix)
+		proxy.Transport = &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     to.Idle,
+			DialContext: (&net.Dialer{
+				Timeout:   to.Dial,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			ForceAttemptHTTP2:     true,
+			TLSHandshakeTimeout:   5 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
+
+		originalDirector := proxy.Director
+		proxy.Director = func(req *http.Request) {
+			originalDirector(req)
+			if requestID, ok := req.Context().Value(middleware.RequestIDKey).(string); ok {
+				req.Header.Set("X-Request-ID", requestID)
+			}
+			if userID, ok := middleware.UserIDFromRequest(req); ok {
+				req.Header.Set("X-User-ID", userID.String())
+			}
+			if tenantID, ok := middleware.TenantIDFromRequest(req); ok {
+				req.Header.Set("X-Tenant-ID", tenantID)
+				q := req.URL.Query()
+				if q.Get("tenant_id") == "" {
+					q.Set("tenant_id", tenantID)
+					req.URL.RawQuery = q.Encode()
+				}
+				injectTenantIntoBody(req, tenantID)
+			}
+		}
+		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Printf("proxy error for %s%s: %v", parsed.Host, r.URL.Path, err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadGateway)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "backend service unavailable"})
+		}
+		gw.proxies[prefix] = proxy
+		if to.Read > 0 {
+			gw.timeouts[prefix] = to.Read
+		}
+	}
 }
 
 // serveSwaggerUI writes the Swagger UI HTML page.

@@ -230,29 +230,35 @@ func SecurityHeaders(next http.Handler) http.Handler {
 
 // --- Tenant Resolution ---
 
-// TenantResolver extracts tenant ID from header or subdomain and injects into context.
+// TenantResolver extracts tenant ID from multiple sources in priority order:
+// 1. X-Tenant-ID header (explicit)
+// 2. JWT claim "tenant_id" (parsed without verification — verified later by JWTAuth)
+// 3. Subdomain (acme.iam.com → tenant "acme", or UUID subdomain)
+// The domainSuffix is used for subdomain extraction (e.g. ".iam.com").
 func TenantResolver(domainSuffix string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var tenantID uuid.UUID
 
-			// 1. Try X-Tenant-ID header
+			// 1. Try X-Tenant-ID header (highest priority)
 			if tidStr := r.Header.Get("X-Tenant-ID"); tidStr != "" {
 				if id, err := uuid.Parse(tidStr); err == nil {
 					tenantID = id
 				}
 			}
 
-			// 2. Fallback to subdomain
-			if tenantID == uuid.Nil && domainSuffix != "" {
-				host := r.Host
-				if strings.HasSuffix(host, domainSuffix) {
-					sub := strings.TrimSuffix(host, domainSuffix)
-					sub = strings.SplitN(sub, ".", 2)[0]
-					if id, err := uuid.Parse(sub); err == nil {
+			// 2. Try JWT claim tenant_id (parse without verification — JWTAuth verifies later)
+			if tenantID == uuid.Nil {
+				if tidStr := extractTenantFromJWT(r); tidStr != "" {
+					if id, err := uuid.Parse(tidStr); err == nil {
 						tenantID = id
 					}
 				}
+			}
+
+			// 3. Fallback to subdomain extraction
+			if tenantID == uuid.Nil && domainSuffix != "" {
+				tenantID = extractTenantFromSubdomain(r.Host, domainSuffix)
 			}
 
 			if tenantID != uuid.Nil {
@@ -268,6 +274,64 @@ func TenantResolver(domainSuffix string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// extractTenantFromJWT parses the JWT from the Authorization header
+// (without verifying the signature) and extracts the tenant_id claim.
+// This is safe because JWTAuth will verify the token later — we're just
+// reading metadata for routing context.
+func extractTenantFromJWT(r *http.Request) string {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return ""
+	}
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return ""
+	}
+	tokenStr := strings.TrimSpace(parts[1])
+	// JWT format: header.payload.signature — we only need the payload
+	tokenParts := strings.Split(tokenStr, ".")
+	if len(tokenParts) < 2 {
+		return ""
+	}
+	// Decode the payload (base64url, no padding)
+	payload, err := base64.RawURLEncoding.DecodeString(tokenParts[1])
+	if err != nil {
+		return ""
+	}
+	// Parse claims
+	var claims map[string]any
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return ""
+	}
+	if tid, ok := claims["tenant_id"].(string); ok {
+		return tid
+	}
+	return ""
+}
+
+// extractTenantFromSubdomain extracts a tenant UUID from the subdomain.
+// For example: "acme.iam.com" with domainSuffix ".iam.com" → tries parsing "acme" as UUID.
+// This only works if tenants use UUID-format subdomains.
+func extractTenantFromSubdomain(host, domainSuffix string) uuid.UUID {
+	// Strip port if present
+	if idx := strings.LastIndex(host, ":"); idx >= 0 {
+		host = host[:idx]
+	}
+	if !strings.HasSuffix(host, domainSuffix) {
+		return uuid.Nil
+	}
+	sub := strings.TrimSuffix(host, domainSuffix)
+	sub = strings.SplitN(sub, ".", 2)[0]
+	if sub == "" || sub == "www" {
+		return uuid.Nil
+	}
+	id, err := uuid.Parse(sub)
+	if err != nil {
+		return uuid.Nil
+	}
+	return id
 }
 
 // --- JWT Verification ---
