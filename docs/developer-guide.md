@@ -1143,3 +1143,140 @@ go run ./services/auth/cmd/
 # Gateway proxies to all services
 go run ./services/gateway/cmd/
 ```
+
+---
+
+## CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+GGID uses GitHub Actions for continuous integration. The pipeline runs on
+every push and pull request.
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main, release/*]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Run tests
+        run: |
+          go test -race -coverprofile=coverage.out -covermode=atomic ./...
+          go tool cover -func=coverage.out | tail -1
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [gateway, identity, auth, oauth, policy, org, audit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build ${{ matrix.service }}
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/${{ matrix.service }}/Dockerfile
+          push: false
+          tags: ggid/${{ matrix.service }}:latest
+
+  integration:
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+      - name: Integration tests
+        run: go test -tags=integration -v ./test/integration/...
+```
+
+### Pipeline Stages
+
+| Stage | Purpose | Tool | Timeout |
+|-------|---------|------|---------|
+| Lint | Code quality, security | golangci-lint | 5 min |
+| Test | Unit tests + race detector | `go test -race` | 10 min |
+| Build | Docker images per service | Docker Buildx | 10 min |
+| Integration | Cross-service E2E | `go test -tags=integration` | 15 min |
+| Deploy (main only) | Rollout to staging | Docker Compose / Helm | 5 min |
+
+### Coverage Enforcement
+
+```bash
+# Minimum coverage per package (enforced in CI)
+PACKAGES=(
+  "pkg/errors=100"
+  "pkg/tenant=100"
+  "pkg/i18n=100"
+  "pkg/crypto=85"
+  "pkg/authprovider=95"
+  "pkg/saml=85"
+  "services/oauth/internal/service=90"
+  "services/auth/internal/service=85"
+)
+```
+
+### PR Review Process
+
+1. **Automated checks must pass**: lint, test, build
+2. **Minimum 1 reviewer** for regular PRs
+3. **Minimum 2 reviewers** for changes to `pkg/` or `proto/`
+4. **Coverage must not decrease** by more than 2%
+5. **No `force-push`** after review approval
+6. **Squash merge** to keep history clean
+
+### Release Process
+
+```
+1. Create release branch: release/v1.x.y
+2. Run full test suite: make test
+3. Update CHANGELOG.md
+4. Tag: git tag v1.x.y
+5. CI builds Docker images with semantic version tag
+6. Deploy to staging → smoke test → promote to production
+```
+
+### Branch Protection Rules
+
+| Branch | Rule |
+|--------|------|
+| `main` | Require PR, 2 reviews, CI pass, no force-push |
+| `release/*` | Require PR, 1 review, CI pass |
+| Feature branches | Auto-delete after merge |
