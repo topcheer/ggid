@@ -463,3 +463,310 @@ if not verify_signature(request.data, signature, "your-hmac-secret"):
 8. **Test edge cases** — empty fields, Unicode, very long strings
 9. **Monitor hook latency** — add the `X-GGID-Signature` timestamp to measure
 10. **Don't block critical paths** — use `post-*` hooks for non-critical side effects
+
+---
+
+## WASM Plugin Development
+
+GGID supports WebAssembly (WASM) plugins that run in-process at the Gateway
+layer for maximum performance (no network overhead).
+
+```mermaid
+graph LR
+    REQ[Request] --> GW[Gateway]
+    GW --> WASM{WASM Plugin<br/>Loaded?}
+    WASM -->|Yes| EXEC[Execute Plugin<br/>in sandbox]
+    EXEC --> RESULT{Result}
+    RESULT -->|Allow| FWD[Forward to backend]
+    RESULT -->|Deny| DENY[403 Forbidden]
+    RESULT -->|Modify| MOD[Modify request<br/>headers/body]
+    MOD --> FWD
+    WASM -->|No| FWD
+
+    style EXEC fill:#8e44ad,color:#fff
+```
+
+### WASM SDK Interface
+
+Plugins implement the `RequestHandler` interface:
+
+```go
+// SDK interface exposed to WASM plugins
+type RequestHandler interface {
+    // OnRequest is called before the request reaches the backend
+    // Return nil to allow, or a Response to short-circuit
+    OnRequest(req *Request) *Response
+
+    // OnResponse is called after the backend responds
+    // Can modify the response before returning to client
+    OnResponse(resp *Response) *Response
+}
+
+type Request struct {
+    Method   string            `json:"method"`
+    Path     string            `json:"path"`
+    Headers  map[string]string `json:"headers"`
+    Body     []byte            `json:"body"`
+    TenantID string            `json:"tenant_id"`
+    UserID   string            `json:"user_id"`
+}
+
+type Response struct {
+    Status  int               `json:"status"`
+    Headers map[string]string `json:"headers"`
+    Body    []byte            `json:"body"`
+}
+```
+
+### Writing a WASM Plugin (TinyGo)
+
+```go
+// plugins/ip-blocker/main.go
+//go:build tinygo.wasm
+
+package main
+
+import (
+    "encoding/json"
+    "syscall/js"
+)
+
+// Blocked IP ranges
+var blockedCIDRs = []string{
+    "10.0.0.0/8",
+    "192.168.1.0/24",
+}
+
+func onRequest(this js.Value, args []js.Value) interface{} {
+    reqJSON := args[0].String()
+    var req struct {
+        Headers  map[string]string `json:"headers"`
+        Path     string            `json:"path"`
+        TenantID string            `json:"tenant_id"`
+    }
+    json.Unmarshal([]byte(reqJSON), &req)
+
+    clientIP := req.Headers["X-Forwarded-For"]
+
+    // Check if IP is blocked
+    for _, cidr := range blockedCIDRs {
+        if isIPInCIDR(clientIP, cidr) {
+            // Deny
+            return map[string]interface{}{
+                "status": 403,
+                "body":   `{"error":"IP blocked"}`,
+            }
+        }
+    }
+
+    // Allow (nil response = pass-through)
+    return nil
+}
+
+func main() {
+    js.Global().Set("onRequest", js.FuncOf(onRequest))
+    // Keep running
+    select {}
+}
+```
+
+### Build with TinyGo
+
+```bash
+# Install TinyGo
+brew install tinygo
+
+# Build WASM module
+tinygo build -o ip-blocker.wasm \
+  -target wasm \
+  -opt 2 \
+  plugins/ip-blocker/main.go
+
+# Verify the module
+file ip-blocker.wasm
+# ip-blocker.wasm: WebAssembly (wasm) binary module
+```
+
+### Deploy WASM Plugin
+
+```bash
+# Upload the plugin
+curl -X POST $API/api/v1/plugins/wasm \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -F "file=@ip-blocker.wasm" \
+  -F "name=ip-blocker" \
+  -F "type=request_handler" \
+  -F "priority=10"
+
+# Enable for specific routes
+curl -X PUT $API/api/v1/plugins/wasm/ip-blocker/routes \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -d '{
+    "routes": ["/api/v1/*"],
+    "methods": ["GET", "POST", "PUT", "DELETE"]
+  }'
+```
+
+### WASM Plugin Capabilities
+
+| Capability | Supported | Notes |
+|------------|-----------|-------|
+| Read request headers | Yes | Via `Headers` field |
+| Read request body | Yes | Up to 1MB |
+| Modify request headers | Yes | Return modified `Request` |
+| Deny request | Yes | Return `Response` with status |
+| Read response headers | Yes | In `OnResponse` |
+| Modify response | Yes | Return modified `Response` |
+| Network access | No | Sandboxed (no sockets) |
+| File system access | No | Sandboxed |
+| Environment access | No | Sandboxed |
+| Memory limit | 32MB | Per-plugin instance |
+
+### Performance
+
+| Metric | Webhook Hook | WASM Plugin |
+|--------|-------------|-------------|
+| Latency overhead | 5-50ms (network) | <0.1ms (in-process) |
+| Failure mode | Network timeout | Panic (caught by runtime) |
+| Deployment | External server | Upload to Gateway |
+| Language | Any (HTTP) | TinyGo (WASM) |
+| Use case | External integrations | High-performance filtering |
+
+---
+
+## Auth Provider Plugin Interface
+
+Custom auth providers can be added without modifying core GGID code.
+
+### Provider Interface
+
+```go
+type AuthProvider interface {
+    Name() string
+
+    // Authenticate validates credentials
+    // Returns user identity or error
+    Authenticate(ctx context.Context, identifier, password string) (*AuthResult, error)
+
+    // SupportsPasswordChange indicates if this provider allows password updates
+    SupportsPasswordChange() bool
+
+    // ChangePassword updates the user's password
+    ChangePassword(ctx context.Context, userID uuid.UUID, oldPassword, newPassword string) error
+}
+
+type AuthResult struct {
+    UserID       uuid.UUID         `json:"user_id"`
+    TenantID     uuid.UUID         `json:"tenant_id"`
+    ProviderName string            `json:"provider_name"`
+    Claims       map[string]string `json:"claims,omitempty"`
+}
+```
+
+### Example: Custom Database Provider
+
+```go
+package customdb
+
+type DBProvider struct {
+    db *sql.DB
+}
+
+func (p *DBProvider) Name() string { return "custom_db" }
+
+func (p *DBProvider) Authenticate(ctx context.Context, identifier, password string) (*authprovider.AuthResult, error) {
+    var userID, hash, tenantID string
+    err := p.db.QueryRowContext(ctx,
+        "SELECT id, password_hash, tenant_id FROM legacy_users WHERE email = $1",
+        identifier,
+    ).Scan(&userID, &hash, &tenantID)
+
+    if err == sql.ErrNoRows {
+        return nil, ErrUserNotFound
+    }
+    if err != nil {
+        return nil, err
+    }
+
+    if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
+        return nil, ErrInvalidPassword
+    }
+
+    return &authprovider.AuthResult{
+        UserID:       uuid.MustParse(userID),
+        TenantID:     uuid.MustParse(tenantID),
+        ProviderName: "custom_db",
+    }, nil
+}
+```
+
+### Register Custom Provider
+
+```go
+// In services/auth/cmd/main.go
+func buildProviderChain(cfg *conf.Config) authprovider.Chain {
+    chain := authprovider.NewChain()
+    chain.Add(authprovider.NewLocalProvider(localRepo))
+
+    if cfg.LDAP.URL != "" {
+        chain.Add(authprovider.NewLDAPProvider(cfg.LDAP))
+    }
+
+    // Register your custom provider
+    if cfg.CustomDB.Enabled {
+        chain.Add(customdb.New(customDBConn))
+    }
+
+    return chain
+}
+```
+
+---
+
+## Debugging Plugins
+
+### Enable Debug Logging
+
+```bash
+# Enable plugin debug logging
+export LOG_LEVEL=debug
+export PLUGIN_DEBUG=true
+
+# View plugin execution logs
+docker logs ggid-gateway 2>&1 | grep "plugin"
+
+# Filter by plugin name
+docker logs ggid-gateway 2>&1 | grep "ip-blocker"
+```
+
+### Trace Hook Execution
+
+```bash
+# Trace a request through the hook chain
+curl -v -H "X-Debug: true" \
+  -X POST $API/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"Test123!"}'
+
+# Response headers include hook trace
+# X-Hook-Trace: pre-login:ok:12ms,post-login:skip
+```
+
+### Common Issues
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Hook timeout | Server too slow | Reduce processing time or increase `timeout_ms` |
+| 403 on all requests | Hook returning deny | Check hook response format and logic |
+| WASM panic | Plugin crash | Check `onRequest` return type; add error handling |
+| Plugin not loading | Wrong WASM target | Use `-target wasm` with TinyGo |
+| HMAC verification fails | Wrong secret or timestamp drift | Sync clocks (NTP), verify secret matches |
+
+---
+
+## References
+
+- [Plugin API Reference](./plugin-api-reference.md) — Detailed API docs
+- [Custom Claims Guide](./custom-claims.md) — JWT claim injection
+- [Developer Guide](./developer-guide.md) — Adding auth providers
+- [Webhooks Guide](./webhooks-guide.md) — Event webhook configuration
