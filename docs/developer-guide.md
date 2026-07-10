@@ -970,3 +970,176 @@ graph TB
     style Authenticated fill:#27ae60,color:#fff
     style Denied fill:#e74c3c,color:#fff
 ```
+
+---
+
+## Mock vs Real Backend Switching
+
+GGID tests use interface mocks (not real DB/Redis/NATS connections). This section
+explains how to switch between mock and real backends during development.
+
+### Interface-Based Mocking
+
+Each service depends on repository interfaces, not concrete implementations:
+
+```go
+// internal/service/auth_service.go
+type AuthService struct {
+    credRepo  CredentialRepo   // Interface, not *repository.CredentialRepository
+    tokenSvc  TokenService
+    sessRepo  SessionRepo
+}
+
+// Interface definition
+type CredentialRepo interface {
+    FindByIDentifier(ctx context.Context, tenantID, identifier string) (*domain.Credential, error)
+    Create(ctx context.Context, cred *domain.Credential) error
+    UpdatePassword(ctx context.Context, cred *domain.Credential) error
+}
+```
+
+### Mock Implementation (Tests)
+
+```go
+// internal/service/auth_service_test.go
+type mockCredentialRepo struct {
+    creds map[string]*domain.Credential
+}
+
+func (m *mockCredentialRepo) FindByIDentifier(ctx context.Context, tenantID, id string) (*domain.Credential, error) {
+    if c, ok := m.creds[id]; ok {
+        return c, nil
+    }
+    return nil, errors.NewNotFound("credential not found")
+}
+
+func TestAuthService_Login(t *testing.T) {
+    credRepo := &mockCredentialRepo{
+        creds: map[string]*domain.Credential{
+            "alice": {ID: uuid.New(), Identifier: "alice", Secret: hashedPassword},
+        },
+    }
+    svc := NewAuthService(credRepo, mockTokenSvc{}, mockSessionRepo{})
+    // Test uses mock, no real DB needed
+}
+```
+
+### Switching to Real Backend
+
+For integration testing or local development:
+
+```bash
+# Start real infrastructure
+docker compose -f deploy/docker-compose.yaml up -d postgres redis nats
+
+# Run integration tests (tagged with //go:build integration)
+go test -tags=integration -v ./test/integration/
+
+# Run a single service against real DB
+DATABASE_URL=postgres://ggid:ggid@localhost:5432/ggid \
+REDIS_URL=redis://localhost:6379 \
+NATS_URL=nats://localhost:4222 \
+go run ./services/auth/cmd/
+```
+
+### Environment Variable Switching
+
+```bash
+# Use mocks (default in unit tests)
+MOCK_BACKEND=true go test ./...
+
+# Use real PostgreSQL
+DATABASE_URL=postgres://localhost:5432/ggid go test -tags=integration ./...
+
+# Use embedded NATS for tests
+NATS_EMBEDDED=true go test ./pkg/audit/
+```
+
+### Mock Toggle Table
+
+| Component | Mock (Unit Test) | Real (Integration) | Flag |
+|-----------|------------------|--------------------|----|
+| PostgreSQL | `mockRepo` struct | `pgxpool.Pool` | `DATABASE_URL` |
+| Redis | `miniredis` library | `redis.Client` | `REDIS_URL` |
+| NATS | embedded test server | `nats.Connect` | `NATS_URL` |
+| LDAP | `fakeLDAPServer` | real OpenLDAP | `LDAP_URL` |
+| SMTP | `httptest.Server` | real SMTP | `SMTP_HOST` |
+
+---
+
+## Local Development Environment Setup
+
+### Prerequisites
+
+| Tool | Version | Install |
+|------|---------|---------|
+| Go | 1.25+ | `brew install go` or [golang.org/dl](https://go.dev/dl/) |
+| Node.js | 20+ | `brew install node` or [nvm](https://github.com/nvm-sh/nvm) |
+| PostgreSQL | 16 | `brew install postgresql@16` |
+| Redis | 7+ | `brew install redis` |
+| NATS | 2.10+ | `brew install nats-server` |
+| Make | any | `brew install make` |
+| protoc | 25+ | `brew install protobuf` |
+| buf | latest | `brew install bufbuild/buf/buf` |
+| Docker | latest | [docker.com](https://docker.com) |
+
+### Step-by-Step Setup
+
+```bash
+# 1. Clone
+git clone https://github.com/ggid/ggid.git
+cd ggid
+
+# 2. Install Go dependencies
+go mod download
+
+# 3. Install proto tools
+make proto-tools   # installs buf + protoc plugins
+
+# 4. Generate protobuf code
+make proto
+
+# 5. Start infrastructure (choose one)
+#    Option A: Docker (recommended)
+docker compose -f deploy/docker-compose.yaml up -d
+
+#    Option B: Local services
+brew services start postgresql@16
+brew services start redis
+nats-server &
+
+# 6. Run database migrations
+go run ./cmd/migrate up
+
+# 7. Build all services
+make build
+
+# 8. Run tests
+make test
+
+# 9. Start Console
+cd console && npm install && npm run dev
+```
+
+### Makefile Commands
+
+```bash
+make build      # Build all 7 service binaries to bin/
+make test       # Run all tests with race detector + coverage
+make proto      # Regenerate protobuf/gRPC code via buf
+make lint       # Run golangci-lint
+make docker     # Build all Docker images
+make clean      # Remove bin/ and generated files
+```
+
+### Running Individual Services
+
+```bash
+# Each service can run independently with env vars
+DATABASE_URL=postgres://localhost:5432/ggid \
+REDIS_URL=redis://localhost:6379 \
+go run ./services/auth/cmd/
+
+# Gateway proxies to all services
+go run ./services/gateway/cmd/
+```
