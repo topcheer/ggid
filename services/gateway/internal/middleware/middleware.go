@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/subtle"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -82,16 +83,147 @@ func Logging(next http.Handler) http.Handler {
 
 // --- CORS ---
 
+// CORSConfig holds CORS configuration.
+type CORSConfig struct {
+	AllowedOrigins   []string // exact origins to allow; ["*"] for wildcard
+	AllowCredentials bool     // allow cookies / Authorization header from browser
+}
+
+// DefaultCORSConfig returns a secure-by-default CORS config.
+// In production, set AllowedOrigins to your frontend domain(s).
+func DefaultCORSConfig() CORSConfig {
+	return CORSConfig{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: false,
+	}
+}
+
+// CORSWithConfig returns a CORS middleware with the given config.
+// When AllowCredentials is true, the Origin header is echoed back instead of
+// using a wildcard, and Access-Control-Allow-Credentials is set to true.
+func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
+	allowAll := len(cfg.AllowedOrigins) == 0
+	for _, o := range cfg.AllowedOrigins {
+		if o == "*" {
+			allowAll = true
+		}
+	}
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
+
+			if allowAll {
+				w.Header().Set("Access-Control-Allow-Origin", "*")
+			} else {
+				// Echo the origin if it's in the allowed list
+				for _, allowed := range cfg.AllowedOrigins {
+					if subtle.ConstantTimeCompare([]byte(origin), []byte(allowed)) == 1 {
+						w.Header().Set("Access-Control-Allow-Origin", origin)
+						w.Header().Set("Vary", "Origin")
+						break
+					}
+				}
+			}
+
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Tenant-ID, X-Request-ID, X-API-Key")
+			w.Header().Set("Access-Control-Expose-Headers", "X-Request-ID, X-Tenant-ID")
+			w.Header().Set("Access-Control-Max-Age", "3600")
+
+			if cfg.AllowCredentials {
+				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			}
+
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// CORS is the default CORS middleware (backward-compatible with wildcard origin).
 func CORS(next http.Handler) http.Handler {
+	return CORSWithConfig(DefaultCORSConfig())(next)
+}
+
+// --- CSRF Protection (Double-Submit Cookie) ---
+
+// CSRFProtect implements double-submit cookie CSRF protection.
+// On safe requests (GET/HEAD/OPTIONS), it sets a csrf_token cookie.
+// On unsafe requests (POST/PUT/PATCH/DELETE), it validates that the
+// X-CSRF-Token header matches the csrf_token cookie.
+func CSRFProtect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Tenant-ID, X-Request-ID, X-API-Key")
-		w.Header().Set("Access-Control-Max-Age", "3600")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
+		// Safe methods don't need CSRF check, but we refresh the cookie
+		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			setCSRFCookie(w)
+			next.ServeHTTP(w, r)
 			return
 		}
+
+		// For unsafe methods, validate the double-submit token
+		cookieToken, err := r.Cookie("csrf_token")
+		if err != nil || cookieToken.Value == "" {
+			writeForbidden(w, "missing CSRF token")
+			return
+		}
+
+		headerToken := r.Header.Get("X-CSRF-Token")
+		if headerToken == "" {
+			writeForbidden(w, "missing CSRF header")
+			return
+		}
+
+		// Constant-time comparison to prevent timing attacks
+		if subtle.ConstantTimeCompare([]byte(cookieToken.Value), []byte(headerToken)) != 1 {
+			writeForbidden(w, "CSRF token mismatch")
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func setCSRFCookie(w http.ResponseWriter) {
+	token := generateCSRFToken()
+	http.SetCookie(w, &http.Cookie{
+		Name:     "csrf_token",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   3600,
+		HttpOnly: false, // Must be readable by JavaScript for double-submit
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func generateCSRFToken() string {
+	b := make([]byte, 32)
+	for i := range b {
+		b[i] = byte(time.Now().UnixNano() >> uint(i))
+	}
+	hash := sha256.Sum256(b)
+	return base64.RawURLEncoding.EncodeToString(hash[:])
+}
+
+func writeForbidden(w http.ResponseWriter, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusForbidden)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
+// --- Security Headers ---
+
+// SecurityHeaders adds common security headers to all responses.
+func SecurityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
 		next.ServeHTTP(w, r)
 	})
 }

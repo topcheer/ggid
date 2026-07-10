@@ -534,3 +534,179 @@ func pemEncode(blockType string, der []byte) []byte {
 
 // Ensure imports are used
 var _ = big.NewInt
+
+// --- CORSWithConfig Tests ---
+
+func TestCORSWithConfig_SpecificOrigin(t *testing.T) {
+	cfg := CORSConfig{
+		AllowedOrigins:   []string{"https://app.ggid.dev"},
+		AllowCredentials: true,
+	}
+	handler := CORSWithConfig(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("Origin", "https://app.ggid.dev")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Header().Get("Access-Control-Allow-Origin") != "https://app.ggid.dev" {
+		t.Errorf("expected specific origin, got %s", w.Header().Get("Access-Control-Allow-Origin"))
+	}
+	if w.Header().Get("Access-Control-Allow-Credentials") != "true" {
+		t.Error("expected credentials header")
+	}
+}
+
+func TestCORSWithConfig_UnlistedOrigin(t *testing.T) {
+	cfg := CORSConfig{
+		AllowedOrigins: []string{"https://app.ggid.dev"},
+	}
+	handler := CORSWithConfig(cfg)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("Origin", "https://evil.com")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Errorf("expected no origin for unlisted domain, got %s", w.Header().Get("Access-Control-Allow-Origin"))
+	}
+}
+
+func TestCORSWithConfig_Preflight(t *testing.T) {
+	handler := CORSWithConfig(DefaultCORSConfig())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Fatal("should not call next for OPTIONS")
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/test", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("expected 204, got %d", w.Code)
+	}
+	if w.Header().Get("Access-Control-Expose-Headers") == "" {
+		t.Error("expected expose headers")
+	}
+}
+
+// --- SecurityHeaders Tests ---
+
+func TestSecurityHeaders_SetsAllHeaders(t *testing.T) {
+	handler := SecurityHeaders(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	tests := []struct{ header, expected string }{
+		{"X-Content-Type-Options", "nosniff"},
+		{"X-Frame-Options", "DENY"},
+		{"Referrer-Policy", "strict-origin-when-cross-origin"},
+		{"Strict-Transport-Security", "max-age=31536000; includeSubDomains"},
+	}
+	for _, tt := range tests {
+		if got := w.Header().Get(tt.header); got != tt.expected {
+			t.Errorf("expected %s=%s, got %s", tt.header, tt.expected, got)
+		}
+	}
+}
+
+// --- CSRF Protection Tests ---
+
+func TestCSRFProtect_GETSetsCookie(t *testing.T) {
+	called := false
+	handler := CSRFProtect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if !called {
+		t.Error("handler should be called for GET")
+	}
+	cookies := w.Result().Cookies()
+	found := false
+	for _, c := range cookies {
+		if c.Name == "csrf_token" && c.Value != "" {
+			found = true
+			if !c.Secure {
+				t.Error("csrf cookie should be Secure")
+			}
+			if c.SameSite != http.SameSiteLaxMode {
+				t.Error("csrf cookie should be SameSite=Lax")
+			}
+		}
+	}
+	if !found {
+		t.Error("expected csrf_token cookie to be set")
+	}
+}
+
+func TestCSRFProtect_POSTWithoutToken_403(t *testing.T) {
+	called := false
+	handler := CSRFProtect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	req := httptest.NewRequest("POST", "/test", nil)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if called {
+		t.Error("handler should NOT be called without CSRF token")
+	}
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", w.Code)
+	}
+}
+
+func TestCSRFProtect_POSTWithMatchingTokens_Passes(t *testing.T) {
+	token := "test-csrf-token-12345"
+	called := false
+	handler := CSRFProtect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("POST", "/test", nil)
+	req.AddCookie(&http.Cookie{Name: "csrf_token", Value: token})
+	req.Header.Set("X-CSRF-Token", token)
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if !called {
+		t.Error("handler should be called with matching tokens")
+	}
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", w.Code)
+	}
+}
+
+func TestCSRFProtect_POSTWithMismatchedTokens_403(t *testing.T) {
+	called := false
+	handler := CSRFProtect(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+	}))
+
+	req := httptest.NewRequest("POST", "/test", nil)
+	req.AddCookie(&http.Cookie{Name: "csrf_token", Value: "token-a"})
+	req.Header.Set("X-CSRF-Token", "token-b")
+	w := httptest.NewRecorder()
+	handler.ServeHTTP(w, req)
+
+	if called {
+		t.Error("handler should NOT be called with mismatched tokens")
+	}
+	if w.Code != http.StatusForbidden {
+		t.Errorf("expected 403, got %d", w.Code)
+	}
+}
