@@ -864,3 +864,197 @@ manual inspection.
 - [API Reference](./api-reference.md) — REST endpoint documentation
 - [Webhooks Guide](./webhooks-guide.md) — Webhook event types and configuration
 - [Integration Guide](./integration-guide.md) — App integration patterns
+
+---
+
+## Advanced SDK Patterns
+
+### Go: Token Auto-Refresh Middleware
+
+```go
+package main
+
+import (
+    "context"
+    "net/http"
+    "sync"
+    "time"
+    ggid "github.com/ggid/ggid/sdk/go"
+)
+
+type TokenManager struct {
+    client   *ggid.Client
+    mutex    sync.Mutex
+n    token    string
+    expires  time.Time
+    username string
+    password string
+}
+
+func NewTokenManager(baseURL, tenantID, username, password string) *TokenManager {
+    return &TokenManager{
+        client:   ggid.NewClient(baseURL, ggid.WithTenantID(tenantID)),
+        username: username,
+        password: password,
+    }
+}
+
+func (tm *TokenManager) GetToken(ctx context.Context) (string, error) {
+    tm.mutex.Lock()
+    defer tm.mutex.Unlock()
+
+    // Refresh if token expires within 60 seconds
+    if time.Now().Add(60 * time.Second).Before(tm.expires) {
+        return tm.token, nil
+    }
+
+    resp, err := tm.client.Auth.Login(ctx, &ggid.LoginRequest{
+        Username: tm.username,
+        Password: tm.password,
+    })
+    if err != nil {
+        return "", err
+    }
+
+    tm.token = resp.AccessToken
+    tm.expires = time.Now().Add(time.Duration(resp.ExpiresIn) * time.Second)
+    return tm.token, nil
+}
+
+// HTTP RoundTripper that auto-injects token
+func (tm *TokenManager) RoundTrip(req *http.Request) (*http.Response, error) {
+    token, err := tm.GetToken(req.Context())
+    if err != nil {
+        return nil, err
+    }
+    req.Header.Set("Authorization", "Bearer "+token)
+    return http.DefaultTransport.RoundTrip(req)
+}
+```
+
+### Node.js: Express Middleware
+
+```typescript
+import { GGIDClient } from '@ggid/sdk';
+import express from 'express';
+
+const app = express();
+
+// Initialize GGID client
+const ggid = new GGIDClient({
+  baseURL: process.env.GGID_URL!,
+  tenantID: process.env.GGID_TENANT_ID!,
+});
+
+// Auth middleware: validates JWT from GGID
+app.use(async (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (!token) {
+    return res.status(401).json({ error: 'missing_token' });
+  }
+
+  try {
+    // Introspect token via GGID
+    const introspection = await ggid.oauth.introspect(token);
+    if (!introspection.active) {
+      return res.status(401).json({ error: 'invalid_token' });
+    }
+
+    // Attach user info to request
+    req.user = {
+      id: introspection.sub,
+      tenantId: introspection.tenant_id,
+      scopes: introspection.scope?.split(' ') || [],
+    };
+
+    next();
+  } catch (err) {
+    return res.status(401).json({ error: 'token_validation_failed' });
+  }
+});
+
+// Protected route
+app.get('/api/profile', async (req, res) => {
+  const user = await ggid.users.get(req.user.id, req.user.token);
+  res.json(user);
+});
+
+app.listen(3000);
+```
+
+### Java: Spring Boot Integration
+
+```java
+@Configuration
+public class GGIDConfig {
+
+    @Value("${ggid.url}")
+    private String ggidUrl;
+
+    @Value("${ggid.tenant-id}")
+    private String tenantId;
+
+    @Bean
+    public GGIDClient ggidClient() {
+        return GGIDClient.newBuilder()
+            .setBaseUrl(ggidUrl)
+            .setTenantId(tenantId)
+            .build();
+    }
+}
+
+@RestController
+@RequestMapping("/api")
+public class UserController {
+
+    @Autowired
+    private GGIDClient ggid;
+
+    @GetMapping("/users")
+    public List<User> listUsers(@RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        return ggid.users().list(token);
+    }
+
+    @PostMapping("/users")
+    public User createUser(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody CreateUserRequest request) {
+        String token = authHeader.replace("Bearer ", "");
+        return ggid.users().create(token, request);
+    }
+
+    @GetMapping("/users/{id}/roles")
+    public List<Role> getUserRoles(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable String id) {
+        String token = authHeader.replace("Bearer ", "");
+        return ggid.policy().getUserRoles(token, id);
+    }
+}
+```
+
+### Java: WebFlux Reactive
+
+```java
+@Service
+public class ReactiveGGIDService {
+
+    private final GGIDClient ggid;
+
+    public ReactiveGGIDService(GGIDClient ggid) {
+        this.ggid = ggid;
+    }
+
+    public Mono<User> getUser(String token, String userId) {
+        return Mono.fromCallable(() -> ggid.users().get(token, userId))
+            .subscribeOn(Schedulers.boundedElastic());
+    }
+
+    public Flux<User> listUsers(String token) {
+        return Mono.fromCallable(() -> ggid.users().list(token))
+            .flatMapMany(Flux::fromIterable)
+            .subscribeOn(Schedulers.boundedElastic());
+    }
+}
+```
