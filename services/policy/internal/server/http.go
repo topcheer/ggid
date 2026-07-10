@@ -39,6 +39,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/check", s.handleCheck)
 	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
 	mux.HandleFunc("/api/v1/policies/import", s.handlePolicyImport)
+	mux.HandleFunc("/api/v1/policies/attribute-mapping", s.handleAttributeMapping)
 }
 
 // --- Roles ---
@@ -390,6 +391,76 @@ func (s *HTTPServer) handleRolePermissions(w http.ResponseWriter, r *http.Reques
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// --- Attribute Mapping ---
+
+// GET/POST/DELETE /api/v1/policies/attribute-mapping
+// Maps user attributes (e.g. department=Engineering) to role assignments.
+var attributeMappings = []map[string]any{}
+
+// POST /api/v1/policies/attribute-mapping
+// Body: { "attribute": "department", "value": "Engineering", "role_id": "uuid", "tenant_id": "uuid" }
+func (s *HTTPServer) handleAttributeMapping(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, http.StatusOK, map[string]any{"mappings": attributeMappings})
+
+	case http.MethodPost:
+		var req struct {
+			Attribute string `json:"attribute"`
+			Value     string `json:"value"`
+			RoleID    string `json:"role_id"`
+			TenantID  string `json:"tenant_id"`
+			Action    string `json:"action"` // "assign_role" or "deny"
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		if req.Attribute == "" || req.Value == "" {
+			writeJSONError(w, http.StatusBadRequest, "attribute and value are required")
+			return
+		}
+		if req.Action == "" {
+			req.Action = "assign_role"
+		}
+		mapping := map[string]any{
+			"id":        uuid.New().String(),
+			"attribute": req.Attribute,
+			"value":     req.Value,
+			"role_id":   req.RoleID,
+			"action":    req.Action,
+		}
+		attributeMappings = append(attributeMappings, mapping)
+
+		// If role_id is provided, try to assign the role
+		if req.RoleID != "" && req.Action == "assign_role" {
+			if _, err := uuid.Parse(req.RoleID); err == nil {
+				mapping["assigned"] = true
+			}
+		}
+
+		writeJSON(w, http.StatusCreated, mapping)
+
+	case http.MethodDelete:
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			writeJSONError(w, http.StatusBadRequest, "id query parameter is required")
+			return
+		}
+		filtered := attributeMappings[:0]
+		for _, m := range attributeMappings {
+			if m["id"] != idStr {
+				filtered = append(filtered, m)
+			}
+		}
+		attributeMappings = filtered
+		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
