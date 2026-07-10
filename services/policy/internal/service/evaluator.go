@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
@@ -125,6 +126,13 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 			continue
 		}
 
+		// Evaluate ABAC conditions if the policy or request has them.
+		if len(p.Conditions) > 0 {
+			if !matchConditions(p.Conditions, req.Conditions) {
+				continue
+			}
+		}
+
 		switch p.Effect {
 		case domain.EffectDeny:
 			abacDenied = true
@@ -226,4 +234,170 @@ func matchGlob(pattern, s string) bool {
 		return strings.HasSuffix(s, lastPart)
 	}
 	return true
+}
+
+// matchConditions evaluates ABAC conditions (AWS IAM-style operators).
+// Policy conditions use operator keys like "StringEquals", "StringLike",
+// "NumericLessThan", "Bool", "IpAddress", etc.
+// Each operator maps to attribute->value pairs that are checked against
+// the request conditions.
+//
+// Example policy conditions:
+//
+//	{
+//	  "StringEquals": {"department": "engineering"},
+//	  "NumericLessThan": {"hour": 18},
+//	  "StringLike": {"name": "admin-*"}
+//	}
+//
+// If no request conditions are provided, policies with conditions are
+// considered non-matching (fail-closed).
+func matchConditions(policyConds map[string]any, requestConds map[string]any) bool {
+	if len(policyConds) == 0 {
+		return true // No conditions = always match
+	}
+	if len(requestConds) == 0 {
+		return false // Fail-closed: policy has conditions but request has none
+	}
+
+	for operator, condsVal := range policyConds {
+		condMap, ok := condsVal.(map[string]any)
+		if !ok {
+			continue
+		}
+		for attr, expectedVal := range condMap {
+			actualVal, exists := requestConds[attr]
+			if !exists {
+				return false // Required attribute missing from request
+			}
+			if !evaluateOperator(operator, expectedVal, actualVal) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// evaluateOperator checks a single condition using the given operator.
+func evaluateOperator(operator string, expected, actual any) bool {
+	switch operator {
+	// String operators
+	case "StringEquals":
+		return toStr(expected) == toStr(actual)
+	case "StringNotEquals":
+		return toStr(expected) != toStr(actual)
+	case "StringEqualsIgnoreCase":
+		return strings.EqualFold(toStr(expected), toStr(actual))
+	case "StringLike":
+		return matchGlob(toStr(expected), toStr(actual))
+	case "StringNotLike":
+		return !matchGlob(toStr(expected), toStr(actual))
+
+	// Numeric operators
+	case "NumericEquals":
+		return toFloat64(expected) == toFloat64(actual)
+	case "NumericNotEquals":
+		return toFloat64(expected) != toFloat64(actual)
+	case "NumericLessThan":
+		return toFloat64(actual) < toFloat64(expected)
+	case "NumericLessThanEquals":
+		return toFloat64(actual) <= toFloat64(expected)
+	case "NumericGreaterThan":
+		return toFloat64(actual) > toFloat64(expected)
+	case "NumericGreaterThanEquals":
+		return toFloat64(actual) >= toFloat64(expected)
+
+	// Boolean operators
+	case "Bool":
+		return toBool(expected) == toBool(actual)
+
+	// Date/time operators (RFC 3339 comparison)
+	case "DateLessThan":
+		return toDate(actual).Before(toDate(expected))
+	case "DateGreaterThan":
+		return toDate(actual).After(toDate(expected))
+
+	// IP address operators
+	case "IpAddress":
+		return matchIP(toStr(expected), toStr(actual))
+	case "NotIpAddress":
+		return !matchIP(toStr(expected), toStr(actual))
+
+	default:
+		// Unknown operator: fail-closed
+		return false
+	}
+}
+
+// --- Type coercion helpers ---
+
+func toStr(v any) string {
+	switch val := v.(type) {
+	case string:
+		return val
+	case float64:
+		return fmt.Sprintf("%g", val)
+	case int:
+		return fmt.Sprintf("%d", val)
+	case bool:
+		return fmt.Sprintf("%t", val)
+	default:
+		return fmt.Sprintf("%v", val)
+	}
+}
+
+func toFloat64(v any) float64 {
+	switch val := v.(type) {
+	case float64:
+		return val
+	case float32:
+		return float64(val)
+	case int:
+		return float64(val)
+	case int64:
+		return float64(val)
+	case string:
+		var f float64
+		fmt.Sscanf(val, "%g", &f)
+		return f
+	default:
+		return 0
+	}
+}
+
+func toBool(v any) bool {
+	switch val := v.(type) {
+	case bool:
+		return val
+	case string:
+		return val == "true" || val == "1"
+	default:
+		return false
+	}
+}
+
+func toDate(v any) time.Time {
+	s := toStr(v)
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		t, err = time.Parse("2006-01-02", s)
+		if err != nil {
+			return time.Time{}
+		}
+	}
+	return t
+}
+
+func matchIP(cidrOrIP, actualIP string) bool {
+	// Simple matching: exact or CIDR prefix
+	if !strings.Contains(cidrOrIP, "/") {
+		return cidrOrIP == actualIP
+	}
+	// CIDR matching
+	parts := strings.SplitN(actualIP, "/", 2)
+	ipStr := parts[0]
+	if strings.HasPrefix(ipStr, cidrOrIP[:strings.Index(cidrOrIP, "/")]) {
+		return true
+	}
+	return false
 }

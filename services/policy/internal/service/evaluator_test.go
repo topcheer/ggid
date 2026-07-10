@@ -532,3 +532,372 @@ func TestMatchGlob(t *testing.T) {
 		})
 	}
 }
+
+// --- ABAC Condition Evaluation Tests ---
+
+func newPolicyWithConditions(effect domain.Effect, name string, actions []string, conditions map[string]any) *domain.Policy {
+	return &domain.Policy{
+		ID:         uuid.New(),
+		Name:       name,
+		Effect:     effect,
+		Actions:    actions,
+		Conditions: conditions,
+	}
+}
+
+func newRequestWithConditions(userID uuid.UUID, resourceType, action string, conds map[string]any) *domain.CheckRequest {
+	return &domain.CheckRequest{
+		UserID:       userID,
+		ResourceType: resourceType,
+		Action:       action,
+		Conditions:   conds,
+	}
+}
+
+func TestABAC_StringEquals_Match(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectAllow, "eng-only", []string{"*"},
+					map[string]any{
+						"StringEquals": map[string]any{"department": "engineering"},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	// Match: department=engineering
+	result, _ := e.Check(context.Background(), newRequestWithConditions(userID, "docs", "read",
+		map[string]any{"department": "engineering"}))
+	if !result.Allowed {
+		t.Error("StringEquals condition should match")
+	}
+}
+
+func TestABAC_StringEquals_NoMatch(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectAllow, "eng-only", []string{"*"},
+					map[string]any{
+						"StringEquals": map[string]any{"department": "engineering"},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	// No match: department=sales
+	result, _ := e.Check(context.Background(), newRequestWithConditions(userID, "docs", "read",
+		map[string]any{"department": "sales"}))
+	if result.Allowed {
+		t.Error("StringEquals condition should NOT match for different department")
+	}
+}
+
+func TestABAC_StringLike_Match(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectAllow, "admin-prefix", []string{"*"},
+					map[string]any{
+						"StringLike": map[string]any{"role": "admin-*"},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	result, _ := e.Check(context.Background(), newRequestWithConditions(userID, "users", "read",
+		map[string]any{"role": "admin-super"}))
+	if !result.Allowed {
+		t.Error("StringLike admin-* should match admin-super")
+	}
+}
+
+func TestABAC_NumericLessThan_Match(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectAllow, "business-hours", []string{"*"},
+					map[string]any{
+						"NumericLessThan": map[string]any{"hour": float64(18)},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	// hour=14 < 18 should match
+	result, _ := e.Check(context.Background(), newRequestWithConditions(userID, "docs", "read",
+		map[string]any{"hour": float64(14)}))
+	if !result.Allowed {
+		t.Error("NumericLessThan 14 < 18 should match")
+	}
+
+	// hour=20 < 18 should NOT match
+	result2, _ := e.Check(context.Background(), newRequestWithConditions(userID, "docs", "read",
+		map[string]any{"hour": float64(20)}))
+	if result2.Allowed {
+		t.Error("NumericLessThan 20 < 18 should NOT match")
+	}
+}
+
+func TestABAC_Bool_Match(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectAllow, "mfa-required", []string{"*"},
+					map[string]any{
+						"Bool": map[string]any{"mfa_verified": true},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	result, _ := e.Check(context.Background(), newRequestWithConditions(userID, "sensitive", "read",
+		map[string]any{"mfa_verified": true}))
+	if !result.Allowed {
+		t.Error("Bool condition mfa_verified=true should match")
+	}
+
+	result2, _ := e.Check(context.Background(), newRequestWithConditions(userID, "sensitive", "read",
+		map[string]any{"mfa_verified": false}))
+	if result2.Allowed {
+		t.Error("Bool condition mfa_verified=false should NOT match when policy requires true")
+	}
+}
+
+func TestABAC_Conditions_NoRequestConditions_FailClosed(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectAllow, "cond-policy", []string{"*"},
+					map[string]any{
+						"StringEquals": map[string]any{"department": "eng"},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	// No conditions in request → policy with conditions should not match (fail-closed)
+	result, _ := e.Check(context.Background(), newRequest(userID, "docs", "read"))
+	if result.Allowed {
+		t.Error("Policy with conditions should not match when request has no conditions (fail-closed)")
+	}
+}
+
+func TestABAC_MultipleConditions_AllMustMatch(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectAllow, "multi-cond", []string{"*"},
+					map[string]any{
+						"StringEquals":      map[string]any{"department": "eng"},
+						"NumericGreaterThan": map[string]any{"clearance": float64(5)},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	// Both conditions match
+	result, _ := e.Check(context.Background(), newRequestWithConditions(userID, "docs", "read",
+		map[string]any{"department": "eng", "clearance": float64(7)}))
+	if !result.Allowed {
+		t.Error("Both conditions match → should allow")
+	}
+
+	// Only one condition matches
+	result2, _ := e.Check(context.Background(), newRequestWithConditions(userID, "docs", "read",
+		map[string]any{"department": "eng", "clearance": float64(3)}))
+	if result2.Allowed {
+		t.Error("Only one condition matches → should deny")
+	}
+}
+
+func TestABAC_DenyWithConditions(t *testing.T) {
+	userID := uuid.New()
+	roleID := uuid.New()
+	rr := &mockRoleReader{
+		ancestorChain:   map[uuid.UUID][]uuid.UUID{roleID: {roleID}},
+		rolePermissions: map[uuid.UUID][]*domain.Permission{roleID: {newPerm("users", "delete")}},
+	}
+	ur := &mockUserRoleReader{roleIDs: map[uuid.UUID][]uuid.UUID{userID: {roleID}}}
+	pr := &mockPolicyReader{
+		policies: map[uuid.UUID][]*domain.Policy{
+			userID: {
+				newPolicyWithConditions(domain.EffectDeny, "deny-prod-delete", []string{"*"},
+					map[string]any{
+						"StringEquals": map[string]any{"env": "production"},
+					}),
+			},
+		},
+	}
+	e := NewEvaluator(rr, ur, pr)
+
+	// In production → deny overrides RBAC allow
+	result, _ := e.Check(context.Background(), newRequestWithConditions(userID, "users", "delete",
+		map[string]any{"env": "production"}))
+	if result.Allowed {
+		t.Error("Deny policy with matching condition should override RBAC allow")
+	}
+
+	// In staging → deny policy condition doesn't match, RBAC allows
+	result2, _ := e.Check(context.Background(), newRequestWithConditions(userID, "users", "delete",
+		map[string]any{"env": "staging"}))
+	if !result2.Allowed {
+		t.Error("Deny policy with non-matching condition should not block RBAC allow")
+	}
+}
+
+// --- matchConditions unit tests ---
+
+func TestMatchConditions(t *testing.T) {
+	tests := []struct {
+		name       string
+		policyConds map[string]any
+		reqConds   map[string]any
+		want       bool
+	}{
+		{
+			"empty policy conditions = always match",
+			nil,
+			map[string]any{"x": 1},
+			true,
+		},
+		{
+			"policy has conditions, no request conds = fail-closed",
+			map[string]any{"StringEquals": map[string]any{"k": "v"}},
+			nil,
+			false,
+		},
+		{
+			"StringEquals match",
+			map[string]any{"StringEquals": map[string]any{"k": "v"}},
+			map[string]any{"k": "v"},
+			true,
+		},
+		{
+			"StringEquals no match",
+			map[string]any{"StringEquals": map[string]any{"k": "v"}},
+			map[string]any{"k": "x"},
+			false,
+		},
+		{
+			"StringNotEquals match",
+			map[string]any{"StringNotEquals": map[string]any{"k": "v"}},
+			map[string]any{"k": "x"},
+			true,
+		},
+		{
+			"StringEqualsIgnoreCase match",
+			map[string]any{"StringEqualsIgnoreCase": map[string]any{"k": "Hello"}},
+			map[string]any{"k": "hello"},
+			true,
+		},
+		{
+			"StringLike match",
+			map[string]any{"StringLike": map[string]any{"k": "pre*"}},
+			map[string]any{"k": "prefix"},
+			true,
+		},
+		{
+			"StringNotLike match",
+			map[string]any{"StringNotLike": map[string]any{"k": "pre*"}},
+			map[string]any{"k": "other"},
+			true,
+		},
+		{
+			"NumericEquals match",
+			map[string]any{"NumericEquals": map[string]any{"k": float64(42)}},
+			map[string]any{"k": float64(42)},
+			true,
+		},
+		{
+			"NumericLessThan match",
+			map[string]any{"NumericLessThan": map[string]any{"k": float64(10)}},
+			map[string]any{"k": float64(5)},
+			true,
+		},
+		{
+			"NumericGreaterThan match",
+			map[string]any{"NumericGreaterThan": map[string]any{"k": float64(10)}},
+			map[string]any{"k": float64(15)},
+			true,
+		},
+		{
+			"Bool match",
+			map[string]any{"Bool": map[string]any{"k": true}},
+			map[string]any{"k": true},
+			true,
+		},
+		{
+			"missing attribute = no match",
+			map[string]any{"StringEquals": map[string]any{"missing": "v"}},
+			map[string]any{"other": "v"},
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := matchConditions(tt.policyConds, tt.reqConds)
+			if got != tt.want {
+				t.Errorf("matchConditions() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
