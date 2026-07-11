@@ -298,6 +298,7 @@ services:
       NATS_URL: "nats://nats:4222"
       AUDIT_HTTP_ADDR: ":8072"
       AUDIT_GRPC_ADDR: ":9072"
+      AUDIT_HASH_CHAIN_SECRET: "${AUDIT_HASH_CHAIN_SECRET:-ggid-audit-hash-chain-dev-key-change-in-prod}"
     ports:
       - "8072:8072"
       - "9072:9072"
