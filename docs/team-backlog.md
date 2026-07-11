@@ -648,3 +648,11 @@
 - [x] settings/certificates — 15 edits: STATUS_CONFIG → key-based t(statusCfg.key), upload msgs (selectOrPaste/certUploaded/certUploadedOffline), rotation msgs (keyRotated/keyRotateFailed), certCount, JWKS table headers (keyId/algorithm/status/created), rotation dialog (confirmRotation/rotationConfirmDesc), Active/Rotated badges (27dcd38)
 - [x] en.json + zh.json: 95 new keys (sso 18, oauth 9, apiKeys 8, certs 7, common 8)
 - [x] Total: 726 keys, npm run build: 0 errors (27dcd38)
+
+## Sprint: i18n Wiring — roles/mfa/login-flows (frontend 94093e3)
+- [x] roles/page.tsx — 63 edits across 6 components: main page (header, create/edit forms, error msgs, role cards), PolicyChecker (labels, results), PermissionAssignment (role select, assigned/available perms, batch assign), RolePermissionMatrix (loading, empty states), RoleHierarchyTree (inheritance labels, expand), ABACConditionBuilder (all labels, save/copy). Added useI18n hooks to 5 sub-components. (94093e3)
+- [x] settings/mfa — 21 edits: recovery codes section (download/copyAll/copied/warning), webauthn/passkeys (webauthnDesc/registerPasskey/registeredOn), backup MFA (smsBackup/emailBackup/toggleMsgs), TOTP msgs (scanQrPrompt/totpEnrolledSuccess/enterDigitCode), passkey msgs (passkeyRegistered/enterPasskeyName) (94093e3)
+- [x] settings/login-flows — 11 edits: flowPreview title, noActiveSteps, step toggles (enableStep/disableStep), conditions panel (ipRangeCidr/riskThreshold/userRole), addStep section, save messages (flowSavedServer/flowSavedLocal) (94093e3)
+- [x] en.json + zh.json: 101 new keys (roles 57, mfa 23, flows 12)
+- [x] Total: 827 keys, npm run build: 0 errors (94093e3)
+- NOTE: dashboard/page.tsx does NOT exist — root page is login redirect. No i18n needed.
