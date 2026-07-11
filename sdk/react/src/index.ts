@@ -59,6 +59,12 @@ export { useWebhooks } from './useWebhooks';
 export type { Webhook, CreateWebhookInput, UseWebhooksResult } from './useWebhooks';
 export { useFeatureFlags } from './useFeatureFlags';
 export type { FeatureFlag, CreateFlagInput, UseFeatureFlagsResult } from './useFeatureFlags';
+export { useMFA } from './useMFA';
+export type { MFAStatus, TOTPSecret, BackupCodes, WebAuthnCredential, UseMFAResult } from './useMFA';
+export { useAuditStream } from './useAuditStream';
+export type { StreamEvent, UseAuditStreamResult } from './useAuditStream';
+export { useOrgTree } from './useOrgTree';
+export type { OrgTreeNode, UseOrgTreeResult } from './useOrgTree';
 export type {
   GGIDConfig,
   GGIDUser,
