@@ -355,6 +355,13 @@
 
 - [x] Also fixed: make test failures (83951b0) — NewChecker signature, duplicate test name, circuit breaker timing
 
+### Batch 35 — Competitive Analysis (5 docs)
+- [x] auth0-comparison.md (1595 lines, f46d5b5)
+- [x] keycloak-comparison.md (1893 lines, 003f8e3)
+- [x] ory-comparison.md (2337 lines, 559dd0f)
+- [x] casdoor-comparison.md (1352 lines, ae61de2)
+- [x] iam-differentiation-strategy.md (1907 lines, 7ef94cf)
+
 ### Key P0 Findings Driven to Remediation
 - [x] CSRF predictable entropy → fixed (29b51c1)
 - [x] Rate limiter not wired → fixed (fc20c41)
