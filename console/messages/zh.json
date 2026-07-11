@@ -64,7 +64,13 @@
     "description": "描述",
     "domain": "域名",
     "subject": "主体",
-    "issuer": "签发者"
+    "issuer": "签发者",
+    "copy": "复制",
+    "loading": "加载中...",
+    "saveChanges": "保存更改",
+    "toggleVisibility": "切换可见性",
+    "unnamed": "未命名",
+    "uris": "个 URI"
   },
   "users": {
     "title": "用户管理",
@@ -231,7 +237,13 @@
     "failedRotate": "密钥轮换失败",
     "edit": "编辑",
     "rotateSecret": "轮换密钥",
-    "delete": "删除"
+    "delete": "删除",
+    "registerClient": "注册客户端",
+    "secretRevealed": "密钥已显示 — 立即复制！",
+    "secretWarning": "此密钥不会再次显示。请妥善保存。",
+    "createClient": "创建客户端",
+    "editClient": "编辑客户端",
+    "deleteConfirm": "删除 OAuth 客户端\"{name}\"？此操作不可撤销。"
   },
   "webhooks": {
     "title": "Webhook",
@@ -268,7 +280,13 @@
     "enterKeyName": "请输入 API 密钥的名称",
     "selectScope": "请至少选择一个授权范围",
     "storeSecurely": "请将其存储在安全位置。您之后将无法再次获取。",
-    "activeStatus": "活跃"
+    "activeStatus": "活跃",
+    "demoMode": "API 密钥已创建（演示模式）",
+    "keyNamePlaceholder": "例如 CI/CD 流水线密钥",
+    "expiry7": "7 天",
+    "expiry30": "30 天",
+    "expiry90": "90 天",
+    "expiryNever": "永不"
   },
   "settings": {
     "title": "设置",
@@ -324,7 +342,12 @@
     "rotateKey": "轮换密钥",
     "noSigningKeys": "未找到签名密钥。",
     "expiredLabel": "已过期",
-    "rotated": "已轮换"
+    "rotated": "已轮换",
+    "selectOrPaste": "请选择文件或粘贴 PEM 内容",
+    "certUploaded": "证书已上传",
+    "certUploadedOffline": "证书已上传（离线模式）",
+    "certCount": "个证书",
+    "rotationConfirmDesc": "确定吗？这将生成新的签名密钥并将当前密钥标记为已轮换。使用旧密钥签名的现有令牌在过期前仍然有效。"
   },
   "mfa": {
     "title": "多因笠认证",
@@ -393,7 +416,24 @@
     "clickUpload": "点击上传 .pem 或 .crt 文件",
     "customScopePlaceholder": "自定义范围（如 groups）",
     "active": "已启用",
-    "inactive": "未启用"
+    "inactive": "未启用",
+    "samlSaved": "SAML 提供者已保存并激活",
+    "samlSavedLocal": "SAML 提供者已本地保存",
+    "oidcSaved": "OIDC 提供者已保存并激活",
+    "oidcSavedLocal": "OIDC 提供者已本地保存",
+    "providerDeleted": "提供者已删除",
+    "samlExamples": "Okta、ADFS、Azure AD、OneLogin",
+    "oidcExamples": "Google、Microsoft、Keycloak",
+    "ssoUrl": "SSO URL",
+    "charsXmlLoaded": "字符 XML 已加载",
+    "clientId": "客户端 ID",
+    "clientSecret": "客户端密钥",
+    "entityLabel": "实体：",
+    "ssoUrlLabel": "SSO URL：",
+    "discoveryLabel": "发现：",
+    "scopesLabel": "范围：",
+    "testSucceeded": "连接测试成功",
+    "testFailed": "连接测试失败"
   },
   "tenant": {
     "burstLimit": "突发限制",

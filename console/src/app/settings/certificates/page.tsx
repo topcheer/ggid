@@ -24,9 +24,9 @@ interface SigningKey {
 }
 
 const STATUS_CONFIG = {
-  valid: { badge: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400", icon: CheckCircle2, label: "Valid" },
-  expiring: { badge: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-400", icon: AlertTriangle, label: "Expiring Soon" },
-  expired: { badge: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400", icon: XCircle, label: "Expired" },
+  valid: { badge: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400", icon: CheckCircle2, key: "certs.valid" },
+  expiring: { badge: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-400", icon: AlertTriangle, key: "certs.expiringSoon" },
+  expired: { badge: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400", icon: XCircle, key: "certs.expiredLabel" },
 };
 
 function getCertStatus(expiry: string): keyof typeof STATUS_CONFIG {
@@ -123,7 +123,7 @@ export default function CertificatesPage() {
   const handleUpload = async () => {
     if (!pemText && !selectedFile) {
       setMsgType("error");
-      setMsg("Please select a file or paste PEM content");
+      setMsg(t("certs.selectOrPaste"));
       return;
     }
     try {
@@ -135,13 +135,13 @@ export default function CertificatesPage() {
         }),
       }).catch(() => null);
       setMsgType("success");
-      setMsg(`Certificate uploaded: ${selectedFile?.name || "pasted.pem"}`);
+      setMsg(`${t("certs.certUploaded")}: ${selectedFile?.name || "pasted.pem"}`);
       setSelectedFile(null);
       setPemText("");
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch {
       setMsgType("success");
-      setMsg(`Certificate uploaded: ${selectedFile?.name || "pasted.pem"} (offline mode)`);
+      setMsg(`${t("certs.certUploadedOffline")}: ${selectedFile?.name || "pasted.pem"}`);
       setSelectedFile(null);
       setPemText("");
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -161,10 +161,10 @@ export default function CertificatesPage() {
         ...prev.map((k) => (k.status === "active" ? { ...k, status: "rotated" as const } : k)),
       ]);
       setMsgType("success");
-      setMsg("Key rotation successful. New signing key generated.");
+      setMsg(t("certs.keyRotated"));
     } catch {
       setMsgType("error");
-      setMsg("Key rotation failed");
+      setMsg(t("certs.keyRotateFailed"));
     }
   };
 
@@ -196,7 +196,7 @@ export default function CertificatesPage() {
             <FileText className="mr-2 inline h-5 w-5 text-brand-600" />
             {t("certs.tlsCertificates")}
           </h2>
-          <span className="text-xs text-gray-400">{certs.length} certificate(s)</span>
+          <span className="text-xs text-gray-400">{certs.length} {t("certs.certCount")}</span>
         </div>
 
         {loading ? (
@@ -232,7 +232,7 @@ export default function CertificatesPage() {
                       <td className="px-3 py-3">
                         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${statusCfg.badge}`}>
                           <statusCfg.icon className="h-3 w-3" />
-                          {statusCfg.label}
+                          {t(statusCfg.key)}
                         </span>
                       </td>
                     </tr>
@@ -324,21 +324,21 @@ export default function CertificatesPage() {
             className="flex items-center gap-2 rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30"
           >
             <RefreshCw className="h-4 w-4" />
-            Rotate Key
+            {t("certs.rotateKey")}
           </button>
         </div>
 
         {signingKeys.length === 0 ? (
-          <div className="py-8 text-center text-sm text-gray-400">No signing keys found.</div>
+          <div className="py-8 text-center text-sm text-gray-400">{t("certs.noSigningKeys")}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700">
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Key ID (kid)</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Algorithm</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Status</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Created</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.keyId")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.algorithm")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.status")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.created")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -361,7 +361,7 @@ export default function CertificatesPage() {
                         ) : (
                           <Clock className="h-3 w-3" />
                         )}
-                        {key.status === "active" ? "Active" : "Rotated"}
+                        {key.status === "active" ? t("common.active") : t("certs.rotated")}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-500">
@@ -383,24 +383,23 @@ export default function CertificatesPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900">
                 <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Confirm Key Rotation</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("certs.confirmRotation")}</h3>
             </div>
             <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-              Are you sure? This will generate a new signing key and mark the current one as rotated.
-              Existing tokens signed with the old key will remain valid until they expire.
+              {t("certs.rotationConfirmDesc")}
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowRotateDialog(false)}
                 className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 onClick={handleRotateKey}
                 className="flex-1 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
               >
-                Rotate Key
+                {t("certs.rotateKey")}
               </button>
             </div>
           </div>

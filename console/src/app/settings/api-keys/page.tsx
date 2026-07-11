@@ -19,17 +19,17 @@ interface ApiKey {
 }
 
 const SCOPE_OPTIONS = [
-  { value: "read", label: "Read" },
-  { value: "write", label: "Write" },
-  { value: "admin", label: "Admin" },
-  { value: "scim", label: "SCIM" },
+  { value: "read", label: "" },
+  { value: "write", label: "" },
+  { value: "admin", label: "" },
+  { value: "scim", label: "" },
 ];
 
 const EXPIRY_OPTIONS = [
-  { value: "7d", label: "7 days", days: 7 },
-  { value: "30d", label: "30 days", days: 30 },
-  { value: "90d", label: "90 days", days: 90 },
-  { value: "never", label: "Never", days: 0 },
+  { value: "7d", label: "", days: 7 },
+  { value: "30d", label: "", days: 30 },
+  { value: "90d", label: "", days: 90 },
+  { value: "never", label: "", days: 0 },
 ];
 
 export default function ApiKeysPage() {
@@ -147,10 +147,10 @@ export default function ApiKeysPage() {
     try {
       await apiFetch(`/api/v1/api-keys/${keyId}`, { method: "DELETE" });
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
-      showMessage("API key revoked");
+      showMessage(t("apiKeys.keyRevoked"));
     } catch {
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
-      showMessage("API key revoked");
+      showMessage(t("apiKeys.keyRevoked"));
     }
   };
 
@@ -238,7 +238,7 @@ export default function ApiKeysPage() {
                     }`}
                   >
                     {keyScopes.has(scope.value) && <Check className="h-3.5 w-3.5" />}
-                    {scope.label}
+                    {t(`apiKeys.${scope.value}`)}
                   </button>
                 ))}
               </div>
@@ -256,7 +256,7 @@ export default function ApiKeysPage() {
                         : "border-gray-300 text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                     }`}
                   >
-                    {opt.label}
+                    {opt.value === "never" ? t("apiKeys.expiryNever") : t(`apiKeys.expiry${opt.value.replace("d", "")}`)}
                   </button>
                 ))}
               </div>

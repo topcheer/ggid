@@ -700,13 +700,13 @@ export default function SSOConnectionsPage() {
                     onClick={() => setWizardStep(2)}
                     className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                   >
-                    <ArrowLeft className="h-4 w-4" /> Back
+                    <ArrowLeft className="h-4 w-4" /> {t("sso.back")}
                   </button>
                   <button
                     onClick={saveSamlProvider}
                     className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
                   >
-                    <Save className="h-4 w-4" /> Save & Activate Provider
+                    <Save className="h-4 w-4" /> {t("sso.saveActivate")}
                   </button>
                 </div>
               </div>
@@ -803,7 +803,7 @@ export default function SSOConnectionsPage() {
                     onClick={saveOidcProvider}
                     className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
                   >
-                    <Save className="h-4 w-4" /> Save & Activate Provider
+                    <Save className="h-4 w-4" /> {t("sso.saveActivate")}
                   </button>
                 </div>
               </div>

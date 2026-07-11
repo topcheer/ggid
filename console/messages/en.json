@@ -64,7 +64,13 @@
     "description": "Description",
     "domain": "Domain",
     "subject": "Subject",
-    "issuer": "Issuer"
+    "issuer": "Issuer",
+    "copy": "Copy",
+    "loading": "Loading...",
+    "saveChanges": "Save Changes",
+    "toggleVisibility": "Toggle visibility",
+    "unnamed": "Unnamed",
+    "uris": "URI(s)"
   },
   "users": {
     "title": "Users",
@@ -231,7 +237,13 @@
     "failedRotate": "Failed to rotate secret",
     "edit": "Edit",
     "rotateSecret": "Rotate Secret",
-    "delete": "Delete"
+    "delete": "Delete",
+    "registerClient": "Register Client",
+    "secretRevealed": "Secret Revealed — Copy NOW!",
+    "secretWarning": "This secret will NOT be shown again. Store it securely.",
+    "createClient": "Create Client",
+    "editClient": "Edit Client",
+    "deleteConfirm": "Delete OAuth client \"{name}\"? This cannot be undone."
   },
   "webhooks": {
     "title": "Webhooks",
@@ -268,7 +280,13 @@
     "enterKeyName": "Please enter a name for the API key",
     "selectScope": "Please select at least one scope",
     "storeSecurely": "Store it in a secure location. You will not be able to retrieve it later.",
-    "activeStatus": "Active"
+    "activeStatus": "Active",
+    "demoMode": "API key created (demo mode)",
+    "keyNamePlaceholder": "e.g. CI/CD Pipeline Key",
+    "expiry7": "7 days",
+    "expiry30": "30 days",
+    "expiry90": "90 days",
+    "expiryNever": "Never"
   },
   "settings": {
     "title": "Settings",
@@ -324,7 +342,12 @@
     "rotateKey": "Rotate Key",
     "noSigningKeys": "No signing keys found.",
     "expiredLabel": "Expired",
-    "rotated": "Rotated"
+    "rotated": "Rotated",
+    "selectOrPaste": "Please select a file or paste PEM content",
+    "certUploaded": "Certificate uploaded",
+    "certUploadedOffline": "Certificate uploaded (offline mode)",
+    "certCount": "certificate(s)",
+    "rotationConfirmDesc": "Are you sure? This will generate a new signing key and mark the current one as rotated. Existing tokens signed with the old key will remain valid until they expire."
   },
   "mfa": {
     "title": "Multi-Factor Authentication",
@@ -393,7 +416,24 @@
     "clickUpload": "Click to upload .pem or .crt file",
     "customScopePlaceholder": "Custom scope (e.g. groups)",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "samlSaved": "SAML provider saved and activated",
+    "samlSavedLocal": "SAML provider saved locally",
+    "oidcSaved": "OIDC provider saved and activated",
+    "oidcSavedLocal": "OIDC provider saved locally",
+    "providerDeleted": "Provider deleted",
+    "samlExamples": "Okta, ADFS, Azure AD, OneLogin",
+    "oidcExamples": "Google, Microsoft, Keycloak",
+    "ssoUrl": "SSO URL",
+    "charsXmlLoaded": "chars of XML loaded",
+    "clientId": "Client ID",
+    "clientSecret": "Client Secret",
+    "entityLabel": "Entity:",
+    "ssoUrlLabel": "SSO URL:",
+    "discoveryLabel": "Discovery:",
+    "scopesLabel": "Scopes:",
+    "testSucceeded": "connection test succeeded",
+    "testFailed": "connection test failed"
   },
   "tenant": {
     "burstLimit": "Burst Limit",
