@@ -8,6 +8,9 @@
 // Client + errors
 export { GGIDClient, GGIDError } from './client';
 
+// Token manager (auto-refresh)
+export { TokenManager } from './token_manager';
+
 // JWT verifier
 export { JWTVerifier, JWTError } from './jwt';
 export type { JWTClaims } from './jwt';

@@ -1297,24 +1297,29 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func writeJSONError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	errors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
 }
 
 func writeServiceError(w http.ResponseWriter, err error) {
-	if ge, ok := errors.AsGGIDError(err); ok {
-		switch ge.Code {
-		case errors.ErrNotFound:
-			writeJSONError(w, http.StatusNotFound, ge.Message)
-		case errors.ErrAlreadyExists:
-			writeJSONError(w, http.StatusConflict, ge.Message)
-		case errors.ErrInvalidArgument:
-			writeJSONError(w, http.StatusBadRequest, ge.Message)
-		case errors.ErrPermissionDenied:
-			writeJSONError(w, http.StatusForbidden, ge.Message)
-		default:
-			writeJSONError(w, http.StatusInternalServerError, ge.Message)
-		}
-		return
+	errors.WriteAPIError(w, err, "")
+}
+
+// httpStatusToCode maps an HTTP status code to a GGID error code string.
+func httpStatusToCode(status int) string {
+	switch status {
+	case http.StatusBadRequest:
+		return string(errors.ErrInvalidArgument)
+	case http.StatusUnauthorized:
+		return string(errors.ErrUnauthenticated)
+	case http.StatusForbidden:
+		return string(errors.ErrPermissionDenied)
+	case http.StatusNotFound:
+		return string(errors.ErrNotFound)
+	case http.StatusConflict:
+		return string(errors.ErrAlreadyExists)
+	case http.StatusTooManyRequests:
+		return string(errors.ErrResourceExhausted)
+	default:
+		return string(errors.ErrInternal)
 	}
-	writeJSONError(w, http.StatusInternalServerError, err.Error())
 }

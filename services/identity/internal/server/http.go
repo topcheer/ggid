@@ -524,28 +524,31 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	ggiderrors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
+}
+
+// httpStatusToCode maps an HTTP status code to a GGID error code string.
+func httpStatusToCode(status int) string {
+	switch status {
+	case http.StatusBadRequest:
+		return string(ggiderrors.ErrInvalidArgument)
+	case http.StatusUnauthorized:
+		return string(ggiderrors.ErrUnauthenticated)
+	case http.StatusForbidden:
+		return string(ggiderrors.ErrPermissionDenied)
+	case http.StatusNotFound:
+		return string(ggiderrors.ErrNotFound)
+	case http.StatusConflict:
+		return string(ggiderrors.ErrAlreadyExists)
+	case http.StatusTooManyRequests:
+		return string(ggiderrors.ErrResourceExhausted)
+	default:
+		return string(ggiderrors.ErrInternal)
+	}
 }
 
 func writeServiceError(w http.ResponseWriter, err error) {
-	if ge, ok := ggiderrors.AsGGIDError(err); ok {
-		switch ge.Code {
-		case ggiderrors.ErrNotFound:
-			writeError(w, http.StatusNotFound, ge.Message)
-		case ggiderrors.ErrAlreadyExists:
-			writeError(w, http.StatusConflict, ge.Message)
-		case ggiderrors.ErrInvalidArgument:
-			writeError(w, http.StatusBadRequest, ge.Message)
-		case ggiderrors.ErrPermissionDenied:
-			writeError(w, http.StatusForbidden, ge.Message)
-		case ggiderrors.ErrUnauthenticated:
-			writeError(w, http.StatusUnauthorized, ge.Message)
-		default:
-			writeError(w, http.StatusInternalServerError, ge.Message)
-		}
-		return
-	}
-	writeError(w, http.StatusInternalServerError, err.Error())
+	ggiderrors.WriteAPIError(w, err, "")
 }
 
 // handleImportCSV handles POST /api/v1/users/import
