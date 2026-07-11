@@ -1041,32 +1041,63 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 }
 
 func writeAuthError(w http.ResponseWriter, err error) {
+	writeAuthErrorWithTranslator(w, err, nil, nil)
+}
+
+// writeAuthErrorT is the i18n-aware version of writeAuthError.
+// It translates error messages using the handler's translator when available,
+// falling back to English defaults when translator is nil (backwards compatible).
+func (h *Handler) writeAuthErrorT(w http.ResponseWriter, r *http.Request, err error) {
+	writeAuthErrorWithTranslator(w, err, h.translator, r)
+}
+
+// writeAuthErrorWithTranslator is the shared implementation that handles
+// both i18n-translated and untranslated error responses.
+func writeAuthErrorWithTranslator(w http.ResponseWriter, err error, tr *i18n.Translator, r *http.Request) {
+	// resolveLocale returns "en" when translator or request is nil.
+	getLocale := func() string {
+		if tr == nil || r == nil {
+			return "en"
+		}
+		return i18n.ResolveLocale(r.Header.Get("Accept-Language"), "en")
+	}
+	translate := func(key, fallback string) string {
+		if tr == nil {
+			return fallback
+		}
+		msg := tr.Translate(getLocale(), key)
+		if msg == key {
+			return fallback // key not found, use fallback
+		}
+		return msg
+	}
+
 	switch {
 	case stderrors.Is(err, service.ErrInvalidCredentials):
-		writeError(w, http.StatusUnauthorized, "invalid credentials")
+		writeError(w, http.StatusUnauthorized, translate("error.invalid_credentials", "invalid credentials"))
 	case stderrors.Is(err, service.ErrAccountLocked):
-		writeError(w, http.StatusLocked, "account temporarily locked")
+		writeError(w, http.StatusLocked, translate("error.account_locked", "account temporarily locked"))
 	case stderrors.Is(err, service.ErrMFASetupRequired):
 		writeError(w, http.StatusForbidden, err.Error())
 	case stderrors.Is(err, service.ErrRateLimited):
-		writeError(w, http.StatusTooManyRequests, "rate limit exceeded")
+		writeError(w, http.StatusTooManyRequests, translate("error.rate_limit_exceeded", "rate limit exceeded"))
 	case stderrors.Is(err, service.ErrSessionNotFound):
-		writeError(w, http.StatusNotFound, "session not found")
+		writeError(w, http.StatusNotFound, translate("error.session_not_found", "session not found"))
 	case stderrors.Is(err, service.ErrPasswordTooShort), stderrors.Is(err, service.ErrPasswordTooWeak):
 		writeError(w, http.StatusBadRequest, err.Error())
 	case stderrors.Is(err, service.ErrPasswordReused):
 		writeError(w, http.StatusConflict, err.Error())
 	case stderrors.Is(err, service.ErrCredentialAlreadyExists):
-		writeError(w, http.StatusConflict, "username or email already registered")
+		writeError(w, http.StatusConflict, translate("error.credential_already_exists", "username or email already registered"))
 	case stderrors.Is(err, service.ErrInvalidResetToken):
-		writeError(w, http.StatusBadRequest, "invalid or expired reset token")
+		writeError(w, http.StatusBadRequest, translate("error.reset_token_invalid", "invalid or expired reset token"))
 	default:
 		var ge *ggiderrors.GGIDError
 		if stderrors.As(err, &ge) {
 			writeError(w, http.StatusInternalServerError, ge.Message)
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "internal server error")
+		writeError(w, http.StatusInternalServerError, translate("error.internal_server_error", "internal server error"))
 	}
 }
 

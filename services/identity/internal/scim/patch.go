@@ -198,6 +198,14 @@ func applyRemove(attrs map[string]any, path string) error {
 // parsePatchPath parses a SCIM PATCH path into components.
 // Example: emails[type eq "work"].value
 // Returns: attrName="emails", subPath="value", filter="type eq \"work\""
+//
+// Supports URN paths in two notations:
+//   - Dot notation:   urn:ietf:params:scim:schemas:extension:enterprise:2.0:User.department
+//   - Colon notation: urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department (RFC 7644)
+//
+// For URN paths, the "." in version numbers (e.g., "2.0") is NOT treated as
+// a separator. Only a "." or ":" appearing after the schema type suffix
+// (the segment after the last ":") is treated as a sub-path separator.
 func parsePatchPath(path string) (attrName, subPath, filter string) {
 	path = strings.TrimSpace(path)
 
@@ -206,8 +214,30 @@ func parsePatchPath(path string) (attrName, subPath, filter string) {
 		// No filter - simple, dotted, or URN path
 		// For URN paths (e.g., "urn:...:2.0:User"), the colons and the "."
 		// in version numbers are part of the schema identifier, not path
-		// separators. Only split on the last "." that appears AFTER the last ":".
+		// separators. Only split on a "." or ":" that appears AFTER the last ":"
+		// in the URN prefix.
 		if strings.HasPrefix(path, "urn:") {
+			// Split into segments to find the schema/type boundary.
+			// SCIM URN format: urn:...:version:TypeSuffix:subAttr:subSubAttr
+			// e.g., urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department
+			segments := strings.Split(path, ":")
+
+			// Find version segment (contains ".") followed by type suffix (User, Group).
+			for i := 0; i < len(segments)-1; i++ {
+				if strings.Contains(segments[i], ".") && isAlphaStr(segments[i+1]) {
+					// segments[i] = version (2.0), segments[i+1] = type suffix (User)
+					if i+2 < len(segments) {
+						// Sub-attributes exist after type suffix (colon notation)
+						schemaUrn := strings.Join(segments[:i+2], ":")
+						subPath := strings.Join(segments[i+2:], ":")
+						return schemaUrn, subPath, ""
+					}
+					// No sub-attributes — entire path is the schema URN
+					return path, "", ""
+				}
+			}
+
+			// Fallback: dot notation (urn:...:User.department)
 			lastColon := strings.LastIndex(path, ":")
 			afterColon := path[lastColon+1:]
 			if dotIdx := strings.Index(afterColon, "."); dotIdx >= 0 {
@@ -242,6 +272,7 @@ func parsePatchPath(path string) (attrName, subPath, filter string) {
 }
 
 // setNestedAttr sets a nested attribute value: parent.child = value
+// Supports multi-level dotted paths: parent.child.grandchild = value
 func setNestedAttr(attrs map[string]any, parent, child string, value any) error {
 	existing := getAttrCaseInsensitive(attrs, parent)
 	var m map[string]any
@@ -252,7 +283,28 @@ func setNestedAttr(attrs map[string]any, parent, child string, value any) error 
 	} else {
 		m = make(map[string]any)
 	}
-	setAttrCaseInsensitive(m, child, value)
+
+	// Navigate dotted sub-path (e.g., "manager.displayName")
+	parts := strings.Split(child, ".")
+	current := m
+	for i, part := range parts {
+		if i == len(parts)-1 {
+			// Leaf — set the value
+			setAttrCaseInsensitive(current, part, value)
+		} else {
+			// Intermediate — navigate or create nested map
+			next := getAttrCaseInsensitive(current, part)
+			var nm map[string]any
+			if nmm, ok := next.(map[string]any); ok {
+				nm = nmm
+			} else {
+				nm = make(map[string]any)
+			}
+			setAttrCaseInsensitive(current, part, nm)
+			current = nm
+		}
+	}
+
 	setAttrCaseInsensitive(attrs, parent, m)
 	return nil
 }
@@ -331,6 +383,20 @@ func deleteCaseInsensitive(attrs map[string]any, key string) {
 			return
 		}
 	}
+}
+
+// isAlphaStr returns true if s contains only ASCII alphabetic characters.
+// Used to distinguish URN type suffixes (User, Group) from version numbers (2.0).
+func isAlphaStr(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if !((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+			return false
+		}
+	}
+	return true
 }
 
 // PatchedAttrsToSCIMUser builds a SCIMUser from patched attrs map.

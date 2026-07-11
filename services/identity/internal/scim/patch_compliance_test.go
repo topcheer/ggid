@@ -270,6 +270,74 @@ func TestSCIMPatchCompliance_NestedPathReplace(t *testing.T) {
 	}
 }
 
+// TestSCIMPatchCompliance_URNColonNotation verifies that RFC 7644 colon notation
+// for URN paths works (e.g., urn:...:User:department instead of urn:...:User.department).
+func TestSCIMPatchCompliance_URNColonNotation(t *testing.T) {
+	entSchema := "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+	attrs := map[string]any{
+		"userName": "colonuser",
+		entSchema: map[string]any{
+			"department":     "Engineering",
+			"employeeNumber": "EMP-100",
+		},
+	}
+
+	// Use colon notation: urn:...:User:department
+	val, _ := json.Marshal("Security")
+	ops := []PatchOperation{
+		{Op: "replace", Path: entSchema + ":department", Value: val},
+	}
+
+	result, err := ApplyPatch(attrs, ops)
+	if err != nil {
+		t.Fatalf("ApplyPatch with colon notation failed: %v", err)
+	}
+
+	entRaw, ok := result[entSchema]
+	if !ok {
+		t.Fatal("enterprise extension should exist")
+	}
+	entMap := entRaw.(map[string]any)
+	if entMap["department"] != "Security" {
+		t.Errorf("department should be 'Security' with colon notation, got %v", entMap["department"])
+	}
+	if entMap["employeeNumber"] != "EMP-100" {
+		t.Errorf("employeeNumber should remain 'EMP-100', got %v", entMap["employeeNumber"])
+	}
+}
+
+// TestSCIMPatchCompliance_URNColonNotationNested verifies colon notation with
+// deeper nesting: urn:...:User:manager.displayName.
+func TestSCIMPatchCompliance_URNColonNotationNested(t *testing.T) {
+	entSchema := "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+	attrs := map[string]any{
+		"userName": "nesteduser",
+		entSchema: map[string]any{
+			"manager": map[string]any{
+				"value":      "mgr-001",
+				"displayName": "Old Manager",
+			},
+		},
+	}
+
+	// Colon notation with dotted sub-path: urn:...:User:manager.displayName
+	val, _ := json.Marshal("New Manager")
+	ops := []PatchOperation{
+		{Op: "replace", Path: entSchema + ":manager.displayName", Value: val},
+	}
+
+	result, err := ApplyPatch(attrs, ops)
+	if err != nil {
+		t.Fatalf("ApplyPatch failed: %v", err)
+	}
+
+	entRaw := result[entSchema].(map[string]any)
+	mgr := entRaw["manager"].(map[string]any)
+	if mgr["displayName"] != "New Manager" {
+		t.Errorf("manager displayName should be 'New Manager', got %v", mgr["displayName"])
+	}
+}
+
 // TestSCIMPatchCompliance_UnsupportedOperation verifies that an unsupported
 // PATCH operation returns an error.
 func TestSCIMPatchCompliance_UnsupportedOperation(t *testing.T) {
