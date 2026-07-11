@@ -154,6 +154,11 @@
 - [x] OAuth introspection auth — 5 tests: no creds → 401, wrong secret → 401, correct → 200, form-based, missing token (314a4f3). Already implemented: r.BasicAuth() at server.go:563
 - [x] gRPC TLS audit wiring — newGRPCServer() helper with GRPC_TLS_ENABLED/CERT/KEY env vars, fallback to plaintext (314a4f3)
 - [ ] **MISSING: Per-tenant branding backend API** — console pages exist (settings/branding, settings/branding-custom, branding) but no backend API endpoint for CRUD. Need: GET/PUT /api/v1/tenants/{id}/branding with logo_url, primary_color, custom_css fields.
+- [x] Per-tenant branding CRUD API — GET/PUT /api/v1/tenants/{id}/branding, 6 tests (default, update, get-after-update, method, invalid JSON, isolation) (ed2d347)
+- [x] Python SDK update_user — added async update_user(token, user_id, email, phone, status) PATCH method (ed2d347)
+- [x] Java SDK updateUser — added updateUser(userId, email, phone) + patch() HTTP helper (ed2d347)
+- [x] Go SDK typed errors — ALREADY DONE: ErrUnauthorized/ErrForbidden/ErrNotFound/ErrConflict/ErrRateLimited/ErrBadRequest with Is() support in sdk/go/ggid/errors.go (ed2d347)
+- [ ] **FOLLOW-UP: API error format adoption** — pkg/errors.WriteAPIError exists with {\"error\":{\"code\",\"message\"}} format but NOT yet adopted by service handlers. Identity/auth/oauth/policy/org/audit handlers still use ad-hoc writeError(). Migrating all handlers to WriteAPIError is a large refactor — tracked for future sprint.
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
