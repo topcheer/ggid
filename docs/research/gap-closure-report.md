@@ -219,7 +219,7 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | CSRF State Validation (#12) | gap_regression_csrf_test.go | 8 PASS | MEDIUM → HIGH |
 | HasScope Enforcement (#13) | gap_regression_scope_test.go | 8 PASS | MEDIUM → HIGH |
 
-**Total regression tests added: 28.** All PASS.
+**Total regression tests added: 44.** All PASS. (28 original + 7 SIEM + 3 dry-run + 6 ABAC condition groups)
 
 ### Verification breakdown for 18 specifically audited items:
 
