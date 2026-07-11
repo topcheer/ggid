@@ -472,6 +472,351 @@ paths:
               schema:
                 $ref: "#/components/schemas/AgentTokenResponse"
 
+  # === Policy: Permission Tree & Rate Limits ===
+  /api/v1/policy/permissions/tree:
+    get:
+      tags: [Policy]
+      summary: Get permission inheritance tree
+      responses:
+        '200':
+          description: Permission tree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionTree'
+
+  /api/v1/policy/rate-limits:
+    get:
+      tags: [Policy]
+      summary: Get per-tenant rate limit configuration
+      responses:
+        '200':
+          description: Rate limit config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitConfig'
+    put:
+      tags: [Policy]
+      summary: Update per-tenant rate limit configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RateLimitConfig'
+      responses:
+        '200': { description: Updated }
+
+  /api/v1/policies/abac/evaluate:
+    post:
+      tags: [Policy]
+      summary: Evaluate ABAC conditions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ABACEvalRequest'
+      responses:
+        '200':
+          description: Evaluation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ABACEvalResult'
+
+  /api/v1/policy/delegation/validate:
+    post:
+      tags: [Policy]
+      summary: Validate delegation chain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DelegationValidateRequest'
+      responses:
+        '200':
+          description: Validation result
+
+  # === Auth: Login Security ===
+  /api/v1/auth/password-history-check:
+    post:
+      tags: [Auth]
+      summary: Check password against history
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, new_password]
+              properties:
+                user_id: { type: string, format: uuid }
+                new_password: { type: string }
+      responses:
+        '200':
+          description: Check result
+
+  /api/v1/auth/login-attempts/{user_id}:
+    get:
+      tags: [Auth]
+      summary: Get login attempt history
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Login attempts
+
+  /api/v1/auth/login-attempts/{user_id}/reset:
+    post:
+      tags: [Auth]
+      summary: Reset login attempts
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Reset successful }
+
+  /api/v1/auth/sessions/stream:
+    get:
+      tags: [Auth]
+      summary: Session activity stream (SSE)
+      responses:
+        '200':
+          description: SSE stream
+          content:
+            text/event-stream: {}
+
+  # === Audit: SIEM & Compliance ===
+  /api/v1/audit/siem/health:
+    get:
+      tags: [Audit]
+      summary: SIEM forwarder health
+      responses:
+        '200':
+          description: SIEM health status
+
+  /api/v1/audit/alert-webhooks:
+    get:
+      tags: [Audit]
+      summary: List alert webhooks
+      responses:
+        '200':
+          description: Alert webhooks list
+    post:
+      tags: [Audit]
+      summary: Create alert webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string, format: uri }
+                secret: { type: string }
+                events:
+                  type: array
+                  items: { type: string }
+      responses:
+        '201': { description: Created }
+    delete:
+      tags: [Audit]
+      summary: Delete alert webhook
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Deleted }
+
+  /api/v1/audit/compliance-schedules:
+    get:
+      tags: [Audit]
+      summary: List compliance report schedules
+      responses:
+        '200':
+          description: Schedules
+    post:
+      tags: [Audit]
+      summary: Create compliance report schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [report_type, frequency]
+              properties:
+                report_type: { type: string, enum: [soc2, hipaa, gdpr, custom] }
+                frequency: { type: string, enum: [daily, weekly, monthly] }
+                recipients:
+                  type: array
+                  items: { type: string }
+      responses:
+        '201': { description: Created }
+    put:
+      tags: [Audit]
+      summary: Update compliance report schedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200': { description: Updated }
+    delete:
+      tags: [Audit]
+      summary: Delete compliance report schedule
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Deleted }
+
+  # === OAuth: Introspection Config & Consent ===
+  /api/v1/oauth/introspection/config:
+    get:
+      tags: [OAuth]
+      summary: Get introspection cache config
+      responses:
+        '200':
+          description: Config
+    put:
+      tags: [OAuth]
+      summary: Update introspection cache config
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cache_ttl_seconds: { type: integer, default: 300 }
+                cache_enabled: { type: boolean, default: true }
+      responses:
+        '200': { description: Updated }
+
+  /api/v1/oauth/consent/list:
+    get:
+      tags: [OAuth]
+      summary: List user consents
+      parameters:
+        - name: user_id
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Consents list
+
+  /api/v1/oauth/consent/{id}:
+    delete:
+      tags: [OAuth]
+      summary: Revoke consent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Revoked }
+
+  /api/v1/oauth/token-exchange:
+    post:
+      tags: [OAuth]
+      summary: Token exchange (RFC 8693)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject_token, subject_token_type]
+              properties:
+                subject_token: { type: string }
+                subject_token_type: { type: string }
+                actor_token: { type: string }
+                audience: { type: string }
+                scope: { type: string }
+      responses:
+        '200':
+          description: New token
+
+  # === Identity: Account Linking & Import ===
+  /api/v1/users/{id}/link:
+    post:
+      tags: [Identity]
+      summary: Link external provider to user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, external_id]
+              properties:
+                provider: { type: string }
+                external_id: { type: string }
+                external_email: { type: string }
+      responses:
+        '200': { description: Linked }
+
+  /api/v1/users/{id}/link/{provider}:
+    delete:
+      tags: [Identity]
+      summary: Unlink external provider
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+        - name: provider
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204': { description: Unlinked }
+
+  /api/v1/users/import/validate:
+    post:
+      tags: [Identity]
+      summary: Validate user import data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                users:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      username: { type: string }
+                      email: { type: string }
+      responses:
+        '200':
+          description: Validation result
+
 components:
   securitySchemes:
     BearerAuth:

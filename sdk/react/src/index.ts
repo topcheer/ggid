@@ -81,6 +81,10 @@ export { useSIEMForwarder } from './useSIEMForwarder';
 export type { SIEMConfig, SIEMStatus, SIEMDeliveryLog, SIEMFormat, TestResult, UseSIEMForwarderResult } from './useSIEMForwarder';
 export { useConsent } from './useConsent';
 export type { Consent, UseConsentResult } from './useConsent';
+export { useLoginAttempts } from './useLoginAttempts';
+export type { LoginAttempt, Lockout, LoginPolicy, UseLoginAttemptsResult } from './useLoginAttempts';
+export { useComplianceSchedules } from './useComplianceSchedules';
+export type { ComplianceSchedule, ComplianceFramework, ScheduleFrequency, CreateScheduleInput, UseComplianceSchedulesResult } from './useComplianceSchedules';
 export type {
   GGIDConfig,
   GGIDUser,
