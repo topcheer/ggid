@@ -26,11 +26,26 @@ import (
 
 // OAuthService implements OAuth2 client management and the authorization code flow.
 type OAuthService struct {
-	clientRepo repository.ClientRepository
-	codeRepo   repository.AuthorizationCodeRepository
-	tokenRepo  repository.IDTokenRepository
+	clientRepo  repository.ClientRepository
+	codeRepo    repository.AuthorizationCodeRepository
+	tokenRepo   repository.IDTokenRepository
 	keyProvider domain.KeyProvider
 	issuer      string
+	rdb         RedisCmdable // optional Redis client for distributed state
+}
+
+// RedisCmdable is the minimal subset of go-redis used by the state store.
+// This allows mocking in tests without a real Redis server.
+type RedisCmdable interface {
+	Set(ctx context.Context, key string, value any, ttl time.Duration) error
+	GetDel(ctx context.Context, key string) (string, error)
+}
+
+// SetRedisClient wires a Redis client for distributed state storage.
+// When set, OAuth state parameters are stored in Redis (for HA/multi-instance).
+// When nil or Redis is unreachable, the in-memory sync.Map fallback is used.
+func (s *OAuthService) SetRedisClient(rdb RedisCmdable) {
+	s.rdb = rdb
 }
 
 // NewOAuthService creates a new OAuthService.
@@ -266,7 +281,16 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 	// Store state for CSRF validation during token exchange.
 	if req.State != "" {
 		stateKey := fmt.Sprintf("oauth:state:%s:%s", req.ClientID, req.State)
-		stateStore.Store(stateKey, time.Now().Add(10 * time.Minute))
+		stateTTL := 10 * time.Minute
+
+		// Try Redis first (for HA/multi-instance), fallback to sync.Map.
+		if s.rdb != nil {
+			if err := s.rdb.Set(ctx, stateKey, "1", stateTTL); err == nil {
+				return plaintextCode, nil
+			}
+			// Redis failed — fallback to in-memory
+		}
+		stateStore.Store(stateKey, time.Now().Add(stateTTL))
 	}
 
 	return plaintextCode, nil
@@ -675,6 +699,19 @@ func (s *OAuthService) ValidateState(clientID, state string) bool {
 		return false
 	}
 	stateKey := fmt.Sprintf("oauth:state:%s:%s", clientID, state)
+
+	// Try Redis first (for HA/multi-instance).
+	if s.rdb != nil {
+		// GetDel atomically retrieves and deletes — implements one-time use.
+		val, err := s.rdb.GetDel(context.Background(), stateKey)
+		if err == nil && val != "" {
+			return true // state found and consumed
+		}
+		// If Redis returned a key-not-found, the state doesn't exist.
+		// If Redis errored (network), fall through to in-memory check.
+	}
+
+	// In-memory fallback.
 	val, ok := stateStore.Load(stateKey)
 	if !ok {
 		return false // state not found (unknown, expired, or replayed)

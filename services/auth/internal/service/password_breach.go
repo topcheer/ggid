@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -24,11 +25,72 @@ func breachCheckEnabled() bool {
 	return true // default: enabled
 }
 
+// --- HIBP Circuit Breaker ---
+//
+// breachCircuitBreaker implements a simple fail-open circuit breaker for the HIBP API.
+// After `breachCircuitThreshold` consecutive failures, the circuit opens and all
+// subsequent calls fail-open (return nil) for `breachCircuitCooldown` duration.
+// After the cooldown, one trial request is allowed (half-open). If it succeeds,
+// the breaker resets; if it fails, the cooldown restarts.
+
+const (
+	breachCircuitThreshold = 3                // consecutive failures to open
+	breachCircuitCooldown  = 30 * time.Second // open-state duration
+)
+
+// breachCircuitState holds the circuit breaker state using atomics.
+//   failureCount: int32  — consecutive failures (0 = closed/healthy)
+//   openedAt:     int64  — unix-nano when circuit opened (0 = closed)
+var breachFailureCount atomic.Int32
+var breachOpenedAt atomic.Int64
+
+// breachCircuitIsOpen returns true if the circuit is currently open.
+// If the cooldown has elapsed, it transitions to half-open (returns false)
+// but does NOT reset the failure count — that only happens on success.
+func breachCircuitIsOpen() bool {
+	openedAt := breachOpenedAt.Load()
+	if openedAt == 0 {
+		return false // closed
+	}
+	if time.Now().UnixNano()-openedAt >= breachCircuitCooldown.Nanoseconds() {
+		// Cooldown elapsed — half-open: allow a trial request
+		return false
+	}
+	return true // still open
+}
+
+// breachCircuitRecordSuccess resets the circuit breaker to closed/healthy.
+func breachCircuitRecordSuccess() {
+	breachFailureCount.Store(0)
+	breachOpenedAt.Store(0)
+}
+
+// breachCircuitRecordFailure increments the failure counter and opens the circuit
+// if the threshold is reached.
+func breachCircuitRecordFailure() {
+	count := breachFailureCount.Add(1)
+	if count >= int32(breachCircuitThreshold) {
+		breachOpenedAt.Store(time.Now().UnixNano())
+	}
+}
+
+// resetBreachCircuitForTest resets the circuit breaker state. Test-only.
+func resetBreachCircuitForTest() {
+	breachFailureCount.Store(0)
+	breachOpenedAt.Store(0)
+}
+
 // CheckPasswordBreach checks if a password has been found in known data breaches
 // using the HIBP k-anonymity model (haveibeenpwned.com API).
 // Only the first 5 characters of the SHA-1 hash are sent to the API.
 // Returns an error if the password has been breached.
+// Circuit breaker: after 3 consecutive HIBP failures, fail-open for 30s.
 func (ps *PasswordService) CheckPasswordBreach(ctx context.Context, password string) error {
+	// Circuit breaker: if open, fail-open immediately.
+	if breachCircuitIsOpen() {
+		return nil
+	}
+
 	// Compute SHA-1 hash of the password.
 	h := sha1.Sum([]byte(password))
 	hash := strings.ToUpper(hex.EncodeToString(h[:]))
@@ -41,7 +103,8 @@ func (ps *PasswordService) CheckPasswordBreach(ctx context.Context, password str
 	url := "https://api.pwnedpasswords.com/range/" + prefix
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		// Don't block registration if the request can't be created.
+		// Request creation failure — record and fail-open.
+		breachCircuitRecordFailure()
 		return nil
 	}
 	req.Header.Set("User-Agent", "GGID-IAM")
@@ -49,20 +112,27 @@ func (ps *PasswordService) CheckPasswordBreach(ctx context.Context, password str
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		// Don't block registration if the API is unreachable.
+		// Network error — record failure and fail-open.
+		breachCircuitRecordFailure()
 		return nil
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		// API error — don't block registration.
+		// API error — record failure and fail-open.
+		breachCircuitRecordFailure()
 		return nil
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		// Body read error — record failure and fail-open.
+		breachCircuitRecordFailure()
 		return nil
 	}
+
+	// Success — reset circuit breaker.
+	breachCircuitRecordSuccess()
 
 	// Parse the response: each line is "SUFFIX:COUNT".
 	for _, line := range strings.Split(string(body), "\n") {
