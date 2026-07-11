@@ -435,3 +435,10 @@
 - [x] Accessibility audit — aria-labels added to 25+ icon-only buttons across 15+ pages (2da3a4e)
 - [x] Console env vars docs — .env.example created, README.md updated with complete env var table (2da3a4e)
 - [x] Performance: code splitting — lazy-charts.tsx dynamic import for recharts (~400KB), 3 pages updated (2da3a4e)
+
+## Sprint: SDK Examples + Console Polish (frontend e86ecfa, 3bf7f9c)
+- [x] SDK quickstart examples — go/main.go, node/index.js, python/main.py (3-line JWT pattern, GGID_URL env var, default ggid.iot2.win) (3bf7f9c)
+- [x] Console K8s deployment YAML — deploy/k8s/console-deployment.yaml (Deployment+Service+Ingress, ggid-console.iot2.win, probes, resource limits) (e86ecfa)
+- [x] Console dark mode verification — CSS auto-fallback covers 79 bg-white patterns, inline styles in branding pages are intentional dynamic theme preview (e86ecfa)
+- [x] API error display polish — parseApiError() with structured title/detail/request_id/code, human-friendly status messages (e86ecfa)
+- [x] Console build size audit — 3.3MB total across 70+ pages, recharts lazy-loaded, top chunk 365KB is vendor/framework code (e86ecfa)
