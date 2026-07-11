@@ -114,6 +114,19 @@ echo ""
 echo "(should see 401s then 429)"
 ```
 
+## External Infrastructure
+
+If using external databases/middleware (not bundled containers):
+
+- [ ] `DB_HOST` set to external PostgreSQL host
+- [ ] `DB_PORT` set (default 5432)
+- [ ] `DB_PASSWORD` set to production password
+- [ ] `REDIS_HOST` set to external Redis host
+- [ ] `NATS_URL` set to external NATS (e.g. `nats://prod-nats:4222`)
+- [ ] `LDAP_URL` set if using LDAP auth provider (e.g. `ldap://prod-ldap:389`)
+- [ ] Database has SSL enabled (`DB_SSL_MODE=require`)
+- [ ] Redis has AUTH password set
+
 ---
 
 *Last updated: 2025-07-11*

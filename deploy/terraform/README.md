@@ -42,6 +42,23 @@ terraform apply
 | `gateway_service_name` | `ggid-ggid-gateway` |
 | `helm_release_status` | `deployed` |
 
+## Using External Database/Middleware
+
+To use external PostgreSQL, Redis, NATS, or LDAP instead of bundled containers:
+
+```hcl
+# terraform.tfvars
+external_database_host = "prod-db.internal"
+external_database_port = 5432
+external_redis_host    = "prod-redis.internal"
+external_redis_port    = 6379
+external_nats_host     = "prod-nats.internal"
+external_nats_port     = 4222
+external_ldap_url      = "ldap://prod-ldap.internal:389"
+```
+
+When these are set, Terraform passes `postgresql.enabled=false`, `redis.enabled=false`, etc. to the Helm chart.
+
 ## Using a Private Registry
 
 ```hcl

@@ -26,6 +26,8 @@
 |----------|-------------|
 | [RBAC Guide](guides/role-based-access.md) | Complete RBAC: roles, permissions, hierarchy, policy check |
 | [ABAC Policy](guides/abac-policy.md) | ABAC policies: syntax, evaluate, dry-run, compliance templates |
+| [SDK Migration Guide](guides/sdk-migration-guide.md) | Auth0/Keycloak/Firebase to GGID API mapping |
+| [Troubleshooting](guides/troubleshooting.md) | Common issues: JWT, DB, NATS, Gateway 502, tenant isolation |
 | [Webhook Setup](guides/webhook-setup.md) | Register webhooks, verify signatures, retry, idempotency |
 | [Custom Claims](guides/custom-claims.md) | Standard claims, auth hooks, SDK reading, ABAC usage |
 | [Multi-Tenant Setup](guides/multi-tenant-setup.md) | Tenant CRUD, RLS policies, per-tenant config |
@@ -42,6 +44,7 @@
 | [Express.js](integration-guides/express.md) | JWT verification middleware, role/scope guards, GGIDClient |
 | [Gin](integration-guides/gin.md) | Go Gin middleware adapter, role checks, tenant-aware queries |
 | [Spring Boot](integration-guides/spring-boot.md) | Java servlet filter, Spring Security integration |
+| [3-Line Integration](quickstart/3-line-integration.md) | Add JWT auth in 3 lines: Go, Node.js, Python, Java |
 
 ---
 
@@ -51,6 +54,9 @@
 |----------|-------------|
 | [Express.js Integration Example](examples/express-integration.md) | Full runnable Express app: auth, CRUD, permission check |
 | [Go Backend Integration Example](examples/go-integration.md) | Full runnable Go server: SDK middleware, RequirePermission |
+| [Python FastAPI Example](examples/python-integration.md) | Full runnable FastAPI app: GGIDMiddleware, get_current_user |
+| [Java Spring Boot Example](examples/java-spring-integration.md) | Spring Security config, GGIDSecurityFilter, REST controller |
+| [Go Gin Example](examples/go-gin-integration.md) | Gin middleware adapter, role/scope guards, CRUD |
 
 ---
 
@@ -75,8 +81,9 @@
 | [Bare Metal](deploy/bare-metal.md) | systemd units, nginx reverse proxy, Let's Encrypt |
 | [Environment Variables](deploy/environment-variables.md) | Complete reference for all 7 services |
 | [Docker Compose Override](deploy/docker-compose-override.md) | 8 override use cases with examples |
+| [Helm Chart Guide](deploy/helm-chart-guide.md) | Helm install, values reference, upgrade, rollback |
 | [Helm Reference](deploy/helm-reference.md) | Complete Helm values reference |
-| [Production Checklist](deploy/production-checklist.md) | Pre-production verification checklist |
+| [Production Checklist](deploy/production-checklist.md) | Pre-production verification + external infra checklist |
 | [Registry Setup](deploy/registry-setup.md) | Private Docker registry setup |
 | [Troubleshooting](deploy/troubleshooting.md) | 40+ issues across 6 categories |
 
@@ -87,6 +94,8 @@
 | Document | Description |
 |----------|-------------|
 | [Overview](architecture/overview.md) | System diagram, service responsibilities, data flow |
+| [Security Overview](architecture/security-overview.md) | Auth flow, P0 security, RLS, audit hash chain, STRIDE |
+| [Data Flow](architecture/data-flow.md) | Request flow diagrams: register, login, JWT verify, audit pipeline |
 | [ADR-0001: JWT RSA Shared Key](architecture/decision-record/0001-jwt-rsa-shared-key.md) | Why RSA for JWT signing |
 | [ADR-0002: Multi-Tenancy](architecture/decision-record/0002-multi-tenancy.md) | RLS-based tenant isolation decision |
 | [ADR-001: Database Choice](design/adr-001-database-choice.md) | PostgreSQL + RLS for multi-tenant isolation |

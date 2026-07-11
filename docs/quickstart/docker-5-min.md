@@ -92,6 +92,24 @@ Open `http://localhost:3000` in your browser. Login with the credentials you jus
 
 ---
 
+## Using External Database
+
+GGID supports external PostgreSQL, Redis, NATS, and LDAP. Set environment variables before starting:
+
+```bash
+export DB_HOST=prod-db.internal
+export DB_PORT=5432
+export DB_USER=ggid
+export DB_PASSWORD=secure-password
+export REDIS_HOST=prod-redis.internal
+export NATS_URL=nats://prod-nats.internal:4222
+export LDAP_URL=ldap://prod-ldap.internal:389
+
+cd deploy && docker compose up -d  # Only GGID services start, no bundled infra
+```
+
+See [Docker Compose Override](../deploy/docker-compose-override.md) for `.env` file examples.
+
 ## Troubleshooting
 
 | Issue | Fix |

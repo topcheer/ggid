@@ -34,6 +34,8 @@ Access points:
 
 Default credentials: `admin / Admin@123456`
 
+> **External DB support:** All deployment methods (Docker, K8s/Helm, K3s, Terraform, Bare Metal) support external PostgreSQL, Redis, NATS, and LDAP. Set `DB_HOST`, `REDIS_HOST`, `NATS_URL`, `LDAP_URL` environment variables to use your own infrastructure. See [Docker Compose Override](docs/deploy/docker-compose-override.md).
+
 ### Option B: From Source
 
 ### 1. Start Infrastructure
