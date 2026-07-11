@@ -320,5 +320,20 @@ Identified via competitive-update-2026-07.md. These are new gaps created by comp
 | NEW-4 | Zero-Downtime Patches | **P1** | Keycloak 26 | TODO | Keycloak supports rolling updates without auth disruption |
 | NEW-5 | Device-Bound SSO | **P1** | Auth0 | TODO | Auth0 shipped Device-Bound SSO for enterprise |
 
-**Updated Summary**: 24 resolved + 3 partial + 7 outstanding + 5 new strategic gaps = **35 total gaps tracked**.
+**Updated Summary**: 24 resolved + 3 partial + 7 outstanding + 5 new strategic gaps + 4 unwired components = **39 total gaps tracked**.
+
+## Wire Audit — Code Exists But Not Functional (2026-07-24)
+
+These components have code and unit tests but are NOT invoked at runtime. See wire-audit.md for full analysis.
+
+| Component | File Location | Should Be Wired At | Impact | Fix Hours | Status |
+|-----------|--------------|-------------------|--------|-----------|--------|
+| botdetect.go | gateway/middleware/botdetect.go | router.go Handler() chain | Zero bot protection on auth endpoints | 2h | PARTIAL |
+| pii.Obfuscate() | pkg/pii/pii.go | API response handlers, audit publishers | PII in plaintext in responses/logs | 4h | PARTIAL |
+| CheckSessionTimeout | services/auth/ | Auth middleware chain | Sessions never expire server-side | 2h | PARTIAL |
+| pkg/i18n/Translator | pkg/i18n/ | All service handlers | 937 hardcoded English strings | 62h | PARTIAL |
+
+**Root Cause**: Components built and unit-tested but integration step forgotten. No wire-verification test that asserts the middleware chain includes all components.
+
+**Systemic Fix**: Add wire-verification test that introspects the handler chain and fails if any security component is missing. See wire-audit.md section 7 for Go test design.
    unit tests before being marked DONE (currently HasScope has 1, hasAdminScope has 0).

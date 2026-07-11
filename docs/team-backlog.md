@@ -393,6 +393,13 @@
 - [x] gap-closure-report.md UPDATED with 5 new strategic gaps
 - [x] team-backlog.md UPDATED with new strategic gaps
 
+### Batch 39 — Gap Verification + Wire Audit (4 docs + 1 update)
+- [x] wire-audit.md (681 lines, 9f9ac4e) — 4 unwired components: botdetect (2h), pii.Obfuscate (4h), CheckSessionTimeout (2h), i18n (62h). Total: 70h.
+- [x] openapi-audit.md (846 lines, 04cfc1f)
+- [x] auth0-top20-benchmark.md (591 lines, 26f6a73) — 13 DONE, 7 PARTIAL, 0 MISSING. 82.5% readiness.
+- [x] console-ux-comparison.md (426 lines, 25307e3) — GGID 6.5/10 vs Auth0 8.7 vs Keycloak 4.9. 30 pages, 11 unique features.
+- [x] gap-closure-report.md UPDATED — Added 4 wire-audit items as PARTIAL. Total gaps: 39.
+
 ### NEW STRATEGIC GAPS (from competitive monitoring 2026-07)
 - [ ] **[P0]** AI Agent Identity / MCP Auth — Auth0 GA, Keycloak exp, Casdoor shipping. GGID absent. (ai-agent-identity-analysis.md)
 - [ ] **[P0]** IGA Workflows — Keycloak 26 shipped. GGID has no governance layer. (iga-workflows-analysis.md)
