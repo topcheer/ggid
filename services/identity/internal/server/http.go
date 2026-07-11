@@ -92,6 +92,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/segments", h.handleUserSegments)
 	h.mux.HandleFunc("/api/v1/users/merge-conflicts", h.handleMergeConflicts)
 	h.mux.HandleFunc("/api/v1/users/import-csv", h.handleImportCSV)
+	h.mux.HandleFunc("/api/v1/users/timeline", h.handleUserTimeline)
 	h.mux.HandleFunc("/api/v1/users/attribute-history", func(w http.ResponseWriter, r *http.Request) {
 		uid := uuid.MustParse(r.URL.Query().Get("user_id"))
 		h.handleAttributeHistory(r.Context(), uid, w, r)
@@ -198,6 +199,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.reactivateUser(ctx, userID, w, r)
 	case action == "data-export" && r.Method == http.MethodGet:
 		h.dataExport(ctx, userID, w, r)
+	case action == "timeline" && r.Method == http.MethodGet:
+		h.handleUserTimeline(w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

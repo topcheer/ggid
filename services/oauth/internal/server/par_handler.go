@@ -12,12 +12,13 @@ import (
 
 // PAREntry stores a pushed authorization request.
 type PAREntry struct {
-	RequestURI  string         `json:"request_uri"`
-	ClientID    string         `json:"client_id"`
-	Params      map[string]any `json:"params"`
-	CreatedAt   time.Time      `json:"created_at"`
-	ExpiresAt   time.Time      `json:"expires_at"`
-	Used        bool           `json:"used"`
+	RequestURI        string         `json:"request_uri"`
+	ClientID          string         `json:"client_id"`
+	Params            map[string]any `json:"params"`
+	SignedRequestObject string       `json:"signed_request_object,omitempty"`
+	CreatedAt         time.Time      `json:"created_at"`
+	ExpiresAt         time.Time      `json:"expires_at"`
+	Used              bool           `json:"used"`
 }
 
 var (
@@ -30,9 +31,10 @@ var (
 func handlePAR(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var req struct {
-			ClientID    string         `json:"client_id"`
-			Params      map[string]any `json:"params"`
-			ExpirySecs  int            `json:"expiry_seconds"`
+			ClientID          string         `json:"client_id"`
+			Params            map[string]any `json:"params"`
+			SignedRequestObject string     `json:"signed_request_object"`
+			ExpirySecs        int            `json:"expiry_seconds"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON body"})
@@ -54,8 +56,8 @@ func handlePAR(w http.ResponseWriter, r *http.Request) {
 
 		entry := &PAREntry{
 			RequestURI: requestURI, ClientID: req.ClientID,
-			Params: req.Params, CreatedAt: now,
-			ExpiresAt: now.Add(time.Duration(req.ExpirySecs) * time.Second),
+			Params: req.Params, SignedRequestObject: req.SignedRequestObject,
+			CreatedAt: now, ExpiresAt: now.Add(time.Duration(req.ExpirySecs) * time.Second),
 		}
 
 		parStoreMu.Lock()

@@ -264,6 +264,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/hijack-check", h.handleHijackCheck)
 	h.mux.HandleFunc("/api/v1/auth/credential-stuffing/block", h.handleCredentialStuffing)
 	h.mux.HandleFunc("/api/v1/auth/credential-stuffing/blocked", h.handleCredentialStuffing)
+	h.mux.HandleFunc("/api/v1/auth/breach-warnings", h.handleBreachWarnings)
 }
 
 // ServeHTTP implements http.Handler.
