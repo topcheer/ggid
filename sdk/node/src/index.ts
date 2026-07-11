@@ -39,4 +39,9 @@ export type {
   UpdateUserInput,
   CreateRoleInput,
   CreateOrgInput,
+  AgentType,
+  Agent,
+  RegisterAgentInput,
+  AgentTokenResponse,
+  AgentTokenClaims,
 } from './types';

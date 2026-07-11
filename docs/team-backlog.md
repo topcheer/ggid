@@ -746,4 +746,4 @@
 - [x] OpenAPI spec for agent endpoints + rolling update script (commit 6e065a5)
 
 ### In Progress
-- [ ] IGA Workflows — backend implementing identity governance and administration
+- [x] IGA Workflows — DONE (43d9956). Access request domain, 14 tests, 4 HTTP endpoints, gateway routing, Console UI.

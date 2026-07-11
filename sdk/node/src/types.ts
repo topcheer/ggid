@@ -101,3 +101,63 @@ export interface CreateOrgInput {
   parent_id?: string;
   description?: string;
 }
+
+// ---------------------------------------------------------------------------
+// AI Agent Identity
+// ---------------------------------------------------------------------------
+
+export type AgentType =
+  | 'coding-assistant'
+  | 'data-pipeline'
+  | 'customer-service'
+  | 'workflow-orchestrator'
+  | 'research-agent'
+  | 'custom';
+
+export interface Agent {
+  id: string;
+  tenant_id: string;
+  name: string;
+  type: AgentType;
+  owner_user_id: string;
+  client_id: string;
+  status: 'active' | 'suspended' | 'revoked';
+  allowed_scopes: string[];
+  allowed_mcp_servers?: string[];
+  max_delegation_depth: number;
+  rate_limit_per_min: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RegisterAgentInput {
+  name: string;
+  type?: AgentType;
+  owner_user_id: string;
+  description?: string;
+  allowed_scopes: string[];
+  allowed_mcp_servers?: string[];
+  max_delegation_depth?: number;
+  rate_limit_per_min?: number;
+}
+
+export interface AgentTokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope?: string;
+  agent_id: string;
+  delegation_depth_remaining: number;
+  issued_token_type: string;
+}
+
+export interface AgentTokenClaims {
+  active: boolean;
+  agent_id: string;
+  agent_type: string;
+  is_agent_token: boolean;
+  max_delegation_depth: number;
+  sub: string;
+  delegation_chain?: Array<{ sub: string; agent_id?: string; agent_type?: string }>;
+  mcp_servers?: string[];
+}

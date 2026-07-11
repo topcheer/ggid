@@ -16,6 +16,10 @@ import type {
   UpdateUserInput,
   CreateRoleInput,
   CreateOrgInput,
+  Agent,
+  RegisterAgentInput,
+  AgentTokenResponse,
+  AgentTokenClaims,
 } from './types';
 import { JWTVerifier, JWTClaims } from './jwt';
 
@@ -157,6 +161,40 @@ export class GGIDClient {
   }
 
   // ---------------------------------------------------------------------------
+  // AI Agent Identity (MCP Auth)
+  // ---------------------------------------------------------------------------
+
+  /** Register a new AI agent identity. Requires a user access token. */
+  async registerAgent(input: RegisterAgentInput, accessToken: string): Promise<Agent> {
+    return this.requestWithToken<Agent>('POST', '/api/v1/agents/register', input, accessToken);
+  }
+
+  /** List all AI agents for the configured tenant. */
+  async listAgents(accessToken: string): Promise<{ agents: Agent[]; total: number }> {
+    return this.requestWithToken('GET', '/api/v1/agents', undefined, accessToken);
+  }
+
+  /** Exchange a user token for an agent-scoped token (RFC 8693). */
+  async exchangeAgentToken(
+    agentId: string,
+    subjectToken: string,
+    scopes?: string[],
+    mcpServers?: string[],
+  ): Promise<AgentTokenResponse> {
+    return this.request<AgentTokenResponse>('POST', '/api/v1/agents/token', {
+      subject_token: subjectToken,
+      agent_id: agentId,
+      scope: scopes,
+      mcp_servers: mcpServers,
+    });
+  }
+
+  /** Verify an agent token and return its claims. */
+  async verifyAgentToken(token: string): Promise<AgentTokenClaims> {
+    return this.request<AgentTokenClaims>('POST', '/api/v1/agents/verify', { token });
+  }
+
+  // ---------------------------------------------------------------------------
   // Internal
   // ---------------------------------------------------------------------------
 
@@ -178,6 +216,40 @@ export class GGIDClient {
     if (opts.status) params.set('status', opts.status);
     const qs = params.toString();
     return qs ? `?${qs}` : '';
+  }
+
+  private async requestWithToken<T>(method: string, path: string, body: unknown | undefined, accessToken: string): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
+
+    try {
+      const h = this.headers();
+      h['Authorization'] = `Bearer ${accessToken}`;
+      const resp = await fetch(`${this.config.gatewayUrl}${path}`, {
+        method,
+        headers: h,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+
+      if (!resp.ok) {
+        let code = '';
+        let message = '';
+        try {
+          const parsed = await resp.json();
+          code = parsed.code || '';
+          message = parsed.message || parsed.error || '';
+        } catch {
+          message = await resp.text().catch(() => `HTTP ${resp.status}`);
+        }
+        throw new GGIDError(resp.status, message || `HTTP ${resp.status}`, code);
+      }
+
+      if (resp.status === 204) return undefined as T;
+      return (await resp.json()) as T;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
