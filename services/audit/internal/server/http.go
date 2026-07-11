@@ -129,6 +129,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/evidence/chain", s.handleEvidenceChain)
 	mux.HandleFunc("/api/v1/audit/events/subscribe", s.handleEventSubscription)
 	mux.HandleFunc("/api/v1/audit/events/subscribe/", s.handleEventSubscription)
+	mux.HandleFunc("/api/v1/audit/retention/simulate", s.handleRetentionSimulate)
 	mux.HandleFunc("/api/v1/audit/correlation/rules", s.handleCorrelationRules)
 	mux.HandleFunc("/api/v1/audit/webhooks/delivery-status", s.handleWebhookDelivery)
 	mux.HandleFunc("/api/v1/audit/webhooks/", s.handleWebhookDelivery)

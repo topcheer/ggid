@@ -1204,6 +1204,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientMigration(w, r)
 			return
 		}
+		if r.URL.Path == "/api/v1/oauth/token/claims" {
+			handleTokenClaims(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 

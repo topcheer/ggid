@@ -273,6 +273,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/enforce-limit", h.handleSessionLimit)
 	h.mux.HandleFunc("/api/v1/auth/sessions/limits", h.handleSessionLimit)
 	h.mux.HandleFunc("/api/v1/auth/password-policy/check", h.handlePasswordPolicyCheck)
+	h.mux.HandleFunc("/api/v1/auth/mfa/factors", h.handleMFAFactors)
+	h.mux.HandleFunc("/api/v1/auth/mfa/factors/", h.handleMFAFactors)
 }
 
 // ServeHTTP implements http.Handler.
