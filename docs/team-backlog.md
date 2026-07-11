@@ -55,7 +55,7 @@
 - [x] Middleware coverage →90% (coverage_sprint24_test.go, 80b9378)
 - [x] Coverage sprint25 — error_writer, circuit breaker (737b5f5)
 - [x] Coverage sprint26 — gzip, CORS, cb half-open, metrics, deep health (1c23919)
-- [ ] Middleware coverage →92% (currently 88.7%)
+- [ ] Middleware coverage →92% (currently 88.7% — see line 209 for same item)
 
 ### arch (Infrastructure security)
 - [x] CSRF token predictable entropy (29b51c1)
