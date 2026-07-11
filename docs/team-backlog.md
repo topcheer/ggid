@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-> **Last updated**: 2025-01-24 by arch
+> **Last updated**: 2025-01-24 by uiux
 > **Rule**: Update this file when completing any item. Check here before assigning new work.
 
 ## ⚠️ Backlog Maintenance Rules — ALL TEAM MEMBERS MUST FOLLOW
@@ -37,16 +37,22 @@
 - [x] JWT jti tracking with Redis SETNX (72edaa5)
 - [x] HasScope() actual scope enforcement (72edaa5)
 - [x] JWTSecret empty → log.Fatal (72edaa5)
-- [x] Access token scope claim — issueAccessToken scope param (IN PROGRESS — build broken, needs fix)
-- [ ] Password pepper — pkg/crypto/pepper.go exists but NOT wired to auth service boot
-- [ ] WebAuthn attestation verification — attestation_formats.go exists, verify all 6 formats covered
-- [ ] OAuth introspection endpoint auth (server.go — NO AUTH)
+- [x] Access token scope claim — issueAccessToken scope param (b8bfa05, test fix 5c51080)
+- [x] Password pepper — SetPepper() + applyPepper() wired (ce9c29f)
+- [x] WebAuthn attestation verification — 6 format verifiers in attestation_formats.go (ce9c29f)
+- [x] OAuth introspection endpoint auth — client_secret_basic required (ce9c29f)
+- [x] ValidateClientAssertion JWT signature verification — replaced ParseUnverified with ParseWithClaims (8098f1c)
+- [x] ForgotPassword token leak — tokens removed from HTTP response bodies (7742916)
+- [x] UserRole.ExpiresAt enforcement — evaluator filters expired roles (7742916)
+- [x] Email template href injection — safeURL() blocks javascript:/data: protocols (7742916)
 
 ### uiux (Gateway security)
-- [x] Host header validation middleware (host_validation.go exists)
-- [x] Webhook HTTPDeliverer SSRF protection (ssrf.go + b52bafd)
+- [x] Host header validation middleware (host_validation.go, ed4124b)
+- [x] Webhook HTTPDeliverer SSRF protection (ssrf.go, ed4124b)
 - [x] IP allowlist for admin endpoints (ipallowlist.go exists)
 - [x] Body size limit middleware (bodysize.go exists)
+- [x] Circuit breaker per backend (circuitbreaker.go, aa49848)
+- [x] Middleware coverage →90% (coverage_sprint24_test.go, 80b9378)
 - [ ] Middleware coverage →92% (currently 88.7%)
 
 ### arch (Infrastructure security)
@@ -81,8 +87,10 @@
 - [x] GraphQL proxy middleware (graphql.go exists)
 - [x] WebSocket upgrade support (wsproxy.go exists)
 - [x] gRPC server reflection (grpc.go + grpc_interceptor.go exist)
-- [ ] Deep health check aggregation
-- [ ] Per-route timeout middleware
+- [x] Deep health check aggregation (/healthz/deep wired in router.go, 348d61f)
+- [x] Per-route timeout middleware (route_timeout.go, 348d61f)
+- [x] OTel tracing middleware (TracingMiddleware in otel.go:311)
+- [x] Performance benchmarks (benchmark_test.go — 6 benchmarks, 348d61f)
 
 ### frontend
 - [x] Console SSO Configuration page (settings/sso + sso alias)
@@ -117,7 +125,7 @@
 ### All
 - [ ] Coverage →95% across all packages
 - [ ] Integration test suite (10+ E2E tests)
-- [ ] Performance benchmarks
+- [x] Performance benchmarks (benchmark_test.go — 6 benchmarks, 348d61f)
 - [ ] Dark mode for Console
 - [ ] Mobile-responsive Console
 
