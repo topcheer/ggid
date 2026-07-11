@@ -117,6 +117,10 @@ export { useNotificationTemplates } from './useNotificationTemplates';
 export type { NotificationTemplate, NotificationChannel, CreateTemplateInput, UseNotificationTemplatesResult } from './useNotificationTemplates';
 export { useIdentityGovernance } from './useIdentityGovernance';
 export type { IGAMetrics, UseIdentityGovernanceResult } from './useIdentityGovernance';
+export { usePasswordBreach } from './usePasswordBreach';
+export type { BreachStatus, UsePasswordBreachResult } from './usePasswordBreach';
+export { useJITProvisioning } from './useJITProvisioning';
+export type { JITConfig, UseJITProvisioningResult } from './useJITProvisioning';
 export type {
   GGIDConfig,
   GGIDUser,
