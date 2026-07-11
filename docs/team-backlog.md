@@ -221,7 +221,7 @@
 - [x] docs/upgrade-guide.md (verified complete, 438 lines)
 - [x] docs/design/adr-001-database-choice.md (commit 883583d)
 - [x] docs/design/adr-002-event-driven-audit.md (commit 883583d)
-> 163 docs total. All major topics covered. No outstanding doc tasks.
+> 178 docs total. All major topics covered. No outstanding doc tasks.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
