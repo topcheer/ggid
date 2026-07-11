@@ -47,6 +47,10 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 		s.handleOrgMembers(w, r, orgUID)
 		return
 	}
+	if strings.HasSuffix(r.URL.Path, "/access-matrix") {
+		s.handleAccessMatrix(w, r)
+		return
+	}
 
 	// Extract org_id from path
 	path := strings.Trim(r.URL.Path, "/")
