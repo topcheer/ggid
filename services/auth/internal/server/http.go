@@ -16,6 +16,7 @@ import (
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/i18n"
 	"github.com/ggid/ggid/pkg/social"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/conf"
@@ -26,11 +27,12 @@ import (
 
 // Handler is the HTTP handler for the Auth Service.
 type Handler struct {
-	authSvc   *service.AuthService
-	mux       *http.ServeMux
-	socialReg *social.Registry
-	hooks     *service.HookManager
+	authSvc    *service.AuthService
+	mux        *http.ServeMux
+	socialReg  *social.Registry
+	hooks      *service.HookManager
 	idpConfigs map[string]*service.IdPConfig // keyed by config ID
+	translator *i18n.Translator
 }
 
 // New creates a new Auth Service HTTP handler.
@@ -40,9 +42,21 @@ func New(authSvc *service.AuthService) *Handler {
 		socialReg:  social.NewRegistry(),
 		hooks:      service.NewHookManager(),
 		idpConfigs: make(map[string]*service.IdPConfig),
+		translator: i18n.NewTranslator("en"),
 	}
 	h.registerRoutes()
 	return h
+}
+
+// t translates a message key for the given request's locale.
+func (h *Handler) t(r *http.Request, key string) string {
+	locale := i18n.ResolveLocale(r.Header.Get("Accept-Language"), "en")
+	return h.translator.Translate(locale, key)
+}
+
+// writeErrorT writes a JSON error with i18n-translated message.
+func (h *Handler) writeErrorT(w http.ResponseWriter, r *http.Request, status int, key string) {
+	writeJSON(w, status, map[string]string{"error": h.t(r, key)})
 }
 
 func (h *Handler) registerRoutes() {
@@ -242,13 +256,13 @@ type loginRequest struct {
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		h.writeErrorT(w, r, http.StatusMethodNotAllowed, "error.method_not_allowed")
 		return
 	}
 
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		h.writeErrorT(w, r, http.StatusBadRequest, "error.invalid_request_body")
 		return
 	}
 
@@ -258,7 +272,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	// Brute force protection: dual-dimension sliding window rate limit.
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
 		if err := h.authSvc.CheckBruteForce(r.Context(), tc.TenantID, ip, req.Username); err != nil {
-			writeError(w, http.StatusTooManyRequests, "too many login attempts")
+			h.writeErrorT(w, r, http.StatusTooManyRequests, "error.too_many_login_attempts")
 			return
 		}
 	}
@@ -266,7 +280,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	// Check if the account is locked before attempting login.
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
 		if h.authSvc.IsAccountLocked(r.Context(), tc.TenantID, req.Username) {
-			writeError(w, http.StatusLocked, "account is locked due to too many failed attempts")
+			h.writeErrorT(w, r, http.StatusLocked, "error.account_locked")
 			return
 		}
 	}
@@ -304,19 +318,19 @@ type registerRequest struct {
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		h.writeErrorT(w, r, http.StatusMethodNotAllowed, "error.method_not_allowed")
 		return
 	}
 
 	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid request body")
+		h.writeErrorT(w, r, http.StatusBadRequest, "error.invalid_request_body")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "missing tenant context")
+		h.writeErrorT(w, r, http.StatusBadRequest, "error.missing_tenant_context")
 		return
 	}
 

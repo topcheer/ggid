@@ -104,6 +104,10 @@
 - [x] Fix WebAuthn hardcoded attachment — reads from authenticator response (2870f9d)
 - [x] gRPC TLS PoC — pkg/transport/tlsconfig.go already done in fb29546
 - [x] Email OTP MFA — EmailOTPService with SendOTP/VerifyOTP, 7 tests
+- [x] Wire botdetect into gateway Handler() chain + fix memory leak (PENDING COMMIT)
+- [x] Wire i18n translator into auth server — writeErrorT(), 10 i18n keys, en/zh-CN/fr locale files (PENDING COMMIT)
+- [x] Wire pii.Obfuscate into audit InsertEvent — obfuscates ActorName/ResourceName/IP/Metadata (PENDING COMMIT)
+- [x] CheckSessionTimeout — already wired in gateway router.go:359,367
 - [x] Device Auth RFC 8628 — E2E flow tests: full approve flow, denied, invalid, expired, slow_down (7ee1a32)
 - [x] Token Exchange RFC 8693 — E2E flow tests: full exchange, missing token/type, invalid, wrong signature, missing sub (7ee1a32)
 - [x] Backchannel Logout — E2E flow tests: valid token, empty, missing sub/sid, missing events, nonce, replay, sid (7ee1a32)

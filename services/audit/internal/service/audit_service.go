@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/pii"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/google/uuid"
 )
@@ -54,11 +56,39 @@ func (s *AuditService) ListEvents(ctx context.Context, filter domain.ListFilter,
 }
 
 // InsertEvent directly inserts an audit event (for testing or synchronous use).
+// PII fields (email, phone, IP, SSN) in ActorName, ResourceName, and Metadata
+// are obfuscated before persistence.
 func (s *AuditService) InsertEvent(ctx context.Context, event *domain.AuditEvent) error {
+	obfuscateEventPII(event)
 	if err := s.repo.Insert(ctx, event); err != nil {
 		return errors.Wrap(errors.ErrInternal, "insert audit event", err)
 	}
 	return nil
+}
+
+// obfuscateEventPII masks PII fields in an audit event before storage.
+// This prevents raw emails, phone numbers, and other sensitive data from
+// being persisted in the audit log.
+func obfuscateEventPII(e *domain.AuditEvent) {
+	e.ActorName = pii.Obfuscate(e.ActorName)
+	e.ResourceName = pii.Obfuscate(e.ResourceName)
+	e.IPAddress = pii.MaskIP(e.IPAddress)
+	if e.Metadata != nil {
+		for k, v := range e.Metadata {
+			if s, ok := v.(string); ok {
+				e.Metadata[k] = pii.Obfuscate(s)
+			} else {
+				// Marshal/unmarshal to mask nested string values
+				if raw, err := json.Marshal(v); err == nil {
+					masked := pii.Obfuscate(string(raw))
+					var nv any
+					if json.Unmarshal([]byte(masked), &nv) == nil {
+						e.Metadata[k] = nv
+					}
+				}
+			}
+		}
+	}
 }
 
 // GetStats returns aggregated audit analytics for the last 24 hours.

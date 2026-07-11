@@ -1,0 +1,12 @@
+{
+  "error.method_not_allowed": "m\u00e9thode non autoris\u00e9e",
+  "error.invalid_request_body": "corps de requ\u00eate invalide",
+  "error.missing_tenant_context": "contexte de tenant manquant",
+  "error.too_many_login_attempts": "trop de tentatives de connexion",
+  "error.account_locked": "le compte est verrouill\u00e9 en raison de trop de tentatives \u00e9chou\u00e9es",
+  "error.invalid_credentials": "nom d'utilisateur ou mot de passe invalide",
+  "error.unauthorized": "non autoris\u00e9",
+  "error.internal_server_error": "erreur interne du serveur",
+  "error.forbidden": "acc\u00e8s interdit",
+  "error.not_found": "introuvable"
+}

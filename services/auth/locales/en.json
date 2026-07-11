@@ -1,0 +1,12 @@
+{
+  "error.method_not_allowed": "method not allowed",
+  "error.invalid_request_body": "invalid request body",
+  "error.missing_tenant_context": "missing tenant context",
+  "error.too_many_login_attempts": "too many login attempts",
+  "error.account_locked": "account is locked due to too many failed attempts",
+  "error.invalid_credentials": "invalid username or password",
+  "error.unauthorized": "unauthorized",
+  "error.internal_server_error": "internal server error",
+  "error.forbidden": "forbidden",
+  "error.not_found": "not found"
+}
