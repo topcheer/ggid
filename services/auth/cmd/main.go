@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/authprovider"
+	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/ggid/ggid/services/auth/internal/server"
@@ -66,6 +67,11 @@ func main() {
 	rateLimiter := service.NewRateLimiter(rdb)
 
 	// 5. Build auth provider chain (local + optional LDAP)
+	// Wire password pepper from env var (security hardening, P0).
+	if pepper := os.Getenv("PASSWORD_PEPPER"); pepper != "" {
+		crypto.SetPepper(pepper)
+		log.Printf("Password pepper enabled (HMAC-SHA256 pre-hash)")
+	}
 	localProvider := service.NewLocalProvider(credRepo, cfg.Password)
 
 	var providers []authprovider.Provider

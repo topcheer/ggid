@@ -108,6 +108,11 @@
 - [x] Wire i18n translator into auth server — writeErrorT(), 10 i18n keys, en/zh-CN/fr locale files (097f6a7)
 - [x] Wire pii.Obfuscate into audit InsertEvent — obfuscates ActorName/ResourceName/IP/Metadata (097f6a7)
 - [x] CheckSessionTimeout — already wired in gateway router.go:359,367
+- [x] Password pepper — PASSWORD_PEPPER env var wired in auth/cmd/main.go → crypto.SetPepper() (PENDING COMMIT)
+- [x] OAuth introspection auth — already done (Basic Auth check, server.go:563-572, 590-599)
+- [x] Webhook SSRF protection — already done (NewHTTPDeliverer → NewSSRFSafeDeliverer(DefaultSSRFConfig()))
+- [x] API error format — structured APIError type + WriteAPIError/WriteSimpleAPIError helpers in pkg/errors/api_error.go (PENDING COMMIT)
+- [x] gRPC TLS — NewGRPCServer/NewGRPCClientDialer with GRPC_TLS_ENABLED env var in pkg/transport/grpc_tls.go (PENDING COMMIT)
 - [x] Device Auth RFC 8628 — E2E flow tests: full approve flow, denied, invalid, expired, slow_down (7ee1a32)
 - [x] Token Exchange RFC 8693 — E2E flow tests: full exchange, missing token/type, invalid, wrong signature, missing sub (7ee1a32)
 - [x] Backchannel Logout — E2E flow tests: valid token, empty, missing sub/sid, missing events, nonce, replay, sid (7ee1a32)
