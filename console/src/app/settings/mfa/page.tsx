@@ -48,7 +48,7 @@ export default function MFAPage() {
       });
       setTotpSecret(data.secret || "");
       setTotpQrUrl(data.qr_code_url || "");
-      showMessage("Scan the QR code with your authenticator app");
+      showMessage(t("mfa.scanQrPrompt"));
     } catch {
       // Fallback: generate a mock secret for demo
       const mockSecret = Array.from({ length: 16 }, () =>
@@ -56,7 +56,7 @@ export default function MFAPage() {
       ).join("");
       setTotpSecret(mockSecret);
       setTotpQrUrl(`otpauth://totp/GGID:user@example.com?secret=${mockSecret}&issuer=GGID`);
-      showMessage("Scan the QR code with your authenticator app");
+      showMessage(t("mfa.scanQrPrompt"));
     }
   };
 
@@ -83,7 +83,7 @@ export default function MFAPage() {
           ),
         );
       }
-      showMessage("TOTP enrolled successfully!");
+      showMessage(t("mfa.totpEnrolledSuccess"));
     } catch {
       // For demo, still mark as enrolled
       setTotpEnrolled(true);
@@ -92,7 +92,7 @@ export default function MFAPage() {
           Array.from({ length: 5 }, () => "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"[Math.floor(Math.random() * 36)]).join(""),
         ),
       );
-      showMessage("TOTP enrolled successfully!");
+      showMessage(t("mfa.totpEnrolledSuccess"));
     } finally {
       setVerifying(false);
     }
@@ -146,7 +146,7 @@ export default function MFAPage() {
         { id: crypto.randomUUID(), name: webauthnName, created_at: new Date().toISOString() },
       ]);
       setWebauthnName("");
-      showMessage("Passkey registered successfully!");
+      showMessage(t("mfa.passkeyRegistered"));
     } catch {
       // Demo fallback: add locally
       setWebauthnCreds((prev) => [
@@ -154,7 +154,7 @@ export default function MFAPage() {
         { id: crypto.randomUUID(), name: webauthnName, created_at: new Date().toISOString() },
       ]);
       setWebauthnName("");
-      showMessage("Passkey registered successfully!");
+      showMessage(t("mfa.passkeyRegistered"));
     } finally {
       setWebauthnLoading(false);
     }
@@ -393,7 +393,7 @@ export default function MFAPage() {
             <Smartphone className="mr-2 inline h-5 w-5 text-brand-600" /> Backup MFA Methods
           </h2>
           <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            Enable backup verification methods in case you can&apos;t access your primary MFA device.
+            {t("mfa.backupMfaDesc")}
           </p>
           <div className="space-y-3">
             <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700">

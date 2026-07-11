@@ -55,7 +55,7 @@ export default function RolesPage() {
       setPermissions((permsResp as { permissions?: Permission[]; items?: Permission[] }).permissions || (permsResp as { items?: Permission[] }).items || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load");
+      setError(err instanceof Error ? err.message : t("roles.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export default function RolesPage() {
       setMsg(t("roles.roleCreated"));
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create role");
+      setError(err instanceof Error ? err.message : t("roles.failedCreate"));
     }
   };
 
@@ -117,7 +117,7 @@ export default function RolesPage() {
       setMsg(t("roles.roleDeleted"));
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete role");
+      setError(err instanceof Error ? err.message : t("roles.failedDelete"));
     }
   };
 
@@ -128,10 +128,10 @@ export default function RolesPage() {
         method: "POST",
         body: JSON.stringify({ permission_ids: [permId] }),
       });
-      setMsg("Permission assigned");
+      setMsg(t("roles.permAssigned"));
       loadRolePerms(selectedRole);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to assign permission");
+      setError(err instanceof Error ? err.message : t("roles.permAssignFailed"));
     }
   };
 
@@ -142,10 +142,10 @@ export default function RolesPage() {
         method: "DELETE",
         body: JSON.stringify({ permission_ids: [permId] }),
       });
-      setMsg("Permission revoked");
+      setMsg(t("roles.permRevoked"));
       loadRolePerms(selectedRole);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to revoke permission");
+      setError(err instanceof Error ? err.message : t("roles.permRevokeFailed"));
     }
   };
 
@@ -161,10 +161,10 @@ export default function RolesPage() {
           parent_role_id: role.id,
         }),
       });
-      setMsg(`Role cloned as ${cloneKey}`);
+      setMsg(t("roles.roleCloned").replace("{key}", cloneKey));
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to clone role");
+      setError(err instanceof Error ? err.message : t("roles.cloneFailed"));
     }
   };
 
@@ -175,10 +175,10 @@ export default function RolesPage() {
         method: "POST",
         body: JSON.stringify({ permission_ids: permIds }),
       });
-      setMsg(`${permIds.length} permissions assigned`);
+      setMsg(t("roles.batchAssigned").replace("{n}", String(permIds.length)));
       loadRolePerms(selectedRole);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to assign permissions");
+      setError(err instanceof Error ? err.message : t("roles.batchAssignFailed"));
     }
   };
 
@@ -198,7 +198,7 @@ export default function RolesPage() {
       setMsg(t("roles.roleUpdated"));
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update role");
+      setError(err instanceof Error ? err.message : t("roles.failedUpdate"));
     }
   };
 
@@ -226,13 +226,13 @@ export default function RolesPage() {
     <div>
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold dark:text-gray-100">Roles & Permissions</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">{t("roles.title")}</h1>
         <div className="flex gap-2">
           <button
             onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            <Plus className="h-4 w-4" /> Create Role
+            <Plus className="h-4 w-4" /> {t("roles.createRole")}
           </button>
         </div>
       </div>
@@ -248,7 +248,7 @@ export default function RolesPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Key</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{t("roles.roleKey")}</label>
               <input
                 value={createForm.key}
                 onChange={(e) => setCreateForm({ ...createForm, key: e.target.value })}
@@ -257,7 +257,7 @@ export default function RolesPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Name</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{t("roles.roleName")}</label>
               <input
                 value={createForm.name}
                 onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
@@ -266,7 +266,7 @@ export default function RolesPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{t("common.description")}</label>
               <input
                 value={createForm.description}
                 onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
@@ -280,7 +280,7 @@ export default function RolesPage() {
             disabled={!createForm.key || !createForm.name}
             className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
           >
-            Create
+            {t("roles.createBtn")}
           </button>
         </div>
       )}
@@ -301,7 +301,7 @@ export default function RolesPage() {
       {editingRole && (
         <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Edit Role: {editingRole.name || editingRole.key}</h3>
+            <h3 className="text-sm font-semibold">{t("roles.editRolePrefix")} {editingRole.name || editingRole.key}</h3>
             <button onClick={() => setEditingRole(null)} aria-label="Close">
               <X className="h-4 w-4 text-gray-400" />
             </button>
@@ -336,7 +336,7 @@ export default function RolesPage() {
             onClick={handleSaveEdit}
             className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            <Pencil className="h-4 w-4" /> Save Changes
+            <Pencil className="h-4 w-4" /> {t("roles.saveChanges")}
           </button>
         </div>
       )}
@@ -352,7 +352,7 @@ export default function RolesPage() {
       </div>
 
       {loading ? (
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">{t("common.loading")}</p>
       ) : tab === "roles" ? (
         /* ===== Roles Grid ===== */
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -372,7 +372,7 @@ export default function RolesPage() {
                   <button
                     onClick={() => handleEditRole(role)}
                     className="text-gray-400 hover:text-brand-500"
-                    title="Edit role"
+                    title={t("roles.editRole")}
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
@@ -400,15 +400,15 @@ export default function RolesPage() {
                   )}
                 </div>
               </div>
-              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{role.description || "No description"}</p>
+              <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">{role.description || t("roles.noDescription")}</p>
               {/* Users with this role */}
               {roleUsers[role.id] && (
                 <div className="mb-3 rounded-lg bg-gray-50 p-2 dark:bg-gray-700">
                   <p className="mb-1 text-xs font-medium text-gray-500">
-                    <Users className="mr-1 inline h-3 w-3" />Users with this role ({roleUsers[role.id].length})
+                    <Users className="mr-1 inline h-3 w-3" />{t("roles.usersWithRole")} ({roleUsers[role.id].length})
                   </p>
                   {roleUsers[role.id].length === 0 ? (
-                    <p className="text-[10px] text-gray-400">No users assigned</p>
+                    <p className="text-[10px] text-gray-400">{t("roles.noUsersAssigned")}</p>
                   ) : (
                     <div className="flex flex-wrap gap-1">
                       {roleUsers[role.id].slice(0, 5).map((u) => (
@@ -417,7 +417,7 @@ export default function RolesPage() {
                         </span>
                       ))}
                       {roleUsers[role.id].length > 5 && (
-                        <span className="text-[10px] text-gray-400">+{roleUsers[role.id].length - 5} more</span>
+                        <span className="text-[10px] text-gray-400">{t("roles.moreCount").replace("{n}", String(roleUsers[role.id].length - 5))}</span>
                       )}
                     </div>
                   )}
@@ -426,20 +426,20 @@ export default function RolesPage() {
               <div className="flex flex-wrap gap-1">
                 {role.system_role && (
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                    System
+                    {t("roles.system")}
                   </span>
                 )}
                 {role.parent_role_id && (
                   <span className="flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
                     <GitBranch className="h-3 w-3" />
-                    Inherits
+                    {t("roles.inherits")}
                   </span>
                 )}
               </div>
             </div>
           ))}
           {roles.length === 0 && (
-            <p className="col-span-full text-center text-gray-500">No roles found</p>
+            <p className="col-span-full text-center text-gray-500">{t("roles.noRoles")}</p>
           )}
         </div>
       ) : tab === "hierarchy" ? (
@@ -484,6 +484,7 @@ function PolicyChecker({
 }: {
   apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
 }) {
+  const { t } = useI18n();
   const [form, setForm] = useState({
     user_id: "",
     resource_type: "",
@@ -506,7 +507,7 @@ function PolicyChecker({
       });
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Check failed");
+      setError(err instanceof Error ? err.message : t("roles.checkFailed"));
     } finally {
       setChecking(false);
     }
@@ -518,17 +519,17 @@ function PolicyChecker({
         <div className="mb-4">
           <h3 className="flex items-center gap-2 text-lg font-semibold">
             <Search className="h-5 w-5 text-brand-600" />
-            Policy Checker
+            {t("roles.policyChecker")}
           </h3>
           <p className="mt-1 text-sm text-gray-500">
-            Test if a user has permission to perform an action on a resource.
+            {t("roles.policyCheckerDesc")}
           </p>
         </div>
 
         <div className="grid gap-4">
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
-              User ID <span className="text-red-500">*</span>
+              {t("roles.userIdRequired")} <span className="text-red-500">*</span>
             </label>
             <input
               value={form.user_id}
@@ -540,7 +541,7 @@ function PolicyChecker({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
-                Resource Type <span className="text-red-500">*</span>
+                {t("roles.resourceTypeRequired")} <span className="text-red-500">*</span>
               </label>
               <input
                 value={form.resource_type}
@@ -551,14 +552,14 @@ function PolicyChecker({
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
-                Action <span className="text-red-500">*</span>
+                {t("roles.actionRequired")} <span className="text-red-500">*</span>
               </label>
               <select
                 value={form.action}
                 onChange={(e) => setForm({ ...form, action: e.target.value })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
               >
-                <option value="">-- Select --</option>
+                <option value="">{t("roles.selectAction")}</option>
                 <option value="read">read</option>
                 <option value="create">create</option>
                 <option value="update">update</option>
@@ -570,7 +571,7 @@ function PolicyChecker({
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
-              Resource (optional)
+              {t("roles.resourceOptional")}
             </label>
             <input
               value={form.resource}
@@ -586,7 +587,7 @@ function PolicyChecker({
             className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
           >
             <Search className="h-4 w-4" />
-            {checking ? "Checking..." : "Check Permission"}
+            {checking ? t("roles.checking") : t("roles.checkPermission")}
           </button>
         </div>
 
@@ -614,13 +615,13 @@ function PolicyChecker({
               )}
               <div>
                 <p className={`font-semibold ${result.allowed ? "text-green-700" : "text-red-700"}`}>
-                  {result.allowed ? "ALLOWED" : "DENIED"}
+                  {result.allowed ? t("roles.allowed") : t("roles.denied")}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {result.reason || (result.allowed ? "Access granted" : "Access denied")}
+                  {result.reason || (result.allowed ? t("roles.accessGranted") : t("roles.accessDenied"))}
                 </p>
                 {result.matched_by && (
-                  <p className="mt-1 text-xs text-gray-400">Matched by: {result.matched_by}</p>
+                  <p className="mt-1 text-xs text-gray-400">{t("roles.matchedBy")} {result.matched_by}</p>
                 )}
               </div>
             </div>
@@ -654,6 +655,7 @@ function PermissionAssignment({
   onBatchAssign: (permIds: string[]) => void;
   loading: boolean;
 }) {
+  const { t } = useI18n();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const rolePermIds = new Set(rolePerms.map((p) => p.id));
@@ -679,13 +681,13 @@ function PermissionAssignment({
     <div className="space-y-4">
       {/* Role selector */}
       <div className="flex items-center gap-3">
-        <label className="text-sm font-medium text-gray-600">Select Role:</label>
+        <label className="text-sm font-medium text-gray-600">{t("roles.selectRole")}</label>
         <select
           value={selectedRole}
           onChange={(e) => onSelectRole(e.target.value)}
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
         >
-          <option value="">-- Choose a role --</option>
+          <option value="">{t("roles.chooseRole")}</option>
           {roles.map((r) => (
             <option key={r.id} value={r.id}>
               {r.name || r.key}
@@ -698,19 +700,19 @@ function PermissionAssignment({
       {!selectedRole ? (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
           <Shield className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-gray-500">Select a role to manage its permissions</p>
+          <p className="text-gray-500">{t("roles.selectRoleHint")}</p>
         </div>
       ) : loading ? (
-        <p className="text-gray-500">Loading permissions...</p>
+        <p className="text-gray-500">{t("roles.loadingPerms")}</p>
       ) : (
         <>
           {/* Currently assigned */}
           <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
             <h3 className="mb-3 text-sm font-semibold">
-              Assigned Permissions ({rolePerms.length})
+              {t("roles.assignedPerms")} ({rolePerms.length})
             </h3>
             {rolePerms.length === 0 ? (
-              <p className="text-sm text-gray-400">No permissions assigned yet</p>
+              <p className="text-sm text-gray-400">{t("roles.noPermsAssigned")}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {rolePerms.map((p) => (
@@ -738,14 +740,14 @@ function PermissionAssignment({
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-gray-200 p-4">
               <div className="flex items-center gap-3">
-                <h3 className="text-sm font-semibold">Available Permissions ({filteredPerms.length})</h3>
+                <h3 className="text-sm font-semibold">{t("roles.availablePerms")} ({filteredPerms.length})</h3>
                 {selected.size > 0 && (
                   <button
                     onClick={() => { onBatchAssign([...selected]); setSelected(new Set()); }}
                     className="flex items-center gap-1 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700"
                   >
                     <Layers className="h-3.5 w-3.5" />
-                    Assign {selected.size} selected
+                    {t("roles.assignSelected").replace("{n}", String(selected.size))}
                   </button>
                 )}
               </div>
@@ -760,7 +762,7 @@ function PermissionAssignment({
                   }}
                   className="text-xs font-medium text-brand-600 hover:text-brand-700"
                 >
-                  {selected.size === filteredPerms.length && selected.size > 0 ? "Deselect all" : "Select all"}
+                  {selected.size === filteredPerms.length && selected.size > 0 ? t("roles.deselectAll") : t("roles.selectAll")}
                 </button>
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -813,14 +815,14 @@ function PermissionAssignment({
                             onClick={() => onRevoke(p.id)}
                             className="rounded-lg border border-red-200 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
                           >
-                            Revoke
+                            {t("roles.revoke")}
                           </button>
                         ) : (
                           <button
                             onClick={() => onAssign(p.id)}
                             className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 hover:bg-brand-100"
                           >
-                            + Assign
+                            {t("roles.assign")}
                           </button>
                         )}
                       </div>
@@ -830,7 +832,7 @@ function PermissionAssignment({
               ))}
               {filteredPerms.length === 0 && (
                 <p className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-                  No permissions available
+                  {t("roles.noPermsAvailable")}
                 </p>
               )}
             </div>
@@ -877,6 +879,7 @@ function RolePermissionMatrix({
   permissions: Permission[];
   apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
 }) {
+  const { t } = useI18n();
   const [matrix, setMatrix] = useState<Record<string, Set<string>>>({});
   const [loading, setLoading] = useState(true);
 
@@ -899,9 +902,9 @@ function RolePermissionMatrix({
     else setLoading(false);
   }, [roles, apiFetch]);
 
-  if (loading) return <p className="text-gray-500">Loading matrix...</p>;
+  if (loading) return <p className="text-gray-500">{t("roles.loadingMatrix")}</p>;
   if (roles.length === 0 || permissions.length === 0) {
-    return <p className="text-gray-500">No roles or permissions to display</p>;
+    return <p className="text-gray-500">{t("roles.noRolesOrPerms")}</p>;
   }
 
   // Group permissions by resource_type
@@ -966,6 +969,7 @@ function RoleHierarchyTree({
   roles: Role[];
   apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
 }) {
+  const { t } = useI18n();
   const [effectivePerms, setEffectivePerms] = useState<Record<string, string[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -1027,7 +1031,7 @@ function RoleHierarchyTree({
           <div className="flex-1">
             <span className="font-medium">{role.name || role.key}</span>
             {role.system_role && (
-              <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">System</span>
+              <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">{t("roles.system")}</span>
             )}
             <span className="ml-2 text-xs text-gray-400">{role.key}</span>
           </div>
@@ -1056,14 +1060,14 @@ function RoleHierarchyTree({
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
         <GitBranch className="h-4 w-4 text-brand-600" />
-        Role Hierarchy & Inheritance
+        {t("roles.roleHierarchyInherit")}
       </h3>
       <p className="mb-4 text-xs text-gray-500">
-        Parent roles inherit permissions from child roles. Click to expand and view effective permissions.
+        {t("roles.hierarchyDesc")}
       </p>
       {roots.length === 0 ? (
         <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">
-          No roles with hierarchy. Set <code className="rounded bg-gray-100 px-1">parent_role_id</code> when creating roles to build inheritance chains.
+          {t("roles.noHierarchy")}
         </p>
       ) : (
         <div>
@@ -1096,6 +1100,7 @@ function ABACConditionBuilder({
 }: {
   apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
 }) {
+  const { t } = useI18n();
   const [rules, setRules] = useState<ConditionRule[]>([
     { attribute: "user.role", operator: "eq", value: "admin" },
   ]);
@@ -1146,10 +1151,10 @@ function ABACConditionBuilder({
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
           <Layers className="h-4 w-4 text-brand-600" />
-          ABAC Condition Builder
+          {t("roles.abacBuilder")}
         </h3>
         <p className="mb-4 text-xs text-gray-500">
-          Build attribute-based access control rules visually. The generated JSON can be saved as a policy.
+          {t("roles.abacDesc")}
         </p>
 
         {/* Policy metadata */}
@@ -1250,13 +1255,13 @@ function ABACConditionBuilder({
             onClick={handleSave}
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            Save Policy
+            {t("roles.savePolicy")}
           </button>
           <button
             onClick={() => navigator.clipboard.writeText(generatedJSON)}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            Copy JSON
+            {t("roles.copyJson")}
           </button>
           {msg && <span className="text-sm text-green-600">{msg}</span>}
         </div>

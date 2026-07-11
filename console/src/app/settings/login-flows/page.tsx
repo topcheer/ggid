@@ -110,10 +110,10 @@ export default function LoginFlowsPage() {
         method: "POST",
         body: JSON.stringify(flow),
       });
-      setMsg("Login flow saved to server");
+      setMsg(t("flows.flowSavedServer"));
     } catch {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(flow));
-      setMsg("Endpoint unavailable — saved to localStorage");
+      setMsg(t("flows.flowSavedLocal"));
     } finally {
       setSaving(false);
     }
@@ -221,10 +221,10 @@ export default function LoginFlowsPage() {
 
       {/* Flow Preview */}
       <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
-        <h3 className="mb-2 text-xs font-semibold uppercase text-blue-700 dark:text-blue-400">Flow Preview</h3>
+        <h3 className="mb-2 text-xs font-semibold uppercase text-blue-700 dark:text-blue-400">{t("flows.flowPreview")}</h3>
         <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
           {flow.steps.filter((s) => s.enabled).length === 0 ? (
-            <span className="text-gray-400">No active steps in this flow</span>
+            <span className="text-gray-400">{t("flows.noActiveSteps")}</span>
           ) : (
             flow.steps.filter((s) => s.enabled).map((step, i, arr) => (
               <span key={step.id} className="flex items-center gap-2">
@@ -295,7 +295,7 @@ export default function LoginFlowsPage() {
               {/* Enable/disable toggle */}
               <button
                 onClick={() => updateStep(step.id, { enabled: !step.enabled })}
-                title={step.enabled ? "Disable step" : "Enable step"}
+                title={step.enabled ? t("flows.disableStep") : t("flows.enableStep")}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${step.enabled ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"}`}
               >
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${step.enabled ? "translate-x-5" : "translate-x-1"}`} />
@@ -324,7 +324,7 @@ export default function LoginFlowsPage() {
                 onClick={() => setExpandedStep(expandedStep === step.id ? null : step.id)}
                 className="rounded-lg border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                {expandedStep === step.id ? "Hide" : "Conditions"}
+                {expandedStep === step.id ? t("flows.hideConditions") : t("flows.showConditions")}
               </button>
 
               {/* Delete */}
@@ -343,7 +343,7 @@ export default function LoginFlowsPage() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   {/* IP range */}
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500">IP Range (CIDR)</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">{t("flows.ipRangeCidr")}</label>
                     <input
                       value={step.condition.ip_range}
                       onChange={(e) => updateCondition(step.id, { ip_range: e.target.value })}
@@ -355,7 +355,7 @@ export default function LoginFlowsPage() {
                   {/* Risk threshold */}
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-500">
-                      Risk Score Threshold: {step.condition.risk_threshold}
+                      {t("flows.riskThreshold")}: {step.condition.risk_threshold}
                     </label>
                     <input
                       type="range"
@@ -369,7 +369,7 @@ export default function LoginFlowsPage() {
                   </div>
                   {/* User role */}
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500">User Role</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">{t("flows.userRole")}</label>
                     <select
                       value={step.condition.user_role}
                       onChange={(e) =>
@@ -394,7 +394,7 @@ export default function LoginFlowsPage() {
 
       {/* Add step buttons */}
       <div className="mt-4">
-        <h3 className="mb-2 text-xs font-semibold uppercase text-gray-500">Add Authentication Step</h3>
+        <h3 className="mb-2 text-xs font-semibold uppercase text-gray-500">{t("flows.addStep")}</h3>
         <div className="flex flex-wrap gap-2">
           {(Object.keys(STEP_TYPES) as FlowStep["type"][]).map((type) => (
             <button
@@ -411,7 +411,7 @@ export default function LoginFlowsPage() {
       {flow.steps.length === 0 && (
         <div className="mt-4 rounded-xl border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
           <Power className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-          <p className="text-sm text-gray-400">No steps in this flow. Add authentication steps above.</p>
+          <p className="text-sm text-gray-400">{t("flows.noSteps")}</p>
         </div>
       )}
     </div>
