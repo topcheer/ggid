@@ -724,6 +724,13 @@
 - [x] README: updated with Docker build instructions, PWA section, NEXT_PUBLIC_API_URL build-arg docs. (cb13e9b)
 - [x] npm run build: 0 errors, make test: 0 FAIL
 
+## Sprint: Dashboard widget + SDK example + PWA fix (frontend 6f31530)
+- [x] Dashboard Pending Approvals widget: added to page.tsx stats array, fetches GET /api/v1/access-requests?status=pending, links to /access-requests. FileCheck icon. (6f31530)
+- [x] Node SDK agent quickstart: sdk/examples/node-quickstart/agent-example.ts — register→exchange→verify flow with axios. (6f31530)
+- [x] PWA manifest fix: theme_color typo ('':='' → ':'), all required fields verified (short_name, icons[192/512], display:standalone, theme_color, background_color). (6f31530)
+- [x] Console error handling: verified — all pages use apiFetch with try/catch, ToastProvider in layout, parseApiError in api.ts. (existing, verified)
+- [x] Remaining i18n: ~500 strings in secondary pages (saml/exports/activity/permissions). Core pages fully i18n'd at 827 keys. Deprioritized per arch. (existing)
+
 ## Key Findings: Security & Competitive Milestones
 
 ### P0 Security — ALL CLOSED
