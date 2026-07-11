@@ -1159,6 +1159,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/token-exchange-delegation", handleTokenExchangeDelegation)
 	mux.HandleFunc("/api/v1/oauth/resource-indicator", handleResourceIndicator)
 	mux.HandleFunc("/api/v1/oauth/resource-allowed", handleResourceAllowed)
+	mux.HandleFunc("/api/v1/oauth/token-events/stream", handleTokenEventStream)
 
 	// JWKS key rotation
 	mux.HandleFunc("/api/v1/oauth/jwks/rotate", func(w http.ResponseWriter, r *http.Request) {

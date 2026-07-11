@@ -87,6 +87,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/jit-provision", func(w http.ResponseWriter, r *http.Request) {
 		h.handleJITProvision(r.Context(), w, r)
 	})
+	h.mux.HandleFunc("/api/v1/users/by-attribute", h.handleUserByAttribute)
 
 	// User lifecycle automation
 	h.mux.HandleFunc("/api/v1/users/lifecycle/rules", h.handleLifecycleRules)
