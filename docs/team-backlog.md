@@ -115,8 +115,11 @@
 - [x] Wire CheckSessionTimeout into middleware chain (737b5f5)
 - [x] Request ID propagation (request_id.go + router.go:120,706)
 - [x] Gateway integration tests (8 router test files already exist)
-- [x] Error response standardization — error_writer.go (737b5f5)
+- [x] Error response standardization — error_writer.go + all http.Error replaced (737b5f5)
+- [x] Request ID propagation tests — router_chain_test.go (3 tests)
+- [x] Prometheus metrics verification — metrics_test.go (1c23919)
 - [ ] Middleware coverage →92% (currently 88.3%)
+- [ ] API spec coverage audit — openapi.yaml vs router routes
 
 ### frontend
 - [x] Console User Profile Settings /settings/profile (de8093e)
