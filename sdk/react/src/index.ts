@@ -185,6 +185,10 @@ export { useIncidentTimeline } from './useIncidentTimeline';
 export type { IncidentTimelineEvent, IncidentPhase, UseIncidentTimelineResult } from './useIncidentTimeline';
 export { useTrustedDevices } from './useTrustedDevices';
 export type { TrustedDevice, UseTrustedDevicesResult } from './useTrustedDevices';
+export { useRoleMining } from './useRoleMining';
+export type { UserAnalysis, RoleRecommendation, PermissionGrant, RoleMiningResult } from './useRoleMining';
+export { useComplianceGaps } from './useComplianceGaps';
+export type { ComplianceGap, ComplianceGapsResult } from './useComplianceGaps';
 export type {
   GGIDConfig,
   GGIDUser,
