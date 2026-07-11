@@ -136,6 +136,11 @@
 - [x] Circuit breaker lifecycle tests — coverage_sprint27_test.go (2e044b9)
 - [x] Swagger UI at /docs — templates.go + router.go:211 (existing)
 - [x] Per-tenant rate limiter isolation — gateway_infra_test.go (existing)
+- [x] Content-Type validation middleware — content_type_validator.go (669d026)
+- [x] Gzip compression wired into chain — router.go Handler() (669d026)
+- [x] Prometheus metrics naming test — metrics_test.go (669d026)
+- [x] Structured request logging with tenant_id+remote_addr — recovery.go RequestLogger (existing)
+- [x] WebSocket proxy support — wsproxy.go + wsproxy_enhanced.go (existing)
 - [ ] Middleware coverage →92% (currently 88.3%)
 - [ ] API spec coverage audit — openapi.yaml vs router routes
 
