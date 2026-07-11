@@ -82,12 +82,12 @@ export default function ProfilePage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">My Profile</h1>
+      <h1 className="mb-6 text-2xl font-bold dark:text-gray-100">My Profile</h1>
 
-      {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{msg}</div>}
-      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">{msg}</div>}
+      {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">{error}</div>}
 
-      <div className="mb-4 flex gap-2 border-b border-gray-200">
+      <div className="mb-4 flex gap-2 border-b border-gray-200 dark:border-gray-700">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -102,32 +102,32 @@ export default function ProfilePage() {
       </div>
 
       {tab === "profile" && (
-        <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-6 flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-xl font-bold text-brand-600">
               {profile.username.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 className="text-lg font-semibold">{profile.full_name || profile.username}</h2>
-              <p className="text-sm text-gray-500">{profile.email}</p>
+              <h2 className="text-lg font-semibold dark:text-gray-100">{profile.full_name || profile.username}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">{profile.email}</p>
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Username</label>
-              <input value={profile.username} onChange={(e) => setProfile({ ...profile, username: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Username</label>
+              <input value={profile.username} onChange={(e) => setProfile({ ...profile, username: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Email</label>
-              <input value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Email</label>
+              <input value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Full Name</label>
-              <input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Full Name</label>
+              <input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Phone</label>
-              <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Phone</label>
+              <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
           </div>
           <button onClick={handleSaveProfile} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700">
@@ -139,14 +139,14 @@ export default function ProfilePage() {
       {tab === "security" && (
         <div className="space-y-6">
           {/* Change password */}
-          <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
               <Lock className="h-5 w-5 text-brand-600" /> Change Password
             </h2>
             <div className="space-y-3">
-              <input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder="Current password" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-              <input type="password" value={passwords.new} onChange={(e) => setPasswords({ ...passwords, new: e.target.value })} placeholder="New password" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
-              <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="Confirm new password" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder="Current password" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+              <input type="password" value={passwords.new} onChange={(e) => setPasswords({ ...passwords, new: e.target.value })} placeholder="New password" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+              <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="Confirm new password" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <button onClick={handleChangePassword} disabled={!passwords.current || !passwords.new} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50">
               Update Password
@@ -154,15 +154,15 @@ export default function ProfilePage() {
           </div>
 
           {/* MFA */}
-          <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${mfaEnabled ? "bg-green-100" : "bg-gray-100"}`}>
-                  <Shield className={`h-5 w-5 ${mfaEnabled ? "text-green-600" : "text-gray-400"}`} />
+                  <Shield className={`h-5 w-5 ${mfaEnabled ? "text-green-600" : "text-gray-400 dark:text-gray-500"}`} />
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold">Two-Factor Authentication (TOTP)</h2>
-                  <p className="text-xs text-gray-500">{mfaEnabled ? "Enabled — scan QR in your authenticator app" : "Add an extra layer of security"}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{mfaEnabled ? "Enabled — scan QR in your authenticator app" : "Add an extra layer of security"}</p>
                 </div>
               </div>
               <button onClick={handleToggleMFA} className={`relative h-6 w-11 rounded-full transition-colors ${mfaEnabled ? "bg-green-500" : "bg-gray-300"}`}>
@@ -174,22 +174,22 @@ export default function ProfilePage() {
       )}
 
       {tab === "sessions" && (
-        <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold">Active Sessions</h2>
+        <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 text-lg font-semibold dark:text-gray-100">Active Sessions</h2>
           <div className="space-y-3">
             {sessions.map((s) => (
               <div key={s.id} className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
                     {s.device.toLowerCase().includes("iphone") || s.device.toLowerCase().includes("android") ? (
-                      <Smartphone className="h-5 w-5 text-gray-500" />
+                      <Smartphone className="h-5 w-5 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
                     ) : (
-                      <Monitor className="h-5 w-5 text-gray-500" />
+                      <Monitor className="h-5 w-5 text-gray-500 dark:text-gray-400 dark:text-gray-500" />
                     )}
                   </div>
                   <div>
                     <p className="text-sm font-medium">{s.device}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                       <Globe className="mr-1 inline h-3 w-3" />
                       {s.ip} • {s.location} • {new Date(s.last_active).toLocaleString()}
                     </p>
