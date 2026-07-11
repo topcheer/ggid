@@ -139,6 +139,16 @@
 - [x] JWKS endpoint functional verification — 7 tests: valid key set, modulus base64url, exponent AQAB, KID match, public key match, key rotation, discovery URI (07969ea)
 - [x] Token Introspection auth verification — 6 tests: active+fields, revoked→inactive, expired→inactive, malformed→inactive, empty→inactive, scope field (07969ea)
 - [x] gRPC TLS mTLS handshake rejection — rogue cert rejected by RequireAndVerifyClientCert, valid cert accepted (07969ea)
+- [x] Token Exchange (RFC 8693) functional verification — 5 tests: delegation flow, actor token, scope reduction, wrong key, expired (6862e9f)
+- [x] SAML SSO functional verification — 7 tests: SP metadata, AuthnRequest, unique IDs, redirect encoding, XML round-trip, cert metadata, full flow (6862e9f)
+- [x] Multi-tenant RLS verification — 7 tests: tenant isolation, no-tenant rejection, propagation, MustFromContext, isolation levels, spoofing prevention (6862e9f)
+- [x] Rate limiter E2E — 3 tests: 100 requests (10x200 + 90x429), 429 JSON body + Retry-After, separate IP buckets (6862e9f)
+- [x] WebAuthn functional verification — 7 tests: begin registration/auth challenge, method check, finish without session, list credentials, .well-known endpoints (6862e9f)
+- [x] Token Exchange (RFC 8693) functional — 5 tests: delegation flow, actor token, scope reduction, wrong key, expired (6862e9f)
+- [x] WebAuthn registration+auth — 7 tests: begin reg/auth challenge, method check, finish no session, list creds, well-known, delete (6862e9f)
+- [x] SAML SSO functional — 7 tests: SP metadata, AuthnRequest, unique IDs, redirect encoding, XML marshal, cert metadata, full SP flow (6862e9f)
+- [x] Multi-tenant RLS — 7 tests: tenant isolation, no-tenant rejection, propagation, MustFromContext panic, isolation levels, spoofing prevention, settings (6862e9f)
+- [x] Rate limiter E2E — 3 tests: 100 requests (10 OK + 90 rate-limited), 429 JSON body + Retry-After, different IPs separate buckets (6862e9f)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
