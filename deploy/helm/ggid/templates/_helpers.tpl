@@ -36,23 +36,29 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "ggid.dbHost" -}}
 {{- if .Values.postgresql.enabled -}}
 {{- printf "%s-postgresql" .Release.Name -}}
+{{- else if .Values.externalDatabase.host -}}
+{{- .Values.externalDatabase.host -}}
 {{- else -}}
-{{- required "externalDatabase.host is required when postgresql is disabled" .Values.externalDatabase.host -}}
+{{- printf "%s-postgresql" .Release.Name -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "ggid.redisHost" -}}
 {{- if .Values.redis.enabled -}}
-{{- printf "%s-redis-master" .Release.Name -}}
+{{- printf "%s-redis" .Release.Name -}}
+{{- else if .Values.externalRedis.host -}}
+{{- .Values.externalRedis.host -}}
 {{- else -}}
-{{- required "externalRedis.host is required when redis is disabled" .Values.externalRedis.host -}}
+{{- printf "%s-redis" .Release.Name -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "ggid.natsHost" -}}
 {{- if .Values.nats.enabled -}}
 {{- printf "%s-nats" .Release.Name -}}
+{{- else if .Values.externalNats.host -}}
+{{- .Values.externalNats.host -}}
 {{- else -}}
-{{- required "externalNats.host is required when nats is disabled" .Values.externalNats.host -}}
+{{- printf "%s-nats" .Release.Name -}}
 {{- end -}}
 {{- end -}}

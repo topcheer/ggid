@@ -24,9 +24,17 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: rsa-keys
+          secret:
+            secretName: ggid-rsa-keys
       containers:
         - name: {{ $name }}
-          image: "{{ $svc.image.repository }}:{{ $svc.image.tag | default $.Chart.AppVersion }}"
+          volumeMounts:
+            - name: rsa-keys
+              mountPath: /configs
+              readOnly: true
+          image: "{{ if $.Values.global.imageRegistry }}{{ $.Values.global.imageRegistry }}/{{ end }}{{ $svc.image.repository }}:{{ $svc.image.tag | default $.Chart.AppVersion }}"
           imagePullPolicy: {{ $svc.image.pullPolicy | default "IfNotPresent" }}
           ports:
             {{- if $svc.service.httpPort }}
@@ -69,6 +77,22 @@ spec:
                 secretKeyRef:
                   name: {{ include "ggid.fullname" $ }}-jwt-secret
                   key: secret
+              {{- if eq $name "gateway" }}
+            - name: JWT_PUBLIC_KEY_PATH
+              value: /configs/rsa_public.pem
+            - name: IDENTITY_SERVICE_URL
+              value: {{ printf "http://%s-identity:8081" (include "ggid.fullname" $) | quote }}
+            - name: AUTH_SERVICE_URL
+              value: {{ printf "http://%s-auth:8082" (include "ggid.fullname" $) | quote }}
+            - name: OAUTH_SERVICE_URL
+              value: {{ printf "http://%s-oauth:9005" (include "ggid.fullname" $) | quote }}
+            - name: POLICY_SERVICE_URL
+              value: {{ printf "http://%s-policy:8083" (include "ggid.fullname" $) | quote }}
+            - name: ORG_SERVICE_URL
+              value: {{ printf "http://%s-org:8084" (include "ggid.fullname" $) | quote }}
+            - name: AUDIT_SERVICE_URL
+              value: {{ printf "http://%s-audit:8085" (include "ggid.fullname" $) | quote }}
+            {{- end }}
             {{- range $key, $val := $svc.env }}
             - name: {{ $key }}
               value: {{ $val | quote }}
