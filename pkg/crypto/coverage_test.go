@@ -56,8 +56,8 @@ func TestAESEncrypt_DifferentCiphertexts(t *testing.T) {
 	}
 }
 
-// TestAESDecrypt_WrongKey tests decryption with wrong key fails.
-func TestAESDecrypt_WrongKey(t *testing.T) {
+// TestAESDecrypt_WrongKey_DifferentKey tests decryption with a completely different key.
+func TestAESDecrypt_WrongKey_DifferentKey(t *testing.T) {
 	pt := []byte("secret")
 	ct, _ := AESEncrypt(pt, []byte("correct-key"))
 	_, err := AESDecrypt(ct, []byte("wrong-key"))
@@ -103,7 +103,7 @@ func TestGenerateRandomToken_Uniqueness2(t *testing.T) {
 }
 
 // TestGenerateRandomToken_ZeroLength tests zero-length token.
-func TestGenerateRandomToken_ZeroLength(t *testing.T) {
+func TestGenerateRandomToken_ZeroLength2(t *testing.T) {
 	tok, err := GenerateRandomToken(0)
 	if err != nil {
 		t.Fatalf("GenerateRandomToken(0): %v", err)
