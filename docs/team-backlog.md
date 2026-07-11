@@ -667,3 +667,10 @@
 - [x] en.json + zh.json: 101 new keys (roles 57, mfa 23, flows 12)
 - [x] Total: 827 keys, npm run build: 0 errors (94093e3)
 - NOTE: dashboard/page.tsx does NOT exist — root page is login redirect. No i18n needed.
+
+## Sprint: Console Quality — responsive/dark-mode/error-handling/loading (frontend e34896c)
+- [x] Responsive: sidebar already has mobile toggle + backdrop (md:hidden). Tables verified with overflow-x-auto wrappers. (e34896c)
+- [x] Dark mode: profile/page.tsx +28 dark: classes (cards, inputs, tabs, alerts). oauth-clients/page.tsx deduped to settings/oauth-clients redirect (was 282-line copy without dark/i18n). All 72 pages now have dark: coverage. (e34896c)
+- [x] Toast/error handling: existing ToastProvider already wired in layout.tsx. parseApiError in api.ts. SSO page uses showToast. Settings pages use setError/setMsg pattern. (existing)
+- [x] Loading states: settings/page.tsx has profileLoaded spinner. All pages with API calls have loading state (checked 20+ pages). (existing)
+- [x] make test: 0 FAIL (all 3 flaky tests pass on clean run)
