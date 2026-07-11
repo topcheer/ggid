@@ -27,6 +27,11 @@ export interface WebAuthnCredential {
   id: string;
   name: string;
   device_type: string;
+  platform: 'platform' | 'cross-platform';
+  authenticator_type?: string;
+  aaguid?: string;
+  backup_eligible?: boolean;
+  backup_state?: boolean;
   created_at: string;
   last_used?: string;
 }
@@ -41,7 +46,11 @@ export interface UseMFAResult {
   disableTOTP: () => Promise<boolean>;
   generateBackupCodes: () => Promise<BackupCodes | null>;
   registerWebAuthn: (name: string) => Promise<boolean>;
+  registerPlatformAuthenticator: (name: string) => Promise<boolean>;
   unregisterWebAuthn: (id: string) => Promise<boolean>;
+  isPlatformSupported: boolean;
+  platformCredentials: WebAuthnCredential[];
+  crossPlatformCredentials: WebAuthnCredential[];
   fetchStatus: () => Promise<void>;
 }
 
@@ -54,6 +63,7 @@ export function useMFA(): UseMFAResult {
   const [credentials, setCredentials] = useState<WebAuthnCredential[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPlatformSupported, setIsPlatformSupported] = useState(false);
 
   const makeHeaders = useCallback(() => {
     const tok = getAccessToken();
@@ -142,6 +152,24 @@ export function useMFA(): UseMFAResult {
     }
   }, [apiBaseUrl, makeHeaders, fetchStatus]);
 
+  const registerPlatformAuthenticator = useCallback(async (name: string): Promise<boolean> => {
+    if (!isPlatformSupported) {
+      setError('Platform authenticator not available on this device');
+      return false;
+    }
+    try {
+      const resp = await fetch(`${apiBaseUrl}/api/v1/webauthn/register`, {
+        method: 'POST', headers: makeHeaders(),
+        body: JSON.stringify({ name, attachment: 'platform', user_verification: 'required' }),
+      });
+      if (!resp.ok) return false;
+      await fetchStatus();
+      return true;
+    } catch {
+      return false;
+    }
+  }, [apiBaseUrl, makeHeaders, fetchStatus, isPlatformSupported]);
+
   const unregisterWebAuthn = useCallback(async (id: string): Promise<boolean> => {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/webauthn/credentials/${id}`, {
@@ -155,10 +183,24 @@ export function useMFA(): UseMFAResult {
     }
   }, [apiBaseUrl, makeHeaders, fetchStatus]);
 
+  // Check for platform authenticator support (WebAuthn conditional UI)
+  useState(() => {
+    if (typeof window !== 'undefined' && window.PublicKeyCredential) {
+      window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+        .then(setIsPlatformSupported)
+        .catch(() => setIsPlatformSupported(false));
+    }
+  });
+
+  const platformCredentials = credentials.filter((c) => c.platform === 'platform' || c.device_type === 'platform');
+  const crossPlatformCredentials = credentials.filter((c) => c.platform !== 'platform' && c.device_type !== 'platform');
+
   return {
     status, credentials, isLoading, error,
     enrollTOTP, verifyTOTP, disableTOTP,
-    generateBackupCodes, registerWebAuthn, unregisterWebAuthn,
+    generateBackupCodes, registerWebAuthn, registerPlatformAuthenticator,
+    unregisterWebAuthn,
+    isPlatformSupported, platformCredentials, crossPlatformCredentials,
     fetchStatus,
   };
 }

@@ -12,6 +12,8 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  ShieldCheck,
+  Radio,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -38,30 +40,60 @@ interface ServiceHealth {
   latency_ms: number;
 }
 
+interface ComplianceInfo {
+  score: number;
+  grade: string;
+  frameworks: { name: string; status: string; score: number }[];
+}
+
 export default function DashboardPage() {
   const { apiFetch } = useApi();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [health, setHealth] = useState<ServiceHealth[]>([]);
+  const [compliance, setCompliance] = useState<ComplianceInfo | null>(null);
+  const [liveEvents, setLiveEvents] = useState<ActivityItem[]>([]);
+  const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, actRes, healthRes] = await Promise.all([
+      const [statsRes, actRes, healthRes, compRes] = await Promise.all([
         apiFetch<DashboardStats>("/api/v1/dashboard/stats").catch(() => null),
         apiFetch<{ events?: ActivityItem[] }>("/api/v1/audit/events?page_size=8").catch(() => ({ events: [] })),
         apiFetch<{ services?: ServiceHealth[] }>("/api/v1/health/services").catch(() => ({ services: [] })),
+        apiFetch<ComplianceInfo>("/api/v1/audit/compliance/posture").catch(() => null),
       ]);
       if (statsRes) setStats(statsRes);
       setActivity(actRes?.events ?? []);
       setHealth(healthRes?.services ?? []);
+      if (compRes) setCompliance(compRes);
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
     }
   }, [apiFetch]);
+
+  // Live audit event stream via SSE
+  useEffect(() => {
+    const tok = localStorage.getItem("ggid_token");
+    if (!tok || typeof window === "undefined" || !window.EventSource) return;
+    const apiBase = window.location.origin;
+    const tenantId = localStorage.getItem("ggid_tenant_id") || "";
+    const url = `${apiBase}/api/v1/audit/stream?token=${encodeURIComponent(tok)}&tenant_id=${encodeURIComponent(tenantId)}`;
+    const es = new EventSource(url);
+    es.onopen = () => setIsLive(true);
+    es.onmessage = (msg) => {
+      try {
+        const event: ActivityItem = JSON.parse(msg.data);
+        setLiveEvents((prev) => [event, ...prev].slice(0, 12));
+      } catch { /* ignore */ }
+    };
+    es.onerror = () => setIsLive(false);
+    return () => es.close();
+  }, []);
 
   useEffect(() => {
     load();
@@ -79,6 +111,10 @@ export default function DashboardPage() {
 
   const healthColor = (status: string) =>
     status === "healthy" ? "text-green-500" : status === "degraded" ? "text-yellow-500" : "text-red-500";
+
+  const complianceColor = compliance
+    ? compliance.score >= 90 ? "text-green-600" : compliance.score >= 70 ? "text-yellow-600" : "text-red-600"
+    : "text-gray-400";
 
   const statCards = stats ? [
     { label: "Total Users", value: stats.total_users, icon: Users, color: "text-indigo-600" },
@@ -127,17 +163,48 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Compliance score card */}
+        {compliance && (
+          <div className={cardCls}>
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <ShieldCheck className="h-4 w-4" /> Compliance Score
+            </h3>
+            <div className="flex items-center gap-4">
+              <div className={`text-4xl font-bold ${complianceColor}`}>{compliance.score}%</div>
+              <div>
+                <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                  Grade {compliance.grade}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 space-y-2">
+              {compliance.frameworks.map((fw) => (
+                <div key={fw.name} className="flex items-center justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-300">{fw.name}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div className={`h-full rounded-full ${fw.score >= 90 ? "bg-green-500" : fw.score >= 70 ? "bg-yellow-500" : "bg-red-500"}`} style={{ width: `${fw.score}%` }} />
+                    </div>
+                    <span className={complianceColor}>{fw.score}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Recent activity */}
-        <div className="lg:col-span-2">
+        <div className={compliance ? "lg:col-span-1" : "lg:col-span-2"}>
           <div className={cardCls}>
             <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
               <Activity className="h-4 w-4" /> Recent Activity
+              {isLive && <span className="flex items-center gap-1 text-xs text-green-500"><Radio className="h-3 w-3 animate-pulse" /> LIVE</span>}
             </h3>
-            {activity.length === 0 ? (
+            {(liveEvents.length > 0 ? liveEvents : activity).length === 0 ? (
               <p className="py-6 text-center text-sm text-gray-400">No recent activity.</p>
             ) : (
               <div className="space-y-2">
-                {activity.map((item) => (
+                {(liveEvents.length > 0 ? liveEvents : activity).map((item) => (
                   <div key={item.id} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30">
                     <div className="flex items-center gap-2">
                       {resultIcon(item.result)}
