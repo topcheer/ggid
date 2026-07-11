@@ -1183,6 +1183,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientSecretRotation(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/deprecation") {
+			handleClientDeprecation(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 	mux.HandleFunc("/api/v1/oauth/par", handlePAR)
