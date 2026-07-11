@@ -5,7 +5,7 @@
  * Local: GGID_URL=http://localhost:8080 node index.js
  */
 
-const { GGIDClient } = require('@ggid/sdk-node');
+const { GGIDClient } = require('@ggid/node');
 
 async function main() {
   const url = process.env.GGID_URL || 'https://ggid.iot2.win';

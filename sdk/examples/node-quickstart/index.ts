@@ -20,7 +20,7 @@
  *   curl -H "Authorization: Bearer <token>" http://localhost:9090/protected → 200
  */
 import express from 'express';
-import { GGIDClient, expressAuth, getClaims } from '@ggid/sdk-node';
+import { GGIDClient, expressAuth, getClaims } from '@ggid/node';
 
 const app = express();
 app.use(express.json());
