@@ -173,7 +173,14 @@
 - [x] docs/incident-response.md (commit 5061709)
 - [x] docs/network-security.md (commit 5061709)
 - [x] docs/vulnerability-management.md (commit 5061709)
-> 133 docs total. All major topics covered. No outstanding doc tasks.
+- [x] docs/operations-runbook.md (commit 883583d)
+- [x] docs/performance-tuning.md expanded (commit 883583d)
+- [x] docs/api-error-codes.md expanded (commit 883583d)
+- [x] docs/upgrade-guide.md (verified complete, 438 lines)
+- [x] docs/design/adr-001-database-choice.md (commit 883583d)
+- [x] docs/design/adr-002-event-driven-audit.md (commit 883583d)
+- [x] docs/design/adr-003-provider-chain.md (commit 883583d)
+> 139 docs total. All major topics covered. No outstanding doc tasks.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
