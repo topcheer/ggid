@@ -213,6 +213,10 @@ export { useAccessFrequency } from './useAccessFrequency';
 export type { FrequencyData, HourlyBucket } from './useAccessFrequency';
 export { usePasswordStrength } from './usePasswordStrength';
 export type { PasswordStrengthData } from './usePasswordStrength';
+export { usePrivilegedAccess } from './usePrivilegedAccess';
+export type { PrivilegedAccount } from './usePrivilegedAccess';
+export { useInactiveCleanup } from './useInactiveCleanup';
+export type { InactiveUser, CleanupAction } from './useInactiveCleanup';
 export type {
   GGIDConfig,
   GGIDUser,
