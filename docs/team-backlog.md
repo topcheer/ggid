@@ -683,3 +683,12 @@
 - [x] Toast/error handling: existing ToastProvider already wired in layout.tsx. parseApiError in api.ts. SSO page uses showToast. Settings pages use setError/setMsg pattern. (existing)
 - [x] Loading states: settings/page.tsx has profileLoaded spinner. All pages with API calls have loading state (checked 20+ pages). (existing)
 - [x] make test: 0 FAIL (all 3 flaky tests pass on clean run)
+
+## Sprint: 5-Minute Quickstart — login UX/API/onboarding/error/branding (frontend 6eb7070)
+- [x] Login UX: already complete — social login buttons (Google/GitHub/SSO from API), remember me checkbox, forgot password link (/forgot-password), MFA challenge flow (TOTP 6-digit step), WebAuthn passkey conditional mediation. (6eb7070)
+- [x] API client consistency: all pages import from api-config.ts (API_BASE_URL + DEFAULT_TENANT_ID). api.ts uses apiFetch wrapper with auth headers. Login page uses same config. No hardcoded URLs. (existing)
+- [x] Onboarding wizard: created /onboarding 3-step wizard (Create Org → Add User → Get API Key) with progress indicator, skip support, localStorage completion tracking, dark mode. (6eb7070)
+- [x] Auth pages: created /forgot-password (password reset with email confirmation) and /register (self-registration with redirect to login). Both use API_BASE_URL + dark mode. (6eb7070)
+- [x] Branding backend: settings/branding/page.tsx GET loader tries /api/v1/tenants/current/branding → /api/v1/settings/branding → localStorage fallback chain. POST already saved to /api/v1/settings/branding. (6eb7070)
+- [x] Error handling: existing ToastProvider in layout.tsx, parseApiError in api.ts with status maps. All new pages have try/catch with friendly error messages. (6eb7070)
+- [x] make test: 0 FAIL, npm run build: 0 errors
