@@ -1170,6 +1170,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/consent/analytics", handleConsentAnalytics)
 	mux.HandleFunc("/api/v1/oauth/consent/admin-override", handleConsentAdminOverride)
 	mux.HandleFunc("/api/v1/oauth/tokens/validate-audience", handleValidateAudience)
+	mux.HandleFunc("/api/v1/oauth/token/downscope", handleTokenDownscope)
 	mux.HandleFunc("/api/v1/oauth/clients/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/branding") {
 			handleClientBranding(w, r)
