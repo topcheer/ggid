@@ -934,6 +934,127 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusOK, map[string]string{"status": "approved"})
 	})
 
+	// --- AI Agent Identity (MCP Auth) ---
+
+	// Register a new AI agent
+	mux.HandleFunc("/api/v1/agents/register", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		var req service.AgentRegistration
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+			return
+		}
+		agent, err := oauthSvc.RegisterAgent(r.Context(), &req)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusCreated, agent)
+	})
+
+	// List agents for a tenant
+	mux.HandleFunc("/api/v1/agents", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		if tenantIDStr == "" {
+			tenantIDStr = r.URL.Query().Get("tenant_id")
+		}
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header or tenant_id query param required"})
+			return
+		}
+		agents, err := oauthSvc.ListAgents(r.Context(), tenantID)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"agents": agents, "total": len(agents)})
+	})
+
+	// Agent token exchange (RFC 8693 with agent claims)
+	mux.HandleFunc("/api/v1/agents/token", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		if tenantIDStr == "" {
+			tenantIDStr = r.URL.Query().Get("tenant_id")
+		}
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			return
+		}
+		var body struct {
+			SubjectToken   string   `json:"subject_token"`
+			AgentID        string   `json:"agent_id"`
+			Scope          []string `json:"scope"`
+			MCPServers     []string `json:"mcp_servers"`
+			Audience       string   `json:"audience"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+			return
+		}
+		agentID, err := uuid.Parse(body.AgentID)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid agent_id"})
+			return
+		}
+		resp, err := oauthSvc.ExchangeAgentToken(r.Context(), &service.AgentTokenExchangeRequest{
+			TenantID:       tenantID,
+			SubjectToken:   body.SubjectToken,
+			AgentID:        agentID,
+			RequestedScope: body.Scope,
+			MCPServers:     body.MCPServers,
+			Audience:       body.Audience,
+		})
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, resp)
+	})
+
+	// Verify an agent token
+	mux.HandleFunc("/api/v1/agents/verify", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		var body struct {
+			Token string `json:"token"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+			return
+		}
+		claims, err := oauthSvc.VerifyAgentToken(r.Context(), body.Token)
+		if err != nil {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": err.Error(), "active": "false"})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"active":               true,
+			"agent_id":             claims.AgentID,
+			"agent_type":           claims.AgentType,
+			"is_agent_token":       claims.IsAgentToken,
+			"max_delegation_depth": claims.MaxDelegationDepth,
+			"delegation_chain":     claims.DelegationChain,
+			"mcp_servers":          claims.MCPServers,
+			"sub":                  claims.Subject,
+			"exp":                  claims.ExpiresAt,
+		})
+	})
+
 	// Health check
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
