@@ -201,6 +201,10 @@ export { useAccessCertification } from './useAccessCertification';
 export type { CertificationUser, Campaign, CertificationDecision } from './useAccessCertification';
 export { useClientMigration } from './useClientMigration';
 export type { ClientConfig, DiffResult } from './useClientMigration';
+export { useMFAFactors } from './useMFAFactors';
+export type { MFAFactor } from './useMFAFactors';
+export { useOrgChart } from './useOrgChart';
+export type { OrgNode } from './useOrgChart';
 export type {
   GGIDConfig,
   GGIDUser,
