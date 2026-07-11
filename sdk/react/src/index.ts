@@ -101,6 +101,10 @@ export { useAuditExport } from './useAuditExport';
 export type { ExportParams, UseAuditExportResult } from './useAuditExport';
 export { useSoDRules } from './useSoDRules';
 export type { SoDRule as SoDRuleEntry, CreateSoDRuleInput as CreateSoDRuleEntryInput, UseSoDRulesResult } from './useSoDRules';
+export { useAccessReviews } from './useAccessReviews';
+export type { AccessReviewCampaign, ReviewItem, CreateCampaignInput, UseAccessReviewsResult } from './useAccessReviews';
+export { useJWKSRotation } from './useJWKSRotation';
+export type { JWKSStatus, RotationResult, UseJWKSRotationResult } from './useJWKSRotation';
 export type {
   GGIDConfig,
   GGIDUser,
