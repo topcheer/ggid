@@ -91,6 +91,8 @@ export { useEventCorrelation } from './useEventCorrelation';
 export type { CorrelationRule, CorrelationSeverity, CorrelatedGroup, CreateCorrelationRuleInput, CorrelateResult, UseEventCorrelationResult } from './useEventCorrelation';
 export { useDeprovisioning } from './useDeprovisioning';
 export type { DeprovisionResult, DeprovisionHistoryEntry, DeprovisionInput, UseDeprovisioningResult } from './useDeprovisioning';
+export { useRetentionPolicies } from './useRetentionPolicies';
+export type { RetentionPolicy, RetentionAction, CreatePolicyInput, UseRetentionPoliciesResult } from './useRetentionPolicies';
 export type {
   GGIDConfig,
   GGIDUser,
