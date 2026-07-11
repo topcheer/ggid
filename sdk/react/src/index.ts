@@ -97,6 +97,10 @@ export { useScimGroups } from './useScimGroups';
 export type { ScimGroup, CreateScimGroupInput, UseScimGroupsResult } from './useScimGroups';
 export { useDeviceBindings } from './useDeviceBindings';
 export type { DeviceBinding, BindDeviceInput, UseDeviceBindingsResult } from './useDeviceBindings';
+export { useAuditExport } from './useAuditExport';
+export type { ExportParams, UseAuditExportResult } from './useAuditExport';
+export { useSoDRules } from './useSoDRules';
+export type { SoDRule as SoDRuleEntry, CreateSoDRuleInput as CreateSoDRuleEntryInput, UseSoDRulesResult } from './useSoDRules';
 export type {
   GGIDConfig,
   GGIDUser,
