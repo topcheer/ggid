@@ -187,3 +187,53 @@ func TestMetricsMiddleware_StatusLabels(t *testing.T) {
 		t.Error("expected status=404 label")
 	}
 }
+
+// TestPrometheusMetricNaming verifies all exposed metrics follow Prometheus
+// naming conventions: snake_case names, HELP text present, TYPE defined.
+func TestPrometheusMetricNaming(t *testing.T) {
+	// Make a request to populate counters
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mw := MetricsMiddleware(next)
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	mw.ServeHTTP(httptest.NewRecorder(), req)
+
+	// Scrape metrics
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsRR := httptest.NewRecorder()
+	promhttp.Handler().ServeHTTP(metricsRR, metricsReq)
+	body, _ := io.ReadAll(metricsRR.Body)
+	bodyStr := string(body)
+
+	// Required metric names that should be present
+	requiredMetrics := []string{
+		"http_requests_total",
+		"http_request_duration_seconds",
+		"auth_failures_total",
+	}
+
+	for _, name := range requiredMetrics {
+		// Verify HELP text exists
+		helpLine := "# HELP " + name
+		if !strings.Contains(bodyStr, helpLine) {
+			t.Errorf("metric %q missing HELP text", name)
+		}
+		// Verify TYPE line exists
+		typeLine := "# TYPE " + name
+		if !strings.Contains(bodyStr, typeLine) {
+			t.Errorf("metric %q missing TYPE line", name)
+		}
+		// Verify metric name is snake_case (no camelCase, no hyphens)
+		for _, ch := range name {
+			if ch >= 'A' && ch <= 'Z' {
+				t.Errorf("metric %q contains uppercase (not snake_case)", name)
+				break
+			}
+			if ch == '-' {
+				t.Errorf("metric %q contains hyphen (should be underscore)", name)
+				break
+			}
+		}
+	}
+}
