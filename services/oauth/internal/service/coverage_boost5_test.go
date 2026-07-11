@@ -23,7 +23,7 @@ func TestSec_IntrospectToken_ActiveWithAllFields(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	token, _, err := svc.issueAccessToken(userID, testTenantID, "gcid_intro_full")
+	token, _, err := svc.issueAccessToken(userID, testTenantID, "gcid_intro_full", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestSec_IntrospectToken_WithUsername(t *testing.T) {
 func TestSec_UserInfo_ValidToken(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 	userID := uuid.New()
-	token, _, err := svc.issueAccessToken(userID, testTenantID, "gcid_ui")
+	token, _, err := svc.issueAccessToken(userID, testTenantID, "gcid_ui", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -517,7 +517,7 @@ func TestSec_JWTBearer_InvalidAssertion(t *testing.T) {
 
 func TestSec_RevokeToken_Idempotent(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token, _, _ := svc.issueAccessToken(uuid.New(), testTenantID, "c_rev")
+	token, _, _ := svc.issueAccessToken(uuid.New(), testTenantID, "c_rev", "openid")
 	_ = svc.RevokeToken(token)
 	err := svc.RevokeToken(token)
 	if err != nil {

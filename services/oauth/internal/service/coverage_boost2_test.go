@@ -600,7 +600,7 @@ func TestRevokeAndIsTokenRevoked_ValidToken(t *testing.T) {
 
 	// Create a valid token via issueAccessToken.
 	userID := uuid.New()
-	token, _, err := svc.issueAccessToken(userID, testTenantID, "test-client")
+	token, _, err := svc.issueAccessToken(userID, testTenantID, "test-client", "openid profile")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -660,7 +660,7 @@ func TestIntrospectToken_ValidToken(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	token, _, err := svc.issueAccessToken(userID, testTenantID, "introspect-client")
+	token, _, err := svc.issueAccessToken(userID, testTenantID, "introspect-client", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -681,7 +681,7 @@ func TestIntrospectToken_RevokedToken(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	token, _, err := svc.issueAccessToken(userID, testTenantID, "revoked-client")
+	token, _, err := svc.issueAccessToken(userID, testTenantID, "revoked-client", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -758,7 +758,7 @@ func TestExchangeToken_Success(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, "source-client")
+	subjectToken, _, err := svc.issueAccessToken(userID, testTenantID, "source-client", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -1385,7 +1385,7 @@ func TestIssueAccessToken_Success(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	token, expiresIn, err := svc.issueAccessToken(userID, testTenantID, "direct-test-client")
+	token, expiresIn, err := svc.issueAccessToken(userID, testTenantID, "direct-test-client", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}

@@ -290,7 +290,7 @@ func TestIntrospectToken_RevokedToken_C4(t *testing.T) {
 		Enabled:    true,
 	}
 
-	accessToken, _, err := svc.issueAccessToken(uuid.New(), testTenantID, client.ClientID)
+	accessToken, _, err := svc.issueAccessToken(uuid.New(), testTenantID, client.ClientID, "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -317,7 +317,7 @@ func TestIntrospectToken_InvalidToken(t *testing.T) {
 func TestIntrospectToken_WithScopeClaim(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
-	accessToken, _, err := svc.issueAccessToken(uuid.New(), testTenantID, "test_client")
+	accessToken, _, err := svc.issueAccessToken(uuid.New(), testTenantID, "test_client", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
@@ -428,7 +428,7 @@ func TestGetUserInfo_ValidToken_C4(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	userID := uuid.New()
-	token, _, err := svc.issueAccessToken(userID, testTenantID, "client_x")
+	token, _, err := svc.issueAccessToken(userID, testTenantID, "client_x", "openid")
 	if err != nil {
 		t.Fatalf("issueAccessToken: %v", err)
 	}
