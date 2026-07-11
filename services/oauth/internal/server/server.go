@@ -843,6 +843,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
+		// Sub-path: client scopes binding
+		if strings.Contains(clientID, "/scopes") {
+			handleClientScopes(w, r)
+			return
+		}
+
 		switch r.Method {
 		case http.MethodGet:
 			client, err := oauthSvc.GetClient(ctx, clientID)

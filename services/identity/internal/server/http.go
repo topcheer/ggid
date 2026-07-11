@@ -79,6 +79,9 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Impersonation audit trail
 	h.mux.HandleFunc("/api/v1/audit/impersonation", h.handleImpersonationAudit)
+
+	// Enhanced user search
+	h.mux.HandleFunc("/api/v1/users/search", h.handleUserSearch)
 }
 
 // ServeHTTP implements http.Handler.
