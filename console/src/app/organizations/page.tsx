@@ -322,7 +322,7 @@ export default function OrganizationsPage() {
   };
 
   const handleDeleteOrg = async (id: string) => {
-    if (!confirm("Delete this organization? This cannot be undone.")) return;
+    if (!confirm(t("orgs.confirmDeleteOrg"))) return;
     try {
       await apiFetch(`/api/v1/orgs/${id}`, { method: "DELETE" });
       setMsg("Organization deleted");
@@ -333,7 +333,7 @@ export default function OrganizationsPage() {
   };
 
   const handleDeleteDept = async (id: string) => {
-    if (!confirm("Delete this department?")) return;
+    if (!confirm(t("orgs.confirmDeleteDept"))) return;
     try {
       await apiFetch(`/api/v1/departments/${id}`, { method: "DELETE" });
       setMsg("Department deleted");
@@ -344,7 +344,7 @@ export default function OrganizationsPage() {
   };
 
   const handleDeleteTeam = async (id: string) => {
-    if (!confirm("Delete this team?")) return;
+    if (!confirm(t("orgs.confirmDeleteTeam"))) return;
     try {
       await apiFetch(`/api/v1/teams/${id}`, { method: "DELETE" });
       setMsg("Team deleted");
@@ -416,7 +416,7 @@ export default function OrganizationsPage() {
             label={t("orgs.parentOrg")}
             name="parent_id"
             type="select"
-            placeholder="-- None (root) --"
+            placeholder={t("orgs.noneRoot")}
             options={orgs.map((o) => ({ value: o.id, label: o.name }))}
           />
         </CreateForm>
@@ -429,20 +429,20 @@ export default function OrganizationsPage() {
           onSubmit={handleCreateDept}
         >
           <FormField
-            label="Organization"
+            label={t("nav.organizations")}
             name="org_id"
             type="select"
-            placeholder="-- Select org --"
+            placeholder={t("orgs.selectOrg")}
             required
             options={orgs.map((o) => ({ value: o.id, label: o.name }))}
             value={selectedOrgId || undefined}
           />
-          <FormField label="Name" name="name" placeholder="e.g. Frontend" required />
+          <FormField label={t("common.name")} name="name" placeholder="e.g. Frontend" required />
           <FormField
-            label="Parent Department"
+            label={t("orgs.parentDept")}
             name="parent_id"
             type="select"
-            placeholder="-- None (root) --"
+            placeholder={t("orgs.noneRoot")}
             options={depts.map((d) => ({ value: d.id, label: d.name }))}
           />
         </CreateForm>
@@ -455,18 +455,18 @@ export default function OrganizationsPage() {
           onSubmit={handleCreateTeam}
         >
           <FormField
-            label="Organization"
+            label={t("nav.organizations")}
             name="org_id"
             type="select"
-            placeholder="-- Select org --"
+            placeholder={t("orgs.selectOrg")}
             required
             options={orgs.map((o) => ({ value: o.id, label: o.name }))}
             value={selectedOrgId || undefined}
           />
-          <FormField label="Name" name="name" placeholder="e.g. Platform Team" required />
-          <FormField label="Description" name="description" placeholder="Optional" />
+          <FormField label={t("common.name")} name="name" placeholder="e.g. Platform Team" required />
+          <FormField label={t("common.description")} name="description" placeholder="Optional" />
           <FormField
-            label="Created By (User ID)"
+            label={t("orgs.createdBy")}
             name="created_by"
             placeholder="UUID of the creator"
             required
@@ -483,7 +483,7 @@ export default function OrganizationsPage() {
             onChange={(e) => setSelectedOrgId(e.target.value || null)}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
           >
-            <option value="">-- Select org --</option>
+            <option value="">{t("orgs.selectOrg")}</option>
             {orgs.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.name}
@@ -502,7 +502,7 @@ export default function OrganizationsPage() {
             onChange={(e) => setTreeRootId(e.target.value || null)}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none"
           >
-            <option value="">-- Select org --</option>
+            <option value="">{t("orgs.selectOrg")}</option>
             {orgs.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.name}
@@ -547,17 +547,17 @@ export default function OrganizationsPage() {
       ) : tab === "depts" ? (
         /* ===== Departments ===== */
         !selectedOrgId ? (
-          <EmptyState icon={Network} title="Select an organization" subtitle="Choose an organization above to view its departments" />
+          <EmptyState icon={Network} title={t("orgs.selectOrgHint")} subtitle={t("orgs.chooseOrgForDepts")} />
         ) : depts.length === 0 ? (
-          <EmptyState icon={Network} title="No departments" subtitle="Create a department under this organization" />
+          <EmptyState icon={Network} title={t("orgs.noDepts")} subtitle={t("orgs.createDeptHint")} />
         ) : (
           <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Department</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Path</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.department")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.path")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -592,9 +592,9 @@ export default function OrganizationsPage() {
       ) : tab === "teams" ? (
         /* ===== Teams ===== */
         !selectedOrgId ? (
-          <EmptyState icon={Users} title="Select an organization" subtitle="Choose an organization above to view its teams" />
+          <EmptyState icon={Users} title={t("orgs.selectOrgHint")} subtitle={t("orgs.chooseOrgForTeams")} />
         ) : teams.length === 0 ? (
-          <EmptyState icon={Users} title="No teams" subtitle="Create a team under this organization" />
+          <EmptyState icon={Users} title={t("orgs.noTeams")} subtitle={t("orgs.createTeamHint")} />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {teams.map((t) => (
@@ -628,18 +628,18 @@ export default function OrganizationsPage() {
       ) : tab === "tree" ? (
         /* ===== Unified Tree View ===== */
         !treeRootId ? (
-          <EmptyState icon={Layers} title="Select a root organization" subtitle="Choose an organization above to view its full hierarchy" />
+          <EmptyState icon={Layers} title={t("orgs.selectRootOrg")} subtitle={t("orgs.chooseOrgForHierarchy")} />
         ) : treeLoading ? (
           <p className="text-gray-500">{t("orgs.loadingTree")}</p>
         ) : !treeData || treeData.organizations.length === 0 ? (
-          <EmptyState icon={Layers} title="No tree data" subtitle="Failed to load or empty tree" />
+          <EmptyState icon={Layers} title={t("orgs.noTreeData")} subtitle="Failed to load or empty tree" />
         ) : (
           <UnifiedTreeView treeData={treeData} memberCounts={memberCounts} />
         )
       ) : tab === "members" ? (
         /* ===== Members Detail ===== */
         !selectedOrgId ? (
-          <EmptyState icon={Users} title="Select an organization" subtitle="Choose an organization to view its members" />
+          <EmptyState icon={Users} title={t("orgs.selectOrgHint")} subtitle={t("orgs.viewDetails")} />
         ) : (
           <MembersDetail
             orgId={selectedOrgId}
@@ -695,7 +695,7 @@ function MembersDetail({
     <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-200 p-4">
         <h3 className="text-sm font-semibold">
-          Members of {orgName} ({members.length})
+          {t("orgs.membersOf")} {orgName} ({members.length})
         </h3>
       </div>
       {loading ? (

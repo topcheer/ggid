@@ -108,11 +108,11 @@ export default function BrandingSettingsPage() {
         method: "POST",
         body: JSON.stringify(config),
       });
-      setMsg("Branding settings saved to server");
+      setMsg(t("branding.saved"));
     } catch {
       // Fallback: save to localStorage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      setMsg("Endpoint unavailable — saved to localStorage");
+      setMsg(t("branding.savedLocal"));
     } finally {
       setSaving(false);
     }
@@ -123,12 +123,12 @@ export default function BrandingSettingsPage() {
     if (!file) return;
     // Accept only SVG and PNG
     if (!file.type.match(/image\/(svg\+xml|png)/) && !file.name.match(/\.(svg|png)$/i)) {
-      setMsg("Please upload an SVG or PNG file");
+      setMsg(t("brandingCustom.uploadSvg"));
       return;
     }
     // Enforce 1MB max size
     if (file.size > MAX_LOGO_SIZE) {
-      setMsg("Logo file must be 1MB or less");
+      setMsg(t("brandingCustom.fileTooLarge"));
       return;
     }
     const reader = new FileReader();
@@ -380,12 +380,12 @@ export default function BrandingSettingsPage() {
           {/* Email Template Preview */}
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
-              <Mail className="h-5 w-5 text-brand-600" /> Email Template Preview
+              <Mail className="h-5 w-5 text-brand-600" /> {t("branding.emailPreview")}
             </h2>
 
             {/* Template selector */}
             <div className="mb-4">
-              <label className="mb-1 block text-xs font-medium text-gray-500">Template</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">{t("branding.template")}</label>
               <select
                 value={emailTemplate}
                 onChange={(e) => setEmailTemplate(e.target.value as EmailTemplate)}
@@ -473,21 +473,21 @@ export default function BrandingSettingsPage() {
           {/* Summary */}
           <div className="space-y-2 rounded-lg border border-gray-100 p-3 dark:border-gray-700">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">Primary Color</span>
+              <span className="text-gray-500">{t("branding.primaryColor")}</span>
               <span className="font-mono text-gray-700 dark:text-gray-300">{config.primary_color}</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">Secondary Color</span>
+              <span className="text-gray-500">{t("branding.secondaryColor")}</span>
               <span className="font-mono text-gray-700 dark:text-gray-300">{config.secondary_color}</span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">Logo</span>
+              <span className="text-gray-500">{t("branding.logo")}</span>
               <span className="text-gray-700 dark:text-gray-300">
                 {config.logo_url ? "Custom" : "Default (G)"}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">Domain</span>
+              <span className="text-gray-500">{t("common.domain")}</span>
               <span className="text-gray-700 dark:text-gray-300">
                 {config.custom_domain || "Not set"}
               </span>

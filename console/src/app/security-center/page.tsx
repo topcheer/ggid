@@ -190,12 +190,12 @@ export default function SecurityCenterDashboardPage() {
       setData((prev) =>
         prev ? { ...prev, webauthn_devices: prev.webauthn_devices.filter((d) => d.id !== id) } : prev,
       );
-      setMsg("Device revoked");
+      setMsg(t("security.deviceRevoked"));
     } catch {
       setData((prev) =>
         prev ? { ...prev, webauthn_devices: prev.webauthn_devices.filter((d) => d.id !== id) } : prev,
       );
-      setMsg("Device revoked");
+      setMsg(t("security.deviceRevoked"));
     }
   };
 
@@ -333,7 +333,7 @@ export default function SecurityCenterDashboardPage() {
             {/* Legend */}
             <div className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded bg-white/80 px-2 py-1 text-xs text-gray-600 dark:bg-gray-900/80 dark:text-gray-300">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-brand-500" />
-              {d.session_locations.length} active locations
+              {d.session_locations.length} {t("security.activeLocations")}
             </div>
           </div>
         </div>
@@ -361,7 +361,7 @@ export default function SecurityCenterDashboardPage() {
             </svg>
             <div className="z-10 text-center">
               <p className="text-3xl font-bold text-green-600 dark:text-green-400">{enrolledPct}%</p>
-              <p className="text-xs text-gray-500">Enrolled</p>
+              <p className="text-xs text-gray-500">{t("security.enrolled")}</p>
             </div>
           </div>
 
@@ -384,8 +384,8 @@ export default function SecurityCenterDashboardPage() {
           </div>
 
           <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-xs dark:border-gray-700">
-            <span className="text-gray-500">Not enrolled</span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400">{d.mfa_not_enrolled.toLocaleString()} users</span>
+            <span className="text-gray-500">{t("security.notEnrolled")}</span>
+            <span className="font-semibold text-amber-600 dark:text-amber-400">{d.mfa_not_enrolled.toLocaleString()} {t("security.usersLabel")}</span>
           </div>
         </div>
       </div>
@@ -395,7 +395,7 @@ export default function SecurityCenterDashboardPage() {
         {/* Failed Login Chart */}
         <div className={cardCls}>
           <h2 className={`flex items-center gap-2 ${headingCls}`}>
-            <AlertTriangle className="h-5 w-5 text-amber-500" /> Failed Logins (7 days)
+            <AlertTriangle className="h-5 w-5 text-amber-500" /> {t("security.failedLogins7d")}
           </h2>
           <div className="flex items-end justify-between gap-2" style={{ height: "200px" }}>
             {d.failed_login_chart.map((day) => (
@@ -429,24 +429,24 @@ export default function SecurityCenterDashboardPage() {
           </div>
           <div className="mt-4 flex items-center gap-2 text-xs text-gray-400">
             <Activity className="h-3 w-3" />
-            Total: {d.failed_login_chart.reduce((a, b) => a + b.count, 0)} failed attempts this week
+            Total: {d.failed_login_chart.reduce((a, b) => a + b.count, 0)} {t("security.totalFailedWeek")}
           </div>
         </div>
 
         {/* Risky IPs */}
         <div className={cardCls}>
           <h2 className={`flex items-center gap-2 ${headingCls}`}>
-            <ShieldAlert className="h-5 w-5 text-red-500" /> Risky IP Addresses
+            <ShieldAlert className="h-5 w-5 text-red-500" /> {t("security.riskyIps")}
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500 dark:border-gray-700">
-                  <th className="pb-2 font-medium">IP Address</th>
-                  <th className="pb-2 font-medium">Location</th>
-                  <th className="pb-2 text-right font-medium">Attempts</th>
-                  <th className="pb-2 font-medium">Last</th>
-                  <th className="pb-2 font-medium">Risk</th>
+                  <th className="pb-2 font-medium">{t("security.ipAddress")}</th>
+                  <th className="pb-2 font-medium">{t("security.location")}</th>
+                  <th className="pb-2 text-right font-medium">{t("security.attempts")}</th>
+                  <th className="pb-2 font-medium">{t("security.last")}</th>
+                  <th className="pb-2 font-medium">{t("security.risk")}</th>
                   <th className="pb-2"></th>
                 </tr>
               </thead>
@@ -466,13 +466,13 @@ export default function SecurityCenterDashboardPage() {
                       </td>
                       <td className="py-2.5 text-right">
                         {isBlocked ? (
-                          <span className="text-xs font-medium text-gray-400">Blocked</span>
+                          <span className="text-xs font-medium text-gray-400">{t("security.blocked")}</span>
                         ) : (
                           <button
                             onClick={() => blockIP(r.ip)}
                             className="rounded-lg border border-red-300 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                           >
-                            Block
+                            {t("security.block")}
                           </button>
                         )}
                       </td>
@@ -488,10 +488,10 @@ export default function SecurityCenterDashboardPage() {
       {/* ===== WebAuthn Devices ===== */}
       <div className={cardCls}>
         <h2 className={`flex items-center gap-2 ${headingCls}`}>
-          <KeyRound className="h-5 w-5 text-brand-600" /> WebAuthn Registered Devices
+          <KeyRound className="h-5 w-5 text-brand-600" /> {t("security.webauthnDevices")}
         </h2>
         {d.webauthn_devices.length === 0 ? (
-          <p className="py-4 text-center text-sm text-gray-400">No WebAuthn devices registered.</p>
+          <p className="py-4 text-center text-sm text-gray-400">{t("security.noWebauthn")}</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {d.webauthn_devices.map((dev) => (
@@ -512,7 +512,7 @@ export default function SecurityCenterDashboardPage() {
                     <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <span className="capitalize">{dev.type}</span>
                       <span>·</span>
-                      <span>Last used {dev.last_used}</span>
+                      <span>{t("security.lastUsed")} {dev.last_used}</span>
                     </div>
                   </div>
                 </div>
@@ -525,7 +525,7 @@ export default function SecurityCenterDashboardPage() {
                     }`}
                   >
                     {dev.status === "active" && <CheckCircle2 className="h-3 w-3" />}
-                    {dev.status === "active" ? "Active" : "Inactive"}
+                    {dev.status === "active" ? t("common.active") : t("common.inactive")}
                   </span>
                   <button
                     onClick={() => revokeDevice(dev.id)}

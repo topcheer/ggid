@@ -8,14 +8,14 @@ import {
 } from "lucide-react";
 
 const FEATURE_FLAGS = [
-  { key: "scim", label: "Enable SCIM" },
-  { key: "webauthn", label: "Enable WebAuthn" },
-  { key: "social", label: "Enable Social Login" },
-  { key: "saml", label: "Enable SAML" },
-  { key: "branding", label: "Enable Custom Branding" },
-  { key: "audit_export", label: "Enable Audit Export" },
-  { key: "api_keys", label: "Enable API Keys" },
-  { key: "webhooks", label: "Enable Webhooks" },
+  { key: "scim", label: "tenant.enableScim" },
+  { key: "webauthn", label: "tenant.enableWebauthn" },
+  { key: "social", label: "tenant.enableSocial" },
+  { key: "saml", label: "tenant.enableSaml" },
+  { key: "branding", label: "tenant.enableBranding" },
+  { key: "audit_export", label: "tenant.enableAuditExport" },
+  { key: "api_keys", label: "tenant.enableApiKeys" },
+  { key: "webhooks", label: "tenant.enableWebhooks" },
 ] as const;
 
 export default function TenantConfigPage() {
@@ -94,7 +94,7 @@ export default function TenantConfigPage() {
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) { setMsg("Please select an image file"); return; }
+    if (!file || !file.type.startsWith("image/")) { setMsg(t("tenant.selectImage")); return; }
     const reader = new FileReader();
     reader.onload = () => setProfile(prev => ({ ...prev, logoUrl: reader.result as string }));
     reader.readAsDataURL(file);
@@ -148,12 +148,12 @@ export default function TenantConfigPage() {
               <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30">
                 <Upload className="h-4 w-4" /> {t("branding.uploadLogo")}
               </button>
-              {profile.logoUrl && <button onClick={() => setProfile({ ...profile, logoUrl: "" })} className="ml-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950">Remove</button>}
+              {profile.logoUrl && <button onClick={() => setProfile({ ...profile, logoUrl: "" })} className="ml-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950">{t("tenant.removeLogo")}</button>}
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingProfile(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ name: profile.name, logo_url: profile.logoUrl, domain: profile.domain }) }); setMsg("Profile saved"); } catch { setMsg("Profile saved (offline)"); } finally { setSavingProfile(false); } }} disabled={savingProfile} className={saveBtn}>
-              {savingProfile ? <Save className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Profile
+            <button onClick={async () => { setSavingProfile(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ name: profile.name, logo_url: profile.logoUrl, domain: profile.domain }) }); setMsg(t("tenant.profileSaved")); } catch { setMsg(t("tenant.profileSavedOffline")); } finally { setSavingProfile(false); } }} disabled={savingProfile} className={saveBtn}>
+              {savingProfile ? <Save className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("tenant.saveProfile")}
             </button>
           </div>
         </div>
@@ -164,14 +164,14 @@ export default function TenantConfigPage() {
           <div className="grid gap-3 sm:grid-cols-2">
             {FEATURE_FLAGS.map(f => (
               <div key={f.key} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{f.label}</span>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t(f.label)}</span>
                 <Toggle on={flags[f.key]} onClick={() => setFlags({ ...flags, [f.key]: !flags[f.key] })} />
               </div>
             ))}
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingFlags(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ feature_flags: flags }) }); setMsg("Feature flags saved"); } catch { setMsg("Feature flags saved (offline)"); } finally { setSavingFlags(false); } }} disabled={savingFlags} className={saveBtn}>
-              <Save className="h-4 w-4" /> Save Flags
+            <button onClick={async () => { setSavingFlags(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ feature_flags: flags }) }); setMsg(t("tenant.flagsSaved")); } catch { setMsg(t("tenant.flagsSavedOffline")); } finally { setSavingFlags(false); } }} disabled={savingFlags} className={saveBtn}>
+              <Save className="h-4 w-4" /> {t("tenant.saveFlags")}
             </button>
           </div>
         </div>
@@ -190,8 +190,8 @@ export default function TenantConfigPage() {
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingRate(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ rate_limits: { requests_per_minute: rateLimit.requestsPerMinute, burst_limit: rateLimit.burstLimit } }) }); setMsg("Rate limits saved"); } catch { setMsg("Rate limits saved (offline)"); } finally { setSavingRate(false); } }} disabled={savingRate} className={saveBtn}>
-              <Save className="h-4 w-4" /> Save
+            <button onClick={async () => { setSavingRate(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ rate_limits: { requests_per_minute: rateLimit.requestsPerMinute, burst_limit: rateLimit.burstLimit } }) }); setMsg(t("tenant.rateSaved")); } catch { setMsg(t("tenant.rateSavedOffline")); } finally { setSavingRate(false); } }} disabled={savingRate} className={saveBtn}>
+              <Save className="h-4 w-4" /> {t("tenant.saveRate")}
             </button>
           </div>
         </div>
@@ -208,9 +208,9 @@ export default function TenantConfigPage() {
               <input type="range" min={8} max={128} value={pwPolicy.minLength} onChange={e => setPwPolicy({ ...pwPolicy, minLength: Number(e.target.value) })} className="w-full accent-brand-600" />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              {([["requireUpper", "Require Uppercase"], ["requireLower", "Require Lowercase"], ["requireDigit", "Require Digits"], ["requireSpecial", "Require Special Characters"]] as const).map(([key, lbl]) => (
+              {(["requireUpper", "requireLower", "requireDigit", "requireSpecial"] as const).map((key) => (
                 <div key={key} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{lbl}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t(`tenant.${key}`)}</span>
                   <Toggle on={pwPolicy[key]} onClick={() => setPwPolicy({ ...pwPolicy, [key]: !pwPolicy[key] })} />
                 </div>
               ))}
@@ -221,8 +221,8 @@ export default function TenantConfigPage() {
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingPw(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ password_policy: { min_length: pwPolicy.minLength, require_uppercase: pwPolicy.requireUpper, require_lowercase: pwPolicy.requireLower, require_digit: pwPolicy.requireDigit, require_special: pwPolicy.requireSpecial, history_count: pwPolicy.historyCount, expiry_days: pwPolicy.expiryDays } }) }); setMsg("Password policy saved"); } catch { setMsg("Password policy saved (offline)"); } finally { setSavingPw(false); } }} disabled={savingPw} className={saveBtn}>
-              <Save className="h-4 w-4" /> Save Password Policy
+            <button onClick={async () => { setSavingPw(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ password_policy: { min_length: pwPolicy.minLength, require_uppercase: pwPolicy.requireUpper, require_lowercase: pwPolicy.requireLower, require_digit: pwPolicy.requireDigit, require_special: pwPolicy.requireSpecial, history_count: pwPolicy.historyCount, expiry_days: pwPolicy.expiryDays } }) }); setMsg(t("tenant.pwSaved")); } catch { setMsg(t("tenant.pwSavedOffline")); } finally { setSavingPw(false); } }} disabled={savingPw} className={saveBtn}>
+              <Save className="h-4 w-4" /> {t("tenant.savePwPolicy")}
             </button>
           </div>
         </div>
@@ -236,8 +236,8 @@ export default function TenantConfigPage() {
             <div><label className={labelCls}>{t("tenant.concurrentSessions")}</label><input type="number" min={1} max={100} value={sessPolicy.concurrentLimit} onChange={e => setSessPolicy({ ...sessPolicy, concurrentLimit: Number(e.target.value) || 5 })} className={inputCls} /></div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingSess(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ session_policy: { timeout: sessPolicy.timeout, idle_timeout: sessPolicy.idleTimeout, concurrent_limit: sessPolicy.concurrentLimit } }) }); setMsg("Session policy saved"); } catch { setMsg("Session policy saved (offline)"); } finally { setSavingSess(false); } }} disabled={savingSess} className={saveBtn}>
-              <Save className="h-4 w-4" /> Save Session Policy
+            <button onClick={async () => { setSavingSess(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ session_policy: { timeout: sessPolicy.timeout, idle_timeout: sessPolicy.idleTimeout, concurrent_limit: sessPolicy.concurrentLimit } }) }); setMsg(t("tenant.sessSaved")); } catch { setMsg(t("tenant.sessSavedOffline")); } finally { setSavingSess(false); } }} disabled={savingSess} className={saveBtn}>
+              <Save className="h-4 w-4" /> {t("tenant.saveSessPolicy")}
             </button>
           </div>
         </div>
@@ -250,8 +250,8 @@ export default function TenantConfigPage() {
               <div className="flex items-center gap-3">
                 <Shield className="h-5 w-5 text-gray-500" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Require MFA for all users</p>
-                  <p className="text-xs text-gray-500">Enforce multi-factor authentication across the entire tenant</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t("tenant.requireMfa")}</p>
+                  <p className="text-xs text-gray-500">{t("tenant.requireMfaDesc")}</p>
                 </div>
               </div>
               <Toggle on={mfa.requireMfa} onClick={() => setMfa({ ...mfa, requireMfa: !mfa.requireMfa })} />
@@ -272,8 +272,8 @@ export default function TenantConfigPage() {
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingMfa(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ mfa_config: { require_mfa: mfa.requireMfa, method: mfa.method, grace_period: mfa.gracePeriod } }) }); setMsg("MFA enforcement saved"); } catch { setMsg("MFA enforcement saved (offline)"); } finally { setSavingMfa(false); } }} disabled={savingMfa} className={saveBtn}>
-              <Save className="h-4 w-4" /> Save MFA Settings
+            <button onClick={async () => { setSavingMfa(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ mfa_config: { require_mfa: mfa.requireMfa, method: mfa.method, grace_period: mfa.gracePeriod } }) }); setMsg(t("tenant.mfaSaved")); } catch { setMsg(t("tenant.mfaSavedOffline")); } finally { setSavingMfa(false); } }} disabled={savingMfa} className={saveBtn}>
+              <Save className="h-4 w-4" /> {t("tenant.saveMfa")}
             </button>
           </div>
         </div>

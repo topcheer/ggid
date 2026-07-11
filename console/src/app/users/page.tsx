@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import Link from "next/link";
 import {
   Search,
@@ -37,6 +38,7 @@ type GgidFieldKey = (typeof GGID_FIELDS)[number]["key"];
 export default function UsersPage() {
   const { users, loading, error, refresh } = useUsers();
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [page, setPage] = useState(0);
@@ -398,7 +400,7 @@ export default function UsersPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold dark:text-gray-100">Users</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">{t("users.title")}</h1>
         <div className="flex gap-2">
           {/* Export dropdown */}
           <div className="relative">
@@ -406,7 +408,7 @@ export default function UsersPage() {
               onClick={() => setShowExportMenu(!showExportMenu)}
               className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
-              <Download className="h-4 w-4" /> Export
+              <Download className="h-4 w-4" /> {t("common.export")}
               <ChevronDown className="h-3.5 w-3.5" />
             </button>
             {showExportMenu && (
@@ -417,13 +419,13 @@ export default function UsersPage() {
                     onClick={handleExportCSV}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
                   >
-                    <FileText className="h-4 w-4 text-green-600" /> Export to CSV
+                    <FileText className="h-4 w-4 text-green-600" /> {t("users.exportCsv")}
                   </button>
                   <button
                     onClick={handleExportJSON}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
                   >
-                    <FileJson className="h-4 w-4 text-amber-600" /> Export to JSON
+                    <FileJson className="h-4 w-4 text-amber-600" /> {t("users.exportJson")}
                   </button>
                 </div>
               </>
@@ -442,7 +444,7 @@ export default function UsersPage() {
             onClick={() => csvFileRef.current?.click()}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
           >
-            <Upload className="h-4 w-4" /> Import CSV
+            <Upload className="h-4 w-4" /> {t("users.importCsv")}
           </button>
 
           {/* Legacy text import */}
@@ -451,14 +453,14 @@ export default function UsersPage() {
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
             title="Paste CSV text"
           >
-            <FileText className="h-4 w-4" /> Paste
+            <FileText className="h-4 w-4" /> {t("users.paste")}
           </button>
 
           <button
             onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            <UserPlus className="h-4 w-4" /> New User
+            <UserPlus className="h-4 w-4" /> {t("users.newUser")}
           </button>
         </div>
       </div>
@@ -471,7 +473,7 @@ export default function UsersPage() {
       {showCsvImport && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold dark:text-gray-100">Import Users from CSV</h2>
+            <h2 className="text-lg font-semibold dark:text-gray-100">{t("users.importUsersCsv")}</h2>
             <button onClick={closeCsvImport} className="text-gray-400 hover:text-gray-600" aria-label="Close">
               <X className="h-5 w-5" />
             </button>
@@ -479,15 +481,15 @@ export default function UsersPage() {
 
           {/* Column mapping table */}
           <div className="mb-6">
-            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Column Mapping</h3>
+            <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">{t("users.columnMapping")}</h3>
             <p className="mb-3 text-xs text-gray-500">
-              Map your CSV columns to GGID user fields. Required: username, email.
+              {t("users.mappingHint")}
             </p>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">CSV Column</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">GGID Field</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t("users.csvColumn")}</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t("users.ggidField")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -500,7 +502,7 @@ export default function UsersPage() {
                         onChange={(e) => handleMappingChange(header, e.target.value as GgidFieldKey | "")}
                         className="rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                       >
-                        <option value="">— Skip —</option>
+                        <option value="">{t("users.skip")}</option>
                         {GGID_FIELDS.map((field) => (
                           <option key={field.key} value={field.key}>
                             {field.label}
@@ -518,7 +520,7 @@ export default function UsersPage() {
           {/* Preview */}
           <div className="mb-6">
             <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-              Preview (first {Math.min(5, csvData.length)} rows of {csvData.length})
+              {t("users.preview")} ({Math.min(5, csvData.length)}/{csvData.length})
             </h3>
             <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
               <table className="w-full">
@@ -559,11 +561,11 @@ export default function UsersPage() {
               {csvImporting ? (
                 <>
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Importing...
+                  {t("users.importing")}
                 </>
               ) : (
                 <>
-                  <Upload className="h-4 w-4" /> Import {csvData.length} users
+                  <Upload className="h-4 w-4" /> {t("users.importUsers")} {csvData.length}
                 </>
               )}
             </button>
@@ -571,7 +573,7 @@ export default function UsersPage() {
               onClick={closeCsvImport}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
 
@@ -591,10 +593,10 @@ export default function UsersPage() {
       {showImport && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Import Users (CSV)</h2>
+            <h2 className="text-lg font-semibold">{t("users.importUsersCsv")}</h2>
             <button onClick={() => setShowImport(false)} aria-label="Close"><X className="h-4 w-4 text-gray-400" /></button>
           </div>
-          <p className="mb-2 text-xs text-gray-500">Format: username,email,password (one per line, password optional)</p>
+          <p className="mb-2 text-xs text-gray-500">{t("users.formatHint")}</p>
           <textarea
             value={importText}
             onChange={(e) => setImportText(e.target.value)}
@@ -603,7 +605,7 @@ export default function UsersPage() {
             className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm"
           />
           <button onClick={handleImportCSV} disabled={!importText.trim()} className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50">
-            Import Users
+            {t("users.importUsers")}
           </button>
           {importResult && <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{importResult}</p>}
         </div>
@@ -611,24 +613,24 @@ export default function UsersPage() {
 
       {showCreate && (
         <form onSubmit={handleCreate} className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 text-lg font-semibold">Create New User</h2>
+          <h2 className="mb-4 text-lg font-semibold">{t("users.createNew")}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Username</label>
+              <label className="mb-1 block text-sm font-medium">{t("users.usernameLbl")}</label>
               <input name="username" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="johndoe" />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Email</label>
+              <label className="mb-1 block text-sm font-medium">{t("users.email")}</label>
               <input name="email" type="email" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="john@example.com" />
             </div>
             <div className="col-span-2">
-              <label className="mb-1 block text-sm font-medium">Password</label>
+              <label className="mb-1 block text-sm font-medium">{t("users.passwordLbl")}</label>
               <input name="password" type="password" required minLength={12} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="At least 12 characters" />
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Create</button>
-            <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">Cancel</button>
+            <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">{t("common.create")}</button>
+            <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
           </div>
         </form>
       )}
@@ -641,7 +643,7 @@ export default function UsersPage() {
           <Search className="h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder={t("users.searchPlaceholder")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2"
@@ -649,22 +651,22 @@ export default function UsersPage() {
         </div>
         {selected.size > 0 && (
           <div className="flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5">
-            <span className="text-sm font-medium text-amber-800">{selected.size} selected</span>
+            <span className="text-sm font-medium text-amber-800">{selected.size} {t("users.selected")}</span>
             <select
               value={batchRole}
               onChange={(e) => setBatchRole(e.target.value)}
               className="rounded border border-gray-300 px-2 py-1 text-xs"
             >
-              <option value="">Assign role...</option>
+              <option value="">{t("users.assignRole")}</option>
               {roles.map((r) => (
                 <option key={r.id} value={r.id}>{r.name || r.key}</option>
               ))}
             </select>
             <button onClick={handleBatchAssignRole} disabled={!batchRole} className="flex items-center gap-1 rounded bg-brand-600 px-2 py-1 text-xs text-white disabled:opacity-50">
-              <Shield className="h-3 w-3" /> Assign
+              <Shield className="h-3 w-3" /> {t("users.assign")}
             </button>
             <button onClick={handleBatchDelete} className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 text-xs text-white">
-              <Trash2 className="h-3 w-3" /> Delete
+              <Trash2 className="h-3 w-3" /> {t("common.delete")}
             </button>
           </div>
         )}
@@ -683,21 +685,21 @@ export default function UsersPage() {
                   className="rounded"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">User</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Sync</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Created</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.userCol")}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.status")}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.sync")}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.created")}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {loading ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Loading...</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">{t("common.loading")}</td></tr>
             ) : paginated.length === 0 ? (
               <tr><td colSpan={6} className="px-4 py-8 text-center">
                 <div className="flex flex-col items-center gap-2">
-                  <p className="text-gray-500 dark:text-gray-400">No users found</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Users registered through the auth service will appear here. Click "New User" to create one.</p>
+                  <p className="text-gray-500 dark:text-gray-400">{t("users.noUsers")}</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">{t("users.noUsersHint")}</p>
                 </div>
               </td></tr>
             ) : (
@@ -740,15 +742,15 @@ export default function UsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
                         {user.status === "active" ? (
-                          <button onClick={() => handleLock(user.id, user.status)} title="Lock" className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
+                          <button onClick={() => handleLock(user.id, user.status)} title={t("users.lock")} className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
                             <Lock className="h-4 w-4" />
                           </button>
                         ) : (
-                          <button onClick={() => handleLock(user.id, user.status)} title="Unlock" className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
+                          <button onClick={() => handleLock(user.id, user.status)} title={t("users.unlock")} className="rounded p-1.5 text-gray-400 hover:bg-gray-100">
                             <Unlock className="h-4 w-4" />
                           </button>
                         )}
-                        <button onClick={() => handleDelete(user.id, user.username)} title="Delete" className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                        <button onClick={() => handleDelete(user.id, user.username)} title={t("common.delete")} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -765,7 +767,7 @@ export default function UsersPage() {
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <p className="text-sm text-gray-500">
-            Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+            {t("users.showing")} {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} / {filtered.length}
           </p>
           <div className="flex gap-2">
             <button
@@ -773,7 +775,7 @@ export default function UsersPage() {
               disabled={page === 0}
               className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
             >
-              <ChevronLeft className="h-4 w-4" /> Prev
+              <ChevronLeft className="h-4 w-4" /> {t("users.prev")}
             </button>
             <span className="flex items-center px-3 text-sm text-gray-500">
               {page + 1} / {totalPages}
@@ -783,7 +785,7 @@ export default function UsersPage() {
               disabled={page >= totalPages - 1}
               className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm disabled:opacity-50"
             >
-              Next <ChevronRight className="h-4 w-4" />
+              {t("users.next")} <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
