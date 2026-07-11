@@ -46,12 +46,26 @@ interface ComplianceInfo {
   frameworks: { name: string; status: string; score: number }[];
 }
 
+interface SoDInfo {
+  total_violations: number;
+  critical: number;
+  warning: number;
+}
+
+interface AccessReviewInfo {
+  pending: number;
+  overdue: number;
+  completed_30d: number;
+}
+
 export default function DashboardPage() {
   const { apiFetch } = useApi();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [health, setHealth] = useState<ServiceHealth[]>([]);
   const [compliance, setCompliance] = useState<ComplianceInfo | null>(null);
+  const [sod, setSod] = useState<SoDInfo | null>(null);
+  const [accessReview, setAccessReview] = useState<AccessReviewInfo | null>(null);
   const [liveEvents, setLiveEvents] = useState<ActivityItem[]>([]);
   const [isLive, setIsLive] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,16 +73,20 @@ export default function DashboardPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [statsRes, actRes, healthRes, compRes] = await Promise.all([
+      const [statsRes, actRes, healthRes, compRes, sodRes, reviewRes] = await Promise.all([
         apiFetch<DashboardStats>("/api/v1/dashboard/stats").catch(() => null),
         apiFetch<{ events?: ActivityItem[] }>("/api/v1/audit/events?page_size=8").catch(() => ({ events: [] })),
         apiFetch<{ services?: ServiceHealth[] }>("/api/v1/health/services").catch(() => ({ services: [] })),
         apiFetch<ComplianceInfo>("/api/v1/audit/compliance/posture").catch(() => null),
+        apiFetch<SoDInfo>("/api/v1/policy/sod/violations/summary").catch(() => null),
+        apiFetch<AccessReviewInfo>("/api/v1/audit/access-reviews/summary").catch(() => null),
       ]);
       if (statsRes) setStats(statsRes);
       setActivity(actRes?.events ?? []);
       setHealth(healthRes?.services ?? []);
       if (compRes) setCompliance(compRes);
+      if (sodRes) setSod(sodRes);
+      if (reviewRes) setAccessReview(reviewRes);
     } catch {
       /* ignore */
     } finally {
@@ -160,6 +178,37 @@ export default function DashboardPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* SoD violations + Access review widgets */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {sod && (
+          <div className={cardCls}>
+            <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <AlertTriangle className="h-4 w-4 text-amber-500" /> SoD Violations
+            </h3>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-amber-600">{sod.total_violations}</span>
+              {sod.critical > 0 && (
+                <span className="text-xs font-medium text-red-500">{sod.critical} critical</span>
+              )}
+            </div>
+          </div>
+        )}
+        {accessReview && (
+          <div className={cardCls}>
+            <h3 className="mb-2 flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <Clock className="h-4 w-4 text-cyan-500" /> Access Reviews
+            </h3>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-cyan-600">{accessReview.pending}</span>
+              <span className="text-xs text-gray-400">pending</span>
+              {accessReview.overdue > 0 && (
+                <span className="text-xs font-medium text-red-500">{accessReview.overdue} overdue</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

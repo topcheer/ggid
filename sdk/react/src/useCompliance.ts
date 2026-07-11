@@ -34,11 +34,18 @@ export interface ComplianceFilter {
   dateTo?: string;
 }
 
+export interface GenerateReportInput {
+  framework: ComplianceFramework;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
 export interface UseComplianceResult {
   reports: ComplianceReport[];
   isLoading: boolean;
   error: string | null;
   downloadReport: (id: string, format: 'pdf' | 'csv') => Promise<boolean>;
+  generateReport: (input: GenerateReportInput) => Promise<ComplianceReport | null>;
   refetch: () => Promise<void>;
 }
 
@@ -115,11 +122,31 @@ export function useCompliance(filter: ComplianceFilter = {}): UseComplianceResul
     [apiBaseUrl, makeHeaders]
   );
 
+  const generateReport = useCallback(
+    async (input: GenerateReportInput): Promise<ComplianceReport | null> => {
+      try {
+        const resp = await fetch(
+          `${apiBaseUrl}/api/v1/audit/compliance/reports/generate`,
+          { method: 'POST', headers: makeHeaders(), body: JSON.stringify(input) }
+        );
+        if (!resp.ok) throw new Error(`Failed to generate report (${resp.status})`);
+        const created = await resp.json();
+        await fetchReports();
+        return created;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        return null;
+      }
+    },
+    [apiBaseUrl, makeHeaders, fetchReports]
+  );
+
   return {
     reports,
     isLoading,
     error,
     downloadReport,
+    generateReport,
     refetch: fetchReports,
   };
 }

@@ -19,11 +19,17 @@ export interface RetentionPolicy {
   compliance_mode: boolean;
 }
 
+export interface PurgeResult {
+  purged_count: number;
+  archived_count: number;
+}
+
 export interface UseRetentionResult {
   policy: RetentionPolicy | null;
   isLoading: boolean;
   error: string | null;
   updatePolicy: (policy: Partial<RetentionPolicy>) => Promise<boolean>;
+  purgeOldEvents: () => Promise<PurgeResult | null>;
   refetch: () => Promise<void>;
 }
 
@@ -89,11 +95,25 @@ export function useRetention(): UseRetentionResult {
     [apiBaseUrl, makeHeaders]
   );
 
+  const purgeOldEvents = useCallback(async (): Promise<PurgeResult | null> => {
+    try {
+      const resp = await fetch(`${apiBaseUrl}/api/v1/settings/retention/purge`, {
+        method: 'POST', headers: makeHeaders(),
+      });
+      if (!resp.ok) throw new Error(`Failed to purge old events (${resp.status})`);
+      return await resp.json();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      return null;
+    }
+  }, [apiBaseUrl, makeHeaders]);
+
   return {
     policy,
     isLoading,
     error,
     updatePolicy,
+    purgeOldEvents,
     refetch: fetchPolicy,
   };
 }

@@ -21,6 +21,7 @@ export interface UseProfileResult {
   fetchProfile: () => Promise<void>;
   updateProfile: (input: UpdateProfileInput) => Promise<boolean>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>;
+  uploadAvatar: (file: File) => Promise<string | null>;
 }
 
 export function useProfile(): UseProfileResult {
@@ -83,5 +84,28 @@ export function useProfile(): UseProfileResult {
     }
   }, [apiBaseUrl, makeHeaders]);
 
-  return { profile, isLoading, error, fetchProfile, updateProfile, changePassword };
+  const uploadAvatar = useCallback(async (file: File): Promise<string | null> => {
+    try {
+      const tok = getAccessToken();
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const resp = await fetch(`${apiBaseUrl}/api/v1/users/me/avatar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${tok}`, 'X-Tenant-ID': tenantId },
+        body: formData,
+      });
+      if (!resp.ok) throw new Error(`Failed to upload avatar (${resp.status})`);
+      const data = await resp.json();
+      const avatarUrl = data.avatar_url ?? data.url ?? '';
+      if (avatarUrl) {
+        setProfile((prev) => prev ? { ...prev, avatar_url: avatarUrl } : prev);
+      }
+      return avatarUrl || null;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      return null;
+    }
+  }, [getAccessToken, apiBaseUrl, tenantId]);
+
+  return { profile, isLoading, error, fetchProfile, updateProfile, changePassword, uploadAvatar };
 }

@@ -8,7 +8,6 @@ import {
   Check,
   Users,
   Group,
-  Sync,
   Loader2,
   Server,
   AlertTriangle,
@@ -290,7 +289,7 @@ export default function SCIMPage() {
                     {syncing === sync.resourceType ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Sync className="h-4 w-4" />
+                      <RefreshCw className="h-4 w-4" />
                     )}
                     Sync Now
                   </button>

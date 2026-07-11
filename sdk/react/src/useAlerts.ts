@@ -37,6 +37,12 @@ export interface CreateAlertRuleInput {
   cooldown?: number;
 }
 
+export interface AlertTestResult {
+  matched: boolean;
+  sample_count: number;
+  evaluation_time_ms: number;
+}
+
 export interface UseAlertsResult {
   rules: AlertRule[];
   isLoading: boolean;
@@ -45,6 +51,7 @@ export interface UseAlertsResult {
   updateRule: (id: string, input: Partial<AlertRule>) => Promise<boolean>;
   deleteRule: (id: string) => Promise<boolean>;
   toggleRule: (id: string) => Promise<boolean>;
+  testRule: (id: string) => Promise<AlertTestResult | null>;
   refetch: () => Promise<void>;
 }
 
@@ -156,6 +163,23 @@ export function useAlerts(): UseAlertsResult {
     [rules, updateRule]
   );
 
+  const testRule = useCallback(
+    async (id: string): Promise<AlertTestResult | null> => {
+      try {
+        const resp = await fetch(
+          `${apiBaseUrl}/api/v1/settings/alerting/rules/${id}/test`,
+          { method: 'POST', headers: makeHeaders() }
+        );
+        if (!resp.ok) throw new Error(`Failed to test alert rule (${resp.status})`);
+        return await resp.json();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        return null;
+      }
+    },
+    [apiBaseUrl, makeHeaders]
+  );
+
   return {
     rules,
     isLoading,
@@ -164,6 +188,7 @@ export function useAlerts(): UseAlertsResult {
     updateRule,
     deleteRule,
     toggleRule,
+    testRule,
     refetch: fetchRules,
   };
 }
