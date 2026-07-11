@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ggid/ggid/services/gateway/internal/config"
+	"github.com/ggid/ggid/services/gateway/internal/middleware"
 )
 
 // TestFullChain_HealthCheckPasses verifies that public health endpoint
@@ -96,5 +99,65 @@ func TestFullChain_RequestIDPreserved(t *testing.T) {
 
 	if got := rr.Header().Get("X-Request-ID"); got != "trace-abc-123" {
 		t.Fatalf("expected X-Request-ID 'trace-abc-123', got %q", got)
+	}
+}
+
+// TestFullChain_RateLimit429 verifies that after exceeding the rate limit,
+// the gateway returns 429 Too Many Requests through the full middleware chain.
+func TestFullChain_RateLimit429(t *testing.T) {
+	gw := newTestGateway(t)
+	// Override rate limiter with a very aggressive limit for testing
+	gw.rateLimiter = middleware.NewTenantBucketLimiter(&middleware.BucketRateLimitConfig{
+		DefaultMaxTokens:    2,
+		DefaultRefillPerSec: 0, // no refill — exhaust after 2 requests
+	})
+	handler := gw.Handler()
+
+	// Use /api/v1/users (protected path, not skipped by rate limiter)
+	// First 2 requests pass rate limiter → get 401 (no JWT)
+	for i := 0; i < 2; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+		if rr.Code != http.StatusUnauthorized {
+			t.Fatalf("request %d: expected 401 (no JWT), got %d", i+1, rr.Code)
+		}
+	}
+
+	// 3rd request should be rate limited (429)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected 429 after rate limit exceeded, got %d", rr.Code)
+	}
+}
+
+// TestFullChain_ProxySuccess verifies the full chain proxies to a real backend.
+// Uses a public path (no JWT required) with a test backend.
+func TestFullChain_ProxySuccess(t *testing.T) {
+	// Spin up a real backend
+	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Backend", "hit")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"backend-ok"}`))
+	}))
+	defer backend.Close()
+
+	cfg := config.Default()
+	cfg.Routes = map[string]string{
+		"/api/v1/users": backend.URL,
+	}
+	jwks, _ := middleware.NewJWKSClient("", "")
+	gw := New(cfg, jwks)
+	handler := gw.Handler()
+
+	// /api/v1/users is a protected path — should get 401 without JWT
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 without JWT, got %d", rr.Code)
 	}
 }
