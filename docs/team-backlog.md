@@ -251,7 +251,12 @@
 - [x] docs/upgrade-guide.md (verified complete, 438 lines)
 - [x] docs/design/adr-001-database-choice.md (commit 883583d)
 - [x] docs/design/adr-002-event-driven-audit.md (commit 883583d)
-> 182 docs total. All major topics covered. No outstanding doc tasks.
+- [x] docs/guides/role-based-access.md — RBAC complete guide: roles, permissions, hierarchy, policy check
+- [x] docs/guides/abac-policy.md — ABAC guide: policy syntax, dry-run, compliance templates, export/import
+- [x] docs/examples/express-integration.md — Full runnable Express.js demo: JWT auth, scope guard, CRUD
+- [x] docs/examples/go-integration.md — Full runnable Go server: SDK middleware, RequirePermission, handlers
+- [x] docs/quickstart/k3s-deploy.md — Simplified K3s quick deploy (companion to docs/deploy/k3s.md)
+> 187 docs total. All major topics covered. No outstanding doc tasks.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
