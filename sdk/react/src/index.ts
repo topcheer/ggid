@@ -133,6 +133,10 @@ export { useIncidents } from './useIncidents';
 export type { Incident, CreateIncidentInput, IncidentSeverity, IncidentStatus, UseIncidentsResult } from './useIncidents';
 export { useDelegatedAdmin } from './useDelegatedAdmin';
 export type { Delegation, GrantDelegationInput, DelegationScope, DelegationPermission, UseDelegatedAdminResult } from './useDelegatedAdmin';
+export { useEmailOTP } from './useEmailOTP';
+export type { EmailOTPConfig, UseEmailOTPResult } from './useEmailOTP';
+export { useReportGenerator } from './useReportGenerator';
+export type { GeneratedReport, GenerateReportInput, ReportFormat, ReportStatus, UseReportGeneratorResult } from './useReportGenerator';
 export type {
   GGIDConfig,
   GGIDUser,
