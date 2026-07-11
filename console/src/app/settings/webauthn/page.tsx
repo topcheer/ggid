@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useI18n } from "@/lib/i18n";
 import { useApi } from "@/lib/api";
 import { Fingerprint, Save, KeyRound, Loader2, Plus, Trash2, ShieldCheck, ShieldX } from "lucide-react";
 
