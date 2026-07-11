@@ -39,6 +39,10 @@ export { useOAuthClients } from './useOAuthClients';
 export type { OAuthClient, CreateOAuthClientInput, UseOAuthClientsResult } from './useOAuthClients';
 export { useAuditStats } from './useAuditStats';
 export type { AuditStats, HourlyBucket, TopActor, UseAuditStatsResult } from './useAuditStats';
+export { useOrgs } from './useOrgs';
+export type { Organization, CreateOrgInput, UpdateOrgInput, UseOrgsResult } from './useOrgs';
+export { usePolicies } from './usePolicies';
+export type { Policy, ABACRule, CreatePolicyInput, UpdatePolicyInput, UsePoliciesResult } from './usePolicies';
 export type {
   GGIDConfig,
   GGIDUser,
