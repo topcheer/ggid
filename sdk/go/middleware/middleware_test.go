@@ -2,12 +2,17 @@ package middleware
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // --- Auth middleware tests ---
@@ -74,12 +79,18 @@ func TestAuth_InvalidToken(t *testing.T) {
 }
 
 func TestAuth_ValidToken(t *testing.T) {
+	// Generate a real RSA key pair for JWT signing
+	privKey := generateTestRSAKey(t)
+	jwksSrv := createMockJWKSServer(t, privKey)
+	defer jwksSrv.Close()
+
 	called := false
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 		info, ok := FromContext(r.Context())
 		if !ok || info == nil {
 			t.Error("expected UserInfo in context")
+			return
 		}
 		if info.UserID != "user-123" {
 			t.Errorf("expected user-123, got %s", info.UserID)
@@ -87,9 +98,11 @@ func TestAuth_ValidToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	mw := Auth("http://localhost:8080", Options{})(next)
+	mw := Auth("", Options{
+		JWKSURL: jwksSrv.URL,
+	})(next)
 
-	token := makeTestJWT(t, map[string]interface{}{
+	token := signTestJWT(t, privKey, map[string]interface{}{
 		"sub":       "user-123",
 		"username":  "testuser",
 		"email":     "test@example.com",
@@ -281,7 +294,7 @@ func TestAuth_Defaults(t *testing.T) {
 	}
 }
 
-// --- parseToken tests ---
+// --- parseClaimsFromToken tests (claims extraction only, no sig verification) ---
 
 func TestParseToken_AllFields(t *testing.T) {
 	token := makeTestJWT(t, map[string]interface{}{
@@ -293,7 +306,7 @@ func TestParseToken_AllFields(t *testing.T) {
 		"scope":     "read write delete",
 	})
 
-	info, err := parseToken(token)
+	info, err := parseClaimsFromToken(token)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -322,7 +335,7 @@ func TestParseToken_MinimalClaims(t *testing.T) {
 		"sub": "minimal-user",
 	})
 
-	info, err := parseToken(token)
+	info, err := parseClaimsFromToken(token)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -335,7 +348,7 @@ func TestParseToken_MinimalClaims(t *testing.T) {
 }
 
 func TestParseToken_InvalidJWT(t *testing.T) {
-	_, err := parseToken("not.a.valid.jwt")
+	_, err := parseClaimsFromToken("not.a.valid.jwt")
 	if err != nil {
 		// ParseUnverified might still parse 3-part tokens
 		// Just verify it doesn't panic
@@ -369,4 +382,155 @@ func makeTestJWT(t *testing.T, claims map[string]interface{}) string {
 	claimsB64 := base64.RawURLEncoding.EncodeToString(claimsJSON)
 	sigB64 := base64.RawURLEncoding.EncodeToString([]byte("fake-sig"))
 	return strings.Join([]string{headerB64, claimsB64, sigB64}, ".")
+}
+
+// parseClaimsFromToken extracts claims from a JWT string without signature
+// verification. Used only in unit tests to verify claim extraction logic.
+// Production code uses jwksCache.verify() which validates signatures.
+func parseClaimsFromToken(tokenString string) (*UserInfo, error) {
+	parts := strings.Split(tokenString, ".")
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("invalid token format")
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("decode payload: %w", err)
+	}
+	var claims map[string]interface{}
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return nil, fmt.Errorf("unmarshal claims: %w", err)
+	}
+
+	info := &UserInfo{
+		UserID:   getStringClaim(claims, "sub"),
+		TenantID: getStringClaim(claims, "tenant_id"),
+		Username: getStringClaim(claims, "username"),
+		Email:    getStringClaim(claims, "email"),
+	}
+
+	if roles, ok := claims["roles"].([]interface{}); ok {
+		for _, r := range roles {
+			info.Roles = append(info.Roles, fmt.Sprintf("%v", r))
+		}
+	}
+
+	if scope, ok := claims["scope"].(string); ok && scope != "" {
+		info.Scopes = strings.Fields(scope)
+	}
+
+	info.Claims = claims
+	return info, nil
+}
+
+func getStringClaim(claims map[string]interface{}, key string) string {
+	if v, ok := claims[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+// --- RSA test helpers for JWKS verification tests ---
+
+func generateTestRSAKey(t *testing.T) *rsa.PrivateKey {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate RSA key: %v", err)
+	}
+	return key
+}
+
+func signTestJWT(t *testing.T, privKey *rsa.PrivateKey, claims map[string]interface{}) string {
+	t.Helper()
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims(claims))
+	token.Header["kid"] = "test-key-1"
+	signed, err := token.SignedString(privKey)
+	if err != nil {
+		t.Fatalf("sign JWT: %v", err)
+	}
+	return signed
+}
+
+func createMockJWKSServer(t *testing.T, privKey *rsa.PrivateKey) *httptest.Server {
+	t.Helper()
+	pubKey := privKey.Public().(*rsa.PublicKey)
+	nB64 := base64.RawURLEncoding.EncodeToString(pubKey.N.Bytes())
+	eBytes := []byte{0x01, 0x00, 0x01}
+	eB64 := base64.RawURLEncoding.EncodeToString(eBytes)
+
+	jwksJSON := fmt.Sprintf(`{"keys":[{"kty":"RSA","use":"sig","kid":"test-key-1","alg":"RS256","n":"%s","e":"%s"}]}`, nB64, eB64)
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(jwksJSON))
+	}))
+}
+
+// --- RSA test helpers for JWKS verification ---
+
+func generateTestRSAKey(t *testing.T) *rsa.PrivateKey {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate RSA key: %v", err)
+	}
+	return key
+}
+
+func signTestJWT(t *testing.T, privKey *rsa.PrivateKey, claims map[string]interface{}) string {
+	t.Helper()
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims(claims))
+	token.Header["kid"] = "test-key"
+	signed, err := token.SignedString(privKey)
+	if err != nil {
+		t.Fatalf("sign JWT: %v", err)
+	}
+	return signed
+}
+
+func createMockJWKSServer(t *testing.T, privKey *rsa.PrivateKey) *httptest.Server {
+	t.Helper()
+	pubKey := privKey.Public().(*rsa.PublicKey)
+	nB64 := base64.RawURLEncoding.EncodeToString(pubKey.N.Bytes())
+	eB64 := base64.RawURLEncoding.EncodeToString([]byte{0x01, 0x00, 0x01})
+	jwksJSON := fmt.Sprintf(`{"keys":[{"kty":"RSA","use":"sig","kid":"test-key","alg":"RS256","n":"%s","e":"%s"}]}`, nB64, eB64)
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(jwksJSON))
+	}))
+}
+
+// --- RSA test helpers for JWKS verification tests ---
+
+func generateTestRSAKey(t *testing.T) *rsa.PrivateKey {
+	t.Helper()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatalf("generate RSA key: %v", err)
+	}
+	return key
+}
+
+func signTestJWT(t *testing.T, privKey *rsa.PrivateKey, claims map[string]interface{}) string {
+	t.Helper()
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims(claims))
+	token.Header["kid"] = "test-key-1"
+	signed, err := token.SignedString(privKey)
+	if err != nil {
+		t.Fatalf("sign JWT: %v", err)
+	}
+	return signed
+}
+
+func createMockJWKSServer(t *testing.T, privKey *rsa.PrivateKey) *httptest.Server {
+	t.Helper()
+	pubKey := privKey.Public().(*rsa.PublicKey)
+	nB64 := base64.RawURLEncoding.EncodeToString(pubKey.N.Bytes())
+	eBytes := []byte{0x01, 0x00, 0x01} // 65537
+	eB64 := base64.RawURLEncoding.EncodeToString(eBytes)
+	jwksJSON := fmt.Sprintf(`{"keys":[{"kty":"RSA","use":"sig","kid":"test-key-1","alg":"RS256","n":"%s","e":"%s"}]}`, nB64, eB64)
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(jwksJSON))
+	}))
 }

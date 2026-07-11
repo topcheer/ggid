@@ -49,6 +49,7 @@ type UserInfo struct {
 	Email    string
 	Roles    []string
 	Scopes   []string
+	Claims   map[string]any
 }
 
 type contextKey struct{}
