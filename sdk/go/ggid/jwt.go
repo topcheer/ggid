@@ -35,9 +35,9 @@ func (v *JWTVerifier) Verify(ctx context.Context, token string) (map[string]inte
 		return nil, fmt.Errorf("parse JWT: %w", err)
 	}
 
-	// Check expiration
+	// Check expiration (with 60s clock skew tolerance for distributed systems)
 	if exp, ok := claims["exp"].(float64); ok {
-		if time.Now().Unix() > int64(exp) {
+		if time.Now().Add(60*time.Second).Unix() > int64(exp) {
 			return nil, ErrTokenExpired
 		}
 	}

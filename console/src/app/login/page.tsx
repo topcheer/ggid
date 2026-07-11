@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, ArrowLeft, KeyRound } from "lucide-react";
+import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 
-const API_BASE = process.env.NEXT_PUBLIC_GGID_API || "http://localhost:8080";
-const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID || "00000000-0000-0000-0000-000000000001";
+const API_BASE = API_BASE_URL;
+const TENANT_ID = DEFAULT_TENANT_ID;
 
 type Step = "credentials" | "mfa";
 

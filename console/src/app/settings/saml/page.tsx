@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/api-config";
 import {
   ShieldCheck,
   Download,
@@ -14,8 +15,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const GATEWAY_BASE =
-  process.env.NEXT_PUBLIC_GGID_API || "https://gateway.ggid.dev";
+const GATEWAY_BASE = API_BASE_URL;
 
 type GgidField = "username" | "email" | "displayName";
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -178,19 +179,28 @@ func (c *Client) do(ctx context.Context, method, path string, body interface{}, 
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("API error: %s", resp.Status)
+		respBody, _ := io.ReadAll(resp.Body)
+		// Try to parse structured error for better message
+		msg := string(respBody)
+		var structured struct {
+			Error   string `json:"error"`
+			Title   string `json:"title"`
+			Detail  string `json:"detail"`
+			Message string `json:"message"`
+		}
+		if json.Unmarshal(respBody, &structured) == nil {
+			if structured.Detail != "" {
+				msg = structured.Detail
+			} else if structured.Message != "" {
+				msg = structured.Message
+			} else if structured.Title != "" {
+				msg = structured.Title
+			} else if structured.Error != "" {
+				msg = structured.Error
+			}
+		}
+		return nil, NewAPIError(resp.StatusCode, msg)
 	}
 
-	buf := make([]byte, 0, 4096)
-	chunk := make([]byte, 4096)
-	for {
-		n, readErr := resp.Body.Read(chunk)
-		if n > 0 {
-			buf = append(buf, chunk[:n]...)
-		}
-		if readErr != nil {
-			break
-		}
-	}
-	return buf, nil
+	return io.ReadAll(resp.Body)
 }

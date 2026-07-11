@@ -5,6 +5,11 @@ COPY package.json package-lock.json* ./
 RUN npm ci || npm install
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# Bake the API URL into the static bundle (Next.js inlines NEXT_PUBLIC_* at build time)
+ARG NEXT_PUBLIC_API_URL=https://ggid.iot2.win
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_TENANT_ID=00000000-0000-0000-0000-000000000001
+ENV NEXT_PUBLIC_TENANT_ID=$NEXT_PUBLIC_TENANT_ID
 RUN npm run build
 
 FROM node:22-alpine
