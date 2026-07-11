@@ -121,6 +121,10 @@ export { usePasswordBreach } from './usePasswordBreach';
 export type { BreachStatus, UsePasswordBreachResult } from './usePasswordBreach';
 export { useJITProvisioning } from './useJITProvisioning';
 export type { JITConfig, UseJITProvisioningResult } from './useJITProvisioning';
+export { useRiskScore } from './useRiskScore';
+export type { RiskFactor, UserRiskScore, RiskScoreSummary, UseRiskScoreResult } from './useRiskScore';
+export { usePIIScan } from './usePIIScan';
+export type { PIIFinding, PIIScanResult, PIIScanSummary, UsePIIScanResult } from './usePIIScan';
 export type {
   GGIDConfig,
   GGIDUser,
