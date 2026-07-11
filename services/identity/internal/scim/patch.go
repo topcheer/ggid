@@ -128,6 +128,18 @@ func applyReplace(attrs map[string]any, path string, value json.RawMessage) erro
 		if subPath != "" {
 			return setNestedAttr(attrs, attrName, subPath, val)
 		}
+		// If both existing and new values are maps, merge (SCIM RFC 7644 §3.5.2.3
+		// replace on complex attribute updates specified keys, preserves others).
+		if existing := getAttrCaseInsensitive(attrs, attrName); existing != nil {
+			if existMap, ok := existing.(map[string]any); ok {
+				if newMap, ok := val.(map[string]any); ok {
+					for k, v := range newMap {
+						setAttrCaseInsensitive(existMap, k, v)
+					}
+					return nil // merged in-place
+				}
+			}
+		}
 		setAttrCaseInsensitive(attrs, attrName, val)
 		return nil
 	}
@@ -191,7 +203,19 @@ func parsePatchPath(path string) (attrName, subPath, filter string) {
 
 	bracketIdx := strings.Index(path, "[")
 	if bracketIdx < 0 {
-		// No filter - simple or dotted path
+		// No filter - simple, dotted, or URN path
+		// For URN paths (e.g., "urn:...:2.0:User"), the colons and the "."
+		// in version numbers are part of the schema identifier, not path
+		// separators. Only split on the last "." that appears AFTER the last ":".
+		if strings.HasPrefix(path, "urn:") {
+			lastColon := strings.LastIndex(path, ":")
+			afterColon := path[lastColon+1:]
+			if dotIdx := strings.Index(afterColon, "."); dotIdx >= 0 {
+				splitAt := lastColon + 1 + dotIdx
+				return path[:splitAt], path[splitAt+1:], ""
+			}
+			return path, "", ""
+		}
 		if dotIdx := strings.Index(path, "."); dotIdx >= 0 {
 			return path[:dotIdx], path[dotIdx+1:], ""
 		}
