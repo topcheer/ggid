@@ -28,20 +28,20 @@ implementation 'dev.ggid:ggid-sdk:1.0.0'
 ## Quick Start
 
 ```java
-import dev.ggid.sdk.GGIDClient;
+import dev.ggid.sdk.*;
 
 GGIDClient client = new GGIDClient(new GGIDClient.Config("https://iam.example.com"));
 
 // Login
-GGIDClient.TokenSet tokens = client.login("alice", "SecurePass@123");
-System.out.println("Access token: " + tokens.accessToken);
+TokenSet tokens = client.login("alice", "SecurePass@123");
+System.out.println("Access token: " + tokens.getAccessToken());
 
 // Create user
-GGIDClient.User user = client.createUser("bob", "bob@example.com", "SecurePass@123");
+User user = client.createUser("bob", "bob@example.com", "SecurePass@123");
 
 // Check permission
-GGIDClient.PermissionResult result = client.checkPermission(user.id, "documents", "read");
-System.out.println("Allowed: " + result.allowed);
+PermissionResult result = client.checkPermission(user.id, "documents", "read");
+System.out.println("Allowed: " + result.isAllowed());
 ```
 
 ## API Reference

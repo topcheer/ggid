@@ -10,17 +10,23 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Servlet Filter for GGID JWT authentication.
+ * Servlet Filter for GGID JWT authentication with RS256 signature verification.
+ *
+ * Requires a JwtVerifier configured with the GGID JWKS endpoint URL.
+ * Set the "jwksUrl" init parameter in web.xml or pass it to the constructor.
  *
  * Usage in web.xml:
  *   <filter>
  *     <filter-name>ggidAuth</filter-name>
  *     <filter-class>dev.ggid.sdk.GGIDAuthFilter</filter-class>
+ *     <init-param>
+ *       <param-name>jwksUrl</param-name>
+ *       <param-value>https://ggid.example.com/.well-known/jwks.json</param-value>
+ *     </init-param>
  *     <init-param>
  *       <param-name>publicPaths</param-name>
  *       <param-value>/health,/api/public</param-value>
@@ -31,13 +37,13 @@ import java.util.Set;
  *   @Bean
  *   public FilterRegistrationBean<GGIDAuthFilter> ggidFilter() {
  *       FilterRegistrationBean<GGIDAuthFilter> bean = new FilterRegistrationBean<>();
- *       bean.setFilter(new GGIDAuthFilter());
+ *       bean.setFilter(new GGIDAuthFilter("https://ggid.example.com/.well-known/jwks.json"));
  *       bean.addUrlPatterns("/api/*");
  *       bean.addInitParameter("publicPaths", "/api/auth/login,/api/auth/register");
  *       return bean;
  *   }
  *
- * After authentication, the user info is available via:
+ * After authentication, the verified user is available via:
  *   GGIDUser user = (GGIDUser) request.getAttribute("ggidUser");
  */
 public class GGIDAuthFilter implements Filter {
@@ -47,6 +53,15 @@ public class GGIDAuthFilter implements Filter {
     private static final String USER_ATTR = "ggidUser";
 
     private final Set<String> publicPaths = new HashSet<>();
+    private JwtVerifier verifier;
+
+    /** No-arg constructor for servlet container instantiation. Set jwksUrl via init-param. */
+    public GGIDAuthFilter() {}
+
+    /** Constructor with JWKS URL — use with Spring Boot FilterRegistrationBean. */
+    public GGIDAuthFilter(String jwksUrl) {
+        this.verifier = new JwtVerifier(jwksUrl);
+    }
 
     @Override
     public void init(FilterConfig filterConfig) {
@@ -57,6 +72,14 @@ public class GGIDAuthFilter implements Filter {
                 if (!trimmed.isEmpty()) {
                     publicPaths.add(trimmed);
                 }
+            }
+        }
+
+        // Initialize verifier from init-param if not set via constructor
+        if (verifier == null) {
+            String jwksUrl = filterConfig.getInitParameter("jwksUrl");
+            if (jwksUrl != null && !jwksUrl.isEmpty()) {
+                verifier = new JwtVerifier(jwksUrl);
             }
         }
     }
@@ -87,15 +110,24 @@ public class GGIDAuthFilter implements Filter {
 
         String token = authHeader.substring(BEARER_PREFIX.length());
 
-        // Parse JWT (offline — no signature verification for simplicity)
-        // In production, verify against GGID JWKS endpoint
-        GGIDUser user = parseJwt(token);
-        if (user == null || user.userId == null || user.userId.isEmpty()) {
-            sendError(httpResponse, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token");
+        // Verify JWT signature via JWKS (RS256)
+        GGIDUser user;
+        if (verifier != null) {
+            user = verifier.verifyUser(token);
+        } else {
+            // Fallback: no JWKS configured — reject in production
+            sendError(httpResponse, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "JWT verifier not configured");
             return;
         }
 
-        // Inject user info into request
+        if (user == null || user.userId == null || user.userId.isEmpty()) {
+            sendError(httpResponse, HttpServletResponse.SC_UNAUTHORIZED,
+                    "Invalid or expired token");
+            return;
+        }
+
+        // Inject verified user info into request
         httpRequest.setAttribute(USER_ATTR, user);
 
         chain.doFilter(request, response);
@@ -112,85 +144,6 @@ public class GGIDAuthFilter implements Filter {
      */
     public static GGIDUser getUser(HttpServletRequest request) {
         return (GGIDUser) request.getAttribute(USER_ATTR);
-    }
-
-    /**
-     * Parse a JWT token and extract user info.
-     * Does NOT verify signature — for production use, validate against GGID JWKS.
-     */
-    private GGIDUser parseJwt(String token) {
-        try {
-            String[] parts = token.split("\\.");
-            if (parts.length != 3) return null;
-
-            // Decode payload (part 1)
-            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
-
-            // Simple JSON parsing (avoid pulling in Jackson here)
-            GGIDUser user = new GGIDUser();
-            user.userId = extractJsonString(payload, "sub");
-            user.tenantId = extractJsonString(payload, "tenant_id");
-            user.username = extractJsonString(payload, "username");
-            user.email = extractJsonString(payload, "email");
-
-            // Extract roles array
-            String rolesStr = extractJsonArray(payload, "roles");
-            if (rolesStr != null && !rolesStr.isEmpty()) {
-                user.roles = rolesStr.split(",");
-            }
-
-            // Extract scopes from space-delimited string
-            String scopeStr = extractJsonString(payload, "scope");
-            if (scopeStr != null && !scopeStr.isEmpty()) {
-                user.scopes = scopeStr.split(" ");
-            }
-
-            return user;
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
-     * Extract a string value from JSON by key (simple parser, no nested objects).
-     */
-    private String extractJsonString(String json, String key) {
-        String search = "\"" + key + "\"";
-        int idx = json.indexOf(search);
-        if (idx < 0) return null;
-
-        // Find the value after the colon
-        int colonIdx = json.indexOf(":", idx + search.length());
-        if (colonIdx < 0) return null;
-
-        // Find the opening quote
-        int startQuote = json.indexOf("\"", colonIdx + 1);
-        if (startQuote < 0) return null;
-
-        // Find the closing quote
-        int endQuote = json.indexOf("\"", startQuote + 1);
-        if (endQuote < 0) return null;
-
-        return json.substring(startQuote + 1, endQuote);
-    }
-
-    /**
-     * Extract a simple string array from JSON (handles ["a","b"] format).
-     */
-    private String extractJsonArray(String json, String key) {
-        String search = "\"" + key + "\"";
-        int idx = json.indexOf(search);
-        if (idx < 0) return null;
-
-        int bracketStart = json.indexOf("[", idx);
-        int bracketEnd = json.indexOf("]", bracketStart);
-        if (bracketStart < 0 || bracketEnd < 0) return null;
-
-        String arrayContent = json.substring(bracketStart + 1, bracketEnd);
-        // Remove quotes and split by comma
-        String cleaned = arrayContent.replaceAll("\"", "").replaceAll("\\s", "");
-        if (cleaned.isEmpty()) return null;
-        return cleaned;
     }
 
     private void sendError(HttpServletResponse response, int status, String message) throws IOException {

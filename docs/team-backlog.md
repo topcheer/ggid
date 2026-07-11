@@ -104,12 +104,12 @@
 - [x] Fix WebAuthn hardcoded attachment — reads from authenticator response (2870f9d)
 - [x] gRPC TLS PoC — pkg/transport/tlsconfig.go already done in fb29546
 - [x] Email OTP MFA — EmailOTPService with SendOTP/VerifyOTP, 7 tests
-- DUPLICATE: Device Auth RFC 8628 tests — 9 tests already in coverage_sprint11_test.go
-- DUPLICATE: Token Exchange RFC 8693 tests — 8 tests already in coverage_boost2/3
-- DUPLICATE: Backchannel Logout tests — 20+ tests already across multiple files
+- [x] Device Auth RFC 8628 — E2E flow tests: full approve flow, denied, invalid, expired, slow_down (PENDING COMMIT)
+- [x] Token Exchange RFC 8693 — E2E flow tests: full exchange, missing token/type, invalid, wrong signature, missing sub (PENDING COMMIT)
+- [x] Backchannel Logout — E2E flow tests: valid token, empty, missing sub/sid, missing events, nonce, replay, sid (PENDING COMMIT)
 - [x] Password breach check configurable disable — BREACH_CHECK_ENABLED env var (41d8064)
-- DUPLICATE: Device Auth RFC 8628 — 9 tests in coverage_sprint11_test.go
-- NOT VAPORWARE: Java SDK — 8 files, 788 lines (GGIDClient, GGIDAuthFilter, etc.)
+- [x] Java SDK de-duplication — Model.java deleted, inner classes extracted to standalone, no more duplicates (PENDING COMMIT)
+- [x] Java SDK RS256 verification — JwtVerifier.java created, all 3 filters use JWKS verification, jwks-rsa dep added (PENDING COMMIT)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
