@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -86,5 +87,103 @@ func TestMetricsMiddleware_RecordsRequest(t *testing.T) {
 	}
 	if rr.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+}
+
+// TestMetricsMiddleware_CounterIncrementAndLabels verifies that after making
+// requests, the http_requests_total counter is incremented with the correct
+// labels (method, path, status) visible in the /metrics output.
+func TestMetricsMiddleware_CounterIncrementAndLabels(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+	mw := MetricsMiddleware(next)
+
+	// Make 3 GET requests to /api/v1/users
+	for i := 0; i < 3; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
+		rr := httptest.NewRecorder()
+		mw.ServeHTTP(rr, req)
+	}
+
+	// Make 1 POST request to /api/v1/orgs
+	postReq := httptest.NewRequest(http.MethodPost, "/api/v1/orgs", nil)
+	postRR := httptest.NewRecorder()
+	mw.ServeHTTP(postRR, postReq)
+
+	// Now scrape /metrics and verify labels appear
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsRR := httptest.NewRecorder()
+	promhttp.Handler().ServeHTTP(metricsRR, metricsReq)
+
+	body, _ := io.ReadAll(metricsRR.Body)
+	bodyStr := string(body)
+
+	// Verify http_requests_total has the GET /api/v1/users 200 label combination
+	if !strings.Contains(bodyStr, `http_requests_total{method="GET",path="/api/v1/users",status="200"}`) {
+		t.Errorf("expected GET /api/v1/users 200 label in metrics output\nOutput:\n%s", bodyStr)
+	}
+	// Verify POST label
+	if !strings.Contains(bodyStr, `http_requests_total{method="POST",path="/api/v1/orgs",status="200"}`) {
+		t.Errorf("expected POST /api/v1/orgs 200 label in metrics output\nOutput:\n%s", bodyStr)
+	}
+	// Verify the counter value is >= 1 for the GET path.
+	// Note: the prometheus counter is a package-level global, so other tests
+	// in this package may have already incremented it. We only check >= 1
+	// to confirm our requests were counted, not an exact value.
+	found := false
+	for _, line := range strings.Split(bodyStr, "\n") {
+		if strings.Contains(line, `method="GET"`) && strings.Contains(line, `/api/v1/users`) {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				val := parts[len(parts)-1]
+				if f, err := strconv.ParseFloat(val, 64); err == nil && f >= 1 {
+					found = true
+				}
+			}
+		}
+	}
+	if !found {
+		t.Errorf("expected GET /api/v1/users counter >= 1\nOutput:\n%s", bodyStr)
+	}
+}
+
+// TestMetricsMiddleware_StatusLabels verifies different status codes
+// produce the correct label values.
+func TestMetricsMiddleware_StatusLabels(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/forbidden" {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+		if r.URL.Path == "/notfound" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+	mw := MetricsMiddleware(next)
+
+	for _, path := range []string{"/ok", "/forbidden", "/notfound"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rr := httptest.NewRecorder()
+		mw.ServeHTTP(rr, req)
+	}
+
+	// Scrape metrics
+	metricsReq := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	metricsRR := httptest.NewRecorder()
+	promhttp.Handler().ServeHTTP(metricsRR, metricsReq)
+	body, _ := io.ReadAll(metricsRR.Body)
+	bodyStr := string(body)
+
+	if !strings.Contains(bodyStr, `status="200"`) {
+		t.Error("expected status=200 label")
+	}
+	if !strings.Contains(bodyStr, `status="403"`) {
+		t.Error("expected status=403 label")
+	}
+	if !strings.Contains(bodyStr, `status="404"`) {
+		t.Error("expected status=404 label")
 	}
 }
