@@ -103,6 +103,10 @@
 - [x] Wire RotatingKeyProvider into OAuth startup — already done in fb29546
 - [x] Fix WebAuthn hardcoded attachment — reads from authenticator response (2870f9d)
 - [x] gRPC TLS PoC — pkg/transport/tlsconfig.go already done in fb29546
+- [x] Email OTP MFA — EmailOTPService with SendOTP/VerifyOTP, 7 tests
+- DUPLICATE: Device Auth RFC 8628 tests — 9 tests already in coverage_sprint11_test.go
+- DUPLICATE: Token Exchange RFC 8693 tests — 8 tests already in coverage_boost2/3
+- DUPLICATE: Backchannel Logout tests — 20+ tests already across multiple files
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
