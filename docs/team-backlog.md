@@ -104,12 +104,12 @@
 - [x] Fix WebAuthn hardcoded attachment — reads from authenticator response (2870f9d)
 - [x] gRPC TLS PoC — pkg/transport/tlsconfig.go already done in fb29546
 - [x] Email OTP MFA — EmailOTPService with SendOTP/VerifyOTP, 7 tests
-- [x] Device Auth RFC 8628 — E2E flow tests: full approve flow, denied, invalid, expired, slow_down (PENDING COMMIT)
-- [x] Token Exchange RFC 8693 — E2E flow tests: full exchange, missing token/type, invalid, wrong signature, missing sub (PENDING COMMIT)
-- [x] Backchannel Logout — E2E flow tests: valid token, empty, missing sub/sid, missing events, nonce, replay, sid (PENDING COMMIT)
+- [x] Device Auth RFC 8628 — E2E flow tests: full approve flow, denied, invalid, expired, slow_down (7ee1a32)
+- [x] Token Exchange RFC 8693 — E2E flow tests: full exchange, missing token/type, invalid, wrong signature, missing sub (7ee1a32)
+- [x] Backchannel Logout — E2E flow tests: valid token, empty, missing sub/sid, missing events, nonce, replay, sid (7ee1a32)
 - [x] Password breach check configurable disable — BREACH_CHECK_ENABLED env var (41d8064)
-- [x] Java SDK de-duplication — Model.java deleted, inner classes extracted to standalone, no more duplicates (PENDING COMMIT)
-- [x] Java SDK RS256 verification — JwtVerifier.java created, all 3 filters use JWKS verification, jwks-rsa dep added (PENDING COMMIT)
+- [x] Java SDK de-duplication — Model.java deleted, inner classes extracted to standalone, no more duplicates (7ee1a32)
+- [x] Java SDK RS256 verification — JwtVerifier.java created, all 3 filters use JWKS verification, jwks-rsa dep added (7ee1a32)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
