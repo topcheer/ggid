@@ -51,6 +51,7 @@ type Gateway struct {
 	routeVersion  int64
 	stats         *middleware.StatsCollector
 	graphql       *middleware.GraphQLResolver
+	sessionMgr    *middleware.SessionManager
 	mu            sync.RWMutex
 }
 
@@ -71,6 +72,11 @@ func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
 // SetHealthChecker allows injecting a pre-configured health checker.
 func (gw *Gateway) SetHealthChecker(hc *healthcheck.Checker) {
 	gw.healthChecker = hc
+}
+
+// SetSessionManager allows injecting a session manager for timeout enforcement.
+func (gw *Gateway) SetSessionManager(sm *middleware.SessionManager) {
+	gw.sessionMgr = sm
 }
 
 func (gw *Gateway) buildHealthChecker() {
@@ -348,11 +354,19 @@ func (gw *Gateway) Handler() http.Handler {
 		if isPublic {
 			// Public path: no JWT required, but still validate if token present
 			jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			jwtMW(gw).ServeHTTP(w, r)
+			h := jwtMW(gw)
+			if gw.sessionMgr != nil {
+				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
+			}
+			h.ServeHTTP(w, r)
 		} else {
 			// Protected path: JWT required
 			jwtMW := middleware.JWTAuth(gw.jwks, true, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
-			jwtMW(gw).ServeHTTP(w, r)
+			h := jwtMW(gw)
+			if gw.sessionMgr != nil {
+				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
+			}
+			h.ServeHTTP(w, r)
 		}
 	})
 
