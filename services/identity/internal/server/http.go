@@ -61,6 +61,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/link", h.handleLinkAccount)
 	h.mux.HandleFunc("/api/v1/users/unlink", h.handleUnlinkAccount)
 	h.mux.HandleFunc("/api/v1/users/import/validate", h.handleImportValidate)
+	h.mux.HandleFunc("/api/v1/users/bulk/status", h.handleBulkStatus)
 
 	// Branding endpoints
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
