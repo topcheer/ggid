@@ -163,7 +163,12 @@
 - [x] docs/database-schema.md (verified complete, 734 lines)
 - [x] docs/deployment-guide.md (verified complete, 1311 lines)
 - [x] docs/sdk-reference.md (verified complete, 330 lines, all 4 SDKs)
-> 128 docs total. All major topics covered. No outstanding doc tasks.
+- [x] docs/authentication-guide.md (commit 5061709)
+- [x] docs/data-protection.md (commit 5061709)
+- [x] docs/incident-response.md (commit 5061709)
+- [x] docs/network-security.md (commit 5061709)
+- [x] docs/vulnerability-management.md (commit 5061709)
+> 133 docs total. All major topics covered. No outstanding doc tasks.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
