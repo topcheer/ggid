@@ -762,4 +762,353 @@ leveraging auto-generation to keep maintenance costs manageable.
 
 ---
 
+---
+
+## Verification Update (2026-07-24)
+
+> **Methodology**: Every claim in the original document was verified by reading
+> the actual source files, counting lines, and listing methods/classes. This
+> section corrects errors found during verification.
+
+### Summary of Corrections
+
+| SDK | Original Claim | Actual State | Verdict Changed? |
+|-----|---------------|--------------|:-:|
+| Java | "README only, NO SOURCE CODE — Vaporware" | **8 .java files, 788 lines** with real client + 3 servlet filters | **YES** |
+| Python | "~60% complete, no pyproject.toml" | **pyproject.toml EXISTS**, proper JWT verification, ~65% complete | Minor correction |
+| Go | "Production Grade" | Root package IS production grade; `ggid/` subdirectory is a thinner second copy | Confirmed + caveat |
+| Node | "No package.json" | **package.json EXISTS** (`@ggid/node`), full TypeScript types | **YES** |
+
+---
+
+### 1. Java SDK Verification — "Vaporware" was WRONG
+
+**Previous claim**: "zero .java source files" — **FALSE**
+
+**Actual**: 8 `.java` files, 788 lines total in
+`sdk/java/src/main/java/dev/ggid/sdk/`
+
+#### Files and contents
+
+| File | Lines | Content |
+|------|------:|---------|
+| `GGIDClient.java` | 248 | HTTP client with OkHttp + Jackson. Methods: `login()`, `refreshToken()`, `logout()`, `createUser()`, `getUser()`, `deleteUser()`, `listUsers()`, `assignRole()`, `createRole()`, `listRoles()`, `createOrg()`, `listOrgs()`, `checkPermission()`. Inner classes: `Config`, `TokenSet`, `User`, `Role`, `Organization`, `PermissionResult`, `PageResult<T>`. Structured HTTP error handling with JSON response parsing. |
+| `GGIDAuthFilter.java` | 201 | Servlet Filter (`jakarta.servlet.Filter`). Extracts Bearer token, parses JWT payload via manual base64+JSON extraction. Configurable `publicPaths`. Injects `GGIDUser` into request attributes. Static `getUser()` helper. |
+| `GGIDSecurityFilter.java` | 80 | Alternative Servlet Filter. Takes `GGIDClient` in constructor. Stores token in request attribute. Also defines `@RequiresPermission` annotation and a SECOND `GGIDUser` class. |
+| `GGIDFilter.java` | 74 | Third filter variant using `com.auth0.jwt.JWT.decode()` (no signature verification). Injects `ggid.sub`, `ggid.email`, `ggid.tenant_id` into request attributes. |
+| `GGIDException.java` | 53 | Structured exception: `getStatusCode()`, `getCode()`, `isNotFound()`, `isUnauthorized()`, `isForbidden()`, `isConflict()`, `isRateLimited()`. |
+| `GGIDUser.java` | 42 | User model: userId, tenantId, username, email, roles[], scopes[]. Methods: `hasRole()`, `hasScope()`. |
+| `TokenSet.java` | 21 | Immutable token set: accessToken, refreshToken, tokenType, expiresIn. |
+| `Model.java` | 69 | **DUPLICATE** definitions of `TokenSet`, `User`, `Role`, `PolicyResult`, `GGIDException`. |
+
+#### pom.xml
+Valid Maven POM: `groupId=dev.ggid`, `artifactId=ggid-sdk`, `version=1.0.0`,
+Java 17. Dependencies: Jackson 2.18.0, Auth0 java-jwt 4.4.0, OkHttp 4.12.0.
+Apache-2.0 license.
+
+#### CRITICAL ISSUE: Will Not Compile
+The SDK has **duplicate class definitions** in the same package
+(`dev.ggid.sdk`):
+
+- `TokenSet` defined **3 times**: `TokenSet.java`, `Model.java` (line 8),
+  `GGIDClient.java` (inner class, line 204)
+- `User` defined **2 times**: `Model.java` (line 29), `GGIDClient.java`
+  (inner class, line 212)
+- `GGIDException` defined **2 times**: `GGIDException.java` (line 6),
+  `Model.java` (line 66)
+- `GGIDUser` defined **2 times**: `GGIDUser.java` (public class),
+  `GGIDSecurityFilter.java` (package-private class, line 68)
+
+Java does not allow duplicate top-level or package-level classes. **This SDK
+will fail compilation with `javac` until duplicates are resolved.**
+
+#### Security: No JWT Signature Verification
+All three filter variants (`GGIDAuthFilter`, `GGIDFilter`,
+`GGIDSecurityFilter`) **decode JWTs without verifying signatures**. The
+comments explicitly state this: *"Does NOT verify signature — for production
+use, validate against GGID JWKS"* (GGIDAuthFilter line 119-120). Despite the
+pom.xml declaring `java-jwt` 4.4.0, no JWKS fetching or RS256 verification is
+implemented.
+
+#### Revised Verdict
+**NOT vaporware, but NOT usable as-is.** The client API surface is complete
+(login, refresh, logout, user/role/org CRUD, permission check). The exception
+model is well-structured. However:
+1. Will not compile due to duplicate class definitions (must consolidate)
+2. No JWT signature verification (security hole)
+3. Three overlapping filter implementations (should be one)
+4. No tests, no Maven Central publication, no CI
+
+**Revised completeness: 45%** (was 0%). Real code exists but needs
+de-duplication, JWKS verification, and tests before it's shippable.
+
+---
+
+### 2. Python SDK Verification — Confirmed ~65%, Corrections Applied
+
+**Previous claim**: "~60% complete, no pyproject.toml, no structured errors"
+
+**Actual**: 4 `.py` files, 421 lines. **pyproject.toml EXISTS** (original doc
+was wrong).
+
+#### Files and contents
+
+| File | Lines | Content |
+|------|------:|---------|
+| `__init__.py` | 23 | Package exports: `GGIDClient`, `JWTVerifier`, `JWTError`, `GGIDMiddleware`, `get_current_user`, `requires_permission`. Version: 1.0.0. |
+| `client.py` | 129 | Async `GGIDClient` (httpx.AsyncClient). Methods: `login()`, `register()`, `list_users()`, `get_user()`, `create_user()`, `delete_user()`, `list_roles()`, `check_permission()`, `verify_token()`. All async. Context manager support (`__aenter__`/`__aexit__`). |
+| `jwt.py` | 121 | `JWTVerifier` class. RS256 via PyJWT + RSAAlgorithm.from_jwk(). JWKS caching with TTL (default 300s). Force-refresh on missing `kid`. Returns typed `JWTClaims` dataclass. Proper error handling: `JWTError` for expired/invalid tokens, issuer mismatch. |
+| `middleware.py` | 148 | **FastAPI**: `GGIDMiddleware` (Starlette BaseHTTPMiddleware) with actual JWT verification when verifier configured. `get_current_user()` dependency. `requires_permission()` factory. **Flask**: `@requires_auth` decorator (token extraction only, stores in `g.ggid_token`). **Django**: `@ggid_login_required` decorator (token extraction only, stores in `request.ggid_token`). |
+
+#### pyproject.toml — EXISTS (original doc wrong)
+```toml
+[project]
+name = "ggid"
+version = "1.0.0"
+dependencies = ["PyJWT>=2.8", "httpx>=0.25", "cryptography>=41.0"]
+[project.optional-dependencies]
+fastapi = ["fastapi", "starlette", "uvicorn"]
+flask = ["flask"]
+django = ["django"]
+```
+Proper build system (setuptools), Python >=3.9, Apache-2.0 license.
+
+#### Feature verification
+
+| Feature | Status | Evidence |
+|---------|:------:|----------|
+| JWT verification (RS256) | YES | `jwt.py`: PyJWT decode with RSAAlgorithm.from_jwk, algorithms=["RS256"] |
+| JWKS caching | YES | `jwt.py`: TTL-based cache with force-refresh on unknown kid |
+| Login | YES | `client.py`: POST /api/v1/auth/login |
+| Register | YES | `client.py`: POST /api/v1/auth/register |
+| Token refresh | **NO** | Not implemented |
+| Logout | **NO** | Not implemented |
+| User CRUD | PARTIAL | list/get/create/delete — **no update** |
+| Role management | PARTIAL | list only — **no create/assign/remove** |
+| Org management | **NO** | Not implemented |
+| Permission check | YES | `client.py`: POST /api/v1/policies/check |
+| FastAPI middleware | YES | `middleware.py`: Actual JWT verification when verifier configured |
+| Flask middleware | PARTIAL | Token extraction only, no verification (explicitly documented) |
+| Django middleware | PARTIAL | Token extraction only, no verification (explicitly documented) |
+| Structured errors | **NO** | Uses raw `httpx` exceptions (`resp.raise_for_status()`) |
+| Tenant context | YES | `X-Tenant-ID` header set from constructor |
+| Async support | YES | All methods async via httpx.AsyncClient |
+| Sync client | **NO** | No synchronous variant |
+| PyPI publish config | YES | pyproject.toml present and valid |
+
+#### Revised Verdict
+**Revised completeness: 65%** (was ~60%). The JWT verification is genuinely
+solid (RS256, JWKS caching, force-refresh, typed claims). Missing: refresh,
+logout, user update, role create/assign/remove, org CRUD, structured errors,
+sync client. Flask/Django middleware correctly documented as extract-only.
+
+---
+
+### 3. Go SDK Verification — Production Grade Confirmed (with caveat)
+
+**Previous claim**: "Production Grade, 629 lines client.go"
+
+**Actual**: TWO parallel implementations exist in the same module.
+
+#### Root package (`sdk/go/` — package `ggid`)
+
+| File | Lines | Content |
+|------|------:|---------|
+| `client.go` | 629 | Production client. Full feature set. |
+| `middleware.go` | 150 | HTTP middleware: `Middleware()`, `RequireRole()`, `RequireScope()`, `RequirePermission()`, `UserFromContext()`. |
+| `client_test.go` | 775 | Unit tests |
+| `coverage_test.go` | 124 | Coverage tests |
+| `go.mod` | — | Module definition |
+
+**Key methods verified in client.go** (629 lines):
+- `Login(ctx, *LoginRequest)` — password grant
+- `Logout(ctx, accessToken)` — token revocation
+- `RefreshToken(ctx, refreshToken)` — token refresh
+- `VerifyToken(ctx, accessToken)` — online (JWKS RS256) or offline (ParseUnverified)
+- `CreateUser`, `GetUser`, `UpdateUser`, `DeleteUser`, `ListUsers` — full user CRUD
+- `CreateRole`, `ListRoles`, `AssignRole`, `RemoveRole` — role management
+- `CreateOrg`, `ListOrgs` — organization CRUD
+- `CheckPermission` — policy engine integration
+- `APIError` with `IsNotFound`, `IsUnauthorized`, `IsForbidden`, `IsConflict`, `IsRateLimited`
+- JWKS cache: `sync.RWMutex`, configurable TTL, RSA public key reconstruction from JWK n/e
+- `WithAPIKey`, `WithHTTPClient`, `WithJWKS(ttl)` options pattern
+
+#### Subdirectory `sdk/go/ggid/` (package `ggid` — second copy)
+
+| File | Lines | Content |
+|------|------:|---------|
+| `client.go` | 125 | Alternative `Client` with `NewClient()`, `WithTenantID`, `WithJWKS`, `WithCredentials` |
+| `api.go` | 196 | `Login`, `Register`, `Refresh`, `ListUsers`, `GetUser`, `DeleteUser`, `ListRoles`, `CheckPermission` |
+| `jwt.go` | 71 | `JWTVerifier` — **WARNING**: `Verify()` only parses claims (base64 decode), does NOT verify RS256 signature |
+| `middleware.go` | 92 | `Middleware()`, `RequirePermission()` |
+| `errors.go` | 107 | `APIError` with `errors.Is`/`errors.As` support, sentinel errors |
+
+#### CRITICAL CAVEAT
+The `ggid/` subdirectory's `JWTVerifier.Verify()` (jwt.go line 32-46) **does
+not verify the JWT signature**. It only base64-decodes the payload and checks
+expiration. This is a security concern if someone imports the wrong package.
+The root package's `VerifyToken()` (client.go line 241-246) does proper RS256
+verification via JWKS when configured.
+
+#### Revised Verdict
+**Root package (`sdk/go/`): Production grade. CONFIRMED.** Complete for
+server-side management use cases. Missing: OAuth/PKCE flow helpers, `/userinfo`
+endpoint. 904 lines of production code + 899 lines of tests.
+
+**`ggid/` subdirectory: Functional but incomplete.** Thinner API surface,
+non-functional JWT signature verification. Should be removed or consolidated
+into root package to avoid confusion.
+
+**Revised completeness: 85%** (was implied 100%). The dual-package situation
+creates import ambiguity. Root package is genuinely production-ready.
+
+---
+
+### 4. Node SDK Verification — Production Grade, package.json EXISTS
+
+**Previous claim**: "Production Grade, No package.json"
+
+**Actual**: 5 `.ts` source files, 538 lines. **package.json EXISTS**
+(original doc was wrong).
+
+#### Files and contents
+
+| File | Lines | Content |
+|------|------:|---------|
+| `client.ts` | 214 | `GGIDClient` class with: `login()`, `register()`, `logout()`, `refreshToken()`, `verifyToken()`, `createUser()`, `getUser()`, `listUsers()`, `updateUser()`, `deleteUser()`, `createRole()`, `listRoles()`, `assignRole()`, `removeRole()`, `createOrg()`, `listOrgs()`, `checkPermission()`. `GGIDError` class with `isNotFound`, `isUnauthorized`, `isForbidden`, `isConflict`, `isRateLimited`. AbortController timeout. |
+| `jwt.ts` | 53 | `JWTVerifier` using `jose` library. JWKS via `createRemoteJWKSet`. RS256 verification. Returns `JWTClaims`. |
+| `middleware.ts` | 129 | Express middleware: `expressAuth()`, `requireRole()`, `requirePermission()`, `getClaims()`. Type augmentation for `Request.ggidUser`. |
+| `types.ts` | 103 | **15 TypeScript interfaces**: `GGIDConfig`, `User`, `TokenSet`, `Role`, `Organization`, `PolicyCheckResult`, `PageResult<T>`, `ListOptions`, `LoginInput`, `CreateUserInput`, `UpdateUserInput`, `CreateRoleInput`, `CreateOrgInput`. |
+| `index.ts` | 39 | Package barrel exports. |
+
+#### package.json — EXISTS (original doc wrong)
+```json
+{
+  "name": "@ggid/node",
+  "version": "1.0.0",
+  "dependencies": { "jose": ">=5.0" },
+  "peerDependencies": { "express": ">=4.18" },
+  "devDependencies": { "@types/express": "^5.0.6", "typescript": ">=5.3" },
+  "scripts": { "build": "tsc", "typecheck": "tsc --noEmit" }
+}
+```
+
+#### Feature verification
+
+| Feature | Status | Evidence |
+|---------|:------:|----------|
+| JWT verification | YES | `jose` library, `createRemoteJWKSet`, RS256 |
+| Login | YES | POST /api/v1/auth/login |
+| Register | YES | POST /api/v1/auth/register |
+| Token refresh | YES | POST /api/v1/auth/refresh |
+| Logout | YES | POST /api/v1/auth/logout |
+| User CRUD | FULL | create/get/list/update/delete |
+| Role management | FULL | create/list/assign/remove |
+| Org management | PARTIAL | create/list — no update/delete |
+| Permission check | YES | POST /api/v1/policies/check |
+| Express middleware | YES | `expressAuth()`, `requireRole()`, `requirePermission()` |
+| Structured errors | YES | `GGIDError` class with classification methods |
+| Tenant context | YES | Auto `X-Tenant-ID` header |
+| TypeScript types | YES | 15 interfaces, strict mode |
+| Timeout control | YES | AbortController with configurable timeout |
+| NPM publish config | YES | package.json with `@ggid/node` name |
+| OAuth/PKCE flow | **NO** | Not implemented |
+
+#### Revised Verdict
+**Production grade. CONFIRMED.** The original doc's only error was claiming
+"No package.json" — it now exists with proper `@ggid/node` naming, jose
+dependency, and build scripts. Most complete of the four SDKs for
+server-side use. Missing: OAuth/PKCE flow helpers, Hono/Fastify adapters.
+
+**Revised completeness: 90%** (was implied 85%). package.json exists and the
+SDK has the most complete API surface of all four SDKs.
+
+---
+
+### 5. Revised Gap Matrix
+
+Based on actual source code verification:
+
+| SDK | Source Files | Source Lines | Key Features Present | Key Features Missing | Completeness | Verdict |
+|-----|:---:|:---:|----------------------|----------------------|:---:|---------|
+| **Go** (root) | 2 .go + 2 _test.go | 779 prod + 899 test | JWT RS256+JWKS, login/refresh/logout, full user CRUD, role CRUD, org CRUD, middleware, structured errors, JWKS cache | OAuth/PKCE, /userinfo | **85%** | Production grade |
+| **Node.js** | 5 .ts | 538 prod | JWT via jose, login/register/refresh/logout, full user CRUD, role CRUD, org list, middleware, structured errors, TypeScript types | OAuth/PKCE, /userinfo, Hono/Fastify | **90%** | Production grade |
+| **Python** | 4 .py | 421 prod | JWT RS256+JWKS, login/register, partial user CRUD, role list, permission check, FastAPI middleware | Refresh, logout, user update, role create/assign, org CRUD, structured errors, sync client | **65%** | Beta |
+| **Java** | 8 .java | 788 prod | Client API (login/refresh/logout, user/role/org CRUD, permission check), 3 filter variants, structured exception | **Won't compile** (duplicate classes), no JWT signature verification, no tests | **45%** | Broken (fixable) |
+
+#### Feature Comparison (verified)
+
+| Feature | Go (root) | Node.js | Python | Java |
+|---------|:-:|:-:|:-:|:-:|
+| JWT verification (RS256) | YES | YES | YES | **NO** (decode only) |
+| JWKS caching | YES | YES | YES | NO |
+| Login | YES | YES | YES | YES |
+| Token refresh | YES | YES | NO | YES |
+| Logout | YES | YES | NO | YES |
+| Register | NO* | YES | YES | NO* |
+| User CRUD (full) | FULL | FULL | PARTIAL | PARTIAL |
+| Role management | FULL | FULL | LIST ONLY | PARTIAL |
+| Org management | PARTIAL | PARTIAL | NO | PARTIAL |
+| Permission check | YES | YES | YES | YES |
+| HTTP middleware | YES | YES | YES | YES (3 variants) |
+| Structured errors | YES | YES | NO | YES |
+| OAuth/PKCE flow | NO | NO | NO | NO |
+| Package config | go.mod | package.json | pyproject.toml | pom.xml |
+| **Compiles/builds** | YES | YES | YES | **NO** |
+
+*Go root has `CreateUser` (management API) but not `Register` (self-service).
+Java has `createUser` but not self-service `register`.
+
+---
+
+### 6. OpenAPI Spec Check
+
+**File**: `docs/openapi.yaml`
+**Version**: OpenAPI 3.1.0
+**Size**: 2,397 lines
+**API version**: 1.0.0
+**License**: Apache 2.0
+
+**Tag coverage**: Auth, Users, Roles, Permissions, Policies, Organizations,
+Audit, OAuth, SCIM, Health (10 tags)
+
+**Can it generate SDKs?** YES. The spec is valid OpenAPI 3.1.0 with:
+- Proper `servers` section (localhost + production)
+- Complete `components/schemas` (referenced as `$ref`)
+- `security` schemes documented
+- Path parameters, query parameters, and request bodies defined
+
+**Supported codegen languages** (via `openapi-generator`):
+Go, TypeScript (Axios/Fetch/Node), Python, Java, Kotlin, C#, Ruby, PHP,
+Rust, Swift, Dart, JavaScript, and 25+ more (40+ total generators).
+
+**Recommended action**: Set up `openapi-generator` CLI in CI to auto-generate
+SDK stubs for languages GGID doesn't hand-write (C#, Ruby, PHP, Rust). Use
+the generated API client as the base layer, then add hand-written middleware
+and OAuth/PKCE flow helpers on top.
+
+---
+
+### Corrected Action Items (replacing original Section 9 priorities)
+
+Based on verified code state, the priority order changes significantly:
+
+| # | Task | Effort | Priority | Change from original |
+|---|------|--------|----------|---------------------|
+| 1 | **Fix Java SDK compilation** (remove duplicate classes from Model.java and GGIDSecurityFilter.java) | 1 day | P0 | NEW — original didn't know code existed |
+| 2 | **Add JWT signature verification to Java SDK** (JWKS fetch + RS256 via java-jwt) | 2 days | P0 | NEW — 3 filter variants all skip verification |
+| 3 | Add Python SDK: token refresh, logout, user update, role create/assign | 2 days | P0 | Same |
+| 4 | Add Python SDK: structured error classes | 1 day | P0 | Same |
+| 5 | Add Python SDK: org CRUD | 0.5 day | P1 | Same |
+| 6 | Consolidate Go SDK (remove or merge `ggid/` subdirectory into root package) | 1 day | P1 | NEW — dual packages cause import confusion |
+| 7 | Add OAuth/PKCE flow to all 4 SDKs | 3 days | P0 | Same |
+| 8 | Fix Flask/Django middleware to verify JWTs | 1 day | P0 | Same |
+| 9 | Publish all 4 SDKs to registries (NPM, PyPI, Maven, Go proxy) | 1 day | P0 | Same |
+| 10 | Set up openapi-generator CI pipeline | 2 days | P1 | Same |
+
+**Total revised effort**: ~14.5 engineer-days (down from 16-19 because Java
+SDK has existing code to build on, not starting from zero).
+
+---
+
 *Co-Authored-By: ggcode <noreply@ggcode.dev>*
