@@ -109,8 +109,8 @@ services:
         condition: service_healthy
     working_dir: /app
     environment:
-      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
-    entrypoint: ""
+      DATABASE_URL: "postgres://${DB_USER:-ggid}:${DB_PASSWORD:-ggid}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_DATABASE:-ggid}?sslmode=${DB_SSL_MODE:-disable}"
+    entrypoint: "
     command:
       - sh
       - -c
@@ -164,17 +164,17 @@ services:
       keygen:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: "postgres://ggid:ggid@postgres:5432/ggid?sslmode=disable"
-      REDIS_ADDR: "redis:6379"
+      DATABASE_URL: "postgres://${DB_USER:-ggid}:${DB_PASSWORD:-ggid}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_DATABASE:-ggid}?sslmode=${DB_SSL_MODE:-disable}"
+      REDIS_ADDR: "${REDIS_HOST:-redis}:${REDIS_PORT:-6379}"
       AUTH_HTTP_ADDR: ":9001"
       JWT_PRIVATE_KEY_PATH: "/configs/rsa_private.pem"
       JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
-      LDAP_URL: "ldap://ldap:389"
-      LDAP_BIND_DN: "cn=admin,dc=corp,dc=local"
-      LDAP_BIND_PASSWORD: "admin123"
-      LDAP_BASE_DN: "dc=corp,dc=local"
-      LDAP_USER_FILTER: "(&(objectClass=inetOrgPerson)(cn=%s))"
-      LDAP_AUTO_PROVISION: "true"
+      LDAP_URL: "${LDAP_URL:-ldap://ldap:389}"
+      LDAP_BIND_DN: "${LDAP_BIND_DN:-cn=admin,dc=corp,dc=local}"
+      LDAP_BIND_PASSWORD: "${LDAP_BIND_PASSWORD:-admin123}"
+      LDAP_BASE_DN: "${LDAP_BASE_DN:-dc=corp,dc=local}"
+      LDAP_USER_FILTER: "${LDAP_USER_FILTER:-(&(objectClass=inetOrgPerson)(cn=%s))}"
+      LDAP_AUTO_PROVISION: "${LDAP_AUTO_PROVISION:-true}"
     ports:
       - "9001:9001"
     volumes:
@@ -229,15 +229,15 @@ services:
       migrate:
         condition: service_completed_successfully
     environment:
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_USER: "ggid"
-      DB_PASSWORD: "ggid"
-      DB_DATABASE: "ggid"
-      DB_SSL_MODE: "disable"
+      DB_HOST: "${DB_HOST:-postgres}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_USER: "${DB_USER:-ggid}"
+      DB_PASSWORD: "${DB_PASSWORD:-ggid}"
+      DB_DATABASE: "${DB_DATABASE:-ggid}"
+      DB_SSL_MODE: "${DB_SSL_MODE:-disable}"
       POLICY_HTTP_ADDR: ":8070"
       POLICY_GRPC_ADDR: ":9070"
-      NATS_URL: "nats://nats:4222"
+      NATS_URL: "${NATS_URL:-nats://nats:4222}"
     ports:
       - "8070:8070"
       - "9070:9070"
@@ -258,15 +258,15 @@ services:
       migrate:
         condition: service_completed_successfully
     environment:
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_USER: "ggid"
-      DB_PASSWORD: "ggid"
-      DB_DATABASE: "ggid"
-      DB_SSL_MODE: "disable"
+      DB_HOST: "${DB_HOST:-postgres}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_USER: "${DB_USER:-ggid}"
+      DB_PASSWORD: "${DB_PASSWORD:-ggid}"
+      DB_DATABASE: "${DB_DATABASE:-ggid}"
+      DB_SSL_MODE: "${DB_SSL_MODE:-disable}"
       ORG_HTTP_ADDR: ":8071"
       ORG_GRPC_ADDR: ":9071"
-      NATS_URL: "nats://nats:4222"
+      NATS_URL: "${NATS_URL:-nats://nats:4222}"
     ports:
       - "8071:8071"
       - "9071:9071"
@@ -289,13 +289,13 @@ services:
       migrate:
         condition: service_completed_successfully
     environment:
-      DB_HOST: "postgres"
-      DB_PORT: "5432"
-      DB_USER: "ggid"
-      DB_PASSWORD: "ggid"
-      DB_DATABASE: "ggid"
-      DB_SSL_MODE: "disable"
-      NATS_URL: "nats://nats:4222"
+      DB_HOST: "${DB_HOST:-postgres}"
+      DB_PORT: "${DB_PORT:-5432}"
+      DB_USER: "${DB_USER:-ggid}"
+      DB_PASSWORD: "${DB_PASSWORD:-ggid}"
+      DB_DATABASE: "${DB_DATABASE:-ggid}"
+      DB_SSL_MODE: "${DB_SSL_MODE:-disable}"
+      NATS_URL: "${NATS_URL:-nats://nats:4222}"
       AUDIT_HTTP_ADDR: ":8072"
       AUDIT_GRPC_ADDR: ":9072"
       AUDIT_HASH_CHAIN_SECRET: "${AUDIT_HASH_CHAIN_SECRET:-ggid-audit-hash-chain-dev-key-change-in-prod}"

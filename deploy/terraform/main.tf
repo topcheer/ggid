@@ -61,7 +61,9 @@ resource "helm_release" "ggid" {
         storageClass  = var.storage_class
       }
 
+      # External databases — when set, disable bundled services
       postgresql = {
+        enabled = var.external_database_host == ""
         auth = {
           password = var.db_password
         }
@@ -72,10 +74,34 @@ resource "helm_release" "ggid" {
         }
       }
 
+      externalDatabase = {
+        host     = var.external_database_host
+        port     = var.external_database_port
+        username = "ggid"
+        password = var.db_password
+        database = "ggid"
+      }
+
       redis = {
+        enabled = var.external_redis_host == ""
         auth = {
           password = var.redis_password
         }
+      }
+
+      externalRedis = {
+        host     = var.external_redis_host
+        port     = var.external_redis_port
+        password = var.redis_password
+      }
+
+      nats = {
+        enabled = var.external_nats_host == ""
+      }
+
+      externalNats = {
+        host = var.external_nats_host
+        port = var.external_nats_port
       }
 
       gateway = {

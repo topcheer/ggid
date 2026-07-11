@@ -68,6 +68,50 @@ variable "redis_password" {
   default     = ""
 }
 
+# ---- External Infrastructure ----
+
+variable "external_database_host" {
+  description = "External PostgreSQL host (leave empty to use bundled postgresql chart)"
+  type        = string
+  default     = ""
+}
+
+variable "external_database_port" {
+  description = "External PostgreSQL port"
+  type        = number
+  default     = 5432
+}
+
+variable "external_redis_host" {
+  description = "External Redis host (leave empty to use bundled redis chart)"
+  type        = string
+  default     = ""
+}
+
+variable "external_redis_port" {
+  description = "External Redis port"
+  type        = number
+  default     = 6379
+}
+
+variable "external_nats_host" {
+  description = "External NATS host (leave empty to use bundled nats chart)"
+  type        = string
+  default     = ""
+}
+
+variable "external_nats_port" {
+  description = "External NATS port"
+  type        = number
+  default     = 4222
+}
+
+variable "external_ldap_url" {
+  description = "External LDAP URL (leave empty to use bundled LDAP)"
+  type        = string
+  default     = ""
+}
+
 # ---- Sizing ----
 
 variable "db_storage_size" {
