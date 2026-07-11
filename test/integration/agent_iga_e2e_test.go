@@ -15,8 +15,8 @@ import (
 	"testing"
 )
 
-// postJSON sends a POST with JSON body and returns the response.
-func postJSON(t *testing.T, url string, body any) (*http.Response, map[string]any) {
+// postJSONAgent sends a POST with JSON body and returns the response.
+func postJSONAgent(t *testing.T, url string, body any) (*http.Response, map[string]any) {
 	t.Helper()
 	b, _ := json.Marshal(body)
 	req, _ := http.NewRequest("POST", url, bytes.NewReader(b))
@@ -36,7 +36,7 @@ func postJSON(t *testing.T, url string, body any) (*http.Response, map[string]an
 
 // TestAgent_Register verifies agent registration through the gateway.
 func TestAgent_Register(t *testing.T) {
-	resp, body := postJSON(t, gatewayBaseURL+"/api/v1/agents/register", map[string]any{
+	resp, body := postJSONAgent(t, gatewayBaseURL+"/api/v1/agents/register", map[string]any{
 		"name":                "E2E-TestBot",
 		"type":                "coding-assistant",
 		"owner_user_id":       "00000000-0000-0000-0000-000000000001",
@@ -60,7 +60,7 @@ func TestAgent_Register(t *testing.T) {
 
 // TestAgent_List verifies listing agents through the gateway.
 func TestAgent_List(t *testing.T) {
-	resp, body := postJSON(t, gatewayBaseURL+"/api/v1/agents/register", map[string]any{
+	resp, body := postJSONAgent(t, gatewayBaseURL+"/api/v1/agents/register", map[string]any{
 		"name":          "E2E-ListBot",
 		"type":          "research-agent",
 		"owner_user_id": "00000000-0000-0000-0000-000000000001",
@@ -96,7 +96,7 @@ func TestAgent_List(t *testing.T) {
 
 // TestIGA_CreateAccessRequest verifies access request creation.
 func TestIGA_CreateAccessRequest(t *testing.T) {
-	resp, body := postJSON(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
+	resp, body := postJSONAgent(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
 		"requester_id":   "00000000-0000-0000-0000-000000000001",
 		"resource_type":  "role",
 		"resource_id":    "admin",
@@ -120,7 +120,7 @@ func TestIGA_CreateAccessRequest(t *testing.T) {
 // TestIGA_ListAccessRequests verifies listing access requests.
 func TestIGA_ListAccessRequests(t *testing.T) {
 	// Create a request first
-	resp, _ := postJSON(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
+	resp, _ := postJSONAgent(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
 		"requester_id":   "00000000-0000-0000-0000-000000000001",
 		"resource_type":  "role",
 		"resource_id":    "auditor",
@@ -167,7 +167,7 @@ func TestIGA_ListAccessRequests(t *testing.T) {
 // TestIGA_ApproveAccessRequest verifies the approve flow.
 func TestIGA_ApproveAccessRequest(t *testing.T) {
 	// Create a request
-	resp, body := postJSON(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
+	resp, body := postJSONAgent(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
 		"requester_id":   "00000000-0000-0000-0000-000000000001",
 		"resource_type":  "role",
 		"resource_id":    "developer",
@@ -183,7 +183,7 @@ func TestIGA_ApproveAccessRequest(t *testing.T) {
 	resp.Body.Close()
 
 	// Approve it (different user to avoid self-approval block)
-	resp, body = postJSON(t, gatewayBaseURL+"/api/v1/access-requests/"+requestID+"/approve", map[string]any{
+	resp, body = postJSONAgent(t, gatewayBaseURL+"/api/v1/access-requests/"+requestID+"/approve", map[string]any{
 		"approver_id": "00000000-0000-0000-0000-000000000002",
 	})
 	defer resp.Body.Close()
@@ -201,7 +201,7 @@ func TestIGA_ApproveAccessRequest(t *testing.T) {
 // TestIGA_DenyAccessRequest verifies the deny flow.
 func TestIGA_DenyAccessRequest(t *testing.T) {
 	// Create a request
-	resp, body := postJSON(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
+	resp, body := postJSONAgent(t, gatewayBaseURL+"/api/v1/access-requests", map[string]any{
 		"requester_id":   "00000000-0000-0000-0000-000000000001",
 		"resource_type":  "role",
 		"resource_id":    "superadmin",
@@ -217,7 +217,7 @@ func TestIGA_DenyAccessRequest(t *testing.T) {
 	resp.Body.Close()
 
 	// Deny it
-	resp, body = postJSON(t, gatewayBaseURL+"/api/v1/access-requests/"+requestID+"/deny", map[string]any{
+	resp, body = postJSONAgent(t, gatewayBaseURL+"/api/v1/access-requests/"+requestID+"/deny", map[string]any{
 		"approver_id":    "00000000-0000-0000-0000-000000000002",
 		"denial_reason":  "E2E test: request denied",
 	})
