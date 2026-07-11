@@ -109,6 +109,10 @@ export { useImpersonationLog } from './useImpersonationLog';
 export type { ImpersonationEntry, ImpersonationFilter, UseImpersonationLogResult } from './useImpersonationLog';
 export { useRoleHierarchy } from './useRoleHierarchy';
 export type { RoleNode, UseRoleHierarchyResult } from './useRoleHierarchy';
+export { useConditionalAccess } from './useConditionalAccess';
+export type { ConditionalAccessPolicy, AccessAction, CreatePolicyInput, UseConditionalAccessResult } from './useConditionalAccess';
+export { useWebhookDelivery } from './useWebhookDelivery';
+export type { FailedDelivery, UseWebhookDeliveryResult } from './useWebhookDelivery';
 export type {
   GGIDConfig,
   GGIDUser,
