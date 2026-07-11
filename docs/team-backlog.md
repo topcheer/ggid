@@ -166,6 +166,11 @@
 - [x] Panic recovery test — recovery_test.go 5 tests (existing)
 - [x] Tenant header injection test — coverage_sprint16_test.go (existing)
 - [x] API key auth test — apikey_ipallowlist_test.go (existing)
+- [x] QA: docs/examples SDK API fixes — go-integration.md + express-integration.md (e4c671d)
+- [x] QA: docs/guides curl commands verified (consistent)
+- [x] QA: docs/quickstart steps verified (correct)
+- [x] QA: doc link integrity — all .md links resolve (no 404s)
+- [x] QA: OpenAPI vs routes — mismatches recorded in tech-debt.md (e4c671d)
 - [ ] Middleware coverage →92% (currently 88.3%)
 - [ ] API spec coverage audit — openapi.yaml vs router routes
 
