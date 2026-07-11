@@ -29,7 +29,7 @@ func TestHTTPDeliverer_RetrySucceedsOnSecondAttempt(t *testing.T) {
 	}))
 	defer server.Close()
 
-	d := NewHTTPDeliverer()
+	d := newTestDeliverer()
 	err := d.Deliver(context.Background(), server.URL, "", []byte(`{}`))
 	if err != nil {
 		t.Fatalf("expected success, got %v", err)
@@ -47,7 +47,7 @@ func TestHTTPDeliverer_AllRetriesFail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	d := NewHTTPDeliverer()
+	d := newTestDeliverer()
 	err := d.Deliver(context.Background(), server.URL, "", []byte(`{}`))
 	if err == nil {
 		t.Fatal("expected error after all retries fail")
@@ -55,7 +55,7 @@ func TestHTTPDeliverer_AllRetriesFail(t *testing.T) {
 }
 
 func TestHTTPDeliverer_ConnectionError(t *testing.T) {
-	d := NewHTTPDeliverer()
+	d := newTestDeliverer()
 	// Use a closed server to trigger connection error
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -76,7 +76,7 @@ func TestHTTPDeliverer_WithHMACSignature(t *testing.T) {
 	}))
 	defer server.Close()
 
-	d := NewHTTPDeliverer()
+	d := newTestDeliverer()
 	payload := []byte(`{"event":"test"}`)
 	err := d.Deliver(context.Background(), server.URL, "mysecret", payload)
 	if err != nil {
@@ -88,7 +88,7 @@ func TestHTTPDeliverer_WithHMACSignature(t *testing.T) {
 }
 
 func TestHTTPDeliverer_InvalidURL(t *testing.T) {
-	d := NewHTTPDeliverer()
+	d := newTestDeliverer()
 	err := d.Deliver(context.Background(), "://invalid", "", []byte(`{}`))
 	if err == nil {
 		t.Error("expected error for invalid URL")
@@ -102,7 +102,7 @@ func TestHTTPDeliverer_ContextCancelled(t *testing.T) {
 	}))
 	defer server.Close()
 
-	d := NewHTTPDeliverer()
+	d := newTestDeliverer()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
 
@@ -295,7 +295,7 @@ func TestHandler_Test_DeliverySuccess(t *testing.T) {
 
 	store := NewMemoryStore()
 	store.Create(context.Background(), &Webhook{ID: "wh1", TenantID: "t1", URL: server.URL, Events: []string{"e"}})
-	h := NewHandler(store, NewHTTPDeliverer())
+	h := NewHandler(store, newTestDeliverer())
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("POST", "/api/v1/webhooks/wh1/test", nil)
@@ -309,7 +309,7 @@ func TestHandler_Test_DeliverySuccess(t *testing.T) {
 func TestHandler_Test_DeliveryFail(t *testing.T) {
 	store := NewMemoryStore()
 	store.Create(context.Background(), &Webhook{ID: "wh1", TenantID: "t1", URL: "http://localhost:1", Events: []string{"e"}})
-	h := NewHandler(store, NewHTTPDeliverer())
+	h := NewHandler(store, newTestDeliverer())
 
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("POST", "/api/v1/webhooks/wh1/test", nil)
@@ -331,7 +331,7 @@ func TestHandler_DeliverEvent_Success(t *testing.T) {
 		ID: "wh1", TenantID: "t1", URL: server.URL,
 		Events: []string{"user.created"}, Active: true,
 	})
-	h := NewHandler(store, NewHTTPDeliverer())
+	h := NewHandler(store, newTestDeliverer())
 
 	h.DeliverEvent(context.Background(), "user.created", []byte(`{"id":"u1"}`))
 	time.Sleep(100 * time.Millisecond) // async delivery
@@ -343,7 +343,7 @@ func TestHandler_DeliverEvent_NoMatch(t *testing.T) {
 		ID: "wh1", TenantID: "t1", URL: "http://x",
 		Events: []string{"user.deleted"}, Active: true,
 	})
-	h := NewHandler(store, NewHTTPDeliverer())
+	h := NewHandler(store, newTestDeliverer())
 
 	// Should not deliver to webhooks that don't match the event
 	h.DeliverEvent(context.Background(), "user.created", []byte(`{}`))
@@ -351,7 +351,7 @@ func TestHandler_DeliverEvent_NoMatch(t *testing.T) {
 }
 
 func TestHandler_DeliverEvent_StoreError(t *testing.T) {
-	h := NewHandler(&errorStore{}, NewHTTPDeliverer())
+	h := NewHandler(&errorStore{}, newTestDeliverer())
 	// Should not panic when store errors
 	h.DeliverEvent(context.Background(), "test", []byte(`{}`))
 	time.Sleep(50 * time.Millisecond)

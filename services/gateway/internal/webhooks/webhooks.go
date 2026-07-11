@@ -123,11 +123,11 @@ type HTTPDeliverer struct {
 	maxRetries int
 }
 
+// NewHTTPDeliverer creates an HTTP deliverer with SSRF protection enabled by default.
+// Private IPs, loopback, cloud metadata endpoints, and non-HTTP(S) schemes are blocked.
+// For tests that need loopback access, use newTestDeliverer from helpers_test.go.
 func NewHTTPDeliverer() *HTTPDeliverer {
-	return &HTTPDeliverer{
-		client:     &http.Client{Timeout: 10 * time.Second},
-		maxRetries: 3,
-	}
+	return NewSSRFSafeDeliverer(DefaultSSRFConfig())
 }
 
 func (d *HTTPDeliverer) Deliver(ctx context.Context, url, secret string, payload []byte) error {
@@ -195,6 +195,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.URL == "" || len(req.Events) == 0 {
 		writeJSON(w, 400, map[string]string{"error": "url and events required"})
+		return
+	}
+	if err := validateURL(req.URL); err != nil {
+		writeJSON(w, 400, map[string]string{"error": err.Error()})
 		return
 	}
 

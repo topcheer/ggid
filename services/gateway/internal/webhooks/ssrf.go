@@ -17,6 +17,9 @@ type SSRFConfig struct {
 	// AllowRedirects controls whether HTTP redirects are followed.
 	// Redirects can bypass SSRF checks by redirecting to internal IPs.
 	AllowRedirects bool
+	// AllowLoopback allows 127.0.0.0/8 and ::1/128 (for development/testing only).
+	// In production this MUST be false.
+	AllowLoopback bool
 	// DialTimeout is the timeout for DNS resolution + connection.
 	DialTimeout time.Duration
 }
@@ -65,6 +68,7 @@ func validateURL(rawURL string) error {
 
 // NewSSRFSafeDeliverer creates an HTTP deliverer with SSRF protection.
 // It blocks requests to private IPs, loopback, and cloud metadata endpoints.
+// For tests that need loopback access, use NewTestDeliverer instead.
 func NewSSRFSafeDeliverer(cfg *SSRFConfig) *HTTPDeliverer {
 	if cfg == nil {
 		cfg = DefaultSSRFConfig()
@@ -104,6 +108,9 @@ func NewSSRFSafeDeliverer(cfg *SSRFConfig) *HTTPDeliverer {
 
 			// Check all resolved IPs
 			for _, ipAddr := range ips {
+				if cfg.AllowLoopback && (ipAddr.IP.IsLoopback() || ipAddr.IP.IsUnspecified()) {
+					continue
+				}
 				if isBlockedIP(ipAddr.IP.String(), blockedCIDRs) {
 					return nil, fmt.Errorf("SSRF: resolved IP %s for %s is blocked", ipAddr.IP, host)
 				}

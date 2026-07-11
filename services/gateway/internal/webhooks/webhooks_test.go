@@ -123,7 +123,7 @@ func TestTestWebhook_DeliverySuccess(t *testing.T) {
 	store := NewMemoryStore()
 	store.Create(context.Background(), &Webhook{ID: "w1", TenantID: "t1", URL: srv.URL, Events: []string{"*"}, Active: true, Secret: "secret"})
 
-	h := NewHandler(store, NewHTTPDeliverer())
+	h := NewHandler(store, newTestDeliverer())
 	req := httptest.NewRequest("POST", "/api/v1/webhooks/w1/test", nil)
 	req.Header.Set("X-Tenant-ID", "t1")
 	w := httptest.NewRecorder()
@@ -159,7 +159,7 @@ func TestDeliverEvent_Failed(t *testing.T) {
 	// Register a webhook pointing to a non-existent server
 	store.Create(ctx, &Webhook{ID: "w1", TenantID: "t1", URL: "http://127.0.0.1:1/hook", Events: []string{"*"}, Active: true})
 
-	h := NewHandler(store, NewHTTPDeliverer())
+	h := NewHandler(store, newTestDeliverer())
 	// This should not block — failures are logged, not returned
 	h.DeliverEvent(ctx, "user.created", []byte(`{"event":"user.created"}`))
 }
