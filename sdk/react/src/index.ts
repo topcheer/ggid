@@ -11,6 +11,8 @@ export { useUser } from './useUser';
 export { ProtectedRoute } from './ProtectedRoute';
 export { ErrorBoundary } from './ErrorBoundary';
 export { useTokenRefresh } from './useTokenRefresh';
+export { useRoles } from './useRoles';
+export type { UseRolesResult } from './useRoles';
 export type {
   GGIDConfig,
   GGIDUser,
