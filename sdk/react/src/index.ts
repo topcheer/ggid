@@ -149,6 +149,10 @@ export { useApprovals } from './useApprovals';
 export type { ApprovalRequest, ApprovalStep, ApprovalStatus, UseApprovalsResult } from './useApprovals';
 export { useCredentialVault } from './useCredentialVault';
 export type { StoredCredential, UseCredentialVaultResult } from './useCredentialVault';
+export { useComplianceMapping } from './useComplianceMapping';
+export type { ControlMapping, MappingStatus, UseComplianceMappingResult } from './useComplianceMapping';
+export { usePolicyAsCode } from './usePolicyAsCode';
+export type { PolicyFile, UsePolicyAsCodeResult } from './usePolicyAsCode';
 export type {
   GGIDConfig,
   GGIDUser,
