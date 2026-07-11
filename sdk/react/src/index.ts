@@ -125,6 +125,10 @@ export { useRiskScore } from './useRiskScore';
 export type { RiskFactor, UserRiskScore, RiskScoreSummary, UseRiskScoreResult } from './useRiskScore';
 export { usePIIScan } from './usePIIScan';
 export type { PIIFinding, PIIScanResult, PIIScanSummary, UsePIIScanResult } from './usePIIScan';
+export { useComplianceEvidence } from './useComplianceEvidence';
+export type { EvidenceArtifact, ComplianceControl, UseComplianceEvidenceResult } from './useComplianceEvidence';
+export { useTokenEvents } from './useTokenEvents';
+export type { TokenEvent, UseTokenEventsResult } from './useTokenEvents';
 export type {
   GGIDConfig,
   GGIDUser,
