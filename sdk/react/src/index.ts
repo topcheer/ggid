@@ -169,6 +169,10 @@ export { useAccessPaths } from './useAccessPaths';
 export type { AccessPathNode, AccessPathResult, UseAccessPathsResult } from './useAccessPaths';
 export { useTamperCheck } from './useTamperCheck';
 export type { TamperIssue, TamperStatus, UseTamperCheckResult } from './useTamperCheck';
+export { useGDPRForget } from './useGDPRForget';
+export type { GDPRForgetRequest, UseGDPRForgetResult } from './useGDPRForget';
+export { useHijackDetection } from './useHijackDetection';
+export type { SuspiciousSession, UseHijackDetectionResult } from './useHijackDetection';
 export type {
   GGIDConfig,
   GGIDUser,
