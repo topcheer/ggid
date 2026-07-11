@@ -1,72 +1,110 @@
 # GGID Team Backlog
 
-> Last updated: session audit — reflects actual codebase state
+> **Last updated**: 2025-01-24 by arch
+> **Rule**: Update this file when completing any item. Check here before assigning new work.
 
 ## P0 — Security (Critical)
 
-### Resolved (13/20)
-- [x] CSRF token predictable entropy → crypto/rand (arch 29b51c1)
-- [x] Rate limiter wired into handler chain (arch fc20c41)
-- [x] SecurityHeaders wired into handler chain (arch 64991a6)
-- [x] Tenant spoofing fix (arch 5bcbfce)
-- [x] Admin API role check (arch 66ef1db)
-- [x] OAuth state validation on token exchange (dev 72edaa5)
-- [x] iss parameter in auth redirect (dev 72edaa5)
-- [x] JWT jti tracking with Redis SETNX (dev 72edaa5)
-- [x] HasScope() scope enforcement (dev 72edaa5)
-- [x] JWTSecret empty → log.Fatal (dev 72edaa5)
-- [x] Webhook SSRF protection (arch b52bafd)
-- [x] Host header validation middleware (uiux — host_validation.go exists)
-- [x] Audit hash chain (arch fe5b025 — hash_chain.go, 11 tests)
+### dev (OAuth/Auth security)
+- [x] OAuth state validation on token exchange (72edaa5)
+- [x] iss parameter in auth redirect (72edaa5)
+- [x] JWT jti tracking with Redis SETNX (72edaa5)
+- [x] HasScope() actual scope enforcement (72edaa5)
+- [x] JWTSecret empty → log.Fatal (72edaa5)
+- [x] Access token scope claim — issueAccessToken scope param (IN PROGRESS — build broken, needs fix)
+- [ ] Password pepper — pkg/crypto/pepper.go exists but NOT wired to auth service boot
+- [ ] WebAuthn attestation verification — attestation_formats.go exists, verify all 6 formats covered
+- [ ] OAuth introspection endpoint auth (server.go — NO AUTH)
 
-### Outstanding (7) — VERIFIED MISSING
-1. **OAuth introspection endpoint has NO AUTH** — server.go introspection handler requires no client credentials (dev)
-2. **Access token missing scope claim** — issueAccessToken omits scope in JWT claims (dev — in progress)
-3. **Password pepper not wired** — SetPepper() exists but not called at boot (dev)
-4. **gRPC TLS/mTLS between services** — all gRPC is plaintext (arch)
-5. **WebAuthn attestation verification** — attestation_formats.go exists but 5/6 formats unverified (dev)
-6. **JWT signing key rotation** — no kid header, no JWKS rotation (arch)
-7. **Database backup automation** — no pg_dump cron (arch)
+### uiux (Gateway security)
+- [x] Host header validation middleware (host_validation.go exists)
+- [x] Webhook HTTPDeliverer SSRF protection (ssrf.go + b52bafd)
+- [x] IP allowlist for admin endpoints (ipallowlist.go exists)
+- [x] Body size limit middleware (bodysize.go exists)
+- [ ] Middleware coverage →92% (currently 88.7%)
+
+### arch (Infrastructure security)
+- [x] CSRF token predictable entropy (29b51c1)
+- [x] Rate limiter wired into handler chain (fc20c41)
+- [x] SecurityHeaders wired into handler chain (64991a6)
+- [x] Tenant spoofing fix (5bcbfce)
+- [x] Webhook SSRF protection (b52bafd)
+- [x] Audit hash chain implementation (fe5b025 — hash_chain.go)
+- [ ] gRPC TLS/mTLS between services
+- [ ] JWT signing key rotation infrastructure
+- [ ] Database backup automation (pg_dump cron)
 
 ## P1 — Feature Development
 
-### Completed (VERIFIED EXISTING)
-- [x] SCIM 2.0 PATCH support — services/identity/internal/scim/patch.go + filter.go (dev 2caa572)
-- [x] Session timeout middleware — session_timeout.go (dev 2caa572)
-- [x] SAML IdP-initiated SSO — pkg/saml/idp_initiated.go (dev 2caa572)
-- [x] OAuth DPoP support — services/oauth/internal/service/dpop.go (dev 2caa572)
-- [x] TOTP backup codes — backup_codes.go (dev 2caa572)
-- [x] GraphQL proxy middleware — graphql.go (uiux)
-- [x] WebSocket upgrade — wsproxy.go (uiux)
-- [x] gRPC server reflection — grpc_interceptor.go (uiux)
-- [x] Circuit breaker per backend — circuitbreaker.go (uiux)
-- [x] IP allowlist middleware — ipallowlist.go (uiux)
-- [x] Prometheus /metrics all services (uiux 122873e)
-- [x] Structured logging (slog) — 6 gateway middleware files (uiux 122873e)
-- [x] Console: all 33 pages (frontend — password-policy, user-import, audit, notifications, SSO, branding, API explorer, certs, etc.)
-- [x] Console: security dashboard, webhook tester, user activity
-- [x] Docs: api-reference, architecture, developer-environment, security-architecture, admin-guide, audit-guide, configuration, 128 total
-- [x] Research: 135 docs covering all major IAM topics
+### dev
+- [x] SCIM 2.0 PATCH support (2caa572)
+- [x] SAML IdP-initiated SSO (2caa572 — idp_initiated.go)
+- [x] OAuth DPoP support (2caa572 — dpop.go)
+- [x] TOTP backup codes (2caa572 — backup_codes.go)
+- [x] Session timeout middleware (2caa572)
+- [ ] OIDC back-channel logout (RFC 8411)
+- [ ] Session management with revocation list (session_management.go exists — verify completeness)
 
-### Outstanding — VERIFIED MISSING
-1. **OIDC back-channel logout** — no logout_token JWT validation (dev)
-2. **Deep health check aggregation** — no aggregate endpoint (uiux)
-3. **Per-route timeout middleware** — no configurable per-route timeouts (uiux)
-4. **CI/CD pipeline** — no .github/workflows (arch)
-5. **Helm chart** — no deploy/helm/ (arch)
-6. **Performance benchmarks** — no bench tests (all)
+### uiux
+- [x] GraphQL proxy middleware (graphql.go exists)
+- [x] WebSocket upgrade support (wsproxy.go exists)
+- [x] gRPC server reflection (grpc.go + grpc_interceptor.go exist)
+- [ ] Deep health check aggregation
+- [ ] Per-route timeout middleware
+
+### frontend
+- [x] Console SSO Configuration page (settings/sso + sso alias)
+- [x] Console Notification Templates page (notifications/templates)
+- [x] Console Audit Log Advanced Filters (audit page with date range, filters, export)
+- [x] Console User Import Wizard (users/import with CSV, mapping, preview)
+- [x] Console Password Policy Editor (settings/password-policy)
+> All assigned frontend tasks complete. Need NEW page ideas for next batch.
+
+### doc
+- [x] docs/architecture.md
+- [x] docs/architecture-decisions.md
+- [x] docs/sdk-guide.md (sdk-reference.md)
+- [x] docs/development.md (developer-environment.md)
+- [x] docs/api-reference.md
+- [x] docs/rbac-guide.md (untracked, from doc teammate)
+- [x] docs/webhook-guide.md (untracked, from doc teammate)
+- [x] docs/multi-tenancy.md (modified, from doc teammate)
+> 128 docs total. Need to audit what's missing.
+
+### arch
+- [x] SDK coverage tests (sdk/go — 71.4% coverage)
+- [x] Docker multi-stage build (deploy/)
+- [x] Prometheus /metrics for all services (122873e)
+- [x] Structured logging slog for gateway (122873e)
+- [ ] CI/CD pipeline (GitHub Actions)
+- [ ] Helm chart for Kubernetes
+- [ ] OpenTelemetry integration
 
 ## P2 — Quality & Polish
 
-### Outstanding
-- [ ] Coverage →95% (currently avg ~90%, scim 65%, webauthn 75%)
-- [ ] OpenAPI/Swagger spec generation
+### All
+- [ ] Coverage →95% across all packages
+- [ ] Integration test suite (10+ E2E tests)
+- [ ] Performance benchmarks
+- [ ] Dark mode for Console
 - [ ] Mobile-responsive Console
-- [ ] Dark mode Console
 
-## Assignment Rules
+## P3 — Future
 
-1. **Before assigning any task**: check if the file/feature already exists with `ls` or `grep`
-2. **Update this file** when tasks complete — move items from Outstanding to Completed
-3. **Stay in your lane**: dev owns oauth/auth, uiux owns gateway/middleware, arch owns shared pkg + infra
-4. **Never edit another teammate's files without coordination**
+- [ ] Multi-region active-active deployment
+- [ ] Vault/KMS integration
+- [ ] FIDO2 certification
+- [ ] Compliance certifications (SOC2, ISO27001)
+- [ ] Plugin system architecture
+
+## Coordination Rules
+
+1. **Before assigning any task**: `ls` and `grep` to verify target doesn't exist
+2. **After completing any task**: update this file immediately
+3. **Don't edit other teammates' files** without explicit coordination
+4. **dev owns**: services/oauth/, services/auth/
+5. **uiux owns**: services/gateway/internal/middleware/
+6. **arch owns**: pkg/, deploy/, sdk/, services/audit/, services/identity/
+7. **frontend owns**: console/
+8. **doc owns**: docs/ (except team-backlog.md)
+9. **researcher owns**: docs/research/
