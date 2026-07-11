@@ -43,6 +43,10 @@ export { useOrgs } from './useOrgs';
 export type { Organization, CreateOrgInput, UpdateOrgInput, UseOrgsResult } from './useOrgs';
 export { usePolicies } from './usePolicies';
 export type { Policy, ABACRule, CreatePolicyInput, UpdatePolicyInput, UsePoliciesResult } from './usePolicies';
+export { useTenants } from './useTenants';
+export type { Tenant, CreateTenantInput, UpdateTenantInput, UseTenantsResult } from './useTenants';
+export { useScopes } from './useScopes';
+export type { OAuthScope, CreateScopeInput, UpdateScopeInput, UseScopesResult } from './useScopes';
 export type {
   GGIDConfig,
   GGIDUser,
