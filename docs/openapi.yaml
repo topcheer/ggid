@@ -1724,6 +1724,113 @@ paths:
   # ---------------------------------------------------------------------------
   # OAuth / OIDC
   # ---------------------------------------------------------------------------
+  
+  # ---------------------------------------------------------------------------
+  # AI Agent Identity (MCP Auth)
+  # ---------------------------------------------------------------------------
+  /api/v1/agents/register:
+    post:
+      tags: [AI Agents]
+      summary: Register a new AI agent identity
+      description: Creates a new AI agent within a tenant. The agent receives OAuth client credentials and can be delegated authority by a user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRegistration'
+      responses:
+        '201':
+          description: Agent registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+
+  /api/v1/agents:
+    get:
+      tags: [AI Agents]
+      summary: List AI agents for a tenant
+      parameters:
+        - $ref: '#/components/parameters/TenantID'
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+                  total:
+                    type: integer
+
+  /api/v1/agents/token:
+    post:
+      tags: [AI Agents]
+      summary: Exchange user token for agent-scoped token (RFC 8693)
+      description: Validates the subject token (user's access token), checks scope permissions, and issues a new JWT with agent identity claims and delegation chain.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject_token, agent_id]
+              properties:
+                subject_token:
+                  type: string
+                  description: User's access token
+                agent_id:
+                  type: string
+                  format: uuid
+                scope:
+                  type: array
+                  items:
+                    type: string
+                mcp_servers:
+                  type: array
+                  items:
+                    type: string
+                audience:
+                  type: string
+      responses:
+        '200':
+          description: Agent token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTokenResponse'
+        '400':
+          description: Invalid request or scope not allowed
+
+  /api/v1/agents/verify:
+    post:
+      tags: [AI Agents]
+      summary: Verify an agent token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTokenIntrospection'
+        '401':
+          description: Token is invalid or not an agent token
+
   /.well-known/jwks.json:
     get:
       tags: [OAuth]
@@ -1811,6 +1918,172 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenSet'
+
+  # ---------------------------------------------------------------------------
+  # AI Agent Identity (MCP Auth)
+  # ---------------------------------------------------------------------------
+  /api/v1/agents/register:
+    post:
+      tags: [AI Agents]
+      summary: Register a new AI agent
+      description: Creates a new AI agent identity within a tenant. The agent is linked to an owner user.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TenantID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, owner_user_id]
+              properties:
+                name:
+                  type: string
+                  example: CodeBot-1
+                type:
+                  type: string
+                  enum: [coding-assistant, data-pipeline, customer-service, workflow-orchestrator, research-agent, custom]
+                  default: custom
+                owner_user_id:
+                  type: string
+                  format: uuid
+                description:
+                  type: string
+                allowed_scopes:
+                  type: array
+                  items:
+                    type: string
+                allowed_mcp_servers:
+                  type: array
+                  items:
+                    type: string
+                max_delegation_depth:
+                  type: integer
+                  default: 0
+                  description: Maximum number of delegation hops (0 = no sub-delegation)
+                rate_limit_per_min:
+                  type: integer
+                  default: 100
+      responses:
+        '201':
+          description: Agent registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/agents:
+    get:
+      tags: [AI Agents]
+      summary: List AI agents
+      description: Returns all agents for the specified tenant.
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/TenantID'
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+                  total:
+                    type: integer
+
+  /api/v1/agents/token:
+    post:
+      tags: [AI Agents]
+      summary: Exchange user token for agent token
+      description: Implements RFC 8693 Token Exchange for AI agents. Validates the subject token, checks scopes, and issues a new JWT with agent identity claims and delegation chain.
+      parameters:
+        - $ref: '#/components/parameters/TenantID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject_token, agent_id]
+              properties:
+                subject_token:
+                  type: string
+                  description: User's access token
+                agent_id:
+                  type: string
+                  format: uuid
+                scope:
+                  type: array
+                  items:
+                    type: string
+                mcp_servers:
+                  type: array
+                  items:
+                    type: string
+                audience:
+                  type: string
+      responses:
+        '200':
+          description: Agent token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/agents/verify:
+    post:
+      tags: [AI Agents]
+      summary: Verify an agent token
+      description: Validates an agent JWT and returns its claims including delegation chain and MCP server authorization.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                  agent_id:
+                    type: string
+                  agent_type:
+                    type: string
+                  is_agent_token:
+                    type: boolean
+                  max_delegation_depth:
+                    type: integer
+                  delegation_chain:
+                    type: array
+                    items:
+                      type: object
+                  mcp_servers:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Invalid token
 
 # =============================================================================
 # Components
