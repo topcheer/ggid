@@ -232,3 +232,99 @@ app.wsgi_app = GGIDAuthMiddleware(
 | Permission Guard | Yes | Yes | No | No |
 | Scope Guard | Yes | No | No | No |
 | Structured Errors | Yes (APIError) | Yes (regex) | Yes (GGIDException) | No |
+
+---
+
+## Error Handling
+
+### Go
+
+```go
+user, err := client.Users.Get(ctx, "user-id")
+if err != nil {
+    var apiErr *ggid.APIError
+    if errors.As(err, &apiErr) {
+        switch apiErr.Code {
+        case "auth.token_expired":
+            // Refresh and retry
+        case "identity.user_not_found":
+            log.Printf("Not found: %s", apiErr.Message)
+        case "gateway.rate_limited":
+            time.Sleep(time.Duration(apiErr.RetryAfter) * time.Second)
+        }
+    }
+}
+```
+
+### Node.js
+
+```typescript
+try {
+  await client.users.get('user-id');
+} catch (err) {
+  if (err instanceof ggid.APIError) {
+    if (err.code === 'gateway.rate_limited') {
+      await sleep(err.retryAfter * 1000);
+    }
+  }
+}
+```
+
+### APIError Structure
+
+```json
+{
+  "code": "identity.user_not_found",
+  "message": "User not found",
+  "status": 404,
+  "retry_after": null
+}
+```
+
+---
+
+## Pagination
+
+### Cursor-Based (SDK)
+
+```go
+// Go
+users, cursor, _ := client.Users.List(ctx, &ggid.ListOptions{Limit: 50})
+for cursor != "" {
+    users, cursor, _ = client.Users.List(ctx, &ggid.ListOptions{
+        Limit: 50, Cursor: cursor,
+    })
+}
+```
+
+```typescript
+// Node.js — async iterator (auto-paginates)
+for await (const user of client.users.list({ limit: 50 })) {
+  console.log(user.username);
+}
+```
+
+---
+
+## Retry Configuration
+
+```go
+client := ggid.NewClient("https://iam.example.com", ggid.WithRetry(
+    ggid.RetryConfig{
+        MaxAttempts:   3,
+        InitialDelay:  1 * time.Second,
+        MaxDelay:      30 * time.Second,
+        Multiplier:    2,
+        RetryOnStatus: []int{429, 500, 502, 503, 504},
+    },
+))
+```
+
+| Attempt | Delay |
+|---------|-------|
+| 1 | Immediate |
+| 2 | 1s |
+| 3 | 2s |
+| 4 (max) | 4s |
+
+> Retries respect `Retry-After` header on 429 responses.

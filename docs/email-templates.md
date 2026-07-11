@@ -238,4 +238,117 @@ PATCH /api/v1/users/{user_id}
 4. **Keep emails under 100KB** — Large emails may be clipped
 5. **Include clear expiry info** — Users should know when links expire
 6. **Don't put sensitive data in email** — Use tokens, not passwords
+7. **Localize emails** — Match user's `preferred_language` setting
+
+---
+
+## Localization
+
+### Supported Languages
+
+```yaml
+email:
+  locales:
+    - en-US    # English (default)
+    - es-ES    # Spanish
+    - fr-FR    # French
+    - de-DE    # German
+    - ja-JP    # Japanese
+    - zh-CN    # Chinese (Simplified)
+    - pt-BR    # Portuguese (Brazil)
+```
+
+### Translation Files
+
+```
+locales/
+  en-US/
+    welcome.json
+    password_reset.json
+    mfa_code.json
+  es-ES/
+    welcome.json
+    ...
+```
+
+### Example Translation (es-ES/welcome.json)
+
+```json
+{
+  "subject": "Bienvenido a {{.Tenant.Name}}",
+  "body": "Hola {{.User.DisplayName}},\n\nTu cuenta está lista.\n\n{{.Action.URL}}"
+}
+```
+
+### Locale Resolution
+
+1. User's `preferred_language` field
+2. Tenant default language
+3. `en-US` (fallback)
+
+---
+
+## Branding
+
+### Tenant-Specific Branding
+
+```yaml
+branding:
+  logo_url: "https://acme.com/logo.png"
+  primary_color: "#1a73e8"
+  login_page_title: "Acme Corp Login"
+  email_from: "noreply@acme.com"
+  email_from_name: "Acme Security"
+  email_footer: "© 2024 Acme Corp. All rights reserved."
+  email_header_image: "https://acme.com/email-header.png"
+```
+
+### Template Variables for Branding
+
+| Variable | Description |
+|---------|-------------|
+| `{{.Tenant.Name}}` | Tenant display name |
+| `{{.Tenant.LogoURL}}` | Logo image URL |
+| `{{.Tenant.PrimaryColor}}` | Brand color (hex) |
+| `{{.Tenant.EmailFromName}}` | From name |
+| `{{.Tenant.EmailFooter}}` | Footer text |
+
+---
+
+## Testing
+
+### Preview Template
+
+```bash
+curl -X POST "$GW/api/v1/admin/notifications/templates/welcome_email/preview" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{ "user_id": "test-user-id" }'
+```
+
+### Send Test Email
+
+```bash
+curl -X POST "$GW/api/v1/admin/notifications/test" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "template": "welcome_email",
+    "recipient": "test@example.com",
+    "locale": "es-ES"
+  }'
+```
+
+### Validate Template Syntax
+
+```bash
+curl -X POST "$GW/api/v1/admin/notifications/templates/validate" \
+  -d '{ "body": "Hello {{.User.DisplayName}}" }'
+```
+
+```json
+{
+  "valid": true,
+  "variables_used": [".User.DisplayName"],
+  "warnings": []
+}
+```
 7. **Brand consistently** — Match email design with login page and console
