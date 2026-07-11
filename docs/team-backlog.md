@@ -536,6 +536,7 @@
 - [x] Total: 352 keys, 0 duplicates, 0 missing zh translations
 - [x] i18n batch 4: dashboard (10), login (15), sidebar (2), nav+common keys (22) — 49 new keys, 401 total (this commit)
 - [x] i18n batch 5: 8 new namespaces (permissions, policies, groups, sessions, onboarding, notifications, consent, settingsPage) — 505 total keys (ca347a1)
+- [x] i18n batch 6: roles.* expanded (22), passwordPolicy (18), audit.* expanded (9) — 551 total keys, wired roles+password-policy pages (c6b16df)
 
 ## Sprint: i18n Coordination + Mobile + Build (frontend ef4cfc8)
 - [x] Dashboard i18n — already wired to useTranslations() (5 t() calls, no hardcoded strings remaining) (ef4cfc8)
