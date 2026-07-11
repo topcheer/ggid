@@ -122,6 +122,88 @@ public class GGIDClient {
     }
 
     // -----------------------------------------------------------------------
+    // OAuth/OIDC
+    // -----------------------------------------------------------------------
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getOIDCDiscovery() throws GGIDException, IOException {
+        return get("/.well-known/openid-configuration", Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getJWKS() throws GGIDException, IOException {
+        return get("/oauth/jwks", Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getUserInfo(String accessToken) throws GGIDException, IOException {
+        Request request = buildRequest("GET", "/oauth/userinfo", null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + accessToken)
+                .build();
+        return execute(request, Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> registerOAuthClient(String clientName, List<String> redirectUris,
+                                                     List<String> grantTypes, String scope)
+            throws GGIDException, IOException {
+        return post("/api/v1/oauth/register", Map.of(
+                "client_name", clientName,
+                "redirect_uris", redirectUris,
+                "grant_types", grantTypes != null ? grantTypes : List.of("authorization_code"),
+                "scope", scope != null ? scope : ""
+        ), Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> listOAuthClients(String accessToken) throws GGIDException, IOException {
+        Request request = buildRequest("GET", "/api/v1/oauth/clients", null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + accessToken)
+                .build();
+        return execute(request, new TypeReference<List<Map<String, Object>>>() {});
+    }
+
+    public void deleteOAuthClient(String accessToken, String clientId) throws GGIDException, IOException {
+        Request request = buildRequest("DELETE", "/api/v1/oauth/clients/" + clientId, null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + accessToken)
+                .build();
+        execute(request, Void.class);
+    }
+
+    public void revokeToken(String token) throws GGIDException, IOException {
+        post("/api/v1/oauth/revoke", Map.of("token", token), Void.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> deviceAuthorization(String clientId, String scope)
+            throws GGIDException, IOException {
+        return post("/api/v1/oauth/device_authorization", Map.of(
+                "client_id", clientId, "scope", scope), Map.class);
+    }
+
+    public String buildAuthorizeURL(String clientId, String redirectUri, String responseType,
+                                     String scope, String state, String nonce,
+                                     String codeChallenge, String codeChallengeMethod) {
+        StringBuilder url = new StringBuilder(gatewayUrl)
+                .append("/oauth/authorize?")
+                .append("client_id=").append(clientId)
+                .append("&redirect_uri=").append(redirectUri)
+                .append("&response_type=").append(responseType);
+        if (scope != null && !scope.isEmpty()) url.append("&scope=").append(scope);
+        if (state != null && !state.isEmpty()) url.append("&state=").append(state);
+        if (nonce != null && !nonce.isEmpty()) url.append("&nonce=").append(nonce);
+        if (codeChallenge != null && !codeChallenge.isEmpty()) {
+            url.append("&code_challenge=").append(codeChallenge);
+            url.append("&code_challenge_method=")
+              .append(codeChallengeMethod != null ? codeChallengeMethod : "S256");
+        }
+        return url.toString();
+    }
+
+    // -----------------------------------------------------------------------
     // Internal HTTP helpers
     // -----------------------------------------------------------------------
 
