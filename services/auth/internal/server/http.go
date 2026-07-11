@@ -279,6 +279,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password-strength/distribution", h.handlePasswordStrengthDist)
 	h.mux.HandleFunc("/api/v1/auth/login-geo/enrich", h.handleLoginGeoEnrich)
 	h.mux.HandleFunc("/api/v1/auth/risk-notify", h.handleRiskNotify)
+	h.mux.HandleFunc("/api/v1/auth/password-reset/analytics", h.handlePasswordResetAnalytics)
 }
 
 // ServeHTTP implements http.Handler.

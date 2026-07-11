@@ -213,6 +213,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleCloneTemplate(ctx, userID, w, r)
 	case action == "certification-status" && r.Method == http.MethodGet:
 		h.handleCertificationStatus(ctx, userID, w, r)
+	case action == "delegations":
+		h.handleDelegations(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

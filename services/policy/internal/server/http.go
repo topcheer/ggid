@@ -73,6 +73,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/privileged-access", s.handlePrivilegedAccess)
 	mux.HandleFunc("/api/v1/policies/privileged-access/revoke", s.handlePrivilegedAccess)
 	mux.HandleFunc("/api/v1/policies/standing-access", s.handleStandingAccess)
+	mux.HandleFunc("/api/v1/policies/emergency-access/audit", s.handleEmergencyAccessAudit)
 	mux.HandleFunc("/api/v1/policies/effectiveness", s.handlePolicyEffectiveness)
 	mux.HandleFunc("/api/v1/policies/delegate", s.handleDelegate)
 	mux.HandleFunc("/api/v1/policies/delegations", s.handleListDelegations)
