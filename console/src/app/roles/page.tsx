@@ -240,7 +240,7 @@ export default function RolesPage() {
         <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold">New Role</h3>
-            <button onClick={() => setShowCreate(false)}>
+            <button onClick={() => setShowCreate(false)} aria-label="Close">
               <X className="h-4 w-4 text-gray-400" />
             </button>
           </div>
@@ -300,7 +300,7 @@ export default function RolesPage() {
         <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-semibold">Edit Role: {editingRole.name || editingRole.key}</h3>
-            <button onClick={() => setEditingRole(null)}>
+            <button onClick={() => setEditingRole(null)} aria-label="Close">
               <X className="h-4 w-4 text-gray-400" />
             </button>
           </div>

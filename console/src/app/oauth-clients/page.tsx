@@ -128,7 +128,7 @@ export default function OAuthClientsPage() {
             <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-800">
               <KeyRound className="h-4 w-4" /> Client Secret (show only once!)
             </h3>
-            <button onClick={() => setNewSecret(null)}>
+            <button onClick={() => setNewSecret(null)} aria-label="Close">
               <X className="h-4 w-4 text-gray-400" />
             </button>
           </div>
@@ -155,7 +155,7 @@ export default function OAuthClientsPage() {
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold">New OAuth Client</h3>
-            <button onClick={() => setShowCreate(false)}>
+            <button onClick={() => setShowCreate(false)} aria-label="Close">
               <X className="h-4 w-4 text-gray-400" />
             </button>
           </div>

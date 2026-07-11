@@ -263,7 +263,7 @@ export default function OAuthClientsPage() {
           <div className="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{editingClient ? "Edit Client" : "Create OAuth Client"}</h2>
-              <button onClick={() => setShowForm(false)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><X className="h-5 w-5" /></button>
+              <button onClick={() => setShowForm(false)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
 
             <div className="space-y-5">
@@ -307,7 +307,7 @@ export default function OAuthClientsPage() {
                 {form.scopes.filter(s => !STANDARD_SCOPES.includes(s)).length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {form.scopes.filter(s => !STANDARD_SCOPES.includes(s)).map(s => (
-                      <span key={s} className="flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-700 dark:bg-brand-900 dark:text-brand-300">{s}<button onClick={() => toggleScope(s)}><X className="h-3 w-3" /></button></span>
+                      <span key={s} className="flex items-center gap-1 rounded-full bg-brand-100 px-2 py-0.5 text-xs text-brand-700 dark:bg-brand-900 dark:text-brand-300">{s}<button onClick={() => toggleScope(s)} aria-label="Remove scope"><X className="h-3 w-3" /></button></span>
                     ))}
                   </div>
                 )}

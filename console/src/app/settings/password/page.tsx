@@ -591,7 +591,7 @@ export default function PasswordPolicyEnhancedPage() {
                   Common Password Blacklist
                 </h3>
               </div>
-              <button onClick={() => setShowBlacklist(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowBlacklist(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600">
                 <X className="h-5 w-5" />
               </button>
             </div>

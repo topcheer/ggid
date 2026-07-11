@@ -27,7 +27,7 @@ import {
   AreaChart,
   Area,
   Legend,
-} from "recharts";
+} from "@/components/charts/lazy-charts";
 
 interface AuditEvent {
   id: string;

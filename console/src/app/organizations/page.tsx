@@ -1041,7 +1041,7 @@ function CreateForm({
     >
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-sm font-semibold">{title}</h3>
-        <button type="button" onClick={onClose}>
+        <button type="button" onClick={onClose} aria-label="Close">
           <X className="h-4 w-4 text-gray-400" />
         </button>
       </div>

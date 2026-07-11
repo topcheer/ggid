@@ -552,7 +552,7 @@ export default function CertificatesPage() {
           <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Upload CSR</h2>
-              <button onClick={() => setShowCsr(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X className="h-5 w-5" /></button>
+              <button onClick={() => setShowCsr(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
               <div>
@@ -593,7 +593,7 @@ export default function CertificatesPage() {
           <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Import Certificate</h2>
-              <button onClick={() => setShowImport(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X className="h-5 w-5" /></button>
+              <button onClick={() => setShowImport(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
               <div>
@@ -645,7 +645,7 @@ export default function CertificatesPage() {
                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_BADGE[detailCert.type] || TYPE_BADGE.TLS}`}>{detailCert.type}</span>
                 </div>
               </div>
-              <button onClick={() => setDetailCert(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><X className="h-5 w-5" /></button>
+              <button onClick={() => setDetailCert(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-3">
               <DetailRow label="Issuer" value={detailCert.issuer} mono />

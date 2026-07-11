@@ -212,10 +212,22 @@ npm start
 
 ### Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8080` | API Gateway URL |
-| `NEXT_PUBLIC_TENANT_ID` | — | Default tenant for Console |
+See [`.env.example`](./.env.example) for a complete reference.
+
+| Variable | Scope | Default | Description |
+|----------|-------|---------|-------------|
+| `NEXT_PUBLIC_API_URL` | Client | `http://localhost:8080` | API Gateway URL for browser requests |
+| `NEXT_PUBLIC_TENANT_ID` | Client | `00000000-0000-0000-0000-000000000001` | Default tenant ID sent in `X-Tenant-ID` header |
+| `NEXT_PUBLIC_GGID_API` | Client | — | Legacy alias for `NEXT_PUBLIC_API_URL` (lower priority) |
+| `GATEWAY_URL` | Server | `http://localhost:8080` | Gateway URL for Next.js server-side rewrites (`/api/*`, `/oauth/*`) |
+
+**Quick setup:**
+
+```bash
+cp .env.example .env.local
+# Edit .env.local to match your environment
+npm run dev
+```
 
 ### Mock vs Real Backend
 

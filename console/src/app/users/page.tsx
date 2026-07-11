@@ -472,7 +472,7 @@ export default function UsersPage() {
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold dark:text-gray-100">Import Users from CSV</h2>
-            <button onClick={closeCsvImport} className="text-gray-400 hover:text-gray-600">
+            <button onClick={closeCsvImport} className="text-gray-400 hover:text-gray-600" aria-label="Close">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -592,7 +592,7 @@ export default function UsersPage() {
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Import Users (CSV)</h2>
-            <button onClick={() => setShowImport(false)}><X className="h-4 w-4 text-gray-400" /></button>
+            <button onClick={() => setShowImport(false)} aria-label="Close"><X className="h-4 w-4 text-gray-400" /></button>
           </div>
           <p className="mb-2 text-xs text-gray-500">Format: username,email,password (one per line, password optional)</p>
           <textarea

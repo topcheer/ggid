@@ -492,7 +492,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
             <button
               onClick={closeDrawer}
               className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
+             aria-label="Close">
               <X className="h-4 w-4" />
             </button>
           </div>

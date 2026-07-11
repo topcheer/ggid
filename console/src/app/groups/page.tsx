@@ -561,7 +561,7 @@ export default function GroupsPage() {
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold dark:text-gray-100">Add Members</h3>
-              <button onClick={() => setShowMemberPicker(null)} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+              <button onClick={() => setShowMemberPicker(null)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="relative mb-3">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -606,7 +606,7 @@ export default function GroupsPage() {
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold dark:text-gray-100">Add Roles to {selectedIds.size} Group(s)</h3>
-              <button onClick={() => setShowBulkRolePicker(false)} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+              <button onClick={() => setShowBulkRolePicker(false)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-2">
               {roles.map((r) => (
@@ -648,7 +648,7 @@ export default function GroupsPage() {
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold dark:text-gray-100">Add Member to {selectedIds.size} Group(s)</h3>
-              <button onClick={() => setShowBulkMemberPicker(false)} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+              <button onClick={() => setShowBulkMemberPicker(false)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <input
               value={bulkMemberInput}
@@ -727,7 +727,7 @@ function GroupRow({
                 className="inline-flex items-center gap-0.5 rounded-full bg-purple-50 px-2 py-0.5 text-xs text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
               >
                 {r.name || r.key}
-                <button onClick={() => onRemoveRole(r.id)} className="ml-0.5 text-purple-400 hover:text-red-500">
+                <button onClick={() => onRemoveRole(r.id)} aria-label="Remove role" className="ml-0.5 text-purple-400 hover:text-red-500">
                   <X className="h-3 w-3" />
                 </button>
               </span>

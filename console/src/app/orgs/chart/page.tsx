@@ -495,7 +495,7 @@ function SettingsDrawer({
             <Building2 className="h-5 w-5 text-brand-600" />
             Org Settings
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>

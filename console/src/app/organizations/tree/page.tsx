@@ -703,7 +703,7 @@ export default function OrganizationTreePage() {
               <button
                 onClick={closeModal}
                 className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-              >
+               aria-label="Close">
                 <X className="h-5 w-5" />
               </button>
             </div>

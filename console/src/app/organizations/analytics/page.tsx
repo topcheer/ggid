@@ -6,7 +6,7 @@ import { Building2, TrendingUp, Users, Shield, Layers, RefreshCw } from "lucide-
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, AreaChart, Area,
-} from "recharts";
+} from "@/components/charts/lazy-charts";
 
 interface OrgStats {
   total_orgs: number;

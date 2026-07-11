@@ -243,7 +243,7 @@ export default function OAuthClientsSettingsPage() {
             <h3 className="flex items-center gap-2 text-sm font-bold text-amber-800">
               <AlertTriangle className="h-5 w-5" /> Secret Revealed — Copy NOW!
             </h3>
-            <button onClick={() => setNewSecret(null)}>
+            <button onClick={() => setNewSecret(null)} aria-label="Close">
               <X className="h-4 w-4 text-gray-400" />
             </button>
           </div>
@@ -270,7 +270,7 @@ export default function OAuthClientsSettingsPage() {
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold dark:text-gray-100">Register New OAuth Client</h3>
-            <button onClick={() => setShowCreate(false)} className="text-gray-400 hover:text-gray-600">
+            <button onClick={() => setShowCreate(false)} aria-label="Close" className="text-gray-400 hover:text-gray-600">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -332,7 +332,7 @@ export default function OAuthClientsSettingsPage() {
             <h3 className="text-sm font-semibold dark:text-gray-100">
               Edit Client: {editClient.name}
             </h3>
-            <button onClick={() => { setShowEdit(false); setEditClient(null); }} className="text-gray-400 hover:text-gray-600">
+            <button onClick={() => { setShowEdit(false); setEditClient(null); }} aria-label="Close" className="text-gray-400 hover:text-gray-600">
               <X className="h-5 w-5" />
             </button>
           </div>
