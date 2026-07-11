@@ -387,10 +387,10 @@
 - [x] competitive-update-2026-07.md (576 lines, 3b1065c) — Keycloak 26 workflows+IGA, Auth0 MCP for AI, Casdoor 8 releases, Stytch→Twilio acquisition
 
 ### Batch 38 — Strategic Gap Research (3 docs + 2 updates)
-- [x] ai-agent-identity-analysis.md (pending commit)
-- [x] bot-protection-analysis.md (pending commit)
-- [x] iga-workflows-analysis.md (pending commit)
-- [x] gap-closure-report.md UPDATED with 5 new strategic gaps (pending commit)
+- [x] ai-agent-identity-analysis.md (2108 lines, 81dd633)
+- [x] bot-protection-analysis.md (960 lines, ac23146)
+- [x] iga-workflows-analysis.md (1279 lines, c803b1b)
+- [x] gap-closure-report.md UPDATED with 5 new strategic gaps
 - [x] team-backlog.md UPDATED with new strategic gaps
 
 ### NEW STRATEGIC GAPS (from competitive monitoring 2026-07)
