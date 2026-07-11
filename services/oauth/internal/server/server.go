@@ -1179,6 +1179,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientAnalytics(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/rotate-secret") || strings.HasSuffix(r.URL.Path, "/secret-status") {
+			handleClientSecretRotation(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 	mux.HandleFunc("/api/v1/oauth/par", handlePAR)

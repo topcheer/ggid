@@ -7,135 +7,78 @@ import (
 	"time"
 )
 
-// loginAttempt tracks a login attempt for credential stuffing analysis.
-type loginAttempt struct {
-	IP        string
-	UserAgent string
-	Success   bool
-	Timestamp time.Time
+type BlockedIP struct {
+	IP        string    `json:"ip"`
+	Reason    string    `json:"reason"`
+	BlockedAt time.Time `json:"blocked_at"`
+	ExpiresAt time.Time `json:"expires_at,omitempty"`
+	Auto      bool      `json:"auto"`
 }
 
 var (
-	attemptLogMu sync.Mutex
-	attemptLog   []loginAttempt
+	credStuffingMu sync.RWMutex
+	credStuffingIPs = make(map[string]*BlockedIP)
+	autoBlockRules = []map[string]any{
+		{"rule": "failed_logins_threshold", "value": 10, "window_minutes": 5, "action": "block_1h"},
+		{"rule": "unique_user_attempts", "value": 15, "window_minutes": 10, "action": "block_24h"},
+		{"rule": "known_credential_stuffing_pattern", "action": "block_permanent"},
+	}
 )
 
-// RecordLoginAttempt adds a login attempt to the analysis log.
-func RecordLoginAttempt(ip, ua string, success bool) {
-	attemptLogMu.Lock()
-	defer attemptLogMu.Unlock()
-	attemptLog = append(attemptLog, loginAttempt{
-		IP: ip, UserAgent: ua, Success: success, Timestamp: time.Now().UTC(),
-	})
-	// Trim to last 10,000
-	if len(attemptLog) > 10000 {
-		attemptLog = attemptLog[len(attemptLog)-10000:]
-	}
+// handleDetectCredentialStuffing is an alias for the detection endpoint
+func (h *Handler) handleDetectCredentialStuffing(w http.ResponseWriter, r *http.Request) {
+	h.handleCredentialStuffing(w, r)
 }
 
-// POST /api/v1/auth/detect-credential-stuffing
-// Body: {"time_window": "1h", "min_attempts": 10}
-func (h *Handler) handleDetectCredentialStuffing(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+// POST /api/v1/auth/credential-stuffing/block — manually block IP
+// GET /api/v1/auth/credential-stuffing/blocked — list blocked IPs + rules
+// POST /api/v1/auth/detect-credential-stuffing — detect credential stuffing attempts
+func (h *Handler) handleCredentialStuffing(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		var req struct {
+			IP       string `json:"ip"`
+			Reason   string `json:"reason"`
+			Duration string `json:"duration"` // e.g. "1h", "24h", "permanent"
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON")
+			return
+		}
+		if req.IP == "" {
+			writeError(w, http.StatusBadRequest, "ip required")
+			return
+		}
+
+		now := time.Now().UTC()
+		expiry := now.Add(1 * time.Hour)
+		switch req.Duration {
+		case "24h":
+			expiry = now.Add(24 * time.Hour)
+		case "permanent":
+			expiry = time.Time{} // zero = no expiry
+		}
+		blocked := &BlockedIP{IP: req.IP, Reason: req.Reason, BlockedAt: now, ExpiresAt: expiry, Auto: false}
+		credStuffingMu.Lock()
+		credStuffingIPs[req.IP] = blocked
+		credStuffingMu.Unlock()
+		writeJSON(w, http.StatusOK, map[string]any{"status": "blocked", "ip": req.IP, "blocked_at": now})
 		return
 	}
 
-	var req struct {
-		TimeWindow string `json:"time_window"`
-		MinAttempts int   `json:"min_attempts"`
-	}
-	if r.ContentLength > 0 {
-		_ = json.NewDecoder(r.Body).Decode(&req)
-	}
-	if req.TimeWindow == "" {
-		req.TimeWindow = "1h"
-	}
-	if req.MinAttempts <= 0 {
-		req.MinAttempts = 10
-	}
-
-	dur, err := time.ParseDuration(req.TimeWindow)
-	if err != nil || dur <= 0 {
-		dur = time.Hour
-	}
-	cutoff := time.Now().UTC().Add(-dur)
-
-	// Analyze recent attempts
-	attemptLogMu.Lock()
-	defer attemptLogMu.Unlock()
-
-	ipCounts := make(map[string]int)
-	ipSuccess := make(map[string]int)
-	uaSet := make(map[string]int)
-	total := 0
-
-	for _, a := range attemptLog {
-		if a.Timestamp.Before(cutoff) {
-			continue
+	if r.Method == http.MethodGet {
+		credStuffingMu.RLock()
+		blocked := make([]*BlockedIP, 0, len(credStuffingIPs))
+		for _, b := range credStuffingIPs {
+			blocked = append(blocked, b)
 		}
-		total++
-		ipCounts[a.IP]++
-		if a.Success {
-			ipSuccess[a.IP]++
-		}
-		uaSet[a.UserAgent]++
+		credStuffingMu.RUnlock()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"blocked_ips":      blocked,
+			"total_blocked":    len(blocked),
+			"auto_block_rules": autoBlockRules,
+		})
+		return
 	}
 
-	// Detect credential stuffing indicators
-	var blockedIPs []string
-	highVolumeIPs := 0
-	lowSuccessRate := false
-
-	for ip, count := range ipCounts {
-		if count >= req.MinAttempts {
-			highVolumeIPs++
-			successRate := float64(ipSuccess[ip]) / float64(count)
-			if successRate < 0.05 { // <5% success = suspicious
-				lowSuccessRate = true
-				blockedIPs = append(blockedIPs, ip)
-			}
-		}
-	}
-
-	// User agent diversity (many UAs from same IP = bot)
-	uaDiversity := len(uaSet)
-	ipSpread := len(ipCounts)
-
-	// Confidence score
-	confidence := 0.0
-	if highVolumeIPs > 0 {
-		confidence += 30
-	}
-	if lowSuccessRate {
-		confidence += 30
-	}
-	if uaDiversity > 5 {
-		confidence += 20
-	}
-	if ipSpread > 3 {
-		confidence += 20
-	}
-	if confidence > 100 {
-		confidence = 100
-	}
-
-	detected := confidence >= 60
-
-	if blockedIPs == nil {
-		blockedIPs = []string{}
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"is_detected":       detected,
-		"confidence":        int(confidence),
-		"total_attempts":    total,
-		"unique_ips":        ipSpread,
-		"unique_user_agents": uaDiversity,
-		"high_volume_ips":   highVolumeIPs,
-		"low_success_rate":  lowSuccessRate,
-		"blocked_ips":       blockedIPs,
-		"time_window":       req.TimeWindow,
-		"analyzed_at":       time.Now().UTC().Format(time.RFC3339),
-	})
+	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

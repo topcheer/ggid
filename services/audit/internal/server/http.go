@@ -121,6 +121,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/anomalies/detect", s.handleAnomalyDetect)
 	mux.HandleFunc("/api/v1/audit/tamper-check", s.handleTamperCheck)
 	mux.HandleFunc("/api/v1/audit/gdpr/forget", s.handleGDPRForget)
+	mux.HandleFunc("/api/v1/audit/compliance/auto-collect", s.handleComplianceAutoCollect)
 	mux.HandleFunc("/api/v1/audit/webhooks/delivery-status", s.handleWebhookDelivery)
 	mux.HandleFunc("/api/v1/audit/webhooks/", s.handleWebhookDelivery)
 	mux.HandleFunc("/api/v1/audit/dashboards/", s.handleDashboardWidgets)
