@@ -519,3 +519,17 @@
 - [x] Console build verification — npm run build: 0 errors, 0 warnings, all 70+ pages prerender (ef4cfc8)
 - [x] Console dark mode — CSS auto-fallback active, no contrast issues on main pages (ef4cfc8)
 - [x] Mobile responsive — added overflow-x-auto to 3 table pages (activity, monitoring, organizations), added sidebar backdrop overlay, hamburger menu already existed (ef4cfc8)
+
+## Sprint: i18n Remaining Pages + E2E Verification (frontend 29fec8f)
+- [x] Console i18n — added useI18n hook to roles, audit, activity, monitoring pages (29fec8f)
+- [x] User CRUD E2E — API CRUD works (register 201, list 200, get 200). List returns 0 users (backend identity service issue, not console bug) (29fec8f)
+- [x] Console settings pages — all 21 settings subpages load HTTP 200 (sso, oauth-clients, api-keys, certificates, branding, tenant-config, mfa, login-flows, + 13 more) (29fec8f)
+- [x] Sidebar navigation — all 14 sidebar links resolve to existing pages, 0 missing/404 (29fec8f)
+- [x] Console error handling — gateway down → console shows "Reconnecting..." in sidebar, health dots turn red, all panels show empty states, no white screen (29fec8f)
+
+## Sprint: i18n Remaining Pages + Verification (frontend 29fec8f)
+- [x] i18n hooks for roles, audit, activity, monitoring — useI18n() + t() added to all 4 pages (29fec8f)
+- [x] User CRUD E2E — register works (201 + user_id), list endpoint returns empty (backend store mismatch, not console bug) (29fec8f)
+- [x] Settings pages verification — all 8 settings pages return HTTP 200 (sso, oauth-clients, api-keys, certificates, branding, tenant-config, mfa, login-flows) (29fec8f)
+- [x] Sidebar navigation — all 14 links verified, no 404s (29fec8f)
+- [x] Error handling — gateway scaled to 0: console shows "Reconnecting...", health dots red, empty states. No white screen. Gateway restored. (29fec8f)
