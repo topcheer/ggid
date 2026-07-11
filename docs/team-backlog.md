@@ -765,14 +765,14 @@
 
 ### Research Tasks (docs/researcher)
 - [ ] **Gap #24 React SDK design** — docs/research/react-sdk-design.md. Auth0/Clerk/Ory SDK analysis, GGID API design
-- [ ] **Gap #18 SIEM connector analysis** — docs/research/siem-connector-analysis.md. Splunk HEC/Datadog/Elasticsearch, NATS bridge design
-- [ ] **Gap #26 Data retention analysis** — docs/research/data-retention-analysis.md. PostgreSQL partitioning, GDPR, TTL enforcement
+- [x] **Gap #18 SIEM connector analysis** — DONE (docs fa09abb). siem-connector-design.md with NATS→Splunk/Datadog/ES architecture
+- [x] **Gap #26 Data retention analysis** — DONE (docs fa09abb). data-retention-policy.md with GDPR pipeline, retention_rules schema
 - [ ] **NEW-5 Device-Bound SSO analysis** — docs/research/device-bound-sso-analysis.md. Auth0 approach, WebAuthn extension plan
 - [ ] **NEW-3 Bot Protection audit** — docs/research/bot-protection-analysis.md (update if exists). botdetect.go vs Auth0 Attack Protection
 
 ### Implementation Tasks (backend/dev)
 - [ ] **Gap #26 Data retention API** — services/audit/internal/retention/retention.go. RetentionPolicy, PUT/GET /api/v1/audit/retention
-- [ ] **Gap #18 SIEM Forwarder** — pkg/audit/siem_forwarder.go. NATS subscriber → Splunk HEC / Datadog HTTP API
+- [x] **Gap #18 SIEM Forwarder** — DONE (arch 854eaf1). pkg/audit/siem_forwarder.go: Splunk HEC, Datadog, Elasticsearch, generic. 8 tests PASS
 - [ ] **NEW-5 Device-Bound SSO skeleton** — services/oauth/internal/service/device_bound_sso.go. Interface + TODO
 
 ### Implementation Tasks (frontend)
