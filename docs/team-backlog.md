@@ -585,3 +585,11 @@
 - [x] activity/page.tsx — 12 keys added, 2 strings wired (event types, results) (b2c7fac)
 - [x] monitoring/page.tsx — 9 keys added, 10 strings wired (healthy/checking/unhealthy, stats) (b2c7fac)
 - [x] gen-i18n-dicts.py regenerated: 611 EN keys, 611 ZH keys (b2c7fac)
+
+## Sprint: i18n Settings Pages — SSO/OAuth/APIKeys/Certs + TSC Fix (frontend 2e46047)
+- [x] password-policy TSC fix — added const { t } = useI18n() destructure (2e46047)
+- [x] i18n settings/sso — 9 new keys (active/inactive, connected/failed, activate/deactivate, cert) (2e46047)
+- [x] i18n settings/oauth-clients — 13 new keys (created/updated/deleted, rotate, edit/delete) (2e46047)
+- [x] i18n settings/api-keys — 7 new keys (read/write/admin scopes, expired, selectScope) (2e46047)
+- [x] i18n settings/certificates — 4 new keys (valid, expiringSoon, expired, rotated) (2e46047)
+- [x] i18n-dicts.ts regenerated: 631 EN + 631 ZH keys, npm run build 0 errors (2e46047)
