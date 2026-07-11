@@ -189,7 +189,20 @@
     "scopesComma": "授权范围（逗号分隔）",
     "registerNew": "注册新的 OAuth 客户端",
     "noClients": "未注册 OAuth 客户端",
-    "clientNamePlaceholder": "例如：我的 Web 应用"
+    "clientNamePlaceholder": "例如：我的 Web 应用",
+    "failedLoad": "加载失败",
+    "created": "客户端创建成功",
+    "failedCreate": "创建失败",
+    "updated": "客户端已更新",
+    "failedUpdate": "更新失败",
+    "deleted": "客户端已删除",
+    "failedDelete": "删除失败",
+    "rotateConfirm": "轮换客户端密钥？旧密钥将立即失效。",
+    "secretRotated": "密钥已轮换 — 请立即复制新密钥！",
+    "failedRotate": "密钥轮换失败",
+    "edit": "编辑",
+    "rotateSecret": "轮换密钥",
+    "delete": "删除"
   },
   "webhooks": {
     "title": "Webhook",
@@ -225,7 +238,8 @@
     "keyRevoked": "API 密钥已吊销",
     "enterKeyName": "请输入 API 密钥的名称",
     "selectScope": "请至少选择一个授权范围",
-    "storeSecurely": "请将其存储在安全位置。您之后将无法再次获取。"
+    "storeSecurely": "请将其存储在安全位置。您之后将无法再次获取。",
+    "activeStatus": "活跃"
   },
   "settings": {
     "title": "设置",
@@ -279,7 +293,9 @@
     "keyRotated": "密钥轮换成功。已生成新签名密钥。",
     "keyRotateFailed": "密钥轮换失败",
     "rotateKey": "轮换密钥",
-    "noSigningKeys": "未找到签名密钥。"
+    "noSigningKeys": "未找到签名密钥。",
+    "expiredLabel": "已过期",
+    "rotated": "已轮换"
   },
   "mfa": {
     "title": "多因笠认证",
@@ -344,7 +360,11 @@
     "nextCert": "下一步：证书",
     "uploadMetadataXml": "上传元数据 XML",
     "xmlLoaded": "XML 已加载",
-    "back": "返回"
+    "back": "返回",
+    "clickUpload": "点击上传 .pem 或 .crt 文件",
+    "customScopePlaceholder": "自定义范围（如 groups）",
+    "active": "已启用",
+    "inactive": "未启用"
   },
   "tenant": {
     "burstLimit": "突发限制",

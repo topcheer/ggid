@@ -100,6 +100,7 @@ function RuleCheck({ passes, label }: { passes: boolean; label: string }) {
 
 export default function PasswordPolicyPage() {
   const { apiFetch, TENANT_ID } = useApi();
+  const { t } = useI18n();
   const [config, setConfig] = useState<PasswordPolicyConfig>(defaultConfig);
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

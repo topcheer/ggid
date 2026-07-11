@@ -189,7 +189,20 @@
     "scopesComma": "Scopes (comma-separated)",
     "registerNew": "Register New OAuth Client",
     "noClients": "No OAuth clients registered",
-    "clientNamePlaceholder": "e.g. My Web Application"
+    "clientNamePlaceholder": "e.g. My Web Application",
+    "failedLoad": "Failed to load",
+    "created": "Client created successfully",
+    "failedCreate": "Failed to create",
+    "updated": "Client updated",
+    "failedUpdate": "Failed to update",
+    "deleted": "Client deleted",
+    "failedDelete": "Failed to delete",
+    "rotateConfirm": "Rotate client secret? The old secret will stop working immediately.",
+    "secretRotated": "Secret rotated — copy the new secret now!",
+    "failedRotate": "Failed to rotate secret",
+    "edit": "Edit",
+    "rotateSecret": "Rotate Secret",
+    "delete": "Delete"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -225,7 +238,8 @@
     "keyRevoked": "API key revoked",
     "enterKeyName": "Please enter a name for the API key",
     "selectScope": "Please select at least one scope",
-    "storeSecurely": "Store it in a secure location. You will not be able to retrieve it later."
+    "storeSecurely": "Store it in a secure location. You will not be able to retrieve it later.",
+    "activeStatus": "Active"
   },
   "settings": {
     "title": "Settings",
@@ -279,7 +293,9 @@
     "keyRotated": "Key rotation successful. New signing key generated.",
     "keyRotateFailed": "Key rotation failed",
     "rotateKey": "Rotate Key",
-    "noSigningKeys": "No signing keys found."
+    "noSigningKeys": "No signing keys found.",
+    "expiredLabel": "Expired",
+    "rotated": "Rotated"
   },
   "mfa": {
     "title": "Multi-Factor Authentication",
@@ -344,7 +360,11 @@
     "nextCert": "Next: Certificate",
     "uploadMetadataXml": "Upload metadata XML",
     "xmlLoaded": "XML Loaded",
-    "back": "Back"
+    "back": "Back",
+    "clickUpload": "Click to upload .pem or .crt file",
+    "customScopePlaceholder": "Custom scope (e.g. groups)",
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "tenant": {
     "burstLimit": "Burst Limit",
