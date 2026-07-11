@@ -225,6 +225,10 @@ export { useDSR } from './useDSR';
 export type { DSRRequest } from './useDSR';
 export { useClientVersioning } from './useClientVersioning';
 export type { ClientVersion } from './useClientVersioning';
+export { useDelegations } from './useDelegations';
+export type { Delegation } from './useDelegations';
+export { useReviewExemptions } from './useReviewExemptions';
+export type { ReviewExemption } from './useReviewExemptions';
 export type {
   GGIDConfig,
   GGIDUser,
