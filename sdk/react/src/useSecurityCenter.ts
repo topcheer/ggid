@@ -41,6 +41,9 @@ export interface SecurityRecommendation {
 export interface UseSecurityCenterResult {
   posture: SecurityPosture | null;
   threats: SecurityThreat[];
+  recentThreats: SecurityThreat[];
+  riskScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
   recommendations: SecurityRecommendation[];
   isLoading: boolean;
   error: string | null;
@@ -126,7 +129,17 @@ export function useSecurityCenter(): UseSecurityCenterResult {
   }, [apiBaseUrl, makeHeaders]);
 
   return {
-    posture, threats, recommendations,
+    posture,
+    threats,
+    recentThreats: threats
+      .filter((t) => t.status === 'active')
+      .sort((a, b) => new Date(b.detected_at).getTime() - new Date(a.detected_at).getTime())
+      .slice(0, 10),
+    riskScore: posture ? Math.round((posture.failed_checks / Math.max(posture.total_checks, 1)) * 100) : 0,
+    riskLevel: posture
+      ? posture.score >= 90 ? 'low' : posture.score >= 75 ? 'medium' : posture.score >= 50 ? 'high' : 'critical'
+      : 'low',
+    recommendations,
     isLoading, error,
     dismissThreat, resolveRecommendation,
     refetch: fetchAll,

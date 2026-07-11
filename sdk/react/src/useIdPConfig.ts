@@ -150,9 +150,39 @@ export function useIdPConfig(): UseIdPConfigResult {
     }
   }, [apiBaseUrl, makeHeaders]);
 
+  const uploadSAMLMetadata = useCallback(async (id: string, xml: string): Promise<boolean> => {
+    try {
+      const resp = await fetch(`${apiBaseUrl}/api/v1/settings/idp/${id}/saml-metadata`, {
+        method: 'POST',
+        headers: { ...makeHeaders(), 'Content-Type': 'application/xml' },
+        body: xml,
+      });
+      if (!resp.ok) throw new Error(`Metadata upload failed (${resp.status})`);
+      await fetchConfigs();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      return false;
+    }
+  }, [apiBaseUrl, makeHeaders, fetchConfigs]);
+
+  const downloadSPMetadata = useCallback(async (id: string): Promise<string | null> => {
+    try {
+      const resp = await fetch(`${apiBaseUrl}/api/v1/settings/idp/${id}/sp-metadata`, {
+        headers: { ...makeHeaders(), Accept: 'application/xml' },
+      });
+      if (!resp.ok) throw new Error(`Metadata download failed (${resp.status})`);
+      return await resp.text();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+      return null;
+    }
+  }, [apiBaseUrl, makeHeaders]);
+
   return {
     configs, isLoading, error,
-    createConfig, updateConfig, deleteConfig, testConnection,
+    createConfig, updateConfig, deleteConfig,
+    testConnection, uploadSAMLMetadata, downloadSPMetadata,
     refetch: fetchConfigs,
   };
 }
