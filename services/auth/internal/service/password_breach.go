@@ -7,8 +7,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
+
+// breachCheckEnabled returns whether the HIBP breach check should run.
+// Controlled by BREACH_CHECK_ENABLED env var (default: true).
+// Set BREACH_CHECK_ENABLED=false to skip the check (useful for E2E
+// tests with common passwords like "Password123!").
+func breachCheckEnabled() bool {
+	v := os.Getenv("BREACH_CHECK_ENABLED")
+	if v == "false" || v == "0" || v == "no" {
+		return false
+	}
+	return true // default: enabled
+}
 
 // CheckPasswordBreach checks if a password has been found in known data breaches
 // using the HIBP k-anonymity model (haveibeenpwned.com API).

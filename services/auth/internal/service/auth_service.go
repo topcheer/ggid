@@ -118,7 +118,9 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 
 	// 4a.2 Check if password has been found in data breaches (HIBP k-anonymity).
 	// If breached, log a security warning. Non-blocking — fail open if API is unreachable.
-	if s.passwordService != nil {
+	// Can be disabled via BREACH_CHECK_ENABLED=false env var (needed for E2E tests
+	// with common passwords like "Password123!").
+	if breachCheckEnabled() && s.passwordService != nil {
 		if breachErr := s.passwordService.CheckPasswordBreach(ctx, password); breachErr != nil {
 			slog.Warn("password breach detected at login",
 				"user_id", userID.String(),
