@@ -276,6 +276,95 @@ export class GGIDClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Admin Extensions
+  // ---------------------------------------------------------------------------
+
+  /** Get login attempts for a user. */
+  async getLoginAttempts(accessToken: string, userId: string): Promise<Record<string, unknown>> {
+    return this.requestWithToken('GET', `/api/v1/auth/login-attempts/${userId}`, undefined, accessToken);
+  }
+
+  /** Reset login attempts for a user. */
+  async resetLoginAttempts(accessToken: string, userId: string): Promise<void> {
+    return this.requestWithToken('POST', `/api/v1/auth/login-attempts/${userId}/reset`, undefined, accessToken);
+  }
+
+  /** Check if password matches user's history. */
+  async passwordHistoryCheck(accessToken: string, userId: string, newPassword: string): Promise<{ is_repeated: boolean; history_count: number }> {
+    return this.requestWithToken('POST', '/api/v1/auth/password-history-check', { user_id: userId, new_password: newPassword }, accessToken);
+  }
+
+  /** Link an external provider to a user. */
+  async linkAccount(accessToken: string, userId: string, provider: string, externalId: string, externalEmail?: string): Promise<void> {
+    return this.requestWithToken('POST', `/api/v1/users/${userId}/link`, { provider, external_id: externalId, external_email: externalEmail }, accessToken);
+  }
+
+  /** Unlink an external provider from a user. */
+  async unlinkAccount(accessToken: string, userId: string, provider: string): Promise<void> {
+    return this.requestWithToken('DELETE', `/api/v1/users/${userId}/link/${provider}`, undefined, accessToken);
+  }
+
+  /** List user consents. */
+  async listConsents(accessToken: string, userId: string): Promise<unknown[]> {
+    return this.requestWithToken('GET', `/api/v1/oauth/consent/list?user_id=${userId}`, undefined, accessToken);
+  }
+
+  /** Revoke a consent. */
+  async revokeConsent(accessToken: string, consentId: string): Promise<void> {
+    return this.requestWithToken('DELETE', `/api/v1/oauth/consent/${consentId}`, undefined, accessToken);
+  }
+
+  /** Evaluate ABAC conditions. */
+  async evaluateABAC(accessToken: string, attributes: Record<string, string>, conditions: Array<{ field: string; operator: string; value: string }>): Promise<{ matched: boolean; matched_rules?: string[] }> {
+    return this.requestWithToken('POST', '/api/v1/policies/abac/evaluate', { attributes, conditions }, accessToken);
+  }
+
+  /** Validate delegation chain. */
+  async validateDelegation(accessToken: string, chain: string[], maxDepth: number): Promise<{ valid: boolean; depth: number; cycle_detected: boolean }> {
+    return this.requestWithToken('POST', '/api/v1/policy/delegation/validate', { chain, max_depth: maxDepth }, accessToken);
+  }
+
+  /** Get SIEM forwarder health. */
+  async getSIEMHealth(accessToken: string): Promise<Record<string, unknown>> {
+    return this.requestWithToken('GET', '/api/v1/audit/siem/health', undefined, accessToken);
+  }
+
+  /** List alert webhooks. */
+  async listAlertWebhooks(accessToken: string): Promise<unknown[]> {
+    return this.requestWithToken('GET', '/api/v1/audit/alert-webhooks', undefined, accessToken);
+  }
+
+  /** Create alert webhook. */
+  async createAlertWebhook(accessToken: string, url: string, events?: string[]): Promise<void> {
+    return this.requestWithToken('POST', '/api/v1/audit/alert-webhooks', { url, events }, accessToken);
+  }
+
+  /** Delete alert webhook. */
+  async deleteAlertWebhook(accessToken: string, webhookId: string): Promise<void> {
+    return this.requestWithToken('DELETE', `/api/v1/audit/alert-webhooks?id=${webhookId}`, undefined, accessToken);
+  }
+
+  /** List compliance schedules. */
+  async listComplianceSchedules(accessToken: string): Promise<unknown[]> {
+    return this.requestWithToken('GET', '/api/v1/audit/compliance-schedules', undefined, accessToken);
+  }
+
+  /** Create compliance schedule. */
+  async createComplianceSchedule(accessToken: string, reportType: string, frequency: string, recipients: string[]): Promise<void> {
+    return this.requestWithToken('POST', '/api/v1/audit/compliance-schedules', { report_type: reportType, frequency, recipients }, accessToken);
+  }
+
+  /** Delete compliance schedule. */
+  async deleteComplianceSchedule(accessToken: string, scheduleId: string): Promise<void> {
+    return this.requestWithToken('DELETE', `/api/v1/audit/compliance-schedules?id=${scheduleId}`, undefined, accessToken);
+  }
+
+  /** Validate user import data. */
+  async validateUserImport(accessToken: string, users: Array<Record<string, string>>): Promise<{ valid_count: number; invalid_count: number; errors?: unknown[] }> {
+    return this.requestWithToken('POST', '/api/v1/users/import/validate', { users }, accessToken);
+  }
+
+  // ---------------------------------------------------------------------------
   // Internal
   // ---------------------------------------------------------------------------
 
