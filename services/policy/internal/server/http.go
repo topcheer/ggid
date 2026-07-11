@@ -449,11 +449,24 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Sub-path: versions
+	// Sub-path: versions and versions/rollback
 	if len(parts) == 2 && parts[1] == "versions" {
 		// Route to existing handlePolicyVersions via query param
 		q := r.URL.Query()
 		q.Set("policy_id", id.String())
+		r.URL.RawQuery = q.Encode()
+		s.handlePolicyVersions(w, r)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "versions/rollback" {
+		// POST /api/v1/policies/{id}/versions/rollback?version=N
+		if r.Method != http.MethodPost {
+			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		q := r.URL.Query()
+		q.Set("policy_id", id.String())
+		q.Set("action", "rollback")
 		r.URL.RawQuery = q.Encode()
 		s.handlePolicyVersions(w, r)
 		return

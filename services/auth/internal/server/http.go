@@ -120,6 +120,9 @@ func (h *Handler) registerRoutes() {
 	// Session management: force logout, concurrent session limits, device fingerprint
 	h.mux.HandleFunc("/api/v1/auth/sessions/force-logout", h.forceLogout)
 	h.mux.HandleFunc("/api/v1/auth/sessions/limit", h.sessionLimit)
+	h.mux.HandleFunc("/api/v1/auth/sessions/bind-device", h.handleBindDevice)
+	h.mux.HandleFunc("/api/v1/auth/sessions/check-device", h.handleCheckDevice)
+	h.mux.HandleFunc("/api/v1/auth/sessions/unbind-device", h.handleUnbindDevice)
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)

@@ -100,6 +100,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/search", s.handleSearch)
 	mux.HandleFunc("/api/v1/audit/alerts/config", s.handleAlertConfig)
 	mux.HandleFunc("/api/v1/audit/alerts/test", s.handleAlertTest)
+	mux.HandleFunc("/api/v1/audit/alerts/evaluate", s.handleAlertEvaluate)
 	mux.HandleFunc("/api/v1/audit/reports", s.handleComplianceReport)
 	mux.HandleFunc("/api/v1/audit/compliance-report", s.handleComplianceReportV2)
 	mux.HandleFunc("/api/v1/audit/risk-score", s.handleRiskScore)
@@ -109,7 +110,6 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/alert-webhooks", s.handleAlertWebhooks)
 	mux.HandleFunc("/api/v1/audit/siem/health", s.handleSIEMHealth)
 	mux.HandleFunc("/api/v1/audit/compliance-schedules", s.handleComplianceScheduleCRUD)
-	mux.HandleFunc("/api/v1/audit/correlate", s.handleCorrelate)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
