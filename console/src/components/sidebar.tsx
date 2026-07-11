@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -25,12 +25,21 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
+import { checkApiHealth, API_BASE_URL } from "@/lib/api-config";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { mode, toggle } = useTheme();
   const { locale, setLocale, t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const check = () => checkApiHealth().then(setApiOnline);
+    check();
+    const interval = setInterval(check, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
@@ -124,6 +133,11 @@ export function Sidebar() {
       </div>
 
       <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+        {/* API Health Indicator */}
+        <div className="mb-3 flex items-center gap-2 text-xs">
+          <span className={`inline-block h-2 w-2 rounded-full ${apiOnline === null ? "bg-gray-400" : apiOnline ? "bg-green-500" : "bg-red-500"}`} />
+          <span className="text-gray-500 dark:text-gray-400">API: {apiOnline === null ? "Checking..." : apiOnline ? "Connected" : "Offline"}</span>
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium dark:bg-gray-700 dark:text-gray-300">
             A
