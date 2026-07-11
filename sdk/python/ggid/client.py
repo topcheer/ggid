@@ -78,6 +78,25 @@ class GGIDClient:
         )
         return resp.status_code in (200, 204)
 
+    async def update_user(
+        self, token: str, user_id: str, email: str = "", phone: str = "", status: str = ""
+    ) -> dict:
+        """Update a user's attributes. Only non-empty fields are sent."""
+        payload = {}
+        if email:
+            payload["email"] = email
+        if phone:
+            payload["phone"] = phone
+        if status:
+            payload["status"] = status
+        resp = await self._client.patch(
+            f"{self.base_url}/api/v1/users/{user_id}",
+            json=payload,
+            headers=self._headers(token),
+        )
+        resp.raise_for_status()
+        return resp.json()
+
     # --- Auth ---
 
     async def login(self, username: str, password: str) -> dict:

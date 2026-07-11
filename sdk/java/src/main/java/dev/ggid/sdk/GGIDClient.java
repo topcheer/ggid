@@ -66,6 +66,14 @@ public class GGIDClient {
         return get("/api/v1/users/" + userId, User.class);
     }
 
+    public User updateUser(String userId, String email, String phone)
+            throws GGIDException, IOException {
+        java.util.Map<String, String> body = new java.util.HashMap<>();
+        if (email != null && !email.isEmpty()) body.put("email", email);
+        if (phone != null && !phone.isEmpty()) body.put("phone", phone);
+        return patch("/api/v1/users/" + userId, body, User.class);
+    }
+
     public void deleteUser(String userId) throws GGIDException, IOException {
         delete("/api/v1/users/" + userId);
     }
@@ -129,6 +137,11 @@ public class GGIDClient {
 
     private <T> T post(String path, Object body, Class<T> type) throws GGIDException, IOException {
         Request request = buildRequest("POST", path, body);
+        return execute(request, type);
+    }
+
+    private <T> T patch(String path, Object body, Class<T> type) throws GGIDException, IOException {
+        Request request = buildRequest("PATCH", path, body);
         return execute(request, type);
     }
 
