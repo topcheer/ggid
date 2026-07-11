@@ -35,6 +35,7 @@ type Credential struct {
 	UserVerified    bool   // WA-1: user verification flag at registration
 	AttestationType string // WA-1: attestation type (e.g. "none", "basic_full")
 	AAGUID          []byte // WA-1: authenticator model identifier
+	Attachment      string // platform or cross-platform
 	CreatedAt       time.Time
 	LastUsedAt      *time.Time
 }
@@ -423,7 +424,7 @@ func (h *Handler) buildWebAuthnUser(ctx context.Context, tenantID, userID uuid.U
 					Authenticator: webauthn.Authenticator{
 						AAGUID:     c.AAGUID,
 						SignCount:  c.Counter,
-						Attachment: protocol.Platform,
+						Attachment: resolveAttachment(c.Attachment),
 					},
 				})
 			}
@@ -569,6 +570,7 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 			UserVerified:    credential.Flags.UserVerified,
 			AttestationType: credential.AttestationType,
 			AAGUID:          credential.Authenticator.AAGUID,
+			Attachment:      string(credential.Authenticator.Attachment),
 			CreatedAt:       time.Now(),
 		}
 		if err := h.creds.SaveCredential(ctx, cred); err != nil {
@@ -843,4 +845,18 @@ func (h *Handler) deleteCredential(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
+}
+
+// resolveAttachment returns the protocol attachment type from a stored string.
+// Falls back to platform if the value is empty or unrecognized.
+func resolveAttachment(stored string) protocol.AuthenticatorAttachment {
+	switch protocol.AuthenticatorAttachment(stored) {
+	case protocol.CrossPlatform:
+		return protocol.CrossPlatform
+	case protocol.Platform:
+		return protocol.Platform
+	default:
+		// Empty or unrecognized — default to platform.
+		return protocol.Platform
+	}
 }
