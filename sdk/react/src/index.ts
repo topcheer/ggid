@@ -51,6 +51,10 @@ export { useGroups } from './useGroups';
 export type { Group, GroupMember, CreateGroupInput, UseGroupsResult } from './useGroups';
 export { useDevices } from './useDevices';
 export type { WebAuthnDevice, UseDevicesResult } from './useDevices';
+export { useIdPConfig } from './useIdPConfig';
+export type { IdPConfig, CreateIdPInput, UseIdPConfigResult } from './useIdPConfig';
+export { useSecurityCenter } from './useSecurityCenter';
+export type { SecurityPosture, SecurityThreat, SecurityRecommendation, UseSecurityCenterResult } from './useSecurityCenter';
 export type {
   GGIDConfig,
   GGIDUser,
