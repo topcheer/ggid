@@ -389,3 +389,11 @@
 7. **frontend owns**: console/
 8. **doc owns**: docs/ (except team-backlog.md)
 9. **researcher owns**: docs/research/
+
+## Sprint: Developer Onboarding Polish (frontend beb47d0)
+- [x] Onboarding wizard — already complete (640 lines, 5-step: Welcome/Admin/Auth/Users/Review)
+- [x] CopyButton component — reusable clipboard component, 3 variants (icon/button/ghost), masked mode for secrets (beb47d0)
+- [x] CopyButton integration — OAuth client secret display + API explorer code snippets (beb47d0)
+- [x] API health indicator polish — latency tooltip, 5s retry when disconnected, "Reconnecting..." spinner state (beb47d0)
+- [x] Console dark mode audit — CSS auto-fallback layer covering ~1500 hardcoded colors across 30+ pages (beb47d0)
+- [x] Console i18n completion — hardcoded sidebar labels fixed (Policies, Sessions, SCIM, Org Analytics, Monitoring, API Explorer → t() keys) (beb47d0)
