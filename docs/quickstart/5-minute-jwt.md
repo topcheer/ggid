@@ -6,9 +6,30 @@
 
 ## Prerequisites
 
+- [Docker](https://docs.docker.com/get-docker/) 24+ with Docker Compose v2
+- `jq` installed (`brew install jq` or `apt install jq`)
+- Port 8080 available
+
 ```bash
-docker compose -f deploy/docker-compose.yml up -d
-sleep 30  # wait for healthchecks
+# Clone and start
+git clone https://github.com/ggid/ggid.git
+cd ggid
+docker compose -f deploy/docker-compose.yaml up -d
+
+# Wait for all 12 containers to be healthy (30-60 seconds)
+sleep 30
+docker compose ps  # all should show "Up (healthy)"
+
+# Verify gateway is up
+curl http://localhost:8080/healthz
+# → {"status":"ok"}
+```
+
+### Variables used below
+
+```bash
+export GGID_URL="http://localhost:8080"
+export TENANT="00000000-0000-0000-0000-000000000001"
 ```
 
 ---
@@ -16,22 +37,31 @@ sleep 30  # wait for healthchecks
 ## curl
 
 ```bash
-# 1. Register
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/register \
+# 1. Register a new user
+curl -s -X POST $GGID_URL/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -d '{"username":"alice","email":"alice@example.com","password":"Secure1Pass!"}' | jq -r .user_id)
+  -H "X-Tenant-ID: $TENANT" \
+  -d '{"username":"alice","email":"alice@example.com","password":"Secure1Pass!"}' | jq .
+# → {"user_id":"usr_abc123","username":"alice",...}  (201 Created)
 
 # 2. Login → get JWT
-JWT=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+JWT=$(curl -s -X POST $GGID_URL/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -H "X-Tenant-ID: $TENANT" \
   -d '{"username":"alice","password":"Secure1Pass!"}' | jq -r .access_token)
 
-# 3. Use JWT
-curl -s http://localhost:8080/api/v1/users \
+echo "JWT length: ${#JWT} chars"  # should be ~690 chars
+
+# 3. Use JWT to call a protected endpoint
+curl -s $GGID_URL/api/v1/users \
   -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" | jq .
+  -H "X-Tenant-ID: $TENANT" | jq .
+# → {"users":[...],"total":1}  (200 OK)
+
+# 4. Verify 401 without JWT
+curl -s -o /dev/null -w "%{http_code}" $GGID_URL/api/v1/users \
+  -H "X-Tenant-ID: $TENANT"
+# → 401
 ```
 
 ---
