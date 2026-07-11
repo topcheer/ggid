@@ -161,6 +161,10 @@ export { useSoDMatrix } from './useSoDMatrix';
 export type { SoDRule, UseSoDMatrixResult } from './useSoDMatrix';
 export { useThreatFeed } from './useThreatFeed';
 export type { ThreatEvent, UseThreatFeedResult } from './useThreatFeed';
+export { useAnomalies } from './useAnomalies';
+export type { Anomaly, AnomalySeverity, AnomalyStatus, UseAnomaliesResult } from './useAnomalies';
+export { useClientAnalytics } from './useClientAnalytics';
+export type { ClientAnalyticsEntry, UseClientAnalyticsResult } from './useClientAnalytics';
 export type {
   GGIDConfig,
   GGIDUser,
