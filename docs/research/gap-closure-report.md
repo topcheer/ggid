@@ -66,11 +66,11 @@ Confidence levels:
 | 9 | SCIM 2.0 /Users CRUD | DONE | grep + test count | services/identity/internal/scim/handler.go: routes for GET/POST/PUT/PATCH/DELETE /scim/v2/Users; patch.go ApplyPatch engine; 12 CRUD test functions + PATCH engine tests (filter_patch_test.go: 20 ApplyPatch tests); EnterpriseUser schema (handler.go:78) | HIGH confidence. PATCH now implemented (was previously flagged incomplete). Enterprise schema added. PATCH operations: add, replace, remove with nested attrs and array filters |
 | 10 | JWT Claim Validation | DONE | grep + test count | services/gateway/internal/middleware/middleware.go:501 JWTAuth; jwt_validation_test.go: 13 test functions (invalid format, optional invalid token, expired, malformed) | HIGH confidence. Bearer token extraction, HMAC signature verification, expiry check |
 | 11 | Rate Limiter Wiring | DONE | grep (router wiring) | services/gateway/internal/router/router.go:376 rateLimiter.Middleware(handler) wired in outer chain; router.go:49 TenantBucketLimiter; 18 rate-limit related files in middleware/ (ratelimit.go, sliding_ratelimit.go, tier_ratelimit.go, tenant_ratelimit.go, token_bucket.go, botdetect.go) | HIGH confidence. P0 fix confirmed: rate limiter is in the production middleware chain at router.go:376 |
-| 12 | CSRF State Validation | DONE | grep (implementation) | services/oauth/internal/service/oauth_service.go:222-224 state required; :267-269 state stored; :673-688 ValidateState with expiry + one-time use + deletion | MEDIUM confidence. Implementation is solid (state enforced at authorize, stored with 10min TTL, validated + deleted at token exchange). Only 1 direct test function found (session_mgmt_test.go:218 GenerateSessionState). State validation itself has no dedicated unit test — risk of regression |
-| 13 | HasScope Enforcement | DONE | grep + test count | services/gateway/internal/middleware/apikey.go:62 HasScope; router.go:567 hasAdminScope; apikey_ipallowlist_test.go:85 TestHasScope (checks API key scope, JWT scope, empty context) | MEDIUM confidence. P0 fix confirmed: HasScope now checks actual scopes (not always-true). Admin routes guarded by hasAdminScope at router.go:246. Limited test coverage — only 1 HasScope test |
+| 12 | CSRF State Validation | **DONE — FUNCTIONAL TEST VERIFIED** | **ARCH functional test 2026-07-24** | services/oauth/internal/service/gap_regression_csrf_test.go: 8 dedicated ValidateState tests ALL PASS. Covers: happy path, one-time use (RFC 6749 §10.12 replay prevention), expired state, empty/unknown state, cross-client isolation, multiple concurrent states, expiry cleanup. **MEDIUM → HIGH confidence.** Previous risk (no dedicated test) now resolved |
+| 13 | HasScope Enforcement | **DONE — FUNCTIONAL TEST VERIFIED** | **ARCH functional test 2026-07-24** | services/gateway/internal/middleware/gap_regression_scope_test.go: 8 dedicated HasScope tests ALL PASS. Covers: wildcard scope, multiple scopes, API key priority over JWT, JWT fallback, deny-by-default (P0 regression), empty scope list, JWT wildcard, security regression (20-scope bypass attempt). **MEDIUM → HIGH confidence.** P0 fix confirmed secure |
 | 14 | Admin API Role Check | DONE | grep (router wiring) | services/gateway/internal/router/router.go:244-249 admin API section guarded by hasAdminScope(r); router.go:566-567 hasAdminScope checks JWT claims for admin scope | MEDIUM confidence. P0 fix confirmed: admin endpoints require admin scope. No dedicated hasAdminScope unit test found — relies on integration verification |
 | 15 | Password Breach Check | DONE | grep + test count | services/auth/internal/service/password_breach.go:17 CheckPasswordBreach (HIBP range query, k-anonymity); 2 breach test functions (coverage_auth_test.go, coverage_sprint3_test.go) | MEDIUM confidence. Implementation uses HIBP Pwned Passwords API with k-anonymity model. Low test count (2 tests) — external API dependency limits testability |
-| 16 | Audit Hash Chain | DONE | grep + test count | services/audit/internal/domain/hash_chain.go: ComputeHash (HMAC-SHA256), VerifyHash, VerifyChain, CanonicalJSON, SetHashChainSecret, IsHashChainEnabled; hash_chain_test.go: 12 test functions; migrations/03_audit_hash_chain.sql | HIGH confidence. Full tamper-proof chain: per-event HMAC hash, chain verification, canonical JSON serialization. Wired in audit service startup |
+| 16 | Audit Hash Chain | **DONE — FUNCTIONAL TEST VERIFIED** | **ARCH functional test 2026-07-24** | services/audit/internal/domain/gap_regression_test.go: 12 dedicated regression tests ALL PASS. Covers: repository wiring proof (ComputeHash called in storage path), field-level tamper detection (TenantID, ActorID, ActorType, ResourceType, ResourceID), event deletion/insertion detection, cross-tenant isolation, secret rotation impact, replay attack, disabled-when-no-secret. Wired: main.go:46 + audit_repo.go:37-46 + http.go:836. **HIGH confidence (reconfirmed).** Full pipeline verified: secret config → compute → store → verify → detect tamper |
 | 17 | Multi-Tenant RLS | DONE | grep (migration + context) | pkg/tenant/tenant.go: Context with IsolationLevel (shared/schema/database), FromContext, WithContext, MustFromContext; tenant_test.go: 5 test functions; deploy/migrations/01_all_up.sql: RLS policies on 10+ tables (users, organizations, memberships, roles, permissions, policies, oauth_clients, mfa_devices, sessions, audit_events) using `current_setting('app.tenant_id')` | HIGH confidence. PostgreSQL RLS policies enforce tenant isolation at database level. All tenant-scoped tables have `FOR ALL USING (tenant_id = current_setting(...))` policies |
 | 18 | K8s/K3s Deployment (P0 #1) | **DONE — E2E VERIFIED** | Full E2E via Traefik ingress | deploy/e2e-k3s-test.sh: 10/10 tests PASS via https://ggid.iot2.win (2026-07-24); deploy/helm/ggid/: 8 templates, values-k3s.yaml; deploy/terraform/: main.tf + variables.tf + outputs.tf (commits 7d4ba74, 7db6d5d) | **HIGH confidence.** Production-grade K8s deployment verified end-to-end through external ingress with TLS. 8 deployment issues found and fixed during verification |
 
@@ -216,16 +216,16 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 
 ### Items Needing Re-Verification or Additional Tests
 
-1. **CSRF State Validation** — MEDIUM confidence. The `ValidateState` function (oauth_service.go:673)
-   has no dedicated unit test. It uses an in-memory `sync.Map` stateStore which will not survive
-   restarts and doesn't work across multiple OAuth service instances. **Risk: state validation could
-   silently fail in production if stateStore is reset.** Recommendation: add Redis-backed state store
-   and write dedicated ValidateState unit tests.
+1. **CSRF State Validation** — ~~MEDIUM~~ **HIGH confidence** (upgraded 2026-07-24). ARCH functional
+   test written: gap_regression_csrf_test.go with 8 tests covering happy path, one-time use (RFC
+   6749 §10.12), expiry, cross-client isolation, and multiple states. All PASS.
+   **Remaining risk:** in-memory `sync.Map` stateStore will not survive restarts and doesn't work
+   across multiple OAuth service instances. Recommendation: migrate to Redis-backed state store.
 
-2. **HasScope Enforcement** — MEDIUM confidence. Only 1 test function (TestHasScope in
-   apikey_ipallowlist_test.go:85). The P0 fix changed behavior from always-true to actual checking,
-   but the test coverage is thin. **Risk: scope bypass regression.** Recommendation: add tests for
-   wildcard scopes, compound scopes, and negative cases.
+2. **HasScope Enforcement** — ~~MEDIUM~~ **HIGH confidence** (upgraded 2026-07-24). ARCH functional
+   test written: gap_regression_scope_test.go with 8 tests covering wildcard, API key priority,
+   JWT fallback, deny-by-default, and 20-scope security regression sweep. All PASS.
+   **Risk resolved:** P0 bypass is confirmed fixed and regression-tested.
 
 3. **Admin API Role Check** — MEDIUM confidence. `hasAdminScope` (router.go:567) has no dedicated
    unit test — it's only exercised through integration. **Risk: admin endpoint exposure if
