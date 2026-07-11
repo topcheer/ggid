@@ -24,12 +24,35 @@ export interface PurgeResult {
   archived_count: number;
 }
 
+export interface RetentionSchedule {
+  id: string;
+  name: string;
+  cron: string;
+  action: 'archive' | 'purge' | 'export';
+  max_age_days: number;
+  enabled: boolean;
+  last_run?: string;
+  next_run?: string;
+}
+
+export interface CreateScheduleInput {
+  name: string;
+  cron: string;
+  action: RetentionSchedule['action'];
+  max_age_days: number;
+  enabled?: boolean;
+}
+
 export interface UseRetentionResult {
   policy: RetentionPolicy | null;
+  schedules: RetentionSchedule[];
   isLoading: boolean;
   error: string | null;
   updatePolicy: (policy: Partial<RetentionPolicy>) => Promise<boolean>;
   purgeOldEvents: () => Promise<PurgeResult | null>;
+  createSchedule: (input: CreateScheduleInput) => Promise<RetentionSchedule | null>;
+  updateSchedule: (id: string, input: Partial<RetentionSchedule>) => Promise<boolean>;
+  deleteSchedule: (id: string) => Promise<boolean>;
   refetch: () => Promise<void>;
 }
 
@@ -39,6 +62,7 @@ export function useRetention(): UseRetentionResult {
   const tenantId = typeof window !== 'undefined' ? localStorage.getItem('ggid_tenant_id') || '' : '';
 
   const [policy, setPolicy] = useState<RetentionPolicy | null>(null);
+  const [schedules, setSchedules] = useState<RetentionSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,6 +87,7 @@ export function useRetention(): UseRetentionResult {
       if (!resp.ok) throw new Error(`Failed to fetch retention policy (${resp.status})`);
       const data = await resp.json();
       setPolicy(data);
+      setSchedules(data.schedules ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setPolicy(null);
@@ -108,12 +133,69 @@ export function useRetention(): UseRetentionResult {
     }
   }, [apiBaseUrl, makeHeaders]);
 
+  const createSchedule = useCallback(
+    async (input: CreateScheduleInput): Promise<RetentionSchedule | null> => {
+      try {
+        const resp = await fetch(`${apiBaseUrl}/api/v1/settings/retention/schedules`, {
+          method: 'POST', headers: makeHeaders(), body: JSON.stringify(input),
+        });
+        if (!resp.ok) throw new Error(`Failed to create schedule (${resp.status})`);
+        const created = await resp.json();
+        setSchedules((prev) => [...prev, created]);
+        return created;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        return null;
+      }
+    },
+    [apiBaseUrl, makeHeaders]
+  );
+
+  const updateSchedule = useCallback(
+    async (id: string, input: Partial<RetentionSchedule>): Promise<boolean> => {
+      try {
+        const resp = await fetch(`${apiBaseUrl}/api/v1/settings/retention/schedules/${id}`, {
+          method: 'PATCH', headers: makeHeaders(), body: JSON.stringify(input),
+        });
+        if (!resp.ok) throw new Error(`Failed to update schedule (${resp.status})`);
+        const updated = await resp.json();
+        setSchedules((prev) => prev.map((s) => (s.id === id ? updated : s)));
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        return false;
+      }
+    },
+    [apiBaseUrl, makeHeaders]
+  );
+
+  const deleteSchedule = useCallback(
+    async (id: string): Promise<boolean> => {
+      try {
+        const resp = await fetch(`${apiBaseUrl}/api/v1/settings/retention/schedules/${id}`, {
+          method: 'DELETE', headers: makeHeaders(),
+        });
+        if (!resp.ok) throw new Error(`Failed to delete schedule (${resp.status})`);
+        setSchedules((prev) => prev.filter((s) => s.id !== id));
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        return false;
+      }
+    },
+    [apiBaseUrl, makeHeaders]
+  );
+
   return {
     policy,
+    schedules,
     isLoading,
     error,
     updatePolicy,
     purgeOldEvents,
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
     refetch: fetchPolicy,
   };
 }

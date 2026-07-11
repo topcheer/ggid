@@ -43,6 +43,18 @@ export interface AlertTestResult {
   evaluation_time_ms: number;
 }
 
+export interface AlertHistoryItem {
+  id: string;
+  rule_id: string;
+  rule_name: string;
+  triggered_at: string;
+  metric_value: number;
+  threshold: number;
+  action: AlertRule['action'];
+  delivery_status: 'sent' | 'failed' | 'pending';
+  message: string;
+}
+
 export interface UseAlertsResult {
   rules: AlertRule[];
   isLoading: boolean;
@@ -52,6 +64,7 @@ export interface UseAlertsResult {
   deleteRule: (id: string) => Promise<boolean>;
   toggleRule: (id: string) => Promise<boolean>;
   testRule: (id: string) => Promise<AlertTestResult | null>;
+  alertHistory: (opts?: { ruleId?: string; limit?: number }) => Promise<AlertHistoryItem[]>;
   refetch: () => Promise<void>;
 }
 
@@ -180,6 +193,27 @@ export function useAlerts(): UseAlertsResult {
     [apiBaseUrl, makeHeaders]
   );
 
+  const alertHistory = useCallback(
+    async (opts?: { ruleId?: string; limit?: number }): Promise<AlertHistoryItem[]> => {
+      try {
+        const params = new URLSearchParams();
+        if (opts?.ruleId) params.set('rule_id', opts.ruleId);
+        params.set('limit', String(opts?.limit ?? 50));
+        const resp = await fetch(
+          `${apiBaseUrl}/api/v1/settings/alerting/history?${params.toString()}`,
+          { headers: makeHeaders() }
+        );
+        if (!resp.ok) throw new Error(`Failed to fetch alert history (${resp.status})`);
+        const data = await resp.json();
+        return data.items ?? data.history ?? [];
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        return [];
+      }
+    },
+    [apiBaseUrl, makeHeaders]
+  );
+
   return {
     rules,
     isLoading,
@@ -189,6 +223,7 @@ export function useAlerts(): UseAlertsResult {
     deleteRule,
     toggleRule,
     testRule,
+    alertHistory,
     refetch: fetchRules,
   };
 }

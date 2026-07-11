@@ -40,11 +40,14 @@ export interface GenerateReportInput {
   dateTo?: string;
 }
 
+export type ReportFormat = 'pdf' | 'csv' | 'json';
+
 export interface UseComplianceResult {
   reports: ComplianceReport[];
   isLoading: boolean;
   error: string | null;
-  downloadReport: (id: string, format: 'pdf' | 'csv') => Promise<boolean>;
+  downloadReport: (id: string, format: ReportFormat) => Promise<boolean>;
+  downloadRawReport: (id: string, format: ReportFormat) => Promise<Blob | null>;
   generateReport: (input: GenerateReportInput) => Promise<ComplianceReport | null>;
   refetch: () => Promise<void>;
 }
@@ -98,28 +101,36 @@ export function useCompliance(filter: ComplianceFilter = {}): UseComplianceResul
     if (isAuthenticated) fetchReports();
   }, [isAuthenticated, fetchReports]);
 
-  const downloadReport = useCallback(
-    async (id: string, format: 'pdf' | 'csv'): Promise<boolean> => {
+  const downloadRawReport = useCallback(
+    async (id: string, format: ReportFormat): Promise<Blob | null> => {
       try {
         const resp = await fetch(
           `${apiBaseUrl}/api/v1/audit/compliance/reports/${id}/download?format=${format}`,
           { headers: makeHeaders() }
         );
         if (!resp.ok) throw new Error(`Failed to download report (${resp.status})`);
-        const blob = await resp.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${id}.${format}`;
-        a.click();
-        URL.revokeObjectURL(url);
-        return true;
+        return await resp.blob();
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
-        return false;
+        return null;
       }
     },
     [apiBaseUrl, makeHeaders]
+  );
+
+  const downloadReport = useCallback(
+    async (id: string, format: ReportFormat): Promise<boolean> => {
+      const blob = await downloadRawReport(id, format);
+      if (!blob) return false;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${id}.${format}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return true;
+    },
+    [downloadRawReport]
   );
 
   const generateReport = useCallback(
@@ -146,6 +157,7 @@ export function useCompliance(filter: ComplianceFilter = {}): UseComplianceResul
     isLoading,
     error,
     downloadReport,
+    downloadRawReport,
     generateReport,
     refetch: fetchReports,
   };
