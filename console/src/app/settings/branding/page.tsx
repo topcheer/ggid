@@ -82,17 +82,38 @@ export default function BrandingSettingsPage() {
 
   // Load from localStorage or API
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setConfig({ ...defaultConfig, ...parsed });
-        if (parsed.logo_url) setLogoPreview(parsed.logo_url);
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
+    // Try loading from API first (tenant-specific branding endpoint)
+    apiFetch<BrandingConfig>("/api/v1/tenants/current/branding")
+      .then((data) => {
+        if (data && data.primary_color) {
+          setConfig({ ...defaultConfig, ...data });
+          if (data.logo_url) setLogoPreview(data.logo_url);
+        }
+      })
+      .catch(() => {
+        // Fallback: try /api/v1/settings/branding, then localStorage
+        apiFetch<BrandingConfig>("/api/v1/settings/branding")
+          .then((data) => {
+            if (data && data.primary_color) {
+              setConfig({ ...defaultConfig, ...data });
+              if (data.logo_url) setLogoPreview(data.logo_url);
+            }
+          })
+          .catch(() => {
+            // Final fallback: localStorage
+            const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+            if (stored) {
+              try {
+                const parsed = JSON.parse(stored);
+                setConfig({ ...defaultConfig, ...parsed });
+                if (parsed.logo_url) setLogoPreview(parsed.logo_url);
+              } catch {
+                // ignore
+              }
+            }
+          });
+      });
+  }, [apiFetch]);
 
   useEffect(() => {
     if (msg) {
