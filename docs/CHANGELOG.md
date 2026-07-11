@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] — Milestone: Documentation & Developer Experience
 
+### Latest Changes (2026-07-26)
+
+#### SCIM PATCH URN Colon Notation Fix (commit 513548b)
+- Fixed `isAlpha` redeclaration conflict between `filter.go` and `patch.go`
+- Fixed URN colon notation parsing for single-level sub-attributes (`urn:...:User:department`)
+- Added multi-level nested attribute traversal in `setNestedAttr` (`manager.displayName`)
+
+#### External Database/Middleware Support (commit d56efc9)
+- All deployment methods (Docker, K8s/Helm, K3s, Terraform, Bare Metal) support external PostgreSQL, Redis, NATS, LDAP
+- Docker Compose: `.env` file and override file support
+- Helm: `externalDatabase`, `externalRedis`, `externalNats` values
+- Terraform: `external_database_host`, `external_redis_host`, `external_nats_host` variables
+
+#### Gap Regression Verification (15/20 verified)
+- 3 gaps upgraded MEDIUM→HIGH confidence (28 regression tests)
+- SCIM enterprise URN colon notation compliance (RFC 7644 §3.10)
+- Audit hash chain tamper detection verified
+- CSRF state validation (one-time use, cross-client isolation)
+- HasScope enforcement (deny-by-default, wildcard, multi-scope)
+
+#### i18n Expansion (827 keys total)
+- Console i18n: 979→58 lines refactored to JSON-backed dictionaries
+- 827 total translation keys across all console pages
+- gen-i18n-dicts.py script for dictionary generation
+
 ### Gap Closure & Security Verification (2026-07-24)
 
 #### Gap Regression Verification (3 gaps, 28 tests)
