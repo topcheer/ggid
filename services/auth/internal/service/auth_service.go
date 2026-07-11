@@ -4,6 +4,7 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -113,6 +114,23 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 		return &domain.TokenSet{
 			MustChangePassword: true,
 		}, nil
+	}
+
+	// 4a.2 Check if password has been found in data breaches (HIBP k-anonymity).
+	// If breached, log a security warning. Non-blocking — fail open if API is unreachable.
+	if s.passwordService != nil {
+		if breachErr := s.passwordService.CheckPasswordBreach(ctx, password); breachErr != nil {
+			slog.Warn("password breach detected at login",
+				"user_id", userID.String(),
+				"tenant_id", tc.TenantID.String(),
+				"detail", breachErr.Error(),
+			)
+			// If user has MFA, they can still log in with elevated trust.
+			// If no MFA, force MFA setup for compromised accounts.
+			if s.mfaService != nil && !s.mfaService.HasMFAEnabled(ctx, tc.TenantID, userID) {
+				return nil, ErrMFASetupRequired
+			}
+		}
 	}
 
 	// 4b. Check if MFA is required for this user.
