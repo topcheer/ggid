@@ -107,6 +107,9 @@
 - DUPLICATE: Device Auth RFC 8628 tests — 9 tests already in coverage_sprint11_test.go
 - DUPLICATE: Token Exchange RFC 8693 tests — 8 tests already in coverage_boost2/3
 - DUPLICATE: Backchannel Logout tests — 20+ tests already across multiple files
+- [x] Password breach check configurable disable — BREACH_CHECK_ENABLED env var (41d8064)
+- DUPLICATE: Device Auth RFC 8628 — 9 tests in coverage_sprint11_test.go
+- NOT VAPORWARE: Java SDK — 8 files, 788 lines (GGIDClient, GGIDAuthFilter, etc.)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)

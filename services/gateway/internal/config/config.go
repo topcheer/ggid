@@ -33,10 +33,21 @@ type Config struct {
 	RouteConfigs    map[string]RouteConfig `yaml:"route_configs"` // per-route advanced config
 	ReadTimeout     time.Duration       `yaml:"read_timeout"`
 	WriteTimeout    time.Duration       `yaml:"write_timeout"`
+	UpstreamTimeout time.Duration       `yaml:"upstream_timeout"`
 }
 
 // Default returns the default gateway configuration.
+// Route URLs can be overridden via env vars: AUTH_SERVICE_URL, USERS_SERVICE_URL,
+// POLICY_SERVICE_URL, ORG_SERVICE_URL, AUDIT_SERVICE_URL, OAUTH_SERVICE_URL.
+// UPSTREAM_TIMEOUT (in seconds) controls the default upstream proxy timeout.
 func Default() *Config {
+	upstreamTimeout := 30 * time.Second
+	if v := os.Getenv("UPSTREAM_TIMEOUT"); v != "" {
+		if d, err := time.ParseDuration(v + "s"); err == nil {
+			upstreamTimeout = d
+		}
+	}
+
 	return &Config{
 		Addr:          ":8080",
 		DomainSuffix:  "",
@@ -45,15 +56,15 @@ func Default() *Config {
 		JWTAudience:   "ggid",
 		PublicKeyPath: "configs/rsa_public.pem",
 		Routes: map[string]string{
-			"/api/v1/auth":         "http://localhost:9001",
-			"/api/v1/users":        "http://localhost:8081",
-			"/api/v1/roles":        "http://localhost:8070",
-			"/api/v1/permissions":  "http://localhost:8070",
-			"/api/v1/policies":     "http://localhost:8070",
-			"/api/v1/orgs":         "http://localhost:8071",
-			"/api/v1/audit":        "http://localhost:8072",
-			"/oauth":               "http://localhost:9005",
-			"/saml":                "http://localhost:9005",
+			"/api/v1/auth":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/users":       envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/roles":       envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
+			"/api/v1/permissions": envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
+			"/api/v1/policies":    envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
+			"/api/v1/orgs":        envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
+			"/api/v1/audit":       envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
+			"/oauth":              envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/saml":               envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 		},
 		RouteConfigs: map[string]RouteConfig{
 			// Auth needs short timeouts for fast failure on rate-limited requests
@@ -75,9 +86,18 @@ func Default() *Config {
 				},
 			},
 		},
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		ReadTimeout:     15 * time.Second,
+		WriteTimeout:    15 * time.Second,
+		UpstreamTimeout: upstreamTimeout,
 	}
+}
+
+// envOrDefault returns the env var value if set and non-empty, otherwise the fallback.
+func envOrDefault(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
 
 // LoadFromEnv overrides config from environment variables.
