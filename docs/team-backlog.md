@@ -313,9 +313,8 @@
 - [x] docs/architecture/data-flow.md — Request flow diagrams: register, login, JWT verify, policy check, audit pipeline
 - [x] docs/examples/go-gin-integration.md — Full runnable Gin app: auth middleware adapter, role/scope guards, CRUD
 - [x] docs/research/gap-closure-report.md — Updated: 24 DONE, 3 PARTIAL, 4 TODO (77% closure) + 10 arch verifications
-> 204 docs total. All major topics covered.
-> Full doc audit completed (docs/AUDIT-REPORT.md): 200+ checks, 5 issues found and fixed.
-> Latest batch: social-login, SCIM API, microservices arch, Helm quickstart, webhook verified.
+> 205 docs total. All major topics covered.
+> Latest batch: rest-api reference, 5-min-jwt reverified, examples SDK-verified, RBAC+multi-tenant confirmed.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
