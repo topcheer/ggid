@@ -148,6 +148,8 @@ Full examples: [3-Line Integration Guide](docs/quickstart/3-line-integration.md)
 - **Multi-Tenancy** — PostgreSQL Row-Level Security (defense in depth)
 - **API Gateway** — JWT verification (RS256+JWKS), rate limiting, CORS, circuit breaker, compression, OTel tracing
 - **Audit** — NATS JetStream event pipeline + queryable log + CSV export + SSE streaming + anomaly detection
+- **AI Agent Identity** — RFC 8693 token exchange, delegation chain, MCP server authorization
+- **IGA Workflows** — Access request approval workflows (create → approve → auto-provision)
 - **Admin Console** — Next.js 15 + Tailwind CSS (10 pages)
 - **SDK** — Go / Node.js / Java / Python
 - **SCIM 2.0** — Standard user provisioning protocol
@@ -169,7 +171,7 @@ Full examples: [3-Line Integration Guide](docs/quickstart/3-line-integration.md)
 | **SCIM 2.0** | Yes | Paid tier | Yes | No |
 | **Audit pipeline** | NATS JetStream | Logs | DB | DB |
 | **Admin Console** | Next.js 15 | Hosted | React | No |
-| **AI Agent Identity (MCP)** | Planned | In dev | No | No |
+| **AI Agent Identity (MCP)** | Yes | In dev | No | No |
 
 ## Documentation
 

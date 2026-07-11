@@ -239,6 +239,17 @@ See [AI Agent Identity Guide](../guides/ai-agent-identity.md) for delegation cha
 
 ---
 
+## IGA Workflows (Access Requests)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/v1/access-requests` | Bearer JWT | Create access request |
+| `GET` | `/api/v1/access-requests` | Bearer JWT | List requests (pending/approved/denied) |
+| `POST` | `/api/v1/access-requests/{id}/approve` | `admin` role | Approve a request |
+| `POST` | `/api/v1/access-requests/{id}/deny` | `admin` role | Deny a request |
+
+---
+
 ## Health
 
 | Method | Path | Auth | Description |
