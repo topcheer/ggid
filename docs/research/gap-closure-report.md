@@ -172,8 +172,8 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | 19 | Compliance reporting | Missing | PARTIAL | Tests exist, implementation needs verification |
 | 20 | Tamper-proof audit trail | Missing | DONE | hash_chain.go (HMAC-SHA256), 12 test functions, wired in service startup |
 | 21 | API explorer/playground | Missing | PARTIAL | openapi_aggregator.go exists, Swagger UI not deployed |
-| 22 | Device authorization flow | Missing | DONE | server.go:867 device_authorization endpoint |
-| 23 | Token exchange (RFC 8693) | Missing | DONE | oauth_service.go:1105 TokenExchangeRequestRFC8693 |
+| 22 | Device authorization flow | Missing | DONE — VERIFIED | server.go:867 + TestPollDeviceToken_Approved PASS (2026-07-11 arch functional test) |
+| 23 | Token exchange (RFC 8693) | Missing | DONE — VERIFIED | oauth_service.go:1105 + TestExchangeToken_Success PASS (2026-07-11 arch functional test) |
 | 24 | React/Frontend SDK | Missing | TODO | No SPA SDK |
 | 25 | Real-time alerting | Missing | TODO | Not implemented |
 | 26 | Data retention policies | Missing | TODO | Not implemented |
