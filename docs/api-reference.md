@@ -1118,3 +1118,291 @@ Content-Type: application/json
   "created_at": "2024-01-15T10:00:00Z"
 }
 ```
+
+---
+
+## Policy & ABAC Endpoints
+
+### Check Permission
+
+Check if a user has a specific permission.
+
+```
+POST /api/v1/policies/check
+```
+
+**Request:**
+```json
+{
+  "user_id": "usr_abc123",
+  "tenant_id": "00000000-0000-0000-0000-000000000001",
+  "action": "write",
+  "resource": "users"
+}
+```
+
+**Response 200:**
+```json
+{
+  "allowed": true,
+  "reason": "role_permission_match",
+  "matched_role": "user_admin"
+}
+```
+
+### List ABAC Rules
+
+```
+GET /api/v1/policies/rules?tenant_id={uuid}
+```
+
+**Response 200:**
+```json
+{
+  "rules": [
+    {
+      "id": "rule_001",
+      "name": "business_hours_only",
+      "condition": "env.time.hour >= 9 AND env.time.hour <= 17",
+      "action": "ALLOW",
+      "priority": 100,
+      "active": true
+    }
+  ],
+  "total": 1
+}
+```
+
+### Create ABAC Rule
+
+```
+POST /api/v1/policies/rules
+```
+
+**Request:**
+```json
+{
+  "name": "office_ip_only",
+  "description": "Admin operations only from office IP range",
+  "condition": "user.role = 'admin' AND env.ip IN ['10.0.0.0/8']",
+  "action": "ALLOW",
+  "priority": 200
+}
+```
+
+---
+
+## Tenant Management Endpoints
+
+> **Note**: These endpoints require super-admin scope.
+
+### Create Tenant
+
+```
+POST /api/v1/tenants
+```
+
+**Request:**
+```json
+{
+  "name": "Acme Corporation",
+  "plan": "enterprise",
+  "max_users": 10000
+}
+```
+
+**Response 201:**
+```json
+{
+  "id": "55000000-0000-0000-0000-000000000002",
+  "name": "Acme Corporation",
+  "plan": "enterprise",
+  "active": true,
+  "created_at": "2025-07-11T12:00:00Z"
+}
+```
+
+### Get Tenant
+
+```
+GET /api/v1/tenants/{tenant_id}
+```
+
+### List Tenants
+
+```
+GET /api/v1/tenants
+```
+
+### Update Tenant
+
+```
+PUT /api/v1/tenants/{tenant_id}
+```
+
+**Request:**
+```json
+{
+  "name": "Acme Corp (Updated)",
+  "max_users": 50000
+}
+```
+
+### Suspend Tenant
+
+```
+POST /api/v1/tenants/{tenant_id}/suspend
+```
+
+**Request:**
+```json
+{
+  "reason": "Non-payment"
+}
+```
+
+### Delete Tenant
+
+```
+DELETE /api/v1/tenants/{tenant_id}
+```
+
+**Warning**: Cascades to all tenant data. Irreversible.
+
+---
+
+## Session Management Endpoints
+
+### List Active Sessions
+
+```
+GET /api/v1/sessions?user_id={user_id}
+```
+
+**Response 200:**
+```json
+{
+  "sessions": [
+    {
+      "id": "sess_abc123",
+      "user_id": "usr_abc123",
+      "ip_address": "192.168.1.50",
+      "user_agent": "Mozilla/5.0...",
+      "created_at": "2025-07-11T08:00:00Z",
+      "last_active": "2025-07-11T11:30:00Z",
+      "expires_at": "2025-07-11T20:00:00Z"
+    }
+  ]
+}
+```
+
+### Revoke Session
+
+```
+DELETE /api/v1/sessions/{session_id}
+```
+
+### Revoke All User Sessions
+
+```
+DELETE /api/v1/sessions?user_id={user_id}
+```
+
+**Response 200:**
+```json
+{
+  "revoked_count": 5
+}
+```
+
+---
+
+## Notification Endpoints
+
+### List Notifications
+
+```
+GET /api/v1/notifications?user_id={user_id}
+```
+
+**Response 200:**
+```json
+{
+  "notifications": [
+    {
+      "id": "notif_001",
+      "type": "security_alert",
+      "title": "New device login",
+      "message": "Login from new device at 192.168.1.50",
+      "read": false,
+      "created_at": "2025-07-11T12:00:00Z"
+    }
+  ],
+  "unread_count": 3
+}
+```
+
+### Mark Notification Read
+
+```
+PUT /api/v1/notifications/{notification_id}/read
+```
+
+### Send Test Notification
+
+```
+POST /api/v1/notifications/test
+```
+
+**Request:**
+```json
+{
+  "user_id": "usr_abc123",
+  "channel": "email",
+  "template": "welcome"
+}
+```
+
+---
+
+## Webhook Management Endpoints
+
+### List Webhook Deliveries
+
+```
+GET /api/v1/webhooks/{webhook_id}/deliveries?limit=20
+```
+
+**Response 200:**
+```json
+{
+  "deliveries": [
+    {
+      "id": "dlv_001",
+      "event_id": "evt_abc123",
+      "event_type": "user.created",
+      "status": "delivered",
+      "response_code": 200,
+      "latency_ms": 45,
+      "attempt": 1,
+      "delivered_at": "2025-07-11T12:00:00Z"
+    }
+  ]
+}
+```
+
+### Replay Failed Delivery
+
+```
+POST /api/v1/webhooks/{webhook_id}/deliveries/{delivery_id}/replay
+```
+
+### List Dead Letter Queue
+
+```
+GET /api/v1/webhooks/{webhook_id}/failures
+```
+
+---
+
+*Last updated: 2025-07-11*

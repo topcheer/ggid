@@ -318,3 +318,277 @@ user.events.{tenant_id}       # Per-tenant user events
 
 Consumers filter by tenant_id in subject pattern, preventing cross-tenant
 message delivery.
+
+---
+
+## Tenant CRUD API
+
+### Create Tenant
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tenants \
+  -H "Authorization: Bearer <super-admin-JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Acme Corporation",
+    "plan": "enterprise",
+    "max_users": 10000,
+    "features": ["sso", "scim", "audit_export"]
+  }'
+```
+
+Response: `201 Created`
+```json
+{
+  "id": "55000000-0000-0000-0000-000000000002",
+  "name": "Acme Corporation",
+  "plan": "enterprise",
+  "max_users": 10000,
+  "active": true,
+  "created_at": "2025-07-11T12:00:00Z"
+}
+```
+
+### Get Tenant
+
+```bash
+curl http://localhost:8080/api/v1/tenants/{tenant_id} \
+  -H "Authorization: Bearer <JWT>"
+```
+
+### List Tenants
+
+```bash
+curl http://localhost:8080/api/v1/tenants \
+  -H "Authorization: Bearer <super-admin-JWT>"
+```
+
+### Update Tenant
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/tenants/{tenant_id} \
+  -H "Authorization: Bearer <JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Acme Corp (Updated)",
+    "max_users": 50000,
+    "features": ["sso", "scim", "audit_export", "webhooks"]
+  }'
+```
+
+### Suspend Tenant
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tenants/{tenant_id}/suspend \
+  -H "Authorization: Bearer <super-admin-JWT>" \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "Non-payment"}'
+```
+
+Suspended tenants: all API calls return `403 Forbidden` with `tenant_suspended` error.
+
+### Delete Tenant
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/tenants/{tenant_id} \
+  -H "Authorization: Bearer <super-admin-JWT>"
+```
+
+**Warning**: This cascades to all tenant data (users, roles, orgs, audit events). This operation is irreversible.
+
+---
+
+## Default Tenant
+
+The default tenant is pre-seeded during database migration:
+
+| Property | Value |
+|----------|-------|
+| **UUID** | `00000000-0000-0000-0000-000000000001` |
+| **Name** | `Default` |
+| **Plan** | `unlimited` |
+| **Active** | `true` |
+
+### Purpose
+
+- Single-tenant deployments use this as the only tenant
+- Development and testing default to this tenant
+- Gateway requires `X-Tenant-ID` header — use this UUID for single-tenant mode
+
+### Gateway Configuration
+
+The gateway always requires a tenant identifier. In single-tenant mode, all requests use the default tenant UUID:
+
+```bash
+# All API calls must include X-Tenant-ID header
+curl http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer <JWT>" \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001"
+```
+
+### Gateway Tenant Forwarding
+
+The gateway forwards tenant context to backend services via two mechanisms:
+
+1. **Query parameter**: `tenant_id` appended to URL for GET requests
+2. **JSON body**: `tenant_id` injected into POST/PUT/PATCH body
+
+This is because Policy/Org/Audit services expect `tenant_id` as a query parameter or body field (not just a header).
+
+---
+
+## Tenant Context Flow (Complete)
+
+### Three Sources of Tenant Identity
+
+```
+┌─────────────────────────────────────────────────────┐
+│ Source 1: JWT Claim (AUTHORITATIVE)                  │
+│                                                      │
+│ "tenant_id" claim in JWT payload                     │
+│ → Takes PRIORITY over all other sources              │
+│ → Prevents tenant spoofing via header injection       │
+│ → Set at token issuance time by auth service          │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ Source 2: X-Tenant-ID Header (SERVICE-TO-SERVICE)    │
+│                                                      │
+│ HTTP header set by gateway                            │
+│ → Used when no JWT is present (health checks)         │
+│ → IGNORED if JWT is present (prevents spoofing)       │
+│ → For logging and audit only when JWT exists          │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│ Source 3: Database Session (ENFORCEMENT)              │
+│                                                      │
+│ SET LOCAL app.tenant_id = '<uuid>'                   │
+│ → Set on every database connection                    │
+│ → Enforced by RLS policies                            │
+│ → Cannot be bypassed by application bugs              │
+└─────────────────────────────────────────────────────┘
+```
+
+### Tenant Spoofing Prevention
+
+**Threat**: Malicious user tries to access another tenant's data by sending a different `X-Tenant-ID` header.
+
+**Defense**: The gateway extracts `tenant_id` from the JWT claim and ignores the header:
+
+```go
+// In gateway middleware
+tenantID := jwtClaims.TenantID  // From JWT — authoritative
+// NOT: tenantID := r.Header.Get("X-Tenant-ID")  // SPOOFABLE!
+```
+
+---
+
+## Tenant Migration Patterns
+
+### Pattern 1: Tenant Onboarding
+
+When a new tenant signs up:
+
+```
+1. Create tenant record in tenants table
+2. Create default roles for tenant (super_admin, end_user)
+3. Create first admin user with super_admin role
+4. Send onboarding email
+5. Emit tenant.created webhook event
+```
+
+### Pattern 2: Tenant Data Export
+
+```bash
+# Export all tenant data for backup or migration
+curl http://localhost:8080/api/v1/tenants/{tenant_id}/export \
+  -H "Authorization: Bearer <JWT>" \
+  -o tenant_export.json
+```
+
+Export includes:
+- All users (passwords excluded)
+- All roles and permissions
+- Organization hierarchy
+- Audit events (configurable date range)
+- Webhook configurations
+
+### Pattern 3: Tenant Data Import
+
+```bash
+curl -X POST http://localhost:8080/api/v1/tenants/{tenant_id}/import \
+  -H "Authorization: Bearer <JWT>" \
+  -H "Content-Type: application/json" \
+  -d @tenant_export.json
+```
+
+### Pattern 4: Tenant Splitting
+
+When a large tenant needs to be split into multiple tenants:
+
+1. Export source tenant data
+2. Create new tenant(s)
+3. Import users into new tenant(s)
+4. Reassign roles in new tenant
+5. Verify data isolation
+6. Suspend original tenant
+
+### Pattern 5: Schema Migration Per Tenant
+
+For schema changes that need per-tenant validation:
+
+```sql
+-- Step 1: Migrate default tenant
+SET LOCAL app.tenant_id = '00000000-0000-0000-0000-000000000001';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS department VARCHAR(255);
+
+-- Step 2: Verify
+SELECT COUNT(*) FROM users WHERE department IS NOT NULL;
+
+-- Step 3: Migrate remaining tenants (application handles this)
+```
+
+**Note**: DDL changes apply to the table (all tenants). DML changes are tenant-scoped via RLS.
+
+---
+
+## Per-Tenant Rate Limiting
+
+Rate limits are applied per-tenant, not just per-IP:
+
+```
+Rate Limit Key: rate_limit:{tenant_id}:{ip}:{endpoint}
+
+Default Limits:
+  - 1000 req/min per tenant (enterprise)
+  - 100 req/min per tenant (starter)
+  - 10 req/min per IP (unauthenticated)
+```
+
+This prevents one tenant's heavy usage from affecting others.
+
+---
+
+## Tenant Monitoring
+
+### Key Metrics Per Tenant
+
+| Metric | Description | Alert Threshold |
+|--------|-------------|----------------|
+| `tenant.user_count` | Active users | >90% of max_users |
+| `tenant.api_calls` | API calls per minute | >80% of rate limit |
+| `tenant.failed_logins` | Failed login attempts | >50 per hour |
+| `tenant.audit_events` | Audit events per day | Anomaly detection |
+| `tenant.storage_mb` | Database storage used | >80% of quota |
+
+### Querying Tenant Metrics
+
+```bash
+curl "http://localhost:8080/api/v1/tenants/{tenant_id}/metrics" \
+  -H "Authorization: Bearer <JWT>"
+```
+
+---
+
+*Last updated: 2025-07-11*
