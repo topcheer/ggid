@@ -66,6 +66,7 @@
 - [ ] make test intermittent timeout when teammates edit concurrently
 - [ ] Missing input validation on several API endpoints
 - [x] Dark mode needs testing across all Console pages — verified dashboard, users, settings, organizations in dark mode via browser. CSS auto-fallback layer covers 77 bg-white patterns. No contrast issues. (frontend 29fec8f)
+- [ ] Dashboard stats show 0/placeholder when /api/v1/dashboard/stats returns empty — Total Users/Active Sessions/Login Rate/MFA Adoption fall back to 0 when backend endpoint returns null. Backend issue: identity service and auth service use separate stores. Fix: either share user store or have dashboard endpoint aggregate from both.
 
 ## P3 — Infrastructure
 

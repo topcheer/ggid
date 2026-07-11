@@ -694,7 +694,12 @@ export default function UsersPage() {
             {loading ? (
               <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Loading...</td></tr>
             ) : paginated.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No users found</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center">
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-gray-500 dark:text-gray-400">No users found</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">Users registered through the auth service will appear here. Click "New User" to create one.</p>
+                </div>
+              </td></tr>
             ) : (
               paginated.map((user) => {
                 const scimBadge = getScimBadge(user);

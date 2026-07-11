@@ -63,21 +63,41 @@ export function Sidebar() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const navItems = [
-    { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
-    { href: "/users", label: t("nav.users"), icon: Users },
-    { href: "/roles", label: t("nav.roles"), icon: Shield },
-    { href: "/policies", label: t("nav.policies"), icon: Shield },
-    { href: "/organizations", label: t("nav.organizations"), icon: Building2 },
-    { href: "/audit", label: t("nav.audit"), icon: ScrollText },
-    { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
-    { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
-    { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
-    { href: "/scim", label: t("nav.scim"), icon: BookOpen },
-    { href: "/organizations/analytics", label: t("nav.orgAnalytics"), icon: TrendingUp },
-    { href: "/monitoring", label: t("nav.monitoring"), icon: Server },
-    { href: "/api-explorer", label: t("nav.apiExplorer"), icon: Send },
-    { href: "/settings", label: t("nav.settings"), icon: Settings },
+  const navGroups = [
+    {
+      label: "Overview",
+      items: [
+        { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: "Management",
+      items: [
+        { href: "/users", label: t("nav.users"), icon: Users },
+        { href: "/roles", label: t("nav.roles"), icon: Shield },
+        { href: "/policies", label: t("nav.policies"), icon: Shield },
+        { href: "/organizations", label: t("nav.organizations"), icon: Building2 },
+        { href: "/organizations/analytics", label: t("nav.orgAnalytics"), icon: TrendingUp },
+      ],
+    },
+    {
+      label: "Security",
+      items: [
+        { href: "/audit", label: t("nav.audit"), icon: ScrollText },
+        { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
+        { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
+        { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
+        { href: "/scim", label: t("nav.scim"), icon: BookOpen },
+      ],
+    },
+    {
+      label: "System",
+      items: [
+        { href: "/monitoring", label: t("nav.monitoring"), icon: Server },
+        { href: "/api-explorer", label: t("nav.apiExplorer"), icon: Send },
+        { href: "/settings", label: t("nav.settings"), icon: Settings },
+      ],
+    },
   ];
 
   return (
@@ -111,27 +131,36 @@ export function Sidebar() {
         </button>
       </div>
 
-      <nav className="flex-1 space-y-1 p-3">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active =
-            pathname === item.href ||
-            (item.href !== "/" && pathname.startsWith(item.href));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                active
-                  ? "bg-brand-50 text-brand-700 font-medium dark:bg-brand-900/30 dark:text-brand-400"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-3 overflow-y-auto p-3">
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            <p className="mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              {group.label}
+            </p>
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const active =
+                  pathname === item.href ||
+                  (item.href !== "/" && pathname.startsWith(item.href));
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      active
+                        ? "bg-brand-50 text-brand-700 font-medium dark:bg-brand-900/30 dark:text-brand-400"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Controls: theme + locale */}
