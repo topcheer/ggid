@@ -328,6 +328,14 @@
 - [x] Go SDK auto token refresh — TokenManager with 30s margin, transparent refresh on AccessToken(ctx) (2cd7602)
 - [x] Gateway OIDC discovery — /.well-known/openid-configuration proxied to OAuth service (2cd7602)
 
+## Sprint: Error Format Migration + SDK Tests + Node Auto-Refresh (backend 2625a95)
+- [x] Identity service error format — writeError/writeServiceError migrated to WriteSimpleAPIError/WriteAPIError (2625a95)
+- [x] Policy/Org/Audit error format — writeJSONError migrated to WriteSimpleAPIError, writeServiceError to WriteAPIError (2625a95)
+- [x] OAuth error format — NOT CHANGED: follows RFC 6749 ({"error":"...","error_description":"..."}) — correct behavior (2625a95)
+- [x] Go SDK TokenManager tests — 10 tests: auto-refresh margin, concurrent safety, no-tokens, no-refresh-token, sentinel errors (2625a95)
+- [x] Go SDK JWKS cache tests — 7 tests: cache hit, TTL expiry (15min), key rotation, concurrent access, empty/error response (2625a95)
+- [x] Node SDK token refresh — TokenManager class (sdk/node/src/token_manager.ts): 30s margin auto-refresh, concurrent dedup, exported from index.ts (2625a95)
+
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
 - [x] Docker multi-stage build (deploy/)
