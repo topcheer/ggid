@@ -63,6 +63,9 @@ type PanicRecord struct {
 
 // Emit writes a log record as JSON to the underlying logger.
 func (sl *StructuredLogger) Emit(rec any) {
+	if sl == nil || sl.logger == nil {
+		return
+	}
 	data, err := json.Marshal(rec)
 	if err != nil {
 		return
