@@ -77,7 +77,7 @@ Confidence levels:
 
 | # | Gap | Matrix Said | Actual Status | Commit/Evidence |
 |---|-----|------------|---------------|-----------------|
-| 1 | K8s/Helm deployment | Missing | DONE | deploy/helm/ggid/ — 8 templates, HPA, PDB, NetworkPolicy |
+| 1 | K8s/Helm deployment | Missing | **DONE — E2E VERIFIED** | deploy/helm/ggid/ — 8 templates. K3s: 10/10 E2E PASS via https://ggid.iot2.win (7db6d5d). Docker: 11/11 PASS. Ingress: Traefik + cert-manager TLS |
 | 2 | HA configuration | Missing | DONE | Helm chart has replicaCount, HPA, PDB |
 | 3 | Token introspection (RFC 7662) | Missing | DONE | services/oauth: 20 test functions, server.go:555 endpoint with client auth |
 | 4 | SLO / Backchannel logout | Missing | DONE | server.go:459, /api/v1/oauth/backchannel-logout |
@@ -96,7 +96,7 @@ Confidence levels:
 | 12 | Webhooks | Missing | DONE | gateway/webhooks/ — full impl + SSRF protection |
 | 13 | GraphQL API | Missing | DONE | gateway/middleware/graphql.go |
 | 14 | Prometheus/Grafana | Missing | DONE | /metrics on all services, deploy/grafana/ |
-| 15 | Terraform/IaC provider | Missing | TODO | Not implemented |
+| 15 | Terraform/IaC provider | Missing | **DONE** | deploy/terraform/ (main.tf, variables.tf, outputs.tf) — Helm release + K8s secret. Verified: 7db6d5d | K3s verified 2026-07-11 |
 | 16 | Python SDK | Missing | DONE | sdk/python/ggid/ — client, jwt, middleware |
 | 17 | API-wide rate limiting | Missing | DONE | gateway/middleware/ — 18 rate-limit files; wired at router.go:376 |
 
