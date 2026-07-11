@@ -100,6 +100,9 @@
 - [x] gRPC TLS config (P0) — pkg/transport/tlsconfig.go LoadServerTLS/LoadClientTLS/LoadMutualTLS (fb29546)
 - DUPLICATE: Token exchange RFC 8693 tests — already 8 tests in coverage_boost2/3, sprint14_test.go
 - DUPLICATE: DPoP proof verification tests — already 15 tests in dpop_test.go
+- [x] Wire RotatingKeyProvider into OAuth startup — already done in fb29546
+- [x] Fix WebAuthn hardcoded attachment — reads from authenticator response (2870f9d)
+- [x] gRPC TLS PoC — pkg/transport/tlsconfig.go already done in fb29546
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
