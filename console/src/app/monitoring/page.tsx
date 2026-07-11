@@ -104,25 +104,25 @@ export default function MonitoringPage() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <OverviewCard
           icon={Server}
-          label="Services Healthy"
+          label={t("monitoring.servicesHealthy")}
           value={`${healthyCount}/${services.length || SERVICES.length}`}
           color={healthyCount === SERVICES.length ? "green" : healthyCount > 0 ? "amber" : "red"}
         />
         <OverviewCard
           icon={Activity}
-          label="Total Requests"
+          label={t("monitoring.totalRequests")}
           value={totalReqs.toLocaleString()}
           color="blue"
         />
         <OverviewCard
           icon={XCircle}
-          label="Error Rate"
+          label={t("monitoring.errorRate")}
           value={`${errorRate}%`}
           color={parseFloat(errorRate) > 5 ? "red" : "green"}
         />
         <OverviewCard
           icon={TrendingUp}
-          label="Uptime"
+          label={t("monitoring.uptime")}
           value={gwStats?.uptime_seconds ? formatUptime(gwStats.uptime_seconds) : "-"}
           color="green"
         />
@@ -158,7 +158,7 @@ export default function MonitoringPage() {
                     ) : (
                       <XCircle className="h-4 w-4" />
                     )}
-                    {svc.status === "healthy" ? "Healthy" : svc.status === "checking" ? "Checking..." : "Unhealthy"}
+                    {svc.status === "healthy" ? t("monitoring.healthy") : svc.status === "checking" ? t("monitoring.checking") : t("monitoring.unhealthy")}
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-500">

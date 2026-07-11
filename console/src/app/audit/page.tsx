@@ -298,19 +298,19 @@ export default function AuditPage() {
             <div className="grid gap-4 sm:grid-cols-3">
               <StatCard
                 icon={Activity}
-                label="Events (24h)"
+                label={t("audit.events24h")}
                 value={stats.total_events_24h}
                 color="indigo"
               />
               <StatCard
                 icon={TrendingUp}
-                label="Unique Event Types"
+                label={t("audit.uniqueEventTypes")}
                 value={Object.keys(stats.events_by_action).length}
                 color="green"
               />
               <StatCard
                 icon={AlertTriangle}
-                label="Failed Logins (24h)"
+                label={t("audit.failedLogins24h")}
                 value={stats.failed_logins_24h}
                 color="red"
               />
@@ -493,7 +493,7 @@ export default function AuditPage() {
               onChange={(e) => setActionFilter(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             >
-              <option value="">All Actions</option>
+              <option value="">{t("audit.allActions")}</option>
               <option value="user.login">user.login</option>
               <option value="user.register">user.register</option>
               <option value="user.logout">user.logout</option>
@@ -509,7 +509,7 @@ export default function AuditPage() {
             </select>
             <input
               type="text"
-              placeholder="Actor ID/Name"
+              placeholder={t("audit.actorPlaceholder")}
               value={actorFilter}
               onChange={(e) => setActorFilter(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
@@ -526,7 +526,7 @@ export default function AuditPage() {
               onChange={(e) => setResultFilter(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
             >
-              <option value="">All Results</option>
+              <option value="">{t("audit.allResults")}</option>
               <option value="success">Success</option>
               <option value="failure">Failure</option>
               <option value="denied">Denied</option>

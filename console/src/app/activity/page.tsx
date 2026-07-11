@@ -222,7 +222,7 @@ export default function ActivityLogPage() {
               onChange={(e) => setEventTypeFilter(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              <option value="">All Events</option>
+              <option value="">{t("activity.allEvents")}</option>
               {EVENT_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
                   {t.label}
@@ -237,7 +237,7 @@ export default function ActivityLogPage() {
               onChange={(e) => setResultFilter(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
-              <option value="">All Results</option>
+              <option value="">{t("activity.allResults")}</option>
               <option value="success">Success</option>
               <option value="failure">Failure</option>
             </select>
