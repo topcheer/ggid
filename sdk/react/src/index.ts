@@ -165,6 +165,10 @@ export { useAnomalies } from './useAnomalies';
 export type { Anomaly, AnomalySeverity, AnomalyStatus, UseAnomaliesResult } from './useAnomalies';
 export { useClientAnalytics } from './useClientAnalytics';
 export type { ClientAnalyticsEntry, UseClientAnalyticsResult } from './useClientAnalytics';
+export { useAccessPaths } from './useAccessPaths';
+export type { AccessPathNode, AccessPathResult, UseAccessPathsResult } from './useAccessPaths';
+export { useTamperCheck } from './useTamperCheck';
+export type { TamperIssue, TamperStatus, UseTamperCheckResult } from './useTamperCheck';
 export type {
   GGIDConfig,
   GGIDUser,
