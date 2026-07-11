@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -56,6 +57,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users", h.handleUsers)
 	h.mux.HandleFunc("/api/v1/users/", h.handleUserByID)
 	h.mux.HandleFunc("/api/v1/users/import", h.handleImportCSV)
+	h.mux.HandleFunc("/api/v1/users/export", h.handleExportUsers)
 
 	// Branding endpoints
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
@@ -667,4 +669,64 @@ func (h *HTTPHandler) handleImportCSV(w http.ResponseWriter, r *http.Request) {
 		"failed":  len(lines) - startIdx - successCount,
 		"results": results,
 	})
+}
+
+// handleExportUsers handles GET /api/v1/users/export?format=csv|json
+// Streams the user list in the requested format.
+func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	ctx, ok := injectTenant(r)
+	if ! ok {
+		writeError(w, http.StatusBadRequest, "missing or invalid X-Tenant-ID header")
+		return
+	}
+
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "csv"
+	}
+	if format != "csv" && format != "json" {
+		writeError(w, http.StatusBadRequest, "format must be csv or json")
+		return
+	}
+
+	if h.svc == nil {
+		writeError(w, http.StatusInternalServerError, "service not initialized")
+		return
+	}
+
+	result, err := h.svc.ListUsers(ctx, &domain.ListUsersFilter{PageSize: 10000})
+	if err != nil || result == nil {
+		writeServiceError(w, err)
+		return
+	}
+	users := result.Users
+
+	switch format {
+	case "csv":
+		w.Header().Set("Content-Type", "text/csv")
+		w.Header().Set("Content-Disposition", `attachment; filename="users_export.csv"`)
+		wr := csv.NewWriter(w)
+		wr.Write([]string{"id", "username", "email", "phone", "status", "display_name", "created_at"})
+		for _, u := range users {
+			wr.Write([]string{
+				u.ID.String(),
+				u.Username,
+				u.Email,
+				u.Phone,
+				string(u.Status),
+				u.DisplayName,
+				u.CreatedAt.Format(time.RFC3339),
+			})
+		}
+		wr.Flush()
+	case "json":
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Disposition", `attachment; filename="users_export.json"`)
+		json.NewEncoder(w).Encode(map[string]any{"users": users})
+	}
 }

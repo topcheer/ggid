@@ -55,10 +55,23 @@ type SIEMForwarder struct {
 	buffer   []Event
 	stopCh   chan struct{}
 	doneCh   chan struct{}
+	stopOnce sync.Once
 }
 
 // NewSIEMForwarder creates a new SIEM forwarder.
 func NewSIEMForwarder(cfg SIEMConfig) *SIEMForwarder {
+	if cfg.MaxRetries <= 0 {
+		cfg.MaxRetries = 3
+	}
+	if cfg.BatchSize <= 0 {
+		cfg.BatchSize = 100
+	}
+	if cfg.FlushInterval <= 0 {
+		cfg.FlushInterval = 5 * time.Second
+	}
+	if cfg.Timeout <= 0 {
+		cfg.Timeout = 10 * time.Second
+	}
 	return &SIEMForwarder{
 		config: cfg,
 		client: &http.Client{Timeout: cfg.Timeout},
@@ -104,9 +117,15 @@ func (f *SIEMForwarder) Start(ctx context.Context) {
 }
 
 // Stop gracefully shuts down the forwarder, flushing remaining events.
+// Safe to call multiple times.
 func (f *SIEMForwarder) Stop() {
-	close(f.stopCh)
-	<-f.doneCh
+	f.stopOnce.Do(func() {
+		close(f.stopCh)
+	})
+	select {
+	case <-f.doneCh:
+	case <-time.After(5 * time.Second):
+	}
 }
 
 // flush sends all buffered events to the configured SIEM endpoint.
