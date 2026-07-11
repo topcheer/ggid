@@ -13,11 +13,28 @@ import (
 )
 
 // makeClientAssertionJWT builds a JWT for RFC 7523 testing.
+// makeClientAssertionJWT creates an unsigned JWT (alg=none) for testing
+// claim-level validation errors. These will FAIL signature verification.
 func makeClientAssertionJWT(iss, sub, aud string, exp int64) string {
 	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"none","typ":"JWT"}`))
 	payload := `{"iss":"` + iss + `","sub":"` + sub + `","aud":"` + aud + `","exp":` + formatInt(exp) + `}`
 	p := base64.RawURLEncoding.EncodeToString([]byte(payload))
 	return header + "." + p + "."
+}
+
+// makeSignedClientAssertionJWT creates a properly HMAC-signed JWT for testing
+// successful signature verification.
+func makeSignedClientAssertionJWT(iss, sub, aud, secret string, exp int64) string {
+	claims := jwt.RegisteredClaims{
+		Issuer:    iss,
+		Subject:   sub,
+		Audience:  []string{aud},
+		ExpiresAt: jwt.NewNumericDate(time.Unix(exp, 0)),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token.Header["typ"] = "JWT"
+	signed, _ := token.SignedString([]byte(secret))
+	return signed
 }
 
 // --- Coverage: RPInitiatedLogout (83.3%) ---
@@ -269,8 +286,8 @@ func TestCovSprint12_CryptoRandInt_Zero(t *testing.T) {
 
 func TestRFC7523_ValidAssertion(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", time.Now().Add(5*time.Minute).Unix())
-	claims, err := svc.ValidateClientAssertion(token, "client-1")
+	token := makeSignedClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", "secret-1", time.Now().Add(5*time.Minute).Unix())
+	claims, err := svc.ValidateClientAssertion(token, "client-1", "secret-1")
 	if err != nil {
 		t.Fatalf("ValidateClientAssertion: %v", err)
 	}
@@ -281,7 +298,7 @@ func TestRFC7523_ValidAssertion(t *testing.T) {
 
 func TestRFC7523_EmptyAssertion(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	_, err := svc.ValidateClientAssertion("", "client-1")
+	_, err := svc.ValidateClientAssertion("", "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for empty assertion")
 	}
@@ -289,7 +306,7 @@ func TestRFC7523_EmptyAssertion(t *testing.T) {
 
 func TestRFC7523_EmptyClientID(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	_, err := svc.ValidateClientAssertion("token", "")
+	_, err := svc.ValidateClientAssertion("token", "", "secret-1")
 	if err == nil {
 		t.Error("expected error for empty client_id")
 	}
@@ -297,7 +314,7 @@ func TestRFC7523_EmptyClientID(t *testing.T) {
 
 func TestRFC7523_InvalidJWT(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	_, err := svc.ValidateClientAssertion("not.a.jwt", "client-1")
+	_, err := svc.ValidateClientAssertion("not.a.jwt", "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for invalid JWT")
 	}
@@ -305,8 +322,8 @@ func TestRFC7523_InvalidJWT(t *testing.T) {
 
 func TestRFC7523_IssMismatch(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeClientAssertionJWT("wrong", "client-1", "https://test.ggid.dev", time.Now().Add(5*time.Minute).Unix())
-	_, err := svc.ValidateClientAssertion(token, "client-1")
+	token := makeSignedClientAssertionJWT("wrong", "client-1", "https://test.ggid.dev", "secret-1", time.Now().Add(5*time.Minute).Unix())
+	_, err := svc.ValidateClientAssertion(token, "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for iss mismatch")
 	}
@@ -314,8 +331,8 @@ func TestRFC7523_IssMismatch(t *testing.T) {
 
 func TestRFC7523_SubMismatch(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeClientAssertionJWT("client-1", "wrong", "https://test.ggid.dev", time.Now().Add(5*time.Minute).Unix())
-	_, err := svc.ValidateClientAssertion(token, "client-1")
+	token := makeSignedClientAssertionJWT("client-1", "wrong", "https://test.ggid.dev", "secret-1", time.Now().Add(5*time.Minute).Unix())
+	_, err := svc.ValidateClientAssertion(token, "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for sub mismatch")
 	}
@@ -323,8 +340,8 @@ func TestRFC7523_SubMismatch(t *testing.T) {
 
 func TestRFC7523_WrongAud(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeClientAssertionJWT("client-1", "client-1", "https://wrong.example.com", time.Now().Add(5*time.Minute).Unix())
-	_, err := svc.ValidateClientAssertion(token, "client-1")
+	token := makeSignedClientAssertionJWT("client-1", "client-1", "https://wrong.example.com", "secret-1", time.Now().Add(5*time.Minute).Unix())
+	_, err := svc.ValidateClientAssertion(token, "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for wrong aud")
 	}
@@ -332,8 +349,8 @@ func TestRFC7523_WrongAud(t *testing.T) {
 
 func TestRFC7523_Expired(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", 1)
-	_, err := svc.ValidateClientAssertion(token, "client-1")
+	token := makeSignedClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", "secret-1", 1)
+	_, err := svc.ValidateClientAssertion(token, "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for expired assertion")
 	}
@@ -341,10 +358,11 @@ func TestRFC7523_Expired(t *testing.T) {
 
 func TestRFC7523_MissingExp(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
+	// alg=none must be rejected by signature verification.
 	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"none","typ":"JWT"}`))
 	payload := base64.RawURLEncoding.EncodeToString([]byte(`{"iss":"client-1","sub":"client-1","aud":"https://test.ggid.dev"}`))
 	token := header + "." + payload + "."
-	_, err := svc.ValidateClientAssertion(token, "client-1")
+	_, err := svc.ValidateClientAssertion(token, "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for missing exp")
 	}
@@ -352,7 +370,7 @@ func TestRFC7523_MissingExp(t *testing.T) {
 
 func TestRFC7523_JWTClientAuth_WrongType(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	_, err := svc.ValidateJWTClientAuth("wrong-type", "token", "client-1")
+	_, err := svc.ValidateJWTClientAuth("wrong-type", "token", "client-1", "secret-1")
 	if err == nil {
 		t.Error("expected error for wrong assertion_type")
 	}
@@ -360,13 +378,58 @@ func TestRFC7523_JWTClientAuth_WrongType(t *testing.T) {
 
 func TestRFC7523_JWTClientAuth_Valid(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
-	token := makeClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", time.Now().Add(5*time.Minute).Unix())
-	claims, err := svc.ValidateJWTClientAuth(ClientAssertionTypeRFC7523, token, "client-1")
+	token := makeSignedClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", "secret-1", time.Now().Add(5*time.Minute).Unix())
+	claims, err := svc.ValidateJWTClientAuth(ClientAssertionTypeRFC7523, token, "client-1", "secret-1")
 	if err != nil {
 		t.Fatalf("ValidateJWTClientAuth: %v", err)
 	}
 	if claims.ClientID != "client-1" {
 		t.Errorf("expected client-1, got %s", claims.ClientID)
+	}
+}
+
+// --- RFC 7523: Signature Verification Security Tests ---
+
+// TestRFC7523_RejectAlgNone verifies that unsigned JWTs (alg=none) are rejected.
+// This is the core security fix — without it, anyone can forge client assertions.
+func TestRFC7523_RejectAlgNone(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	token := makeClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", time.Now().Add(5*time.Minute).Unix())
+	_, err := svc.ValidateClientAssertion(token, "client-1", "secret-1")
+	if err == nil {
+		t.Fatal("SECURITY: alg=none assertion must be rejected")
+	}
+	if !strings.Contains(err.Error(), "alg=none") {
+		t.Errorf("expected alg=none error, got: %v", err)
+	}
+}
+
+// TestRFC7523_RejectWrongSecret verifies that HMAC signatures with the wrong
+// secret are rejected.
+func TestRFC7523_RejectWrongSecret(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	token := makeSignedClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", "correct-secret", time.Now().Add(5*time.Minute).Unix())
+	_, err := svc.ValidateClientAssertion(token, "client-1", "wrong-secret")
+	if err == nil {
+		t.Fatal("SECURITY: assertion signed with wrong secret must be rejected")
+	}
+}
+
+// TestRFC7523_RejectTamperedPayload verifies that modifying the JWT payload
+// invalidates the signature.
+func TestRFC7523_RejectTamperedPayload(t *testing.T) {
+	svc, _, _, _ := newTestOAuthService()
+	token := makeSignedClientAssertionJWT("client-1", "client-1", "https://test.ggid.dev", "secret-1", time.Now().Add(5*time.Minute).Unix())
+	// Tamper with the payload by flipping a character.
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		t.Fatal("expected 3-part JWT")
+	}
+	tamperedPayload := parts[1] + "X" // append garbage
+	tamperedToken := parts[0] + "." + tamperedPayload + "." + parts[2]
+	_, err := svc.ValidateClientAssertion(tamperedToken, "client-1", "secret-1")
+	if err == nil {
+		t.Fatal("SECURITY: tampered JWT must be rejected")
 	}
 }
 
