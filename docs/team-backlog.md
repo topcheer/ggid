@@ -1,87 +1,72 @@
 # GGID Team Backlog
 
+> Last updated: session audit — reflects actual codebase state
+
 ## P0 — Security (Critical)
 
-### dev (OAuth/Auth security)
-- [ ] OAuth state validation on token exchange — store state in Redis, verify on callback
-- [ ] iss parameter in auth redirect (RFC 6749 §10.14)
-- [ ] JWT jti tracking with Redis SETNX (anti-replay)
-- [ ] HasScope() actual scope enforcement — verify JWT scope claim
-- [ ] Access token missing scope claim — issueAccessToken omits scope
-- [ ] JWTSecret empty → log.Fatal (silent auth bypass fix)
-- [ ] Password pepper (HMAC-SHA256 pre-hash)
-- [ ] WebAuthn attestation verification (5/6 formats unverified)
+### Resolved (13/20)
+- [x] CSRF token predictable entropy → crypto/rand (arch 29b51c1)
+- [x] Rate limiter wired into handler chain (arch fc20c41)
+- [x] SecurityHeaders wired into handler chain (arch 64991a6)
+- [x] Tenant spoofing fix (arch 5bcbfce)
+- [x] Admin API role check (arch 66ef1db)
+- [x] OAuth state validation on token exchange (dev 72edaa5)
+- [x] iss parameter in auth redirect (dev 72edaa5)
+- [x] JWT jti tracking with Redis SETNX (dev 72edaa5)
+- [x] HasScope() scope enforcement (dev 72edaa5)
+- [x] JWTSecret empty → log.Fatal (dev 72edaa5)
+- [x] Webhook SSRF protection (arch b52bafd)
+- [x] Host header validation middleware (uiux — host_validation.go exists)
+- [x] Audit hash chain (arch fe5b025 — hash_chain.go, 11 tests)
 
-### uiux (Gateway security)
-- [ ] Host header validation middleware (DNS rebinding defense)
-- [ ] Webhook HTTPDeliverer SSRF protection (private IP blocking)
-- [ ] Body size limit middleware (default 10MB)
-- [ ] IP allowlist middleware for admin endpoints
-- [ ] Middleware coverage →92%
-
-### arch (Infrastructure security)
-- [x] CSRF token predictable entropy (crypto/rand fix)
-- [x] Rate limiter wired into handler chain
-- [x] SecurityHeaders wired into handler chain
-- [x] Tenant spoofing fix (JWT claim priority)
-- [ ] gRPC TLS/mTLS between services
-- [ ] Audit hash chain implementation
-- [ ] JWT signing key rotation infrastructure
-- [ ] Database backup automation (pg_dump cron)
+### Outstanding (7) — VERIFIED MISSING
+1. **OAuth introspection endpoint has NO AUTH** — server.go introspection handler requires no client credentials (dev)
+2. **Access token missing scope claim** — issueAccessToken omits scope in JWT claims (dev — in progress)
+3. **Password pepper not wired** — SetPepper() exists but not called at boot (dev)
+4. **gRPC TLS/mTLS between services** — all gRPC is plaintext (arch)
+5. **WebAuthn attestation verification** — attestation_formats.go exists but 5/6 formats unverified (dev)
+6. **JWT signing key rotation** — no kid header, no JWKS rotation (arch)
+7. **Database backup automation** — no pg_dump cron (arch)
 
 ## P1 — Feature Development
 
-### dev
-- [ ] SCIM 2.0 server implementation (create/update/delete users via SCIM)
-- [ ] Session management with revocation list
-- [ ] SAML IdP-initiated SSO
-- [ ] OIDC back-channel logout
-- [ ] OAuth DPoP support (RFC 9449)
+### Completed (VERIFIED EXISTING)
+- [x] SCIM 2.0 PATCH support — services/identity/internal/scim/patch.go + filter.go (dev 2caa572)
+- [x] Session timeout middleware — session_timeout.go (dev 2caa572)
+- [x] SAML IdP-initiated SSO — pkg/saml/idp_initiated.go (dev 2caa572)
+- [x] OAuth DPoP support — services/oauth/internal/service/dpop.go (dev 2caa572)
+- [x] TOTP backup codes — backup_codes.go (dev 2caa572)
+- [x] GraphQL proxy middleware — graphql.go (uiux)
+- [x] WebSocket upgrade — wsproxy.go (uiux)
+- [x] gRPC server reflection — grpc_interceptor.go (uiux)
+- [x] Circuit breaker per backend — circuitbreaker.go (uiux)
+- [x] IP allowlist middleware — ipallowlist.go (uiux)
+- [x] Prometheus /metrics all services (uiux 122873e)
+- [x] Structured logging (slog) — 6 gateway middleware files (uiux 122873e)
+- [x] Console: all 33 pages (frontend — password-policy, user-import, audit, notifications, SSO, branding, API explorer, certs, etc.)
+- [x] Console: security dashboard, webhook tester, user activity
+- [x] Docs: api-reference, architecture, developer-environment, security-architecture, admin-guide, audit-guide, configuration, 128 total
+- [x] Research: 135 docs covering all major IAM topics
 
-### uiux
-- [ ] GraphQL proxy middleware (ResolveQuery)
-- [ ] WebSocket upgrade support in gateway
-- [ ] gRPC server reflection for debugging
-- [ ] Deep health check aggregation
-- [ ] Per-route timeout middleware
-
-### frontend
-- [ ] Console SSO Configuration page
-- [ ] Console Notification Templates page
-- [ ] Console Audit Log Advanced Filters
-- [ ] Console User Import Wizard
-- [ ] Console Password Policy Editor
-
-### doc
-- [ ] docs/architecture.md — system architecture overview
-- [ ] docs/database-schema.md — full DB schema
-- [ ] docs/deployment-guide.md — production deployment
-- [ ] docs/sdk-guide.md — SDK usage guide
-- [ ] docs/development.md — developer guide
-
-### arch
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] SDK coverage tests (Go/Node/Java)
-- [ ] Docker multi-stage build optimization
-- [ ] Helm chart for Kubernetes
-- [ ] OpenTelemetry integration
+### Outstanding — VERIFIED MISSING
+1. **OIDC back-channel logout** — no logout_token JWT validation (dev)
+2. **Deep health check aggregation** — no aggregate endpoint (uiux)
+3. **Per-route timeout middleware** — no configurable per-route timeouts (uiux)
+4. **CI/CD pipeline** — no .github/workflows (arch)
+5. **Helm chart** — no deploy/helm/ (arch)
+6. **Performance benchmarks** — no bench tests (all)
 
 ## P2 — Quality & Polish
 
-### All
-- [ ] Coverage →95% across all packages
-- [ ] Integration test suite (10+ E2E tests)
-- [ ] Performance benchmarks
-- [ ] API documentation (OpenAPI/Swagger)
-- [ ] Upgrade guide documentation
-- [ ] Log structured everywhere
-- [ ] Error message internationalization
-- [ ] Dark mode for Console
+### Outstanding
+- [ ] Coverage →95% (currently avg ~90%, scim 65%, webauthn 75%)
+- [ ] OpenAPI/Swagger spec generation
 - [ ] Mobile-responsive Console
+- [ ] Dark mode Console
 
-## P3 — Future
-- [ ] Multi-region active-active deployment
-- [ ] Vault/KMS integration
-- [ ] FIDO2 certification
-- [ ] Compliance certifications (SOC2, ISO27001)
-- [ ] Plugin system architecture
+## Assignment Rules
+
+1. **Before assigning any task**: check if the file/feature already exists with `ls` or `grep`
+2. **Update this file** when tasks complete — move items from Outstanding to Completed
+3. **Stay in your lane**: dev owns oauth/auth, uiux owns gateway/middleware, arch owns shared pkg + infra
+4. **Never edit another teammate's files without coordination**

@@ -2,7 +2,7 @@
 
 ## P0 — Security Debt
 
-### Resolved (11)
+### Resolved (12)
 - [x] CSRF token predictable entropy → crypto/rand (arch 29b51c1)
 - [x] Rate limiter not wired into handler chain (arch fc20c41)
 - [x] SecurityHeaders not wired into handler chain (arch 64991a6)
@@ -13,9 +13,10 @@
 - [x] JWTSecret empty → silent auth bypass (dev 72edaa5)
 - [x] HasScope() always returns true for JWT (dev 72edaa5)
 - [x] JWT jti not tracked — tokens replayable (dev 72edaa5)
-- [x] Webhook HTTPDeliverer SSRF — NewHTTPDeliverer now uses SSRF-safe transport + URL validation (arch)
+- [x] Webhook HTTPDeliverer SSRF — SSRF-safe transport (arch b52bafd)
+- [x] Audit hash chain — HMAC-SHA256 tamper detection (arch fe5b025)
 
-### Outstanding (7)
+### Outstanding (8)
 - [ ] OAuth introspection endpoint has NO AUTH (server.go:545)
 - [ ] No Host header validation (DNS rebinding)
 - [ ] gRPC plaintext between all services
