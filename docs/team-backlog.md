@@ -146,14 +146,24 @@
 
 ### doc
 - [x] docs/architecture.md
-- [x] docs/architecture-decisions.md
+- [x] docs/architecture-decisions.md (commit a0ac967)
+- [x] docs/security-architecture.md (commit a0ac967)
+- [x] docs/developer-environment.md (commit a0ac967)
 - [x] docs/sdk-guide.md (sdk-reference.md)
 - [x] docs/development.md (developer-environment.md)
-- [x] docs/api-reference.md
-- [x] docs/rbac-guide.md (untracked, from doc teammate)
-- [x] docs/webhook-guide.md (untracked, from doc teammate)
-- [x] docs/multi-tenancy.md (modified, from doc teammate)
-> 128 docs total. Need to audit what's missing.
+- [x] docs/api-reference.md (expanded, commit 1142575)
+- [x] docs/rbac-guide.md (commit 1142575)
+- [x] docs/webhook-guide.md (commit 1142575)
+- [x] docs/multi-tenancy.md (expanded, commit 1142575)
+- [x] docs/api-gateway.md (commit c006ba0)
+- [x] docs/changelog.md / CHANGELOG.md (expanded, commit 7f1462f)
+- [x] docs/faq.md (expanded, commit 7f1462f)
+- [x] docs/contributing.md (verified complete, 620 lines)
+- [x] docs/troubleshooting.md (verified complete, 1398 lines)
+- [x] docs/database-schema.md (verified complete, 734 lines)
+- [x] docs/deployment-guide.md (verified complete, 1311 lines)
+- [x] docs/sdk-reference.md (verified complete, 330 lines, all 4 SDKs)
+> 128 docs total. All major topics covered. No outstanding doc tasks.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
