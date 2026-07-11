@@ -3,6 +3,8 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 // POST /api/v1/users/link — link external provider to local user
@@ -48,5 +50,45 @@ func (h *HTTPHandler) handleUnlinkAccount(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, map[string]any{
 		"unlinked":  true,
 		"provider":  req.Provider,
+	})
+}
+
+// POST /api/v1/users/import/validate — pre-check CSV/JSON import data
+func (h *HTTPHandler) handleImportValidate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	var req struct {
+		Users []struct {
+			Username string `json:"username"`
+			Email    string `json:"email"`
+		} `json:"users"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON")
+		return
+	}
+
+	valid, invalid := 0, 0
+	var errors []map[string]string
+	for i, u := range req.Users {
+		if u.Username == "" {
+			invalid++
+			errors = append(errors, map[string]string{"row": strconv.Itoa(i), "error": "username required"})
+			continue
+		}
+		if u.Email == "" || !strings.Contains(u.Email, "@") {
+			invalid++
+			errors = append(errors, map[string]string{"row": strconv.Itoa(i), "error": "invalid email"})
+			continue
+		}
+		valid++
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"valid_count":   valid,
+		"invalid_count": invalid,
+		"errors":        errors,
 	})
 }
