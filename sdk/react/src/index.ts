@@ -77,6 +77,10 @@ export { usePermissionTree } from './usePermissionTree';
 export type { PermissionNode, UsePermissionTreeResult } from './usePermissionTree';
 export { useRateLimits } from './useRateLimits';
 export type { RateLimit, CreateRateLimitInput, UseRateLimitsResult } from './useRateLimits';
+export { useSIEMForwarder } from './useSIEMForwarder';
+export type { SIEMConfig, SIEMStatus, SIEMDeliveryLog, SIEMFormat, TestResult, UseSIEMForwarderResult } from './useSIEMForwarder';
+export { useConsent } from './useConsent';
+export type { Consent, UseConsentResult } from './useConsent';
 export type {
   GGIDConfig,
   GGIDUser,
