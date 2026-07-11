@@ -572,3 +572,11 @@
 - [x] Dashboard data validation — stats show 0 when backend stores separated, documented in tech-debt.md (cd3d2ed)
 - [x] Console sidebar nav groups — 4 groups: Overview, Management, Security, System (cd3d2ed)
 - [x] Login page — already has centered card, logo, remember checkbox, social login (no changes needed)
+
+## Sprint: i18n String Extraction — 5 Pages (frontend b2c7fac)
+- [x] policies/page.tsx — 19 keys added to messages (import/export/delete/edit) (b2c7fac)
+- [x] settings/branding-custom/page.tsx — 13 keys added (colors/logo/email/password) (b2c7fac)
+- [x] audit/page.tsx — 9 new keys added, 6 strings wired (events24h, actor, results) (b2c7fac)
+- [x] activity/page.tsx — 12 keys added, 2 strings wired (event types, results) (b2c7fac)
+- [x] monitoring/page.tsx — 9 keys added, 10 strings wired (healthy/checking/unhealthy, stats) (b2c7fac)
+- [x] gen-i18n-dicts.py regenerated: 611 EN keys, 611 ZH keys (b2c7fac)
