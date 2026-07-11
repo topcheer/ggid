@@ -610,3 +610,12 @@
 - [x] i18n settings/api-keys — 7 new keys (read/write/admin scopes, expired, selectScope) (2e46047)
 - [x] i18n settings/certificates — 4 new keys (valid, expiringSoon, expired, rotated) (2e46047)
 - [x] i18n-dicts.ts regenerated: 631 EN + 631 ZH keys, npm run build 0 errors (2e46047)
+
+## Sprint: i18n Wiring — orgs/security/tenant/branding/users (frontend 2a015c7)
+- [x] organizations/page.tsx — 13 edits: confirm dialogs wired, form labels (Org/Name/ParentDept/CreatedBy), select options, empty states, table headers (2a015c7)
+- [x] security-center/page.tsx — 15 edits: section titles (FailedLogins7d, RiskyIPs, WebAuthnDevices), table headers (IP/Location/Attempts/Last/Risk), device status, MFA labels (2a015c7)
+- [x] settings/tenant-config/page.tsx — 25 edits: FEATURE_FLAGS labels, all 12 setMsg calls, 6 save button texts, toggle labels, MFA descriptions (2a015c7)
+- [x] settings/branding/page.tsx — 10 edits: setMsg (saved/savedLocal/uploadSvg/fileTooLarge), Email Template Preview title, Template label, summary labels (2a015c7)
+- [x] users/page.tsx — 38 edits: all UI labels/buttons/headers, form fields, search, batch toolbar, table headers, pagination, lock/unlock titles (2a015c7)
+- [x] en.json + zh.json: 76 new keys (users 28, security 11, tenant 18, branding 0 existing reused)
+- [x] gen-i18n-dicts.py: 631 EN / 631 ZH keys, npm run build: 0 errors (2a015c7)
