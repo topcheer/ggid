@@ -2478,5 +2478,242 @@ components:
           items:
             type: string
 
+    AlertRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        condition:
+          type: string
+          description: Condition expression (e.g. failed_logins > 5)
+        threshold:
+          type: integer
+        window:
+          type: string
+          description: Time window (e.g. 5m, 1h)
+        action:
+          type: string
+          enum: [webhook, email, log]
+        enabled:
+          type: boolean
+
+    BrandingConfig:
+      type: object
+      properties:
+        logo_url:
+          type: string
+        primary_color:
+          type: string
+          example: '#2563eb'
+        custom_css:
+          type: string
+
+  /api/v1/audit/alerts/config:
+    get:
+      tags: [Audit Alerting]
+      summary: Get alert configuration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Alert configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AlertRule'
+    put:
+      tags: [Audit Alerting]
+      summary: Update alert configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRule'
+      responses:
+        '200':
+          description: Alert rule created/updated
+        '400':
+          description: Invalid rule
+
+  /api/v1/audit/alerts/test:
+    post:
+      tags: [Audit Alerting]
+      summary: Test alert notification delivery
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Test notification sent
+        '500':
+          description: Delivery failed
+
+  /api/v1/audit/compliance-report:
+    get:
+      tags: [Audit Compliance]
+      summary: Generate compliance report (SOC2/HIPAA/GDPR)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [soc2, hipaa, gdpr]
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Compliance report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  period:
+                    type: object
+                  summary:
+                    type: object
+                  controls:
+                    type: array
+                    items:
+                      type: object
+
+  /api/v1/tenants/{tenantId}/branding:
+    get:
+      tags: [Tenant Branding]
+      summary: Get tenant branding configuration
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Branding configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandingConfig'
+    put:
+      tags: [Tenant Branding]
+      summary: Update tenant branding
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandingConfig'
+      responses:
+        '200':
+          description: Branding updated
+
+  /api/v1/access-requests:
+    post:
+      tags: [IGA Workflows]
+      summary: Submit access request for approval
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resource, action]
+              properties:
+                resource:
+                  type: string
+                action:
+                  type: string
+                justification:
+                  type: string
+                duration:
+                  type: string
+      responses:
+        '201':
+          description: Access request created
+        '400':
+          description: Invalid request
+    get:
+      tags: [IGA Workflows]
+      summary: List access requests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, denied, expired]
+      responses:
+        '200':
+          description: List of access requests
+
+  /api/v1/access-requests/{id}/approve:
+    post:
+      tags: [IGA Workflows]
+      summary: Approve an access request
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request approved
+
+  /api/v1/access-requests/{id}/deny:
+    post:
+      tags: [IGA Workflows]
+      summary: Deny an access request
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request denied
+
 security:
   - BearerAuth: []
