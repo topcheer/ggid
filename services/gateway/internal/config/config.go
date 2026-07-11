@@ -63,6 +63,7 @@ func Default() *Config {
 			"/api/v1/policies":    envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/orgs":        envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/audit":       envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
+			"/api/v1/access-requests": envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/agents":      envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/api/v1/oauth":       envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/oauth":                          envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
