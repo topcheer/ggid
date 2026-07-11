@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Activity,
   ShieldAlert,
@@ -138,6 +139,7 @@ function mockData(): SecurityCenterData {
 
 export default function SecurityCenterDashboardPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [data, setData] = useState<SecurityCenterData | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
@@ -201,7 +203,7 @@ export default function SecurityCenterDashboardPage() {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
-        <span className="ml-2 text-gray-500">Loading security dashboard...</span>
+        <span className="ml-2 text-gray-500">{t("security.loading")}</span>
       </div>
     );
   }
@@ -237,10 +239,10 @@ export default function SecurityCenterDashboardPage() {
     <div>
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
-          <ShieldCheck className="h-6 w-6 text-brand-600" /> Security Center
+          <ShieldCheck className="h-6 w-6 text-brand-600" /> {t("security.title")}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Monitor active sessions, MFA coverage, failed logins, and threat indicators.
+          {t("security.subtitle")}
         </p>
       </div>
 
@@ -252,10 +254,10 @@ export default function SecurityCenterDashboardPage() {
 
       {/* ===== Summary Cards ===== */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard icon={Users} label="Active Sessions" value={d.total_active_sessions} color="brand" />
-        <SummaryCard icon={AlertTriangle} label="Failed Logins (24h)" value={d.failed_logins_24h} color="amber" />
-        <SummaryCard icon={ShieldCheck} label="MFA Coverage" value={`${d.mfa_coverage_pct}%`} color="green" />
-        <SummaryCard icon={Ban} label="Blocked IPs" value={d.blocked_ips + blockedIPs.size} color="red" />
+        <SummaryCard icon={Users} label={t("security.activeSessions")} value={d.total_active_sessions} color="brand" />
+        <SummaryCard icon={AlertTriangle} label={t("security.failedLogins24h")} value={d.failed_logins_24h} color="amber" />
+        <SummaryCard icon={ShieldCheck} label={t("security.mfaCoverage")} value={`${d.mfa_coverage_pct}%`} color="green" />
+        <SummaryCard icon={Ban} label={t("security.blockedIPs")} value={d.blocked_ips + blockedIPs.size} color="red" />
       </div>
 
       {/* ===== Active Sessions Map + MFA Stats ===== */}
@@ -263,7 +265,7 @@ export default function SecurityCenterDashboardPage() {
         {/* World Map */}
         <div className={`lg:col-span-2 ${cardCls}`}>
           <h2 className={`flex items-center gap-2 ${headingCls}`}>
-            <Globe className="h-5 w-5 text-brand-600" /> Active Sessions Map
+            <Globe className="h-5 w-5 text-brand-600" /> {t("security.sessionsMap")}
           </h2>
           <div className="relative overflow-hidden rounded-lg border border-gray-200 bg-gradient-to-br from-blue-50 to-indigo-50 dark:border-gray-700 dark:from-gray-900 dark:to-gray-800">
             {/* Simplified world map SVG outline */}
@@ -339,7 +341,7 @@ export default function SecurityCenterDashboardPage() {
         {/* MFA Donut */}
         <div className={cardCls}>
           <h2 className={`flex items-center gap-2 ${headingCls}`}>
-            <Fingerprint className="h-5 w-5 text-brand-600" /> MFA Enrollment
+            <Fingerprint className="h-5 w-5 text-brand-600" /> {t("security.mfaEnrollment")}
           </h2>
 
           {/* Donut chart */}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Save, Building2, Upload, Flag, Gauge, Lock, Clock, Shield, Check, Palette,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const FEATURE_FLAGS = [
 
 export default function TenantConfigPage() {
   const { apiFetch, TENANT_ID } = useApi();
+  const t = useTranslations();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -114,7 +116,7 @@ export default function TenantConfigPage() {
     <div>
       <div className="mb-6">
         <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
-          <Building2 className="h-7 w-7 text-brand-600" /> Tenant Configuration
+          <Building2 className="h-7 w-7 text-brand-600" /> {t("tenant.title")}
         </h1>
       </div>
 
@@ -123,14 +125,14 @@ export default function TenantConfigPage() {
       <div className="space-y-6">
         {/* Tenant Profile */}
         <div className={cardCls}>
-          <h2 className={headingCls}><Building2 className="mr-2 inline h-5 w-5 text-brand-600" /> Tenant Profile</h2>
+          <h2 className={headingCls}><Building2 className="mr-2 inline h-5 w-5 text-brand-600" /> {t("tenant.profile")}</h2>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Name</label>
+              <label className={labelCls}>{t("common.name")}</label>
               <input value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className={inputCls} placeholder="My Organization" />
             </div>
             <div>
-              <label className={labelCls}>Domain</label>
+              <label className={labelCls}>{t("common.domain")}</label>
               <input value={profile.domain} onChange={e => setProfile({ ...profile, domain: e.target.value })} className={inputCls} placeholder="company.com" />
             </div>
           </div>
@@ -144,7 +146,7 @@ export default function TenantConfigPage() {
             <div>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
               <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30">
-                <Upload className="h-4 w-4" /> Upload Logo
+                <Upload className="h-4 w-4" /> {t("branding.uploadLogo")}
               </button>
               {profile.logoUrl && <button onClick={() => setProfile({ ...profile, logoUrl: "" })} className="ml-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950">Remove</button>}
             </div>
@@ -158,7 +160,7 @@ export default function TenantConfigPage() {
 
         {/* Feature Flags */}
         <div className={cardCls}>
-          <h2 className={headingCls}><Flag className="mr-2 inline h-5 w-5 text-brand-600" /> Feature Flags</h2>
+          <h2 className={headingCls}><Flag className="mr-2 inline h-5 w-5 text-brand-600" /> {t("tenant.featureFlags")}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {FEATURE_FLAGS.map(f => (
               <div key={f.key} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-700">
@@ -176,14 +178,14 @@ export default function TenantConfigPage() {
 
         {/* Rate Limit Config */}
         <div className={cardCls}>
-          <h2 className={headingCls}><Gauge className="mr-2 inline h-5 w-5 text-brand-600" /> Rate Limit Configuration</h2>
+          <h2 className={headingCls}><Gauge className="mr-2 inline h-5 w-5 text-brand-600" /> {t("tenant.rateLimitConfig")}</h2>
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Requests Per Minute</label>
+              <label className={labelCls}>{t("tenant.requestsPerMinute")}</label>
               <input type="number" min={1} value={rateLimit.requestsPerMinute} onChange={e => setRateLimit({ ...rateLimit, requestsPerMinute: Number(e.target.value) || 100 })} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Burst Limit</label>
+              <label className={labelCls}>{t("tenant.burstLimit")}</label>
               <input type="number" min={1} value={rateLimit.burstLimit} onChange={e => setRateLimit({ ...rateLimit, burstLimit: Number(e.target.value) || 200 })} className={inputCls} />
             </div>
           </div>
@@ -196,11 +198,11 @@ export default function TenantConfigPage() {
 
         {/* Password Policy */}
         <div className={cardCls}>
-          <h2 className={headingCls}><Lock className="mr-2 inline h-5 w-5 text-brand-600" /> Password Policy</h2>
+          <h2 className={headingCls}><Lock className="mr-2 inline h-5 w-5 text-brand-600" /> {t("tenant.passwordPolicy")}</h2>
           <div className="space-y-4">
             <div>
               <div className="mb-1 flex items-center justify-between">
-                <label className={labelCls}>Minimum Length</label>
+                <label className={labelCls}>{t("tenant.minPasswordLength")}</label>
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{pwPolicy.minLength}</span>
               </div>
               <input type="range" min={8} max={128} value={pwPolicy.minLength} onChange={e => setPwPolicy({ ...pwPolicy, minLength: Number(e.target.value) })} className="w-full accent-brand-600" />
@@ -214,8 +216,8 @@ export default function TenantConfigPage() {
               ))}
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
-              <div><label className={labelCls}>Password History Count</label><input type="number" min={0} max={24} value={pwPolicy.historyCount} onChange={e => setPwPolicy({ ...pwPolicy, historyCount: Number(e.target.value) || 0 })} className={inputCls} /></div>
-              <div><label className={labelCls}>Expiry (days)</label><input type="number" min={0} max={365} value={pwPolicy.expiryDays} onChange={e => setPwPolicy({ ...pwPolicy, expiryDays: Number(e.target.value) || 0 })} className={inputCls} /></div>
+              <div><label className={labelCls}>{t("tenant.passwordHistory")}</label><input type="number" min={0} max={24} value={pwPolicy.historyCount} onChange={e => setPwPolicy({ ...pwPolicy, historyCount: Number(e.target.value) || 0 })} className={inputCls} /></div>
+              <div><label className={labelCls}>{t("tenant.expiryDays")}</label><input type="number" min={0} max={365} value={pwPolicy.expiryDays} onChange={e => setPwPolicy({ ...pwPolicy, expiryDays: Number(e.target.value) || 0 })} className={inputCls} /></div>
             </div>
           </div>
           <div className="mt-4 flex justify-end">
@@ -227,11 +229,11 @@ export default function TenantConfigPage() {
 
         {/* Session Policy */}
         <div className={cardCls}>
-          <h2 className={headingCls}><Clock className="mr-2 inline h-5 w-5 text-brand-600" /> Session Policy</h2>
+          <h2 className={headingCls}><Clock className="mr-2 inline h-5 w-5 text-brand-600" /> {t("tenant.sessionPolicy")}</h2>
           <div className="grid gap-6 sm:grid-cols-3">
-            <div><label className={labelCls}>Session Timeout (minutes)</label><input type="number" min={5} max={1440} value={sessPolicy.timeout} onChange={e => setSessPolicy({ ...sessPolicy, timeout: Number(e.target.value) || 60 })} className={inputCls} /></div>
-            <div><label className={labelCls}>Idle Timeout (minutes)</label><input type="number" min={1} max={1440} value={sessPolicy.idleTimeout} onChange={e => setSessPolicy({ ...sessPolicy, idleTimeout: Number(e.target.value) || 30 })} className={inputCls} /></div>
-            <div><label className={labelCls}>Concurrent Sessions Limit</label><input type="number" min={1} max={100} value={sessPolicy.concurrentLimit} onChange={e => setSessPolicy({ ...sessPolicy, concurrentLimit: Number(e.target.value) || 5 })} className={inputCls} /></div>
+            <div><label className={labelCls}>{t("tenant.sessionTimeout")}</label><input type="number" min={5} max={1440} value={sessPolicy.timeout} onChange={e => setSessPolicy({ ...sessPolicy, timeout: Number(e.target.value) || 60 })} className={inputCls} /></div>
+            <div><label className={labelCls}>{t("tenant.idleTimeout")}</label><input type="number" min={1} max={1440} value={sessPolicy.idleTimeout} onChange={e => setSessPolicy({ ...sessPolicy, idleTimeout: Number(e.target.value) || 30 })} className={inputCls} /></div>
+            <div><label className={labelCls}>{t("tenant.concurrentSessions")}</label><input type="number" min={1} max={100} value={sessPolicy.concurrentLimit} onChange={e => setSessPolicy({ ...sessPolicy, concurrentLimit: Number(e.target.value) || 5 })} className={inputCls} /></div>
           </div>
           <div className="mt-4 flex justify-end">
             <button onClick={async () => { setSavingSess(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ session_policy: { timeout: sessPolicy.timeout, idle_timeout: sessPolicy.idleTimeout, concurrent_limit: sessPolicy.concurrentLimit } }) }); setMsg("Session policy saved"); } catch { setMsg("Session policy saved (offline)"); } finally { setSavingSess(false); } }} disabled={savingSess} className={saveBtn}>
@@ -242,7 +244,7 @@ export default function TenantConfigPage() {
 
         {/* MFA Enforcement */}
         <div className={cardCls}>
-          <h2 className={headingCls}><Shield className="mr-2 inline h-5 w-5 text-brand-600" /> MFA Enforcement</h2>
+          <h2 className={headingCls}><Shield className="mr-2 inline h-5 w-5 text-brand-600" /> {t("tenant.mfaEnforcement")}</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div className="flex items-center gap-3">
@@ -256,7 +258,7 @@ export default function TenantConfigPage() {
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
-                <label className={labelCls}>Required Method</label>
+                <label className={labelCls}>{t("tenant.requiredMethod")}</label>
                 <select value={mfa.method} onChange={e => setMfa({ ...mfa, method: e.target.value })} className={inputCls}>
                   <option value="TOTP">TOTP</option>
                   <option value="WebAuthn">WebAuthn</option>
@@ -264,7 +266,7 @@ export default function TenantConfigPage() {
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Grace Period (days)</label>
+                <label className={labelCls}>{t("tenant.gracePeriod")}</label>
                 <input type="number" min={0} max={90} value={mfa.gracePeriod} onChange={e => setMfa({ ...mfa, gracePeriod: Number(e.target.value) || 0 })} className={inputCls} />
               </div>
             </div>

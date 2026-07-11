@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import { Workflow, Save, Loader2, ChevronUp, ChevronDown, Plus, Trash2, GripVertical, ArrowRight, Power } from "lucide-react";
 
 interface FlowCondition {
@@ -75,6 +76,7 @@ function buildPreview(steps: FlowStep[]): string {
 
 export default function LoginFlowsPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [flow, setFlow] = useState<FlowConfig>(defaultFlow);
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -180,14 +182,14 @@ export default function LoginFlowsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-2xl font-bold dark:text-gray-100">
-          <Workflow className="h-6 w-6 text-brand-600" /> Login Flow Builder
+          <Workflow className="h-6 w-6 text-brand-600" /> {t("flows.builder")}
         </h1>
         <button
           onClick={handleSave}
           disabled={saving}
           className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
         >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Flow
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("flows.saveFlow")}
         </button>
       </div>
 
@@ -212,7 +214,7 @@ export default function LoginFlowsPage() {
             className="text-sm font-semibold bg-transparent text-gray-900 dark:text-gray-100 outline-none border-b border-transparent focus:border-brand-500"
           />
           <p className="text-xs text-gray-500">
-            {flow.enabled ? "Flow is active" : "Flow is disabled"}
+            {flow.enabled ? t("flows.flowActive") : t("flows.flowDisabled")}
           </p>
         </div>
       </div>

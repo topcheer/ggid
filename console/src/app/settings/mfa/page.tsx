@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Smartphone, Fingerprint, Shield, Key, Copy, Download, Check, Loader2,
   Mail, MessageSquare, KeyRound, AlertCircle,
@@ -9,6 +10,7 @@ import {
 
 export default function MFAPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -181,7 +183,7 @@ export default function MFAPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">Multi-Factor Authentication</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">{t("mfa.title")}</h1>
 
       {msg && (
         <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">{msg}</div>
@@ -194,19 +196,19 @@ export default function MFAPage() {
         {/* === TOTP Section === */}
         <div className={cardCls}>
           <h2 className={headingCls}>
-            <Fingerprint className="mr-2 inline h-5 w-5 text-brand-600" /> TOTP Authenticator
+            <Fingerprint className="mr-2 inline h-5 w-5 text-brand-600" /> {t("mfa.totpAuthenticator")}
           </h2>
 
           {!totpSecret && !totpEnrolled && (
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Set up a TOTP authenticator app (Google Authenticator, Authy, etc.)</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t("mfa.totpSetup")}</p>
               </div>
               <button
                 onClick={startTotpEnrollment}
                 className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
               >
-                <Key className="h-4 w-4" /> Start Enrollment
+                <Key className="h-4 w-4" /> {t("mfa.startEnrollment")}
               </button>
             </div>
           )}
@@ -233,13 +235,13 @@ export default function MFAPage() {
                       <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-400">Scan with your authenticator app</p>
+                  <p className="text-xs text-gray-400">{t("mfa.scanQr")}</p>
                 </div>
 
                 {/* Secret + Verify */}
                 <div className="flex-1 space-y-3">
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500">Secret Key</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">{t("mfa.secretKey")}</label>
                     <div className="flex items-center gap-2">
                       <code className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
                         {showSecret ? totpSecret : "•••• •••• •••• ••••"}
@@ -261,7 +263,7 @@ export default function MFAPage() {
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-500">Verify Code (6 digits)</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-500">{t("mfa.verifyCode")}</label>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
@@ -278,7 +280,7 @@ export default function MFAPage() {
                         className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
                       >
                         {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                        Enroll
+                        {t("mfa.enroll")}
                       </button>
                     </div>
                   </div>
@@ -291,8 +293,8 @@ export default function MFAPage() {
             <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950">
               <Check className="h-5 w-5 text-green-600" />
               <div>
-                <p className="text-sm font-medium text-green-800 dark:text-green-400">TOTP authenticator is enrolled</p>
-                <p className="text-xs text-green-600 dark:text-green-500">Your account is protected with TOTP MFA.</p>
+                <p className="text-sm font-medium text-green-800 dark:text-green-400">{t("mfa.totpEnrolled")}</p>
+                <p className="text-xs text-green-600 dark:text-green-500">{t("mfa.protected")}</p>
               </div>
             </div>
           )}

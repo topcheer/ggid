@@ -200,12 +200,25 @@
   "branding": {
     "title": "品牌设置",
     "logo": "标志",
-    "uploadLogo": "点击上传标志图片",
+    "clickToUpload": "点击上传标志图片",
+    "uploadLogo": "上传标志",
     "primaryColor": "主色",
     "secondaryColor": "辅色",
     "customDomain": "自定义域名",
     "template": "模板",
-    "signIn": "登录"
+    "signIn": "登录",
+    "loginCustomization": "登录页自定义",
+    "saved": "品牌设置已保存到服务器",
+    "savedLocal": "端点不可用 — 已保存到 localStorage",
+    "svgPng": "SVG 或 PNG，最大 1MB",
+    "cssOverride": "CSS 覆盖",
+    "cnameHint": "将此域名 CNAME 到您的 GGID 实例",
+    "loginPreview": "登录页预览",
+    "emailPreview": "邮件模板预览",
+    "welcomeEmail": "欢迎邮件",
+    "passwordReset": "密码重置",
+    "magicLink": "Magic Link 登录",
+    "mfaEnroll": "MFA 注册"
   },
   "certs": {
     "title": "证书",
@@ -218,7 +231,17 @@
     "keyId": "密钥 ID (kid)",
     "confirmRotation": "确认密钥轮换",
     "selectFile": "选择文件 (.pem / .crt)",
-    "pastePem": "或粘贴 PEM 内容"
+    "pastePem": "或粘贴 PEM 内容",
+    "tlsCertificates": "TLS 证书",
+    "uploadSection": "上传证书",
+    "jwksKeys": "JWKS 签名密钥",
+    "chooseFile": "选择文件",
+    "valid": "有效",
+    "expiringSoon": "即将过期",
+    "keyRotated": "密钥轮换成功。已生成新签名密钥。",
+    "keyRotateFailed": "密钥轮换失败",
+    "rotateKey": "轮换密钥",
+    "noSigningKeys": "未找到签名密钥。"
   },
   "mfa": {
     "title": "多因笠认证",
@@ -229,7 +252,16 @@
     "protected": "您的账户已使用 TOTP 多因笠认证保护。",
     "smsCodes": "通过短信接收验证码",
     "emailBackup": "邮箱备份",
-    "emailCodes": "通过邮箱接收验证码"
+    "emailCodes": "通过邮箱接收验证码",
+    "totpAuthenticator": "TOTP 认证器",
+    "startEnrollment": "开始注册",
+    "totpEnrolled": "TOTP 认证器已注册",
+    "qrCode": "二维码",
+    "show": "显示",
+    "hide": "隐藏",
+    "enroll": "注册",
+    "scanQrPrompt": "使用您的认证器应用扫描二维码",
+    "passkeyName": "Passkey 名称（例如 MacBook Touch ID）"
   },
   "sso": {
     "title": "单点登录",
@@ -287,7 +319,30 @@
     "requireMfa": "要求所有用户使用 MFA",
     "requireMfaDesc": "在整个租户中强制多因笠认证",
     "requiredMethod": "必选方法",
-    "expiryDays": "有效期（天）"
+    "expiryDays": "有效期（天）",
+    "title": "租户配置",
+    "profile": "租户资料",
+    "featureFlags": "功能开关",
+    "rateLimitConfig": "速率限制配置",
+    "passwordPolicy": "密码策略",
+    "sessionPolicy": "会话策略",
+    "mfaEnforcement": "MFA 强制执行",
+    "saveProfile": "保存资料",
+    "saveFlags": "保存开关",
+    "requireUpper": "需要大写字母",
+    "requireLower": "需要小写字母",
+    "requireDigit": "需要数字",
+    "requireSpecial": "需要特殊字符",
+    "sessionTimeout": "会话超时（分钟）",
+    "savePwPolicy": "保存密码策略",
+    "saveSessPolicy": "保存会话策略",
+    "saveMfa": "保存 MFA 设置",
+    "profileSaved": "资料已保存",
+    "flagsSaved": "功能开关已保存",
+    "rateSaved": "速率限制已保存",
+    "pwSaved": "密码策略已保存",
+    "sessSaved": "会话策略已保存",
+    "mfaSaved": "MFA 强制执行已保存"
   },
   "flows": {
     "title": "登录流程",
@@ -298,7 +353,16 @@
     "noActiveSteps": "流程中无活动步骤",
     "userRole": "用户角色",
     "onlyRole": "仅对特定角色生效",
-    "onlyIp": "仅当用户 IP 在此范围内时生效"
+    "onlyIp": "仅当用户 IP 在此范围内时生效",
+    "builder": "登录流程构建器",
+    "saveFlow": "保存流程",
+    "flowActive": "流程已激活",
+    "flowDisabled": "流程已禁用",
+    "flowSavedServer": "登录流程已保存到服务器",
+    "flowSavedLocal": "端点不可用 — 已保存到 localStorage",
+    "password": "密码",
+    "otp": "OTP (TOTP)",
+    "magicLink": "邮件 Magic Link"
   },
   "security": {
     "title": "安全中心",
@@ -311,6 +375,14 @@
     "location": "位置",
     "topIps": "主要 IP：",
     "noWebauthn": "未注册 WebAuthn 设备。",
-    "lastUsed": "最后使用"
+    "lastUsed": "最后使用",
+    "subtitle": "监控活跃会话、MFA 覆盖率、失败登录和威胁指标。",
+    "activeSessions": "活跃会话",
+    "failedLogins24h": "失败登录（24小时）",
+    "mfaCoverage": "MFA 覆盖率",
+    "blockedIPs": "已封禁 IP",
+    "sessionsMap": "活跃会话地图",
+    "mfaEnrollment": "MFA 注册",
+    "deviceRevoked": "设备已吊销"
   }
 }

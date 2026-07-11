@@ -200,12 +200,25 @@
   "branding": {
     "title": "Branding Settings",
     "logo": "Logo",
-    "uploadLogo": "Click to upload logo image",
+    "clickToUpload": "Click to upload logo image",
+    "uploadLogo": "Upload Logo",
     "primaryColor": "Primary Color",
     "secondaryColor": "Secondary Color",
     "customDomain": "Custom Domain",
     "template": "Template",
-    "signIn": "Sign In"
+    "signIn": "Sign In",
+    "loginCustomization": "Login Customization",
+    "saved": "Branding settings saved to server",
+    "savedLocal": "Endpoint unavailable — saved to localStorage",
+    "svgPng": "SVG or PNG, up to 1MB",
+    "cssOverride": "CSS Override",
+    "cnameHint": "CNAME this domain to your GGID instance",
+    "loginPreview": "Login Page Preview",
+    "emailPreview": "Email Template Preview",
+    "welcomeEmail": "Welcome Email",
+    "passwordReset": "Password Reset",
+    "magicLink": "Magic Link Login",
+    "mfaEnroll": "MFA Enrollment"
   },
   "certs": {
     "title": "Certificates",
@@ -218,7 +231,17 @@
     "keyId": "Key ID (kid)",
     "confirmRotation": "Confirm Key Rotation",
     "selectFile": "Select File (.pem / .crt)",
-    "pastePem": "Or Paste PEM Content"
+    "pastePem": "Or Paste PEM Content",
+    "tlsCertificates": "TLS Certificates",
+    "uploadSection": "Upload Certificate",
+    "jwksKeys": "JWKS Signing Keys",
+    "chooseFile": "Choose File",
+    "valid": "Valid",
+    "expiringSoon": "Expiring Soon",
+    "keyRotated": "Key rotation successful. New signing key generated.",
+    "keyRotateFailed": "Key rotation failed",
+    "rotateKey": "Rotate Key",
+    "noSigningKeys": "No signing keys found."
   },
   "mfa": {
     "title": "Multi-Factor Authentication",
@@ -229,7 +252,16 @@
     "protected": "Your account is protected with TOTP MFA.",
     "smsCodes": "Receive verification codes via SMS",
     "emailBackup": "Email Backup",
-    "emailCodes": "Receive verification codes via email"
+    "emailCodes": "Receive verification codes via email",
+    "totpAuthenticator": "TOTP Authenticator",
+    "startEnrollment": "Start Enrollment",
+    "totpEnrolled": "TOTP authenticator is enrolled",
+    "qrCode": "QR Code",
+    "show": "Show",
+    "hide": "Hide",
+    "enroll": "Enroll",
+    "scanQrPrompt": "Scan the QR code with your authenticator app",
+    "passkeyName": "Passkey name (e.g. MacBook Touch ID)"
   },
   "sso": {
     "title": "Single Sign-On",
@@ -287,7 +319,30 @@
     "requireMfa": "Require MFA for all users",
     "requireMfaDesc": "Enforce multi-factor authentication across the entire tenant",
     "requiredMethod": "Required Method",
-    "expiryDays": "Expiry (days)"
+    "expiryDays": "Expiry (days)",
+    "title": "Tenant Configuration",
+    "profile": "Tenant Profile",
+    "featureFlags": "Feature Flags",
+    "rateLimitConfig": "Rate Limit Configuration",
+    "passwordPolicy": "Password Policy",
+    "sessionPolicy": "Session Policy",
+    "mfaEnforcement": "MFA Enforcement",
+    "saveProfile": "Save Profile",
+    "saveFlags": "Save Flags",
+    "requireUpper": "Require Uppercase",
+    "requireLower": "Require Lowercase",
+    "requireDigit": "Require Digits",
+    "requireSpecial": "Require Special Characters",
+    "sessionTimeout": "Session Timeout (minutes)",
+    "savePwPolicy": "Save Password Policy",
+    "saveSessPolicy": "Save Session Policy",
+    "saveMfa": "Save MFA Settings",
+    "profileSaved": "Profile saved",
+    "flagsSaved": "Feature flags saved",
+    "rateSaved": "Rate limits saved",
+    "pwSaved": "Password policy saved",
+    "sessSaved": "Session policy saved",
+    "mfaSaved": "MFA enforcement saved"
   },
   "flows": {
     "title": "Login Flows",
@@ -298,7 +353,16 @@
     "noActiveSteps": "No active steps in this flow",
     "userRole": "User Role",
     "onlyRole": "Only apply for specific role",
-    "onlyIp": "Only apply if user IP is in this range"
+    "onlyIp": "Only apply if user IP is in this range",
+    "builder": "Login Flow Builder",
+    "saveFlow": "Save Flow",
+    "flowActive": "Flow is active",
+    "flowDisabled": "Flow is disabled",
+    "flowSavedServer": "Login flow saved to server",
+    "flowSavedLocal": "Endpoint unavailable — saved to localStorage",
+    "password": "Password",
+    "otp": "OTP (TOTP)",
+    "magicLink": "Email Magic Link"
   },
   "security": {
     "title": "Security Center",
@@ -311,6 +375,14 @@
     "location": "Location",
     "topIps": "Top IPs:",
     "noWebauthn": "No WebAuthn devices registered.",
-    "lastUsed": "Last used"
+    "lastUsed": "Last used",
+    "subtitle": "Monitor active sessions, MFA coverage, failed logins, and threat indicators.",
+    "activeSessions": "Active Sessions",
+    "failedLogins24h": "Failed Logins (24h)",
+    "mfaCoverage": "MFA Coverage",
+    "blockedIPs": "Blocked IPs",
+    "sessionsMap": "Active Sessions Map",
+    "mfaEnrollment": "MFA Enrollment",
+    "deviceRevoked": "Device revoked"
   }
 }
