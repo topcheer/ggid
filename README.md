@@ -125,6 +125,23 @@ npm run dev
 - **Webhooks** — Pre/post auth hooks, HMAC-signed payloads
 - **Auth Hooks** — Extensible plugin system (pre-registration, post-login, pre-token-issue)
 
+## Why GGID?
+
+| Feature | GGID | Auth0 | Keycloak | Ory |
+|---------|------|-------|----------|-----|
+| **License** | Apache 2.0 | Proprietary | Apache 2.0 | Apache 2.0 |
+| **Self-hosted** | Yes | No | Yes | Yes |
+| **Multi-tenancy** | RLS (defense in depth) | Built-in | Realms | Partial |
+| **Language** | Go (fast, low memory) | Node.js | Java | Go |
+| **Image size** | 18-35 MB per service | N/A | 600MB+ | 50MB+ |
+| **OAuth 2.1 + PKCE** | Yes | Yes | Yes | Yes |
+| **SAML 2.0** | Yes | Paid tier | Yes | No |
+| **WebAuthn/Passkeys** | Yes | Yes | Yes | Yes |
+| **SCIM 2.0** | Yes | Paid tier | Yes | No |
+| **Audit pipeline** | NATS JetStream | Logs | DB | DB |
+| **Admin Console** | Next.js 15 | Hosted | React | No |
+| **AI Agent Identity (MCP)** | Planned | In dev | No | No |
+
 ## Documentation
 
 | Document | Description |
