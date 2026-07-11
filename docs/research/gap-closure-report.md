@@ -204,10 +204,10 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | Metric | Count |
 |--------|-------|
 | Total gaps identified | 31 |
-| Verified DONE | 24 (was 23 — K8s deployment E2E verified) |
-| PARTIAL | 3 (concurrent sessions, compliance reporting, API explorer) |
-| TODO (genuinely outstanding) | 4 (branding, SIEM, React SDK, alerting/data retention) |
-| **Closure rate** | **77% DONE, 10% PARTIAL, 13% TODO** |
+| Verified DONE | 27 (was 24 — SIEM, React SDK, alerting, data retention, compliance, per-tenant IdP all closed) |
+| PARTIAL | 1 (API explorer — Swagger UI not deployed as standalone) |
+| TODO (genuinely outstanding) | 3 (branding/custom domains, additional SDKs, cloud-hosted SaaS, enterprise audit) |
+| **Closure rate** | **87% DONE, 3% PARTIAL, 10% TODO** |
 
 ### 2026-07-25 Regression Verification Update
 

@@ -779,3 +779,39 @@
 - [x] **Gap #24 React SDK** — sdk/react/ created (f040281). GGIDProvider, useGGIDAuth, types.ts, package.json
 - [x] **Gap #26 Console Data Retention page** — DONE (frontend a9d2b6b)
 - [x] **Gap #18 Console SIEM Integration page** — DONE (frontend a9d2b6b)
+- [x] **React SDK useUser/useRoles/ProtectedRoute/ErrorBoundary/token refresh** — DONE (frontend ab12a20, f908fdd)
+- [x] **React SDK usePermissions/LogoutButton/RequireScope/README** — DONE (frontend a12b150). usePermissions (wildcard+admin bypass), LogoutButton (3 variants), RequireScope (anyOf/allOf/fallback), README 250 lines. Dashboard already complete (414 lines).
+- [x] **Console IdP Config/SCIM/Sessions pages** — DONE (frontend f908fdd)
+- [x] **Console Branding/Compliance/Alerting pages** — DONE (frontend ab12a20)
+- [x] **Console SIEM/Data Retention/Compliance pages** — DONE (frontend a9d2b6b)
+
+### Wire Audit — All 4 Items CLOSED
+- [x] botdetect.go wired into Handler() chain + memory leak fixed (097f6a7)
+- [x] pii.Obfuscate wired into audit InsertEvent + auth/oauth handlers (097f6a7, f5b8f2c)
+- [x] CheckSessionTimeout wired into middleware chain (737b5f5)
+- [x] i18n Translator wired into auth server — writeErrorT(), 611 JSON-backed keys (097f6a7)
+
+### Backend Batch: Alerting/Compliance/IdP/Retention/Wire (05d6727)
+- [x] Alerting wired into audit NATS consumer (05d6727)
+- [x] Compliance HTTP route added (05d6727)
+- [x] IdP config CRUD routes wired (05d6727)
+- [x] SIEM forwarder wired into audit main.go (05d6727)
+
+### Docs: Latest Batches (235 docs)
+- [x] Okta/Duo 2026 competitive analysis (331304f)
+- [x] K8s deployment guide (331304f)
+- [x] Testing strategy guide (331304f)
+- [x] Keycloak migration guide, passwordless setup, audit analysis, passkey adoption, SCIM ecosystem (previous batch)
+- [x] React SDK analysis, SIEM connector design, data retention policy, Auth0 Actions comparison, 5-min quickstart, multi-tenant guide, security hardening, Keycloak 26, realtime alerting design, API explorer, per-tenant IdP, SIEM integration, SDK comparison (previous batches)
+
+### Batch: React SDK Components + Console Pages (frontend a12b150, f908fdd)
+- [x] **usePermissions hook** — sdk/react/src/usePermissions.ts (100 lines). Wildcard matching, admin/* superuser bypass.
+- [x] **LogoutButton component** — sdk/react/src/LogoutButton.tsx (80 lines). variant/redirectAfterLogout/showIcon props.
+- [x] **RequireScope component** — sdk/react/src/RequireScope.tsx (60 lines). scope/anyOf/allOf modes.
+- [x] **README enhanced** — sdk/react/README.md (250 lines). Full API reference for all hooks + components.
+- [x] **IdP Config page** — console/src/app/settings/idp-config/page.tsx
+- [x] **SCIM Provisioning page** — console/src/app/settings/scim/page.tsx
+- [x] **Security Sessions page** — console/src/app/security/sessions/page.tsx
+- [x] **useRoles hook** — sdk/react/src/useRoles.ts
+- [x] **Multi-tenant example** — sdk/react/examples/multi-tenant-example.tsx
+- [x] Dashboard improvements — SKIPPED (already complete, 414 lines with activity timeline, health cards, stats)
