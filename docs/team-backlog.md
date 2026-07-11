@@ -261,7 +261,15 @@
 - [x] docs/examples/express-integration.md — Full runnable Express.js demo: JWT auth, scope guard, CRUD
 - [x] docs/examples/go-integration.md — Full runnable Go server: SDK middleware, RequirePermission, handlers
 - [x] docs/quickstart/k3s-deploy.md — Simplified K3s quick deploy (companion to docs/deploy/k3s.md)
-> 187 docs total. All major topics covered. No outstanding doc tasks.
+- [x] docs/INDEX.md — Complete documentation index: 362 docs organized by category
+- [x] docs/CHANGELOG.md — Updated with gap regression (28 tests), i18n refactor, P0 fixes, Docker E2E 11/11
+- [x] docs/examples/ verification — express/go integration verified: all SDK API calls match actual source
+- [x] docs/research/gap-closure-report.md — Updated with 2026-07-25 regression verification (3 gaps, 28 tests)
+- [x] docs/quickstart/docker-5-min.md — Verified: compose commands and ports match deploy/docker-compose.yaml
+- [x] QA fix: go-sdk.md, node-sdk.md, sdk-quickstart.md — Fixed SDK API mismatches (NewVerifier→New, expressAuth)
+- [x] QA fix: express.md, gin.md integration guides — Updated to match actual SDK exports
+- [x] QA fix: developer-onboarding.md, 5-minute-jwt.md — Fixed SDK snippets and io.Reader bug
+> 188 docs total. All major topics covered.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
