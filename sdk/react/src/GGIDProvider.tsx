@@ -7,7 +7,7 @@
  *   </GGIDProvider>
  */
 
-import { createContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import type { GGIDConfig, GGIDUser, GGIDTokenSet, GGIDAuthState, GGIDAuthContextValue } from './types';
 
 // --- Context ---
@@ -76,6 +76,58 @@ export function GGIDProvider({
         setState({ user: null, tokenSet: null, isLoading: false, isAuthenticated: false, error: null });
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // --- Token auto-refresh (60s before expiry) ---
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const refreshToken = useCallback(async () => {
+    const current = loadTokenSet(storageKey);
+    if (!current?.refresh_token) return;
+
+    try {
+      const resp = await fetch(`${config.apiBaseUrl}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': config.tenantId,
+        },
+        body: JSON.stringify({ refresh_token: current.refresh_token }),
+      });
+
+      if (!resp.ok) throw new Error('Token refresh failed');
+
+      const newTokenSet: GGIDTokenSet = await resp.json();
+      saveTokenSet(storageKey, newTokenSet);
+      setState((prev) => ({ ...prev, tokenSet: newTokenSet }));
+    } catch {
+      // Refresh failed — logout
+      saveTokenSet(storageKey, null);
+      setState({ user: null, tokenSet: null, isLoading: false, isAuthenticated: false, error: 'Session expired' });
+    }
+  }, [config.apiBaseUrl, config.tenantId, storageKey]);
+
+  useEffect(() => {
+    if (!state.tokenSet?.access_token) return;
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+
+    // Parse expiry from JWT or expires_at
+    let expiresAt: number | undefined;
+    if (state.tokenSet.expires_at) {
+      expiresAt = state.tokenSet.expires_at > 1e12 ? state.tokenSet.expires_at : state.tokenSet.expires_at * 1000;
+    } else {
+      try {
+        const payload = JSON.parse(atob(state.tokenSet.access_token.split('.')[1]));
+        if (payload.exp) expiresAt = payload.exp * 1000;
+      } catch { return; }
+    }
+
+    if (!expiresAt) return;
+    const delay = Math.max(expiresAt - Date.now() - 60_000, 5_000);
+    if (delay <= 0) return;
+
+    refreshTimerRef.current = setTimeout(refreshToken, delay);
+    return () => { if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current); };
+  }, [state.tokenSet?.access_token, state.tokenSet?.expires_at, refreshToken]);
 
   const login = useCallback(async (username: string, password: string) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
