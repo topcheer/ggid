@@ -173,6 +173,10 @@ export { useGDPRForget } from './useGDPRForget';
 export type { GDPRForgetRequest, UseGDPRForgetResult } from './useGDPRForget';
 export { useHijackDetection } from './useHijackDetection';
 export type { SuspiciousSession, UseHijackDetectionResult } from './useHijackDetection';
+export { useComplianceDashboard } from './useComplianceDashboard';
+export type { FrameworkSummary, UseComplianceDashboardResult } from './useComplianceDashboard';
+export { useUserTimeline } from './useUserTimeline';
+export type { TimelineEvent, TimelineEventType, UseUserTimelineResult } from './useUserTimeline';
 export type {
   GGIDConfig,
   GGIDUser,
