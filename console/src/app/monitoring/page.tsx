@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import { Server, Activity, CheckCircle2, XCircle, RefreshCw, TrendingUp } from "lucide-react";
 
 interface ServiceHealth {
@@ -30,6 +31,7 @@ const SERVICES: Omit<ServiceHealth, "status">[] = [
 
 export default function MonitoringPage() {
   const { apiFetch } = useApi();
+  const { t } = useI18n();
   const [services, setServices] = useState<ServiceHealth[]>([]);
   const [gwStats, setGwStats] = useState<GatewayStats | null>(null);
   const [loading, setLoading] = useState(true);

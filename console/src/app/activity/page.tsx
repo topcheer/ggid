@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useApi } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   Activity,
   Download,
@@ -36,6 +37,7 @@ const PAGE_SIZE = 20;
 
 export default function ActivityLogPage() {
   const { apiFetch } = useApi();
+  const { t } = useI18n();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

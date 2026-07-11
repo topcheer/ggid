@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   ScrollText,
   RefreshCw,
@@ -59,6 +60,7 @@ type Tab = "events" | "dashboard";
 
 export default function AuditPage() {
   const { apiFetch, API_BASE, TENANT_ID } = useApi();
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>("dashboard");
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
