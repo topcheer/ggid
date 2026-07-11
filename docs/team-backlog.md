@@ -67,6 +67,17 @@
 - [ ] Health check aggregation across services
 - [ ] Distributed tracing (OpenTelemetry)
 - [ ] Database migration versioning tool
+- [ ] **P1** ML-DSA JWT signing in pkg/crypto (PQC) — see docs/research/pqc-post-quantum-cryptography.md
+- [ ] **P1** Hybrid PQC TLS in gateway (ML-KEM) — see docs/research/pqc-post-quantum-cryptography.md
+- [ ] **P1** Workload identity federation (SPIFFE/SPIRE) — see docs/research/non-human-workload-identity.md
+- [ ] **P1** Service account lifecycle + rotation — see docs/research/non-human-workload-identity.md
+- [ ] **P1** OAuth 2.1 enforcement (mandatory PKCE, reject implicit) — see docs/research/oauth-2-1-continuous-verification.md
+- [ ] **P1** Continuous session validation goroutine — see docs/research/oauth-2-1-continuous-verification.md
+- [ ] **P2** Crypto-agility registry in pkg/crypto
+- [ ] **P2** SLH-DSA audit log signatures
+- [ ] **P2** Geo-velocity anomaly detection
+- [ ] **P2** Device posture API + conditional access integration
+- [ ] **P2** Agent-to-agent delegation policies
 
 ### Frontend (Next)
 - [ ] Settings - Email templates editor
@@ -74,6 +85,9 @@
 - [ ] Dashboard - System health overview widget
 - [ ] Users - Bulk import wizard (CSV upload + preview)
 - [ ] Audit - Real-time event heatmap
+- [ ] **P1** Service accounts management page — see docs/research/non-human-workload-identity.md
+- [ ] **P2** Machine identity inventory dashboard
+- [ ] **P2** Device posture dashboard
 
 ### Docs (Next)
 - [ ] docs/guides/high-availability.md
@@ -81,6 +95,8 @@
 - [ ] docs/api/org-api.md
 - [ ] docs/guides/oauth-migration.md
 - [ ] docs/research/iam-market-landscape-2026.md
+- [ ] **P2** docs/guides/pqc-migration-guide.md
+- [ ] **P2** docs/oauth-2-1-compliance-statement.md
 
 ### SDK (Next)
 - [ ] Java SDK OAuth methods (matching Go/Node)
