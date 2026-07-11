@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"log"
 	"net"
@@ -21,7 +22,27 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ggid/ggid/services/policy/internal/service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
+
+// newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
+func newGRPCServer() *grpc.Server {
+	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
+		certFile := os.Getenv("GRPC_TLS_CERT")
+		keyFile := os.Getenv("GRPC_TLS_KEY")
+		if certFile != "" && keyFile != "" {
+			tlsCfg, err := tls.LoadX509KeyPair(certFile, keyFile)
+			if err == nil {
+				return grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{
+					Certificates: []tls.Certificate{tlsCfg},
+					MinVersion:   tls.VersionTLS12,
+				})))
+			}
+			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext", err)
+		}
+	}
+	return grpc.NewServer()
+}
 
 func main() {
 	migrateOnly := flag.Bool("migrate-only", false, "Run database migrations and exit")
@@ -76,7 +97,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen on %s: %v", cfg.GRPCAddr, err)
 	}
-	grpcServer := grpc.NewServer()
+	grpcServer := newGRPCServer()
 	pb.RegisterRoleServiceServer(grpcServer, roleHandler)
 	pb.RegisterPermissionServiceServer(grpcServer, permHandler)
 	pb.RegisterPolicyServiceServer(grpcServer, policyHandler)
