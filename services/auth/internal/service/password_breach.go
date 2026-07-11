@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 // breachCheckEnabled returns whether the HIBP breach check should run.
@@ -45,7 +46,8 @@ func (ps *PasswordService) CheckPasswordBreach(ctx context.Context, password str
 	}
 	req.Header.Set("User-Agent", "GGID-IAM")
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		// Don't block registration if the API is unreachable.
 		return nil
