@@ -149,6 +149,11 @@
 - [x] SAML SSO functional — 7 tests: SP metadata, AuthnRequest, unique IDs, redirect encoding, XML marshal, cert metadata, full SP flow (6862e9f)
 - [x] Multi-tenant RLS — 7 tests: tenant isolation, no-tenant rejection, propagation, MustFromContext panic, isolation levels, spoofing prevention, settings (6862e9f)
 - [x] Rate limiter E2E — 3 tests: 100 requests (10 OK + 90 rate-limited), 429 JSON body + Retry-After, different IPs separate buckets (6862e9f)
+- [x] Password pepper functional — 5 tests: full lifecycle, different peppers → different hashes, backward compat, empty no-op, format stable (314a4f3). Already implemented: SetPepper/applyPepper HMAC-SHA256 in pkg/crypto
+- [x] Audit hash chain verify — 7 tests: valid chain, tampered event, empty, single, missing hash, replay, different secret (314a4f3)
+- [x] OAuth introspection auth — 5 tests: no creds → 401, wrong secret → 401, correct → 200, form-based, missing token (314a4f3). Already implemented: r.BasicAuth() at server.go:563
+- [x] gRPC TLS audit wiring — newGRPCServer() helper with GRPC_TLS_ENABLED/CERT/KEY env vars, fallback to plaintext (314a4f3)
+- [ ] **MISSING: Per-tenant branding backend API** — console pages exist (settings/branding, settings/branding-custom, branding) but no backend API endpoint for CRUD. Need: GET/PUT /api/v1/tenants/{id}/branding with logo_url, primary_color, custom_css fields.
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
