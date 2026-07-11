@@ -28,14 +28,19 @@ var _ http.Handler = (*HTTPHandler)(nil)
 
 // HTTPHandler is the HTTP handler for the Identity Service REST API.
 type HTTPHandler struct {
-	svc           *service.IdentityService
-	mux           *http.ServeMux
-	brandingStore *service.BrandingStore
+	svc              *service.IdentityService
+	mux              *http.ServeMux
+	brandingStore    *service.BrandingStore
+	accessRequestSvc *service.AccessRequestService
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
 func NewHTTPHandler(svc *service.IdentityService) *HTTPHandler {
-	h := &HTTPHandler{svc: svc, brandingStore: service.NewBrandingStore()}
+	h := &HTTPHandler{
+		svc:              svc,
+		brandingStore:    service.NewBrandingStore(),
+		accessRequestSvc: service.NewAccessRequestService(service.NewMemoryAccessRequestStore()),
+	}
 	h.registerRoutes()
 	return h
 }
@@ -51,6 +56,10 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Branding endpoints
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
+
+	// Access request (IGA workflow) endpoints
+	h.mux.HandleFunc("/api/v1/access-requests", h.handleAccessRequests)
+	h.mux.HandleFunc("/api/v1/access-requests/", h.handleAccessRequests)
 
 	// SCIM 2.0 endpoints
 	scimHandler := scim.NewHandler(h.svc)
