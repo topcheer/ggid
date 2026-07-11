@@ -16,7 +16,7 @@
 ```bash
 mkdir ggid-express-demo && cd ggid-express-demo
 npm init -y
-npm install express @ggid/sdk-node jsonwebtoken
+npm install express @ggid/node jsonwebtoken
 ```
 
 ---
@@ -27,7 +27,7 @@ Create `app.js`:
 
 ```javascript
 const express = require('express');
-const { GGIDMiddleware, GGIDClient } = require('@ggid/sdk-node');
+const { expressAuth, GGIDClient } = require('@ggid/node');
 
 const app = express();
 app.use(express.json());
@@ -39,19 +39,19 @@ const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001
 const PORT = process.env.PORT || 3000;
 
 // ─── Auth Middleware ─────────────────────────────────────────
-const authMw = GGIDMiddleware({
-  gatewayURL: GGID_URL,
-  secret: JWT_SECRET,
+const authMw = expressAuth({
+  jwksUrl: `${GGID_URL}/.well-known/jwks.json`,
+  issuer: GGID_URL,
 });
 
 // ─── Scope Guard ─────────────────────────────────────────────
 function requireScope(scope) {
   return (req, res, next) => {
-    if (!req.ggid?.scopes?.includes(scope)) {
+    if (!req.ggidUser?.scopes?.includes(scope)) {
       return res.status(403).json({
         error: 'insufficient_scope',
         required: scope,
-        user_scopes: req.ggid?.scopes || [],
+        user_scopes: req.ggidUser?.scopes || [],
       });
     }
     next();
@@ -70,10 +70,9 @@ api.use(authMw);
 // Get current user info from JWT
 api.get('/me', (req, res) => {
   res.json({
-    user_id: req.ggid.userID,
-    tenant_id: req.ggid.tenantID,
-    scopes: req.ggid.scopes,
-    token: req.ggid.token?.slice(0, 20) + '...',
+    user_id: req.ggidUser?.sub,
+    tenant_id: req.ggidUser?.tenant_id,
+    scopes: req.ggidUser?.scopes,
   });
 });
 
@@ -81,16 +80,13 @@ api.get('/me', (req, res) => {
 api.get('/users', requireScope('read:users'), async (req, res) => {
   try {
     const client = new GGIDClient({
-      gatewayURL: GGID_URL,
-      token: req.ggid.token,
+      gatewayUrl: GGID_URL,
+      tenantId: req.ggidUser?.tenant_id || TENANT_ID,
     });
 
     // Tenant-scoped query
-    const users = await client.users.list({
-      tenant_id: req.ggid.tenantID,
-    });
-
-    res.json({ users, count: users.length });
+    const result = await client.listUsers();
+    const users = result.items || result;
   } catch (err) {
     console.error('Failed to list users:', err.message);
     res.status(502).json({ error: 'upstream_error', message: err.message });
@@ -110,15 +106,14 @@ api.post('/users', requireScope('write:users'), async (req, res) => {
 
   try {
     const client = new GGIDClient({
-      gatewayURL: GGID_URL,
-      token: req.ggid.token,
+      gatewayUrl: GGID_URL,
+      tenantId: req.ggidUser?.tenant_id || TENANT_ID,
     });
 
-    const user = await client.users.create({
+    const user = await client.createUser({
       username,
       email,
       password,
-      tenant_id: req.ggid.tenantID,
     });
 
     res.status(201).json(user);
@@ -134,11 +129,11 @@ api.post('/users', requireScope('write:users'), async (req, res) => {
 api.delete('/users/:id', requireScope('delete:users'), async (req, res) => {
   try {
     const client = new GGIDClient({
-      gatewayURL: GGID_URL,
-      token: req.ggid.token,
+      gatewayUrl: GGID_URL,
+      tenantId: req.ggidUser?.tenant_id || TENANT_ID,
     });
 
-    await client.users.delete(req.params.id);
+    await client.deleteUser(req.params.id);
     res.json({ status: 'deleted', user_id: req.params.id });
   } catch (err) {
     res.status(502).json({ error: 'upstream_error', message: err.message });
@@ -153,7 +148,7 @@ api.post('/check-permission', async (req, res) => {
     const resp = await fetch(`${GGID_URL}/api/v1/policies/check`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${req.ggid.token}`,
+        'Authorization': `Bearer ${req.headers.authorization?.replace('Bearer ', '')}`,
         'X-Tenant-ID': req.ggid.tenantID,
         'Content-Type': 'application/json',
       },

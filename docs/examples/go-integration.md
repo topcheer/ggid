@@ -49,9 +49,8 @@ var (
 
 func main() {
 	// Create GGID SDK client
-	client := ggid.New(ggidURL,
-		ggid.WithAPIKey(os.Getenv("GGID_API_KEY")),
-		ggid.WithJWKS(15*60*1e9), // 15-minute JWKS cache (nanoseconds)
+	client := ggid.NewClient(ggidURL,
+		ggid.WithJWKS(fmt.Sprintf("%s/.well-known/jwks.json", ggidURL)),
 	)
 
 	mux := http.NewServeMux()
@@ -166,8 +165,8 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create user via GGID client
-	client := ggid.New(ggidURL, ggid.WithAPIKey(os.Getenv("GGID_API_KEY")))
-	_ = client // Use client.Users.Create() in production
+	client := ggid.NewClient(ggidURL)
+	_ = client // Use client.CheckPermission() in production
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -320,7 +319,7 @@ curl -s -X POST http://localhost:8081/api/users/create \
 | **Auth** | `ggidmw.Auth(baseURL, opts)` | Verifies JWT on every request |
 | **Context** | `ggidmw.FromContext(ctx)` | Extracts `UserInfo` (ID, tenant, roles, scopes) |
 | **Permission** | `client.RequirePermission(resource, action)` | Checks Policy Engine |
-| **Client** | `ggid.New(url, WithAPIKey(...))` | Call GGID management APIs |
+| **Client** | `ggid.NewClient(url, WithJWKS(jwksURL))` | Call GGID management APIs |
 | **JWKS** | `ggid.WithJWKS(ttl)` | Cache signing keys for signature verification |
 
 ### Middleware Chain

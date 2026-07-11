@@ -97,3 +97,14 @@
 
 - Recurring lesson: always run `go build ./...` before `go test` to catch
   compilation errors from concurrent edits.
+
+## QA: Documentation Accuracy Audit (4b952b2)
+
+### Fixed (commit pending)
+- **go-integration.md**: `ggid.New()` → `ggid.NewClient()`; `WithAPIKey()` doesn't exist (removed); `WithJWKS(15*60*1e9)` → `WithJWKS(url)` (takes URL, not nanoseconds)
+- **express-integration.md**: `@ggid/sdk-node` → `@ggid/node`; `GGIDMiddleware` → `expressAuth`; `gatewayURL/secret` → `jwksUrl/issuer`; `req.ggid` → `req.ggidUser`; `client.users.list()` → `client.listUsers()`; `client.users.create()` → `client.createUser()`; `client.users.delete()` → `client.deleteUser()`
+
+### Not Fixed (informational)
+- OpenAPI spec has routes not in actual services: `/api/v1/auth/email/resend`, `/api/v1/auth/social/{provider}` (OpenAPI documents forward-looking APIs not yet fully implemented)
+- Actual auth routes not in OpenAPI: `/api/v1/auth/device`, `/api/v1/auth/change-email`, `/api/v1/auth/risk-assess`, `/api/v1/auth/login-attempts`, `/api/v1/auth/lockout-policy` (newer endpoints not yet documented in spec)
+- Doc link integrity: all internal `.md` links resolve correctly (no 404s found)
