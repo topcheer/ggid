@@ -131,7 +131,11 @@
 - [x] Prometheus metrics verification — metrics_test.go (1c23919)
 - [x] Gateway route URLs from env vars + UPSTREAM_TIMEOUT (9e5f2d9)
 - [x] Full-chain integration tests — full_chain_test.go (2e044b9)
+- [x] Full-chain 429 rate limit + proxy test — full_chain_test.go (9d0d30e)
+- [x] Metrics label verification — metrics_test.go (9d0d30e)
 - [x] Circuit breaker lifecycle tests — coverage_sprint27_test.go (2e044b9)
+- [x] Swagger UI at /docs — templates.go + router.go:211 (existing)
+- [x] Per-tenant rate limiter isolation — gateway_infra_test.go (existing)
 - [ ] Middleware coverage →92% (currently 88.3%)
 - [ ] API spec coverage audit — openapi.yaml vs router routes
 
