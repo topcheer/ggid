@@ -56,7 +56,7 @@ func (h *Handler) t(r *http.Request, key string) string {
 
 // writeErrorT writes a JSON error with i18n-translated message.
 func (h *Handler) writeErrorT(w http.ResponseWriter, r *http.Request, status int, key string) {
-	writeJSON(w, status, map[string]string{"error": h.t(r, key)})
+	ggiderrors.WriteSimpleAPIError(w, status, httpStatusToCode(status), h.t(r, key))
 }
 
 func (h *Handler) registerRoutes() {
@@ -1037,7 +1037,7 @@ func writeJSON(w http.ResponseWriter, status int, data any) {
 }
 
 func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, map[string]string{"error": msg})
+	ggiderrors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
 }
 
 func writeAuthError(w http.ResponseWriter, err error) {
@@ -1098,6 +1098,31 @@ func writeAuthErrorWithTranslator(w http.ResponseWriter, err error, tr *i18n.Tra
 			return
 		}
 		writeError(w, http.StatusInternalServerError, translate("error.internal_server_error", "internal server error"))
+	}
+}
+
+// httpStatusToCode maps an HTTP status code to a GGID error code string.
+func httpStatusToCode(status int) string {
+	switch status {
+	case http.StatusBadRequest:
+		return string(ggiderrors.ErrInvalidArgument)
+	case http.StatusUnauthorized:
+		return string(ggiderrors.ErrUnauthenticated)
+	case http.StatusForbidden:
+		return string(ggiderrors.ErrPermissionDenied)
+	case http.StatusNotFound:
+		return string(ggiderrors.ErrNotFound)
+	case http.StatusConflict:
+		return string(ggiderrors.ErrAlreadyExists)
+	case http.StatusTooManyRequests:
+		return string(ggiderrors.ErrResourceExhausted)
+	case http.StatusLocked:
+		return "account_locked"
+	default:
+		if status >= 500 {
+			return string(ggiderrors.ErrInternal)
+		}
+		return string(ggiderrors.ErrInternal)
 	}
 }
 

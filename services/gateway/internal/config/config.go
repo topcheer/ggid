@@ -63,8 +63,9 @@ func Default() *Config {
 			"/api/v1/policies":    envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/orgs":        envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/audit":       envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
-			"/oauth":              envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
-			"/saml":               envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/oauth":                          envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/saml":                           envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/.well-known/openid-configuration": envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 		},
 		RouteConfigs: map[string]RouteConfig{
 			// Auth needs short timeouts for fast failure on rate-limited requests
