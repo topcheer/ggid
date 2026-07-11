@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Milestone: Documentation & Developer Experience
+## [Unreleased] — Milestone: 205 Docs — Developer Experience Complete
+
+### Documentation Milestone (205 docs)
+- **REST API Reference** — Complete endpoint reference (commit 99007fc)
+- **Rate limiting guide** — Token bucket, adaptive limiting, 429 handling
+- **Event-driven architecture** — NATS JetStream flow, audit pipeline, webhook delivery
+- **Audit compliance guide** — Hash chain verification, PCI-DSS/HIPAA/SOC2 reports, SIEM export
+- **Social login setup** — 10 providers (GitHub/Google/Microsoft/OIDC/LDAP)
+- **SCIM 2.0 API** — Full enterprise HR integration reference
+- **Microservices architecture** — 7-service diagram, ports, data ownership
+
+### P0 SDK Security Fix (commit 06da7b5)
+- Go SDK: `RequirePermission` signature fixed to 3-arg (resource, action, handler)
+- Node SDK: Package name standardized to `@ggid/node`
+- All SDK examples verified against actual source code
 
 ### Latest Changes (2026-07-26)
 
