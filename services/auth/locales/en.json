@@ -8,5 +8,20 @@
   "error.unauthorized": "unauthorized",
   "error.internal_server_error": "internal server error",
   "error.forbidden": "forbidden",
-  "error.not_found": "not found"
+  "error.not_found": "not found",
+  "error.logout_failed": "logout failed",
+  "error.refresh_token_required": "refresh token is required",
+  "error.refresh_token_invalid": "invalid or expired refresh token",
+  "error.forgot_password_email_required": "email is required",
+  "error.forgot_password_user_not_found": "user not found",
+  "error.forgot_password_failed": "failed to send reset email",
+  "error.reset_token_required": "reset token is required",
+  "error.reset_password_required": "new password is required",
+  "error.reset_token_invalid": "invalid or expired reset token",
+  "error.reset_password_failed": "failed to reset password",
+  "error.invalid_user_id": "invalid user_id",
+  "error.user_id_required": "user_id is required",
+  "error.session_id_required": "valid session_id is required",
+  "error.failed_list_sessions": "failed to list sessions",
+  "error.failed_revoke_session": "failed to revoke session"
 }

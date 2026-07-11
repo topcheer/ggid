@@ -8,5 +8,15 @@
   "error.unauthorized": "non autoris\u00e9",
   "error.internal_server_error": "erreur interne du serveur",
   "error.forbidden": "acc\u00e8s interdit",
-  "error.not_found": "introuvable"
+  "error.not_found": "introuvable",
+  "error.logout_failed": "\u00e9chec de la d\u00e9connexion",
+  "error.refresh_token_required": "le jeton d'actualisation est requis",
+  "error.invalid_refresh_token": "jeton d'actualisation invalide ou expir\u00e9",
+  "error.forgot_password_email_required": "l'email est requis",
+  "error.reset_password_token_required": "le jeton de r\u00e9initialisation est requis",
+  "error.user_id_required": "user_id est requis",
+  "error.invalid_user_id": "user_id invalide",
+  "error.session_id_required": "session_id est requis",
+  "error.failed_list_sessions": "\u00e9chec de la liste des sessions",
+  "error.failed_revoke_session": "\u00e9chec de la r\u00e9vocation de la session"
 }
