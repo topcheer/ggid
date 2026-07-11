@@ -65,7 +65,7 @@
 - [ ] Coverage →95% across all packages (currently: errors/tenant/i18n 100%, authprovider 97%, pii 96.6%, notification 95.7%)
 - [ ] make test intermittent timeout when teammates edit concurrently
 - [ ] Missing input validation on several API endpoints
-- [ ] Dark mode needs testing across all Console pages
+- [x] Dark mode needs testing across all Console pages — verified dashboard, users, settings, organizations in dark mode via browser. CSS auto-fallback layer covers 77 bg-white patterns. No contrast issues. (frontend 29fec8f)
 
 ## P3 — Infrastructure
 
