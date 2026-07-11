@@ -73,6 +73,9 @@ func (h *HTTPHandler) registerRoutes() {
 	// SCIM 2.0 endpoints
 	scimHandler := scim.NewHandler(h.svc)
 	scimHandler.RegisterRoutes(h.mux)
+	// SCIM Groups also accessible via /api/v1/scim/ prefix (gateway-compatible)
+	h.mux.HandleFunc("/api/v1/scim/Groups", scimHandler.HandleGroupsCollectionPublic)
+	h.mux.HandleFunc("/api/v1/scim/Groups/", scimHandler.HandleGroupResourcePublic)
 }
 
 // ServeHTTP implements http.Handler.

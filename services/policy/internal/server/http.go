@@ -61,6 +61,9 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/diff", s.handlePolicyDiff)
 	mux.HandleFunc("/api/v1/policies/analyze", s.handleAnalyze)
 	mux.HandleFunc("/api/v1/policies/decision-log", s.handleDecisionLog)
+	mux.HandleFunc("/api/v1/policies/access-requests/pending", s.handleAccessRequestsPending)
+	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
+	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }
 
 // --- Roles ---

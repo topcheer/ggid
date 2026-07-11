@@ -28,6 +28,18 @@ type SCIMGroupMember struct {
 	Type    string `json:"type"`    // "User" or "Group"
 }
 
+// HandleGroupsCollectionPublic is the exported wrapper for handleGroupsCollection.
+// Allows registering the handler under alternative route prefixes (e.g. /api/v1/scim/Groups).
+func (h *Handler) HandleGroupsCollectionPublic(w http.ResponseWriter, r *http.Request) {
+	h.handleGroupsCollection(w, r)
+}
+
+// HandleGroupResourcePublic is the exported wrapper for HandleGroupResource.
+// Allows registering the handler under alternative route prefixes.
+func (h *Handler) HandleGroupResourcePublic(w http.ResponseWriter, r *http.Request) {
+	h.HandleGroupResource(w, r)
+}
+
 // handleGroupsCollection handles GET (list) and POST (create) for /scim/v2/Groups.
 // SCIM Groups map to GGID roles. Members are users assigned to that role.
 func (h *Handler) handleGroupsCollection(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +153,8 @@ func (h *Handler) HandleGroupResource(w http.ResponseWriter, r *http.Request) {
 		writeSCIMError(w, http.StatusNotFound, "group ID required")
 		return
 	}
-	groupID := pathParts[2]
+	// Use the last path segment as group ID (supports /scim/v2/Groups/{id} and /api/v1/scim/Groups/{id})
+	groupID := pathParts[len(pathParts)-1]
 
 	switch r.Method {
 	case http.MethodGet:

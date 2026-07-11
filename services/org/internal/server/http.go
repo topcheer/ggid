@@ -194,6 +194,10 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 			s.handleOrgRoles(w, r, id)
 			return
 		}
+		if subPath == "departments/tree" {
+			s.handleDeptTree(w, r)
+			return
+		}
 		// Handle members/{userId} and roles/{roleId} sub-paths
 		subParts := strings.SplitN(subPath, "/", 2)
 		if len(subParts) == 2 {
