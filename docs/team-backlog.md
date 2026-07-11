@@ -190,8 +190,8 @@
 - [ ] Coverage →95% across all packages
 - [x] Integration test suite (31 E2E tests across 3 files: e2e_test.go, gateway_e2e_test.go, oauth_e2e_test.go)
 - [x] Performance benchmarks (benchmark_test.go — 6 benchmarks, 348d61f)
-- [ ] Dark mode for Console
-- [ ] Mobile-responsive Console
+- [x] Dark mode for Console (already complete — theme.tsx toggle, verified 6ddd6fa)
+- [x] Mobile-responsive Console (already complete — sidebar hamburger, breakpoints, verified 6ddd6fa)
 
 ## P3 — Future
 
