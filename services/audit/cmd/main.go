@@ -19,6 +19,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/data"
 	"github.com/ggid/ggid/services/audit/internal/handler"
 	"github.com/ggid/ggid/services/audit/internal/repository"
+	"github.com/ggid/ggid/pkg/audit"
 	httpserver "github.com/ggid/ggid/services/audit/internal/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ggid/ggid/services/audit/internal/service"
