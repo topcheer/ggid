@@ -25,6 +25,17 @@ const (
 	argonSaltLength  = 16
 )
 
+// testFastHash controls fast hashing for tests (set via init in test files).
+// When true, uses minimal Argon2id params (1 iteration, 4KB memory) to avoid
+// timeouts when hundreds of tests call HashPassword under the race detector.
+var testFastHash bool
+
+// EnableTestFastHash enables fast password hashing for tests.
+// This MUST only be called from test files (TestMain or init()).
+func EnableTestFastHash() {
+	testFastHash = true
+}
+
 // pepper is an optional HMAC-SHA256 pre-hash pepper.
 // When set, passwords are HMAC'd before Argon2id, adding a server-side secret.
 // Configure via SetPepper() at startup from environment variable.
@@ -60,11 +71,15 @@ func HashPassword(password string) (string, error) {
 		return "", fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	hash := argon2.IDKey(applyPepper(password), salt, argonIterations, argonMemory, argonParallelism, argonKeyLength)
+	iter, mem := uint32(argonIterations), uint32(argonMemory)
+	if testFastHash {
+		iter, mem = 1, 4*1024 // Minimal params for test speed
+	}
+	hash := argon2.IDKey(applyPepper(password), salt, iter, mem, argonParallelism, argonKeyLength)
 
 	// Format: argon2id$iterations$memory$parallelism$salt.hash
 	encoded := fmt.Sprintf("argon2id$%d$%d$%d$%s.%s",
-		argonIterations, argonMemory, argonParallelism,
+		iter, mem, argonParallelism,
 		base64.RawStdEncoding.EncodeToString(salt),
 		base64.RawStdEncoding.EncodeToString(hash),
 	)
