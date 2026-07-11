@@ -55,6 +55,10 @@ export { useIdPConfig } from './useIdPConfig';
 export type { IdPConfig, CreateIdPInput, UseIdPConfigResult } from './useIdPConfig';
 export { useSecurityCenter } from './useSecurityCenter';
 export type { SecurityPosture, SecurityThreat, SecurityRecommendation, UseSecurityCenterResult } from './useSecurityCenter';
+export { useWebhooks } from './useWebhooks';
+export type { Webhook, CreateWebhookInput, UseWebhooksResult } from './useWebhooks';
+export { useFeatureFlags } from './useFeatureFlags';
+export type { FeatureFlag, CreateFlagInput, UseFeatureFlagsResult } from './useFeatureFlags';
 export type {
   GGIDConfig,
   GGIDUser,

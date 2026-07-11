@@ -139,6 +139,10 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 		return &domain.CheckResult{Allowed: false, Reason: "anonymous user"}, nil
 	}
 
+	if e.userRoleReader == nil {
+		return &domain.CheckResult{Allowed: false, Reason: "no role reader configured"}, nil
+	}
+
 	// Step 1: Get the user's direct role assignments (with ExpiresAt for filtering).
 	userRoles, err := e.userRoleReader.GetUserRoles(ctx, req.UserID)
 	if err != nil {
