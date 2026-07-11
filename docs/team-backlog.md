@@ -339,8 +339,14 @@
 - [x] hsm-kms-integration.md (3965 lines, f5eeefe)
 - [x] fido2-certification-guide.md (3026 lines, cb3b772)
 - [x] api-gateway-patterns-comparison.md (2640 lines, 5015bd3)
-- [x] DUPLICATE: post-quantum-iam.md (post-quantum-cryptography-iam.md exists, 349 lines)
-- [x] DUPLICATE: adaptive-authentication.md (adaptive-mfa-design.md 368 lines + step-up-authentication-patterns.md 399 lines)
+### Batch 34 — PasskeySync/EUDIWallet/CredentialAgent/AIThreat/SGX (5 docs)
+- [x] passkey-sync-security.md (2896 lines, 447a397)
+- [x] eu-digital-identity-wallet.md (3734 lines, 6ae3d2a)
+- [x] credential-agent-architecture.md (3305 lines, 2b0f3cc)
+- [x] ai-threat-detection-iam.md (3547 lines, 49fb88e)
+- [x] sgx-confidential-computing-iam.md (2843 lines, 6da65de)
+
+- [x] Also fixed: make test failures (83951b0) — NewChecker signature, duplicate test name, circuit breaker timing
 
 ### Key P0 Findings Driven to Remediation
 - [x] CSRF predictable entropy → fixed (29b51c1)
