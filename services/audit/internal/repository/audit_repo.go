@@ -23,22 +23,40 @@ func NewAuditRepository(db *pgxpool.Pool) *AuditRepository {
 }
 
 // Insert writes a single audit event to the database.
+// It computes the hash chain link using the previous event's hash.
 func (r *AuditRepository) Insert(ctx context.Context, e *domain.AuditEvent) error {
 	metaJSON, _ := json.Marshal(e.Metadata)
 	var ipAddr any
 	if e.IPAddress != "" {
 		ipAddr = e.IPAddress
 	}
+
+	// Get the previous event's hash for the chain.
+	// We query the most recent event for this tenant to get the prev_hash.
+	prevHash := ""
+	if domain.IsHashChainEnabled() {
+		var ph string
+		r.db.QueryRow(ctx,
+			`SELECT COALESCE(event_hash, '') FROM audit_events
+			 WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 1`,
+			e.TenantID,
+		).Scan(&ph)
+		prevHash = ph
+		e.PrevHash = prevHash
+		e.Hash = e.ComputeHash(prevHash)
+	}
+
 	query := `
 		INSERT INTO audit_events (tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result, ip_address,
-		    user_agent, request_id, metadata)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11, $12, $13)
+		    user_agent, request_id, metadata, prev_hash, event_hash)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::inet, $11, $12, $13, $14, $15)
 		RETURNING id, created_at`
 	return r.db.QueryRow(ctx, query,
 		e.TenantID, e.ActorType, e.ActorID, nullableStr(e.ActorName), e.Action,
 		nullableStr(e.ResourceType), e.ResourceID, nullableStr(e.ResourceName), e.Result, ipAddr,
 		nullableStr(e.UserAgent), nullableStr(e.RequestID), metaJSON,
+		e.PrevHash, e.Hash,
 	).Scan(&e.ID, &e.CreatedAt)
 }
 
@@ -58,12 +76,15 @@ func (r *AuditRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Au
 	query := `
 		SELECT id, tenant_id, actor_type, actor_id, actor_name, action,
 		    resource_type, resource_id, resource_name, result,
-		    ip_address::text, user_agent, request_id, metadata, created_at
+		    ip_address::text, user_agent, request_id, metadata,
+		    COALESCE(prev_hash, ''), COALESCE(event_hash, ''),
+		    created_at
 		FROM audit_events WHERE id = $1`
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&event.ID, &event.TenantID, &event.ActorType, &event.ActorID, &actorName,
 		&event.Action, &resourceType, &event.ResourceID, &resourceName,
-		&event.Result, &ipAddr, &userAgent, &requestID, &metaBytes, &event.CreatedAt,
+		&event.Result, &ipAddr, &userAgent, &requestID, &metaBytes,
+		&event.PrevHash, &event.Hash, &event.CreatedAt,
 	)
 	if err != nil {
 		return nil, mapErr(err, "audit_event", id.String())

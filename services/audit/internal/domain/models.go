@@ -42,7 +42,8 @@ type AuditEvent struct {
 	UserAgent    string
 	RequestID    string
 	Metadata     map[string]any
-	Hash         string // HMAC chain hash for tamper detection
+	Hash         string // HMAC-SHA256 chain hash for tamper detection
+	PrevHash     string // Hash of the previous event in the chain
 	CreatedAt    time.Time
 }
 
