@@ -771,9 +771,9 @@
 - [x] **NEW-3 Bot Protection audit** — DONE (backend f36d01c). bot-protection-analysis.md
 
 ### Implementation Tasks (backend/dev)
-- [ ] **Gap #26 Data retention API** — services/audit/internal/retention/retention.go. RetentionPolicy, PUT/GET /api/v1/audit/retention
+- [x] **Gap #26 Data retention API** — DONE (backend b930a59). RetentionPolicy, Apply(), 8 tests. HTTP endpoints already existed.
 - [x] **Gap #18 SIEM Forwarder** — DONE (arch 854eaf1). pkg/audit/siem_forwarder.go: Splunk HEC, Datadog, Elasticsearch, generic. 8 tests PASS
-- [ ] **NEW-5 Device-Bound SSO skeleton** — services/oauth/internal/service/device_bound_sso.go. Interface + TODO
+- [x] **NEW-5 Device-Bound SSO skeleton** — DONE (backend b930a59). IssueDeviceBoundToken/VerifyDeviceBoundToken, sentinel errors. TODO for Phase 1.
 
 ### Implementation Tasks (frontend)
 - [x] **Gap #24 React SDK** — sdk/react/ created (f040281). GGIDProvider, useGGIDAuth, types.ts, package.json
