@@ -57,7 +57,7 @@ func APIVersioning(cfg APIVersionConfig, nextByVersion func(version string) http
 
 		handler := nextByVersion(version)
 		if handler == nil {
-			http.Error(w, `{"error":"no backend for API version"}`, http.StatusBadGateway)
+			WriteError(w, r, http.StatusBadGateway, "bad_gateway", "no backend for API version")
 			return
 		}
 		handler.ServeHTTP(w, r)

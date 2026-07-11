@@ -40,7 +40,7 @@ func HostValidation(cfg HostValidationConfig) func(http.Handler) http.Handler {
 
 			host := strings.ToLower(r.Host)
 			if host == "" {
-				http.Error(w, `{"error":"missing Host header"}`, http.StatusBadRequest)
+				WriteError(w, r, http.StatusBadRequest, "bad_request", "missing Host header")
 				return
 			}
 
@@ -67,7 +67,7 @@ func HostValidation(cfg HostValidationConfig) func(http.Handler) http.Handler {
 				}
 			}
 
-			http.Error(w, `{"error":"Host not allowed"}`, http.StatusForbidden)
+			WriteError(w, r, http.StatusForbidden, "host_not_allowed", "Host not allowed")
 		})
 	}
 }

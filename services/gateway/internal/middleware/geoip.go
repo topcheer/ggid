@@ -55,13 +55,13 @@ func GeoIPMiddleware(cfg *GeoIPConfig) func(http.Handler) http.Handler {
 
 				// Check blocklist (takes precedence)
 				if blocked[country] {
-					http.Error(w, `{"error":"access denied for your region"}`, http.StatusForbidden)
+					WriteError(w, r, http.StatusForbidden, "geoip_blocked", "access denied for your region")
 					return
 				}
 
 				// Check allowlist
 				if len(allowed) > 0 && !allowed[country] {
-					http.Error(w, `{"error":"access denied for your region"}`, http.StatusForbidden)
+					WriteError(w, r, http.StatusForbidden, "geoip_blocked", "access denied for your region")
 					return
 				}
 			} else if upstreamCountry := r.Header.Get("X-Geo-Country"); upstreamCountry != "" {

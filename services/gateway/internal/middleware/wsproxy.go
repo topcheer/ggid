@@ -35,20 +35,20 @@ func IsWebSocketRequest(r *http.Request) bool {
 func WebSocketProxy(target string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !IsWebSocketRequest(r) {
-			http.Error(w, "not a websocket request", http.StatusBadRequest)
+			WriteError(w, r, http.StatusBadRequest, "bad_request", "not a websocket request")
 			return
 		}
 
 		hj, ok := w.(http.Hijacker)
 		if !ok {
-			http.Error(w, "hijacking not supported", http.StatusInternalServerError)
+			WriteError(w, r, http.StatusInternalServerError, "internal_error", "hijacking not supported")
 			return
 		}
 
 		clientConn, clientBuf, err := hj.Hijack()
 		if err != nil {
 			slog.Error("wsproxy: hijack error", "err", err)
-			http.Error(w, "hijack failed", http.StatusInternalServerError)
+			WriteError(w, r, http.StatusInternalServerError, "internal_error", "hijack failed")
 			return
 		}
 		defer clientConn.Close()
