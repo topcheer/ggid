@@ -304,6 +304,9 @@ func (s *HTTPServer) handleExport(w http.ResponseWriter, r *http.Request) {
 	if action := r.URL.Query().Get("action"); action != "" {
 		filter.Action = action
 	}
+	if eventType := r.URL.Query().Get("event_type"); eventType != "" {
+		filter.Action = eventType // event_type alias
+	}
 	if result := r.URL.Query().Get("result"); result != "" {
 		filter.Result = domain.EventResult(result)
 	}
@@ -317,6 +320,17 @@ func (s *HTTPServer) handleExport(w http.ResponseWriter, r *http.Request) {
 	}
 	if endStr := r.URL.Query().Get("end_time"); endStr != "" {
 		if t, err := time.Parse(time.RFC3339, endStr); err == nil {
+			filter.EndTime = &t
+		}
+	}
+	// from/to aliases
+	if fromStr := r.URL.Query().Get("from"); fromStr != "" {
+		if t, err := time.Parse(time.RFC3339, fromStr); err == nil {
+			filter.StartTime = &t
+		}
+	}
+	if toStr := r.URL.Query().Get("to"); toStr != "" {
+		if t, err := time.Parse(time.RFC3339, toStr); err == nil {
 			filter.EndTime = &t
 		}
 	}

@@ -1145,6 +1145,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 	// OAuth scope management
 	mux.HandleFunc("/api/v1/oauth/scopes", handleScopes)
 
+	// DPoP proof verification
+	mux.HandleFunc("/api/v1/oauth/dpop/verify", handleDPoPVerify)
+
 	// Health check
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})

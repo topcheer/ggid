@@ -162,6 +162,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.restoreUser(ctx, userID, w, r)
 	case action == "avatar" && r.Method == http.MethodPost:
 		h.uploadAvatar(ctx, userID, w, r)
+	case action == "merge" && r.Method == http.MethodPost:
+		h.handleMerge(ctx, userID, w, r)
 	case action == "deprovision" && r.Method == http.MethodPost:
 		h.handleDeprovision(ctx, userID, w, r)
 	default:

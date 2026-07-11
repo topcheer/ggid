@@ -50,6 +50,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/time-conditions", s.handleTimeConditions)
 	mux.HandleFunc("/api/v1/policies/dry-run", s.handleDryRun)
 	mux.HandleFunc("/api/v1/policies/sod/check", s.handleSoDCheck)
+	mux.HandleFunc("/api/v1/policies/sod/violations", s.handleSoDViolations)
 	mux.HandleFunc("/api/v1/policies/delegate", s.handleDelegate)
 	mux.HandleFunc("/api/v1/policies/delegations", s.handleListDelegations)
 	mux.HandleFunc("/api/v1/policies/permissions/tree", s.handlePermissionTree)
