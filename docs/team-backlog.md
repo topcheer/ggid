@@ -161,6 +161,11 @@
 - [x] Per-tenant CORS config — per_tenant_cors.go + 5 tests (existing)
 - [x] Tiered rate limiting — token_bucket.go TierOverrides + tier_ratelimit_test.go (existing)
 - [x] Request size limit — bodysize.go MaxBodySize + bodysize_test.go (existing)
+- [x] Middleware chain order test — chain_order_test.go 3 tests (4b952b2)
+- [x] pkg/transport gRPC TLS coverage — grpc_tls_test.go 6 tests (4b952b2)
+- [x] Panic recovery test — recovery_test.go 5 tests (existing)
+- [x] Tenant header injection test — coverage_sprint16_test.go (existing)
+- [x] API key auth test — apikey_ipallowlist_test.go (existing)
 - [ ] Middleware coverage →92% (currently 88.3%)
 - [ ] API spec coverage audit — openapi.yaml vs router routes
 
