@@ -216,6 +216,13 @@ func (h *Handler) registerRoutes() {
 	} else {
 		webauthnHandler.RegisterRoutes(h.mux)
 	}
+
+	// --- Wired feature routes ---
+	h.mux.HandleFunc("/api/v1/auth/impersonate", h.handleImpersonate)
+	h.mux.HandleFunc("/api/v1/auth/impersonate/revoke", h.handleImpersonateRevoke)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/conditional", h.handleConditionalUI)
+	h.mux.HandleFunc("/api/v1/notifications/send", h.handleSendNotification)
+	h.mux.HandleFunc("/api/v1/auth/expiry-status", h.handleExpiryStatus)
 }
 
 // ServeHTTP implements http.Handler.

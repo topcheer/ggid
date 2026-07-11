@@ -934,6 +934,27 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusOK, map[string]string{"status": "approved"})
 	})
 
+	// Front-channel logout
+	mux.HandleFunc("/api/v1/oauth/frontchannel-logout", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		var req struct {
+			SessionID string `json:"session_id"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+			return
+		}
+		uris, err := service.FrontChannelLogout(req.SessionID)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"logout_uris": uris})
+	})
+
 	// --- AI Agent Identity (MCP Auth) ---
 
 	// Register a new AI agent
