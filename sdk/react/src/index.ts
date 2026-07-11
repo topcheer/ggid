@@ -35,6 +35,10 @@ export { useSessions } from './useSessions';
 export type { UserSession, UseSessionsResult } from './useSessions';
 export { useCompliance } from './useCompliance';
 export type { ComplianceFramework, ComplianceReport, ComplianceFilter, UseComplianceResult } from './useCompliance';
+export { useOAuthClients } from './useOAuthClients';
+export type { OAuthClient, CreateOAuthClientInput, UseOAuthClientsResult } from './useOAuthClients';
+export { useAuditStats } from './useAuditStats';
+export type { AuditStats, HourlyBucket, TopActor, UseAuditStatsResult } from './useAuditStats';
 export type {
   GGIDConfig,
   GGIDUser,

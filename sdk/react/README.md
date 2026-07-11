@@ -36,6 +36,17 @@ const { isAuthenticated, user, login, logout } = useGGIDAuth();
   - [useRoles](#useroles)
   - [usePermissions](#usepermissions)
   - [useTokenRefresh](#usetokenrefresh)
+  - [Data Hooks](#data-hooks)
+    - [useUsers](#useusers)
+    - [useAuditEvents](#useauditevents)
+    - [useAuditStats](#useauditstats)
+    - [useAccessRequests](#useaccessrequests)
+    - [useAlerts](#usealerts)
+    - [useSessions](#usesessions)
+    - [useCompliance](#usecompliance)
+    - [useOAuthClients](#useoauthclients)
+    - [useBranding](#usebranding)
+    - [useRetention](#useretention)
 - [Types](#types)
 - [Examples](#examples)
 
@@ -256,6 +267,168 @@ function App() {
 }
 ```
 
+### Data Hooks
+
+All data hooks follow the same pattern: `isLoading`, `error`, and a `refetch()` function. Mutation methods auto-refetch the list after success.
+
+---
+
+#### `useUsers()`
+
+User list + CRUD + role assignment.
+
+```tsx
+import { useUsers } from '@ggid/react';
+
+const {
+  users,         // GGIDUserRecord[]
+  isLoading,
+  error,
+  createUser,    // (input: CreateUserInput) => Promise<GGIDUserRecord | null>
+  updateUser,    // (id: string, input: UpdateUserInput) => Promise<boolean>
+  deleteUser,    // (id: string) => Promise<boolean>
+  assignRole,    // (userId: string, roleId: string) => Promise<boolean>
+  removeRole,    // (userId: string, roleId: string) => Promise<boolean>
+  refetch,
+} = useUsers();
+```
+
+---
+
+#### `useAuditEvents(filter)`
+
+Fetches audit events with filtering and pagination.
+
+```tsx
+import { useAuditEvents } from '@ggid/react';
+
+const { events, isLoading, error, pagination, refetch } = useAuditEvents({
+  eventType: 'user.login',
+  dateFrom: '2025-01-01',
+  page: 1,
+  pageSize: 20,
+});
+```
+
+| Filter | Type | Description |
+|--------|------|-------------|
+| `eventType` | `string` | Filter by action type |
+| `resourceType` | `string` | Filter by resource type |
+| `actorId` | `string` | Filter by actor |
+| `result` | `string` | Filter by result (success/failure/denied) |
+| `dateFrom` / `dateTo` | `string` | Date range |
+| `page` / `pageSize` | `number` | Pagination |
+
+---
+
+#### `useAuditStats(options)`
+
+Aggregate audit statistics for dashboard charts.
+
+```tsx
+import { useAuditStats } from '@ggid/react';
+
+const { stats, hourlyData, topActors, isLoading, refetch } = useAuditStats({ hours: 24 });
+// stats: { total_events_24h, failed_logins_24h, events_by_action, ... }
+// hourlyData: [{ hour, count, failed, succeeded }]
+// topActors: [{ actor_id, actor_name, count }]
+```
+
+---
+
+#### `useAccessRequests(statusFilter)`
+
+IGA access request workflow: list, create, approve, reject.
+
+```tsx
+import { useAccessRequests } from '@ggid/react';
+
+const { requests, createRequest, approveRequest, rejectRequest, refetch } =
+  useAccessRequests('pending');
+```
+
+---
+
+#### `useAlerts()`
+
+CRUD for audit alerting rules.
+
+```tsx
+import { useAlerts } from '@ggid/react';
+
+const { rules, createRule, updateRule, deleteRule, toggleRule, refetch } = useAlerts();
+```
+
+---
+
+#### `useSessions()`
+
+List and revoke user sessions.
+
+```tsx
+import { useSessions } from '@ggid/react';
+
+const { sessions, revokeSession, revokeAllOthers, refetch } = useSessions();
+// sessions: [{ id, device, browser, os, ip_address, location, last_active, current }]
+```
+
+---
+
+#### `useCompliance(filter)`
+
+Fetch SOC2/HIPAA/GDPR compliance reports with date range.
+
+```tsx
+import { useCompliance } from '@ggid/react';
+
+const { reports, downloadReport, refetch } = useCompliance({
+  framework: 'soc2',
+  dateFrom: '2025-01-01',
+});
+// downloadReport(id, 'pdf' | 'csv')
+```
+
+---
+
+#### `useOAuthClients()`
+
+OAuth client CRUD + secret regeneration.
+
+```tsx
+import { useOAuthClients } from '@ggid/react';
+
+const { clients, createClient, updateClient, deleteClient, regenerateSecret, refetch } =
+  useOAuthClients();
+// createClient returns { client, client_secret } — secret only shown once
+// regenerateSecret(id) returns new secret string
+```
+
+---
+
+#### `useBranding()`
+
+Fetch and update per-tenant branding configuration.
+
+```tsx
+import { useBranding } from '@ggid/react';
+
+const { branding, updateBranding, refetch } = useBranding();
+// branding: { logo_url, primary_color, css_override, custom_domain, ... }
+```
+
+---
+
+#### `useRetention()`
+
+Fetch and update audit log retention policy.
+
+```tsx
+import { useRetention } from '@ggid/react';
+
+const { policy, updatePolicy, refetch } = useRetention();
+// policy: { max_age_days, max_events, archive_enabled, compliance_mode }
+```
+
 ---
 
 ## Types
@@ -298,6 +471,10 @@ See [`examples/login-example.tsx`](./examples/login-example.tsx) for a full logi
 ### Multi-Tenant App
 
 See [`examples/multi-tenant-example.tsx`](./examples/multi-tenant-example.tsx) for tenant switching with session isolation and useRoles.
+
+### Admin Dashboard
+
+See [`examples/dashboard-example.tsx`](./examples/dashboard-example.tsx) for a complete admin panel combining useGGIDAuth, useUser, useRoles, usePermissions, useAuditEvents, RequireScope, and LogoutButton.
 
 ### Permission-Based Access Control
 
