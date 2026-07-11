@@ -69,6 +69,15 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)
 	h.mux.HandleFunc("/api/v1/auth/refresh", h.refresh)
 	h.mux.HandleFunc("/api/v1/auth/password/forgot", h.forgotPassword)
+	h.mux.HandleFunc("/api/v1/auth/devices/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/trust-score") {
+			h.handleDeviceTrustScore(w, r)
+		} else if strings.HasSuffix(r.URL.Path, "/report") {
+			h.handleDeviceReport(w, r)
+		} else {
+			writeError(w, http.StatusNotFound, "not found")
+		}
+	})
 	h.mux.HandleFunc("/api/v1/auth/password/reset", h.resetPassword)
 
 	// Password reset — arch-spec routes (aliases)

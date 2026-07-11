@@ -41,6 +41,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/check", s.handleCheck)
 	mux.HandleFunc("/api/v1/policies/evaluate", s.handleEvaluate)
 	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
+	mux.HandleFunc("/api/v1/policies/resource-acl", s.handleResourceACL)
 	mux.HandleFunc("/api/v1/policies/import", s.handlePolicyImport)
 	mux.HandleFunc("/api/v1/policies/attribute-mapping", s.handleAttributeMapping)
 	mux.HandleFunc("/api/v1/policies/versions", s.handlePolicyVersions)
