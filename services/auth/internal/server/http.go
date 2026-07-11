@@ -258,6 +258,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password-reset/", h.handlePasswordReset)
 	h.mux.HandleFunc("/api/v1/auth/login-notify", h.handleLoginNotify)
 	h.mux.HandleFunc("/api/v1/auth/login-notify/config", h.handleLoginNotify)
+	h.mux.HandleFunc("/api/v1/auth/devices/register", h.handleDeviceFingerprint)
+	h.mux.HandleFunc("/api/v1/auth/devices/list", h.handleDeviceFingerprint)
 }
 
 // ServeHTTP implements http.Handler.

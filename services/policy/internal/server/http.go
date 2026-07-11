@@ -57,6 +57,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/sod/matrix", s.handleSoDMatrix)
 	mux.HandleFunc("/api/v1/policies/dynamic-roles", s.handleDynamicRoles)
 	mux.HandleFunc("/api/v1/policies/dynamic-roles/list", s.handleDynamicRoles)
+	mux.HandleFunc("/api/v1/policies/access-paths", s.handleAccessPaths)
 	mux.HandleFunc("/api/v1/policies/delegate", s.handleDelegate)
 	mux.HandleFunc("/api/v1/policies/delegations", s.handleListDelegations)
 	mux.HandleFunc("/api/v1/policies/permissions/tree", s.handlePermissionTree)
