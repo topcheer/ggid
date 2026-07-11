@@ -40,6 +40,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Verify failed: %v", err)
 	}
-	fmt.Printf("Verified — user: %s, subject: %s\n", claims.Username, claims.Subject)
+	fmt.Printf("Verified — subject: %v\n", claims["sub"])
 	fmt.Println("Quickstart complete!")
 }
