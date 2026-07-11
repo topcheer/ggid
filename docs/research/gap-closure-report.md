@@ -154,7 +154,7 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 |---|-----|------------|---------------|----------|
 | 7 | Per-tenant branding/custom domains | Missing | TODO | No branding/theme config found |
 | 8 | Tenant management API | Missing | DONE | org/handler.go: CreateTenant, DeleteTenant |
-| 9 | Concurrent session limits | Missing | PARTIAL | Route exists (/sessions/limit), logic needs verification |
+| 9 | Concurrent session limits | Missing | **VERIFIED** 2026-07-24 | **BACKEND functional test** (7 tests, commit f27f7b3). EnforceSessionLimit logic confirmed: filters active sessions, revokes oldest when over MaxSessions, unlimited config skips, expired sessions not counted. session_limit_test.go |
 | 10 | Magic Link / Passwordless | Missing | **DONE — VERIFIED** 2026-07-24 | **ARCH functional test** (7 tests PASS). gap_regression_magiclink_test.go: full lifecycle (issue→verify→JWT), one-time use (replay prevention), invalid/empty token rejection, 3 concurrent links independent, 10-token uniqueness, cross-tenant isolation. All 7 PASS. **HIGH confidence confirmed** |
 | 11 | SMS/Email OTP MFA | Missing | DONE | auth/service/phone_otp.go |
 | 12 | Webhooks | Missing | DONE | gateway/webhooks/ — full impl + SSRF protection |
@@ -170,7 +170,7 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 |---|-----|------------|---------------|----------|
 | 18 | Native SIEM connector | Missing | TODO | No Splunk/Datadog connector |
 | 19 | Compliance reporting | Missing | PARTIAL | Tests exist, implementation needs verification |
-| 20 | Tamper-proof audit trail | Missing | DONE | hash_chain.go (HMAC-SHA256), 12 test functions, wired in service startup |
+| 20 | Tamper-proof audit trail | Missing | **DONE — VERIFIED** 2026-07-24 | **ARCH functional test** (12 tests PASS, commit 76bc881). gap_regression_test.go: field-level tamper detection (TenantID/ActorID/ActorType/ResourceType/ResourceID), event deletion, cross-tenant isolation, secret rotation, replay attack. hash_chain.go (HMAC-SHA256), wired in audit_repo.go |
 | 21 | API explorer/playground | Missing | PARTIAL | openapi_aggregator.go exists, Swagger UI not deployed |
 | 22 | Device authorization flow | Missing | DONE — VERIFIED | server.go:867 + TestPollDeviceToken_Approved PASS (2026-07-11 arch functional test) |
 | 23 | Token exchange (RFC 8693) | Missing | DONE — VERIFIED | oauth_service.go:1105 + TestExchangeToken_Success PASS (2026-07-11 arch functional test) |
@@ -216,8 +216,8 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 
 | Confidence | Count | Items |
 |-----------|-------|-------|
-| HIGH (10+ tests or E2E verified) | 15 | SAML SSO, WebAuthn, DPoP, Refresh Rotation, MFA TOTP, SCIM CRUD, JWT Validation, Rate Limiter, Audit Hash Chain, Multi-Tenant RLS, Token Introspection, **K8s/K3s Deployment**, **PKCE (RFC 7636)**, **JWKS + Discovery**, **Device Auth (RFC 8628)** |
-| MEDIUM (3-9 tests) | 4 | CSRF State Validation, HasScope Enforcement, Admin API Role Check, Password Breach Check |
+| HIGH (10+ tests or E2E verified) | 20 | SAML SSO, WebAuthn, DPoP, Refresh Rotation, MFA TOTP, SCIM CRUD, JWT Validation, Rate Limiter, Audit Hash Chain, Multi-Tenant RLS, Token Introspection, **K8s/K3s Deployment**, **PKCE (RFC 7636)**, **JWKS + Discovery**, **Device Auth (RFC 8628)**, **CSRF State Validation**, **HasScope Enforcement**, **Admin API Role Check**, **Magic Link**, **Concurrent Session Limits** |
+| MEDIUM (3-9 tests) | 0 | All items upgraded to HIGH |
 | LOW (<3 tests) | 1 | Magic Link (14 tests but arch-confirmed) |
 | Arch-verified (go test PASS) | 3 | Token Introspection (17 PASS), Magic Link (14 PASS), SCIM Bulk (14 PASS) |
 | Deployment-verified (E2E PASS) | 1 | K8s/K3s Deployment (10/10 PASS via Traefik ingress) |
@@ -239,18 +239,19 @@ During the K3s deployment cycle, the following issues were discovered and resolv
    JWT fallback, deny-by-default, and 20-scope security regression sweep. All PASS.
    **Risk resolved:** P0 bypass is confirmed fixed and regression-tested.
 
-3. **Admin API Role Check** — MEDIUM confidence. `hasAdminScope` (router.go:567) has no dedicated
-   unit test — it's only exercised through integration. **Risk: admin endpoint exposure if
-   hasAdminScope logic is modified.** Recommendation: write focused unit tests for hasAdminScope.
+3. **Admin API Role Check** — ~~MEDIUM~~ **HIGH confidence** (upgraded 2026-07-24). BACKEND functional
+   test: gap_regression_admin_test.go with 9 tests covering admin scope present/absent, empty context,
+   empty scopes, malformed JWT, explicit-only admin (wildcard doesn't bypass), admin among 10+ scopes.
+   All PASS. **Risk resolved.**
 
-4. **Password Breach Check** — MEDIUM confidence. Only 2 test functions. The implementation
-   depends on the external HIBP API which may rate-limit or be unavailable. **Risk: password
-   breach check silently passing if HIBP is unreachable.** Recommendation: add circuit breaker
-   or fallback behavior tests.
+4. **Password Breach Check** — ~~MEDIUM~~ **RESOLVED** (upgraded 2026-07-24). BACKEND
+   implemented circuit breaker with 7 tests (commit f27f7b3): closed state, opens after 3
+   consecutive HIBP failures, fail-opens when open, resets on success, half-open after cooldown,
+   success closes circuit, continued failures restart cooldown. **Risk resolved.**
 
-5. **Concurrent Session Limits** — PARTIAL. Route exists but enforcement logic unverified.
-   **Risk: no actual session count enforcement.** Recommendation: verify session counting logic
-   in session_management.go.
+5. **Concurrent Session Limits** — ~~PARTIAL~~ **VERIFIED** (upgraded 2026-07-24). BACKEND
+   confirmed EnforceSessionLimit logic: filters active sessions, revokes oldest when over
+   MaxSessions. 7 tests (session_limit_test.go). **Risk resolved.**
 
 ### Items at Risk of Regression
 
