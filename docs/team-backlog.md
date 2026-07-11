@@ -158,7 +158,7 @@
 - [x] Python SDK update_user — added async update_user(token, user_id, email, phone, status) PATCH method (ed2d347)
 - [x] Java SDK updateUser — added updateUser(userId, email, phone) + patch() HTTP helper (ed2d347)
 - [x] Go SDK typed errors — ALREADY DONE: ErrUnauthorized/ErrForbidden/ErrNotFound/ErrConflict/ErrRateLimited/ErrBadRequest with Is() support in sdk/go/ggid/errors.go (ed2d347)
-- [ ] **FOLLOW-UP: API error format adoption** — pkg/errors.WriteAPIError exists with {\"error\":{\"code\",\"message\"}} format but NOT yet adopted by service handlers. Identity/auth/oauth/policy/org/audit handlers still use ad-hoc writeError(). Migrating all handlers to WriteAPIError is a large refactor — tracked for future sprint.
+- [x] **API error format adoption (auth)** — auth service writeError/writeErrorT now use pkg/errors.WriteSimpleAPIError for unified {\"error\":{\"code\",\"message\"}} format (2cd7602). OAuth/identity/policy/org/audit handlers still need migration.
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
@@ -320,6 +320,13 @@
 - [x] docs/research/gap-closure-report.md — Updated: 24 DONE, 3 PARTIAL, 4 TODO (77% closure) + 10 arch verifications
 > 208 docs total. All major topics covered.
 > Latest batch: rate-limiting guide, event-driven arch, audit-compliance, CHANGELOG update, sdk-quickstart reverified.
+
+## Sprint: SDK Auto-Refresh + Error Format + Discovery (backend 2cd7602)
+- [x] API error format adoption (auth) — auth service writeError/writeErrorT migrated to WriteSimpleAPIError for {"error":{"code","message"}} (2cd7602)
+- [x] Node SDK middleware security audit — PASS: uses jose jwtVerify with JWKS (createRemoteJWKSet), algorithms: ['RS256'], issuer check. No jwt.decode. No security issues. (2cd7602)
+- [x] Go SDK examples — sdk/examples/go/main.go: 3-line integration, role/scope check, permission check, auto-refresh demo (2cd7602)
+- [x] Go SDK auto token refresh — TokenManager with 30s margin, transparent refresh on AccessToken(ctx) (2cd7602)
+- [x] Gateway OIDC discovery — /.well-known/openid-configuration proxied to OAuth service (2cd7602)
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
