@@ -91,13 +91,14 @@ class JWTVerifier:
 
             public_key = RSAAlgorithm.from_jwk(json.dumps(key_data))
 
-            # Verify token
+            # Verify token — allow 60s clock skew for distributed systems
             options = {"verify_aud": False}
             payload = pyjwt.decode(
                 token,
                 key=public_key,
                 algorithms=["RS256"],
                 options=options,
+                leeway=60,
             )
 
             if self.issuer and payload.get("iss") != self.issuer:

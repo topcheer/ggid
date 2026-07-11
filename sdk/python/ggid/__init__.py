@@ -6,11 +6,16 @@ for FastAPI, Django, and Flask applications.
 
 from ggid.client import GGIDClient
 from ggid.jwt import JWTVerifier, JWTError
-from ggid.middleware import (
-    GGIDMiddleware,
-    get_current_user,
-    requires_permission,
-)
+
+# Middleware imports are optional — they require framework-specific deps
+try:
+    from ggid.middleware import (
+        GGIDMiddleware,
+        get_current_user,
+        requires_permission,
+    )
+except ImportError:
+    pass
 
 __version__ = "1.0.0"
 __all__ = [

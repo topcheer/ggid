@@ -37,7 +37,7 @@ spec:
     spec:
       containers:
         - name: console
-          image: registry.iot2.win/ggid-console:latest
+          image: registry.iot2.win/ggid/console:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 3000
