@@ -181,6 +181,10 @@ export { useCorrelationRules } from './useCorrelationRules';
 export type { CorrelationRule, UseCorrelationRulesResult } from './useCorrelationRules';
 export { useResourceTags } from './useResourceTags';
 export type { ResourceTag, UseResourceTagsResult } from './useResourceTags';
+export { useIncidentTimeline } from './useIncidentTimeline';
+export type { IncidentTimelineEvent, IncidentPhase, UseIncidentTimelineResult } from './useIncidentTimeline';
+export { useTrustedDevices } from './useTrustedDevices';
+export type { TrustedDevice, UseTrustedDevicesResult } from './useTrustedDevices';
 export type {
   GGIDConfig,
   GGIDUser,
