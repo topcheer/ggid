@@ -3,6 +3,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/json"
 	"flag"
 	"log"
 	"net"
@@ -10,22 +12,24 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	pb "github.com/ggid/ggid/api/gen/audit/v1"
 
+	"github.com/ggid/ggid/pkg/audit"
+	"github.com/ggid/ggid/services/audit/internal/alerting"
 	"github.com/ggid/ggid/services/audit/internal/config"
-	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/consumer"
 	"github.com/ggid/ggid/services/audit/internal/data"
+	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/handler"
 	"github.com/ggid/ggid/services/audit/internal/repository"
-	"github.com/ggid/ggid/pkg/audit"
 	httpserver "github.com/ggid/ggid/services/audit/internal/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ggid/ggid/services/audit/internal/service"
+	"github.com/nats-io/nats.go"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"crypto/tls"
 )
 
 // newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
@@ -146,6 +150,65 @@ func main() {
 		log.Printf("Audit Service: SIEM forwarder started (provider=%s, endpoint=%s)", siemProvider, siemEndpoint)
 	}
 
+	// Alert Engine — real-time alerting on audit events via NATS subscription.
+	// Reads alert rules from ALERT_RULES_CONFIG (JSON file path).
+	var alertEngine *alerting.AlertEngine
+	var alertNc *nats.Conn
+	if alertConfigPath := os.Getenv("ALERT_RULES_CONFIG"); alertConfigPath != "" {
+		rulesData, err := os.ReadFile(alertConfigPath)
+		if err != nil {
+			log.Printf("Audit Service: failed to read alert rules config: %v", err)
+		} else {
+			var rules []*alerting.AlertRule
+			if err := json.Unmarshal(rulesData, &rules); err != nil {
+				log.Printf("Audit Service: failed to parse alert rules config: %v", err)
+			} else {
+				var notifier alerting.Notifier
+				if webhookURL := os.Getenv("ALERT_WEBHOOK_URL"); webhookURL != "" {
+					notifier = &alerting.WebhookNotifier{URL: webhookURL}
+				}
+				alertEngine = alerting.NewAlertEngine(notifier)
+				for _, rule := range rules {
+					alertEngine.AddRule(rule)
+				}
+
+				// Subscribe to NATS audit events for real-time evaluation.
+				alertNc, err = nats.Connect(cfg.NATS.URL,
+					nats.MaxReconnects(-1),
+					nats.ReconnectWait(2*time.Second),
+				)
+				if err != nil {
+					log.Printf("Audit Service: failed to connect NATS for alerting: %v", err)
+				} else {
+					subject := cfg.NATS.Subject
+					_, err = alertNc.Subscribe(subject, func(m *nats.Msg) {
+						var event domain.AuditEvent
+						if err := json.Unmarshal(m.Data, &event); err != nil {
+							return
+						}
+						userID := ""
+						if event.ActorID != nil {
+							userID = event.ActorID.String()
+						}
+						alertEngine.Evaluate(ctx, &alerting.AlertEvent{
+							TenantID:  event.TenantID.String(),
+							Action:    event.Action,
+							UserID:    userID,
+							IPAddress: event.IPAddress,
+							Timestamp: event.CreatedAt,
+							Fields:    event.Metadata,
+						})
+					})
+					if err != nil {
+						log.Printf("Audit Service: failed to subscribe for alerting: %v", err)
+					} else {
+						log.Printf("Audit Service: alert engine started (%d rules loaded, subject=%s)", len(rules), subject)
+					}
+				}
+			}
+		}
+	}
+
 	go func() {
 		log.Printf("Audit Service: HTTP listening on %s", cfg.HTTPAddr)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -164,6 +227,9 @@ func main() {
 	}
 	if siemForwarder != nil {
 		siemForwarder.Stop()
+	}
+	if alertNc != nil {
+		alertNc.Close()
 	}
 	httpServer.Shutdown(context.Background())
 	log.Println("Audit Service: stopped")

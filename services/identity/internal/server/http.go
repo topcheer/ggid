@@ -18,6 +18,7 @@ import (
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
+	"github.com/ggid/ggid/services/identity/internal/idpconfig"
 	"github.com/ggid/ggid/services/identity/internal/scim"
 	"github.com/ggid/ggid/services/identity/internal/service"
 	"github.com/google/uuid"
@@ -32,6 +33,7 @@ type HTTPHandler struct {
 	mux              *http.ServeMux
 	brandingStore    *service.BrandingStore
 	accessRequestSvc *service.AccessRequestService
+	idpConfigSvc     *idpconfig.Service
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -40,6 +42,7 @@ func NewHTTPHandler(svc *service.IdentityService) *HTTPHandler {
 		svc:              svc,
 		brandingStore:    service.NewBrandingStore(),
 		accessRequestSvc: service.NewAccessRequestService(service.NewMemoryAccessRequestStore()),
+		idpConfigSvc:     idpconfig.NewService(idpconfig.NewMemoryStore()),
 	}
 	h.registerRoutes()
 	return h

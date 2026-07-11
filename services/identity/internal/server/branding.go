@@ -13,8 +13,13 @@ import (
 func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 	// Extract tenant ID from path
 	// /api/v1/tenants/{id}/branding → parts: ["api", "v1", "tenants", "{id}", "branding"]
+	// /api/v1/tenants/{id}/idp-config → dispatch to IdP config handler
 	path := strings.Trim(r.URL.Path, "/")
 	parts := strings.Split(path, "/")
+	if len(parts) >= 5 && parts[4] == "idp-config" {
+		h.handleIdPConfig(w, r)
+		return
+	}
 	if len(parts) < 5 || parts[0] != "api" || parts[1] != "v1" || parts[2] != "tenants" || parts[4] != "branding" {
 		writeError(w, http.StatusBadRequest, "invalid branding path")
 		return

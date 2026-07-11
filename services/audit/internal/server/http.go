@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/services/audit/internal/compliance"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/service"
 	"github.com/google/uuid"
@@ -100,6 +101,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/alerts/config", s.handleAlertConfig)
 	mux.HandleFunc("/api/v1/audit/alerts/test", s.handleAlertTest)
 	mux.HandleFunc("/api/v1/audit/reports", s.handleComplianceReport)
+	mux.HandleFunc("/api/v1/audit/compliance-report", s.handleComplianceReportV2)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
@@ -1270,6 +1272,89 @@ func (s *HTTPServer) handleComplianceReport(w http.ResponseWriter, r *http.Reque
 
 	report := s.generateComplianceReport(req.Format, tenantID, startTime, endTime, events)
 	writeJSON(w, http.StatusOK, report)
+}
+
+// GET /api/v1/audit/compliance-report?type=soc2&from=2025-01-01T00:00:00Z&to=2025-07-01T00:00:00Z
+// Uses the compliance package to generate structured reports (SOC2/HIPAA/GDPR).
+func (s *HTTPServer) handleComplianceReportV2(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	reportType := compliance.ReportType(r.URL.Query().Get("type"))
+	if reportType == "" {
+		reportType = compliance.ReportSOC2
+	}
+	if reportType != compliance.ReportSOC2 && reportType != compliance.ReportHIPAA && reportType != compliance.ReportGDPR {
+		writeJSONError(w, http.StatusBadRequest, "type must be soc2, hipaa, or gdpr")
+		return
+	}
+
+	now := time.Now()
+	from := now.AddDate(0, -1, 0)
+	to := now
+	if f := r.URL.Query().Get("from"); f != "" {
+		if t, err := time.Parse(time.RFC3339, f); err == nil {
+			from = t
+		}
+	}
+	if t := r.URL.Query().Get("to"); t != "" {
+		if parsed, err := time.Parse(time.RFC3339, t); err == nil {
+			to = parsed
+		}
+	}
+
+	adapter := &auditEventQueryAdapter{svc: s.svc}
+	gen := compliance.NewGenerator(adapter)
+	report, err := gen.Generate(r.Context(), reportType, from, to)
+	if err != nil {
+		writeJSONError(w, http.StatusInternalServerError, "failed to generate report: "+err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, report)
+}
+
+// auditEventQueryAdapter adapts AuditService to compliance.EventQuery.
+type auditEventQueryAdapter struct {
+	svc *service.AuditService
+}
+
+func (a *auditEventQueryAdapter) QueryEvents(ctx context.Context, from, to time.Time, actionTypes []string) ([]compliance.AuditEvent, error) {
+	events, _, err := a.svc.ListEvents(ctx, domain.ListFilter{
+		StartTime: &from,
+		EndTime:   &to,
+	}, 1, 500)
+	if err != nil {
+		return nil, err
+	}
+
+	actionSet := make(map[string]bool, len(actionTypes))
+	for _, at := range actionTypes {
+		actionSet[at] = true
+	}
+
+	result := make([]compliance.AuditEvent, 0, len(events))
+	for _, e := range events {
+		if len(actionSet) > 0 && !actionSet[e.Action] {
+			continue
+		}
+		userID := ""
+		if e.ActorID != nil {
+			userID = e.ActorID.String()
+		}
+		result = append(result, compliance.AuditEvent{
+			ID:        e.ID.String(),
+			TenantID:  e.TenantID.String(),
+			UserID:    userID,
+			Action:    e.Action,
+			Resource:  e.ResourceName,
+			IPAddress: e.IPAddress,
+			Timestamp: e.CreatedAt,
+			Success:   string(e.Result) == "success",
+		})
+	}
+	return result, nil
 }
 
 func (s *HTTPServer) generateComplianceReport(format string, tenantID uuid.UUID, start, end time.Time, events []*domain.AuditEvent) map[string]any {
