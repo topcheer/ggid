@@ -129,6 +129,23 @@ func main() {
 
 	httpServer := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
 
+	// SIEM Forwarder — forward audit events to external SIEM (Splunk/Datadog/Elasticsearch)
+	var siemForwarder *audit.SIEMForwarder
+	if siemEndpoint := os.Getenv("SIEM_ENDPOINT"); siemEndpoint != "" {
+		siemProvider := audit.SIEMProvider(os.Getenv("SIEM_PROVIDER"))
+		if siemProvider == "" {
+			siemProvider = audit.SIEMProviderGeneric
+		}
+		siemCfg := audit.DefaultSIEMConfig()
+		siemCfg.Provider = siemProvider
+		siemCfg.Endpoint = siemEndpoint
+		siemCfg.APIKey = os.Getenv("SIEM_API_KEY")
+		siemCfg.IndexName = os.Getenv("SIEM_INDEX")
+		siemForwarder = audit.NewSIEMForwarder(siemCfg)
+		siemForwarder.Start(ctx)
+		log.Printf("Audit Service: SIEM forwarder started (provider=%s, endpoint=%s)", siemProvider, siemEndpoint)
+	}
+
 	go func() {
 		log.Printf("Audit Service: HTTP listening on %s", cfg.HTTPAddr)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -144,6 +161,9 @@ func main() {
 	grpcServer.GracefulStop()
 	if natsConsumer != nil {
 		natsConsumer.Close()
+	}
+	if siemForwarder != nil {
+		siemForwarder.Stop()
 	}
 	httpServer.Shutdown(context.Background())
 	log.Println("Audit Service: stopped")
