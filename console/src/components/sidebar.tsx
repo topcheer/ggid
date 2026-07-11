@@ -20,6 +20,7 @@ import {
   Monitor,
   BookOpen,
   TrendingUp,
+  Bot,
   X,
   Menu,
   AlertCircle,
@@ -84,6 +85,7 @@ export function Sidebar() {
       label: "Security",
       items: [
         { href: "/audit", label: t("nav.audit"), icon: ScrollText },
+        { href: "/agents", label: "AI Agents", icon: Bot },
         { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
         { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
         { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
