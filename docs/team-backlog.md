@@ -386,6 +386,20 @@
 - [x] i18n-wiring-estimate.md (584 lines, 9e737f1) — 937 hardcoded strings across 7 services. auth: 530. ~62.6h / ~4 weeks to wire.
 - [x] competitive-update-2026-07.md (576 lines, 3b1065c) — Keycloak 26 workflows+IGA, Auth0 MCP for AI, Casdoor 8 releases, Stytch→Twilio acquisition
 
+### Batch 38 — Strategic Gap Research (3 docs + 2 updates)
+- [x] ai-agent-identity-analysis.md (pending commit)
+- [x] bot-protection-analysis.md (pending commit)
+- [x] iga-workflows-analysis.md (pending commit)
+- [x] gap-closure-report.md UPDATED with 5 new strategic gaps (pending commit)
+- [x] team-backlog.md UPDATED with new strategic gaps
+
+### NEW STRATEGIC GAPS (from competitive monitoring 2026-07)
+- [ ] **[P0]** AI Agent Identity / MCP Auth — Auth0 GA, Keycloak exp, Casdoor shipping. GGID absent. (ai-agent-identity-analysis.md)
+- [ ] **[P0]** IGA Workflows — Keycloak 26 shipped. GGID has no governance layer. (iga-workflows-analysis.md)
+- [ ] **[P1]** Bot Protection — Auth0 + Keycloak have full suite. GGID has botdetect.go (coverage unclear). (bot-protection-analysis.md)
+- [ ] **[P1]** Zero-Downtime Patches — Keycloak 26 supports. GGID needs rolling update strategy.
+- [ ] **[P1]** Device-Bound SSO — Auth0 shipped. GGID has WebAuthn but no device-bound SSO flow.
+
 ### Key P0 Findings Driven to Remediation
 - [x] CSRF predictable entropy → fixed (29b51c1)
 - [x] Rate limiter not wired → fixed (fc20c41)

@@ -307,4 +307,18 @@ research must reference this document before claiming a gap exists.
    catch regressions, especially for security-critical middleware (HasScope,
    ValidateState, hasAdminScope, rate limiter).
 5. **Test coverage floor**: Security-critical functions must have 5+ dedicated
+
+## New Strategic Gaps (from Competitive Monitoring — 2026-07-24)
+
+Identified via competitive-update-2026-07.md. These are new gaps created by competitor movement, not present in the original matrix.
+
+| # | Gap | Priority | Competitor | Status | Notes |
+|---|-----|----------|------------|--------|-------|
+| NEW-1 | AI Agent Identity / MCP Auth | **P0** | Auth0 (GA), Keycloak (exp), Casdoor | TODO | Auth0 shipped Auth for MCP. Keycloak 26 CIMD experimental. Casdoor "Agent-first Identity". GGID completely absent. See ai-agent-identity-analysis.md |
+| NEW-2 | IGA Workflows (Access Request, Review, SoD) | **P0** | Keycloak 26 | TODO | Keycloak shipped IGA Workflows. GGID has RBAC+ABAC but no governance layer (approval workflows, access reviews, SoD). See iga-workflows-analysis.md |
+| NEW-3 | Bot Protection (CAPTCHA, behavioral) | **P1** | Auth0, Keycloak | PARTIAL | GGID has botdetect.go but coverage unclear. Auth0 has full Attack Protection suite. See bot-protection-analysis.md |
+| NEW-4 | Zero-Downtime Patches | **P1** | Keycloak 26 | TODO | Keycloak supports rolling updates without auth disruption |
+| NEW-5 | Device-Bound SSO | **P1** | Auth0 | TODO | Auth0 shipped Device-Bound SSO for enterprise |
+
+**Updated Summary**: 24 resolved + 3 partial + 7 outstanding + 5 new strategic gaps = **35 total gaps tracked**.
    unit tests before being marked DONE (currently HasScope has 1, hasAdminScope has 0).

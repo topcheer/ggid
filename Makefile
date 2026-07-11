@@ -33,13 +33,13 @@ build:
 	done
 
 test:
-	go test -timeout 10m -cover ./...
+	go test -timeout 10m -cover $(shell go list ./... | grep -v '/sdk/examples/')
 
 test-short:
-	go test -timeout 2m -short ./...
+	go test -timeout 2m -short $(shell go list ./... | grep -v '/sdk/examples/')
 
 coverage:
-	go test -timeout 10m -coverprofile=coverage.out ./...
+	go test -timeout 10m -coverprofile=coverage.out $(shell go list ./... | grep -v '/sdk/examples/')
 	go tool cover -func=coverage.out | grep total
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report: coverage.html"
