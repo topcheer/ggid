@@ -522,8 +522,8 @@
 - [x] gap-closure-report.md UPDATED — Added 4 wire-audit items as PARTIAL. Total gaps: 39.
 
 ### NEW STRATEGIC GAPS (from competitive monitoring 2026-07)
-- [ ] **[P0]** AI Agent Identity / MCP Auth — Auth0 GA, Keycloak exp, Casdoor shipping. GGID absent. (ai-agent-identity-analysis.md)
-- [ ] **[P0]** IGA Workflows — Keycloak 26 shipped. GGID has no governance layer. (iga-workflows-analysis.md)
+- [x] **[P0]** AI Agent Identity / MCP Auth — IMPLEMENTED (55ffd6f). Agent registration, RFC 8693 token exchange with delegation chain, MCP server auth, 20 tests, 4 HTTP endpoints, gateway routing. (ai-agent-identity-analysis.md)
+- [ ] **[P0]** IGA Workflows — Keycloak 26 shipped. GGID has no governance layer. (iga-workflows-analysis.md) — ASSIGNED to backend
 - [ ] **[P1]** Bot Protection — Auth0 + Keycloak have full suite. GGID has botdetect.go (coverage unclear). (bot-protection-analysis.md)
 - [ ] **[P1]** Zero-Downtime Patches — Keycloak 26 supports. GGID needs rolling update strategy.
 - [ ] **[P1]** Device-Bound SSO — Auth0 shipped. GGID has WebAuthn but no device-bound SSO flow.
@@ -544,7 +544,7 @@
 - [x] UserRole.ExpiresAt not enforced → fixed (7742916)
 
 ### Outstanding P0s Still Open (from research findings)
-- [ ] gRPC plaintext between all services (grpc-security-iam.md) — ONLY GENUINELY OPEN P0
+- [x] gRPC plaintext between all services — FIXED (6a0eced). All gRPC services (audit, policy, org) now support GRPC_TLS_ENABLED env var with cert/key loading.
 - [x] Introspection endpoint auth — fixed (dev ce9c29f, client_secret_basic required)
 - [x] JWT key rotation automation — RotatingKeyProvider with 24h grace (dev f5b8f2c — key_rotation.go)
 - [x] pii.Obfuscate() zero callers — wired as obfuscateForLog/obfuscateEmail (dev f5b8f2c)
