@@ -53,6 +53,7 @@
 - [x] Body size limit middleware (bodysize.go exists)
 - [x] Circuit breaker per backend (circuitbreaker.go, aa49848)
 - [x] Middleware coverage →90% (coverage_sprint24_test.go, 80b9378)
+- [x] Coverage sprint25 — error_writer, circuit breaker (737b5f5)
 - [ ] Middleware coverage →92% (currently 88.7%)
 
 ### arch (Infrastructure security)
