@@ -1,0 +1,127 @@
+# Developer Onboarding
+
+> From zero to first authenticated API call. Follow each step in order.
+
+---
+
+## Prerequisites
+
+| Tool | Version | Install |
+|------|---------|--------|
+| Go | 1.25+ | `brew install go` |
+| Docker | 24+ | [docker.com](https://docker.com) |
+| Node.js | 20+ | `brew install node` |
+| jq | latest | `brew install jq` |
+
+---
+
+## Step 1: Clone
+
+```bash
+git clone https://github.com/ggid/ggid.git
+cd ggid
+```
+
+## Step 2: Build
+
+```bash
+make build
+# Output:
+# bin/gateway
+# bin/identity
+# bin/auth
+# bin/oauth
+# bin/policy
+# bin/org
+# bin/audit
+```
+
+## Step 3: Start Docker Stack
+
+```bash
+cd deploy && docker compose up -d
+sleep 30
+
+# Verify
+docker compose ps
+# All 12 containers: Up (healthy)
+```
+
+## Step 4: Register
+
+```bash
+curl -s -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -d '{"username":"dev","email":"dev@test.com","password":"W3lcome-2025!"}' | jq .
+
+# Expected: {"user_id":"usr_...","username":"dev",...}
+```
+
+## Step 5: Login
+
+```bash
+JWT=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -d '{"username":"dev","password":"W3lcome-2025!"}' | jq -r .access_token)
+
+echo "JWT: ${JWT:0:30}... (${#JWT} chars)"
+# Expected: JWT: eyJhbGciOiJIUzI1NiIsInR5... (693 chars)
+```
+
+## Step 6: Use JWT
+
+```bash
+curl -s http://localhost:8080/api/v1/users \
+  -H "Authorization: Bearer $JWT" \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" | jq .
+
+# Expected: {"users":[...],"total":1}
+```
+
+## Step 7: Verify 401 Without JWT
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/users \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001"
+# Expected: 401
+```
+
+## Step 8: Add to Your App
+
+### Go
+
+```go
+import ggid "github.com/ggid/ggid/sdk/go"
+
+verifier := ggid.NewVerifier("http://localhost:8080", "jwt-secret")
+claims, _ := verifier.Verify(ctx, token)
+```
+
+### Node.js
+
+```javascript
+const { GGIDMiddleware } = require('@ggid/sdk-node');
+app.use(GGIDMiddleware({ gatewayURL: 'http://localhost:8080', secret: 'jwt-secret' }));
+```
+
+### Python
+
+```python
+from ggid import GGIDVerifier
+verifier = GGIDVerifier(gateway_url="http://localhost:8080", secret="jwt-secret")
+```
+
+---
+
+## Next Steps
+
+- [5-Minute JWT Quickstart](./5-minute-jwt.md)
+- [SDK Quickstart](./sdk-quickstart.md)
+- [API Reference](../api-reference.md)
+- [Integration Guides](../integration-guides/)
+
+---
+
+*Last updated: 2025-07-11*
