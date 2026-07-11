@@ -221,6 +221,10 @@ export { useStandingAccess } from './useStandingAccess';
 export type { StandingAccessEntry } from './useStandingAccess';
 export { useEvidenceExpiry } from './useEvidenceExpiry';
 export type { EvidenceItem } from './useEvidenceExpiry';
+export { useDSR } from './useDSR';
+export type { DSRRequest } from './useDSR';
+export { useClientVersioning } from './useClientVersioning';
+export type { ClientVersion } from './useClientVersioning';
 export type {
   GGIDConfig,
   GGIDUser,
