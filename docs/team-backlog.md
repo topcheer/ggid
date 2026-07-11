@@ -124,6 +124,11 @@
 - [x] Password breach check configurable disable — BREACH_CHECK_ENABLED env var (41d8064)
 - [x] Java SDK de-duplication — Model.java deleted, inner classes extracted to standalone, no more duplicates (7ee1a32)
 - [x] Java SDK RS256 verification — JwtVerifier.java created, all 3 filters use JWKS verification, jwks-rsa dep added (7ee1a32)
+- [x] hasAdminScope unit tests — 9 dedicated tests in router/gap_regression_admin_test.go (f27f7b3) Gap #14 MEDIUM→HIGH
+- [x] Concurrent session limits verification — 7 tests in session_limit_test.go proving EnforceSessionLimit (f27f7b3) Gap #5 PARTIAL→VERIFIED
+- [x] OAuth state store Redis migration — RedisCmdable interface, SetRedisClient, Redis GetDel + sync.Map fallback (f27f7b3)
+- [x] HIBP password breach circuit breaker — 3-failure threshold, 30s cooldown, fail-open, 7 tests (f27f7b3) Gap #15 MEDIUM→RESOLVED
+- [x] SCIM PATCH compliance tests (RFC 7644) — 7 tests: enterprise ext, filter replace, array remove, multi-op sequence (f27f7b3)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
