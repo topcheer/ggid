@@ -97,6 +97,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/correlate", s.handleCorrelate)
 	mux.HandleFunc("/api/v1/audit/webhooks", s.handleAuditWebhooks)
 	mux.HandleFunc("/api/v1/audit/verify-integrity", s.handleVerifyIntegrity)
+	mux.HandleFunc("/api/v1/audit/integrity/verify", s.handleVerifyIntegrity) // alias
 	mux.HandleFunc("/api/v1/audit/search", s.handleSearch)
 	mux.HandleFunc("/api/v1/audit/alerts/config", s.handleAlertConfig)
 	mux.HandleFunc("/api/v1/audit/alerts/test", s.handleAlertTest)

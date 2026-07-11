@@ -37,6 +37,7 @@ type Server struct {
 	oauthSvc   *service.OAuthService
 	pool       *pgxpool.Pool
 	stopTicker func()
+	rotatingKP *service.RotatingKeyProvider
 }
 
 // keyProvider implements domain.KeyProvider by loading RSA keys from disk.
@@ -102,7 +103,7 @@ func New(cfg *conf.Config) (*Server, error) {
 	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, rotatingKP, cfg.Issuer)
 
 	// Build HTTP handler.
-	handler := buildHandler(oauthSvc, cfg)
+	handler := buildHandler(oauthSvc, cfg, rotatingKP)
 
 	httpSrv := &http.Server{
 		Addr:         cfg.HTTP.Addr,
@@ -111,7 +112,7 @@ func New(cfg *conf.Config) (*Server, error) {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool, stopTicker: stopTicker}, nil
+	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool, stopTicker: stopTicker, rotatingKP: rotatingKP}, nil
 }
 
 // Run starts the server and blocks until ctx is cancelled.
@@ -148,7 +149,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // buildHandler creates the HTTP mux with all OAuth/OIDC endpoints.
-func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler {
+func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *service.RotatingKeyProvider) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -1148,7 +1149,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 	// DPoP proof verification
 	mux.HandleFunc("/api/v1/oauth/dpop/verify", handleDPoPVerify)
 
-	// Health check
+	// JWKS key rotation
+	mux.HandleFunc("/api/v1/oauth/jwks/rotate", func(w http.ResponseWriter, r *http.Request) {
+		handleJWKSRotateWithKP(w, r, rotatingKP)
+	})
+	mux.HandleFunc("/api/v1/oauth/jwks/rotation-status", func(w http.ResponseWriter, r *http.Request) {
+		handleJWKSRotationStatusWithKP(w, r, rotatingKP)
+	})
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})

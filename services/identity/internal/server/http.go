@@ -76,6 +76,9 @@ func (h *HTTPHandler) registerRoutes() {
 	// SCIM Groups also accessible via /api/v1/scim/ prefix (gateway-compatible)
 	h.mux.HandleFunc("/api/v1/scim/Groups", scimHandler.HandleGroupsCollectionPublic)
 	h.mux.HandleFunc("/api/v1/scim/Groups/", scimHandler.HandleGroupResourcePublic)
+
+	// Impersonation audit trail
+	h.mux.HandleFunc("/api/v1/audit/impersonation", h.handleImpersonationAudit)
 }
 
 // ServeHTTP implements http.Handler.

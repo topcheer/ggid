@@ -121,6 +121,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/force-logout", h.forceLogout)
 	h.mux.HandleFunc("/api/v1/auth/sessions/limit", h.sessionLimit)
 	h.mux.HandleFunc("/api/v1/auth/sessions/revoke", h.handleRevokeSessions)
+	h.mux.HandleFunc("/api/v1/auth/password-pepper/rotate", h.handlePepperRotate)
+	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)
 	h.mux.HandleFunc("/api/v1/auth/sessions/bind-device", h.handleBindDevice)
 	h.mux.HandleFunc("/api/v1/auth/sessions/check-device", h.handleCheckDevice)
 	h.mux.HandleFunc("/api/v1/auth/sessions/unbind-device", h.handleUnbindDevice)
