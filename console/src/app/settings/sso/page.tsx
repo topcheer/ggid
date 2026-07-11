@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Save,
   ShieldCheck,
@@ -75,6 +76,7 @@ const SAML_ATTRS = ["email", "username", "firstName", "lastName", "displayName",
 
 export default function SSOConnectionsPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [toast, setToast] = useState<Toast | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, TestResult>>({});
@@ -430,9 +432,9 @@ export default function SSOConnectionsPage() {
     <div className="max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">SSO Connections</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("sso.connections")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Configure SAML IdPs, OIDC providers, and social login for your organization.
+            {t("sso.subtitle")}
           </p>
         </div>
         {!showWizard && (
@@ -440,7 +442,7 @@ export default function SSOConnectionsPage() {
             onClick={() => { setShowWizard(true); setWizardType("SAML"); setWizardStep(1); }}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            <Plus className="h-4 w-4" /> Add Provider
+            <Plus className="h-4 w-4" /> {t("sso.addProvider")}
           </button>
         )}
       </div>
@@ -470,13 +472,13 @@ export default function SSOConnectionsPage() {
             {/* Wizard header */}
             <div className="mb-6 flex items-center justify-between">
               <h2 className={headingCls}>
-                {editingId ? "Edit Provider" : "Add New SSO Provider"}
+                {editingId ? t("sso.editProvider") : t("sso.addNewProvider")}
               </h2>
               <button
                 onClick={resetWizard}
                 className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               >
-                <XCircle className="h-4 w-4" /> Cancel
+                <XCircle className="h-4 w-4" /> {t("common.cancel")}
               </button>
             </div>
 
@@ -492,7 +494,7 @@ export default function SSOConnectionsPage() {
                   }`}
                 >
                   <Building2 className="mb-2 h-5 w-5 text-brand-600" />
-                  <p className="text-sm font-semibold">SAML 2.0 IdP</p>
+                  <p className="text-sm font-semibold">{t("sso.samlIdp")}</p>
                   <p className="text-xs text-gray-500">Okta, ADFS, Azure AD, OneLogin</p>
                 </button>
                 <button
@@ -504,7 +506,7 @@ export default function SSOConnectionsPage() {
                   }`}
                 >
                   <Key className="mb-2 h-5 w-5 text-brand-600" />
-                  <p className="text-sm font-semibold">OIDC Provider</p>
+                  <p className="text-sm font-semibold">{t("sso.oidcProvider")}</p>
                   <p className="text-xs text-gray-500">Google, Microsoft, Keycloak</p>
                 </button>
               </div>
@@ -813,7 +815,7 @@ export default function SSOConnectionsPage() {
       {/* ===== Provider List ===== */}
       {providers.length > 0 && (
         <div className="mb-6">
-          <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Configured Providers</h2>
+          <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">{t("sso.configuredProviders")}</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {providers.map((provider) => {
               const result = testResults[provider.id];

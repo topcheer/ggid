@@ -495,3 +495,15 @@
 - [x] Node SDK build — dist/ verified, npm run build passes, example runs against K3s with jwksUrl (aa8585c)
 - [x] Python SDK pip install — clean pip install -e works, pyproject.toml build backend fixed, example runs against K3s (aa8585c)
 - [x] Console Users page — verified against K3s, CRUD UI present, empty state correct (backend returns 0 users for list endpoint) (aa8585c)
+
+## Sprint: Frontend i18n Expansion (i18n bf8f58a, this commit)
+- [x] Expand i18n dictionary 30→193 keys — top 10 pages covered (organizations, branding, certificates, MFA, SSO, OAuth clients, API keys, tenant config, login flows, security center) (bf8f58a)
+- [x] useTranslations() convenience hook + useCallback optimization (bf8f58a)
+- [x] LanguageSwitcher component — standalone, compact + full modes (bf8f58a)
+- [x] messages/en.json + zh.json synced with nested structure for next-intl migration (bf8f58a)
+- [x] Expand i18n 193→280 keys — organizations, SSO, API keys page strings extracted and wired (this commit)
+- [x] Organizations page — 18 strings wired to t() (title, tabs, forms, empty states, messages)
+- [x] SSO page — 10 strings wired to t() (title, subtitle, wizard headers, provider list)
+- [x] API Keys page — 20 strings wired to t() (title, subtitle, table headers, create form, modal)
+- [x] All 280 zh-CN translations verified — 0 missing, 3 acronyms (URL, SAML, SCIM) correctly untranslated
+- [x] Fixed pre-existing JSX bug in MembersDetail (unclosed div)

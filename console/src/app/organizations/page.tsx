@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Building2,
   Plus,
@@ -64,6 +65,7 @@ interface TreeData {
 
 export default function OrganizationsPage() {
   const { apiFetch, TENANT_ID } = useApi();
+  const t = useTranslations();
   const [tab, setTab] = useState<Tab>("orgs");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -376,7 +378,7 @@ export default function OrganizationsPage() {
     <div>
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold dark:text-gray-100">Organizations</h1>
+        <h1 className="text-2xl font-bold dark:text-gray-100">{t("orgs.title")}</h1>
         <button
           onClick={() => {
             setShowCreate(!showCreate);
@@ -385,7 +387,7 @@ export default function OrganizationsPage() {
           className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
           <Plus className="h-4 w-4" />
-          New {tab === "orgs" ? "Organization" : tab === "depts" ? "Department" : "Team"}
+          {t("common.create")} {tab === "orgs" ? t("nav.organizations") : tab === "depts" ? t("orgs.department") : t("orgs.members")}
         </button>
       </div>
 
@@ -398,20 +400,20 @@ export default function OrganizationsPage() {
       {error && (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
-          <p className="mt-1 text-xs">Make sure Org Service (:8071) is running.</p>
+          <p className="mt-1 text-xs">{t("orgs.serviceDown")}</p>
         </div>
       )}
 
       {/* Create Forms */}
       {showCreate && tab === "orgs" && (
         <CreateForm
-          title="New Organization"
+          title={t("orgs.newOrg")}
           onClose={() => setShowCreate(false)}
           onSubmit={handleCreateOrg}
         >
-          <FormField label="Name" name="name" placeholder="e.g. Engineering" required />
+          <FormField label={t("common.name")} name="name" placeholder="e.g. Engineering" required />
           <FormField
-            label="Parent Organization"
+            label={t("orgs.parentOrg")}
             name="parent_id"
             type="select"
             placeholder="-- None (root) --"
@@ -422,7 +424,7 @@ export default function OrganizationsPage() {
 
       {showCreate && tab === "depts" && (
         <CreateForm
-          title="New Department"
+          title={t("orgs.newDept")}
           onClose={() => setShowCreate(false)}
           onSubmit={handleCreateDept}
         >
@@ -448,7 +450,7 @@ export default function OrganizationsPage() {
 
       {showCreate && tab === "teams" && (
         <CreateForm
-          title="New Team"
+          title={t("orgs.newTeam")}
           onClose={() => setShowCreate(false)}
           onSubmit={handleCreateTeam}
         >
@@ -475,7 +477,7 @@ export default function OrganizationsPage() {
       {/* Org Filter for Depts/Teams tabs */}
       {(tab === "depts" || tab === "teams") && (
         <div className="mb-4 flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-600">Filter by Organization:</label>
+          <label className="text-sm font-medium text-gray-600">{t("orgs.filterByOrg")}</label>
           <select
             value={selectedOrgId || ""}
             onChange={(e) => setSelectedOrgId(e.target.value || null)}
@@ -494,7 +496,7 @@ export default function OrganizationsPage() {
       {/* Tree root selector */}
       {tab === "tree" && (
         <div className="mb-4 flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-600">Root Organization:</label>
+          <label className="text-sm font-medium text-gray-600">{t("orgs.rootOrg")}</label>
           <select
             value={treeRootId || ""}
             onChange={(e) => setTreeRootId(e.target.value || null)}
@@ -512,20 +514,20 @@ export default function OrganizationsPage() {
 
       {/* Tabs */}
       <div className="mb-4 flex gap-2 border-b border-gray-200">
-        <TabButton active={tab === "orgs"} onClick={() => setTab("orgs")} icon={Building2} label={`Organizations (${orgs.length})`} />
-        <TabButton active={tab === "depts"} onClick={() => setTab("depts")} icon={Network} label={`Departments (${depts.length})`} />
-        <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Users} label={`Teams (${teams.length})`} />
-        <TabButton active={tab === "tree"} onClick={() => setTab("tree")} icon={Layers} label="Tree View" />
-        <TabButton active={tab === "members"} onClick={() => setTab("members")} icon={Users} label="Members" />
+        <TabButton active={tab === "orgs"} onClick={() => setTab("orgs")} icon={Building2} label={`${t("orgs.title")} (${orgs.length})`} />
+        <TabButton active={tab === "depts"} onClick={() => setTab("depts")} icon={Network} label={`${t("orgs.department")} (${depts.length})`} />
+        <TabButton active={tab === "teams"} onClick={() => setTab("teams")} icon={Users} label={`${t("orgs.members")} (${teams.length})`} />
+        <TabButton active={tab === "tree"} onClick={() => setTab("tree")} icon={Layers} label={t("orgs.treeView")} />
+        <TabButton active={tab === "members"} onClick={() => setTab("members")} icon={Users} label={t("orgs.members")} />
       </div>
 
       {/* Content */}
       {loading ? (
-        <p className="text-gray-500">Loading...</p>
+        <p className="text-gray-500">{t("common.loading")}</p>
       ) : tab === "orgs" ? (
         /* ===== Organizations Tree View ===== */
         orgs.length === 0 ? (
-          <EmptyState icon={Building2} title="No organizations yet" subtitle="Create an organization to start managing your team structure" />
+          <EmptyState icon={Building2} title={t("orgs.noOrgsYet")} subtitle={t("orgs.createOrgHint")} />
         ) : (
           <div className="space-y-1">
             {tree.map((org) => (
@@ -549,7 +551,7 @@ export default function OrganizationsPage() {
         ) : depts.length === 0 ? (
           <EmptyState icon={Network} title="No departments" subtitle="Create a department under this organization" />
         ) : (
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
@@ -628,7 +630,7 @@ export default function OrganizationsPage() {
         !treeRootId ? (
           <EmptyState icon={Layers} title="Select a root organization" subtitle="Choose an organization above to view its full hierarchy" />
         ) : treeLoading ? (
-          <p className="text-gray-500">Loading tree...</p>
+          <p className="text-gray-500">{t("orgs.loadingTree")}</p>
         ) : !treeData || treeData.organizations.length === 0 ? (
           <EmptyState icon={Layers} title="No tree data" subtitle="Failed to load or empty tree" />
         ) : (
@@ -661,6 +663,7 @@ function MembersDetail({
   orgName: string;
   apiFetch: <T>(path: string, options?: RequestInit) => Promise<T>;
 }) {
+  const t = useTranslations();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -696,9 +699,9 @@ function MembersDetail({
         </h3>
       </div>
       {loading ? (
-        <p className="p-8 text-center text-gray-500">Loading...</p>
+        <p className="p-8 text-center text-gray-500">{t("common.loading")}</p>
       ) : members.length === 0 ? (
-        <p className="p-8 text-center text-gray-500">No members in this organization</p>
+        <p className="p-8 text-center text-gray-500">{t("orgs.noMembers")}</p>
       ) : (
         <table className="w-full">
           <thead className="border-b border-gray-100 dark:border-gray-700 bg-gray-50">
@@ -730,6 +733,7 @@ function MembersDetail({
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );
@@ -994,14 +998,14 @@ function OrgTreeNode({
           href={`/organizations/${org.id}`}
           className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
         >
-          View Details
+          {t("orgs.viewDetails")}
         </Link>
       </div>
 
       {/* Render children */}
       {isExpanded && isLoading && org.children.length === 0 && (
         <div style={{ paddingLeft: `${(depth + 1) * 24 + 12}px` }} className="py-2 text-xs text-gray-400">
-          Loading children...
+          {t("orgs.loadingChildren")}
         </div>
       )}
       {isExpanded &&
