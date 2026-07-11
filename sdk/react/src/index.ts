@@ -73,6 +73,10 @@ export { useDelegation } from './useDelegation';
 export type { Delegation, DelegateInput, UseDelegationResult } from './useDelegation';
 export { useSoD } from './useSoD';
 export type { SoDRule, SoDViolation, SoDSeverity, CreateSoDRuleInput, ViolationCheckResult, UseSoDResult } from './useSoD';
+export { usePermissionTree } from './usePermissionTree';
+export type { PermissionNode, UsePermissionTreeResult } from './usePermissionTree';
+export { useRateLimits } from './useRateLimits';
+export type { RateLimit, CreateRateLimitInput, UseRateLimitsResult } from './useRateLimits';
 export type {
   GGIDConfig,
   GGIDUser,
