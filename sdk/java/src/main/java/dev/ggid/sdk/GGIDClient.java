@@ -200,49 +200,4 @@ public class GGIDClient {
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class TokenSet {
-        @JsonProperty("access_token") public String accessToken;
-        @JsonProperty("refresh_token") public String refreshToken;
-        @JsonProperty("token_type") public String tokenType;
-        @JsonProperty("expires_in") public int expiresIn;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class User {
-        public String id;
-        public String username;
-        public String email;
-        public String status;
-        @JsonProperty("display_name") public String displayName;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Role {
-        public String id;
-        public String key;
-        public String name;
-        public String description;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Organization {
-        public String id;
-        public String name;
-        @JsonProperty("parent_id") public String parentId;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class PermissionResult {
-        public boolean allowed;
-        public String reason;
-    }
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class PageResult<T> {
-        public List<T> items;
-        @JsonProperty("total_count") public int totalCount;
-        public int page;
-        @JsonProperty("page_size") public int pageSize;
-    }
 }

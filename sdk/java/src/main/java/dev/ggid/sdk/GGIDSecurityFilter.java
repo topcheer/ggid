@@ -61,20 +61,4 @@ public class GGIDSecurityFilter implements Filter {
     String action();
 }
 
-/**
- * Represents the authenticated GGID user.
- * Can be used as @AuthenticationPrincipal in Spring controllers.
- */
-class GGIDUser {
-    private String subject;
-    private String email;
-    private String name;
-    private List<String> roles;
-    private Map<String, Object> claims;
-    
-    public String getSubject() { return subject; }
-    public String getEmail() { return email; }
-    public String getName() { return name; }
-    public List<String> getRoles() { return roles != null ? roles : Collections.emptyList(); }
-    public Map<String, Object> getClaims() { return claims; }
 }
