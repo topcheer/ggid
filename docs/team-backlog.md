@@ -123,8 +123,11 @@
 - [x] Request ID propagation (request_id.go + router.go:120,706)
 - [x] Gateway integration tests (8 router test files already exist)
 - [x] Error response standardization — error_writer.go + all http.Error replaced (737b5f5)
-- [x] Request ID propagation tests — router_chain_test.go (3 tests)
+- [x] Request ID propagation tests — request_id_test.go (9e5f2d9)
 - [x] Prometheus metrics verification — metrics_test.go (1c23919)
+- [x] Gateway route URLs from env vars + UPSTREAM_TIMEOUT (9e5f2d9)
+- [x] Full-chain integration tests — full_chain_test.go (2e044b9)
+- [x] Circuit breaker lifecycle tests — coverage_sprint27_test.go (2e044b9)
 - [ ] Middleware coverage →92% (currently 88.3%)
 - [ ] API spec coverage audit — openapi.yaml vs router routes
 
@@ -210,7 +213,7 @@
 - [x] docs/upgrade-guide.md (verified complete, 438 lines)
 - [x] docs/design/adr-001-database-choice.md (commit 883583d)
 - [x] docs/design/adr-002-event-driven-audit.md (commit 883583d)
-> 159 docs total. All major topics covered. No outstanding doc tasks.
+> 163 docs total. All major topics covered. No outstanding doc tasks.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
