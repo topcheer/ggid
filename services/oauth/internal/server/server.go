@@ -1208,6 +1208,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleTokenClaims(w, r)
 			return
 		}
+		if r.URL.Path == "/api/v1/oauth/scope-delegation" {
+			handleScopeDelegation(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 

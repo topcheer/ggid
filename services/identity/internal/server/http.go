@@ -92,6 +92,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/segments", h.handleUserSegments)
 	h.mux.HandleFunc("/api/v1/users/merge-conflicts", h.handleMergeConflicts)
 	h.mux.HandleFunc("/api/v1/users/import-csv", h.handleImportCSV)
+	h.mux.HandleFunc("/api/v1/users/create-from-template", h.handleCreateFromTemplate)
 	h.mux.HandleFunc("/api/v1/organizations/", h.handleOrgChart)
 	h.mux.HandleFunc("/api/v1/users/timeline", h.handleUserTimeline)
 	h.mux.HandleFunc("/api/v1/users/bulk-provision", h.handleBulkProvision)
@@ -207,6 +208,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleUserPreferences(ctx, userID, w, r)
 	case action == "reassign" && r.Method == http.MethodPost:
 		h.reassignUser(ctx, userID, w, r)
+	case action == "clone-template" && r.Method == http.MethodPost:
+		h.handleCloneTemplate(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

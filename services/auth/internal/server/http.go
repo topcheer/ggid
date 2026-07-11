@@ -275,6 +275,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password-policy/check", h.handlePasswordPolicyCheck)
 	h.mux.HandleFunc("/api/v1/auth/mfa/factors", h.handleMFAFactors)
 	h.mux.HandleFunc("/api/v1/auth/mfa/factors/", h.handleMFAFactors)
+	h.mux.HandleFunc("/api/v1/auth/login-analytics", h.handleLoginAnalytics)
 }
 
 // ServeHTTP implements http.Handler.
