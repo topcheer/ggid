@@ -523,9 +523,9 @@
 
 ### NEW STRATEGIC GAPS (from competitive monitoring 2026-07)
 - [x] **[P0]** AI Agent Identity / MCP Auth — IMPLEMENTED (55ffd6f). Agent registration, RFC 8693 token exchange with delegation chain, MCP server auth, 20 tests, 4 HTTP endpoints, gateway routing. (ai-agent-identity-analysis.md)
-- [ ] **[P0]** IGA Workflows — Keycloak 26 shipped. GGID has no governance layer. (iga-workflows-analysis.md) — ASSIGNED to backend
+- [x] **[P0]** IGA Workflows — IMPLEMENTED (43d9956, backend). Access requests with approval/denial, 7-day auto-expiry, self-approval prevention, tenant isolation, 14 tests, 4 HTTP endpoints, gateway routing.
 - [ ] **[P1]** Bot Protection — Auth0 + Keycloak have full suite. GGID has botdetect.go (coverage unclear). (bot-protection-analysis.md)
-- [ ] **[P1]** Zero-Downtime Patches — Keycloak 26 supports. GGID needs rolling update strategy.
+- [x] **[P1]** Zero-Downtime Patches — IMPLEMENTED (0521d2a). Rolling update guide + script, K8s/Docker strategies, expand-contract migrations.
 - [ ] **[P1]** Device-Bound SSO — Auth0 shipped. GGID has WebAuthn but no device-bound SSO flow.
 
 ### Key P0 Findings Driven to Remediation
