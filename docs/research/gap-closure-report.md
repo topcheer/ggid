@@ -178,13 +178,13 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | # | Gap | Matrix Said | Actual Status | Evidence |
 |---|-----|------------|---------------|----------|
 | 18 | Native SIEM connector | Missing | **DONE — VERIFIED** 2026-07-12 | pkg/audit/siem_forwarder.go (arch e06f7b5). Splunk HEC, Datadog, Elasticsearch, generic. Batch + retry. Wired in services/audit/cmd/main.go (backend b930a59). 12 tests PASS. |
-| 19 | Compliance reporting | Missing | PARTIAL | Tests exist, implementation needs verification |
+| 19 | Compliance reporting | Missing | **DONE** 2026-07-12 | services/audit/internal/compliance/compliance.go (backend). SOC2/HIPAA/GDPR report generation, 6 tests. |
 | 20 | Tamper-proof audit trail | Missing | **DONE — VERIFIED** 2026-07-24 | **ARCH functional test** (12 tests PASS, commit 76bc881). gap_regression_test.go: field-level tamper detection (TenantID/ActorID/ActorType/ResourceType/ResourceID), event deletion, cross-tenant isolation, secret rotation, replay attack. hash_chain.go (HMAC-SHA256), wired in audit_repo.go |
 | 21 | API explorer/playground | Missing | PARTIAL | openapi_aggregator.go exists, Swagger UI not deployed |
 | 22 | Device authorization flow | Missing | DONE — VERIFIED | server.go:867 + TestPollDeviceToken_Approved PASS (2026-07-11 arch functional test) |
 | 23 | Token exchange (RFC 8693) | Missing | DONE — VERIFIED | oauth_service.go:1105 + TestExchangeToken_Success PASS (2026-07-11 arch functional test) |
 | 24 | React/Frontend SDK | Missing | **DONE** 2026-07-12 | sdk/react/ (frontend f040281, a9d2b6b, ab12a20). GGIDProvider, useGGIDAuth, useUser, ProtectedRoute, ErrorBoundary, token refresh, README. |
-| 25 | Real-time alerting | Missing | TODO | Not implemented |
+| 25 | Real-time alerting | Missing | **DONE** 2026-07-12 | services/audit/internal/alerting/alert.go (backend). AlertRule, AlertEngine, WebhookNotifier, 8 tests. |
 | 26 | Data retention policies | Missing | **DONE** 2026-07-12 | services/audit/internal/retention/retention.go (backend b930a59). RetentionPolicy, Apply(), 8 tests. HTTP endpoints already in audit http.go. |
 
 ### P3 — Future (5 identified → 1 closed, 4 open)
@@ -195,7 +195,7 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | 28 | .NET/Ruby/PHP/Swift/Android SDKs | TODO | Low priority |
 | 29 | Cloud-hosted SaaS | TODO | Strategic decision needed |
 | 30 | Enterprise security audit | TODO | SOC 2 when adoption warrants |
-| 31 | Per-tenant IdP config | TODO | Multi-tenant IdP registry |
+| 31 | Per-tenant IdP config | **DONE** 2026-07-12 | services/identity/internal/idpconfig/idpconfig.go (backend). CRUD, MemoryStore, 7 tests. |
 
 ---
 
