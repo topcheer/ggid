@@ -204,6 +204,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleUserTimeline(w, r)
 	case action == "preferences":
 		h.handleUserPreferences(ctx, userID, w, r)
+	case action == "reassign" && r.Method == http.MethodPost:
+		h.reassignUser(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

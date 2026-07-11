@@ -1200,6 +1200,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientAnalytics(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/migrate") {
+			handleClientMigration(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 
