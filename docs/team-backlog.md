@@ -723,3 +723,27 @@
 - [x] Mobile: sidebar has mobile toggle + backdrop (md:hidden). Tables use overflow-x-auto wrappers. Forms are responsive (sm:col-span-2). (existing, verified)
 - [x] README: updated with Docker build instructions, PWA section, NEXT_PUBLIC_API_URL build-arg docs. (cb13e9b)
 - [x] npm run build: 0 errors, make test: 0 FAIL
+
+## Key Findings: Security & Competitive Milestones
+
+### P0 Security — ALL CLOSED
+- [x] gRPC TLS between all services (commit 6a0eced) — LAST P0 FIX
+- [x] CSRF predictable entropy → crypto/rand (commit 29b51c1)
+- [x] Rate limiter wired into production handler chain (commit fc20c41)
+- [x] SecurityHeaders wired (commit 64991a6)
+- [x] Tenant spoofing: JWT claim priority over X-Tenant-ID (commit 5bcbfce)
+- [x] Admin API scope check: hasAdminScope() (commit 66ef1db)
+- [x] OAuth state validation, JWT jti anti-replay, HasScope enforcement (commit 72edaa5)
+
+### Competitive Gap #1 — CLOSED
+- [x] AI Agent Identity + MCP Auth (commit 55ffd6f) — 4 API endpoints, agent token JWT claims, delegation chain, MCP server authorization
+- [x] Console AI Agents page (commit 142cf7c)
+- [x] Go SDK agent identity support (commit d6f0972)
+- [x] Developer guide docs/guides/ai-agent-identity.md (commit 08a216b)
+
+### Deployment
+- [x] Zero-downtime deployment guide (commit 0521d2a) — rolling updates, health checks, rollback
+- [x] OpenAPI spec for agent endpoints + rolling update script (commit 6e065a5)
+
+### In Progress
+- [ ] IGA Workflows — backend implementing identity governance and administration
