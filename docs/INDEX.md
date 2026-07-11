@@ -28,6 +28,7 @@
 | [ABAC Policy](guides/abac-policy.md) | ABAC policies: syntax, evaluate, dry-run, compliance templates |
 | [SDK Migration Guide](guides/sdk-migration-guide.md) | Auth0/Keycloak/Firebase to GGID API mapping |
 | [Troubleshooting](guides/troubleshooting.md) | Common issues: JWT, DB, NATS, Gateway 502, tenant isolation |
+| [Social Login Setup](guides/social-login-setup.md) | GitHub/Google/Microsoft/LDAP/OIDC provider configuration |
 | [Webhook Setup](guides/webhook-setup.md) | Register webhooks, verify signatures, retry, idempotency |
 | [Custom Claims](guides/custom-claims.md) | Standard claims, auth hooks, SDK reading, ABAC usage |
 | [Multi-Tenant Setup](guides/multi-tenant-setup.md) | Tenant CRUD, RLS policies, per-tenant config |
@@ -45,6 +46,8 @@
 | [Gin](integration-guides/gin.md) | Go Gin middleware adapter, role checks, tenant-aware queries |
 | [Spring Boot](integration-guides/spring-boot.md) | Java servlet filter, Spring Security integration |
 | [3-Line Integration](quickstart/3-line-integration.md) | Add JWT auth in 3 lines: Go, Node.js, Python, Java |
+| [External DB Setup](quickstart/external-db-setup.md) | Connect external PostgreSQL/Redis/NATS/LDAP |
+| [Helm 5-Minute](quickstart/helm-5-min.md) | Deploy GGID to Kubernetes with Helm in 5 minutes |
 
 ---
 
@@ -96,6 +99,7 @@
 | [Overview](architecture/overview.md) | System diagram, service responsibilities, data flow |
 | [Security Overview](architecture/security-overview.md) | Auth flow, P0 security, RLS, audit hash chain, STRIDE |
 | [Data Flow](architecture/data-flow.md) | Request flow diagrams: register, login, JWT verify, audit pipeline |
+| [Microservices](architecture/microservices.md) | 7-service architecture: ports, deps, communication patterns |
 | [ADR-0001: JWT RSA Shared Key](architecture/decision-record/0001-jwt-rsa-shared-key.md) | Why RSA for JWT signing |
 | [ADR-0002: Multi-Tenancy](architecture/decision-record/0002-multi-tenancy.md) | RLS-based tenant isolation decision |
 | [ADR-001: Database Choice](design/adr-001-database-choice.md) | PostgreSQL + RLS for multi-tenant isolation |
@@ -115,6 +119,8 @@
 | Document | Description |
 |----------|-------------|
 | [API Reference](api-reference.md) | Complete endpoint reference: 78+ endpoints across 7 services |
+| [Admin API](api/admin-api.md) | User/role/org/policy/audit admin endpoints |
+| [SCIM 2.0 API](api/scim-api.md) | Enterprise SCIM endpoints for HR system integration |
 | [API Error Codes](api-error-codes.md) | 57 error codes across all services |
 | [API Error Codes (v2)](api/error-codes.md) | Error codes with HTTP status mapping |
 | [API Conventions](api-conventions.md) | URL patterns, pagination, filtering, versioning |
