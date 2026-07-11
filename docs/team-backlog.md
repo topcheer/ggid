@@ -478,3 +478,10 @@
 - [x] SDK examples verified against K3s — Go/Node/Python all: Login OK (693 chars), Verify OK (subject: 395cbb75...). Fixed: Go JWKS, Node tsconfig, Python __init__/pyproject/clock-skew (006038f)
 - [x] API Explorer page — already complete (329 lines, 8 endpoints, curl/JS/Python/Go snippets, try-it with JWT, CopyButton) (e86ecfa)
 - [x] Onboarding wizard verification — uses shared useApi().apiFetch(), no hardcoded URLs, NEXT_PUBLIC_API_URL inherited correctly (006038f)
+
+## Sprint: Console Login E2E + SDK Quality (frontend aa8585c)
+- [x] Console login flow E2E — fixed critical bug: NEXT_PUBLIC_API_URL not baked into Docker image. Added ARG to Dockerfile, fixed 3 pages using wrong env var. Browser login → dashboard → users all verified against K3s (aa8585c)
+- [x] Go SDK quality audit — 3 improvements: (1) structured APIError with parsed title/detail via NewAPIError(), (2) io.ReadAll instead of manual buffer, (3) 60s clock skew tolerance in JWT verify (aa8585c)
+- [x] Node SDK build — dist/ verified, npm run build passes, example runs against K3s with jwksUrl (aa8585c)
+- [x] Python SDK pip install — clean pip install -e works, pyproject.toml build backend fixed, example runs against K3s (aa8585c)
+- [x] Console Users page — verified against K3s, CRUD UI present, empty state correct (backend returns 0 users for list endpoint) (aa8585c)
