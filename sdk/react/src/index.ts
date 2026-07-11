@@ -145,6 +145,10 @@ export { useDeviceTrust } from './useDeviceTrust';
 export type { DeviceTrustEntry, PosturePolicy, PostureReport, UseDeviceTrustResult } from './useDeviceTrust';
 export { useResourceACL } from './useResourceACL';
 export type { ResourceACLRule, CreateACLInput, UseResourceACLResult } from './useResourceACL';
+export { useApprovals } from './useApprovals';
+export type { ApprovalRequest, ApprovalStep, ApprovalStatus, UseApprovalsResult } from './useApprovals';
+export { useCredentialVault } from './useCredentialVault';
+export type { StoredCredential, UseCredentialVaultResult } from './useCredentialVault';
 export type {
   GGIDConfig,
   GGIDUser,
