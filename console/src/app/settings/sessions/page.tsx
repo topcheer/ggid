@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   Monitor, Smartphone, Tablet, Globe, Trash2, RefreshCw, Clock,
   MapPin, Wifi, X, AlertTriangle,

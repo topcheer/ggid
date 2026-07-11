@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
 import {
   Save,
   Loader2,
