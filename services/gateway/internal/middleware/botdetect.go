@@ -69,12 +69,31 @@ type botRequestLog struct {
 // NewBehavioralBotDetect creates a behavioral bot detector.
 // threshold = max requests per window per IP before challenge.
 func NewBehavioralBotDetect(threshold int, window time.Duration) *BehavioralBotDetect {
-	return &BehavioralBotDetect{
+	b := &BehavioralBotDetect{
 		window:    window,
 		threshold: threshold,
 		store: &botRateStore{
 			buckets: make(map[string]*botRequestLog),
 		},
+	}
+	// Start background cleanup to prevent unbounded map growth.
+	go b.store.cleanupLoop(window)
+	return b
+}
+
+// cleanupLoop periodically removes expired entries from the store.
+func (s *botRateStore) cleanupLoop(window time.Duration) {
+	ticker := time.NewTicker(window * 2)
+	defer ticker.Stop()
+	for range ticker.C {
+		s.mu.Lock()
+		now := time.Now()
+		for key, log := range s.buckets {
+			if now.After(log.expires) {
+				delete(s.buckets, key)
+			}
+		}
+		s.mu.Unlock()
 	}
 }
 

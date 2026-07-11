@@ -32,3 +32,5 @@ coverage.html
 # ggcode
 .ggcode/
 service.test
+sdk/python/ggid.egg-info/
+sdk/python/ggid/__pycache__/
