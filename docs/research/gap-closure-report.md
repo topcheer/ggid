@@ -283,6 +283,9 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 
 > **Closed since last update**: K8s/K3s deployment (P0 #1) — E2E verified 2026-07-24;
 > Terraform provider (P1 #15) — verified in deploy/terraform/ (commit 7db6d5d).
+> **Security gaps closed 2026-07-11**: Password pepper (commit 1703849), OAuth introspection
+> auth (already done, verified server.go:563), Webhook SSRF (already done, verified NewSSRFSafeDeliverer),
+> gRPC TLS (commit 1703849, GRPC_TLS_ENABLED env var), API error format unification (pkg/errors/api_error.go).
 
 ---
 
