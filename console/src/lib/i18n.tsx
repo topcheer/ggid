@@ -1,22 +1,36 @@
 "use client";
 
-import { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext, useEffect, useCallback } from "react";
 
 export type Locale = "en" | "zh";
 
 type Dict = Record<string, string>;
 
 const en: Dict = {
-  // Sidebar / nav
+  // ── Sidebar / nav ──
   "nav.dashboard": "Dashboard",
   "nav.users": "Users",
   "nav.roles": "Roles & Permissions",
   "nav.organizations": "Organizations",
+  "nav.groups": "Groups",
   "nav.audit": "Audit Log",
+  "nav.policies": "Policies",
+  "nav.permissions": "Permissions",
   "nav.oauthClients": "OAuth Clients",
   "nav.webhooks": "Webhooks",
+  "nav.apiKeys": "API Keys",
+  "nav.sessions": "Sessions",
+  "nav.security": "Security Center",
   "nav.settings": "Settings",
-  // Common
+  "nav.saml": "SAML Config",
+  "nav.scim": "SCIM Provisioning",
+  "nav.branding": "Branding",
+  "nav.certificates": "Certificates",
+  "nav.monitoring": "Monitoring",
+  "nav.exports": "Data Export",
+  "nav.flows": "Login Flows",
+
+  // ── Common ──
   "common.loading": "Loading...",
   "common.create": "Create",
   "common.delete": "Delete",
@@ -26,39 +40,226 @@ const en: Dict = {
   "common.search": "Search",
   "common.refresh": "Refresh",
   "common.export": "Export",
-  // Users page
+  "common.actions": "Actions",
+  "common.status": "Status",
+  "common.name": "Name",
+  "common.created": "Created",
+  "common.expires": "Expires",
+  "common.expiry": "Expiry",
+  "common.key": "Key",
+  "common.scopes": "Scopes",
+  "common.confirm": "Confirm",
+  "common.close": "Close",
+  "common.add": "Add",
+  "common.remove": "Remove",
+  "common.yes": "Yes",
+  "common.no": "No",
+  "common.active": "Active",
+  "common.inactive": "Inactive",
+  "common.enabled": "Enabled",
+  "common.disabled": "Disabled",
+  "common.success": "Success",
+  "common.error": "Error",
+  "common.warning": "Warning",
+  "common.info": "Info",
+  "common.required": "Required",
+  "common.optional": "Optional",
+  "common.none": "None",
+  "common.all": "All",
+  "common.type": "Type",
+  "common.description": "Description",
+  "common.domain": "Domain",
+  "common.subject": "Subject",
+  "common.issuer": "Issuer",
+
+  // ── Users page ──
   "users.title": "Users",
   "users.searchPlaceholder": "Search by name or email...",
-  // Roles page
+  "users.createUser": "Create User",
+  "users.email": "Email",
+  "users.firstName": "First Name",
+  "users.lastName": "Last Name",
+  "users.role": "Role",
+  "users.lastLogin": "Last Login",
+  "users.noUsers": "No users found",
+
+  // ── Roles page ──
   "roles.title": "Roles & Permissions",
-  // Orgs page
+  "roles.createRole": "Create Role",
+  "roles.roleName": "Role Name",
+  "roles.permissions": "Permissions",
+  "roles.assignPermissions": "Assign Permissions",
+
+  // ── Organizations page ──
   "orgs.title": "Organizations",
-  // Audit page
+  "orgs.loadingTree": "Loading tree...",
+  "orgs.rootOrg": "Root Organization:",
+  "orgs.filterByOrg": "Filter by Organization:",
+  "orgs.noMembers": "No members in this organization",
+  "orgs.department": "Department",
+  "orgs.path": "Path",
+  "orgs.titleField": "Title",
+  "orgs.userId": "User ID",
+  "orgs.selectOrg": "-- Select org --",
+  "orgs.noneRoot": "-- None (root) --",
+  "orgs.serviceDown": "Make sure Org Service (:8071) is running.",
+
+  // ── Audit page ──
   "audit.title": "Audit Log",
   "audit.dashboard": "Dashboard",
   "audit.events": "Event Log",
-  // OAuth clients
+  "audit.eventType": "Event Type",
+  "audit.actor": "Actor",
+  "audit.timestamp": "Timestamp",
+  "audit.resource": "Resource",
+
+  // ── OAuth Clients page ──
   "oauth.title": "OAuth Clients",
-  // Webhooks
+  "oauth.subtitle": "Register and manage OAuth 2.0 / OIDC clients",
+  "oauth.clientName": "Client Name",
+  "oauth.clientNameRequired": "Client Name *",
+  "oauth.clientId": "Client ID",
+  "oauth.clientSecret": "Client Secret",
+  "oauth.redirectUris": "Redirect URIs",
+  "oauth.redirectUrisHint": "Redirect URIs (one per line)",
+  "oauth.grantTypes": "Grant Types",
+  "oauth.scopesComma": "Scopes (comma-separated)",
+  "oauth.registerNew": "Register New OAuth Client",
+  "oauth.noClients": "No OAuth clients registered",
+  "oauth.clientNamePlaceholder": "e.g. My Web Application",
+
+  // ── Webhooks page ──
   "webhooks.title": "Webhooks",
-  // Settings
+  "webhooks.url": "URL",
+  "webhooks.events": "Events",
+  "webhooks.secret": "Secret",
+  "webhooks.createWebhook": "Create Webhook",
+
+  // ── API Keys page ──
+  "apiKeys.title": "API Keys",
+  "apiKeys.subtitle": "Manage API keys for programmatic access",
+  "apiKeys.createNew": "Create New API Key",
+  "apiKeys.keyName": "Key Name",
+  "apiKeys.noKeys": "No API keys created yet",
+  "apiKeys.copyNow": "Copy your key now",
+  "apiKeys.createDesc": "Create an API key to enable programmatic access to the GGID API.",
+
+  // ── Settings page ──
   "settings.title": "Settings",
   "settings.theme": "Theme",
   "settings.language": "Language",
   "settings.darkMode": "Dark Mode",
+  "settings.general": "General",
+  "settings.security": "Security",
+
+  // ── Branding page ──
+  "branding.title": "Branding Settings",
+  "branding.logo": "Logo",
+  "branding.uploadLogo": "Click to upload logo image",
+  "branding.primaryColor": "Primary Color",
+  "branding.secondaryColor": "Secondary Color",
+  "branding.customDomain": "Custom Domain",
+  "branding.template": "Template",
+  "branding.signIn": "Sign In",
+
+  // ── Certificates page ──
+  "certs.title": "Certificates",
+  "certs.loadingCerts": "Loading certificates...",
+  "certs.noCerts": "No certificates found. Upload a certificate below.",
+  "certs.noKeys": "No signing keys found.",
+  "certs.algorithm": "Algorithm",
+  "certs.fingerprint": "Fingerprint",
+  "certs.expiryDate": "Expiry Date",
+  "certs.keyId": "Key ID (kid)",
+  "certs.confirmRotation": "Confirm Key Rotation",
+  "certs.selectFile": "Select File (.pem / .crt)",
+  "certs.pastePem": "Or Paste PEM Content",
+
+  // ── MFA page ──
+  "mfa.title": "Multi-Factor Authentication",
+  "mfa.totpSetup": "Set up a TOTP authenticator app (Google Authenticator, Authy, etc.)",
+  "mfa.scanQr": "Scan with your authenticator app",
+  "mfa.secretKey": "Secret Key",
+  "mfa.verifyCode": "Verify Code (6 digits)",
+  "mfa.protected": "Your account is protected with TOTP MFA.",
+  "mfa.smsCodes": "Receive verification codes via SMS",
+  "mfa.emailBackup": "Email Backup",
+  "mfa.emailCodes": "Receive verification codes via email",
+
+  // ── SSO page ──
+  "sso.title": "Single Sign-On",
+  "sso.configuredProviders": "Configured Providers",
+  "sso.metadata": "Metadata",
+  "sso.importMetadata": "Import Metadata (optional)",
+  "sso.pasteCert": "Or paste certificate (PEM)",
+  "sso.pasteMetadataUrl": "Or paste metadata URL",
+  "sso.discoveryUrl": "Discovery URL",
+  "sso.entityId": "Entity ID",
+  "sso.attributes": "Attributes",
+
+  // ── Tenant Config page ──
+  "tenant.burstLimit": "Burst Limit",
+  "tenant.concurrentSessions": "Concurrent Sessions Limit",
+  "tenant.gracePeriod": "Grace Period (days)",
+  "tenant.idleTimeout": "Idle Timeout (minutes)",
+  "tenant.minPasswordLength": "Minimum Length",
+  "tenant.passwordHistory": "Password History Count",
+  "tenant.requestsPerMinute": "Requests Per Minute",
+  "tenant.requireMfa": "Require MFA for all users",
+  "tenant.requireMfaDesc": "Enforce multi-factor authentication across the entire tenant",
+  "tenant.requiredMethod": "Required Method",
+  "tenant.expiryDays": "Expiry (days)",
+
+  // ── Login Flows page ──
+  "flows.title": "Login Flows",
+  "flows.addStep": "Add Authentication Step",
+  "flows.conditions": "Conditions for this step",
+  "flows.flowPreview": "Flow Preview",
+  "flows.noSteps": "No steps in this flow. Add authentication steps above.",
+  "flows.noActiveSteps": "No active steps in this flow",
+  "flows.userRole": "User Role",
+  "flows.onlyRole": "Only apply for specific role",
+  "flows.onlyIp": "Only apply if user IP is in this range",
+
+  // ── Security Center page ──
+  "security.title": "Security Center",
+  "security.loading": "Loading security dashboard...",
+  "security.attempts": "Attempts",
+  "security.blocked": "Blocked",
+  "security.enrolled": "Enrolled",
+  "security.notEnrolled": "Not enrolled",
+  "security.risk": "Risk",
+  "security.location": "Location",
+  "security.topIps": "Top IPs:",
+  "security.noWebauthn": "No WebAuthn devices registered.",
+  "security.lastUsed": "Last used",
 };
 
 const zh: Dict = {
-  // Sidebar / nav
+  // ── 侧边栏 / 导航 ──
   "nav.dashboard": "\u4eea\u8868\u76d8",
   "nav.users": "\u7528\u6237",
   "nav.roles": "\u89d2\u8272\u4e0e\u6743\u9650",
   "nav.organizations": "\u7ec4\u7ec7\u67b6\u6784",
+  "nav.groups": "\u7528\u6237\u7ec4",
   "nav.audit": "\u5ba1\u8ba1\u65e5\u5fd7",
+  "nav.policies": "\u7b56\u7565",
+  "nav.permissions": "\u6743\u9650",
   "nav.oauthClients": "OAuth \u5ba2\u6237\u7aef",
   "nav.webhooks": "Webhook",
+  "nav.apiKeys": "API \u5bc6\u94a5",
+  "nav.sessions": "\u4f1a\u8bdd",
+  "nav.security": "\u5b89\u5168\u4e2d\u5fc3",
   "nav.settings": "\u8bbe\u7f6e",
-  // Common
+  "nav.saml": "SAML \u914d\u7f6e",
+  "nav.scim": "SCIM \u914d\u7f6e",
+  "nav.branding": "\u54c1\u724c\u8bbe\u7f6e",
+  "nav.certificates": "\u8bc1\u4e66",
+  "nav.monitoring": "\u76d1\u63a7",
+  "nav.exports": "\u6570\u636e\u5bfc\u51fa",
+  "nav.flows": "\u767b\u5f55\u6d41\u7a0b",
+
+  // ── 通用 ──
   "common.loading": "\u52a0\u8f7d\u4e2d...",
   "common.create": "\u521b\u5efa",
   "common.delete": "\u5220\u9664",
@@ -68,26 +269,199 @@ const zh: Dict = {
   "common.search": "\u641c\u7d22",
   "common.refresh": "\u5237\u65b0",
   "common.export": "\u5bfc\u51fa",
-  // Users page
+  "common.actions": "\u64cd\u4f5c",
+  "common.status": "\u72b6\u6001",
+  "common.name": "\u540d\u79f0",
+  "common.created": "\u521b\u5efa\u65f6\u95f4",
+  "common.expires": "\u8fc7\u671f\u65f6\u95f4",
+  "common.expiry": "\u6709\u6548\u671f",
+  "common.key": "\u5bc6\u94a5",
+  "common.scopes": "\u6388\u6743\u8303\u56f4",
+  "common.confirm": "\u786e\u8ba4",
+  "common.close": "\u5173\u95ed",
+  "common.add": "\u6dfb\u52a0",
+  "common.remove": "\u79fb\u9664",
+  "common.yes": "\u662f",
+  "common.no": "\u5426",
+  "common.active": "\u5df2\u542f\u7528",
+  "common.inactive": "\u672a\u542f\u7528",
+  "common.enabled": "\u5df2\u542f\u7528",
+  "common.disabled": "\u5df2\u7981\u7528",
+  "common.success": "\u6210\u529f",
+  "common.error": "\u9519\u8bef",
+  "common.warning": "\u8b66\u544a",
+  "common.info": "\u4fe1\u606f",
+  "common.required": "\u5fc5\u586b",
+  "common.optional": "\u53ef\u9009",
+  "common.none": "\u65e0",
+  "common.all": "\u5168\u90e8",
+  "common.type": "\u7c7b\u578b",
+  "common.description": "\u63cf\u8ff0",
+  "common.domain": "\u57df\u540d",
+  "common.subject": "\u4e3b\u4f53",
+  "common.issuer": "\u7b7e\u53d1\u8005",
+
+  // ── \u7528\u6237\u9875\u9762 ──
   "users.title": "\u7528\u6237\u7ba1\u7406",
   "users.searchPlaceholder": "\u6309\u59d3\u540d\u6216\u90ae\u7bb1\u641c\u7d22...",
-  // Roles page
+  "users.createUser": "\u521b\u5efa\u7528\u6237",
+  "users.email": "\u90ae\u7bb1",
+  "users.firstName": "\u540d",
+  "users.lastName": "\u59d3",
+  "users.role": "\u89d2\u8272",
+  "users.lastLogin": "\u6700\u540e\u767b\u5f55",
+  "users.noUsers": "\u672a\u627e\u5230\u7528\u6237",
+
+  // ── \u89d2\u8272\u9875\u9762 ──
   "roles.title": "\u89d2\u8272\u4e0e\u6743\u9650",
-  // Orgs page
+  "roles.createRole": "\u521b\u5efa\u89d2\u8272",
+  "roles.roleName": "\u89d2\u8272\u540d\u79f0",
+  "roles.permissions": "\u6743\u9650",
+  "roles.assignPermissions": "\u5206\u914d\u6743\u9650",
+
+  // ── \u7ec4\u7ec7\u67b6\u6784\u9875\u9762 ──
   "orgs.title": "\u7ec4\u7ec7\u67b6\u6784",
-  // Audit page
+  "orgs.loadingTree": "\u52a0\u8f7d\u6811\u5f62\u56fe...",
+  "orgs.rootOrg": "\u6839\u7ec4\u7ec7\uff1a",
+  "orgs.filterByOrg": "\u6309\u7ec4\u7ec7\u7b5b\u9009\uff1a",
+  "orgs.noMembers": "\u8be5\u7ec4\u7ec7\u65e0\u6210\u5458",
+  "orgs.department": "\u90e8\u95e8",
+  "orgs.path": "\u8def\u5f84",
+  "orgs.titleField": "\u804c\u4f4d",
+  "orgs.userId": "\u7528\u6237 ID",
+  "orgs.selectOrg": "-- \u9009\u62e9\u7ec4\u7ec7 --",
+  "orgs.noneRoot": "-- \u65e0\uff08\u6839\uff09--",
+  "orgs.serviceDown": "\u8bf7\u786e\u4fdd\u7ec4\u7ec7\u670d\u52a1 (:8071) \u6b63\u5728\u8fd0\u884c\u3002",
+
+  // ── \u5ba1\u8ba1\u65e5\u5fd7\u9875\u9762 ──
   "audit.title": "\u5ba1\u8ba1\u65e5\u5fd7",
   "audit.dashboard": "\u4eea\u8868\u76d8",
   "audit.events": "\u4e8b\u4ef6\u65e5\u5fd7",
-  // OAuth clients
+  "audit.eventType": "\u4e8b\u4ef6\u7c7b\u578b",
+  "audit.actor": "\u64cd\u4f5c\u8005",
+  "audit.timestamp": "\u65f6\u95f4\u6233",
+  "audit.resource": "\u8d44\u6e90",
+
+  // ── OAuth \u5ba2\u6237\u7aef\u9875\u9762 ──
   "oauth.title": "OAuth \u5ba2\u6237\u7aef",
-  // Webhooks
+  "oauth.subtitle": "\u6ce8\u518c\u548c\u7ba1\u7406 OAuth 2.0 / OIDC \u5ba2\u6237\u7aef",
+  "oauth.clientName": "\u5ba2\u6237\u7aef\u540d\u79f0",
+  "oauth.clientNameRequired": "\u5ba2\u6237\u7aef\u540d\u79f0 *",
+  "oauth.clientId": "\u5ba2\u6237\u7aef ID",
+  "oauth.clientSecret": "\u5ba2\u6237\u7aef\u5bc6\u94a5",
+  "oauth.redirectUris": "\u91cd\u5b9a\u5411 URI",
+  "oauth.redirectUrisHint": "\u91cd\u5b9a\u5411 URI\uff08\u6bcf\u884c\u4e00\u4e2a\uff09",
+  "oauth.grantTypes": "\u6388\u6743\u7c7b\u578b",
+  "oauth.scopesComma": "\u6388\u6743\u8303\u56f4\uff08\u9017\u53f7\u5206\u9694\uff09",
+  "oauth.registerNew": "\u6ce8\u518c\u65b0\u7684 OAuth \u5ba2\u6237\u7aef",
+  "oauth.noClients": "\u672a\u6ce8\u518c OAuth \u5ba2\u6237\u7aef",
+  "oauth.clientNamePlaceholder": "\u4f8b\u5982\uff1a\u6211\u7684 Web \u5e94\u7528",
+
+  // ── Webhook \u9875\u9762 ──
   "webhooks.title": "Webhook",
-  // Settings
+  "webhooks.url": "URL",
+  "webhooks.events": "\u4e8b\u4ef6",
+  "webhooks.secret": "\u5bc6\u94a5",
+  "webhooks.createWebhook": "\u521b\u5efa Webhook",
+
+  // ── API \u5bc6\u94a5\u9875\u9762 ──
+  "apiKeys.title": "API \u5bc6\u94a5",
+  "apiKeys.subtitle": "\u7ba1\u7406\u7528\u4e8e\u7a0b\u5e8f\u5316\u8bbf\u95ee\u7684 API \u5bc6\u94a5",
+  "apiKeys.createNew": "\u521b\u5efa\u65b0 API \u5bc6\u94a5",
+  "apiKeys.keyName": "\u5bc6\u94a5\u540d\u79f0",
+  "apiKeys.noKeys": "\u5c1a\u672a\u521b\u5efa API \u5bc6\u94a5",
+  "apiKeys.copyNow": "\u7acb\u5373\u590d\u5236\u60a8\u7684\u5bc6\u94a5",
+  "apiKeys.createDesc": "\u521b\u5efa API \u5bc6\u94a5\u4ee5\u542f\u7528\u5bf9 GGID API \u7684\u7a0b\u5e8f\u5316\u8bbf\u95ee\u3002",
+
+  // ── \u8bbe\u7f6e\u9875\u9762 ──
   "settings.title": "\u8bbe\u7f6e",
   "settings.theme": "\u4e3b\u9898",
   "settings.language": "\u8bed\u8a00",
   "settings.darkMode": "\u6697\u8272\u6a21\u5f0f",
+  "settings.general": "\u5e38\u89c4",
+  "settings.security": "\u5b89\u5168",
+
+  // ── \u54c1\u724c\u8bbe\u7f6e\u9875\u9762 ──
+  "branding.title": "\u54c1\u724c\u8bbe\u7f6e",
+  "branding.logo": "\u6807\u5fd7",
+  "branding.uploadLogo": "\u70b9\u51fb\u4e0a\u4f20\u6807\u5fd7\u56fe\u7247",
+  "branding.primaryColor": "\u4e3b\u8272",
+  "branding.secondaryColor": "\u8f85\u8272",
+  "branding.customDomain": "\u81ea\u5b9a\u4e49\u57df\u540d",
+  "branding.template": "\u6a21\u677f",
+  "branding.signIn": "\u767b\u5f55",
+
+  // ── \u8bc1\u4e66\u9875\u9762 ──
+  "certs.title": "\u8bc1\u4e66",
+  "certs.loadingCerts": "\u52a0\u8f7d\u8bc1\u4e66\u4e2d...",
+  "certs.noCerts": "\u672a\u627e\u5230\u8bc1\u4e66\u3002\u8bf7\u5728\u4e0b\u65b9\u4e0a\u4f20\u8bc1\u4e66\u3002",
+  "certs.noKeys": "\u672a\u627e\u5230\u7b7e\u540d\u5bc6\u94a5\u3002",
+  "certs.algorithm": "\u7b97\u6cd5",
+  "certs.fingerprint": "\u6307\u7eb9",
+  "certs.expiryDate": "\u8fc7\u671f\u65e5\u671f",
+  "certs.keyId": "\u5bc6\u94a5 ID (kid)",
+  "certs.confirmRotation": "\u786e\u8ba4\u5bc6\u94a5\u8f6e\u6362",
+  "certs.selectFile": "\u9009\u62e9\u6587\u4ef6 (.pem / .crt)",
+  "certs.pastePem": "\u6216\u7c98\u8d34 PEM \u5185\u5bb9",
+
+  // ── \u591a\u56e0\u7b20\u8ba4\u8bc1\u9875\u9762 ──
+  "mfa.title": "\u591a\u56e0\u7b20\u8ba4\u8bc1",
+  "mfa.totpSetup": "\u8bbe\u7f6e TOTP \u8ba4\u8bc1\u5668\u5e94\u7528\uff08Google Authenticator\u3001Authy \u7b49\uff09",
+  "mfa.scanQr": "\u7528\u8ba4\u8bc1\u5668\u5e94\u7528\u626b\u63cf",
+  "mfa.secretKey": "\u5bc6\u94a5",
+  "mfa.verifyCode": "\u9a8c\u8bc1\u7801\uff086 \u4f4d\u6570\u5b57\uff09",
+  "mfa.protected": "\u60a8\u7684\u8d26\u6237\u5df2\u4f7f\u7528 TOTP \u591a\u56e0\u7b20\u8ba4\u8bc1\u4fdd\u62a4\u3002",
+  "mfa.smsCodes": "\u901a\u8fc7\u77ed\u4fe1\u63a5\u6536\u9a8c\u8bc1\u7801",
+  "mfa.emailBackup": "\u90ae\u7bb1\u5907\u4efd",
+  "mfa.emailCodes": "\u901a\u8fc7\u90ae\u7bb1\u63a5\u6536\u9a8c\u8bc1\u7801",
+
+  // ── \u5355\u70b9\u767b\u5f55\u9875\u9762 ──
+  "sso.title": "\u5355\u70b9\u767b\u5f55",
+  "sso.configuredProviders": "\u5df2\u914d\u7f6e\u7684\u63d0\u4f9b\u8005",
+  "sso.metadata": "\u5143\u6570\u636e",
+  "sso.importMetadata": "\u5bfc\u5165\u5143\u6570\u636e\uff08\u53ef\u9009\uff09",
+  "sso.pasteCert": "\u6216\u7c98\u8d34\u8bc1\u4e66 (PEM)",
+  "sso.pasteMetadataUrl": "\u6216\u7c98\u8d34\u5143\u6570\u636e URL",
+  "sso.discoveryUrl": "\u53d1\u73b0 URL",
+  "sso.entityId": "\u5b9e\u4f53 ID",
+  "sso.attributes": "\u5c5e\u6027",
+
+  // ── \u79df\u6237\u914d\u7f6e\u9875\u9762 ──
+  "tenant.burstLimit": "\u7a81\u53d1\u9650\u5236",
+  "tenant.concurrentSessions": "\u5e76\u53d1\u4f1a\u8bdd\u9650\u5236",
+  "tenant.gracePeriod": "\u5bbd\u9650\u671f\uff08\u5929\uff09",
+  "tenant.idleTimeout": "\u7a7a\u95f2\u8d85\u65f6\uff08\u5206\u949f\uff09",
+  "tenant.minPasswordLength": "\u6700\u5c0f\u957f\u5ea6",
+  "tenant.passwordHistory": "\u5bc6\u7801\u5386\u53f2\u8bb0\u5f55\u6570",
+  "tenant.requestsPerMinute": "\u6bcf\u5206\u949f\u8bf7\u6c42\u6570",
+  "tenant.requireMfa": "\u8981\u6c42\u6240\u6709\u7528\u6237\u4f7f\u7528 MFA",
+  "tenant.requireMfaDesc": "\u5728\u6574\u4e2a\u79df\u6237\u4e2d\u5f3a\u5236\u591a\u56e0\u7b20\u8ba4\u8bc1",
+  "tenant.requiredMethod": "\u5fc5\u9009\u65b9\u6cd5",
+  "tenant.expiryDays": "\u6709\u6548\u671f\uff08\u5929\uff09",
+
+  // ── \u767b\u5f55\u6d41\u7a0b\u9875\u9762 ──
+  "flows.title": "\u767b\u5f55\u6d41\u7a0b",
+  "flows.addStep": "\u6dfb\u52a0\u8ba4\u8bc1\u6b65\u9aa4",
+  "flows.conditions": "\u6b64\u6b65\u9aa4\u7684\u6761\u4ef6",
+  "flows.flowPreview": "\u6d41\u7a0b\u9884\u89c8",
+  "flows.noSteps": "\u6d41\u7a0b\u4e2d\u65e0\u6b65\u9aa4\u3002\u8bf7\u5728\u4e0a\u65b9\u6dfb\u52a0\u8ba4\u8bc1\u6b65\u9aa4\u3002",
+  "flows.noActiveSteps": "\u6d41\u7a0b\u4e2d\u65e0\u6d3b\u52a8\u6b65\u9aa4",
+  "flows.userRole": "\u7528\u6237\u89d2\u8272",
+  "flows.onlyRole": "\u4ec5\u5bf9\u7279\u5b9a\u89d2\u8272\u751f\u6548",
+  "flows.onlyIp": "\u4ec5\u5f53\u7528\u6237 IP \u5728\u6b64\u8303\u56f4\u5185\u65f6\u751f\u6548",
+
+  // ── \u5b89\u5168\u4e2d\u5fc3\u9875\u9762 ──
+  "security.title": "\u5b89\u5168\u4e2d\u5fc3",
+  "security.loading": "\u52a0\u8f7d\u5b89\u5168\u4eea\u8868\u76d8...",
+  "security.attempts": "\u5c1d\u8bd5\u6b21\u6570",
+  "security.blocked": "\u5df2\u62e6\u622a",
+  "security.enrolled": "\u5df2\u6ce8\u518c",
+  "security.notEnrolled": "\u672a\u6ce8\u518c",
+  "security.risk": "\u98ce\u9669",
+  "security.location": "\u4f4d\u7f6e",
+  "security.topIps": "\u4e3b\u8981 IP\uff1a",
+  "security.noWebauthn": "\u672a\u6ce8\u518c WebAuthn \u8bbe\u5907\u3002",
+  "security.lastUsed": "\u6700\u540e\u4f7f\u7528",
 };
 
 const dictionaries: Record<Locale, Dict> = { en, zh };
@@ -108,7 +482,14 @@ export function useI18n() {
   return useContext(I18nContext);
 }
 
-import { useEffect } from "react";
+/**
+ * useTranslations — convenience hook that returns a bound `t` function.
+ * Usage: const t = useTranslations();  t("common.save")
+ */
+export function useTranslations() {
+  const { t } = useContext(I18nContext);
+  return t;
+}
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
@@ -120,14 +501,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const setLocale = (l: Locale) => {
+  const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     localStorage.setItem("ggid_locale", l);
-  };
+  }, []);
 
-  const t = (key: string): string => {
-    return dictionaries[locale][key] || dictionaries.en[key] || key;
-  };
+  const t = useCallback(
+    (key: string): string => dictionaries[locale]?.[key] || dictionaries.en[key] || key,
+    [locale],
+  );
 
   return <I18nContext.Provider value={{ locale, setLocale, t }}>{children}</I18nContext.Provider>;
 }
