@@ -342,3 +342,167 @@ functional and production-ready.
 
 Open an issue on GitHub with the `feature-request` label, or contact the team
 via the GGID community channels.
+
+---
+
+## JWT Key Rotation
+
+### Q: How do I rotate JWT signing keys?
+
+Current process (manual):
+
+1. Generate new secret: `openssl rand -base64 32`
+2. Update `JWT_SECRET` environment variable on all services
+3. Restart all services (existing tokens become invalid)
+4. Users must re-authenticate
+
+**Planned improvement**: Support multiple signing keys simultaneously, allowing zero-downtime rotation.
+
+### Q: What happens if JWT_SECRET is empty?
+
+The auth service calls `log.Fatal()` — it will not start. This prevents silent bypass of token verification. Never deploy with an empty `JWT_SECRET`.
+
+### Q: Can I use RS256 (asymmetric) instead of HMAC?
+
+The gateway supports RS256 + JWKS verification. The auth service signs tokens with the configured algorithm. For HMAC (HS256), use `JWT_SECRET`. For RS256, use the private key.
+
+---
+
+## SCIM Provisioning
+
+### Q: How do I configure SCIM provisioning?
+
+SCIM 2.0 endpoints are at `/api/v1/scim/v2/Users` and `/api/v1/scim/v2/Groups`.
+
+1. Create a service account with SCIM permissions
+2. Generate a bearer token for the SCIM client
+3. Configure your SCIM client (Okta, Azure AD, Workday):
+   - SCIM URL: `https://your-ggid.example.com/scim/v2/Users`
+   - Auth: Bearer token
+   - User filter mapping: `userName` → `email`
+
+### Q: Does SCIM support PATCH operations?
+
+Yes. PATCH follows RFC 7644. The `patchUser` handler uses the `ApplyPatch` engine for replace, add, and remove operations on user attributes.
+
+### Q: How does SCIM deprovisioning work?
+
+When a SCIM client sends `DELETE /scim/v2/Users/{id}` or `PATCH { active: false }`:
+1. User's `active` flag is set to false
+2. All active sessions are revoked (Redis)
+3. All refresh tokens are invalidated
+4. User cannot authenticate
+5. Webhook `user.deleted` or `user.suspended` is emitted
+
+### Q: Why am I getting 404 on SCIM endpoints?
+
+The SCIM endpoints are registered at `/scim/v2/` under the Identity service. If accessing through the gateway, the full path is `/api/v1/scim/v2/Users`. The gateway must have the route configured.
+
+---
+
+## Docker Deployment
+
+### Q: How do I start the full stack?
+
+```bash
+cd deploy && docker compose up -d
+sleep 30  # wait for healthchecks
+bash deploy/e2e-docker-test.sh  # verify 11/11 tests pass
+```
+
+### Q: Why is the NATS healthcheck failing?
+
+NATS must start with the `-m 8222` flag to enable the monitoring endpoint:
+
+```yaml
+nats:
+  command: ["-m", "8222"]
+```
+
+Without this, the healthcheck at `http://localhost:8222/healthz` returns connection refused.
+
+### Q: Why does auth return 429 after a few login attempts?
+
+The auth service rate limits after ~5 failed login attempts per IP within a short window. This is working as designed to prevent brute force attacks.
+
+To clear the rate limit during development:
+```bash
+docker compose restart auth
+```
+
+### Q: Why does register return 500 instead of 409 for duplicate emails?
+
+This was a bug. The auth handler reads the `username` field (not `email`) as the credential identifier. When `username` is empty, all registrations conflict on an empty key.
+
+**Fix**: Always include a unique `username` field in the registration payload.
+
+### Q: Why does create role return 500?
+
+The roles table has `UNIQUE(tenant_id, key)`. An empty `key` conflicts with existing roles.
+
+**Fix**: Always provide a unique `key` field:
+```json
+{ "name": "Editor", "key": "editor" }
+```
+
+### Q: Policy/Org/Audit containers won't start — DB connection error
+
+These services use individual DB environment variables (`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`), NOT `DATABASE_URL`. Make sure all 5 variables are set in docker-compose.yml.
+
+---
+
+## OAuth / OIDC
+
+### Q: How do I configure SSO with Azure AD?
+
+1. Register an app in Azure AD
+2. Get the client ID and client secret
+3. Configure GGID as a relying party:
+   ```
+   OAUTH_CLIENT_ID=<azure-client-id>
+   OAUTH_CLIENT_SECRET=<azure-client-secret>
+   OAUTH_ISSUER=https://login.microsoftonline.com/<tenant>/v2.0
+   ```
+4. Users authenticate at `/api/v1/oauth/authorize?client_id=<id>&redirect_uri=<url>`
+
+### Q: Does GGID support PKCE?
+
+Yes. PKCE (Proof Key for Code Exchange) is **mandatory** in OAuth 2.1. All authorization code flows require a code challenge and verifier.
+
+### Q: How does token introspection work?
+
+`POST /api/v1/oauth/introspect` accepts a client credentials or bearer token and returns the token's active status, scopes, and expiration in RFC 7662 format.
+
+### Q: Can I use DPoP (RFC 9449)?
+
+Yes. GGID validates DPoP proof JWTs for sender-constrained tokens. Include a `DPoP` header with the signed JWT proof on token requests.
+
+---
+
+## Audit & Compliance
+
+### Q: How long are audit events retained?
+
+Default retention is 90 days. Configure via the `AUDIT_RETENTION_DAYS` environment variable. Events older than the retention period are automatically deleted.
+
+### Q: Can I export audit events?
+
+Yes. Use the Audit API:
+
+```bash
+curl ".../api/v1/audit/events?from=2025-01-01&to=2025-07-11&format=csv" \
+  -H "Authorization: Bearer <JWT>" \
+  -o audit_export.csv
+```
+
+### Q: Are audit events tamper-proof?
+
+Currently, audit events are stored in PostgreSQL without cryptographic chaining. A hash chain is planned that would make modification detectable.
+
+### Q: Can I forward audit events to a SIEM?
+
+Yes. Configure a webhook with security event types (`auth.login_failed`, `auth.account_locked`). See the [Webhook Guide](webhook-guide.md) for SIEM integration examples (Splunk, ELK, Datadog).
+
+---
+
+*Last updated: 2025-07-11*
