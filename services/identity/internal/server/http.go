@@ -83,6 +83,11 @@ func (h *HTTPHandler) registerRoutes() {
 	// Enhanced user search
 	h.mux.HandleFunc("/api/v1/users/search", h.handleUserSearch)
 
+	// JIT provisioning
+	h.mux.HandleFunc("/api/v1/users/jit-provision", func(w http.ResponseWriter, r *http.Request) {
+		h.handleJITProvision(r.Context(), w, r)
+	})
+
 	// User lifecycle automation
 	h.mux.HandleFunc("/api/v1/users/lifecycle/rules", h.handleLifecycleRules)
 }
