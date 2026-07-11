@@ -349,7 +349,7 @@ export default function PermissionsPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-gray-500">Loading permissions...</p>
+        <p className="text-gray-500 dark:text-gray-400">Loading permissions...</p>
       </div>
     );
   }
@@ -440,7 +440,7 @@ export default function PermissionsPage() {
           return (
             <div
               key={group.service}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
+              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800-sm dark:border-gray-700 dark:bg-gray-800"
             >
               {/* Service header */}
               <div

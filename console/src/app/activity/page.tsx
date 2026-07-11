@@ -168,8 +168,8 @@ export default function ActivityLogPage() {
         <div className="flex items-center gap-3">
           <Activity className="h-7 w-7 text-brand-600" />
           <div>
-            <h1 className="text-2xl font-bold">Activity Log</h1>
-            <p className="text-sm text-gray-500">Your personal activity history</p>
+            <h1 className="text-2xl font-bold dark:text-gray-100">Activity Log</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Your personal activity history</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -260,7 +260,7 @@ export default function ActivityLogPage() {
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+      <div className="overflow-x-auto overflow-hidden rounded-xl border border-gray-200 bg-white shadow dark:border-gray-700 dark:bg-gray-800-sm dark:border-gray-700 dark:bg-gray-900">
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">

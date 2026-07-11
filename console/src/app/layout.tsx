@@ -1,14 +1,25 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Sidebar } from "@/components/sidebar";
 import { AuthGuard } from "@/components/auth-guard";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { ToastProvider } from "@/components/Toast";
+import PWARegister from "@/components/PWARegister";
 
 export const metadata: Metadata = {
   title: "GGID Console",
   description: "GGID Identity & Access Management Console",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "GGID Console",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({
@@ -24,6 +35,7 @@ export default function RootLayout({
         }} />
       </head>
       <body>
+        <PWARegister />
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
