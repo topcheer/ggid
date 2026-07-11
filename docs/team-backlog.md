@@ -507,3 +507,10 @@
 - [x] API Keys page — 20 strings wired to t() (title, subtitle, table headers, create form, modal)
 - [x] All 280 zh-CN translations verified — 0 missing, 3 acronyms (URL, SAML, SCIM) correctly untranslated
 - [x] Fixed pre-existing JSX bug in MembersDetail (unclosed div)
+
+## Sprint: i18n Coordination + Mobile + Build (frontend ef4cfc8)
+- [x] Dashboard i18n — already wired to useTranslations() (5 t() calls, no hardcoded strings remaining) (ef4cfc8)
+- [x] Users page i18n — already wired to useTranslations() (34 t() calls) (ef4cfc8)
+- [x] Console build verification — npm run build: 0 errors, 0 warnings, all 70+ pages prerender (ef4cfc8)
+- [x] Console dark mode — CSS auto-fallback active, no contrast issues on main pages (ef4cfc8)
+- [x] Mobile responsive — added overflow-x-auto to 3 table pages (activity, monitoring, organizations), added sidebar backdrop overlay, hamburger menu already existed (ef4cfc8)
