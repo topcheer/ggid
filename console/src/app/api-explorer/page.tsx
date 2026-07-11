@@ -40,6 +40,25 @@ export default function APIExplorerPage() {
   ]);
   const [responses, setResponses] = useState<Record<string, { status: number; body: string; time: number }>>({});
   const [loading, setLoading] = useState<string | null>(null);
+  const [snippets, setSnippets] = useState<Record<string, string>>({});
+
+  const generateSnippet = (ep: Endpoint, lang: string): string => {
+    const url = `${API_BASE}${ep.path}`;
+    const hdrs = ep.headers.filter(h => h.key).map(h => `-H '${h.key}: ${h.value}'`).join(" ");
+    switch (lang) {
+      case "curl":
+        return ep.method === "GET"
+          ? `curl -X ${ep.method} '${url}' ${hdrs} -H 'Authorization: Bearer <JWT>'`
+          : `curl -X ${ep.method} '${url}' ${hdrs} -H 'Authorization: Bearer <JWT>' -H 'Content-Type: application/json' -d '${ep.body}'`;
+      case "javascript":
+        return `const res = await fetch('${url}', {\n  method: '${ep.method}',\n  headers: { 'Authorization': 'Bearer <JWT>', ${ep.headers.map(h => `'${h.key}': '${h.value}'`).join(", ")} },${ep.body ? `\n  body: JSON.stringify(${ep.body}),` : ""}\n});\nconst data = await res.json();\nconsole.log(data);`;
+      case "python":
+        return `import requests\n\nresp = requests.${ep.method.toLowerCase()}(\n    '${url}',\n    headers={'Authorization': 'Bearer <JWT>', ${ep.headers.map(h => `'${h.key}': '${h.value}'`).join(", ")}},${ep.body ? `\n    json=${ep.body},` : ""}\n)\nprint(resp.json())`;
+      case "go":
+        return `req, _ := http.NewRequest("${ep.method}", "${url}", nil)\nreq.Header.Set("Authorization", "Bearer <JWT>")\n${ep.headers.map(h => `req.Header.Set("${h.key}", "${h.value}")`).join("\n")}\nclient := &http.Client{}\nresp, _ := client.Do(req)\ndefer resp.Body.Close()`;
+      default: return "";
+    }
+  };
 
   const addEndpoint = () => {
     const id = String(Date.now());
@@ -221,6 +240,27 @@ export default function APIExplorerPage() {
                   />
                 </div>
               )}
+
+              {/* Code Snippet Generator */}
+              <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-700">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Code Snippet</span>
+                  <div className="flex gap-1 ml-auto">
+                    {["curl", "javascript", "python", "go"].map(lang => (
+                      <button key={lang} onClick={() => {
+                        const newSnippets = { ...snippets };
+                        newSnippets[ep.id] = lang;
+                        setSnippets(newSnippets);
+                      }} className={`px-2 py-0.5 text-[10px] font-medium rounded transition ${snippets[ep.id] === lang ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"}`}>
+                        {lang === "javascript" ? "JS" : lang.charAt(0).toUpperCase() + lang.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <pre className="max-h-48 overflow-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100 dark:bg-black">
+                  {generateSnippet(ep, snippets[ep.id] || "curl")}
+                </pre>
+              </div>
 
               {/* Response */}
               {responses[ep.id] && (
