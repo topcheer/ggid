@@ -88,6 +88,7 @@ func (h *HTTPHandler) registerRoutes() {
 		h.handleJITProvision(r.Context(), w, r)
 	})
 	h.mux.HandleFunc("/api/v1/users/by-attribute", h.handleUserByAttribute)
+	h.mux.HandleFunc("/api/v1/users/provision-webhook", h.handleProvisionWebhook)
 	h.mux.HandleFunc("/api/v1/users/attribute-history", func(w http.ResponseWriter, r *http.Request) {
 		uid := uuid.MustParse(r.URL.Query().Get("user_id"))
 		h.handleAttributeHistory(r.Context(), uid, w, r)

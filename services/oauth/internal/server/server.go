@@ -1180,6 +1180,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/par", handlePAR)
 	mux.HandleFunc("/api/v1/oauth/par/", handlePAR)
 	mux.HandleFunc("/api/v1/oauth/scopes", handleScopesI18n)
+	mux.HandleFunc("/api/v1/oauth/scopes/hierarchy", handleScopeHierarchy)
 
 	// JWKS key rotation
 	mux.HandleFunc("/api/v1/oauth/jwks/rotate", func(w http.ResponseWriter, r *http.Request) {
