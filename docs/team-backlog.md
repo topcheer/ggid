@@ -692,3 +692,11 @@
 - [x] Branding backend: settings/branding/page.tsx GET loader tries /api/v1/tenants/current/branding → /api/v1/settings/branding → localStorage fallback chain. POST already saved to /api/v1/settings/branding. (6eb7070)
 - [x] Error handling: existing ToastProvider in layout.tsx, parseApiError in api.ts with status maps. All new pages have try/catch with friendly error messages. (6eb7070)
 - [x] make test: 0 FAIL, npm run build: 0 errors
+
+## Sprint: PWA + branding verification + dark mode audit (frontend 4979d41)
+- [x] npm run build: 0 errors, all routes compile (4979d41)
+- [x] Branding backend: GET loader chain connected (/api/v1/tenants/current/branding → /api/v1/settings/branding → localStorage), POST saves to /api/v1/settings/branding (4979d41)
+- [x] Dark mode: activity/page.tsx + permissions/page.tsx dark: classes added. All pages now have dark: coverage. (4979d41)
+- [x] PWA support: manifest.json (standalone, themeColor, shortcuts), service worker (cache-first static, network-first API), PWARegister component in layout, appleWebApp meta tags (4979d41)
+- [x] Page dedup: apikeys/page.tsx → redirect to settings/api-keys (was 450-line dup). oauth-clients already redirected. (4979d41)
+- NOTE: ~500 hardcoded English strings remain in low-traffic pages (saml, exports, activity, permissions, notifications/preview). These are secondary pages not in main sidebar navigation. Core pages (dashboard, users, roles, all settings/*) are fully i18n'd with 827 keys.
