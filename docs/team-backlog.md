@@ -95,6 +95,10 @@
 - [x] Wire pii.Obfuscate() in auth/oauth handlers — obfuscateForLog/obfuscateEmail (f5b8f2c)
 - [x] Auth service coverage tests — 10 tests (f5b8f2c — coverage_auth_test.go)
 - [x] OAuth CIBA flow tests — 9 tests (f5b8f2c — ciba_flow_test.go)
+- [x] Wire RotatingKeyProvider into OAuth startup — 24h grace + ticker (fb29546)
+- [x] gRPC TLS config (P0) — pkg/transport/tlsconfig.go LoadServerTLS/LoadClientTLS/LoadMutualTLS (fb29546)
+- DUPLICATE: Token exchange RFC 8693 tests — already 8 tests in coverage_boost2/3, sprint14_test.go
+- DUPLICATE: DPoP proof verification tests — already 15 tests in dpop_test.go
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
