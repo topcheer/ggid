@@ -235,6 +235,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password-breach/notify", h.handlePasswordBreachNotify)
 	h.mux.HandleFunc("/api/v1/auth/detect-credential-stuffing", h.handleDetectCredentialStuffing)
 	h.mux.HandleFunc("/api/v1/auth/adaptive-mfa/evaluate", h.handleAdaptiveMFA)
+	h.mux.HandleFunc("/api/v1/auth/biometric/enroll", h.handleBiometricEnroll)
+	h.mux.HandleFunc("/api/v1/auth/biometric/verify", h.handleBiometricVerify)
 	h.mux.HandleFunc("/api/v1/auth/sessions/stream", h.handleSessionStream)
 	h.mux.HandleFunc("/api/v1/auth/password-history-check", h.handlePasswordHistoryCheck)
 }

@@ -72,6 +72,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/risk-score", s.handleRiskScore)
 	mux.HandleFunc("/api/v1/policies/abac/export", s.handleABACExportImport)
 	mux.HandleFunc("/api/v1/policies/abac/import", s.handleABACExportImport)
+	mux.HandleFunc("/api/v1/policies/time-based", s.handleTimeBased)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }
