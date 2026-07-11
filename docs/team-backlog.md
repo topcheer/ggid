@@ -274,7 +274,11 @@
 - [x] QA fix: go-sdk.md, node-sdk.md, sdk-quickstart.md — Fixed SDK API mismatches (NewVerifier→New, expressAuth)
 - [x] QA fix: express.md, gin.md integration guides — Updated to match actual SDK exports
 - [x] QA fix: developer-onboarding.md, 5-minute-jwt.md — Fixed SDK snippets and io.Reader bug
-> 188 docs total. All major topics covered.
+- [x] docs/quickstart/3-line-integration.md — 3-line JWT auth for Go/Node/Python/Java
+- [x] README.md polish — Added 3-line integration section, updated doc links to latest paths
+- [x] docs/api/error-codes.md — Verified complete (57 error codes, all services)
+- [x] docs/deploy/production-checklist.md — Verified complete (119 lines, TLS/DB/Redis/NATS/Auth)
+> 189 docs total. All major topics covered.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)

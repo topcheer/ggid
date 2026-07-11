@@ -110,6 +110,33 @@ npm run dev
 # Open http://localhost:3000
 ```
 
+## 3-Line Integration
+
+Add GGID JWT auth to any backend:
+
+**Go:**
+```go
+client := ggid.New("http://localhost:8080", ggid.WithJWKS(15*time.Minute))
+userInfo, _ := client.VerifyToken(ctx, token)
+// userInfo.UserID, userInfo.TenantID, userInfo.Roles
+```
+
+**Node.js:**
+```javascript
+app.use(expressAuth({ jwksUrl: '.../.well-known/jwks.json', issuer: '...' }));
+const claims = getClaims(req); // claims.sub, claims.tenant_id
+```
+
+**Python:**
+```python
+client = GGIDClient(gateway_url="http://localhost:8080", tenant_id="...")
+claims = await client.verify_token(token)
+```
+
+Full examples: [3-Line Integration Guide](docs/quickstart/3-line-integration.md)
+
+---
+
 ## Features
 
 - **Authentication** — Password (Argon2id), MFA (TOTP + WebAuthn/Passkey + Email OTP), Magic Link, LDAP/AD
@@ -146,26 +173,29 @@ npm run dev
 
 | Document | Description |
 |----------|-------------|
-| [Quick Start](docs/quick-start.md) | 5-min guide: Docker → register → login → JWT |
-| [Integration Guide](docs/integration-guide.md) | Third-party developer integration (SDK + JWT + middleware) |
+| [3-Line Integration](docs/quickstart/3-line-integration.md) | Add JWT auth in 3 lines: Go, Node.js, Python, Java |
+| [5-Minute JWT Quickstart](docs/quickstart/5-minute-jwt.md) | Docker → register → login → JWT |
+| [Docker 5-Minute](docs/quickstart/docker-5-min.md) | Zero to authenticated API call with Docker Compose |
+| [SDK Quickstart](docs/quickstart/sdk-quickstart.md) | All 4 SDKs side-by-side: Go, Node, Python, Java |
+| [Developer Onboarding](docs/quickstart/developer-onboarding.md) | 8-step onboarding: clone → build → first API call |
+| [Doc Index](docs/INDEX.md) | Complete catalog of all 362 docs |
 | [OpenAPI Spec](docs/openapi.yaml) | Complete REST API reference (Swagger/OpenAPI 3.1) |
-| [API Examples](docs/api-examples.md) | curl examples for every endpoint |
-| [SDK Guide](docs/sdk-guide.md) | Go / Node.js / Java / Python side-by-side comparison |
-| [Deployment Guide](docs/deployment.md) | Production deployment (Docker, K8s, TLS, backup) |
-| [Security Hardening](docs/security-hardening.md) | Production security checklist |
-| [Security Audit](docs/security-audit-checklist.md) | OWASP Top 10 alignment |
-| [Performance Tuning](docs/performance.md) | DB indexing, connection pools, pprof |
-| [Migration Guide](docs/migration-guide.md) | Auth0 / Keycloak → GGID |
-| [Troubleshooting](docs/troubleshooting.md) | Common issues and fixes |
-| [Plugin Development](docs/plugin-development.md) | Auth hooks and webhooks |
-| [Console Guide](docs/console-guide.md) | Admin Console user manual |
-| [Developer Guide](docs/developer-guide.md) | Code structure, testing, PR workflow |
-| [Contributing](docs/contributing-quickstart.md) | 5-min contributor quick start |
-| [Testing Guide](docs/testing-guide.md) | Unit / integration / E2E / k6 |
+| [API Reference](docs/api-reference.md) | All 78+ endpoints across 7 services |
+| [API Error Codes](docs/api/error-codes.md) | 57 error codes with HTTP status and fixes |
+| [Integration Guides](docs/integration-guides/) | Express.js, Gin, Spring Boot |
+| [Code Examples](docs/examples/) | Full runnable Express.js and Go backend demos |
+| [RBAC Guide](docs/guides/role-based-access.md) | Roles, permissions, hierarchy, policy check |
+| [ABAC Guide](docs/guides/abac-policy.md) | Attribute-based policies, dry-run, compliance |
+| [Deployment Guide](docs/deploy/) | Docker, K8s, K3s, bare metal, Helm |
+| [Production Checklist](docs/deploy/production-checklist.md) | Pre-flight checklist for go-live |
+| [Security Hardening](docs/guides/security-hardening.md) | Production security checklist |
+| [Performance Tuning](docs/performance-tuning.md) | Benchmark results, pool sizing, profiling |
+| [Migration Guide](docs/migration-from-auth0.md) | Auth0 / Keycloak / Clerk → GGID |
+| [CHANGELOG](docs/CHANGELOG.md) | Notable changes by version |
+| [Architecture](docs/architecture/overview.md) | System diagram, service responsibilities |
+| [Design Docs](docs/design/) | RLS, NATS audit, policy engine, zero-trust |
+| [Contributing](docs/contributing.md) | How to contribute — code style, PR process |
 | [FAQ](docs/faq.md) | Frequently asked questions |
-| [Changelog](docs/CHANGELOG.md) | v1.0 release notes |
-| [ADRs](docs/adr/) | Architecture Decision Records |
-| [Design Docs](docs/design/) | RLS, NATS audit, policy engine designs |
 
 ## Architecture
 
