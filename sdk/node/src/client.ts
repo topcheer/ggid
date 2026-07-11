@@ -195,6 +195,87 @@ export class GGIDClient {
   }
 
   // ---------------------------------------------------------------------------
+  // OAuth/OIDC
+  // ---------------------------------------------------------------------------
+
+  /** Fetch the OpenID Connect discovery document. */
+  async getOIDCDiscovery(): Promise<Record<string, unknown>> {
+    return this.request('GET', '/.well-known/openid-configuration');
+  }
+
+  /** Fetch the JWKS for token verification. */
+  async getJWKS(): Promise<{ keys: Array<Record<string, unknown>> }> {
+    return this.request('GET', '/oauth/jwks');
+  }
+
+  /** Fetch UserInfo for an access token. */
+  async getUserInfo(accessToken: string): Promise<Record<string, unknown>> {
+    return this.requestWithToken('GET', '/oauth/userinfo', undefined, accessToken);
+  }
+
+  /** Register an OAuth client via RFC 7591 dynamic registration. */
+  async registerOAuthClient(input: {
+    client_name: string;
+    redirect_uris: string[];
+    grant_types?: string[];
+    response_types?: string[];
+    scope?: string;
+  }): Promise<{ client_id: string; client_secret?: string }> {
+    return this.request('POST', '/api/v1/oauth/register', input);
+  }
+
+  /** List OAuth clients for the current tenant. */
+  async listOAuthClients(accessToken: string): Promise<unknown[]> {
+    return this.requestWithToken('GET', '/api/v1/oauth/clients', undefined, accessToken);
+  }
+
+  /** Delete an OAuth client. */
+  async deleteOAuthClient(accessToken: string, clientId: string): Promise<void> {
+    return this.requestWithToken('DELETE', `/api/v1/oauth/clients/${clientId}`, undefined, accessToken);
+  }
+
+  /** Revoke a token (RFC 7009). */
+  async revokeToken(token: string): Promise<void> {
+    return this.request('POST', '/api/v1/oauth/revoke', { token });
+  }
+
+  /** Initiate device authorization flow (RFC 8628). */
+  async deviceAuthorization(clientId: string, scope: string): Promise<{
+    device_code: string;
+    user_code: string;
+    verification_uri: string;
+    expires_in: number;
+    interval: number;
+  }> {
+    return this.request('POST', '/api/v1/oauth/device_authorization', { client_id: clientId, scope });
+  }
+
+  /** Build an authorization URL with PKCE support. */
+  buildAuthorizeURL(opts: {
+    client_id: string;
+    redirect_uri: string;
+    response_type: string;
+    scope?: string;
+    state?: string;
+    nonce?: string;
+    code_challenge?: string;
+    code_challenge_method?: string;
+  }): string {
+    const params = new URLSearchParams();
+    params.set('client_id', opts.client_id);
+    params.set('redirect_uri', opts.redirect_uri);
+    params.set('response_type', opts.response_type);
+    if (opts.scope) params.set('scope', opts.scope);
+    if (opts.state) params.set('state', opts.state);
+    if (opts.nonce) params.set('nonce', opts.nonce);
+    if (opts.code_challenge) {
+      params.set('code_challenge', opts.code_challenge);
+      params.set('code_challenge_method', opts.code_challenge_method || 'S256');
+    }
+    return `${this.config.gatewayUrl}/oauth/authorize?${params.toString()}`;
+  }
+
+  // ---------------------------------------------------------------------------
   // Internal
   // ---------------------------------------------------------------------------
 
