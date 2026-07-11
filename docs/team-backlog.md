@@ -146,6 +146,11 @@
 - [x] Prometheus metrics naming test — metrics_test.go (669d026)
 - [x] Structured request logging with tenant_id+remote_addr — recovery.go RequestLogger (existing)
 - [x] WebSocket proxy support — wsproxy.go + wsproxy_enhanced.go (existing)
+- [x] Content-Type validator tests — content_type_validator_test.go 8 tests (21a2e0a)
+- [x] CORS preflight integration test — cors_integration_test.go 3 tests (21a2e0a)
+- [x] Bot detection integration test — botdetect_integration_test.go 2 tests (21a2e0a)
+- [x] WASM plugin tests — wasm_plugin_test.go (existing)
+- [x] /healthz/deep mock backend tests — healthcheck_deep_test.go 4 tests (existing)
 - [ ] Middleware coverage →92% (currently 88.3%)
 - [ ] API spec coverage audit — openapi.yaml vs router routes
 
