@@ -3,6 +3,32 @@
 > **Last updated**: 2025-01-24 by arch
 > **Rule**: Update this file when completing any item. Check here before assigning new work.
 
+## ⚠️ Backlog Maintenance Rules — ALL TEAM MEMBERS MUST FOLLOW
+
+### 1. 开工前 (Before starting work)
+- 读这个文件，确认你的任务还在 Outstanding 区
+- `ls` / `grep` 验证目标文件确实不存在
+
+### 2. 完成后 (After completing work) — 必须做
+- 把你的任务从 `- [ ]` 改成 `- [x]`
+- 加上 commit hash：`- [x] Task name (commit abc1234)`
+- 如果是新功能，在对应 P1/P2 区新增条目
+- `git add docs/team-backlog.md && git commit -m "docs: mark <task> done"`
+
+### 3. 发现重复时 (When finding duplicates)
+- 不要创建已存在的文件
+- 在 DM 中回复 "DUPLICATE: <task> already exists at <path>"
+- 不要写入任何内容
+
+### 4. 文件归属 (Ownership)
+- **dev**: services/oauth/, services/auth/
+- **uiux**: services/gateway/internal/middleware/
+- **arch**: pkg/, deploy/, sdk/, services/audit/, services/identity/
+- **frontend**: console/
+- **doc**: docs/ (except team-backlog.md)
+- **researcher**: docs/research/
+- **不要修改其他人的文件**，除非有明确协调
+
 ## P0 — Security (Critical)
 
 ### dev (OAuth/Auth security)
