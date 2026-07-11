@@ -141,6 +141,10 @@ export { useSessionRisk } from './useSessionRisk';
 export type { SessionRiskEntry, SessionRiskFactor, UseSessionRiskResult } from './useSessionRisk';
 export { useClientCerts } from './useClientCerts';
 export type { ClientCert, RotationResult, CertStatus, UseClientCertsResult } from './useClientCerts';
+export { useDeviceTrust } from './useDeviceTrust';
+export type { DeviceTrustEntry, PosturePolicy, PostureReport, UseDeviceTrustResult } from './useDeviceTrust';
+export { useResourceACL } from './useResourceACL';
+export type { ResourceACLRule, CreateACLInput, UseResourceACLResult } from './useResourceACL';
 export type {
   GGIDConfig,
   GGIDUser,
