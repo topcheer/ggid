@@ -89,6 +89,8 @@ export { useRoleTemplates } from './useRoleTemplates';
 export type { RoleTemplate, PermissionNode, ApplyResult, UseRoleTemplatesResult } from './useRoleTemplates';
 export { useEventCorrelation } from './useEventCorrelation';
 export type { CorrelationRule, CorrelationSeverity, CorrelatedGroup, CreateCorrelationRuleInput, CorrelateResult, UseEventCorrelationResult } from './useEventCorrelation';
+export { useDeprovisioning } from './useDeprovisioning';
+export type { DeprovisionResult, DeprovisionHistoryEntry, DeprovisionInput, UseDeprovisioningResult } from './useDeprovisioning';
 export type {
   GGIDConfig,
   GGIDUser,
