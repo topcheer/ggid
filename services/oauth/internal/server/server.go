@@ -934,6 +934,35 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusOK, map[string]string{"status": "approved"})
 	})
 
+	// PAR (RFC 9126) — Pushed Authorization Request
+	mux.HandleFunc("/oauth/par", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		if err := r.ParseForm(); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid form data"})
+			return
+		}
+		req := &service.PushedAuthorizationRequest{
+			ClientID:            r.Form.Get("client_id"),
+			ClientSecret:        r.Form.Get("client_secret"),
+			RedirectURI:         r.Form.Get("redirect_uri"),
+			ResponseType:        r.Form.Get("response_type"),
+			Scope:               r.Form.Get("scope"),
+			State:               r.Form.Get("state"),
+			Nonce:               r.Form.Get("nonce"),
+			CodeChallenge:       r.Form.Get("code_challenge"),
+			CodeChallengeMethod: r.Form.Get("code_challenge_method"),
+		}
+		resp, err := oauthSvc.PushAuthorizationRequest(r.Context(), req)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusCreated, resp)
+	})
+
 	// Front-channel logout
 	mux.HandleFunc("/api/v1/oauth/frontchannel-logout", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

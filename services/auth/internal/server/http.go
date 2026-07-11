@@ -223,6 +223,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/webauthn/conditional", h.handleConditionalUI)
 	h.mux.HandleFunc("/api/v1/notifications/send", h.handleSendNotification)
 	h.mux.HandleFunc("/api/v1/auth/expiry-status", h.handleExpiryStatus)
+	h.mux.HandleFunc("/api/v1/auth/password-breach-check", h.handleBreachCheck)
 }
 
 // ServeHTTP implements http.Handler.

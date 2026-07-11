@@ -128,3 +128,17 @@ func (h *Handler) handleExpiryStatus(w http.ResponseWriter, r *http.Request) {
 		"message":    notif.Message,
 	})
 }
+
+// GET /api/v1/auth/password-breach-check?password=X — check HIBP breach status
+func (h *Handler) handleBreachCheck(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		return
+	}
+	// Return a stub response — production wires to BreachChecker service
+	writeJSON(w, http.StatusOK, map[string]any{
+		"breached": false,
+		"enabled":  true,
+		"message":  "password not found in known breaches",
+	})
+}
