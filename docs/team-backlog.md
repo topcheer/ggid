@@ -62,6 +62,8 @@
 - [x] Tenant spoofing fix (5bcbfce)
 - [x] Webhook SSRF protection (b52bafd)
 - [x] Audit hash chain implementation (fe5b025 — hash_chain.go)
+- [x] Audit hash chain wired into service startup (74f7feb — AUDIT_HASH_CHAIN_SECRET env var)
+- [x] Audit hash chain wired into service startup (74f7feb — SetHashChainSecret + AUDIT_HASH_CHAIN_SECRET env)
 - [ ] gRPC TLS/mTLS between services
 - [x] JWT key persistence + kid header (loadOrCreatePrivateKey + kid in JWT)
 - [x] JWKS endpoint (oauth /oauth/jwks)
@@ -187,8 +189,8 @@
 - [x] Docker multi-stage build (deploy/)
 - [x] Prometheus /metrics for all services (122873e)
 - [x] Structured logging slog for gateway (122873e)
-- [x] CI/CD pipeline (GitHub Actions — ci.yml, coverage.yml, release.yml)
-- [x] Helm chart for Kubernetes (deploy/helm/ggid/ — 12 templates: deployments, services, ingress, HPA, PDB, networkpolicy, secrets, configmap)
+- [x] CI/CD pipeline (GitHub Actions — ci.yml, coverage.yml, release.yml) (commit 22c6e5f)
+- [x] Helm chart for Kubernetes (deploy/helm/ggid/ — 12 templates) (commit 22c6e5f)
 - [ ] OpenTelemetry integration (otel middleware exists in gateway, needs distributed tracing setup)
 
 ## P2 — Quality & Polish
