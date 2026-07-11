@@ -759,3 +759,23 @@
 
 ### In Progress
 - [x] IGA Workflows — DONE (43d9956). Access request domain, 14 tests, 4 HTTP endpoints, gateway routing, Console UI.
+
+## Sprint: Gap Closure Q3 2026 — PM-Driven (2026-07-11)
+> Source: docs/research/gap-closure-report.md TODO/PARTIAL items + new strategic gaps
+
+### Research Tasks (docs/researcher)
+- [ ] **Gap #24 React SDK design** — docs/research/react-sdk-design.md. Auth0/Clerk/Ory SDK analysis, GGID API design
+- [ ] **Gap #18 SIEM connector analysis** — docs/research/siem-connector-analysis.md. Splunk HEC/Datadog/Elasticsearch, NATS bridge design
+- [ ] **Gap #26 Data retention analysis** — docs/research/data-retention-analysis.md. PostgreSQL partitioning, GDPR, TTL enforcement
+- [ ] **NEW-5 Device-Bound SSO analysis** — docs/research/device-bound-sso-analysis.md. Auth0 approach, WebAuthn extension plan
+- [ ] **NEW-3 Bot Protection audit** — docs/research/bot-protection-analysis.md (update if exists). botdetect.go vs Auth0 Attack Protection
+
+### Implementation Tasks (backend/dev)
+- [ ] **Gap #26 Data retention API** — services/audit/internal/retention/retention.go. RetentionPolicy, PUT/GET /api/v1/audit/retention
+- [ ] **Gap #18 SIEM Forwarder** — pkg/audit/siem_forwarder.go. NATS subscriber → Splunk HEC / Datadog HTTP API
+- [ ] **NEW-5 Device-Bound SSO skeleton** — services/oauth/internal/service/device_bound_sso.go. Interface + TODO
+
+### Implementation Tasks (frontend)
+- [ ] **Gap #24 React SDK** — sdk/react/ directory. GGIDProvider, useAuth hook, ProtectedRoute, token management
+- [ ] **Gap #26 Console Data Retention page** — console/src/app/settings/data-retention/page.tsx
+- [ ] **Gap #18 Console SIEM Integration page** — console/src/app/settings/siem/page.tsx
