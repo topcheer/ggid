@@ -2,7 +2,7 @@
 
 ## P0 — Security Debt
 
-### Resolved (12)
+### Resolved (14)
 - [x] CSRF token predictable entropy → crypto/rand (arch 29b51c1)
 - [x] Rate limiter not wired into handler chain (arch fc20c41)
 - [x] SecurityHeaders not wired into handler chain (arch 64991a6)
@@ -15,15 +15,16 @@
 - [x] JWT jti not tracked — tokens replayable (dev 72edaa5)
 - [x] Webhook HTTPDeliverer SSRF — SSRF-safe transport (arch b52bafd)
 - [x] Audit hash chain — HMAC-SHA256 tamper detection (arch fe5b025)
+- [x] Host header validation — host_validation.go (uiux)
+- [x] Access token scope claim — issueAccessToken scope param (dev — in progress)
 
-### Outstanding (8)
-- [ ] OAuth introspection endpoint has NO AUTH (server.go:545)
-- [ ] No Host header validation (DNS rebinding)
+### Outstanding (6)
+- [ ] OAuth introspection endpoint has NO AUTH (server.go)
 - [ ] gRPC plaintext between all services
-- [ ] No audit hash chain
 - [ ] No database backup automation
 - [ ] 5/6 WebAuthn attestation formats unverified
-- [ ] No password pepper
+- [ ] No password pepper (pepper.go exists, not wired)
+- [ ] No JWT signing key rotation infrastructure
 
 ## P1 — Architecture Debt
 
