@@ -83,12 +83,19 @@ export function Sidebar() {
   return (
     <>
       {collapsed && (
-        <button
-          onClick={() => setCollapsed(false)}
-          className="fixed left-4 top-4 z-50 rounded-lg border border-gray-200 bg-white p-2 shadow-md dark:border-gray-700 dark:bg-gray-800 md:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <>
+          <button
+            onClick={() => setCollapsed(false)}
+            className="fixed left-4 top-4 z-50 rounded-lg border border-gray-200 bg-white p-2 shadow-md dark:border-gray-700 dark:bg-gray-800 md:hidden"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          {/* Mobile backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            onClick={() => setCollapsed(false)}
+          />
+        </>
       )}
     <aside
       className={`${collapsed ? "hidden" : "flex"} flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 md:flex lg:flex`}

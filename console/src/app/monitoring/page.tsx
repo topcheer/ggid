@@ -131,8 +131,9 @@ export default function MonitoringPage() {
         <div className="border-b border-gray-200 p-4">
           <h2 className="text-sm font-semibold">Service Health</h2>
         </div>
+        <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="border-b border-gray-100 bg-gray-50">
+          <thead className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
             <tr>
               <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Service</th>
               <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
@@ -166,6 +167,7 @@ export default function MonitoringPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Route stats */}

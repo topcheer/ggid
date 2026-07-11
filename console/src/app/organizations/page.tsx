@@ -703,6 +703,7 @@ function MembersDetail({
       ) : members.length === 0 ? (
         <p className="p-8 text-center text-gray-500">{t("orgs.noMembers")}</p>
       ) : (
+        <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="border-b border-gray-100 dark:border-gray-700 bg-gray-50">
             <tr>
@@ -998,14 +999,14 @@ function OrgTreeNode({
           href={`/organizations/${org.id}`}
           className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
         >
-          {t("orgs.viewDetails")}
+          View Details →
         </Link>
       </div>
 
       {/* Render children */}
       {isExpanded && isLoading && org.children.length === 0 && (
         <div style={{ paddingLeft: `${(depth + 1) * 24 + 12}px` }} className="py-2 text-xs text-gray-400">
-          {t("orgs.loadingChildren")}
+          Loading children...
         </div>
       )}
       {isExpanded &&
