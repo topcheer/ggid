@@ -28,8 +28,12 @@ curl http://localhost:8080/healthz
 ### Variables used below
 
 ```bash
+# Local Docker
 export GGID_URL="http://localhost:8080"
 export TENANT="00000000-0000-0000-0000-000000000001"
+
+# Or use K3s deployment
+# export GGID_URL="https://ggid.iot2.win"
 ```
 
 ---
@@ -41,14 +45,14 @@ export TENANT="00000000-0000-0000-0000-000000000001"
 curl -s -X POST $GGID_URL/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT" \
-  -d '{"username":"alice","email":"alice@example.com","password":"Secure1Pass!"}' | jq .
+  -d '{"username":"alice","email":"alice@example.com","password":"W3lcome-2025!"}' | jq .
 # → {"user_id":"usr_abc123","username":"alice",...}  (201 Created)
 
 # 2. Login → get JWT
 JWT=$(curl -s -X POST $GGID_URL/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: $TENANT" \
-  -d '{"username":"alice","password":"Secure1Pass!"}' | jq -r .access_token)
+  -d '{"username":"alice","password":"W3lcome-2025!"}' | jq -r .access_token)
 
 echo "JWT length: ${#JWT} chars"  # should be ~690 chars
 
@@ -85,7 +89,7 @@ func main() {
 
     // 1. Login
     body, _ := json.Marshal(map[string]string{
-        "username": "alice", "password": "Secure1Pass!",
+        "username": "alice", "password": "W3lcome-2025!",
     })
     resp, _ := http.Post(base+"/api/v1/auth/login",
         bytes.NewReader(body), )
@@ -116,7 +120,7 @@ const tenant = '00000000-0000-0000-0000-000000000001';
 const { access_token } = await fetch(`${base}/api/v1/auth/login`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': tenant },
-  body: JSON.stringify({ username: 'alice', password: 'Secure1Pass!' })
+  body: JSON.stringify({ username: 'alice', password: 'W3lcome-2025!' })
 }).then(r => r.json());
 
 // 2. Use JWT
