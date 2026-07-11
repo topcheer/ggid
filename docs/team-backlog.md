@@ -206,6 +206,7 @@
 - [x] Structured logging slog for gateway (122873e)
 - [x] CI/CD pipeline (GitHub Actions — ci.yml, coverage.yml, release.yml) (commit 22c6e5f)
 - [x] Helm chart for Kubernetes (deploy/helm/ggid/ — 12 templates) (commit 22c6e5f)
+- [x] SDK quickstart examples for Go/Node/Python/Java (dae3339 — sdk/examples/, 5-minute integration)
 - [ ] OpenTelemetry integration (otel middleware exists in gateway, needs distributed tracing setup)
 
 ## P2 — Quality & Polish
