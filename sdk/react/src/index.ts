@@ -217,6 +217,10 @@ export { usePrivilegedAccess } from './usePrivilegedAccess';
 export type { PrivilegedAccount } from './usePrivilegedAccess';
 export { useInactiveCleanup } from './useInactiveCleanup';
 export type { InactiveUser, CleanupAction } from './useInactiveCleanup';
+export { useStandingAccess } from './useStandingAccess';
+export type { StandingAccessEntry } from './useStandingAccess';
+export { useEvidenceExpiry } from './useEvidenceExpiry';
+export type { EvidenceItem } from './useEvidenceExpiry';
 export type {
   GGIDConfig,
   GGIDUser,
