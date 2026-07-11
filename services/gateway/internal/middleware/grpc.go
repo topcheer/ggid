@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -128,7 +128,7 @@ func (p *GRPCProxy) HandleConn(ctx context.Context, clientConn net.Conn, targetA
 
 	backendConn, err := net.DialTimeout("tcp", targetAddr, p.config.ConnectTimeout)
 	if err != nil {
-		log.Printf("grpc-proxy: dial backend %s error: %v", targetAddr, err)
+		slog.Error("grpc-proxy: dial backend error", "target", targetAddr, "err", err)
 		return
 	}
 	defer backendConn.Close()
@@ -182,21 +182,21 @@ func (p *GRPCProxy) GRPCHTTPHandler(next http.Handler) http.Handler {
 
 		clientConn, _, err := hj.Hijack()
 		if err != nil {
-			log.Printf("grpc-proxy: hijack error: %v", err)
+			slog.Error("grpc-proxy: hijack error", "err", err)
 			return
 		}
 		defer clientConn.Close()
 
 		backendConn, err := net.DialTimeout("tcp", targetAddr, p.config.ConnectTimeout)
 		if err != nil {
-			log.Printf("grpc-proxy: dial %s error: %v", targetAddr, err)
+			slog.Error("grpc-proxy: dial error", "target", targetAddr, "err", err)
 			return
 		}
 		defer backendConn.Close()
 
 		// Forward the original request to backend
 		if err := r.Write(backendConn); err != nil {
-			log.Printf("grpc-proxy: write to backend error: %v", err)
+			slog.Error("grpc-proxy: write to backend error", "err", err)
 			return
 		}
 

@@ -27,6 +27,7 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/service"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Server encapsulates the OAuth HTTP server.
@@ -140,6 +141,7 @@ func (s *Server) Run(ctx context.Context) error {
 // buildHandler creates the HTTP mux with all OAuth/OIDC endpoints.
 func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler {
 	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
 
 	// OIDC Discovery
 	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {

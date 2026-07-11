@@ -3,7 +3,7 @@ package middleware
 
 import (
 	"io"
-	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
@@ -47,7 +47,7 @@ func WebSocketProxy(target string) http.HandlerFunc {
 
 		clientConn, clientBuf, err := hj.Hijack()
 		if err != nil {
-			log.Printf("wsproxy: hijack error: %v", err)
+			slog.Error("wsproxy: hijack error", "err", err)
 			http.Error(w, "hijack failed", http.StatusInternalServerError)
 			return
 		}
@@ -56,7 +56,7 @@ func WebSocketProxy(target string) http.HandlerFunc {
 		// Dial backend
 		backendConn, err := net.DialTimeout("tcp", target, 10*time.Second)
 		if err != nil {
-			log.Printf("wsproxy: dial backend %s error: %v", target, err)
+			slog.Error("wsproxy: dial backend error", "target", target, "err", err)
 			// Write a simple HTTP error response to the client.
 			resp := "HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\n\r\n"
 			_, _ = clientConn.Write([]byte(resp))
@@ -67,7 +67,7 @@ func WebSocketProxy(target string) http.HandlerFunc {
 		// Forward the original HTTP upgrade request to the backend so that
 		// the backend WebSocket handshake completes correctly.
 		if err := r.Write(backendConn); err != nil {
-			log.Printf("wsproxy: write request to backend error: %v", err)
+			slog.Error("wsproxy: write request to backend error", "err", err)
 			return
 		}
 

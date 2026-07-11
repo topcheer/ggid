@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"bytes"
-	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -209,5 +209,5 @@ func readAll(r interface{ Read([]byte) (int, error) }) ([]byte, error) {
 	}
 }
 
-// Ensure log is used
-var _ = log.Printf
+// Ensure slog is used
+var _ = slog.Info

@@ -18,6 +18,7 @@ import (
 	"github.com/ggid/ggid/services/policy/internal/handler"
 	"github.com/ggid/ggid/services/policy/internal/repository"
 	httpserver "github.com/ggid/ggid/services/policy/internal/server"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ggid/ggid/services/policy/internal/service"
 	"google.golang.org/grpc"
 )
@@ -89,6 +90,7 @@ func main() {
 
 	// Start HTTP server (health + REST API for Console)
 	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))

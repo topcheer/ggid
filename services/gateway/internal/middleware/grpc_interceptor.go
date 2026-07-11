@@ -2,7 +2,8 @@ package middleware
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"os"
 	"strings"
 	"time"
 
@@ -59,7 +60,8 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 	// P0 Security: If RequireAuth is true but JWTSecret is empty, fail hard.
 	// Silent bypass when secret is empty is a critical vulnerability.
 	if cfg.RequireAuth && cfg.JWTSecret == "" {
-		log.Fatal("GRPCUnaryInterceptor: RequireAuth=true but JWTSecret is empty — refusing to start with silent auth bypass")
+		slog.Error("GRPCUnaryInterceptor: RequireAuth=true but JWTSecret is empty — refusing to start with silent auth bypass")
+		os.Exit(1)
 	}
 	tenantHeader := cfg.TenantHeader
 	if tenantHeader == "" {
@@ -103,7 +105,7 @@ func GRPCUnaryInterceptor(cfg *GRPCInterceptorConfig) grpc.UnaryServerIntercepto
 		if cfg.LogRequests {
 			duration := time.Since(start)
 			code := status.Code(err)
-			log.Printf("grpc: method=%s duration=%s code=%s", info.FullMethod, duration, code)
+			slog.Info("grpc request", "method", info.FullMethod, "duration", duration.String(), "code", code.String())
 		}
 
 		return resp, err

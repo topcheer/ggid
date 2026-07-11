@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/social"
@@ -47,6 +49,7 @@ func (h *Handler) registerRoutes() {
 	h.mux = http.NewServeMux()
 	h.mux.HandleFunc("/healthz", h.healthz)
 	h.mux.HandleFunc("/readyz", h.readyz)
+	h.mux.Handle("/metrics", promhttp.Handler())
 	h.mux.HandleFunc("/api/v1/auth/login", h.login)
 	h.mux.HandleFunc("/api/v1/auth/register", h.register)
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)

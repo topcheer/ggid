@@ -13,7 +13,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"math/big"
 	"net/http"
 	"os"
@@ -76,9 +76,13 @@ func Logging(next http.Handler) http.Handler {
 		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sr, r)
 		requestID, _ := r.Context().Value(RequestIDKey).(string)
-		log.Printf("%s %s %d %d %s req=%s",
-			r.Method, r.URL.Path, sr.status, sr.size,
-			time.Since(start), requestID)
+		slog.Info("request",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", sr.status,
+			"size", sr.size,
+			"duration_ms", time.Since(start).Milliseconds(),
+			"request_id", requestID)
 	})
 }
 
@@ -371,7 +375,7 @@ func NewJWKSClient(jwksURL, publicKeyPath string) (*JWKSClient, error) {
 	if jwksURL != "" {
 		// Try initial JWKS fetch; fall back to static key on error
 		if err := c.refreshJWKS(); err != nil {
-			log.Printf("warning: initial JWKS fetch failed: %v (using static key)", err)
+			slog.Warn("initial JWKS fetch failed, using static key", "err", err)
 		}
 	}
 
@@ -389,7 +393,7 @@ func (c *JWKSClient) StartRefresh(ctx context.Context, interval time.Duration) {
 				return
 			case <-ticker.C:
 				if err := c.refreshJWKS(); err != nil {
-					log.Printf("JWKS refresh error: %v", err)
+						slog.Error("JWKS refresh error", "err", err)
 				}
 			}
 		}
