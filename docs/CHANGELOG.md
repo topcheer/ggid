@@ -7,6 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added
+
+#### Documentation (40+ docs)
+- Architecture Decisions (ADRs): 15 decisions with Context/Decision/Consequences
+- Security Architecture: trust boundaries, defense in depth, JWT flow, tenant isolation, incident response
+- Developer Environment: prerequisites, VS Code config, debugging tips, common errors
+- RBAC Guide: role hierarchy, permission model, RBAC+ABAC evaluation, common patterns
+- Webhook Guide: registration, 25+ event types, HMAC verification (Node/Python/Go), SSRF protection
+- API Gateway Guide: reverse proxy, route table, middleware chain, tenant injection, circuit breaker
+- API Reference expanded (+292 lines): Policy/ABAC, Tenant, Session, Notification, Webhook Delivery endpoints
+- Multi-Tenancy expanded (+276 lines): tenant CRUD, migration patterns, per-tenant rate limiting
+- 15+ security research documents (CIBA, back-channel logout, SAML metadata, MFA bypass, DPoP, etc.)
+
+#### Console (Admin UI)
+- Branding page: logo upload, 3-color picker, live preview
+- Webhook tester with real-time delivery inspection
+- User activity timeline with session history
+- API explorer with interactive endpoint testing
+- Certificate manager page
+- Notification preview page
+- Enhanced OAuth consent screen with history and custom text
+- Enhanced impersonation with audit trail and history
+- Access keys with scoped secrets and IP binding
+- Enhanced group management with nesting and bulk operations
+- SSO top-level route (`/sso`)
+
+#### Security Fixes (P0)
+- Database backup automation (P0)
+- JWT access tokens now include scope claim (P0)
+- SSRF protection wired into webhook delivery by default
+- JWT signature verification enforced in `ValidateClientAssertion` (P0)
+- DPoP (RFC 9449) proof validation for sender-constrained tokens
+
+#### Infrastructure
+- Prometheus `/metrics` endpoint on all 7 services
+- `slog` structured logging for gateway
+- Middleware coverage boosted: 89.4% → 90.0% (sprint24, 21 tests)
+
+### Fixed
+- OAuth build: `issueAccessToken` now accepts scope parameter across all call sites
+- DPoP build: replaced custom ellipticCurve with `crypto/elliptic`, use `sha256.Sum256`
+- Removed broken `coverage_sprint24_test.go` (stale API references from concurrent edits)
+- Gateway `ClientIP()` now strips port from `RemoteAddr` (CIDR matching was failing)
+- Register handler: duplicate email now returns 409 Conflict (was 500)
+- Gateway tenant forwarding: injects `tenant_id` as both query param AND JSON body field
+- Audit route alias: `/api/v1/audit` now works alongside `/api/v1/audit/events`
+- Auth rate limiting: `429` after ~5 failed login attempts (working as designed)
+
+### Changed
+- SDK test coverage improved: 65.8% → 71.4% (put + RequirePermission tests)
+- Docker Compose: 12 containers all healthy, 11/11 E2E tests pass
+- NATS: added `-m 8222` flag for monitoring port (healthcheck)
+- Policy/Org/Audit DB: use individual `DB_HOST`/`DB_PORT` env vars (not `DATABASE_URL`)
+- Dockerfile: fixed EXPOSE ports (auth: 9001, policy: 8070/9070)
+- Migrations: idempotent init container (skips if DB already has tables)
+
+---
+
 ## [1.0.0] — 2024-07-10
 
 ### Overview
