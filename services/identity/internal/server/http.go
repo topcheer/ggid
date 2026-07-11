@@ -92,6 +92,7 @@ func (h *HTTPHandler) registerRoutes() {
 		uid := uuid.MustParse(r.URL.Query().Get("user_id"))
 		h.handleAttributeHistory(r.Context(), uid, w, r)
 	})
+	h.mux.HandleFunc("/api/v1/users/attestation/pending", h.handleAttestationPending)
 
 	// User lifecycle automation
 	h.mux.HandleFunc("/api/v1/users/lifecycle/rules", h.handleLifecycleRules)
@@ -185,6 +186,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleMerge(ctx, userID, w, r)
 	case action == "lifecycle-preview" && r.Method == http.MethodGet:
 		h.handleLifecyclePreview(ctx, userID, w, r)
+	case action == "attest" && r.Method == http.MethodPost:
+		h.handleAttest(ctx, userID, w, r)
 	case action == "deprovision" && r.Method == http.MethodPost:
 		h.handleDeprovision(ctx, userID, w, r)
 	default:

@@ -120,6 +120,9 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/integrity/sign-pqc", s.handlePQCSign)
 	mux.HandleFunc("/api/v1/audit/integrity/verify-pqc", s.handlePQCVerify)
 	mux.HandleFunc("/api/v1/audit/compliance/evidence", s.handleComplianceEvidence)
+	mux.HandleFunc("/api/v1/audit/incidents/active", s.handleIncidentsActive)
+	mux.HandleFunc("/api/v1/audit/incidents/", s.handleIncidents)
+	mux.HandleFunc("/api/v1/audit/incidents", s.handleIncidents)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }

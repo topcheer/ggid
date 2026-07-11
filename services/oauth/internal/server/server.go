@@ -1161,6 +1161,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/resource-allowed", handleResourceAllowed)
 	mux.HandleFunc("/api/v1/oauth/token-events/stream", handleTokenEventStream)
 	mux.HandleFunc("/api/v1/oauth/consent/", handleConsentReceipt)
+	mux.HandleFunc("/api/v1/oauth/clients/", handleClientCert)
 
 	// JWKS key rotation
 	mux.HandleFunc("/api/v1/oauth/jwks/rotate", func(w http.ResponseWriter, r *http.Request) {
