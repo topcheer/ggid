@@ -16,7 +16,7 @@
 ```bash
 mkdir ggid-express-demo && cd ggid-express-demo
 npm init -y
-npm install express @ggid/node jsonwebtoken
+npm install express @ggid/node
 ```
 
 ---
@@ -27,36 +27,22 @@ Create `app.js`:
 
 ```javascript
 const express = require('express');
-const { expressAuth, GGIDClient } = require('@ggid/node');
+const { expressAuth, getClaims, requireRole, requirePermission, GGIDClient } = require('@ggid/node');
 
 const app = express();
 app.use(express.json());
 
 // ─── Configuration ───────────────────────────────────────────
 const GGID_URL = process.env.GGID_URL || 'http://localhost:8080';
-const JWT_SECRET = process.env.JWT_SECRET || 'your-shared-secret';
+const JWKS_URL = process.env.JWKS_URL || `${GGID_URL}/.well-known/jwks.json`;
 const TENANT_ID = process.env.TENANT_ID || '00000000-0000-0000-0000-000000000001';
 const PORT = process.env.PORT || 3000;
 
 // ─── Auth Middleware ─────────────────────────────────────────
-const authMw = expressAuth({
-  jwksUrl: `${GGID_URL}/.well-known/jwks.json`,
+const authConfig = {
+  jwksUrl: JWKS_URL,
   issuer: GGID_URL,
-});
-
-// ─── Scope Guard ─────────────────────────────────────────────
-function requireScope(scope) {
-  return (req, res, next) => {
-    if (!req.ggidUser?.scopes?.includes(scope)) {
-      return res.status(403).json({
-        error: 'insufficient_scope',
-        required: scope,
-        user_scopes: req.ggidUser?.scopes || [],
-      });
-    }
-    next();
-  };
-}
+};
 
 // ─── Public Routes (no auth) ─────────────────────────────────
 app.get('/health', (req, res) => {
@@ -65,36 +51,38 @@ app.get('/health', (req, res) => {
 
 // ─── Protected API ───────────────────────────────────────────
 const api = express.Router();
-api.use(authMw);
+api.use(expressAuth(authConfig));
 
 // Get current user info from JWT
 api.get('/me', (req, res) => {
+  const claims = getClaims(req);
   res.json({
-    user_id: req.ggidUser?.sub,
-    tenant_id: req.ggidUser?.tenant_id,
-    scopes: req.ggidUser?.scopes,
+    user_id: claims.sub,
+    tenant_id: claims.tenant_id,
+    email: claims.email,
+    scope: claims.scope,
   });
 });
 
-// List users — requires read:users scope
-api.get('/users', requireScope('read:users'), async (req, res) => {
+// List users — requires read:users permission
+api.get('/users', requirePermission({ gatewayUrl: GGID_URL }, 'users', 'read'), async (req, res) => {
   try {
+    const claims = getClaims(req);
     const client = new GGIDClient({
       gatewayUrl: GGID_URL,
-      tenantId: req.ggidUser?.tenant_id || TENANT_ID,
+      apiKey: process.env.GGID_API_KEY,
     });
 
-    // Tenant-scoped query
-    const result = await client.listUsers();
-    const users = result.items || result;
+    const result = await client.listUsers({ tenant_id: claims.tenant_id });
+    res.json({ users: result.users, count: result.users.length });
   } catch (err) {
     console.error('Failed to list users:', err.message);
     res.status(502).json({ error: 'upstream_error', message: err.message });
   }
 });
 
-// Create user — requires write:users scope
-api.post('/users', requireScope('write:users'), async (req, res) => {
+// Create user — requires admin role
+api.post('/users', requireRole('admin'), async (req, res) => {
   const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
@@ -107,30 +95,25 @@ api.post('/users', requireScope('write:users'), async (req, res) => {
   try {
     const client = new GGIDClient({
       gatewayUrl: GGID_URL,
-      tenantId: req.ggidUser?.tenant_id || TENANT_ID,
+      apiKey: process.env.GGID_API_KEY,
     });
 
-    const user = await client.createUser({
-      username,
-      email,
-      password,
-    });
-
+    const user = await client.createUser({ username, email, password });
     res.status(201).json(user);
   } catch (err) {
-    if (err.status === 409) {
+    if (err.isConflict) {
       return res.status(409).json({ error: 'user_exists' });
     }
     res.status(502).json({ error: 'upstream_error', message: err.message });
   }
 });
 
-// Delete user — requires delete:users scope (admin only)
-api.delete('/users/:id', requireScope('delete:users'), async (req, res) => {
+// Delete user — requires admin role
+api.delete('/users/:id', requireRole('admin'), async (req, res) => {
   try {
     const client = new GGIDClient({
       gatewayUrl: GGID_URL,
-      tenantId: req.ggidUser?.tenant_id || TENANT_ID,
+      apiKey: process.env.GGID_API_KEY,
     });
 
     await client.deleteUser(req.params.id);
@@ -142,25 +125,16 @@ api.delete('/users/:id', requireScope('delete:users'), async (req, res) => {
 
 // Check permissions via Policy Engine
 api.post('/check-permission', async (req, res) => {
-  const { action, resource, resource_type } = req.body;
+  const { action, resource } = req.body;
+  const claims = getClaims(req);
 
   try {
-    const resp = await fetch(`${GGID_URL}/api/v1/policies/check`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${req.headers.authorization?.replace('Bearer ', '')}`,
-        'X-Tenant-ID': req.ggid.tenantID,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        user_id: req.ggid.userID,
-        action: action || 'read',
-        resource: resource || 'users',
-        resource_type: resource_type || 'users',
-      }),
+    const client = new GGIDClient({
+      gatewayUrl: GGID_URL,
+      apiKey: process.env.GGID_API_KEY,
     });
 
-    const result = await resp.json();
+    const result = await client.checkPermission(claims.sub, resource || 'users', action || 'read');
     res.json(result);
   } catch (err) {
     res.status(502).json({ error: 'policy_check_failed', message: err.message });
@@ -171,14 +145,11 @@ app.use('/api', api);
 
 // ─── Error Handler ───────────────────────────────────────────
 app.use((err, req, res, next) => {
-  if (err.name === 'GGIDAuthError') {
+  if (err.name === 'JWTError') {
     return res.status(401).json({
       error: 'token_invalid',
       message: err.message,
     });
-  }
-  if (err.name === 'UnauthorizedError') {
-    return res.status(401).json({ error: 'unauthorized', message: err.message });
   }
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'internal_error' });
@@ -200,7 +171,8 @@ Create `.env`:
 
 ```bash
 GGID_URL=http://localhost:8080
-JWT_SECRET=your-shared-secret
+JWKS_URL=http://localhost:8080/.well-known/jwks.json
+GGID_API_KEY=your-api-key
 TENANT_ID=00000000-0000-0000-0000-000000000001
 PORT=3000
 ```
@@ -244,10 +216,10 @@ JWT=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
 # Call protected endpoint
 curl -s http://localhost:3000/api/me \
   -H "Authorization: Bearer $JWT" | jq .
-# → {"user_id":"usr_...","tenant_id":"00000000-...","scopes":["read:users","write:users"]}
+# → {"user_id":"usr_...","tenant_id":"00000000-...","email":"admin@example.com"}
 ```
 
-### List Users (requires read:users scope)
+### List Users (requires read:users permission)
 
 ```bash
 curl -s http://localhost:3000/api/users \
@@ -264,24 +236,24 @@ curl -s -X POST http://localhost:3000/api/check-permission \
 # → {"allowed":true,"reason":"role_permission_match"}
 ```
 
-### Insufficient Scope (403)
+### Insufficient Role (403)
 
 ```bash
-# User without delete:users scope
+# User without admin role
 curl -s -X DELETE http://localhost:3000/api/users/usr_123 \
   -H "Authorization: Bearer $JWT" | jq .
-# → {"error":"insufficient_scope","required":"delete:users","user_scopes":["read:users"]}
+# → {"error":"forbidden: requires role 'admin'"}
 ```
 
 ---
 
 ## Key Takeaways
 
-1. **`GGIDMiddleware`** handles JWT verification on all routes in the group.
-2. **`req.ggid`** gives you `userID`, `tenantID`, `scopes`, and `token`.
-3. **`requireScope()`** is a reusable guard for fine-grained access control.
-4. **`GGIDClient`** lets you call GGID APIs on behalf of the authenticated user.
-5. **Tenant isolation** is automatic — always use `req.ggid.tenantID` for database queries.
+1. **`expressAuth(config)`** handles JWT verification on all routes in the group.
+2. **`getClaims(req)`** gives you `sub`, `tenant_id`, `email`, `scope` from the JWT.
+3. **`requireRole()` / `requirePermission()`** are reusable guards for access control.
+4. **`GGIDClient`** lets you call GGID management APIs server-side.
+5. **Tenant isolation** is automatic — always use `claims.tenant_id` for database queries.
 
 ---
 

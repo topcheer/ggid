@@ -93,24 +93,28 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/v1/users \
 ### Go
 
 ```go
-import ggid "github.com/ggid/ggid/sdk/go"
+import (
+    "context"
+    "time"
+    ggid "github.com/ggid/ggid/sdk/go"
+)
 
-verifier := ggid.NewVerifier("http://localhost:8080", "jwt-secret")
-claims, _ := verifier.Verify(ctx, token)
+client := ggid.New("http://localhost:8080", ggid.WithJWKS(15*time.Minute))
+userInfo, _ := client.VerifyToken(context.Background(), token)
 ```
 
 ### Node.js
 
 ```javascript
-const { GGIDMiddleware } = require('@ggid/sdk-node');
-app.use(GGIDMiddleware({ gatewayURL: 'http://localhost:8080', secret: 'jwt-secret' }));
+const { expressAuth } = require('@ggid/node');
+app.use(expressAuth({ jwksUrl: 'http://localhost:8080/.well-known/jwks.json', issuer: 'http://localhost:8080' }));
 ```
 
 ### Python
 
 ```python
-from ggid import GGIDVerifier
-verifier = GGIDVerifier(gateway_url="http://localhost:8080", secret="jwt-secret")
+from ggid import GGIDClient
+client = GGIDClient(gateway_url="http://localhost:8080", tenant_id="00000000-0000-0000-0000-000000000001")
 ```
 
 ---

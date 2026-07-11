@@ -7,53 +7,50 @@
 ## Install
 
 ```bash
-npm install @ggid/sdk-node express
+npm install @ggid/node express
 ```
 
 ## Minimal Setup
 
 ```javascript
 const express = require('express');
-const { GGIDMiddleware } = require('@ggid/sdk-node');
+const { expressAuth, getClaims } = require('@ggid/node');
 
 const app = express();
 
 // Protect all /api/* routes
-app.use('/api', GGIDMiddleware({
-  gatewayURL: process.env.GGID_URL || 'http://localhost:8080',
-  secret: process.env.JWT_SECRET,
+app.use('/api', expressAuth({
+  jwksUrl: process.env.JWKS_URL || 'http://localhost:8080/.well-known/jwks.json',
+  issuer: process.env.GGID_URL || 'http://localhost:8080',
 }));
 
 app.get('/api/profile', (req, res) => {
+  const claims = getClaims(req);
   res.json({
-    userID: req.ggid.userID,
-    tenantID: req.ggid.tenantID,
-    scopes: req.ggid.scopes,
+    userID: claims.sub,
+    tenantID: claims.tenant_id,
+    scopes: claims.scope?.split(' ') || [],
   });
 });
 
 app.listen(3000, () => console.log('Server on :3000'));
 ```
 
-## Scope-Based Authorization
+## Role-Based Authorization
 
 ```javascript
-function requireScope(scope) {
-  return (req, res, next) => {
-    if (!req.ggid?.scopes?.includes(scope)) {
-      return res.status(403).json({ error: 'insufficient_scope', required: scope });
-    }
-    next();
-  };
-}
+const { requireRole, requirePermission } = require('@ggid/node');
 
-// Only admins can delete
-app.delete('/api/users/:id', requireScope('delete:users'), async (req, res) => {
+// Require admin role (local JWT claim check)
+app.delete('/api/users/:id', requireRole('admin'), async (req, res) => {
   // ...
 });
 
-// Read access
-app.get('/api/users', requireScope('read:users'), async (req, res) => {
+// Check permission via Policy Engine
+app.get('/api/users', requirePermission(
+  { gatewayUrl: 'http://localhost:8080' },
+  'users', 'read',
+), async (req, res) => {
   // ...
 });
 ```
@@ -62,7 +59,8 @@ app.get('/api/users', requireScope('read:users'), async (req, res) => {
 
 ```javascript
 app.get('/api/items', (req, res) => {
-  const tenantID = req.ggid.tenantID;
+  const claims = getClaims(req);
+  const tenantID = claims.tenant_id;
   db.query('SELECT * FROM items WHERE tenant_id = $1', [tenantID]);
 });
 ```
@@ -70,29 +68,31 @@ app.get('/api/items', (req, res) => {
 ## Optional Auth (Public + Protected Routes)
 
 ```javascript
-const { GGIDMiddleware } = require('@ggid/sdk-node');
+const { expressAuth } = require('@ggid/node');
 
 // Public routes (no middleware)
 app.get('/health', (req, res) => res.json({ ok: true }));
 app.post('/api/auth/login', loginHandler);
 
 // Protected routes
-const authMw = GGIDMiddleware({ gatewayURL: '...', secret: '...' });
-app.use('/api', authMw);
+app.use('/api', expressAuth({
+  jwksUrl: 'http://localhost:8080/.well-known/jwks.json',
+  issuer: 'http://localhost:8080',
+}));
 ```
 
 ## Using the GGID Client
 
 ```javascript
-const { GGIDClient } = require('@ggid/sdk-node');
+const { GGIDClient } = require('@ggid/node');
 
-app.get('/api/users/:id', requireScope('read:users'), async (req, res) => {
+app.get('/api/users/:id', requireRole('admin'), async (req, res) => {
   const client = new GGIDClient({
-    gatewayURL: process.env.GGID_URL,
-    token: req.ggid.token,
+    gatewayUrl: process.env.GGID_URL,
+    apiKey: process.env.GGID_API_KEY,
   });
 
-  const user = await client.users.get(req.params.id);
+  const user = await client.getUser(req.params.id);
   res.json(user);
 });
 ```
@@ -100,9 +100,14 @@ app.get('/api/users/:id', requireScope('read:users'), async (req, res) => {
 ## Error Handling
 
 ```javascript
+const { GGIDError, JWTError } = require('@ggid/node');
+
 app.use((err, req, res, next) => {
-  if (err.name === 'GGIDAuthError') {
+  if (err instanceof JWTError) {
     return res.status(401).json({ error: 'token_invalid', message: err.message });
+  }
+  if (err instanceof GGIDError) {
+    return res.status(err.statusCode).json({ error: err.code, message: err.message });
   }
   res.status(500).json({ error: 'internal_error' });
 });
@@ -112,10 +117,11 @@ app.use((err, req, res, next) => {
 
 ```bash
 GGID_URL=http://localhost:8080
-JWT_SECRET=your-shared-secret
+JWKS_URL=http://localhost:8080/.well-known/jwks.json
+GGID_API_KEY=your-api-key
 PORT=3000
 ```
 
 ---
 
-*See: [Node SDK Quickstart](../quickstart/node-sdk.md) | [SDK Reference](../sdk-reference.md)*
+*See: [Node SDK Quickstart](../quickstart/node-sdk.md) | [Express Example](../examples/express-integration.md) | [SDK Reference](../sdk-reference.md)*

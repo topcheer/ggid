@@ -20,16 +20,10 @@ import (
     "net/http"
 
     "github.com/gin-gonic/gin"
-    ggid "github.com/ggid/ggid/sdk/go"
-    ggidmw "github.com/ggid/ggid/sdk/go/middleware/gin"
+    ggidmw "github.com/ggid/ggid/sdk/go/middleware"
 )
 
 func main() {
-    verifier := ggid.NewVerifier(
-        "http://localhost:8080",
-        "your-jwt-secret",
-    )
-
     r := gin.Default()
 
     // Public routes (no auth)
@@ -37,56 +31,100 @@ func main() {
         c.JSON(http.StatusOK, gin.H{"status": "ok"})
     })
 
-    // Protected API group
+    // Protected API group — wrap GGID middleware for Gin
     api := r.Group("/api")
-    api.Use(ggidmw.Auth(verifier))
+    api.Use(ginAuthMiddleware("http://localhost:8080"))
     {
         api.GET("/me", func(c *gin.Context) {
-            claims := ggidmw.Claims(c)
+            info, _ := ggidmw.FromContext(c.Request.Context())
             c.JSON(http.StatusOK, gin.H{
-                "user_id":   claims.UserID,
-                "tenant_id": claims.TenantID,
-                "scope":     claims.Scope,
+                "user_id":   info.UserID,
+                "tenant_id": info.TenantID,
+                "username":  info.Username,
+                "scopes":    info.Scopes,
             })
         })
     }
 
     r.Run(":8081")
 }
+
+// ginAuthMiddleware adapts the GGID HTTP middleware for Gin.
+func ginAuthMiddleware(baseURL string) gin.HandlerFunc {
+    auth := ggidmw.Auth(baseURL, ggidmw.Options{})
+    return func(c *gin.Context) {
+        next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            c.Request = r
+            c.Next()
+        })
+        auth(next).ServeHTTP(c.Writer, c.Request)
+        c.Abort()
+    }
+}
+```
+
+## Role Check Middleware
+
+```go
+func ginRequireRole(role string) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        info, ok := ggidmw.FromContext(c.Request.Context())
+        if !ok {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+            return
+        }
+        for _, r := range info.Roles {
+            if r == role || r == "admin" {
+                c.Next()
+                return
+            }
+        }
+        c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+            "error":    "insufficient_role",
+            "required": role,
+        })
+    }
+}
+
+// Usage
+api.DELETE("/users/:id", ginRequireRole("admin"), deleteUser)
+api.GET("/users", ginRequireRole("editor"), listUsers)
 ```
 
 ## Scope Check Middleware
 
 ```go
-func RequireScope(scope string) gin.HandlerFunc {
+func ginRequireScope(scope string) gin.HandlerFunc {
     return func(c *gin.Context) {
-        claims := ggidmw.Claims(c)
-        if !claims.HasScope(scope) {
-            c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-                "error":    "insufficient_scope",
-                "required": scope,
-            })
+        info, ok := ggidmw.FromContext(c.Request.Context())
+        if !ok {
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
             return
         }
-        c.Next()
+        for _, s := range info.Scopes {
+            if s == scope {
+                c.Next()
+                return
+            }
+        }
+        c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+            "error":    "insufficient_scope",
+            "required": scope,
+        })
     }
 }
-
-// Usage
-api.DELETE("/users/:id", RequireScope("delete:users"), deleteUser)
-api.GET("/users", RequireScope("read:users"), listUsers)
 ```
 
 ## Tenant-Aware Handler
 
 ```go
 func listUsers(c *gin.Context) {
-    claims := ggidmw.Claims(c)
+    info, _ := ggidmw.FromContext(c.Request.Context())
 
     // Use tenant_id for all queries
     rows, err := db.Query(
         `SELECT id, username, email FROM users WHERE tenant_id = $1`,
-        claims.TenantID,
+        info.TenantID,
     )
     // ...
 }
@@ -97,7 +135,7 @@ func listUsers(c *gin.Context) {
 ```go
 // Apply middleware only to specific groups
 api := r.Group("/api")
-api.Use(ggidmw.Auth(verifier))
+api.Use(ginAuthMiddleware("http://localhost:8080"))
 
 // Public routes don't get middleware
 r.GET("/health", healthHandler)
@@ -107,11 +145,13 @@ r.POST("/api/auth/login", loginHandler)
 ## Using the GGID Client
 
 ```go
-func getUser(c *gin.Context) {
-    claims := ggidmw.Claims(c)
+import ggid "github.com/ggid/ggid/sdk/go"
 
-    client := ggid.NewClient("http://localhost:8080", claims.Token)
-    user, err := client.Users.Get(c, c.Param("id"))
+func getUser(c *gin.Context) {
+    client := ggid.New("http://localhost:8080",
+        ggid.WithAPIKey(os.Getenv("GGID_API_KEY")),
+    )
+    user, err := client.GetUser(c, c.Param("id"))
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
@@ -124,10 +164,10 @@ func getUser(c *gin.Context) {
 
 ```bash
 export GGID_URL=http://localhost:8080
-export JWT_SECRET=your-shared-secret
+export GGID_API_KEY=your-api-key
 export PORT=8081
 ```
 
 ---
 
-*See: [Go SDK Quickstart](../quickstart/go-sdk.md) | [SDK Reference](../sdk-reference.md)*
+*See: [Go SDK Quickstart](../quickstart/go-sdk.md) | [Go Integration Example](../examples/go-integration.md) | [SDK Reference](../sdk-reference.md)*

@@ -9,9 +9,9 @@
 | Language | Package | Install |
 |----------|---------|--------|
 | [Go](#go) | `github.com/ggid/ggid/sdk/go` | `go get` |
-| [Node.js](#nodejs) | `@ggid/sdk-node` | `npm install` |
+| [Node.js](#nodejs) | `@ggid/node` | `npm install` |
 | [Python](#python) | `ggid` | `pip install` |
-| [Java](#java) | `dev.ggid:ggid-sdk-java` | Maven / Gradle |
+| [Java](#java) | `dev.ggid:ggid-sdk` | Maven / Gradle |
 
 ---
 
@@ -28,10 +28,11 @@ go get github.com/ggid/ggid/sdk/go@latest
 ```go
 import ggid "github.com/ggid/ggid/sdk/go"
 
-verifier := ggid.NewVerifier("http://localhost:8080", "jwt-secret")
-claims, err := verifier.Verify(ctx, tokenString)
-// claims.UserID, claims.TenantID, claims.Scope
+client := ggid.New("http://localhost:8080", ggid.WithJWKS(15*time.Minute))
+userInfo, err := client.VerifyToken(ctx, accessToken)
+// userInfo.UserID, userInfo.TenantID, userInfo.Roles
 ```
+
 ### Full Example
 
 ```go
@@ -40,14 +41,26 @@ package main
 import (
     "fmt"
     "net/http"
+    "time"
+
     ggid "github.com/ggid/ggid/sdk/go"
 )
 
 func main() {
-    verifier := ggid.NewVerifier("http://localhost:8080", "secret")
-    mw := ggid.NewMiddleware(verifier)
-    http.Handle("/api/me", mw.Protect(http.HandlerFunc(meHandler)))
-    http.ListenAndServe(":8081", nil)
+    client := ggid.New("http://localhost:8080", ggid.WithJWKS(15*time.Minute))
+
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api/me", client.RequirePermission("users", "read",
+        func(w http.ResponseWriter, r *http.Request) {
+            user := ggid.UserFromContext(r.Context())
+            fmt.Fprintf(w, "Hello, %s", user.Username)
+        },
+    ))
+
+    handler := client.Middleware(mux, ggid.MiddlewareConfig{
+        PublicPaths: []string{"/healthz"},
+    })
+    http.ListenAndServe(":8081", handler)
 }
 ```
 
@@ -60,15 +73,15 @@ func main() {
 ### Install
 
 ```bash
-npm install @ggid/sdk-node
+npm install @ggid/node
 ```
 
 ### Verify JWT (3 lines)
 
 ```javascript
-const { GGIDVerifier } = require('@ggid/sdk-node');
+const { JWTVerifier } = require('@ggid/node');
 
-const verifier = new GGIDVerifier({ gatewayURL: 'http://localhost:8080', secret: 'jwt-secret' });
+const verifier = new JWTVerifier({ jwksUrl: 'http://localhost:8080/.well-known/jwks.json', issuer: 'http://localhost:8080' });
 const claims = await verifier.verify(token);
 // claims.sub, claims.tenant_id, claims.scope
 ```
@@ -76,14 +89,18 @@ const claims = await verifier.verify(token);
 ### Full Example
 
 ```javascript
-const { GGIDMiddleware } = require('@ggid/sdk-node');
+const { expressAuth, getClaims, requireRole } = require('@ggid/node');
 const express = require('express');
 
 const app = express();
-app.use(GGIDMiddleware({ gatewayURL: 'http://localhost:8080', secret: 'jwt-secret' }));
+app.use(expressAuth({
+  jwksUrl: 'http://localhost:8080/.well-known/jwks.json',
+  issuer: 'http://localhost:8080',
+}));
 
 app.get('/api/me', (req, res) => {
-    res.json({ userID: req.ggid.userID });
+    const claims = getClaims(req);
+    res.json({ userID: claims.sub, email: claims.email });
 });
 
 app.listen(3000);
@@ -104,26 +121,30 @@ pip install ggid
 ### Verify JWT (3 lines)
 
 ```python
-from ggid import GGIDVerifier
+from ggid import GGIDClient
 
-verifier = GGIDVerifier(gateway_url="http://localhost:8080", secret="jwt-secret")
-claims = verifier.verify(token)
-# claims.user_id, claims.tenant_id, claims.scope
+client = GGIDClient(gateway_url="http://localhost:8080", tenant_id="00000000-0000-0000-0000-000000000001")
+claims = await client.verify_token(token)
+# claims['sub'], claims['tenant_id'], claims['scope']
 ```
 
-### Full Example
+### Full Example (FastAPI)
 
 ```python
-from ggid import GGIDMiddleware
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Depends
+from ggid import GGIDMiddleware, get_current_user
 
-app = Flask(__name__)
-app.wsgi_app = GGIDMiddleware(app.wsgi_app,
-    gateway_url="http://localhost:8080", secret="jwt-secret")
+app = FastAPI()
+app.add_middleware(
+    GGIDMiddleware,
+    gateway_url="http://localhost:8080",
+    jwks_url="http://localhost:8080/.well-known/jwks.json",
+    tenant_id="00000000-0000-0000-0000-000000000001",
+)
 
-@app.route('/api/me')
-def me():
-    return jsonify(user_id=request.ggid.user_id)
+@app.get("/api/me")
+async def me(user = Depends(get_current_user)):
+    return {"user": user}
 ```
 
 **[Full Python SDK Reference →](../../sdk/python/README.md)**
@@ -137,7 +158,7 @@ def me():
 ```xml
 <dependency>
     <groupId>dev.ggid</groupId>
-    <artifactId>ggid-sdk-java</artifactId>
+    <artifactId>ggid-sdk</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
@@ -145,27 +166,22 @@ def me():
 ### Verify JWT (3 lines)
 
 ```java
-import dev.ggid.sdk.GGIDVerifier;
+import dev.ggid.sdk.*;
 
-GGIDVerifier verifier = new GGIDVerifier("http://localhost:8080", "jwt-secret");
-GGIDClaims claims = verifier.verify(token);
-// claims.getUserId(), claims.getTenantId(), claims.getScopes()
+GGIDClient client = new GGIDClient(new GGIDClient.Config("http://localhost:8080"));
+GGIDUser user = client.getUser("user-id");
+// user.getId(), user.getEmail(), user.getRoles()
 ```
 
-### Full Example (Spring Boot)
+### Full Example (Servlet Filter)
 
 ```java
-// See: docs/integration-guides/spring-boot.md
-@Configuration
-@EnableWebSecurity
-public class SecurityConfig {
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.addFilterBefore(new GGIDJwtFilter(verifier),
-            UsernamePasswordAuthenticationFilter.class);
-        return http.build();
-    }
-}
+import dev.ggid.sdk.GGIDAuthFilter;
+
+// Register the filter in web.xml or programmatically
+GGIDAuthFilter filter = new GGIDAuthFilter();
+filter.setGatewayUrl("http://localhost:8080");
+// The filter verifies JWT on every request and sets request attributes
 ```
 
 **[Full Java SDK Reference →](../../sdk/java/README.md)**
@@ -176,12 +192,12 @@ public class SecurityConfig {
 
 | Feature | Go | Node.js | Python | Java |
 |---------|-----|---------|--------|------|
-| JWT Verification | ✓ | ✓ | ✓ | ✓ |
-| HTTP Middleware | ✓ | ✓ (Express) | ✓ (Flask/Django) | ✓ (Servlet Filter) |
-| Gin Integration | ✓ | — | — | — |
-| Spring Integration | — | — | — | ✓ |
-| JWKS Refresh | ✓ | ✓ | ✓ | ✓ |
-| Permission Check | ✓ | ✓ | ✓ | ✓ |
+| JWT Verification | `client.VerifyToken()` | `JWTVerifier` | `GGIDClient` | `GGIDClient` |
+| HTTP Middleware | `client.Middleware()` | `expressAuth()` | `GGIDMiddleware` | `GGIDAuthFilter` |
+| Gin Integration | `ggidmw.Auth()` | — | — | — |
+| Spring Integration | — | — | — | `GGIDSecurityFilter` |
+| JWKS Refresh | `WithJWKS(ttl)` | Built-in | Built-in | Built-in |
+| Permission Check | `RequirePermission()` | `requirePermission()` | `check_permission()` | `checkPermission()` |
 
 ---
 

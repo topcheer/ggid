@@ -96,7 +96,7 @@ func main() {
     defer resp.Body.Close()
 
     var result struct{ AccessToken string `json:"access_token"` }
-    json.NewDecoder(io.Reader(resp.Body)).Decode(&result)
+    json.NewDecoder(resp.Body).Decode(&result)
 
     // 2. Use JWT
     req, _ := http.NewRequest("GET", base+"/api/v1/users", nil)

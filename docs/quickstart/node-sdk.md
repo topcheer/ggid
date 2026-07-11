@@ -7,32 +7,36 @@
 ## Install
 
 ```bash
-npm install @ggid/sdk-node
+npm install @ggid/node express
 # or
-pnpm add @ggid/sdk-node
+yarn add @ggid/node express
 ```
 
 ## Verify a JWT (3 lines)
 
 ```javascript
-const { GGIDVerifier } = require('@ggid/sdk-node');
+const { JWTVerifier } = require('@ggid/node');
 
-const verifier = new GGIDVerifier({ gatewayURL: 'http://localhost:8080', secret: 'your-jwt-secret' });
+const verifier = new JWTVerifier({ jwksUrl: 'http://localhost:8080/.well-known/jwks.json', issuer: 'http://localhost:8080' });
 const claims = await verifier.verify(token);
-// claims.tenant_id, claims.sub, claims.scope
+// claims.sub, claims.tenant_id, claims.email, claims.scope
 ```
 
 ## Express Middleware
 
 ```javascript
-const { GGIDMiddleware } = require('@ggid/sdk-node');
+const { expressAuth, getClaims } = require('@ggid/node');
 const express = require('express');
 
 const app = express();
-app.use(GGIDMiddleware({ gatewayURL: 'http://localhost:8080', secret: 'your-jwt-secret' }));
+app.use(expressAuth({
+  jwksUrl: 'http://localhost:8080/.well-known/jwks.json',
+  issuer: 'http://localhost:8080',
+}));
 
 app.get('/api/me', (req, res) => {
-    res.json({ user: req.ggid.userID, tenant: req.ggid.tenantID });
+    const claims = getClaims(req);
+    res.json({ user: claims.sub, tenant: claims.tenant_id });
 });
 
 app.listen(3000);
@@ -41,39 +45,32 @@ app.listen(3000);
 ## Full Example
 
 ```javascript
-const { GGIDClient, GGIDMiddleware } = require('@ggid/sdk-node');
+const { GGIDClient, expressAuth, requireRole, getClaims } = require('@ggid/node');
 const express = require('express');
 
-const config = { gatewayURL: 'http://localhost:8080', secret: 'your-jwt-secret' };
+const config = {
+  jwksUrl: 'http://localhost:8080/.well-known/jwks.json',
+  issuer: 'http://localhost:8080',
+};
 
 const app = express();
-app.use(GGIDMiddleware(config));
+app.use(expressAuth(config));
 
-// Protected route
-app.get('/api/profile', async (req, res) => {
-    const client = new GGIDClient({ ...config, token: req.ggid.token });
-    const user = await client.users.get(req.ggid.userID);
-    res.json(user);
+// Protected route — get user info
+app.get('/api/profile', (req, res) => {
+    const claims = getClaims(req);
+    res.json({ userId: claims.sub, email: claims.email });
 });
 
-// Role check
-app.delete('/api/users/:id', 
-    requireScope('delete:users'),  // middleware
-    async (req, res) => { /* ... */ }
-);
-
-function requireScope(scope) {
-    return (req, res, next) => {
-        if (!req.ggid.scopes.includes(scope)) {
-            return res.status(403).json({ error: 'insufficient_scope' });
-        }
-        next();
-    };
-}
+// Role-based access control
+app.delete('/api/users/:id', requireRole('admin'), async (req, res) => {
+    // Only admins can reach here
+    res.json({ status: 'deleted' });
+});
 
 app.listen(3000);
 ```
 
 ---
 
-*See: [Express Integration](../integration-guides/express.md) | [SDK Reference](../sdk-reference.md)*
+*See: [Express Integration](../integration-guides/express.md) | [Express Example](../examples/express-integration.md) | [SDK Reference](../sdk-reference.md)*

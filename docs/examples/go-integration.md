@@ -85,24 +85,18 @@ func main() {
 	})
 
 	// GET /api/users — requires read:users permission
-	protected.Handle("/api/users",
-		client.RequirePermission("users", "read")(
-			http.HandlerFunc(listUsers),
-		),
+	protected.HandleFunc("/api/users",
+		client.RequirePermission("users", "read", listUsers),
 	)
 
 	// POST /api/users — requires write:users permission
-	protected.Handle("/api/users/create",
-		client.RequirePermission("users", "write")(
-			http.HandlerFunc(createUser),
-		),
+	protected.HandleFunc("/api/users/create",
+		client.RequirePermission("users", "write", createUser),
 	)
 
 	// DELETE /api/users/{id} — requires delete:users permission
-	protected.Handle("/api/users/delete/",
-		client.RequirePermission("users", "delete")(
-			http.HandlerFunc(deleteUser),
-		),
+	protected.HandleFunc("/api/users/delete/",
+		client.RequirePermission("users", "delete", deleteUser),
 	)
 
 	// Wrap protected routes with auth middleware
@@ -307,7 +301,7 @@ curl -s -X POST http://localhost:8081/api/users/create \
   -H "Authorization: Bearer $READONLY_JWT" \
   -H "Content-Type: application/json" \
   -d '{"username":"hack","email":"hack@test.com"}' | jq .
-# → {"error":"forbidden: requires permission users:write"}
+# → {"error":"forbidden"}
 ```
 
 ---
