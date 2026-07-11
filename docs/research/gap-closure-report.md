@@ -58,7 +58,7 @@ Confidence levels:
 
 | # | Gap Item | Status | Verification Method | Evidence (file:test_count) | Notes |
 |---|----------|--------|-------------------|----------------------------|-------|
-| 4 | SAML SP-initiated SSO | DONE | grep + test count | pkg/saml/sp.go:73 BuildAuthnRequest; sp.go:192 GenerateSPMetadata; 134 total test functions across 7 files (sp_test.go:24, sp_flow_test.go:24 incl ACS flow, replay protection, signature verification) | HIGH confidence. Full SP-initiated SSO: AuthnRequest construction, ACS processing, signed assertion verification, replay protection |
+| 4 | SAML SP-initiated SSO | DONE | **VERIFIED** 2026-07-11 | pkg/saml/sp.go:73 BuildAuthnRequest; sp.go:192 GenerateSPMetadata; 134 total test functions. ARCH functional test: TestGenerateSPMetadata_ValidXML + 3 edge cases PASS | HIGH confidence. Full SP-initiated SSO: AuthnRequest construction, ACS processing, signed assertion verification, replay protection |
 | 5 | WebAuthn Registration/Auth | DONE | grep + test count | services/auth/internal/webauthn/handler.go:483 BeginRegistration, :653 BeginLogin; 101 test functions across 5 files (handler_test.go:30, attestation_test.go:26, handler_p2_test.go:19, handler_coverage_test.go:22, handler_p1_test.go:4) | HIGH confidence. Full WebAuthn flow with attestation format registry |
 | 6 | OAuth DPoP Support (RFC 9449) | DONE | grep + test count | services/oauth/internal/service/dpop.go: ParseDPoPHeader, ValidateDPoPForToken, IsDPoPTokenRequest; dpop_test.go: 14 test functions | HIGH confidence. Full RFC 9449: proof parsing, htm/htu matching, ath binding, anti-replay via jti, asymmetric-only algorithms |
 | 7 | Refresh Token Rotation | DONE | grep + test count | services/auth/internal/service/token_service.go:134 RotateRefreshToken; auth_service.go:235 Refresh; domain/token.go:19 RotatedFrom chain; migrations/000003 rotation support; 14 refresh/rotation test functions across 6 files | HIGH confidence. Rotation chain via RotatedFrom UUID, replay detection (coverage_sprint6_test.go:941) |
@@ -204,7 +204,7 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 
 | Confidence | Count | Items |
 |-----------|-------|-------|
-| HIGH (10+ tests or E2E verified) | 12 | SAML SSO, WebAuthn, DPoP, Refresh Rotation, MFA TOTP, SCIM CRUD, JWT Validation, Rate Limiter, Audit Hash Chain, Multi-Tenant RLS, Token Introspection, **K8s/K3s Deployment** |
+| HIGH (10+ tests or E2E verified) | 15 | SAML SSO, WebAuthn, DPoP, Refresh Rotation, MFA TOTP, SCIM CRUD, JWT Validation, Rate Limiter, Audit Hash Chain, Multi-Tenant RLS, Token Introspection, **K8s/K3s Deployment**, **PKCE (RFC 7636)**, **JWKS + Discovery**, **Device Auth (RFC 8628)** |
 | MEDIUM (3-9 tests) | 4 | CSRF State Validation, HasScope Enforcement, Admin API Role Check, Password Breach Check |
 | LOW (<3 tests) | 1 | Magic Link (14 tests but arch-confirmed) |
 | Arch-verified (go test PASS) | 3 | Token Introspection (17 PASS), Magic Link (14 PASS), SCIM Bulk (14 PASS) |
