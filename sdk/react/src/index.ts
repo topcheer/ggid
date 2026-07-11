@@ -153,6 +153,10 @@ export { useComplianceMapping } from './useComplianceMapping';
 export type { ControlMapping, MappingStatus, UseComplianceMappingResult } from './useComplianceMapping';
 export { usePolicyAsCode } from './usePolicyAsCode';
 export type { PolicyFile, UsePolicyAsCodeResult } from './usePolicyAsCode';
+export { useSecurityPosture } from './useSecurityPosture';
+export type { SecurityPosture, PostureRecommendation, UseSecurityPostureResult } from './useSecurityPosture';
+export { useConsentScreen } from './useConsentScreen';
+export type { ConsentConfig, UseConsentScreenResult } from './useConsentScreen';
 export type {
   GGIDConfig,
   GGIDUser,
