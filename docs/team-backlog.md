@@ -707,3 +707,11 @@
 - [x] PWA support: manifest.json (standalone, themeColor, shortcuts), service worker (cache-first static, network-first API), PWARegister component in layout, appleWebApp meta tags (4979d41)
 - [x] Page dedup: apikeys/page.tsx → redirect to settings/api-keys (was 450-line dup). oauth-clients already redirected. (4979d41)
 - NOTE: ~500 hardcoded English strings remain in low-traffic pages (saml, exports, activity, permissions, notifications/preview). These are secondary pages not in main sidebar navigation. Core pages (dashboard, users, roles, all settings/*) are fully i18n'd with 827 keys.
+
+## Sprint: Final quality polish (frontend cb13e9b)
+- [x] E2E verified: Console live at https://ggid-console.iot2.win (HTTP 200), Gateway healthy, register→login→MFA challenge flow works end-to-end. (cb13e9b)
+- [x] Performance: largest chunk 365KB (under 500KB threshold). Total static 3.3MB. recharts already lazy-loaded via next/dynamic. No code splitting needed. (cb13e9b)
+- [x] Accessibility: focus-visible outline ring globally, skip-to-content link, main content id. 77 focus styles across pages. 5 aria-labels on key pages. (cb13e9b)
+- [x] Mobile: sidebar has mobile toggle + backdrop (md:hidden). Tables use overflow-x-auto wrappers. Forms are responsive (sm:col-span-2). (existing, verified)
+- [x] README: updated with Docker build instructions, PWA section, NEXT_PUBLIC_API_URL build-arg docs. (cb13e9b)
+- [x] npm run build: 0 errors, make test: 0 FAIL
