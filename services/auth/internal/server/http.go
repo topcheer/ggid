@@ -260,6 +260,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/login-notify/config", h.handleLoginNotify)
 	h.mux.HandleFunc("/api/v1/auth/devices/register", h.handleDeviceFingerprint)
 	h.mux.HandleFunc("/api/v1/auth/devices/list", h.handleDeviceFingerprint)
+	h.mux.HandleFunc("/api/v1/auth/mfa/jit-enroll", h.handleJITMFAEnroll)
 }
 
 // ServeHTTP implements http.Handler.
