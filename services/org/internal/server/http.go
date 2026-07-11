@@ -38,6 +38,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	// Organizations
 	mux.HandleFunc("/api/v1/orgs", s.handleOrgs)
 	mux.HandleFunc("/api/v1/orgs/tree", s.handleFullTree)
+	mux.HandleFunc("/api/v1/orgs/tree-with-members", s.handleOrgTreeWithMembers)
 	mux.HandleFunc("/api/v1/orgs/", s.handleOrgByID)
 	// Departments
 	mux.HandleFunc("/api/v1/departments", s.handleDepartments)
