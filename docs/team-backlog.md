@@ -797,12 +797,19 @@
 - [x] IdP config CRUD routes wired (05d6727)
 - [x] SIEM forwarder wired into audit main.go (05d6727)
 
-### Docs: Latest Batches (235 docs)
-- [x] Okta/Duo 2026 competitive analysis (331304f)
-- [x] K8s deployment guide (331304f)
-- [x] Testing strategy guide (331304f)
-- [x] Keycloak migration guide, passwordless setup, audit analysis, passkey adoption, SCIM ecosystem (previous batch)
-- [x] React SDK analysis, SIEM connector design, data retention policy, Auth0 Actions comparison, 5-min quickstart, multi-tenant guide, security hardening, Keycloak 26, realtime alerting design, API explorer, per-tenant IdP, SIEM integration, SDK comparison (previous batches)
+### Docs: Latest Batches (245 docs)
+- [x] Okta/Duo 2026, K8s deployment, testing strategy (331304f)
+- [x] Zero Trust, OAuth scopes design, disaster recovery, risk scoring, FIDO2 ecosystem (20ec24b)
+- [x] Production readiness checklist, observability guide, pricing TCO, post-quantum readiness, webhook events reference (45f5542)
+
+### Go SDK Audit Client (arch 9305734, 1f287f0)
+- [x] audit.go: ListAuditEvents, GetComplianceReport, AlertRules CRUD, RetentionPolicy, VerifyAuditIntegrity, ExportAuditEvents, AccessRequests, Branding. Uses existing c.do() helper.
+
+### React SDK Additional Hooks + OpenAPI (frontend 1f287f0, arch 3944bf8)
+- [x] useAuditEvents hook (126 lines) — filter + pagination + refetch
+- [x] useAccessRequests hook (176 lines) — IGA workflow: list/create/approve/reject
+- [x] dashboard-example.tsx (323 lines) — complete admin panel demo
+- [x] OpenAPI: 7 missing endpoints + AlertRule/BrandingConfig schemas (3944bf8)
 
 ### Batch: React SDK Components + Console Pages (frontend a12b150, f908fdd)
 - [x] **usePermissions hook** — sdk/react/src/usePermissions.ts (100 lines). Wildcard matching, admin/* superuser bypass.
