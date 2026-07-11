@@ -113,6 +113,10 @@ export { useConditionalAccess } from './useConditionalAccess';
 export type { ConditionalAccessPolicy, AccessAction, CreatePolicyInput, UseConditionalAccessResult } from './useConditionalAccess';
 export { useWebhookDelivery } from './useWebhookDelivery';
 export type { FailedDelivery, UseWebhookDeliveryResult } from './useWebhookDelivery';
+export { useNotificationTemplates } from './useNotificationTemplates';
+export type { NotificationTemplate, NotificationChannel, CreateTemplateInput, UseNotificationTemplatesResult } from './useNotificationTemplates';
+export { useIdentityGovernance } from './useIdentityGovernance';
+export type { IGAMetrics, UseIdentityGovernanceResult } from './useIdentityGovernance';
 export type {
   GGIDConfig,
   GGIDUser,
