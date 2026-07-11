@@ -19,6 +19,10 @@ export { LogoutButton } from './LogoutButton';
 export type { LogoutButtonProps } from './LogoutButton';
 export { RequireScope } from './RequireScope';
 export type { RequireScopeProps } from './RequireScope';
+export { useAuditEvents } from './useAuditEvents';
+export type { AuditEvent, AuditEventFilter, UseAuditEventsResult } from './useAuditEvents';
+export { useAccessRequests } from './useAccessRequests';
+export type { AccessRequest, CreateAccessRequestInput, UseAccessRequestsResult } from './useAccessRequests';
 export type {
   GGIDConfig,
   GGIDUser,

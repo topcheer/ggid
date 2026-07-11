@@ -1,23 +1,15 @@
-// Package ggid provides audit, compliance, and alerting helpers for the GGID SDK.
+// Package ggid provides audit, compliance, and retention helpers for the GGID SDK.
 //
-// This file adds support for the Audit Service API, enabling Go applications
-// to query audit events, generate compliance reports, manage alert rules,
-// and configure data retention policies through the existing Client.do() helper.
-//
-// Quick start:
-//
-//	client := ggid.NewClient("https://iam.example.com",
-//		ggid.WithTenantID("00000000-0000-0000-0000-000000000001"))
-//	events, _ := client.ListAuditEvents(ctx, accessToken, ggid.AuditEventFilter{})
+// This file adds support for the Audit Service API: querying audit events,
+// generating compliance reports, managing alert rules, and configuring data
+// retention policies through the GGID Gateway.
 
 package ggid
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"strconv"
-	"time"
 )
 
 // AuditEvent represents a single audit log entry.
@@ -32,10 +24,11 @@ type AuditEvent struct {
 	ResourceID   string                 `json:"resource_id"`
 	ResourceName string                 `json:"resource_name,omitempty"`
 	Action       string                 `json:"action"`
-	Timestamp    time.Time              `json:"timestamp"`
 	IP           string                 `json:"ip,omitempty"`
 	UserAgent    string                 `json:"user_agent,omitempty"`
 	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	Timestamp    string                 `json:"timestamp"`
+	Hash         string                 `json:"hash,omitempty"`
 }
 
 // AuditEventFilter holds query parameters for listing audit events.
@@ -44,94 +37,52 @@ type AuditEventFilter struct {
 	ActorID      string
 	ResourceType string
 	ResourceID   string
-	StartDate    time.Time
-	EndDate      time.Time
+	StartTime    string // RFC3339
+	EndTime      string // RFC3339
 	Limit        int
 	Offset       int
 }
 
 // ListAuditEvents retrieves audit events with optional filtering.
-func (c *Client) ListAuditEvents(ctx context.Context, accessToken string, filter AuditEventFilter) ([]AuditEvent, error) {
-	params := url.Values{}
-	if filter.EventType != "" {
-		params.Set("event_type", filter.EventType)
-	}
-	if filter.ActorID != "" {
-		params.Set("actor_id", filter.ActorID)
-	}
-	if filter.ResourceType != "" {
-		params.Set("resource_type", filter.ResourceType)
-	}
-	if filter.ResourceID != "" {
-		params.Set("resource_id", filter.ResourceID)
-	}
-	if !filter.StartDate.IsZero() {
-		params.Set("start_date", filter.StartDate.Format(time.RFC3339))
-	}
-	if !filter.EndDate.IsZero() {
-		params.Set("end_date", filter.EndDate.Format(time.RFC3339))
-	}
-	if filter.Limit > 0 {
-		params.Set("limit", strconv.Itoa(filter.Limit))
-	}
-	if filter.Offset > 0 {
-		params.Set("offset", strconv.Itoa(filter.Offset))
-	}
-
+func (c *Client) ListAuditEvents(ctx context.Context, token string, f AuditEventFilter) ([]AuditEvent, error) {
 	path := "/api/v1/audit/events"
-	if encoded := params.Encode(); encoded != "" {
-		path += "?" + encoded
+	q := buildQueryString(f)
+	if q != "" {
+		path += "?" + q
 	}
 
-	resp, err := c.do(ctx, "GET", path, nil, accessToken)
+	resp, err := c.do(ctx, "GET", path, nil, token)
 	if err != nil {
 		return nil, err
 	}
 
 	var events []AuditEvent
 	if err := json.Unmarshal(resp, &events); err != nil {
-		// Try wrapped structure
-		var wrapped struct {
-			Events []AuditEvent `json:"events"`
-		}
-		if err2 := json.Unmarshal(resp, &wrapped); err2 == nil && len(wrapped.Events) > 0 {
-			return wrapped.Events, nil
-		}
 		return nil, fmt.Errorf("parse audit events: %w", err)
 	}
 	return events, nil
 }
 
-// ComplianceReport represents a generated compliance report.
+// ComplianceReport holds a generated compliance report.
 type ComplianceReport struct {
 	Type      string                 `json:"type"`
 	Period    map[string]string      `json:"period"`
 	Summary   map[string]interface{} `json:"summary"`
-	Controls  []ComplianceControl    `json:"controls"`
-	Generated time.Time              `json:"generated"`
-}
-
-// ComplianceControl represents a single control in a compliance report.
-type ComplianceControl struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Status      string `json:"status"`
-	Description string `json:"description,omitempty"`
+	Controls  []map[string]interface{} `json:"controls"`
+	Generated string                 `json:"generated,omitempty"`
 }
 
 // GetComplianceReport generates a compliance report (soc2, hipaa, or gdpr).
-func (c *Client) GetComplianceReport(ctx context.Context, accessToken, reportType string, startDate, endDate time.Time) (*ComplianceReport, error) {
-	params := url.Values{}
-	params.Set("type", reportType)
-	if !startDate.IsZero() {
-		params.Set("start_date", startDate.Format(time.RFC3339))
+func (c *Client) GetComplianceReport(ctx context.Context, token, reportType, startDate, endDate string) (*ComplianceReport, error) {
+	path := "/api/v1/audit/compliance-report?type=" + reportType
+	if startDate != "" {
+		path += "&start_date=" + startDate
 	}
-	if !endDate.IsZero() {
-		params.Set("end_date", endDate.Format(time.RFC3339))
+	if endDate != "" {
+		path += "&end_date=" + endDate
 	}
 
-	path := "/api/v1/audit/compliance-report?" + params.Encode()
-	resp, err := c.do(ctx, "GET", path, nil, accessToken)
+	resp, err := c.do(ctx, "GET", path, nil, token)
 	if err != nil {
 		return nil, err
 	}
@@ -154,9 +105,9 @@ type AlertRule struct {
 	Enabled   bool   `json:"enabled"`
 }
 
-// GetAlertRules retrieves the current alerting configuration.
-func (c *Client) GetAlertRules(ctx context.Context, accessToken string) ([]AlertRule, error) {
-	resp, err := c.do(ctx, "GET", "/api/v1/audit/alerts/config", nil, accessToken)
+// GetAlertRules retrieves all configured alert rules.
+func (c *Client) GetAlertRules(ctx context.Context, token string) ([]AlertRule, error) {
+	resp, err := c.do(ctx, "GET", "/api/v1/audit/alerts/config", nil, token)
 	if err != nil {
 		return nil, err
 	}
@@ -165,37 +116,32 @@ func (c *Client) GetAlertRules(ctx context.Context, accessToken string) ([]Alert
 		Rules []AlertRule `json:"rules"`
 	}
 	if err := json.Unmarshal(resp, &result); err != nil {
-		// Try flat array
-		var rules []AlertRule
-		if err2 := json.Unmarshal(resp, &rules); err2 == nil {
-			return rules, nil
-		}
 		return nil, fmt.Errorf("parse alert rules: %w", err)
 	}
 	return result.Rules, nil
 }
 
 // UpsertAlertRule creates or updates an alert rule.
-func (c *Client) UpsertAlertRule(ctx context.Context, accessToken string, rule AlertRule) error {
-	_, err := c.do(ctx, "PUT", "/api/v1/audit/alerts/config", rule, accessToken)
+func (c *Client) UpsertAlertRule(ctx context.Context, token string, rule AlertRule) error {
+	_, err := c.do(ctx, "PUT", "/api/v1/audit/alerts/config", rule, token)
 	return err
 }
 
 // TestAlert sends a test notification for the alerting system.
-func (c *Client) TestAlert(ctx context.Context, accessToken string) error {
-	_, err := c.do(ctx, "POST", "/api/v1/audit/alerts/test", nil, accessToken)
+func (c *Client) TestAlert(ctx context.Context, token string) error {
+	_, err := c.do(ctx, "POST", "/api/v1/audit/alerts/test", nil, token)
 	return err
 }
 
 // RetentionPolicy defines how long audit events are retained.
 type RetentionPolicy struct {
-	MaxAge   string `json:"max_age,omitempty"`
-	MaxCount int64  `json:"max_count,omitempty"`
+	MaxAgeDays int   `json:"max_age_days"`
+	MaxEvents  int64 `json:"max_events,omitempty"`
 }
 
 // GetRetentionPolicy retrieves the current data retention policy.
-func (c *Client) GetRetentionPolicy(ctx context.Context, accessToken string) (*RetentionPolicy, error) {
-	resp, err := c.do(ctx, "GET", "/api/v1/audit/retention", nil, accessToken)
+func (c *Client) GetRetentionPolicy(ctx context.Context, token string) (*RetentionPolicy, error) {
+	resp, err := c.do(ctx, "GET", "/api/v1/audit/retention", nil, token)
 	if err != nil {
 		return nil, err
 	}
@@ -208,14 +154,14 @@ func (c *Client) GetRetentionPolicy(ctx context.Context, accessToken string) (*R
 }
 
 // UpdateRetentionPolicy updates the data retention policy.
-func (c *Client) UpdateRetentionPolicy(ctx context.Context, accessToken string, policy RetentionPolicy) error {
-	_, err := c.do(ctx, "PUT", "/api/v1/audit/retention", policy, accessToken)
+func (c *Client) UpdateRetentionPolicy(ctx context.Context, token string, policy RetentionPolicy) error {
+	_, err := c.do(ctx, "PUT", "/api/v1/audit/retention", policy, token)
 	return err
 }
 
 // VerifyAuditIntegrity verifies the hash chain integrity of audit events.
-func (c *Client) VerifyAuditIntegrity(ctx context.Context, accessToken string) (bool, error) {
-	resp, err := c.do(ctx, "POST", "/api/v1/audit/verify-integrity", nil, accessToken)
+func (c *Client) VerifyAuditIntegrity(ctx context.Context, token string) (bool, error) {
+	resp, err := c.do(ctx, "POST", "/api/v1/audit/verify-integrity", nil, token)
 	if err != nil {
 		return false, err
 	}
@@ -231,11 +177,118 @@ func (c *Client) VerifyAuditIntegrity(ctx context.Context, accessToken string) (
 }
 
 // ExportAuditEvents exports audit events as CSV or JSON.
-func (c *Client) ExportAuditEvents(ctx context.Context, accessToken, format string) ([]byte, error) {
-	path := "/api/v1/audit/export?format=" + url.QueryEscape(format)
-	resp, err := c.do(ctx, "GET", path, nil, accessToken)
+// format can be "csv" or "json".
+func (c *Client) ExportAuditEvents(ctx context.Context, token, format string) ([]byte, error) {
+	path := "/api/v1/audit/export?format=" + format
+	return c.do(ctx, "GET", path, nil, token)
+}
+
+// AccessRequest represents an IGA access request.
+type AccessRequest struct {
+	ID           string `json:"id,omitempty"`
+	Resource     string `json:"resource"`
+	Action       string `json:"action"`
+	Justification string `json:"justification,omitempty"`
+	Duration     string `json:"duration,omitempty"`
+	Status       string `json:"status,omitempty"`
+	RequesterID  string `json:"requester_id,omitempty"`
+	CreatedAt    string `json:"created_at,omitempty"`
+}
+
+// ListAccessRequests retrieves access requests with optional status filter.
+func (c *Client) ListAccessRequests(ctx context.Context, token, status string) ([]AccessRequest, error) {
+	path := "/api/v1/access-requests"
+	if status != "" {
+		path += "?status=" + status
+	}
+
+	resp, err := c.do(ctx, "GET", path, nil, token)
 	if err != nil {
 		return nil, err
 	}
-	return resp, nil
+
+	var requests []AccessRequest
+	if err := json.Unmarshal(resp, &requests); err != nil {
+		return nil, fmt.Errorf("parse access requests: %w", err)
+	}
+	return requests, nil
+}
+
+// SubmitAccessRequest creates a new access request.
+func (c *Client) SubmitAccessRequest(ctx context.Context, token string, req AccessRequest) (*AccessRequest, error) {
+	resp, err := c.do(ctx, "POST", "/api/v1/access-requests", req, token)
+	if err != nil {
+		return nil, err
+	}
+
+	var result AccessRequest
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return nil, fmt.Errorf("parse access request response: %w", err)
+	}
+	return &result, nil
+}
+
+// ApproveAccessRequest approves an access request by ID.
+func (c *Client) ApproveAccessRequest(ctx context.Context, token, requestID string) error {
+	_, err := c.do(ctx, "POST", "/api/v1/access-requests/"+requestID+"/approve", nil, token)
+	return err
+}
+
+// DenyAccessRequest denies an access request by ID.
+func (c *Client) DenyAccessRequest(ctx context.Context, token, requestID string) error {
+	_, err := c.do(ctx, "POST", "/api/v1/access-requests/"+requestID+"/deny", nil, token)
+	return err
+}
+
+// BrandingConfig holds per-tenant branding settings.
+type BrandingConfig struct {
+	LogoURL      string `json:"logo_url,omitempty"`
+	PrimaryColor string `json:"primary_color,omitempty"`
+	CustomCSS    string `json:"custom_css,omitempty"`
+}
+
+// GetBranding retrieves the branding configuration for a tenant.
+func (c *Client) GetBranding(ctx context.Context, token, tenantID string) (*BrandingConfig, error) {
+	resp, err := c.do(ctx, "GET", "/api/v1/tenants/"+tenantID+"/branding", nil, token)
+	if err != nil {
+		return nil, err
+	}
+
+	var config BrandingConfig
+	if err := json.Unmarshal(resp, &config); err != nil {
+		return nil, fmt.Errorf("parse branding config: %w", err)
+	}
+	return &config, nil
+}
+
+// UpdateBranding updates the branding configuration for a tenant.
+func (c *Client) UpdateBranding(ctx context.Context, token, tenantID string, config BrandingConfig) error {
+	_, err := c.do(ctx, "PUT", "/api/v1/tenants/"+tenantID+"/branding", config, token)
+	return err
+}
+
+// buildQueryString converts an AuditEventFilter into a URL query string.
+func buildQueryString(f AuditEventFilter) string {
+	var q string
+	add := func(key, val string) {
+		if val != "" {
+			if q != "" {
+				q += "&"
+			}
+			q += key + "=" + val
+		}
+	}
+	add("event_type", f.EventType)
+	add("actor_id", f.ActorID)
+	add("resource_type", f.ResourceType)
+	add("resource_id", f.ResourceID)
+	add("start_time", f.StartTime)
+	add("end_time", f.EndTime)
+	if f.Limit > 0 {
+		add("limit", fmt.Sprintf("%d", f.Limit))
+	}
+	if f.Offset > 0 {
+		add("offset", fmt.Sprintf("%d", f.Offset))
+	}
+	return q
 }
