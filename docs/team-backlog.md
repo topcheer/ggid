@@ -283,7 +283,12 @@
 - [x] README.md polish — Added 3-line integration section, updated doc links to latest paths
 - [x] docs/api/error-codes.md — Verified complete (57 error codes, all services)
 - [x] docs/deploy/production-checklist.md — Verified complete (119 lines, TLS/DB/Redis/NATS/Auth)
-> 189 docs total. All major topics covered.
+- [x] docs/guides/sdk-migration-guide.md — Auth0/Keycloak/Firebase migration with API mapping tables
+- [x] docs/examples/python-integration.md — Full runnable FastAPI demo: GGIDMiddleware, get_current_user, CRUD
+- [x] docs/examples/java-spring-integration.md — Full runnable Spring Boot: GGIDSecurityFilter, SecurityConfig, REST controller
+- [x] docs/architecture/security-overview.md — Auth flow, P0 security, multi-tenant RLS, audit hash chain, STRIDE
+- [x] fix(scim): isAlpha redeclaration conflict + URN colon notation single-level sub-attribute parsing (commit 513548b)
+> 193 docs total. All major topics covered.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
