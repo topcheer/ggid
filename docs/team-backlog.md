@@ -634,3 +634,11 @@
 - [x] users/page.tsx — 38 edits: all UI labels/buttons/headers, form fields, search, batch toolbar, table headers, pagination, lock/unlock titles (2a015c7)
 - [x] en.json + zh.json: 76 new keys (users 28, security 11, tenant 18, branding 0 existing reused)
 - [x] gen-i18n-dicts.py: 631 EN / 631 ZH keys, npm run build: 0 errors (2a015c7)
+
+## Sprint: i18n Wiring — SSO/OAuth/APIKeys/Certs (frontend 27dcd38)
+- [x] settings/sso — 45 edits: all toast msgs (samlSaved/oidcSaved/providerDeleted/testSucceeded/testFailed), wizard labels (step1Metadata/step2Attributes/step3Certificate), form fields (providerName/entityId/ssoUrl/discoveryUrl/clientId/clientSecret/scopes), action buttons (test/edit/activate/deactivate), social providers (enabled/disabled) (27dcd38)
+- [x] settings/oauth-clients — 29 edits: added useTranslations import+hook, all labels (clientName/scopesComma/redirectUrisHint/grantTypes), buttons (registerClient/createClient/saveChanges), secret modal (secretRevealed/secretWarning), table headers, action titles (edit/rotateSecret/delete), msgs (created/updated/deleted/secretRotated) (27dcd38)
+- [x] settings/api-keys — 11 edits: error msgs (enterKeyName/selectScope), demo mode, revoke confirm, SCOPE_OPTIONS labels via t(`apiKeys.${scope.value}`), EXPIRY_OPTIONS via t(`apiKeys.expiry${n}`), status badge (expired/activeStatus), never label (27dcd38)
+- [x] settings/certificates — 15 edits: STATUS_CONFIG → key-based t(statusCfg.key), upload msgs (selectOrPaste/certUploaded/certUploadedOffline), rotation msgs (keyRotated/keyRotateFailed), certCount, JWKS table headers (keyId/algorithm/status/created), rotation dialog (confirmRotation/rotationConfirmDesc), Active/Rotated badges (27dcd38)
+- [x] en.json + zh.json: 95 new keys (sso 18, oauth 9, apiKeys 8, certs 7, common 8)
+- [x] Total: 726 keys, npm run build: 0 errors (27dcd38)
