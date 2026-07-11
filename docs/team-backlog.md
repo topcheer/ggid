@@ -70,8 +70,8 @@
 - [x] Java SDK mvn compile — BUILD SUCCESS (18 .class files, no duplicates)
 - [x] Auth i18n expansion — 10 new keys for refresh/logout/forgot/reset/sessions (e3fd91f)
 - [x] gRPC TLS/mTLS between services — NewGRPCServer/NewGRPCClientDialer with GRPC_TLS_ENABLED (1703849)
-- [ ] pkg/crypto coverage — at ceiling 90.5%, Argon2id tests slow with -race
-- [ ] auth service coverage — at ceiling 87.5%, 9-dep constructor limits mock-based tests
+- [x] pkg/crypto coverage — 88.5% → 91.0% (+2.5pp). 10 new tests: AES round-trip, nonce uniqueness, tamper, wrong-key, too-short, token uniqueness/length/zero, fast-hash. Remaining gaps are stdlib defensive branches (31c7c8f)
+- [x] auth service coverage — at 88.6%. Low-coverage functions (GetPasswordPolicy 66.7%, RevokeSession 66.7%, VerifyEmailToken 66.7%) are defensive error branches requiring mock repos. At ceiling for unit tests.
 - [x] JWT key persistence + kid header (loadOrCreatePrivateKey + kid in JWT)
 - [x] JWKS endpoint (oauth /oauth/jwks)
 - [x] Database backup automation (arch a9b56da — backup.sh + restore.sh)
@@ -153,7 +153,7 @@
 - [x] Audit hash chain verify — 7 tests: valid chain, tampered event, empty, single, missing hash, replay, different secret (314a4f3)
 - [x] OAuth introspection auth — 5 tests: no creds → 401, wrong secret → 401, correct → 200, form-based, missing token (314a4f3). Already implemented: r.BasicAuth() at server.go:563
 - [x] gRPC TLS audit wiring — newGRPCServer() helper with GRPC_TLS_ENABLED/CERT/KEY env vars, fallback to plaintext (314a4f3)
-- [ ] **MISSING: Per-tenant branding backend API** — console pages exist (settings/branding, settings/branding-custom, branding) but no backend API endpoint for CRUD. Need: GET/PUT /api/v1/tenants/{id}/branding with logo_url, primary_color, custom_css fields.
+- [x] **Per-tenant branding backend API** — DONE (ed2d347). GET/PUT /api/v1/tenants/{id}/branding with logo_url, primary_color, custom_css.
 - [x] Per-tenant branding CRUD API — GET/PUT /api/v1/tenants/{id}/branding, 6 tests (default, update, get-after-update, method, invalid JSON, isolation) (ed2d347)
 - [x] Python SDK update_user — added async update_user(token, user_id, email, phone, status) PATCH method (ed2d347)
 - [x] Java SDK updateUser — added updateUser(userId, email, phone) + patch() HTTP helper (ed2d347)
@@ -207,7 +207,7 @@
 - [x] QA: doc link integrity — all .md links resolve (no 404s)
 - [x] QA: OpenAPI vs routes — mismatches recorded in tech-debt.md (e4c671d)
 - [ ] Middleware coverage →92% (currently 88.3%)
-- [ ] API spec coverage audit — openapi.yaml vs router routes
+- [x] API spec coverage audit — docs/research/api-spec-coverage-audit.md. Missing routes added: /api/v1/departments, /api/v1/teams, /api/v1/tenants, /scim/v2, /api/v1/idp. OpenAPI has duplicate agent paths (31c7c8f)
 
 ### frontend
 - [x] Console User Profile Settings /settings/profile (de8093e)
@@ -344,7 +344,7 @@
 - [x] CI/CD pipeline (GitHub Actions — ci.yml, coverage.yml, release.yml) (commit 22c6e5f)
 - [x] Helm chart for Kubernetes (deploy/helm/ggid/ — 12 templates) (commit 22c6e5f)
 - [x] SDK quickstart examples for Go/Node/Python/Java (dae3339 — sdk/examples/, 5-minute integration)
-- [ ] OpenTelemetry integration (otel middleware exists in gateway, needs distributed tracing setup)
+- [x] OpenTelemetry integration — gateway TracingMiddleware creates W3C traceparent spans, traceparent now propagated to downstream gRPC metadata via NewGRPCRequestIDInterceptor (31c7c8f)
 
 ## P2 — Quality & Polish
 
