@@ -554,3 +554,10 @@
 - [x] Settings pages verification — all 8 settings pages return HTTP 200 (sso, oauth-clients, api-keys, certificates, branding, tenant-config, mfa, login-flows) (29fec8f)
 - [x] Sidebar navigation — all 14 links verified, no 404s (29fec8f)
 - [x] Error handling — gateway scaled to 0: console shows "Reconnecting...", health dots red, empty states. No white screen. Gateway restored. (29fec8f)
+
+## Sprint: Console Polish — Nav Groups + Empty States + Build Fix (frontend cd3d2ed)
+- [x] npm run build 0 errors — TSC clean, monitoring error resolved (cd3d2ed)
+- [x] Users empty state — helpful hint text added (cd3d2ed)
+- [x] Dashboard data validation — stats show 0 when backend stores separated, documented in tech-debt.md (cd3d2ed)
+- [x] Console sidebar nav groups — 4 groups: Overview, Management, Security, System (cd3d2ed)
+- [x] Login page — already has centered card, logo, remember checkbox, social login (no changes needed)
