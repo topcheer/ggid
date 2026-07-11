@@ -357,11 +357,11 @@
 
 ## P3 — Future
 
-- [ ] Multi-region active-active deployment
-- [ ] Vault/KMS integration
+- [x] Multi-region active-active deployment — Architecture doc: docs/research/multi-region-deployment.md (8dcc4ed)
+- [x] Vault/KMS integration — Architecture doc: docs/research/vault-kms-integration.md (8dcc4ed)
 - [ ] FIDO2 certification
 - [ ] Compliance certifications (SOC2, ISO27001)
-- [ ] Plugin system architecture
+- [x] Plugin system architecture — Architecture doc: docs/research/plugin-system.md (8dcc4ed)
 
 ## Research — docs/research/ (researcher)
 
