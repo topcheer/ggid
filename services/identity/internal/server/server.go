@@ -3,10 +3,12 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/ggid/ggid/services/identity/internal/conf"
@@ -14,6 +16,7 @@ import (
 	"github.com/ggid/ggid/services/identity/internal/repository"
 	"github.com/ggid/ggid/services/identity/internal/service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // Server encapsulates the gRPC and HTTP servers for the Identity Service.
@@ -21,6 +24,25 @@ type Server struct {
 	cfg      *conf.Config
 	grpcSrv  *grpc.Server
 	httpSrv  *http.Server
+}
+
+// newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
+func newGRPCServer() *grpc.Server {
+	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
+		certFile := os.Getenv("GRPC_TLS_CERT")
+		keyFile := os.Getenv("GRPC_TLS_KEY")
+		if certFile != "" && keyFile != "" {
+			tlsCfg, err := tls.LoadX509KeyPair(certFile, keyFile)
+			if err == nil {
+				return grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{
+					Certificates: []tls.Certificate{tlsCfg},
+					MinVersion:   tls.VersionTLS12,
+				})))
+			}
+			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext", err)
+		}
+	}
+	return grpc.NewServer()
 }
 
 // New constructs a new Server with all dependencies wired up.
@@ -43,7 +65,7 @@ func New(cfg *conf.Config) (*Server, error) {
 	repo := repository.NewPGRepository(pool)
 	identitySvc := service.NewIdentityService(repo)
 
-	grpcSrv := grpc.NewServer()
+	grpcSrv := newGRPCServer()
 	// gRPC handlers will be registered once proto code is generated.
 
 	httpHandler := NewHTTPHandler(identitySvc)
