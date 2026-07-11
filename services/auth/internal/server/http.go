@@ -255,6 +255,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/login/orchestrate", h.handleLoginOrchestrate)
 	h.mux.HandleFunc("/api/v1/auth/sessions/stream", h.handleSessionStream)
 	h.mux.HandleFunc("/api/v1/auth/password-history-check", h.handlePasswordHistoryCheck)
+	h.mux.HandleFunc("/api/v1/auth/password-reset/", h.handlePasswordReset)
 }
 
 // ServeHTTP implements http.Handler.

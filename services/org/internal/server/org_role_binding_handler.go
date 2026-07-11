@@ -33,6 +33,10 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 		s.handleOrgBudget(w, r)
 		return
 	}
+	if strings.HasSuffix(r.URL.Path, "/access-report") {
+		s.handleAccessReport(w, r)
+		return
+	}
 
 	// Extract org_id from path
 	path := strings.Trim(r.URL.Path, "/")

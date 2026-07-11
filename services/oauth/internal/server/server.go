@@ -1171,6 +1171,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientLifecycle(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/consent-screen") {
+			handleConsentScreen(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 	mux.HandleFunc("/api/v1/oauth/par", handlePAR)
