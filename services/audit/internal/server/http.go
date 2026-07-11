@@ -1274,7 +1274,7 @@ func (s *HTTPServer) handleComplianceReport(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, report)
 }
 
-// GET /api/v1/audit/compliance-report?type=soc2&from=2025-01-01T00:00:00Z&to=2025-07-01T00:00:00Z
+// GET /api/v1/audit/compliance-report?type=soc2&tenant_id=X&from=2025-01-01T00:00:00Z&to=2025-07-01T00:00:00Z
 // Uses the compliance package to generate structured reports (SOC2/HIPAA/GDPR).
 func (s *HTTPServer) handleComplianceReportV2(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -1288,6 +1288,17 @@ func (s *HTTPServer) handleComplianceReportV2(w http.ResponseWriter, r *http.Req
 	}
 	if reportType != compliance.ReportSOC2 && reportType != compliance.ReportHIPAA && reportType != compliance.ReportGDPR {
 		writeJSONError(w, http.StatusBadRequest, "type must be soc2, hipaa, or gdpr")
+		return
+	}
+
+	tenantIDStr := r.URL.Query().Get("tenant_id")
+	if tenantIDStr == "" {
+		writeJSONError(w, http.StatusBadRequest, "tenant_id is required")
+		return
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
 		return
 	}
 
@@ -1305,7 +1316,7 @@ func (s *HTTPServer) handleComplianceReportV2(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	adapter := &auditEventQueryAdapter{svc: s.svc}
+	adapter := &auditEventQueryAdapter{svc: s.svc, tenantID: tenantID}
 	gen := compliance.NewGenerator(adapter)
 	report, err := gen.Generate(r.Context(), reportType, from, to)
 	if err != nil {
@@ -1317,11 +1328,13 @@ func (s *HTTPServer) handleComplianceReportV2(w http.ResponseWriter, r *http.Req
 
 // auditEventQueryAdapter adapts AuditService to compliance.EventQuery.
 type auditEventQueryAdapter struct {
-	svc *service.AuditService
+	svc      *service.AuditService
+	tenantID uuid.UUID
 }
 
 func (a *auditEventQueryAdapter) QueryEvents(ctx context.Context, from, to time.Time, actionTypes []string) ([]compliance.AuditEvent, error) {
 	events, _, err := a.svc.ListEvents(ctx, domain.ListFilter{
+		TenantID:  a.tenantID,
 		StartTime: &from,
 		EndTime:   &to,
 	}, 1, 500)

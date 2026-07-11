@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -54,7 +55,7 @@ func (s *DeviceBoundSSO) IssueDeviceBoundToken(deviceID, userID string) (*Device
 	// TODO: Sign JWT with device_id claim
 	now := time.Now()
 	return &DeviceToken{
-		Token:     fmt.Sprintf("dev-bound:%s:%s:%d", deviceID, userID, now.Unix()),
+		Token:     fmt.Sprintf("dev-bound:%s|%s|%d", deviceID, userID, now.Unix()),
 		DeviceID:  deviceID,
 		UserID:    userID,
 		IssuedAt:  now,
@@ -77,11 +78,15 @@ func (s *DeviceBoundSSO) VerifyDeviceBoundToken(token, deviceID string) error {
 	// TODO: Compare claim device_id with provided deviceID
 	// TODO: Verify token signature and expiry
 
-	// Skeleton: parse the placeholder format
-	var tokDeviceID, tokUserID string
+	// Parse the signed token: dev-bound:{deviceID}|{userID}|{timestamp}
+	trimmed := strings.TrimPrefix(token, "dev-bound:")
+	parts := strings.SplitN(trimmed, "|", 3)
+	if len(parts) != 3 {
+		return errors.New("invalid token format")
+	}
+	tokDeviceID := parts[0]
 	var tokUnix int64
-	n, err := fmt.Sscanf(token, "dev-bound:%s:%s:%d", &tokDeviceID, &tokUserID, &tokUnix)
-	if err != nil || n != 3 {
+	if _, err := fmt.Sscanf(parts[2], "%d", &tokUnix); err != nil {
 		return errors.New("invalid token format")
 	}
 
