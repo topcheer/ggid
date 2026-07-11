@@ -31,8 +31,10 @@
 - [x] Webhook SSRF protection (b52bafd)
 - [x] Audit hash chain implementation (fe5b025 — hash_chain.go)
 - [ ] gRPC TLS/mTLS between services
-- [ ] JWT signing key rotation infrastructure
-- [ ] Database backup automation (pg_dump cron)
+- [x] JWT key persistence + kid header (loadOrCreatePrivateKey + kid in JWT)
+- [x] JWKS endpoint (oauth /oauth/jwks)
+- [x] Database backup automation (arch a9b56da — backup.sh + restore.sh)
+- [ ] JWT key rotation (generate new key, keep old for grace period)
 
 ## P1 — Feature Development
 
@@ -42,8 +44,12 @@
 - [x] OAuth DPoP support (2caa572 — dpop.go)
 - [x] TOTP backup codes (2caa572 — backup_codes.go)
 - [x] Session timeout middleware (2caa572)
-- [ ] OIDC back-channel logout (RFC 8411)
-- [ ] Session management with revocation list (session_management.go exists — verify completeness)
+- [x] OIDC back-channel logout (dev ce9c29f)
+- [x] Session management with revocation list (dev ce9c29f)
+- [x] Password pepper wired (dev ce9c29f)
+- [x] WebAuthn attestation formats (dev ce9c29f)
+- [x] OAuth introspection auth (dev ce9c29f)
+- [x] Token scope claim (dev ce9c29f)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
