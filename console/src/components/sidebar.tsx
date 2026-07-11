@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -22,39 +22,61 @@ import {
   TrendingUp,
   X,
   Menu,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
-import { checkApiHealth, API_BASE_URL } from "@/lib/api-config";
+import { checkApiHealthDetailed, type HealthResult } from "@/lib/api-config";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { mode, toggle } = useTheme();
   const { locale, setLocale, t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
-  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+  const [health, setHealth] = useState<HealthResult | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const doHealthCheck = async () => {
+    const result = await checkApiHealthDetailed();
+    setHealth(result);
+    // If we were reconnecting and now we're back online, clear the flag
+    if (result.online && reconnecting) setReconnecting(false);
+    // If offline, mark reconnecting and switch to fast polling (5s)
+    if (!result.online) setReconnecting(true);
+    scheduleNext(result.online);
+  };
+
+  const scheduleNext = (online: boolean) => {
+    if (intervalRef.current) clearTimeout(intervalRef.current);
+    // Online: poll every 30s. Offline: retry every 5s.
+    const delay = online ? 30000 : 5000;
+    intervalRef.current = setTimeout(doHealthCheck, delay);
+  };
 
   useEffect(() => {
-    const check = () => checkApiHealth().then(setApiOnline);
-    check();
-    const interval = setInterval(check, 30000);
-    return () => clearInterval(interval);
+    doHealthCheck();
+    return () => {
+      if (intervalRef.current) clearTimeout(intervalRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const navItems = [
     { href: "/", label: t("nav.dashboard"), icon: LayoutDashboard },
     { href: "/users", label: t("nav.users"), icon: Users },
     { href: "/roles", label: t("nav.roles"), icon: Shield },
-    { href: "/policies", label: "Policies", icon: Shield },
+    { href: "/policies", label: t("nav.policies"), icon: Shield },
     { href: "/organizations", label: t("nav.organizations"), icon: Building2 },
     { href: "/audit", label: t("nav.audit"), icon: ScrollText },
     { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
     { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
-    { href: "/sessions", label: "Sessions", icon: Monitor },
-    { href: "/scim", label: "SCIM", icon: BookOpen },
-    { href: "/organizations/analytics", label: "Org Analytics", icon: TrendingUp },
-    { href: "/monitoring", label: "Monitoring", icon: Server },
-    { href: "/api-explorer", label: "API Explorer", icon: Send },
+    { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
+    { href: "/scim", label: t("nav.scim"), icon: BookOpen },
+    { href: "/organizations/analytics", label: t("nav.orgAnalytics"), icon: TrendingUp },
+    { href: "/monitoring", label: t("nav.monitoring"), icon: Server },
+    { href: "/api-explorer", label: t("nav.apiExplorer"), icon: Send },
     { href: "/settings", label: t("nav.settings"), icon: Settings },
   ];
 
@@ -133,10 +155,33 @@ export function Sidebar() {
       </div>
 
       <div className="border-t border-gray-200 p-4 dark:border-gray-800">
-        {/* API Health Indicator */}
-        <div className="mb-3 flex items-center gap-2 text-xs">
-          <span className={`inline-block h-2 w-2 rounded-full ${apiOnline === null ? "bg-gray-400" : apiOnline ? "bg-green-500" : "bg-red-500"}`} />
-          <span className="text-gray-500 dark:text-gray-400">API: {apiOnline === null ? "Checking..." : apiOnline ? "Connected" : "Offline"}</span>
+        {/* API Health Indicator with latency tooltip */}
+        <div
+          className="mb-3 flex items-center gap-2 text-xs"
+          title={
+            health?.online
+              ? `Gateway: ${health.latencyMs ?? "?"}ms`
+              : reconnecting
+                ? "Reconnecting..."
+                : "Offline"
+          }
+        >
+          {reconnecting ? (
+            <Loader2 className="h-3 w-3 animate-spin text-amber-500" />
+          ) : health?.online ? (
+            <span className="inline-block h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          ) : (
+            <AlertCircle className="h-3 w-3 text-red-500" />
+          )}
+          <span className="text-gray-500 dark:text-gray-400">
+            {health === null
+              ? "Checking..."
+              : reconnecting
+                ? "Reconnecting..."
+                : health.online
+                  ? `API: ${health.latencyMs ?? "?"}ms`
+                  : "Offline"}
+          </span>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium dark:bg-gray-700 dark:text-gray-300">

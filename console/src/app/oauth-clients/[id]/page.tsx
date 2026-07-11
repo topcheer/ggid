@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/lib/api";
 import { ArrowLeft, Trash2, Plus, X, KeyRound, Save } from "lucide-react";
+import { CopyButton } from "@/components/ui/copy-button";
 
 interface Client {
   id: string;
@@ -134,9 +135,12 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
       {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">{msg}</div>}
 
       {newSecret && (
-        <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-5">
-          <h3 className="mb-2 text-sm font-semibold text-amber-800">New Client Secret (save now!)</h3>
-          <code className="block rounded-lg bg-white px-3 py-2 font-mono text-sm">{newSecret}</code>
+        <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-950">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-400">New Client Secret (save now!)</h3>
+            <CopyButton value={newSecret} label="Copy Secret" variant="button" title="Copy client secret" />
+          </div>
+          <code className="block rounded-lg bg-white px-3 py-2 font-mono text-sm dark:bg-gray-900 dark:text-gray-300">{newSecret}</code>
         </div>
       )}
 

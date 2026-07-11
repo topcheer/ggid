@@ -26,7 +26,8 @@
     "notifications": "Notifications",
     "certificates": "Certificates",
     "branding": "Branding",
-    "apiExplorer": "API Explorer"
+    "apiExplorer": "API Explorer",
+    "orgAnalytics": "Org Analytics"
   },
   "common": {
     "save": "Save",

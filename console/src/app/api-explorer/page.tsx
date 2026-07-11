@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useApi } from "@/lib/api";
 import { Send, Plus, Trash2, ChevronDown } from "lucide-react";
+import { CopyButton } from "@/components/ui/copy-button";
 
 interface Endpoint {
   id: string;
@@ -257,9 +258,14 @@ export default function APIExplorerPage() {
                     ))}
                   </div>
                 </div>
-                <pre className="max-h-48 overflow-auto rounded-lg bg-gray-900 p-3 text-xs text-gray-100 dark:bg-black">
-                  {generateSnippet(ep, snippets[ep.id] || "curl")}
-                </pre>
+                <div className="relative">
+                  <pre className="max-h-48 overflow-auto rounded-lg bg-gray-900 p-3 pr-12 text-xs text-gray-100 dark:bg-black">
+                    {generateSnippet(ep, snippets[ep.id] || "curl")}
+                  </pre>
+                  <div className="absolute right-2 top-2">
+                    <CopyButton value={generateSnippet(ep, snippets[ep.id] || "curl")} title="Copy code snippet" />
+                  </div>
+                </div>
               </div>
 
               {/* Response */}

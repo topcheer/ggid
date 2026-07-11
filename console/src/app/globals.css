@@ -22,3 +22,50 @@ body {
   transition-property: background-color, border-color, color;
   transition-duration: 150ms;
 }
+
+/* === Dark Mode Auto-Fallback ===
+   Provides dark-mode colors for utility classes lacking explicit dark: variants.
+   Elements WITH dark: variants are excluded via :not([class*="dark:..."]).
+   This is a safety net so every page is readable in dark mode. */
+
+/* Card/panel backgrounds */
+.dark .bg-white:not([class*="dark:bg"]) {
+  background-color: rgb(31 41 55); /* gray-800 */
+}
+.dark .bg-gray-50:not([class*="dark:bg"]) {
+  background-color: rgb(17 24 39); /* gray-900 */
+}
+.dark .bg-gray-100:not([class*="dark:bg"]) {
+  background-color: rgb(31 41 55); /* gray-800 */
+}
+.dark .bg-gray-200:not([class*="dark:bg"]) {
+  background-color: rgb(55 65 81); /* gray-700 */
+}
+
+/* Text — ensure readable contrast on dark backgrounds */
+.dark .text-gray-300:not([class*="dark:text"]) {
+  color: rgb(107 114 128); /* gray-500 */
+}
+.dark .text-gray-400:not([class*="dark:text"]) {
+  color: rgb(156 163 175); /* gray-400 */
+}
+.dark .text-gray-500:not([class*="dark:text"]) {
+  color: rgb(107 114 128); /* gray-500 */
+}
+.dark .text-gray-600:not([class*="dark:text"]) {
+  color: rgb(156 163 175); /* gray-400 */
+}
+.dark .text-gray-900:not([class*="dark:text"]) {
+  color: rgb(229 231 235); /* gray-200 */
+}
+
+/* Borders */
+.dark .border-gray-100:not([class*="dark:border"]) {
+  border-color: rgb(31 41 55); /* gray-800 */
+}
+.dark .border-gray-200:not([class*="dark:border"]) {
+  border-color: rgb(55 65 81); /* gray-700 */
+}
+.dark .border-gray-300:not([class*="dark:border"]) {
+  border-color: rgb(75 85 99); /* gray-600 */
+}

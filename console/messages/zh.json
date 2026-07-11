@@ -26,7 +26,8 @@
     "notifications": "通知",
     "certificates": "证书",
     "branding": "品牌",
-    "apiExplorer": "API 浏览器"
+    "apiExplorer": "API 浏览器",
+    "orgAnalytics": "组织分析"
   },
   "common": {
     "save": "保存",

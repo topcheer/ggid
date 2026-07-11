@@ -20,17 +20,29 @@ export function buildUrl(path: string): string {
 /**
  * Health check hook — polls API healthz endpoint.
  */
+export interface HealthResult {
+  online: boolean;
+  latencyMs: number | null;
+}
+
 export async function checkApiHealth(): Promise<boolean> {
+  const result = await checkApiHealthDetailed();
+  return result.online;
+}
+
+export async function checkApiHealthDetailed(): Promise<HealthResult> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const start = performance.now();
     const resp = await fetch(`${API_BASE_URL}/healthz`, {
       signal: controller.signal,
       headers: { "X-Tenant-ID": DEFAULT_TENANT_ID },
     });
     clearTimeout(timeout);
-    return resp.ok;
+    const latencyMs = Math.round(performance.now() - start);
+    return { online: resp.ok, latencyMs };
   } catch {
-    return false;
+    return { online: false, latencyMs: null };
   }
 }
