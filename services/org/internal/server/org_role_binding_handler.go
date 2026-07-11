@@ -28,6 +28,12 @@ var (
 // POST /api/v1/organizations/{id}/role-bindings — bind role to user at org level.
 // GET /api/v1/organizations/{id}/role-bindings — list org role bindings.
 func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Request) {
+	// Route budget paths to budget handler
+	if strings.Contains(r.URL.Path, "budget-summary") || strings.Contains(r.URL.Path, "/budget") {
+		s.handleOrgBudget(w, r)
+		return
+	}
+
 	// Extract org_id from path
 	path := strings.Trim(r.URL.Path, "/")
 	parts := strings.Split(path, "/")

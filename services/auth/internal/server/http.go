@@ -69,6 +69,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/logout", h.logout)
 	h.mux.HandleFunc("/api/v1/auth/refresh", h.refresh)
 	h.mux.HandleFunc("/api/v1/auth/password/forgot", h.forgotPassword)
+	h.mux.HandleFunc("/api/v1/auth/credentials/", h.handleCredentialVault)
+	h.mux.HandleFunc("/api/v1/auth/credentials/store", h.handleCredentialVault)
 	h.mux.HandleFunc("/api/v1/auth/devices/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/trust-score") {
 			h.handleDeviceTrustScore(w, r)
