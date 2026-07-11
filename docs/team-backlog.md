@@ -525,6 +525,7 @@
 - [x] i18n batch 3: branding (13), certificates (18), tenant-config (20), security-center (9), MFA (11), login-flows (5) — 76 strings wired (this commit)
 - [x] Total: 352 keys, 0 duplicates, 0 missing zh translations
 - [x] i18n batch 4: dashboard (10), login (15), sidebar (2), nav+common keys (22) — 49 new keys, 401 total (this commit)
+- [x] i18n batch 5: 8 new namespaces (permissions, policies, groups, sessions, onboarding, notifications, consent, settingsPage) — 505 total keys (ca347a1)
 
 ## Sprint: i18n Coordination + Mobile + Build (frontend ef4cfc8)
 - [x] Dashboard i18n — already wired to useTranslations() (5 t() calls, no hardcoded strings remaining) (ef4cfc8)
