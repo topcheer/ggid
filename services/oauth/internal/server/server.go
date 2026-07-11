@@ -32,10 +32,11 @@ import (
 
 // Server encapsulates the OAuth HTTP server.
 type Server struct {
-	cfg      *conf.Config
-	httpSrv  *http.Server
-	oauthSvc *service.OAuthService
-	pool     *pgxpool.Pool
+	cfg        *conf.Config
+	httpSrv    *http.Server
+	oauthSvc   *service.OAuthService
+	pool       *pgxpool.Pool
+	stopTicker func()
 }
 
 // keyProvider implements domain.KeyProvider by loading RSA keys from disk.
@@ -59,6 +60,11 @@ func New(cfg *conf.Config) (*Server, error) {
 		return nil, fmt.Errorf("load keys: %w", err)
 	}
 	log.Printf("OAuth key loaded (kid=%s)", kp.KeyID())
+
+	// Wrap in RotatingKeyProvider for automatic key rotation with 24h grace period.
+	rotatingKP := service.NewRotatingKeyProvider(kp.PrivateKey(), 24*time.Hour)
+	stopTicker := rotatingKP.StartRotationTicker(24 * time.Hour)
+	log.Printf("OAuth key rotation enabled (24h interval, 24h grace period)")
 
 	var (
 		clientRepo repository.ClientRepository
@@ -92,8 +98,8 @@ func New(cfg *conf.Config) (*Server, error) {
 		}
 	}
 
-	// Create the OAuth service.
-	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, kp, cfg.Issuer)
+	// Create the OAuth service with rotating key provider.
+	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, rotatingKP, cfg.Issuer)
 
 	// Build HTTP handler.
 	handler := buildHandler(oauthSvc, cfg)
@@ -105,7 +111,7 @@ func New(cfg *conf.Config) (*Server, error) {
 		WriteTimeout: 30 * time.Second,
 	}
 
-	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool}, nil
+	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool, stopTicker: stopTicker}, nil
 }
 
 // Run starts the server and blocks until ctx is cancelled.
@@ -126,6 +132,9 @@ func (s *Server) Run(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		log.Println("OAuth server shutting down...")
+		if s.stopTicker != nil {
+			s.stopTicker()
+		}
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		_ = s.httpSrv.Shutdown(shutdownCtx)
