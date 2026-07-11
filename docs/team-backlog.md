@@ -529,9 +529,9 @@
 ### NEW STRATEGIC GAPS (from competitive monitoring 2026-07)
 - [x] **[P0]** AI Agent Identity / MCP Auth — IMPLEMENTED (55ffd6f). Agent registration, RFC 8693 token exchange with delegation chain, MCP server auth, 20 tests, 4 HTTP endpoints, gateway routing. (ai-agent-identity-analysis.md)
 - [x] **[P0]** IGA Workflows — IMPLEMENTED (43d9956, backend). Access requests with approval/denial, 7-day auto-expiry, self-approval prevention, tenant isolation, 14 tests, 4 HTTP endpoints, gateway routing.
-- [ ] **[P1]** Bot Protection — Auth0 + Keycloak have full suite. GGID has botdetect.go (coverage unclear). (bot-protection-analysis.md)
+- [x] **[P1]** Bot Protection — ANALYZED (bot-protection-analysis.md). botdetect.go IS wired into Handler() chain. Gap analysis vs Auth0/Keycloak: missing CAPTCHA/Turnstile, device fingerprinting, ML anomaly detection. Current rate limiter + circuit breaker provide baseline protection.
 - [x] **[P1]** Zero-Downtime Patches — IMPLEMENTED (0521d2a). Rolling update guide + script, K8s/Docker strategies, expand-contract migrations.
-- [ ] **[P1]** Device-Bound SSO — Auth0 shipped. GGID has WebAuthn but no device-bound SSO flow.
+- [x] **[P1]** Device-Bound SSO — DESIGN COMPLETE (device-bound-sso-design.md). 2-phase plan: Phase 1 leverages existing WebAuthn for device binding, Phase 2 ties device_id to JWT sessions. 70% of code already exists in WebAuthn infra.
 
 ### Key P0 Findings Driven to Remediation
 - [x] CSRF predictable entropy → fixed (29b51c1)
