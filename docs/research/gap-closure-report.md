@@ -1,21 +1,30 @@
 # GGID Competitive Gap Closure Report
 
-> Generated: 2026-07-11 (updated 2026-07-12 with verification evidence, 2026-07-24 with K3s deployment verification, 2026-07-25 with gap regression tests)
+> Generated: 2026-07-11 (updated 2026-07-12 with verification evidence, 2026-07-24 with K3s deployment verification, 2026-07-25 with gap regression tests, 2026-07-26 with arch feature verification)
 > Source: docs/research/auth0-keycloak-ggid-matrix.md (31 gaps identified)
 > Method: Codebase verification of each gap claim — grep source, inspect test files, count test functions
 
 ## Executive Summary
 
 The competitive analysis matrix identified 31 gaps (6 P0, 11 P1, 9 P2, 5 P3).
-After codebase verification: **24 resolved, 3 partial, 7 genuinely outstanding**.
+After codebase verification: **24 DONE, 3 PARTIAL, 4 TODO** (77% closure).
 
-This update adds a **Verification** pass for 18 specific items (3 arch-verified,
-14 independently verified, 1 deployment E2E verified). Each item now carries exact
-file paths, test counts, and a confidence rating.
+**2026-07-26 Update**: 10 additional arch feature verifications completed:
+1. SCIM enterprise URN colon notation (RFC 7644 §3.10) — parsePatchPath restructured
+2. SCIM PATCH nested attribute traversal — setNestedAttr multi-level dotted paths
+3. Audit hash chain regression (12 tests PASS)
+4. CSRF state validation regression (8 tests PASS)
+5. HasScope enforcement regression (8 tests PASS)
+6. i18n refactor: 979→58 lines, 611 JSON-backed keys
+7. P0 security fixes: all 10 implemented and verified
+8. Docker E2E: 11/11 PASS
+9. OAuth state Redis-backed validation
+10. JWT jti anti-replay (Redis SETNX)
+
+**2026-07-25 Update**: 3 gaps upgraded MEDIUM→HIGH confidence via 28 regression tests.
 
 **2026-07-24 Update**: K8s/K3s deployment gap (P0 #1) fully closed with production
-E2E verification — 10/10 tests PASS via Traefik ingress at https://ggid.iot2.win.
-8 deployment issues discovered and fixed during the K3s deployment cycle.
+E2E verification — 10/10 tests PASS via Traefik ingress.
 
 The matrix itself was **never updated** as gaps were closed, causing:
 - Duplicate research effort (new comparison docs re-discovering fixed issues)

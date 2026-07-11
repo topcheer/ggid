@@ -288,7 +288,12 @@
 - [x] docs/examples/java-spring-integration.md — Full runnable Spring Boot: GGIDSecurityFilter, SecurityConfig, REST controller
 - [x] docs/architecture/security-overview.md — Auth flow, P0 security, multi-tenant RLS, audit hash chain, STRIDE
 - [x] fix(scim): isAlpha redeclaration conflict + URN colon notation single-level sub-attribute parsing (commit 513548b)
-> 193 docs total. All major topics covered.
+- [x] docs/deploy/helm-chart-guide.md — Helm chart deployment: values reference, install, upgrade, rollback, production overrides
+- [x] docs/guides/troubleshooting.md — Common issues: JWT, DB, NATS, Gateway 502, tenant isolation, OAuth, SCIM, Docker
+- [x] docs/architecture/data-flow.md — Request flow diagrams: register, login, JWT verify, policy check, audit pipeline
+- [x] docs/examples/go-gin-integration.md — Full runnable Gin app: auth middleware adapter, role/scope guards, CRUD
+- [x] docs/research/gap-closure-report.md — Updated: 24 DONE, 3 PARTIAL, 4 TODO (77% closure) + 10 arch verifications
+> 197 docs total. All major topics covered.
 
 ### arch
 - [x] SDK coverage tests (sdk/go — 71.4% coverage)
