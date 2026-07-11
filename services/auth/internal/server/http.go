@@ -240,6 +240,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/", h.handleSessionReevaluate)
 	h.mux.HandleFunc("/api/v1/auth/email-otp/send", h.handleEmailOTPSend)
 	h.mux.HandleFunc("/api/v1/auth/email-otp/verify", h.handleEmailOTPVerify)
+	h.mux.HandleFunc("/api/v1/auth/login/orchestrate", h.handleLoginOrchestrate)
 	h.mux.HandleFunc("/api/v1/auth/sessions/stream", h.handleSessionStream)
 	h.mux.HandleFunc("/api/v1/auth/password-history-check", h.handlePasswordHistoryCheck)
 }

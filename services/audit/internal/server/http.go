@@ -125,6 +125,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/incidents", s.handleIncidents)
 	mux.HandleFunc("/api/v1/audit/reports/generate", s.handleReportGenerate)
 	mux.HandleFunc("/api/v1/audit/reports/", s.handleReportDownload)
+	mux.HandleFunc("/api/v1/audit/retention/execute", s.handleRetentionExecute)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }

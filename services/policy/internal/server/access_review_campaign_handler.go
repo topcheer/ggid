@@ -57,6 +57,10 @@ func (s *HTTPServer) handleReviewCampaigns(w http.ResponseWriter, r *http.Reques
 		s.submitReviewCampaign(w, r, parts[0])
 		return
 	}
+	if len(parts) == 2 && parts[1] == "results" {
+		s.handleCampaignResults(w, r, parts[0])
+		return
+	}
 
 	writeJSONError(w, http.StatusNotFound, "not found")
 }
