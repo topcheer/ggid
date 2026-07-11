@@ -105,6 +105,10 @@ export { useAccessReviews } from './useAccessReviews';
 export type { AccessReviewCampaign, ReviewItem, CreateCampaignInput, UseAccessReviewsResult } from './useAccessReviews';
 export { useJWKSRotation } from './useJWKSRotation';
 export type { JWKSStatus, RotationResult, UseJWKSRotationResult } from './useJWKSRotation';
+export { useImpersonationLog } from './useImpersonationLog';
+export type { ImpersonationEntry, ImpersonationFilter, UseImpersonationLogResult } from './useImpersonationLog';
+export { useRoleHierarchy } from './useRoleHierarchy';
+export type { RoleNode, UseRoleHierarchyResult } from './useRoleHierarchy';
 export type {
   GGIDConfig,
   GGIDUser,
