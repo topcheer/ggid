@@ -415,3 +415,10 @@
 - [x] API health indicator polish — latency tooltip, 5s retry when disconnected, "Reconnecting..." spinner state (beb47d0)
 - [x] Console dark mode audit — CSS auto-fallback layer covering ~1500 hardcoded colors across 30+ pages (beb47d0)
 - [x] Console i18n completion — hardcoded sidebar labels fixed (Policies, Sessions, SCIM, Org Analytics, Monitoring, API Explorer → t() keys) (beb47d0)
+
+## Sprint: Integration Quality (frontend 2da3a4e)
+- [x] Console API integration test — api.test.ts with 15 mock fetch tests (URL, headers, auth, CRUD, errors) (2da3a4e)
+- [x] Console build verification — npm run build passes clean, 0 errors, 0 warnings (2da3a4e)
+- [x] Accessibility audit — aria-labels added to 25+ icon-only buttons across 15+ pages (2da3a4e)
+- [x] Console env vars docs — .env.example created, README.md updated with complete env var table (2da3a4e)
+- [x] Performance: code splitting — lazy-charts.tsx dynamic import for recharts (~400KB), 3 pages updated (2da3a4e)
