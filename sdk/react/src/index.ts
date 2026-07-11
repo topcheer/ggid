@@ -23,6 +23,12 @@ export { useAuditEvents } from './useAuditEvents';
 export type { AuditEvent, AuditEventFilter, UseAuditEventsResult } from './useAuditEvents';
 export { useAccessRequests } from './useAccessRequests';
 export type { AccessRequest, CreateAccessRequestInput, UseAccessRequestsResult } from './useAccessRequests';
+export { useUsers } from './useUsers';
+export type { GGIDUserRecord, CreateUserInput, UpdateUserInput, UseUsersResult } from './useUsers';
+export { useBranding } from './useBranding';
+export type { BrandingConfig, UseBrandingResult } from './useBranding';
+export { useRetention } from './useRetention';
+export type { RetentionPolicy, UseRetentionResult } from './useRetention';
 export type {
   GGIDConfig,
   GGIDUser,
