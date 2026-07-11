@@ -85,6 +85,11 @@
 - [x] WebAuthn attestation formats (dev ce9c29f)
 - [x] OAuth introspection auth (dev ce9c29f)
 - [x] Token scope claim (dev ce9c29f)
+- [x] Password breach check at login — HIBP k-anonymity wired in Login() (f5b8f2c)
+- [x] JWT key rotation with grace period — RotatingKeyProvider 24h (f5b8f2c — key_rotation.go)
+- [x] PII obfuscation wired in auth/oauth — obfuscateForLog/obfuscateEmail (f5b8f2c)
+- [x] Auth service coverage tests — 9 tests in coverage_auth_test.go (f5b8f2c)
+- [x] CIBA flow tests — 9 tests in ciba_flow_test.go (f5b8f2c)
 - [x] Password breach check at login — HIBP k-anonymity, wired in Login() (f5b8f2c)
 - [x] JWT key rotation with grace period — RotatingKeyProvider (f5b8f2c — key_rotation.go)
 - [x] Wire pii.Obfuscate() in auth/oauth handlers — obfuscateForLog/obfuscateEmail (f5b8f2c)
@@ -349,12 +354,12 @@
 - [x] UserRole.ExpiresAt not enforced → fixed (7742916)
 
 ### Outstanding P0s Still Open (from research findings)
-- [ ] gRPC plaintext between all services (grpc-security-iam.md)
-- [ ] Introspection endpoint auth (partially fixed — verify complete)
-- [ ] JWT key rotation automation (key-rotation-iam.md)
-- [ ] pii.Obfuscate() zero callers — masking code never invoked (data-loss-prevention-iam.md)
-- [ ] CheckSessionTimeout dead code not wired (session-management-iam.md)
-- [ ] No password breach check at login (credential-stuffing-iam.md)
+- [ ] gRPC plaintext between all services (grpc-security-iam.md) — ONLY GENUINELY OPEN P0
+- [x] Introspection endpoint auth — fixed (dev ce9c29f, client_secret_basic required)
+- [x] JWT key rotation automation — RotatingKeyProvider with 24h grace (dev f5b8f2c — key_rotation.go)
+- [x] pii.Obfuscate() zero callers — wired as obfuscateForLog/obfuscateEmail (dev f5b8f2c)
+- [x] CheckSessionTimeout dead code — wired into middleware chain (uiux 737b5f5)
+- [x] Password breach check at login — HIBP k-anonymity wired in Login() (dev f5b8f2c)
 
 ## Coordination Rules
 
