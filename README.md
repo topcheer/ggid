@@ -3,7 +3,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](#)
 [![Go Version](https://img.shields.io/badge/Go-1.25%2B-00ADD8)](#)
-[![Tests](https://img.shields.io/badge/tests-19%20packages%2C%200%20FAIL-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/tests-33%20packages%2C%200%20FAIL-brightgreen)](#)
 [![Docker](https://img.shields.io/badge/Docker-13%20containers-blue)](#)
 [![Coverage](https://img.shields.io/badge/coverage-75%25%2B-green)](#)
 
