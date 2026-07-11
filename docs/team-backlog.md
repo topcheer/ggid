@@ -512,6 +512,8 @@
 - [x] API Keys page — 20 strings wired to t() (title, subtitle, table headers, create form, modal)
 - [x] All 280 zh-CN translations verified — 0 missing, 3 acronyms (URL, SAML, SCIM) correctly untranslated
 - [x] Fixed pre-existing JSX bug in MembersDetail (unclosed div)
+- [x] i18n batch 3: branding (13), certificates (18), tenant-config (20), security-center (9), MFA (11), login-flows (5) — 76 strings wired (this commit)
+- [x] Total: 352 keys, 0 duplicates, 0 missing zh translations
 
 ## Sprint: i18n Coordination + Mobile + Build (frontend ef4cfc8)
 - [x] Dashboard i18n — already wired to useTranslations() (5 t() calls, no hardcoded strings remaining) (ef4cfc8)
