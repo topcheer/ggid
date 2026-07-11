@@ -134,6 +134,11 @@
 - [x] Webhook delivery retry E2E — 5 tests: retry-then-success (3x503→200), retries-exhausted, first-success, HMAC sig, ctx cancel (513548b)
 - [x] OAuth Redis state store integration test — 7 tests: Redis failure fallback, cross-store isolation, Redis recovery, nil Redis, expiry (513548b)
 - [x] Auth error i18n — 37 new keys in en/zh-CN, writeAuthErrorT i18n-aware for login/register/refresh/rate-limit errors (513548b)
+- [x] PKCE functional verification — 5 tests: full S256 flow, mismatch rejection, plain method, public client enforcement, VerifyCodeChallenge unit tests (07969ea)
+- [x] Device Auth functional verification — 8 tests: full flow, pending, denied, expired, invalid code, user code, verification URI, slow_down (07969ea)
+- [x] JWKS endpoint functional verification — 7 tests: valid key set, modulus base64url, exponent AQAB, KID match, public key match, key rotation, discovery URI (07969ea)
+- [x] Token Introspection auth verification — 6 tests: active+fields, revoked→inactive, expired→inactive, malformed→inactive, empty→inactive, scope field (07969ea)
+- [x] gRPC TLS mTLS handshake rejection — rogue cert rejected by RequireAndVerifyClientCert, valid cert accepted (07969ea)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
