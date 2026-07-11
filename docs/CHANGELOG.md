@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — Milestone: Documentation & Developer Experience
+
+### Documentation Expansion (170+ docs)
+
+#### Quickstarts & Tutorials
+- 5 copy-paste quickstart guides (5-min JWT, RBAC, OAuth, Go SDK, Node SDK)
+- Unified SDK quickstart entry page (Go/Node/Python/Java side-by-side)
+- 4 step-by-step tutorials (multi-tenant setup, custom auth provider, webhook integration, SAML SP config)
+- Docker 5-minute quickstart with expected output for every command
+
+#### Deployment Guides
+- Docker deployment guide (compose explained, env vars, health checks, E2E walkthrough)
+- Kubernetes/Helm deployment guide (values reference, ingress, cert-manager, HPA)
+- K3s deployment guide (OrbStack, Traefik ingress, registry.iot2.win)
+- Bare metal deployment guide (systemd units, nginx reverse proxy, Let's Encrypt)
+- Docker Compose override guide (8 use cases with examples)
+- Private Docker registry setup guide
+- Complete environment variables reference (all 7 services)
+- Deployment troubleshooting (40+ issues across 6 categories)
+- Helm values complete reference
+- Terraform module (main.tf, variables.tf, outputs.tf, README)
+
+#### Architecture & Design
+- Architecture overview for evaluators (system diagram, service responsibilities, data flow)
+- 3 ADRs in docs/design/ (PostgreSQL+RLS, NATS JetStream audit, provider chain)
+- ADR-0001 JWT RSA shared key decision record
+- AI Agent Identity / MCP authentication design doc
+
+#### Integration & Developer Experience
+- 3 framework integration guides (Express.js, Gin, Spring Boot)
+- Frontend i18n guide (next-intl config, message key convention, LanguageSwitcher)
+- Backend i18n guide (pkg/i18n translator, 937 string extraction plan)
+- Operations runbook (deploy, tenants, key rotation, backups, monitoring, emergencies)
+- Authentication guide (all 8 methods, provider chain, session management)
+- Data protection guide (encryption, PII, GDPR, key management)
+- Incident response runbook (5 playbooks, forensic tools, communication plan)
+- Network security guide (segmentation, firewall, mTLS planning, DDoS)
+- Vulnerability management (scanning, SLAs, 19 P0 patches history)
+
+#### API Reference
+- Complete API reference: 78 endpoint subsections, 108+ endpoint references
+- Complete error codes reference (57 error codes across 7 services)
+- Performance tuning with benchmark_test.go results and pool sizing formulas
+
+### Build & Test
+- Makefile fix: exclude `sdk/examples/` from test targets (build constraint: ignore)
+- 32/32 packages pass, 0 FAIL, 250+ test cases
+
+---
+
 ## [Unreleased]
 
 ### Added
