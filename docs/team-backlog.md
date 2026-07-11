@@ -91,6 +91,11 @@
 - [x] Per-route timeout middleware (route_timeout.go, 348d61f)
 - [x] OTel tracing middleware (TracingMiddleware in otel.go:311)
 - [x] Performance benchmarks (benchmark_test.go — 6 benchmarks, 348d61f)
+- [x] Wire CheckSessionTimeout into middleware chain (737b5f5)
+- [x] Request ID propagation (request_id.go + router.go:120,706)
+- [x] Gateway integration tests (8 router test files already exist)
+- [x] Error response standardization — error_writer.go (737b5f5)
+- [ ] Middleware coverage →92% (currently 88.3%)
 
 ### frontend
 - [x] Console User Profile Settings /settings/profile (de8093e)
