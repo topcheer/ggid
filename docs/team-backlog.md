@@ -797,19 +797,33 @@
 - [x] IdP config CRUD routes wired (05d6727)
 - [x] SIEM forwarder wired into audit main.go (05d6727)
 
-### Docs: Latest Batches (245 docs)
+### Docs: Latest Batches (250 docs)
 - [x] Okta/Duo 2026, K8s deployment, testing strategy (331304f)
 - [x] Zero Trust, OAuth scopes design, disaster recovery, risk scoring, FIDO2 ecosystem (20ec24b)
 - [x] Production readiness checklist, observability guide, pricing TCO, post-quantum readiness, webhook events reference (45f5542)
+- [x] CIAM market 2026, performance tuning, Auth0/Okta migration, SAML federation, security audit checklist (98bc8db) — 250 docs milestone
 
 ### Go SDK Audit Client (arch 9305734, 1f287f0)
 - [x] audit.go: ListAuditEvents, GetComplianceReport, AlertRules CRUD, RetentionPolicy, VerifyAuditIntegrity, ExportAuditEvents, AccessRequests, Branding. Uses existing c.do() helper.
 
-### React SDK Additional Hooks + OpenAPI (frontend 1f287f0, arch 3944bf8)
+### React SDK Additional Hooks + OpenAPI (frontend 1f287f0, 360053e, arch 3944bf8)
 - [x] useAuditEvents hook (126 lines) — filter + pagination + refetch
 - [x] useAccessRequests hook (176 lines) — IGA workflow: list/create/approve/reject
 - [x] dashboard-example.tsx (323 lines) — complete admin panel demo
 - [x] OpenAPI: 7 missing endpoints + AlertRule/BrandingConfig schemas (3944bf8)
+- [x] Audit Events Explorer page (380 lines) — 6 filters, JSON viewer, CSV export, pagination (360053e)
+- [x] useUsers hook (190 lines) — CRUD + assignRole/removeRole (360053e)
+- [x] useBranding hook (90 lines) — fetch/update tenant branding (360053e)
+- [x] useRetention hook (90 lines) — fetch/update retention policy (360053e)
+
+### Backend: Audit Hash Chain (0e88ce1)
+- [x] SHA-256 hash chain: hash = SHA256(prev_hash + canonical_event_data)
+- [x] Per-tenant prev_hash tracked in memory (sync.RWMutex)
+- [x] canonicalEventData(): deterministic bytes with sorted metadata keys
+- [x] VerifyIntegrity(tenantID): validates full chain, detects tampering
+- [x] 9 tests: single/chained/tenant-isolation/valid/empty/nil/tampered/deterministic/metadata-sorted
+- [x] Password pepper verified (already in pkg/crypto), 3 auth-service tests
+- [x] OAuth introspection auth verified (already done, RFC 7662 §2.1)
 
 ### Batch: React SDK Components + Console Pages (frontend a12b150, f908fdd)
 - [x] **usePermissions hook** — sdk/react/src/usePermissions.ts (100 lines). Wildcard matching, admin/* superuser bypass.
