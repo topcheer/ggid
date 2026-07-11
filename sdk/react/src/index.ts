@@ -2,7 +2,7 @@
  * GGID React SDK — Entry Point
  *
  * Usage:
- *   import { GGIDProvider, useGGIDAuth } from '@ggid/react';
+ *   import { GGIDProvider, useGGIDAuth, ProtectedRoute, useUser } from '@ggid/react';
  */
 
 export { GGIDProvider, GGIDAuthContext } from './GGIDProvider';

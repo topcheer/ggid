@@ -8,7 +8,7 @@ React SDK for GGID Identity & Access Management.
 npm install @ggid/react
 ```
 
-## Quick Start
+## Quick Start (3 lines)
 
 ```tsx
 import { GGIDProvider, useGGIDAuth } from '@ggid/react';
@@ -19,67 +19,74 @@ import { GGIDProvider, useGGIDAuth } from '@ggid/react';
 </GgidProvider>
 
 // 2. Use the hook
-function App() {
-  const { isAuthenticated, login, user } = useGGIDAuth();
-  if (!isAuthenticated) return <LoginForm onSubmit={login} />;
-  return <Dashboard user={user} />;
-}
+const { isAuthenticated, user, login, logout } = useGGIDAuth();
 ```
 
-## API Reference
+## Components
 
 ### `<GGIDProvider>`
+
+Wraps your application to provide auth context.
 
 | Prop | Type | Required | Description |
 |------|------|----------|-------------|
 | `config.apiBaseUrl` | `string` | Yes | Gateway URL |
-| `config.tenantId` | `string` | Yes | Tenant UUID |
+| `config.tenantId` | `string` | Yes | Tenant ID |
 | `config.clientId` | `string` | No | OAuth client ID |
 | `config.redirectUri` | `string` | No | Post-login redirect |
-| `config.scopes` | `string[]` | No | Token scopes |
-| `config.storageKey` | `string` | No | localStorage key (default: `ggid_token`) |
-
-### `useGGIDAuth()`
-
-Returns `GGIDAuthContextValue`:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `user` | `GGIDUser \| null` | Current user profile |
-| `isAuthenticated` | `boolean` | Auth state |
-| `isLoading` | `boolean` | Loading state |
-| `error` | `string \| null` | Last error |
-| `login(username, password)` | `Promise<void>` | Login |
-| `logout()` | `void` | Clear session |
-| `getAccessToken()` | `string \| null` | Raw JWT |
-| `hasRole(role)` | `boolean` | Check role |
-| `hasScope(scope)` | `boolean` | Check scope |
+| `config.scopes` | `string[]` | No | Requested scopes |
+| `config.storageKey` | `string` | No | Token storage key (default: `ggid_token`) |
 
 ### `<ProtectedRoute>`
+
+Redirects to `/login` if not authenticated.
 
 ```tsx
 import { ProtectedRoute } from '@ggid/react';
 
-<ProtectedRoute loginPath="/login">
-  <AdminPanel />
-</ProtectedRoute>
+<ProtectedRoute><Dashboard /></ProtectedRoute>
 ```
 
-Redirects to `loginPath` if not authenticated.
+## Hooks
+
+### `useGGIDAuth()`
+
+Returns auth state and actions.
+
+```tsx
+const {
+  user,           // GGIDUser | null
+  isAuthenticated, // boolean
+  isLoading,       // boolean
+  error,           // string | null
+  login,           // (username, password) => Promise<void>
+  logout,          // () => void
+  getAccessToken,  // () => string | null
+  hasRole,         // (role: string) => boolean
+  hasScope,        // (scope: string) => boolean
+} = useGGIDAuth();
+```
 
 ### `useUser()`
 
-```tsx
-import { useUser } from '@ggid/react';
+Auto-fetches the current user profile from `GET /api/v1/users/me`.
 
-function Profile() {
-  const { user, isLoading } = useUser();
-  if (isLoading) return <Spinner />;
-  return <div>{user?.email}</div>;
-}
+```tsx
+const { user, isLoading, error, refresh } = useUser();
 ```
 
-Auto-fetches `GET /api/v1/users/me` on mount.
+## Types
+
+```typescript
+interface GGIDUser {
+  id: string;
+  username: string;
+  email: string;
+  tenant_id: string;
+  roles?: string[];
+  scopes?: string[];
+}
+```
 
 ## License
 
