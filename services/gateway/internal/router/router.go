@@ -170,6 +170,18 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// --- Deep health check (aggregated from all backends with latency) ---
+	if r.URL.Path == "/healthz/deep" {
+		if gw.healthChecker != nil {
+			gw.healthChecker.DeepHandler().ServeHTTP(w, r)
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		}
+		return
+	}
+
 	// --- Basic health check ---
 	if r.URL.Path == "/healthz" {
 		w.WriteHeader(http.StatusOK)
@@ -329,7 +341,7 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 		}
 		// Health check and JWKS are always public
-		if r.URL.Path == "/healthz" || r.URL.Path == "/healthz/live" || r.URL.Path == "/healthz/ready" || r.URL.Path == "/.well-known/jwks.json" || r.URL.Path == "/metrics" {
+		if r.URL.Path == "/healthz" || r.URL.Path == "/healthz/live" || r.URL.Path == "/healthz/ready" || r.URL.Path == "/healthz/deep" || r.URL.Path == "/.well-known/jwks.json" || r.URL.Path == "/metrics" {
 			isPublic = true
 		}
 
