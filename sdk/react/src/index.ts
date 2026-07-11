@@ -189,6 +189,10 @@ export { useRoleMining } from './useRoleMining';
 export type { UserAnalysis, RoleRecommendation, PermissionGrant, RoleMiningResult } from './useRoleMining';
 export { useComplianceGaps } from './useComplianceGaps';
 export type { ComplianceGap, ComplianceGapsResult } from './useComplianceGaps';
+export { usePolicySnapshots } from './usePolicySnapshots';
+export type { PolicySnapshot } from './usePolicySnapshots';
+export { useDataLineage } from './useDataLineage';
+export type { LineageData, LineageNode, AccessEvent, Consumer } from './useDataLineage';
 export type {
   GGIDConfig,
   GGIDUser,
