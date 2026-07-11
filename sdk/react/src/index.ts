@@ -205,6 +205,10 @@ export { useMFAFactors } from './useMFAFactors';
 export type { MFAFactor } from './useMFAFactors';
 export { useOrgChart } from './useOrgChart';
 export type { OrgNode } from './useOrgChart';
+export { useLoginAnalytics } from './useLoginAnalytics';
+export type { LoginAnalytics } from './useLoginAnalytics';
+export { useCloneTemplate } from './useCloneTemplate';
+export type { TemplateData, SavedTemplate } from './useCloneTemplate';
 export type {
   GGIDConfig,
   GGIDUser,
