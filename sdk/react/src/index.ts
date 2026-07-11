@@ -65,6 +65,10 @@ export { useAuditStream } from './useAuditStream';
 export type { StreamEvent, UseAuditStreamResult } from './useAuditStream';
 export { useOrgTree } from './useOrgTree';
 export type { OrgTreeNode, UseOrgTreeResult } from './useOrgTree';
+export { useProfile } from './useProfile';
+export type { UpdateProfileInput, UseProfileResult } from './useProfile';
+export { useNotifications } from './useNotifications';
+export type { Notification, NotificationPreferences, UseNotificationsResult } from './useNotifications';
 export type {
   GGIDConfig,
   GGIDUser,

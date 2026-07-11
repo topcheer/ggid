@@ -1,0 +1,184 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useApi } from "@/lib/api";
+import {
+  Users,
+  Shield,
+  Activity,
+  AlertTriangle,
+  TrendingUp,
+  Clock,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
+
+interface DashboardStats {
+  total_users: number;
+  active_sessions: number;
+  failed_logins_24h: number;
+  successful_logins_24h: number;
+  mfa_enrollment_rate: number;
+  audit_events_24h: number;
+  pending_access_requests: number;
+}
+
+interface ActivityItem {
+  id: string;
+  action: string;
+  actor_name: string;
+  result: "success" | "failure" | "denied";
+  created_at: string;
+}
+
+interface ServiceHealth {
+  name: string;
+  status: "healthy" | "degraded" | "down";
+  latency_ms: number;
+}
+
+export default function DashboardPage() {
+  const { apiFetch } = useApi();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [health, setHealth] = useState<ServiceHealth[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [statsRes, actRes, healthRes] = await Promise.all([
+        apiFetch<DashboardStats>("/api/v1/dashboard/stats").catch(() => null),
+        apiFetch<{ events?: ActivityItem[] }>("/api/v1/audit/events?page_size=8").catch(() => ({ events: [] })),
+        apiFetch<{ services?: ServiceHealth[] }>("/api/v1/health/services").catch(() => ({ services: [] })),
+      ]);
+      if (statsRes) setStats(statsRes);
+      setActivity(actRes?.events ?? []);
+      setHealth(healthRes?.services ?? []);
+    } catch {
+      /* ignore */
+    } finally {
+      setLoading(false);
+    }
+  }, [apiFetch]);
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [load]);
+
+  const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
+
+  const resultIcon = (result: string) => {
+    if (result === "success") return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
+    if (result === "failure") return <XCircle className="h-3.5 w-3.5 text-red-500" />;
+    return <AlertTriangle className="h-3.5 w-3.5 text-yellow-500" />;
+  };
+
+  const healthColor = (status: string) =>
+    status === "healthy" ? "text-green-500" : status === "degraded" ? "text-yellow-500" : "text-red-500";
+
+  const statCards = stats ? [
+    { label: "Total Users", value: stats.total_users, icon: Users, color: "text-indigo-600" },
+    { label: "Active Sessions", value: stats.active_sessions, icon: Shield, color: "text-green-600" },
+    { label: "Logins (24h)", value: stats.successful_logins_24h, icon: TrendingUp, color: "text-blue-600" },
+    { label: "Failed Logins", value: stats.failed_logins_24h, icon: AlertTriangle, color: "text-red-600" },
+    { label: "MFA Enrollment", value: `${stats.mfa_enrollment_rate}%`, icon: Shield, color: "text-purple-600" },
+    { label: "Audit Events", value: stats.audit_events_24h, icon: Activity, color: "text-orange-600" },
+    { label: "Access Requests", value: stats.pending_access_requests, icon: Clock, color: "text-cyan-600" },
+    { label: "Services Up", value: `${health.filter((s) => s.status === "healthy").length}/${health.length}`, icon: CheckCircle2, color: "text-green-600" },
+  ] : [];
+
+  if (loading && !stats) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Real-time overview. Auto-refreshes every 30s.
+        </p>
+      </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className={cardCls}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-gray-400">{card.label}</p>
+                  <p className={`mt-1 text-2xl font-bold ${card.color}`}>{card.value}</p>
+                </div>
+                <Icon className={`h-8 w-8 ${card.color} opacity-50`} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent activity */}
+        <div className="lg:col-span-2">
+          <div className={cardCls}>
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <Activity className="h-4 w-4" /> Recent Activity
+            </h3>
+            {activity.length === 0 ? (
+              <p className="py-6 text-center text-sm text-gray-400">No recent activity.</p>
+            ) : (
+              <div className="space-y-2">
+                {activity.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <div className="flex items-center gap-2">
+                      {resultIcon(item.result)}
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{item.action}</span>
+                      <span className="text-xs text-gray-400">by {item.actor_name || "system"}</span>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {new Date(item.created_at).toLocaleTimeString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Service health */}
+        <div>
+          <div className={cardCls}>
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <Shield className="h-4 w-4" /> Service Health
+            </h3>
+            {health.length === 0 ? (
+              <p className="py-6 text-center text-sm text-gray-400">No health data.</p>
+            ) : (
+              <div className="space-y-2">
+                {health.map((svc) => (
+                  <div key={svc.name} className="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <span className="text-sm font-medium capitalize text-gray-700 dark:text-gray-200">{svc.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">{svc.latency_ms}ms</span>
+                      <span className={`h-2 w-2 rounded-full ${svc.status === "healthy" ? "bg-green-500" : svc.status === "degraded" ? "bg-yellow-500" : "bg-red-500"}`} />
+                      <span className={`text-xs font-medium ${healthColor(svc.status)}`}>{svc.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
