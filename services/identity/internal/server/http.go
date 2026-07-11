@@ -192,6 +192,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleDeprovision(ctx, userID, w, r)
 	case action == "reactivate" && r.Method == http.MethodPost:
 		h.reactivateUser(ctx, userID, w, r)
+	case action == "data-export" && r.Method == http.MethodGet:
+		h.dataExport(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

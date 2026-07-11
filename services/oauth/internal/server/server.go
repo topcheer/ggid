@@ -1162,10 +1162,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/token-events/stream", handleTokenEventStream)
 	mux.HandleFunc("/api/v1/oauth/consent/", handleConsentReceipt)
 	mux.HandleFunc("/api/v1/oauth/token-families/", handleTokenFamily)
-	mux.HandleFunc("/api/v1/oauth/clients/", handleClientCert)
 	mux.HandleFunc("/api/v1/oauth/clients/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/branding") {
 			handleClientBranding(w, r)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/suspend") || strings.HasSuffix(r.URL.Path, "/reinstate") {
+			handleClientLifecycle(w, r)
 			return
 		}
 		handleClientCert(w, r)

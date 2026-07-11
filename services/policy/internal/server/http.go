@@ -80,6 +80,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/delegated-admin", s.handleDelegatedAdmin)
 	mux.HandleFunc("/api/v1/policies/break-glass/active", s.handleBreakGlass)
 	mux.HandleFunc("/api/v1/policies/break-glass", s.handleBreakGlass)
+	mux.HandleFunc("/api/v1/policies/approvals", s.handleApprovals)
+	mux.HandleFunc("/api/v1/policies/approvals/", s.handleApprovals)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }
