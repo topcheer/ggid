@@ -60,7 +60,7 @@ func TestAgent_Register(t *testing.T) {
 
 // TestAgent_List verifies listing agents through the gateway.
 func TestAgent_List(t *testing.T) {
-	resp, body := postJSONAgent(t, gatewayBaseURL+"/api/v1/agents/register", map[string]any{
+	resp, _ := postJSONAgent(t, gatewayBaseURL+"/api/v1/agents/register", map[string]any{
 		"name":          "E2E-ListBot",
 		"type":          "research-agent",
 		"owner_user_id": "00000000-0000-0000-0000-000000000001",
