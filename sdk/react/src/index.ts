@@ -29,6 +29,12 @@ export { useBranding } from './useBranding';
 export type { BrandingConfig, UseBrandingResult } from './useBranding';
 export { useRetention } from './useRetention';
 export type { RetentionPolicy, UseRetentionResult } from './useRetention';
+export { useAlerts } from './useAlerts';
+export type { AlertRule, CreateAlertRuleInput, UseAlertsResult } from './useAlerts';
+export { useSessions } from './useSessions';
+export type { UserSession, UseSessionsResult } from './useSessions';
+export { useCompliance } from './useCompliance';
+export type { ComplianceFramework, ComplianceReport, ComplianceFilter, UseComplianceResult } from './useCompliance';
 export type {
   GGIDConfig,
   GGIDUser,
