@@ -1216,6 +1216,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleAnalyticsSummary(w, r)
 			return
 		}
+		if r.URL.Path == "/api/v1/oauth/grant-flows" {
+			handleGrantFlows(w, r)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
 			handleValidateClientSecret(w, r)
 			return

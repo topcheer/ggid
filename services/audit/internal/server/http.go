@@ -133,6 +133,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/compliance/score-history", s.handleScoreHistory)
 	mux.HandleFunc("/api/v1/audit/siem/metrics", s.handleSIEMMetrics)
 	mux.HandleFunc("/api/v1/audit/reports/custom", s.handleCustomReport)
+	mux.HandleFunc("/api/v1/audit/compliance/evidence-expiry", s.handleEvidenceExpiry)
+	mux.HandleFunc("/api/v1/audit/compliance/evidence-refresh", s.handleEvidenceExpiry)
 	mux.HandleFunc("/api/v1/audit/correlation/rules", s.handleCorrelationRules)
 	mux.HandleFunc("/api/v1/audit/webhooks/delivery-status", s.handleWebhookDelivery)
 	mux.HandleFunc("/api/v1/audit/webhooks/", s.handleWebhookDelivery)
