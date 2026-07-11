@@ -226,6 +226,19 @@ curl -s "http://localhost:8080/api/v1/audit/events?limit=10&action=login" \
 
 ---
 
+## AI Agent Identity
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `POST` | `/api/v1/agents/register` | Bearer JWT | Register a new AI agent |
+| `GET` | `/api/v1/agents` | Bearer JWT | List agents by tenant |
+| `POST` | `/api/v1/agents/token` | Bearer JWT | Exchange user token for agent token (RFC 8693) |
+| `POST` | `/api/v1/agents/verify` | None | Verify an agent token |
+
+See [AI Agent Identity Guide](../guides/ai-agent-identity.md) for delegation chains, MCP auth, and JWT claims.
+
+---
+
 ## Health
 
 | Method | Path | Auth | Description |
