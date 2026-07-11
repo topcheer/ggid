@@ -137,6 +137,10 @@ export { useEmailOTP } from './useEmailOTP';
 export type { EmailOTPConfig, UseEmailOTPResult } from './useEmailOTP';
 export { useReportGenerator } from './useReportGenerator';
 export type { GeneratedReport, GenerateReportInput, ReportFormat, ReportStatus, UseReportGeneratorResult } from './useReportGenerator';
+export { useSessionRisk } from './useSessionRisk';
+export type { SessionRiskEntry, SessionRiskFactor, UseSessionRiskResult } from './useSessionRisk';
+export { useClientCerts } from './useClientCerts';
+export type { ClientCert, RotationResult, CertStatus, UseClientCertsResult } from './useClientCerts';
 export type {
   GGIDConfig,
   GGIDUser,
