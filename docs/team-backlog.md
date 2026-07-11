@@ -66,7 +66,12 @@
 - [x] Audit hash chain implementation (fe5b025 — hash_chain.go)
 - [x] Audit hash chain wired into service startup (74f7feb — AUDIT_HASH_CHAIN_SECRET env var)
 - [x] Audit hash chain wired into service startup (74f7feb — SetHashChainSecret + AUDIT_HASH_CHAIN_SECRET env)
-- [ ] gRPC TLS/mTLS between services
+- [x] Audit hash chain verification tests — 13 tests: valid chain, tampering detection, gaps, empty/single/large (e3fd91f)
+- [x] Java SDK mvn compile — BUILD SUCCESS (18 .class files, no duplicates)
+- [x] Auth i18n expansion — 10 new keys for refresh/logout/forgot/reset/sessions (e3fd91f)
+- [x] gRPC TLS/mTLS between services — NewGRPCServer/NewGRPCClientDialer with GRPC_TLS_ENABLED (1703849)
+- [ ] pkg/crypto coverage — at ceiling 90.5%, Argon2id tests slow with -race
+- [ ] auth service coverage — at ceiling 87.5%, 9-dep constructor limits mock-based tests
 - [x] JWT key persistence + kid header (loadOrCreatePrivateKey + kid in JWT)
 - [x] JWKS endpoint (oauth /oauth/jwks)
 - [x] Database backup automation (arch a9b56da — backup.sh + restore.sh)
