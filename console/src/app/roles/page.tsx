@@ -99,7 +99,7 @@ export default function RolesPage() {
       });
       setShowCreate(false);
       setCreateForm({ key: "", name: "", description: "" });
-      setMsg("Role created successfully");
+      setMsg(t("roles.roleCreated"));
       loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create role");
@@ -108,13 +108,13 @@ export default function RolesPage() {
 
   const handleDelete = async (roleId: string, systemRole: boolean) => {
     if (systemRole) {
-      setError("Cannot delete system role");
+      setError(t("roles.systemRole"));
       return;
     }
-    if (!confirm("Delete this role?")) return;
+    if (!confirm(t("roles.confirmDelete"))) return;
     try {
       await apiFetch(`/api/v1/roles/${roleId}`, { method: "DELETE" });
-      setMsg("Role deleted");
+      setMsg(t("roles.roleDeleted"));
       loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete role");
@@ -195,7 +195,7 @@ export default function RolesPage() {
         body: JSON.stringify(editForm),
       });
       setEditingRole(null);
-      setMsg("Role updated successfully");
+      setMsg(t("roles.roleUpdated"));
       loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update role");
@@ -241,7 +241,7 @@ export default function RolesPage() {
       {showCreate && (
         <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">New Role</h3>
+            <h3 className="text-sm font-semibold">{t("roles.createRole")}</h3>
             <button onClick={() => setShowCreate(false)} aria-label="Close">
               <X className="h-4 w-4 text-gray-400" />
             </button>
@@ -343,12 +343,12 @@ export default function RolesPage() {
 
       {/* Tabs */}
       <div className="mb-4 flex gap-2 border-b border-gray-200 overflow-x-auto">
-        <TabButton active={tab === "roles"} onClick={() => setTab("roles")} label={`Roles (${roles.length})`} />
-        <TabButton active={tab === "permissions"} onClick={() => setTab("permissions")} label="Permissions" />
-        <TabButton active={tab === "hierarchy"} onClick={() => setTab("hierarchy")} label="Hierarchy" />
-        <TabButton active={tab === "matrix"} onClick={() => setTab("matrix")} label="Matrix" />
-        <TabButton active={tab === "checker"} onClick={() => setTab("checker")} label="Checker" />
-        <TabButton active={tab === "abac"} onClick={() => setTab("abac")} label="ABAC Builder" />
+        <TabButton active={tab === "roles"} onClick={() => setTab("roles")} label={`${t("nav.roles")} (${roles.length})`} />
+        <TabButton active={tab === "permissions"} onClick={() => setTab("permissions")} label={t("roles.permissions")} />
+        <TabButton active={tab === "hierarchy"} onClick={() => setTab("hierarchy")} label={t("roles.hierarchy")} />
+        <TabButton active={tab === "matrix"} onClick={() => setTab("matrix")} label={t("roles.matrix")} />
+        <TabButton active={tab === "checker"} onClick={() => setTab("checker")} label={t("roles.checker")} />
+        <TabButton active={tab === "abac"} onClick={() => setTab("abac")} label={t("roles.abacBuilder")} />
       </div>
 
       {loading ? (

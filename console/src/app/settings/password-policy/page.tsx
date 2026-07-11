@@ -132,7 +132,7 @@ export default function PasswordPolicyPage() {
         method: "PUT",
         body: JSON.stringify(config),
       });
-      setMsg("Password policy saved to server");
+      setMsg(t("passwordPolicy.policySaved"));
     } catch {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
       setMsg("Endpoint unavailable — saved to localStorage");
@@ -174,7 +174,7 @@ export default function PasswordPolicyPage() {
       <div className="mb-6 flex items-center gap-3">
         <ShieldCheck className="h-7 w-7 text-brand-600" />
         <div>
-          <h1 className="text-2xl font-bold dark:text-gray-100">Password Policy</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{t("passwordPolicy.title")}</h1>
           <p className="text-sm text-gray-500">
             Configure password complexity rules, history, and expiry
           </p>
@@ -230,37 +230,37 @@ export default function PasswordPolicyPage() {
             <Toggle
               checked={config.require_uppercase}
               onChange={(v) => setConfig({ ...config, require_uppercase: v })}
-              label="Require uppercase letters"
+              label={t("passwordPolicy.requireUppercase")}
               description="At least one A-Z character"
             />
             <Toggle
               checked={config.require_lowercase}
               onChange={(v) => setConfig({ ...config, require_lowercase: v })}
-              label="Require lowercase letters"
+              label={t("passwordPolicy.requireLowercase")}
               description="At least one a-z character"
             />
             <Toggle
               checked={config.require_digit}
               onChange={(v) => setConfig({ ...config, require_digit: v })}
-              label="Require digits"
+              label={t("passwordPolicy.requireDigits")}
               description="At least one 0-9 character"
             />
             <Toggle
               checked={config.require_special}
               onChange={(v) => setConfig({ ...config, require_special: v })}
-              label="Require special characters"
+              label={t("passwordPolicy.requireSpecial")}
               description="At least one non-alphanumeric character"
             />
             <Toggle
               checked={config.prevent_username}
               onChange={(v) => setConfig({ ...config, prevent_username: v })}
-              label="Prevent username in password"
+              label={t("passwordPolicy.preventUsername")}
               description="Password cannot contain the user's username"
             />
             <Toggle
               checked={config.prevent_common}
               onChange={(v) => setConfig({ ...config, prevent_common: v })}
-              label="Prevent common passwords"
+              label={t("passwordPolicy.preventCommon")}
               description="Reject passwords from a known dictionary of common passwords"
             />
           </div>
