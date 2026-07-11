@@ -836,3 +836,30 @@
 - [x] **useRoles hook** — sdk/react/src/useRoles.ts
 - [x] **Multi-tenant example** — sdk/react/examples/multi-tenant-example.tsx
 - [x] Dashboard improvements — SKIPPED (already complete, 414 lines with activity timeline, health cards, stats)
+
+## 2026-07-12 Arch Cycle Update
+
+### Gap Regression Completed
+- **#18 SIEM Forwarder**: RE-VERIFIED (7 new regression tests, commit ca85abf)
+  - Stop() triple-call no panic (sync.Once)
+  - MaxRetries=0 defaults to 3
+  - Full lifecycle (Start→Forward→Flush→Stop)
+  - Elasticsearch Bearer auth + Content-Type
+  - Batch auto-flush trigger
+  - Empty buffer no-op
+- **#23 Token Exchange (RFC 8693)**: RE-VERIFIED (9 tests PASS)
+
+### Go SDK Service Clients Added (commit c9f7e38)
+- policy.go: 8 methods (CreateRole, GetRole, DeleteRole, AssignRole, RevokeRole, GetUserRoles, ListPermissions, CheckPolicy)
+- identity.go: 5 methods (CreateUser, UpdateUser, LockUser, UnlockUser, SearchUsers)
+- org.go: 8 methods (ListOrganizations, GetOrganization, CreateOrganization, DeleteOrganization, ListDepartments, CreateDepartment, AddMember, RemoveMember)
+- 14 tests ALL PASS
+- Go SDK total: 11 files, 104+ tests
+
+### Dispatched Tasks (all 3 teammates idle, new session IDs)
+- **Backend**: SIEM TLS, email verification, policy dry-run, dept RBAC, response compression
+- **Frontend**: useWebhooks, useFeatureFlags, SIEM settings page, onboarding wizard, branding page
+- **Docs**: Go SDK guide, OAuth 2.1, auth flows, GDPR, audit/SIEM guide
+
+### Build Status
+- 39 packages PASS, 0 FAIL
