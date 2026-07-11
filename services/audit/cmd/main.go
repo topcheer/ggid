@@ -23,7 +23,28 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ggid/ggid/services/audit/internal/service"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"crypto/tls"
 )
+
+// newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
+func newGRPCServer() *grpc.Server {
+	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
+		certFile := os.Getenv("GRPC_TLS_CERT")
+		keyFile := os.Getenv("GRPC_TLS_KEY")
+		if certFile != "" && keyFile != "" {
+			tlsCfg, err := tls.LoadX509KeyPair(certFile, keyFile)
+			if err == nil {
+				return grpc.NewServer(grpc.Creds(credentials.NewTLS(&tls.Config{
+					Certificates: []tls.Certificate{tlsCfg},
+					MinVersion:   tls.VersionTLS12,
+				})))
+			}
+			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext", err)
+		}
+	}
+	return grpc.NewServer()
+}
 
 func main() {
 	migrateOnly := flag.Bool("migrate-only", false, "Run migrations only and exit")
@@ -75,12 +96,12 @@ func main() {
 	// Initialize gRPC handler
 	auditHandler := handler.NewAuditHandler(auditSvc)
 
-	// Start gRPC server
+	// Start gRPC server (TLS-aware via GRPC_TLS_ENABLED env var)
 	lis, err := net.Listen("tcp", cfg.GRPCAddr)
 	if err != nil {
 		log.Fatalf("failed to listen on %s: %v", cfg.GRPCAddr, err)
 	}
-	grpcServer := grpc.NewServer()
+	grpcServer := newGRPCServer()
 	pb.RegisterAuditServiceServer(grpcServer, auditHandler)
 
 	go func() {
