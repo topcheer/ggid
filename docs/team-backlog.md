@@ -129,6 +129,11 @@
 - [x] OAuth state store Redis migration — RedisCmdable interface, SetRedisClient, Redis GetDel + sync.Map fallback (f27f7b3)
 - [x] HIBP password breach circuit breaker — 3-failure threshold, 30s cooldown, fail-open, 7 tests (f27f7b3) Gap #15 MEDIUM→RESOLVED
 - [x] SCIM PATCH compliance tests (RFC 7644) — 7 tests: enterprise ext, filter replace, array remove, multi-op sequence (f27f7b3)
+- [x] SCIM URN colon notation — parsePatchPath supports RFC 7644 colon notation (urn:...:User:department), 2 new tests (513548b)
+- [x] gRPC TLS integration test — self-signed cert, TLS server+client round trip, health RPC call, 5 tests (513548b)
+- [x] Webhook delivery retry E2E — 5 tests: retry-then-success (3x503→200), retries-exhausted, first-success, HMAC sig, ctx cancel (513548b)
+- [x] OAuth Redis state store integration test — 7 tests: Redis failure fallback, cross-store isolation, Redis recovery, nil Redis, expiry (513548b)
+- [x] Auth error i18n — 37 new keys in en/zh-CN, writeAuthErrorT i18n-aware for login/register/refresh/rate-limit errors (513548b)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
