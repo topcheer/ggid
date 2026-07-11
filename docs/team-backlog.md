@@ -366,6 +366,13 @@
 - [x] casdoor-comparison.md (1352 lines, ae61de2)
 - [x] iam-differentiation-strategy.md (1907 lines, 7ef94cf)
 
+### Batch 36 — Gap Validation Research (5 docs)
+- [x] gap-closure-report.md (243 lines, 99c6660) — UPDATED with verification: 11 HIGH confidence, 4 MEDIUM, 3 arch-verified
+- [x] auth0-quickstart-comparison.md (886 lines, 260f64c)
+- [x] sdk-ecosystem-gap-analysis.md (765 lines, 260f64c)
+- [x] market-positioning-analysis.md (1188 lines, 8aed6b0)
+- [x] i18n-gap-analysis.md (752 lines, 6307bcf)
+
 ### Key P0 Findings Driven to Remediation
 - [x] CSRF predictable entropy → fixed (29b51c1)
 - [x] Rate limiter not wired → fixed (fc20c41)
