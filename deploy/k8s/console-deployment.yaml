@@ -1,0 +1,124 @@
+---
+# GGID Admin Console — Kubernetes Deployment
+# Deploys the Next.js admin console with ClusterIP service + Ingress route.
+#
+# Usage:
+#   kubectl apply -f deploy/k8s/console-deployment.yaml
+#
+# Prerequisites:
+#   - Namespace "ggid" exists
+#   - Registry reachable (default: registry.iot2.win/ggid-console)
+#   - Ingress controller installed (traefik/nginx)
+#   - TLS secret "ggid-console-tls" in namespace ggid (optional)
+#
+# Verify:
+#   kubectl get pods -n ggid -l app=ggid-console
+#   kubectl get svc -n ggid ggid-console
+#   curl https://ggid-console.iot2.win
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ggid-console
+  namespace: ggid
+  labels:
+    app: ggid-console
+    component: console
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ggid-console
+  template:
+    metadata:
+      labels:
+        app: ggid-console
+        component: console
+    spec:
+      containers:
+        - name: console
+          image: registry.iot2.win/ggid-console:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: "https://ggid.iot2.win"
+            - name: NEXT_PUBLIC_TENANT_ID
+              value: "00000000-0000-0000-0000-000000000001"
+            - name: NODE_ENV
+              value: "production"
+            - name: HOSTNAME
+              value: "0.0.0.0"
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ggid-console
+  namespace: ggid
+  labels:
+    app: ggid-console
+spec:
+  type: ClusterIP
+  selector:
+    app: ggid-console
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ggid-console
+  namespace: ggid
+  labels:
+    app: ggid-console
+  annotations:
+    # Traefik (K3s default)
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # Nginx fallback
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+    - host: ggid-console.iot2.win
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ggid-console
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - ggid-console.iot2.win
+      secretName: ggid-console-tls

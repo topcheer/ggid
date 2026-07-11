@@ -6,6 +6,59 @@ const API_BASE = process.env.NEXT_PUBLIC_GGID_API || "http://localhost:8080";
 const TENANT_ID =
   process.env.NEXT_PUBLIC_TENANT_ID || "00000000-0000-0000-0000-000000000001";
 
+// Structured error from the GGID API
+export interface ApiError extends Error {
+  status: number;
+  title: string;
+  detail: string;
+  requestId: string | null;
+  code: string | null;
+}
+
+export function parseApiError(status: number, body: string): ApiError {
+  let title = "Request Failed";
+  let detail = body;
+  let requestId: string | null = null;
+  let code: string | null = null;
+
+  // Try to parse structured error response
+  try {
+    const parsed = JSON.parse(body);
+    title = parsed.error?.title || parsed.title || parsed.error?.code || title;
+    detail = parsed.error?.detail || parsed.detail || parsed.error?.message || parsed.message || detail;
+    requestId = parsed.request_id || parsed.error?.request_id || null;
+    code = parsed.error?.code || parsed.code || null;
+  } catch {
+    // Not JSON — use raw text if short, else generic
+    if (body.length > 200) detail = "Internal server error";
+  }
+
+  // Human-friendly status messages
+  const statusMap: Record<number, string> = {
+    400: "Bad Request",
+    401: "Unauthorized",
+    403: "Forbidden",
+    404: "Not Found",
+    409: "Conflict",
+    422: "Validation Error",
+    429: "Too Many Requests",
+    500: "Internal Server Error",
+    502: "Bad Gateway",
+    503: "Service Unavailable",
+  };
+  if (title === "Request Failed" && statusMap[status]) {
+    title = statusMap[status];
+  }
+
+  const err = new Error(`${title}: ${detail}`) as ApiError;
+  err.status = status;
+  err.title = title;
+  err.detail = detail;
+  err.requestId = requestId;
+  err.code = code;
+  return err;
+}
+
 export interface User {
   id: string;
   tenant_id: string;
@@ -54,7 +107,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!resp.ok) {
     const text = await resp.text();
-    throw new Error(`API ${resp.status}: ${text}`);
+    throw parseApiError(resp.status, text);
   }
 
   if (resp.status === 204) return {} as T;

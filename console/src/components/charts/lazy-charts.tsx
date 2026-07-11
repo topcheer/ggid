@@ -4,11 +4,16 @@ import dynamic from "next/dynamic";
 
 /**
  * Lazy-loaded chart components from recharts.
- * Recharts is ~400KB minified — code-splitting keeps it out of the
- * initial bundle so pages that don't use charts load faster.
+ *
+ * recharts (~400KB) is code-split via next/dynamic with ssr:false.
+ * Pages without charts never download the recharts chunk.
  *
  * Usage:
- *   import { LazyAreaChart, LazyBarChart, LazyPieChart } from "@/components/charts/lazy-charts";
+ *   import { AreaChart, Area, BarChart, ... } from "@/components/charts/lazy-charts";
+ *
+ * Note: Chart container components (AreaChart, BarChart, PieChart) are
+ * dynamically imported. Sub-components (Area, Bar, XAxis, etc.) are
+ * tree-shaken static imports — they are tiny and shared across chart types.
  */
 
 const LoadingFallback = () => (
@@ -17,30 +22,27 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Dynamically import recharts with ssr disabled
-const RechartAreaChart = dynamic(
+// Chart containers — dynamically imported (these pull in SVG rendering)
+const AreaChart = dynamic(
   () => import("recharts").then((m) => m.AreaChart),
   { ssr: false, loading: () => <LoadingFallback /> }
 );
-
-const RechartBarChart = dynamic(
+const BarChart = dynamic(
   () => import("recharts").then((m) => m.BarChart),
   { ssr: false, loading: () => <LoadingFallback /> }
 );
-
-const RechartPieChart = dynamic(
+const PieChart = dynamic(
   () => import("recharts").then((m) => m.PieChart),
   { ssr: false, loading: () => <LoadingFallback /> }
 );
 
-// Re-export chart sub-components that are lightweight (no heavy SVG libs)
+// Lightweight sub-components — tree-shaken, no heavy SVG libs
 export {
-  RechartAreaChart as AreaChart,
-  RechartBarChart as BarChart,
-  RechartPieChart as PieChart,
+  AreaChart,
+  BarChart,
+  PieChart,
 };
 
-// These are small components, safe to import eagerly
 export {
   Area,
   Bar,
