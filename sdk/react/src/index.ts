@@ -177,6 +177,10 @@ export { useComplianceDashboard } from './useComplianceDashboard';
 export type { FrameworkSummary, UseComplianceDashboardResult } from './useComplianceDashboard';
 export { useUserTimeline } from './useUserTimeline';
 export type { TimelineEvent, TimelineEventType, UseUserTimelineResult } from './useUserTimeline';
+export { useCorrelationRules } from './useCorrelationRules';
+export type { CorrelationRule, UseCorrelationRulesResult } from './useCorrelationRules';
+export { useResourceTags } from './useResourceTags';
+export type { ResourceTag, UseResourceTagsResult } from './useResourceTags';
 export type {
   GGIDConfig,
   GGIDUser,
