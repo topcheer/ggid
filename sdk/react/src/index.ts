@@ -193,6 +193,10 @@ export { usePolicySnapshots } from './usePolicySnapshots';
 export type { PolicySnapshot } from './usePolicySnapshots';
 export { useDataLineage } from './useDataLineage';
 export type { LineageData, LineageNode, AccessEvent, Consumer } from './useDataLineage';
+export { useUsagePolicy } from './useUsagePolicy';
+export type { ClientUsagePolicy } from './useUsagePolicy';
+export { useEvidenceChain } from './useEvidenceChain';
+export type { EvidenceChain, ChainEntry } from './useEvidenceChain';
 export type {
   GGIDConfig,
   GGIDUser,
