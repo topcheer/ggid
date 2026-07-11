@@ -30,6 +30,8 @@ func TestConfig_DefaultHasAllServiceRoutes(t *testing.T) {
 			"/api/v1/policies",
 			"/api/v1/orgs",
 			"/api/v1/audit",
+			"/api/v1/agents",
+			"/api/v1/oauth",
 			"/oauth",
 			"/saml",
 		}
