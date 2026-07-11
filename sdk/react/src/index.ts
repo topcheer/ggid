@@ -157,6 +157,10 @@ export { useSecurityPosture } from './useSecurityPosture';
 export type { SecurityPosture, PostureRecommendation, UseSecurityPostureResult } from './useSecurityPosture';
 export { useConsentScreen } from './useConsentScreen';
 export type { ConsentConfig, UseConsentScreenResult } from './useConsentScreen';
+export { useSoDMatrix } from './useSoDMatrix';
+export type { SoDRule, UseSoDMatrixResult } from './useSoDMatrix';
+export { useThreatFeed } from './useThreatFeed';
+export type { ThreatEvent, UseThreatFeedResult } from './useThreatFeed';
 export type {
   GGIDConfig,
   GGIDUser,
