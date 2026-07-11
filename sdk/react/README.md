@@ -8,19 +8,38 @@ React SDK for GGID Identity & Access Management.
 npm install @ggid/react
 ```
 
-## Quick Start (3 lines)
+## Quick Start
 
 ```tsx
 import { GGIDProvider, useGGIDAuth } from '@ggid/react';
 
 // 1. Wrap your app
-<GgidProvider config={{ apiBaseUrl: 'https://api.ggid.dev', tenantId: 'your-tenant-id' }}>
+<GGIDProvider config={{ apiBaseUrl: 'https://api.ggid.dev', tenantId: 'your-tenant-id' }}>
   <App />
-</GgidProvider>
+</GGIDProvider>
 
 // 2. Use the hook
 const { isAuthenticated, user, login, logout } = useGGIDAuth();
 ```
+
+## Table of Contents
+
+- [Components](#components)
+  - [GGIDProvider](#ggidprovider)
+  - [ProtectedRoute](#protectedroute)
+  - [RequireScope](#requirescope)
+  - [LogoutButton](#logoutbutton)
+  - [ErrorBoundary](#errorboundary)
+- [Hooks](#hooks)
+  - [useGGIDAuth](#useggidauth)
+  - [useUser](#useuser)
+  - [useRoles](#useroles)
+  - [usePermissions](#usepermissions)
+  - [useTokenRefresh](#usetokenrefresh)
+- [Types](#types)
+- [Examples](#examples)
+
+---
 
 ## Components
 
@@ -37,6 +56,16 @@ Wraps your application to provide auth context.
 | `config.scopes` | `string[]` | No | Requested scopes |
 | `config.storageKey` | `string` | No | Token storage key (default: `ggid_token`) |
 
+```tsx
+<GGIDProvider config={{
+  apiBaseUrl: 'https://api.ggid.dev',
+  tenantId: '00000000-0000-0000-0000-000000000001',
+  scopes: ['openid', 'profile', 'email'],
+}}>
+  <App />
+</GGIDProvider>
+```
+
 ### `<ProtectedRoute>`
 
 Redirects to `/login` if not authenticated.
@@ -44,8 +73,86 @@ Redirects to `/login` if not authenticated.
 ```tsx
 import { ProtectedRoute } from '@ggid/react';
 
-<ProtectedRoute><Dashboard /></ProtectedRoute>
+<ProtectedRoute>
+  <Dashboard />
+</ProtectedRoute>
 ```
+
+### `<RequireScope>`
+
+Conditionally renders children based on scope/permission checks.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `scope` | `string` | Single required scope |
+| `anyOf` | `string[]` | User must have ANY of these scopes |
+| `allOf` | `string[]` | User must have ALL of these scopes |
+| `fallback` | `ReactNode` | Content when unauthorized (default: `null`) |
+| `loadingFallback` | `ReactNode` | Content while auth state loads |
+
+```tsx
+import { RequireScope } from '@ggid/react';
+
+// Single scope
+<RequireScope scope="admin">
+  <AdminPanel />
+</RequireScope>
+
+// Any of multiple scopes
+<RequireScope anyOf={['admin', 'user-manager']}>
+  <ManageUsers />
+</RequireScope>
+
+// All of multiple scopes
+<RequireScope allOf={['users:read', 'users:write']}>
+  <EditUsers />
+</RequireScope>
+
+// With fallback
+<RequireScope scope="admin" fallback={<AccessDenied />}>
+  <AdminPanel />
+</RequireScope>
+```
+
+### `<LogoutButton>`
+
+Pre-built logout button with optional redirect.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `label` | `string` | `"Logout"` | Button label text |
+| `redirectAfterLogout` | `string` | `"/login"` | Redirect path after logout |
+| `variant` | `"default" \| "danger" \| "ghost"` | `"default"` | Visual style |
+| `className` | `string` | — | Custom CSS class |
+| `showIcon` | `boolean` | `true` | Show logout icon |
+| `disabled` | `boolean` | `false` | Disable button |
+
+```tsx
+import { LogoutButton } from '@ggid/react';
+
+// Basic
+<LogoutButton />
+
+// Custom label + redirect
+<LogoutButton label="Sign Out" redirectAfterLogout="/goodbye" />
+
+// Danger variant
+<LogoutButton variant="danger" label="Exit" />
+```
+
+### `<ErrorBoundary>`
+
+Catches render errors in the auth tree and displays a fallback.
+
+```tsx
+import { ErrorBoundary } from '@ggid/react';
+
+<ErrorBoundary fallback={<div>Something went wrong.</div>}>
+  <App />
+</ErrorBoundary>
+```
+
+---
 
 ## Hooks
 
@@ -55,15 +162,16 @@ Returns auth state and actions.
 
 ```tsx
 const {
-  user,           // GGIDUser | null
-  isAuthenticated, // boolean
-  isLoading,       // boolean
-  error,           // string | null
-  login,           // (username, password) => Promise<void>
-  logout,          // () => void
-  getAccessToken,  // () => string | null
-  hasRole,         // (role: string) => boolean
-  hasScope,        // (scope: string) => boolean
+  user,             // GGIDUser | null
+  tokenSet,         // GGIDTokenSet | null
+  isAuthenticated,  // boolean
+  isLoading,        // boolean
+  error,            // string | null
+  login,            // (username: string, password: string) => Promise<void>
+  logout,           // () => void
+  getAccessToken,   // () => string | null
+  hasRole,          // (role: string) => boolean
+  hasScope,         // (scope: string) => boolean
 } = useGGIDAuth();
 ```
 
@@ -75,9 +183,93 @@ Auto-fetches the current user profile from `GET /api/v1/users/me`.
 const { user, isLoading, error, refresh } = useUser();
 ```
 
+### `useRoles()`
+
+Provides role and scope helpers built on top of `useGGIDAuth`.
+
+```tsx
+import { useRoles } from '@ggid/react';
+
+const {
+  roles,          // string[]
+  scopes,         // string[]
+  hasRole,        // (role: string) => boolean
+  hasScope,       // (scope: string) => boolean
+  hasAnyRole,     // (...roles: string[]) => boolean
+  hasAllRoles,    // (...roles: string[]) => boolean
+  hasAnyScope,    // (...scopes: string[]) => boolean
+  isAdmin,        // boolean — shortcut for hasRole('admin') || hasScope('admin')
+} = useRoles();
+
+// Example: conditional rendering
+{isAdmin && <AdminSettings />}
+{hasAnyRole('manager', 'supervisor') && <TeamDashboard />}
+```
+
+### `usePermissions()`
+
+Fine-grained permission checking with wildcard support.
+
+Permissions are derived from the user's scopes and normalized to `resource:action` format. Supports wildcard matching (`users:*` satisfies `users:read`).
+
+```tsx
+import { usePermissions } from '@ggid/react';
+
+const {
+  permissions,         // string[] — normalized permissions
+  hasPermission,       // (permission: string) => boolean
+  hasAnyPermission,    // (...permissions: string[]) => boolean
+  hasAllPermissions,   // (...permissions: string[]) => boolean
+  loading,             // boolean
+} = usePermissions();
+
+// Example: check single permission
+if (hasPermission('users:read')) { fetchUsers(); }
+
+// Example: check multiple
+if (hasAllPermissions('users:read', 'users:write')) {
+  enableUserEditing();
+}
+
+// Wildcard: 'users:*' in scopes satisfies 'users:read'
+// Admin: 'admin' or '*' scope satisfies everything
+```
+
+**Permission normalization rules:**
+| Scope format | Normalized permission |
+|---|---|
+| `users:read` | `users:read` (unchanged) |
+| `user.read` | `user:read` (dot → colon) |
+| `users:*` | Matches any `users:<action>` |
+| `admin` or `*` | Matches all permissions |
+
+### `useTokenRefresh()`
+
+Automatically refreshes the access token before it expires (60s threshold). Parses JWT `exp` claim or uses `expires_at`.
+
+```tsx
+import { useTokenRefresh } from '@ggid/react';
+
+function App() {
+  useTokenRefresh(); // Call once near the root
+  return <Dashboard />;
+}
+```
+
+---
+
 ## Types
 
 ```typescript
+interface GGIDConfig {
+  apiBaseUrl: string;
+  tenantId: string;
+  clientId?: string;
+  redirectUri?: string;
+  scopes?: string[];
+  storageKey?: string;
+}
+
 interface GGIDUser {
   id: string;
   username: string;
@@ -85,6 +277,47 @@ interface GGIDUser {
   tenant_id: string;
   roles?: string[];
   scopes?: string[];
+}
+
+interface GGIDTokenSet {
+  access_token: string;
+  refresh_token?: string;
+  expires_at?: number;
+  token_type?: string;
+}
+```
+
+---
+
+## Examples
+
+### Complete Login Flow
+
+See [`examples/login-example.tsx`](./examples/login-example.tsx) for a full login experience with GGIDProvider, ProtectedRoute, useTokenRefresh, and ErrorBoundary.
+
+### Multi-Tenant App
+
+See [`examples/multi-tenant-example.tsx`](./examples/multi-tenant-example.tsx) for tenant switching with session isolation and useRoles.
+
+### Permission-Based Access Control
+
+```tsx
+import { GGIDProvider, RequireScope, usePermissions, LogoutButton } from '@ggid/react';
+
+function App() {
+  return (
+    <GGIDProvider config={config}>
+      <RequireScope scope="admin" fallback={<AccessDenied />}>
+        <AdminPanel />
+      </RequireScope>
+
+      <RequireScope anyOf={['users:read', 'users:write']}>
+        <UserManagement />
+      </RequireScope>
+
+      <LogoutButton variant="danger" redirectAfterLogout="/goodbye" />
+    </GGIDProvider>
+  );
 }
 ```
 

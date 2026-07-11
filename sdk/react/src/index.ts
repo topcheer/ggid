@@ -13,6 +13,12 @@ export { ErrorBoundary } from './ErrorBoundary';
 export { useTokenRefresh } from './useTokenRefresh';
 export { useRoles } from './useRoles';
 export type { UseRolesResult } from './useRoles';
+export { usePermissions } from './usePermissions';
+export type { UsePermissionsResult } from './usePermissions';
+export { LogoutButton } from './LogoutButton';
+export type { LogoutButtonProps } from './LogoutButton';
+export { RequireScope } from './RequireScope';
+export type { RequireScopeProps } from './RequireScope';
 export type {
   GGIDConfig,
   GGIDUser,
