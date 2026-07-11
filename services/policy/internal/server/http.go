@@ -67,6 +67,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/access-reviews/campaigns/", s.handleReviewCampaigns)
 	mux.HandleFunc("/api/v1/policies/access-reviews/campaigns", s.handleReviewCampaigns)
 	mux.HandleFunc("/api/v1/policies/roles/", s.handleRoleHierarchy)
+	mux.HandleFunc("/api/v1/policies/conditional-access", s.handleConditionalAccess)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }

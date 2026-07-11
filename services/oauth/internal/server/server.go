@@ -1154,6 +1154,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 	// DPoP proof verification
 	mux.HandleFunc("/api/v1/oauth/dpop/verify", handleDPoPVerify)
+	mux.HandleFunc("/api/v1/oauth/token/dpop-bind", handleDPoPTokenBind)
+	mux.HandleFunc("/api/v1/oauth/token/dpop-verify", handleDPoPTokenVerify)
 
 	// JWKS key rotation
 	mux.HandleFunc("/api/v1/oauth/jwks/rotate", func(w http.ResponseWriter, r *http.Request) {

@@ -82,6 +82,9 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Enhanced user search
 	h.mux.HandleFunc("/api/v1/users/search", h.handleUserSearch)
+
+	// User lifecycle automation
+	h.mux.HandleFunc("/api/v1/users/lifecycle/rules", h.handleLifecycleRules)
 }
 
 // ServeHTTP implements http.Handler.
@@ -170,6 +173,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.uploadAvatar(ctx, userID, w, r)
 	case action == "merge" && r.Method == http.MethodPost:
 		h.handleMerge(ctx, userID, w, r)
+	case action == "lifecycle-preview" && r.Method == http.MethodGet:
+		h.handleLifecyclePreview(ctx, userID, w, r)
 	case action == "deprovision" && r.Method == http.MethodPost:
 		h.handleDeprovision(ctx, userID, w, r)
 	default:
