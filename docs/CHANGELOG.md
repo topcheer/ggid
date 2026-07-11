@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] — Milestone: Documentation & Developer Experience
 
+### Gap Closure & Security Verification (2026-07-24)
+
+#### Gap Regression Verification (3 gaps, 28 tests)
+- **Audit Hash Chain** — 12 regression tests: repository wiring proof, field-level tamper detection, event deletion/insertion detection, cross-tenant isolation, replay attack defense (commit 76bc881)
+- **CSRF State Validation** — 8 tests: happy path, one-time use (RFC 6749 §10.12), expired state, cross-client isolation, multiple concurrent states, expiry cleanup
+- **HasScope Enforcement** — 8 tests: wildcard scope, multiple scopes, API key priority, JWT fallback, deny-by-default (P0 regression), empty scope list, 20-scope bypass attempt
+
+#### i18n Refactoring (commits 133eaac, 33e1ce3)
+- Console i18n: 979→58 lines in i18n.tsx, JSON-backed dictionaries (611 keys)
+- 33 new keys for SSO/OAuth/API Keys/Certificates settings pages (commit 2e46047)
+- gen-i18n-dicts.py script for dictionary generation
+
+#### P0 Security Fixes — All Complete
+- CSRF predictable entropy → crypto/rand.Read()
+- Rate limiter wired into production Handler() chain
+- SecurityHeaders wired into handler chain
+- Tenant spoofing — JWT claim takes priority over X-Tenant-ID header
+- Admin API scope check — hasAdminScope() guards /api/v1/admin/*
+- OAuth state validation on token exchange (Redis-backed)
+- JWT jti tracking with Redis SETNX (anti-replay)
+- JWTSecret empty → log.Fatal (no silent bypass)
+- HasScope() actual scope enforcement (no longer always true)
+- iss parameter in auth redirect
+
+#### Docker E2E — 11/11 PASS
+- Full stack: 12 containers, 7 microservices + Console + 4 infrastructure
+- Tests: gateway health, register, login+JWT, 401 without JWT, list users, create role, list roles, create org, audit query, wrong password 401, duplicate register 409
+- Gateway tenant forwarding: injects tenant_id as query param AND JSON body field
+
+#### Build Fixes
+- StructuredLogger.Emit nil pointer fixed (commit 9a4f46e)
+- Fast Argon2id hashing for auth service tests (commit 7e8e29f)
+- Middleware chain order verification tests (commit 4b952b2)
+
 ### Documentation Expansion (170+ docs)
 
 #### Quickstarts & Tutorials

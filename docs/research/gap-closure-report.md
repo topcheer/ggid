@@ -1,6 +1,6 @@
 # GGID Competitive Gap Closure Report
 
-> Generated: 2026-07-11 (updated 2026-07-12 with verification evidence, 2026-07-24 with K3s deployment verification)
+> Generated: 2026-07-11 (updated 2026-07-12 with verification evidence, 2026-07-24 with K3s deployment verification, 2026-07-25 with gap regression tests)
 > Source: docs/research/auth0-keycloak-ggid-matrix.md (31 gaps identified)
 > Method: Codebase verification of each gap claim — grep source, inspect test files, count test functions
 
@@ -146,7 +146,7 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | 3 | Token introspection (RFC 7662) | Missing | DONE | services/oauth: 20 test functions, server.go:555 endpoint with client auth |
 | 4 | SLO / Backchannel logout | Missing | DONE | server.go:459, /api/v1/oauth/backchannel-logout |
 | 5 | OpenAPI spec published | Missing | DONE | docs/openapi.yaml |
-| 6 | SCIM 2.0 | Skeleton only | DONE (was PARTIAL) | PATCH now implemented (patch.go + handler.go:586); EnterpriseUser schema (handler.go:78); 29 bulk tests + 20 PATCH engine tests. Updated from PARTIAL to DONE after verification |
+| 6 | SCIM 2.0 | Skeleton only | **DONE — VERIFIED** 2026-07-24 | **ARCH functional test** (7 tests PASS). gap_regression_scim_test.go: RFC 7644 §3.5.2 multi-op PATCH (add+replace+remove), enterprise extension, filter-based array replace, immutability, bulk operations, invalid op rejection, empty ops. All 7 PASS. **Known limitation:** colon-separated URN paths (`urn:...:User:department`) not yet supported by parsePatchPath — use whole-object replace as workaround |
 
 ### P1 — Important (11 identified → 9 closed, 2 open)
 
@@ -155,7 +155,7 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | 7 | Per-tenant branding/custom domains | Missing | TODO | No branding/theme config found |
 | 8 | Tenant management API | Missing | DONE | org/handler.go: CreateTenant, DeleteTenant |
 | 9 | Concurrent session limits | Missing | PARTIAL | Route exists (/sessions/limit), logic needs verification |
-| 10 | Magic Link / Passwordless | Missing | DONE | auth/server/http.go:84 magicLink handler; 14 test functions |
+| 10 | Magic Link / Passwordless | Missing | **DONE — VERIFIED** 2026-07-24 | **ARCH functional test** (7 tests PASS). gap_regression_magiclink_test.go: full lifecycle (issue→verify→JWT), one-time use (replay prevention), invalid/empty token rejection, 3 concurrent links independent, 10-token uniqueness, cross-tenant isolation. All 7 PASS. **HIGH confidence confirmed** |
 | 11 | SMS/Email OTP MFA | Missing | DONE | auth/service/phone_otp.go |
 | 12 | Webhooks | Missing | DONE | gateway/webhooks/ — full impl + SSRF protection |
 | 13 | GraphQL API | Missing | DONE | gateway/middleware/graphql.go |
@@ -199,6 +199,18 @@ During the K3s deployment cycle, the following issues were discovered and resolv
 | PARTIAL | 3 (concurrent sessions, compliance reporting, API explorer) |
 | TODO (genuinely outstanding) | 4 (branding, SIEM, React SDK, alerting/data retention) |
 | **Closure rate** | **77% DONE, 10% PARTIAL, 13% TODO** |
+
+### 2026-07-25 Regression Verification Update
+
+3 previously MEDIUM-confidence gaps upgraded to HIGH via dedicated regression test suites (commit 76bc881):
+
+| Gap | Test File | Tests | Confidence Change |
+|-----|-----------|-------|-------------------|
+| Audit Hash Chain (#20) | gap_regression_test.go | 12 PASS | MEDIUM → HIGH |
+| CSRF State Validation (#12) | gap_regression_csrf_test.go | 8 PASS | MEDIUM → HIGH |
+| HasScope Enforcement (#13) | gap_regression_scope_test.go | 8 PASS | MEDIUM → HIGH |
+
+**Total regression tests added: 28.** All PASS.
 
 ### Verification breakdown for 18 specifically audited items:
 
