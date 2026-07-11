@@ -76,7 +76,7 @@ func TestWasmPluginHost_LoadPlugin_NonExistentFile(t *testing.T) {
 	}
 }
 
-func TestWasmMiddleware_NilHost(t *testing.T) {
+func TestWasmMiddleware_NilHost_PluginTest(t *testing.T) {
 	mw := WasmMiddleware(nil, nil)
 	if mw == nil {
 		t.Fatal("expected non-nil middleware")
