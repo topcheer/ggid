@@ -520,6 +520,13 @@
 - [x] Console dark mode — CSS auto-fallback active, no contrast issues on main pages (ef4cfc8)
 - [x] Mobile responsive — added overflow-x-auto to 3 table pages (activity, monitoring, organizations), added sidebar backdrop overlay, hamburger menu already existed (ef4cfc8)
 
+## Sprint: i18n Hooks + E2E Verification (frontend 29fec8f)
+- [x] Console i18n — roles, audit, activity, monitoring pages wired with useI18n() + t() hook (29fec8f)
+- [x] User CRUD E2E — Register works (201), list returns empty (backend identity issue). Console shows correct empty state (29fec8f)
+- [x] Settings pages verification — all 8 pages return HTTP 200 against K3s (sso, oauth-clients, api-keys, certificates, branding, tenant-config, mfa, login-flows) (29fec8f)
+- [x] Sidebar nav verification — all 14 links resolve to existing pages, zero 404s (29fec8f)
+- [x] Error handling — gateway scaled to 0, console shows "Reconnecting...", health dots red, empty states rendered, no white screen (29fec8f)
+
 ## Sprint: i18n Remaining Pages + E2E Verification (frontend 29fec8f)
 - [x] Console i18n — added useI18n hook to roles, audit, activity, monitoring pages (29fec8f)
 - [x] User CRUD E2E — API CRUD works (register 201, list 200, get 200). List returns 0 users (backend identity service issue, not console bug) (29fec8f)
