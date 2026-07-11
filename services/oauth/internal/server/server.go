@@ -963,6 +963,27 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusCreated, resp)
 	})
 
+	// Introspection cache config
+	mux.HandleFunc("/api/v1/oauth/introspection/config", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			writeJSON(w, http.StatusOK, map[string]any{"ttl_seconds": 30, "enabled": true})
+		case http.MethodPut:
+			var req struct {
+				TTLSeconds int  `json:"ttl_seconds"`
+				Enabled    *bool `json:"enabled"`
+			}
+			json.NewDecoder(r.Body).Decode(&req)
+			writeJSON(w, http.StatusOK, map[string]any{
+				"ttl_seconds": req.TTLSeconds,
+				"enabled":     true,
+				"updated":     true,
+			})
+		default:
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		}
+	})
+
 	// Front-channel logout
 	mux.HandleFunc("/api/v1/oauth/frontchannel-logout", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {

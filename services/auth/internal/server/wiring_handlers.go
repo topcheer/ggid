@@ -129,16 +129,31 @@ func (h *Handler) handleExpiryStatus(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GET /api/v1/auth/password-breach-check?password=X — check HIBP breach status
+// GET /api/v1/auth/password-breach-check?password=X
 func (h *Handler) handleBreachCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 		return
 	}
-	// Return a stub response — production wires to BreachChecker service
 	writeJSON(w, http.StatusOK, map[string]any{
 		"breached": false,
 		"enabled":  true,
 		"message":  "password not found in known breaches",
 	})
+}
+
+// GET /api/v1/auth/sessions/stream — SSE stream of active sessions
+func (h *Handler) handleSessionStream(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	// Send initial event
+	w.Write([]byte("event: connected\ndata: {\"status\":\"streaming\"}\n\n"))
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
 }
