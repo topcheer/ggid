@@ -334,7 +334,7 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 	// 7. Issue tokens.
 	// Access token — delegated to the auth service in production.
 	// For now we issue a self-contained JWT as a placeholder.
-	accessToken, expiresIn, err := s.issueAccessToken(code.UserID, code.TenantID, client.ClientID)
+	accessToken, expiresIn, err := s.issueAccessToken(code.UserID, code.TenantID, client.ClientID, joinScopes(code.Scope))
 	if err != nil {
 		return nil, err
 	}
@@ -406,7 +406,7 @@ func (s *OAuthService) GetJWKS() *domain.JWKSResponse {
 
 // --- Internal helpers ---
 
-func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience string) (string, int, error) {
+func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, scope string) (string, int, error) {
 	now := time.Now()
 	expiresAt := now.Add(15 * time.Minute)
 
@@ -428,6 +428,7 @@ func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience str
 		"exp":       expiresAt.Unix(),
 		"jti":       uuid.New().String(),
 		"tenant_id": tenantID.String(),
+		"scope":     scope,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claimsMap)
@@ -631,7 +632,7 @@ func (e *ClaimRulesEngine) AddRule(rule ClaimRule) {
 func (s *OAuthService) IssueSAMLToken(tenantID uuid.UUID, nameID, email, displayName string) (string, int, error) {
 	// Use nameID as a synthetic user ID hash for the JWT subject.
 	userID := uuid.NewSHA1(uuid.NameSpaceOID, []byte("saml:"+nameID))
-	return s.issueAccessToken(userID, tenantID, "saml")
+	return s.issueAccessToken(userID, tenantID, "saml", "openid")
 }
 
 // --- Token Revocation (RFC 7009) ---
@@ -786,7 +787,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	_ = s.tokenRepo.RevokeRefreshToken(ctx, req.TenantID, tokenHash)
 
 	// 8. Issue new access token.
-	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, client.ClientID)
+	accessToken, expiresIn, err := s.issueAccessToken(record.UserID, req.TenantID, client.ClientID, joinScopes(req.Scope))
 	if err != nil {
 		return nil, err
 	}
@@ -853,7 +854,7 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 	}
 
 	// 4. Issue access token (no user — machine-to-machine).
-	accessToken, expiresIn, err := s.issueAccessToken(uuid.Nil, req.TenantID, client.ClientID)
+	accessToken, expiresIn, err := s.issueAccessToken(uuid.Nil, req.TenantID, client.ClientID, joinScopes(req.Scope))
 	if err != nil {
 		return nil, err
 	}

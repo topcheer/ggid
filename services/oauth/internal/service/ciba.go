@@ -170,7 +170,7 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 		cibaStore.Delete(authReqID)
 		// Issue access token for the resolved user.
 		scopes := strings.Fields(entry.Scope)
-		accessToken, expiresIn, err := s.issueAccessToken(entry.UserID, entry.TenantID, clientID)
+		accessToken, expiresIn, err := s.issueAccessToken(entry.UserID, entry.TenantID, clientID, entry.Scope)
 		if err != nil {
 			return nil, errors.Internal("issue CIBA access token", err)
 		}
