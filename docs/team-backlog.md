@@ -321,6 +321,13 @@
 - [x] DUPLICATE: iam-disaster-recovery.md (disaster-recovery-iam.md exists, batch 21)
 - [x] DUPLICATE: credential-theft-defense.md (already exists)
 
+### Batch 33 — HSM/FIDO2/Gateway (3 docs, 2 dups)
+- [x] hsm-kms-integration.md (3965 lines, f5eeefe)
+- [x] fido2-certification-guide.md (3026 lines, cb3b772)
+- [x] api-gateway-patterns-comparison.md (2640 lines, 5015bd3)
+- [x] DUPLICATE: post-quantum-iam.md (post-quantum-cryptography-iam.md exists, 349 lines)
+- [x] DUPLICATE: adaptive-authentication.md (adaptive-mfa-design.md 368 lines + step-up-authentication-patterns.md 399 lines)
+
 ### Key P0 Findings Driven to Remediation
 - [x] CSRF predictable entropy → fixed (29b51c1)
 - [x] Rate limiter not wired → fixed (fc20c41)
