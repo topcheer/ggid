@@ -776,6 +776,6 @@
 - [ ] **NEW-5 Device-Bound SSO skeleton** — services/oauth/internal/service/device_bound_sso.go. Interface + TODO
 
 ### Implementation Tasks (frontend)
-- [ ] **Gap #24 React SDK** — sdk/react/ directory. GGIDProvider, useAuth hook, ProtectedRoute, token management
+- [x] **Gap #24 React SDK** — sdk/react/ created (f040281). GGIDProvider, useGGIDAuth, types.ts, package.json
 - [ ] **Gap #26 Console Data Retention page** — console/src/app/settings/data-retention/page.tsx
 - [ ] **Gap #18 Console SIEM Integration page** — console/src/app/settings/siem/page.tsx
