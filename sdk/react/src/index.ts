@@ -69,6 +69,10 @@ export { useProfile } from './useProfile';
 export type { UpdateProfileInput, UseProfileResult } from './useProfile';
 export { useNotifications } from './useNotifications';
 export type { Notification, NotificationPreferences, UseNotificationsResult } from './useNotifications';
+export { useDelegation } from './useDelegation';
+export type { Delegation, DelegateInput, UseDelegationResult } from './useDelegation';
+export { useSoD } from './useSoD';
+export type { SoDRule, SoDViolation, SoDSeverity, CreateSoDRuleInput, ViolationCheckResult, UseSoDResult } from './useSoD';
 export type {
   GGIDConfig,
   GGIDUser,
