@@ -1,8 +1,8 @@
 # REST API Reference
 
-> Complete REST API for GGID. All endpoints require `X-Tenant-ID` header. Protected routes require `Authorization: Bearer <JWT>`.
+Complete REST API reference for GGID. All endpoints require `X-Tenant-ID` header. Protected routes require `Authorization: Bearer <JWT>`.
 
----
+**Base URL**: `https://api.ggid.example.com`
 
 ## Authentication
 
@@ -18,17 +18,20 @@ POST /api/v1/auth/register
 | `email` | Yes | User email |
 | `password` | Yes | Min 8 chars |
 
+**Request**:
 ```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
+curl -X POST https://api.ggid.example.com/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: $TENANT" \
-  -d '{"username":"alice","email":"alice@test.com","password":"Secure123!"}'
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"username":"alice","email":"alice@example.com","password":"SecurePass1!"}'
 ```
 
-**201:**
+**Response** (201):
 ```json
-{"id":"usr_abc","username":"alice","email":"alice@test.com","status":"active"}
+{ "id": "uuid", "username": "alice", "email": "alice@example.com" }
 ```
+
+**Errors**: 409 Conflict (duplicate username/email)
 
 ### Login
 
@@ -36,28 +39,49 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 POST /api/v1/auth/login
 ```
 
+**Request**:
 ```bash
-JWT=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+curl -X POST https://api.ggid.example.com/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: $TENANT" \
-  -d '{"username":"alice","password":"Secure123!"}' | jq -r .access_token)
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"username":"alice","password":"SecurePass1!"}'
 ```
 
-**200:**
+**Response** (200):
 ```json
-{"access_token":"eyJ...","refresh_token":"rft...","token_type":"Bearer","expires_in":900}
+{
+  "access_token": "eyJhbG...",
+  "refresh_token": "eyJhbG...",
+  "expires_in": 900,
+  "token_type": "Bearer"
+}
 ```
 
-**401:** `{"error":"invalid_credentials"}`
+**MFA Response** (200, `mfa_required: true`):
+```json
+{
+  "mfa_required": true,
+  "mfa_token": "mfa_temp_token_xxx"
+}
+```
+
+**Errors**: 401 Unauthorized (wrong password), 429 Too Many Requests (rate limited)
 
 ### Refresh Token
 
 ```
 POST /api/v1/auth/refresh
 ```
-```json
-{"refresh_token":"rft..."}
+
+**Request**:
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"refresh_token":"eyJhbG..."}'
 ```
+
+**Response** (200): Same as login response.
 
 ### Logout
 
@@ -65,210 +89,637 @@ POST /api/v1/auth/refresh
 POST /api/v1/auth/logout
 ```
 
-### MFA Verify
+Revokes the current session via `jti` blacklist.
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/auth/logout \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID"
+```
+
+### Verify MFA
 
 ```
 POST /api/v1/auth/mfa/verify
 ```
-```json
-{"code":"123456"}
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `mfa_token` | Yes | Temporary MFA token from login |
+| `code` | Yes | 6-digit TOTP code |
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/auth/mfa/verify \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"mfa_token":"mfa_temp_xxx","code":"123456"}'
 ```
 
----
+### Impersonate User
+
+```
+POST /api/v1/auth/impersonate
+```
+
+Requires `admin` scope. Issues a JWT impersonating the target user.
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/auth/impersonate \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"user_id":"target-uuid"}'
+```
 
 ## Users
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/v1/users` | `read:users` | List users (paginated) |
-| `GET` | `/api/v1/users/{id}` | `read:users` | Get user |
-| `POST` | `/api/v1/users` | `write:users` | Create user |
-| `PUT` | `/api/v1/users/{id}` | `write:users` | Update user |
-| `DELETE` | `/api/v1/users/{id}` | `delete:users` | Delete user |
-| `POST` | `/api/v1/users/{id}/roles` | `write:users` | Assign role |
-| `GET` | `/api/v1/users/{id}/permissions` | `read:users` | User's permissions |
-
 ### List Users
 
+```
+GET /api/v1/users
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | int | Page number (default 1) |
+| `page_size` | int | Per page (max 100, default 20) |
+| `search` | string | Search by username/email |
+| `status` | string | `active` / `locked` / `suspended` |
+| `role` | string | Filter by role key |
+
 ```bash
-curl -s http://localhost:8080/api/v1/users?page=1&page_size=20 \
-  -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: $TENANT"
+curl https://api.ggid.example.com/api/v1/users?page=1\&page_size=20 \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID"
 ```
 
-**200:**
+**Response** (200):
 ```json
-{"users":[{"id":"usr_1","username":"alice","email":"alice@test.com","status":"active"}],"total":1,"page":1}
+{
+  "items": [
+    { "id": "uuid", "username": "alice", "email": "alice@example.com", "status": "active" }
+  ],
+  "page": 1,
+  "page_size": 20,
+  "total": 142
+}
 ```
 
----
+### Get User
+
+```
+GET /api/v1/users/{id}
+```
+
+```bash
+curl https://api.ggid.example.com/api/v1/users/$USER_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID"
+```
+
+### Get Current User
+
+```
+GET /api/v1/users/me
+```
+
+Returns the authenticated user's profile.
+
+### Create User
+
+```
+POST /api/v1/users
+```
+
+Requires `users:write` scope.
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"username":"bob","email":"bob@example.com","password":"SecurePass1!","name":"Bob Smith"}'
+```
+
+### Update User
+
+```
+PUT /api/v1/users/{id}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `email` | No | New email |
+| `phone` | No | Phone number |
+| `name` | No | Display name |
+
+### Delete User
+
+```
+DELETE /api/v1/users/{id}
+```
+
+Soft-deletes the user (marks as inactive).
+
+### Lock User
+
+```
+POST /api/v1/users/{id}/lock
+```
+
+### Unlock User
+
+```
+POST /api/v1/users/{id}/unlock
+```
+
+### Search Users
+
+```
+GET /api/v1/users?search={query}
+```
+
+### Import Users (Bulk)
+
+```
+POST /api/v1/users/import
+```
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/users/import \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"users":[{"username":"u1","email":"u1@example.com","password":"Pass1!"}]}'
+```
+
+### Export Users
+
+```
+GET /api/v1/users/export?format=csv
+```
+
+### Get User Sessions
+
+```
+GET /api/v1/users/{id}/sessions
+```
+
+### Revoke User Sessions
+
+```
+DELETE /api/v1/users/{id}/sessions
+```
 
 ## Roles
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/v1/roles` | `read:roles` | List roles |
-| `POST` | `/api/v1/roles` | `write:roles` | Create role |
-| `DELETE` | `/api/v1/roles/{id}` | `delete:roles` | Delete role |
-| `POST` | `/api/v1/roles/{id}/permissions` | `write:roles` | Assign permissions |
-| `POST` | `/api/v1/roles/{id}/parent` | `write:roles` | Set parent (inheritance) |
-| `GET` | `/api/v1/permissions` | `read:roles` | List all permissions |
+### List Roles
+
+```
+GET /api/v1/roles
+```
 
 ### Create Role
 
-```bash
-curl -X POST http://localhost:8080/api/v1/roles \
-  -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: $TENANT" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Editor","key":"editor","description":"Read+write users"}'
+```
+POST /api/v1/roles
 ```
 
----
+| Field | Required | Description |
+|-------|----------|-------------|
+| `key` | Yes | Unique role key (e.g., `admin`) |
+| `name` | Yes | Display name |
+| `description` | No | Role description |
 
-## Organizations
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/roles \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"key":"developer","name":"Developer"}'
+```
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/v1/orgs` | `read:orgs` | List orgs |
-| `POST` | `/api/v1/orgs` | `write:orgs` | Create org |
-| `GET` | `/api/v1/orgs/{id}` | `read:orgs` | Get org |
-| `PUT` | `/api/v1/orgs/{id}` | `write:orgs` | Update org |
-| `DELETE` | `/api/v1/orgs/{id}` | `delete:orgs` | Delete org |
+**Errors**: 500 (empty key causes UNIQUE constraint violation)
 
----
+### Get Role
+
+```
+GET /api/v1/roles/{id}
+```
+
+### Update Role
+
+```
+PUT /api/v1/roles/{id}
+```
+
+### Delete Role
+
+```
+DELETE /api/v1/roles/{id}
+```
+
+### Assign Role
+
+```
+POST /api/v1/users/{user_id}/roles
+```
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/users/$USER_ID/roles \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"role_id":"role-uuid"}'
+```
+
+### Revoke Role
+
+```
+DELETE /api/v1/users/{user_id}/roles/{role_id}
+```
+
+### Get User Roles
+
+```
+GET /api/v1/users/{user_id}/roles
+```
+
+### List Permissions
+
+```
+GET /api/v1/permissions
+```
 
 ## Policies
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/api/v1/policies` | `write:policies` | Create ABAC policy |
-| `GET` | `/api/v1/policies` | `read:policies` | List policies |
-| `DELETE` | `/api/v1/policies/{id}` | `delete:policies` | Delete policy |
-| `POST` | `/api/v1/policies/check` | Any auth | Check permission (RBAC) |
-| `POST` | `/api/v1/policies/evaluate` | Any auth | Evaluate with attributes (ABAC) |
-| `POST` | `/api/v1/policies/dry-run` | `write:policies` | Test without affecting prod |
-| `GET` | `/api/v1/policies/templates` | `read:policies` | List compliance templates |
-| `POST` | `/api/v1/policies/from-template/{id}` | `write:policies` | Apply template |
-| `GET` | `/api/v1/policies/export` | `read:policies` | Export policies JSON |
-| `POST` | `/api/v1/policies/import` | `write:policies` | Import policies |
-
 ### Check Permission
 
+```
+POST /api/v1/policies/check
+```
+
 ```bash
-curl -X POST http://localhost:8080/api/v1/policies/check \
-  -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: $TENANT" \
-  -H "Content-Type: application/json" \
-  -d '{"user_id":"usr_abc","action":"write","resource":"users"}'
+curl -X POST https://api.ggid.example.com/api/v1/policies/check \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"user_id":"uuid","resource":"document:report","action":"read"}'
 ```
 
-**200:**
+**Response**:
 ```json
-{"allowed":true,"reason":"role_permission_match"}
+{ "allowed": true, "reason": "role:developer permits document:read" }
 ```
 
----
+### Dry-Run Policy
+
+```
+POST /api/v1/policies/dry-run
+```
+
+Evaluates a policy without saving it.
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/policies/dry-run \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"rules":[{"effect":"allow","resource":"api:*","action":"*"}]}'
+```
+
+### Create Policy
+
+```
+POST /api/v1/policies
+```
+
+### List Policies
+
+```
+GET /api/v1/policies
+```
+
+### Delete Policy
+
+```
+DELETE /api/v1/policies/{id}
+```
 
 ## Audit
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/v1/audit/events` | `read:audit` | Query events (paginated) |
-| `GET` | `/api/v1/audit/verify` | `read:audit` | Verify hash chain |
-
 ### Query Events
 
-```bash
-curl -s "http://localhost:8080/api/v1/audit/events?limit=10&action=login" \
-  -H "Authorization: Bearer $JWT" \
-  -H "X-Tenant-ID: $TENANT"
+```
+GET /api/v1/audit/events
 ```
 
----
+See [Audit API Reference](audit-api.md) for full details.
 
-## OAuth 2.1 / OIDC
+### Stream Events (SSE)
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/oauth/authorize` | Session | Authorization code flow |
-| `POST` | `/oauth/token` | Client creds | Token endpoint (code→token, refresh, exchange) |
-| `GET` | `/oauth/userinfo` | Bearer JWT | OIDC UserInfo |
-| `GET` | `/.well-known/openid-configuration` | None | OIDC Discovery |
-| `GET` | `/.well-known/jwks.json` | None | JWKS (public keys) |
-| `POST` | `/oauth/introspect` | Client creds | Token introspection |
-| `POST` | `/oauth/revoke` | Client creds | Token revocation |
+```
+GET /api/v1/audit/events/stream
+```
 
----
+### Export Events
+
+```
+GET /api/v1/audit/export?format=csv|json
+```
+
+### Verify Integrity
+
+```
+GET /api/v1/audit/integrity/verify
+```
+
+### Compliance Report
+
+```
+GET /api/v1/audit/compliance/report?type=soc2|hipaa|gdpr
+```
+
+## Organizations
+
+### List Organizations
+
+```
+GET /api/v1/organizations
+```
+
+### Create Organization
+
+```
+POST /api/v1/organizations
+```
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/organizations \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"name":"Engineering","description":"Engineering team"}'
+```
+
+### Get Organization
+
+```
+GET /api/v1/organizations/{id}
+```
+
+### Delete Organization
+
+```
+DELETE /api/v1/organizations/{id}
+```
+
+### List Departments
+
+```
+GET /api/v1/organizations/{id}/departments
+```
+
+### Create Department
+
+```
+POST /api/v1/organizations/{id}/departments
+```
+
+### Add Member
+
+```
+POST /api/v1/organizations/{id}/members
+```
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/organizations/$ORG_ID/members \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"user_id":"uuid","role":"developer"}'
+```
+
+### Remove Member
+
+```
+DELETE /api/v1/organizations/{id}/members/{user_id}
+```
+
+## AI Agents
+
+### Register Agent
+
+```
+POST /api/v1/agents
+```
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/agents \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{
+    "name": "my-service-agent",
+    "type": "service",
+    "scopes": ["users:read", "audit:read"],
+    "max_delegation_depth": 3
+  }'
+```
+
+### List Agents
+
+```
+GET /api/v1/agents
+```
+
+### Exchange Agent Token
+
+```
+POST /api/v1/agents/{id}/token
+```
+
+```bash
+curl -X POST https://api.ggid.example.com/api/v1/agents/$AGENT_ID/token \
+  -H "Authorization: Bearer $SUBJECT_TOKEN" \
+  -H "X-Tenant-ID: $TENANT_ID" \
+  -d '{"scopes":["users:read"]}'
+```
+
+### Verify Agent Token
+
+```
+POST /api/v1/agents/verify
+```
+
+### Suspend Agent
+
+```
+POST /api/v1/agents/{id}/suspend
+```
+
+## OAuth
+
+### Authorization Endpoint
+
+```
+GET /oauth/authorize
+```
+
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| `response_type` | Yes | `code` |
+| `client_id` | Yes | OAuth client ID |
+| `redirect_uri` | Yes | Must match registered URI exactly |
+| `scope` | Yes | Requested scopes |
+| `state` | Yes | CSRF protection |
+| `code_challenge` | Yes | PKCE challenge |
+| `code_challenge_method` | Yes | `S256` |
+
+### Token Endpoint
+
+```
+POST /oauth/token
+```
+
+```bash
+curl -X POST https://api.ggid.example.com/oauth/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code&code=xxx&redirect_uri=xxx&client_id=xxx&code_verifier=xxx"
+```
+
+### JWKS
+
+```
+GET /.well-known/jwks.json
+```
+
+### Discovery
+
+```
+GET /.well-known/openid-configuration
+```
+
+## Sessions
+
+### List Sessions
+
+```
+GET /api/v1/sessions
+```
+
+### Revoke Session
+
+```
+DELETE /api/v1/sessions/{id}
+```
+
+### Revoke All User Sessions
+
+```
+DELETE /api/v1/sessions?user_id={user_id}
+```
+
+## Access Requests (IGA)
+
+### Submit Access Request
+
+```
+POST /api/v1/access-requests
+```
+
+### List Access Requests
+
+```
+GET /api/v1/access-requests?status=pending
+```
+
+### Approve Access Request
+
+```
+POST /api/v1/access-requests/{id}/approve
+```
+
+### Deny Access Request
+
+```
+POST /api/v1/access-requests/{id}/deny
+```
+
+## Webhooks
+
+### Register Webhook
+
+```
+POST /api/v1/webhooks
+```
+
+### List Webhooks
+
+```
+GET /api/v1/webhooks
+```
+
+### Delete Webhook
+
+```
+DELETE /api/v1/webhooks/{id}
+```
 
 ## SCIM 2.0
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/scim/v2/Users` | Bearer JWT | List/filter users |
-| `POST` | `/scim/v2/Users` | Bearer JWT | Create user |
-| `GET` | `/scim/v2/Users/{id}` | Bearer JWT | Get user |
-| `PUT` | `/scim/v2/Users/{id}` | Bearer JWT | Replace user |
-| `PATCH` | `/scim/v2/Users/{id}` | Bearer JWT | Patch user |
-| `DELETE` | `/scim/v2/Users/{id}` | Bearer JWT | Delete user |
-| `GET/POST` | `/scim/v2/Groups[/{id}]` | Bearer JWT | Group CRUD |
-| `POST` | `/scim/v2/Bulk` | Bearer JWT | Bulk operations |
+### Get User (SCIM)
 
----
+```
+GET /scim/v2/Users/{id}
+```
 
-## Admin
+### Create User (SCIM)
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/api/v1/admin/stats` | `admin` role | System stats |
-| `GET` | `/api/v1/admin/routes` | `admin` role | Route config |
-| `POST` | `/api/v1/admin/routes/{prefix}/toggle` | `admin` role | Toggle route |
+```
+POST /scim/v2/Users
+```
 
----
+### Patch User (SCIM)
 
-## AI Agent Identity
+```
+PATCH /scim/v2/Users/{id}
+```
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/api/v1/agents/register` | Bearer JWT | Register a new AI agent |
-| `GET` | `/api/v1/agents` | Bearer JWT | List agents by tenant |
-| `POST` | `/api/v1/agents/token` | Bearer JWT | Exchange user token for agent token (RFC 8693) |
-| `POST` | `/api/v1/agents/verify` | None | Verify an agent token |
+### List Users (SCIM)
 
-See [AI Agent Identity Guide](../guides/ai-agent-identity.md) for delegation chains, MCP auth, and JWT claims.
+```
+GET /scim/v2/Users?filter=userName eq "alice"
+```
 
----
+## Health & Discovery
 
-## IGA Workflows (Access Requests)
+### Health Check
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/api/v1/access-requests` | Bearer JWT | Create access request |
-| `GET` | `/api/v1/access-requests` | Bearer JWT | List requests (pending/approved/denied) |
-| `POST` | `/api/v1/access-requests/{id}/approve` | `admin` role | Approve a request |
-| `POST` | `/api/v1/access-requests/{id}/deny` | `admin` role | Deny a request |
+```
+GET /healthz
+```
 
----
+**Response**: `{"status":"ok"}`
 
-## Health
+## Error Format
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/healthz` | None | Health check |
-| `GET` | `/docs` | None | Swagger UI |
+All errors return a consistent JSON structure:
 
----
+```json
+{
+  "error": {
+    "code": "not_found",
+    "message": "User not found",
+    "details": { "user_id": "uuid" }
+  }
+}
+```
 
-## Conventions
+| Status | Code | Description |
+|--------|------|-------------|
+| 400 | `invalid_argument` | Bad request |
+| 401 | `unauthorized` | Missing/invalid token |
+| 403 | `forbidden` | Insufficient scope |
+| 404 | `not_found` | Resource not found |
+| 409 | `already_exists` | Duplicate resource |
+| 429 | `rate_limit_exceeded` | Too many requests |
+| 500 | `internal` | Server error |
 
-- **Pagination:** `?page=1&page_size=20` → `{page, page_size, total}`
-- **Tenant:** All requests need `X-Tenant-ID` header
-- **Auth:** `Authorization: Bearer <jwt>` (except health, discovery, JWKS)
-- **Content-Type:** `application/json` (SCIM: `application/scim+json`)
-- **Errors:** `{"error":"code","message":"detail"}`
+## See Also
 
----
-
-*See: [Admin API](admin-api.md) | [SCIM API](scim-api.md) | [Error Codes](error-codes.md)*
-
-*Last updated: 2025-07-11*
+- [Audit API Reference](audit-api.md)
+- [Go SDK Guide](../guides/go-sdk-guide.md)
+- [Node.js SDK Guide](../guides/node-sdk-guide.md)
+- [Java SDK Guide](../guides/java-sdk-guide.md)
+- [Error Reference](error-reference.md)
