@@ -261,6 +261,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/devices/register", h.handleDeviceFingerprint)
 	h.mux.HandleFunc("/api/v1/auth/devices/list", h.handleDeviceFingerprint)
 	h.mux.HandleFunc("/api/v1/auth/mfa/jit-enroll", h.handleJITMFAEnroll)
+	h.mux.HandleFunc("/api/v1/auth/sessions/hijack-check", h.handleHijackCheck)
 }
 
 // ServeHTTP implements http.Handler.

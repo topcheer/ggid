@@ -37,6 +37,10 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 		s.handleAccessReport(w, r)
 		return
 	}
+	if strings.HasSuffix(r.URL.Path, "/restructure") {
+		s.handleOrgRestructure(w, r)
+		return
+	}
 
 	// Extract org_id from path
 	path := strings.Trim(r.URL.Path, "/")
