@@ -687,10 +687,14 @@ func TestWriteJSONError(t *testing.T) {
 		t.Fatalf("expected 400, got %d", w.Code)
 	}
 
-	var resp map[string]string
+	var resp map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &resp)
-	if resp["error"] != "bad input" {
-		t.Fatalf("expected error message, got %v", resp["error"])
+	errObj, ok := resp["error"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected error object, got %v", resp["error"])
+	}
+	if errObj["message"] != "bad input" {
+		t.Fatalf("expected error message 'bad input', got %v", errObj["message"])
 	}
 }
 
@@ -1360,9 +1364,18 @@ func TestHandleExport_CSVFormat(t *testing.T) {
 
 func TestWriteServiceError_NotFoundMsg(t *testing.T) {
 	w := httptest.NewRecorder()
-	writeServiceError(w, errSimple("record not found"))
+	writeServiceError(w, ggiderrors.New(ggiderrors.ErrNotFound, "record not found"))
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected 404, got %d", w.Code)
+	}
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	errObj, ok := resp["error"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("expected error object, got %v", resp["error"])
+	}
+	if errObj["message"] != "record not found" {
+		t.Fatalf("expected 'record not found', got %v", errObj["message"])
 	}
 }
 

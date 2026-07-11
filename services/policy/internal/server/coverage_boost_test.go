@@ -1259,8 +1259,8 @@ func TestWriteServiceError_AllTypes(t *testing.T) {
 		{"permission_denied", pkgerrors.PermissionDenied("forbidden"), http.StatusForbidden},
 		{"failed_precondition", pkgerrors.New(pkgerrors.ErrFailedPrecondition, "precondition"), http.StatusPreconditionFailed},
 		{"internal_ggid", pkgerrors.New(pkgerrors.ErrInternal, "internal"), http.StatusInternalServerError},
-		{"unauthenticated", pkgerrors.New(pkgerrors.ErrUnauthenticated, "no auth"), http.StatusInternalServerError},
-		{"resource_exhausted", pkgerrors.New(pkgerrors.ErrResourceExhausted, "exhausted"), http.StatusInternalServerError},
+		{"unauthenticated", pkgerrors.New(pkgerrors.ErrUnauthenticated, "no auth"), http.StatusUnauthorized},
+		{"resource_exhausted", pkgerrors.New(pkgerrors.ErrResourceExhausted, "exhausted"), http.StatusTooManyRequests},
 		{"plain_error", fmt.Errorf("plain error"), http.StatusInternalServerError},
 	}
 	for _, tt := range tests {
