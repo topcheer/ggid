@@ -93,6 +93,10 @@ export { useDeprovisioning } from './useDeprovisioning';
 export type { DeprovisionResult, DeprovisionHistoryEntry, DeprovisionInput, UseDeprovisioningResult } from './useDeprovisioning';
 export { useRetentionPolicies } from './useRetentionPolicies';
 export type { RetentionPolicy, RetentionAction, CreatePolicyInput, UseRetentionPoliciesResult } from './useRetentionPolicies';
+export { useScimGroups } from './useScimGroups';
+export type { ScimGroup, CreateScimGroupInput, UseScimGroupsResult } from './useScimGroups';
+export { useDeviceBindings } from './useDeviceBindings';
+export type { DeviceBinding, BindDeviceInput, UseDeviceBindingsResult } from './useDeviceBindings';
 export type {
   GGIDConfig,
   GGIDUser,
