@@ -47,6 +47,10 @@ export { useTenants } from './useTenants';
 export type { Tenant, CreateTenantInput, UpdateTenantInput, UseTenantsResult } from './useTenants';
 export { useScopes } from './useScopes';
 export type { OAuthScope, CreateScopeInput, UpdateScopeInput, UseScopesResult } from './useScopes';
+export { useGroups } from './useGroups';
+export type { Group, GroupMember, CreateGroupInput, UseGroupsResult } from './useGroups';
+export { useDevices } from './useDevices';
+export type { WebAuthnDevice, UseDevicesResult } from './useDevices';
 export type {
   GGIDConfig,
   GGIDUser,
