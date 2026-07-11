@@ -238,6 +238,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/biometric/enroll", h.handleBiometricEnroll)
 	h.mux.HandleFunc("/api/v1/auth/biometric/verify", h.handleBiometricVerify)
 	h.mux.HandleFunc("/api/v1/auth/sessions/", h.handleSessionReevaluate)
+	h.mux.HandleFunc("/api/v1/auth/email-otp/send", h.handleEmailOTPSend)
+	h.mux.HandleFunc("/api/v1/auth/email-otp/verify", h.handleEmailOTPVerify)
 	h.mux.HandleFunc("/api/v1/auth/sessions/stream", h.handleSessionStream)
 	h.mux.HandleFunc("/api/v1/auth/password-history-check", h.handlePasswordHistoryCheck)
 }
