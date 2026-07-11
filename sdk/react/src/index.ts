@@ -85,6 +85,10 @@ export { useLoginAttempts } from './useLoginAttempts';
 export type { LoginAttempt, Lockout, LoginPolicy, UseLoginAttemptsResult } from './useLoginAttempts';
 export { useComplianceSchedules } from './useComplianceSchedules';
 export type { ComplianceSchedule, ComplianceFramework, ScheduleFrequency, CreateScheduleInput, UseComplianceSchedulesResult } from './useComplianceSchedules';
+export { useRoleTemplates } from './useRoleTemplates';
+export type { RoleTemplate, PermissionNode, ApplyResult, UseRoleTemplatesResult } from './useRoleTemplates';
+export { useEventCorrelation } from './useEventCorrelation';
+export type { CorrelationRule, CorrelationSeverity, CorrelatedGroup, CreateCorrelationRuleInput, CorrelateResult, UseEventCorrelationResult } from './useEventCorrelation';
 export type {
   GGIDConfig,
   GGIDUser,
