@@ -209,6 +209,10 @@ export { useLoginAnalytics } from './useLoginAnalytics';
 export type { LoginAnalytics } from './useLoginAnalytics';
 export { useCloneTemplate } from './useCloneTemplate';
 export type { TemplateData, SavedTemplate } from './useCloneTemplate';
+export { useAccessFrequency } from './useAccessFrequency';
+export type { FrequencyData, HourlyBucket } from './useAccessFrequency';
+export { usePasswordStrength } from './usePasswordStrength';
+export type { PasswordStrengthData } from './usePasswordStrength';
 export type {
   GGIDConfig,
   GGIDUser,
