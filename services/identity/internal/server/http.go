@@ -217,6 +217,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleDelegations(ctx, userID, w, r)
 	case action == "profile-completeness" && r.Method == http.MethodGet:
 		h.handleProfileCompleteness(ctx, userID, w, r)
+	case action == "management-chain" && r.Method == http.MethodGet:
+		h.handleManagementChain(ctx, userID, w, r)
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
