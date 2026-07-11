@@ -1224,6 +1224,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientVersioning(w, r)
 			return
 		}
+		if r.URL.Path == "/api/v1/oauth/scopes/resolve-dependencies" {
+			handleResolveDependencies(w, r)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
 			handleValidateClientSecret(w, r)
 			return
