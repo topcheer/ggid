@@ -175,15 +175,15 @@
 - [x] Docker multi-stage build (deploy/)
 - [x] Prometheus /metrics for all services (122873e)
 - [x] Structured logging slog for gateway (122873e)
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Helm chart for Kubernetes
-- [ ] OpenTelemetry integration
+- [x] CI/CD pipeline (GitHub Actions — ci.yml, coverage.yml, release.yml)
+- [x] Helm chart for Kubernetes (deploy/helm/ggid/ — 12 templates: deployments, services, ingress, HPA, PDB, networkpolicy, secrets, configmap)
+- [ ] OpenTelemetry integration (otel middleware exists in gateway, needs distributed tracing setup)
 
 ## P2 — Quality & Polish
 
 ### All
 - [ ] Coverage →95% across all packages
-- [ ] Integration test suite (10+ E2E tests)
+- [x] Integration test suite (31 E2E tests across 3 files: e2e_test.go, gateway_e2e_test.go, oauth_e2e_test.go)
 - [x] Performance benchmarks (benchmark_test.go — 6 benchmarks, 348d61f)
 - [ ] Dark mode for Console
 - [ ] Mobile-responsive Console
