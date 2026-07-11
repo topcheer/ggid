@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-> **Last updated**: 2025-01-24 by uiux
+> **Last updated**: 2025-01-24 by researcher (research backlog sync)
 > **Rule**: Update this file when completing any item. Check here before assigning new work.
 
 ## ⚠️ Backlog Maintenance Rules — ALL TEAM MEMBERS MUST FOLLOW
@@ -180,6 +180,139 @@
 - [ ] FIDO2 certification
 - [ ] Compliance certifications (SOC2, ISO27001)
 - [ ] Plugin system architecture
+
+## Research — docs/research/ (researcher)
+
+> 137 files, ~119K+ lines total. All docs include Go code examples + GGID source analysis.
+
+### Completed Batches 1-18 (75 docs)
+- [x] OAuth/OIDC spec analysis (2.1 migration, PKCE, DPoP, RFC 8693, RFC 8628, RFC 8707, RFC 8414, RFC 8252, RFC 6750, RFC 9700, RFC 7591/7592, PAR/JAR)
+- [x] WebAuthn/FIDO (passkey best practices, recovery, roadmap v2, attestation chains, FIDO MDS)
+- [x] Security (JWT alg confusion, session fixation, credential theft, anomaly detection ML, API checklist, audit compliance, SIEM)
+- [x] Architecture (zero trust, edge IAM, privacy-enhancing tech, compliance automation, gateway patterns, lifecycle automation)
+- [x] Competitive (Auth0/Keycloak/GGID matrix, Ory, Clerk/Logto/Casdoor)
+- [x] Other (SCIM conformance, multi-tenant SAML, LDAP/AD, OIDC Federation, CAEP, OID4VCI/VP, CIAM, post-quantum)
+
+### Batch 19 — SPA/Mobile/CSRF/SQLi/Certs (5 docs)
+- [x] grafeb-spa-security.md (683 lines, 1ef19a7)
+- [x] mobile-biometric-iam.md (408 lines, adcd2fb)
+- [x] cross-site-request-forgery-iam.md (809 lines, 05c9215)
+- [x] sql-injection-iam-defense.md (748 lines, 7a56ae8)
+- [x] certificate-pinning-iam.md (932 lines, 6e8d59c)
+
+### Batch 20 — Logout/Replay/RateLimit/DNS/SupplyChain (5 docs)
+- [x] openid-connect-logout.md (1085 lines, 8d7ddc1)
+- [x] token-replay-defense.md (1081 lines, 1360aaa)
+- [x] rate-limiting-iam.md (1267 lines, 5ed7b66)
+- [x] dns-rebinding-iam.md (1174 lines, 85453c5)
+- [x] supply-chain-iam.md (981 lines, fa5bffc)
+
+### Batch 21 — ZeroTrust/GatewaySec/DataResidency/Secrets/DR (5 docs)
+- [x] zero-trust-iam.md (1198 lines, 6529124)
+- [x] api-gateway-security.md (1103 lines, 76b707a)
+- [x] data-residency-iam.md (1158 lines, 2c6c276)
+- [x] secret-management-iam.md (1086 lines, 7b75dc1)
+- [x] disaster-recovery-iam.md (1529 lines, ed25bc6)
+
+### Batch 22 — DPoP/AuditChain/Tenant/ gRPC/KeyRotation (5 docs)
+- [x] oauth-dpop-support.md (1270 lines, c56dec2)
+- [x] audit-tampering-detection.md (1443 lines, a6e776a)
+- [x] multi-tenant-isolation.md (1147 lines, be20476)
+- [x] grpc-security-iam.md (1129 lines, 987430b)
+- [x] key-rotation-iam.md (1373 lines, 9117f26)
+
+### Batch 23 — WebAuthn/State/IP/Password/Scope (5 docs)
+- [x] webauthn-attestation-verification.md (1151 lines, 0700747)
+- [x] oauth-state-csrf.md (1012 lines, c4e0776)
+- [x] ip-reputation-iam.md (1488 lines, 4c533d5)
+- [x] password-cracking-defense.md (1041 lines, f8131ce)
+- [x] oidc-scope-management.md (1051 lines, ffec9d3)
+
+### Batch 24 — Observability/Federation/Consent/Lifecycle/STRIDE (5 docs)
+- [x] observability-iam.md (1114 lines, 57061b7)
+- [x] federation-iam.md (1138 lines, 9369ab4)
+- [x] consent-management.md (1048 lines, acf119b)
+- [x] identity-lifecycle.md (1328 lines, 9e58c13)
+- [x] threat-model-iam.md (783 lines, fd0edd5)
+
+### Batch 25 — Passwordless/Introspection/Versioning/Onboarding/AuditCompliance (5 docs)
+- [x] passwordless-auth-iam.md (1358 lines, 151986f)
+- [x] token-introspection-iam.md (1103 lines, 151986f)
+- [x] api-versioning-iam.md (1037 lines, ecc1b2d)
+- [x] tenant-onboarding-iam.md (2256 lines, abbba11)
+- [x] audit-compliance-iam.md (957 lines, 4909b77)
+
+### Batch 26 — PAM/ABAC/Email/Session/Headless (5 docs)
+- [x] priveleged-access-management.md (1443 lines, bf13b27)
+- [x] abac-attribute-engine.md (1049 lines, ce9c29f)
+- [x] email-security-iam.md (1182 lines, 8e82bf1)
+- [x] session-management-iam.md (1183 lines, 8e82bf1)
+- [x] headless-auth-iam.md (1553 lines, 8e82bf1)
+
+### Batch 27 — JWT/CA/DLP/IR (4 docs, PKCE dup)
+- [x] jwt-claim-validation.md (875 lines, 1ed56a3)
+- [x] certificate-authority-iam.md (1351 lines, 82afb5c)
+- [x] data-loss-prevention-iam.md (1315 lines, 9f21563)
+- [x] incident-response-iam.md (1226 lines, f20e5f0)
+- [x] DUPLICATE: oauth-pkce-deep-dive.md already existed (318 lines)
+
+### Batch 28 — ClientCred/TokenExchange/Discovery/Keys/Entropy (5 docs)
+- [x] oauth-client-credentials-security.md (916 lines, 7742916)
+- [x] token-exchange-iam.md (1028 lines, 3c83071)
+- [x] oidc-discovery-security.md (1244 lines, 36235b9)
+- [x] access-key-management.md (1403 lines, 26e53da)
+- [x] entropy-audit-iam.md (717 lines, 536dca7)
+
+### Batch 29 — SAMLMeta/Logout/Grant/DeviceFlow (4 docs, key-binding dup)
+- [x] saml-metadata-security.md (1405 lines, f23744b)
+- [x] oidc-back-channel-logout-security.md (1184 lines, 807329b)
+- [x] grant-type-validation.md (1053 lines, 346110d)
+- [x] oauth-device-flow-security.md (1320 lines)
+- [x] DUPLICATE: key-binding-tokens.md (3 DPoP docs exist: 2943+340+1270 lines)
+
+### Batch 30 — MFA/CredentialStuffing/ServiceMesh (3 docs, 2 dups)
+- [x] mfa-bypass-prevention.md (1628 lines, ad2902e)
+- [x] credential-stuffing-iam.md (1694 lines, 9c7d66b)
+- [x] service-mesh-iam.md (1086 lines, d19e123)
+- [x] DUPLICATE: oauth-device-flow-security.md (done batch 29)
+- [x] DUPLICATE: api-key-lifecycle-iam.md (access-key-management.md covers same topics)
+
+### Batch 31 — CIBA/Rotation/Cookie/Idempotency (4 docs, 1 dup)
+- [x] oidc-ciba-security.md (1073 lines, 392001c)
+- [x] rotating-credentials-iam.md (1570 lines, 1040497)
+- [x] cookie-security-iam.md (1176 lines, 2b9e7d0)
+- [x] idempotency-iam.md (1235 lines, d831e7d)
+- [x] DUPLICATE: dns-rebinding-iam.md (exists, batch 20, 1174 lines)
+
+### Batch 32 — PPA-ARC/SOC2 (2 docs, 3 dups)
+- [x] oidc-ppa-arc.md (1136 lines, f706ca9)
+- [x] compliance-soc2-iam.md (1278 lines, 561ecff)
+- [x] DUPLICATE: zero-trust-iam.md (exists, batch 21)
+- [x] DUPLICATE: iam-disaster-recovery.md (disaster-recovery-iam.md exists, batch 21)
+- [x] DUPLICATE: credential-theft-defense.md (already exists)
+
+### Key P0 Findings Driven to Remediation
+- [x] CSRF predictable entropy → fixed (29b51c1)
+- [x] Rate limiter not wired → fixed (fc20c41)
+- [x] Tenant spoofing via header → fixed (5bcbfce)
+- [x] SecurityHeaders not wired → fixed (64991a6)
+- [x] OAuth state never validated → fixed (72edaa5)
+- [x] HasScope() always true → fixed (72edaa5)
+- [x] JWTSecret empty bypass → fixed (72edaa5)
+- [x] jti replay not tracked → fixed (72edaa5)
+- [x] ValidateClientAssertion ParseUnverified → fixed (8098f1c)
+- [x] Email template HTML injection → fixed (3399a2a)
+- [x] Admin API no role check → fixed (66ef1db/749f809)
+- [x] ForgotPassword token leak → fixed (7742916)
+- [x] UserRole.ExpiresAt not enforced → fixed (7742916)
+
+### Outstanding P0s Still Open (from research findings)
+- [ ] gRPC plaintext between all services (grpc-security-iam.md)
+- [ ] Introspection endpoint auth (partially fixed — verify complete)
+- [ ] JWT key rotation automation (key-rotation-iam.md)
+- [ ] pii.Obfuscate() zero callers — masking code never invoked (data-loss-prevention-iam.md)
+- [ ] CheckSessionTimeout dead code not wired (session-management-iam.md)
+- [ ] No password breach check at login (credential-stuffing-iam.md)
 
 ## Coordination Rules
 
