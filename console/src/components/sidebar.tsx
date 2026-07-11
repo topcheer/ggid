@@ -182,12 +182,12 @@ export function Sidebar() {
           )}
           <span className="text-gray-500 dark:text-gray-400">
             {health === null
-              ? "Checking..."
+              ? t("sidebar.checking")
               : reconnecting
-                ? "Reconnecting..."
+                ? t("sidebar.reconnecting")
                 : health.online
                   ? `API: ${health.latencyMs ?? "?"}ms`
-                  : "Offline"}
+                  : t("sidebar.offline")}
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -196,7 +196,7 @@ export function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-200">admin@ggid.dev</p>
-            <p className="truncate text-xs text-gray-500 dark:text-gray-500">Administrator</p>
+            <p className="truncate text-xs text-gray-500 dark:text-gray-500">{t("sidebar.administrator")}</p>
           </div>
         </div>
       </div>

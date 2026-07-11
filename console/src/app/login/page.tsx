@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, ArrowLeft, KeyRound } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
+import { useTranslations } from "@/lib/i18n";
 
 const API_BASE = API_BASE_URL;
 const TENANT_ID = DEFAULT_TENANT_ID;
@@ -19,6 +20,7 @@ interface SocialConnector {
 
 export default function LoginPage() {
   const router = useRouter();
+  const t = useTranslations();
   const [step, setStep] = useState<Step>("credentials");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -175,8 +177,8 @@ export default function LoginPage() {
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white text-xl font-bold">
             G
           </div>
-          <h1 className="text-2xl font-bold dark:text-gray-100">GGID Console</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Identity &amp; Access Management</p>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{t("login.consoleTitle")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("login.subtitle")}</p>
         </div>
 
         {step === "credentials" ? (
@@ -189,7 +191,7 @@ export default function LoginPage() {
             )}
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium">Username</label>
+              <label className="mb-1 block text-sm font-medium">{t("login.username")}</label>
               <input
                 type="text"
                 value={username}
@@ -202,7 +204,7 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-4">
-              <label className="mb-1 block text-sm font-medium">Password</label>
+              <label className="mb-1 block text-sm font-medium">{t("login.password")}</label>
               <input
                 type="password"
                 value={password}
@@ -216,9 +218,9 @@ export default function LoginPage() {
             <div className="mb-6 flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="rounded border-gray-300" />
-                Remember me
+                {t("login.rememberMe")}
               </label>
-              <a href="/forgot-password" className="text-sm text-brand-600 hover:underline">Forgot password?</a>
+              <a href="/forgot-password" className="text-sm text-brand-600 hover:underline">{t("login.forgotPassword")}</a>
             </div>
 
             <button
@@ -226,13 +228,13 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? t("login.signingIn") : t("login.signIn")}
             </button>
 
             {/* Social Login */}
             <div className="my-5 flex items-center gap-3">
               <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
-              <span className="text-xs text-gray-400 dark:text-gray-500">or continue with</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">{t("login.orContinueWith")}</span>
               <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
             </div>
 
@@ -251,12 +253,12 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-5 rounded-lg bg-blue-50 px-3 py-2 text-center text-xs text-blue-600">
-              Demo: admin / Admin@123456
+              {t("login.demo")}
             </div>
 
             <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-              Don&apos;t have an account?{" "}
-              <a href="/register" className="font-medium text-brand-600 hover:underline">Sign up</a>
+              {t("login.noAccount")}{" "}
+              <a href="/register" className="font-medium text-brand-600 hover:underline">{t("login.signUp")}</a>
             </p>
           </form>
         ) : (
@@ -266,9 +268,9 @@ export default function LoginPage() {
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
                 <Shield className="h-6 w-6 text-brand-600" />
               </div>
-              <h2 className="text-lg font-semibold">Two-Factor Authentication</h2>
+              <h2 className="text-lg font-semibold">{t("login.twoFactor")}</h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Enter the 6-digit code from your authenticator app
+                {t("login.enterCode")}
               </p>
             </div>
 
@@ -280,7 +282,7 @@ export default function LoginPage() {
 
             <div className="mb-6">
               <label className="mb-1 flex items-center gap-1.5 text-sm font-medium">
-                <KeyRound className="h-4 w-4 text-gray-400" /> Verification Code
+                <KeyRound className="h-4 w-4 text-gray-400" /> {t("login.verificationCode")}
               </label>
               <input
                 type="text"
@@ -301,7 +303,7 @@ export default function LoginPage() {
               disabled={loading || totpCode.length !== 6}
               className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
-              {loading ? "Verifying..." : "Verify & Sign In"}
+              {loading ? t("login.verifying") : t("login.verifySignIn")}
             </button>
 
             <button
@@ -309,12 +311,12 @@ export default function LoginPage() {
               onClick={() => { setStep("credentials"); setError(""); setTotpCode(""); }}
               className="mt-3 flex w-full items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700"
             >
-              <ArrowLeft className="h-4 w-4" /> Back to login
+              <ArrowLeft className="h-4 w-4" /> {t("login.backToLogin")}
             </button>
           </form>
         )}
 
-        <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">GGID IAM Suite · Apache 2.0</p>
+        <p className="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">{t("login.footer")}</p>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import Link from "next/link";
 import {
   Users as UsersIcon,
@@ -22,6 +23,7 @@ import {
 
 export default function DashboardPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [userCount, setUserCount] = useState<number | null>(null);
   const [roleCount, setRoleCount] = useState<number | null>(null);
   const [orgCount, setOrgCount] = useState<number | null>(null);
@@ -135,10 +137,10 @@ export default function DashboardPage() {
   ).slice(0, 10);
 
   const realTimeStats = [
-    { label: "Total Users", value: dashboardStats?.total_users ?? userCount ?? 0, icon: UsersIcon, color: "from-blue-500 to-blue-600" },
-    { label: "Active Sessions", value: dashboardStats?.active_sessions ?? 0, icon: Activity, color: "from-cyan-500 to-cyan-600" },
-    { label: "Login Rate / hr", value: dashboardStats?.login_rate_per_hour ?? 0, icon: TrendingUp, color: "from-green-500 to-green-600" },
-    { label: "MFA Adoption", value: `${dashboardStats?.mfa_adoption_pct ?? 0}%`, icon: KeyRound, color: "from-purple-500 to-purple-600" },
+    { label: t("dashboard.totalUsers"), value: loading ? "..." : String(dashboardStats?.total_users ?? userCount ?? 0), icon: UsersIcon, color: "from-blue-500 to-blue-600" },
+    { label: t("dashboard.activeSessions"), value: dashboardStats?.active_sessions ?? 0, icon: Activity, color: "from-cyan-500 to-cyan-600" },
+    { label: t("dashboard.loginRateHr"), value: dashboardStats?.login_rate_per_hour ?? 0, icon: TrendingUp, color: "from-green-500 to-green-600" },
+    { label: t("dashboard.mfaAdoption"), value: `${dashboardStats?.mfa_adoption_pct ?? 0}%`, icon: KeyRound, color: "from-purple-500 to-purple-600" },
   ];
 
   const healthColors: Record<string, string> = {
@@ -155,12 +157,12 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t("dashboard.title")}</h1>
         <div className="flex items-center gap-2 text-xs text-gray-400">
           <Clock className="h-3.5 w-3.5" />
-          Last refresh: {lastRefresh.toLocaleTimeString()}
+          {t("dashboard.lastRefresh")} {lastRefresh.toLocaleTimeString()}
           <span className="ml-1 inline-flex h-2 w-2 animate-pulse rounded-full bg-green-500" />
-          <span className="text-green-600">Auto (30s)</span>
+          <span className="text-green-600">{t("dashboard.auto30s")}</span>
         </div>
       </div>
 
@@ -190,7 +192,7 @@ export default function DashboardPage() {
       {/* System health cards */}
       <div className="mt-6">
         <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-600">
-          <Heart className="h-4 w-4 text-red-500" /> System Health
+          <Heart className="h-4 w-4 text-red-500" /> {t("dashboard.systemHealth")}
         </h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {health.map((svc) => (
@@ -214,10 +216,10 @@ export default function DashboardPage() {
       <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
         <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold dark:text-gray-200">
           <ScrollText className="h-4 w-4 text-brand-600" />
-          Recent Activity Feed
+          {t("dashboard.recentActivity")}
         </h2>
         {activityFeed.length === 0 ? (
-          <p className="py-8 text-center text-sm text-gray-400">No recent login/register/role events</p>
+          <p className="py-8 text-center text-sm text-gray-400">{t("dashboard.noRecentEvents")}</p>
         ) : (
           <div className="space-y-2">
             {activityFeed.map((event) => {
@@ -257,7 +259,7 @@ export default function DashboardPage() {
 
       {/* Stat cards */}
       <h2 className="mb-3 mt-6 flex items-center gap-2 text-sm font-semibold text-gray-600">
-        <Activity className="h-4 w-4 text-brand-600" /> Overview
+        <Activity className="h-4 w-4 text-brand-600" /> {t("dashboard.overview")}
       </h2>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-7">
         {stats.map((stat) => {
@@ -287,7 +289,7 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-2 dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <Activity className="h-4 w-4 text-brand-600" />
-            Activity Timeline (24h)
+            {t("dashboard.activityTimeline")}
           </h2>
           {hourlyData.length > 0 ? (
             <ResponsiveContainer width="100%" height={220}>

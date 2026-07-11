@@ -20,7 +20,9 @@
     "certificates": "Certificates",
     "monitoring": "Monitoring",
     "exports": "Data Export",
-    "flows": "Login Flows"
+    "flows": "Login Flows",
+    "orgAnalytics": "Org Analytics",
+    "apiExplorer": "API Explorer"
   },
   "common": {
     "loading": "Loading...",
@@ -384,5 +386,58 @@
     "sessionsMap": "Active Sessions Map",
     "mfaEnrollment": "MFA Enrollment",
     "deviceRevoked": "Device revoked"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "lastRefresh": "Last refresh:",
+    "auto30s": "Auto (30s)",
+    "totalUsers": "Total Users",
+    "activeSessions": "Active Sessions",
+    "loginRateHr": "Login Rate / hr",
+    "mfaAdoption": "MFA Adoption",
+    "systemHealth": "System Health",
+    "recentActivity": "Recent Activity Feed",
+    "noRecentEvents": "No recent login/register/role events",
+    "overview": "Overview",
+    "activityTimeline": "Activity Timeline (24h)",
+    "events24h": "Events (24h)",
+    "failedLogins": "Failed Logins",
+    "registrations": "Registrations",
+    "topActors": "Top Actors",
+    "eventsByAction": "Events by Action",
+    "viewAll": "View All"
+  },
+  "login": {
+    "consoleTitle": "GGID Console",
+    "subtitle": "Identity & Access Management",
+    "username": "Username",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot password?",
+    "signIn": "Sign In",
+    "signingIn": "Signing in...",
+    "orContinueWith": "or continue with",
+    "demo": "Demo: admin / Admin@123456",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign up",
+    "twoFactor": "Two-Factor Authentication",
+    "enterCode": "Enter the 6-digit code from your authenticator app",
+    "verificationCode": "Verification Code",
+    "verifySignIn": "Verify & Sign In",
+    "verifying": "Verifying...",
+    "backToLogin": "Back to login",
+    "loginFailed": "Login failed",
+    "networkError": "Network error — is the API running?",
+    "invalidCode": "Invalid verification code",
+    "verificationFailed": "Verification failed",
+    "notConfigured": "login not configured",
+    "notAvailable": "login not available",
+    "footer": "GGID IAM Suite · Apache 2.0"
+  },
+  "sidebar": {
+    "checking": "Checking...",
+    "reconnecting": "Reconnecting...",
+    "offline": "Offline",
+    "administrator": "Administrator"
   }
 }

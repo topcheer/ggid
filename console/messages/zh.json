@@ -20,7 +20,9 @@
     "certificates": "证书",
     "monitoring": "监控",
     "exports": "数据导出",
-    "flows": "登录流程"
+    "flows": "登录流程",
+    "orgAnalytics": "组织分析",
+    "apiExplorer": "API 浏览器"
   },
   "common": {
     "loading": "加载中...",
@@ -384,5 +386,58 @@
     "sessionsMap": "活跃会话地图",
     "mfaEnrollment": "MFA 注册",
     "deviceRevoked": "设备已吊销"
+  },
+  "dashboard": {
+    "title": "仪表盘",
+    "lastRefresh": "最后刷新：",
+    "auto30s": "自动（30秒）",
+    "totalUsers": "总用户数",
+    "activeSessions": "活跃会话",
+    "loginRateHr": "登录速率/小时",
+    "mfaAdoption": "MFA 采用率",
+    "systemHealth": "系统健康",
+    "recentActivity": "最近活动",
+    "noRecentEvents": "暂无登录/注册/角色事件",
+    "overview": "概览",
+    "activityTimeline": "活动时间线（24小时）",
+    "events24h": "事件（24小时）",
+    "failedLogins": "失败登录",
+    "registrations": "注册",
+    "topActors": "活跃用户",
+    "eventsByAction": "按操作分类事件",
+    "viewAll": "查看全部"
+  },
+  "login": {
+    "consoleTitle": "GGID 控制台",
+    "subtitle": "身份与访问管理",
+    "username": "用户名",
+    "password": "密码",
+    "rememberMe": "记住我",
+    "forgotPassword": "忘记密码？",
+    "signIn": "登录",
+    "signingIn": "登录中...",
+    "orContinueWith": "或使用以下方式",
+    "demo": "演示：admin / Admin@123456",
+    "noAccount": "还没有账户？",
+    "signUp": "注册",
+    "twoFactor": "双因素认证",
+    "enterCode": "请输入认证器应用中的 6 位验证码",
+    "verificationCode": "验证码",
+    "verifySignIn": "验证并登录",
+    "verifying": "验证中...",
+    "backToLogin": "返回登录",
+    "loginFailed": "登录失败",
+    "networkError": "网络错误 — API 是否正在运行？",
+    "invalidCode": "验证码无效",
+    "verificationFailed": "验证失败",
+    "notConfigured": "登录未配置",
+    "notAvailable": "登录不可用",
+    "footer": "GGID IAM 套件 · Apache 2.0"
+  },
+  "sidebar": {
+    "checking": "检查中...",
+    "reconnecting": "重新连接中...",
+    "offline": "离线",
+    "administrator": "管理员"
   }
 }
