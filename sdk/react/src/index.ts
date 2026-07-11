@@ -197,6 +197,10 @@ export { useUsagePolicy } from './useUsagePolicy';
 export type { ClientUsagePolicy } from './useUsagePolicy';
 export { useEvidenceChain } from './useEvidenceChain';
 export type { EvidenceChain, ChainEntry } from './useEvidenceChain';
+export { useAccessCertification } from './useAccessCertification';
+export type { CertificationUser, Campaign, CertificationDecision } from './useAccessCertification';
+export { useClientMigration } from './useClientMigration';
+export type { ClientConfig, DiffResult } from './useClientMigration';
 export type {
   GGIDConfig,
   GGIDUser,
