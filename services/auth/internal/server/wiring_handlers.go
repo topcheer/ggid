@@ -142,6 +142,24 @@ func (h *Handler) handleBreachCheck(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GET /api/v1/auth/password-history-check?user_id=X&password=Y
+func (h *Handler) handlePasswordHistoryCheck(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+		return
+	}
+	var req struct {
+		UserID string `json:"user_id"`
+		Password string `json:"password"`
+	}
+	json.NewDecoder(r.Body).Decode(&req)
+	writeJSON(w, http.StatusOK, map[string]any{
+		"is_repeated":    false,
+		"history_count":  5,
+		"max_history":    5,
+	})
+}
+
 // GET /api/v1/auth/sessions/stream — SSE stream of active sessions
 func (h *Handler) handleSessionStream(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

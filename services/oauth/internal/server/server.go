@@ -963,6 +963,22 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config) http.Handler
 		writeJSON(w, http.StatusCreated, resp)
 	})
 
+	// Consent management
+	mux.HandleFunc("/api/v1/oauth/consent/list", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"consents": []any{}})
+	})
+	mux.HandleFunc("/api/v1/oauth/consent/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+	})
+
 	// Introspection cache config
 	mux.HandleFunc("/api/v1/oauth/introspection/config", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

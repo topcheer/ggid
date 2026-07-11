@@ -58,6 +58,8 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/", h.handleUserByID)
 	h.mux.HandleFunc("/api/v1/users/import", h.handleImportCSV)
 	h.mux.HandleFunc("/api/v1/users/export", h.handleExportUsers)
+	h.mux.HandleFunc("/api/v1/users/link", h.handleLinkAccount)
+	h.mux.HandleFunc("/api/v1/users/unlink", h.handleUnlinkAccount)
 
 	// Branding endpoints
 	h.mux.HandleFunc("/api/v1/tenants/", h.handleBranding)
