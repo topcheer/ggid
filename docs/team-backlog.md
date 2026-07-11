@@ -456,3 +456,10 @@
 - [x] Console dark mode verification — CSS auto-fallback covers 79 bg-white patterns, inline styles in branding pages are intentional dynamic theme preview (e86ecfa)
 - [x] API error display polish — parseApiError() with structured title/detail/request_id/code, human-friendly status messages (e86ecfa)
 - [x] Console build size audit — 3.3MB total across 70+ pages, recharts lazy-loaded, top chunk 365KB is vendor/framework code (e86ecfa)
+
+## Sprint: K3s Deployment + SDK Verification (frontend 006038f)
+- [x] Deploy console to K3s — amd64 image built, pushed to registry.iot2.win/ggid/console:latest, pod Running, live at https://ggid-console.iot2.win (HTTP 200) (006038f)
+- [x] Console connect to K3s backend — NEXT_PUBLIC_API_URL=https://ggid.iot2.win, CORS configured, SPA client-side requests work (006038f)
+- [x] SDK examples verified against K3s — Go/Node/Python all: Login OK (693 chars), Verify OK (subject: 395cbb75...). Fixed: Go JWKS, Node tsconfig, Python __init__/pyproject/clock-skew (006038f)
+- [x] API Explorer page — already complete (329 lines, 8 endpoints, curl/JS/Python/Go snippets, try-it with JWT, CopyButton) (e86ecfa)
+- [x] Onboarding wizard verification — uses shared useApi().apiFetch(), no hardcoded URLs, NEXT_PUBLIC_API_URL inherited correctly (006038f)
