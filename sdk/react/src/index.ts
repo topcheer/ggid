@@ -129,6 +129,10 @@ export { useComplianceEvidence } from './useComplianceEvidence';
 export type { EvidenceArtifact, ComplianceControl, UseComplianceEvidenceResult } from './useComplianceEvidence';
 export { useTokenEvents } from './useTokenEvents';
 export type { TokenEvent, UseTokenEventsResult } from './useTokenEvents';
+export { useIncidents } from './useIncidents';
+export type { Incident, CreateIncidentInput, IncidentSeverity, IncidentStatus, UseIncidentsResult } from './useIncidents';
+export { useDelegatedAdmin } from './useDelegatedAdmin';
+export type { Delegation, GrantDelegationInput, DelegationScope, DelegationPermission, UseDelegatedAdminResult } from './useDelegatedAdmin';
 export type {
   GGIDConfig,
   GGIDUser,
