@@ -1162,6 +1162,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/token-events/stream", handleTokenEventStream)
 	mux.HandleFunc("/api/v1/oauth/consent/", handleConsentReceipt)
 	mux.HandleFunc("/api/v1/oauth/token-families/", handleTokenFamily)
+	mux.HandleFunc("/api/v1/oauth/par", handlePAR)
+	mux.HandleFunc("/api/v1/oauth/par/", handlePAR)
+	mux.HandleFunc("/api/v1/oauth/scopes", handleScopesI18n)
+	mux.HandleFunc("/api/v1/oauth/scopes/hierarchy", handleScopeHierarchy)
+	mux.HandleFunc("/api/v1/oauth/introspect/batch", handleBatchIntrospect)
+	mux.HandleFunc("/api/v1/oauth/consent/analytics", handleConsentAnalytics)
+	mux.HandleFunc("/api/v1/oauth/consent/admin-override", handleConsentAdminOverride)
+	mux.HandleFunc("/api/v1/oauth/tokens/validate-audience", handleValidateAudience)
 	mux.HandleFunc("/api/v1/oauth/clients/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/branding") {
 			handleClientBranding(w, r)
@@ -1171,32 +1179,28 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientLifecycle(w, r)
 			return
 		}
-		if strings.HasSuffix(r.URL.Path, "/consent-screen") {
-			handleConsentScreen(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/analytics") {
-			handleClientAnalytics(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/rotate-secret") || strings.HasSuffix(r.URL.Path, "/secret-status") {
-			handleClientSecretRotation(w, r)
+		if strings.HasSuffix(r.URL.Path, "/usage-policy") {
+			handleUsagePolicy(w, r)
 			return
 		}
 		if strings.HasSuffix(r.URL.Path, "/deprecation") {
 			handleClientDeprecation(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/consent-screen") {
+			handleConsentScreen(w, r)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/rotate-secret") || strings.HasSuffix(r.URL.Path, "/secret-status") {
+			handleClientSecretRotation(w, r)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/analytics") {
+			handleClientAnalytics(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
-	mux.HandleFunc("/api/v1/oauth/par", handlePAR)
-	mux.HandleFunc("/api/v1/oauth/par/", handlePAR)
-	mux.HandleFunc("/api/v1/oauth/scopes", handleScopesI18n)
-	mux.HandleFunc("/api/v1/oauth/scopes/hierarchy", handleScopeHierarchy)
-	mux.HandleFunc("/api/v1/oauth/introspect/batch", handleBatchIntrospect)
-	mux.HandleFunc("/api/v1/oauth/consent/analytics", handleConsentAnalytics)
-	mux.HandleFunc("/api/v1/oauth/consent/admin-override", handleConsentAdminOverride)
-	mux.HandleFunc("/api/v1/oauth/tokens/validate-audience", handleValidateAudience)
 
 	// JWKS key rotation
 	mux.HandleFunc("/api/v1/oauth/jwks/rotate", func(w http.ResponseWriter, r *http.Request) {
