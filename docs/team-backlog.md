@@ -69,7 +69,7 @@
 - [x] JWT key persistence + kid header (loadOrCreatePrivateKey + kid in JWT)
 - [x] JWKS endpoint (oauth /oauth/jwks)
 - [x] Database backup automation (arch a9b56da — backup.sh + restore.sh)
-- [ ] JWT key rotation (generate new key, keep old for grace period)
+- [x] JWT key rotation — RotatingKeyProvider with 24h grace period (key_rotation.go)
 
 ## P1 — Feature Development
 
@@ -85,6 +85,11 @@
 - [x] WebAuthn attestation formats (dev ce9c29f)
 - [x] OAuth introspection auth (dev ce9c29f)
 - [x] Token scope claim (dev ce9c29f)
+- [x] Password breach check at login — HIBP k-anonymity, wired in Login() (f5b8f2c)
+- [x] JWT key rotation with grace period — RotatingKeyProvider (f5b8f2c — key_rotation.go)
+- [x] Wire pii.Obfuscate() in auth/oauth handlers — obfuscateForLog/obfuscateEmail (f5b8f2c)
+- [x] Auth service coverage tests — 10 tests (f5b8f2c — coverage_auth_test.go)
+- [x] OAuth CIBA flow tests — 9 tests (f5b8f2c — ciba_flow_test.go)
 
 ### uiux
 - [x] GraphQL proxy middleware (graphql.go exists)
