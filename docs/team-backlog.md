@@ -379,6 +379,13 @@
 - [x] market-positioning-analysis.md (1188 lines, 8aed6b0)
 - [x] i18n-gap-analysis.md (752 lines, 6307bcf)
 
+### Batch 37 — Gap Verification + Competitive Monitoring (5 docs)
+- [x] gap-closure-report.md (310 lines, 695c698) — UPDATED: K3s E2E 10/10 verified, 8 deployment issues documented, 24 DONE (77% closure)
+- [x] quickstart-timing-comparison.md (889 lines, c3766a5) — GGID 2m35s vs Auth0 8m20s to first JWT (3.2x faster)
+- [x] sdk-ecosystem-gap-analysis.md (1114 lines, c3766a5) — VERIFIED: Java SDK has 8 files (NOT vaporware, but won't compile — duplicate classes). Node 90%, Go 85%, Python 65%. Revised from original.
+- [x] i18n-wiring-estimate.md (584 lines, 9e737f1) — 937 hardcoded strings across 7 services. auth: 530. ~62.6h / ~4 weeks to wire.
+- [x] competitive-update-2026-07.md (576 lines, 3b1065c) — Keycloak 26 workflows+IGA, Auth0 MCP for AI, Casdoor 8 releases, Stytch→Twilio acquisition
+
 ### Key P0 Findings Driven to Remediation
 - [x] CSRF predictable entropy → fixed (29b51c1)
 - [x] Rate limiter not wired → fixed (fc20c41)
