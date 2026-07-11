@@ -210,6 +210,27 @@ npm run build
 npm start
 ```
 
+### Docker Build
+
+```bash
+docker build -t ggid-console \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.example.com \
+  .
+```
+
+The `NEXT_PUBLIC_API_URL` build arg is baked into the bundle at build time (Next.js requirement for client-side env vars).
+
+### PWA Support
+
+The Console includes Progressive Web App support:
+
+- **manifest.json** — standalone display mode, theme color, app shortcuts
+- **Service Worker** (`/sw.js`) — cache-first for static assets, network-first for API calls
+- **Auto-update** — checks for SW updates hourly, reloads on new version
+- Works offline for cached pages (shell + previously visited routes)
+
+Install on mobile: open in Chrome/Safari → Add to Home Screen.
+
 ### Environment Variables
 
 See [`.env.example`](./.env.example) for a complete reference.

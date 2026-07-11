@@ -36,13 +36,14 @@ export default function RootLayout({
       </head>
       <body>
         <PWARegister />
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
             <AuthGuard>
               <div className="flex h-screen dark:bg-gray-950">
                 <Sidebar />
-                <main className="flex-1 overflow-auto">
+                <main id="main-content" className="flex-1 overflow-auto">
                   <div className="p-4 md:p-6">{children}</div>
                 </main>
               </div>
