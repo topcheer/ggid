@@ -10,7 +10,10 @@ import (
 )
 
 // gRPC metadata key for request ID propagation.
-const GRPCRequestIDKey = "x-request-id"
+const (
+	GRPCRequestIDKey  = "x-request-id"
+	GRPCTraceParentKey = "traceparent"
+)
 
 // RequestIDFromContext extracts the request ID from the context.
 func RequestIDFromContext(ctx context.Context) string {
@@ -48,6 +51,12 @@ func NewGRPCRequestIDInterceptor() grpc.UnaryClientInterceptor {
 			requestID = uuid.New().String()
 		}
 		ctx = metadata.AppendToOutgoingContext(ctx, GRPCRequestIDKey, requestID)
+
+		// Propagate W3C traceparent from context to downstream gRPC metadata.
+		if tc, ok := ctx.Value(traceContextKey{}).(*TraceContext); ok && tc != nil {
+			tp := formatTraceparent(tc.TraceID, tc.SpanID, true)
+			ctx = metadata.AppendToOutgoingContext(ctx, GRPCTraceParentKey, tp)
+		}
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
 }
