@@ -345,6 +345,11 @@
 - [x] Helm chart for Kubernetes (deploy/helm/ggid/ — 12 templates) (commit 22c6e5f)
 - [x] SDK quickstart examples for Go/Node/Python/Java (dae3339 — sdk/examples/, 5-minute integration)
 - [x] OpenTelemetry integration — gateway TracingMiddleware creates W3C traceparent spans, traceparent now propagated to downstream gRPC metadata via NewGRPCRequestIDInterceptor (31c7c8f)
+- [x] gRPC TLS for all services — audit/policy/org (6a0eced), identity (eb7175d). Auth+OAuth are HTTP-only (no gRPC server).
+- [x] Middleware coverage tests — 9 new tests for GRPCHTTPHandler + GRPCStreamInterceptor (eb7175d)
+- [x] Branding CRUD API — DONE (ed2d347), 6 tests
+- [x] Auth service error format — DONE (2cd7602), writeError uses WriteSimpleAPIError
+- [x] E2E agent+IGA tests — 5 tests in test/integration/agent_iga_e2e_test.go
 
 ## P2 — Quality & Polish
 
