@@ -1,0 +1,629 @@
+openapi: 3.0.3
+info:
+  title: GGID IAM API
+  description: Production-grade Identity & Access Management API
+  version: 1.0.0
+  license:
+    name: Apache-2.0
+  contact:
+    url: https://github.com/ggid/ggid
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://api.ggid.dev
+    description: Production
+
+security:
+  - BearerAuth: []
+
+paths:
+  # === Auth ===
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+                display_name: { type: string }
+      responses:
+        "201": { description: User created }
+        "409": { description: Username/email already exists }
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenSet"
+        "401": { description: Invalid credentials }
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200":
+          description: New token set
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenSet"
+
+  # === Users ===
+  /api/v1/users:
+    get:
+      tags: [Users]
+      summary: List users
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Search query
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50 }
+        - name: offset
+          in: query
+          schema: { type: integer, default: 0 }
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      tags: [Users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /api/v1/users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404": { description: User not found }
+    put:
+      tags: [Users]
+      summary: Update user
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      tags: [Users]
+      summary: Delete user
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "204": { description: User deleted }
+
+  /api/v1/users/{id}/lock:
+    post:
+      tags: [Users]
+      summary: Lock user account
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200": { description: User locked }
+
+  /api/v1/users/{id}/unlock:
+    post:
+      tags: [Users]
+      summary: Unlock user account
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200": { description: User unlocked }
+
+  # === Roles & Permissions ===
+  /api/v1/roles:
+    get:
+      tags: [Policy]
+      summary: List roles
+      responses:
+        "200":
+          description: Role list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+    post:
+      tags: [Policy]
+      summary: Create role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleRequest"
+      responses:
+        "201":
+          description: Role created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+
+  /api/v1/roles/{id}:
+    get:
+      tags: [Policy]
+      summary: Get role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Role details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+    delete:
+      tags: [Policy]
+      summary: Delete role
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Role deleted }
+
+  /api/v1/roles/assign:
+    post:
+      tags: [Policy]
+      summary: Assign role to user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id, role_id]
+              properties:
+                user_id: { type: string }
+                role_id: { type: string }
+      responses:
+        "200": { description: Role assigned }
+
+  /api/v1/permissions:
+    get:
+      tags: [Policy]
+      summary: List all permissions
+      responses:
+        "200":
+          description: Permission list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Permission"
+
+  /api/v1/policies/check:
+    post:
+      tags: [Policy]
+      summary: Check permission (ABAC)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyCheckRequest"
+      responses:
+        "200":
+          description: Policy decision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyResult"
+
+  # === Organizations ===
+  /api/v1/orgs:
+    get:
+      tags: [Organizations]
+      summary: List organizations
+      responses:
+        "200":
+          description: Organization list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Organization"
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        "201":
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+
+  /api/v1/orgs/{id}/departments:
+    get:
+      tags: [Organizations]
+      summary: List departments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Department list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+
+  # === Audit ===
+  /api/v1/audit/events:
+    get:
+      tags: [Audit]
+      summary: Query audit events
+      parameters:
+        - name: action
+          in: query
+          schema: { type: string }
+        - name: start_date
+          in: query
+          schema: { type: string, format: date-time }
+        - name: end_date
+          in: query
+          schema: { type: string, format: date-time }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 100 }
+      responses:
+        "200":
+          description: Audit events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditEvent"
+
+  /api/v1/audit/stream:
+    get:
+      tags: [Audit]
+      summary: SSE stream of audit events
+      responses:
+        "200":
+          description: Server-Sent Events stream
+          content:
+            text/event-stream: {}
+
+  /api/v1/audit/export:
+    get:
+      tags: [Audit]
+      summary: Export audit events
+      parameters:
+        - name: format
+          in: query
+          schema: { type: string, enum: [csv, json], default: json }
+      responses:
+        "200":
+          description: Exported data
+
+  /api/v1/audit/integrity:
+    get:
+      tags: [Audit]
+      summary: Verify audit hash chain integrity
+      responses:
+        "200":
+          description: Integrity status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid: { type: boolean }
+                  broken_at: { type: string }
+
+  # === Agent Identity ===
+  /api/v1/agents:
+    get:
+      tags: [Agents]
+      summary: List registered AI agents
+      responses:
+        "200":
+          description: Agent list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Agent"
+    post:
+      tags: [Agents]
+      summary: Register a new AI agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentRegistration"
+      responses:
+        "201":
+          description: Agent registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+
+  /api/v1/agents/{id}/token:
+    post:
+      tags: [Agents]
+      summary: Exchange agent token
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject_token, scopes]
+              properties:
+                subject_token: { type: string }
+                scopes:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200":
+          description: Agent token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentTokenResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+
+  schemas:
+    TokenSet:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, example: Bearer }
+        expires_in: { type: integer, example: 3600 }
+
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        username: { type: string }
+        email: { type: string, format: email }
+        display_name: { type: string }
+        status: { type: string, enum: [active, locked, disabled] }
+        created_at: { type: string, format: date-time }
+
+    CreateUserRequest:
+      type: object
+      required: [username, email, password]
+      properties:
+        username: { type: string }
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        display_name: { type: string }
+        status: { type: string }
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        display_name: { type: string }
+        status: { type: string }
+
+    Role:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        key: { type: string }
+        description: { type: string }
+
+    CreateRoleRequest:
+      type: object
+      required: [name, key]
+      properties:
+        name: { type: string }
+        key: { type: string }
+        description: { type: string }
+
+    Permission:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        resource: { type: string }
+        action: { type: string }
+        description: { type: string }
+
+    PolicyCheckRequest:
+      type: object
+      required: [subject, resource, action]
+      properties:
+        subject: { type: string }
+        resource: { type: string }
+        action: { type: string }
+        context:
+          type: object
+          additionalProperties: { type: string }
+
+    PolicyResult:
+      type: object
+      properties:
+        allowed: { type: boolean }
+        reason: { type: string }
+
+    Organization:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        parent_id: { type: string }
+        status: { type: string }
+
+    Department:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        org_id: { type: string }
+        parent_id: { type: string }
+
+    AuditEvent:
+      type: object
+      properties:
+        id: { type: string }
+        action: { type: string }
+        result: { type: string }
+        actor_type: { type: string }
+        actor_id: { type: string }
+        resource_type: { type: string }
+        resource_id: { type: string }
+        ip_address: { type: string }
+        created_at: { type: string, format: date-time }
+
+    Agent:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        status: { type: string }
+        public_key: { type: string }
+        scopes:
+          type: array
+          items: { type: string }
+
+    AgentRegistration:
+      type: object
+      required: [name, type, public_key]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        public_key: { type: string }
+        scopes:
+          type: array
+          items: { type: string }
+        max_delegation_depth: { type: integer, default: 3 }
+
+    AgentTokenResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string }
+        expires_in: { type: integer }
+        delegation_chain:
+          type: array
+          items: { type: string }
