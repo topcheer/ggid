@@ -61,6 +61,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/conflicts/resolve", s.handleConflictResolve)
 	mux.HandleFunc("/api/v1/policies/abac/groups", s.handleABACGroups)
 	mux.HandleFunc("/api/v1/policies/resource-tags", s.handleResourceTags)
+	mux.HandleFunc("/api/v1/policies/inheritance", s.handlePolicyInheritance)
+	mux.HandleFunc("/api/v1/policies/inheritance/", s.handlePolicyInheritance)
 	mux.HandleFunc("/api/v1/policies/effectiveness", s.handlePolicyEffectiveness)
 	mux.HandleFunc("/api/v1/policies/delegate", s.handleDelegate)
 	mux.HandleFunc("/api/v1/policies/delegations", s.handleListDelegations)

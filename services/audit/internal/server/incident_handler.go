@@ -107,6 +107,10 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, inc)
 		return
 	}
+	if len(parts) == 2 && parts[1] == "timeline" {
+		s.handleIncidentTimeline(w, r)
+		return
+	}
 	writeJSONError(w, http.StatusNotFound, "not found")
 }
 
