@@ -12,10 +12,11 @@ import (
 
 // Config holds all configuration for the Audit Service.
 type Config struct {
-	GRPCAddr  string
-	HTTPAddr  string
-	DB        data.Config
-	NATS      consumer.Config
+	GRPCAddr        string
+	HTTPAddr        string
+	DB              data.Config
+	NATS            consumer.Config
+	HashChainSecret string
 }
 
 func FromEnv() *Config {
@@ -33,6 +34,7 @@ func FromEnv() *Config {
 			MinConns:        int32(getEnvInt("DB_MIN_CONNS", 2)),
 			MaxConnLifetime: time.Duration(getEnvInt("DB_CONN_LIFETIME", 300)) * time.Second,
 		},
+		HashChainSecret: getEnv("AUDIT_HASH_CHAIN_SECRET", ""),
 		NATS: consumer.Config{
 			URL:        getEnv("NATS_URL", "nats://localhost:4222"),
 			StreamName: getEnv("NATS_STREAM", "AUDIT"),

@@ -12,7 +12,9 @@ import (
 	"syscall"
 
 	pb "github.com/ggid/ggid/api/gen/audit/v1"
+
 	"github.com/ggid/ggid/services/audit/internal/config"
+	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/consumer"
 	"github.com/ggid/ggid/services/audit/internal/data"
 	"github.com/ggid/ggid/services/audit/internal/handler"
@@ -38,6 +40,14 @@ func main() {
 	}
 	defer db.Close()
 	log.Println("Audit Service: database connected")
+
+	// Initialize hash chain for tamper-evident audit events
+	if cfg.HashChainSecret != "" {
+		domain.SetHashChainSecret([]byte(cfg.HashChainSecret))
+		log.Println("Audit Service: hash chain enabled")
+	} else {
+		log.Println("Audit Service: WARNING — hash chain disabled (set AUDIT_HASH_CHAIN_SECRET to enable)")
+	}
 
 	// Initialize repository and service
 	repo := repository.NewAuditRepository(db)
