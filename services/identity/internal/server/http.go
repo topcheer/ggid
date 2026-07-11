@@ -93,6 +93,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/merge-conflicts", h.handleMergeConflicts)
 	h.mux.HandleFunc("/api/v1/users/import-csv", h.handleImportCSV)
 	h.mux.HandleFunc("/api/v1/users/create-from-template", h.handleCreateFromTemplate)
+	h.mux.HandleFunc("/api/v1/users/cleanup-inactive", h.handleCleanupInactive)
 	h.mux.HandleFunc("/api/v1/organizations/", h.handleOrgChart)
 	h.mux.HandleFunc("/api/v1/users/timeline", h.handleUserTimeline)
 	h.mux.HandleFunc("/api/v1/users/bulk-provision", h.handleBulkProvision)

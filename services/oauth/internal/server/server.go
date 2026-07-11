@@ -1212,6 +1212,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleScopeDelegation(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
+			handleValidateClientSecret(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 
