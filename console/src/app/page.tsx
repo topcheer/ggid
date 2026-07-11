@@ -16,6 +16,7 @@ import {
   Clock,
   KeyRound,
   TrendingUp,
+  FileCheck,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -48,23 +49,26 @@ export default function DashboardPage() {
     { name: "Policy", status: "healthy" },
     { name: "Audit", status: "healthy" },
   ]);
+  const [pendingApprovals, setPendingApprovals] = useState<number | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [usersResp, rolesResp, orgsResp, statsResp, eventsResp, dashResp] = await Promise.all([
+      const [usersResp, rolesResp, orgsResp, statsResp, eventsResp, dashResp, pendingResp] = await Promise.all([
         apiFetch<{ users?: unknown[]; items?: unknown[] }>("/api/v1/users").catch(() => ({ users: [] })),
         apiFetch<{ roles?: unknown[] }>("/api/v1/roles").catch(() => ({ roles: [] })),
         apiFetch<{ organizations?: unknown[] }>("/api/v1/orgs").catch(() => ({ organizations: [] })),
         apiFetch<{ total_events_24h?: number; failed_logins_24h?: number; hourly_distribution?: { hour: string; count: number }[]; events_by_action?: Record<string, number>; top_actors?: { actor_id: string; actor_name: string; count: number }[] }>("/api/v1/audit/stats").catch(() => ({})),
         apiFetch<{ events?: { id: string; action: string; actor_name: string; result: string; created_at: string }[] }>("/api/v1/audit/events?page_size=10").catch(() => ({ events: [] })),
         apiFetch<{ total_users?: number; active_sessions?: number; login_rate_per_hour?: number; mfa_adoption_pct?: number }>("/api/v1/dashboard/stats").catch(() => null),
+        apiFetch<{ requests?: unknown[]; count?: number }>("/api/v1/access-requests?status=pending").catch(() => ({ count: 0 })),
       ]);
       setUserCount((usersResp as { users?: unknown[] }).users?.length || 0);
       setRoleCount((rolesResp as { roles?: unknown[] }).roles?.length || 0);
       setOrgCount((orgsResp as { organizations?: unknown[] }).organizations?.length || 0);
+      setPendingApprovals((pendingResp as { count?: number }).count ?? (pendingResp as { requests?: unknown[] }).requests?.length ?? 0);
       setAuditStats(statsResp as { total_events_24h: number; failed_logins_24h: number; hourly_distribution: { hour: string; count: number }[]; events_by_action?: Record<string, number>; top_actors?: { actor_id: string; actor_name: string; count: number }[] });
       setRecentEvents((eventsResp as { events?: typeof recentEvents }).events || []);
       if (dashResp) {
@@ -123,6 +127,7 @@ export default function DashboardPage() {
     { label: "Events (24h)", value: loading ? "..." : String(auditStats?.total_events_24h ?? 0), icon: Activity, color: "bg-green-500", href: "/audit" },
     { label: "Failed Logins", value: loading ? "..." : String(auditStats?.failed_logins_24h ?? 0), icon: AlertTriangle, color: "bg-red-500", href: "/audit" },
     { label: "Registrations", value: loading ? "..." : String(auditStats?.events_by_action?.["user.register"] ?? 0), icon: UsersIcon, color: "bg-teal-500", href: "/users" },
+    { label: "Pending Approvals", value: loading ? "..." : String(pendingApprovals ?? 0), icon: FileCheck, color: "bg-amber-500", href: "/access-requests" },
   ];
 
   const hourlyData = (auditStats?.hourly_distribution || []).map((h) => ({
