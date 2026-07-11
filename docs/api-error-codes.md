@@ -298,3 +298,124 @@ for i in $(seq 1 100); do curl -s "$GW/api/v1/auth/login" ...; done
 | `invalidPath` | 400 | invalidPath | PATCH path not found |
 | `noTarget` | 400 | noTarget | PATCH target missing |
 | `tooMany` | 400 | tooMany | Results exceed maxResults |
+
+---
+
+## Complete Error Reference by Service
+
+### Auth Service Errors
+
+| Error Code | HTTP Status | Description | How to Fix |
+|-----------|-------------|-------------|------------|
+| `AUTH_INVALID_CREDENTIALS` | 401 | Username or password incorrect | Check credentials; verify `username` field is used (not `email`) |
+| `AUTH_USER_NOT_FOUND` | 404 | User does not exist in tenant | Verify tenant_id and username |
+| `AUTH_USER_EXISTS` | 409 | Username already taken | Use a different username |
+| `AUTH_USER_INACTIVE` | 403 | Account suspended or deactivated | Contact admin to reactivate |
+| `AUTH_ACCOUNT_LOCKED` | 423 | Account locked after too many failures | Wait 60s or restart auth container in dev |
+| `AUTH_TOKEN_INVALID` | 401 | JWT signature or claims invalid | Obtain new token via login |
+| `AUTH_TOKEN_EXPIRED` | 401 | Access token has expired | Use refresh token to get new access token |
+| `AUTH_REFRESH_INVALID` | 401 | Refresh token invalid or already used | Re-authenticate |
+| `AUTH_MFA_REQUIRED` | 403 | MFA enrollment or verification required | Complete MFA setup or provide MFA code |
+| `AUTH_MFA_INVALID` | 401 | MFA code is wrong or expired | Provide valid 6-digit TOTP code |
+| `AUTH_MFA_ALREADY_ENROLLED` | 409 | MFA already configured for this method | Disable existing MFA first |
+| `AUTH_PASSWORD_TOO_WEAK` | 400 | Password doesn't meet policy | Use 8+ chars with upper, lower, digit, special |
+| `AUTH_LDAP_UNAVAILABLE` | 503 | LDAP server unreachable | Check LDAP_URL and LDAP_BIND_DN config |
+| `AUTH_LDAP_BIND_FAILED` | 401 | LDAP bind failed for user | Check LDAP credentials or filter |
+| `AUTH_WEBAUTHN_REGISTRATION_FAILED` | 400 | WebAuthn attestation verification failed | Check device compatibility |
+| `AUTH_WEBAUTHN_AUTH_FAILED` | 401 | WebAuthn assertion verification failed | Re-register device |
+| `AUTH_RATE_LIMITED` | 429 | Too many login attempts | Wait 60s or contact admin |
+
+### OAuth Service Errors
+
+| Error Code | HTTP Status | Description | How to Fix |
+|-----------|-------------|-------------|------------|
+| `OAUTH_INVALID_CLIENT` | 401 | Client ID or secret invalid | Verify client credentials |
+| `OAUTH_INVALID_GRANT` | 400 | Authorization code invalid or expired | Restart authorization flow |
+| `OAUTH_INVALID_REQUEST` | 400 | Missing required parameter | Check `grant_type`, `code`, `redirect_uri` |
+| `OAUTH_INVALID_SCOPE` | 400 | Requested scope not allowed for client | Reduce scope or update client config |
+| `OAUTH_UNAUTHORIZED_CLIENT` | 401 | Client not authorized for this grant type | Enable grant type for client |
+| `OAUTH_UNSUPPORTED_GRANT_TYPE` | 400 | Grant type not supported | Use `authorization_code`, `client_credentials`, or `device_code` |
+| `OAUTH_ACCESS_DENIED` | 403 | Resource owner denied authorization | User declined consent |
+| `OAUTH_INVALID_REDIRECT_URI` | 400 | Redirect URI doesn't match registered | Register exact URI in client config |
+| `OAUTH_INVALID_STATE` | 400 | State parameter mismatch (CSRF) | Restart authorization flow with fresh state |
+| `OAUTH_PKCE_REQUIRED` | 400 | PKCE code challenge required | Include `code_challenge` and `code_challenge_method=S256` |
+| `OAUTH_INVALID_PKCE_VERIFIER` | 400 | Code verifier doesn't match challenge | Verify `code_verifier` matches original `code_challenge` |
+| `OAUTH_TOKEN_NOT_FOUND` | 404 | Token not found during introspection | Token may be expired or revoked |
+| `OAUTH_TOKEN_REVOKED` | 401 | Token has been revoked | Obtain new token |
+| `OAUTH_INTROSPECTION_FAILED` | 401 | Introspection endpoint authentication failed | Provide valid client credentials |
+| `OAUTH_DPOP_PROOF_INVALID` | 400 | DPoP proof JWT validation failed | Check DPoP header format and signature |
+| `OAUTH_DEVICE_CODE_EXPIRED` | 400 | Device authorization code expired | Request new device code |
+
+### Identity Service Errors
+
+| Error Code | HTTP Status | Description | How to Fix |
+|-----------|-------------|-------------|------------|
+| `IDENTITY_USER_NOT_FOUND` | 404 | User ID not found in tenant | Verify user_id and tenant_id |
+| `IDENTITY_USER_EXISTS` | 409 | User with same username/email exists | Use different username/email |
+| `IDENTITY_INVALID_USER_DATA` | 400 | Validation failed on user fields | Check required fields, email format |
+| `IDENTITY_TENANT_MISMATCH` | 403 | User does not belong to requesting tenant | Check JWT tenant_id matches user's tenant |
+| `IDENTITY_BULK_LIMIT` | 400 | Bulk operation exceeds max batch size | Limit to 100 records per request |
+
+### Policy Service Errors
+
+| Error Code | HTTP Status | Description | How to Fix |
+|-----------|-------------|-------------|------------|
+| `POLICY_ROLE_NOT_FOUND` | 404 | Role ID not found | Verify role exists in tenant |
+| `POLICY_ROLE_EXISTS` | 409 | Role with same key already exists | Use different role `key` |
+| `POLICY_ROLE_KEY_REQUIRED` | 400 | Role `key` field is empty | Provide unique `key` (UNIQUE constraint) |
+| `POLICY_PERMISSION_DENIED` | 403 | User lacks required permission | Assign role with needed permissions |
+| `POLICY_ABAC_RULE_INVALID` | 400 | ABAC rule condition syntax error | Check expression syntax |
+| `POLICY_ABAC_EVAL_ERROR` | 500 | Error evaluating ABAC condition | Check attribute names in rule |
+
+### Org Service Errors
+
+| Error Code | HTTP Status | Description | How to Fix |
+|-----------|-------------|-------------|------------|
+| `ORG_NOT_FOUND` | 404 | Organization ID not found | Verify org_id |
+| `ORG_EXISTS` | 409 | Organization with same name exists | Use different name |
+| `ORG_MEMBER_EXISTS` | 409 | User already in organization | Remove first, then re-add |
+| `ORG_CIRCULAR_REFERENCE` | 400 | Parent org would create cycle | Check org hierarchy tree |
+| `ORG_MAX_DEPTH_EXCEEDED` | 400 | Organization tree too deep | Restructure hierarchy |
+
+### Audit Service Errors
+
+| Error Code | HTTP Status | Description | How to Fix |
+|-----------|-------------|-------------|------------|
+| `AUDIT_QUERY_TOO_BROAD` | 400 | Query missing required filters | Add tenant_id or date range filter |
+| `AUDIT_EXPORT_LIMIT` | 400 | Export exceeds 100k records | Narrow date range |
+| `AUDIT_EVENT_NOT_FOUND` | 404 | Specific event ID not found | Verify event_id |
+| `AUDIT_NATS_UNAVAILABLE` | 503 | Cannot publish to NATS | Check NATS connectivity |
+
+### Gateway Errors
+
+| Error Code | HTTP Status | Description | How to Fix |
+|-----------|-------------|-------------|------------|
+| `GATEWAY_ROUTE_NOT_FOUND` | 404 | No route matches the path | Check API path spelling |
+| `GATEWAY_BACKEND_UNAVAILABLE` | 503 | Circuit breaker open or backend down | Wait or check service health |
+| `GATEWAY_BODY_TOO_LARGE` | 413 | Request body exceeds 10MB | Split request or reduce size |
+| `GATEWAY_INVALID_JSON` | 400 | Request body is not valid JSON | Fix JSON syntax |
+| `GATEWAY_MISSING_TENANT` | 400 | No tenant context found | Include `X-Tenant-ID` header or valid JWT |
+
+---
+
+## HTTP Status Code Summary
+
+| HTTP Status | Meaning | GGID Usage |
+|-------------|---------|------------|
+| 200 | OK | Successful GET, PUT, PATCH |
+| 201 | Created | Successful POST (create) |
+| 204 | No Content | Successful DELETE |
+| 400 | Bad Request | Validation errors, malformed input |
+| 401 | Unauthorized | Missing or invalid JWT |
+| 403 | Forbidden | Insufficient scope or permission |
+| 404 | Not Found | Resource doesn't exist |
+| 409 | Conflict | Duplicate resource |
+| 413 | Payload Too Large | Body > 10MB |
+| 423 | Locked | Account locked (brute force) |
+| 429 | Too Many Requests | Rate limit exceeded |
+| 500 | Internal Server Error | Unhandled exception |
+| 503 | Service Unavailable | Backend down, circuit open |
+
+---
+
+*Last updated: 2025-07-11*
