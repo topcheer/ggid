@@ -151,6 +151,11 @@
 - [x] Bot detection integration test — botdetect_integration_test.go 2 tests (21a2e0a)
 - [x] WASM plugin tests — wasm_plugin_test.go (existing)
 - [x] /healthz/deep mock backend tests — healthcheck_deep_test.go 4 tests (existing)
+- [x] HTTP→HTTPS redirect middleware — https_redirect.go + 5 tests (0f0a019)
+- [x] Content-Type validation — content_type_validator.go (existing, 669d026)
+- [x] Per-tenant CORS config — per_tenant_cors.go + 5 tests (existing)
+- [x] Tiered rate limiting — token_bucket.go TierOverrides + tier_ratelimit_test.go (existing)
+- [x] Request size limit — bodysize.go MaxBodySize + bodysize_test.go (existing)
 - [ ] Middleware coverage →92% (currently 88.3%)
 - [ ] API spec coverage audit — openapi.yaml vs router routes
 
