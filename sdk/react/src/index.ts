@@ -685,6 +685,16 @@ export { usePolicyMigrationWizard } from './usePolicyMigrationWizard';
 export type { PolicyMigrationWizardData, MappingEntry, ValidationReport, MigrationRecord } from './usePolicyMigrationWizard';
 export { useAuditDataLineage } from './useAuditDataLineage';
 export type { AuditDataLineageData, FlowNode, DatasetLineage } from './useAuditDataLineage';
+export { useAuthTokenBindingEnforcement } from './useAuthTokenBindingEnforcement';
+export type { AuthTokenBindingEnforcementData, ClientBindingPolicy, MigrationPhase } from './useAuthTokenBindingEnforcement';
+export { useIdentityGroupLifecycle } from './useIdentityGroupLifecycle';
+export type { IdentityGroupLifecycleData, GroupHealthMetric, CleanupRecommendation } from './useIdentityGroupLifecycle';
+export { usePolicyEmergencyChanges } from './usePolicyEmergencyChanges';
+export type { PolicyEmergencyChangesData, ActiveEmergency, EmergencyHistoryEntry } from './usePolicyEmergencyChanges';
+export { useOAuthScopeAnalytics } from './useOAuthScopeAnalytics';
+export type { OAuthScopeAnalyticsData, ScopeUsageEntry } from './useOAuthScopeAnalytics';
+export { useAuditPipelineHealth } from './useAuditPipelineHealth';
+export type { AuditPipelineHealthData, PipelineStage, Bottleneck, FailoverStatus, LastIncident } from './useAuditPipelineHealth';
 export type {
   GGIDConfig,
   GGIDUser,
