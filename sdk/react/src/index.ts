@@ -349,6 +349,16 @@ export { useScopeLifecycle } from './useScopeLifecycle';
 export type { ScopeRequest } from './useScopeLifecycle';
 export { useHijackTimeline } from './useHijackTimeline';
 export type { HijackData } from './useHijackTimeline';
+export { useSamlSpHealth } from './useSamlSpHealth';
+export type { SpHealth } from './useSamlSpHealth';
+export { useCoverageMatrix } from './useCoverageMatrix';
+export type { MatrixData } from './useCoverageMatrix';
+export { useForensicsTimeline } from './useForensicsTimeline';
+export type { ForensicsData } from './useForensicsTimeline';
+export { useTeamInsights } from './useTeamInsights';
+export type { TeamInsights } from './useTeamInsights';
+export { useScimSyncHealth } from './useScimSyncHealth';
+export type { ScimHealth } from './useScimSyncHealth';
 export type {
   GGIDConfig,
   GGIDUser,
