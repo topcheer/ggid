@@ -635,6 +635,16 @@ export { useAuditComplianceScheduler } from './useAuditComplianceScheduler';
 export type { AuditComplianceSchedulerData, ScheduledAudit, ChecklistItem, DeadlineItem, OverdueAlert } from './useAuditComplianceScheduler';
 export { useOAuthRateLimitPerClient } from './useOAuthRateLimitPerClient';
 export type { OAuthRateLimitPerClientData, RateLimitEntry, EndpointOverride, ThrottleResponse } from './useOAuthRateLimitPerClient';
+export { useAuthSessionBinding } from './useAuthSessionBinding';
+export type { AuthSessionBindingData, AppBinding, CrossDeviceTransfer } from './useAuthSessionBinding';
+export { useIdentityRoleMiningConfig } from './useIdentityRoleMiningConfig';
+export type { IdentityRoleMiningConfigData, MiningParameters, SuggestedRole } from './useIdentityRoleMiningConfig';
+export { useOAuthResourceIndicators } from './useOAuthResourceIndicators';
+export type { OAuthResourceIndicatorsData, ResourcePattern, ClientPatterns, ScopeRestriction, RejectedRequest } from './useOAuthResourceIndicators';
+export { usePolicyContextualConditions } from './usePolicyContextualConditions';
+export type { PolicyContextualConditionsData, ConditionCategory, ConditionTemplate } from './usePolicyContextualConditions';
+export { useAuditStreamProcessing } from './useAuditStreamProcessing';
+export type { AuditStreamProcessingData, StreamHealth, LagPoint, RetryPolicy, ScalingConfig } from './useAuditStreamProcessing';
 export type {
   GGIDConfig,
   GGIDUser,
