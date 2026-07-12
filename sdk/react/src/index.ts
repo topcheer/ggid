@@ -273,6 +273,10 @@ export { useAutoAssignment } from './useAutoAssignment';
 export type { Assignment } from './useAutoAssignment';
 export { useClientHealth } from './useClientHealth';
 export type { ClientHealth } from './useClientHealth';
+export { usePolicySetEval } from './usePolicySetEval';
+export type { PolicyResult, EvalResponse } from './usePolicySetEval';
+export { useDirectorySnapshot } from './useDirectorySnapshot';
+export type { Snapshot } from './useDirectorySnapshot';
 export type {
   GGIDConfig,
   GGIDUser,
