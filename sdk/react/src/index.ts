@@ -969,6 +969,16 @@ export { useComplianceAutomationConfig } from './useComplianceAutomationConfig';
 export type { ComplianceAutomationConfig, ContinuousMonitoringRule, FrameworkMapping, RemediationTrigger } from './useComplianceAutomationConfig';
 export { useIdentityRecoveryConfig } from './useIdentityRecoveryConfig';
 export type { IdentityRecoveryConfig } from './useIdentityRecoveryConfig';
+export { useDistributedTracingConfig } from './useDistributedTracingConfig';
+export type { DistributedTracingConfig, PerServiceSpan } from './useDistributedTracingConfig';
+export { useCanaryDeploymentConfig } from './useCanaryDeploymentConfig';
+export type { CanaryDeploymentConfig, PerTenantCanary, PromotionCriteria } from './useCanaryDeploymentConfig';
+export { useDatabaseMigrationConfig } from './useDatabaseMigrationConfig';
+export type { DatabaseMigrationConfig } from './useDatabaseMigrationConfig';
+export { useOAuthScopeTieringConfig } from './useOAuthScopeTieringConfig';
+export type { OAuthScopeTieringConfig, TierDefinition, ScopePackage, ScopeInheritanceRule } from './useOAuthScopeTieringConfig';
+export { useSecretSprawlPreventionConfig } from './useSecretSprawlPreventionConfig';
+export type { SecretSprawlPreventionConfig, SecretInventoryEntry } from './useSecretSprawlPreventionConfig';
 export type {
   GGIDConfig,
   GGIDUser,
