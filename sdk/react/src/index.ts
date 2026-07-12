@@ -695,6 +695,16 @@ export { useOAuthScopeAnalytics } from './useOAuthScopeAnalytics';
 export type { OAuthScopeAnalyticsData, ScopeUsageEntry } from './useOAuthScopeAnalytics';
 export { useAuditPipelineHealth } from './useAuditPipelineHealth';
 export type { AuditPipelineHealthData, PipelineStage, Bottleneck, FailoverStatus, LastIncident } from './useAuditPipelineHealth';
+export { useITDRDashboard } from './useITDRDashboard';
+export type { ITDRDashboardData, ThreatDetection, DetectionRule, ResponsePlaybook } from './useITDRDashboard';
+export { useFraudDetection } from './useFraudDetection';
+export type { FraudDetectionData, FlaggedAccount, VelocityRule, BlockedEntities } from './useFraudDetection';
+export { useAgentLifecycle } from './useAgentLifecycle';
+export type { AgentLifecycleData, RegisteredAgent, CredentialRotationSchedule, BehavioralAlert } from './useAgentLifecycle';
+export { usePasskeyHealth } from './usePasskeyHealth';
+export type { PasskeyHealthData, PasskeyInfo, RecoveryOption } from './usePasskeyHealth';
+export { useOAuth21Audit } from './useOAuth21Audit';
+export type { OAuth21AuditData, ComplianceCheck, NonCompliantClient, RemediationAction } from './useOAuth21Audit';
 export type {
   GGIDConfig,
   GGIDUser,
