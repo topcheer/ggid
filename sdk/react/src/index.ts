@@ -959,6 +959,16 @@ export { useWebhookEventCatalogConfig } from './useWebhookEventCatalogConfig';
 export type { WebhookEventCatalogConfig, EventTypeEntry, DeliveryStats } from './useWebhookEventCatalogConfig';
 export { useTenantIsolationConfig } from './useTenantIsolationConfig';
 export type { TenantIsolationConfig, IsolationTestResult } from './useTenantIsolationConfig';
+export { useAgentIdentityDelegationConfig } from './useAgentIdentityDelegationConfig';
+export type { AgentIdentityDelegationConfig, ScopeNarrowingRule, PerAgentTrust } from './useAgentIdentityDelegationConfig';
+export { useZeroTrustNetworkConfig } from './useZeroTrustNetworkConfig';
+export type { ZeroTrustNetworkConfig, DeviceTrustSignal, NetworkAccessPolicy } from './useZeroTrustNetworkConfig';
+export { usePostQuantumMigrationConfig } from './usePostQuantumMigrationConfig';
+export type { PostQuantumMigrationConfig, ImpactAssessment } from './usePostQuantumMigrationConfig';
+export { useComplianceAutomationConfig } from './useComplianceAutomationConfig';
+export type { ComplianceAutomationConfig, ContinuousMonitoringRule, FrameworkMapping, RemediationTrigger } from './useComplianceAutomationConfig';
+export { useIdentityRecoveryConfig } from './useIdentityRecoveryConfig';
+export type { IdentityRecoveryConfig } from './useIdentityRecoveryConfig';
 export type {
   GGIDConfig,
   GGIDUser,
