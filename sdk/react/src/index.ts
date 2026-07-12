@@ -565,6 +565,16 @@ export { usePolicyLifecycleDashboard } from './usePolicyLifecycleDashboard';
 export type { PolicyLifecycleDashboardData, PolicyByStatus, ApprovalPipeline, PolicyChange, PolicyAgeBin } from './usePolicyLifecycleDashboard';
 export { useOAuthParManagement } from './useOAuthParManagement';
 export type { OAuthParManagementData, PushedRequest, ParClientUsage, ParError } from './useOAuthParManagement';
+export { useTenantQuotas } from './useTenantQuotas';
+export type { TenantQuotasData, UsageItem, PlanLimit, OverageAlert } from './useTenantQuotas';
+export { useOAuthDpopProofViewer } from './useOAuthDpopProofViewer';
+export type { OAuthDpopProofViewerData, DpopProof, ProofHeader, ProofPayload, ValidityStep, ProofError } from './useOAuthDpopProofViewer';
+export { useIdentityProofing } from './useIdentityProofing';
+export type { IdentityProofingData, ProofingStep, RecentVerification } from './useIdentityProofing';
+export { useAuditQueryLibrary } from './useAuditQueryLibrary';
+export type { AuditQueryLibraryData, SavedQuery, PopularQuery } from './useAuditQueryLibrary';
+export { usePolicyImpactAnalysis } from './usePolicyImpactAnalysis';
+export type { PolicyImpactAnalysisData, PolicyAnalysis, PermissionDelta, ComparisonItem } from './usePolicyImpactAnalysis';
 export type {
   GGIDConfig,
   GGIDUser,
