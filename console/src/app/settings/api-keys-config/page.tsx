@@ -1,0 +1,85 @@
+'use client';
+import { useState } from 'react';
+
+interface ApiKey {
+  id: string;
+  keyId: string;
+  name: string;
+  created: string;
+  scopes: string[];
+  expires: string;
+  rateLimit: number;
+  ipRestriction: string;
+}
+
+export default function ApiKeysConfigPage() {
+  const [keys, setKeys] = useState<ApiKey[]>([
+    { id: 'k1', keyId: 'gak_abc123', name: 'Production API', created: '2026-01-15', scopes: ['read:users', 'write:users'], expires: '2027-01-15', rateLimit: 1000, ipRestriction: '10.0.0.0/8' },
+    { id: 'k2', keyId: 'gak_def456', name: 'Monitoring', created: '2026-03-01', scopes: ['read:audit'], expires: '2026-09-01', rateLimit: 100, ipRestriction: 'any' },
+  ]);
+  const [showForm, setShowForm] = useState(false);
+  const [newKey, setNewKey] = useState({ name: '', scopes: [] as string[], expires: '', rateLimit: 1000, ipRestriction: 'any' });
+  const [auditLog] = useState([
+    { time: '14:30', action: 'API call', key: 'gak_abc123', endpoint: '/api/v1/users' },
+    { time: '14:15', action: 'Rate limited', key: 'gak_def456', endpoint: '/api/v1/audit' },
+    { time: '13:00', action: 'Created', key: 'gak_def456', endpoint: '-' },
+  ]);
+
+  const allScopes = ['read:users', 'write:users', 'read:orgs', 'write:orgs', 'read:audit', 'write:audit', 'read:policy', 'admin:all'];
+  const toggleScope = (s: string) => setNewKey(prev => ({ ...prev, scopes: prev.scopes.includes(s) ? prev.scopes.filter(x => x !== s) : [...prev.scopes, s] }));
+  const createKey = () => {
+    const id = `gak_${Math.random().toString(36).slice(2, 8)}`;
+    setKeys(prev => [...prev, { id: `k${prev.length + 1}`, keyId: id, name: newKey.name, created: new Date().toISOString().slice(0, 10), scopes: newKey.scopes, expires: newKey.expires || '2027-01-01', rateLimit: newKey.rateLimit, ipRestriction: newKey.ipRestriction }]);
+    setShowForm(false); setNewKey({ name: '', scopes: [], expires: '', rateLimit: 1000, ipRestriction: 'any' });
+  };
+  const revoke = (id: string) => setKeys(prev => prev.filter(k => k.id !== id));
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div><h1 className="text-2xl font-bold">API Keys Configuration</h1><p className="text-gray-600">Manage API keys with scoped access, rate limits, and IP restrictions.</p></div>
+        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{showForm ? 'Cancel' : 'Create Key'}</button>
+      </div>
+
+      {showForm && (
+        <section className="bg-white rounded-lg shadow p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Create API Key</h2>
+          <div><label className="text-sm font-medium">Name</label><input type="text" value={newKey.name} onChange={e => setNewKey(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">Scopes</label><div className="flex flex-wrap gap-2 mt-2">{allScopes.map(s => <label key={s} className="flex items-center gap-1 text-sm"><input type="checkbox" checked={newKey.scopes.includes(s)} onChange={() => toggleScope(s)} className="rounded" />{s}</label>)}</div></div>
+          <div className="grid grid-cols-3 gap-4">
+            <div><label className="text-sm font-medium">Expires</label><input type="date" value={newKey.expires} onChange={e => setNewKey(prev => ({ ...prev, expires: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Rate Limit (req/min)</label><input type="number" min={1} value={newKey.rateLimit} onChange={e => setNewKey(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 1000 }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">IP Restriction</label><input type="text" value={newKey.ipRestriction} onChange={e => setNewKey(prev => ({ ...prev, ipRestriction: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
+          </div>
+          <button onClick={createKey} disabled={!newKey.name} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Create</button>
+        </section>
+      )}
+
+      <section className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50"><tr className="text-left"><th className="p-3">Key ID</th><th className="p-3">Name</th><th className="p-3">Scopes</th><th className="p-3">Expires</th><th className="p-3">Rate</th><th className="p-3">IP</th><th className="p-3">Action</th></tr></thead>
+          <tbody>
+            {keys.map(k => (
+              <tr key={k.id} className="border-b">
+                <td className="p-3 font-mono text-xs">{k.keyId}</td>
+                <td className="p-3 font-medium">{k.name}</td>
+                <td className="p-3"><div className="flex flex-wrap gap-1">{k.scopes.map(s => <span key={s} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{s}</span>)}</div></td>
+                <td className="p-3 text-gray-500">{k.expires}</td>
+                <td className="p-3 text-xs">{k.rateLimit}/min</td>
+                <td className="p-3 font-mono text-xs">{k.ipRestriction}</td>
+                <td className="p-3"><button onClick={() => revoke(k.id)} className="text-red-600 text-xs hover:underline">Revoke</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Audit Log</h2>
+        <div className="space-y-1">{auditLog.map((l, i) => (
+          <div key={i} className="text-sm flex items-center gap-3 border-b pb-1"><span className="text-gray-500 text-xs">{l.time}</span><span className={`px-2 py-0.5 rounded text-xs ${l.action === 'Rate limited' ? 'bg-amber-100 text-amber-700' : l.action === 'Created' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{l.action}</span><span className="font-mono text-xs">{l.key}</span><span className="text-gray-500 text-xs">{l.endpoint}</span></div>
+        ))}</div>
+      </section>
+    </div>
+  );
+}
