@@ -1,0 +1,138 @@
+'use client';
+import { useState } from 'react';
+
+interface ServiceEndpoint {
+  id: string;
+  type: string;
+  serviceEndpoint: string;
+}
+
+interface DidDocument {
+  id: string;
+  method: string;
+  verificationStatus: string;
+  serviceEndpoints: ServiceEndpoint[];
+  linkedVCs: number;
+  raw: string;
+}
+
+export default function DidResolverPage() {
+  const [didInput, setDidInput] = useState('');
+  const [method, setMethod] = useState('did:web');
+  const [result, setResult] = useState<DidDocument | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const methods = ['did:web', 'did:ion', 'did:key', 'did:ebsi'];
+
+  const resolve = () => {
+    if (!didInput.trim()) {
+      setError('Please enter a DID');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    setTimeout(() => {
+      const mockDoc: DidDocument = {
+        id: didInput,
+        method: didInput.split(':')[1] || 'unknown',
+        verificationStatus: 'verified',
+        serviceEndpoints: [
+          { id: `${didInput}#service-1`, type: 'LinkedDomains', serviceEndpoint: 'https://example.com' },
+          { id: `${didInput}#service-2`, type: 'DIDCommMessaging', serviceEndpoint: 'https://msg.example.com/inbox' },
+        ],
+        linkedVCs: 3,
+        raw: JSON.stringify({
+          '@context': ['https://www.w3.org/ns/did/v1'],
+          id: didInput,
+          verificationMethod: [{
+            id: `${didInput}#keys-1`,
+            type: 'Ed25519VerificationKey2020',
+            controller: didInput,
+            publicKeyMultibase: 'z6MkpTHR8VNsBxYAAWHut2GeaddxsrTd7B8k...'
+          }],
+          service: [
+            { id: `${didInput}#service-1`, type: 'LinkedDomains', serviceEndpoint: 'https://example.com' },
+            { id: `${didInput}#service-2`, type: 'DIDCommMessaging', serviceEndpoint: 'https://msg.example.com/inbox' }
+          ],
+          assertionMethod: [`${didInput}#keys-1`],
+          authentication: [`${didInput}#keys-1`]
+        }, null, 2)
+      };
+      setResult(mockDoc);
+      setLoading(false);
+    }, 500);
+  };
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">DID Resolver</h1>
+        <p className="text-gray-600">Resolve Decentralized Identifiers and view DID documents.</p>
+      </div>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="flex gap-3">
+          <select value={method} onChange={e => setMethod(e.target.value)} className="border rounded px-3 py-2 text-sm">
+            {methods.map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+          <input
+            type="text"
+            placeholder={`${method}:example.com:user`}
+            value={didInput}
+            onChange={e => setDidInput(e.target.value)}
+            className="flex-1 border rounded px-3 py-2 text-sm font-mono"
+          />
+          <button onClick={resolve} disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">
+            {loading ? 'Resolving...' : 'Resolve'}
+          </button>
+        </div>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+      </section>
+
+      {result && (
+        <>
+          <section className="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 className="text-lg font-semibold">Resolution Result</h2>
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="text-xs text-gray-500">DID</div>
+                <div className="font-mono text-sm">{result.id}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Method</div>
+                <div className="text-sm font-medium">{result.method}</div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Verification</div>
+                <span className={`px-2 py-0.5 rounded text-xs ${result.verificationStatus === 'verified' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{result.verificationStatus}</span>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Linked VCs</div>
+                <div className="text-sm font-bold">{result.linkedVCs}</div>
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 className="text-lg font-semibold">Service Endpoints</h2>
+            <div className="space-y-2">
+              {result.serviceEndpoints.map(ep => (
+                <div key={ep.id} className="flex items-center gap-3 border-b pb-2">
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{ep.type}</span>
+                  <span className="font-mono text-xs text-gray-500">{ep.id}</span>
+                  <span className="text-sm text-blue-600">{ep.serviceEndpoint}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 className="text-lg font-semibold">DID Document</h2>
+            <pre className="bg-gray-900 text-green-400 rounded p-4 text-xs overflow-x-auto max-h-96">{result.raw}</pre>
+          </section>
+        </>
+      )}
+    </div>
+  );
+}
