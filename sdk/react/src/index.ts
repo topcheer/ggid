@@ -585,6 +585,16 @@ export { useIdentityAccountLinkingConfig } from './useIdentityAccountLinkingConf
 export type { IdentityAccountLinkingConfigData, LinkingMethod, ConflictResolution, LinkedAccountsStats, UnlinkPolicy } from './useIdentityAccountLinkingConfig';
 export { useOAuthClientDeployment } from './useOAuthClientDeployment';
 export type { OAuthClientDeploymentData, Environment, ConfigDiffEntry, DeploymentRecord, HealthCheck } from './useOAuthClientDeployment';
+export { useSamlIdpInitiatedSSO } from './useSamlIdpInitiatedSSO';
+export type { SamlIdpInitiatedSSOData, AllowedIdp, SessionBridge } from './useSamlIdpInitiatedSSO';
+export { useAuthPasswordlessConfig } from './useAuthPasswordlessConfig';
+export type { AuthPasswordlessConfigData, PasswordlessMethod, RoleRequirement } from './useAuthPasswordlessConfig';
+export { useOAuthRedirectURIValidation } from './useOAuthRedirectURIValidation';
+export type { OAuthRedirectURIValidationData, ClientUris, ValidationError } from './useOAuthRedirectURIValidation';
+export { usePolicyGovernanceWorkflow } from './usePolicyGovernanceWorkflow';
+export type { PolicyGovernanceWorkflowData, PipelineStage, ReviewerAssignment, FreezeWindow, EmergencyBypass, SegregationOfDuties, AuditTrailEntry } from './usePolicyGovernanceWorkflow';
+export { useAuditSiemMapping } from './useAuditSiemMapping';
+export type { AuditSiemMappingData, SiemDestinationMapping, FieldMapping, SeverityMap, CustomField } from './useAuditSiemMapping';
 export type {
   GGIDConfig,
   GGIDUser,
