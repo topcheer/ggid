@@ -105,7 +105,25 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 
 	// 3. Resolve user ID
 	if result.LinkedUser == nil {
-		return nil, fmt.Errorf("authentication succeeded but no linked user")
+		// Auto-provision: create local user from external attributes
+		tc, err := tenant.FromContext(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("tenant context required: %w", err)
+		}
+		email, _ := result.Attributes["email"].(string)
+		if email == "" {
+			email = username + "@ldap.local"
+		}
+		name, _ := result.Attributes["displayName"].(string)
+		if name == "" {
+			name = username
+		}
+		newUser, err := s.identityClient.CreateUserFromSocial(ctx, tc.TenantID, username, email, name, string(result.Provider), result.ExternalID, result.Attributes)
+		if err != nil {
+			return nil, fmt.Errorf("auto-provision failed: %w", err)
+		}
+		uid := newUser.ID
+		result.LinkedUser = &uid
 	}
 	userID := *result.LinkedUser
 
@@ -370,7 +388,25 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 	}
 
 	if result.LinkedUser == nil {
-		return nil, fmt.Errorf("authentication succeeded but no linked user")
+		// Auto-provision: create local user from external attributes
+		tc, err := tenant.FromContext(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("tenant context required: %w", err)
+		}
+		email, _ := result.Attributes["email"].(string)
+		if email == "" {
+			email = username + "@ldap.local"
+		}
+		name, _ := result.Attributes["displayName"].(string)
+		if name == "" {
+			name = username
+		}
+		newUser, err := s.identityClient.CreateUserFromSocial(ctx, tc.TenantID, username, email, name, string(result.Provider), result.ExternalID, result.Attributes)
+		if err != nil {
+			return nil, fmt.Errorf("auto-provision failed: %w", err)
+		}
+		uid := newUser.ID
+		result.LinkedUser = &uid
 	}
 	userID := *result.LinkedUser
 
