@@ -359,6 +359,16 @@ export { useTeamInsights } from './useTeamInsights';
 export type { TeamInsights } from './useTeamInsights';
 export { useScimSyncHealth } from './useScimSyncHealth';
 export type { ScimHealth } from './useScimSyncHealth';
+export { usePasswordlessStats } from './usePasswordlessStats';
+export type { PasswordlessStats } from './usePasswordlessStats';
+export { useAttributeGovernance } from './useAttributeGovernance';
+export type { Attribute } from './useAttributeGovernance';
+export { usePolicyExceptions } from './usePolicyExceptions';
+export type { PolicyException } from './usePolicyExceptions';
+export { useVendorManagement } from './useVendorManagement';
+export type { Vendor } from './useVendorManagement';
+export { useAuthorizeFlowAnalytics } from './useAuthorizeFlowAnalytics';
+export type { AuthorizeAnalytics } from './useAuthorizeFlowAnalytics';
 export type {
   GGIDConfig,
   GGIDUser,
