@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ServiceEndpoint {
   id: string;
@@ -32,36 +32,12 @@ export default function DidResolverPage() {
     }
     setLoading(true);
     setError('');
-    setTimeout(() => {
-      const mockDoc: DidDocument = {
-        id: didInput,
-        method: didInput.split(':')[1] || 'unknown',
-        verificationStatus: 'verified',
-        serviceEndpoints: [
-          { id: `${didInput}#service-1`, type: 'LinkedDomains', serviceEndpoint: 'https://example.com' },
-          { id: `${didInput}#service-2`, type: 'DIDCommMessaging', serviceEndpoint: 'https://msg.example.com/inbox' },
-        ],
-        linkedVCs: 3,
-        raw: JSON.stringify({
-          '@context': ['https://www.w3.org/ns/did/v1'],
-          id: didInput,
-          verificationMethod: [{
-            id: `${didInput}#keys-1`,
-            type: 'Ed25519VerificationKey2020',
-            controller: didInput,
-            publicKeyMultibase: 'z6MkpTHR8VNsBxYAAWHut2GeaddxsrTd7B8k...'
-          }],
-          service: [
-            { id: `${didInput}#service-1`, type: 'LinkedDomains', serviceEndpoint: 'https://example.com' },
-            { id: `${didInput}#service-2`, type: 'DIDCommMessaging', serviceEndpoint: 'https://msg.example.com/inbox' }
-          ],
-          assertionMethod: [`${didInput}#keys-1`],
-          authentication: [`${didInput}#keys-1`]
-        }, null, 2)
-      };
-      setResult(mockDoc);
-      setLoading(false);
-    }, 500);
+    fetch(`/api/v1/identity/did?id=${encodeURIComponent(didInput)}`, {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setResult(data); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
   };
 
   return (

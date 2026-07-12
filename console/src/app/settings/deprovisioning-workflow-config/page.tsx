@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface WorkflowStep {
   id: string;
@@ -9,20 +9,15 @@ interface WorkflowStep {
 }
 
 export default function DeprovisioningWorkflowConfigPage() {
-  const [steps, setSteps] = useState<WorkflowStep[]>([
-    { id: 's1', name: 'Revoke Tokens', description: 'Revoke all active OAuth/JWT tokens', enabled: true },
-    { id: 's2', name: 'Remove Groups', description: 'Remove user from all groups and roles', enabled: true },
-    { id: 's3', name: 'Disable Account', description: 'Set account status to disabled', enabled: true },
-    { id: 's4', name: 'Archive Data', description: 'Archive user data to cold storage', enabled: true },
-    { id: 's5', name: 'Audit Trail', description: 'Generate final audit trail entry', enabled: true },
-  ]);
-
+  const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [rollback, setRollback] = useState(true);
   const [dryRun, setDryRun] = useState(false);
   const [notifyUser, setNotifyUser] = useState(false);
   const [notifyManager, setNotifyManager] = useState(true);
   const [notifyAdmin, setNotifyAdmin] = useState(true);
   const [cleanupDays, setCleanupDays] = useState(90);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const toggleStep = (id: string) => {
     setSteps(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
@@ -37,6 +32,29 @@ export default function DeprovisioningWorkflowConfigPage() {
       return next;
     });
   };
+
+  useEffect(() => {
+    fetch('/api/v1/identity/deprovisioning/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.steps) setSteps(data.steps);
+          if (data.rollback !== undefined) setRollback(data.rollback);
+          if (data.dry_run !== undefined) setDryRun(data.dry_run);
+          if (data.notify_user !== undefined) setNotifyUser(data.notify_user);
+          if (data.notify_manager !== undefined) setNotifyManager(data.notify_manager);
+          if (data.notify_admin !== undefined) setNotifyAdmin(data.notify_admin);
+          if (data.cleanup_days) setCleanupDays(data.cleanup_days);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LifecycleStage {
   key: string;
@@ -28,6 +28,8 @@ interface ProvisioningRule {
 }
 
 export default function DigitalIdentityLifecyclePage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const stages: LifecycleStage[] = [
     { key: 'provision', label: 'Provision', color: 'bg-blue-600' },
     { key: 'activate', label: 'Activate', color: 'bg-green-600' },
@@ -36,13 +38,7 @@ export default function DigitalIdentityLifecyclePage() {
     { key: 'deprovision', label: 'Deprovision', color: 'bg-red-600' },
   ];
 
-  const [journeys, setJourneys] = useState<UserJourney[]>([
-    { id: 'j1', user: 'alice@ggid.io', stage: 'activate', timestamp: '2026-07-12 09:00', event: 'Account activated, MFA enrolled' },
-    { id: 'j2', user: 'bob@ggid.io', stage: 'provision', timestamp: '2026-07-11 14:30', event: 'Provisioned from HR system (Workday)' },
-    { id: 'j3', user: 'carol@ggid.io', stage: 'suspend', timestamp: '2026-07-10 16:00', event: 'Suspended - security investigation' },
-    { id: 'j4', user: 'dave@ggid.io', stage: 'deprovision', timestamp: '2026-07-09 11:00', event: 'Deprovisioned - employee departure' },
-    { id: 'j5', user: 'eve@ggid.io', stage: 'modify', timestamp: '2026-07-08 10:15', event: 'Role changed: developer -> senior developer' },
-  ]);
+  const [journeys, setJourneys] = useState<UserJourney[]>([]);
 
   const [checklist, setChecklist] = useState<DeprovisionChecklist[]>([
     { item: 'Revoke all OAuth tokens', done: true },
@@ -55,12 +51,20 @@ export default function DigitalIdentityLifecyclePage() {
     { item: 'Notify manager', done: false },
   ]);
 
-  const [rules, setRules] = useState<ProvisioningRule[]>([
-    { id: 'pr1', trigger: 'New hire in Workday', action: 'Provision account + default groups', enabled: true },
-    { id: 'pr2', trigger: 'Department change in Workday', action: 'Update group memberships', enabled: true },
-    { id: 'pr3', trigger: 'Termination in Workday', action: 'Suspend account + start deprovision checklist', enabled: true },
-    { id: 'pr4', trigger: 'Leave of absence', action: 'Suspend account, preserve data', enabled: false },
-  ]);
+  const [rules, setRules] = useState<ProvisioningRule[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/user-lifecycle/stages", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setJourneys(data.journeys || data.items || []);
+        setRules(data.rules || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const [selectedStage, setSelectedStage] = useState('all');
   const [bulkTarget, setBulkTarget] = useState('suspend');
@@ -76,6 +80,12 @@ export default function DigitalIdentityLifecyclePage() {
   const filteredJourneys = selectedStage === 'all' ? journeys : journeys.filter(j => j.stage === selectedStage);
   const checklistProgress = Math.round((checklist.filter(c => c.done).length / checklist.length) * 100);
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Digital Identity Lifecycle</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Digital Identity Lifecycle</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
