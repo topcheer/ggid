@@ -1163,9 +1163,18 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/token-lifetime/analytics", handleTokenLifetimeAnalytics)
 	mux.HandleFunc("/api/v1/oauth/revoke-cascade", handleRevokeCascade)
 	mux.HandleFunc("/api/v1/oauth/clients/dependency-graph", handleDependencyGraph)
+	mux.HandleFunc("/api/v1/oauth/scopes/deprecations", handleScopeDeprecation)
 	mux.HandleFunc("/api/v1/oauth/scopes/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/description") {
 			handleScopeDescription(w, r)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/deprecate") {
+			handleScopeDeprecation(w, r)
+			return
+		}
+		if r.URL.Path == "/api/v1/oauth/scopes/deprecations" {
+			handleScopeDeprecation(w, r)
 			return
 		}
 		handleScopes(w, r)

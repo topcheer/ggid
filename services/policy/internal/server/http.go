@@ -115,6 +115,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/export-package", s.handlePolicyExportImport)
 	mux.HandleFunc("/api/v1/policies/import-package", s.handlePolicyExportImport)
 	mux.HandleFunc("/api/v1/policies/access-reviews/metrics", s.handleAccessReviewMetrics)
+	mux.HandleFunc("/api/v1/policies/tags", s.handlePolicyTags)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }
@@ -516,6 +517,11 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(parts) == 2 && strings.HasPrefix(parts[1], "comments") {
 		s.handlePolicyComments(w, r)
+		return
+	}
+
+	if len(parts) == 2 && parts[1] == "tags" {
+		s.handlePolicyTags(w, r)
 		return
 	}
 
