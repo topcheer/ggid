@@ -525,6 +525,16 @@ export { usePasswordResetFlow } from './usePasswordResetFlow';
 export type { ResetConfig } from './usePasswordResetFlow';
 export { useAccountRecovery } from './useAccountRecovery';
 export type { RecoveryConfig, RecoveryCode } from './useAccountRecovery';
+export { useOAuthTokenExchange } from './useOAuthTokenExchange';
+export type { ExchangeResult } from './useOAuthTokenExchange';
+export { useIpReputation } from './useIpReputation';
+export type { IpInfo } from './useIpReputation';
+export { useGroupPermissionTree } from './useGroupPermissionTree';
+export type { TreeNode } from './useGroupPermissionTree';
+export { useCacheHealth } from './useCacheHealth';
+export type { CacheInstance } from './useCacheHealth';
+export { useNatsJetstream } from './useNatsJetstream';
+export type { JetStreamData } from './useNatsJetstream';
 export type {
   GGIDConfig,
   GGIDUser,
