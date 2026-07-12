@@ -575,6 +575,16 @@ export { useAuditQueryLibrary } from './useAuditQueryLibrary';
 export type { AuditQueryLibraryData, SavedQuery, PopularQuery } from './useAuditQueryLibrary';
 export { usePolicyImpactAnalysis } from './usePolicyImpactAnalysis';
 export type { PolicyImpactAnalysisData, PolicyAnalysis, PermissionDelta, ComparisonItem } from './usePolicyImpactAnalysis';
+export { useOAuthBackchannelLogoutConfig } from './useOAuthBackchannelLogoutConfig';
+export type { OAuthBackchannelLogoutConfigData, ErrorHandling, ClientLogoutConfig } from './useOAuthBackchannelLogoutConfig';
+export { useAuthOidcFederation } from './useAuthOidcFederation';
+export type { AuthOidcFederationData, TrustAnchor, FederatedProvider, TrustChainNode } from './useAuthOidcFederation';
+export { usePolicyTagging } from './usePolicyTagging';
+export type { PolicyTaggingData, TagEntry, TaggedPolicy, AutoTagRule } from './usePolicyTagging';
+export { useIdentityAccountLinkingConfig } from './useIdentityAccountLinkingConfig';
+export type { IdentityAccountLinkingConfigData, LinkingMethod, ConflictResolution, LinkedAccountsStats, UnlinkPolicy } from './useIdentityAccountLinkingConfig';
+export { useOAuthClientDeployment } from './useOAuthClientDeployment';
+export type { OAuthClientDeploymentData, Environment, ConfigDiffEntry, DeploymentRecord, HealthCheck } from './useOAuthClientDeployment';
 export type {
   GGIDConfig,
   GGIDUser,
