@@ -939,6 +939,16 @@ export { usePolicyBreakGlassConfig } from './usePolicyBreakGlassConfig';
 export type { PolicyBreakGlassConfig, BreakGlassRole } from './usePolicyBreakGlassConfig';
 export { useOAuthJwksRotationConfig } from './useOAuthJwksRotationConfig';
 export type { OAuthJwksRotationConfig, RotationHistoryEntry } from './useOAuthJwksRotationConfig';
+export { useOAuthIntrospectionCacheConfig } from './useOAuthIntrospectionCacheConfig';
+export type { OAuthIntrospectionCacheConfig, PerClientTtl, CacheStats } from './useOAuthIntrospectionCacheConfig';
+export { useIdentityTokenPrefetchConfig } from './useIdentityTokenPrefetchConfig';
+export type { IdentityTokenPrefetchConfig, AppIntegration } from './useIdentityTokenPrefetchConfig';
+export { usePolicyHotReloadConfig } from './usePolicyHotReloadConfig';
+export type { PolicyHotReloadConfig } from './usePolicyHotReloadConfig';
+export { useAuditQueryOptimizationConfig } from './useAuditQueryOptimizationConfig';
+export type { AuditQueryOptimizationConfig, IndexConfig, AutoVacuumConfig } from './useAuditQueryOptimizationConfig';
+export { useOAuthBackpressureConfig } from './useOAuthBackpressureConfig';
+export type { OAuthBackpressureConfig, DegradationRule } from './useOAuthBackpressureConfig';
 export type {
   GGIDConfig,
   GGIDUser,
