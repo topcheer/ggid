@@ -425,6 +425,16 @@ export { useDiscoveryConfig } from './useDiscoveryConfig';
 export type { DiscoveryInfo } from './useDiscoveryConfig';
 export { useOAuthHealthCheck } from './useOAuthHealthCheck';
 export type { EndpointStatus, OAuthHealthData } from './useOAuthHealthCheck';
+export { useScimProvisioning } from './useScimProvisioning';
+export type { ScimConfig } from './useScimProvisioning';
+export { useMfaChallengeConfig } from './useMfaChallengeConfig';
+export type { MfaConfig } from './useMfaChallengeConfig';
+export { useClientOnboarding } from './useClientOnboarding';
+export type { ClientCreds } from './useClientOnboarding';
+export { usePolicySimulationLab } from './usePolicySimulationLab';
+export type { SimResult } from './usePolicySimulationLab';
+export { useComplianceTimeline } from './useComplianceTimeline';
+export type { Milestone, FrameworkData } from './useComplianceTimeline';
 export type {
   GGIDConfig,
   GGIDUser,
