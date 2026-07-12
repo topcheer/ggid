@@ -931,6 +931,14 @@ export { useSessionClusteringConfig } from './useSessionClusteringConfig';
 export type { SessionClusteringConfig, RedisNode } from './useSessionClusteringConfig';
 export { useEventDrivenAuditConfig } from './useEventDrivenAuditConfig';
 export type { EventDrivenAuditConfig, StreamConfig } from './useEventDrivenAuditConfig';
+export { useAuthSessionResilienceConfig } from './useAuthSessionResilienceConfig';
+export type { AuthSessionResilienceConfig, FailoverConfig } from './useAuthSessionResilienceConfig';
+export { useOAuthScopeConsentMatrixConfig } from './useOAuthScopeConsentMatrixConfig';
+export type { OAuthScopeConsentMatrixConfig, ScopeConsentEntry } from './useOAuthScopeConsentMatrixConfig';
+export { usePolicyBreakGlassConfig } from './usePolicyBreakGlassConfig';
+export type { PolicyBreakGlassConfig, BreakGlassRole } from './usePolicyBreakGlassConfig';
+export { useOAuthJwksRotationConfig } from './useOAuthJwksRotationConfig';
+export type { OAuthJwksRotationConfig, RotationHistoryEntry } from './useOAuthJwksRotationConfig';
 export type {
   GGIDConfig,
   GGIDUser,
