@@ -949,6 +949,16 @@ export { useAuditQueryOptimizationConfig } from './useAuditQueryOptimizationConf
 export type { AuditQueryOptimizationConfig, IndexConfig, AutoVacuumConfig } from './useAuditQueryOptimizationConfig';
 export { useOAuthBackpressureConfig } from './useOAuthBackpressureConfig';
 export type { OAuthBackpressureConfig, DegradationRule } from './useOAuthBackpressureConfig';
+export { useOAuth21ComplianceChecker } from './useOAuth21ComplianceChecker';
+export type { OAuth21ComplianceChecker, ComplianceCheckItem, NonCompliantClient, RemediationAction } from './useOAuth21ComplianceChecker';
+export { useIdentityAttributeSchemaConfig } from './useIdentityAttributeSchemaConfig';
+export type { IdentityAttributeSchemaConfig, CustomAttribute } from './useIdentityAttributeSchemaConfig';
+export { useOAuthErrorCatalogConfig } from './useOAuthErrorCatalogConfig';
+export type { OAuthErrorCatalogConfig, ErrorCodeEntry, CustomLocaleMessage } from './useOAuthErrorCatalogConfig';
+export { useWebhookEventCatalogConfig } from './useWebhookEventCatalogConfig';
+export type { WebhookEventCatalogConfig, EventTypeEntry, DeliveryStats } from './useWebhookEventCatalogConfig';
+export { useTenantIsolationConfig } from './useTenantIsolationConfig';
+export type { TenantIsolationConfig, IsolationTestResult } from './useTenantIsolationConfig';
 export type {
   GGIDConfig,
   GGIDUser,
