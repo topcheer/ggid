@@ -104,3 +104,46 @@
 - [ ] Go SDK: policy versioning, device binding, deprovisioning, scope mgmt
 - [ ] Node SDK: admin extensions (matching Go)
 - [ ] React SDK: usePolicyVersions, useDeviceBinding hooks
+
+---
+
+## Research-Driven Backlog (2026-07-26)
+*Source: docs/research/itdr-fraud-agent-lifecycle-gaps.md*
+
+### Backend (P1)
+- [ ] **P1** ITDR: detection rules catalog (services/auth/internal/server/itdr_handler.go)
+- [ ] **P1** ITDR: automated response playbooks (block→revoke→notify→ticket)
+- [ ] **P1** ITDR: lateral movement detection
+- [ ] **P1** ITDR: privilege escalation detection
+- [ ] **P1** ITDR: MITRE ATT&CK identity mapping
+- [ ] **P1** Fraud: device fingerprinting service (pkg/fraud/)
+- [ ] **P1** Fraud: velocity rules engine (max registrations/logins per IP)
+- [ ] **P1** Fraud: synthetic identity detection + disposable email blocklist
+- [ ] **P1** Fraud: TOR/VPN/proxy detection
+- [ ] **P1** Agent: lifecycle management (onboard→provision→monitor→revoke)
+- [ ] **P1** Agent: persistent registry (database-backed)
+- [ ] **P1** Agent: behavioral monitoring + per-tenant rate limiting
+- [ ] **P1** Agent: consent flow (user approves agent scope)
+- [ ] **P1** Agent: credential rotation automation
+
+### Frontend (P1)
+- [ ] **P1** ITDR dashboard (console/src/app/settings/itdr-dashboard/)
+- [ ] **P1** Fraud detection dashboard (console/src/app/settings/fraud-detection/)
+- [ ] **P1** Agent lifecycle dashboard (console/src/app/settings/agent-lifecycle/)
+
+### Backend (P2)
+- [ ] **P2** PIPL: data handling rules for Chinese users
+- [ ] **P2** PIPL: cross-border transfer assessment
+- [ ] **P2** OAuth 2.1: compliance audit tool + deprecation enforcement
+- [ ] **P2** Passkey: health dashboard API (registered passkeys per user)
+
+### Frontend (P2)
+- [ ] **P2** Passkey health dashboard (console/src/app/settings/passkey-health/)
+- [ ] **P2** OAuth 2.1 compliance checker page
+- [ ] **P2** PIPL compliance config page
+
+### Docs (P2)
+- [ ] **P2** docs/guides/itdr-implementation.md
+- [ ] **P2** docs/guides/fraud-detection.md
+- [ ] **P2** docs/guides/ai-agent-lifecycle.md
+- [ ] **P2** docs/guides/pipl-compliance.md
