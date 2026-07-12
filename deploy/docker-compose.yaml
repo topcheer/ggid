@@ -347,6 +347,8 @@ services:
         condition: service_started
     environment:
       GATEWAY_URL: "http://gateway:8080"
+      NEXT_PUBLIC_API_URL: "http://localhost:8080"
+      NEXT_PUBLIC_TENANT_ID: "00000000-0000-0000-0000-000000000001"
       NEXTAUTH_URL: "http://localhost:3000"
     ports:
       - "3000:3000"
