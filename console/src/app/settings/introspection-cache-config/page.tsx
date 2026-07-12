@@ -1,0 +1,88 @@
+'use client';
+import { useState } from 'react';
+
+export default function IntrospectionCacheConfigPage() {
+  const [enabled, setEnabled] = useState(true);
+  const [activeTtl, setActiveTtl] = useState(120);
+  const [inactiveTtl, setInactiveTtl] = useState(1800);
+  const [maxSize, setMaxSize] = useState(10000);
+  const [cacheWarming, setCacheWarming] = useState(false);
+  const [invalidateToken, setInvalidateToken] = useState('');
+  const [redisStatus] = useState('connected');
+
+  const [stats] = useState({
+    hitRate: 94.2,
+    missRate: 5.8,
+    totalRequests: 15420,
+    cachedTokens: 8740,
+  });
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Introspection Cache Configuration</h1>
+        <p className="text-gray-600">Configure token introspection caching for OAuth token validation.</p>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <span className={`px-3 py-1 rounded text-sm ${redisStatus === 'connected' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>Redis: {redisStatus}</span>
+      </div>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Cache Settings</h2>
+        <label className="flex items-center justify-between">
+          <span className="text-sm font-medium">Cache Enabled</span>
+          <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
+        </label>
+        <label className="flex items-center justify-between">
+          <span className="text-sm font-medium">Cache Warming (pre-populate on startup)</span>
+          <input type="checkbox" checked={cacheWarming} onChange={e => setCacheWarming(e.target.checked)} className="rounded" />
+        </label>
+        <div>
+          <label className="text-sm font-medium">Active Token TTL: {activeTtl}s</label>
+          <input type="range" min={30} max={300} value={activeTtl} onChange={e => setActiveTtl(parseInt(e.target.value))} className="w-full mt-2" />
+          <div className="flex justify-between text-xs text-gray-400"><span>30s</span><span>300s</span></div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Inactive Token TTL: {inactiveTtl}s</label>
+          <input type="range" min={300} max={3600} step={60} value={inactiveTtl} onChange={e => setInactiveTtl(parseInt(e.target.value))} className="w-full mt-2" />
+          <div className="flex justify-between text-xs text-gray-400"><span>300s</span><span>3600s</span></div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Max Cache Size</label>
+          <input type="number" min={1000} max={100000} value={maxSize} onChange={e => setMaxSize(parseInt(e.target.value) || 10000)} className="w-32 border rounded px-2 py-1 text-sm mt-1" />
+        </div>
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Cache Statistics</h2>
+        <div className="grid grid-cols-4 gap-4">
+          <div className="border rounded p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{stats.hitRate}%</div>
+            <div className="text-sm text-gray-500">Hit Rate</div>
+          </div>
+          <div className="border rounded p-4 text-center">
+            <div className="text-2xl font-bold text-red-600">{stats.missRate}%</div>
+            <div className="text-sm text-gray-500">Miss Rate</div>
+          </div>
+          <div className="border rounded p-4 text-center">
+            <div className="text-2xl font-bold">{stats.totalRequests.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Total Requests</div>
+          </div>
+          <div className="border rounded p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{stats.cachedTokens.toLocaleString()}</div>
+            <div className="text-sm text-gray-500">Cached Tokens</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Invalidate by Token</h2>
+        <div className="flex gap-3">
+          <input type="text" placeholder="Paste token to invalidate..." value={invalidateToken} onChange={e => setInvalidateToken(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm font-mono" />
+          <button disabled={!invalidateToken} className="px-4 py-2 bg-red-600 text-white rounded text-sm disabled:opacity-50">Invalidate</button>
+        </div>
+      </section>
+    </div>
+  );
+}
