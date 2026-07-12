@@ -147,6 +147,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)
 	h.mux.HandleFunc("/api/v1/identity/groups/", h.handleGroupAnalytics)
 	h.mux.HandleFunc("/api/v1/identity/provisioning/log", h.handleProvisioningLog)
+	h.mux.HandleFunc("/api/v1/identity/user-lifecycle/stages", h.handleUserLifecycleStages)
 
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {

@@ -999,6 +999,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/stats/oauth-2-1-audit", handleOAuth21Audit)
 	mux.HandleFunc("/api/v1/oauth/clients/onboarding", handleClientOnboarding)
 	mux.HandleFunc("/api/v1/oauth/consents/dashboard", handleConsentDashboard)
+	mux.HandleFunc("/api/v1/oauth/stats/token-revocation", handleTokenRevocationStats)
 	mux.HandleFunc("/api/v1/oauth/agents/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if strings.HasSuffix(path, "/lifecycle") {

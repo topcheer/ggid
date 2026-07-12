@@ -314,6 +314,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/dlp/policies", h.handleDLPPolicies)
 	h.mux.HandleFunc("/api/v1/auth/stats/social-providers", h.handleSocialProvidersStats)
 	h.mux.HandleFunc("/api/v1/auth/sessions/", h.handleSessionInspect)
+	h.mux.HandleFunc("/api/v1/auth/anomaly/detect", h.handleAnomalyDetect)
 	h.mux.HandleFunc("/api/v1/auth/sessions/geo-stats", h.handleSessionGeoStats)
 	h.mux.HandleFunc("/api/v1/auth/mfa/enrollment-stats", h.handleMFAEnrollmentStats)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)
