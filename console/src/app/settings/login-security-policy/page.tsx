@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LockoutRecord {
   user: string;
@@ -14,15 +14,13 @@ export default function LoginSecurityPolicyPage() {
   const [captchaAfter, setCaptchaAfter] = useState(3);
   const [enforceMfaAdmin, setEnforceMfaAdmin] = useState(true);
   const [anomalyAlert, setAnomalyAlert] = useState(true);
-  const [ipAllowlist, setIpAllowlist] = useState(['10.0.0.0/8']);
-  const [ipBlocklist, setIpBlocklist] = useState(['203.0.113.0/24']);
+  const [ipAllowlist, setIpAllowlist] = useState<string[]>([]);
+  const [ipBlocklist, setIpBlocklist] = useState<string[]>([]);
   const [newIp, setNewIp] = useState('');
   const [ipMode, setIpMode] = useState<'allow' | 'block'>('allow');
-
-  const [lockouts] = useState<LockoutRecord[]>([
-    { user: 'alice@ggid.io', attempts: 5, lockedAt: '2026-07-12 10:30', reason: 'Too many failed attempts' },
-    { user: 'bob@ggid.io', attempts: 7, lockedAt: '2026-07-11 15:45', reason: 'Brute force detected' },
-  ]);
+  const [lockouts, setLockouts] = useState<LockoutRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const addIp = () => {
     if (ipMode === 'allow') setIpAllowlist(prev => [...prev, newIp]);
@@ -34,6 +32,30 @@ export default function LoginSecurityPolicyPage() {
     if (mode === 'allow') setIpAllowlist(prev => prev.filter(i => i !== ip));
     else setIpBlocklist(prev => prev.filter(i => i !== ip));
   };
+
+  useEffect(() => {
+    fetch('/api/v1/auth/password-policy/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.max_attempts) setMaxAttempts(data.max_attempts);
+          if (data.lockout_duration) setLockoutDuration(data.lockout_duration);
+          if (data.captcha_after) setCaptchaAfter(data.captcha_after);
+          if (data.enforce_mfa_admin !== undefined) setEnforceMfaAdmin(data.enforce_mfa_admin);
+          if (data.anomaly_alert !== undefined) setAnomalyAlert(data.anomaly_alert);
+          if (data.ip_allowlist) setIpAllowlist(data.ip_allowlist);
+          if (data.ip_blocklist) setIpBlocklist(data.ip_blocklist);
+          if (data.lockouts) setLockouts(data.lockouts);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

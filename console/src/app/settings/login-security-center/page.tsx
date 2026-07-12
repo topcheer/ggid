@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface LoginAttempt {
   user: string;
@@ -11,18 +11,33 @@ interface LoginAttempt {
 }
 
 export default function LoginSecurityCenterPage() {
-  const [attempts] = useState<LoginAttempt[]>([
-    { user: "john.doe", ip: "192.168.1.50", status: "success", timestamp: "16:42:01", device: "Chrome / macOS", location: "San Francisco, US" },
-    { user: "jane.smith", ip: "10.0.0.15", status: "failed", timestamp: "16:41:30", device: "Safari / iOS", location: "New York, US" },
-    { user: "unknown", ip: "45.146.165.37", status: "blocked", timestamp: "16:40:15", device: "Unknown", location: "Unknown (TOR exit node)" },
-    { user: "admin", ip: "172.16.0.1", status: "success", timestamp: "16:38:00", device: "Firefox / Linux", location: "Austin, US" },
-    { user: "bob.wilson", ip: "45.146.165.37", status: "failed", timestamp: "16:35:22", device: "Unknown", location: "Unknown (TOR exit node)" },
-  ]);
-  const [blocklist, setBlocklist] = useState(["45.146.165.0/24", "193.27.228.0/22"]);
+  const [attempts, setAttempts] = useState<LoginAttempt[]>([]);
+  const [blocklist, setBlocklist] = useState<string[]>([]);
   const [newIp, setNewIp] = useState("");
-  const botStats = { total_blocked: 1247, captcha_challenged: 892, rate_limited: 355, top_patterns: ["rapid retries", "credential stuffing", "TOR exit nodes"] };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [botStats, setBotStats] = useState({ total_blocked: 0, captcha_challenged: 0, rate_limited: 0, top_patterns: [] as string[] });
+
+  useEffect(() => {
+    fetch("/api/v1/auth/risk/aggregate", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.attempts) setAttempts(data.attempts);
+          if (data.blocklist) setBlocklist(data.blocklist);
+          if (data.bot_stats) setBotStats(data.bot_stats);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const statusColors: Record<string, string> = { success: "bg-green-100 text-green-700", failed: "bg-yellow-100 text-yellow-700", blocked: "bg-red-100 text-red-700" };
+
+  if (loading) return <div className="p-8"><p>Loading...</p></div>;
+  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">

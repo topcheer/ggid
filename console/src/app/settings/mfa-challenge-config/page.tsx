@@ -1,16 +1,40 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shield, Save } from "lucide-react";
 const methods = ["totp", "sms", "email", "webauthn", "backup"];
 const sensitiveActions = ["password_change", "email_change", "role_grant", "data_export", "admin_console", "api_key_create"];
 export default function MfaChallengeConfigPage() {
   const [priority, setPriority] = useState<string[]>([...methods]);
-  const [stepUpActions, setStepUpActions] = useState<string[]>(["password_change", "role_grant"]);
+  const [stepUpActions, setStepUpActions] = useState<string[]>([]);
   const [frequency, setFrequency] = useState("once_per_session");
   const [fallback, setFallback] = useState(true);
   const [graceMin, setGraceMin] = useState(5);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/auth/mfa/challenge-config", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.priority) setPriority(data.priority);
+          if (data.step_up_actions) setStepUpActions(data.step_up_actions);
+          if (data.frequency) setFrequency(data.frequency);
+          if (data.fallback !== undefined) setFallback(data.fallback);
+          if (data.grace_min) setGraceMin(data.grace_min);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
   const move = (idx: number, dir: -1 | 1) => { const n = [...priority]; const t = idx + dir; if (t < 0 || t >= n.length) return; [n[idx], n[t]] = [n[t], n[idx]]; setPriority(n); };
   const toggleAction = (a: string) => setStepUpActions(stepUpActions.includes(a) ? stepUpActions.filter((x) => x !== a) : [...stepUpActions, a]);
+  if (loading) return <div className="space-y-6"><p className="text-gray-500">Loading...</p></div>;
+  if (error) return <div className="space-y-6 text-red-600">Error: {error}</div>;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> MFA Challenge Config</h1><p className="text-sm text-gray-500 mt-1">Configure MFA method priority and step-up authentication.</p></div><button className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2"><Save className="w-4 h-4" /> Save</button></div>

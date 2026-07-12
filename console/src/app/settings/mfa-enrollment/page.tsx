@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Factor {
   id: string;
@@ -11,20 +11,34 @@ interface Factor {
 }
 
 export default function MfaEnrollmentPage() {
-  const [factors, setFactors] = useState<Factor[]>([
-    { id: 'f1', type: 'TOTP', label: 'Google Authenticator', enrolledAt: '2026-05-01', lastUsed: '2026-07-12', priority: 1 },
-    { id: 'f2', type: 'WebAuthn', label: 'MacBook Touch ID', enrolledAt: '2026-06-15', lastUsed: '2026-07-12', priority: 2 },
-    { id: 'f3', type: 'backup', label: 'Backup Codes', enrolledAt: '2026-05-01', lastUsed: '-', priority: 3 },
-  ]);
+  const [factors, setFactors] = useState<Factor[]>([]);
 
   const [showWizard, setShowWizard] = useState(false);
   const [wizardStep, setWizardStep] = useState(0);
   const [selectedType, setSelectedType] = useState('');
   const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
-  const [recoveryCodes] = useState(['8KX4-9P2M', 'WQ7T-3F8N', 'ZB5V-1L6C', 'RY9D-4H2X', 'MN3K-7J5P', 'EA8G-2T4W', 'VC6S-9B3Q', 'LO1F-5N7U']);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
 
   const factorTypes = ['TOTP', 'WebAuthn', 'SMS', 'Email', 'Backup Codes'];
-  const [stats] = useState({ enrolled: 142, pending: 8, totp: 98, webauthn: 44, backupCodes: 89 });
+  const [stats, setStats] = useState({ enrolled: 0, pending: 0, totp: 0, webauthn: 0, backupCodes: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/mfa/enrollment-stats', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.factors) setFactors(data.factors);
+          if (data.recovery_codes) setRecoveryCodes(data.recovery_codes);
+          if (data.stats) setStats(data.stats);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const removeFactor = (id: string) => setFactors(prev => prev.filter(f => f.id !== id));
 
@@ -40,6 +54,9 @@ export default function MfaEnrollmentPage() {
     setShowWizard(false); setWizardStep(0); setSelectedType('');
     if (selectedType === 'TOTP') setShowRecoveryCodes(true);
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

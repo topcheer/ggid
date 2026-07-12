@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function LdapConfigPage() {
   const [ldapUrl, setLdapUrl] = useState('ldaps://ldap.ggid.io:636');
@@ -15,14 +15,35 @@ export default function LdapConfigPage() {
   const [testResult, setTestResult] = useState('');
   const [testing, setTesting] = useState(false);
 
-  const [attrMapping, setAttrMapping] = useState([
-    { ldap: 'uid', local: 'username' },
-    { ldap: 'mail', local: 'email' },
-    { ldap: 'cn', local: 'displayName' },
-    { ldap: 'memberOf', local: 'groups' },
-  ]);
+  const [attrMapping, setAttrMapping] = useState([] as { ldap: string; local: string }[]);
   const [newLdapAttr, setNewLdapAttr] = useState('');
   const [newLocalAttr, setNewLocalAttr] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/adaptive-auth/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data && data.ldap) {
+          const ldap = data.ldap;
+          if (ldap.url) setLdapUrl(ldap.url);
+          if (ldap.bind_dn) setBindDn(ldap.bind_dn);
+          if (ldap.base_dn) setBaseDn(ldap.base_dn);
+          if (ldap.user_filter) setUserFilter(ldap.user_filter);
+          if (ldap.group_filter) setGroupFilter(ldap.group_filter);
+          if (ldap.start_tls !== undefined) setStartTls(ldap.start_tls);
+          if (ldap.auto_provision !== undefined) setAutoProvision(ldap.auto_provision);
+          if (ldap.pool_size) setPoolSize(ldap.pool_size);
+          if (ldap.sync_interval) setSyncInterval(ldap.sync_interval);
+          if (ldap.attr_mapping) setAttrMapping(ldap.attr_mapping);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const filterAttrs = ['uid', 'cn', 'mail', 'sAMAccountName', 'userPrincipalName'];
   const groupAttrs = ['cn', 'ou', 'displayName', 'sAMAccountName'];
@@ -39,6 +60,9 @@ export default function LdapConfigPage() {
     }
   };
   const removeMapping = (idx: number) => setAttrMapping(prev => prev.filter((_, i) => i !== idx));
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
