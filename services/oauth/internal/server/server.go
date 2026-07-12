@@ -996,6 +996,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/scope-lifecycle", handleScopeLifecycle)
 	mux.HandleFunc("/api/v1/oauth/stats/authorize-flow", handleAuthorizeFlowStats)
 	mux.HandleFunc("/api/v1/oauth/stats/backchannel-logout", handleBackchannelLogoutStats)
+	mux.HandleFunc("/api/v1/oauth/stats/oauth-2-1-audit", handleOAuth21Audit)
 	mux.HandleFunc("/api/v1/oauth/introspection/config", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
