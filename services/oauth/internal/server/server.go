@@ -1240,6 +1240,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleValidateClientSecret(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/events/") {
+			handleClientEvents(w, r)
+			return
+		}
 		handleClientCert(w, r)
 	})
 

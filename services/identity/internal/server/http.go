@@ -105,6 +105,9 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// User lifecycle automation
 	h.mux.HandleFunc("/api/v1/users/lifecycle/rules", h.handleLifecycleRules)
+
+	// Skill matrix
+	h.mux.HandleFunc("/api/v1/users/skill-matrix", h.handleSkillMatrix)
 }
 
 // ServeHTTP implements http.Handler.
