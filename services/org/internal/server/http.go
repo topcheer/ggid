@@ -53,6 +53,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/org/team-insights", s.handleTeamInsights)
 	mux.HandleFunc("/api/v1/org/vendors", s.handleVendors)
 	mux.HandleFunc("/api/v1/org/department-analytics", s.handleDepartmentAnalytics)
+	mux.HandleFunc("/api/v1/org/tenants/migrate", s.handleTenantMigrate)
 }
 
 // GET /api/v1/orgs/tree?tenant_id=X&depth=N — returns full org tree as nested structure
