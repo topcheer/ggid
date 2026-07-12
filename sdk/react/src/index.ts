@@ -253,6 +253,10 @@ export { usePolicySimulation } from './usePolicySimulation';
 export type { SimRule, SimResult } from './usePolicySimulation';
 export { useComplianceHeatmap } from './useComplianceHeatmap';
 export type { HeatmapData } from './useComplianceHeatmap';
+export { useTokenLifetime } from './useTokenLifetime';
+export type { LifetimeData } from './useTokenLifetime';
+export { useOrgTransfer } from './useOrgTransfer';
+export type { TransferImpact } from './useOrgTransfer';
 export type {
   GGIDConfig,
   GGIDUser,
