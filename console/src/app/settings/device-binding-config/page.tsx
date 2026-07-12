@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Device {
   id: string;
@@ -12,17 +12,29 @@ interface Device {
 }
 
 export default function DeviceBindingConfigPage() {
-  const [devices, setDevices] = useState<Device[]>([
-    { id: 'd1', deviceName: 'MacBook Pro', platform: 'macOS', fingerprint: 'fp_a1b2c3d4e5', boundAt: '2026-05-01', lastSeen: '2026-07-12', trustScore: 85 },
-    { id: 'd2', deviceName: 'iPhone 15', platform: 'iOS', fingerprint: 'fp_f6e5d4c3b2', boundAt: '2026-04-15', lastSeen: '2026-07-11', trustScore: 90 },
-    { id: 'd3', deviceName: 'Work Desktop', platform: 'Windows', fingerprint: 'fp_a1b2c3f6e5', boundAt: '2026-03-01', lastSeen: '2026-07-10', trustScore: 70 },
-    { id: 'd4', deviceName: 'Unknown Device', platform: 'Android', fingerprint: 'fp_z9y8x7w6v5', boundAt: '2026-07-05', lastSeen: '2026-06-28', trustScore: 35 },
-    { id: 'd5', deviceName: 'Linux Server', platform: 'Linux', fingerprint: 'fp_q1w2e3r4t5', boundAt: '2026-02-10', lastSeen: '2026-07-12', trustScore: 80 },
-  ]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [platformFilter, setPlatformFilter] = useState('all');
   const [unbindTarget, setUnbindTarget] = useState<Device | null>(null);
   const [thresholds, setThresholds] = useState({ trusted: 70, suspicious: 40 });
+
+  useEffect(() => {
+    fetch('/api/v1/auth/sessions/device-binding-status', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.devices) setDevices(data.devices);
+          else if (Array.isArray(data)) setDevices(data);
+          if (data.thresholds) setThresholds(data.thresholds);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const platforms = ['all', 'iOS', 'Android', 'Windows', 'macOS', 'Linux'];
 
@@ -42,6 +54,9 @@ export default function DeviceBindingConfigPage() {
     if (unbindTarget) setDevices(prev => prev.filter(d => d.id !== unbindTarget.id));
     setUnbindTarget(null);
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -105,7 +120,9 @@ export default function DeviceBindingConfigPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(d => (
+            {filtered.length === 0 ? (
+              <tr><td colSpan={7} className="p-3 text-center text-gray-400">No data available</td></tr>
+            ) : filtered.map(d => (
               <tr key={d.id} className="border-b hover:bg-gray-50">
                 <td className="p-3 font-medium">{d.deviceName}</td>
                 <td className="p-3"><span className="px-2 py-0.5 bg-gray-100 rounded text-xs">{d.platform}</span></td>

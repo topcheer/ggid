@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ClientDpop {
   clientId: string;
@@ -12,13 +12,30 @@ export default function DpopConfigPage() {
   const [nonceTtl, setNonceTtl] = useState(600);
   const [algorithms, setAlgorithms] = useState(['ES256', 'RS256', 'EdDSA']);
   const [requireSensitive, setRequireSensitive] = useState(true);
-  const [clients, setClients] = useState<ClientDpop[]>([
-    { clientId: 'web-app', enforce: true },
-    { clientId: 'mobile-app', enforce: false },
-    { clientId: 'api-gateway', enforce: true },
-  ]);
+  const [clients, setClients] = useState<ClientDpop[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [debugProof, setDebugProof] = useState('');
   const [debugResult, setDebugResult] = useState('');
+
+  useEffect(() => {
+    fetch('/api/v1/auth/token-reuse-check', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.enabled !== undefined) setEnabled(data.enabled);
+          if (data.proof_expiry) setProofExpiry(data.proof_expiry);
+          if (data.nonce_ttl) setNonceTtl(data.nonce_ttl);
+          if (data.algorithms) setAlgorithms(data.algorithms);
+          if (data.require_sensitive !== undefined) setRequireSensitive(data.require_sensitive);
+          if (data.clients) setClients(data.clients);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const allAlgorithms = ['ES256', 'RS256', 'EdDSA', 'ES384', 'ES512'];
 
@@ -42,6 +59,9 @@ export default function DpopConfigPage() {
       setDebugResult('Failed to parse JWT');
     }
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

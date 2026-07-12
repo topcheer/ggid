@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface VelocityRule {
   name: string;
@@ -16,17 +16,33 @@ const samplePairs = [
 ];
 
 export default function GeoVelocityRulesPage() {
-  const [rules, setRules] = useState<VelocityRule[]>([
-    { name: "Impossible Travel", distance_km: 500, time_hours: 1, action: "block", enabled: true },
-    { name: "Long Distance Challenge", distance_km: 3000, time_hours: 6, action: "challenge", enabled: true },
-    { name: "Cross-Continent Log", distance_km: 5000, time_hours: 12, action: "log", enabled: false },
-  ]);
-  const [exemptions] = useState(["10.0.0.0/8", "admin@company.com"]);
+  const [rules, setRules] = useState<VelocityRule[]>([]);
+  const [exemptions, setExemptions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [simFrom, setSimFrom] = useState("");
   const [simTo, setSimTo] = useState("");
   const [simResult, setSimResult] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetch("/api/v1/auth/velocity-rules", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.rules) setRules(data.rules);
+          if (data.exemptions) setExemptions(data.exemptions);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
   const actionColors: Record<string, string> = { block: "bg-red-100 text-red-700", challenge: "bg-yellow-100 text-yellow-700", log: "bg-gray-100 text-gray-600" };
+
+  if (loading) return <div className="p-8"><p>Loading...</p></div>;
+  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">

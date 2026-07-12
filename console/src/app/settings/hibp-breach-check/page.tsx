@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface BreachRecord {
   id: string;
@@ -18,15 +18,39 @@ export default function HibpBreachCheckPage() {
   const [autoForceReset, setAutoForceReset] = useState(false);
   const [notifyUser, setNotifyUser] = useState(true);
   const [notifyAdmin, setNotifyAdmin] = useState(true);
-  const [lastCheck, setLastCheck] = useState('2026-07-12 14:00');
+  const [lastCheck, setLastCheck] = useState('');
+  const [breaches, setBreaches] = useState<BreachRecord[]>([]);
+  const [compromisedPasswords, setCompromisedPasswords] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [breaches] = useState<BreachRecord[]>([
-    { id: 'b1', user: 'alice@ggid.io', breachName: 'LinkedIn 2021', date: '2026-07-10', dataClasses: ['Emails', 'Passwords'] },
-    { id: 'b2', user: 'bob@ggid.io', breachName: 'Adobe 2013', date: '2026-07-08', dataClasses: ['Emails', 'Passwords', 'Hints'] },
-    { id: 'b3', user: 'carol@ggid.io', breachName: 'Collection #1', date: '2026-07-05', dataClasses: ['Emails', 'Passwords'] },
-  ]);
+  useEffect(() => {
+    fetch('/api/v1/auth/password-breach-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.enabled !== undefined) setEnabled(data.enabled);
+          if (data.api_key) setApiKey(data.api_key);
+          if (data.check_on_login !== undefined) setCheckOnLogin(data.check_on_login);
+          if (data.check_on_password_change !== undefined) setCheckOnPasswordChange(data.check_on_password_change);
+          if (data.check_on_register !== undefined) setCheckOnRegister(data.check_on_register);
+          if (data.auto_force_reset !== undefined) setAutoForceReset(data.auto_force_reset);
+          if (data.notify_user !== undefined) setNotifyUser(data.notify_user);
+          if (data.notify_admin !== undefined) setNotifyAdmin(data.notify_admin);
+          if (data.last_check) setLastCheck(data.last_check);
+          if (data.breaches) setBreaches(data.breaches);
+          if (data.compromised_passwords) setCompromisedPasswords(data.compromised_passwords);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
-  const [compromisedPasswords] = useState(['password123', 'admin', '123456', 'qwerty', 'letmein', 'welcome1']);
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

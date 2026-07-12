@@ -1,21 +1,46 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function HostValidationConfigPage() {
-  const [allowedHosts, setAllowedHosts] = useState(['ggid.io', 'admin.ggid.io', 'api.ggid.io']);
+  const [allowedHosts, setAllowedHosts] = useState<string[]>([]);
   const [strictMode, setStrictMode] = useState(true);
   const [dnsRebinding, setDnsRebinding] = useState(true);
   const [wildcardSubdomains, setWildcardSubdomains] = useState(true);
   const [portValidation, setPortValidation] = useState(true);
   const [injectionDetection, setInjectionDetection] = useState(true);
-  const [bypassList, setBypassList] = useState(['localhost', '127.0.0.1']);
+  const [bypassList, setBypassList] = useState<string[]>([]);
   const [newHost, setNewHost] = useState('');
   const [newBypass, setNewBypass] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/throttle-status', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.allowed_hosts) setAllowedHosts(data.allowed_hosts);
+          if (data.strict_mode !== undefined) setStrictMode(data.strict_mode);
+          if (data.dns_rebinding !== undefined) setDnsRebinding(data.dns_rebinding);
+          if (data.wildcard_subdomains !== undefined) setWildcardSubdomains(data.wildcard_subdomains);
+          if (data.port_validation !== undefined) setPortValidation(data.port_validation);
+          if (data.injection_detection !== undefined) setInjectionDetection(data.injection_detection);
+          if (data.bypass_list) setBypassList(data.bypass_list);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const addHost = () => { if (newHost) { setAllowedHosts(prev => [...prev, newHost]); setNewHost(''); } };
   const removeHost = (h: string) => setAllowedHosts(prev => prev.filter(x => x !== h));
   const addBypass = () => { if (newBypass) { setBypassList(prev => [...prev, newBypass]); setNewBypass(''); } };
   const removeBypass = (h: string) => setBypassList(prev => prev.filter(x => x !== h));
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
