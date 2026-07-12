@@ -895,6 +895,12 @@ export { useDataSovereigntyConfig } from './useDataSovereigntyConfig';
 export type { DataSovereigntyConfig, ResidencyRegion, CrossBorderRule, SovereigntyViolation } from './useDataSovereigntyConfig';
 export { useWebauthnRecoveryConfig } from './useWebauthnRecoveryConfig';
 export type { WebauthnRecoveryConfig, ReEnrollmentStep } from './useWebauthnRecoveryConfig';
+export { useOAuthTokenExchangeConfig } from './useOAuthTokenExchangeConfig';
+export type { OAuthTokenExchangeConfig, PerClientScopes } from './useOAuthTokenExchangeConfig';
+export { useAuthMtlsConfig } from './useAuthMtlsConfig';
+export type { AuthMtlsConfig, TrustedCaCert } from './useAuthMtlsConfig';
+export { usePolicyDryRunConfig } from './usePolicyDryRunConfig';
+export type { PolicyDryRunConfig, ContextValue } from './usePolicyDryRunConfig';
 export type {
   GGIDConfig,
   GGIDUser,
