@@ -605,6 +605,16 @@ export { usePolicyAbacEvaluator } from './usePolicyAbacEvaluator';
 export type { PolicyAbacEvaluatorData, DecisionResult, MatchedRule, ResolutionStep } from './usePolicyAbacEvaluator';
 export { useAuditGdprRequests } from './useAuditGdprRequests';
 export type { AuditGdprRequestsData, GdprRequest, CompletedStats } from './useAuditGdprRequests';
+export { useOAuthClientSecretScanner } from './useOAuthClientSecretScanner';
+export type { OAuthClientSecretScannerData, ScanResult, SecretFinding } from './useOAuthClientSecretScanner';
+export { usePolicyBreakGlass } from './usePolicyBreakGlass';
+export type { PolicyBreakGlassData, BreakGlassRole, ActiveSession, UsageRecord } from './usePolicyBreakGlass';
+export { useAuditAnomalyScoringConfig } from './useAuditAnomalyScoringConfig';
+export type { AuditAnomalyScoringConfigData, ScoringSignal, CompositeThreshold, AccuracyStats } from './useAuditAnomalyScoringConfig';
+export { useIdentityUserAttestation } from './useIdentityUserAttestation';
+export type { IdentityUserAttestationData, AttestationCampaign, AttestationUser } from './useIdentityUserAttestation';
+export { useOrgCostAllocation } from './useOrgCostAllocation';
+export type { OrgCostAllocationData, AllocationRule, MonthlyCost, OverBudgetAlert } from './useOrgCostAllocation';
 export type {
   GGIDConfig,
   GGIDUser,
