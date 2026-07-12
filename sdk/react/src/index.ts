@@ -595,6 +595,16 @@ export { usePolicyGovernanceWorkflow } from './usePolicyGovernanceWorkflow';
 export type { PolicyGovernanceWorkflowData, PipelineStage, ReviewerAssignment, FreezeWindow, EmergencyBypass, SegregationOfDuties, AuditTrailEntry } from './usePolicyGovernanceWorkflow';
 export { useAuditSiemMapping } from './useAuditSiemMapping';
 export type { AuditSiemMappingData, SiemDestinationMapping, FieldMapping, SeverityMap, CustomField } from './useAuditSiemMapping';
+export { useIdentityGroupMembershipAnalytics } from './useIdentityGroupMembershipAnalytics';
+export type { IdentityGroupMembershipAnalyticsData, GroupCard, InactiveMember, OrphanedGroup, CleanupRecommendation } from './useIdentityGroupMembershipAnalytics';
+export { useOAuthJwksManagement } from './useOAuthJwksManagement';
+export type { OAuthJwksManagementData, JwkKey, RotationRecord, JwksUriHealth } from './useOAuthJwksManagement';
+export { useAuthSessionResilience } from './useAuthSessionResilience';
+export type { AuthSessionResilienceData, ConnectionPoolStatus, SessionFailoverConfig, DegradedIndicator } from './useAuthSessionResilience';
+export { usePolicyAbacEvaluator } from './usePolicyAbacEvaluator';
+export type { PolicyAbacEvaluatorData, DecisionResult, MatchedRule, ResolutionStep } from './usePolicyAbacEvaluator';
+export { useAuditGdprRequests } from './useAuditGdprRequests';
+export type { AuditGdprRequestsData, GdprRequest, CompletedStats } from './useAuditGdprRequests';
 export type {
   GGIDConfig,
   GGIDUser,
