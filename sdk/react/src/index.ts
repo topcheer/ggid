@@ -865,6 +865,16 @@ export { useAuditExportScheduleConfig } from './useAuditExportScheduleConfig';
 export type { AuditExportScheduleConfig, ScheduledExportJob, RetryPolicy } from './useAuditExportScheduleConfig';
 export { useTokenRotationConfig } from './useTokenRotationConfig';
 export type { TokenRotationConfig, TokenRotationEntry, UpcomingRotation } from './useTokenRotationConfig';
+export { useOAuthDynamicClientReg } from './useOAuthDynamicClientReg';
+export type { OAuthDynamicClientRegConfig, RegisteredClient } from './useOAuthDynamicClientReg';
+export { useWebauthnServerConfig } from './useWebauthnServerConfig';
+export type { WebauthnServerConfig, RpEntity } from './useWebauthnServerConfig';
+export { useSamlSpConfig } from './useSamlSpConfig';
+export type { SamlSpConfig, AttributeConsumingService } from './useSamlSpConfig';
+export { useRbacDesignConfig } from './useRbacDesignConfig';
+export type { RbacDesignConfig, RoleNode, RoleTemplate, SodPair } from './useRbacDesignConfig';
+export { useTenantProvisioningConfig } from './useTenantProvisioningConfig';
+export type { TenantProvisioningConfig, ProvisioningStep, OnboardingChecklistItem } from './useTenantProvisioningConfig';
 export type {
   GGIDConfig,
   GGIDUser,
