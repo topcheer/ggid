@@ -19,11 +19,20 @@ func ContentTypeValidator(next http.Handler) http.Handler {
 						"Content-Type header is required for write requests")
 					return
 				}
-				// Accept application/json and variants like application/json; charset=utf-8
-				if !strings.HasPrefix(ct, "application/json") {
-					WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
-						"Content-Type must be application/json, got: "+ct)
-					return
+				// OAuth endpoints accept application/x-www-form-urlencoded (RFC 6749)
+				if strings.HasPrefix(r.URL.Path, "/oauth/") {
+					if !strings.HasPrefix(ct, "application/x-www-form-urlencoded") && !strings.HasPrefix(ct, "application/json") {
+						WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
+							"Content-Type must be application/x-www-form-urlencoded or application/json, got: "+ct)
+						return
+					}
+				} else {
+					// Accept application/json and variants like application/json; charset=utf-8
+					if !strings.HasPrefix(ct, "application/json") {
+						WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
+							"Content-Type must be application/json, got: "+ct)
+						return
+					}
 				}
 			}
 		}
