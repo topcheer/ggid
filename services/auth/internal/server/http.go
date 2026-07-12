@@ -283,6 +283,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/credential-exposure", h.handleCredentialExposure)
 	h.mux.HandleFunc("/api/v1/auth/detect-password-spray", h.handleDetectPasswordSpray)
 	h.mux.HandleFunc("/api/v1/auth/token-reuse-check", h.handleTokenReuseCheck)
+	h.mux.HandleFunc("/api/v1/auth/sessions/anomaly-score", h.handleSessionAnomalyScore)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)
 	h.mux.HandleFunc("/api/v1/auth/sessions/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/fingerprint") {

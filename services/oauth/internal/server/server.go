@@ -755,6 +755,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// --- OAuth Client Management REST API ---
 
 	mux.HandleFunc("/api/v1/oauth/clients", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/oauth/clients/scope-matrix" {
+			handleScopeMatrix(w, r)
+			return
+		}
 		// Inject tenant context.
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
 		tenantID, err := uuid.Parse(tenantIDStr)

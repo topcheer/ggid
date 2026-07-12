@@ -111,6 +111,9 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Smart search
 	h.mux.HandleFunc("/api/v1/users/smart-search", h.handleSmartSearch)
+
+	// Provisioning webhooks
+	h.mux.HandleFunc("/api/v1/users/provisioning-webhooks", h.handleProvisioningWebhooks)
 }
 
 // ServeHTTP implements http.Handler.

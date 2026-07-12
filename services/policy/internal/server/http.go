@@ -109,6 +109,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/approvals/", s.handleApprovals)
 	mux.HandleFunc("/api/v1/policies/access-paths/optimization", s.handleAccessPathOptimization)
 	mux.HandleFunc("/api/v1/policies/recertify", s.handleRecertify)
+	mux.HandleFunc("/api/v1/policies/role-requests", s.handleRoleRequests)
+	mux.HandleFunc("/api/v1/policies/role-requests/", s.handleRoleRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }

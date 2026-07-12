@@ -153,8 +153,15 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/reports/", s.handleReportDownload)
 	mux.HandleFunc("/api/v1/audit/retention/execute", s.handleRetentionExecute)
 	// Alias: Gateway may route /api/v1/audit without /events suffix
-	mux.HandleFunc("/api/v1/audit/compliance/evidence/", s.handleEvidenceVersioning)
+	mux.HandleFunc("/api/v1/audit/compliance/evidence/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/attach") || strings.HasSuffix(r.URL.Path, "/attachments") {
+			s.handleEvidenceAttachments(w, r)
+			return
+		}
+		s.handleEvidenceVersioning(w, r)
+	})
 	mux.HandleFunc("/api/v1/audit/compliance/widget-data", s.handleComplianceWidgetData)
+	mux.HandleFunc("/api/v1/audit/compliance/evidence-attachments", s.handleEvidenceAttachments)
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
 
