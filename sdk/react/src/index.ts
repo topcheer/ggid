@@ -299,6 +299,16 @@ export { useRiskAggregate } from './useRiskAggregate';
 export type { RiskData, HighRiskEntry } from './useRiskAggregate';
 export { useConsentHistory } from './useConsentHistory';
 export type { ConsentEntry } from './useConsentHistory';
+export { useLoginPatterns } from './useLoginPatterns';
+export type { LoginPatternData } from './useLoginPatterns';
+export { useDirectoryReconcile } from './useDirectoryReconcile';
+export type { ReconcileData } from './useDirectoryReconcile';
+export { useGrantTypeStats } from './useGrantTypeStats';
+export type { GrantTypeData } from './useGrantTypeStats';
+export { useFrameworkCoverage } from './useFrameworkCoverage';
+export type { FrameworkInfo, CoverageData } from './useFrameworkCoverage';
+export { useBlastRadius } from './useBlastRadius';
+export type { BlastRadiusData } from './useBlastRadius';
 export type {
   GGIDConfig,
   GGIDUser,
