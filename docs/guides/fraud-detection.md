@@ -1,195 +1,197 @@
-# Fraud Detection Engine Guide
-
-This guide covers GGID's fraud detection capabilities — device fingerprinting, velocity rules, synthetic identity detection, and Tor/VPN detection.
+# Fraud Detection Implementation Guide
 
 ## Overview
 
-Fraud detection in GGID analyzes real-time signals to identify suspicious activities that don't match legitimate user behavior patterns.
+GGID's fraud detection system identifies and blocks suspicious identity activities including synthetic identities, credential abuse, velocity attacks, and automated bot activity.
 
-## Device Fingerprinting
+## Architecture
 
-### Signal Collection
-
-GGID collects browser/device signals during authentication:
-
-| Signal | Source | Stability |
-|--------|--------|-----------|
-| User agent | HTTP header | Low (changes with updates) |
-| Screen resolution | Client-side JS | Medium |
-| Timezone | Client-side JS | High |
-| Language | HTTP header | High |
-| Platform | navigator.platform | High |
-| Canvas fingerprint | Canvas API | High |
-| WebGL fingerprint | WebGL renderer | High |
-| Font list | Client-side JS | Medium |
-| Audio context | Web Audio API | High |
-
-### Fingerprint Hash
-
-```go
-func ComputeFingerprint(signals DeviceSignals) string {
-    data := fmt.Sprintf("%s|%s|%s|%s|%s",
-        signals.UserAgent, signals.ScreenResolution,
-        signals.Timezone, signals.CanvasHash, signals.WebGLHash)
-    return sha256Hex(data)
-}
+```
+┌──────────────────────────────────────────────────────────┐
+│                  Fraud Detection Engine                    │
+│                                                            │
+│  ┌───────────┐   ┌───────────┐   ┌───────────────────┐   │
+│  │ Velocity   │   │ Synthetic │   │ Device            │   │
+│  │ Rules      │   │ Identity  │   │ Fingerprinting    │   │
+│  │ Engine     │   │ Detector  │   │ Service           │   │
+│  └─────┬─────┘   └─────┬─────┘   └────────┬──────────┘   │
+│        │                │                   │              │
+│  ┌─────┴─────────────────┴───────────────────┴──────┐     │
+│  │              Risk Scoring Aggregator              │     │
+│  └───────────────────────┬──────────────────────────┘     │
+│                          │                                 │
+│  ┌───────────────────────┴──────────────────────────┐     │
+│  │              Action Executor                       │     │
+│  │  (block / challenge / flag / throttle)            │     │
+│  └───────────────────────────────────────────────────┘     │
+└──────────────────────────────────────────────────────────┘
 ```
 
-### Device Registry
+## Velocity Rules Engine
 
-```sql
-CREATE TABLE device_fingerprints (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    tenant_id UUID NOT NULL,
-    fingerprint_hash VARCHAR(64) NOT NULL,
-    user_agent TEXT,
-    first_seen TIMESTAMPTZ DEFAULT NOW(),
-    last_seen TIMESTAMPTZ DEFAULT NOW(),
-    trusted BOOLEAN DEFAULT FALSE,
-    UNIQUE(tenant_id, user_id, fingerprint_hash)
-);
+### Rule Configuration
+
+```yaml
+velocity_rules:
+  - name: "Registration spam from IP"
+    description: "More than 10 registrations from same IP in 1 hour"
+    metric: registration_count
+    dimension: ip_address
+    threshold: 10
+    window: 1h
+    action: block
+    duration: 24h
+
+  - name: "Login brute force"
+    description: "More than 20 failed logins per user in 5 minutes"
+    metric: failed_login_count
+    dimension: user_id
+    threshold: 20
+    window: 5m
+    action: lock_account
+    duration: 30m
+
+  - name: "OTP flooding"
+    description: "More than 5 OTP requests per phone in 10 minutes"
+    metric: otp_request_count
+    dimension: phone_number
+    threshold: 5
+    window: 10m
+    action: throttle
+    cooldown: 1h
 ```
 
-### New Device Alert
-
-When a login comes from an unknown fingerprint:
-1. Flag session as "new device"
-2. Require step-up MFA
-3. Send notification email
-4. Log audit event: `security.new_device_login`
-
-## Velocity Rules
-
-Velocity rules detect unusually rapid activity patterns:
-
-| Rule | Condition | Action |
-|------|-----------|--------|
-| Login velocity | > 5 logins from different IPs in 10m | Block + alert |
-| Account creation | > 10 accounts from same IP in 1h | Block IP |
-| Password reset | > 3 resets in 10m | Rate limit |
-| Failed login velocity | > 20 failures in 5m | Block IP |
-| Token refresh | > 10 refreshes in 1m | Rate limit |
-| API key creation | > 5 keys in 1h | Alert |
-
-### Configuration
-
-```bash
-curl -X PUT https://api.ggid.example.com/api/v1/settings/fraud/velocity \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "X-Tenant-ID: $TENANT_ID" \
-  -d '{
-    "rules": [
-      {
-        "name": "Login velocity",
-        "metric": "user.login",
-        "field": "ip",
-        "threshold": 5,
-        "window": "10m",
-        "action": "block"
-      }
-    ]
-  }'
-```
+### Implementation
+- **Storage**: Redis sliding window counters (Lua atomic operations)
+- **Evaluation**: Real-time on every auth event
+- **Bypass**: Trusted IP allowlist per tenant
 
 ## Synthetic Identity Detection
 
-Detect accounts created with fake or stolen identities:
+### Indicators
+1. **Disposable email**: Check against known disposable email providers (10minutemail, guerrillamail, etc.)
+2. **Phone validation**: VOIP number detection, carrier lookup
+3. **Name patterns**: Generated name patterns (first+last from common lists)
+4. **Timing anomalies**: Registration + immediate high-value action within seconds
+5. **Profile completeness**: Missing optional fields that real users typically fill
 
-| Signal | Detection Method | Confidence |
-|--------|-----------------|------------|
-| Disposable email | Check against known disposable domains | High |
-| Username pattern | Regex for random strings (e.g., `user12345678`) | Medium |
-| Phone number VOIP | Check carrier type | Medium |
-| Registration velocity | Multiple accounts from same device | High |
-| Email/phone mismatch | Area code doesn't match IP geo | Low |
-| Stolen credentials | HIBP breach check | High |
+### Scoring Model
+```python
+synthetic_score = (
+    0.30 * disposable_email +
+    0.20 * voip_phone +
+    0.15 * name_pattern_match +
+    0.15 * timing_anomaly +
+    0.10 * profile_completeness +
+    0.10 * velocity_correlation
+)
+# score > 0.7 → block
+# score 0.4-0.7 → manual review
+# score < 0.4 → allow
+```
 
-### Implementation
+## Device Fingerprinting
 
-```go
-type FraudScore struct {
-    Score       int      // 0-100
-    Signals     []string // Triggered signals
-    Recommended string   // allow | review | deny
+### Fingerprint Components
+| Component | Collection Method | Stability |
+|-----------|------------------|-----------|
+| User-Agent | HTTP header | Low (easily spoofed) |
+| Screen resolution | JavaScript | Medium |
+| Timezone | JavaScript | Medium |
+| Canvas fingerprint | Canvas API hash | High |
+| WebGL fingerprint | WebGL renderer | High |
+| Audio fingerprint | AudioContext | High |
+| Font list | JavaScript detection | Medium |
+| Plugin list | Navigator API | Low |
+
+### Fingerprint Lifecycle
+1. **Collection**: Client-side JavaScript collects 8+ signals
+2. **Hashing**: SHA-256 of normalized signal concatenation
+3. **Storage**: `device_fingerprints` table with first_seen, last_seen, trust_level
+4. **Correlation**: Link fingerprints to user accounts
+5. **Alerting**: Same fingerprint across many accounts → fraud indicator
+
+## TOR/VPN/Proxy Detection
+
+### Detection Layers
+1. **IP reputation**: Real-time check against TOR exit nodes, known VPN providers
+2. **ASN analysis**: Datacenter ASN vs residential ASN
+3. **Port scan signals**: Open SOCKS/HTTP proxy ports
+4. **Behavioral**: Multiple users from same datacenter IP
+
+### Action Matrix
+| Source Type | Risk Level | Default Action |
+|-------------|-----------|----------------|
+| Residential ISP | Low | Allow |
+| Corporate VPN | Medium | Allow + flag |
+| Known VPN provider | Medium | Challenge (CAPTCHA) |
+| TOR exit node | High | Block |
+| Datacenter IP | High | Challenge + flag |
+| Known proxy | Critical | Block immediately |
+
+## Integration Points
+
+### API Endpoints
+```http
+GET  /api/v1/identity/fraud/indicators?severity=high
+GET  /api/v1/identity/fraud/velocity-rules
+PUT  /api/v1/identity/fraud/velocity-rules/{id}
+GET  /api/v1/identity/fraud/blocked-entities
+POST /api/v1/identity/fraud/block-entity
+DELETE /api/v1/identity/fraud/block-entity/{id}
+GET  /api/v1/identity/fraud/false-positives?status=pending
+```
+
+### Event Stream
+- All fraud events published to NATS `fraud.events` stream
+- SIEM forwarding via `/api/v1/audit/siem/forwarder-config`
+- Real-time dashboard via WebSocket subscription
+
+## Configuration
+
+### Per-Tenant Settings
+```json
+{
+  "fraud_detection": {
+    "enabled": true,
+    "sensitivity": "balanced",
+    "velocity_rules": "default",
+    "synthetic_detection": true,
+    "device_fingerprinting": true,
+    "tor_vpn_blocking": "challenge",
+    "trusted_ips": ["10.0.0.0/8"],
+    "action_on_detect": "challenge",
+    "notify_on_block": true
+  }
 }
-
-func EvaluateRegistration(req RegisterRequest, ip string) FraudScore {
-    score := 0
-    var signals []string
-
-    if isDisposableEmail(req.Email) { score += 30; signals = append(signals, "disposable_email") }
-    if isRandomUsername(req.Username) { score += 15; signals = append(signals, "random_username") }
-    if isVOIPPhone(req.Phone) { score += 20; signals = append(signals, "voip_phone") }
-    if checkBreach(req.Password) { score += 40; signals = append(signals, "breached_password") }
-
-    switch {
-    case score >= 60: return FraudScore{score, signals, "deny"}
-    case score >= 30: return FraudScore{score, signals, "review"}
-    default: return FraudScore{score, signals, "allow"}
-    }
-}
 ```
 
-## Tor / VPN Detection
+### Sensitivity Presets
+| Preset | Velocity Threshold | Synthetic Cutoff | TOR Action |
+|--------|-------------------|-----------------|------------|
+| Relaxed | 2x default | 0.8 | Log |
+| Balanced | Default | 0.7 | Challenge |
+| Strict | 0.5x default | 0.5 | Block |
+| Paranoia | 0.25x default | 0.3 | Block + Alert |
 
-### Threat Intelligence Feed
+## False Positive Management
 
-GGID checks client IPs against known threat intelligence:
+### Review Queue
+1. Flagged events enter FP review queue
+2. Analyst reviews: user history, device, geo, behavior
+3. Decision: confirm block / unblock + whitelist
+4. Feedback loop: update scoring model weights
 
-| Source | Type | Update Frequency |
-|--------|------|-----------------|
-| Tor exit nodes | Public list | Hourly |
-| Known VPN providers | Commercial feed | Daily |
-| Botnet C&C | Threat intel feed | Hourly |
-| Proxy services | Commercial feed | Daily |
-| Datacenter IPs | ASN lookup | Monthly |
+### Whitelist Management
+- IP allowlist: bypass velocity rules for trusted networks
+- User allowlist: exempt trusted users from synthetic detection
+- Device allowlist: known-good device fingerprints
 
-### Configuration
+## Best Practices
 
-```yaml
-fraud_detection:
-  tor_detection: true
-  vpn_detection: true
-  proxy_detection: true
-  threat_intel_feed: "https://feeds.example.com/blocklists.json"
-  update_interval: "1h"
-```
-
-### Action on Tor/VPN Login
-
-```bash
-curl -X PUT https://api.ggid.example.com/api/v1/settings/fraud/ip-policy \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -d '{
-    "tor": "step_up_mfa",
-    "vpn": "allow_with_warning",
-    "proxy": "step_up_mfa",
-    "datacenter": "log_only"
-  }'
-```
-
-## Risk Scoring Integration
-
-All fraud signals feed into a composite risk score (0-100):
-
-```
-risk_score = 0
-  + device_fingerprint_risk     (0-30)
-  + velocity_risk               (0-25)
-  + synthetic_identity_risk     (0-20)
-  + ip_reputation_risk          (0-15)
-  + behavioral_anomaly_risk     (0-10)
-
-decision:
-  < 20  → ALLOW
-  20-50 → STEP_UP (MFA)
-  > 50  → DENY
-```
-
-## See Also
-
-- [ITDR Implementation](itdr-implementation.md)
-- [Adaptive Authentication](../research/adaptive-authentication.md)
-- [Risk Scoring Model](../research/risk-scoring-adaptive-access.md)
-- [Security Audit Checklist](security-audit-checklist.md)
+1. **Layer defenses**: Don't rely on single signal — combine velocity + synthetic + device
+2. **Tune continuously**: Review false positive rate weekly, adjust thresholds
+3. **Preserve UX**: Prefer CAPTCHA challenge over outright block for medium-risk
+4. **Log everything**: Every fraud decision is auditable with full context
+5. **Privacy first**: Device fingerprints are hashed, never store raw browser data
+6. **Monitor coverage**: Track which rules fire most, retire stale rules
