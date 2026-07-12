@@ -712,6 +712,21 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Extract user_id from JWT if not provided in body
+	if req.UserID == "" {
+		authHeader := r.Header.Get("Authorization")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := jwt.MapClaims{}
+		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
+		req.UserID, _ = claims["sub"].(string)
+	}
+
 	user, err := uuid.Parse(req.UserID)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, "invalid user_id")
