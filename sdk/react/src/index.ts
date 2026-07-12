@@ -555,6 +555,16 @@ export { useDataClassificationPolicy } from './useDataClassificationPolicy';
 export type { DataClassificationPolicyData, ClassificationLevel, AttributeMapping, PiiInventoryItem } from './useDataClassificationPolicy';
 export { useOAuthDpopConfig } from './useOAuthDpopConfig';
 export type { OAuthDpopConfigData, DpopStats, PerClientOverride, ExemptedClient } from './useOAuthDpopConfig';
+export { useTokenRefreshAnalytics } from './useTokenRefreshAnalytics';
+export type { TokenRefreshAnalyticsData, RefreshByClient, RefreshFailure } from './useTokenRefreshAnalytics';
+export { useComplianceGapReport } from './useComplianceGapReport';
+export type { ComplianceGapReportData, ComplianceGap, GapSeverityBreakdown } from './useComplianceGapReport';
+export { useUserBehaviorAnalytics } from './useUserBehaviorAnalytics';
+export type { UserBehaviorAnalyticsData, BehavioralBaseline, BehaviorAnomaly } from './useUserBehaviorAnalytics';
+export { usePolicyLifecycleDashboard } from './usePolicyLifecycleDashboard';
+export type { PolicyLifecycleDashboardData, PolicyByStatus, ApprovalPipeline, PolicyChange, PolicyAgeBin } from './usePolicyLifecycleDashboard';
+export { useOAuthParManagement } from './useOAuthParManagement';
+export type { OAuthParManagementData, PushedRequest, ParClientUsage, ParError } from './useOAuthParManagement';
 export type {
   GGIDConfig,
   GGIDUser,
