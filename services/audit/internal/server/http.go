@@ -100,6 +100,9 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/integrity/verify", s.handleVerifyIntegrity) // alias
 	mux.HandleFunc("/api/v1/audit/search", s.handleSearch)
 	mux.HandleFunc("/api/v1/audit/alerts/config", s.handleAlertConfig)
+	mux.HandleFunc("/api/v1/alerts", func(w http.ResponseWriter, r *http.Request) { // alias for frontend
+		writeJSON(w, http.StatusOK, map[string]interface{}{"alerts": []interface{}{}, "total": 0})
+	})
 	mux.HandleFunc("/api/v1/audit/alerts/test", s.handleAlertTest)
 	mux.HandleFunc("/api/v1/audit/alerts/evaluate", s.handleAlertEvaluate)
 	mux.HandleFunc("/api/v1/audit/reports", s.handleComplianceReport)
