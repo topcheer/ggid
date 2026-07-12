@@ -1002,6 +1002,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/stats/token-revocation", handleTokenRevocationStats)
 	mux.HandleFunc("/api/v1/oauth/dpop/config", handleDPoPConfig)
 	mux.HandleFunc("/api/v1/oauth/redirect-uri-validation/config", handleRedirectURIValidationConfig)
+	mux.HandleFunc("/api/v1/oauth/oidc/claim-mapping", handleOIDCClaimMapping)
 	mux.HandleFunc("/api/v1/oauth/agents/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if strings.HasSuffix(path, "/lifecycle") {

@@ -148,6 +148,10 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/groups/", h.handleGroupAnalytics)
 	h.mux.HandleFunc("/api/v1/identity/provisioning/log", h.handleProvisioningLog)
 	h.mux.HandleFunc("/api/v1/identity/user-lifecycle/stages", h.handleUserLifecycleStages)
+	h.mux.HandleFunc("/api/v1/identity/saml/attribute-mapping", h.handleSAMLAttributeMapping)
+	h.mux.HandleFunc("/api/v1/identity/scim/group-mapping", h.handleSCIMGroupMapping)
+	h.mux.HandleFunc("/api/v1/identity/ldap/sync-config", h.handleLDAPSyncConfig)
+	h.mux.HandleFunc("/api/v1/identity/idp/metadata-import", h.handleIdPMetadataImport)
 
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
