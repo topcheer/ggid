@@ -329,6 +329,16 @@ export { useIntrospectionStats } from './useIntrospectionStats';
 export type { IntrospectionStats } from './useIntrospectionStats';
 export { usePasswordAgePolicy } from './usePasswordAgePolicy';
 export type { PasswordPolicy } from './usePasswordAgePolicy';
+export { useJoinerFlow } from './useJoinerFlow';
+export type { JoinerData } from './useJoinerFlow';
+export { usePolicyQuarantine } from './usePolicyQuarantine';
+export type { QuarantineResult } from './usePolicyQuarantine';
+export { useBudgetTracking } from './useBudgetTracking';
+export type { BudgetData, DeptBudget } from './useBudgetTracking';
+export { useTokenBindingStats } from './useTokenBindingStats';
+export type { BindingStats } from './useTokenBindingStats';
+export { useExportSchedule } from './useExportSchedule';
+export type { ExportJob } from './useExportSchedule';
 export type {
   GGIDConfig,
   GGIDUser,
