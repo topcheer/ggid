@@ -928,10 +928,10 @@ export default function SSOConnectionsPage() {
       {!showWizard && (
         <div className={cardCls}>
           <h2 className={`flex items-center gap-2 ${headingCls}`}>
-            <Globe className="h-5 w-5 text-brand-600" /> Social Login Providers
+            <Globe className="h-5 w-5 text-brand-600" /> {t("sso.socialProviders")}
           </h2>
           <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            Enable or disable social login options for your users.
+            {t("sso.socialHint")}
           </p>
           <div className="space-y-3">
             {socialProviders.map((provider) => (

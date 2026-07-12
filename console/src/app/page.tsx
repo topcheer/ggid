@@ -323,10 +323,10 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold dark:text-gray-200">
             <ScrollText className="h-4 w-4 text-brand-600" />
-            Recent Activity
+            {t("dashboard.recentActivity")}
           </h2>
           {recentEvents.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-400">No recent events</p>
+            <p className="py-8 text-center text-sm text-gray-400">{t("dashboard.noRecentEvents")}</p>
           ) : (
             <div className="space-y-3">
               {recentEvents.map((event) => (
@@ -358,7 +358,7 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold dark:text-gray-200">
             <UsersIcon className="h-4 w-4 text-brand-600" />
-            Top Active Users
+            {t("dashboard.topActiveUsers")}
           </h2>
           {(auditStats?.top_actors || []).length > 0 ? (
             <div className="space-y-2">
@@ -375,7 +375,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="py-6 text-center text-sm text-gray-400">No active users in 24h</p>
+            <p className="py-6 text-center text-sm text-gray-400">{t("dashboard.noActiveUsers") || "No active users in 24h"}</p>
           )}
         </div>
 
@@ -383,7 +383,7 @@ export default function DashboardPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold dark:text-gray-200">
             <ScrollText className="h-4 w-4 text-brand-600" />
-            Actions Breakdown
+            {t("dashboard.actionsBreakdown")}
           </h2>
           {auditStats?.events_by_action && Object.keys(auditStats.events_by_action).length > 0 ? (
             <div className="space-y-2">

@@ -86,8 +86,8 @@ export function Sidebar() {
       label: "Security",
       items: [
         { href: "/audit", label: t("nav.audit"), icon: ScrollText },
-        { href: "/agents", label: "AI Agents", icon: Bot },
-        { href: "/access-requests", label: "Access Requests", icon: FileCheck },
+        { href: "/agents", label: t("nav.aiAgents"), icon: Bot },
+        { href: "/access-requests", label: t("nav.accessRequests"), icon: FileCheck },
         { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
         { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
         { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
