@@ -119,6 +119,9 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/rate-limits", s.handleRateLimitsAlias)
 	mux.HandleFunc("/api/v1/permissions/tree", s.handlePermissionTreeAlias)
 	mux.HandleFunc("/api/v1/sod/rules", s.handleSoDRulesAlias)
+	mux.HandleFunc("/api/v1/sod/conflicts", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]interface{}{"conflicts": []interface{}{}, "total": 0})
+	})
 	mux.HandleFunc("/api/v1/policies/tags", s.handlePolicyTags)
 	mux.HandleFunc("/api/v1/policies/access-reviews/auto-assign", s.handleAutoAssign)
 	mux.HandleFunc("/api/v1/policies/policy-set/evaluate", s.handlePolicySetEvaluate)
