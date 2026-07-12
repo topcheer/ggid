@@ -162,6 +162,19 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/nhi", h.handleNHIInventory)
 	h.mux.HandleFunc("/api/v1/identity/nhi/orphans", h.handleNHIOrphans)
 	h.mux.HandleFunc("/api/v1/identity/nhi/", h.handleNHIDecommission)
+	h.mux.HandleFunc("/api/v1/identity/vc/issue", h.handleVCIssue)
+	h.mux.HandleFunc("/api/v1/identity/vc/verify", h.handleVCVerify)
+	h.mux.HandleFunc("/api/v1/identity/vc/present", h.handleVCPresent)
+	h.mux.HandleFunc("/api/v1/identity/vc", h.handleVCList)
+	h.mux.HandleFunc("/api/v1/identity/vc/", h.handleVCRevoke)
+	h.mux.HandleFunc("/api/v1/identity/did", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			h.handleDIDRegister(w, r)
+		} else {
+			h.handleDIDList(w, r)
+		}
+	})
+	h.mux.HandleFunc("/api/v1/identity/did/", h.handleDIDRoute)
 
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
