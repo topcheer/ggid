@@ -206,6 +206,7 @@ services:
       JWT_PUBLIC_KEY_PATH: "/configs/rsa_public.pem"
       AUTH_SERVICE_URL: "http://auth:9001"
       IDENTITY_SERVICE_URL: "http://identity:8080"
+      USERS_SERVICE_URL: "http://identity:8080"
       POLICY_SERVICE_URL: "http://policy:8070"
       ROLES_SERVICE_URL: "http://policy:8070"
       PERMISSIONS_SERVICE_URL: "http://policy:8070"
