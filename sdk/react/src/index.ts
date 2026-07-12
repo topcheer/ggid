@@ -445,6 +445,14 @@ export { usePolicyRecommendation } from './usePolicyRecommendation';
 export type { Recommendation } from './usePolicyRecommendation';
 export { useAnomalyScoring } from './useAnomalyScoring';
 export type { AnomalyData } from './useAnomalyScoring';
+export { useDeviceManagement } from './useDeviceManagement';
+export type { Device } from './useDeviceManagement';
+export { useEvidenceCollection } from './useEvidenceCollection';
+export type { Control, FrameworkData } from './useEvidenceCollection';
+export { useTokenLifecycleDashboard } from './useTokenLifecycleDashboard';
+export type { TokenDashboard } from './useTokenLifecycleDashboard';
+export { useRiskPostureDashboard } from './useRiskPostureDashboard';
+export type { RiskPosture } from './useRiskPostureDashboard';
 export type {
   GGIDConfig,
   GGIDUser,
