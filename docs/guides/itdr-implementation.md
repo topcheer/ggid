@@ -1,153 +1,227 @@
 # ITDR Implementation Guide
 
-Identity Threat Detection and Response (ITDR) implementation guide for GGID — detection rules, response playbooks, MITRE ATT&CK mapping, and SIEM integration.
-
 ## Overview
 
-ITDR focuses on detecting and responding to identity-based attacks: credential stuffing, pass-the-hash, golden ticket, anomalous access patterns, and privilege escalation.
+Identity Threat Detection and Response (ITDR) extends GGID's IAM capabilities to detect, investigate, and respond to identity-based attacks. This guide covers architecture, detection rules, and response playbooks.
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────┐
+│                   ITDR Engine                         │
+│                                                       │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐   │
+│  │ Signal   │→ │ Risk     │→ │ Response         │   │
+│  │ Collector│  │ Scorer   │  │ Orchestrator     │   │
+│  └──────────┘  └──────────┘  └──────────────────┘   │
+│       ↑              ↑              ↓                 │
+│  ┌────┴────┐   ┌─────┴─────┐  ┌────┴────────────┐   │
+│  │ Auth    │   │ Detection │  │ Action Executor  │   │
+│  │ Events  │   │ Rules     │  │ (block/revoke)   │   │
+│  └─────────┘   └───────────┘  └──────────────────┘   │
+│  ┌─────────┐   ┌───────────┐  ┌──────────────────┐   │
+│  │ Audit   │   │ MITRE     │  │ Notification     │   │
+│  │ Events  │   │ ATT&CK    │  │ (webhook/SIEM)   │   │
+│  └─────────┘   └───────────┘  └──────────────────┘   │
+│  ┌─────────┐                                          │
+│  │ Session │                                          │
+│  │ Events  │                                          │
+│  └─────────┘                                          │
+└──────────────────────────────────────────────────────┘
+```
+
+## Detection Rules Catalog
+
+### 1. Brute Force Detection
+```yaml
+rule_id: ITDR-001
+name: Brute Force Attack
+severity: high
+mitre_technique: T1110
+signals:
+  - source: auth_events
+    condition: failed_login_count >= 10
+    window: 5m
+    group_by: [ip_address, user_id]
+actions:
+  - block_ip (duration: 1h)
+  - lock_account (duration: 30m)
+  - notify (channel: security-team)
+```
+
+### 2. Credential Stuffing
+```yaml
+rule_id: ITDR-002
+name: Credential Stuffing
+severity: high
+mitre_technique: T1110.004
+signals:
+  - source: auth_events
+    condition: distinct_userids_failed >= 20
+    window: 10m
+    group_by: [ip_address]
+  - source: auth_events
+    condition: success_ratio < 0.05
+actions:
+  - block_ip (duration: 24h)
+  - add_to_watchlist (entity: ip)
+  - alert (severity: critical)
+```
+
+### 3. Lateral Movement Detection
+```yaml
+rule_id: ITDR-003
+name: Impossible Travel
+severity: medium
+mitre_technique: T1021
+signals:
+  - source: session_events
+    condition: geo_distance > 1000km
+    window: 2h
+    comparison: consecutive_logins
+actions:
+  - require_mfa (user_id)
+  - flag_session (risk_level: elevated)
+  - log_anomaly
+```
+
+### 4. Privilege Escalation
+```yaml
+rule_id: ITDR-004
+name: Suspicious Role Assignment
+severity: critical
+mitre_technique: T1098
+signals:
+  - source: audit_events
+    condition: role_change == "escalation"
+    filters:
+      - outside_business_hours: true
+      - or self_grant: true
+      - or skip_approval: true
+actions:
+  - hold_change (review_required: true)
+  - notify (channel: security-team, priority: urgent)
+  - create_ticket (type: security-review)
+```
+
+### 5. Golden Ticket Detection
+```yaml
+rule_id: ITDR-005
+name: Forged Token Detection
+severity: critical
+mitre_technique: T1098.004
+signals:
+  - source: auth_events
+    condition: jwt_iss_mismatch == true
+  - source: auth_events
+    condition: jwt_kid_unknown == true
+  - source: audit_events
+    condition: admin_scope_without_chain == true
+actions:
+  - revoke_token (immediate: true)
+  - block_user (pending_investigation: true)
+  - page_oncall (severity: critical)
+```
+
+### 6. Session Hijacking
+```yaml
+rule_id: ITDR-006
+name: Session Anomaly
+severity: high
+mitre_technique: T1185
+signals:
+  - source: session_events
+    condition: device_fingerprint_changed == true
+    window: 1h
+  - source: session_events
+    condition: user_agent_changed == true
+    window: 1h
+  - source: session_events
+    condition: ip_asn_changed == true
+    window: 1h
+actions:
+  - force_reauth (user_id)
+  - invalidate_other_sessions (user_id)
+  - flag_session (risk_level: high)
+```
+
+### 7. Account Takeover
+```yaml
+rule_id: ITDR-007
+name: Account Takeover Indicators
+severity: critical
+mitre_technique: T1078
+signals:
+  - combo_rule:
+      any_of:
+        - password_change_followed_by_email_change (window: 1h)
+        - mfa_disabled_followed_by_login (window: 30m)
+        - new_device_followed_by_financial_action (window: 24h)
+      min_matches: 1
+actions:
+  - freeze_account (pending_verification: true)
+  - send_recovery_email
+  - create_incident (type: account-takeover)
+```
 
 ## MITRE ATT&CK Mapping
 
-| Technique | ID | Detection Rule | GGID Control |
-|-----------|-----|---------------|--------------|
-| Credential Stuffing | T1110.004 | Failed logins > 10 from same IP in 5m | Rate limiting + lockout |
-| Brute Force | T1110.001 | Failed logins > 20 for same user | Account lockout |
-| Pass the Hash | T1550.002 | JWT from new IP after old IP session | jti anti-replay |
-| Golden Ticket | T1558.001 | JWT with forged claims | RS256 signature verification |
-| Kerberoasting | T1558.003 | Service account token anomaly | Agent identity monitoring |
-| Token Impersonation | T1134.001 | Unexpected token delegation | Delegation depth enforcement |
-| Account Manipulation | T1098 | Role assigned outside business hours | Alert + approval workflow |
-| Root Account Use | T1078.004 | Admin login from new geo | Step-up MFA |
-
-## Detection Rules
-
-### Rule Configuration
-
-```bash
-curl -X POST https://api.ggid.example.com/api/v1/audit/alerts/rules \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -H "X-Tenant-ID: $TENANT_ID" \
-  -d '{
-    "name": "Credential Stuffing",
-    "description": "Multiple failed logins from same IP",
-    "condition": {
-      "event_type": "user.login_failed",
-      "aggregation": { "field": "ip", "count_gt": 10, "window": "5m" }
-    },
-    "severity": "high",
-    "mitre_attack": "T1110.004",
-    "response": ["block_ip", "alert_soc"]
-  }'
-```
-
-### Recommended Detection Rules
-
-| Rule Name | Condition | Severity | MITRE | Response |
-|-----------|-----------|----------|-------|----------|
-| Credential stuffing | 10+ failed logins / IP / 5m | High | T1110.004 | Block IP, alert |
-| Brute force | 20+ failed logins / user / 10m | High | T1110.001 | Lock account |
-| Impossible travel | Login from 2 countries < 2h apart | Critical | T1027 | Step-up MFA, alert |
-| New device admin | Admin login from new device | Medium | T1078 | Step-up WebAuthn |
-| Off-hours privilege change | Role assign 22:00-06:00 | Medium | T1098 | Alert, require approval |
-| Mass export | 5+ audit exports in 1h | Medium | T1048 | Alert SOC |
-| Token reuse | jti reuse detected | Critical | T1550 | Revoke all sessions |
-| Agent depth exceeded | Delegation > max_depth | High | T1134 | Deny + suspend agent |
-| Dormant account login | Inactive > 90d then login | Medium | T1078 | Step-up MFA |
-| VPN/Tor login | Login from known VPN/Tor exit | Medium | T1090 | Step-up MFA |
+| Technique | ID | ITDR Detection |
+|-----------|----|----------------|
+| Brute Force | T1110 | ITDR-001, ITDR-002 |
+| Lateral Movement | T1021 | ITDR-003 |
+| Account Manipulation | T1098 | ITDR-004, ITDR-005 |
+| Session Hijacking | T1185 | ITDR-006 |
+| Valid Accounts | T1078 | ITDR-007 |
+| OS Credential Dumping | T1003 | (via SIEM integration) |
+| Kerberoasting | T1558 | (via SIEM integration) |
 
 ## Response Playbooks
 
-### Playbook: Credential Stuffing Detected
+### Automated Response Matrix
 
-```
-Trigger: Credential stuffing rule fires
-  ↓
-1. Auto-block source IP (15 min)
-2. Lock targeted accounts
-3. Send alert to SOC (email + Slack)
-4. Create incident ticket
-5. If pattern persists → escalate to block IP permanently
-6. Record in audit log with MITRE tag
-```
+| Risk Score | Action | Duration |
+|------------|--------|----------|
+| Low (0-30) | Log + monitor | Indefinite |
+| Medium (31-60) | Require MFA re-challenge | Current session |
+| High (61-85) | Block source IP + flag session | 1-24h |
+| Critical (86-100) | Freeze account + revoke all tokens | Pending investigation |
 
-### Playbook: Impossible Travel
+### Manual Investigation Workflow
 
-```
-Trigger: Login from EU, then US within 2 hours
-  ↓
-1. Require step-up WebAuthn
-2. If WebAuthn fails → deny login
-3. Revoke previous sessions
-4. Alert user via email
-5. Alert SOC for investigation
-```
+1. **Alert received** → Analyst opens ITDR dashboard
+2. **Correlate signals** → Review user activity, device history, geo patterns
+3. **Assess impact** → What data/resources were accessed?
+4. **Containment** → Revoke sessions, reset credentials, block IPs
+5. **Eradication** → Remove malicious OAuth grants, revoke agent tokens
+6. **Recovery** → User identity verification, credential reset, monitoring period
+7. **Lessons learned** → Update detection rules, adjust thresholds
 
-### Playbook: Privilege Escalation
+## Integration Points
 
-```
-Trigger: Role assigned outside normal pattern
-  ↓
-1. Require manager approval (access request workflow)
-2. Log with full context (assigner, target, role, time, IP)
-3. If auto-approved → alert for review
-4. SoD check → deny if conflict
-```
+### SIEM Integration
+- Forward all ITDR events to SIEM (Splunk/Elastic/Datadog)
+- Configured via `/api/v1/audit/siem/forwarder-config`
+- Batch delivery with retry and circuit breaker
 
-## SIEM Integration
+### Webhook Notifications
+- Real-time alerts to security team webhooks
+- Configured via tenant settings
+- Includes full event context + MITRE mapping
 
-Forward all identity events to SIEM for correlation:
-
-```yaml
-siem:
-  provider: splunk
-  endpoint: https://splunk.example.com:8088/services/collector
-  api_key: hec-token
-  index: ggid-itdr
-  events:
-    - user.login
-    - user.login_failed
-    - role.assigned
-    - role.revoked
-    - agent.token_exchanged
-    - security.suspicious_activity
+### API Access
+```http
+GET /api/v1/identity/itdr/threats?status=active&severity=critical
+GET /api/v1/identity/itdr/detection-rules
+PUT /api/v1/identity/itdr/detection-rules/{id}
+POST /api/v1/identity/itdr/threats/{id}/respond
 ```
 
-Events are forwarded in CEF format with MITRE ATT&CK technique IDs:
+## Best Practices
 
-```
-CEF:0|GGID|ITDR|1.0|100|Credential Stuffing|9|
-act=login_failed suser=unknown src=1.2.3.4
-rt=Jan 24 2025 14:30:00 UTC
-cs1Label=MITRE cs1=T1110.004
-```
-
-## ITDR Dashboard
-
-Key metrics for the ITDR dashboard:
-
-| Metric | Description |
-|--------|-------------|
-| Threats detected (24h) | Total alerts triggered |
-| Top attack types | MITRE technique distribution |
-| Blocked IPs | Auto-blocked source IPs |
-| Locked accounts | Accounts locked by rules |
-| MTTR | Mean time to respond |
-| False positive rate | Alerts dismissed / total |
-
-## Implementation Checklist
-
-- [ ] All 10 detection rules configured
-- [ ] SIEM forwarder operational
-- [ ] Response playbooks documented
-- [ ] SOC alert routing tested
-- [ ] MITRE ATT&CK tags on all rules
-- [ ] ITDR dashboard live
-- [ ] Monthly rule tuning scheduled
-- [ ] Tabletop exercise conducted
-
-## See Also
-
-- [Audit & SIEM Guide](audit-siem-guide.md)
-- [Security Audit Checklist](security-audit-checklist.md)
-- [Rate Limiting](rate-limiting-guide.md)
-- [Fraud Detection](fraud-detection.md)
+1. **Tune thresholds**: Start conservative, adjust based on false positive rate
+2. **Layer detection**: Use multiple signal types (behavioral, contextual, technical)
+3. **Automate response**: Critical threats should auto-contain without human delay
+4. **Preserve evidence**: All ITDR events retained in audit log with hash chain
+5. **Test regularly**: Run red team exercises against detection rules
+6. **Integrate broadly**: Connect with EDR, NDR, and SIEM for full coverage
