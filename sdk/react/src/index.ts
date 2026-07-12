@@ -765,6 +765,14 @@ export { useConsentManagement } from './useConsentManagement';
 export type { ConsentManagementData, ConsentRecord, ConsentTemplate, RegionCompliance } from './useConsentManagement';
 export { useGDPRDataPortability } from './useGDPRDataPortability';
 export type { GDPRDataPortabilityData, ExportRequest } from './useGDPRDataPortability';
+export { useAuditSiemForwarding } from './useAuditSiemForwarding';
+export type { AuditSiemForwardingData, SiemDestination } from './useAuditSiemForwarding';
+export { useSiemLogFormats } from './useSiemLogFormats';
+export type { SiemLogFormatsData, FormatConfig, FieldMapEntry, SeverityMapEntry } from './useSiemLogFormats';
+export { useSecurityEventStream } from './useSecurityEventStream';
+export type { SecurityEventStreamData, SecurityEvent } from './useSecurityEventStream';
+export { useVulnerabilityManagement } from './useVulnerabilityManagement';
+export type { VulnerabilityManagementData, VulnEntry, TriageRule } from './useVulnerabilityManagement';
 export type {
   GGIDConfig,
   GGIDUser,
