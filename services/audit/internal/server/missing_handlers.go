@@ -1,25 +1,49 @@
 package httpserver
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 )
 
 // handleWebhooksList - GET /api/v1/webhooks — list webhooks (returns empty array if no DB)
 func (s *HTTPServer) handleWebhooksList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-	// Reuse the alert webhook store if available, otherwise return empty
-	globalAlertWebhooks.mu.RLock()
-	result := make([]map[string]any, len(globalAlertWebhooks.webhooks))
-	copy(result, globalAlertWebhooks.webhooks)
-	globalAlertWebhooks.mu.RUnlock()
-	writeJSON(w, http.StatusOK, map[string]any{
-		"webhooks": result,
+	switch r.Method {
+	case http.MethodGet:
+		globalAlertWebhooks.mu.RLock()
+		result := make([]map[string]any, len(globalAlertWebhooks.webhooks))
+		copy(result, globalAlertWebhooks.webhooks)
+		globalAlertWebhooks.mu.RUnlock()
+		writeJSON(w, http.StatusOK, map[string]any{
+			"webhooks": result,
 		"count":    len(result),
 	})
+	case http.MethodPost:
+		var req struct {
+			URL     string   `json:"url"`
+			Events  []string `json:"events"`
+			Active  bool     `json:"active"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		webhook := map[string]any{
+			"id":     fmt.Sprintf("whk_%d", time.Now().UnixNano()),
+			"url":    req.URL,
+			"events": req.Events,
+			"active": req.Active,
+		}
+		globalAlertWebhooks.mu.Lock()
+		globalAlertWebhooks.webhooks = append(globalAlertWebhooks.webhooks, webhook)
+		globalAlertWebhooks.mu.Unlock()
+		writeJSON(w, http.StatusCreated, webhook)
+	case http.MethodDelete:
+		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted"})
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
 }
 
 // handleHashChainStatus - GET /api/v1/audit/hash-chain — return hash chain status
