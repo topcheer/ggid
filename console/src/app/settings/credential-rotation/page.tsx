@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface RotationSchedule {
   id: string;
@@ -20,13 +20,22 @@ interface NewSchedule {
 }
 
 export default function CredentialRotationPage() {
-  const [schedules, setSchedules] = useState<RotationSchedule[]>([
-    { id: 's1', credential: 'auth-jwt-signing-key', type: 'signing-key', intervalDays: 90, nextRotation: '2026-09-15', status: 'scheduled', autoRotate: true, notifyBeforeDays: 7 },
-    { id: 's2', credential: 'gateway-tls-cert', type: 'tls-cert', intervalDays: 365, nextRotation: '2026-12-01', status: 'scheduled', autoRotate: true, notifyBeforeDays: 30 },
-    { id: 's3', credential: 'oauth-client-secret', type: 'client-secret', intervalDays: 180, nextRotation: '2026-07-20', status: 'due', autoRotate: true, notifyBeforeDays: 14 },
-    { id: 's4', credential: 'db-replication-password', type: 'password', intervalDays: 60, nextRotation: '2026-06-30', status: 'overdue', autoRotate: false, notifyBeforeDays: 7 },
-    { id: 's5', credential: 'ldap-bind-password', type: 'password', intervalDays: 90, nextRotation: '2026-08-10', status: 'scheduled', autoRotate: true, notifyBeforeDays: 7 },
-  ]);
+  const [schedules, setSchedules] = useState<RotationSchedule[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/credentials/rotation/due', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data && data.schedules) setSchedules(data.schedules);
+        else if (Array.isArray(data)) setSchedules(data);
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const [showForm, setShowForm] = useState(false);
   const [newSchedule, setNewSchedule] = useState<NewSchedule>({ credential: '', intervalDays: 90, autoRotate: true, notifyBeforeDays: 7 });
@@ -62,6 +71,9 @@ export default function CredentialRotationPage() {
     }
     setExecuteTarget(null);
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -129,7 +141,9 @@ export default function CredentialRotationPage() {
             </tr>
           </thead>
           <tbody>
-            {schedules.map(s => (
+            {schedules.length === 0 ? (
+              <tr><td colSpan={7} className="p-3 text-center text-gray-400">No data available</td></tr>
+            ) : schedules.map(s => (
               <tr key={s.id} className="border-b hover:bg-gray-50">
                 <td className="p-3 font-medium">{s.credential}</td>
                 <td className="p-3 text-gray-600 capitalize">{s.type.replace('-', ' ')}</td>

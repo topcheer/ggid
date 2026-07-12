@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Credential {
   id: string;
@@ -14,23 +14,30 @@ interface Credential {
 }
 
 export default function CredentialVaultManagementPage() {
-  const [credentials, setCredentials] = useState<Credential[]>([
-    { id: 'c1', type: 'API Key', name: 'gateway-prod-key', created: '2026-01-15', lastUsed: '2026-07-12', lastRotated: '2026-06-01', status: 'active', encrypted: true, rotationDays: 90 },
-    { id: 'c2', type: 'OAuth Token', name: 'azure-ad-service-token', created: '2026-03-01', lastUsed: '2026-07-11', lastRotated: '2026-05-01', status: 'active', encrypted: true, rotationDays: 60 },
-    { id: 'c3', type: 'SSH Key', name: 'deploy-key-prod', created: '2025-08-01', lastUsed: '2026-07-10', lastRotated: '2025-08-01', status: 'active', encrypted: true, rotationDays: 365 },
-    { id: 'c4', type: 'Password', name: 'ldap-bind-pw', created: '2025-12-01', lastUsed: '2026-07-12', lastRotated: '2026-03-01', status: 'active', encrypted: true, rotationDays: 90 },
-    { id: 'c5', type: 'Certificate', name: 'auth-tls-cert', created: '2025-06-01', lastUsed: '2026-07-12', lastRotated: '2025-06-01', status: 'expired', encrypted: true, rotationDays: 365 },
-  ]);
+  const [credentials, setCredentials] = useState<Credential[]>([]);
 
   const [showForm, setShowForm] = useState(false);
   const [newCred, setNewCred] = useState({ type: 'API Key', name: '', rotationDays: 90 });
-  const [auditLog, setAuditLog] = useState([
-    { timestamp: '2026-07-12 14:30', action: 'Rotated', credential: 'gateway-prod-key', actor: 'admin@ggid.io' },
-    { timestamp: '2026-07-11 09:15', action: 'Accessed', credential: 'azure-ad-service-token', actor: 'auth-service' },
-    { timestamp: '2026-07-10 16:00', action: 'Created', credential: 'deploy-key-prod', actor: 'devops@ggid.io' },
-    { timestamp: '2026-07-09 11:20', action: 'Expired', credential: 'auth-tls-cert', actor: 'system' },
-  ]);
+  const [auditLog, setAuditLog] = useState([] as { timestamp: string; action: string; credential: string; actor: string }[]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/credentials/', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.credentials) setCredentials(data.credentials);
+          else if (Array.isArray(data)) setCredentials(data);
+          if (data.audit_log) setAuditLog(data.audit_log);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const types = ['API Key', 'OAuth Token', 'SSH Key', 'Password', 'Certificate'];
 
@@ -79,6 +86,9 @@ export default function CredentialVaultManagementPage() {
     });
     setSelectedIds(new Set());
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -156,7 +166,9 @@ export default function CredentialVaultManagementPage() {
             </tr>
           </thead>
           <tbody>
-            {credentials.map(c => (
+            {credentials.length === 0 ? (
+              <tr><td colSpan={9} className="p-3 text-center text-gray-400">No data available</td></tr>
+            ) : credentials.map(c => (
               <tr key={c.id} className="border-b hover:bg-gray-50">
                 <td className="p-3"><input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleSelect(c.id)} className="rounded" /></td>
                 <td className="p-3 font-medium">{c.name}</td>
@@ -180,7 +192,9 @@ export default function CredentialVaultManagementPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Access Audit Log</h2>
         <div className="space-y-2">
-          {auditLog.map((entry, idx) => (
+          {auditLog.length === 0 ? (
+            <p className="text-sm text-gray-400">No data available</p>
+          ) : auditLog.map((entry, idx) => (
             <div key={idx} className="flex items-center gap-3 text-sm border-b pb-2">
               <span className="text-xs text-gray-400 w-32">{entry.timestamp}</span>
               <span className={`px-2 py-0.5 rounded text-xs ${
