@@ -811,6 +811,14 @@ export { useMembershipTrends } from './useMembershipTrends';
 export type { MembershipTrendsData, MonthlyMembership, DeptMembers, AttritionReason } from './useMembershipTrends';
 export { usePolicyDecisionStats } from './usePolicyDecisionStats';
 export type { PolicyDecisionStatsData, PolicyStat, ResourceTypeStat, DeniedAction } from './usePolicyDecisionStats';
+export { useWebauthnConfig } from './useWebauthnConfig';
+export type { WebauthnConfigData, SupportedAlgEntry, PlatformEntry } from './useWebauthnConfig';
+export { useTokenFamilyAnalysis } from './useTokenFamilyAnalysis';
+export type { TokenFamilyAnalysisData, TokenFamily, ReuseAlert } from './useTokenFamilyAnalysis';
+export { useRoleMiningResults } from './useRoleMiningResults';
+export type { RoleMiningResultsData, UnusedPerm, ConsolidationSuggestion, OverAssigned } from './useRoleMiningResults';
+export { useOAuthParUsage } from './useOAuthParUsage';
+export type { OAuthParUsageData, ParRequest, ParClientUsageEntry, ParErrorEntry } from './useOAuthParUsage';
 export type {
   GGIDConfig,
   GGIDUser,
