@@ -185,6 +185,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/forensics/timeline", s.handleForensicsTimeline)
 	mux.HandleFunc("/api/v1/audit/export/schedule-config", s.handleExportScheduleConfig)
 	mux.HandleFunc("/api/v1/audit/siem/forwarder-config", s.handleSIEMForwarderConfig)
+	mux.HandleFunc("/api/v1/audit/hash-chain/config", s.handleAuditHashChainConfig)
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
 
