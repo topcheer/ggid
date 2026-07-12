@@ -745,6 +745,16 @@ export { useSecurityPostureScoring } from './useSecurityPostureScoring';
 export type { SecurityPostureScoringData, CategoryScore, BenchmarkComparison, Recommendation } from './useSecurityPostureScoring';
 export { useComplianceGapHeatmap } from './useComplianceGapHeatmap';
 export type { ComplianceGapHeatmapData, HeatmapCell, DrillDownItem } from './useComplianceGapHeatmap';
+export { useSecurityMetricsDash } from './useSecurityMetricsDash';
+export type { SecurityMetricsDashData, TopRisk } from './useSecurityMetricsDash';
+export { useSecurityKPITracker } from './useSecurityKPITracker';
+export type { SecurityKPITrackerData, KpiDefinition, MonthlyPoint, AlertThreshold } from './useSecurityKPITracker';
+export { useVulnScanResults } from './useVulnScanResults';
+export type { VulnScanResultsData, ScanRun, VulnFinding } from './useVulnScanResults';
+export { usePentestFindings } from './usePentestFindings';
+export type { PentestFindingsData, PentestFinding } from './usePentestFindings';
+export { useRemediationTracker } from './useRemediationTracker';
+export type { RemediationTrackerData, RemediationItem, OverdueAlert, TeamBreakdown } from './useRemediationTracker';
 export type {
   GGIDConfig,
   GGIDUser,
