@@ -921,6 +921,16 @@ export { useUserProvisioningPipelineConfig } from './useUserProvisioningPipeline
 export type { UserProvisioningPipelineConfig, PipelineStage, ErrorRetryPolicy } from './useUserProvisioningPipelineConfig';
 export { useAccessRequestLifecycleConfig } from './useAccessRequestLifecycleConfig';
 export type { AccessRequestLifecycleConfig, LifecycleStage, AutoApprovalRule } from './useAccessRequestLifecycleConfig';
+export { useOAuthStateManagementConfig } from './useOAuthStateManagementConfig';
+export type { OAuthStateManagementConfig, PerFlowEncoding } from './useOAuthStateManagementConfig';
+export { useSamlMetadataManagement } from './useSamlMetadataManagement';
+export type { SamlMetadataManagement, IdpMetadata } from './useSamlMetadataManagement';
+export { usePolicyEvaluationEngineConfig } from './usePolicyEvaluationEngineConfig';
+export type { PolicyEvaluationEngineConfig, BenchmarkResults } from './usePolicyEvaluationEngineConfig';
+export { useSessionClusteringConfig } from './useSessionClusteringConfig';
+export type { SessionClusteringConfig, RedisNode } from './useSessionClusteringConfig';
+export { useEventDrivenAuditConfig } from './useEventDrivenAuditConfig';
+export type { EventDrivenAuditConfig, StreamConfig } from './useEventDrivenAuditConfig';
 export type {
   GGIDConfig,
   GGIDUser,
