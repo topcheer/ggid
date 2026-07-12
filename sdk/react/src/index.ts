@@ -281,6 +281,10 @@ export { useMergeConflicts } from './useMergeConflicts';
 export type { ConflictRule } from './useMergeConflicts';
 export { useClientRateLimits } from './useClientRateLimits';
 export type { RateLimitConfig } from './useClientRateLimits';
+export { useImpactPreview } from './useImpactPreview';
+export type { AffectedItem, PreviewResult } from './useImpactPreview';
+export { useProfileDiff } from './useProfileDiff';
+export type { DiffEntry, DiffResult } from './useProfileDiff';
 export type {
   GGIDConfig,
   GGIDUser,
