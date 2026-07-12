@@ -507,6 +507,14 @@ export { useRiskQuantification } from './useRiskQuantification';
 export type { RiskFactor, RiskData } from './useRiskQuantification';
 export { useSessionAnalytics } from './useSessionAnalytics';
 export type { SessionData } from './useSessionAnalytics';
+export { useCertificateManagement } from './useCertificateManagement';
+export type { Cert } from './useCertificateManagement';
+export { useOauthConsentFlow } from './useOauthConsentFlow';
+export type { ConsentConfig } from './useOauthConsentFlow';
+export { useAdminSettings } from './useAdminSettings';
+export type { AdminConfig } from './useAdminSettings';
+export { useRolePermissionMatrix } from './useRolePermissionMatrix';
+export type { MatrixData } from './useRolePermissionMatrix';
 export type {
   GGIDConfig,
   GGIDUser,
