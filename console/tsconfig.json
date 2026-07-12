@@ -25,6 +25,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@ggid/sdk-react": [
+        "../sdk/react/src/index.ts"
+      ],
+      "@ggid/sdk-react/*": [
+        "../sdk/react/src/*"
       ]
     }
   },

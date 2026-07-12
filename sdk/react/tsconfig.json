@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "bundler", "rootDir": "src",
     "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
