@@ -755,6 +755,16 @@ export { usePentestFindings } from './usePentestFindings';
 export type { PentestFindingsData, PentestFinding } from './usePentestFindings';
 export { useRemediationTracker } from './useRemediationTracker';
 export type { RemediationTrackerData, RemediationItem, OverdueAlert, TeamBreakdown } from './useRemediationTracker';
+export { usePIIDiscovery } from './usePIIDiscovery';
+export type { PIIDiscoveryData, PIISource, UnencryptedAlert, DatabaseBreakdown } from './usePIIDiscovery';
+export { useDLP } from './useDLP';
+export type { DLPData, DLPPolicy, DLPViolation } from './useDLP';
+export { useDataRetentionDashboard } from './useDataRetentionDashboard';
+export type { DataRetentionDashboardData, RetentionPolicy, StorageAge, UpcomingPurge, ComplianceEntry, PurgeHistoryEntry } from './useDataRetentionDashboard';
+export { useConsentManagement } from './useConsentManagement';
+export type { ConsentManagementData, ConsentRecord, ConsentTemplate, RegionCompliance } from './useConsentManagement';
+export { useGDPRDataPortability } from './useGDPRDataPortability';
+export type { GDPRDataPortabilityData, ExportRequest } from './useGDPRDataPortability';
 export type {
   GGIDConfig,
   GGIDUser,
