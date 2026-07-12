@@ -285,6 +285,10 @@ export { useImpactPreview } from './useImpactPreview';
 export type { AffectedItem, PreviewResult } from './useImpactPreview';
 export { useProfileDiff } from './useProfileDiff';
 export type { DiffEntry, DiffResult } from './useProfileDiff';
+export { useDelegatedReview } from './useDelegatedReview';
+export type { Delegation } from './useDelegatedReview';
+export { useSIEMHealth } from './useSIEMHealth';
+export type { SIEMDestination } from './useSIEMHealth';
 export type {
   GGIDConfig,
   GGIDUser,
