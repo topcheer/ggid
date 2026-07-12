@@ -137,9 +137,14 @@ func (t *PermissionTree) GetEffectivePermissions(ctx context.Context, id uuid.UU
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 	seen := make(map[string]bool)
+	visited := make(map[uuid.UUID]bool)
 	var result []string
 	current := id
 	for current != uuid.Nil {
+		if visited[current] {
+			return nil, fmt.Errorf("inheritance cycle detected at node %s", current)
+		}
+		visited[current] = true
 		node, ok := t.nodes[current]
 		if !ok {
 			break
@@ -158,7 +163,7 @@ func (t *PermissionTree) GetEffectivePermissions(ctx context.Context, id uuid.UU
 func (t *PermissionTree) HasPermission(ctx context.Context, id uuid.UUID, perm string) bool {
 	perms, _ := t.GetEffectivePermissions(ctx, id)
 	for _, p := range perms {
-		if p == perm {
+		if p == perm || p == "*" {
 			return true
 		}
 	}
