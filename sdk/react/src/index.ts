@@ -665,6 +665,16 @@ export { usePolicyDryRunHistory } from './usePolicyDryRunHistory';
 export type { PolicyDryRunHistoryData, DryRunEntry } from './usePolicyDryRunHistory';
 export { useAuditRealtimeAlerts } from './useAuditRealtimeAlerts';
 export type { AuditRealtimeAlertsData, AlertRule, ActiveAlert, SuppressionRule, EscalationStep } from './useAuditRealtimeAlerts';
+export { useOAuthIssuerMetadata } from './useOAuthIssuerMetadata';
+export type { OAuthIssuerMetadataData } from './useOAuthIssuerMetadata';
+export { useAuthBackChannelAuth } from './useAuthBackChannelAuth';
+export type { AuthBackChannelAuthData, BindingMessageConfig, ClientCiba, CibaUsageStats } from './useAuthBackChannelAuth';
+export { useIdentityJitProvisioningConfig } from './useIdentityJitProvisioningConfig';
+export type { IdentityJitProvisioningConfigData, IdpConfig, AttributeMappingEntry, ProvisioningLogEntry } from './useIdentityJitProvisioningConfig';
+export { usePolicyVisualEditor } from './usePolicyVisualEditor';
+export type { PolicyVisualEditorData, PolicyNode, PolicyTemplate } from './usePolicyVisualEditor';
+export { useAuditChainVerification } from './useAuditChainVerification';
+export type { AuditChainVerificationData, LastVerification, VerificationLogEntry } from './useAuditChainVerification';
 export type {
   GGIDConfig,
   GGIDUser,
