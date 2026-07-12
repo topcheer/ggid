@@ -274,6 +274,27 @@ During the K3s deployment cycle, the following issues were discovered and resolv
    (total_users/roles/resources/cascading/breaking_changes/risk_level/recommended_action),
    preview_mode default + custom, analyzed_at timestamp. **HIGH confidence.**
 
+8. **Framework Coverage** — **VERIFIED** 2026-07-26. ARCH functional test: 6 tests PASS
+   (commit 16eee9b). gap_regression_audit_test.go: GET-only enforcement, 5 frameworks with
+   required fields (framework/total_controls/covered/gaps/coverage_pct), coverage math
+   (covered+gaps=total), summary aggregation, best/worst framework. **HIGH confidence.**
+
+9. **Forensics Timeline** — **VERIFIED** 2026-07-26. ARCH functional test: 8 tests PASS
+   (commit 16eee9b). gap_regression_audit_test.go: GET-only enforcement, structure validation
+   (hash_chain_verification/tamper_evidence/insertion_gaps/reorder_detected/integrity_score),
+   tamper evidence entries with fields, integrity_score 0-1 range, hash chain status enum,
+   anomaly consistency, valid JSON. **HIGH confidence.**
+
+10. **Authorize Flow Stats** — **VERIFIED** 2026-07-26. ARCH functional test: 6 tests PASS
+    (commit 1297501). gap_regression_oauth_test.go: GET-only enforcement, structure validation,
+    abandonment steps with names/counts, top clients with IDs, PKCE adoption 0-1 range,
+    generated_at timestamp. **HIGH confidence.**
+
+11. **Token Binding Stats** — **VERIFIED** 2026-07-26. ARCH functional test: 5 tests PASS
+    (commit 1297501). gap_regression_oauth_test.go: GET-only enforcement, bound+unbound=total
+    math, binding method entries with counts, per-client stats, compliance_pct 0-100 range.
+    **HIGH confidence.**
+
 ### Items at Risk of Regression
 
 | Item | Risk Factor | Mitigation |
