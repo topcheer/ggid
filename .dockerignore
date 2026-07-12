@@ -34,6 +34,11 @@ console/.next/
 
 # SDK (not needed in service images)
 sdk/
+!sdk/react/
+!sdk/react/src/
+!sdk/react/dist/
+!sdk/react/package.json
+!sdk/react/tsconfig.json
 
 # Deploy artifacts (not needed in service runtime)
 deploy/k6/

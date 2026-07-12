@@ -339,8 +339,8 @@ services:
 
   console:
     build:
-      context: ../console
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: console/Dockerfile
     container_name: ggid-console
     depends_on:
       gateway:
