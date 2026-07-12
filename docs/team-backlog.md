@@ -136,35 +136,35 @@
 *Source: docs/research/iam-trends-2026.md*
 
 ### P0: Agentic AI Identity Governance
-- [ ] Backend: Agent privilege drift detector (services/oauth/internal/service/agent_drift.go)
-- [ ] Backend: Shadow agent scanner (services/oauth/internal/service/shadow_scanner.go)
-- [ ] Backend: Agent access review CRUD (services/oauth/internal/server/agent_review_handler.go)
-- [ ] Frontend: Agent delegation chain visualization (console/src/app/agents/delegation-graph/)
-- [ ] Frontend: Agent access review page (console/src/app/settings/agent-access-review/)
-- [ ] SDK: GetAgentAccessReview, SubmitAgentReview methods
-- [ ] Docs: Agentic AI governance guide (docs/guides/agentic-ai-governance.md)
+- [x] Backend: Agent privilege drift detector (services/oauth/internal/service/agent_drift.go) ✅ 0583672
+- [x] Backend: Shadow agent scanner (services/oauth/internal/service/shadow_scanner.go) ✅ 0583672
+- [x] Backend: Agent access review CRUD (services/oauth/internal/server/agent_review_handler.go) ✅ 0583672
+- [ ] Frontend: Agent delegation chain visualization (console/src/app/agents/delegation-graph/) — dispatched
+- [ ] Frontend: Agent access review page (console/src/app/settings/agent-access-review/) — dispatched
+- [x] SDK: GetAgentAccessReview, SubmitAgentReview methods ✅ 79c01f9
+- [x] Docs: Agentic AI governance guide (docs/guides/agentic-ai-governance.md) ✅ 9254a95
 
 ### P1: Non-Human Identity Lifecycle
-- [ ] Backend: NHI inventory endpoint (services/identity/internal/server/nhi_inventory_handler.go)
-- [ ] Backend: NHI lifecycle automation (services/identity/internal/service/nhi_lifecycle.go)
-- [ ] Backend: Credential rotation scheduler (services/auth/internal/service/rotation_scheduler.go)
-- [ ] Frontend: NHI inventory dashboard (console/src/app/settings/nhi-inventory/)
-- [ ] Frontend: Credential rotation config (console/src/app/settings/credential-rotation/)
-- [ ] SDK: ListNHI, GetNHIDetails, RotateNHI, DecommissionNHI methods
-- [ ] Docs: NHI lifecycle management guide (docs/guides/nhi-lifecycle-management.md)
+- [x] Backend: NHI inventory endpoint (services/identity/internal/service/nhi_lifecycle.go) ✅ 0583672
+- [x] Backend: NHI lifecycle automation (services/identity/internal/service/nhi_lifecycle.go) ✅ 0583672
+- [x] Backend: Credential rotation scheduler (services/auth/internal/service/rotation_scheduler.go) ✅ 0583672
+- [ ] Frontend: NHI inventory dashboard (console/src/app/settings/nhi-inventory/) — dispatched
+- [ ] Frontend: Credential rotation config (console/src/app/settings/credential-rotation/) — dispatched
+- [x] SDK: ListNHI, GetNHIDetails, RotateNHI, DecommissionNHI methods ✅ 79c01f9
+- [x] Docs: NHI lifecycle management guide (docs/guides/nhi-lifecycle-management.md) ✅ 9254a95
 
 ### P1: Passkeys
-- [ ] Frontend: Passkey management page (console/src/app/settings/passkeys/)
-- [ ] Backend: Passkey enrollment endpoint (services/auth/internal/server/passkey_handler.go)
-- [ ] Docs: Passkey deployment guide (docs/guides/passkey-deployment.md)
+- [ ] Frontend: Passkey management page (console/src/app/settings/passkeys/) — dispatched
+- [ ] Backend: Passkey enrollment endpoint (services/auth/internal/server/passkey_handler.go) — not started
+- [x] Docs: Passkey deployment guide (docs/guides/passkey-deployment.md) ✅ 9254a95
 
 ### P2: Decentralized Identity
-- [ ] Backend: DID resolver (services/identity/internal/service/did_resolver.go)
-- [ ] Backend: VC issuer (services/identity/internal/service/vc_issuer.go)
-- [ ] Frontend: VC management page (console/src/app/settings/verifiable-credentials/)
-- [ ] Docs: Decentralized identity guide (docs/guides/decentralized-identity.md)
+- [ ] Backend: DID resolver (services/identity/internal/service/did_resolver.go) — not started
+- [ ] Backend: VC issuer (services/identity/internal/service/vc_issuer.go) — not started
+- [ ] Frontend: VC management page (console/src/app/settings/verifiable-credentials/) — not started
+- [x] Docs: Decentralized identity guide (docs/guides/decentralized-identity.md) ✅ 9254a95
 
 ### P2: CRA Compliance
-- [ ] Backend: SBOM endpoint (services/audit/internal/server/sbom_handler.go)
-- [ ] Docs: CRA compliance guide (docs/guides/cra-compliance.md)
+- [ ] Backend: SBOM endpoint (services/audit/internal/server/sbom_handler.go) — dispatched
+- [x] Docs: CRA compliance guide (docs/guides/cra-compliance.md) ✅ 9254a95
 - [ ] **P2** docs/oauth-2-1-compliance-statement.md
