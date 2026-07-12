@@ -249,6 +249,10 @@ export { useRoleRequests } from './useRoleRequests';
 export type { RoleRequest } from './useRoleRequests';
 export { useScopeMatrix } from './useScopeMatrix';
 export type { MatrixData } from './useScopeMatrix';
+export { usePolicySimulation } from './usePolicySimulation';
+export type { SimRule, SimResult } from './usePolicySimulation';
+export { useComplianceHeatmap } from './useComplianceHeatmap';
+export type { HeatmapData } from './useComplianceHeatmap';
 export type {
   GGIDConfig,
   GGIDUser,
