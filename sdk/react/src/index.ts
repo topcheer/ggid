@@ -655,6 +655,16 @@ export { usePolicyClauseLibrary } from './usePolicyClauseLibrary';
 export type { PolicyClauseLibraryData, Clause } from './usePolicyClauseLibrary';
 export { useAuditSamplingConfig } from './useAuditSamplingConfig';
 export type { AuditSamplingConfigData, SamplingStrategy, EventTypeRate, PopulationStats } from './useAuditSamplingConfig';
+export { useOAuthMtlsConfig } from './useOAuthMtlsConfig';
+export type { OAuthMtlsConfigData, TrustedCa, ClientMtls } from './useOAuthMtlsConfig';
+export { useAuthStepUpOrchestrator } from './useAuthStepUpOrchestrator';
+export type { AuthStepUpOrchestratorData, StepUpFlow, ActiveChallenge } from './useAuthStepUpOrchestrator';
+export { useIdentitySoftDeleteConfig } from './useIdentitySoftDeleteConfig';
+export type { IdentitySoftDeleteConfigData, EntityConfig, SoftDeletedItem } from './useIdentitySoftDeleteConfig';
+export { usePolicyDryRunHistory } from './usePolicyDryRunHistory';
+export type { PolicyDryRunHistoryData, DryRunEntry } from './usePolicyDryRunHistory';
+export { useAuditRealtimeAlerts } from './useAuditRealtimeAlerts';
+export type { AuditRealtimeAlertsData, AlertRule, ActiveAlert, SuppressionRule, EscalationStep } from './useAuditRealtimeAlerts';
 export type {
   GGIDConfig,
   GGIDUser,
