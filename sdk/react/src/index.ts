@@ -885,6 +885,16 @@ export { useCorsConfig } from './useCorsConfig';
 export type { CorsConfig, AllowedOrigin } from './useCorsConfig';
 export { useServiceMeshConfig } from './useServiceMeshConfig';
 export type { ServiceMeshConfig, TrafficPolicy, IdentityPropagation, CircuitBreakingConfig } from './useServiceMeshConfig';
+export { useOidcBackchannelLogoutConfig } from './useOidcBackchannelLogoutConfig';
+export type { OidcBackchannelLogoutConfig, BackchannelLogoutClient, LogoutErrorHandling } from './useOidcBackchannelLogoutConfig';
+export { useIdentityProofingConfig } from './useIdentityProofingConfig';
+export type { IdentityProofingConfig, VerificationMethod, RiskLevelConfig } from './useIdentityProofingConfig';
+export { useOauthConsentFlowConfig } from './useOauthConsentFlowConfig';
+export type { OauthConsentFlowConfig, ScopeDescription, PreApprovedApp } from './useOauthConsentFlowConfig';
+export { useDataSovereigntyConfig } from './useDataSovereigntyConfig';
+export type { DataSovereigntyConfig, ResidencyRegion, CrossBorderRule, SovereigntyViolation } from './useDataSovereigntyConfig';
+export { useWebauthnRecoveryConfig } from './useWebauthnRecoveryConfig';
+export type { WebauthnRecoveryConfig, ReEnrollmentStep } from './useWebauthnRecoveryConfig';
 export type {
   GGIDConfig,
   GGIDUser,
