@@ -137,6 +137,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/access-review/campaigns", h.handleAccessReviewCampaigns)
 	h.mux.HandleFunc("/api/v1/identity/saml/sp-health", h.handleSPHealth)
 	h.mux.HandleFunc("/api/v1/identity/scim/sync-health", h.handleSCIMSyncHealth)
+	h.mux.HandleFunc("/api/v1/identity/attribute-governance", h.handleAttributeGovernance)
 
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
