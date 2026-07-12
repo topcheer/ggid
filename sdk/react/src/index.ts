@@ -783,6 +783,16 @@ export { useTenantIsolationCheck } from './useTenantIsolationCheck';
 export type { TenantIsolationCheckData, IsolationTest, CrossTenantLog, RlsValidation } from './useTenantIsolationCheck';
 export { useAccessCertificationCampaigns } from './useAccessCertificationCampaigns';
 export type { AccessCertificationCampaignsData, Campaign, ReviewerWorkload, PendingReview } from './useAccessCertificationCampaigns';
+export { useScimErrorRecovery } from './useScimErrorRecovery';
+export type { ScimErrorRecoveryData, ScimErrorEntry, ErrorPattern, AutoRetryConfig } from './useScimErrorRecovery';
+export { useIdpFailoverConfig } from './useIdpFailoverConfig';
+export type { IdpFailoverConfigData, IdpCard, FailoverRule, FailoverHistoryEntry } from './useIdpFailoverConfig';
+export { useTenantMigrationTool } from './useTenantMigrationTool';
+export type { TenantMigrationToolData, MigrationScopeItem, DryRunResult, MigrationRecord } from './useTenantMigrationTool';
+export { usePolicyImportExport } from './usePolicyImportExport';
+export type { PolicyImportExportData, ImportLog, TemplateEntry } from './usePolicyImportExport';
+export { useOAuthClientOnboardingWizard } from './useOAuthClientOnboardingWizard';
+export type { OAuthClientOnboardingWizardData, GrantTypeOption, ScopeOption, GeneratedCredentials } from './useOAuthClientOnboardingWizard';
 export type {
   GGIDConfig,
   GGIDUser,
