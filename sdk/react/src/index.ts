@@ -257,6 +257,10 @@ export { useTokenLifetime } from './useTokenLifetime';
 export type { LifetimeData } from './useTokenLifetime';
 export { useOrgTransfer } from './useOrgTransfer';
 export type { TransferImpact } from './useOrgTransfer';
+export { usePolicyExport } from './usePolicyExport';
+export type { ImportDiff } from './usePolicyExport';
+export { useGeofencing } from './useGeofencing';
+export type { GeofenceRule } from './useGeofencing';
 export type {
   GGIDConfig,
   GGIDUser,
