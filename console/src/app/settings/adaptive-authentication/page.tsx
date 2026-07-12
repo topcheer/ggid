@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface RiskRule {
   id: string;
@@ -17,14 +17,7 @@ interface DeviceTrust {
 }
 
 export default function AdaptiveAuthenticationPage() {
-  const [rules, setRules] = useState<RiskRule[]>([
-    { id: 'r1', condition: 'New device login', action: 'step_up_mfa', enabled: true },
-    { id: 'r2', condition: 'Login from new country', action: 'block', enabled: true },
-    { id: 'r3', condition: 'Login outside business hours', action: 'step_up_mfa', enabled: true },
-    { id: 'r4', condition: 'Impossible travel detected', action: 'block', enabled: true },
-    { id: 'r5', condition: 'Failed password 3+ times', action: 'lock_account', enabled: true },
-  ]);
-
+  const [rules, setRules] = useState<RiskRule[]>([]);
   const [thresholds, setThresholds] = useState([
     { level: 'low', minScore: 0, maxScore: 25, action: 'allow' },
     { level: 'medium', minScore: 25, maxScore: 50, action: 'step_up' },
@@ -32,19 +25,36 @@ export default function AdaptiveAuthenticationPage() {
     { level: 'critical', minScore: 75, maxScore: 100, action: 'block' },
   ]);
 
-  const [ipAllowlist, setIpAllowlist] = useState(['10.0.0.0/8', '172.16.0.0/12', '192.168.1.0/24']);
-  const [ipBlocklist, setIpBlocklist] = useState(['203.0.113.0/24', '198.51.100.50']);
+  const [ipAllowlist, setIpAllowlist] = useState<string[]>([]);
+  const [ipBlocklist, setIpBlocklist] = useState<string[]>([]);
   const [newIp, setNewIp] = useState('');
   const [ipMode, setIpMode] = useState<'allow' | 'block'>('allow');
 
-  const [devices, setDevices] = useState<DeviceTrust[]>([
-    { id: 'd1', deviceId: 'dev-001', name: 'MacBook Pro', trustLevel: 'trusted', lastSeen: '2026-07-12' },
-    { id: 'd2', deviceId: 'dev-002', name: 'iPhone 15', trustLevel: 'trusted', lastSeen: '2026-07-11' },
-    { id: 'd3', deviceId: 'dev-003', name: 'Unknown Device', trustLevel: 'untrusted', lastSeen: '2026-07-10' },
-  ]);
-
+  const [devices, setDevices] = useState<DeviceTrust[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [realTimeEval, setRealTimeEval] = useState(true);
   const [adaptiveMfa, setAdaptiveMfa] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/adaptive-auth/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.rules) setRules(data.rules);
+          if (data.thresholds) setThresholds(data.thresholds);
+          if (data.ip_allowlist) setIpAllowlist(data.ip_allowlist);
+          if (data.ip_blocklist) setIpBlocklist(data.ip_blocklist);
+          if (data.devices) setDevices(data.devices);
+          if (data.real_time_eval !== undefined) setRealTimeEval(data.real_time_eval);
+          if (data.adaptive_mfa !== undefined) setAdaptiveMfa(data.adaptive_mfa);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
   const [showAddRule, setShowAddRule] = useState(false);
   const [newRule, setNewRule] = useState({ condition: '', action: 'step_up_mfa' });
 
@@ -78,6 +88,9 @@ export default function AdaptiveAuthenticationPage() {
 
   const trustColor = (t: string): string =>
     t === 'trusted' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -120,7 +133,9 @@ export default function AdaptiveAuthenticationPage() {
         )}
 
         <div className="space-y-2">
-          {rules.map(r => (
+          {rules.length === 0 ? (
+            <p className="text-sm text-gray-400">No data available</p>
+          ) : rules.map(r => (
             <div key={r.id} className="flex items-center gap-3 border-b pb-2">
               <label className="flex items-center gap-2">
                 <input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
@@ -198,7 +213,9 @@ export default function AdaptiveAuthenticationPage() {
             </tr>
           </thead>
           <tbody>
-            {devices.map(d => (
+            {devices.length === 0 ? (
+              <tr><td colSpan={4} className="p-3 text-center text-gray-400">No data available</td></tr>
+            ) : devices.map(d => (
               <tr key={d.id} className="border-b">
                 <td className="p-3 font-medium">{d.name}</td>
                 <td className="p-3 font-mono text-xs text-gray-500">{d.deviceId}</td>

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LockoutRecord {
   user: string;
@@ -19,14 +19,36 @@ export default function AccountLockoutConfigPage() {
   const [perIpTracking, setPerIpTracking] = useState(true);
   const [perUserTracking, setPerUserTracking] = useState(true);
 
-  const [lockouts] = useState<LockoutRecord[]>([
-    { user: 'alice@ggid.io', attempts: 5, lockedAt: '2026-07-12 10:30', unlockedAt: '2026-07-12 10:45', reason: 'Too many failed attempts' },
-    { user: 'bob@ggid.io', attempts: 8, lockedAt: '2026-07-11 15:45', unlockedAt: '-', reason: 'Brute force detected' },
-    { user: 'carol@ggid.io', attempts: 3, lockedAt: '2026-07-11 09:20', unlockedAt: '2026-07-11 09:35', reason: 'Repeated wrong password' },
-  ]);
+  const [lockouts, setLockouts] = useState<LockoutRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/lockout-policy/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.max_attempts) setMaxAttempts(data.max_attempts);
+          if (data.window_minutes) setWindowMinutes(data.window_minutes);
+          if (data.lockout_duration) setLockoutDuration(data.lockout_duration);
+          if (data.captcha_threshold) setCaptchaThreshold(data.captcha_threshold);
+          if (data.auto_unlock !== undefined) setAutoUnlock(data.auto_unlock);
+          if (data.auto_unlock_after) setAutoUnlockAfter(data.auto_unlock_after);
+          if (data.per_ip_tracking !== undefined) setPerIpTracking(data.per_ip_tracking);
+          if (data.per_user_tracking !== undefined) setPerUserTracking(data.per_user_tracking);
+          if (data.lockouts) setLockouts(data.lockouts);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
+      {loading && <p className="text-gray-500">Loading...</p>}
+      {error && <p className="text-red-600">Error: {error}</p>}
       <div>
         <h1 className="text-2xl font-bold">Account Lockout Configuration</h1>
         <p className="text-gray-600">Configure brute-force protection with per-IP and per-user tracking.</p>
@@ -99,7 +121,9 @@ export default function AccountLockoutConfigPage() {
             </tr>
           </thead>
           <tbody>
-            {lockouts.map((l, idx) => (
+            {lockouts.length === 0 ? (
+              <tr><td colSpan={6} className="p-3 text-center text-gray-400">No data available</td></tr>
+            ) : lockouts.map((l, idx) => (
               <tr key={idx} className="border-b">
                 <td className="p-3 font-medium">{l.user}</td>
                 <td className="p-3">{l.attempts}</td>

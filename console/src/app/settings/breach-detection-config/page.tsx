@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface BreachRecord {
   id: string;
@@ -35,26 +35,58 @@ const COMPROMISED_PASSWORDS: CompromisedPassword[] = [
 
 export default function BreachDetectionConfigPage() {
   const [hibpEnabled, setHibpEnabled] = useState(true);
-  const [apiKey, setApiKey] = useState('********-****-****-****-************');
+  const [apiKey, setApiKey] = useState('');
   const [checkOnLogin, setCheckOnLogin] = useState(true);
   const [checkOnPasswordChange, setCheckOnPasswordChange] = useState(true);
   const [checkOnRegister, setCheckOnRegister] = useState(true);
   const [autoForceReset, setAutoForceReset] = useState(true);
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [notifyAdmin, setNotifyAdmin] = useState(true);
-  const [breaches, setBreaches] = useState<BreachRecord[]>(INITIAL_BREACHES);
+  const [breaches, setBreaches] = useState<BreachRecord[]>([]);
+  const [compromisedPasswords, setCompromisedPasswords] = useState<CompromisedPassword[]>([]);
   const [filterUser, setFilterUser] = useState('all');
   const [activeTab, setActiveTab] = useState<'config' | 'history' | 'passwords'>('config');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const lastCheck = '2025-01-15T08:00:00Z';
-  const rateLimitRemaining = 42;
-  const rateLimitTotal = 50;
+  const [lastCheck, setLastCheck] = useState('');
+  const [rateLimitRemaining, setRateLimitRemaining] = useState(0);
+  const [rateLimitTotal, setRateLimitTotal] = useState(50);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/breach-warnings', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.hibp_enabled !== undefined) setHibpEnabled(data.hibp_enabled);
+          if (data.api_key) setApiKey(data.api_key);
+          if (data.check_on_login !== undefined) setCheckOnLogin(data.check_on_login);
+          if (data.check_on_password_change !== undefined) setCheckOnPasswordChange(data.check_on_password_change);
+          if (data.check_on_register !== undefined) setCheckOnRegister(data.check_on_register);
+          if (data.auto_force_reset !== undefined) setAutoForceReset(data.auto_force_reset);
+          if (data.notify_email !== undefined) setNotifyEmail(data.notify_email);
+          if (data.notify_admin !== undefined) setNotifyAdmin(data.notify_admin);
+          if (data.breaches) setBreaches(data.breaches);
+          if (data.compromised_passwords) setCompromisedPasswords(data.compromised_passwords);
+          if (data.last_check) setLastCheck(data.last_check);
+          if (data.rate_limit_remaining !== undefined) setRateLimitRemaining(data.rate_limit_remaining);
+          if (data.rate_limit_total) setRateLimitTotal(data.rate_limit_total);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const filteredBreaches = filterUser === 'all' ? breaches : breaches.filter(b => b.user === filterUser);
 
   const resolveBreach = useCallback((id: string) => {
     setBreaches(breaches.map(b => b.id === id ? { ...b, resolved: true } : b));
   }, [breaches]);
+
+  if (loading) return <div className="space-y-6"><p className="text-gray-500">Loading...</p></div>;
+  if (error) return <div className="space-y-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="space-y-6">
@@ -190,7 +222,10 @@ export default function BreachDetectionConfigPage() {
 
       {activeTab === 'passwords' && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-700">Compromised Password List ({COMPROMISED_PASSWORDS.length})</h3>
+          <h3 className="text-sm font-medium text-gray-700">Compromised Password List ({compromisedPasswords.length})</h3>
+          {compromisedPasswords.length === 0 ? (
+            <p className="text-sm text-gray-400">No data available</p>
+          ) : (
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
@@ -200,7 +235,7 @@ export default function BreachDetectionConfigPage() {
               </tr>
             </thead>
             <tbody>
-              {COMPROMISED_PASSWORDS.map((p, i) => (
+              {compromisedPasswords.map((p, i) => (
                 <tr key={i} className="border-b border-gray-100">
                   <td className="py-2 font-mono text-xs">{p.hash}</td>
                   <td className="py-2">{p.count.toLocaleString()}</td>
@@ -209,6 +244,7 @@ export default function BreachDetectionConfigPage() {
               ))}
             </tbody>
           </table>
+          )}
         </div>
       )}
     </div>
