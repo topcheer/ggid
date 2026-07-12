@@ -59,8 +59,8 @@ func TestConfig_LoadFromEnv(t *testing.T) {
 	if cfg.Routes["/api/v1/auth"] != "http://auth:9001" {
 		t.Errorf("unexpected auth route: %s", cfg.Routes["/api/v1/auth"])
 	}
-	if cfg.Routes["/api/v1/users"] != "http://identity:9002" {
-		t.Errorf("unexpected identity route: %s", cfg.Routes["/api/v1/users"])
+	if cfg.Routes["/api/v1/identity"] != "http://identity:9002" {
+		t.Errorf("unexpected identity route: %s", cfg.Routes["/api/v1/identity"])
 	}
 }
 

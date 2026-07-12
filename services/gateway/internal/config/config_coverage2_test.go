@@ -47,8 +47,8 @@ func TestLoadFromEnv_ServiceURLs(t *testing.T) {
 	if cfg.Routes["/api/v1/auth"] != "http://auth-env:9001" {
 		t.Errorf("expected auth route override, got %s", cfg.Routes["/api/v1/auth"])
 	}
-	if cfg.Routes["/api/v1/users"] != "http://identity-env:8080" {
-		t.Errorf("expected identity route override, got %s", cfg.Routes["/api/v1/users"])
+	if cfg.Routes["/api/v1/identity"] != "http://identity-env:8080" {
+		t.Errorf("expected identity route override, got %s", cfg.Routes["/api/v1/identity"])
 	}
 	if cfg.Routes["/api/v1/audit"] != "http://audit-env:8072" {
 		t.Errorf("expected audit route override, got %s", cfg.Routes["/api/v1/audit"])

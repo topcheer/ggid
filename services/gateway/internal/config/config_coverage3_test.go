@@ -129,8 +129,8 @@ func TestLoadFromEnv_AllEnvVars(t *testing.T) {
 	if cfg.Routes["/api/v1/auth"] != "http://auth:9001" {
 		t.Errorf("Auth route: got '%s'", cfg.Routes["/api/v1/auth"])
 	}
-	if cfg.Routes["/api/v1/users"] != "http://id:8081" {
-		t.Errorf("Identity route: got '%s'", cfg.Routes["/api/v1/users"])
+	if cfg.Routes["/api/v1/identity"] != "http://id:8081" {
+		t.Errorf("Identity route: got '%s'", cfg.Routes["/api/v1/identity"])
 	}
 	if cfg.Routes["/oauth"] != "http://oauth:9005" {
 		t.Errorf("OAuth route: got '%s'", cfg.Routes["/oauth"])
