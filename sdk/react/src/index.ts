@@ -461,6 +461,12 @@ export { useUserImport } from './useUserImport';
 export type { ImportResults } from './useUserImport';
 export { useGrantHistory } from './useGrantHistory';
 export type { GrantEvent } from './useGrantHistory';
+export { useScopeDrift } from './useScopeDrift';
+export type { ScopeDriftData } from './useScopeDrift';
+export { usePolicyVersioning } from './usePolicyVersioning';
+export type { PolicyVersion } from './usePolicyVersioning';
+export { useHashChain } from './useHashChain';
+export type { HashChainInfo } from './useHashChain';
 export type {
   GGIDConfig,
   GGIDUser,
