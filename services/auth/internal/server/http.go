@@ -286,6 +286,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/anomaly-score", h.handleSessionAnomalyScore)
 	h.mux.HandleFunc("/api/v1/auth/vpn-check", h.handleVPNCheck)
 	h.mux.HandleFunc("/api/v1/auth/detect-impossible-travel", h.handleDetectImpossibleTravel)
+	h.mux.HandleFunc("/api/v1/auth/geofencing", h.handleGeofencing)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)
 	h.mux.HandleFunc("/api/v1/auth/sessions/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/fingerprint") {

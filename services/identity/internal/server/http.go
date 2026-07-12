@@ -125,6 +125,10 @@ func (h *HTTPHandler) registerRoutes() {
 			h.handleFreezeUnfreeze(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/risk-profile") {
+			h.handleRiskProfile(w, r)
+			return
+		}
 		h.handleUsers(w, r)
 	})
 }
