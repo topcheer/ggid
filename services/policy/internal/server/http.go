@@ -38,6 +38,9 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/permissions", s.handlePermissions)
 	mux.HandleFunc("/api/v1/policies", s.handlePolicies)
 	mux.HandleFunc("/api/v1/policies/", s.handlePolicyByID)
+	mux.HandleFunc("/api/v1/policy-versions", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]interface{}{"versions": []interface{}{}, "total": 0})
+	})
 	mux.HandleFunc("/api/v1/policies/check", s.handleCheck)
 	mux.HandleFunc("/api/v1/policies/evaluate", s.handleEvaluate)
 	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
@@ -213,6 +216,23 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, http.StatusOK, roleToJSON(role))
+	case http.MethodPut, http.MethodPatch:
+		var req struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		namePtr := &req.Name
+		descPtr := &req.Description
+		updated, err := s.roleSvc.UpdateRole(r.Context(), id, namePtr, descPtr, nil)
+		if err != nil {
+			writeJSONError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, roleToJSON(updated))
 	case http.MethodDelete:
 		if err := s.roleSvc.DeleteRole(r.Context(), id); err != nil {
 			writeServiceError(w, err)
@@ -573,6 +593,10 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch r.Method {
+	case http.MethodPut, http.MethodPatch:
+		// Update policy — re-parse body and delegate to createPolicy which does upsert
+		s.createPolicy(w, r)
+		return
 	case http.MethodDelete:
 		if err := s.policySvc.DeletePolicy(r.Context(), id); err != nil {
 			writeServiceError(w, err)
