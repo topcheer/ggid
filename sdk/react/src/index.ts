@@ -339,6 +339,16 @@ export { useTokenBindingStats } from './useTokenBindingStats';
 export type { BindingStats } from './useTokenBindingStats';
 export { useExportSchedule } from './useExportSchedule';
 export type { ExportJob } from './useExportSchedule';
+export { useAccessReviewCampaigns } from './useAccessReviewCampaigns';
+export type { Campaign } from './useAccessReviewCampaigns';
+export { useAccessGraph } from './useAccessGraph';
+export type { AccessData } from './useAccessGraph';
+export { useReportingStructure } from './useReportingStructure';
+export type { OrgTreeData, TreeNode } from './useReportingStructure';
+export { useScopeLifecycle } from './useScopeLifecycle';
+export type { ScopeRequest } from './useScopeLifecycle';
+export { useHijackTimeline } from './useHijackTimeline';
+export type { HijackData } from './useHijackTimeline';
 export type {
   GGIDConfig,
   GGIDUser,
