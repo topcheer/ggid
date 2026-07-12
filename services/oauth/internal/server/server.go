@@ -1004,6 +1004,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/redirect-uri-validation/config", handleRedirectURIValidationConfig)
 	mux.HandleFunc("/api/v1/oauth/oidc/claim-mapping", handleOIDCClaimMapping)
 	mux.HandleFunc("/api/v1/oauth/issuer/metadata", handleIssuerMetadataConfig)
+	mux.HandleFunc("/api/v1/oauth/ciba/config", handleCIBAConfig)
+	mux.HandleFunc("/api/v1/oauth/jar/config", handleJARConfig)
+	mux.HandleFunc("/api/v1/oauth/oidc-federation/config", handleOIDCFederationConfig)
+	mux.HandleFunc("/api/v1/oauth/par/config", handlePARConfig)
 	mux.HandleFunc("/api/v1/oauth/agents/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if strings.HasSuffix(path, "/lifecycle") {
