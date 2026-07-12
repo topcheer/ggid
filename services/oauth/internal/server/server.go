@@ -1282,7 +1282,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/resource-indicator", handleResourceIndicator)
 	mux.HandleFunc("/api/v1/oauth/resource-allowed", handleResourceAllowed)
 	mux.HandleFunc("/api/v1/oauth/token-events/stream", handleTokenEventStream)
-	mux.HandleFunc("/api/v1/oauth/consent/", handleConsentReceipt)
+	// /api/v1/oauth/consent/ is already registered at line ~1025 with sub-path routing
 	mux.HandleFunc("/api/v1/oauth/token-families/", handleTokenFamily)
 	mux.HandleFunc("/api/v1/oauth/par", handlePAR)
 	mux.HandleFunc("/api/v1/oauth/par/", handlePAR)
