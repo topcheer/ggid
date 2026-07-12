@@ -608,10 +608,29 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := uuid.Parse(req.UserID)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "invalid user_id")
-		return
+	// Extract user_id from JWT token in Authorization header
+	var userID uuid.UUID
+	if req.UserID != "" {
+		userID, err = uuid.Parse(req.UserID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid user_id")
+			return
+		}
+	} else {
+		// Extract from JWT sub claim
+		authHeader := r.Header.Get("Authorization")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims, err := h.authSvc.ParseAccessToken(r.Context(), tokenStr)
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
+		sub, _ := claims["sub"].(string)
+		userID, err = uuid.Parse(sub)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid user_id in token")
+			return
+		}
 	}
 
 	if err := h.authSvc.ChangePassword(r.Context(), tc.TenantID, userID, req.OldPassword, req.NewPassword); err != nil {
