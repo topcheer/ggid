@@ -489,6 +489,16 @@ export { useEmailTemplateEditor } from './useEmailTemplateEditor';
 export type { EmailContent } from './useEmailTemplateEditor';
 export { useNotificationPreferences } from './useNotificationPreferences';
 export type { NotificationPrefs } from './useNotificationPreferences';
+export { useIdpMetadataImport } from './useIdpMetadataImport';
+export type { MetadataInfo } from './useIdpMetadataImport';
+export { useAuditRetentionPolicy } from './useAuditRetentionPolicy';
+export type { RetentionRule } from './useAuditRetentionPolicy';
+export { useTenantBranding } from './useTenantBranding';
+export type { Branding } from './useTenantBranding';
+export { useLdapSyncConfig } from './useLdapSyncConfig';
+export type { LdapConfig } from './useLdapSyncConfig';
+export { useLockoutPolicy } from './useLockoutPolicy';
+export type { LockoutConfig } from './useLockoutPolicy';
 export type {
   GGIDConfig,
   GGIDUser,
