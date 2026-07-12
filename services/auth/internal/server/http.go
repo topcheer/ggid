@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
@@ -620,7 +621,10 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		// Extract from JWT sub claim
 		authHeader := r.Header.Get("Authorization")
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		claims, err := h.authSvc.ParseAccessToken(r.Context(), tokenStr)
+		claims := jwt.MapClaims{}
+		_, err := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, "invalid token")
 			return

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/rsa"
 	stderrors "errors"
 	"fmt"
 	"log/slog"
@@ -63,6 +64,11 @@ func NewAuthService(
 }
 
 // GetPasswordPolicy returns the current password policy configuration.
+// PublicKey returns the RSA public key for JWT verification.
+func (s *AuthService) PublicKey() *rsa.PublicKey {
+	return s.tokenService.PublicKey()
+}
+
 func (s *AuthService) GetPasswordPolicy() conf.PasswordPolicy {
 	if s.passwordService == nil {
 		return conf.PasswordPolicy{}
