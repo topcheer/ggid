@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Destination {
   id: string;
@@ -12,6 +12,36 @@ interface Destination {
 }
 
 export default function SiemForwarderDashboardPage() {
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/audit/siem/metrics", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [destinations] = useState<Destination[]>([
     { id: 'd1', name: 'Splunk Prod', type: 'Splunk', status: 'healthy', lastForward: '2026-07-12 14:32', latency: '45ms', circuitBreaker: 'closed' },
     { id: 'd2', name: 'ELK Cluster', type: 'ELK', status: 'healthy', lastForward: '2026-07-12 14:32', latency: '120ms', circuitBreaker: 'closed' },

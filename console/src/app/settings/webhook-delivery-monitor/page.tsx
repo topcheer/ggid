@@ -1,9 +1,39 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Delivery { id: string; webhook: string; event: string; status: string; attempts: number; latency: string; nextRetry: string; }
 
 export default function WebhookDeliveryMonitorPage() {
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/audit/webhooks/delivery-status", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [deliveries] = useState<Delivery[]>([
     { id: 'd1', webhook: 'Splunk Prod', event: 'user.login', status: 'success', attempts: 1, latency: '45ms', nextRetry: '-' },
     { id: 'd2', webhook: 'ELK Cluster', event: 'policy.update', status: 'success', attempts: 1, latency: '120ms', nextRetry: '-' },

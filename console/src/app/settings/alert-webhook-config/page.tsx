@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Webhook {
   id: string;
@@ -12,6 +12,36 @@ interface Webhook {
 }
 
 export default function AlertWebhookConfigPage() {
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/audit/alert-webhooks", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [webhooks, setWebhooks] = useState<Webhook[]>([
     { id: 'w1', url: 'https://hooks.slack.com/services/xxx', eventTypes: ['alert', 'escalation'], enabled: true, maxRetries: 3, status: 'healthy', deliveries: { success: 142, failure: 2, retry: 5 } },
     { id: 'w2', url: 'https://api.pagerduty.com/v2/enqueue', eventTypes: ['alert', 'correlation'], enabled: true, maxRetries: 5, status: 'healthy', deliveries: { success: 89, failure: 0, retry: 1 } },

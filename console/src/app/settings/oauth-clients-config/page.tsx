@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Client {
   id: string;
@@ -15,6 +15,36 @@ interface Client {
 }
 
 export default function OauthClientsConfigPage() {
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/oauth/clients", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [clients, setClients] = useState<Client[]>([
     { id: 'c1', clientId: 'web-app', name: 'Web Application', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'profile'], redirectUris: ['https://app.ggid.io/callback'], status: 'active', tokenLifetime: 3600, logoUri: 'https://app.ggid.io/logo.png', policyUri: 'https://app.ggid.io/privacy' },
     { id: 'c2', clientId: 'mobile-app', name: 'Mobile App', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'profile', 'offline_access'], redirectUris: ['com.ggid.app://callback'], status: 'active', tokenLifetime: 7200, logoUri: '', policyUri: '' },

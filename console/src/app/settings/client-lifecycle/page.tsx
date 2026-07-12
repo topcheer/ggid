@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Client {
   id: string;
@@ -14,6 +14,36 @@ interface Client {
 }
 
 export default function ClientLifecyclePage() {
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/oauth/clients", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [clients, setClients] = useState<Client[]>([
     { id: 'c1', clientId: 'web-app-prod', name: 'Web App Production', status: 'active', created: '2026-01-15', lastUsed: '2026-07-12', grantTypes: ['authorization_code', 'refresh_token'], redirectUris: ['https://app.ggid.io/callback'], secretRotatedAt: '2026-06-01' },
     { id: 'c2', clientId: 'mobile-app', name: 'Mobile App', status: 'active', created: '2026-03-01', lastUsed: '2026-07-11', grantTypes: ['authorization_code', 'refresh_token', 'pkce'], redirectUris: ['com.ggid.app://callback'], secretRotatedAt: '2026-05-15' },

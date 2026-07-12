@@ -1,10 +1,40 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Rocket, Check, ChevronRight, Copy } from "lucide-react";
 const grantTypes = ["authorization_code", "client_credentials", "refresh_token", "password", "device_code", "implicit"];
 const allScopes = ["openid", "profile", "email", "read:users", "write:users", "read:roles", "write:roles", "audit:read"];
 const steps = ["App Info", "Grant Types", "Redirect URIs", "Scopes", "Review"];
 export default function ClientOnboardingPage() {
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/oauth/clients", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: "", description: "", grants: ["authorization_code"], redirects: [""], scopes: ["openid", "profile"] });
   const [creds, setCreds] = useState<{ client_id: string; client_secret: string } | null>(null);

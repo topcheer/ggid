@@ -1,9 +1,39 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface AuditEvent { id: string; timestamp: string; actor: string; action: string; resource: string; tenant: string; severity: string; ip: string; }
 
 export default function AuditLogViewerPage() {
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/audit/events", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [events] = useState<AuditEvent[]>([
     { id: 'e1', timestamp: '2026-07-12 14:32:15', actor: 'admin@ggid.io', action: 'user.create', resource: 'user/alice', tenant: 'default', severity: 'info', ip: '10.0.0.5' },
     { id: 'e2', timestamp: '2026-07-12 14:30:08', actor: 'system', action: 'auth.login', resource: 'auth/session', tenant: 'default', severity: 'info', ip: '192.168.1.50' },
