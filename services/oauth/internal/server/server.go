@@ -1012,6 +1012,20 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/client-lifecycle/config", handleClientLifecycleConfig)
 	mux.HandleFunc("/api/v1/oauth/consent/config", handleConsentConfig)
 	mux.HandleFunc("/api/v1/oauth/dynamic-registration/config", handleDynamicRegistrationConfig)
+	mux.HandleFunc("/api/v1/agents/reviews", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			handleAgentReviewCreate(w, r)
+		} else {
+			handleAgentReviewList(w, r)
+		}
+	})
+	mux.HandleFunc("/api/v1/agents/reviews/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut {
+			handleAgentReviewUpdate(w, r)
+		} else {
+			handleAgentReviewGet(w, r)
+		}
+	})
 	mux.HandleFunc("/api/v1/oauth/agents/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if strings.HasSuffix(path, "/lifecycle") {
