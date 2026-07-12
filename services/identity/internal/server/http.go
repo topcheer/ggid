@@ -140,6 +140,9 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/attribute-governance", h.handleAttributeGovernance)
 	h.mux.HandleFunc("/api/v1/identity/entitlement-review/", h.handleEntitlementReview)
 	h.mux.HandleFunc("/api/v1/identity/pipl/data-inventory", h.handlePIPLDataInventory)
+	h.mux.HandleFunc("/api/v1/identity/pii/discover", h.handlePIIDiscover)
+	h.mux.HandleFunc("/api/v1/identity/consent/registry", h.handleConsentRegistry)
+	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
