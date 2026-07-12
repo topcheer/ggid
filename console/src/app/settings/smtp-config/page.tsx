@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function SmtpConfigPage() {
   const [host, setHost] = useState('smtp.ggid.io');
@@ -20,11 +20,42 @@ export default function SmtpConfigPage() {
   const [testEmail, setTestEmail] = useState('');
   const [testResult, setTestResult] = useState('');
   const [testing, setTesting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/email-template/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.host) setHost(data.host);
+          if (data.port) setPort(data.port);
+          if (data.encryption) setEncryption(data.encryption);
+          if (data.username) setUsername(data.username);
+          if (data.from_address) setFromAddress(data.from_address);
+          if (data.from_name) setFromName(data.from_name);
+          if (data.reply_to) setReplyTo(data.reply_to);
+          if (data.timeout) setTimeout(data.timeout);
+          if (data.auth_method) setAuthMethod(data.auth_method);
+          if (data.rate_limit) setRateLimit(data.rate_limit);
+          if (data.dkim_enabled !== undefined) setDkimEnabled(data.dkim_enabled);
+          if (data.dkim_domain) setDkimDomain(data.dkim_domain);
+          if (data.dkim_selector) setDkimSelector(data.dkim_selector);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const sendTest = () => {
     setTesting(true);
     setTimeout(() => { setTestResult(`Test email sent to ${testEmail}`); setTesting(false); }, 1000);
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface RiskFactor {
   name: string;
@@ -18,27 +18,27 @@ interface RiskEvent {
 }
 
 export default function RiskEngineDashboardPage() {
-  const [factors, setFactors] = useState<RiskFactor[]>([
-    { name: 'Geo-velocity', score: 15, weight: 25, enabled: true },
-    { name: 'Impossible travel', score: 0, weight: 30, enabled: true },
-    { name: 'New device', score: 10, weight: 20, enabled: true },
-    { name: 'Anomalous time', score: 5, weight: 10, enabled: true },
-    { name: 'Failed attempts', score: 0, weight: 15, enabled: true },
-  ]);
+  const [factors, setFactors] = useState<RiskFactor[]>([]);
+  const [events, setEvents] = useState<RiskEvent[]>([]);
+  const [thresholds, setThresholds] = useState([] as { level: string; minScore: number; maxScore: number; action: string }[]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [events] = useState<RiskEvent[]>([
-    { id: 'e1', user: 'alice@ggid.io', score: 87, factors: ['impossible-travel', 'new-device'], action: 'block', timestamp: '2026-07-12 14:32' },
-    { id: 'e2', user: 'bob@ggid.io', score: 62, factors: ['anomalous-time', 'failed-attempts'], action: 'step-up', timestamp: '2026-07-12 13:15' },
-    { id: 'e3', user: 'carol@ggid.io', score: 45, factors: ['geo-velocity'], action: 'step-up', timestamp: '2026-07-12 11:08' },
-    { id: 'e4', user: 'dave@ggid.io', score: 92, factors: ['impossible-travel', 'failed-attempts'], action: 'block', timestamp: '2026-07-12 09:45' },
-  ]);
-
-  const [thresholds, setThresholds] = useState([
-    { level: 'low', minScore: 0, maxScore: 30, action: 'allow' },
-    { level: 'medium', minScore: 30, maxScore: 60, action: 'step-up' },
-    { level: 'high', minScore: 60, maxScore: 85, action: 'challenge-mfa' },
-    { level: 'critical', minScore: 85, maxScore: 100, action: 'block' },
-  ]);
+  useEffect(() => {
+    fetch('/api/v1/auth/risk/aggregate', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.factors) setFactors(data.factors);
+          if (data.events) setEvents(data.events);
+          if (data.thresholds) setThresholds(data.thresholds);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const currentScore = factors.filter(f => f.enabled).reduce((sum, f) => sum + f.score, 0);
   const gaugeColor = currentScore >= 85 ? 'text-red-600' : currentScore >= 60 ? 'text-amber-600' : currentScore >= 30 ? 'text-yellow-600' : 'text-green-600';
@@ -53,6 +53,9 @@ export default function RiskEngineDashboardPage() {
 
   const actionColor = (a: string): string =>
     a === 'block' ? 'bg-red-100 text-red-700' : a === 'challenge-mfa' ? 'bg-amber-100 text-amber-700' : a === 'step-up' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

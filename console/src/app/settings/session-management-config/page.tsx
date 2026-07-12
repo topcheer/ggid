@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function SessionManagementConfigPage() {
   const [idleTimeout, setIdleTimeout] = useState(30);
@@ -12,6 +12,34 @@ export default function SessionManagementConfigPage() {
   const [stepUpTimeout, setStepUpTimeout] = useState(300);
   const [storage, setStorage] = useState('redis');
   const [logoutBehavior, setLogoutBehavior] = useState('all_sessions');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/session-timeout/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.idle_timeout) setIdleTimeout(data.idle_timeout);
+          if (data.absolute_timeout) setAbsoluteTimeout(data.absolute_timeout);
+          if (data.max_concurrent) setMaxConcurrent(data.max_concurrent);
+          if (data.fixation_prevention !== undefined) setFixationPrevention(data.fixation_prevention);
+          if (data.bind_ip !== undefined) setBindIp(data.bind_ip);
+          if (data.bind_device !== undefined) setBindDevice(data.bind_device);
+          if (data.bind_geo !== undefined) setBindGeo(data.bind_geo);
+          if (data.step_up_timeout) setStepUpTimeout(data.step_up_timeout);
+          if (data.storage) setStorage(data.storage);
+          if (data.logout_behavior) setLogoutBehavior(data.logout_behavior);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

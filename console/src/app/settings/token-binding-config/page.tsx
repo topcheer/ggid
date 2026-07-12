@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ClientOverride {
   clientId: string;
@@ -14,10 +14,29 @@ export default function TokenBindingConfigPage() {
   const [mtlsBinding, setMtlsBinding] = useState(false);
   const [replayDetection, setReplayDetection] = useState(true);
   const [enforcementPolicy, setEnforcementPolicy] = useState('strict');
-  const [overrides, setOverrides] = useState<ClientOverride[]>([
-    { clientId: 'web-app', bindingType: 'dpop', enforcement: 'required' },
-    { clientId: 'mobile-app', bindingType: 'mtls', enforcement: 'optional' },
-  ]);
+  const [overrides, setOverrides] = useState<ClientOverride[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/token-reuse-check', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.dpop_enabled !== undefined) setDpopEnabled(data.dpop_enabled);
+          if (data.proof_expiry) setProofExpiry(data.proof_expiry);
+          if (data.sender_constrained !== undefined) setSenderConstrained(data.sender_constrained);
+          if (data.mtls_binding !== undefined) setMtlsBinding(data.mtls_binding);
+          if (data.replay_detection !== undefined) setReplayDetection(data.replay_detection);
+          if (data.enforcement_policy) setEnforcementPolicy(data.enforcement_policy);
+          if (data.overrides) setOverrides(data.overrides);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const addOverride = () => {
     setOverrides(prev => [...prev, { clientId: '', bindingType: 'dpop', enforcement: 'optional' }]);
@@ -30,6 +49,9 @@ export default function TokenBindingConfigPage() {
   const removeOverride = (idx: number) => {
     setOverrides(prev => prev.filter((_, i) => i !== idx));
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

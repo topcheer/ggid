@@ -23,6 +23,21 @@ export default function SessionRevocationCenterPage() {
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [auditLog, setAuditLog] = useState<string[]>([]);
 
+  useEffect(() => {
+    fetch('/api/v1/auth/sessions/revoke', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+      body: JSON.stringify({ action: 'list' }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data && data.sessions) setSessions(data.sessions);
+        else if (Array.isArray(data)) setSessions(data);
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
   const revoke = (id: string, userId: string) => {
     setSessions(prev => prev.filter(s => s.id !== id));
     setAuditLog(prev => [`Revoked session ${id} for ${userId}${reason ? `: ${reason}` : ''} at ${new Date().toISOString().slice(0, 16)}`, ...prev]);
@@ -45,6 +60,9 @@ export default function SessionRevocationCenterPage() {
     setAuditLog(prev => [`BULK REVOKE: All ${sessions.length} sessions revoked${reason ? `: ${reason}` : ''}`, ...prev]);
     setBulkConfirm(false);
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
