@@ -293,6 +293,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/login-flow/record", h.handleLoginFlowRecord)
 	h.mux.HandleFunc("/api/v1/auth/sessions/device-binding-status", h.handleDeviceBindingStatus)
 	h.mux.HandleFunc("/api/v1/auth/replay-check", h.handleReplayCheck)
+	h.mux.HandleFunc("/api/v1/auth/password-history/config", h.handlePasswordHistoryConfig)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)
 	h.mux.HandleFunc("/api/v1/auth/sessions/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/fingerprint") {
