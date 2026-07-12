@@ -5,8 +5,7 @@
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  process.env.NEXT_PUBLIC_GGID_API ||
-  "http://localhost:8080";
+  "";
 
 export const DEFAULT_TENANT_ID =
   process.env.NEXT_PUBLIC_TENANT_ID ||
