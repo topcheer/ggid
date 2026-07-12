@@ -12,6 +12,14 @@ const nextConfig = {
         source: '/oauth/:path*',
         destination: `${gatewayUrl}/oauth/:path*`,
       },
+      {
+        source: '/saml/:path*',
+        destination: `${gatewayUrl}/saml/:path*`,
+      },
+      {
+        source: '/.well-known/:path*',
+        destination: `${gatewayUrl}/.well-known/:path*`,
+      },
     ];
   },
 };
