@@ -329,6 +329,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/session-binding/config", h.handleSessionBindingConfig)
 	h.mux.HandleFunc("/api/v1/auth/mfa/config", h.handleMFAConfig)
 	h.mux.HandleFunc("/api/v1/auth/impersonation/config", h.handleImpersonationConfig)
+	h.mux.HandleFunc("/api/v1/auth/credentials/rotation/due", h.handleRotationDue)
+	h.mux.HandleFunc("/api/v1/auth/credentials/", h.handleRotationRoute)
 	h.mux.HandleFunc("/api/v1/auth/sessions/geo-stats", h.handleSessionGeoStats)
 	h.mux.HandleFunc("/api/v1/auth/mfa/enrollment-stats", h.handleMFAEnrollmentStats)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)

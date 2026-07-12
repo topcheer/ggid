@@ -1026,6 +1026,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleAgentReviewGet(w, r)
 		}
 	})
+	mux.HandleFunc("/api/v1/agents/shadows", handleAgentShadows)
+	mux.HandleFunc("/api/v1/agents/drift/report", handleAgentDriftReport)
+	mux.HandleFunc("/api/v1/agents/", handleAgentDriftDetect) // /api/v1/agents/{id}/drift
 	mux.HandleFunc("/api/v1/oauth/agents/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if strings.HasSuffix(path, "/lifecycle") {
