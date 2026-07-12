@@ -1,21 +1,31 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Policy { id: string; name: string; subject: string; resource: string; action: string; effect: string; priority: number; enabled: boolean; }
 
 export default function AbacPolicyEditorPage() {
-  const [policies, setPolicies] = useState<Policy[]>([
-    { id: 'p1', name: 'Admin access to all', subject: 'role=admin', resource: '*', action: '*', effect: 'allow', priority: 1, enabled: true },
-    { id: 'p2', name: 'Developer read users', subject: 'role=developer', resource: 'user/*', action: 'read', effect: 'allow', priority: 2, enabled: true },
-    { id: 'p3', name: 'Block outside hours', subject: '*', resource: '*', action: 'write', effect: 'deny', priority: 3, enabled: true },
-    { id: 'p4', name: 'Auditor read audit', subject: 'role=auditor', resource: 'audit/*', action: 'read', effect: 'allow', priority: 4, enabled: true },
-  ]);
+  const [policies, setPolicies] = useState<Policy[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newPolicy, setNewPolicy] = useState({ name: '', subject: '', resource: '', action: '', effect: 'allow' });
   const [simSubject, setSimSubject] = useState('role=admin');
   const [simResource, setSimResource] = useState('user/alice');
   const [simAction, setSimAction] = useState('read');
   const [simResult, setSimResult] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/policies/abac/groups', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data && data.policies) setPolicies(data.policies);
+        else if (Array.isArray(data)) setPolicies(data);
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const addPolicy = () => {
     setPolicies(prev => [...prev, { id: `p${prev.length + 1}`, name: newPolicy.name, subject: newPolicy.subject, resource: newPolicy.resource, action: newPolicy.action, effect: newPolicy.effect, priority: prev.length + 1, enabled: true }]);
@@ -38,6 +48,9 @@ export default function AbacPolicyEditorPage() {
   };
 
   const effectColor = (e: string) => e === 'allow' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

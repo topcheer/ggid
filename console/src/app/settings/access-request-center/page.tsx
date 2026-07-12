@@ -1,19 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface AccessRequest { id: string; requester: string; resource: string; role: string; justification: string; status: string; submittedAt: string; sla: string; }
 
 export default function AccessRequestCenterPage() {
-  const [requests, setRequests] = useState<AccessRequest[]>([
-    { id: 'ar1', requester: 'alice@ggid.io', resource: 'production-db', role: 'read-only', justification: 'Need access for quarterly audit', status: 'pending', submittedAt: '2026-07-12 10:00', sla: '24h' },
-    { id: 'ar2', requester: 'bob@ggid.io', resource: 'admin-console', role: 'admin', justification: 'Covering for vacation', status: 'approved', submittedAt: '2026-07-11 14:00', sla: 'met' },
-    { id: 'ar3', requester: 'carol@ggid.io', resource: 'audit-logs', role: 'auditor', justification: 'Security investigation', status: 'pending', submittedAt: '2026-07-12 09:30', sla: '12h left' },
-    { id: 'ar4', requester: 'dave@ggid.io', resource: 'secrets-vault', role: 'developer', justification: 'Deploying new service', status: 'rejected', submittedAt: '2026-07-10 11:00', sla: 'met' },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newReq, setNewReq] = useState({ resource: '', role: '', justification: '', duration: 24 });
   const [autoApproveLow, setAutoApproveLow] = useState(true);
   const [slaHours, setSlaHours] = useState(48);
+
+  useEffect(() => {
+    fetch("/api/v1/policies/access-requests", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setRequests(Array.isArray(data) ? data : (data.requests || data.items || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const submit = () => {
     setRequests(prev => [...prev, { id: `ar${prev.length + 1}`, requester: 'current@ggid.io', resource: newReq.resource, role: newReq.role, justification: newReq.justification, status: 'pending', submittedAt: new Date().toISOString().slice(0, 16).replace('T', ' '), sla: `${slaHours}h` }]);
@@ -24,6 +30,12 @@ export default function AccessRequestCenterPage() {
 
   const statusColor = (s: string) => s === 'approved' ? 'bg-green-100 text-green-700' : s === 'rejected' ? 'bg-red-100 text-red-700' : s === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600';
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Access Request Center</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Access Request Center</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
