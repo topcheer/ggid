@@ -2715,5 +2715,291 @@ components:
         '200':
           description: Request denied
 
+  /api/v1/identity/user-lifecycle/config:
+    get:
+      tags: [Configuration]
+      summary: Get user lifecycle configuration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User lifecycle config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auto_deactivate_after_days:
+                    type: integer
+                  dormant_detection_rules:
+                    type: object
+                  stage_transitions:
+                    type: array
+                    items:
+                      type: object
+                  notification_before:
+                    type: integer
+                  per_role_override:
+                    type: object
+    put:
+      tags: [Configuration]
+      summary: Update user lifecycle configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                auto_deactivate_after_days:
+                  type: integer
+                dormant_detection_rules:
+                  type: object
+                stage_transitions:
+                  type: array
+                  items:
+                    type: object
+                notification_before:
+                  type: integer
+                per_role_override:
+                  type: object
+      responses:
+        '200':
+          description: Configuration updated
+
+  /api/v1/policy/abac/condition-config:
+    get:
+      tags: [Configuration]
+      summary: Get ABAC condition configuration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ABAC condition config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  attribute_sources:
+                    type: array
+                    items:
+                      type: string
+                  operators_per_type:
+                    type: object
+                  condition_templates:
+                    type: array
+                    items:
+                      type: object
+                  evaluation_cache_ttl:
+                    type: integer
+                  default_deny:
+                    type: boolean
+    put:
+      tags: [Configuration]
+      summary: Update ABAC condition configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                attribute_sources:
+                  type: array
+                  items:
+                    type: string
+                operators_per_type:
+                  type: object
+                condition_templates:
+                  type: array
+                  items:
+                    type: object
+                evaluation_cache_ttl:
+                  type: integer
+                default_deny:
+                  type: boolean
+      responses:
+        '200':
+          description: Configuration updated
+
+  /api/v1/identity/scim/provisioning-config:
+    get:
+      tags: [Configuration]
+      summary: Get SCIM provisioning configuration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: SCIM provisioning config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  endpoint:
+                    type: string
+                  mapping_rules:
+                    type: object
+                  triggers:
+                    type: array
+                    items:
+                      type: string
+                  sync_direction:
+                    type: string
+                    enum: [inbound, outbound, bidirectional]
+                  deprovision_on_disable:
+                    type: boolean
+    put:
+      tags: [Configuration]
+      summary: Update SCIM provisioning configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                endpoint:
+                  type: string
+                mapping_rules:
+                  type: object
+                triggers:
+                  type: array
+                  items:
+                    type: string
+                sync_direction:
+                  type: string
+                  enum: [inbound, outbound, bidirectional]
+                deprovision_on_disable:
+                  type: boolean
+      responses:
+        '200':
+          description: Configuration updated
+
+  /api/v1/audit/export/schedule-config:
+    get:
+      tags: [Configuration]
+      summary: Get audit export schedule configuration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Export schedule config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        cron:
+                          type: string
+                        format:
+                          type: string
+                        filters:
+                          type: object
+                        retention:
+                          type: integer
+                        destination:
+                          type: string
+                  max_concurrent:
+                    type: integer
+                  retry_policy:
+                    type: object
+                  notification:
+                    type: object
+    put:
+      tags: [Configuration]
+      summary: Update audit export schedule configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                jobs:
+                  type: array
+                  items:
+                    type: object
+                max_concurrent:
+                  type: integer
+                retry_policy:
+                  type: object
+                notification:
+                  type: object
+      responses:
+        '200':
+          description: Configuration updated
+
+  /api/v1/oauth/token-rotation/config:
+    get:
+      tags: [Configuration]
+      summary: Get token rotation configuration
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token rotation config
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  per_client:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        client_id:
+                          type: string
+                        rotation_interval:
+                          type: integer
+                        max_age:
+                          type: integer
+                        notify_before:
+                          type: integer
+                        auto_rotate:
+                          type: boolean
+                        grace_period:
+                          type: integer
+                  global_defaults:
+                    type: object
+    put:
+      tags: [Configuration]
+      summary: Update token rotation configuration
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                per_client:
+                  type: array
+                  items:
+                    type: object
+                global_defaults:
+                  type: object
+      responses:
+        '200':
+          description: Configuration updated
+
 security:
   - BearerAuth: []
