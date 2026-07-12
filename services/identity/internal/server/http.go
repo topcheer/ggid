@@ -143,6 +143,10 @@ func (h *HTTPHandler) registerRoutes() {
 			h.handleUserAliases(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/reactivation-history") {
+			h.handleReactivationHistory(w, r)
+			return
+		}
 		h.handleUsers(w, r)
 	})
 }
