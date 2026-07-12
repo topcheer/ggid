@@ -1003,6 +1003,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleAgentLifecycle(w, r)
 		} else if strings.HasSuffix(path, "/consent") {
 			handleAgentConsent(w, r)
+		} else if strings.HasSuffix(path, "/behavior") {
+			handleAgentBehavior(w, r)
 		} else {
 			http.Error(w, "not found", http.StatusNotFound)
 		}
