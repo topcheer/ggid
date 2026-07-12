@@ -545,6 +545,16 @@ export { useAuditChallengeResponse } from './useAuditChallengeResponse';
 export type { Challenge } from './useAuditChallengeResponse';
 export { useOAuthScopeConsentMatrix } from './useOAuthScopeConsentMatrix';
 export type { ScopeMatrix } from './useOAuthScopeConsentMatrix';
+export { useZeroTrustPosture } from './useZeroTrustPosture';
+export type { ZeroTrustPostureData, ZeroTrustViolation } from './useZeroTrustPosture';
+export { useSiemIntegrationStatus } from './useSiemIntegrationStatus';
+export type { SiemIntegrationStatusData, SiemDestination } from './useSiemIntegrationStatus';
+export { useAccessRequestApprovalWorkflow } from './useAccessRequestApprovalWorkflow';
+export type { AccessRequestApprovalWorkflowData, PendingRequest, ApprovalChainStep, AutoApproveRule } from './useAccessRequestApprovalWorkflow';
+export { useDataClassificationPolicy } from './useDataClassificationPolicy';
+export type { DataClassificationPolicyData, ClassificationLevel, AttributeMapping, PiiInventoryItem } from './useDataClassificationPolicy';
+export { useOAuthDpopConfig } from './useOAuthDpopConfig';
+export type { OAuthDpopConfigData, DpopStats, PerClientOverride, ExemptedClient } from './useOAuthDpopConfig';
 export type {
   GGIDConfig,
   GGIDUser,
