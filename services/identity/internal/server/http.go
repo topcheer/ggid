@@ -130,6 +130,9 @@ func (h *HTTPHandler) registerRoutes() {
 	// Directory reconcile
 	h.mux.HandleFunc("/api/v1/identity/directory/reconcile", h.handleDirectoryReconcile)
 
+	// Membership graph
+	h.mux.HandleFunc("/api/v1/identity/groups/", h.handleMembershipGraph)
+
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/transfer-org") {

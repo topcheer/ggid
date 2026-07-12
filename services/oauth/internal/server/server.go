@@ -1292,6 +1292,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleRotationPolicy(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/secret-history") {
+			handleSecretHistory(w, r)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
 			handleValidateClientSecret(w, r)
 			return
