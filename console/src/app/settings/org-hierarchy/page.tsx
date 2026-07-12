@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface OrgNode {
   id: string;
@@ -9,16 +9,18 @@ interface OrgNode {
 }
 
 export default function OrgHierarchyPage() {
-  const [orgs, setOrgs] = useState<OrgNode[]>([
-    { id: 'o1', name: 'GGID Corporation', parentId: null, children: [] },
-    { id: 'o2', name: 'Engineering', parentId: 'o1', children: [] },
-    { id: 'o3', name: 'Platform Team', parentId: 'o2', children: [] },
-    { id: 'o4', name: 'Mobile Team', parentId: 'o2', children: [] },
-    { id: 'o5', name: 'Sales', parentId: 'o1', children: [] },
-    { id: 'o6', name: 'Enterprise Sales', parentId: 'o5', children: [] },
-    { id: 'o7', name: 'Operations', parentId: 'o1', children: [] },
-    { id: 'o8', name: 'Security', parentId: 'o1', children: [] },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [orgs, setOrgs] = useState<OrgNode[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/orgs/tree", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setOrgs(Array.isArray(data) ? data : (data.orgs || data.items || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -91,6 +93,12 @@ export default function OrgHierarchyPage() {
     </ul>
   );
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Organization Hierarchy</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Organization Hierarchy</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

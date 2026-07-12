@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function NotificationPreviewPage() {
   const [template, setTemplate] = useState('welcome');
@@ -7,6 +7,20 @@ export default function NotificationPreviewPage() {
   const [darkMode, setDarkMode] = useState(false);
   const [mobilePreview, setMobilePreview] = useState(false);
   const [sendResult, setSendResult] = useState('');
+  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/notifications/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+      body: JSON.stringify({ action: 'list_templates' }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(() => setLoading(false))
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const templates: Record<string, { subject: string; html: string; text: string }> = {
     welcome: { subject: 'Welcome to {{org}}', html: '<h2>Welcome, {{name}}!</h2><p>Your account at {{org}} is ready.</p>', text: 'Welcome, {{name}}! Your account at {{org}} is ready.' },
@@ -20,7 +34,18 @@ export default function NotificationPreviewPage() {
   const current = templates[template];
   const [versions] = useState(['v1.0 (initial)', 'v1.1 (added dark mode)', 'v1.2 (current)']);
 
-  const sendTest = () => { setSendResult('Test email sent to preview@example.com'); setTimeout(() => setSendResult(''), 3000); };
+  const sendTest = () => {
+    setSending(true);
+    fetch("/api/v1/notifications/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      body: JSON.stringify({ template, variables, to: "preview@example.com" }),
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(() => { setSendResult('Test email sent to preview@example.com'); setTimeout(() => setSendResult(''), 3000); })
+      .catch(err => setSendResult(`Error: ${err.message}`))
+      .finally(() => setSending(false));
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -32,7 +57,7 @@ export default function NotificationPreviewPage() {
         </select>
         <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={darkMode} onChange={e => setDarkMode(e.target.checked)} className="rounded" />Dark mode</label>
         <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={mobilePreview} onChange={e => setMobilePreview(e.target.checked)} className="rounded" />Mobile</label>
-        <button onClick={sendTest} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Send Test</button>
+        <button onClick={sendTest} disabled={sending} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{sending ? 'Sending...' : 'Send Test'}</button>
       </div>
       {sendResult && <div className="text-sm p-3 rounded bg-green-50 text-green-700">{sendResult}</div>}
 

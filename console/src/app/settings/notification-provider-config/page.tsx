@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Provider {
   id: string;
@@ -12,18 +12,22 @@ interface Provider {
 }
 
 export default function NotificationProviderConfigPage() {
-  const [providers, setProviders] = useState<Provider[]>([
-    { id: 'p1', type: 'email', name: 'SMTP Server', enabled: true, status: 'healthy', template: 'default-email', rateLimit: 100 },
-    { id: 'p2', type: 'sms', name: 'Twilio SMS', enabled: true, status: 'healthy', template: 'default-sms', rateLimit: 50 },
-    { id: 'p3', type: 'push', name: 'Firebase FCM', enabled: true, status: 'degraded', template: 'default-push', rateLimit: 200 },
-    { id: 'p4', type: 'webhook', name: 'Custom Webhook', enabled: false, status: 'untested', template: 'default-webhook', rateLimit: 30 },
-    { id: 'p5', type: 'slack', name: 'Slack Notifications', enabled: true, status: 'healthy', template: 'default-slack', rateLimit: 20 },
-    { id: 'p6', type: 'teams', name: 'MS Teams', enabled: false, status: 'down', template: 'default-teams', rateLimit: 20 },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [providers, setProviders] = useState<Provider[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/auth/notification-preferences", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setProviders(Array.isArray(data) ? data : (data.providers || data.items || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const [showForm, setShowForm] = useState(false);
   const [newProvider, setNewProvider] = useState({ type: 'email', name: '', rateLimit: 100 });
-  const [fallbackChain, setFallbackChain] = useState<string[]>(['email', 'sms', 'push']);
+  const [fallbackChain, setFallbackChain] = useState<string[]>([]);
   const [testTarget, setTestTarget] = useState('');
   const [testResult, setTestResult] = useState('');
 
@@ -52,6 +56,12 @@ export default function NotificationProviderConfigPage() {
   const addToChain = (t: string) => setFallbackChain(prev => [...prev, t]);
   const removeFromChain = (idx: number) => setFallbackChain(prev => prev.filter((_, i) => i !== idx));
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Notification Provider Config</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Notification Provider Config</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface VC {
   id: string;
@@ -13,11 +13,18 @@ interface VC {
 }
 
 export default function VerifiableCredentialsPage() {
-  const [credentials, setCredentials] = useState<VC[]>([
-    { id: 'vc1', type: 'UniversityDegree', issuer: 'did:web:university.edu', subject: 'did:web:alice.example', issued: '2026-01-15', expires: '2031-01-15', status: 'valid', claims: { degree: 'MS Computer Science', gpa: '3.8' } },
-    { id: 'vc2', type: 'DriverLicense', issuer: 'did:web:dmv.gov', subject: 'did:web:bob.example', issued: '2025-06-01', expires: '2030-06-01', status: 'valid', claims: { state: 'CA', class: 'C' } },
-    { id: 'vc3', type: 'Passport', issuer: 'did:web:gov.state', subject: 'did:web:carol.example', issued: '2024-03-10', expires: '2027-03-10', status: 'revoked', claims: { nationality: 'US', passportNumber: 'XX12345' } },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<VC[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/vc", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setCredentials(Array.isArray(data) ? data : (data.credentials || data.items || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const [showIssue, setShowIssue] = useState(false);
   const [template, setTemplate] = useState('UniversityDegree');
@@ -85,6 +92,12 @@ export default function VerifiableCredentialsPage() {
     }
   };
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Verifiable Credentials</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Verifiable Credentials</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

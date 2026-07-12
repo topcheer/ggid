@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 
 interface GraphNode {
   id: string;
@@ -74,8 +74,25 @@ export default function IdentityCorrelationGraphPage() {
   const [searchQuery, setSearchQuery] = useState('alice@corp.com');
   const [depth, setDepth] = useState(3);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [nodes] = useState<GraphNode[]>(SAMPLE_NODES);
-  const [edges] = useState<GraphEdge[]>(SAMPLE_EDGES);
+  const [nodes, setNodes] = useState<GraphNode[]>([]);
+  const [edges, setEdges] = useState<GraphEdge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/identity/groups/', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.nodes) setNodes(data.nodes);
+          if (data.edges) setEdges(data.edges);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const filteredNodes = useMemo(() => {
     if (!searchQuery) return nodes;
@@ -120,6 +137,9 @@ export default function IdentityCorrelationGraphPage() {
     a.click();
     URL.revokeObjectURL(url);
   }, [filteredNodes, filteredEdges]);
+
+  if (loading) return <div className="space-y-6"><p>Loading...</p></div>;
+  if (error) return <div className="space-y-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="space-y-6">

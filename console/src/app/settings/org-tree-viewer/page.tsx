@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface OrgNode {
   id: string;
@@ -13,25 +13,18 @@ interface OrgNode {
 }
 
 export default function OrgTreeViewerPage() {
-  const [tree, setTree] = useState<OrgNode>({
-    id: 'root', name: 'GGID Corp', level: 0, path: '/GGID Corp', memberCount: 5, created: '2024-01-01',
-    children: [
-      { id: 'eng', name: 'Engineering', level: 1, path: '/GGID Corp/Engineering', memberCount: 45, created: '2024-02-01',
-        children: [
-          { id: 'backend', name: 'Backend Team', level: 2, path: '/GGID Corp/Engineering/Backend', memberCount: 15, created: '2024-03-01', children: [] },
-          { id: 'frontend', name: 'Frontend Team', level: 2, path: '/GGID Corp/Engineering/Frontend', memberCount: 12, created: '2024-03-15', children: [] },
-          { id: 'devops', name: 'DevOps', level: 2, path: '/GGID Corp/Engineering/DevOps', memberCount: 8, created: '2024-04-01', children: [] },
-        ]
-      },
-      { id: 'sales', name: 'Sales', level: 1, path: '/GGID Corp/Sales', memberCount: 20, created: '2024-02-15',
-        children: [
-          { id: 'na', name: 'North America', level: 2, path: '/GGID Corp/Sales/NA', memberCount: 12, created: '2024-03-01', children: [] },
-          { id: 'eu', name: 'Europe', level: 2, path: '/GGID Corp/Sales/EU', memberCount: 8, created: '2024-03-01', children: [] },
-        ]
-      },
-      { id: 'sec', name: 'Security', level: 1, path: '/GGID Corp/Security', memberCount: 10, created: '2024-02-01', children: [] },
-    ]
-  });
+  const [tree, setTree] = useState<OrgNode | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/orgs/tree', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => { if (data) setTree(data); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const [selected, setSelected] = useState<OrgNode | null>(null);
   const [search, setSearch] = useState('');
@@ -45,7 +38,7 @@ export default function OrgTreeViewerPage() {
       ...n, collapsed: n.id === node.id ? !n.collapsed : n.collapsed,
       children: n.children.map(toggle),
     });
-    setTree(toggle(tree));
+    setTree(tree ? toggle(tree) : null);
   };
 
   const matches = (n: OrgNode, q: string): boolean => n.name.toLowerCase().includes(q.toLowerCase());
@@ -80,7 +73,7 @@ export default function OrgTreeViewerPage() {
       ['id,name,path,level,memberCount', ...(() => {
         const rows: string[] = [];
         const flatten = (n: OrgNode) => { rows.push(`${n.id},${n.name},${n.path},${n.level},${n.memberCount}`); n.children.forEach(flatten); };
-        flatten(tree);
+        if (tree) flatten(tree);
         return rows;
       })()].join('\n');
     const blob = new Blob([data], { type: format === 'json' ? 'application/json' : 'text/csv' });
@@ -88,6 +81,10 @@ export default function OrgTreeViewerPage() {
     const a = document.createElement('a');
     a.href = url; a.download = `org-tree.${format}`; a.click();
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
+  if (!tree) return <div className="p-6"><p>No data available</p></div>;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">

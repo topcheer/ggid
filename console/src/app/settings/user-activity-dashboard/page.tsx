@@ -1,27 +1,36 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function UserActivityDashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState('24h');
-  const [stats] = useState({ activeUsers: 142, totalLogins: 893, failedAttempts: 23, avgSessionMin: 47 });
-  const [topUsers] = useState([
-    { user: 'alice@ggid.io', logins: 45, lastActive: '14:30' },
-    { user: 'bob@ggid.io', logins: 32, lastActive: '14:15' },
-    { user: 'carol@ggid.io', logins: 28, lastActive: '13:45' },
-    { user: 'dave@ggid.io', logins: 19, lastActive: '12:00' },
-  ]);
-  const [loginMethods] = useState([
-    { method: 'Password', count: 520, pct: 58 },
-    { method: 'SSO/SAML', count: 210, pct: 24 },
-    { method: 'OIDC', count: 98, pct: 11 },
-    { method: 'WebAuthn', count: 65, pct: 7 },
-  ]);
-  const [deviceBreakdown] = useState([
-    { device: 'Desktop', count: 612, pct: 68 },
-    { device: 'Mobile', count: 215, pct: 24 },
-    { device: 'Tablet', count: 66, pct: 8 },
-  ]);
+  const [stats, setStats] = useState({ activeUsers: 0, totalLogins: 0, failedAttempts: 0, avgSessionMin: 0 });
+  const [topUsers, setTopUsers] = useState<{ user: string; logins: number; lastActive: string }[]>([]);
+  const [loginMethods, setLoginMethods] = useState<{ method: string; count: number; pct: number }[]>([]);
+  const [deviceBreakdown, setDeviceBreakdown] = useState<{ device: string; count: number; pct: number }[]>([]);
 
+  useEffect(() => {
+    fetch("/api/v1/users/timeline", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        if (data.stats) setStats(data.stats);
+        setTopUsers(data.topUsers || data.top_users || []);
+        setLoginMethods(data.loginMethods || data.login_methods || []);
+        setDeviceBreakdown(data.deviceBreakdown || data.device_breakdown || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">User Activity Dashboard</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">User Activity Dashboard</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const steps = ['Organization', 'Admin Account', 'SSO Config', 'MFA Setup', 'Password Policy', 'Branding', 'Review'];
 
@@ -8,10 +8,24 @@ export default function OnboardingWizardPage() {
   const [data, setData] = useState({ orgName: '', adminEmail: '', ssoProvider: 'none', mfaType: 'totp', minLen: 12, logo: '#3B82F6' });
   const [completed, setCompleted] = useState(false);
   const [skipped, setSkipped] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/identity/joiner-flow', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => { if (data) setData(data); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const next = () => { if (current < steps.length - 1) setCurrent(c => c + 1); else setCompleted(true); };
   const prev = () => { if (current > 0) setCurrent(c => c - 1); };
   const skip = () => { setSkipped(prev => [...prev, current]); next(); };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">

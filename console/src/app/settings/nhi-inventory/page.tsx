@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface NHIEntry {
   id: string;
@@ -19,14 +19,18 @@ interface DecommissionModal {
 }
 
 export default function NHIInventoryPage() {
-  const [entries, setEntries] = useState<NHIEntry[]>([
-    { id: 'n1', name: 'auth-service-sa', type: 'service-account', status: 'active', created: '2025-01-15', lastUsed: '2026-07-12', owner: 'platform-team', riskScore: 15 },
-    { id: 'n2', name: 'gateway-api-key', type: 'api-key', status: 'active', created: '2025-06-01', lastUsed: '2026-03-10', owner: 'infra-team', riskScore: 72 },
-    { id: 'n3', name: 'DataSync Bot', type: 'ai-agent', status: 'active', created: '2026-01-20', lastUsed: '2026-07-12', owner: 'data-team', riskScore: 35 },
-    { id: 'n4', name: 'sensor-cluster-3', type: 'iot', status: 'active', created: '2024-08-01', lastUsed: '2026-02-28', owner: 'iot-ops', riskScore: 85 },
-    { id: 'n5', name: 'mobile-oauth-client', type: 'oauth-client', status: 'active', created: '2025-10-01', lastUsed: '2026-07-11', owner: 'mobile-team', riskScore: 20 },
-    { id: 'n6', name: 'legacy-batch-sa', type: 'service-account', status: 'active', created: '2024-03-01', lastUsed: '2026-01-05', owner: 'unknown', riskScore: 90 },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [entries, setEntries] = useState<NHIEntry[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/nhi", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setEntries(Array.isArray(data) ? data : (data.entries || data.items || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState<DecommissionModal>({ open: false, entry: null, reason: '' });
@@ -52,6 +56,12 @@ export default function NHIInventoryPage() {
 
   const types = ['all', 'service-account', 'api-key', 'ai-agent', 'iot', 'oauth-client'];
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">NHI Inventory</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">NHI Inventory</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
