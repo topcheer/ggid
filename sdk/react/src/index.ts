@@ -369,6 +369,16 @@ export { useVendorManagement } from './useVendorManagement';
 export type { Vendor } from './useVendorManagement';
 export { useAuthorizeFlowAnalytics } from './useAuthorizeFlowAnalytics';
 export type { AuthorizeAnalytics } from './useAuthorizeFlowAnalytics';
+export { useRiskScoringConfig } from './useRiskScoringConfig';
+export type { RiskConfig } from './useRiskScoringConfig';
+export { useEntitlementReview } from './useEntitlementReview';
+export type { Entitlement } from './useEntitlementReview';
+export { useBackchannelLogoutStats } from './useBackchannelLogoutStats';
+export type { BackchannelStats } from './useBackchannelLogoutStats';
+export { useDepartmentAnalytics } from './useDepartmentAnalytics';
+export type { Department } from './useDepartmentAnalytics';
+export { useCredentialStuffingStats } from './useCredentialStuffingStats';
+export type { StuffingStats } from './useCredentialStuffingStats';
 export type {
   GGIDConfig,
   GGIDUser,
