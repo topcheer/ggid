@@ -129,6 +129,9 @@ func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*domain.
 	if err != nil {
 		return nil, errors.New(errors.ErrFailedPrecondition, "missing tenant context")
 	}
+	if s.clientRepo == nil {
+		return nil, errors.New(errors.ErrInternal, "OAuth database not configured")
+	}
 	return s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
 }
 
@@ -137,6 +140,9 @@ func (s *OAuthService) ListClients(ctx context.Context, pageSize, offset int) ([
 	tc, err := tenant.FromContext(ctx)
 	if err != nil {
 		return nil, 0, errors.New(errors.ErrFailedPrecondition, "missing tenant context")
+	}
+	if s.clientRepo == nil {
+		return []*domain.OAuthClient{}, 0, nil
 	}
 	return s.clientRepo.ListClients(ctx, tc.TenantID, pageSize, offset)
 }

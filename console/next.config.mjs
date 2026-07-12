@@ -13,9 +13,6 @@ const nextConfig = {
     // Build should not fail on type errors (some are from SDK types)
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   async rewrites() {
     const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:8080';
     return [
