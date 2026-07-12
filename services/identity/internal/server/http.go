@@ -147,6 +147,10 @@ func (h *HTTPHandler) registerRoutes() {
 			h.handleReactivationHistory(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/profile-diff") {
+			h.handleProfileDiff(w, r)
+			return
+		}
 		h.handleUsers(w, r)
 	})
 }
