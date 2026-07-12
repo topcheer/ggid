@@ -735,6 +735,16 @@ export { useAuditEvidenceCollection } from './useAuditEvidenceCollection';
 export type { AuditEvidenceCollectionData, EvidenceRequest, EvidenceFile, CollectionProgress } from './useAuditEvidenceCollection';
 export { useComplianceEvidenceTracker } from './useComplianceEvidenceTracker';
 export type { ComplianceEvidenceTrackerData, EvidenceRow, OverdueAlert, AutoCollectionRule } from './useComplianceEvidenceTracker';
+export { useMitreAttackMapping } from './useMitreAttackMapping';
+export type { MitreAttackMappingData, MitreTechnique } from './useMitreAttackMapping';
+export { useThreatHunting } from './useThreatHunting';
+export type { ThreatHuntingData, HuntResult, Hypothesis, SavedHunt } from './useThreatHunting';
+export { useIncidentResponsePlaybook } from './useIncidentResponsePlaybook';
+export type { IncidentResponsePlaybookData, ActiveIncident, Playbook, PostMortemTemplate } from './useIncidentResponsePlaybook';
+export { useSecurityPostureScoring } from './useSecurityPostureScoring';
+export type { SecurityPostureScoringData, CategoryScore, BenchmarkComparison, Recommendation } from './useSecurityPostureScoring';
+export { useComplianceGapHeatmap } from './useComplianceGapHeatmap';
+export type { ComplianceGapHeatmapData, HeatmapCell, DrillDownItem } from './useComplianceGapHeatmap';
 export type {
   GGIDConfig,
   GGIDUser,
