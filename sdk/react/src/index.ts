@@ -837,6 +837,16 @@ export { useOidcClaimMappingConfig } from './useOidcClaimMappingConfig';
 export type { OidcClaimMappingConfigData, ClaimEntry, ScopeRow } from './useOidcClaimMappingConfig';
 export { useIdpMetadataImportConfig } from './useIdpMetadataImportConfig';
 export type { IdpMetadataImportConfigData, MetadataPreview, SavedIdp } from './useIdpMetadataImportConfig';
+export { useEmailTemplateConfig } from './useEmailTemplateConfig';
+export type { EmailTemplateConfigData, EmailTemplate } from './useEmailTemplateConfig';
+export { useNotificationPrefConfig } from './useNotificationPrefConfig';
+export type { NotificationPrefConfigData, MatrixRow, QuietHours } from './useNotificationPrefConfig';
+export { useOAuthIssuerMetadataConfig } from './useOAuthIssuerMetadataConfig';
+export type { OAuthIssuerMetadataConfigData } from './useOAuthIssuerMetadataConfig';
+export { usePolicyApprovalWorkflowConfig } from './usePolicyApprovalWorkflowConfig';
+export type { PolicyApprovalWorkflowConfigData, PipelineStage, ReviewerAssignment, FreezeWindow } from './usePolicyApprovalWorkflowConfig';
+export { useBrandingConfig } from './useBrandingConfig';
+export type { BrandingConfigData } from './useBrandingConfig';
 export type {
   GGIDConfig,
   GGIDUser,
