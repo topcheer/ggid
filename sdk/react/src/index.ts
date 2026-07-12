@@ -379,6 +379,16 @@ export { useDepartmentAnalytics } from './useDepartmentAnalytics';
 export type { Department } from './useDepartmentAnalytics';
 export { useCredentialStuffingStats } from './useCredentialStuffingStats';
 export type { StuffingStats } from './useCredentialStuffingStats';
+export { useAnomalyDetection } from './useAnomalyDetection';
+export type { AnomalyEvent } from './useAnomalyDetection';
+export { useTokenRevocationStats } from './useTokenRevocationStats';
+export type { RevocationStats } from './useTokenRevocationStats';
+export { useIdpFederation } from './useIdpFederation';
+export type { FederatedIdP } from './useIdpFederation';
+export { usePolicyDryRun } from './usePolicyDryRun';
+export type { DryRunResult } from './usePolicyDryRun';
+export { useAuditSearch } from './useAuditSearch';
+export type { AuditEntry } from './useAuditSearch';
 export type {
   GGIDConfig,
   GGIDUser,

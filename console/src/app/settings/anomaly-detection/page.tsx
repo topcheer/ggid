@@ -1,0 +1,80 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { AlertTriangle, Activity, Check, X, Filter } from "lucide-react";
+
+interface AnomalyEvent {
+  id: string;
+  type: string;
+  severity: "low" | "medium" | "high" | "critical";
+  user: string;
+  timestamp: string;
+  confidence: number;
+  detail: string;
+  status: "active" | "acknowledged" | "dismissed";
+}
+
+const sevColors: Record<string, string> = {
+  low: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
+  medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  high: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+  critical: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+};
+
+export default function AnomalyDetectionPage() {
+  const [events, setEvents] = useState<AnomalyEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filterType, setFilterType] = useState("");
+  const [filterSeverity, setFilterSeverity] = useState("");
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/v1/audit/anomaly-detection", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      if (res.ok) { const d = await res.json(); setEvents(d.events || d || []); }
+    } catch { /* noop */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const updateStatus = async (id: string, status: "acknowledged" | "dismissed") => {
+    setEvents(events.map((e) => e.id === id ? { ...e, status } : e));
+    try { await fetch("/api/v1/audit/anomaly-detection/" + id, { method: "PATCH", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ status }) }); } catch { /* noop */ }
+  };
+
+  const filtered = events.filter((e) => {
+    if (filterType && e.type !== filterType) return false;
+    if (filterSeverity && e.severity !== filterSeverity) return false;
+    return true;
+  });
+  const activeCount = events.filter((e) => e.status === "active").length;
+  const types = [...new Set(events.map((e) => e.type))];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-red-500" /> Anomaly Detection</h1><p className="text-sm text-gray-500 mt-1">Real-time anomaly detection dashboard with severity filtering.</p></div>
+        <span className="flex items-center gap-2 text-sm"><span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /><span className="text-gray-500">Live</span><span className="font-bold text-red-600">{activeCount} active</span></span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Filter className="w-4 h-4 text-gray-400" />
+        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Types</option>{types.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+        <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Severities</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select>
+        <span className="text-sm text-gray-500">{filtered.length} events</span>
+      </div>
+
+      <div className="space-y-2">
+        {filtered.map((e) => (
+          <div key={e.id} className="rounded-lg border dark:border-gray-800 p-3 flex items-center gap-4">
+            <div className={"w-1 self-stretch rounded " + (e.severity === "critical" ? "bg-red-500" : e.severity === "high" ? "bg-orange-500" : e.severity === "medium" ? "bg-yellow-500" : "bg-gray-400")} />
+            <div className="flex-1"><div className="flex items-center gap-2"><span className={"px-2 py-0.5 rounded text-xs " + sevColors[e.severity]}>{e.severity}</span><span className="text-xs font-mono text-gray-500">{e.type}</span>{e.status !== "active" && <span className="text-xs text-gray-400 italic">({e.status})</span>}</div><p className="text-sm mt-1">{e.detail}</p><div className="flex items-center gap-3 text-xs text-gray-400 mt-1"><span>User: {e.user}</span><span>Confidence: {e.confidence}%</span><span>{e.timestamp}</span></div></div>
+            {e.status === "active" && <div className="flex gap-1"><button onClick={() => updateStatus(e.id, "acknowledged")} className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600" title="Acknowledge"><Check className="w-4 h-4" /></button><button onClick={() => updateStatus(e.id, "dismissed")} className="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400" title="Dismiss"><X className="w-4 h-4" /></button></div>}
+          </div>
+        ))}
+        {filtered.length === 0 && !loading && <p className="text-sm text-gray-500 text-center py-8">No anomalies detected.</p>}
+      </div>
+    </div>
+  );
+}
