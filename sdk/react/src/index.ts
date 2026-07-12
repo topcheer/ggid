@@ -625,6 +625,16 @@ export { useIdentityAccessRevoke } from './useIdentityAccessRevoke';
 export type { IdentityAccessRevokeData, SearchableUser, ImpactItem, LogEntry } from './useIdentityAccessRevoke';
 export { useAuditDataSovereignty } from './useAuditDataSovereignty';
 export type { AuditDataSovereigntyData, ResidencyRegion, TransferRule, PendingTransfer, SovereigntyViolation } from './useAuditDataSovereignty';
+export { useOAuthIntrospectionCache } from './useOAuthIntrospectionCache';
+export type { OAuthIntrospectionCacheData, CacheConfig, CachedToken, InvalidationRule } from './useOAuthIntrospectionCache';
+export { usePolicyTimeBasedAccess } from './usePolicyTimeBasedAccess';
+export type { PolicyTimeBasedAccessData, TimeWindowRule, RoleRestriction, Holiday } from './usePolicyTimeBasedAccess';
+export { useIdentityDeprovisioningAutomation } from './useIdentityDeprovisioningAutomation';
+export type { IdentityDeprovisioningAutomationData, AutomationRule, PendingAction } from './useIdentityDeprovisioningAutomation';
+export { useAuditComplianceScheduler } from './useAuditComplianceScheduler';
+export type { AuditComplianceSchedulerData, ScheduledAudit, ChecklistItem, DeadlineItem, OverdueAlert } from './useAuditComplianceScheduler';
+export { useOAuthRateLimitPerClient } from './useOAuthRateLimitPerClient';
+export type { OAuthRateLimitPerClientData, RateLimitEntry, EndpointOverride, ThrottleResponse } from './useOAuthRateLimitPerClient';
 export type {
   GGIDConfig,
   GGIDUser,
