@@ -415,6 +415,16 @@ export { useUserLifecycle } from './useUserLifecycle';
 export type { LifecycleUser } from './useUserLifecycle';
 export { usePasswordBreachCheck } from './usePasswordBreachCheck';
 export type { BreachResult } from './usePasswordBreachCheck';
+export { useTokenFamily } from './useTokenFamily';
+export type { TokenFamily } from './useTokenFamily';
+export { useBruteForceConfig } from './useBruteForceConfig';
+export type { BruteForceConfig } from './useBruteForceConfig';
+export { usePolicyApprovalWorkflow } from './usePolicyApprovalWorkflow';
+export type { PolicyApproval } from './usePolicyApprovalWorkflow';
+export { useDiscoveryConfig } from './useDiscoveryConfig';
+export type { DiscoveryInfo } from './useDiscoveryConfig';
+export { useOAuthHealthCheck } from './useOAuthHealthCheck';
+export type { EndpointStatus, OAuthHealthData } from './useOAuthHealthCheck';
 export type {
   GGIDConfig,
   GGIDUser,
