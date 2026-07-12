@@ -399,6 +399,14 @@ export { usePolicyChangesHistory } from './usePolicyChangeHistory';
 export type { ChangeEntry } from './usePolicyChangeHistory';
 export { useAuditRealtime } from './useAuditRealtime';
 export type { LiveEvent } from './useAuditRealtime';
+export { useGroupAnalytics } from './useGroupAnalytics';
+export type { GroupAnalytics } from './useGroupAnalytics';
+export { usePolicyDecisionLog } from './usePolicyDecisionLog';
+export type { PolicyDecision } from './usePolicyDecisionLog';
+export { useSecurityAlerts } from './useSecurityAlerts';
+export type { SecurityAlert } from './useSecurityAlerts';
+export { useScopeCatalog } from './useScopeCatalog';
+export type { ScopeDef } from './useScopeCatalog';
 export type {
   GGIDConfig,
   GGIDUser,
