@@ -467,6 +467,12 @@ export { usePolicyVersioning } from './usePolicyVersioning';
 export type { PolicyVersion } from './usePolicyVersioning';
 export { useHashChain } from './useHashChain';
 export type { HashChainInfo } from './useHashChain';
+export { useJoinerFlowDashboard } from './useJoinerFlowDashboard';
+export type { OnboardingItem } from './useJoinerFlowDashboard';
+export { useTokenRotationPolicy } from './useTokenRotationPolicy';
+export type { RotationEntry } from './useTokenRotationPolicy';
+export { useDeprovisionDashboard } from './useDeprovisionDashboard';
+export type { DeprovisionItem } from './useDeprovisionDashboard';
 export type {
   GGIDConfig,
   GGIDUser,
