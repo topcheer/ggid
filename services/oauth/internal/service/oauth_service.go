@@ -105,6 +105,18 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 		Metadata:                input.Metadata,
 		Enabled:                 true,
 	}
+	if client.Scopes == nil {
+		client.Scopes = []string{}
+	}
+	if client.GrantTypes == nil {
+		client.GrantTypes = []string{}
+	}
+	if client.ResponseTypes == nil {
+		client.ResponseTypes = []string{}
+	}
+	if client.RedirectURIs == nil {
+		client.RedirectURIs = []string{}
+	}
 
 	var plaintextSecret string
 	if client.IsConfidential() {
