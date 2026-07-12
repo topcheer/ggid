@@ -511,6 +511,11 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 		s.handlePolicyVersions(w, r)
 		return
 	}
+	if len(parts) == 2 && strings.HasPrefix(parts[1], "comments") {
+		s.handlePolicyComments(w, r)
+		return
+	}
+
 	if len(parts) == 2 && parts[1] == "versions/rollback" {
 		// POST /api/v1/policies/{id}/versions/rollback?version=N
 		if r.Method != http.MethodPost {

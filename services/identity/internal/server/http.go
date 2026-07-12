@@ -121,6 +121,10 @@ func (h *HTTPHandler) registerRoutes() {
 			h.handleTransferOrg(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/freeze") || strings.HasSuffix(r.URL.Path, "/unfreeze") {
+			h.handleFreezeUnfreeze(w, r)
+			return
+		}
 		h.handleUsers(w, r)
 	})
 }

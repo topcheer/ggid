@@ -1253,6 +1253,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleOnboardingChecklist(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/migration-data") {
+			handleClientMigrationData(w, r)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
 			handleValidateClientSecret(w, r)
 			return
