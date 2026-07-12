@@ -136,6 +136,10 @@ func (h *HTTPHandler) registerRoutes() {
 			h.handleConsentRegistry(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/aliases") {
+			h.handleUserAliases(w, r)
+			return
+		}
 		h.handleUsers(w, r)
 	})
 }
