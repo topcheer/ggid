@@ -773,6 +773,16 @@ export { useSecurityEventStream } from './useSecurityEventStream';
 export type { SecurityEventStreamData, SecurityEvent } from './useSecurityEventStream';
 export { useVulnerabilityManagement } from './useVulnerabilityManagement';
 export type { VulnerabilityManagementData, VulnEntry, TriageRule } from './useVulnerabilityManagement';
+export { useCertExpiryTracker } from './useCertExpiryTracker';
+export type { CertExpiryTrackerData, CertInfo, AlertConfig } from './useCertExpiryTracker';
+export { useIdpDiscoveryConfig } from './useIdpDiscoveryConfig';
+export type { IdpDiscoveryConfigData, DiscoveryMethod, DomainRule } from './useIdpDiscoveryConfig';
+export { useOAuthFederationMetadata } from './useOAuthFederationMetadata';
+export type { OAuthFederationMetadataData, FederatedEntity } from './useOAuthFederationMetadata';
+export { useTenantIsolationCheck } from './useTenantIsolationCheck';
+export type { TenantIsolationCheckData, IsolationTest, CrossTenantLog, RlsValidation } from './useTenantIsolationCheck';
+export { useAccessCertificationCampaigns } from './useAccessCertificationCampaigns';
+export type { AccessCertificationCampaignsData, Campaign, ReviewerWorkload, PendingReview } from './useAccessCertificationCampaigns';
 export type {
   GGIDConfig,
   GGIDUser,
