@@ -499,6 +499,14 @@ export { useLdapSyncConfig } from './useLdapSyncConfig';
 export type { LdapConfig } from './useLdapSyncConfig';
 export { useLockoutPolicy } from './useLockoutPolicy';
 export type { LockoutConfig } from './useLockoutPolicy';
+export { useSamlAttributeMapping } from './useSamlAttributeMapping';
+export type { Mapping as SamlMapping } from './useSamlAttributeMapping';
+export { useScimGroupMapping } from './useScimGroupMapping';
+export type { GroupMap } from './useScimGroupMapping';
+export { useRiskQuantification } from './useRiskQuantification';
+export type { RiskFactor, RiskData } from './useRiskQuantification';
+export { useSessionAnalytics } from './useSessionAnalytics';
+export type { SessionData } from './useSessionAnalytics';
 export type {
   GGIDConfig,
   GGIDUser,
