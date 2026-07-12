@@ -435,6 +435,16 @@ export { usePolicySimulationLab } from './usePolicySimulationLab';
 export type { SimResult } from './usePolicySimulationLab';
 export { useComplianceTimeline } from './useComplianceTimeline';
 export type { Milestone, FrameworkData } from './useComplianceTimeline';
+export { useAccessRequest } from './useAccessRequest';
+export type { AccessReq } from './useAccessRequest';
+export { useParConfig } from './useParConfig';
+export type { ParConfig } from './useParConfig';
+export { useSessionInspector } from './useSessionInspector';
+export type { SessionInfo } from './useSessionInspector';
+export { usePolicyRecommendation } from './usePolicyRecommendation';
+export type { Recommendation } from './usePolicyRecommendation';
+export { useAnomalyScoring } from './useAnomalyScoring';
+export type { AnomalyData } from './useAnomalyScoring';
 export type {
   GGIDConfig,
   GGIDUser,
