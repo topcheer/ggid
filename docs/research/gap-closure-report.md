@@ -262,6 +262,18 @@ During the K3s deployment cycle, the following issues were discovered and resolv
    confirmed EnforceSessionLimit logic: filters active sessions, revokes oldest when over
    MaxSessions. 7 tests (session_limit_test.go). **Risk resolved.**
 
+6. **Policy Conflict Detection** — **VERIFIED** 2026-07-26. ARCH functional test: 7 tests
+   PASS (commit a187248). gap_regression_conflicts_test.go: POST-only enforcement, conflict_pairs
+   structure with all required fields, overlap_type validation (contradictory/duplicate/subset),
+   severity counts consistency, body parsing with policy_ids, checked_at timestamp, JSON encoding.
+   **HIGH confidence.**
+
+7. **Policy Blast Radius** — **VERIFIED** 2026-07-26. ARCH functional test: 10 tests PASS
+   (commit a187248). gap_regression_conflicts_test.go: GET-only enforcement, empty policy_id
+   rejection, affected_users/roles/cascading_policies structure, summary field validation
+   (total_users/roles/resources/cascading/breaking_changes/risk_level/recommended_action),
+   preview_mode default + custom, analyzed_at timestamp. **HIGH confidence.**
+
 ### Items at Risk of Regression
 
 | Item | Risk Factor | Mitigation |
