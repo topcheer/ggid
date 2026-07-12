@@ -118,6 +118,9 @@ func (h *HTTPHandler) registerRoutes() {
 	// IdP sync status
 	h.mux.HandleFunc("/api/v1/identity/sync-status", h.handleSyncStatus)
 
+	// Directory snapshot
+	h.mux.HandleFunc("/api/v1/identity/directory-snapshot", h.handleDirectorySnapshot)
+
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/transfer-org") {

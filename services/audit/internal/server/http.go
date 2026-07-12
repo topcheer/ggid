@@ -158,6 +158,10 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 			s.handleEvidenceAttachments(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/audit-trail") {
+			s.handleEvidenceAuditTrail(w, r)
+			return
+		}
 		s.handleEvidenceVersioning(w, r)
 	})
 	mux.HandleFunc("/api/v1/audit/compliance/widget-data", s.handleComplianceWidgetData)
