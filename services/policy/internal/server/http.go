@@ -90,6 +90,10 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/abac/evaluate", s.handleABACEvaluate)
 	mux.HandleFunc("/api/v1/policies/role-templates", s.handleRoleTemplates)
 	mux.HandleFunc("/api/v1/policies/role-templates/apply", s.handleRoleTemplateApply)
+	mux.HandleFunc("/api/v1/role-templates", s.handleRoleTemplates) // alias for frontend
+	mux.HandleFunc("/api/v1/scope-management/scopes", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]interface{}{"scopes": []interface{}{}, "total": 0})
+	})
 	mux.HandleFunc("/api/v1/policies/diff", s.handlePolicyDiff)
 	mux.HandleFunc("/api/v1/policies/analyze", s.handleAnalyze)
 	mux.HandleFunc("/api/v1/policies/decision-log", s.handleDecisionLog)
