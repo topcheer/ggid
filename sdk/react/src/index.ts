@@ -725,6 +725,16 @@ export { useAgentBehavioralMonitor } from './useAgentBehavioralMonitor';
 export type { AgentBehavioralMonitorData, MonitoredAgent, AnomalyAlert } from './useAgentBehavioralMonitor';
 export { useAgentCredentialRotation } from './useAgentCredentialRotation';
 export type { AgentCredentialRotationData, RotationEntry, RotationHistoryEntry } from './useAgentCredentialRotation';
+export { useLateralMovementDetect } from './useLateralMovementDetect';
+export type { LateralMovementDetectData, LateralMovementPattern } from './useLateralMovementDetect';
+export { useGoldenTicketDetect } from './useGoldenTicketDetect';
+export type { GoldenTicketDetectData, DetectedForgery, ForgeryDetectionRule } from './useGoldenTicketDetect';
+export { useSessionTokenForgery } from './useSessionTokenForgery';
+export type { SessionTokenForgeryData, ForgedToken, DetectionStats } from './useSessionTokenForgery';
+export { useAuditEvidenceCollection } from './useAuditEvidenceCollection';
+export type { AuditEvidenceCollectionData, EvidenceRequest, EvidenceFile, CollectionProgress } from './useAuditEvidenceCollection';
+export { useComplianceEvidenceTracker } from './useComplianceEvidenceTracker';
+export type { ComplianceEvidenceTrackerData, EvidenceRow, OverdueAlert, AutoCollectionRule } from './useComplianceEvidenceTracker';
 export type {
   GGIDConfig,
   GGIDUser,
