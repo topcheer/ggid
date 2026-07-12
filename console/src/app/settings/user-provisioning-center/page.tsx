@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface SyncHistory {
   timestamp: string;
@@ -14,15 +14,37 @@ interface MappingRule {
 }
 
 export default function UserProvisioningCenterPage() {
-  const [sources] = useState([{ name: "SCIM 2.0", status: "connected" }, { name: "LDAP", status: "connected" }, { name: "Manual", status: "active" }, { name: "Bulk CSV", status: "inactive" }]);
-  const [syncHistory] = useState<SyncHistory[]>([{ timestamp: "16:00:00", direction: "inbound", records: 45, status: "success" }, { timestamp: "12:00:00", direction: "inbound", records: 3, status: "partial" }, { timestamp: "08:00:00", direction: "outbound", records: 12, status: "success" }]);
-  const [mappings, setMappings] = useState<MappingRule[]>([{ source_attr: "mail", ggid_field: "email" }, { source_attr: "displayName", ggid_field: "full_name" }, { source_attr: "department", ggid_field: "department" }, { source_attr: "memberOf", ggid_field: "groups" }]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sources, setSources] = useState<{ name: string; status: string }[]>([]);
+  const [syncHistory, setSyncHistory] = useState<SyncHistory[]>([]);
+  const [mappings, setMappings] = useState<MappingRule[]>([]);
   const [conflictPolicy, setConflictPolicy] = useState("skip");
   const [dryRun, setDryRun] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/v1/users/bulk-provision", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setSources(data.sources || []);
+        setSyncHistory(data.syncHistory || data.sync_history || []);
+        setMappings(data.mappings || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const statusColors: Record<string, string> = { connected: "bg-green-100 text-green-700", active: "bg-green-100 text-green-700", disconnected: "bg-red-100 text-red-700", error: "bg-red-100 text-red-700", inactive: "bg-gray-100 text-gray-500" };
   const syncColors: Record<string, string> = { success: "bg-green-100 text-green-700", partial: "bg-yellow-100 text-yellow-700", failed: "bg-red-100 text-red-700" };
 
+  if (loading) return (
+    <div className="p-8"><h1 className="text-2xl font-bold mb-4">User Provisioning Center</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-8"><h1 className="text-2xl font-bold mb-4">User Provisioning Center</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-8 space-y-6 max-w-5xl">
       <h1 className="text-2xl font-bold">User Provisioning Center</h1>

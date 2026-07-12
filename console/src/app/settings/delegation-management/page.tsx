@@ -1,17 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Delegation { id: string; delegator: string; delegatee: string; scopes: string[]; created: string; expires: string; maxDepth: number; }
 
 export default function DelegationManagementPage() {
-  const [delegations, setDelegations] = useState<Delegation[]>([
-    { id: 'd1', delegator: 'admin@ggid.io', delegatee: 'alice@ggid.io', scopes: ['read:users', 'write:users'], created: '2026-07-10', expires: '2026-07-15', maxDepth: 2 },
-    { id: 'd2', delegator: 'alice@ggid.io', delegatee: 'bob@ggid.io', scopes: ['read:users'], created: '2026-07-11', expires: '2026-07-14', maxDepth: 1 },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [delegations, setDelegations] = useState<Delegation[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newDelegation, setNewDelegation] = useState({ delegatee: '', scopes: '', maxDepth: 2, expiryDays: 7 });
   const [selfError, setSelfError] = useState('');
   const [showChain, setShowChain] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/v1/policies/delegations", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setDelegations(Array.isArray(data) ? data : (data.delegations || data.items || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const create = () => {
     if (newDelegation.delegatee === 'admin@ggid.io') { setSelfError('Cannot delegate to yourself'); return; }
@@ -21,6 +29,12 @@ export default function DelegationManagementPage() {
   };
   const revoke = (id: string) => setDelegations(prev => prev.filter(d => d.id !== id));
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Delegation Management</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Delegation Management</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

@@ -1,20 +1,33 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { GitBranch, Plus, X, Check, Code } from "lucide-react";
 interface Condition { id: string; attribute: string; operator: string; value: string; }
 interface Group { id: string; logic: "AND" | "OR"; conditions: Condition[]; }
 const operators = ["eq", "ne", "in", "contains", "gt", "lt", "gte", "lte"];
 const attributes = ["user.role", "user.department", "user.location", "resource.type", "resource.owner", "action", "time.hour", "request.ip"];
 export default function ConditionBuilderPage() {
-  const [groups, setGroups] = useState<Group[]>([{ id: "g1", logic: "AND", conditions: [{ id: "c1", attribute: "user.role", operator: "eq", value: "admin" }] }]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [validated, setValidated] = useState(false);
   const [showJson, setShowJson] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/v1/policy/abac/condition-config", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setGroups(data.groups || []); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
   const addCondition = (gid: string) => { setGroups(groups.map((g) => g.id === gid ? { ...g, conditions: [...g.conditions, { id: "c" + Date.now(), attribute: "user.role", operator: "eq", value: "" }] } : g)); };
   const removeCondition = (gid: string, cid: string) => { setGroups(groups.map((g) => g.id === gid ? { ...g, conditions: g.conditions.filter((c) => c.id !== cid) } : g)); };
   const updateCondition = (gid: string, cid: string, field: string, value: string) => { setGroups(groups.map((g) => g.id === gid ? { ...g, conditions: g.conditions.map((c) => c.id === cid ? { ...c, [field]: value } : c) } : g)); };
   const addGroup = () => { setGroups([...groups, { id: "g" + Date.now(), logic: "AND", conditions: [] }]); };
   const toggleLogic = (gid: string) => { setGroups(groups.map((g) => g.id === gid ? { ...g, logic: g.logic === "AND" ? "OR" : "AND" } : g)); };
   const jsonPreview = JSON.stringify(groups.map((g) => ({ logic: g.logic, conditions: g.conditions.map((c) => ({ attribute: c.attribute, operator: c.operator, value: c.value })) })), null, 2);
+  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Condition Builder</h1><p>Loading...</p></div>);
+  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Condition Builder</h1><p className="text-red-600">Error: {error}</p></div>);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><GitBranch className="w-6 h-6 text-purple-500" /> Condition Builder</h1><p className="text-sm text-gray-500 mt-1">Build ABAC policy conditions with AND/OR groups.</p></div><div className="flex gap-2"><button onClick={() => setShowJson(!showJson)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-1"><Code className="w-4 h-4" /> JSON</button><button onClick={() => setValidated(true)} className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-sm flex items-center gap-1"><Check className="w-4 h-4" /> Validate</button></div></div>

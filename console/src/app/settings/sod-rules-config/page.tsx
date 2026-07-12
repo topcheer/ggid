@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SodRule {
   id: string;
@@ -18,22 +18,28 @@ interface Violation {
 }
 
 export default function SodRulesConfigPage() {
-  const [rules, setRules] = useState<SodRule[]>([
-    { id: 's1', roleA: 'admin', roleB: 'auditor', conflictLevel: 'high', enabled: true },
-    { id: 's2', roleA: 'finance', roleB: 'admin', conflictLevel: 'high', enabled: true },
-    { id: 's3', roleA: 'developer', roleB: 'security', conflictLevel: 'medium', enabled: true },
-    { id: 's4', roleA: 'operations', roleB: 'finance', conflictLevel: 'low', enabled: false },
-  ]);
-
-  const [violations] = useState<Violation[]>([
-    { id: 'v1', user: 'alice@ggid.io', rule: 'admin × auditor', date: '2026-07-12', status: 'open' },
-    { id: 'v2', user: 'bob@ggid.io', rule: 'finance × admin', date: '2026-07-10', status: 'remediated' },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rules, setRules] = useState<SodRule[]>([]);
+  const [violations, setViolations] = useState<Violation[]>([]);
 
   const [showForm, setShowForm] = useState(false);
   const [sensitivity, setSensitivity] = useState('moderate');
   const [autoRemediate, setAutoRemediate] = useState(false);
   const [newRule, setNewRule] = useState({ roleA: '', roleB: '', conflictLevel: 'medium' });
+
+  useEffect(() => {
+    fetch("/api/v1/policies/sod/rules", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setRules(data.rules || data.items || []);
+        setViolations(data.violations || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const roles = ['admin', 'auditor', 'developer', 'finance', 'security', 'operations'];
   const levels = ['high', 'medium', 'low'];
@@ -59,6 +65,12 @@ export default function SodRulesConfigPage() {
   const cellColor = (v: string): string =>
     v === 'high' ? 'bg-red-200' : v === 'medium' ? 'bg-amber-200' : v === 'low' ? 'bg-green-200' : '';
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">SoD Rules Configuration</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">SoD Rules Configuration</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>

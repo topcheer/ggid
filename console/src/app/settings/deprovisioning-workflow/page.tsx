@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface DeprovisionUser {
   user_id: string;
@@ -10,24 +10,36 @@ interface DeprovisionUser {
   grace_remaining_days: number;
 }
 
-const defaultQueue: DeprovisionUser[] = [
-  { user_id: "u-001", username: "john.doe", department: "Engineering", stage: "disable", linked_accounts: 3, grace_remaining_days: 2 },
-  { user_id: "u-014", username: "jane.smith", department: "Sales", stage: "notify", linked_accounts: 1, grace_remaining_days: 7 },
-  { user_id: "u-022", username: "bob.wilson", department: "Marketing", stage: "revoke", linked_accounts: 5, grace_remaining_days: 0 },
-  { user_id: "u-031", username: "alice.chen", department: "Engineering", stage: "done", linked_accounts: 0, grace_remaining_days: 0 },
-];
+const defaultQueue: DeprovisionUser[] = [];
 
 const stages = ["notify", "disable", "revoke", "archive", "done"] as const;
 
 export default function DeprovisioningWorkflowPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<DeprovisionUser[]>(defaultQueue);
   const [gracePeriodDays, setGracePeriodDays] = useState(7);
   const [dryRun, setDryRun] = useState(false);
   const [cascadePreview, setCascadePreview] = useState<DeprovisionUser | null>(null);
 
+  useEffect(() => {
+    fetch("/api/v1/identity/deprovisioning/config", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setQueue(data.queue || data.items || []); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
   const stageColors: Record<string, string> = { notify: "bg-blue-100 text-blue-700", disable: "bg-yellow-100 text-yellow-700", revoke: "bg-orange-100 text-orange-700", archive: "bg-gray-100 text-gray-600", done: "bg-green-100 text-green-700" };
   const stageIndex = (s: string) => stages.indexOf(s as typeof stages[number]);
 
+  if (loading) return (
+    <div className="p-8"><h1 className="text-2xl font-bold mb-4">Deprovisioning Workflow</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-8"><h1 className="text-2xl font-bold mb-4">Deprovisioning Workflow</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-8 space-y-6 max-w-5xl">
       <h1 className="text-2xl font-bold">Deprovisioning Workflow</h1>

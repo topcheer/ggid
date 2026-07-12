@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SodRule {
   id: string;
@@ -20,23 +20,28 @@ interface Violation {
 const roles = ['admin', 'developer', 'auditor', 'finance', 'security', 'operations', 'support'];
 
 export default function SodConflictDetectionPage() {
-  const [rules, setRules] = useState<SodRule[]>([
-    { id: 'r1', ruleName: 'No Admin + Auditor', roleA: 'admin', roleB: 'auditor', conflictLevel: 'critical' },
-    { id: 'r2', ruleName: 'No Finance + Admin', roleA: 'finance', roleB: 'admin', conflictLevel: 'high' },
-    { id: 'r3', ruleName: 'No Developer + Security', roleA: 'developer', roleB: 'security', conflictLevel: 'medium' },
-    { id: 'r4', ruleName: 'No Operations + Auditor', roleA: 'operations', roleB: 'auditor', conflictLevel: 'high' },
-  ]);
-
-  const [violations, setViolations] = useState<Violation[]>([
-    { id: 'v1', user: 'alice@ggid.io', rule: 'No Admin + Auditor', date: '2026-07-10', status: 'resolved' },
-    { id: 'v2', user: 'bob@ggid.io', rule: 'No Finance + Admin', date: '2026-07-08', status: 'open' },
-    { id: 'v3', user: 'carol@ggid.io', rule: 'No Developer + Security', date: '2026-07-05', status: 'remediated' },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rules, setRules] = useState<SodRule[]>([]);
+  const [violations, setViolations] = useState<Violation[]>([]);
 
   const [sensitivity, setSensitivity] = useState('moderate');
   const [autoRemediate, setAutoRemediate] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [newRule, setNewRule] = useState({ ruleName: '', roleA: 'admin', roleB: 'auditor', conflictLevel: 'medium' });
+
+  useEffect(() => {
+    fetch("/api/v1/policies/sod/rules", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setRules(data.rules || data.items || []);
+        setViolations(data.violations || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const levelColor = (l: string): string =>
     l === 'critical' ? 'bg-red-100 text-red-700' :
@@ -67,6 +72,12 @@ export default function SodConflictDetectionPage() {
     v === 1 ? 'bg-yellow-300 text-gray-700' :
     'bg-gray-50 text-gray-300';
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">SoD Conflict Detection</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">SoD Conflict Detection</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>

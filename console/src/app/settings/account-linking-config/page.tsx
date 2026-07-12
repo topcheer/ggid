@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface LinkedAccount {
   id: string;
@@ -12,21 +12,26 @@ interface LinkedAccount {
 }
 
 export default function AccountLinkingConfigPage() {
-  const [accounts, setAccounts] = useState<LinkedAccount[]>([
-    { id: 'la1', user: 'alice@ggid.io', provider: 'Google', externalId: 'google-12345', linkedAt: '2026-05-01', lastSync: '2026-07-12', isDuplicate: false },
-    { id: 'la2', user: 'bob@ggid.io', provider: 'Microsoft', externalId: 'ms-67890', linkedAt: '2026-04-15', lastSync: '2026-07-11', isDuplicate: false },
-    { id: 'la3', user: 'carol@ggid.io', provider: 'GitHub', externalId: 'gh-carol42', linkedAt: '2026-06-01', lastSync: '2026-07-10', isDuplicate: false },
-    { id: 'la4', user: 'dave@ggid.io', provider: 'Apple', externalId: 'apple-dave001', linkedAt: '2026-03-20', lastSync: '2026-06-15', isDuplicate: true },
-    { id: 'la5', user: 'eve@ggid.io', provider: 'SAML', externalId: 'saml-eve-enterprise', linkedAt: '2026-02-01', lastSync: '2026-07-12', isDuplicate: false },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
 
   const [showForm, setShowForm] = useState(false);
   const [unlinkTarget, setUnlinkTarget] = useState<LinkedAccount | null>(null);
-  const [auditLog, setAuditLog] = useState([
-    { timestamp: '2026-07-12 10:30', action: 'Synced', account: 'alice@ggid.io / Google', actor: 'system' },
-    { timestamp: '2026-07-11 14:00', action: 'Linked', account: 'bob@ggid.io / Microsoft', actor: 'admin@ggid.io' },
-    { timestamp: '2026-07-10 09:15', action: 'Duplicate detected', account: 'dave@ggid.io / Apple', actor: 'system' },
-  ]);
+  const [auditLog, setAuditLog] = useState<{ timestamp: string; action: string; account: string; actor: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/account-linking/config", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setAccounts(Array.isArray(data) ? data : (data.accounts || data.items || []));
+        setAuditLog(data.auditLog || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
   const [newLink, setNewLink] = useState({ user: '', provider: 'Google', externalId: '' });
 
   const providers = ['Google', 'Microsoft', 'GitHub', 'Apple', 'SAML'];
@@ -67,6 +72,18 @@ export default function AccountLinkingConfigPage() {
     setUnlinkTarget(null);
   };
 
+  if (loading) return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Account Linking Configuration</h1>
+      <p>Loading...</p>
+    </div>
+  );
+  if (error) return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Account Linking Configuration</h1>
+      <p className="text-red-600">Error: {error}</p>
+    </div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

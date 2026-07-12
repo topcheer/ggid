@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface FieldMapping {
   sourceField: string;
@@ -25,30 +25,24 @@ interface ExecutionLog {
 }
 
 export default function UserProvisioningRulesPage() {
-  const [rules, setRules] = useState<ProvisioningRule[]>([
-    { id: 'r1', source: 'HR', trigger: 'create', enabled: true, fieldMappings: [
-      { sourceField: 'employee_id', targetField: 'username', defaultValue: '' },
-      { sourceField: 'email', targetField: 'email', defaultValue: '' },
-      { sourceField: 'department', targetField: 'department', defaultValue: 'general' },
-    ]},
-    { id: 'r2', source: 'SCIM', trigger: 'create', enabled: true, fieldMappings: [
-      { sourceField: 'userName', targetField: 'username', defaultValue: '' },
-      { sourceField: 'displayName', targetField: 'full_name', defaultValue: '' },
-    ]},
-    { id: 'r3', source: 'HR', trigger: 'update', enabled: true, fieldMappings: [
-      { sourceField: 'department', targetField: 'department', defaultValue: '' },
-      { sourceField: 'title', targetField: 'job_title', defaultValue: '' },
-    ]},
-    { id: 'r4', source: 'IaC', trigger: 'delete', enabled: false, fieldMappings: [
-      { sourceField: 'resource_id', targetField: 'user_id', defaultValue: '' },
-    ]},
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rules, setRules] = useState<ProvisioningRule[]>([]);
 
-  const [logs] = useState<ExecutionLog[]>([
-    { id: 'l1', rule: 'HR-create', source: 'HR', status: 'success', timestamp: '2026-07-12 09:30', details: 'Provisioned alice@ggid.io' },
-    { id: 'l2', rule: 'SCIM-create', source: 'SCIM', status: 'success', timestamp: '2026-07-12 08:15', details: 'Provisioned bob@ggid.io' },
-    { id: 'l3', rule: 'HR-update', source: 'HR', status: 'failed', timestamp: '2026-07-11 17:45', details: 'Field mapping error: missing department' },
-  ]);
+  const [logs, setLogs] = useState<ExecutionLog[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/scim/provisioning-config", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setRules(data.rules || data.items || []);
+        setLogs(data.logs || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const [showForm, setShowForm] = useState(false);
   const [autoProvision, setAutoProvision] = useState(true);
@@ -85,6 +79,12 @@ export default function UserProvisioningRulesPage() {
 
   const syncStatus: Record<string, string> = { HR: 'synced', SCIM: 'synced', IaC: 'error' };
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">User Provisioning Rules</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">User Provisioning Rules</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

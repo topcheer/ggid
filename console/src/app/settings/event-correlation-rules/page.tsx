@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface CorrelationRule {
   id: string;
@@ -21,14 +21,7 @@ interface CorrelationEvent {
   ip: string;
 }
 
-const INITIAL_RULES: CorrelationRule[] = [
-  { id: 'cr-001', name: 'Multiple Failed Logins', pattern: 'failed_login > 5', window: 300, action: 'lock_account', enabled: true, matches: 142, falsePositives: 3 },
-  { id: 'cr-002', name: 'IP Hopping', pattern: 'distinct_ip > 3 AND login_success', window: 600, action: 'require_mfa', enabled: true, matches: 87, falsePositives: 12 },
-  { id: 'cr-003', name: 'Off-Hours Access', pattern: 'hour NOT IN [8-18] AND admin_action', window: 3600, action: 'alert_admin', enabled: true, matches: 34, falsePositives: 8 },
-  { id: 'cr-004', name: 'Mass Data Export', pattern: 'export_count > 1000', window: 1800, action: 'block_and_alert', enabled: true, matches: 15, falsePositives: 1 },
-  { id: 'cr-005', name: 'Privilege Escalation Chain', pattern: 'role_change AND permission_grant IN 60s', window: 60, action: 'require_approval', enabled: false, matches: 5, falsePositives: 0 },
-  { id: 'cr-006', name: 'Impossible Travel', pattern: 'geo_distance > 1000km IN 1h', window: 3600, action: 'force_reauth', enabled: true, matches: 22, falsePositives: 5 },
-];
+const INITIAL_RULES: CorrelationRule[] = [];
 
 const TEST_EVENTS: CorrelationEvent[] = [
   { id: 'ev-1', type: 'failed_login', user: 'alice@corp.com', timestamp: '2025-01-15T10:00:00Z', ip: '192.168.1.50' },
@@ -41,6 +34,8 @@ const TEST_EVENTS: CorrelationEvent[] = [
 ];
 
 export default function EventCorrelationRulesPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [rules, setRules] = useState<CorrelationRule[]>(INITIAL_RULES);
   const [activeTab, setActiveTab] = useState<'rules' | 'create' | 'test'>('rules');
   const [newName, setNewName] = useState('');
@@ -87,6 +82,17 @@ export default function EventCorrelationRulesPage() {
 
   const falsePositiveRate = (r: CorrelationRule) => r.matches > 0 ? ((r.falsePositives / r.matches) * 100).toFixed(1) : '0.0';
 
+  useEffect(() => {
+    fetch("/api/v1/audit/correlation/rules", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setRules(data.rules || data.items || []); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
+  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Event Correlation Rules</h1><p>Loading...</p></div>);
+  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Event Correlation Rules</h1><p className="text-red-600">Error: {error}</p></div>);
   return (
     <div className="space-y-6">
       <div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface DelegationRule {
   id: string;
@@ -19,24 +19,13 @@ interface ValidationHistoryEntry {
   reasons: string[];
 }
 
-const INITIAL_RULES: DelegationRule[] = [
-  { id: 'rule-1', name: 'Self-Delegation Prevention', description: 'Users cannot delegate to themselves', enabled: true },
-  { id: 'rule-2', name: 'Circular Delegation Prevention', description: 'Prevents A->B->A delegation cycles', enabled: true },
-  { id: 'rule-3', name: 'Max Depth Limit', description: 'Delegation chain cannot exceed configured max depth', enabled: true },
-  { id: 'rule-4', name: 'Scope Narrowing', description: 'Delegatee cannot have broader scopes than delegator', enabled: true },
-  { id: 'rule-5', name: 'Tenant Boundary Check', description: 'Delegator and delegatee must be in same tenant', enabled: true },
-  { id: 'rule-6', name: 'Active Status Check', description: 'Both parties must have active accounts', enabled: false },
-];
+const INITIAL_RULES: DelegationRule[] = [];
 
-const HISTORY: ValidationHistoryEntry[] = [
-  { id: 'vh-001', timestamp: '2025-01-15T10:30:00Z', delegator: 'alice@corp.com', delegatee: 'bob@corp.com', scopes: ['audit:read', 'audit:export'], valid: true, reasons: [] },
-  { id: 'vh-002', timestamp: '2025-01-15T09:15:00Z', delegator: 'alice@corp.com', delegatee: 'alice@corp.com', scopes: ['openid', 'profile'], valid: false, reasons: ['Self-delegation not allowed'] },
-  { id: 'vh-003', timestamp: '2025-01-14T14:00:00Z', delegator: 'bob@corp.com', delegatee: 'charlie@corp.com', scopes: ['admin:all'], valid: false, reasons: ['Scope narrowing violated: delegatee scope broader than delegator'] },
-  { id: 'vh-004', timestamp: '2025-01-14T08:00:00Z', delegator: 'admin@corp.com', delegatee: 'service-bot@corp.com', scopes: ['users:read', 'users:write'], valid: true, reasons: [] },
-  { id: 'vh-005', timestamp: '2025-01-13T16:30:00Z', delegator: 'alice@corp.com', delegatee: 'charlie@corp.com', scopes: ['deploy:write'], valid: false, reasons: ['Circular delegation detected: alice->bob->charlie->alice'] },
-];
+const HISTORY: ValidationHistoryEntry[] = [];
 
 export default function DelegationValidatorPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [rules, setRules] = useState<DelegationRule[]>(INITIAL_RULES);
   const [delegator, setDelegator] = useState('alice@corp.com');
   const [delegatee, setDelegatee] = useState('bob@corp.com');
@@ -45,22 +34,33 @@ export default function DelegationValidatorPage() {
   const [result, setResult] = useState<{ valid: boolean; reasons: string[] } | null>(null);
   const [validating, setValidating] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/v1/policies/delegations", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setRules(data.rules || []); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
   const toggleRule = useCallback((id: string) => {
     setRules(rules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
   }, [rules]);
 
   const validate = useCallback(() => {
     setValidating(true);
-    setTimeout(() => {
-      const reasons: string[] = [];
-      if (delegator === delegatee) reasons.push('Self-delegation not allowed');
-      if (scopes.includes('admin:all')) reasons.push('Scope narrowing violated: admin:all is too broad for delegation');
-      if (maxDepth > 5) reasons.push('Max depth limit exceeded (configured max: 5)');
-      setResult({ valid: reasons.length === 0, reasons });
-      setValidating(false);
-    }, 500);
+    fetch("/api/v1/policy/delegation/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      body: JSON.stringify({ delegator, delegatee, scopes: scopes.split(',').map(s => s.trim()).filter(Boolean), maxDepth }),
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setResult(data); setValidating(false); })
+      .catch(err => { setError(err.message); setValidating(false); });
   }, [delegator, delegatee, scopes, maxDepth]);
 
+  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Delegation Validator</h1><p>Loading...</p></div>);
+  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Delegation Validator</h1><p className="text-red-600">Error: {error}</p></div>);
   return (
     <div className="space-y-6">
       <div>

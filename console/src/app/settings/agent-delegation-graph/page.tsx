@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface DelegationNode {
   id: string;
@@ -13,54 +13,33 @@ interface DelegationNode {
 }
 
 export default function AgentDelegationGraphPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<DelegationNode | null>(null);
   const [cycleWarning, setCycleWarning] = useState(false);
   const [maxDepth, setMaxDepth] = useState(5);
 
-  const [tree, setTree] = useState<DelegationNode>({
-    id: 'user-001',
-    name: 'admin@ggid.io',
-    type: 'user',
-    scopes: ['admin:all'],
-    delegatedAt: '-',
-    expires: '-',
-    children: [
-      {
-        id: 'agent-001',
-        name: 'DataSync Bot',
-        type: 'agent',
-        scopes: ['read:users', 'read:orgs'],
-        delegatedAt: '2026-07-01',
-        expires: '2026-08-01',
-        children: [
-          {
-            id: 'agent-004',
-            name: 'Sub-Processor',
-            type: 'sub-agent',
-            scopes: ['read:users'],
-            delegatedAt: '2026-07-05',
-            expires: '2026-07-20',
-            children: [],
-          },
-        ],
-      },
-      {
-        id: 'agent-002',
-        name: 'Audit Loader',
-        type: 'agent',
-        scopes: ['write:audit'],
-        delegatedAt: '2026-06-15',
-        expires: '2026-09-15',
-        children: [],
-      },
-    ],
-  });
+  const [tree, setTree] = useState<DelegationNode | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/nhi/orphans", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        const t = data.tree || data.data || data;
+        setTree(t);
+        if (t) setCycleWarning(detectCycle(t, new Set()));
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const computeDepth = (node: DelegationNode): number => {
     if (!node.children || node.children.length === 0) return 0;
     return 1 + Math.max(...node.children.map(computeDepth));
   };
-  const currentDepth = computeDepth(tree);
+  const currentDepth = tree ? computeDepth(tree) : 0;
 
   const toggleCollapse = (node: DelegationNode) => {
     const toggle = (n: DelegationNode): DelegationNode => ({
@@ -68,7 +47,7 @@ export default function AgentDelegationGraphPage() {
       collapsed: n.id === node.id ? !n.collapsed : n.collapsed,
       children: n.children.map(toggle),
     });
-    setTree(toggle(tree));
+    if (tree) setTree(toggle(tree));
   };
 
   const detectCycle = (node: DelegationNode, visited: Set<string>): boolean => {
@@ -76,7 +55,7 @@ export default function AgentDelegationGraphPage() {
     visited.add(node.id);
     return node.children.some(c => detectCycle(c, new Set(visited)));
   };
-  setCycleWarning(detectCycle(tree, new Set()));
+  // detectCycle moved to useEffect above
 
   const renderNode = (node: DelegationNode, depth: number): React.ReactNode => {
     const typeColor = node.type === 'user' ? 'bg-blue-100 text-blue-700' : node.type === 'agent' ? 'bg-purple-100 text-purple-700' : 'bg-teal-100 text-teal-700';
@@ -111,6 +90,15 @@ export default function AgentDelegationGraphPage() {
     );
   };
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Agent Delegation Graph</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Agent Delegation Graph</h1><p className="text-red-600">Error: {error}</p></div>
+  );
+  if (!tree) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Agent Delegation Graph</h1><p>No data available</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>

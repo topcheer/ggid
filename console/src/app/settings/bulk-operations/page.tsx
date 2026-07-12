@@ -1,7 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function BulkOperationsPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [bundles, setBundles] = useState<any[]>([]);
   const [opType, setOpType] = useState('bulk_user_create');
   const [csvPreview, setCsvPreview] = useState('');
   const [progress, setProgress] = useState(0);
@@ -19,12 +22,14 @@ export default function BulkOperationsPage() {
 
   const runOp = () => {
     setRunning(true); setProgress(0); setResult(null);
-    const interval = setInterval(() => {
-      setProgress(p => {
-        if (p >= 100) { clearInterval(interval); setRunning(false); setResult({ success: 48, failed: 2, total: 50 }); return 100; }
-        return p + 10;
-      });
-    }, 200);
+    fetch("/api/v1/policies/bundles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      body: JSON.stringify({ opType, csvPreview }),
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setResult(data.result || data); setProgress(100); setRunning(false); })
+      .catch(err => { setError(err.message); setRunning(false); });
   };
 
   const downloadErrors = () => {
@@ -33,6 +38,17 @@ export default function BulkOperationsPage() {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bulk-errors.csv'; a.click();
   };
 
+  useEffect(() => {
+    fetch("/api/v1/policies/bundles", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setBundles(data.bundles || data.items || []); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
+  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Bulk Operations</h1><p>Loading...</p></div>);
+  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Bulk Operations</h1><p className="text-red-600">Error: {error}</p></div>);
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div><h1 className="text-2xl font-bold">Bulk Operations</h1><p className="text-gray-600">Run bulk user operations with CSV upload, progress tracking, and rollback.</p></div>

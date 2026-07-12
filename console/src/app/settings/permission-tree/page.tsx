@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface TreeNode {
   id: string;
@@ -16,47 +16,21 @@ interface UserPerm {
 }
 
 export default function PermissionTreePage() {
-  const [tree, setTree] = useState<TreeNode>({
-    id: 'root',
-    name: 'Root',
-    type: 'role',
-    inherited: false,
-    children: [
-      {
-        id: 'admin', name: 'admin', type: 'role', inherited: false, children: [
-          { id: 'p-admin-1', name: 'admin:all', type: 'permission', inherited: false, children: [
-            { id: 'r-admin-1', name: 'all resources', type: 'resource', inherited: false, children: [] },
-          ]},
-          { id: 'p-admin-2', name: 'read:audit', type: 'permission', inherited: true, children: [
-            { id: 'r-admin-2', name: 'audit logs', type: 'resource', inherited: true, children: [] },
-          ]},
-        ]
-      },
-      {
-        id: 'developer', name: 'developer', type: 'role', inherited: false, children: [
-          { id: 'p-dev-1', name: 'write:users', type: 'permission', inherited: false, children: [
-            { id: 'r-dev-1', name: 'users', type: 'resource', inherited: false, children: [] },
-          ]},
-          { id: 'p-dev-2', name: 'read:policy', type: 'permission', inherited: true, children: [
-            { id: 'r-dev-2', name: 'policy rules', type: 'resource', inherited: true, children: [] },
-          ]},
-        ]
-      },
-      {
-        id: 'auditor', name: 'auditor', type: 'role', inherited: false, children: [
-          { id: 'p-aud-1', name: 'read:audit', type: 'permission', inherited: false, children: [
-            { id: 'r-aud-1', name: 'audit logs', type: 'resource', inherited: false, children: [] },
-          ]},
-          { id: 'p-aud-2', name: 'read:users', type: 'permission', inherited: false, children: [
-            { id: 'r-aud-2', name: 'users (readonly)', type: 'resource', inherited: false, children: [] },
-          ]},
-        ]
-      },
-    ]
-  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [tree, setTree] = useState<TreeNode | null>(null);
 
   const [selectedUser, setSelectedUser] = useState('');
   const [gapAnalysis, setGapAnalysis] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/policies/permissions/tree", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setTree(data.tree || data); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const users: UserPerm[] = [
     { user: 'alice@ggid.io', permissions: ['admin:all', 'read:audit', 'write:users'] },
@@ -67,6 +41,7 @@ export default function PermissionTreePage() {
   const allPermissions = ['admin:all', 'read:audit', 'write:users', 'read:policy', 'read:users', 'write:policy', 'write:orgs'];
 
   const toggleCollapse = (node: TreeNode) => {
+    if (!tree) return;
     const toggle = (n: TreeNode): TreeNode => ({
       ...n,
       collapsed: n.id === node.id ? !n.collapsed : n.collapsed,
@@ -114,6 +89,9 @@ export default function PermissionTreePage() {
     a.href = url; a.download = 'permission-tree.json'; a.click();
   };
 
+  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Permission Tree</h1><p>Loading...</p></div>);
+  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Permission Tree</h1><p className="text-red-600">Error: {error}</p></div>);
+  if (!tree) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Permission Tree</h1><p>No data available</p></div>);
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

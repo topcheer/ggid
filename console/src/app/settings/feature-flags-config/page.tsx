@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface FeatureFlag {
   id: string;
@@ -25,22 +25,9 @@ interface FlagAuditEntry {
   newValue: string;
 }
 
-const INITIAL_FLAGS: FeatureFlag[] = [
-  { id: 'ff-001', name: 'new_auth_flow', description: 'Enable new OAuth2/OIDC auth flow with PKCE', enabled: true, environment: 'prod', percentage: 100, created: '2025-01-10T08:00:00Z', targetedUsers: [], targetedRoles: [], targetedTenants: [], killSwitch: false },
-  { id: 'ff-002', name: 'saml_sp_metadata', description: 'SAML SP metadata auto-generation', enabled: true, environment: 'staging', percentage: 50, created: '2025-01-08T10:00:00Z', targetedUsers: ['user-1', 'user-2'], targetedRoles: ['admin'], targetedTenants: ['tenant-001'], killSwitch: false },
-  { id: 'ff-003', name: 'abac_policy_editor', description: 'ABAC policy editor UI in console', enabled: true, environment: 'dev', percentage: 100, created: '2025-01-05T08:00:00Z', targetedUsers: [], targetedRoles: [], targetedTenants: [], killSwitch: false },
-  { id: 'ff-004', name: 'webauthn_passkeys', description: 'WebAuthn passkey enrollment and authentication', enabled: false, environment: 'prod', percentage: 0, created: '2025-01-12T08:00:00Z', targetedUsers: [], targetedRoles: [], targetedTenants: [], killSwitch: false },
-  { id: 'ff-005', name: 'siem_forwarder', description: 'SIEM event forwarding via syslog/TLS', enabled: true, environment: 'prod', percentage: 100, created: '2025-01-01T00:00:00Z', targetedUsers: [], targetedRoles: [], targetedTenants: [], killSwitch: false },
-  { id: 'ff-006', name: 'scim_user_prov', description: 'SCIM 2.0 automated user provisioning', enabled: false, environment: 'dev', percentage: 25, created: '2025-01-14T08:00:00Z', targetedUsers: ['user-3'], targetedRoles: [], targetedTenants: [], killSwitch: false },
-];
+const INITIAL_FLAGS: FeatureFlag[] = [];
 
-const AUDIT_LOG: FlagAuditEntry[] = [
-  { timestamp: '2025-01-15T10:30:00Z', actor: 'admin@corp.com', flagName: 'new_auth_flow', action: 'enabled', oldValue: 'false', newValue: 'true' },
-  { timestamp: '2025-01-15T09:15:00Z', actor: 'admin@corp.com', flagName: 'saml_sp_metadata', action: 'percentage_changed', oldValue: '25', newValue: '50' },
-  { timestamp: '2025-01-14T14:00:00Z', actor: 'dev@corp.com', flagName: 'scim_user_prov', action: 'created', oldValue: '-', newValue: 'false' },
-  { timestamp: '2025-01-12T08:00:00Z', actor: 'admin@corp.com', flagName: 'webauthn_passkeys', action: 'created', oldValue: '-', newValue: 'false' },
-  { timestamp: '2025-01-10T08:00:00Z', actor: 'admin@corp.com', flagName: 'new_auth_flow', action: 'created', oldValue: '-', newValue: 'true' },
-];
+const AUDIT_LOG: FlagAuditEntry[] = [];
 
 const ENV_COLORS: Record<string, string> = {
   dev: 'bg-blue-100 text-blue-700',
@@ -50,8 +37,10 @@ const ENV_COLORS: Record<string, string> = {
 };
 
 export default function FeatureFlagsConfigPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [flags, setFlags] = useState<FeatureFlag[]>(INITIAL_FLAGS);
-  const [auditLog] = useState<FlagAuditEntry[]>(AUDIT_LOG);
+  const [auditLog, setAuditLog] = useState<FlagAuditEntry[]>(AUDIT_LOG);
   const [activeTab, setActiveTab] = useState<'flags' | 'create' | 'audit'>('flags');
   const [newName, setNewName] = useState('');
   const [newDescription, setNewDescription] = useState('');
@@ -96,6 +85,21 @@ export default function FeatureFlagsConfigPage() {
     setActiveTab('flags');
   }, [flags, newName, newDescription, newDefaultState]);
 
+  useEffect(() => {
+    fetch("/api/v1/policy/feature-flags", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setFlags(data.flags || data.items || []);
+        setAuditLog(data.auditLog || data.audit_log || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
+  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Feature Flags Config</h1><p>Loading...</p></div>);
+  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Feature Flags Config</h1><p className="text-red-600">Error: {error}</p></div>);
   return (
     <div className="space-y-6">
       <div>

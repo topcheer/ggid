@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Review {
   id: string;
@@ -13,18 +13,23 @@ interface Review {
 }
 
 export default function AccessReviewCenterPage() {
-  const [reviews, setReviews] = useState<Review[]>([
-    { id: 'r1', user: 'alice@ggid.io', reviewer: 'manager1@ggid.io', roles: ['admin', 'developer'], scopes: ['admin:all', 'read:audit'], decision: 'pending', timestamp: '2026-07-01', overdue: true },
-    { id: 'r2', user: 'bob@ggid.io', reviewer: 'manager2@ggid.io', roles: ['developer'], scopes: ['write:users'], decision: 'approved', timestamp: '2026-07-05', overdue: false },
-    { id: 'r3', user: 'carol@ggid.io', reviewer: 'manager1@ggid.io', roles: ['auditor'], scopes: ['read:audit', 'read:users'], decision: 'pending', timestamp: '2026-07-08', overdue: false },
-    { id: 'r4', user: 'dave@ggid.io', reviewer: 'manager3@ggid.io', roles: ['finance', 'operations'], scopes: ['write:orgs'], decision: 'rejected', timestamp: '2026-06-28', overdue: false },
-  ]);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [scheduledReview, setScheduledReview] = useState(true);
   const [reviewFrequency, setReviewFrequency] = useState('quarterly');
   const [newReview, setNewReview] = useState({ user: '', reviewer: '', scopes: [] as string[] });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch("/api/v1/policies/access-reviews/campaigns", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setReviews(Array.isArray(data) ? data : (data.reviews || data.campaigns || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const allScopes = ['admin:all', 'read:users', 'write:users', 'read:orgs', 'write:orgs', 'read:audit', 'write:audit', 'read:policy'];
 
@@ -73,6 +78,12 @@ export default function AccessReviewCenterPage() {
   const pendingCount = reviews.filter(r => r.decision === 'pending').length;
   const overdueCount = reviews.filter(r => r.overdue).length;
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Access Review Center</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Access Review Center</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">

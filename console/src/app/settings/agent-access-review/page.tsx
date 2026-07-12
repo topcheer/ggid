@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Review {
   id: string;
@@ -14,11 +14,18 @@ interface Review {
 }
 
 export default function AgentAccessReviewPage() {
-  const [reviews, setReviews] = useState<Review[]>([
-    { id: 'r1', agentId: 'agent-001', agentName: 'DataSync Bot', reviewer: 'admin@ggid.io', decision: 'approved', timestamp: '2026-07-10 14:30', scopes: ['read:users', 'read:orgs'], comment: 'Scoped correctly', drift: false },
-    { id: 'r2', agentId: 'agent-002', agentName: 'Audit Loader', reviewer: 'sec-team@ggid.io', decision: 'rejected', timestamp: '2026-07-09 09:15', scopes: ['admin:all'], comment: 'Excessive scope', drift: true },
-    { id: 'r3', agentId: 'agent-003', agentName: 'Webhook Relay', reviewer: 'admin@ggid.io', decision: 'revoke', timestamp: '2026-07-08 16:45', scopes: ['write:audit'], comment: 'No longer needed', drift: false },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/nhi", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setReviews(Array.isArray(data) ? data : (data.reviews || data.items || [])); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const [showForm, setShowForm] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState('');
@@ -71,6 +78,12 @@ export default function AgentAccessReviewPage() {
     d === 'rejected' ? 'bg-red-100 text-red-700' :
     'bg-amber-100 text-amber-700';
 
+  if (loading) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Agent Access Review</h1><p>Loading...</p></div>
+  );
+  if (error) return (
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Agent Access Review</h1><p className="text-red-600">Error: {error}</p></div>
+  );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
