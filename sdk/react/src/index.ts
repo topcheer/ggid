@@ -261,6 +261,10 @@ export { usePolicyExport } from './usePolicyExport';
 export type { ImportDiff } from './usePolicyExport';
 export { useGeofencing } from './useGeofencing';
 export type { GeofenceRule } from './useGeofencing';
+export { useRiskProfile } from './useRiskProfile';
+export type { RiskData } from './useRiskProfile';
+export { useConsentRegistry } from './useConsentRegistry';
+export type { ConsentData, ConsentEntry } from './useConsentRegistry';
 export type {
   GGIDConfig,
   GGIDUser,
