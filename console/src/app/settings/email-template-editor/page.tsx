@@ -1,0 +1,28 @@
+"use client";
+import { useState, useCallback } from "react";
+import { Mail, Send, Eye } from "lucide-react";
+const templates = ["welcome", "password_reset", "mfa_setup", "account_locked", "access_granted"];
+const variables = ["{{.UserName}}", "{{.UserEmail}}", "{{.ResetLink}}", "{{.OrgName}}", "{{.LoginURL}}", "{{.OTPCode}}", "{{.RoleName}}", "{{.ExpiryTime}}"];
+const langs = ["en", "zh", "ja", "es", "de"];
+const defaultHtml = { welcome: "<h1>Welcome {{.UserName}}!</h1><p>Your account on {{.OrgName}} is ready. <a href=\"{{.LoginURL}}\">Login now</a></p>", password_reset: "<h1>Reset Your Password</h1><p>Click <a href=\"{{.ResetLink}}\">here</a> to reset. Expires: {{.ExpiryTime}}</p>", mfa_setup: "<h1>MFA Setup</h1><p>Your code: <strong>{{.OTPCode}}</strong></p>", account_locked: "<h1>Account Locked</h1><p>Too many failed attempts. Contact admin.</p>", access_granted: "<h1>Access Granted</h1><p>You now have role: {{.RoleName}}</p>" };
+export default function EmailTemplateEditorPage() {
+  const [template, setTemplate] = useState("welcome");
+  const [lang, setLang] = useState("en");
+  const [content, setContent] = useState(defaultHtml.welcome);
+  const [preview, setPreview] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [contentByLang, setContentByLang] = useState<Record<string, string>>({ en: defaultHtml.welcome });
+  const selectTemplate = (t: string) => { setTemplate(t); const key = t + "_" + lang; setContent(contentByLang[key] || defaultHtml[t as keyof typeof defaultHtml] || ""); };
+  const selectLang = (l: string) => { setLang(l); const key = template + "_" + l; setContent(contentByLang[key] || defaultHtml[template as keyof typeof defaultHtml] || ""); };
+  const updateContent = (c: string) => { setContent(c); setContentByLang({ ...contentByLang, [template + "_" + lang]: c }); };
+  const insertVar = (v: string) => updateContent(content + v);
+  const sendTest = async () => { setSending(true); try { await fetch("/api/v1/notification/email-test", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ template, lang, content }) }); } catch { /* noop */ } finally { setSending(false); } };
+  return (
+    <div className="space-y-6">
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Mail className="w-6 h-6 text-blue-500" /> Email Template Editor</h1><p className="text-sm text-gray-500 mt-1">Edit and preview email templates with variable insertion.</p></div>
+      <div className="flex items-center gap-3"><select value={template} onChange={(e) => selectTemplate(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">{templates.map((t) => <option key={t} value={t}>{t}</option>)}</select><div className="flex gap-1">{langs.map((l) => <button key={l} onClick={() => selectLang(l)} className={"px-2 py-1 rounded text-xs font-medium " + (lang === l ? "bg-blue-600 text-white" : "border dark:border-gray-700")}>{l.toUpperCase()}</button>)}</div></div>
+      <div className="flex flex-wrap gap-1">{variables.map((v) => <button key={v} onClick={() => insertVar(v)} className="px-2 py-0.5 rounded text-xs font-mono bg-gray-100 dark:bg-gray-800 hover:bg-blue-100 dark:hover:bg-blue-900/30">{v}</button>)}</div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><div><div className="flex items-center justify-between mb-2"><h3 className="text-sm font-semibold">HTML Editor</h3><div className="flex gap-2"><button onClick={() => setPreview(!preview)} className="text-xs flex items-center gap-1 text-gray-500"><Eye className="w-3.5 h-3.5" /> {preview ? "Edit" : "Preview"}</button><button onClick={sendTest} disabled={sending} className="text-xs px-3 py-1 rounded bg-blue-600 text-white flex items-center gap-1"><Send className="w-3 h-3" /> {sending ? "Sending..." : "Send Test"}</button></div></div>{preview ? <div className="border dark:border-gray-800 rounded-lg p-4 min-h-64" dangerouslySetInnerHTML={{ __html: content }} /> : <textarea value={content} onChange={(e) => updateContent(e.target.value)} rows={12} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-xs font-mono" />}</div><div><h3 className="text-sm font-semibold mb-2">Preview</h3><div className="border dark:border-gray-800 rounded-lg p-4 min-h-64 bg-gray-50 dark:bg-gray-900" dangerouslySetInnerHTML={{ __html: content }} /></div></div>
+    </div>
+  );
+}

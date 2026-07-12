@@ -481,6 +481,14 @@ export { usePasswordPolicyConfig } from './usePasswordPolicyConfig';
 export type { PasswordConfig } from './usePasswordPolicyConfig';
 export { useWebhookDebugger } from './useWebhookDebugger';
 export type { DeliveryLog, TestResult } from './useWebhookDebugger';
+export { useSsoDebugger } from './useSsoDebugger';
+export type { SsoResult } from './useSsoDebugger';
+export { useOidcClaimConfig } from './useOidcClaimConfig';
+export type { ClaimConfig } from './useOidcClaimConfig';
+export { useEmailTemplateEditor } from './useEmailTemplateEditor';
+export type { EmailContent } from './useEmailTemplateEditor';
+export { useNotificationPreferences } from './useNotificationPreferences';
+export type { NotificationPrefs } from './useNotificationPreferences';
 export type {
   GGIDConfig,
   GGIDUser,
