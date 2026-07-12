@@ -91,7 +91,7 @@ func Default() *Config {
 			"/api/v1/alerts":          envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/event-correlation": envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/role-templates":  envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
-			"/api/v1/scope-management": envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/api/v1/scope-management": envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/siem":            envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/security":        envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/admin":           envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
