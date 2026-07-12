@@ -715,6 +715,16 @@ export { useDeviceFingerprintAnalytics } from './useDeviceFingerprintAnalytics';
 export type { DeviceFingerprintAnalyticsData, FingerprintCluster, SuspiciousFingerprint, KnownGood } from './useDeviceFingerprintAnalytics';
 export { useAgentConsentFlow } from './useAgentConsentFlow';
 export type { AgentConsentFlowData, PendingConsent, ConsentHistoryEntry } from './useAgentConsentFlow';
+export { usePrivilegeEscalationDetect } from './usePrivilegeEscalationDetect';
+export type { PrivilegeEscalationDetectData, EscalationEvent, RecommendedAction } from './usePrivilegeEscalationDetect';
+export { useSyntheticIdentity } from './useSyntheticIdentity';
+export type { SyntheticIdentityData, FlaggedAccount, DetectionRule } from './useSyntheticIdentity';
+export { useTorVpnDetect } from './useTorVpnDetect';
+export type { TorVpnDetectData, DetectedConnection, BlocklistRule, CountryStat } from './useTorVpnDetect';
+export { useAgentBehavioralMonitor } from './useAgentBehavioralMonitor';
+export type { AgentBehavioralMonitorData, MonitoredAgent, AnomalyAlert } from './useAgentBehavioralMonitor';
+export { useAgentCredentialRotation } from './useAgentCredentialRotation';
+export type { AgentCredentialRotationData, RotationEntry, RotationHistoryEntry } from './useAgentCredentialRotation';
 export type {
   GGIDConfig,
   GGIDUser,
