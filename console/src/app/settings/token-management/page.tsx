@@ -1,17 +1,28 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Token { id: string; type: string; user: string; client: string; issued: string; expires: string; scopes: string[]; dpop: boolean; jti: string; }
 
 export default function TokenManagementPage() {
-  const [tokens, setTokens] = useState<Token[]>([
-    { id: 't1', type: 'access', user: 'alice@ggid.io', client: 'web-app', issued: '14:00', expires: '14:15', scopes: ['openid', 'profile'], dpop: true, jti: 'abc-123-def' },
-    { id: 't2', type: 'refresh', user: 'bob@ggid.io', client: 'mobile-app', issued: '13:30', expires: '07-13T13:30', scopes: ['openid', 'offline_access'], dpop: false, jti: 'xyz-456-ghi' },
-    { id: 't3', type: 'access', user: 'admin@ggid.io', client: 'admin-cli', issued: '14:25', expires: '14:40', scopes: ['admin:all'], dpop: true, jti: 'mno-789-jkl' },
-  ]);
+  const [tokens, setTokens] = useState<Token[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchJti, setSearchJti] = useState('');
   const [selected, setSelected] = useState<Token | null>(null);
   const [batchRevoke, setBatchRevoke] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/sessions', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data && data.tokens) setTokens(data.tokens);
+        else if (Array.isArray(data)) setTokens(data);
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const filtered = tokens.filter(t => !searchJti || t.jti.includes(searchJti));
   const revoke = (id: string) => setTokens(prev => prev.filter(t => t.id !== id));
@@ -19,6 +30,9 @@ export default function TokenManagementPage() {
   const revokeBatch = () => { setTokens(prev => prev.filter(t => !batchRevoke.includes(t.id))); setBatchRevoke([]); };
 
   const decodeJwt = (t: Token) => btoa(JSON.stringify({ iss: 'ggid.io', sub: t.user, aud: t.client, scope: t.scopes.join(' '), iat: '2026-07-12T14:00Z', exp: t.expires, jti: t.jti, dpop: t.dpop }, null, 2));
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

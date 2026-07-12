@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Code2, ChevronRight, ChevronDown, Copy, AlertCircle } from "lucide-react";
 
 interface DecodedToken {
@@ -54,6 +54,16 @@ export default function TokenClaimsPage() {
   const [token, setToken] = useState("");
   const [decoded, setDecoded] = useState<DecodedToken | null>(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/v1/auth/sessions/anomaly-score", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(() => setLoading(false))
+      .catch(() => setLoading(false));
+  }, []);
 
   const decode = useCallback(() => {
     setError("");

@@ -1,15 +1,29 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function TokenIntrospectionCenterPage() {
   const [token, setToken] = useState("");
   const [decoded, setDecoded] = useState<{ header: string; payload: string; signature: string } | null>(null);
   const [validation, setValidation] = useState<{ issuer: string; expiry: string; audience: string; scopes: string[]; active: boolean; revoked: boolean; binding: string; client: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/auth/expiry-status", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(() => setLoading(false))
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const handleIntrospect = async () => {
     setDecoded({ header: '{\n  "alg": "RS256",\n  "kid": "key-2025-01",\n  "typ": "JWT"\n}', payload: '{\n  "iss": "https://auth.ggid.dev",\n  "sub": "user-12345",\n  "aud": "dashboard-client",\n  "exp": 1736995200,\n  "iat": 1736908800,\n  "scope": "openid profile email users:read",\n  "cnf": { "jkt": "dPvWjK3xQ..." }\n}', signature: 'a3f2b91c...7c4e9d22' });
     setValidation({ issuer: "https://auth.ggid.dev", expiry: "2025-01-16 00:00:00 UTC", audience: "dashboard-client", scopes: ["openid", "profile", "email", "users:read"], active: true, revoked: false, binding: "DPoP (cnf.jkt: dPvWjK3xQ...)", client: "Web Dashboard (cli-001)" });
   };
+
+  if (loading) return <div className="p-8"><p>Loading...</p></div>;
+  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">

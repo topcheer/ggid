@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface BindingConfig {
   clientId: string;
@@ -16,22 +16,34 @@ interface Thumbprint {
 }
 
 export default function TokenBindingStrategiesPage() {
-  const [configs, setConfigs] = useState<BindingConfig[]>([
-    { clientId: 'web-app', dpop: 'required', mtls: 'disabled', senderConstrained: 'required' },
-    { clientId: 'mobile-app', dpop: 'optional', mtls: 'required', senderConstrained: 'optional' },
-    { clientId: 'service-account', dpop: 'disabled', mtls: 'required', senderConstrained: 'disabled' },
-    { clientId: 'spa-frontend', dpop: 'required', mtls: 'disabled', senderConstrained: 'required' },
-  ]);
+  const [configs, setConfigs] = useState<BindingConfig[]>([]);
 
   const [proofLifetime, setProofLifetime] = useState(300);
   const [replayDetection, setReplayDetection] = useState(true);
   const [replayWindow, setReplayWindow] = useState(60);
-  const [thumbprints, setThumbprints] = useState<Thumbprint[]>([
-    { id: 't1', certName: 'auth-service.crt', thumbprint: 'a1:b2:c3:d4:e5:f6:07:08:09:0a', added: '2026-06-01' },
-    { id: 't2', certName: 'gateway.crt', thumbprint: 'f0:e1:d2:c3:b4:a5:96:87:78:69', added: '2026-05-15' },
-  ]);
+  const [thumbprints, setThumbprints] = useState<Thumbprint[]>([]);
   const [showAddThumb, setShowAddThumb] = useState(false);
   const [newThumb, setNewThumb] = useState({ certName: '', thumbprint: '' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/sessions/anomaly-score', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.configs) setConfigs(data.configs);
+          if (data.proof_lifetime) setProofLifetime(data.proof_lifetime);
+          if (data.replay_detection !== undefined) setReplayDetection(data.replay_detection);
+          if (data.replay_window) setReplayWindow(data.replay_window);
+          if (data.thumbprints) setThumbprints(data.thumbprints);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const methods = [
     { name: 'DPoP', desc: 'Demonstration of Proof of Possession', pros: ['No cert management', 'Works with any transport', 'RFC 9449 standard'], cons: ['Higher overhead per request', 'Requires JS crypto in browser'] },
@@ -57,6 +69,9 @@ export default function TokenBindingStrategiesPage() {
     v === 'required' ? 'bg-red-50 text-red-700' :
     v === 'optional' ? 'bg-amber-50 text-amber-700' :
     'bg-gray-100 text-gray-500';
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
