@@ -901,6 +901,16 @@ export { useAuthMtlsConfig } from './useAuthMtlsConfig';
 export type { AuthMtlsConfig, TrustedCaCert } from './useAuthMtlsConfig';
 export { usePolicyDryRunConfig } from './usePolicyDryRunConfig';
 export type { PolicyDryRunConfig, ContextValue } from './usePolicyDryRunConfig';
+export { useOAuthClientMigrationConfig } from './useOAuthClientMigrationConfig';
+export type { OAuthClientMigrationConfig, MappingPreview, CutoverPhase } from './useOAuthClientMigrationConfig';
+export { useTokenBindingComparison } from './useTokenBindingComparison';
+export type { TokenBindingComparison, ComparisonRow, RecommendationEntry, BenchmarkResult, PerClientMethod } from './useTokenBindingComparison';
+export { useAdaptiveAuthDesign } from './useAdaptiveAuthDesign';
+export type { AdaptiveAuthDesign, SignalConfig, ThresholdConfig, ABTestConfig } from './useAdaptiveAuthDesign';
+export { useAuditTamperDetectionConfig } from './useAuditTamperDetectionConfig';
+export type { AuditTamperDetectionConfig } from './useAuditTamperDetectionConfig';
+export { useFederationPatternsConfig } from './useFederationPatternsConfig';
+export type { FederationPatternsConfig, TrustLifecycleRule, MemberProvider } from './useFederationPatternsConfig';
 export type {
   GGIDConfig,
   GGIDUser,
