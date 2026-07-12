@@ -132,6 +132,7 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Membership graph
 	h.mux.HandleFunc("/api/v1/identity/groups/", h.handleMembershipGraph)
+	h.mux.HandleFunc("/api/v1/identity/role-mining", h.handleRoleMining)
 
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {

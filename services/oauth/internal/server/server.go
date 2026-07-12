@@ -991,6 +991,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 
 	// Introspection cache config
+	mux.HandleFunc("/api/v1/oauth/introspection/stats", handleIntrospectionStats)
 	mux.HandleFunc("/api/v1/oauth/introspection/config", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
