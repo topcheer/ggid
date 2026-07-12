@@ -1232,6 +1232,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleTokenEntropy(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/onboarding-checklist") {
+			handleOnboardingChecklist(w, r)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
 			handleValidateClientSecret(w, r)
 			return

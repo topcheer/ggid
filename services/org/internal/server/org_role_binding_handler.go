@@ -51,6 +51,10 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 		s.handleAccessMatrix(w, r)
 		return
 	}
+	if strings.Contains(r.URL.Path, "/teams/export") {
+		s.handleTeamsExport(w, r)
+		return
+	}
 
 	// Extract org_id from path
 	path := strings.Trim(r.URL.Path, "/")
