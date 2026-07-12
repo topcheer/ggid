@@ -157,6 +157,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/scim/provisioning-config", h.handleSCIMProvisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
+	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
 
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
