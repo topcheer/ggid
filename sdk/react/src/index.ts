@@ -233,6 +233,10 @@ export { useJITElevation } from './useJITElevation';
 export type { ElevationRequest } from './useJITElevation';
 export { useCredentialExposure } from './useCredentialExposure';
 export type { ExposureData } from './useCredentialExposure';
+export { usePermissionBoundaries } from './usePermissionBoundaries';
+export type { PermissionBoundary } from './usePermissionBoundaries';
+export { useOnboardingChecklist } from './useOnboardingChecklist';
+export type { Checklist, ChecklistStep } from './useOnboardingChecklist';
 export type {
   GGIDConfig,
   GGIDUser,
