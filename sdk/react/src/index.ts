@@ -823,6 +823,12 @@ export { usePasswordlessConfig } from './usePasswordlessConfig';
 export type { PasswordlessConfigData, PasswordlessMethod, RoleRequirement } from './usePasswordlessConfig';
 export { useAdaptiveAuthConfig } from './useAdaptiveAuthConfig';
 export type { AdaptiveAuthConfigData, RiskThreshold, SignalWeight, RoleOverride } from './useAdaptiveAuthConfig';
+export { useGeoFencingConfig } from './useGeoFencingConfig';
+export type { GeoFencingConfigData, GeoRule } from './useGeoFencingConfig';
+export { useLockoutPolicyConfig } from './useLockoutPolicyConfig';
+export type { LockoutPolicyConfigData, LockoutEntry, EndpointConfig } from './useLockoutPolicyConfig';
+export { useRedirectURIValidationConfig } from './useRedirectURIValidationConfig';
+export type { RedirectURIValidationConfigData, ClientUriEntry } from './useRedirectURIValidationConfig';
 export type {
   GGIDConfig,
   GGIDUser,
