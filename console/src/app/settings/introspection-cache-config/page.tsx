@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function IntrospectionCacheConfigPage() {
   const [enabled, setEnabled] = useState(true);
@@ -8,14 +8,33 @@ export default function IntrospectionCacheConfigPage() {
   const [maxSize, setMaxSize] = useState(10000);
   const [cacheWarming, setCacheWarming] = useState(false);
   const [invalidateToken, setInvalidateToken] = useState('');
-  const [redisStatus] = useState('connected');
+  const [redisStatus, setRedisStatus] = useState('');
+  const [stats, setStats] = useState({ hitRate: 0, missRate: 0, totalRequests: 0, cachedTokens: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [stats] = useState({
-    hitRate: 94.2,
-    missRate: 5.8,
-    totalRequests: 15420,
-    cachedTokens: 8740,
-  });
+  useEffect(() => {
+    fetch('/api/v1/auth/expiry-status', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.enabled !== undefined) setEnabled(data.enabled);
+          if (data.active_ttl) setActiveTtl(data.active_ttl);
+          if (data.inactive_ttl) setInactiveTtl(data.inactive_ttl);
+          if (data.max_size) setMaxSize(data.max_size);
+          if (data.cache_warming !== undefined) setCacheWarming(data.cache_warming);
+          if (data.redis_status) setRedisStatus(data.redis_status);
+          if (data.stats) setStats(data.stats);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

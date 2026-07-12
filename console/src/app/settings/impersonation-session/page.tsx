@@ -1,25 +1,41 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ImpSession { id: string; impersonator: string; target: string; startedAt: string; expires: string; reason: string; }
 
 export default function ImpersonationSessionPage() {
-  const [sessions, setSessions] = useState<ImpSession[]>([
-    { id: 's1', impersonator: 'admin@ggid.io', target: 'alice@ggid.io', startedAt: '14:00', expires: '14:30', reason: 'Debug login issue' },
-  ]);
+  const [sessions, setSessions] = useState<ImpSession[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newSession, setNewSession] = useState({ target: '', reason: '', duration: 30 });
-  const [auditLog] = useState([
-    { time: '14:05', action: 'viewed user profile', target: 'alice@ggid.io' },
-    { time: '14:03', action: 'accessed audit logs', target: 'audit/events' },
-    { time: '14:01', action: 'started impersonation', target: 'alice@ggid.io' },
-  ]);
+  const [auditLog, setAuditLog] = useState([] as { time: string; action: string; target: string }[]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/impersonate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+      body: JSON.stringify({ action: 'list' }),
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.sessions) setSessions(data.sessions);
+          if (data.audit_log) setAuditLog(data.audit_log);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const start = () => {
     setSessions(prev => [...prev, { id: `s${prev.length + 1}`, impersonator: 'admin@ggid.io', target: newSession.target, startedAt: new Date().toISOString().slice(11, 16), expires: `${new Date(Date.now() + newSession.duration * 60000).toISOString().slice(11, 16)}`, reason: newSession.reason }]);
     setShowForm(false); setNewSession({ target: '', reason: '', duration: 30 });
   };
   const endSession = (id: string) => setSessions(prev => prev.filter(s => s.id !== id));
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

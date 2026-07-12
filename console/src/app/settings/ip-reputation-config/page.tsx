@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function IpReputationConfigPage() {
   const [enabled, setEnabled] = useState(true);
@@ -17,7 +17,33 @@ export default function IpReputationConfigPage() {
   const [listMode, setListMode] = useState<'allow' | 'block'>('allow');
 
   const countries = ['CN', 'RU', 'KP', 'IR', 'SY', 'CU', 'VN', 'TR', 'BR', 'IN'];
-  const [stats] = useState({ checkedToday: 15420, blockedToday: 89, suspiciousToday: 234, avgScore: 12.5 });
+  const [stats, setStats] = useState({ checkedToday: 0, blockedToday: 0, suspiciousToday: 0, avgScore: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/tor-vpn/detect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.enabled !== undefined) setEnabled(data.enabled);
+          if (data.provider) setProvider(data.provider);
+          if (data.check_interval) setCheckInterval(data.check_interval);
+          if (data.block_threshold) setBlockThreshold(data.block_threshold);
+          if (data.suspicious_threshold) setSuspiciousThreshold(data.suspicious_threshold);
+          if (data.allowlist) setAllowlist(data.allowlist);
+          if (data.blocklist) setBlocklist(data.blocklist);
+          if (data.blocked_countries) setBlockedCountries(data.blocked_countries);
+          if (data.asn_blocklist) setAsnBlocklist(data.asn_blocklist);
+          if (data.stats) setStats(data.stats);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const addIp = () => {
     if (listMode === 'allow') setAllowlist(prev => [...prev, newIp]);
@@ -31,6 +57,9 @@ export default function IpReputationConfigPage() {
   const toggleCountry = (c: string) => setBlockedCountries(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
   const addAsn = () => { if (newAsn) { setAsnBlocklist(prev => [...prev, newAsn]); setNewAsn(''); } };
   const removeAsn = (a: string) => setAsnBlocklist(prev => prev.filter(x => x !== a));
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

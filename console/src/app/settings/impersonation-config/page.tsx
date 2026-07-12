@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ImpersonationRecord {
   id: string;
@@ -12,21 +12,39 @@ interface ImpersonationRecord {
 }
 
 export default function ImpersonationConfigPage() {
-  const [allowedImpersonators, setAllowedImpersonators] = useState(['admin@ggid.io', 'sec-team@ggid.io']);
+  const [allowedImpersonators, setAllowedImpersonators] = useState<string[]>([]);
   const [requireReason, setRequireReason] = useState(true);
   const [maxDuration, setMaxDuration] = useState(60);
   const [auditLevel, setAuditLevel] = useState('full');
   const [requireTargetConsent, setRequireTargetConsent] = useState(false);
   const [autoRevokeOnIdle, setAutoRevokeOnIdle] = useState(true);
-  const [restrictToRoles, setRestrictToRoles] = useState(['super-admin', 'security-admin']);
+  const [restrictToRoles, setRestrictToRoles] = useState<string[]>([]);
   const [newImpersonator, setNewImpersonator] = useState('');
   const [newRole, setNewRole] = useState('');
+  const [history, setHistory] = useState<ImpersonationRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [history] = useState<ImpersonationRecord[]>([
-    { id: 'i1', impersonator: 'admin@ggid.io', target: 'alice@ggid.io', reason: 'Debug login issue', startedAt: '2026-07-12 14:00', duration: '15min', status: 'active' },
-    { id: 'i2', impersonator: 'sec-team@ggid.io', target: 'bob@ggid.io', reason: 'Security investigation', startedAt: '2026-07-11 10:30', duration: '30min', status: 'ended' },
-    { id: 'i3', impersonator: 'admin@ggid.io', target: 'carol@ggid.io', reason: 'Account troubleshooting', startedAt: '2026-07-10 09:00', duration: '10min', status: 'ended' },
-  ]);
+  useEffect(() => {
+    fetch('/api/v1/auth/impersonation/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.allowed_impersonators) setAllowedImpersonators(data.allowed_impersonators);
+          if (data.require_reason !== undefined) setRequireReason(data.require_reason);
+          if (data.max_duration) setMaxDuration(data.max_duration);
+          if (data.audit_level) setAuditLevel(data.audit_level);
+          if (data.require_target_consent !== undefined) setRequireTargetConsent(data.require_target_consent);
+          if (data.auto_revoke_on_idle !== undefined) setAutoRevokeOnIdle(data.auto_revoke_on_idle);
+          if (data.restrict_to_roles) setRestrictToRoles(data.restrict_to_roles);
+          if (data.history) setHistory(data.history);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const addImpersonator = () => { if (newImpersonator) { setAllowedImpersonators(prev => [...prev, newImpersonator]); setNewImpersonator(''); } };
   const removeImpersonator = (u: string) => setAllowedImpersonators(prev => prev.filter(x => x !== u));
@@ -35,6 +53,9 @@ export default function ImpersonationConfigPage() {
 
   const statusColor = (s: string): string =>
     s === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600';
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ClientOverride {
   clientId: string;
@@ -15,11 +15,9 @@ export default function JwtExpiryConfigPage() {
   const [slidingWindow, setSlidingWindow] = useState(true);
   const [maxRefreshCount, setMaxRefreshCount] = useState(100);
   const [warningThreshold, setWarningThreshold] = useState(300);
-  const [overrides, setOverrides] = useState<ClientOverride[]>([
-    { clientId: 'web-app', accessTokenExpiry: 30, refreshTokenExpiry: 86400 },
-    { clientId: 'mobile-app', accessTokenExpiry: 60, refreshTokenExpiry: 2592000 },
-    { clientId: 'admin-cli', accessTokenExpiry: 5, refreshTokenExpiry: 3600 },
-  ]);
+  const [overrides, setOverrides] = useState<ClientOverride[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [newOverride, setNewOverride] = useState({ clientId: '', accessTokenExpiry: 15, refreshTokenExpiry: 43200 });
 
@@ -31,6 +29,30 @@ export default function JwtExpiryConfigPage() {
   const removeOverride = (clientId: string) => setOverrides(prev => prev.filter(o => o.clientId !== clientId));
 
   const fmt = (s: number): string => s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}min` : s < 86400 ? `${Math.round(s / 3600)}h` : `${Math.round(s / 86400)}d`;
+
+  useEffect(() => {
+    fetch('/api/v1/auth/expiry-status', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.access_expiry) setAccessExpiry(data.access_expiry);
+          if (data.refresh_expiry) setRefreshExpiry(data.refresh_expiry);
+          if (data.id_token_expiry) setIdTokenExpiry(data.id_token_expiry);
+          if (data.agent_token_expiry) setAgentTokenExpiry(data.agent_token_expiry);
+          if (data.sliding_window !== undefined) setSlidingWindow(data.sliding_window);
+          if (data.max_refresh_count) setMaxRefreshCount(data.max_refresh_count);
+          if (data.warning_threshold) setWarningThreshold(data.warning_threshold);
+          if (data.overrides) setOverrides(data.overrides);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
