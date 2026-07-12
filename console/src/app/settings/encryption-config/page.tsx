@@ -1,19 +1,42 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function EncryptionConfigPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [algorithm, setAlgorithm] = useState('AES-256-GCM');
   const [keyRotation, setKeyRotation] = useState(90);
   const [kmsProvider, setKmsProvider] = useState('internal');
   const [envelopeEncryption, setEnvelopeEncryption] = useState(true);
   const [tlsMinVersion, setTlsMinVersion] = useState('1.2');
-  const [cipherSuites, setCipherSuites] = useState(['TLS_AES_256_GCM_SHA384', 'TLS_CHACHA20_POLY1305_SHA256']);
+  const [cipherSuites, setCipherSuites] = useState<string[]>([]);
   const [hsmEnabled, setHsmEnabled] = useState(false);
   const [keyBackup, setKeyBackup] = useState(true);
-  const [newCipher, setNewCipher] = useState('');
+
+  useEffect(() => {
+    fetch("/api/v1/identity/encryption-config", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        if (data.algorithm) setAlgorithm(data.algorithm);
+        if (data.keyRotation) setKeyRotation(data.keyRotation);
+        if (data.kmsProvider) setKmsProvider(data.kmsProvider);
+        if (data.envelopeEncryption !== undefined) setEnvelopeEncryption(data.envelopeEncryption);
+        if (data.tlsMinVersion) setTlsMinVersion(data.tlsMinVersion);
+        if (data.cipherSuites) setCipherSuites(data.cipherSuites);
+        if (data.hsmEnabled !== undefined) setHsmEnabled(data.hsmEnabled);
+        if (data.keyBackup !== undefined) setKeyBackup(data.keyBackup);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const allCiphers = ['TLS_AES_256_GCM_SHA384', 'TLS_CHACHA20_POLY1305_SHA256', 'TLS_AES_128_GCM_SHA256', 'ECDHE-RSA-AES256-GCM-SHA384', 'ECDHE-ECDSA-AES256-GCM-SHA384'];
   const toggleCipher = (c: string) => setCipherSuites(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]);
+
+  if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">Encryption Configuration</h1><p className="text-gray-600 mt-2">Loading...</p></div>;
+  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">Encryption Configuration</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

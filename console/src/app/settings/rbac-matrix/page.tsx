@@ -1,38 +1,56 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Role { id: string; name: string; description: string; }
 
 export default function RbacMatrixPage() {
-  const [roles] = useState<Role[]>([
-    { id: 'r1', name: 'admin', description: 'Full system access' },
-    { id: 'r2', name: 'developer', description: 'Development access' },
-    { id: 'r3', name: 'auditor', description: 'Read-only audit access' },
-    { id: 'r4', name: 'viewer', description: 'View-only access' },
-  ]);
-  const [permissions] = useState(['read:users', 'write:users', 'read:orgs', 'write:orgs', 'read:audit', 'write:audit', 'admin:all']);
-  const [matrix, setMatrix] = useState<Record<string, boolean[]>>({
-    r1: [true, true, true, true, true, true, true],
-    r2: [true, true, false, false, true, false, false],
-    r3: [true, false, true, false, true, false, false],
-    r4: [true, false, false, false, false, false, false],
-  });
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [matrix, setMatrix] = useState<Record<string, boolean[]>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [newRole, setNewRole] = useState({ name: '', description: '' });
-  const [selectedRole, setSelectedRole] = useState('r1');
+  const [selectedRole, setSelectedRole] = useState('');
+
+  useEffect(() => {
+    fetch("/api/v1/policy/rbac-matrix", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setRoles(data.roles || []);
+        setPermissions(data.permissions || []);
+        setMatrix(data.matrix || {});
+        if (data.roles && data.roles.length > 0) setSelectedRole(data.roles[0].id);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const toggleCell = (roleId: string, permIdx: number) => {
-    setMatrix(prev => ({ ...prev, [roleId]: prev[roleId].map((v, i) => i === permIdx ? !v : v) }));
+    setMatrix(prev => ({ ...prev, [roleId]: prev[roleId]?.map((v, i) => i === permIdx ? !v : v) || [] }));
   };
 
   const addRole = () => {
-    const id = `r${roles.length + 1}`;
-    setMatrix(prev => ({ ...prev, [id]: new Array(permissions.length).fill(false) }));
-    // Note: roles is read-only mock; in production this would update backend
-    setShowForm(false); setNewRole({ name: '', description: '' });
+    fetch("/api/v1/policy/roles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      body: JSON.stringify(newRole),
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setRoles(prev => [...prev, data]);
+        setMatrix(prev => ({ ...prev, [data.id]: new Array(permissions.length).fill(false) }));
+        setShowForm(false); setNewRole({ name: '', description: '' });
+      })
+      .catch(err => setError(err.message));
   };
 
-  const effectivePerms = matrix[selectedRole]?.map((v, i) => v ? permissions[i] : null).filter(Boolean) as string[];
+  const effectivePerms = matrix[selectedRole]?.map((v, i) => v ? permissions[i] : null).filter(Boolean) as string[] || [];
+
+  if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">RBAC Matrix</h1><p className="text-gray-600 mt-2">Loading...</p></div>;
+  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">RBAC Matrix</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -53,6 +71,7 @@ export default function RbacMatrixPage() {
       )}
 
       <section className="bg-white rounded-lg shadow overflow-hidden">
+        {roles.length === 0 ? <p className="p-6 text-center text-gray-500">No roles configured.</p> :
         <table className="w-full text-sm">
           <thead className="bg-gray-50"><tr className="text-left"><th className="p-3">Role</th>{permissions.map(p => <th key={p} className="p-3 font-mono text-xs">{p}</th>)}</tr></thead>
           <tbody>
@@ -63,7 +82,7 @@ export default function RbacMatrixPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table>}
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
@@ -71,7 +90,7 @@ export default function RbacMatrixPage() {
         <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)} className="border rounded px-3 py-2 text-sm">
           {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
         </select>
-        <div className="flex flex-wrap gap-2">{effectivePerms?.map(p => <span key={p} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-mono">{p}</span>)}</div>
+        <div className="flex flex-wrap gap-2">{effectivePerms.map(p => <span key={p} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-mono">{p}</span>)}</div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">

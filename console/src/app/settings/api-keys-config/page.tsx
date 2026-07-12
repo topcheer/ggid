@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ApiKey {
   id: string;
@@ -13,17 +13,26 @@ interface ApiKey {
 }
 
 export default function ApiKeysConfigPage() {
-  const [keys, setKeys] = useState<ApiKey[]>([
-    { id: 'k1', keyId: 'gak_abc123', name: 'Production API', created: '2026-01-15', scopes: ['read:users', 'write:users'], expires: '2027-01-15', rateLimit: 1000, ipRestriction: '10.0.0.0/8' },
-    { id: 'k2', keyId: 'gak_def456', name: 'Monitoring', created: '2026-03-01', scopes: ['read:audit'], expires: '2026-09-01', rateLimit: 100, ipRestriction: 'any' },
-  ]);
+  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [newKey, setNewKey] = useState({ name: '', scopes: [] as string[], expires: '', rateLimit: 1000, ipRestriction: 'any' });
-  const [auditLog] = useState([
-    { time: '14:30', action: 'API call', key: 'gak_abc123', endpoint: '/api/v1/users' },
-    { time: '14:15', action: 'Rate limited', key: 'gak_def456', endpoint: '/api/v1/audit' },
-    { time: '13:00', action: 'Created', key: 'gak_def456', endpoint: '-' },
-  ]);
+  const [auditLog, setAuditLog] = useState<{ time: string; action: string; key: string; endpoint: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/v1/identity/api-keys", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        const items = data.keys || data.items || [];
+        setKeys(items);
+        setAuditLog(data.audit_log || []);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const allScopes = ['read:users', 'write:users', 'read:orgs', 'write:orgs', 'read:audit', 'write:audit', 'read:policy', 'admin:all'];
   const toggleScope = (s: string) => setNewKey(prev => ({ ...prev, scopes: prev.scopes.includes(s) ? prev.scopes.filter(x => x !== s) : [...prev.scopes, s] }));
@@ -33,6 +42,9 @@ export default function ApiKeysConfigPage() {
     setShowForm(false); setNewKey({ name: '', scopes: [], expires: '', rateLimit: 1000, ipRestriction: 'any' });
   };
   const revoke = (id: string) => setKeys(prev => prev.filter(k => k.id !== id));
+
+  if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">API Keys Configuration</h1><p className="text-gray-600 mt-2">Loading...</p></div>;
+  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">API Keys Configuration</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -59,7 +71,8 @@ export default function ApiKeysConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50"><tr className="text-left"><th className="p-3">Key ID</th><th className="p-3">Name</th><th className="p-3">Scopes</th><th className="p-3">Expires</th><th className="p-3">Rate</th><th className="p-3">IP</th><th className="p-3">Action</th></tr></thead>
           <tbody>
-            {keys.map(k => (
+            {keys.length === 0 ? <tr><td colSpan={7} className="p-6 text-center text-gray-500">No API keys configured.</td></tr> :
+            keys.map(k => (
               <tr key={k.id} className="border-b">
                 <td className="p-3 font-mono text-xs">{k.keyId}</td>
                 <td className="p-3 font-medium">{k.name}</td>
@@ -76,7 +89,7 @@ export default function ApiKeysConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Audit Log</h2>
-        <div className="space-y-1">{auditLog.map((l, i) => (
+        <div className="space-y-1">{auditLog.length === 0 ? <p className="text-gray-500 text-sm">No audit entries.</p> : auditLog.map((l, i) => (
           <div key={i} className="text-sm flex items-center gap-3 border-b pb-1"><span className="text-gray-500 text-xs">{l.time}</span><span className={`px-2 py-0.5 rounded text-xs ${l.action === 'Rate limited' ? 'bg-amber-100 text-amber-700' : l.action === 'Created' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{l.action}</span><span className="font-mono text-xs">{l.key}</span><span className="text-gray-500 text-xs">{l.endpoint}</span></div>
         ))}</div>
       </section>

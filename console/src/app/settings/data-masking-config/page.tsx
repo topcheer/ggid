@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface PiiField {
   id: string;
@@ -12,21 +12,28 @@ interface PiiField {
 }
 
 export default function DataMaskingConfigPage() {
-  const [fields, setFields] = useState<PiiField[]>([
-    { id: 'p1', field: 'email', pattern: 'partial', maskInApi: true, maskInAudit: true, maskInExports: true, unmaskRoles: ['admin'] },
-    { id: 'p2', field: 'phone', pattern: 'partial', maskInApi: true, maskInAudit: true, maskInExports: true, unmaskRoles: ['admin'] },
-    { id: 'p3', field: 'ssn', pattern: 'full', maskInApi: true, maskInAudit: true, maskInExports: true, unmaskRoles: ['admin', 'security-admin'] },
-    { id: 'p4', field: 'credit_card', pattern: 'partial', maskInApi: true, maskInAudit: true, maskInExports: true, unmaskRoles: ['admin'] },
-    { id: 'p5', field: 'address', pattern: 'partial', maskInApi: false, maskInAudit: true, maskInExports: true, unmaskRoles: ['admin', 'developer'] },
-    { id: 'p6', field: 'full_name', pattern: 'partial', maskInApi: false, maskInAudit: true, maskInExports: false, unmaskRoles: ['admin'] },
-  ]);
-
+  const [fields, setFields] = useState<PiiField[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [newField, setNewField] = useState({ field: '', pattern: 'partial', unmaskRoles: '' });
   const [testInput, setTestInput] = useState('');
   const [testField, setTestField] = useState('email');
   const [testOutput, setTestOutput] = useState('');
-  const [stats] = useState({ fieldsConfigured: 6, recordsMasked24h: 15420, auditMasked: 8930, exportsMasked: 142 });
+  const [stats, setStats] = useState({ fieldsConfigured: 0, recordsMasked24h: 0, auditMasked: 0, exportsMasked: 0 });
+
+  useEffect(() => {
+    fetch("/api/v1/identity/pii-config", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        setFields(data.fields || []);
+        setStats(data.stats || { fieldsConfigured: (data.fields || []).length, recordsMasked24h: 0, auditMasked: 0, exportsMasked: 0 });
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const patterns = ['full', 'partial', 'regex', 'hash'];
   const allRoles = ['admin', 'security-admin', 'developer', 'auditor', 'viewer'];
@@ -48,17 +55,16 @@ export default function DataMaskingConfigPage() {
     return value;
   };
 
-  const runTest = () => {
-    setTestOutput(maskValue(testInput, testField));
-  };
-
+  const runTest = () => { setTestOutput(maskValue(testInput, testField)); };
   const addField = () => {
     setFields(prev => [...prev, { id: `p${prev.length + 1}`, field: newField.field, pattern: newField.pattern, maskInApi: true, maskInAudit: true, maskInExports: true, unmaskRoles: newField.unmaskRoles ? newField.unmaskRoles.split(',').map(s => s.trim()) : [] }]);
     setShowForm(false); setNewField({ field: '', pattern: 'partial', unmaskRoles: '' });
   };
-
   const removeField = (id: string) => setFields(prev => prev.filter(f => f.id !== id));
   const updateField = (id: string, key: keyof PiiField, value: boolean) => setFields(prev => prev.map(f => f.id === id ? { ...f, [key]: value } : f));
+
+  if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">Data Masking Configuration</h1><p className="text-gray-600 mt-2">Loading...</p></div>;
+  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">Data Masking Configuration</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -90,7 +96,8 @@ export default function DataMaskingConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50"><tr className="text-left"><th className="p-3">Field</th><th className="p-3">Pattern</th><th className="p-3">API</th><th className="p-3">Audit</th><th className="p-3">Exports</th><th className="p-3">Unmask Roles</th><th className="p-3">Action</th></tr></thead>
           <tbody>
-            {fields.map(f => (
+            {fields.length === 0 ? <tr><td colSpan={7} className="p-6 text-center text-gray-500">No PII fields configured.</td></tr> :
+            fields.map(f => (
               <tr key={f.id} className="border-b">
                 <td className="p-3 font-mono text-xs">{f.field}</td>
                 <td className="p-3"><span className="px-2 py-0.5 bg-gray-100 rounded text-xs">{f.pattern}</span></td>

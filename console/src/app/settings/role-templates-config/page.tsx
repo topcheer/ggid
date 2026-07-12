@@ -1,21 +1,30 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Template { id: string; name: string; category: string; permissions: string[]; version: string; }
 
 export default function RoleTemplatesConfigPage() {
-  const [templates] = useState<Template[]>([
-    { id: 't1', name: 'Finance Analyst', category: 'finance', permissions: ['read:audit', 'read:orgs', 'read:reports'], version: '1.2' },
-    { id: 't2', name: 'IT Admin', category: 'IT', permissions: ['admin:all'], version: '2.0' },
-    { id: 't3', name: 'Security Reviewer', category: 'security', permissions: ['read:audit', 'read:users', 'read:policy'], version: '1.1' },
-    { id: 't4', name: 'Operations Manager', category: 'operations', permissions: ['read:users', 'write:orgs', 'read:audit'], version: '1.3' },
-  ]);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showDiff, setShowDiff] = useState<Template | null>(null);
   const [newTemplate, setNewTemplate] = useState(false);
 
-  const categories = ['finance', 'IT', 'security', 'operations'];
+  useEffect(() => {
+    fetch("/api/v1/policy/role-templates", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setTemplates(data.templates || data.items || []); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
+
+  const categories = [...new Set(templates.map(t => t.category))];
   const filtered = templates.filter(t => categoryFilter === 'all' || t.category === categoryFilter);
+
+  if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">Role Templates Configuration</h1><p className="text-gray-600 mt-2">Loading...</p></div>;
+  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">Role Templates Configuration</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -39,6 +48,7 @@ export default function RoleTemplatesConfigPage() {
       <div className="flex gap-2"><button onClick={() => setCategoryFilter('all')} className={`px-3 py-1 rounded text-sm ${categoryFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>All</button>{categories.map(c => <button key={c} onClick={() => setCategoryFilter(c)} className={`px-3 py-1 rounded text-sm capitalize ${categoryFilter === c ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>{c}</button>)}</div>
 
       <section className="bg-white rounded-lg shadow overflow-hidden">
+        {filtered.length === 0 ? <p className="p-6 text-center text-gray-500">No templates configured.</p> :
         <table className="w-full text-sm"><thead className="bg-gray-50"><tr className="text-left"><th className="p-3">Template</th><th className="p-3">Category</th><th className="p-3">Permissions</th><th className="p-3">Version</th><th className="p-3">Actions</th></tr></thead>
           <tbody>{filtered.map(t => (
             <tr key={t.id} className="border-b">
@@ -46,16 +56,14 @@ export default function RoleTemplatesConfigPage() {
               <td className="p-3"><div className="flex flex-wrap gap-1">{t.permissions.map(p => <span key={p} className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">{p}</span>)}</div></td>
               <td className="p-3 text-gray-500">v{t.version}</td>
               <td className="p-3"><div className="flex gap-2"><button onClick={() => setShowDiff(t)} className="text-blue-600 text-xs hover:underline">Diff</button><button className="text-green-600 text-xs hover:underline">Apply</button></div></td>
-            </tr>))}</tbody></table>
+            </tr>))}</tbody></table>}
       </section>
 
       {showDiff && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 space-y-4">
             <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Template Diff: {showDiff.name}</h2><button onClick={() => setShowDiff(null)} className="text-gray-400">x</button></div>
-            <div className="space-y-3"><div><div className="text-xs font-medium text-green-600">Baseline Permissions:</div><div className="flex flex-wrap gap-1 mt-1">{showDiff.permissions.map(p => <span key={p} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-mono">{p}</span>)}</div></div>
-            <div><div className="text-xs font-medium text-blue-600">Additional on Apply:</div><div className="flex flex-wrap gap-1 mt-1"><span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-mono">read:config</span></div></div></div>
-            <div className="text-xs text-gray-400">Changelog: v1.0 initial → v1.1 added read:policy → v{showDiff.version} current</div>
+            <div className="space-y-3"><div><div className="text-xs font-medium text-green-600">Baseline Permissions:</div><div className="flex flex-wrap gap-1 mt-1">{showDiff.permissions.map(p => <span key={p} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-mono">{p}</span>)}</div></div></div>
           </div>
         </div>
       )}

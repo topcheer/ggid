@@ -1,154 +1,87 @@
 'use client';
+import { useState, useEffect, useCallback } from 'react';
 
-import { useState, useCallback } from 'react';
-
-interface PolicyRule {
-  id: string;
-  name: string;
-  effect: 'allow' | 'deny';
-  matched: boolean;
-  priority: number;
-}
-
-interface SimulationResult {
-  decision: 'allow' | 'deny' | 'indeterminate';
-  matchedRules: PolicyRule[];
-  trace: string[];
-  evaluatedAt: string;
-  durationMs: number;
-}
-
-interface BatchResult {
-  rowIndex: number;
-  subject: string;
-  resource: string;
-  action: string;
-  decision: string;
-  matchedRules: number;
-}
-
-interface ImpactAnalysis {
-  affectedUsers: number;
-  allowCount: number;
-  denyCount: number;
-  indeterminateCount: number;
-}
-
-interface DiffEntry {
-  field: string;
-  before: string;
-  after: string;
-  changed: boolean;
-}
-
-const SAMPLE_POLICIES = [
-  { id: 'pol-001', name: 'Admin Full Access', effect: 'allow' as const, priority: 100 },
-  { id: 'pol-002', name: 'Read-Only Users', effect: 'allow' as const, priority: 50 },
-  { id: 'pol-003', name: 'Deny Deleted Users', effect: 'deny' as const, priority: 200 },
-  { id: 'pol-004', name: 'Tenant Isolation', effect: 'deny' as const, priority: 150 },
-  { id: 'pol-005', name: 'MFA Required for Admin', effect: 'deny' as const, priority: 180 },
-];
+interface PolicyRule { id: string; name: string; effect: 'allow' | 'deny'; matched: boolean; priority: number; }
+interface SimulationResult { decision: 'allow' | 'deny' | 'indeterminate'; matchedRules: PolicyRule[]; trace: string[]; evaluatedAt: string; durationMs: number; }
+interface BatchResult { rowIndex: number; subject: string; resource: string; action: string; decision: string; matchedRules: number; }
+interface ImpactAnalysis { affectedUsers: number; allowCount: number; denyCount: number; indeterminateCount: number; }
 
 export default function PolicySimulationCenterPage() {
-  const [selectedPolicy, setSelectedPolicy] = useState(SAMPLE_POLICIES[0].id);
-  const [subjectAttrs, setSubjectAttrs] = useState('{\n  "role": "admin",\n  "department": "engineering",\n  "tenant_id": "tenant-001"\n}');
-  const [resourceAttrs, setResourceAttrs] = useState('{\n  "type": "document",\n  "owner": "user-123",\n  "classification": "confidential"\n}');
+  const [policies, setPolicies] = useState<{ id: string; name: string; effect: 'allow' | 'deny'; priority: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedPolicy, setSelectedPolicy] = useState('');
+  const [subjectAttrs, setSubjectAttrs] = useState('{\n  "role": "admin",\n  "department": "engineering"\n}');
+  const [resourceAttrs, setResourceAttrs] = useState('{\n  "type": "document",\n  "owner": "user-123"\n}');
   const [action, setAction] = useState('read');
-  const [environment, setEnvironment] = useState('{\n  "time": "2025-01-15T10:00:00Z",\n  "ip": "192.168.1.50",\n  "mfa_verified": true\n}');
+  const [environment, setEnvironment] = useState('{\n  "time": "2025-01-15T10:00:00Z",\n  "ip": "192.168.1.50"\n}');
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [simulating, setSimulating] = useState(false);
   const [batchResults, setBatchResults] = useState<BatchResult[]>([]);
-  const [csvInput, setCsvInput] = useState('subject,resource,action\nuser-1,doc-1,read\nuser-2,doc-2,write\nuser-3,doc-3,delete');
+  const [csvInput, setCsvInput] = useState('subject,resource,action\nuser-1,doc-1,read\nuser-2,doc-2,write');
   const [impact, setImpact] = useState<ImpactAnalysis | null>(null);
-  const [diffEntries, setDiffEntries] = useState<DiffEntry[]>([]);
   const [activeTab, setActiveTab] = useState<'single' | 'batch' | 'impact'>('single');
+
+  useEffect(() => {
+    fetch("/api/v1/policy/policies", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => {
+        const items = data.policies || data.items || [];
+        setPolicies(items);
+        if (items.length > 0) setSelectedPolicy(items[0].id);
+        setLoading(false);
+      })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, []);
 
   const simulate = useCallback(() => {
     setSimulating(true);
-    setTimeout(() => {
-      const rules: PolicyRule[] = SAMPLE_POLICIES.map(p => ({
-        ...p,
-        matched: Math.random() > 0.4,
-      }));
-      const denyMatch = rules.find(r => r.matched && r.effect === 'deny');
-      const allowMatch = rules.find(r => r.matched && r.effect === 'allow');
-      const decision = denyMatch ? 'deny' : allowMatch ? 'allow' : 'indeterminate';
-      setResult({
-        decision,
-        matchedRules: rules.filter(r => r.matched),
-        trace: [
-          'Evaluating subject attributes: role=admin, department=engineering',
-          `Checking policy: ${SAMPLE_POLICIES[0].name} (priority ${SAMPLE_POLICIES[0].priority})`,
-          `Checking policy: ${SAMPLE_POLICIES[2].name} (priority ${SAMPLE_POLICIES[2].priority})`,
-          denyMatch ? `Matched deny rule: ${denyMatch.name}` : 'No deny rules matched',
-          allowMatch ? `Matched allow rule: ${allowMatch.name}` : 'No allow rules matched',
-          `Final decision: ${decision}`,
-        ],
-        evaluatedAt: new Date().toISOString(),
-        durationMs: Math.floor(Math.random() * 20) + 1,
-      });
-      setSimulating(false);
-    }, 600);
-  }, []);
+    fetch("/api/v1/policy/simulate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      body: JSON.stringify({ policyId: selectedPolicy, subject: subjectAttrs, resource: resourceAttrs, action, environment }),
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setResult(data); setSimulating(false); })
+      .catch(err => { setError(err.message); setSimulating(false); });
+  }, [selectedPolicy, subjectAttrs, resourceAttrs, action, environment]);
 
   const runBatch = useCallback(() => {
-    const lines = csvInput.trim().split('\n').slice(1);
-    const results: BatchResult[] = lines.map((line, i) => {
-      const [subject, resource, act] = line.split(',');
-      const decisions = ['allow', 'deny', 'indeterminate'];
-      const dec = decisions[Math.floor(Math.random() * decisions.length)];
-      return {
-        rowIndex: i + 1,
-        subject: subject || '',
-        resource: resource || '',
-        action: act || '',
-        decision: dec,
-        matchedRules: Math.floor(Math.random() * 3) + 1,
-      };
-    });
-    setBatchResults(results);
+    fetch("/api/v1/policy/simulate/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      body: JSON.stringify({ csv: csvInput }),
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setBatchResults(data.results || []); })
+      .catch(err => { setError(err.message); });
   }, [csvInput]);
 
   const runImpact = useCallback(() => {
-    const total = Math.floor(Math.random() * 5000) + 100;
-    const allow = Math.floor(total * 0.6);
-    const deny = Math.floor(total * 0.3);
-    setImpact({
-      affectedUsers: total,
-      allowCount: allow,
-      denyCount: deny,
-      indeterminateCount: total - allow - deny,
-    });
-    setDiffEntries([
-      { field: 'Decision for admin users', before: 'allow', after: 'deny', changed: true },
-      { field: 'Decision for read-only users', before: 'allow', after: 'allow', changed: false },
-      { field: 'MFA enforcement', before: 'optional', after: 'required', changed: true },
-      { field: 'Tenant isolation', before: 'soft', after: 'hard', changed: true },
-      { field: 'Resource classification check', before: 'N/A', after: 'enforced', changed: true },
-    ]);
-  }, []);
+    fetch("/api/v1/policy/simulate/impact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      body: JSON.stringify({ policyId: selectedPolicy }),
+    })
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(data => { setImpact(data); })
+      .catch(err => { setError(err.message); });
+  }, [selectedPolicy]);
 
-  const decisionColor = (dec: string) =>
-    dec === 'allow' ? 'text-green-600' : dec === 'deny' ? 'text-red-600' : 'text-yellow-600';
+  const decisionColor = (dec: string) => dec === 'allow' ? 'text-green-600' : dec === 'deny' ? 'text-red-600' : 'text-yellow-600';
+
+  if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">Policy Simulation Center</h1><p className="text-gray-600 mt-2">Loading...</p></div>;
+  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">Policy Simulation Center</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Policy Simulation Center</h1>
-        <p className="mt-1 text-sm text-gray-500">Test policy decisions before deployment, run batch simulations, and analyze impact.</p>
-      </div>
+      <div><h1 className="text-2xl font-bold text-gray-900">Policy Simulation Center</h1><p className="mt-1 text-sm text-gray-500">Test policy decisions before deployment, run batch simulations, and analyze impact.</p></div>
 
       <div className="flex gap-2 border-b border-gray-200">
         {(['single', 'batch', 'impact'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
-              activeTab === tab ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab === 'single' ? 'Single Simulation' : tab === 'batch' ? 'Batch Simulation' : 'Impact Analysis'}
-          </button>
+          <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === tab ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>{tab === 'single' ? 'Single Simulation' : tab === 'batch' ? 'Batch Simulation' : 'Impact Analysis'}</button>
         ))}
       </div>
 
@@ -156,116 +89,25 @@ export default function PolicySimulationCenterPage() {
         <div className="space-y-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <label className="block text-sm font-medium text-gray-700">Policy Selector</label>
-            <select
-              value={selectedPolicy}
-              onChange={e => setSelectedPolicy(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              {SAMPLE_POLICIES.map(p => (
-                <option key={p.id} value={p.id}>{p.name} (priority: {p.priority}, effect: {p.effect})</option>
-              ))}
+            <select value={selectedPolicy} onChange={e => setSelectedPolicy(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+              {policies.map(p => <option key={p.id} value={p.id}>{p.name} (priority: {p.priority}, effect: {p.effect})</option>)}
             </select>
           </div>
-
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700">Subject Attributes (JSON)</label>
-              <textarea
-                value={subjectAttrs}
-                onChange={e => setSubjectAttrs(e.target.value)}
-                rows={6}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
-              />
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700">Resource Attributes (JSON)</label>
-              <textarea
-                value={resourceAttrs}
-                onChange={e => setResourceAttrs(e.target.value)}
-                rows={6}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
-              />
-            </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Subject Attributes (JSON)</label><textarea value={subjectAttrs} onChange={e => setSubjectAttrs(e.target.value)} rows={6} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Resource Attributes (JSON)</label><textarea value={resourceAttrs} onChange={e => setResourceAttrs(e.target.value)} rows={6} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
           </div>
-
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700">Action</label>
-              <input
-                value={action}
-                onChange={e => setAction(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <label className="block text-sm font-medium text-gray-700">Environment (JSON)</label>
-              <textarea
-                value={environment}
-                onChange={e => setEnvironment(e.target.value)}
-                rows={3}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
-              />
-            </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Action</label><input value={action} onChange={e => setAction(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Environment (JSON)</label><textarea value={environment} onChange={e => setEnvironment(e.target.value)} rows={3} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
           </div>
-
-          <button
-            onClick={simulate}
-            disabled={simulating}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {simulating ? 'Simulating...' : 'Simulate Decision'}
-          </button>
-
+          <button onClick={simulate} disabled={simulating} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{simulating ? 'Simulating...' : 'Run Simulation'}</button>
           {result && (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-sm text-gray-500">Decision:</span>
-                    <span className={`ml-2 text-2xl font-bold ${decisionColor(result.decision)}`}>{result.decision.toUpperCase()}</span>
-                  </div>
-                  <div className="text-right text-xs text-gray-400">
-                    <div>Evaluated: {result.evaluatedAt}</div>
-                    <div>Duration: {result.durationMs}ms</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-700">Matched Rules</h3>
-                <table className="mt-2 w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                      <th className="pb-2">Rule ID</th>
-                      <th className="pb-2">Name</th>
-                      <th className="pb-2">Effect</th>
-                      <th className="pb-2">Priority</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.matchedRules.map(r => (
-                      <tr key={r.id} className="border-b border-gray-100">
-                        <td className="py-2 font-mono text-xs">{r.id}</td>
-                        <td className="py-2">{r.name}</td>
-                        <td className={`py-2 ${r.effect === 'allow' ? 'text-green-600' : 'text-red-600'}`}>{r.effect}</td>
-                        <td className="py-2">{r.priority}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-700">Evaluation Trace</h3>
-                <div className="mt-2 space-y-1 font-mono text-xs text-gray-600">
-                  {result.trace.map((line, i) => (
-                    <div key={i} className="flex gap-2">
-                      <span className="text-gray-400">{i + 1}.</span>
-                      <span>{line}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+              <h3 className="text-sm font-medium text-gray-700">Result</h3>
+              <div className="mt-2"><span className={`text-2xl font-bold ${decisionColor(result.decision)}`}>{result.decision.toUpperCase()}</span><span className="ml-3 text-sm text-gray-500">{result.durationMs}ms</span></div>
+              {result.matchedRules && result.matchedRules.length > 0 && (<div className="mt-3 space-y-1">{result.matchedRules.map((r, i) => <div key={i} className="text-sm"><span className={`px-2 py-0.5 rounded text-xs ${r.effect === 'deny' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{r.effect}</span> {r.name}</div>)}</div>)}
+              {result.trace && result.trace.length > 0 && (<div className="mt-3 space-y-1">{result.trace.map((t, i) => <div key={i} className="text-xs text-gray-600 font-mono">{t}</div>)}</div>)}
             </div>
           )}
         </div>
@@ -273,49 +115,12 @@ export default function PolicySimulationCenterPage() {
 
       {activeTab === 'batch' && (
         <div className="space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <label className="block text-sm font-medium text-gray-700">Batch Input (CSV)</label>
-            <p className="mt-1 text-xs text-gray-400">Format: subject,resource,action</p>
-            <textarea
-              value={csvInput}
-              onChange={e => setCsvInput(e.target.value)}
-              rows={8}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
-            />
-            <button
-              onClick={runBatch}
-              className="mt-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Run Batch Simulation
-            </button>
-          </div>
-
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Batch CSV Input</label><textarea value={csvInput} onChange={e => setCsvInput(e.target.value)} rows={8} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
+          <button onClick={runBatch} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Batch</button>
           {batchResults.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <h3 className="text-sm font-medium text-gray-700">Batch Results ({batchResults.length} rows)</h3>
-              <table className="mt-2 w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                    <th className="pb-2">Row</th>
-                    <th className="pb-2">Subject</th>
-                    <th className="pb-2">Resource</th>
-                    <th className="pb-2">Action</th>
-                    <th className="pb-2">Decision</th>
-                    <th className="pb-2">Matched Rules</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {batchResults.map(r => (
-                    <tr key={r.rowIndex} className="border-b border-gray-100">
-                      <td className="py-2 text-xs">{r.rowIndex}</td>
-                      <td className="py-2 font-mono text-xs">{r.subject}</td>
-                      <td className="py-2 font-mono text-xs">{r.resource}</td>
-                      <td className="py-2">{r.action}</td>
-                      <td className={`py-2 font-medium ${decisionColor(r.decision)}`}>{r.decision}</td>
-                      <td className="py-2">{r.matchedRules}</td>
-                    </tr>
-                  ))}
-                </tbody>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm overflow-hidden">
+              <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">#</th><th>Subject</th><th>Resource</th><th>Action</th><th>Decision</th><th>Rules</th></tr></thead>
+                <tbody>{batchResults.map(r => <tr key={r.rowIndex} className="border-b"><td className="py-2">{r.rowIndex}</td><td className="font-mono text-xs">{r.subject}</td><td className="font-mono text-xs">{r.resource}</td><td className="text-xs">{r.action}</td><td><span className={`font-bold ${decisionColor(r.decision)}`}>{r.decision}</span></td><td className="text-xs">{r.matchedRules}</td></tr>)}</tbody>
               </table>
             </div>
           )}
@@ -324,64 +129,14 @@ export default function PolicySimulationCenterPage() {
 
       {activeTab === 'impact' && (
         <div className="space-y-4">
-          <button
-            onClick={runImpact}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Run Impact Analysis
-          </button>
-
+          <button onClick={runImpact} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Impact Analysis</button>
           {impact && (
-            <>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs text-gray-500">Affected Users</p>
-                  <p className="mt-1 text-2xl font-bold text-gray-900">{impact.affectedUsers.toLocaleString()}</p>
-                </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs text-gray-500">Allow</p>
-                  <p className="mt-1 text-2xl font-bold text-green-600">{impact.allowCount.toLocaleString()}</p>
-                </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs text-gray-500">Deny</p>
-                  <p className="mt-1 text-2xl font-bold text-red-600">{impact.denyCount.toLocaleString()}</p>
-                </div>
-                <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                  <p className="text-xs text-gray-500">Indeterminate</p>
-                  <p className="mt-1 text-2xl font-bold text-yellow-600">{impact.indeterminateCount.toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-700">Before / After Diff</h3>
-                <table className="mt-2 w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                      <th className="pb-2">Field</th>
-                      <th className="pb-2">Before</th>
-                      <th className="pb-2">After</th>
-                      <th className="pb-2">Changed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {diffEntries.map((d, i) => (
-                      <tr key={i} className="border-b border-gray-100">
-                        <td className="py-2">{d.field}</td>
-                        <td className="py-2 text-gray-500">{d.before}</td>
-                        <td className="py-2 font-medium">{d.after}</td>
-                        <td className="py-2">
-                          {d.changed ? (
-                            <span className="inline-flex rounded bg-yellow-100 px-2 py-0.5 text-xs text-yellow-700">changed</span>
-                          ) : (
-                            <span className="text-xs text-gray-400">unchanged</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm text-center"><div className="text-2xl font-bold">{impact.affectedUsers}</div><div className="text-xs text-gray-500">Affected Users</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm text-center"><div className="text-2xl font-bold text-green-600">{impact.allowCount}</div><div className="text-xs text-gray-500">Allow</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm text-center"><div className="text-2xl font-bold text-red-600">{impact.denyCount}</div><div className="text-xs text-gray-500">Deny</div></div>
+              <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm text-center"><div className="text-2xl font-bold text-yellow-600">{impact.indeterminateCount}</div><div className="text-xs text-gray-500">Indeterminate</div></div>
+            </div>
           )}
         </div>
       )}
