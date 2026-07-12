@@ -793,6 +793,16 @@ export { usePolicyImportExport } from './usePolicyImportExport';
 export type { PolicyImportExportData, ImportLog, TemplateEntry } from './usePolicyImportExport';
 export { useOAuthClientOnboardingWizard } from './useOAuthClientOnboardingWizard';
 export type { OAuthClientOnboardingWizardData, GrantTypeOption, ScopeOption, GeneratedCredentials } from './useOAuthClientOnboardingWizard';
+export { useSocialProviderStats } from './useSocialProviderStats';
+export type { SocialProviderStatsData, ProviderStat, ProviderError } from './useSocialProviderStats';
+export { useSessionTokenBindingCoverage } from './useSessionTokenBindingCoverage';
+export type { SessionTokenBindingCoverageData, ClientCoverage, UnboundToken } from './useSessionTokenBindingCoverage';
+export { useGroupDeepAnalytics } from './useGroupDeepAnalytics';
+export type { GroupDeepAnalyticsData, GroupAnalytics, RoleDist } from './useGroupDeepAnalytics';
+export { usePolicyEvalTimeline } from './usePolicyEvalTimeline';
+export type { PolicyEvalTimelineData, PolicyEvaluation, EvalStep, MatchedRule } from './usePolicyEvalTimeline';
+export { useAuditEventCorrelation } from './useAuditEventCorrelation';
+export type { AuditEventCorrelationData, CorrelatedIncident, CorrelationRule } from './useAuditEventCorrelation';
 export type {
   GGIDConfig,
   GGIDUser,
