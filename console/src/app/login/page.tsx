@@ -194,6 +194,9 @@ export default function LoginPage() {
               <label className="mb-1 block text-sm font-medium">{t("login.username")}</label>
               <input
                 type="text"
+                id="username"
+                name="username"
+                aria-label={t("login.username")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -207,9 +210,13 @@ export default function LoginPage() {
               <label className="mb-1 block text-sm font-medium">{t("login.password")}</label>
               <input
                 type="password"
+                id="password"
+                name="password"
+                aria-label={t("login.password")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
                 placeholder="••••••••••••"
               />
@@ -217,7 +224,7 @@ export default function LoginPage() {
 
             <div className="mb-6 flex items-center justify-between">
               <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="rounded border-gray-300" />
+                <input type="checkbox" id="remember" name="remember" aria-label={t("login.rememberMe")} checked={remember} onChange={(e) => setRemember(e.target.checked)} className="rounded border-gray-300" />
                 {t("login.rememberMe")}
               </label>
               <a href="/forgot-password" className="text-sm text-brand-600 hover:underline">{t("login.forgotPassword")}</a>
@@ -286,6 +293,9 @@ export default function LoginPage() {
               </label>
               <input
                 type="text"
+                id="totp-code"
+                name="totp-code"
+                aria-label={t("login.verificationCode")}
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 required
