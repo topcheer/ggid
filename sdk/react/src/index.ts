@@ -515,6 +515,16 @@ export { useAdminSettings } from './useAdminSettings';
 export type { AdminConfig } from './useAdminSettings';
 export { useRolePermissionMatrix } from './useRolePermissionMatrix';
 export type { MatrixData } from './useRolePermissionMatrix';
+export { useApiGatewayConfig } from './useApiGatewayConfig';
+export type { GatewayConfig } from './useApiGatewayConfig';
+export { useDatabaseHealth } from './useDatabaseHealth';
+export type { DbHealth } from './useDatabaseHealth';
+export { useUserProvisioning } from './useUserProvisioning';
+export type { ProvRule, QueueItem } from './useUserProvisioning';
+export { usePasswordResetFlow } from './usePasswordResetFlow';
+export type { ResetConfig } from './usePasswordResetFlow';
+export { useAccountRecovery } from './useAccountRecovery';
+export type { RecoveryConfig, RecoveryCode } from './useAccountRecovery';
 export type {
   GGIDConfig,
   GGIDUser,
