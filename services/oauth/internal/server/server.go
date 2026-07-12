@@ -1166,6 +1166,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/audience-mismatches", handleAudienceMismatches)
 	mux.HandleFunc("/api/v1/oauth/token-scope-diff", handleTokenScopeDiff)
 	mux.HandleFunc("/api/v1/oauth/consents/history", handleConsentsHistory)
+	mux.HandleFunc("/api/v1/oauth/stats/grant-types", handleGrantTypeStats)
 	mux.HandleFunc("/api/v1/oauth/scopes/deprecations", handleScopeDeprecation)
 	mux.HandleFunc("/api/v1/oauth/scopes/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/description") {
