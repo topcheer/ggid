@@ -289,6 +289,16 @@ export { useDelegatedReview } from './useDelegatedReview';
 export type { Delegation } from './useDelegatedReview';
 export { useSIEMHealth } from './useSIEMHealth';
 export type { SIEMDestination } from './useSIEMHealth';
+export { usePolicyConflicts } from './usePolicyConflicts';
+export type { ConflictPair } from './usePolicyConflicts';
+export { useTokenRotation } from './useTokenRotation';
+export type { RotationConfig } from './useTokenRotation';
+export { useDeprovisionSchedule } from './useDeprovisionSchedule';
+export type { DeprovisionJob } from './useDeprovisionSchedule';
+export { useRiskAggregate } from './useRiskAggregate';
+export type { RiskData, HighRiskEntry } from './useRiskAggregate';
+export { useConsentHistory } from './useConsentHistory';
+export type { ConsentEntry } from './useConsentHistory';
 export type {
   GGIDConfig,
   GGIDUser,
