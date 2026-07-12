@@ -110,6 +110,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/compliance/schedules", s.handleComplianceSchedules)
 	mux.HandleFunc("/api/v1/audit/alert-webhooks", s.handleAlertWebhooks)
 	mux.HandleFunc("/api/v1/audit/siem/health", s.handleSIEMHealth)
+	mux.HandleFunc("/api/v1/siem/health", s.handleSIEMHealth) // alias for frontend
 	mux.HandleFunc("/api/v1/audit/compliance-schedules", s.handleComplianceScheduleCRUD)
 	mux.HandleFunc("/api/v1/audit/retention-policies", s.handleRetentionPolicies)
 	mux.HandleFunc("/api/v1/audit/aggregations", s.handleAggregations)
@@ -191,6 +192,12 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/sbom", s.handleSBOM)
 	mux.HandleFunc("/api/v1/audit/sbom/", s.handleSBOMComponent)
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
+
+	// Missing handler routes — aliased paths for console compatibility
+	mux.HandleFunc("/api/v1/webhooks", s.handleWebhooksList)
+	mux.HandleFunc("/api/v1/audit/hash-chain", s.handleHashChainStatus)
+	mux.HandleFunc("/api/v1/event-correlation/rules", s.handleEventCorrelationRules)
+	mux.HandleFunc("/api/v1/compliance/schedules", s.handleComplianceSchedulesList)
 }
 
 // GET /api/v1/audit/events?tenant_id=X&action=Y&result=Z&page_size=N

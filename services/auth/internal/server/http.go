@@ -338,6 +338,18 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/enrollment-stats", h.handleMFAEnrollmentStats)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)
 
+	// Frontend-facing routes (without /auth/ prefix, matched by gateway path rewriting)
+	h.mux.HandleFunc("/api/v1/auth/me", h.handleAuthMe)
+	h.mux.HandleFunc("/api/v1/auth/mfa/status", h.handleMFAStatus)
+	h.mux.HandleFunc("/api/v1/auth/consent", h.handleConsent)
+	h.mux.HandleFunc("/api/v1/auth/delegation", h.handleDelegation)
+	h.mux.HandleFunc("/api/v1/auth/account-linking", h.handleAccountLinking)
+	h.mux.HandleFunc("/api/v1/auth/login-security", h.handleLoginSecurity)
+	h.mux.HandleFunc("/api/v1/auth/introspection/config", h.handleIntrospectionConfig)
+	h.mux.HandleFunc("/api/v1/auth/tokens", h.handleTokens)
+	h.mux.HandleFunc("/api/v1/auth/notifications", h.handleNotifications)
+	h.mux.HandleFunc("/api/v1/auth/device-bindings", h.handleDeviceBindings)
+
 }
 
 // ServeHTTP implements http.Handler.

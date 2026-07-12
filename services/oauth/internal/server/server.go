@@ -1068,7 +1068,37 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 	mux.HandleFunc("/api/v1/agents/shadows", handleAgentShadows)
 	mux.HandleFunc("/api/v1/agents/drift/report", handleAgentDriftReport)
-	mux.HandleFunc("/api/v1/agents/", handleAgentDriftDetect) // /api/v1/agents/{id}/drift
+	mux.HandleFunc("/api/v1/agents/", func(w http.ResponseWriter, r *http.Request) {
+		// Agent status update: POST /api/v1/agents/{id}/status
+		if strings.HasSuffix(r.URL.Path, "/status") && r.Method == http.MethodPost {
+			agentIDStr := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/agents/"), "/status")
+			agentID, err := uuid.Parse(agentIDStr)
+			if err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid agent_id in path"})
+				return
+			}
+			var body struct {
+				Status string `json:"status"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON body"})
+				return
+			}
+			if err := oauthSvc.UpdateAgentStatus(r.Context(), agentID, service.AgentStatus(body.Status)); err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+				return
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "agent_id": agentIDStr})
+			return
+		}
+		// Agent drift detection: GET /api/v1/agents/{id}/drift
+		if strings.HasSuffix(r.URL.Path, "/drift") {
+			handleAgentDriftDetect(w, r)
+			return
+		}
+		// Default: treat as drift detection for backward compat
+		handleAgentDriftDetect(w, r)
+	}) // /api/v1/agents/{id}/drift
 	mux.HandleFunc("/api/v1/oauth/agents/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		if strings.HasSuffix(path, "/lifecycle") {

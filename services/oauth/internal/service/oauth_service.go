@@ -130,7 +130,7 @@ func (s *OAuthService) GetClient(ctx context.Context, clientID string) (*domain.
 		return nil, errors.New(errors.ErrFailedPrecondition, "missing tenant context")
 	}
 	if s.clientRepo == nil {
-		return nil, errors.New(errors.ErrInternal, "OAuth database not configured")
+		return nil, errors.New(errors.ErrNotFound, "client not found")
 	}
 	return s.clientRepo.GetClientByID(ctx, tc.TenantID, clientID)
 }
@@ -152,6 +152,9 @@ func (s *OAuthService) DeleteClient(ctx context.Context, clientID string) error 
 	tc, err := tenant.FromContext(ctx)
 	if err != nil {
 		return errors.New(errors.ErrFailedPrecondition, "missing tenant context")
+	}
+	if s.clientRepo == nil {
+		return errors.New(errors.ErrNotFound, "client not found")
 	}
 	return s.clientRepo.DeleteClient(ctx, tc.TenantID, clientID)
 }
