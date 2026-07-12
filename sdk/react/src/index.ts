@@ -389,6 +389,16 @@ export { usePolicyDryRun } from './usePolicyDryRun';
 export type { DryRunResult } from './usePolicyDryRun';
 export { useAuditSearch } from './useAuditSearch';
 export type { AuditEntry } from './useAuditSearch';
+export { useLeaverFlow } from './useLeaverFlow';
+export type { LeaverData } from './useLeaverFlow';
+export { useConsentDashboard } from './useConsentDashboard';
+export type { ConsentInfo, ConsentDashboardData } from './useConsentDashboard';
+export { useProvisioningLog } from './useProvisioningLog';
+export type { ProvisioningEvent } from './useProvisioningLog';
+export { usePolicyChangesHistory } from './usePolicyChangeHistory';
+export type { ChangeEntry } from './usePolicyChangeHistory';
+export { useAuditRealtime } from './useAuditRealtime';
+export type { LiveEvent } from './useAuditRealtime';
 export type {
   GGIDConfig,
   GGIDUser,
