@@ -379,14 +379,14 @@ export default function RolesPage() {
                   <button
                     onClick={() => { loadRoleUsers(role.id); }}
                     className="text-gray-400 hover:text-brand-500"
-                    title="View users with this role"
+                    title={t("roles.viewUsers")}
                   >
                     <Users className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleCloneRole(role)}
                     className="text-gray-400 hover:text-brand-500"
-                    title="Clone role"
+                    title={t("roles.cloneRole")}
                   >
                     <Copy className="h-4 w-4" />
                   </button>

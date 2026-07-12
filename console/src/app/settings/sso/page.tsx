@@ -206,7 +206,7 @@ export default function SSOConnectionsPage() {
   // --- Wizard save ---
   const saveSamlProvider = async () => {
     if (!samlForm.entityId || !samlForm.ssoUrl) {
-      showToast("error", "Entity ID and SSO URL are required");
+      showToast("error", t("sso.entityIdRequired"));
       return;
     }
     const provider: SAMLProvider = {
@@ -236,7 +236,7 @@ export default function SSOConnectionsPage() {
         }
         return [...prev, provider];
       });
-      showToast("success", "SAML provider saved and activated");
+      showToast("success", t("sso.samlSaved"));
       resetWizard();
     } catch {
       setProviders((prev) => {
@@ -248,14 +248,14 @@ export default function SSOConnectionsPage() {
         }
         return [...prev, provider];
       });
-      showToast("success", "SAML provider saved locally");
+      showToast("success", t("sso.samlSavedLocal"));
       resetWizard();
     }
   };
 
   const saveOidcProvider = async () => {
     if (!oidcForm.clientId || !oidcForm.discoveryUrl) {
-      showToast("error", "Client ID and Discovery URL are required");
+      showToast("error", t("sso.clientIdRequired"));
       return;
     }
     const allScopes = oidcForm.customScope
@@ -287,7 +287,7 @@ export default function SSOConnectionsPage() {
         }
         return [...prev, provider];
       });
-      showToast("success", "OIDC provider saved and activated");
+      showToast("success", t("sso.oidcSaved"));
       resetWizard();
     } catch {
       setProviders((prev) => {
@@ -299,7 +299,7 @@ export default function SSOConnectionsPage() {
         }
         return [...prev, provider];
       });
-      showToast("success", "OIDC provider saved locally");
+      showToast("success", t("sso.oidcSavedLocal"));
       resetWizard();
     }
   };
@@ -397,7 +397,7 @@ export default function SSOConnectionsPage() {
 
   const deleteProvider = (id: string) => {
     setProviders((prev) => prev.filter((p) => p.id !== id));
-    showToast("success", "Provider deleted");
+    showToast("success", t("sso.providerDeleted"));
   };
 
   const toggleProviderActive = (id: string) => {
@@ -584,7 +584,7 @@ export default function SSOConnectionsPage() {
                         className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 hover:border-brand-400 hover:text-brand-600 dark:border-gray-600"
                       >
                         <Upload className="h-5 w-5" />
-                        {samlForm.metadataXml ? "XML Loaded" : "Upload metadata XML"}
+                        {samlForm.metadataXml ? t("sso.xmlLoaded") : t("sso.uploadMetadataXml")}
                       </button>
                       <input ref={samlMetadataRef} type="file" accept=".xml" className="hidden" onChange={handleMetadataUpload} />
                     </div>
@@ -681,7 +681,7 @@ export default function SSOConnectionsPage() {
                     className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-8 text-sm text-gray-500 hover:border-brand-400 hover:text-brand-600 dark:border-gray-600"
                   >
                     <Upload className="h-6 w-6" />
-                    {samlForm.x509Cert ? "Certificate Loaded" : "Click to upload .pem or .crt file"}
+                    {samlForm.x509Cert ? t("sso.certLoaded") : t("sso.uploadCertHint")}
                   </button>
                   <input ref={samlCertRef} type="file" accept=".pem,.crt,.cer" className="hidden" onChange={handleCertUpload} />
                 </div>
@@ -785,7 +785,7 @@ export default function SSOConnectionsPage() {
                   <input
                     value={oidcForm.customScope}
                     onChange={(e) => setOidcForm({ ...oidcForm, customScope: e.target.value })}
-                    placeholder="Custom scope (e.g. groups)"
+                    placeholder={t("sso.customScopePlaceholder")}
                     className={`${inputCls} mt-2 font-mono`}
                   />
                 </div>

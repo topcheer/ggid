@@ -111,7 +111,7 @@ export default function UsersPage() {
       setShowCreate(false);
       refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create user");
+      alert(err instanceof Error ? err.message : t("users.createFailed"));
     }
   };
 
@@ -144,7 +144,7 @@ export default function UsersPage() {
       setMsg(`Deleted ${selected.size} users`);
       refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Batch delete failed");
+      alert(err instanceof Error ? err.message : t("users.batchDeleteFailed"));
     }
   };
 
@@ -160,7 +160,7 @@ export default function UsersPage() {
       setSelected(new Set());
       setBatchRole("");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Batch assign failed");
+      alert(err instanceof Error ? err.message : t("users.batchAssignFailed"));
     }
   };
 

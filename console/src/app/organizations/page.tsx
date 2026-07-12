@@ -325,10 +325,10 @@ export default function OrganizationsPage() {
     if (!confirm(t("orgs.confirmDeleteOrg"))) return;
     try {
       await apiFetch(`/api/v1/orgs/${id}`, { method: "DELETE" });
-      setMsg("Organization deleted");
+      setMsg(t("orgs.orgDeleted"));
       loadOrgs();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
+      setError(err instanceof Error ? err.message : t("orgs.deleteFailed"));
     }
   };
 
@@ -336,10 +336,10 @@ export default function OrganizationsPage() {
     if (!confirm(t("orgs.confirmDeleteDept"))) return;
     try {
       await apiFetch(`/api/v1/departments/${id}`, { method: "DELETE" });
-      setMsg("Department deleted");
+      setMsg(t("orgs.deptDeleted"));
       if (selectedOrgId) loadDepts(selectedOrgId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
+      setError(err instanceof Error ? err.message : t("orgs.deleteFailed"));
     }
   };
 
@@ -347,10 +347,10 @@ export default function OrganizationsPage() {
     if (!confirm(t("orgs.confirmDeleteTeam"))) return;
     try {
       await apiFetch(`/api/v1/teams/${id}`, { method: "DELETE" });
-      setMsg("Team deleted");
+      setMsg(t("orgs.teamDeleted"));
       if (selectedOrgId) loadTeams(selectedOrgId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
+      setError(err instanceof Error ? err.message : t("orgs.deleteFailed"));
     }
   };
 

@@ -204,7 +204,7 @@ export default function BrandingSettingsPage() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={logoPreview}
-                    alt="Logo preview"
+                    alt={t("common.logoPreview")}
                     className="h-12 max-w-32 object-contain"
                   />
                   <button
@@ -510,7 +510,7 @@ export default function BrandingSettingsPage() {
             <div className="flex items-center justify-between text-xs">
               <span className="text-gray-500">{t("common.domain")}</span>
               <span className="text-gray-700 dark:text-gray-300">
-                {config.custom_domain || "Not set"}
+                {config.custom_domain || t("common.notSet")}
               </span>
             </div>
           </div>
