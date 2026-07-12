@@ -1,16 +1,16 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-13 00:30 (hourly cycle)*
+*Last updated: 2026-07-13 01:00 (PM cycle + research)*
 
 ## Current Stats
-- **Docs**: 640 markdown files
-- **Console pages**: 611 page.tsx
+- **Docs**: 661 markdown files
+- **Console pages**: 629 page.tsx
 - **React hooks**: 492 use*.ts
-- **Go SDK**: 32 files, 154+ test functions
+- **Go SDK**: 27 files, 154+ test functions
 - **Go services**: 271+ source files, 293+ test files
 - **Build**: `go build ./...` = CLEAN
 - **Tests**: 40/40 packages PASS, 0 FAIL
-- **Session commits**: 250+ across all teams
+- **Session commits**: 260+ across all teams
 
 ## Completed This Session (All Teams)
 
@@ -45,25 +45,25 @@
 ## Currently Dispatched (In Progress)
 
 ### Backend (Batch — dispatched, awaiting report)
-1. Risk scoring config (risk factors, weights, thresholds, action mapping)
-2. SOD conflict detection config (rules, sensitivity, auto-remediate)
-3. PAR config (require_par_for_scopes/clients, enforce PKCE, cache)
-4. SIEM forwarder config (destinations, filters, retry, circuit breaker)
-5. Password policy config (complexity, history, breach detection, pepper)
+1. Import validation config (formats, batch size, field mapping, conflict resolution)
+2. Delegation config (max depth, allowed roles, expiry, consent, cascade revoke)
+3. Dynamic registration config (open registration, grant types, software statement)
+4. Alert evaluation config (rules, correlation window, dedup, escalation)
+5. Impersonation config (allowed impersonators, reason, duration, audit level)
 
-### Frontend (Batch — re-dispatched, awaiting report)
-1. Auto-scaling config page
-2. Circuit breaker dashboard page
-3. Service dependency graph page
-4. API gateway routes management page
-5. K8s deployment management page
+### Frontend (Batch — dispatched, awaiting report)
+1. SCIM provisioning page
+2. Risk engine config page
+3. Token binding config page
+4. API versioning config page
+5. Credential vault page
 
 ### Docs (Batch — dispatched, awaiting report)
-1. Credential vault architecture
-2. Adaptive authentication
-3. Digital identity lifecycle
-4. Token binding strategies
-5. API versioning strategy
+1. Email template design guide
+2. WebAuthn deployment guide
+3. Audit API reference
+4. Multi-tenant architecture guide
+5. Zero-trust network design guide
 
 ## Pending Backlog (Not Yet Dispatched)
 
@@ -129,4 +129,42 @@
 
 ### Docs (P2)
 - [ ] **P2** docs/guides/pqc-migration-guide.md
+
+---
+
+## Research-Driven Backlog (2026 IAM Trends)
+*Source: docs/research/iam-trends-2026.md*
+
+### P0: Agentic AI Identity Governance
+- [ ] Backend: Agent privilege drift detector (services/oauth/internal/service/agent_drift.go)
+- [ ] Backend: Shadow agent scanner (services/oauth/internal/service/shadow_scanner.go)
+- [ ] Backend: Agent access review CRUD (services/oauth/internal/server/agent_review_handler.go)
+- [ ] Frontend: Agent delegation chain visualization (console/src/app/agents/delegation-graph/)
+- [ ] Frontend: Agent access review page (console/src/app/settings/agent-access-review/)
+- [ ] SDK: GetAgentAccessReview, SubmitAgentReview methods
+- [ ] Docs: Agentic AI governance guide (docs/guides/agentic-ai-governance.md)
+
+### P1: Non-Human Identity Lifecycle
+- [ ] Backend: NHI inventory endpoint (services/identity/internal/server/nhi_inventory_handler.go)
+- [ ] Backend: NHI lifecycle automation (services/identity/internal/service/nhi_lifecycle.go)
+- [ ] Backend: Credential rotation scheduler (services/auth/internal/service/rotation_scheduler.go)
+- [ ] Frontend: NHI inventory dashboard (console/src/app/settings/nhi-inventory/)
+- [ ] Frontend: Credential rotation config (console/src/app/settings/credential-rotation/)
+- [ ] SDK: ListNHI, GetNHIDetails, RotateNHI, DecommissionNHI methods
+- [ ] Docs: NHI lifecycle management guide (docs/guides/nhi-lifecycle-management.md)
+
+### P1: Passkeys
+- [ ] Frontend: Passkey management page (console/src/app/settings/passkeys/)
+- [ ] Backend: Passkey enrollment endpoint (services/auth/internal/server/passkey_handler.go)
+- [ ] Docs: Passkey deployment guide (docs/guides/passkey-deployment.md)
+
+### P2: Decentralized Identity
+- [ ] Backend: DID resolver (services/identity/internal/service/did_resolver.go)
+- [ ] Backend: VC issuer (services/identity/internal/service/vc_issuer.go)
+- [ ] Frontend: VC management page (console/src/app/settings/verifiable-credentials/)
+- [ ] Docs: Decentralized identity guide (docs/guides/decentralized-identity.md)
+
+### P2: CRA Compliance
+- [ ] Backend: SBOM endpoint (services/audit/internal/server/sbom_handler.go)
+- [ ] Docs: CRA compliance guide (docs/guides/cra-compliance.md)
 - [ ] **P2** docs/oauth-2-1-compliance-statement.md
