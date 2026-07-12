@@ -265,6 +265,10 @@ export { useRiskProfile } from './useRiskProfile';
 export type { RiskData } from './useRiskProfile';
 export { useConsentRegistry } from './useConsentRegistry';
 export type { ConsentData, ConsentEntry } from './useConsentRegistry';
+export { useComplianceDrift } from './useComplianceDrift';
+export type { DriftData } from './useComplianceDrift';
+export { useRotationReminders } from './useRotationReminders';
+export type { RotationItem } from './useRotationReminders';
 export type {
   GGIDConfig,
   GGIDUser,
