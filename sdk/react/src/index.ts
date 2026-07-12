@@ -241,6 +241,10 @@ export { useRecertification } from './useRecertification';
 export type { RecertDecision, RecertUser } from './useRecertification';
 export { useClientEvents } from './useClientEvents';
 export type { ClientEvent } from './useClientEvents';
+export { useAccessOptimization } from './useAccessOptimization';
+export type { OptimizationData } from './useAccessOptimization';
+export { useTokenReuse } from './useTokenReuse';
+export type { TokenReuse } from './useTokenReuse';
 export type {
   GGIDConfig,
   GGIDUser,
