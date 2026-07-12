@@ -675,6 +675,16 @@ export { usePolicyVisualEditor } from './usePolicyVisualEditor';
 export type { PolicyVisualEditorData, PolicyNode, PolicyTemplate } from './usePolicyVisualEditor';
 export { useAuditChainVerification } from './useAuditChainVerification';
 export type { AuditChainVerificationData, LastVerification, VerificationLogEntry } from './useAuditChainVerification';
+export { useOAuthCrossTenant } from './useOAuthCrossTenant';
+export type { OAuthCrossTenantData, TrustedTenant, AppSharing, AuditEntry, RevocationPolicy } from './useOAuthCrossTenant';
+export { useAuthRiskEngineConfig } from './useAuthRiskEngineConfig';
+export type { AuthRiskEngineConfigData, RiskSignal, BacktestResults, OverrideRule } from './useAuthRiskEngineConfig';
+export { useIdentityCertificateLifecycle } from './useIdentityCertificateLifecycle';
+export type { IdentityCertificateLifecycleData, Certificate, RenewalItem, ExpiryItem, RevocationItem } from './useIdentityCertificateLifecycle';
+export { usePolicyMigrationWizard } from './usePolicyMigrationWizard';
+export type { PolicyMigrationWizardData, MappingEntry, ValidationReport, MigrationRecord } from './usePolicyMigrationWizard';
+export { useAuditDataLineage } from './useAuditDataLineage';
+export type { AuditDataLineageData, FlowNode, DatasetLineage } from './useAuditDataLineage';
 export type {
   GGIDConfig,
   GGIDUser,
