@@ -245,6 +245,10 @@ export { useAccessOptimization } from './useAccessOptimization';
 export type { OptimizationData } from './useAccessOptimization';
 export { useTokenReuse } from './useTokenReuse';
 export type { TokenReuse } from './useTokenReuse';
+export { useRoleRequests } from './useRoleRequests';
+export type { RoleRequest } from './useRoleRequests';
+export { useScopeMatrix } from './useScopeMatrix';
+export type { MatrixData } from './useScopeMatrix';
 export type {
   GGIDConfig,
   GGIDUser,
