@@ -295,6 +295,17 @@ During the K3s deployment cycle, the following issues were discovered and resolv
     math, binding method entries with counts, per-client stats, compliance_pct 0-100 range.
     **HIGH confidence.**
 
+12. **Security Headers Injection** — **VERIFIED** 2026-07-13. ARCH functional test: 5 header
+    assertions PASS (commit 0f3d994). gap_regression_security_test.go: X-Content-Type-Options=nosniff,
+    X-Frame-Options=DENY, Strict-Transport-Security (max-age=31536000; includeSubDomains),
+    Content-Security-Policy (default-src 'self'; frame-ancestors 'none'),
+    Referrer-Policy (strict-origin-when-cross-origin). **HIGH confidence.**
+
+13. **Tenant Anti-Spoofing** — **VERIFIED** 2026-07-13. ARCH functional test: 3 subtests PASS
+    (commit 0f3d994). gap_regression_security_test.go: JWT claim overrides X-Tenant-ID header
+    (spoofing prevention), no-JWT header preserved, empty case. tenant_context.go confirmed:
+    if JWT has tenant claim and header differs, JWT wins. **HIGH confidence.**
+
 ### Items at Risk of Regression
 
 | Item | Risk Factor | Mitigation |
