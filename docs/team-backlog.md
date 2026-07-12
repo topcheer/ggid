@@ -139,8 +139,8 @@
 - [x] Backend: Agent privilege drift detector (services/oauth/internal/service/agent_drift.go) ✅ 0583672
 - [x] Backend: Shadow agent scanner (services/oauth/internal/service/shadow_scanner.go) ✅ 0583672
 - [x] Backend: Agent access review CRUD (services/oauth/internal/server/agent_review_handler.go) ✅ 0583672
-- [ ] Frontend: Agent delegation chain visualization (console/src/app/agents/delegation-graph/) — dispatched
-- [ ] Frontend: Agent access review page (console/src/app/settings/agent-access-review/) — dispatched
+- [x] Frontend: Agent delegation chain visualization (console/src/app/settings/agent-delegation-graph/) ✅ 29c6d7e
+- [x] Frontend: Agent access review page (console/src/app/settings/agent-access-review/) ✅ 29c6d7e
 - [x] SDK: GetAgentAccessReview, SubmitAgentReview methods ✅ 79c01f9
 - [x] Docs: Agentic AI governance guide (docs/guides/agentic-ai-governance.md) ✅ 9254a95
 
@@ -148,23 +148,23 @@
 - [x] Backend: NHI inventory endpoint (services/identity/internal/service/nhi_lifecycle.go) ✅ 0583672
 - [x] Backend: NHI lifecycle automation (services/identity/internal/service/nhi_lifecycle.go) ✅ 0583672
 - [x] Backend: Credential rotation scheduler (services/auth/internal/service/rotation_scheduler.go) ✅ 0583672
-- [ ] Frontend: NHI inventory dashboard (console/src/app/settings/nhi-inventory/) — dispatched
-- [ ] Frontend: Credential rotation config (console/src/app/settings/credential-rotation/) — dispatched
+- [x] Frontend: NHI inventory dashboard (console/src/app/settings/nhi-inventory/) ✅ 29c6d7e
+- [x] Frontend: Credential rotation config (console/src/app/settings/credential-rotation/) ✅ 29c6d7e
 - [x] SDK: ListNHI, GetNHIDetails, RotateNHI, DecommissionNHI methods ✅ 79c01f9
 - [x] Docs: NHI lifecycle management guide (docs/guides/nhi-lifecycle-management.md) ✅ 9254a95
 
 ### P1: Passkeys
-- [ ] Frontend: Passkey management page (console/src/app/settings/passkeys/) — dispatched
-- [ ] Backend: Passkey enrollment endpoint (services/auth/internal/server/passkey_handler.go) — not started
+- [x] Frontend: Passkey management page (console/src/app/settings/passkey-management/) ✅ 29c6d7e
+- [x] Backend: Passkey enrollment endpoint (services/auth/internal/server/passkey_handler.go) ✅ 33632e9
 - [x] Docs: Passkey deployment guide (docs/guides/passkey-deployment.md) ✅ 9254a95
 
 ### P2: Decentralized Identity
-- [ ] Backend: DID resolver (services/identity/internal/service/did_resolver.go) — not started
-- [ ] Backend: VC issuer (services/identity/internal/service/vc_issuer.go) — not started
-- [ ] Frontend: VC management page (console/src/app/settings/verifiable-credentials/) — not started
+- [x] Backend: DID resolver (services/identity/internal/service/did_resolver.go) ✅ 33632e9
+- [x] Backend: VC issuer (services/identity/internal/service/vc_issuer.go) ✅ 33632e9
+- [x] Frontend: VC management page (console/src/app/settings/verifiable-credentials/) ✅ 4de81ee
 - [x] Docs: Decentralized identity guide (docs/guides/decentralized-identity.md) ✅ 9254a95
 
 ### P2: CRA Compliance
-- [ ] Backend: SBOM endpoint (services/audit/internal/server/sbom_handler.go) — dispatched
+- [x] Backend: SBOM endpoint (services/audit/internal/server/sbom_handler.go) ✅ 501777c
 - [x] Docs: CRA compliance guide (docs/guides/cra-compliance.md) ✅ 9254a95
 - [ ] **P2** docs/oauth-2-1-compliance-statement.md
