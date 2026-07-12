@@ -43,7 +43,7 @@ export default function ServiceDependencyGraphPage() {
       <p className="text-gray-600">Visualize service dependencies, health status, and communication patterns.</p>
 
       <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
-        <span className="text-sm font-medium text-yellow-800">Warning: Circular dependency detected (identity {"->"} org {"->"} audit {"->"} identity)</span>
+        <span className="text-sm font-medium text-yellow-800">{"Warning: Circular dependency detected (identity -> org -> audit -> identity)"}</span>
       </div>
 
       <div className="flex gap-6">

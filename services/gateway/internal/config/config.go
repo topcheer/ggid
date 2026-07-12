@@ -67,6 +67,10 @@ func Default() *Config {
 			"/api/v1/departments":  envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/teams":       envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/tenants":     envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/identity":    envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/organizations": envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
+			"/api/v1/notifications": envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/scim":        envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/scim/v2":            envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/idp":         envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/api/v1/agents":      envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
@@ -131,7 +135,8 @@ func LoadFromEnv(cfg *Config) *Config {
 	// Service URL overrides — each maps a path prefix to a backend URL
 	serviceEnvs := map[string]string{
 		"AUTH_SERVICE_URL":         "/api/v1/auth",
-		"IDENTITY_SERVICE_URL":     "/api/v1/users",
+		"IDENTITY_SERVICE_URL":     "/api/v1/identity",
+		"USERS_SERVICE_URL":        "/api/v1/users",
 		"ROLES_SERVICE_URL":        "/api/v1/roles",
 		"PERMISSIONS_SERVICE_URL":  "/api/v1/permissions",
 		"POLICY_SERVICE_URL":       "/api/v1/policies",
