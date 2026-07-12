@@ -26,7 +26,17 @@ export default function PolicyApprovalWorkflowConfigPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-gray-900 rounded-xl p-6"><h2 className="text-sm font-semibold mb-3">Reviewer Assignment</h2><div className="space-y-1">{(data?.reviewers ?? []).map((r) => <div key={r.category} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs"><span className="flex-1">{r.category}</span><span className="text-blue-400">{r.reviewer}</span></div>))}</div></div>
+        <div className="bg-gray-900 rounded-xl p-6">
+          <h2 className="text-sm font-semibold mb-3">Reviewer Assignment</h2>
+          <div className="space-y-1">
+            {(data?.reviewers ?? []).map((r) => (
+              <div key={r.category} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">
+                <span className="flex-1">{r.category}</span>
+                <span className="text-blue-400">{r.reviewer}</span>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="space-y-6">
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Snowflake className="w-4 h-4 text-cyan-400" /> Change Freeze Windows</h2>
