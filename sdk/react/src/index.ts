@@ -855,6 +855,16 @@ export { useOidcFederationConfig } from './useOidcFederationConfig';
 export type { OidcFederationConfig, TrustAnchor, EntityCategoryRequirement, FederatedProvider } from './useOidcFederationConfig';
 export { useSessionBindingConfig } from './useSessionBindingConfig';
 export type { SessionBindingConfig, PerAppBinding } from './useSessionBindingConfig';
+export { useUserLifecycleConfig } from './useUserLifecycleConfig';
+export type { UserLifecycleConfig, DormantDetectionRule, StageTransitionRule, PerRoleOverride } from './useUserLifecycleConfig';
+export { useAbacConditionConfig } from './useAbacConditionConfig';
+export type { AbacConditionConfig, AttributeSource, ConditionTemplate } from './useAbacConditionConfig';
+export { useScimProvisioningConfig } from './useScimProvisioningConfig';
+export type { ScimProvisioningConfig, ScimMappingRule, ProvisioningTrigger } from './useScimProvisioningConfig';
+export { useAuditExportScheduleConfig } from './useAuditExportScheduleConfig';
+export type { AuditExportScheduleConfig, ScheduledExportJob, RetryPolicy } from './useAuditExportScheduleConfig';
+export { useTokenRotationConfig } from './useTokenRotationConfig';
+export type { TokenRotationConfig, TokenRotationEntry, UpcomingRotation } from './useTokenRotationConfig';
 export type {
   GGIDConfig,
   GGIDUser,
