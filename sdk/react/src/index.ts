@@ -819,6 +819,10 @@ export { useRoleMiningResults } from './useRoleMiningResults';
 export type { RoleMiningResultsData, UnusedPerm, ConsolidationSuggestion, OverAssigned } from './useRoleMiningResults';
 export { useOAuthParUsage } from './useOAuthParUsage';
 export type { OAuthParUsageData, ParRequest, ParClientUsageEntry, ParErrorEntry } from './useOAuthParUsage';
+export { usePasswordlessConfig } from './usePasswordlessConfig';
+export type { PasswordlessConfigData, PasswordlessMethod, RoleRequirement } from './usePasswordlessConfig';
+export { useAdaptiveAuthConfig } from './useAdaptiveAuthConfig';
+export type { AdaptiveAuthConfigData, RiskThreshold, SignalWeight, RoleOverride } from './useAdaptiveAuthConfig';
 export type {
   GGIDConfig,
   GGIDUser,
