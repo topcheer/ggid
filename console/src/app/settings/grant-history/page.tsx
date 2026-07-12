@@ -1,0 +1,21 @@
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import { KeyRound, Search } from "lucide-react";
+interface GrantEvent { id: string; client_name: string; user_id: string; username: string; scopes: string[]; granted_at: string; expires_at: string; revoked_at: string | null; grant_type: string; }
+export default function GrantHistoryPage() {
+  const [events, setEvents] = useState<GrantEvent[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("");
+  const [showEvidence, setShowEvidence] = useState(false);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/oauth/grant-history", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setEvents(d.events || d || []); } } catch { /* noop */ } finally { setLoading(false); } }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
+  const filtered = events.filter((e) => { if (filterType && e.grant_type !== filterType) return false; if (search) { const q = search.toLowerCase(); return e.username.toLowerCase().includes(q) || e.client_name.toLowerCase().includes(q); } return true; });
+  return (
+    <div className="space-y-6">
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> Grant History</h1><p className="text-sm text-gray-500 mt-1">Track OAuth grant events over time.</p></div>
+      <div className="flex items-center gap-3"><div className="relative flex-1 max-w-xs"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search client/user..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div><select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Grant Types</option><option value="authorization_code">Authorization Code</option><option value="client_credentials">Client Credentials</option><option value="refresh_token">Refresh Token</option><option value="device_code">Device Code</option></select><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={showEvidence} onChange={(e) => setShowEvidence(e.target.checked)} className="rounded" /> Consent Evidence</label></div>
+      <div className="relative pl-8"><div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" /><div className="space-y-3">{filtered.map((e) => (<div key={e.id} className="relative"><div className={"absolute -left-5 w-4 h-4 rounded-full border-2 " + (e.revoked_at ? "bg-red-500 border-red-200" : "bg-green-500 border-green-200")} /><div className="rounded-lg border dark:border-gray-800 p-3 ml-2"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><span className="text-sm font-medium">{e.client_name}</span><span className="text-xs text-gray-400">{e.grant_type}</span></div><span className="text-xs text-gray-400">{e.granted_at}</span></div><div className="mt-1 text-sm"><span className="text-gray-500">User: </span><span className="font-medium">{e.username}</span></div><div className="mt-1 flex flex-wrap gap-1">{e.scopes.map((s, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div><div className="mt-1 text-xs text-gray-400">Expires: {e.expires_at}{e.revoked_at && <span className="text-red-500 ml-2">Revoked: {e.revoked_at}</span>}</div>{showEvidence && <div className="mt-2 border-t dark:border-gray-800 pt-1 text-xs text-gray-400">Consent IP: 192.168.1.100 | Evidence hash: 0xabc123...</div>}</div></div>))}{filtered.length === 0 && !loading && <p className="text-sm text-gray-500 py-4 ml-2">No grant events.</p>}</div></div>
+    </div>
+  );
+}

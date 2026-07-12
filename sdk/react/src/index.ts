@@ -453,6 +453,14 @@ export { useTokenLifecycleDashboard } from './useTokenLifecycleDashboard';
 export type { TokenDashboard } from './useTokenLifecycleDashboard';
 export { useRiskPostureDashboard } from './useRiskPostureDashboard';
 export type { RiskPosture } from './useRiskPostureDashboard';
+export { useConditionBuilder } from './useConditionBuilder';
+export type { ConditionGroup } from './useConditionBuilder';
+export { useQueryBuilder } from './useQueryBuilder';
+export type { AuditQuery, QueryResult } from './useQueryBuilder';
+export { useUserImport } from './useUserImport';
+export type { ImportResults } from './useUserImport';
+export { useGrantHistory } from './useGrantHistory';
+export type { GrantEvent } from './useGrantHistory';
 export type {
   GGIDConfig,
   GGIDUser,
