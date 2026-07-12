@@ -269,6 +269,10 @@ export { useComplianceDrift } from './useComplianceDrift';
 export type { DriftData } from './useComplianceDrift';
 export { useRotationReminders } from './useRotationReminders';
 export type { RotationItem } from './useRotationReminders';
+export { useAutoAssignment } from './useAutoAssignment';
+export type { Assignment } from './useAutoAssignment';
+export { useClientHealth } from './useClientHealth';
+export type { ClientHealth } from './useClientHealth';
 export type {
   GGIDConfig,
   GGIDUser,
