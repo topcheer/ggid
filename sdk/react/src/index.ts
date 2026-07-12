@@ -875,6 +875,16 @@ export { useRbacDesignConfig } from './useRbacDesignConfig';
 export type { RbacDesignConfig, RoleNode, RoleTemplate, SodPair } from './useRbacDesignConfig';
 export { useTenantProvisioningConfig } from './useTenantProvisioningConfig';
 export type { TenantProvisioningConfig, ProvisioningStep, OnboardingChecklistItem } from './useTenantProvisioningConfig';
+export { useJwtClaimValidationConfig } from './useJwtClaimValidationConfig';
+export type { JwtClaimValidationConfig, CustomClaim, RequiredClaim } from './useJwtClaimValidationConfig';
+export { useLdapDirectoryConfig } from './useLdapDirectoryConfig';
+export type { LdapDirectoryConfig, ConnectionPoolConfig, SearchOptimization, GroupMembershipResolution, DirectoryFederation, SyncTuning } from './useLdapDirectoryConfig';
+export { useRefreshTokenRotationConfig } from './useRefreshTokenRotationConfig';
+export type { RefreshTokenRotationConfig, RefreshTokenClientOverride } from './useRefreshTokenRotationConfig';
+export { useCorsConfig } from './useCorsConfig';
+export type { CorsConfig, AllowedOrigin } from './useCorsConfig';
+export { useServiceMeshConfig } from './useServiceMeshConfig';
+export type { ServiceMeshConfig, TrafficPolicy, IdentityPropagation, CircuitBreakingConfig } from './useServiceMeshConfig';
 export type {
   GGIDConfig,
   GGIDUser,
