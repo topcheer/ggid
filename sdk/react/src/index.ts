@@ -473,6 +473,14 @@ export { useTokenRotationPolicy } from './useTokenRotationPolicy';
 export type { RotationEntry } from './useTokenRotationPolicy';
 export { useDeprovisionDashboard } from './useDeprovisionDashboard';
 export type { DeprovisionItem } from './useDeprovisionDashboard';
+export { useDevicePosture } from './useDevicePosture';
+export type { PostureData } from './useDevicePosture';
+export { useAPIKeyLifecycle } from './useAPIKeyLifecycle';
+export type { ApiKey } from './useAPIKeyLifecycle';
+export { usePasswordPolicyConfig } from './usePasswordPolicyConfig';
+export type { PasswordConfig } from './usePasswordPolicyConfig';
+export { useWebhookDebugger } from './useWebhookDebugger';
+export type { DeliveryLog, TestResult } from './useWebhookDebugger';
 export type {
   GGIDConfig,
   GGIDUser,
