@@ -183,6 +183,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/timeline/reconstruct", s.handleTimelineReconstruct)
 	mux.HandleFunc("/api/v1/audit/exports/schedule", s.handleExportSchedule)
 	mux.HandleFunc("/api/v1/audit/forensics/timeline", s.handleForensicsTimeline)
+	mux.HandleFunc("/api/v1/audit/export/schedule-config", s.handleExportScheduleConfig)
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
 

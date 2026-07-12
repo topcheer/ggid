@@ -135,6 +135,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policy/stats/decision-log", s.handleDecisionLogStats)
 	mux.HandleFunc("/api/v1/policy/feature-flags", s.handleFeatureFlags)
 	mux.HandleFunc("/api/v1/policy/approval-workflow", s.handleApprovalWorkflow)
+	mux.HandleFunc("/api/v1/policy/abac/condition-config", s.handleABACConditionConfig)
 	mux.HandleFunc("/api/v1/policy/versions/", s.handlePolicyVersionDiff)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
