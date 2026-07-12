@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ComplexityRules {
   min_length: number;
@@ -22,14 +22,36 @@ export default function PasswordPolicyCenterPage() {
   const [hibpApiKey, setHibpApiKey] = useState("");
   const [historyCount, setHistoryCount] = useState(5);
   const [expiryDays, setExpiryDays] = useState(90);
-  const [blocklist, setBlocklist] = useState(["password", "12345678", "qwerty", "letmein", "admin123"]);
+  const [blocklist, setBlocklist] = useState<string[]>([]);
   const [newBlockEntry, setNewBlockEntry] = useState("");
   const [pepperStatus, setPepperStatus] = useState(true);
-  const [overrides] = useState<PerRoleOverride[]>([
-    { role: "admin", min_length: 16, history_count: 10, expiry_days: 30 },
-    { role: "service", min_length: 20, history_count: 0, expiry_days: 0 },
-    { role: "user", min_length: 12, history_count: 5, expiry_days: 90 },
-  ]);
+  const [overrides, setOverrides] = useState<PerRoleOverride[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/auth/password-policy", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.complexity) setComplexity(data.complexity);
+          if (data.breach_detection !== undefined) setBreachDetection(data.breach_detection);
+          if (data.hibp_api_key) setHibpApiKey(data.hibp_api_key);
+          if (data.history_count) setHistoryCount(data.history_count);
+          if (data.expiry_days) setExpiryDays(data.expiry_days);
+          if (data.blocklist) setBlocklist(data.blocklist);
+          if (data.pepper_status !== undefined) setPepperStatus(data.pepper_status);
+          if (data.overrides) setOverrides(data.overrides);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
+  if (loading) return <div className="p-8"><p>Loading...</p></div>;
+  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">

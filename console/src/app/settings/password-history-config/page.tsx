@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function PasswordHistoryConfigPage() {
   const [maxHistory, setMaxHistory] = useState(12);
@@ -8,12 +8,34 @@ export default function PasswordHistoryConfigPage() {
   const [perTenantOverride, setPerTenantOverride] = useState(true);
   const [testPassword, setTestPassword] = useState('');
   const [testResult, setTestResult] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/password-history/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.max_history) setMaxHistory(data.max_history);
+          if (data.check_on_change !== undefined) setCheckOnChange(data.check_on_change);
+          if (data.purge_after) setPurgeAfter(data.purge_after);
+          if (data.per_tenant_override !== undefined) setPerTenantOverride(data.per_tenant_override);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const runTest = () => {
     if (!testPassword) { setTestResult('Enter a password to test'); return; }
     const reused = testPassword.length < 8;
     setTestResult(reused ? 'REJECTED: Password too similar to history entry #3' : 'ACCEPTED: Not found in password history');
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MfaFactor {
   type: "TOTP" | "WebAuthn" | "Push" | "SMS";
@@ -17,19 +17,38 @@ interface ComplianceStats {
 }
 
 export default function MfaEnrollmentCenterPage() {
-  const [factors] = useState<MfaFactor[]>([
-    { type: "TOTP", name: "Google Authenticator", enrolled_at: "2025-01-10", last_used: "2025-01-15 14:22", status: "active" },
-    { type: "WebAuthn", name: "YubiKey 5C", enrolled_at: "2025-01-12", last_used: "2025-01-15 09:01", status: "active" },
-    { type: "Push", name: "Duo Mobile", enrolled_at: "2024-12-20", last_used: "2024-12-28", status: "disabled" },
-  ]);
-  const [compliance] = useState<ComplianceStats>({ total_users: 450, enrolled: 387, pending: 52, exemptions: 11 });
+  const [factors, setFactors] = useState<MfaFactor[]>([]);
+  const [compliance, setCompliance] = useState<ComplianceStats>({ total_users: 0, enrolled: 0, pending: 0, exemptions: 0 });
   const [factorPriority, setFactorPriority] = useState<string[]>(["WebAuthn", "TOTP", "Push", "SMS"]);
   const [forceEnroll, setForceEnroll] = useState(true);
   const [showRecovery, setShowRecovery] = useState(false);
-  const [recoveryCodes] = useState(["aB3k-x9M2", "cD7n-p4Q8", "eF1j-r6T3", "gH5m-s2V9", "iJ9o-t0W4", "kL3u-v7X1", "mN7w-y5Z2", "oP1z-a8B6"]);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/v1/auth/mfa/factors", {
+      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.factors) setFactors(data.factors);
+          if (data.compliance) setCompliance(data.compliance);
+          if (data.factor_priority) setFactorPriority(data.factor_priority);
+          if (data.force_enroll !== undefined) setForceEnroll(data.force_enroll);
+          if (data.recovery_codes) setRecoveryCodes(data.recovery_codes);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const enrolledPct = compliance.total_users > 0 ? Math.round((compliance.enrolled / compliance.total_users) * 100) : 0;
   const factorColors: Record<string, string> = { TOTP: "bg-blue-100 text-blue-700", WebAuthn: "bg-green-100 text-green-700", Push: "bg-purple-100 text-purple-700", SMS: "bg-yellow-100 text-yellow-700" };
+
+  if (loading) return <div className="p-8"><p>Loading...</p></div>;
+  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">

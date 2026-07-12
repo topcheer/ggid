@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Passkey {
   id: string;
@@ -13,12 +13,9 @@ interface Passkey {
 }
 
 export default function PasskeyManagementPage() {
-  const [passkeys, setPasskeys] = useState<Passkey[]>([
-    { id: 'pk1', deviceName: 'MacBook Pro', platform: 'Apple', created: '2026-06-01', lastUsed: '2026-07-12', transports: ['internal', 'hybrid'], syncStatus: 'synced', backupEligible: true },
-    { id: 'pk2', deviceName: 'iPhone 15', platform: 'Apple', created: '2026-05-15', lastUsed: '2026-07-11', transports: ['internal'], syncStatus: 'synced', backupEligible: true },
-    { id: 'pk3', deviceName: 'Chrome on Windows', platform: 'Google', created: '2026-04-20', lastUsed: '2026-06-28', transports: ['internal', 'hybrid'], syncStatus: 'synced', backupEligible: true },
-    { id: 'pk4', deviceName: 'Security Key FIDO2', platform: 'Hardware', created: '2026-03-10', lastUsed: '2026-07-10', transports: ['usb', 'nfc'], syncStatus: 'not-applicable', backupEligible: false },
-  ]);
+  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [showEnroll, setShowEnroll] = useState(false);
   const [enrollDevice, setEnrollDevice] = useState('');
@@ -52,12 +49,28 @@ export default function PasskeyManagementPage() {
     setEnrollDevice('');
   };
 
+  useEffect(() => {
+    fetch('/api/v1/auth/passkeys/status', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data && data.passkeys) setPasskeys(data.passkeys);
+        else if (Array.isArray(data)) setPasskeys(data);
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
+
   const confirmRevoke = () => {
     if (revokeTarget) {
       setPasskeys(prev => prev.filter(p => p.id !== revokeTarget.id));
     }
     setRevokeTarget(null);
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

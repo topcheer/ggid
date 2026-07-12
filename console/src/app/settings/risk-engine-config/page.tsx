@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface RiskWeight {
   factor: string;
@@ -14,25 +14,34 @@ interface RiskAction {
 }
 
 export default function RiskEngineConfigPage() {
-  const [weights, setWeights] = useState<RiskWeight[]>([
-    { factor: 'IP Reputation', weight: 30, enabled: true },
-    { factor: 'Device Fingerprint', weight: 25, enabled: true },
-    { factor: 'Geolocation Velocity', weight: 20, enabled: true },
-    { factor: 'Login History', weight: 15, enabled: true },
-    { factor: 'Behavioral Biometrics', weight: 10, enabled: false },
-  ]);
-
-  const [actions, setActions] = useState<RiskAction[]>([
-    { threshold: 80, action: 'block', label: 'Block' },
-    { threshold: 60, action: 'challenge_mfa', label: 'Challenge MFA' },
-    { threshold: 40, action: 'step_up', label: 'Step-up Auth' },
-    { threshold: 0, action: 'allow', label: 'Allow' },
-  ]);
+  const [weights, setWeights] = useState<RiskWeight[]>([]);
+  const [actions, setActions] = useState<RiskAction[]>([]);
 
   const [ipReputation, setIpReputation] = useState(true);
   const [deviceFingerprint, setDeviceFingerprint] = useState(true);
   const [realTimeEval, setRealTimeEval] = useState(true);
   const [riskThreshold, setRiskThreshold] = useState(50);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/auth/risk-scoring/config', {
+      headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
+    })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(data => {
+        if (data) {
+          if (data.weights) setWeights(data.weights);
+          if (data.actions) setActions(data.actions);
+          if (data.ip_reputation !== undefined) setIpReputation(data.ip_reputation);
+          if (data.device_fingerprint !== undefined) setDeviceFingerprint(data.device_fingerprint);
+          if (data.real_time_eval !== undefined) setRealTimeEval(data.real_time_eval);
+          if (data.risk_threshold) setRiskThreshold(data.risk_threshold);
+        }
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, []);
 
   const totalWeight = weights.filter(w => w.enabled).reduce((sum, w) => sum + w.weight, 0);
 
@@ -47,6 +56,9 @@ export default function RiskEngineConfigPage() {
   const handleActionChange = (idx: number, field: 'threshold' | 'action' | 'label', value: string | number) => {
     setActions(prev => prev.map((a, i) => i === idx ? { ...a, [field]: value } : a));
   };
+
+  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
