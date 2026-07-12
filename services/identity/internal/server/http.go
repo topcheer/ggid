@@ -145,7 +145,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 	h.mux.HandleFunc("/api/v1/identity/scim/error-recovery", h.handleSCIMErrorRecovery)
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)
-	h.mux.HandleFunc("/api/v1/identity/groups/", h.handleGroupAnalytics)
+	h.mux.HandleFunc("/api/v1/identity/groups/analytics", h.handleGroupAnalytics) // was /api/v1/identity/groups/ (duplicate)
 	h.mux.HandleFunc("/api/v1/identity/provisioning/log", h.handleProvisioningLog)
 	h.mux.HandleFunc("/api/v1/identity/user-lifecycle/stages", h.handleUserLifecycleStages)
 	h.mux.HandleFunc("/api/v1/identity/saml/attribute-mapping", h.handleSAMLAttributeMapping)
@@ -177,41 +177,15 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/did/", h.handleDIDRoute)
 
 	// Org transfer
-	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/transfer-org") {
-			h.handleTransferOrg(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/freeze") || strings.HasSuffix(r.URL.Path, "/unfreeze") {
-			h.handleFreezeUnfreeze(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/risk-profile") {
-			h.handleRiskProfile(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/consent-registry") {
-			h.handleConsentRegistry(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/aliases") {
-			h.handleUserAliases(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/reactivation-history") {
-			h.handleReactivationHistory(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/deprovision-schedule") {
-			h.handleDeprovisionSchedule(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/profile-diff") {
-			h.handleProfileDiff(w, r)
-			return
-		}
-		h.handleUsers(w, r)
-	})
+	h.mux.HandleFunc("/api/v1/users/transfer-org", h.handleTransferOrg)
+	h.mux.HandleFunc("/api/v1/users/freeze", h.handleFreezeUnfreeze)
+	h.mux.HandleFunc("/api/v1/users/unfreeze", h.handleFreezeUnfreeze)
+	h.mux.HandleFunc("/api/v1/users/risk-profile", h.handleRiskProfile)
+	h.mux.HandleFunc("/api/v1/users/consent-registry", h.handleConsentRegistry)
+	h.mux.HandleFunc("/api/v1/users/aliases", h.handleUserAliases)
+	h.mux.HandleFunc("/api/v1/users/reactivation-history", h.handleReactivationHistory)
+	h.mux.HandleFunc("/api/v1/users/deprovision-schedule", h.handleDeprovisionSchedule)
+	h.mux.HandleFunc("/api/v1/users/profile-diff", h.handleProfileDiff)
 }
 
 // ServeHTTP implements http.Handler.

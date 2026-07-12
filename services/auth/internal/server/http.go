@@ -313,7 +313,6 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/golden-ticket/detect", h.handleGoldenTicketDetect)
 	h.mux.HandleFunc("/api/v1/auth/dlp/policies", h.handleDLPPolicies)
 	h.mux.HandleFunc("/api/v1/auth/stats/social-providers", h.handleSocialProvidersStats)
-	h.mux.HandleFunc("/api/v1/auth/sessions/", h.handleSessionInspect)
 	h.mux.HandleFunc("/api/v1/auth/anomaly/detect", h.handleAnomalyDetect)
 	h.mux.HandleFunc("/api/v1/auth/brute-force/config", h.handleBruteForceConfig)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/config", h.handleWebAuthnConfig)
@@ -330,7 +329,6 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/config", h.handleMFAConfig)
 	h.mux.HandleFunc("/api/v1/auth/impersonation/config", h.handleImpersonationConfig)
 	h.mux.HandleFunc("/api/v1/auth/credentials/rotation/due", h.handleRotationDue)
-	h.mux.HandleFunc("/api/v1/auth/credentials/", h.handleRotationRoute)
 	h.mux.HandleFunc("/api/v1/auth/passkey/register/begin", h.handlePasskeyRegisterBegin)
 	h.mux.HandleFunc("/api/v1/auth/passkey/register/finish", h.handlePasskeyRegisterFinish)
 	h.mux.HandleFunc("/api/v1/auth/passkey/auth/begin", h.handlePasskeyAuthBegin)
@@ -339,13 +337,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/geo-stats", h.handleSessionGeoStats)
 	h.mux.HandleFunc("/api/v1/auth/mfa/enrollment-stats", h.handleMFAEnrollmentStats)
 	h.mux.HandleFunc("/api/v1/auth/devices/attest", h.handleDeviceAttest)
-	h.mux.HandleFunc("/api/v1/auth/sessions/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/fingerprint") {
-			h.handleSessionFingerprint(w, r)
-			return
-		}
-		writeError(w, http.StatusNotFound, "not found")
-	})
+
 }
 
 // ServeHTTP implements http.Handler.

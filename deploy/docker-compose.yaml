@@ -110,7 +110,7 @@ services:
     working_dir: /app
     environment:
       DATABASE_URL: "postgres://${DB_USER:-ggid}:${DB_PASSWORD:-ggid}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_DATABASE:-ggid}?sslmode=${DB_SSL_MODE:-disable}"
-    entrypoint: "
+    entrypoint: ["sh"]
     command:
       - sh
       - -c
