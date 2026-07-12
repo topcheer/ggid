@@ -1151,6 +1151,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 	// OAuth scope management
 	mux.HandleFunc("/api/v1/oauth/scopes", handleScopes)
+	mux.HandleFunc("/api/v1/oauth/scopes/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/description") {
+			handleScopeDescription(w, r)
+			return
+		}
+		handleScopes(w, r)
+	})
 
 	// DPoP proof verification
 	mux.HandleFunc("/api/v1/oauth/dpop/verify", handleDPoPVerify)

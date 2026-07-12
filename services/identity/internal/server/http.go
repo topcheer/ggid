@@ -108,6 +108,9 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Skill matrix
 	h.mux.HandleFunc("/api/v1/users/skill-matrix", h.handleSkillMatrix)
+
+	// Smart search
+	h.mux.HandleFunc("/api/v1/users/smart-search", h.handleSmartSearch)
 }
 
 // ServeHTTP implements http.Handler.
