@@ -541,10 +541,8 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			keyID, _ := token.Header["kid"].(string)
-			if keyID == "" {
-				keyID = jwks.KeyID()
-			}
-			return jwks.GetKey(keyID)
+			_ = keyID // ignore kid from JWT; always use static public key
+			return jwks.publicKey, nil
 		}, parseOpts...)
 
 			if err != nil || !token.Valid {
