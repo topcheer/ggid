@@ -117,9 +117,8 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	}
 
 	// 4a.2 Check if password has been found in data breaches (HIBP k-anonymity).
-	// If breached, log a security warning. Non-blocking — fail open if API is unreachable.
-	// Can be disabled via BREACH_CHECK_ENABLED=false env var (needed for E2E tests
-	// with common passwords like "Password123!").
+	// If breached, log a security warning. Non-blocking — fail open by default.
+	// Set BREACH_CHECK_BLOCK=true to block login for breached passwords (requires MFA).
 	if breachCheckEnabled() && s.passwordService != nil {
 		if breachErr := s.passwordService.CheckPasswordBreach(ctx, password); breachErr != nil {
 			slog.Warn("password breach detected at login",
@@ -127,9 +126,9 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 				"tenant_id", tc.TenantID.String(),
 				"detail", breachErr.Error(),
 			)
-			// If user has MFA, they can still log in with elevated trust.
-			// If no MFA, force MFA setup for compromised accounts.
-			if s.mfaService != nil && !s.mfaService.HasMFAEnabled(ctx, tc.TenantID, userID) {
+			// Only block login if BREACH_CHECK_BLOCK=true is explicitly set.
+			// Default: warn only, allow login (fail-open for usability).
+			if breachCheckBlock() && s.mfaService != nil && !s.mfaService.HasMFAEnabled(ctx, tc.TenantID, userID) {
 				return nil, ErrMFASetupRequired
 			}
 		}

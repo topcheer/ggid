@@ -25,6 +25,14 @@ func breachCheckEnabled() bool {
 	return true // default: enabled
 }
 
+// breachCheckBlock returns true if breached passwords should block login
+// (requires MFA). Default: false (warn only, fail-open for usability).
+// Set BREACH_CHECK_BLOCK=true to enforce blocking.
+func breachCheckBlock() bool {
+	v := os.Getenv("BREACH_CHECK_BLOCK")
+	return v == "true" || v == "1" || v == "yes"
+}
+
 // --- HIBP Circuit Breaker ---
 //
 // breachCircuitBreaker implements a simple fail-open circuit breaker for the HIBP API.
