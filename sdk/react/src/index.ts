@@ -829,6 +829,14 @@ export { useLockoutPolicyConfig } from './useLockoutPolicyConfig';
 export type { LockoutPolicyConfigData, LockoutEntry, EndpointConfig } from './useLockoutPolicyConfig';
 export { useRedirectURIValidationConfig } from './useRedirectURIValidationConfig';
 export type { RedirectURIValidationConfigData, ClientUriEntry } from './useRedirectURIValidationConfig';
+export { useSamlAttributeMappingConfig } from './useSamlAttributeMappingConfig';
+export type { SamlAttributeMappingConfigData, SamlMapping, IdpOverride } from './useSamlAttributeMappingConfig';
+export { useScimGroupMappingConfig } from './useScimGroupMappingConfig';
+export type { ScimGroupMappingConfigData, ScimMapping, ScimApp, LastSync } from './useScimGroupMappingConfig';
+export { useOidcClaimMappingConfig } from './useOidcClaimMappingConfig';
+export type { OidcClaimMappingConfigData, ClaimEntry, ScopeRow } from './useOidcClaimMappingConfig';
+export { useIdpMetadataImportConfig } from './useIdpMetadataImportConfig';
+export type { IdpMetadataImportConfigData, MetadataPreview, SavedIdp } from './useIdpMetadataImportConfig';
 export type {
   GGIDConfig,
   GGIDUser,
