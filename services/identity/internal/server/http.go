@@ -153,6 +153,10 @@ func (h *HTTPHandler) registerRoutes() {
 			h.handleReactivationHistory(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/deprovision-schedule") {
+			h.handleDeprovisionSchedule(w, r)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/profile-diff") {
 			h.handleProfileDiff(w, r)
 			return
