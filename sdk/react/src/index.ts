@@ -979,6 +979,16 @@ export { useOAuthScopeTieringConfig } from './useOAuthScopeTieringConfig';
 export type { OAuthScopeTieringConfig, TierDefinition, ScopePackage, ScopeInheritanceRule } from './useOAuthScopeTieringConfig';
 export { useSecretSprawlPreventionConfig } from './useSecretSprawlPreventionConfig';
 export type { SecretSprawlPreventionConfig, SecretInventoryEntry } from './useSecretSprawlPreventionConfig';
+export { useGrpcInterceptorConfig } from './useGrpcInterceptorConfig';
+export type { GrpcInterceptorConfig, InterceptorEntry } from './useGrpcInterceptorConfig';
+export { useConnectionPoolTuning } from './useConnectionPoolTuning';
+export type { ConnectionPoolTuning, PoolConfig, PoolBenchmark } from './useConnectionPoolTuning';
+export { useFeatureFlagArchitectureConfig } from './useFeatureFlagArchitectureConfig';
+export type { FeatureFlagArchitectureConfig, KillSwitch, PerTenantFlag } from './useFeatureFlagArchitectureConfig';
+export { useLogAggregationConfig } from './useLogAggregationConfig';
+export type { LogAggregationConfig, LogLevel, RedactionRule } from './useLogAggregationConfig';
+export { useHealthCheckDesignConfig } from './useHealthCheckDesignConfig';
+export type { HealthCheckDesignConfig, DependencyCheck, DegradationRule } from './useHealthCheckDesignConfig';
 export type {
   GGIDConfig,
   GGIDUser,
