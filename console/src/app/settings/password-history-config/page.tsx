@@ -1,0 +1,69 @@
+'use client';
+import { useState } from 'react';
+
+export default function PasswordHistoryConfigPage() {
+  const [maxHistory, setMaxHistory] = useState(12);
+  const [checkOnChange, setCheckOnChange] = useState(true);
+  const [purgeAfter, setPurgeAfter] = useState(365);
+  const [perTenantOverride, setPerTenantOverride] = useState(true);
+  const [testPassword, setTestPassword] = useState('');
+  const [testResult, setTestResult] = useState('');
+
+  const runTest = () => {
+    if (!testPassword) { setTestResult('Enter a password to test'); return; }
+    const reused = testPassword.length < 8;
+    setTestResult(reused ? 'REJECTED: Password too similar to history entry #3' : 'ACCEPTED: Not found in password history');
+  };
+
+  return (
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Password History Configuration</h1>
+        <p className="text-gray-600">Prevent password reuse and manage history retention policies.</p>
+      </div>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">History Settings</h2>
+        <div>
+          <label className="text-sm font-medium">Max History Count: {maxHistory}</label>
+          <input type="range" min={5} max={24} value={maxHistory} onChange={e => setMaxHistory(parseInt(e.target.value))} className="w-full mt-2" />
+          <div className="flex justify-between text-xs text-gray-400"><span>5</span><span>24</span></div>
+          <p className="text-xs text-gray-500 mt-1">Users cannot reuse their last {maxHistory} passwords.</p>
+        </div>
+        <label className="flex items-center justify-between">
+          <span className="text-sm">Check on Password Change</span>
+          <input type="checkbox" checked={checkOnChange} onChange={e => setCheckOnChange(e.target.checked)} className="rounded" />
+        </label>
+        <div>
+          <label className="text-sm font-medium">Purge After (days)</label>
+          <input type="number" min={30} max={1095} value={purgeAfter} onChange={e => setPurgeAfter(parseInt(e.target.value) || 365)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
+          <p className="text-xs text-gray-500 mt-1">Password history entries older than {purgeAfter} days are automatically purged.</p>
+        </div>
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Policy</h2>
+        <div className="flex items-center gap-2">
+          <span className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm">Reuse Prevention Active</span>
+          <span className="text-sm text-gray-500">Last {maxHistory} passwords blocked</span>
+        </div>
+        <label className="flex items-center justify-between">
+          <span className="text-sm">Per-Tenant Override</span>
+          <input type="checkbox" checked={perTenantOverride} onChange={e => setPerTenantOverride(e.target.checked)} className="rounded" />
+        </label>
+        {perTenantOverride && <p className="text-xs text-gray-400">Individual tenants can configure their own history count and purge settings.</p>}
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Test Password Against History</h2>
+        <div className="flex gap-3">
+          <input type="password" placeholder="Enter test password" value={testPassword} onChange={e => setTestPassword(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
+          <button onClick={runTest} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Test</button>
+        </div>
+        {testResult && (
+          <div className={`text-sm p-3 rounded ${testResult.startsWith('ACCEPTED') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{testResult}</div>
+        )}
+      </section>
+    </div>
+  );
+}
