@@ -124,6 +124,9 @@ func (h *HTTPHandler) registerRoutes() {
 	// Search stats
 	h.mux.HandleFunc("/api/v1/users/search-stats", h.handleSearchStats)
 
+	// Directory health
+	h.mux.HandleFunc("/api/v1/identity/directory-health", h.handleDirectoryHealth)
+
 	// Org transfer
 	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/transfer-org") {

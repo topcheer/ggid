@@ -1282,6 +1282,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientRateLimits(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/scope-drift") {
+			handleScopeDrift(w, r)
+			return
+		}
 		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
 			handleValidateClientSecret(w, r)
 			return

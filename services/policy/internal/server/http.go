@@ -122,6 +122,8 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/impact-preview", s.handleImpactPreview)
 	mux.HandleFunc("/api/v1/policies/access-reviews/delegate", s.handleReviewDelegation)
 	mux.HandleFunc("/api/v1/policies/access-reviews/delegated", s.handleReviewDelegation)
+	mux.HandleFunc("/api/v1/policies/access-reviews/escalate", s.handleReviewEscalation)
+	mux.HandleFunc("/api/v1/policies/access-reviews/escalated", s.handleReviewEscalation)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }
