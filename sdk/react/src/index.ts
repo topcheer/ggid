@@ -615,6 +615,16 @@ export { useIdentityUserAttestation } from './useIdentityUserAttestation';
 export type { IdentityUserAttestationData, AttestationCampaign, AttestationUser } from './useIdentityUserAttestation';
 export { useOrgCostAllocation } from './useOrgCostAllocation';
 export type { OrgCostAllocationData, AllocationRule, MonthlyCost, OverBudgetAlert } from './useOrgCostAllocation';
+export { useOAuthTokenAuditing } from './useOAuthTokenAuditing';
+export type { OAuthTokenAuditingData, TokenAuditEntry, SuspiciousPattern } from './useOAuthTokenAuditing';
+export { useAuthWebauthnConfig } from './useAuthWebauthnConfig';
+export type { AuthWebauthnConfigData, SupportedAlg, PlatformConfig } from './useAuthWebauthnConfig';
+export { usePolicySoDConfig } from './usePolicySoDConfig';
+export type { PolicySoDConfigData, ConflictingRolePair, SodViolation } from './usePolicySoDConfig';
+export { useIdentityAccessRevoke } from './useIdentityAccessRevoke';
+export type { IdentityAccessRevokeData, SearchableUser, ImpactItem, LogEntry } from './useIdentityAccessRevoke';
+export { useAuditDataSovereignty } from './useAuditDataSovereignty';
+export type { AuditDataSovereigntyData, ResidencyRegion, TransferRule, PendingTransfer, SovereigntyViolation } from './useAuditDataSovereignty';
 export type {
   GGIDConfig,
   GGIDUser,
