@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -47,8 +48,43 @@ const (
 )
 
 var (
-	parStore sync.Map // requestURI -> parEntry
+	parStore sync.Map // requestURI -> parEntry (in-memory fallback)
 )
+
+// parStoreRedis stores a PAR entry to Redis with TTL, falling back to in-memory.
+func (s *OAuthService) parStoreRedis(ctx context.Context, requestURI string, entry parEntry) {
+	parStore.Store(requestURI, entry)
+	if s.rdb != nil {
+		if data, err := json.Marshal(entry); err == nil {
+			s.rdb.Set(ctx, "par:"+requestURI, data, parTTL*time.Second)
+		}
+	}
+}
+
+// parLoadRedis loads a PAR entry from Redis, falling back to in-memory.
+func (s *OAuthService) parLoadRedis(ctx context.Context, requestURI string) (parEntry, bool) {
+	if val, ok := parStore.Load(requestURI); ok {
+		return val.(parEntry), true
+	}
+	if s.rdb != nil {
+		if data, err := s.rdb.Get(ctx, "par:"+requestURI); err == nil && data != "" {
+			var entry parEntry
+			if json.Unmarshal([]byte(data), &entry) == nil {
+				parStore.Store(requestURI, entry)
+				return entry, true
+			}
+		}
+	}
+	return parEntry{}, false
+}
+
+// parDeleteRedis removes a PAR entry from both Redis and in-memory.
+func (s *OAuthService) parDeleteRedis(ctx context.Context, requestURI string) {
+	parStore.Delete(requestURI)
+	if s.rdb != nil {
+		s.rdb.Del(ctx, "par:"+requestURI)
+	}
+}
 
 // PushAuthorizationRequest implements RFC 9126: stores auth params server-side
 // and returns a request_uri reference. The /authorize endpoint can then look
@@ -87,7 +123,7 @@ func (s *OAuthService) PushAuthorizationRequest(ctx context.Context, req *Pushed
 
 	// 4. Generate request_uri and store.
 	requestURI := parRequestURIPrefix + uuid.New().String()
-	parStore.Store(requestURI, parEntry{
+	s.parStoreRedis(ctx, requestURI, parEntry{
 		Request:   req,
 		ExpiresAt: time.Now().Add(parTTL * time.Second),
 	})
@@ -101,23 +137,23 @@ func (s *OAuthService) PushAuthorizationRequest(ctx context.Context, req *Pushed
 // GetPushedAuthorizationRequest retrieves a pushed authorization request by its request_uri.
 // Returns error if not found or expired.
 func (s *OAuthService) GetPushedAuthorizationRequest(requestURI string) (*PushedAuthorizationRequest, error) {
+	ctx := context.Background()
 	if !strings.HasPrefix(requestURI, parRequestURIPrefix) {
 		return nil, fmt.Errorf("invalid request_uri format")
 	}
 
-	val, ok := parStore.Load(requestURI)
+	entry, ok := s.parLoadRedis(ctx, requestURI)
 	if !ok {
 		return nil, fmt.Errorf("request_uri not found or expired")
 	}
 
-	entry := val.(parEntry)
 	if time.Now().After(entry.ExpiresAt) {
-		parStore.Delete(requestURI)
+		s.parDeleteRedis(ctx, requestURI)
 		return nil, fmt.Errorf("request_uri expired")
 	}
 
 	// RFC 9126: request_uri is single-use.
-	parStore.Delete(requestURI)
+	s.parDeleteRedis(ctx, requestURI)
 	return entry.Request, nil
 }
 

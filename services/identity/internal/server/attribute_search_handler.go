@@ -56,8 +56,11 @@ func (h *HTTPHandler) handleUserByAttribute(w http.ResponseWriter, r *http.Reque
 					// In production: check u.CustomAttributes[attrKey]
 				}
 			default:
-				// Generic attribute matching
-				_ = attrVal // placeholder for production attribute lookup
+				// Generic attribute matching: check user metadata fields.
+				// Match against email, username, display name, or phone.
+				if u.Email != attrVal && u.Username != attrVal && u.DisplayName != attrVal && u.Phone != attrVal {
+					allMatch = false
+				}
 			}
 			if !allMatch {
 				break

@@ -22,12 +22,30 @@ func newMockRedisStateStore() *mockRedisStateStore {
 	return &mockRedisStateStore{data: make(map[string]string)}
 }
 
-func (m *mockRedisStateStore) Set(_ context.Context, key string, _ any, _ time.Duration) error {
+func (m *mockRedisStateStore) Set(_ context.Context, key string, value any, _ time.Duration) error {
 	if m.err != nil {
 		return m.err
 	}
-	m.data[key] = "1"
+	switch v := value.(type) {
+	case string:
+		m.data[key] = v
+	case []byte:
+		m.data[key] = string(v)
+	default:
+		m.data[key] = "1"
+	}
 	return nil
+}
+
+func (m *mockRedisStateStore) Get(_ context.Context, key string) (string, error) {
+	if m.err != nil {
+		return "", m.err
+	}
+	val, ok := m.data[key]
+	if !ok {
+		return "", errors.New("redis: nil")
+	}
+	return val, nil
 }
 
 func (m *mockRedisStateStore) GetDel(_ context.Context, key string) (string, error) {
@@ -40,6 +58,14 @@ func (m *mockRedisStateStore) GetDel(_ context.Context, key string) (string, err
 	}
 	delete(m.data, key) // atomic get-and-delete
 	return val, nil
+}
+
+func (m *mockRedisStateStore) Del(_ context.Context, key string) error {
+	if m.err != nil {
+		return m.err
+	}
+	delete(m.data, key)
+	return nil
 }
 
 // ========== State Store Redis Migration Tests ==========

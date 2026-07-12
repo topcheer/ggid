@@ -21,8 +21,16 @@ func (f *failingRedis) Set(_ context.Context, _ string, _ any, _ time.Duration) 
 	return errors.New("redis: connection refused")
 }
 
+func (f *failingRedis) Get(_ context.Context, _ string) (string, error) {
+	return "", errors.New("redis: connection refused")
+}
+
 func (f *failingRedis) GetDel(_ context.Context, _ string) (string, error) {
 	return "", errors.New("redis: connection refused")
+}
+
+func (f *failingRedis) Del(_ context.Context, _ string) error {
+	return errors.New("redis: connection refused")
 }
 
 // slowRedis simulates a Redis with high latency (for timeout behavior).
@@ -45,6 +53,24 @@ func (s *slowRedis) GetDel(ctx context.Context, _ string) (string, error) {
 		return "", errors.New("redis: key not found")
 	case <-ctx.Done():
 		return "", ctx.Err()
+	}
+}
+
+func (s *slowRedis) Get(ctx context.Context, _ string) (string, error) {
+	select {
+	case <-time.After(s.delay):
+		return "", errors.New("redis: key not found")
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func (s *slowRedis) Del(ctx context.Context, _ string) error {
+	select {
+	case <-time.After(s.delay):
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }
 

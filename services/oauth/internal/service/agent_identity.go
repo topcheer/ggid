@@ -110,13 +110,63 @@ type AgentTokenResponse struct {
 	IssuedTokenType  string `json:"issued_token_type"`
 }
 
-// --- In-memory agent registry (production would use a database) ---
+// --- Agent registry (in-memory + Redis persistent) ---
 
 var (
 	agentMu       sync.RWMutex
 	agentStore    = make(map[uuid.UUID]*AgentRegistration)
 	agentByClient = make(map[string]uuid.UUID) // client_id → agent_id
 )
+
+// agentStoreRedis persists an agent registration to Redis (no TTL, persistent).
+func (s *OAuthService) agentStoreRedis(ctx context.Context, reg *AgentRegistration) {
+	agentMu.Lock()
+	agentStore[reg.ID] = reg
+	agentByClient[reg.ClientID] = reg.ID
+	agentMu.Unlock()
+	if s.rdb != nil {
+		if data, err := json.Marshal(reg); err == nil {
+			s.rdb.Set(ctx, "agent:"+reg.ID.String(), data, 0) // no expiry
+		}
+	}
+}
+
+// agentLoadRedis loads an agent from Redis, falling back to in-memory.
+func (s *OAuthService) agentLoadRedis(ctx context.Context, agentID uuid.UUID) (*AgentRegistration, bool) {
+	agentMu.RLock()
+	agent, ok := agentStore[agentID]
+	agentMu.RUnlock()
+	if ok {
+		return agent, true
+	}
+	if s.rdb != nil {
+		if data, err := s.rdb.Get(ctx, "agent:"+agentID.String()); err == nil && data != "" {
+			var reg AgentRegistration
+			if json.Unmarshal([]byte(data), &reg) == nil {
+				agentMu.Lock()
+				agentStore[reg.ID] = &reg
+				agentByClient[reg.ClientID] = reg.ID
+				agentMu.Unlock()
+				return &reg, true
+			}
+		}
+	}
+	return nil, false
+}
+
+// agentDeleteRedis removes an agent from both Redis and in-memory.
+func (s *OAuthService) agentDeleteRedis(ctx context.Context, agentID uuid.UUID) {
+	agentMu.Lock()
+	agent, ok := agentStore[agentID]
+	if ok {
+		delete(agentByClient, agent.ClientID)
+	}
+	delete(agentStore, agentID)
+	agentMu.Unlock()
+	if s.rdb != nil {
+		s.rdb.Del(ctx, "agent:"+agentID.String())
+	}
+}
 
 // RegisterAgent creates a new AI agent identity within a tenant.
 // The agent is linked to an owner user who can delegate authority to it.
@@ -158,19 +208,13 @@ func (s *OAuthService) RegisterAgent(ctx context.Context, reg *AgentRegistration
 	reg.CreatedAt = time.Now()
 	reg.UpdatedAt = reg.CreatedAt
 
-	agentMu.Lock()
-	agentStore[reg.ID] = reg
-	agentByClient[reg.ClientID] = reg.ID
-	agentMu.Unlock()
-
+	s.agentStoreRedis(ctx, reg)
 	return reg, nil
 }
 
 // GetAgent retrieves an agent by ID.
 func (s *OAuthService) GetAgent(ctx context.Context, agentID uuid.UUID) (*AgentRegistration, error) {
-	agentMu.RLock()
-	defer agentMu.RUnlock()
-	agent, ok := agentStore[agentID]
+	agent, ok := s.agentLoadRedis(ctx, agentID)
 	if !ok {
 		return nil, fmt.Errorf("agent not found: %s", agentID)
 	}
@@ -195,14 +239,13 @@ func (s *OAuthService) ListAgents(ctx context.Context, tenantID uuid.UUID) ([]*A
 
 // UpdateAgentStatus changes the lifecycle status of an agent.
 func (s *OAuthService) UpdateAgentStatus(ctx context.Context, agentID uuid.UUID, status AgentStatus) error {
-	agentMu.Lock()
-	defer agentMu.Unlock()
-	agent, ok := agentStore[agentID]
+	agent, ok := s.agentLoadRedis(ctx, agentID)
 	if !ok {
 		return fmt.Errorf("agent not found: %s", agentID)
 	}
 	agent.Status = status
 	agent.UpdatedAt = time.Now()
+	s.agentStoreRedis(ctx, agent)
 	return nil
 }
 

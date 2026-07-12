@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -65,8 +66,43 @@ const (
 )
 
 var (
-	cibaStore sync.Map // authReqID -> cibaEntry
+	cibaStore sync.Map // authReqID -> cibaEntry (in-memory fallback)
 )
+
+// cibaStoreRedis stores a CIBA entry to Redis with TTL, falling back to in-memory.
+func (s *OAuthService) cibaStoreRedis(ctx context.Context, authReqID string, entry cibaEntry, ttl time.Duration) {
+	cibaStore.Store(authReqID, entry)
+	if s.rdb != nil {
+		if data, err := json.Marshal(entry); err == nil {
+			s.rdb.Set(ctx, "ciba:session:"+authReqID, data, ttl)
+		}
+	}
+}
+
+// cibaLoadRedis loads a CIBA entry from Redis, falling back to in-memory.
+func (s *OAuthService) cibaLoadRedis(ctx context.Context, authReqID string) (cibaEntry, bool) {
+	if val, ok := cibaStore.Load(authReqID); ok {
+		return val.(cibaEntry), true
+	}
+	if s.rdb != nil {
+		if data, err := s.rdb.Get(ctx, "ciba:session:"+authReqID); err == nil && data != "" {
+			var entry cibaEntry
+			if json.Unmarshal([]byte(data), &entry) == nil {
+				cibaStore.Store(authReqID, entry)
+				return entry, true
+			}
+		}
+	}
+	return cibaEntry{}, false
+}
+
+// cibaDeleteRedis removes a CIBA entry from both Redis and in-memory.
+func (s *OAuthService) cibaDeleteRedis(ctx context.Context, authReqID string) {
+	cibaStore.Delete(authReqID)
+	if s.rdb != nil {
+		s.rdb.Del(ctx, "ciba:session:"+authReqID)
+	}
+}
 
 // BackchannelAuthentication implements the OIDC CIBA flow: accepts
 // authentication parameters, returns auth_req_id for polling.
@@ -117,7 +153,7 @@ func (s *OAuthService) BackchannelAuthentication(ctx context.Context, req *Backc
 		userID = uuid.New()
 	}
 
-	cibaStore.Store(authReqID, cibaEntry{
+	s.cibaStoreRedis(ctx, authReqID, cibaEntry{
 		ClientID:       client.ID,
 		TenantID:       req.TenantID,
 		UserID:         userID,
@@ -126,7 +162,7 @@ func (s *OAuthService) BackchannelAuthentication(ctx context.Context, req *Backc
 		Scope:          req.Scope,
 		CreatedAt:      time.Now(),
 		ExpiresAt:      time.Now().Add(time.Duration(expiry) * time.Second),
-	})
+	}, time.Duration(expiry)*time.Second)
 
 	return &BackchannelAuthResponse{
 		AuthReqID: authReqID,
@@ -139,16 +175,14 @@ func (s *OAuthService) BackchannelAuthentication(ctx context.Context, req *Backc
 // Returns a token response if the user approved, or an error indicating
 // pending, slow_down, or expired.
 func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, authReqID, clientID, clientSecret string) (*TokenResponse, error) {
-	val, ok := cibaStore.Load(authReqID)
+	entry, ok := s.cibaLoadRedis(ctx, authReqID)
 	if !ok {
 		return nil, &CIBAError{Err: "invalid_grant", Desc: "unknown or expired auth_req_id"}
 	}
 
-	entry := val.(cibaEntry)
-
 	// Check expiry.
 	if time.Now().After(entry.ExpiresAt) {
-		cibaStore.Delete(authReqID)
+		s.cibaDeleteRedis(ctx, authReqID)
 		return nil, &CIBAError{Err: "expired_token", Desc: "auth_req_id has expired"}
 	}
 
@@ -159,7 +193,7 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 
 	// Update last poll time.
 	entry.LastPoll = time.Now()
-	cibaStore.Store(authReqID, entry)
+	s.cibaStoreRedis(ctx, authReqID, entry, time.Until(entry.ExpiresAt))
 
 	// Check status.
 	switch entry.Status {
@@ -167,7 +201,7 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 		return nil, &CIBAError{Err: "authorization_pending", Desc: "user has not yet responded"}
 
 	case CIBAStatusApproved:
-		cibaStore.Delete(authReqID)
+		s.cibaDeleteRedis(ctx, authReqID)
 		// Issue access token for the resolved user.
 		scopes := strings.Fields(entry.Scope)
 		accessToken, expiresIn, err := s.issueAccessToken(entry.UserID, entry.TenantID, clientID, entry.Scope)
@@ -182,7 +216,7 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 		}, nil
 
 	case CIBAStatusDenied:
-		cibaStore.Delete(authReqID)
+		s.cibaDeleteRedis(ctx, authReqID)
 		return nil, &CIBAError{Err: "access_denied", Desc: "user denied the authentication request"}
 
 	default:
@@ -193,32 +227,29 @@ func (s *OAuthService) PollCIBAToken(ctx context.Context, tenantID uuid.UUID, au
 // ApproveCIBAAuth marks a CIBA authentication request as approved.
 // This is called by the authentication device (e.g., mobile app) after user consent.
 func (s *OAuthService) ApproveCIBAAuth(authReqID string) error {
-	val, ok := cibaStore.Load(authReqID)
+	ctx := context.Background()
+	entry, ok := s.cibaLoadRedis(ctx, authReqID)
 	if !ok {
 		return fmt.Errorf("auth_req_id not found")
 	}
-
-	entry := val.(cibaEntry)
 	if time.Now().After(entry.ExpiresAt) {
-		cibaStore.Delete(authReqID)
+		s.cibaDeleteRedis(ctx, authReqID)
 		return fmt.Errorf("auth_req_id expired")
 	}
-
 	entry.Status = CIBAStatusApproved
-	cibaStore.Store(authReqID, entry)
+	s.cibaStoreRedis(ctx, authReqID, entry, time.Until(entry.ExpiresAt))
 	return nil
 }
 
 // DenyCIBAAuth marks a CIBA authentication request as denied.
 func (s *OAuthService) DenyCIBAAuth(authReqID string) error {
-	val, ok := cibaStore.Load(authReqID)
+	ctx := context.Background()
+	entry, ok := s.cibaLoadRedis(ctx, authReqID)
 	if !ok {
 		return fmt.Errorf("auth_req_id not found")
 	}
-
-	entry := val.(cibaEntry)
 	entry.Status = CIBAStatusDenied
-	cibaStore.Store(authReqID, entry)
+	s.cibaStoreRedis(ctx, authReqID, entry, time.Until(entry.ExpiresAt))
 	return nil
 }
 

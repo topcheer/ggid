@@ -38,7 +38,9 @@ type OAuthService struct {
 // This allows mocking in tests without a real Redis server.
 type RedisCmdable interface {
 	Set(ctx context.Context, key string, value any, ttl time.Duration) error
+	Get(ctx context.Context, key string) (string, error)
 	GetDel(ctx context.Context, key string) (string, error)
+	Del(ctx context.Context, key string) error
 }
 
 // SetRedisClient wires a Redis client for distributed state storage.
