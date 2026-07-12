@@ -229,6 +229,10 @@ export { useDelegations } from './useDelegations';
 export type { Delegation } from './useDelegations';
 export { useReviewExemptions } from './useReviewExemptions';
 export type { ReviewExemption } from './useReviewExemptions';
+export { useJITElevation } from './useJITElevation';
+export type { ElevationRequest } from './useJITElevation';
+export { useCredentialExposure } from './useCredentialExposure';
+export type { ExposureData } from './useCredentialExposure';
 export type {
   GGIDConfig,
   GGIDUser,
