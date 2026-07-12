@@ -1154,7 +1154,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 
 	// OAuth scope management
-	mux.HandleFunc("/api/v1/oauth/scopes", handleScopes)
+	mux.HandleFunc("/api/v1/oauth/token-lifetime", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/analytics") || r.URL.Path == "/api/v1/oauth/token-lifetime/analytics" {
+			handleTokenLifetimeAnalytics(w, r)
+			return
+		}
+	})
+	mux.HandleFunc("/api/v1/oauth/token-lifetime/analytics", handleTokenLifetimeAnalytics)
 	mux.HandleFunc("/api/v1/oauth/scopes/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/description") {
 			handleScopeDescription(w, r)

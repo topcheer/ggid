@@ -114,6 +114,15 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Provisioning webhooks
 	h.mux.HandleFunc("/api/v1/users/provisioning-webhooks", h.handleProvisioningWebhooks)
+
+	// Org transfer
+	h.mux.HandleFunc("/api/v1/users/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/transfer-org") {
+			h.handleTransferOrg(w, r)
+			return
+		}
+		h.handleUsers(w, r)
+	})
 }
 
 // ServeHTTP implements http.Handler.

@@ -161,6 +161,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 		s.handleEvidenceVersioning(w, r)
 	})
 	mux.HandleFunc("/api/v1/audit/compliance/widget-data", s.handleComplianceWidgetData)
+	mux.HandleFunc("/api/v1/audit/compliance/heatmap", s.handleComplianceHeatmap)
 	mux.HandleFunc("/api/v1/audit/compliance/evidence-attachments", s.handleEvidenceAttachments)
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }
