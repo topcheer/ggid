@@ -911,6 +911,16 @@ export { useAuditTamperDetectionConfig } from './useAuditTamperDetectionConfig';
 export type { AuditTamperDetectionConfig } from './useAuditTamperDetectionConfig';
 export { useFederationPatternsConfig } from './useFederationPatternsConfig';
 export type { FederationPatternsConfig, TrustLifecycleRule, MemberProvider } from './useFederationPatternsConfig';
+export { usePkceDeepDiveConfig } from './usePkceDeepDiveConfig';
+export type { PkceDeepDiveConfig, PkceClientEntry } from './usePkceDeepDiveConfig';
+export { useTokenIntrospectionDesign } from './useTokenIntrospectionDesign';
+export type { TokenIntrospectionDesign, IntrospectionCaching, ResourceServerAuth } from './useTokenIntrospectionDesign';
+export { useDeviceAuthorizationFlowConfig } from './useDeviceAuthorizationFlowConfig';
+export type { DeviceAuthorizationFlowConfig, DeviceClientEntry, DeviceFlowStats } from './useDeviceAuthorizationFlowConfig';
+export { useUserProvisioningPipelineConfig } from './useUserProvisioningPipelineConfig';
+export type { UserProvisioningPipelineConfig, PipelineStage, ErrorRetryPolicy } from './useUserProvisioningPipelineConfig';
+export { useAccessRequestLifecycleConfig } from './useAccessRequestLifecycleConfig';
+export type { AccessRequestLifecycleConfig, LifecycleStage, AutoApprovalRule } from './useAccessRequestLifecycleConfig';
 export type {
   GGIDConfig,
   GGIDUser,
