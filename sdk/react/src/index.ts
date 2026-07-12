@@ -237,6 +237,10 @@ export { usePermissionBoundaries } from './usePermissionBoundaries';
 export type { PermissionBoundary } from './usePermissionBoundaries';
 export { useOnboardingChecklist } from './useOnboardingChecklist';
 export type { Checklist, ChecklistStep } from './useOnboardingChecklist';
+export { useRecertification } from './useRecertification';
+export type { RecertDecision, RecertUser } from './useRecertification';
+export { useClientEvents } from './useClientEvents';
+export type { ClientEvent } from './useClientEvents';
 export type {
   GGIDConfig,
   GGIDUser,
