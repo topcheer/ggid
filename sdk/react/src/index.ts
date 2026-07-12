@@ -309,6 +309,16 @@ export { useFrameworkCoverage } from './useFrameworkCoverage';
 export type { FrameworkInfo, CoverageData } from './useFrameworkCoverage';
 export { useBlastRadius } from './useBlastRadius';
 export type { BlastRadiusData } from './useBlastRadius';
+export { useSessionGeoStats } from './useSessionGeoStats';
+export type { GeoData } from './useSessionGeoStats';
+export { useMembershipGraph } from './useMembershipGraph';
+export type { GraphData } from './useMembershipGraph';
+export { useSecretHistory } from './useSecretHistory';
+export type { SecretHistory, RotationEntry } from './useSecretHistory';
+export { useMFAEnrollmentStats } from './useMFAEnrollmentStats';
+export type { MFAStats } from './useMFAEnrollmentStats';
+export { usePolicyVersionDiff } from './usePolicyVersionDiff';
+export type { VersionDiff } from './usePolicyVersionDiff';
 export type {
   GGIDConfig,
   GGIDUser,
