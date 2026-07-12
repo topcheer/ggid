@@ -407,6 +407,14 @@ export { useSecurityAlerts } from './useSecurityAlerts';
 export type { SecurityAlert } from './useSecurityAlerts';
 export { useScopeCatalog } from './useScopeCatalog';
 export type { ScopeDef } from './useScopeCatalog';
+export { useSessionTimeoutConfig } from './useSessionTimeoutConfig';
+export type { SessionTimeoutConfig } from './useSessionTimeoutConfig';
+export { usePkceEnforcement } from './usePkceEnforcement';
+export type { PkceConfig } from './usePkceEnforcement';
+export { useUserLifecycle } from './useUserLifecycle';
+export type { LifecycleUser } from './useUserLifecycle';
+export { usePasswordBreachCheck } from './usePasswordBreachCheck';
+export type { BreachResult } from './usePasswordBreachCheck';
 export type {
   GGIDConfig,
   GGIDUser,
