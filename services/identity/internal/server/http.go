@@ -129,6 +129,10 @@ func (h *HTTPHandler) registerRoutes() {
 			h.handleRiskProfile(w, r)
 			return
 		}
+		if strings.HasSuffix(r.URL.Path, "/consent-registry") {
+			h.handleConsentRegistry(w, r)
+			return
+		}
 		h.handleUsers(w, r)
 	})
 }

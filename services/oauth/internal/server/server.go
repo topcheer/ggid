@@ -1162,6 +1162,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 	mux.HandleFunc("/api/v1/oauth/token-lifetime/analytics", handleTokenLifetimeAnalytics)
 	mux.HandleFunc("/api/v1/oauth/revoke-cascade", handleRevokeCascade)
+	mux.HandleFunc("/api/v1/oauth/clients/dependency-graph", handleDependencyGraph)
 	mux.HandleFunc("/api/v1/oauth/scopes/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/description") {
 			handleScopeDescription(w, r)

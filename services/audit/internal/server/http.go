@@ -164,6 +164,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/compliance/heatmap", s.handleComplianceHeatmap)
 	mux.HandleFunc("/api/v1/audit/compliance/auto-score", s.handleComplianceAutoScore)
 	mux.HandleFunc("/api/v1/audit/compliance/schedule-collect", s.handleScheduleCollect)
+	mux.HandleFunc("/api/v1/audit/compliance/evidence/verify-integrity", s.handleEvidenceVerifyIntegrity)
 	mux.HandleFunc("/api/v1/audit/compliance/evidence-attachments", s.handleEvidenceAttachments)
 	mux.HandleFunc("/api/v1/audit", s.handleEvents)
 }

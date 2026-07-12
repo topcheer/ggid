@@ -114,6 +114,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/simulate", s.handlePolicySimulate)
 	mux.HandleFunc("/api/v1/policies/export-package", s.handlePolicyExportImport)
 	mux.HandleFunc("/api/v1/policies/import-package", s.handlePolicyExportImport)
+	mux.HandleFunc("/api/v1/policies/access-reviews/metrics", s.handleAccessReviewMetrics)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
 }
