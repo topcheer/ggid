@@ -305,6 +305,18 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Path rewriting: map frontend API paths to backend service paths
+	// Frontend calls /api/v1/mfa/status but auth service expects /api/v1/auth/mfa/status
+	if prefix == "/api/v1/mfa" || prefix == "/api/v1/tokens" || prefix == "/api/v1/login-security" ||
+		prefix == "/api/v1/password-history" || prefix == "/api/v1/delegation" ||
+		prefix == "/api/v1/account-linking" || prefix == "/api/v1/consent" ||
+		prefix == "/api/v1/notifications" || prefix == "/api/v1/introspection" ||
+		prefix == "/api/v1/device-bindings" {
+		// Rewrite /api/v1/<feature>/... -> /api/v1/auth/<feature>/...
+		r.URL.Path = strings.Replace(r.URL.Path, "/api/v1/"+strings.TrimPrefix(prefix, "/api/v1/")+"/", "/api/v1/auth/"+strings.TrimPrefix(prefix, "/api/v1/")+"/", 1)
+		r.URL.Path = strings.Replace(r.URL.Path, "/api/v1/"+strings.TrimPrefix(prefix, "/api/v1/"), "/api/v1/auth/"+strings.TrimPrefix(prefix, "/api/v1/"), 1)
+	}
+
 	// Apply per-route timeout if configured
 	if to, ok := gw.timeouts[prefix]; ok && to > 0 {
 		ctx, cancel := context.WithTimeout(r.Context(), to)
