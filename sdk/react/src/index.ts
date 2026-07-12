@@ -645,6 +645,16 @@ export { usePolicyContextualConditions } from './usePolicyContextualConditions';
 export type { PolicyContextualConditionsData, ConditionCategory, ConditionTemplate } from './usePolicyContextualConditions';
 export { useAuditStreamProcessing } from './useAuditStreamProcessing';
 export type { AuditStreamProcessingData, StreamHealth, LagPoint, RetryPolicy, ScalingConfig } from './useAuditStreamProcessing';
+export { useOAuthJarConfig } from './useOAuthJarConfig';
+export type { OAuthJarConfigData, ClientOverride, JarUsageStats } from './useOAuthJarConfig';
+export { useAuthAdaptiveAuthFlow } from './useAuthAdaptiveAuthFlow';
+export type { AuthAdaptiveAuthFlowData, RiskThresholdEntry, SignalWeight, StepUpTrigger, RoleOverride } from './useAuthAdaptiveAuthFlow';
+export { useIdentityDynamicGrouping } from './useIdentityDynamicGrouping';
+export type { IdentityDynamicGroupingData, GroupRule, PreviewMember } from './useIdentityDynamicGrouping';
+export { usePolicyClauseLibrary } from './usePolicyClauseLibrary';
+export type { PolicyClauseLibraryData, Clause } from './usePolicyClauseLibrary';
+export { useAuditSamplingConfig } from './useAuditSamplingConfig';
+export type { AuditSamplingConfigData, SamplingStrategy, EventTypeRate, PopulationStats } from './useAuditSamplingConfig';
 export type {
   GGIDConfig,
   GGIDUser,
