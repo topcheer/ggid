@@ -705,6 +705,16 @@ export { usePasskeyHealth } from './usePasskeyHealth';
 export type { PasskeyHealthData, PasskeyInfo, RecoveryOption } from './usePasskeyHealth';
 export { useOAuth21Audit } from './useOAuth21Audit';
 export type { OAuth21AuditData, ComplianceCheck, NonCompliantClient, RemediationAction } from './useOAuth21Audit';
+export { usePiplCompliance } from './usePiplCompliance';
+export type { PiplComplianceData, DataHandlingRules, ConsentLogEntry, DpoInfo, CrossBorderApplication, RetentionItem } from './usePiplCompliance';
+export { useThreatIntelligenceFeed } from './useThreatIntelligenceFeed';
+export type { ThreatIntelligenceFeedData, IntelSource, FeedHealth, ThreatIndicator, AutoBlockRule } from './useThreatIntelligenceFeed';
+export { useVelocityRulesConfig } from './useVelocityRulesConfig';
+export type { VelocityRulesConfigData, VelocityRule } from './useVelocityRulesConfig';
+export { useDeviceFingerprintAnalytics } from './useDeviceFingerprintAnalytics';
+export type { DeviceFingerprintAnalyticsData, FingerprintCluster, SuspiciousFingerprint, KnownGood } from './useDeviceFingerprintAnalytics';
+export { useAgentConsentFlow } from './useAgentConsentFlow';
+export type { AgentConsentFlowData, PendingConsent, ConsentHistoryEntry } from './useAgentConsentFlow';
 export type {
   GGIDConfig,
   GGIDUser,
