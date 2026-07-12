@@ -803,6 +803,14 @@ export { usePolicyEvalTimeline } from './usePolicyEvalTimeline';
 export type { PolicyEvalTimelineData, PolicyEvaluation, EvalStep, MatchedRule } from './usePolicyEvalTimeline';
 export { useAuditEventCorrelation } from './useAuditEventCorrelation';
 export type { AuditEventCorrelationData, CorrelatedIncident, CorrelationRule } from './useAuditEventCorrelation';
+export { useAnomalyDetectDashboard } from './useAnomalyDetectDashboard';
+export type { AnomalyDetectDashboardData, AnomalyEvent, DetectedPattern } from './useAnomalyDetectDashboard';
+export { useUserLifecycleStats } from './useUserLifecycleStats';
+export type { UserLifecycleStatsData, StageTime, TransitionRule, MonthlyTransition } from './useUserLifecycleStats';
+export { useMembershipTrends } from './useMembershipTrends';
+export type { MembershipTrendsData, MonthlyMembership, DeptMembers, AttritionReason } from './useMembershipTrends';
+export { usePolicyDecisionStats } from './usePolicyDecisionStats';
+export type { PolicyDecisionStatsData, PolicyStat, ResourceTypeStat, DeniedAction } from './usePolicyDecisionStats';
 export type {
   GGIDConfig,
   GGIDUser,
