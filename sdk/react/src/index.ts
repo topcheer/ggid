@@ -535,6 +535,16 @@ export { useCacheHealth } from './useCacheHealth';
 export type { CacheInstance } from './useCacheHealth';
 export { useNatsJetstream } from './useNatsJetstream';
 export type { JetStreamData } from './useNatsJetstream';
+export { useOAuthClientMigration } from './useOAuthClientMigration';
+export type { MigrationPreview } from './useOAuthClientMigration';
+export { useIdentityVerification } from './useIdentityVerification';
+export type { VerifConfig } from './useIdentityVerification';
+export { usePolicyDecisionExplain } from './usePolicyDecisionExplain';
+export type { ExplainResult } from './usePolicyDecisionExplain';
+export { useAuditChallengeResponse } from './useAuditChallengeResponse';
+export type { Challenge } from './useAuditChallengeResponse';
+export { useOAuthScopeConsentMatrix } from './useOAuthScopeConsentMatrix';
+export type { ScopeMatrix } from './useOAuthScopeConsentMatrix';
 export type {
   GGIDConfig,
   GGIDUser,
