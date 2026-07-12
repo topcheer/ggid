@@ -4,14 +4,16 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/ggid/ggid/services/identity/internal/domain"
 )
 
 // directoryHealthIssue represents a data quality issue in the user directory.
 type directoryHealthIssue struct {
-	Type        string `json:"type"`
-	Severity    string `json:"severity"`
-	Count       int    `json:"count"`
-	Description string `json:"description"`
+	Type        string   `json:"type"`
+	Severity    string   `json:"severity"`
+	Count       int      `json:"count"`
+	Description string   `json:"description"`
 	Examples    []string `json:"examples,omitempty"`
 }
 
@@ -29,40 +31,47 @@ func (h *HTTPHandler) handleDirectoryHealth(w http.ResponseWriter, r *http.Reque
 
 	now := time.Now().UTC()
 
-	issues := []directoryHealthIssue{
-		{
-			Type: "orphaned_accounts", Severity: "high", Count: 12,
-			Description: "Users with no manager assignment and no active role",
-			Examples:    []string{"user-0042", "user-0078", "user-0156"},
-		},
-		{
-			Type: "duplicate_emails", Severity: "medium", Count: 3,
-			Description: "Multiple accounts sharing the same email address",
-			Examples:    []string{"dup@example.com (2 accounts)", "shared@company.com (2 accounts)"},
-		},
-		{
-			Type: "stale_managers", Severity: "medium", Count: 8,
-			Description: "Manager accounts that are inactive or deactivated",
-			Examples:    []string{"mgr-002 (deactivated 30d ago)", "mgr-007 (suspended)"},
-		},
-		{
-			Type: "missing_departments", Severity: "low", Count: 45,
-			Description: "Users without a department assignment",
-		},
-		{
-			Type: "stale_accounts", Severity: "medium", Count: 28,
-			Description: "Active accounts with no login in 90+ days",
-		},
-		{
-			Type: "non_compliant_mfa", Severity: "high", Count: 5800,
-			Description: "Users without MFA enrollment",
-		},
-		{
-			Type: "weak_passwords", Severity: "high", Count: 245,
-			Description: "Users with passwords not meeting current policy",
-		},
+	// Query real user data from the identity service.
+	ctx := r.Context()
+	result, err := h.svc.ListUsers(ctx, &domain.ListUsersFilter{PageSize: 1000})
+	if err != nil {
+		// Fall back to empty data if service is unavailable.
+		writeJSON(w, http.StatusOK, map[string]any{
+			"overall_status":      "unknown",
+			"health_score":        0,
+			"total_users":         0,
+			"total_issues":        0,
+			"high_severity_count": 0,
+			"compliance_issues":   []directoryHealthIssue{},
+			"checked_at":          now.Format(time.RFC3339),
+			"last_full_scan":      directoryHealthStore.lastChecked,
+			"error":               "unable to query user directory",
+		})
+		return
 	}
 
+	totalUsers := 0
+	staleAccounts := 0
+	if result != nil {
+		totalUsers = result.Total
+		for _, u := range result.Users {
+			// Stale: no login in 90+ days.
+			if u.LastLoginAt != nil && now.Sub(*u.LastLoginAt) > 90*24*time.Hour {
+				staleAccounts++
+			}
+		}
+	}
+
+	// Build issues from real data.
+	issues := []directoryHealthIssue{}
+	if staleAccounts > 0 {
+		issues = append(issues, directoryHealthIssue{
+			Type: "stale_accounts", Severity: "medium", Count: staleAccounts,
+			Description: "Active accounts with no login in 90+ days",
+		})
+	}
+
+	// Compute health score from issues.
 	totalIssues := 0
 	highSeverity := 0
 	for _, iss := range issues {
@@ -72,7 +81,6 @@ func (h *HTTPHandler) handleDirectoryHealth(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	// Overall health score
 	healthScore := 100
 	for _, iss := range issues {
 		switch iss.Severity {
@@ -97,24 +105,25 @@ func (h *HTTPHandler) handleDirectoryHealth(w http.ResponseWriter, r *http.Reque
 		overallStatus = "fair"
 	}
 
+	// Update last checked timestamp.
+	directoryHealthStore.Lock()
+	directoryHealthStore.lastChecked = now.Format(time.RFC3339)
+	directoryHealthStore.Unlock()
+
+	severityCounts := map[string]int{}
+	for _, iss := range issues {
+		severityCounts[iss.Severity]++
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
-		"overall_status":    overallStatus,
-		"health_score":      healthScore,
-		"total_users":       15420,
-		"total_issues":      totalIssues,
+		"overall_status":      overallStatus,
+		"health_score":        healthScore,
+		"total_users":         totalUsers,
+		"total_issues":        totalIssues,
 		"high_severity_count": highSeverity,
-		"compliance_issues": issues,
-		"by_severity": map[int]string{
-			1: "high", 2: "medium", 3: "low",
-		},
-		"severity_counts": func() map[string]int {
-			counts := map[string]int{}
-			for _, iss := range issues {
-				counts[iss.Severity]++
-			}
-			return counts
-		}(),
-		"checked_at": now.Format(time.RFC3339),
-		"last_full_scan": directoryHealthStore.lastChecked,
+		"compliance_issues":   issues,
+		"severity_counts":     severityCounts,
+		"checked_at":          now.Format(time.RFC3339),
+		"last_full_scan":      directoryHealthStore.lastChecked,
 	})
 }
