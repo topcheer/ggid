@@ -208,6 +208,12 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Unknown sub-path — reject
+	if len(parts) == 2 {
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		role, err := s.roleSvc.GetRole(r.Context(), id)

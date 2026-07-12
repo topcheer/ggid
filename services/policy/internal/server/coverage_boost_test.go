@@ -430,7 +430,8 @@ func TestHandleRoleByID_NotFound(t *testing.T) {
 func TestHandleRoleByID_MethodNotAllowed(t *testing.T) {
 	h := newTestHarness()
 	role, _ := h.roleSvc.CreateRole(context.Background(), h.tenantID, "x", "X", "", nil)
-	w := doReq("PATCH", "/api/v1/roles/"+role.ID.String(), "")
+	// POST to /api/v1/roles/{id} is not allowed (only GET, PUT, PATCH, DELETE)
+	w := doReq("POST", "/api/v1/roles/"+role.ID.String(), "")
 	assertStatus(t, w, http.StatusMethodNotAllowed)
 }
 
