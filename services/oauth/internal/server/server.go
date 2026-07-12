@@ -852,6 +852,46 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientScopes(w, r)
 			return
 		}
+		// Sub-path: client branding
+		if strings.HasSuffix(r.URL.Path, "/branding") {
+			handleClientBranding(w, r)
+			return
+		}
+		// Sub-path: client lifecycle (suspend/reinstate)
+		if strings.HasSuffix(r.URL.Path, "/suspend") || strings.HasSuffix(r.URL.Path, "/reinstate") {
+			handleClientLifecycle(w, r)
+			return
+		}
+		// Sub-path: usage policy
+		if strings.HasSuffix(r.URL.Path, "/usage-policy") {
+			handleUsagePolicy(w, r)
+			return
+		}
+		// Sub-path: deprecation
+		if strings.HasSuffix(r.URL.Path, "/deprecation") {
+			handleClientDeprecation(w, r)
+			return
+		}
+		// Sub-path: consent screen
+		if strings.HasSuffix(r.URL.Path, "/consent-screen") {
+			handleConsentScreen(w, r)
+			return
+		}
+		// Sub-path: secret rotation
+		if strings.HasSuffix(r.URL.Path, "/rotate-secret") || strings.HasSuffix(r.URL.Path, "/secret-status") {
+			handleClientSecretRotation(w, r)
+			return
+		}
+		// Sub-path: analytics
+		if strings.HasSuffix(r.URL.Path, "/analytics") {
+			handleClientAnalytics(w, r)
+			return
+		}
+		// Sub-path: migrate
+		if strings.HasSuffix(r.URL.Path, "/migrate") {
+			handleClientMigration(w, r)
+			return
+		}
 
 		switch r.Method {
 		case http.MethodGet:
@@ -1253,109 +1293,15 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/consent/admin-override", handleConsentAdminOverride)
 	mux.HandleFunc("/api/v1/oauth/tokens/validate-audience", handleValidateAudience)
 	mux.HandleFunc("/api/v1/oauth/token/downscope", handleTokenDownscope)
-	mux.HandleFunc("/api/v1/oauth/clients/", func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/branding") {
-			handleClientBranding(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/suspend") || strings.HasSuffix(r.URL.Path, "/reinstate") {
-			handleClientLifecycle(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/usage-policy") {
-			handleUsagePolicy(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/deprecation") {
-			handleClientDeprecation(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/consent-screen") {
-			handleConsentScreen(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/rotate-secret") || strings.HasSuffix(r.URL.Path, "/secret-status") {
-			handleClientSecretRotation(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/analytics") {
-			handleClientAnalytics(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/migrate") {
-			handleClientMigration(w, r)
-			return
-		}
-		if r.URL.Path == "/api/v1/oauth/token/claims" {
-			handleTokenClaims(w, r)
-			return
-		}
-		if r.URL.Path == "/api/v1/oauth/scope-delegation" {
-			handleScopeDelegation(w, r)
-			return
-		}
-		if r.URL.Path == "/api/v1/oauth/analytics/summary" {
-			handleAnalyticsSummary(w, r)
-			return
-		}
-		if r.URL.Path == "/api/v1/oauth/grant-flows" {
-			handleGrantFlows(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/version") || strings.HasSuffix(r.URL.Path, "/versions") {
-			handleClientVersioning(w, r)
-			return
-		}
-		if r.URL.Path == "/api/v1/oauth/scopes/resolve-dependencies" {
-			handleResolveDependencies(w, r)
-			return
-		}
-		if r.URL.Path == "/api/v1/oauth/token-entropy" {
-			handleTokenEntropy(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/onboarding-checklist") {
-			handleOnboardingChecklist(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/migration-data") {
-			handleClientMigrationData(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/health") {
-			handleClientHealth(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/secret-compare") {
-			handleSecretCompare(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/rate-limits") {
-			handleClientRateLimits(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/scope-drift") {
-			handleScopeDrift(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/rotation-policy") {
-			handleRotationPolicy(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/secret-history") {
-			handleSecretHistory(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/validate-secret") {
-			handleValidateClientSecret(w, r)
-			return
-		}
-		if strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/events/") {
-			handleClientEvents(w, r)
-			return
-		}
-		handleClientCert(w, r)
-	})
+	// Note: /api/v1/oauth/clients/ sub-paths (branding, suspend, etc.) are handled
+	// by the first /api/v1/oauth/clients/ handler registered above (line ~831).
+	// Additional sub-paths not covered there are registered with distinct prefixes:
+	mux.HandleFunc("/api/v1/oauth/token/claims", handleTokenClaims)
+	mux.HandleFunc("/api/v1/oauth/scope-delegation", handleScopeDelegation)
+	mux.HandleFunc("/api/v1/oauth/analytics/summary", handleAnalyticsSummary)
+	mux.HandleFunc("/api/v1/oauth/grant-flows", handleGrantFlows)
+	mux.HandleFunc("/api/v1/oauth/scopes/resolve-dependencies", handleResolveDependencies)
+	mux.HandleFunc("/api/v1/oauth/token-entropy", handleTokenEntropy)
 
 	// JWKS key rotation
 	mux.HandleFunc("/api/v1/oauth/jwks/rotate", func(w http.ResponseWriter, r *http.Request) {
