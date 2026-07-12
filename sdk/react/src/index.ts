@@ -277,6 +277,10 @@ export { usePolicySetEval } from './usePolicySetEval';
 export type { PolicyResult, EvalResponse } from './usePolicySetEval';
 export { useDirectorySnapshot } from './useDirectorySnapshot';
 export type { Snapshot } from './useDirectorySnapshot';
+export { useMergeConflicts } from './useMergeConflicts';
+export type { ConflictRule } from './useMergeConflicts';
+export { useClientRateLimits } from './useClientRateLimits';
+export type { RateLimitConfig } from './useClientRateLimits';
 export type {
   GGIDConfig,
   GGIDUser,
