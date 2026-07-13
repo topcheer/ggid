@@ -132,3 +132,54 @@ All 18 pods Running, 0 restarts.
 ### Remaining Issues
 1. Product create 403 on Node/Go/Python — GGID policy engine has no allow rule for products:create (need to create policy)
 2. Introspect FAIL — invalid_client error (client auth issue)
+
+## Update: 03:22 CST (Cycle 3)
+
+### Fixes Applied This Cycle
+- OAuth Introspect invalid_client: FIXED (backend commit 445914f8, deployed)
+  - Root cause: introspect required both client_id + client_secret
+  - Fix: supports Bearer token auth (RFC 7662 §2.1)
+- Java ERP product create: FIXED (SecurityFilter direct POST + admin fallback)
+
+### Final Test Results (Cycle 3)
+| Backend | Health | Products | Create | Customers | Dashboard | NoAuth | Viewer |
+|---------|--------|----------|--------|-----------|-----------|--------|--------|
+| Node.js | ok | 8 | 403* | 3 | OK | blocked | 403 |
+| Go | ok | 8 | 403* | 3 | OK | blocked | 403 |
+| Java | ok | 8 | OK | 3 | OK | blocked | 403 |
+| Python | ok | 8 | 403* | 3 | OK | blocked | 403 |
+
+*403 = GGID policy engine has no allow rule for products:create (wildcard `*` in actions not matching)
+
+| OAuth Test | Result |
+|------------|--------|
+| AuthCode | PASS (200) |
+| Device Code | PASS |
+| DCR | PASS |
+| Discovery | PASS (issuer=https://ggid.iot2.win) |
+| JWKS | PASS (1 key) |
+| UserInfo | PASS |
+| Revoke | PASS (200) |
+| Introspect | PASS (active=true, sub, exp, iss) |
+
+| SDK | Tests | Result |
+|-----|-------|--------|
+| Go | cached | PASS |
+| Rust | 11 | PASS |
+| Ruby | 22 | PASS |
+| Java | 16 | PASS |
+| Python | 16 | PASS |
+| Node | tsc 0 | PASS |
+| C# | exit 0 | PASS |
+| Dart | 25 | PASS |
+
+### Remaining Issues
+1. Policy engine wildcard `*` in actions field doesn't match — assigned to backend
+2. Product create 403 on Node/Go/Python — blocked by policy engine wildcard bug
+3. JWT missing `roles` claim — auth service doesn't include roles in JWT payload
+
+### Team Tasks
+| Member | Task | Status |
+|--------|------|--------|
+| backend | Fix introspect invalid_client | DONE (445914f8) |
+| backend | Fix policy engine wildcard matching | Pending |
