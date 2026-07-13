@@ -156,10 +156,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	// OIDC Discovery (both prefixed and non-prefixed for gateway compatibility)
 	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
 		config := oauthSvc.GetDiscoveryConfig()
+		overrideDiscoveryIssuer(config, r)
 		writeJSON(w, http.StatusOK, config)
 	})
 	mux.HandleFunc("/api/v1/oauth/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
 		config := oauthSvc.GetDiscoveryConfig()
+		overrideDiscoveryIssuer(config, r)
 		writeJSON(w, http.StatusOK, config)
 	})
 
@@ -252,11 +254,73 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		userID, err := uuid.Parse(userIDStr)
 		if err != nil {
-			// Return authorization_required so frontend can prompt for login.
-			writeJSON(w, http.StatusOK, map[string]string{
-				"status":  "authorization_required",
-				"message": "User must be authenticated. Provide user_id parameter or X-User-ID header.",
-			})
+			// Show built-in login page (not the admin console)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, `<!DOCTYPE html>
+	<html lang="zh-CN">
+	<head>
+	<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>GGID 登录</title>
+	<style>
+	*{margin:0;padding:0;box-sizing:border-box}
+	body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:linear-gradient(135deg,#667eea 0%%,#764ba2 100%%);min-height:100vh;display:flex;align-items:center;justify-content:center}
+	.card{background:#fff;border-radius:12px;padding:40px;width:400px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+	h1{text-align:center;color:#1677ff;margin-bottom:8px;font-size:24px}
+	.sub{text-align:center;color:#999;margin-bottom:24px;font-size:14px}
+	label{display:block;margin-bottom:6px;font-weight:600;font-size:14px;color:#333}
+	input{width:100%%;padding:12px 14px;border:1px solid #ddd;border-radius:8px;font-size:15px;margin-bottom:16px;transition:border .2s}
+	input:focus{outline:none;border-color:#1677ff;box-shadow:0 0 0 2px rgba(22,119,255,.1)}
+	button{width:100%%;padding:14px;background:#1677ff;color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;transition:background .2s}
+	button:hover{background:#0958d9}
+	button:disabled{background:#ccc;cursor:not-allowed}
+	.err{color:#ff4d4f;font-size:13px;margin-bottom:12px;display:none}
+	.redirect-info{margin-top:16px;padding:10px;background:#f6f8fa;border-radius:6px;font-size:12px;color:#666;text-align:center}
+	</style>
+	</head>
+	<body>
+	<div class="card">
+	<h1>GGID 登录</h1>
+	<p class="sub">使用您的账户登录以继续</p>
+	<form id="loginForm">
+	<div id="err" class="err"></div>
+	<label>用户名</label>
+	<input id="username" type="text" required autocomplete="username" placeholder="输入用户名">
+	<label>密码</label>
+	<input id="password" type="password" required autocomplete="current-password" placeholder="输入密码">
+	<button type="submit" id="btn">登录</button>
+	</form>
+	<div class="redirect-info">授权完成后将返回 <strong id="app-name">应用</strong></div>
+	</div>
+	<script>
+	document.getElementById('loginForm').addEventListener('submit', async (e) => {
+	  e.preventDefault();
+	  const btn = document.getElementById('btn');
+	  const errDiv = document.getElementById('err');
+	  btn.disabled = true; btn.textContent = '登录中...';
+	  errDiv.style.display = 'none';
+	  try {
+    const resp = await fetch('%s/api/v1/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-Tenant-ID': '%s'},
+      body: JSON.stringify({username: document.getElementById('username').value, password: document.getElementById('password').value, tenant_id: '%s'})
+    });
+	    const data = await resp.json();
+	    if (!resp.ok) { errDiv.textContent = data.error?.message || data.error || '登录失败'; errDiv.style.display = 'block'; btn.disabled = false; btn.textContent = '登录'; return; }
+	    // Extract user_id from JWT and redirect back to authorize
+	    const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+	    const url = new URL(window.location.href);
+	    const authorizeURL = url.pathname + url.search;
+	    const sep = authorizeURL.includes('?') ? '&' : '?';
+	    window.location.href = authorizeURL + sep + 'user_id=' + payload.sub;
+	  } catch (err) {
+	    errDiv.textContent = '网络错误，请重试'; errDiv.style.display = 'block';
+	    btn.disabled = false; btn.textContent = '登录';
+	  }
+	});
+	</script>
+	</body>
+	</html>`, os.Getenv("GGID_URL"), tenantID.String(), tenantID.String())
 			return
 		}
 
@@ -321,12 +385,8 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			redirectURL += "&state=" + state
 		}
 
-		// Return JSON with the redirect URL (works for SPA and API clients).
-		writeJSON(w, http.StatusOK, map[string]string{
-			"redirect_url": redirectURL,
-			"code":         code,
-			"state":        state,
-		})
+		// HTTP 302 redirect to the client's redirect_uri with code and state
+		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
 
 	// Token endpoint (POST)
@@ -573,7 +633,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 			return
 		}
-		result, err := oauthSvc.DynamicClientRegister(r.Context(), &req)
+		// Inject tenant context from header or query param.
+		ctx, err := injectTenantContext(r)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			return
+		}
+		result, err := oauthSvc.DynamicClientRegister(ctx, &req)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
@@ -647,7 +713,13 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 			return
 		}
-		result, err := oauthSvc.DynamicClientRegister(r.Context(), &req)
+		// Inject tenant context from header or query param.
+		ctx, err := injectTenantContext(r)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			return
+		}
+		result, err := oauthSvc.DynamicClientRegister(ctx, &req)
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
@@ -1400,6 +1472,100 @@ func samlMetadata(entityID, issuer string) string {
     <SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="%s/saml/slo"/>
   </IDPSSODescriptor>
 </EntityDescriptor>`, entityID, issuer, issuer, issuer, issuer)
+}
+
+// injectTenantContext extracts the tenant ID from the X-Tenant-ID header
+// (or tenant_id query param) and returns a context with the tenant attached.
+func injectTenantContext(r *http.Request) (context.Context, error) {
+	tenantIDStr := r.Header.Get("X-Tenant-ID")
+	if tenantIDStr == "" {
+		tenantIDStr = r.URL.Query().Get("tenant_id")
+	}
+	if tenantIDStr == "" {
+		return nil, fmt.Errorf("valid X-Tenant-ID header or tenant_id query param required")
+	}
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid tenant_id: %s", tenantIDStr)
+	}
+	return tenant.WithContext(r.Context(), &tenant.Context{TenantID: tenantID}), nil
+}
+
+// overrideDiscoveryIssuer replaces the internal issuer URL in the OIDC discovery
+// config with the public-facing URL derived from the request's forwarded headers.
+// This ensures clients see the correct public endpoints when the service runs
+// behind a reverse proxy or gateway.
+func overrideDiscoveryIssuer(config *domain.OIDCDiscoveryConfig, r *http.Request) {
+	// Determine the public scheme.
+	scheme := r.Header.Get("X-Forwarded-Proto")
+	if scheme == "" {
+		scheme = "http"
+		if r.TLS != nil {
+			scheme = "https"
+		}
+	}
+
+	// Determine the public host.
+	host := r.Header.Get("X-Forwarded-Host")
+	if host == "" {
+		host = r.Host
+	}
+	if host == "" {
+		return // nothing to override
+	}
+
+	publicURL := scheme + "://" + host
+	originalIssuer := config.Issuer
+
+	// Only override if the current issuer looks like an internal address.
+	// (localhost, private IP ranges, or raw port numbers without a domain)
+	if !shouldOverrideIssuer(originalIssuer) {
+		return
+	}
+
+	config.Issuer = publicURL
+	config.AuthorizationEndpoint = strings.Replace(config.AuthorizationEndpoint, originalIssuer, publicURL, 1)
+	config.TokenEndpoint = strings.Replace(config.TokenEndpoint, originalIssuer, publicURL, 1)
+	config.UserInfoEndpoint = strings.Replace(config.UserInfoEndpoint, originalIssuer, publicURL, 1)
+	config.JwksURI = strings.Replace(config.JwksURI, originalIssuer, publicURL, 1)
+	config.RevocationEndpoint = strings.Replace(config.RevocationEndpoint, originalIssuer, publicURL, 1)
+	config.IntrospectionEndpoint = strings.Replace(config.IntrospectionEndpoint, originalIssuer, publicURL, 1)
+	if config.CheckSessionIFrame != "" {
+		config.CheckSessionIFrame = strings.Replace(config.CheckSessionIFrame, originalIssuer, publicURL, 1)
+	}
+	if config.EndSessionEndpoint != "" {
+		config.EndSessionEndpoint = strings.Replace(config.EndSessionEndpoint, originalIssuer, publicURL, 1)
+	}
+}
+
+// shouldOverrideIssuer returns true when the issuer URL looks like an internal
+// address (localhost, 127.x, 10.x, 172.16-31.x, 192.168.x, or a bare :port).
+func shouldOverrideIssuer(issuer string) bool {
+	if issuer == "" {
+		return true
+	}
+	lower := strings.ToLower(issuer)
+	if strings.Contains(lower, "localhost") {
+		return true
+	}
+	if strings.Contains(lower, "127.0.0.1") {
+		return true
+	}
+	if strings.Contains(lower, "192.168.") {
+		return true
+	}
+	if strings.Contains(lower, "10.") {
+		return true
+	}
+	// 172.16.0.0 – 172.31.255.255
+	if strings.Contains(lower, "172.") {
+		return true
+	}
+	// Bare port like :9005 without a hostname
+	if strings.HasPrefix(lower, "http://:") || strings.HasPrefix(lower, "https://:") {
+		return true
+	}
+	return false
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
