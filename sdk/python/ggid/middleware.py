@@ -1,148 +1,145 @@
-"""Framework middleware for FastAPI, Flask, and Django."""
+"""HTTP middleware decorators for Flask and FastAPI."""
 
-from typing import Optional
-from ggid.jwt import JWTVerifier, JWTClaims, JWTError
-
-
-# --- FastAPI ---
-
-try:
-    from starlette.middleware.base import BaseHTTPMiddleware
-    from starlette.requests import Request
-    from starlette.responses import JSONResponse
-    _fastapi_available = True
-except ImportError:
-    _fastapi_available = False
+import functools
+from typing import Optional, Callable, List
+from .jwt_verifier import JWTVerifier, JWTError
 
 
-if _fastapi_available:
-
-    class GGIDMiddleware(BaseHTTPMiddleware):
-        """FastAPI/Starlette middleware for GGID JWT authentication.
-
-        Usage:
-            app.add_middleware(
-                GGIDMiddleware,
-                gateway_url="https://iam.example.com",
-                jwks_url="https://iam.example.com/.well-known/jwks.json",
-                tenant_id="00000000-0000-0000-0000-000000000001",
-            )
-        """
-
-        def __init__(self, app, gateway_url: str = "", jwks_url: str = "", tenant_id: str = ""):
-            super().__init__(app)
-            self.gateway_url = gateway_url
-            self.tenant_id = tenant_id
-            self.verifier = JWTVerifier(jwks_url=jwks_url) if jwks_url else None
-            # Public paths that skip JWT verification
-            self.public_paths = {"/", "/healthz", "/docs", "/api-docs", "/login"}
-
-        async def dispatch(self, request: Request, call_next):
-            # Skip public paths
-            path = request.url.path
-            if path in self.public_paths or path.startswith("/api/v1/auth/"):
-                return await call_next(request)
-
-            # Extract token
-            auth_header = request.headers.get("Authorization", "")
-            if not auth_header.startswith("Bearer "):
-                return JSONResponse({"error": "missing bearer token"}, status_code=401)
-
-            token = auth_header[7:]
-
-            # Verify token
-            if self.verifier:
-                try:
-                    claims = await self.verifier.verify(token)
-                    request.state.ggid_user = claims
-                except JWTError as e:
-                    return JSONResponse({"error": str(e)}, status_code=401)
-            else:
-                request.state.ggid_user = None
-
-            return await call_next(request)
-
-    async def get_current_user(request: Request) -> JWTClaims:
-        """FastAPI dependency to get the current authenticated user."""
-        user = getattr(request.state, "ggid_user", None)
-        if user is None:
-            from starlette.responses import JSONResponse
-            raise ValueError("not authenticated")
-        return user
-
-    def requires_permission(resource: str, action: str):
-        """FastAPI dependency factory for permission checking."""
-        async def checker(request: Request):
-            user = await get_current_user(request)
-            # TODO: call policy check API
-            return user
-        return checker
+def _get_token_from_header(auth_header: str) -> str:
+    """Extract Bearer token from Authorization header."""
+    if not auth_header:
+        raise JWTError("missing Authorization header")
+    parts = auth_header.split(" ")
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise JWTError("invalid Authorization header format")
+    return parts[1]
 
 
-# --- Flask ---
+def ggid_auth(verifier: JWTVerifier):
+    """Decorator that requires valid JWT authentication.
 
-try:
-    from functools import wraps
-    from flask import request, jsonify, g, current_app
-    _flask_available = True
-except ImportError:
-    _flask_available = False
+    Works with both Flask and FastAPI by detecting the framework.
 
+    Usage:
+        @app.route("/protected")
+        @ggid_auth(verifier)
+        def protected(request_claims):
+            return {"user": request_claims.sub}
+    """
 
-if _flask_available:
-    def requires_auth(f):
-        """Flask decorator for GGID JWT authentication.
+    def decorator(handler: Callable):
+        @functools.wraps(handler)
+        def wrapper(*args, **kwargs):
+            # Detect Flask (first arg is request) vs FastAPI
+            request = None
+            if args and hasattr(args[0], "headers"):
+                request = args[0]
+            elif "request" in kwargs:
+                request = kwargs["request"]
 
-        Usage:
-            @app.route("/profile")
-            @requires_auth
-            def profile():
-                user = g.ggid_user
-                return jsonify({"user": user.raw})
-        """
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            auth_header = request.headers.get("Authorization", "")
-            if not auth_header.startswith("Bearer "):
-                return jsonify({"error": "missing bearer token"}), 401
+            # Try to get from kwargs first, then from args
+            # Flask: handler(request) → args[0] is request
+            # FastAPI: handler(request=Request) → kwargs["request"]
+            auth_header = None
+            if request and hasattr(request, "headers"):
+                auth_header = request.headers.get("Authorization", "")
 
-            token = auth_header[7:]
-            # For Flask, verification is synchronous — store raw token
-            g.ggid_token = token
-            g.ggid_user = None  # User can call verify_token separately
-            return f(*args, **kwargs)
-        return decorated
+            if not auth_header:
+                # Try inspecting args for a request-like object
+                for arg in args:
+                    if hasattr(arg, "headers"):
+                        auth_header = arg.headers.get("Authorization", "")
+                        break
 
+            if not auth_header:
+                return {"error": "missing Authorization header"}, 401
 
-# --- Django ---
+            try:
+                token = _get_token_from_header(auth_header)
+                claims = verifier.verify(token)
+            except JWTError as e:
+                return {"error": str(e)}, 401
 
-try:
-    from django.http import JsonResponse
-    from django.conf import settings
-    from functools import wraps
-    _django_available = True
-except ImportError:
-    _django_available = False
+            # Pass claims to handler
+            return handler(claims, *args, **kwargs)
 
-
-if _django_available:
-    def ggid_login_required(view_func):
-        """Django decorator for GGID JWT authentication.
-
-        Usage:
-            @ggid_login_required
-            def profile(request):
-                user = request.ggid_user
-                return JsonResponse({"user": user})
-        """
-        @wraps(view_func)
-        def wrapper(request, *args, **kwargs):
-            auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-            if not auth_header.startswith("Bearer "):
-                return JsonResponse({"error": "missing bearer token"}, status=401)
-
-            token = auth_header[7:]
-            request.ggid_token = token
-            request.ggid_user = None
-            return view_func(request, *args, **kwargs)
         return wrapper
+
+    return decorator
+
+
+def ggid_require_role(verifier: JWTVerifier, roles: List[str]):
+    """Decorator that requires the JWT to have at least one of the specified roles.
+
+    Usage:
+        @app.route("/admin")
+        @ggid_require_role(verifier, ["admin"])
+        def admin(request_claims):
+            return {"message": "admin access"}
+    """
+
+    def decorator(handler: Callable):
+        @functools.wraps(handler)
+        def wrapper(*args, **kwargs):
+            auth_header = None
+            for arg in args:
+                if hasattr(arg, "headers"):
+                    auth_header = arg.headers.get("Authorization", "")
+                    break
+
+            if not auth_header:
+                return {"error": "missing Authorization header"}, 401
+
+            try:
+                token = _get_token_from_header(auth_header)
+                claims = verifier.verify(token)
+                token_roles = set(claims.roles)
+                if not any(r in token_roles for r in roles):
+                    return {"error": f"insufficient role: requires one of {roles}"}, 403
+            except JWTError as e:
+                return {"error": str(e)}, 401
+
+            return handler(claims, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+def ggid_require_permission(verifier: JWTVerifier, scopes: List[str]):
+    """Decorator that requires the JWT to have all specified scopes.
+
+    Usage:
+        @app.route("/api/data")
+        @ggid_require_permission(verifier, ["read:data"])
+        def get_data(request_claims):
+            return {"data": "..."}
+    """
+
+    def decorator(handler: Callable):
+        @functools.wraps(handler)
+        def wrapper(*args, **kwargs):
+            auth_header = None
+            for arg in args:
+                if hasattr(arg, "headers"):
+                    auth_header = arg.headers.get("Authorization", "")
+                    break
+
+            if not auth_header:
+                return {"error": "missing Authorization header"}, 401
+
+            try:
+                token = _get_token_from_header(auth_header)
+                claims = verifier.verify(token)
+                token_scopes = set(claims.scopes)
+                if not all(s in token_scopes for s in scopes):
+                    missing = [s for s in scopes if s not in token_scopes]
+                    return {"error": f"missing scopes: {missing}"}, 403
+            except JWTError as e:
+                return {"error": str(e)}, 401
+
+            return handler(claims, *args, **kwargs)
+
+        return wrapper
+
+    return decorator

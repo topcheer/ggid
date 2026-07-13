@@ -1,148 +1,186 @@
-"""GGID API client for user management and permission checking."""
+"""GGID Client — HTTP client for all GGID API calls."""
 
-import httpx
-from typing import Optional
-from ggid.jwt import JWTVerifier
+import json
+import requests
+from typing import Any, Optional
+from dataclasses import dataclass, field
+
+
+class GGIDError(Exception):
+    """GGID API error."""
+
+    def __init__(self, message: str, status_code: int = 0, body: Any = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.body = body
+
+
+@dataclass
+class GGIDConfig:
+    base_url: str = "http://localhost:8080"
+    tenant_id: str = "00000000-0000-0000-0000-000000000001"
+    api_key: Optional[str] = None
+    timeout: int = 30
 
 
 class GGIDClient:
-    """Async client for GGID IAM Platform APIs.
+    """Main GGID API client."""
 
-    Usage:
-        client = GGIDClient(gateway_url="https://iam.example.com")
-        users = await client.list_users(token="eyJ...")
-    """
+    def __init__(self, config: GGIDConfig):
+        self.config = config
+        self.base_url = config.base_url.rstrip("/")
+        self._session = requests.Session()
 
-    def __init__(
-        self,
-        gateway_url: str,
-        tenant_id: str = "00000000-0000-0000-0000-000000000001",
-        jwks_url: str = "",
-    ):
-        self.base_url = gateway_url.rstrip("/")
-        self.tenant_id = tenant_id
-        self._client = httpx.AsyncClient(timeout=30)
-        self._verifier: Optional[JWTVerifier] = None
-        if jwks_url:
-            self._verifier = JWTVerifier(jwks_url=jwks_url)
-
-    async def close(self):
-        await self._client.aclose()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, *args):
-        await self.close()
-
-    def _headers(self, token: str = "") -> dict:
-        h = {"X-Tenant-ID": self.tenant_id, "Content-Type": "application/json"}
+    def _headers(self, token: Optional[str] = None) -> dict:
+        h = {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": self.config.tenant_id,
+        }
+        if self.config.api_key:
+            h["X-API-Key"] = self.config.api_key
         if token:
             h["Authorization"] = f"Bearer {token}"
         return h
 
+    def _request(
+        self,
+        method: str,
+        path: str,
+        body: Any = None,
+        token: Optional[str] = None,
+        params: Optional[dict] = None,
+    ) -> Any:
+        url = f"{self.base_url}{path}"
+        resp = self._session.request(
+            method,
+            url,
+            json=body if body is not None else None,
+            params=params,
+            headers=self._headers(token),
+            timeout=self.config.timeout,
+        )
+        if resp.status_code >= 400:
+            try:
+                err_body = resp.json()
+            except Exception:
+                err_body = resp.text
+            raise GGIDError(
+                f"API error {resp.status_code}: {err_body}",
+                status_code=resp.status_code,
+                body=err_body,
+            )
+        if resp.status_code == 204 or not resp.text:
+            return None
+        return resp.json()
+
     # --- User Management ---
 
-    async def list_users(self, token: str, limit: int = 50) -> dict:
-        resp = await self._client.get(
-            f"{self.base_url}/api/v1/users",
-            params={"limit": limit},
-            headers=self._headers(token),
-        )
-        resp.raise_for_status()
-        return resp.json()
+    def register(self, username: str, email: str, password: str) -> dict:
+        return self._request("POST", "/api/v1/auth/register", {
+            "username": username, "email": email, "password": password,
+        })
 
-    async def get_user(self, token: str, user_id: str) -> dict:
-        resp = await self._client.get(
-            f"{self.base_url}/api/v1/users/{user_id}",
-            headers=self._headers(token),
-        )
-        resp.raise_for_status()
-        return resp.json()
+    def login(self, username: str, password: str) -> dict:
+        return self._request("POST", "/api/v1/auth/login", {
+            "username": username, "password": password,
+        })
 
-    async def create_user(
-        self, token: str, username: str, email: str, password: str, name: str = ""
-    ) -> dict:
-        resp = await self._client.post(
-            f"{self.base_url}/api/v1/users",
-            json={"username": username, "email": email, "password": password, "name": name},
-            headers=self._headers(token),
-        )
-        resp.raise_for_status()
-        return resp.json()
+    def get_user(self, token: str, user_id: str) -> dict:
+        return self._request("GET", f"/api/v1/users/{user_id}", token=token)
 
-    async def delete_user(self, token: str, user_id: str) -> bool:
-        resp = await self._client.delete(
-            f"{self.base_url}/api/v1/users/{user_id}",
-            headers=self._headers(token),
-        )
-        return resp.status_code in (200, 204)
+    def list_users(self, token: str, **params) -> dict:
+        return self._request("GET", "/api/v1/users", token=token, params=params)
 
-    async def update_user(
-        self, token: str, user_id: str, email: str = "", phone: str = "", status: str = ""
-    ) -> dict:
-        """Update a user's attributes. Only non-empty fields are sent."""
-        payload = {}
-        if email:
-            payload["email"] = email
-        if phone:
-            payload["phone"] = phone
-        if status:
-            payload["status"] = status
-        resp = await self._client.patch(
-            f"{self.base_url}/api/v1/users/{user_id}",
-            json=payload,
-            headers=self._headers(token),
-        )
-        resp.raise_for_status()
-        return resp.json()
+    def create_user(self, token: str, data: dict) -> dict:
+        return self._request("POST", "/api/v1/users", data, token=token)
 
-    # --- Auth ---
+    def update_user(self, token: str, user_id: str, data: dict) -> dict:
+        return self._request("PUT", f"/api/v1/users/{user_id}", data, token=token)
 
-    async def login(self, username: str, password: str) -> dict:
-        resp = await self._client.post(
-            f"{self.base_url}/api/v1/auth/login",
-            json={"username": username, "password": password},
-            headers=self._headers(),
-        )
-        resp.raise_for_status()
-        return resp.json()
+    def delete_user(self, token: str, user_id: str) -> None:
+        self._request("DELETE", f"/api/v1/users/{user_id}", token=token)
 
-    async def register(self, username: str, email: str, password: str, name: str = "") -> dict:
-        resp = await self._client.post(
-            f"{self.base_url}/api/v1/auth/register",
-            json={"username": username, "email": email, "password": password, "name": name},
-            headers=self._headers(),
-        )
-        resp.raise_for_status()
-        return resp.json()
+    # --- OAuth/OIDC ---
+
+    def get_oidc_discovery(self) -> dict:
+        return self._request("GET", "/.well-known/openid-configuration")
+
+    def get_jwks(self) -> dict:
+        return self._request("GET", "/.well-known/jwks.json")
+
+    def get_user_info(self, access_token: str) -> dict:
+        return self._request("GET", "/oauth/userinfo", token=access_token)
+
+    def introspect_token(self, token: str, client_id: str, client_secret: str) -> dict:
+        return self._request("POST", "/oauth/introspect", {
+            "token": token, "client_id": client_id, "client_secret": client_secret,
+        })
+
+    def revoke_token(self, token: str, access_token: str) -> None:
+        self._request("POST", "/oauth/revoke", {"token": token}, token=access_token)
+
+    # --- Roles CRUD ---
+
+    def create_role(self, token: str, name: str, key: str, description: str = "") -> dict:
+        return self._request("POST", "/api/v1/roles", {
+            "name": name, "key": key, "description": description,
+        }, token=token)
+
+    def get_role(self, token: str, role_id: str) -> dict:
+        return self._request("GET", f"/api/v1/roles/{role_id}", token=token)
+
+    def list_roles(self, token: str) -> dict:
+        return self._request("GET", "/api/v1/roles", token=token)
+
+    def update_role(self, token: str, role_id: str, name: str = None, description: str = None) -> dict:
+        body = {}
+        if name: body["name"] = name
+        if description: body["description"] = description
+        return self._request("PUT", f"/api/v1/roles/{role_id}", body, token=token)
+
+    def delete_role(self, token: str, role_id: str) -> None:
+        self._request("DELETE", f"/api/v1/roles/{role_id}", token=token)
 
     # --- RBAC ---
 
-    async def list_roles(self, token: str) -> dict:
-        resp = await self._client.get(
-            f"{self.base_url}/api/v1/roles",
-            headers=self._headers(token),
-        )
-        resp.raise_for_status()
-        return resp.json()
+    def check_permission(self, token: str, resource: str, action: str) -> dict:
+        """Check if user has permission for resource+action. Returns {allowed, reason}."""
+        return self._request("GET", "/api/v1/policies/check", token=token,
+                             params={"resource": resource, "action": action})
 
-    async def check_permission(
-        self, token: str, resource: str, action: str, user_id: str = ""
-    ) -> bool:
-        resp = await self._client.post(
-            f"{self.base_url}/api/v1/policies/check",
-            json={"resource": resource, "action": action, "user_id": user_id},
-            headers=self._headers(token),
-        )
-        if resp.status_code == 200:
-            data = resp.json()
-            return data.get("allowed", False)
-        return False
+    def assign_role(self, token: str, user_id: str, role_id: str) -> dict:
+        return self._request("POST", f"/api/v1/policies/roles/{role_id}/users/{user_id}", {
+            "user_id": user_id, "role_id": role_id,
+        }, token=token)
 
-    # --- JWT ---
+    def revoke_role(self, token: str, user_id: str, role_id: str) -> None:
+        self._request("DELETE", f"/api/v1/policies/roles/{role_id}/users/{user_id}", token=token)
 
-    async def verify_token(self, token: str):
-        if not self._verifier:
-            raise RuntimeError("no jwks_url configured")
-        return await self._verifier.verify(token)
+    def get_user_roles(self, token: str, user_id: str) -> list:
+        return self._request("GET", f"/api/v1/policies/users/{user_id}/roles", token=token)
+
+    def list_permissions(self, token: str) -> list:
+        """Get the permission tree."""
+        return self._request("GET", "/api/v1/policies/permissions/tree", token=token)
+
+    # --- ABAC ---
+
+    def check_policy(self, token: str, subject: str, resource: str, action: str,
+                     context: Optional[dict] = None) -> dict:
+        """Full ABAC policy evaluation via POST."""
+        body = {"subject": subject, "resource": resource, "action": action}
+        if context: body["context"] = context
+        return self._request("POST", "/api/v1/policies/abac/evaluate", body, token=token)
+
+    def evaluate_abac(self, token: str, action: str, resource: str, subject: str,
+                      conditions: Optional[list] = None, tenant_id: Optional[str] = None) -> dict:
+        """ABAC evaluation with structured conditions [{field, operator, value}]."""
+        body: dict = {"action": action, "resource": resource, "subject": subject}
+        if conditions: body["conditions"] = conditions
+        if tenant_id: body["tenant_id"] = tenant_id
+        return self._request("POST", "/api/v1/policies/abac/evaluate", body, token=token)
+
+    # --- Audit ---
+
+    def list_audit_events(self, token: str, **params) -> dict:
+        return self._request("GET", "/api/v1/audit/events", token=token, params=params)

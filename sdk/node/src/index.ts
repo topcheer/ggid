@@ -45,3 +45,13 @@ export type {
   AgentTokenResponse,
   AgentTokenClaims,
 } from './types';
+
+// RBAC/ABAC policy management
+import './policy';
+export type {
+  PermissionCheckResult,
+  ABACEvaluateRequest,
+  ABACEvaluateResult,
+  PolicyCheckRequest,
+  Permission,
+} from './policy';
