@@ -322,14 +322,18 @@ public class GGIDClient {
     }
 
     private Request buildRequest(String method, String path, Object body) throws IOException {
-        RequestBody reqBody = body != null && !body.equals(Void.class)
-                ? RequestBody.create(mapper.writeValueAsString(body), JSON)
-                : RequestBody.create("", null);
-
+        RequestBody reqBody = null;
+        if (body != null && !body.equals(Void.class)) {
+            reqBody = RequestBody.create(mapper.writeValueAsString(body), JSON);
+        }
+        // For GET/DELETE with no body, pass null to avoid OkHttp IllegalArgumentException
         Request.Builder builder = new Request.Builder()
                 .url(gatewayUrl + path)
-                .header("X-Tenant-ID", tenantId)
-                .header("Content-Type", "application/json");
+                .header("X-Tenant-ID", tenantId);
+
+        if (reqBody != null) {
+            builder.header("Content-Type", "application/json");
+        }
 
         if (apiKey != null && !apiKey.isEmpty()) {
             builder.header("X-API-Key", apiKey);
