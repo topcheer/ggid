@@ -23,6 +23,7 @@
     "tailwind-merge": "latest"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
