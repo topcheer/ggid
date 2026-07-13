@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -103,11 +104,13 @@ func (c *HTTPIdentityClient) LinkExternalIdentity(ctx context.Context, tenantID,
 }
 
 func (c *HTTPIdentityClient) CreateUserFromSocial(ctx context.Context, tenantID uuid.UUID, username, email, displayName, provider, externalID string, metadata map[string]any) (*UserInfo, error) {
+	// Generate a random password — LDAP users authenticate via LDAP, not local password
+	randomPass := fmt.Sprintf("ldap-%s-%d", externalID[:8], time.Now().UnixNano())
 	body, _ := json.Marshal(map[string]string{
 		"username":      username,
 		"email":         email,
+		"password":      randomPass,
 		"display_name":  displayName,
-		"status":        "active",
 	})
 	url := fmt.Sprintf("%s/api/v1/users", c.baseURL)
 	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(body))
