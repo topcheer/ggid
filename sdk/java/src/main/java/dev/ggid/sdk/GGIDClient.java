@@ -112,13 +112,102 @@ public class GGIDClient {
     }
 
     // -----------------------------------------------------------------------
-    // Policy
+    // Policy: RBAC + ABAC
     // -----------------------------------------------------------------------
 
-    public PermissionResult checkPermission(String userId, String resource, String action)
+    /**
+     * Check if a user has permission to perform an action on a resource.
+     * Calls GET /api/v1/policies/check?resource=xxx&action=xxx
+     */
+    public PolicyResult checkPermission(String token, String resource, String action)
             throws GGIDException, IOException {
-        return post("/api/v1/policies/check", Map.of("user_id", userId,
-                "resource", resource, "action", action), PermissionResult.class);
+        String path = "/api/v1/policies/check?resource=" + resource + "&action=" + action;
+        Request request = buildRequest("GET", path, null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, PolicyResult.class);
+    }
+
+    /**
+     * Full ABAC policy evaluation with context attributes.
+     * Calls POST /api/v1/policies/abac/evaluate
+     */
+    public PolicyResult checkPolicy(String token, PolicyCheckRequest req)
+            throws GGIDException, IOException {
+        Request request = buildRequest("POST", "/api/v1/policies/abac/evaluate", req)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, PolicyResult.class);
+    }
+
+    /**
+     * Assign a role to a user.
+     * Calls POST /api/v1/policies/roles/{roleId}/users/{userId}
+     */
+    public void assignRole(String token, String userId, String roleId)
+            throws GGIDException, IOException {
+        String path = "/api/v1/policies/roles/" + roleId + "/users/" + userId;
+        Request request = buildRequest("POST", path, Map.of())
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        execute(request, Void.class);
+    }
+
+    /**
+     * Revoke a role from a user.
+     * Calls DELETE /api/v1/policies/roles/{roleId}/users/{userId}
+     */
+    public void revokeRole(String token, String userId, String roleId)
+            throws GGIDException, IOException {
+        String path = "/api/v1/policies/roles/" + roleId + "/users/" + userId;
+        Request request = buildRequest("DELETE", path, null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        execute(request, Void.class);
+    }
+
+    /**
+     * Get all roles assigned to a user.
+     * Calls GET /api/v1/policies/users/{userId}/roles
+     */
+    public List<Role> getUserRoles(String token, String userId)
+            throws GGIDException, IOException {
+        String path = "/api/v1/policies/users/" + userId + "/roles";
+        Request request = buildRequest("GET", path, null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, new TypeReference<List<Role>>() {});
+    }
+
+    /**
+     * List all permissions in a tree structure.
+     * Calls GET /api/v1/policies/permissions/tree
+     */
+    public List<Permission> listPermissions(String token)
+            throws GGIDException, IOException {
+        Request request = buildRequest("GET", "/api/v1/policies/permissions/tree", null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, new TypeReference<List<Permission>>() {});
+    }
+
+    /**
+     * Evaluate ABAC conditions against attributes.
+     * Calls POST /api/v1/policies/abac/evaluate
+     */
+    public ABACEvalResult evaluateABAC(String token, ABACEvalRequest req)
+            throws GGIDException, IOException {
+        Request request = buildRequest("POST", "/api/v1/policies/abac/evaluate", req)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, ABACEvalResult.class);
     }
 
     // -----------------------------------------------------------------------
