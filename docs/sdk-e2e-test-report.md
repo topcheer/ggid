@@ -90,3 +90,45 @@ All 18 pods Running, 0 restarts.
 | Introspect | PASS |
 | Java Product Create | PENDING (Java SDK fix needed) |
 | 8 SDK tests | ALL PASS |
+
+## Update: 02:22 CST (Cycle 2)
+
+### All Fixes Applied
+- Java ERP product create: FIXED (SecurityFilter with direct POST + admin fallback)
+- Java SDK OkHttp GET+body: FIXED (frontend commit 1b0d61e)
+- DCR tenant context: FIXED (backend commit 0cd61a11)
+- OIDC Discovery issuer: FIXED (OAUTH_ISSUER env var)
+
+### Final Test Results
+| Backend | Health | Products | Create | Customers | Dashboard | NoAuth | Viewer |
+|---------|--------|----------|--------|-----------|-----------|--------|--------|
+| Node.js | ok | 6 | 403 | 3 | OK | blocked | 403 |
+| Go | ok | 6 | 403 | 3 | OK | blocked | 403 |
+| Java | ok | 6 | OK | 3 | OK | blocked | 403 |
+| Python | ok | 7 | 403 | 3 | OK | blocked | 403 |
+
+| OAuth Test | Result |
+|------------|--------|
+| AuthCode | PASS (200) |
+| Device Code | PASS |
+| DCR | PASS |
+| Discovery | PASS |
+| JWKS | PASS (1 key) |
+| UserInfo | PASS |
+| Revoke | PASS (200) |
+| Introspect | FAIL (invalid_client) |
+
+| SDK | Tests | Result |
+|-----|-------|--------|
+| Go | cached | PASS |
+| Rust | 11 | PASS |
+| Ruby | 22 | PASS |
+| Java | 16 | PASS |
+| Python | 16 | PASS |
+| Node | tsc 0 | PASS |
+| C# | exit 0 | PASS |
+| Dart | 25 | PASS |
+
+### Remaining Issues
+1. Product create 403 on Node/Go/Python — GGID policy engine has no allow rule for products:create (need to create policy)
+2. Introspect FAIL — invalid_client error (client auth issue)
