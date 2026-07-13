@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"os/signal"
 	"syscall"
@@ -131,6 +132,21 @@ func main() {
 		mfaService,
 	)
 
+	// 7a. Configure email sender if SMTP is configured
+	smtpHost := os.Getenv("SMTP_HOST")
+	if smtpHost != "" {
+		smtpPort := 587
+		if p := os.Getenv("SMTP_PORT"); p != "" {
+			fmt.Sscanf(p, "%d", &smtpPort)
+		}
+		authSvc.SetEmailSender(&smtpEmailSender{
+			host:     smtpHost,
+		port:     smtpPort,
+		from:     os.Getenv("SMTP_FROM"),
+		})
+		log.Printf("SMTP email sender configured: %s:%d", smtpHost, smtpPort)
+	}
+
 	// 7. Start session cleanup goroutine
 	go startSessionCleanup(ctx, authSvc)
 
@@ -192,4 +208,23 @@ func init() {
 	if err := os.MkdirAll("configs", 0o700); err != nil {
 		panic(fmt.Sprintf("failed to create configs directory: %v", err))
 	}
+}
+
+// smtpEmailSender implements service.EmailSender using net/smtp.
+type smtpEmailSender struct {
+	host string
+	port int
+	from string
+}
+
+func (s *smtpEmailSender) Send(ctx context.Context, to, subject, body string) error {
+	msg := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
+		s.from, to, subject, body)
+	addr := fmt.Sprintf("%s:%d", s.host, s.port)
+	return smtpSendMail(addr, s.from, []string{to}, []byte(msg))
+}
+
+// smtpSendMail sends plain SMTP (no auth, suitable for MailHog).
+func smtpSendMail(addr, from string, to []string, msg []byte) error {
+	return smtp.SendMail(addr, nil, from, to, msg)
 }
