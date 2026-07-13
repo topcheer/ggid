@@ -59,3 +59,34 @@ All 18 pods Running, 0 restarts.
 | ggcxf_backend | Fix DCR tenant context bug in services/oauth/ | Pending |
 | ggcxf_frontend | Fix Java ERP SecurityAspect role extraction | Pending |
 | ggcxf_docs | (idle, no tasks this cycle) | - |
+
+## Update: 01:50 CST
+
+### Fixes Applied
+- OAuth issuer: FIXED (set OAUTH_ISSUER=https://ggid.iot2.win)
+- DCR tenant context: FIXED (backend commit 0cd61a11, deployed)
+- Java ERP AOP routing: FIXED (removed @EnableAspectJAutoProxy, added SecurityFilter)
+- Java ERP role check: FIXED (frontend commit 07370f0)
+
+### New Bug Found
+- Java SDK GGIDClient.checkPermission() uses GET+body → OkHttp rejects
+  - Root cause: `buildRequest()` in GGIDClient.java line 338 sends GET with request body
+  - Assigned to frontend for fix
+
+### Current Status
+| Test | Result |
+|------|--------|
+| 4 ERP backends health | ALL PASS |
+| Products GET | ALL PASS |
+| Customers GET | ALL PASS |
+| Dashboard | ALL PASS |
+| No-Auth blocking | ALL PASS |
+| DCR | PASS |
+| Device Code | PASS |
+| Discovery | PASS (issuer fixed) |
+| JWKS | PASS |
+| UserInfo | PASS |
+| Revoke | PASS |
+| Introspect | PASS |
+| Java Product Create | PENDING (Java SDK fix needed) |
+| 8 SDK tests | ALL PASS |
