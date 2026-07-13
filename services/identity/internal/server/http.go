@@ -260,6 +260,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.deleteUser(ctx, userID, w, r)
 	case action == "" && r.Method == http.MethodPatch:
 		h.updateUser(ctx, userID, w, r)
+	case action == "" && r.Method == http.MethodPut:
+		h.updateUser(ctx, userID, w, r)
 	case action == "lock" && r.Method == http.MethodPost:
 		h.lockUser(ctx, userID, w, r)
 	case action == "unlock" && r.Method == http.MethodPost:

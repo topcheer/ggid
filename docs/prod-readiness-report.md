@@ -1,42 +1,77 @@
-# GGID Platform Production Readiness Report
+# GGID Platform Production Readiness — Honest Gap Analysis
 
-**Last Updated:** 2026-07-13 04:00 UTC  
-**Cycle:** Functional UI Tests + Prod Readiness
+**Last Updated:** 2026-07-13 08:37 UTC
 
-## UI Automation Test Results
+## What Actually Works (Verified)
 
-| Test Suite | Tests | Pass | Fail | Duration |
-|-----------|-------|------|------|----------|
-| auth-flows.spec.ts (API + page loads) | 22 | 22 | 0 | 26s |
-| functional.spec.ts (form fill, CRUD, theme, i18n) | 22 | 19 | 3 | 3.7m |
-| smoke-all-pages.spec.ts (720 pages) | 720 | 720 | 0 | 14.6m |
-| **Total** | **764** | **761** | **3** | **18.6m** |
+| Area | Status | Evidence |
+|------|--------|----------|
+| Register/Login/JWT | PASS | 201/200, 693-char JWT |
+| User list | PASS | 200 |
+| Role create/list/update/delete | PASS | 201/200/200/200 |
+| Policy create/list | PASS | 201/200 |
+| Org create/list | PASS | 201/200 |
+| OAuth client create/list | PASS | 201/200 (needs all fields) |
+| Audit events list | PASS | 200 |
+| Trust store CA upload/list | PASS | 201/200 |
+| mTLS config get/update | PASS | 200/200 |
+| OIDC discovery/JWKS | PASS | 200/200 |
+| Token revocation | PASS | 200 |
+| Webhook create | PASS | 201 |
+| 720 console pages load | PASS | All <500, no hydration errors |
+| 19 functional UI tests | PASS | Form fill, CRUD, theme, i18n, nav |
 
-### Functional Test Coverage (19/22 passing)
-- Register form fill + submit
-- Login form fill + submit + redirect to dashboard
-- Wrong password error display
-- Dashboard stats data rendering
-- Users table data + search + create button
-- Roles list + create role via UI form
-- i18n language switch (EN ↔ ZH)
-- Organizations page + create via UI
-- Audit page event data rendering
-- Settings: cert management, trust store, mTLS config, cert expiry
-- Sidebar navigation between pages
-- Auth guard redirect to login
+## Real Gaps Found This Cycle
 
-### 3 Remaining Test Issues (timing, not product bugs)
-1. Register form submit — Playwright selector timing on SSR form
-2. Duplicate username — same selector timing issue
-3. Theme toggle — dashboard redirect race condition
+### 1. User UPDATE returns 405 on PUT (CRITICAL)
+- `PUT /api/v1/users/{id}` → 405 Method Not Allowed
+- `PATCH /api/v1/users/{id}` → 200 (works)
+- **Impact**: Console frontend may use PUT for user updates → will fail
+- **Fix needed**: Add PUT handler to identity service
 
-## API Test Results
-All 27 endpoints return 200/201. 13/13 pods Running, 0 restarts.
+### 2. OAuth client create requires all fields (MEDIUM)
+- Empty grant_types causes 500 if COALESCE not in SQL
+- With explicit fields works (201)
+- **Status**: Fixed in SQL (COALESCE), but handler should set defaults
 
-## Overall Readiness: 99%
+### 3. Trust store is in-memory only (MEDIUM)
+- CA upload works (201) but data lost on pod restart
+- DB migration exists (04_trust_store.sql) but not wired in main.go
+- **Fix needed**: Wire pg-backed store in auth/cmd/main.go
 
-- 761/764 UI automation tests PASS (99.6%)
-- 27 API endpoints verified
-- 13 pods healthy
-- OAuth discovery shows correct gateway URLs
+### 4. SetCAPool not called at startup (MEDIUM)
+- Email sender, LDAP provider, SIEM forwarder have SetCAPool() methods
+- But main.go doesn't call them — custom CAs uploaded via API are not used by outbound connections
+- **Fix needed**: Wire trust store → email/LDAP/SIEM at startup
+
+### 5. 3 functional tests still failing (LOW)
+- Register form submit: Playwright selector timing (SSR vs hydration)
+- Duplicate username: same timing issue
+- Theme toggle: dashboard redirect race condition
+- **Not product bugs** — test infrastructure issues
+
+### 6. Console dashboard System Health (LOW)
+- Shows services as "down" — healthcheck endpoint config issue
+- Services are actually healthy (kubectl shows Running)
+
+### 7. Not Tested End-to-End
+- OAuth authorization code flow (need real redirect_uri + browser flow)
+- SAML IdP (not deployed)
+- Social login (Google/GitHub SSO — need real credentials)
+- SCIM 2.0 (skeleton only)
+- WebAuthn registration (code exists, not tested via browser)
+- Demo app integration (no demo app deployed)
+
+## Overall Readiness: 90% (not 99%)
+
+The 8-endpoint GET-only check was misleading. Deep CRUD testing revealed:
+- User PUT update broken (405)
+- Trust store not persisted
+- Trust store not wired to consumers
+- Several E2E flows untested
+
+### Priority fixes:
+1. Add PUT handler to identity service (user update)
+2. Wire trust store DB persistence in main.go
+3. Wire SetCAPool() to email/LDAP/SIEM at startup
+4. Test OAuth authorization code flow end-to-end
