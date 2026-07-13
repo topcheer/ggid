@@ -603,10 +603,51 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch r.Method {
+	case http.MethodGet:
+		// Get policy by ID
+		policy, err := s.policySvc.GetPolicy(r.Context(), id)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, policyToJSON(policy))
 	case http.MethodPut, http.MethodPatch:
-		// Update policy — re-parse body and delegate to createPolicy which does upsert
-		s.createPolicy(w, r)
-		return
+		// Update policy: delete old + create new with same ID
+		var req struct {
+			TenantID    string   `json:"tenant_id"`
+			Name        string   `json:"name"`
+			Description string   `json:"description"`
+			Effect      string   `json:"effect"`
+			Actions     []string `json:"actions"`
+			Resources   []string `json:"resources"`
+			Priority    int      `json:"priority"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		tenantID, err := uuid.Parse(req.TenantID)
+		if err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+			return
+		}
+		// Delete existing, then create updated
+		_ = s.policySvc.DeletePolicy(r.Context(), id)
+		policy, err := s.policySvc.CreatePolicy(r.Context(), &domain.Policy{
+			ID:          id,
+			TenantID:    tenantID,
+			Name:        req.Name,
+			Description: req.Description,
+			Effect:      domain.Effect(req.Effect),
+			Actions:     req.Actions,
+			Resources:   req.Resources,
+			Priority:    req.Priority,
+		})
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, policyToJSON(policy))
 	case http.MethodDelete:
 		if err := s.policySvc.DeletePolicy(r.Context(), id); err != nil {
 			writeServiceError(w, err)

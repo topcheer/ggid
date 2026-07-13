@@ -28,6 +28,17 @@ var (
 // POST /api/v1/organizations/{id}/role-bindings — bind role to user at org level.
 // GET /api/v1/organizations/{id}/role-bindings — list org role bindings.
 func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Request) {
+	// If the path after /api/v1/organizations/ is a bare UUID, delegate to handleOrgByID
+	pathAfter := strings.TrimPrefix(r.URL.Path, "/api/v1/organizations/")
+	parts := strings.SplitN(pathAfter, "/", 2)
+	if len(parts) == 1 && parts[0] != "" {
+		if _, err := uuid.Parse(parts[0]); err == nil {
+			// It's a UUID — route to org CRUD handler
+			r.URL.Path = "/api/v1/orgs/" + parts[0]
+			s.handleOrgByID(w, r)
+			return
+		}
+	}
 	// Route budget paths to budget handler
 	if strings.Contains(r.URL.Path, "budget-summary") || strings.Contains(r.URL.Path, "/budget") {
 		s.handleOrgBudget(w, r)
@@ -57,13 +68,13 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Extract org_id from path
-	path := strings.Trim(r.URL.Path, "/")
-	parts := strings.Split(path, "/")
-	if len(parts) < 5 {
+	pathStr := strings.Trim(r.URL.Path, "/")
+	pathParts := strings.Split(pathStr, "/")
+	if len(pathParts) < 5 {
 		writeJSONError(w, http.StatusBadRequest, "invalid path")
 		return
 	}
-	orgID := parts[3] // api/v1/organizations/{id}/role-bindings
+	orgID := pathParts[3] // api/v1/organizations/{id}/role-bindings
 
 	switch r.Method {
 	case http.MethodPost:
