@@ -306,7 +306,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 	}
 
 	// 1a. If not found by identifier, try via identity service (email → username)
-	if cred == nil {
+	if cred == nil && s.identityClient != nil {
 		user, err := s.identityClient.GetUser(ctx, tenantID, email)
 		if err != nil {
 			slog.Error("ForgotPassword: identity lookup error", "email", email, "error", err)
