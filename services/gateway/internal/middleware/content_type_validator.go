@@ -20,7 +20,7 @@ func ContentTypeValidator(next http.Handler) http.Handler {
 					return
 				}
 				// OAuth endpoints accept application/x-www-form-urlencoded (RFC 6749)
-				if strings.HasPrefix(r.URL.Path, "/oauth/") {
+				if strings.HasPrefix(r.URL.Path, "/oauth/") || strings.HasPrefix(r.URL.Path, "/api/v1/oauth/") {
 					if !strings.HasPrefix(ct, "application/x-www-form-urlencoded") && !strings.HasPrefix(ct, "application/json") {
 						WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
 							"Content-Type must be application/x-www-form-urlencoded or application/json, got: "+ct)

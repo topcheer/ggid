@@ -82,7 +82,12 @@ const createClientSQL = `
 INSERT INTO oauth_clients (id, tenant_id, client_id, client_secret_hash, name, type,
     grant_types, response_types, redirect_uris, scopes,
     token_endpoint_auth_method, metadata, enabled)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+VALUES ($1, $2, $3, $4, $5, $6,
+    COALESCE($7, '{authorization_code,refresh_token}'::text[]),
+    COALESCE($8, '{code}'::text[]),
+    COALESCE($9, '{}'::text[]),
+    COALESCE($10, '{openid,profile,email}'::text[]),
+    $11, $12, $13)
 RETURNING created_at, updated_at`
 
 func (r *pgClientRepo) CreateClient(ctx context.Context, client *domain.OAuthClient) error {

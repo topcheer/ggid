@@ -106,13 +106,13 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 		Enabled:                 true,
 	}
 	if client.Scopes == nil {
-		client.Scopes = []string{}
+		client.Scopes = []string{"openid", "profile", "email"}
 	}
-	if client.GrantTypes == nil {
-		client.GrantTypes = []string{}
+	if client.GrantTypes == nil || len(client.GrantTypes) == 0 {
+		client.GrantTypes = []string{"authorization_code", "refresh_token"}
 	}
-	if client.ResponseTypes == nil {
-		client.ResponseTypes = []string{}
+	if client.ResponseTypes == nil || len(client.ResponseTypes) == 0 {
+		client.ResponseTypes = []string{"code"}
 	}
 	if client.RedirectURIs == nil {
 		client.RedirectURIs = []string{}
