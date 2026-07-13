@@ -469,7 +469,16 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := uuid.New() // In production, user is created via Identity Service first
+	userID := uuid.New()
+	// Create user in Identity Service
+	user, err := h.authSvc.IdentityClient().CreateUserFromSocial(r.Context(), tc.TenantID, req.Username, req.Email, req.Username, "local", userID.String(), nil)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create user: "+err.Error())
+		return
+	}
+	if user != nil {
+		userID = user.ID
+	}
 	if err := h.authSvc.Register(r.Context(), tc.TenantID, userID, req.Username, req.Password); err != nil {
 		writeAuthError(w, err)
 		return

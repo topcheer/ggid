@@ -292,6 +292,11 @@ func (s *AuthService) SetEmailSender(sender PasswordResetEmailSender) {
 	s.emailSender = sender
 }
 
+// IdentityClient returns the identity client for external use.
+func (s *AuthService) IdentityClient() IdentityClient {
+	return s.identityClient
+}
+
 func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, email string) error {
 	// 1. Look up credential by identifier (username or email)
 	cred, err := s.credentialRepo.FindByIDentifier(ctx, tenantID, email)
