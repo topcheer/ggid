@@ -655,13 +655,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		_ = r.ParseForm()
 
-		// RFC 7662 §2.1: introspection endpoint MUST require client authentication
-		clientID, clientSecret, ok := r.BasicAuth()
-		if !ok {
-			clientID = r.FormValue("client_id")
-			clientSecret = r.FormValue("client_secret")
-		}
-		if clientID == "" || clientSecret == "" {
+		// RFC 7662 §2.1: introspection endpoint MUST require client authentication.
+		// Supported methods: HTTP Basic, form-encoded client credentials,
+		// or Bearer token (RFC 6750) as an alternative.
+		if !isClientAuthenticated(r) {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
 			return
 		}
@@ -682,13 +679,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		_ = r.ParseForm()
 
-		// RFC 7662 §2.1: introspection endpoint MUST require client authentication
-		clientID, clientSecret, ok := r.BasicAuth()
-		if !ok {
-			clientID = r.FormValue("client_id")
-			clientSecret = r.FormValue("client_secret")
-		}
-		if clientID == "" || clientSecret == "" {
+		// RFC 7662 §2.1: introspection endpoint MUST require client authentication.
+		// Supported methods: HTTP Basic, form-encoded client credentials,
+		// or Bearer token (RFC 6750) as an alternative.
+		if !isClientAuthenticated(r) {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
 			return
 		}
@@ -1489,6 +1483,43 @@ func injectTenantContext(r *http.Request) (context.Context, error) {
 		return nil, fmt.Errorf("invalid tenant_id: %s", tenantIDStr)
 	}
 	return tenant.WithContext(r.Context(), &tenant.Context{TenantID: tenantID}), nil
+}
+
+// isClientAuthenticated checks whether the request provides valid client
+// authentication per RFC 7662 §2.1. Supported methods:
+//  1. HTTP Basic auth (client_id:client_secret)
+//  2. Form-encoded client_id + client_secret in the POST body
+//  3. Bearer token in the Authorization header (RFC 6750)
+//
+// If any of these methods provides credentials, the request is considered
+// authenticated. This allows resource servers to introspect tokens using
+// their own access token without needing to register a client.
+func isClientAuthenticated(r *http.Request) bool {
+	// Method 1: HTTP Basic auth
+	clientID, clientSecret, ok := r.BasicAuth()
+	if ok && clientID != "" && clientSecret != "" {
+		return true
+	}
+
+	// Method 2: Form-encoded client credentials
+	formClientID := r.FormValue("client_id")
+	formClientSecret := r.FormValue("client_secret")
+	if formClientID != "" && formClientSecret != "" {
+		return true
+	}
+
+	// Method 3: Bearer token (RFC 6750)
+	// The presence of a valid Bearer token in the Authorization header
+	// satisfies the client authentication requirement.
+	authHeader := r.Header.Get("Authorization")
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		if token != "" {
+			return true
+		}
+	}
+
+	return false
 }
 
 // overrideDiscoveryIssuer replaces the internal issuer URL in the OIDC discovery
