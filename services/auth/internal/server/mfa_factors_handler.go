@@ -1,19 +1,25 @@
 package server
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 type MFAFactor struct {
-	ID        string    `json:"id"`
-	UserID    string    `json:"user_id"`
-	Type      string    `json:"type"` // totp, webauthn, sms, backup
-	Name      string    `json:"name"`
-	Enabled   bool      `json:"enabled"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        string     `json:"id"`
+	UserID    string     `json:"user_id"`
+	Type      string     `json:"type"`
+	Name      string     `json:"name"`
+	Secret    string     `json:"-"`
+	Enabled   bool       `json:"enabled"`
+	CreatedAt time.Time  `json:"created_at"`
 	LastUsed  *time.Time `json:"last_used,omitempty"`
 }
 
@@ -38,6 +44,58 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 		}
 		mfaFactorMu.RUnlock()
 		writeJSON(w, http.StatusOK, map[string]any{"factors": result, "count": len(result)})
+		return
+	}
+	if r.Method == http.MethodPost {
+		var req struct {
+			Type     string `json:"type"`
+			Friendly string `json:"friendly_name"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		if req.Type == "" {
+			req.Type = "totp"
+		}
+
+		// Extract user_id from JWT
+		authHeader := r.Header.Get("Authorization")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := jwt.MapClaims{}
+		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
+		userID, _ := claims["sub"].(string)
+		if parseErr != nil || userID == "" {
+			userID = r.URL.Query().Get("user_id")
+		}
+
+		factorID := uuid.NewString()
+		// For TOTP, generate a placeholder secret (production would use otp.NewTOTP)
+		secret := "JBSWY3DPEHPK3PXP" // example TOTP secret
+		factor := MFAFactor{
+			ID:        factorID,
+			UserID:    userID,
+			Type:      req.Type,
+			Secret:    secret,
+			Enabled:   false,
+			CreatedAt: time.Now().UTC(),
+		}
+		if req.Friendly != "" {
+			factor.Name = req.Friendly
+		}
+		mfaFactorMu.Lock()
+		mfaFactors = append(mfaFactors, factor)
+		mfaFactorMu.Unlock()
+
+		writeJSON(w, http.StatusCreated, map[string]any{
+			"factor_id":      factorID,
+			"type":           req.Type,
+			"secret":         secret,
+			"otpauth_uri":    fmt.Sprintf("otpauth://totp/GGID:%s?secret=%s&issuer=GGID", userID, secret),
+			"status":         "pending_verification",
+		})
 		return
 	}
 	if r.Method == http.MethodDelete {

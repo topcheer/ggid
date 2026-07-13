@@ -675,8 +675,22 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 
 	userIDStr := r.URL.Query().Get("user_id")
 	if userIDStr == "" {
-		writeError(w, http.StatusBadRequest, "user_id is required")
-		return
+		// Extract user_id from JWT token in Authorization header
+		authHeader := r.Header.Get("Authorization")
+		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+		claims := jwt.MapClaims{}
+		_, parseErr := jwt.ParseWithClaims(tokenStr, claims, func(tok *jwt.Token) (any, error) {
+			return h.authSvc.PublicKey(), nil
+		})
+		if parseErr != nil {
+			writeError(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
+		userIDStr, _ = claims["sub"].(string)
+		if userIDStr == "" {
+			writeError(w, http.StatusBadRequest, "user_id is required")
+			return
+		}
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
