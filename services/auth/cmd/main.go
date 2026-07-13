@@ -112,11 +112,22 @@ func main() {
 	mfaRepo := repository.NewPGMFADeviceRepository(pool)
 	mfaService := service.NewMFAService(mfaRepo)
 
-	// 6. Build auth service
+	// 6. Build identity client (HTTP-based, connects to Identity Service)
+	var identityClient service.IdentityClient
+	identityURL := os.Getenv("IDENTITY_SERVICE_URL")
+	if identityURL != "" {
+		identityClient = service.NewHTTPIdentityClient(identityURL)
+		log.Printf("Identity client configured: %s", identityURL)
+	} else {
+		identityClient = &service.NoopIdentityClient{}
+		log.Printf("Identity client not configured (IDENTITY_SERVICE_URL not set)")
+	}
+
+	// 7. Build auth service
 	authSvc := service.NewAuthService(
 		cfg, chain, credRepo,
 		tokenService, sessionService, passwordService,
-		rateLimiter, &service.NoopIdentityClient{},
+		rateLimiter, identityClient,
 		mfaService,
 	)
 
