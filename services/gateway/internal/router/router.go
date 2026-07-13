@@ -37,6 +37,7 @@ var publicPaths = []string{
 	"/api/v1/oauth/revoke",
 	"/api/v1/oauth/introspect",
 	"/api/v1/oauth/device",
+	"/api/v1/auth/saml/",
 	"/oauth/",
 	"/saml/",
 	"/.well-known/",

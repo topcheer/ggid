@@ -234,11 +234,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
-		// Inject tenant context from header.
+		// Inject tenant context from header or query param (public endpoint).
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		if tenantIDStr == "" {
+			tenantIDStr = r.URL.Query().Get("tenant_id")
+		}
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header required"})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header or tenant_id query param required"})
 			return
 		}
 
@@ -940,6 +943,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 
 	// Device Authorization Flow (RFC 8628)
+	// Device authorization (RFC 8628) — both /device and /device_authorization
+	mux.HandleFunc("/api/v1/oauth/device", func(w http.ResponseWriter, r *http.Request) {
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/api/v1/oauth/device_authorization"
+		mux.ServeHTTP(w, r2)
+	})
 	mux.HandleFunc("/api/v1/oauth/device_authorization", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
@@ -948,9 +957,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		_ = r.ParseForm()
 
 		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		if tenantIDStr == "" {
+			tenantIDStr = r.FormValue("tenant_id")
+		}
 		tenantID, err := uuid.Parse(tenantIDStr)
 		if err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header required"})
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "valid X-Tenant-ID header or tenant_id param required"})
 			return
 		}
 

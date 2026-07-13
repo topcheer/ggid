@@ -153,18 +153,26 @@ func (h *Handler) registerRoutes() {
 	// Auth hooks (Auth0 Actions equivalent)
 	h.mux.HandleFunc("/api/v1/auth/hooks", h.manageHooks)
 
-	// WebAuthn route aliases under /api/v1/auth/webauthn/
+	// WebAuthn route aliases under /api/v1/auth/webauthn/ — rewrite path then re-dispatch
 	h.mux.HandleFunc("/api/v1/auth/webauthn/register/begin", func(w http.ResponseWriter, r *http.Request) {
-		h.mux.ServeHTTP(w, r) // delegate to registered /api/v1/webauthn/register/begin
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/api/v1/webauthn/register/begin"
+		h.mux.ServeHTTP(w, r2)
 	})
 	h.mux.HandleFunc("/api/v1/auth/webauthn/register/finish", func(w http.ResponseWriter, r *http.Request) {
-		h.mux.ServeHTTP(w, r)
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/api/v1/webauthn/register/finish"
+		h.mux.ServeHTTP(w, r2)
 	})
 	h.mux.HandleFunc("/api/v1/auth/webauthn/login/begin", func(w http.ResponseWriter, r *http.Request) {
-		h.mux.ServeHTTP(w, r)
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/api/v1/webauthn/login/begin"
+		h.mux.ServeHTTP(w, r2)
 	})
 	h.mux.HandleFunc("/api/v1/auth/webauthn/login/finish", func(w http.ResponseWriter, r *http.Request) {
-		h.mux.ServeHTTP(w, r)
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/api/v1/webauthn/login/finish"
+		h.mux.ServeHTTP(w, r2)
 	})
 
 	// Passwordless (WebAuthn-only) registration + login
@@ -587,7 +595,8 @@ func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 // --- Password Flows ---
 
 type forgotPasswordRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
+	TenantID string `json:"tenant_id"`
 }
 
 func (h *Handler) forgotPassword(w http.ResponseWriter, r *http.Request) {
@@ -604,10 +613,25 @@ func (h *Handler) forgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeError(w, http.StatusBadRequest, "missing tenant context")
-		return
+		// Fallback: inject tenant context from body for public endpoints (no JWT)
+		if req.TenantID != "" {
+			if tid, perr := uuid.Parse(req.TenantID); perr == nil {
+				tc = &ggidtenant.Context{
+					TenantID:       tid,
+					IsolationLevel: ggidtenant.IsolationShared,
+				}
+				r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+			} else {
+				writeError(w, http.StatusBadRequest, "invalid tenant_id")
+				return
+			}
+		} else {
+			writeError(w, http.StatusBadRequest, "missing tenant context")
+			return
+		}
 	}
 
+	// Always return 200 to prevent email enumeration
 	_ = h.authSvc.ForgotPassword(r.Context(), tc.TenantID, req.Email)
 	// Always return success to prevent email enumeration
 	writeJSON(w, http.StatusOK, map[string]bool{"reset_initiated": true})
