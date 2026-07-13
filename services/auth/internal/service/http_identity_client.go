@@ -26,6 +26,7 @@ func NewHTTPIdentityClient(baseURL string) *HTTPIdentityClient {
 }
 
 func (c *HTTPIdentityClient) GetUser(ctx context.Context, tenantID uuid.UUID, identifier string) (*UserInfo, error) {
+	// First try username search
 	url := fmt.Sprintf("%s/api/v1/users?username=%s", c.baseURL, identifier)
 	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 	req.Header.Set("X-Tenant-ID", tenantID.String())
@@ -34,34 +35,62 @@ func (c *HTTPIdentityClient) GetUser(ctx context.Context, tenantID uuid.UUID, id
 		return nil, fmt.Errorf("identity service unreachable: %w", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
+	if resp.StatusCode == http.StatusOK {
+		var u struct {
+			ID          string `json:"id"`
+			Username    string `json:"username"`
+			Email       string `json:"email"`
+			Status      string `json:"status"`
+			DisplayName string `json:"display_name"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&u); err == nil && u.ID != "" {
+			uid, err := uuid.Parse(u.ID)
+			if err == nil {
+				return &UserInfo{
+					ID: uid, TenantID: tenantID, Username: u.Username,
+					Email: u.Email, Status: u.Status, DisplayName: u.DisplayName,
+				}, nil
+			}
+		}
+	}
+
+	// Fallback: list all users and search by email or username
+	listURL := fmt.Sprintf("%s/api/v1/users", c.baseURL)
+	req2, _ := http.NewRequestWithContext(ctx, "GET", listURL, nil)
+	req2.Header.Set("X-Tenant-ID", tenantID.String())
+	resp2, err := c.client.Do(req2)
+	if err != nil {
+		return nil, fmt.Errorf("identity service unreachable: %w", err)
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusOK {
 		return nil, nil
 	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("identity service returned %d", resp.StatusCode)
+	var list struct {
+		Users []struct {
+			ID          string `json:"id"`
+			Username    string `json:"username"`
+			Email       string `json:"email"`
+			Status      string `json:"status"`
+			DisplayName string `json:"display_name"`
+		} `json:"users"`
 	}
-	var u struct {
-		ID          string `json:"id"`
-		Username    string `json:"username"`
-		Email       string `json:"email"`
-		Status      string `json:"status"`
-		DisplayName string `json:"display_name"`
+	if err := json.NewDecoder(resp2.Body).Decode(&list); err != nil {
+		return nil, nil
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&u); err != nil {
-		return nil, fmt.Errorf("failed to decode user: %w", err)
+	for _, u := range list.Users {
+		if u.Email == identifier || u.Username == identifier {
+			uid, err := uuid.Parse(u.ID)
+			if err != nil {
+				continue
+			}
+			return &UserInfo{
+				ID: uid, TenantID: tenantID, Username: u.Username,
+				Email: u.Email, Status: u.Status, DisplayName: u.DisplayName,
+			}, nil
+		}
 	}
-	uid, err := uuid.Parse(u.ID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid user ID: %w", err)
-	}
-	return &UserInfo{
-		ID:          uid,
-		TenantID:    tenantID,
-		Username:    u.Username,
-		Email:       u.Email,
-		Status:      u.Status,
-		DisplayName: u.DisplayName,
-	}, nil
+	return nil, nil
 }
 
 func (c *HTTPIdentityClient) GetUserByID(ctx context.Context, tenantID, userID uuid.UUID) (*UserInfo, error) {
