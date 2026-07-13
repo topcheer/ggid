@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/authprovider"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/truststore"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/ggid/ggid/services/auth/internal/server"
@@ -100,6 +102,13 @@ func main() {
 		if err != nil {
 			log.Printf("WARNING: failed to create LDAP provider, skipping: %v", err)
 		} else {
+			// Wire trust store CA pool for custom CA support
+			if ts := loadTrustStoreCAs(ctx, pool); ts != nil {
+				if cp, err := ts.CertPool(); err == nil {
+					ldapProvider.SetCAPool(cp)
+					log.Printf("Trust store CA pool wired to LDAP provider")
+				}
+			}
 			providers = append(providers, ldapProvider)
 			log.Printf("LDAP provider configured: server=%s base=%s filter=%s",
 				ldapCfg.ServerURL, ldapCfg.BaseDN, ldapCfg.UserFilter)
@@ -139,11 +148,19 @@ func main() {
 		if p := os.Getenv("SMTP_PORT"); p != "" {
 			fmt.Sscanf(p, "%d", &smtpPort)
 		}
-		authSvc.SetEmailSender(&smtpEmailSender{
+		sender := &smtpEmailSender{
 			host:     smtpHost,
-		port:     smtpPort,
-		from:     os.Getenv("SMTP_FROM"),
-		})
+			port:     smtpPort,
+			from:     os.Getenv("SMTP_FROM"),
+		}
+		// Wire trust store CA pool for custom CA support
+		if ts := loadTrustStoreCAs(ctx, pool); ts != nil {
+			if cp, err := ts.CertPool(); err == nil {
+				sender.SetCAPool(cp)
+				log.Printf("Trust store CA pool wired to email sender")
+			}
+		}
+		authSvc.SetEmailSender(sender)
 		log.Printf("SMTP email sender configured: %s:%d", smtpHost, smtpPort)
 	}
 
@@ -212,9 +229,14 @@ func init() {
 
 // smtpEmailSender implements service.EmailSender using net/smtp.
 type smtpEmailSender struct {
-	host string
-	port int
-	from string
+	host   string
+	port   int
+	from   string
+	caPool *x509.CertPool
+}
+
+func (s *smtpEmailSender) SetCAPool(cp *x509.CertPool) {
+	s.caPool = cp
 }
 
 func (s *smtpEmailSender) Send(ctx context.Context, to, subject, body string) error {
@@ -227,4 +249,37 @@ func (s *smtpEmailSender) Send(ctx context.Context, to, subject, body string) er
 // smtpSendMail sends plain SMTP (no auth, suitable for MailHog).
 func smtpSendMail(addr, from string, to []string, msg []byte) error {
 	return smtp.SendMail(addr, nil, from, to, msg)
+}
+
+// loadTrustStoreCAs loads trusted CA certificates from the database into a truststore.MemoryStore.
+// Returns nil if no CAs are found (non-fatal — services start without custom CAs).
+func loadTrustStoreCAs(ctx context.Context, pool *pgxpool.Pool) *truststore.MemoryStore {
+	if pool == nil {
+		return nil
+	}
+	ts := truststore.NewMemoryStore()
+	rows, err := pool.Query(ctx, "SELECT name, pem_data FROM trusted_ca_certs")
+	if err != nil {
+		log.Printf("Trust store: failed to query CAs (non-fatal): %v", err)
+		return nil
+	}
+	defer rows.Close()
+	count := 0
+	for rows.Next() {
+		var name, pemData string
+		if err := rows.Scan(&name, &pemData); err != nil {
+			continue
+		}
+		if _, err := ts.AddCA(name, pemData, "system"); err != nil {
+			log.Printf("Trust store: failed to add CA %s: %v", name, err)
+			continue
+		}
+		count++
+	}
+	if count == 0 {
+		return nil
+	}
+	certPool, _ := ts.CertPool()
+	log.Printf("Trust store: %d CA(s) loaded (pool has %d certs)", count, len(certPool.Subjects()))
+	return ts
 }

@@ -3,6 +3,8 @@ package audit
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -78,6 +80,18 @@ func NewSIEMForwarder(cfg SIEMConfig) *SIEMForwarder {
 		logger: slog.Default(),
 		stopCh: make(chan struct{}),
 		doneCh: make(chan struct{}),
+	}
+}
+
+// SetCAPool configures a custom CA certificate pool for TLS connections to the SIEM endpoint.
+func (f *SIEMForwarder) SetCAPool(pool *x509.CertPool) {
+	f.client = &http.Client{
+		Timeout: f.config.Timeout,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: pool,
+			},
+		},
 	}
 }
 

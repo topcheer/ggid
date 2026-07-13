@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"flag"
 	"log"
@@ -146,6 +147,16 @@ func main() {
 		siemCfg.APIKey = os.Getenv("SIEM_API_KEY")
 		siemCfg.IndexName = os.Getenv("SIEM_INDEX")
 		siemForwarder = audit.NewSIEMForwarder(siemCfg)
+		// Wire custom CA cert for SIEM TLS if provided
+		if caCertPath := os.Getenv("SIEM_CA_CERT"); caCertPath != "" {
+			if pemData, err := os.ReadFile(caCertPath); err == nil {
+				caPool := x509.NewCertPool()
+				if caPool.AppendCertsFromPEM(pemData) {
+					siemForwarder.SetCAPool(caPool)
+					log.Printf("SIEM: custom CA cert loaded from %s", caCertPath)
+				}
+			}
+		}
 		siemForwarder.Start(ctx)
 		log.Printf("Audit Service: SIEM forwarder started (provider=%s, endpoint=%s)", siemProvider, siemEndpoint)
 	}
