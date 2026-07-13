@@ -35,11 +35,11 @@ type AuthService struct {
 	identityClient IdentityClient
 	mfaService     *MFAService
 	emailService   *EmailService
-	emailSender    EmailSender
+	emailSender    PasswordResetEmailSender
 }
 
-// EmailSender sends emails (SMTP or noop).
-type EmailSender interface {
+// PasswordResetEmailSender sends password reset emails.
+type PasswordResetEmailSender interface {
 	Send(ctx context.Context, to, subject, body string) error
 }
 
@@ -288,7 +288,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*domain
 
 // ForgotPassword initiates the password reset flow.
 // SetEmailSender sets the email sender for password reset emails.
-func (s *AuthService) SetEmailSender(sender EmailSender) {
+func (s *AuthService) SetEmailSender(sender PasswordResetEmailSender) {
 	s.emailSender = sender
 }
 
@@ -314,7 +314,7 @@ func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, em
 		resetURL := fmt.Sprintf("https://ggid-console.iot2.win/reset-password?token=%s", token)
 		body := fmt.Sprintf("You requested a password reset.\n\nClick the link below to reset your password:\n%s\n\nIf you didn't request this, ignore this email.", resetURL)
 		if err := s.emailSender.Send(ctx, email, "Password Reset - GGID", body); err != nil {
-			log.Printf("failed to send reset email to %s: %v", email, err)
+			slog.Error("failed to send reset email", "email", email, "error", err)
 		}
 	}
 
