@@ -3,6 +3,7 @@ package authprovider
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"strings"
@@ -53,6 +54,7 @@ type LDAPProvider struct {
 	pool     chan ldapConn
 	mu       sync.Mutex
 	dialFunc func(ctx context.Context) (ldapConn, error) // injectable for tests
+	caPool   *x509.CertPool // optional custom CA pool
 }
 
 // NewLDAPProvider creates a new LDAPProvider with a connection pool.
@@ -242,9 +244,20 @@ func (p *LDAPProvider) tlsConfig() *tls.Config {
 	if p.cfg.TLSConfig != nil {
 		return p.cfg.TLSConfig
 	}
-	return &tls.Config{
+	cfg := &tls.Config{
 		MinVersion: tls.VersionTLS12,
 	}
+	if p.caPool != nil {
+		cfg.RootCAs = p.caPool
+	}
+	return cfg
+}
+
+// SetCAPool sets a custom CA certificate pool for TLS verification.
+// This allows the LDAP provider to connect to servers using self-signed
+// or private CA certificates.
+func (p *LDAPProvider) SetCAPool(pool *x509.CertPool) {
+	p.caPool = pool
 }
 
 // Close drains the pool and closes all idle connections.

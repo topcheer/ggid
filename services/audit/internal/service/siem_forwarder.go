@@ -1,9 +1,10 @@
 package service
 
 import (
-	"crypto/tls"
-	"fmt"
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -63,6 +64,63 @@ func NewSIEMForwarder() *SIEMForwarder {
 			},
 		},
 	}
+}
+
+// SetCAPool configures the forwarder to use a custom CA certificate pool
+// for TLS connections to SIEM destinations. This allows connecting to SIEM
+// servers that use self-signed or private CA certificates.
+func (f *SIEMForwarder) SetCAPool(pool *x509.CertPool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	transport, ok := f.client.Transport.(*http.Transport)
+	if !ok {
+		transport = &http.Transport{}
+		f.client.Transport = transport
+	}
+	transport.TLSClientConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		RootCAs:    pool,
+	}
+}
+
+// SetTLSConfig configures custom TLS settings for SIEM connections.
+// This is the production equivalent of the test-only TLSConfig struct.
+func (f *SIEMForwarder) SetTLSConfig(enabled bool, clientCert, clientKey, caCert []byte, serverName string, insecureSkipVerify bool) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	tc := &tls.Config{
+		ServerName:         serverName,
+		InsecureSkipVerify: insecureSkipVerify,
+		MinVersion:         tls.VersionTLS12,
+	}
+
+	// mTLS: load client cert
+	if len(clientCert) > 0 && len(clientKey) > 0 {
+		cert, err := tls.X509KeyPair(clientCert, clientKey)
+		if err != nil {
+			return fmt.Errorf("load client cert: %w", err)
+		}
+		tc.Certificates = []tls.Certificate{cert}
+	}
+
+	// CA verification
+	if len(caCert) > 0 {
+		pool := x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(caCert) {
+			return fmt.Errorf("failed to parse CA cert")
+		}
+		tc.RootCAs = pool
+	}
+
+	transport, ok := f.client.Transport.(*http.Transport)
+	if !ok {
+		transport = &http.Transport{}
+		f.client.Transport = transport
+	}
+	transport.TLSClientConfig = tc
+
+	return nil
 }
 
 func (f *SIEMForwarder) AddDestination(dest SIEMDestination) {

@@ -5,7 +5,9 @@ package email
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"net"
 	"net/smtp"
 	"strings"
 	"time"
@@ -56,7 +58,8 @@ type Config struct {
 
 // SMTPSender implements Sender using Go's net/smtp package.
 type SMTPSender struct {
-	cfg Config
+	cfg     Config
+	caPool  *x509.CertPool // optional custom CA pool for self-signed servers
 }
 
 // NewSMTPSender creates a new SMTP sender.
@@ -68,6 +71,13 @@ func NewSMTPSender(cfg Config) *SMTPSender {
 		cfg.TLSMode = "starttls"
 	}
 	return &SMTPSender{cfg: cfg}
+}
+
+// SetCAPool sets a custom CA certificate pool for TLS verification.
+// This allows the sender to connect to SMTP servers using self-signed
+// or private CA certificates.
+func (s *SMTPSender) SetCAPool(pool *x509.CertPool) {
+	s.caPool = pool
 }
 
 // Send sends a single email.
@@ -119,14 +129,73 @@ func (s *SMTPSender) send(ctx context.Context, msg *Message) error {
 	case "none":
 		return smtp.SendMail(addr, auth, s.extractAddress(from), recipients, []byte(rawMsg))
 	default: // starttls
+		if s.caPool != nil {
+			return s.sendWithStartTLS(addr, host, auth, from, recipients, []byte(rawMsg))
+		}
 		return smtp.SendMail(addr, auth, s.extractAddress(from), recipients, []byte(rawMsg))
 	}
+}
+
+// sendWithStartTLS connects via plain TCP, upgrades with STARTTLS using
+// a custom CA pool, then sends the message.
+func (s *SMTPSender) sendWithStartTLS(addr, host string, auth smtp.Auth, from string, to []string, msg []byte) error {
+	conn, err := net.DialTimeout("tcp", addr, s.cfg.Timeout)
+	if err != nil {
+		return fmt.Errorf("email: dial failed: %w", err)
+	}
+	defer conn.Close()
+
+	c, err := smtp.NewClient(conn, host)
+	if err != nil {
+		return fmt.Errorf("email: SMTP client failed: %w", err)
+	}
+	defer c.Close()
+
+	tlsConfig := &tls.Config{
+		ServerName: host,
+		MinVersion: tls.VersionTLS12,
+		RootCAs:    s.caPool,
+	}
+	if err = c.StartTLS(tlsConfig); err != nil {
+		return fmt.Errorf("email: STARTTLS failed: %w", err)
+	}
+
+	if auth != nil {
+		if err = c.Auth(auth); err != nil {
+			return fmt.Errorf("email: auth failed: %w", err)
+		}
+	}
+
+	if err = c.Mail(s.extractAddress(from)); err != nil {
+		return fmt.Errorf("email: MAIL FROM failed: %w", err)
+	}
+	for _, rcpt := range to {
+		if err = c.Rcpt(rcpt); err != nil {
+			return fmt.Errorf("email: RCPT TO %s failed: %w", rcpt, err)
+		}
+	}
+
+	w, err := c.Data()
+	if err != nil {
+		return fmt.Errorf("email: DATA failed: %w", err)
+	}
+	if _, err = w.Write(msg); err != nil {
+		return fmt.Errorf("email: write body failed: %w", err)
+	}
+	if err = w.Close(); err != nil {
+		return fmt.Errorf("email: close data failed: %w", err)
+	}
+
+	return c.Quit()
 }
 
 func (s *SMTPSender) sendWithTLS(addr, host string, auth smtp.Auth, from string, to []string, msg []byte) error {
 	tlsConfig := &tls.Config{
 		ServerName: host,
 		MinVersion: tls.VersionTLS12,
+	}
+	if s.caPool != nil {
+		tlsConfig.RootCAs = s.caPool
 	}
 
 	dialer := &tls.Dialer{Config: tlsConfig}

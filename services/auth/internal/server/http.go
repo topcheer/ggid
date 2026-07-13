@@ -34,6 +34,7 @@ type Handler struct {
 	hooks      *service.HookManager
 	idpConfigs map[string]*service.IdPConfig // keyed by config ID
 	translator *i18n.Translator
+	tsHandler  *TrustStoreHandler
 }
 
 // New creates a new Auth Service HTTP handler.
@@ -44,6 +45,7 @@ func New(authSvc *service.AuthService) *Handler {
 		hooks:      service.NewHookManager(),
 		idpConfigs: make(map[string]*service.IdPConfig),
 		translator: i18n.NewTranslator("en"),
+		tsHandler:  NewTrustStoreHandler(),
 	}
 	h.registerRoutes()
 	return h
@@ -350,6 +352,14 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/tokens", h.handleTokens)
 	h.mux.HandleFunc("/api/v1/auth/notifications", h.handleNotifications)
 	h.mux.HandleFunc("/api/v1/auth/device-bindings", h.handleDeviceBindings)
+
+	// --- Trust Store & Certificate Management ---
+	h.mux.HandleFunc("/api/v1/auth/trust-store/cas", h.tsHandler.HandleTrustStoreCAs)
+	h.mux.HandleFunc("/api/v1/auth/trust-store/cas/", h.tsHandler.HandleTrustStoreCAs)
+	h.mux.HandleFunc("/api/v1/auth/trust-store/verify", h.tsHandler.HandleVerifyCert)
+	h.mux.HandleFunc("/api/v1/auth/certificates", h.tsHandler.HandleCertificates)
+	h.mux.HandleFunc("/api/v1/auth/certificates/", h.tsHandler.HandleCertificates)
+	h.mux.HandleFunc("/api/v1/auth/mtls/config", h.tsHandler.HandleMTLSConfig)
 
 }
 
