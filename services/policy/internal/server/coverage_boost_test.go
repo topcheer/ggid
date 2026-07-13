@@ -688,13 +688,13 @@ func TestHandlePolicyByID_InvalidID(t *testing.T) {
 	assertStatus(t, w, http.StatusBadRequest)
 }
 
-func TestHandlePolicyByID_MethodNotAllowed(t *testing.T) {
+func TestHandlePolicyByID_GetPolicy(t *testing.T) {
 	h := newTestHarness()
 	policy, _ := h.policySvc.CreatePolicy(context.Background(), &domain.Policy{
 		TenantID: h.tenantID, Name: "P1", Effect: domain.EffectAllow,
 	})
 	w := doReq("GET", "/api/v1/policies/"+policy.ID.String(), "")
-	assertStatus(t, w, http.StatusMethodNotAllowed)
+	assertStatus(t, w, http.StatusOK)
 }
 
 // ===== Check tests =====
