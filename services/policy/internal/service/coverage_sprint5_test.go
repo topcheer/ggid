@@ -121,6 +121,13 @@ func (m *mockEvalPolicyReader) GetPoliciesForUserAndRoles(_ context.Context, _ u
 	return m.policies, nil
 }
 
+func (m *mockEvalPolicyReader) GetTenantPolicies(_ context.Context, _ uuid.UUID) ([]*domain.Policy, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	return m.policies, nil
+}
+
 type mockEvalUserRoleReader struct {
 	roleIDs []uuid.UUID
 }

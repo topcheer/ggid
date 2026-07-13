@@ -258,6 +258,10 @@ func (m *testPolicyReader) GetPoliciesForUserAndRoles(_ context.Context, _ uuid.
 	return nil, nil
 }
 
+func (m *testPolicyReader) GetTenantPolicies(_ context.Context, _ uuid.UUID) ([]*domain.Policy, error) {
+	return nil, nil
+}
+
 // ===== Test harness =====
 
 type testHarness struct {

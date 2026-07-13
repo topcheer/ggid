@@ -31,6 +31,9 @@ type UserRoleReader interface {
 // Implemented by *repository.PolicyRepository; mocked in tests.
 type PolicyReader interface {
 	GetPoliciesForUserAndRoles(ctx context.Context, userID uuid.UUID, roleIDs []uuid.UUID) ([]*domain.Policy, error)
+	// GetTenantPolicies returns policies that apply to all principals in a tenant
+	// (i.e. policies with no attachment or a tenant-level attachment).
+	GetTenantPolicies(ctx context.Context, tenantID uuid.UUID) ([]*domain.Policy, error)
 }
 
 // Evaluator is the core permission evaluation engine.
@@ -200,10 +203,19 @@ func (e *Evaluator) Check(ctx context.Context, req *domain.CheckRequest) (*domai
 		}
 	}
 
-	// Step 4: ABAC evaluation — check policies attached to user and roles.
+	// Step 4: ABAC evaluation — check policies attached to user/roles plus
+	// tenant-global policies (not attached to any specific principal).
 	abacPolicies, err := e.policyReader.GetPoliciesForUserAndRoles(ctx, req.UserID, resolvedIDs)
 	if err != nil {
 		return nil, errors.Wrap(errors.ErrInternal, "get abac policies", err)
+	}
+	// Also fetch tenant-level policies (created without explicit attachment).
+	if req.TenantID != uuid.Nil {
+		tenantPolicies, err := e.policyReader.GetTenantPolicies(ctx, req.TenantID)
+		if err != nil {
+			return nil, errors.Wrap(errors.ErrInternal, "get tenant policies", err)
+		}
+		abacPolicies = append(abacPolicies, tenantPolicies...)
 	}
 
 	abacDenied := false

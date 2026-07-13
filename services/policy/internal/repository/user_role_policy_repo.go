@@ -180,7 +180,6 @@ func (r *PolicyRepository) ListByTenant(ctx context.Context, tenantID uuid.UUID,
 	}
 	return policies, nil
 }
-
 // Delete removes a policy and its attachments (cascade).
 func (r *PolicyRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	cmd, err := r.db.Exec(ctx, `DELETE FROM policies WHERE id = $1`, id)
@@ -251,6 +250,37 @@ func (r *PolicyRepository) GetPoliciesForUserAndRoles(ctx context.Context, userI
 	rows, err := r.db.Query(ctx, query, userID, roleIDs)
 	if err != nil {
 		return nil, fmt.Errorf("get policies for user+roles: %w", err)
+	}
+	defer rows.Close()
+
+	var policies []*domain.Policy
+	for rows.Next() {
+		p := &domain.Policy{}
+		var condBytes []byte
+		if err := rows.Scan(&p.ID, &p.TenantID, &p.Name, &p.Description, &p.Effect, &p.Actions, &p.Resources, &condBytes, &p.Priority, &p.CreatedAt); err != nil {
+			return nil, err
+		}
+		if len(condBytes) > 0 {
+			json.Unmarshal(condBytes, &p.Conditions)
+		}
+		policies = append(policies, p)
+	}
+	return policies, nil
+}
+
+// GetTenantPolicies returns policies for a tenant that are NOT attached to any
+// specific principal (user/role). These are tenant-global policies that apply
+// to all users in the tenant. A policy is considered tenant-global if it has
+// no entry in policy_attachments.
+func (r *PolicyRepository) GetTenantPolicies(ctx context.Context, tenantID uuid.UUID) ([]*domain.Policy, error) {
+	query := `
+		SELECT p.id, p.tenant_id, p.name, p.description, p.effect, p.actions, p.resources, p.conditions, p.priority, p.created_at
+		FROM policies p
+		LEFT JOIN policy_attachments pa ON p.id = pa.policy_id
+		WHERE p.tenant_id = $1 AND pa.policy_id IS NULL`
+	rows, err := r.db.Query(ctx, query, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("get tenant policies: %w", err)
 	}
 	defer rows.Close()
 

@@ -68,6 +68,10 @@ func (m *mockPolicyReader) GetPoliciesForUserAndRoles(_ context.Context, userID 
 	return m.policies[userID], nil
 }
 
+func (m *mockPolicyReader) GetTenantPolicies(_ context.Context, _ uuid.UUID) ([]*domain.Policy, error) {
+	return nil, nil
+}
+
 // --- Helpers ---
 
 func newPerm(resourceType, action string) *domain.Permission {

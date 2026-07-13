@@ -747,6 +747,7 @@ func (s *HTTPServer) handleCheck(w http.ResponseWriter, r *http.Request) {
 
 	result, err := s.evaluator.Check(r.Context(), &domain.CheckRequest{
 		UserID:       userID,
+		TenantID:     tenantIDFromHeader(r),
 		ResourceType: req.ResourceType,
 		Action:       req.Action,
 		Resource:     req.Resource,
@@ -1385,6 +1386,23 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 
 func writeServiceError(w http.ResponseWriter, err error) {
 	errors.WriteAPIError(w, err, "")
+}
+
+// tenantIDFromHeader extracts the tenant ID from the X-Tenant-ID header.
+// Returns uuid.Nil if the header is missing or invalid.
+func tenantIDFromHeader(r *http.Request) uuid.UUID {
+	idStr := r.Header.Get("X-Tenant-ID")
+	if idStr == "" {
+		idStr = r.URL.Query().Get("tenant_id")
+	}
+	if idStr == "" {
+		return uuid.Nil
+	}
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return uuid.Nil
+	}
+	return id
 }
 
 // httpStatusToCode maps an HTTP status code to a GGID error code string.
