@@ -13,10 +13,18 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/server"
 )
 
+// envOrDefault returns the env var value or default if not set.
+func envOrDefault(key, defaultVal string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return defaultVal
+}
+
 func main() {
 	var (
 		addr           = flag.String("addr", ":9005", "HTTP listen address")
-		issuer         = flag.String("issuer", "http://localhost:9005", "OIDC issuer URL")
+		issuer         = flag.String("issuer", envOrDefault("OAUTH_ISSUER", "http://localhost:9005"), "OIDC issuer URL")
 		privateKeyPath = flag.String("private-key", os.Getenv("OAUTH_PRIVATE_KEY_PATH"), "RSA private key path")
 		publicKeyPath  = flag.String("public-key", os.Getenv("OAUTH_PUBLIC_KEY_PATH"), "RSA public key path")
 		dbURL          = flag.String("db-url", os.Getenv("DATABASE_URL"), "PostgreSQL connection URL")
