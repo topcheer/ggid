@@ -293,15 +293,36 @@ func (s *AuthService) SetEmailSender(sender PasswordResetEmailSender) {
 }
 
 func (s *AuthService) ForgotPassword(ctx context.Context, tenantID uuid.UUID, email string) error {
-	// 1. Look up credential by identifier (email or username)
+	// 1. Look up credential by identifier (username or email)
 	cred, err := s.credentialRepo.FindByIDentifier(ctx, tenantID, email)
 	if err != nil {
+		slog.Error("ForgotPassword: FindByIdentifier error", "identifier", email, "error", err)
 		return err
 	}
+
+	// 1a. If not found by identifier, try via identity service (email → username)
+	if cred == nil {
+		user, err := s.identityClient.GetUser(ctx, tenantID, email)
+		if err != nil {
+			slog.Error("ForgotPassword: identity lookup error", "email", email, "error", err)
+			return nil // Don't reveal
+		}
+		if user != nil {
+			// Try with username from identity service
+			cred, err = s.credentialRepo.FindByIDentifier(ctx, tenantID, user.Username)
+			if err != nil {
+				slog.Error("ForgotPassword: credential lookup by username error", "username", user.Username, "error", err)
+				return nil
+			}
+		}
+	}
+
 	// Don't reveal whether the email exists
 	if cred == nil {
+		slog.Info("ForgotPassword: user not found", "identifier", email)
 		return nil
 	}
+	slog.Info("ForgotPassword: user found, issuing reset token", "user_id", cred.UserID)
 
 	// 2. Issue a reset token
 	token, err := s.passwordService.IssueResetToken(ctx, cred.UserID, tenantID)
