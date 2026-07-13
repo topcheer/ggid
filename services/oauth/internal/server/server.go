@@ -153,16 +153,41 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
-	// OIDC Discovery
+	// OIDC Discovery (both prefixed and non-prefixed for gateway compatibility)
 	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
 		config := oauthSvc.GetDiscoveryConfig()
 		writeJSON(w, http.StatusOK, config)
 	})
+	mux.HandleFunc("/api/v1/oauth/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+		config := oauthSvc.GetDiscoveryConfig()
+		writeJSON(w, http.StatusOK, config)
+	})
 
-	// JWKS
+	// JWKS (both prefixed and non-prefixed for gateway compatibility)
 	mux.HandleFunc("/oauth/jwks", func(w http.ResponseWriter, r *http.Request) {
 		jwks := oauthSvc.GetJWKS()
 		writeJSON(w, http.StatusOK, jwks)
+	})
+	mux.HandleFunc("/api/v1/oauth/jwks", func(w http.ResponseWriter, r *http.Request) {
+		jwks := oauthSvc.GetJWKS()
+		writeJSON(w, http.StatusOK, jwks)
+	})
+
+	// Prefixed aliases for gateway: re-dispatch to non-prefixed handlers
+	mux.HandleFunc("/api/v1/oauth/authorize", func(w http.ResponseWriter, r *http.Request) {
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/oauth/authorize"
+		mux.ServeHTTP(w, r2)
+	})
+	mux.HandleFunc("/api/v1/oauth/token", func(w http.ResponseWriter, r *http.Request) {
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/oauth/token"
+		mux.ServeHTTP(w, r2)
+	})
+	mux.HandleFunc("/api/v1/oauth/userinfo", func(w http.ResponseWriter, r *http.Request) {
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/oauth/userinfo"
+		mux.ServeHTTP(w, r2)
 	})
 
 	// Authorize endpoint (GET/POST — creates auth code, redirects)

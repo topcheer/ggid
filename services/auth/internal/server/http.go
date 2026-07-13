@@ -279,6 +279,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/factors", h.handleMFAFactors)
 	h.mux.HandleFunc("/api/v1/auth/mfa/factors/", h.handleMFAFactors)
 	h.mux.HandleFunc("/api/v1/auth/login-analytics", h.handleLoginAnalytics)
+	h.mux.HandleFunc("/api/v1/auth/rate-limits", h.handleRateLimits)
 	h.mux.HandleFunc("/api/v1/auth/password-strength/distribution", h.handlePasswordStrengthDist)
 	h.mux.HandleFunc("/api/v1/auth/login-geo/enrich", h.handleLoginGeoEnrich)
 	h.mux.HandleFunc("/api/v1/auth/risk-notify", h.handleRiskNotify)
@@ -397,6 +398,7 @@ func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
 type loginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	TenantID string `json:"tenant_id"`
 }
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
@@ -413,6 +415,17 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 
 	ip := clientIP(r)
 	userAgent := r.Header.Get("User-Agent")
+
+	// Fallback: inject tenant context from body for public endpoints (no JWT)
+	if _, err := ggidtenant.FromContext(r.Context()); err != nil && req.TenantID != "" {
+		if tid, perr := uuid.Parse(req.TenantID); perr == nil {
+			tc := &ggidtenant.Context{
+				TenantID:       tid,
+				IsolationLevel: ggidtenant.IsolationShared,
+			}
+			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+		}
+	}
 
 	// Brute force protection: dual-dimension sliding window rate limit.
 	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
@@ -459,6 +472,7 @@ type registerRequest struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	TenantID string `json:"tenant_id"`
 }
 
 func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
@@ -475,14 +489,34 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		h.writeErrorT(w, r, http.StatusBadRequest, "error.missing_tenant_context")
-		return
+		// Fallback: accept tenant_id from JSON body for public endpoints (no JWT)
+		if req.TenantID != "" {
+			tid, perr := uuid.Parse(req.TenantID)
+			if perr != nil {
+				h.writeErrorT(w, r, http.StatusBadRequest, "error.invalid_tenant_id")
+				return
+			}
+			tc = &ggidtenant.Context{
+				TenantID:       tid,
+				IsolationLevel: ggidtenant.IsolationShared,
+			}
+			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+		} else {
+			h.writeErrorT(w, r, http.StatusBadRequest, "error.missing_tenant_context")
+			return
+		}
 	}
 
 	userID := uuid.New()
 	// Create user in Identity Service
 	user, err := h.authSvc.IdentityClient().CreateUserFromSocial(r.Context(), tc.TenantID, req.Username, req.Email, req.Username, "local", userID.String(), nil)
 	if err != nil {
+		errStr := strings.ToLower(err.Error())
+		if strings.Contains(errStr, "duplicate") || strings.Contains(errStr, "already exists") ||
+			strings.Contains(errStr, "unique") || strings.Contains(errStr, "409") {
+			h.writeErrorT(w, r, http.StatusConflict, "error.credential_already_exists")
+			return
+		}
 		writeError(w, http.StatusInternalServerError, "failed to create user: "+err.Error())
 		return
 	}

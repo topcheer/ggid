@@ -153,6 +153,20 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleRateLimits returns rate limiting configuration.
+func (h *Handler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"login_rate_limit":       5,
+		"login_window_seconds":   300,
+		"register_rate_limit":    3,
+		"register_window_seconds": 3600,
+		"ip_rate_limit":          100,
+		"ip_window_seconds":      60,
+		"tenant_rate_limit":      1000,
+		"tenant_window_seconds": 3600,
+	})
+}
+
 // writeJSON is already defined in http.go
 
 // Ensure writeError exists (it may already be defined elsewhere)
