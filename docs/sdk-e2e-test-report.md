@@ -228,3 +228,18 @@ All 18 pods Running, 0 restarts.
 8. Node ERP requireRole → admin user bypass
 9. Node ERP policy check GET→POST
 10. Python ERP SQL column mapping
+
+## Update: 04:22 CST (Cycle 4)
+
+### ALL TESTS PASS — Including Viewer RBAC
+
+| Backend | Admin Create | Viewer Create | No-Auth |
+|---------|-------------|---------------|---------|
+| Node.js | 201 | 403 | 401 |
+| Go | 201 | 403 | 401 |
+| Java | 200 | 403 | 401 |
+| Python | 200 | 403 | 401 |
+
+**Fix this cycle**: Viewer users were able to create products because GGID wildcard policy
+matches all users. Added local RBAC enforcement in Go and Python ERP to block non-admin
+write operations regardless of GGID policy result.
