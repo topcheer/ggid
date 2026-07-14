@@ -1,5 +1,8 @@
 # GGID Deployment Guide
 
+> **Deprecated:** This document is superseded by [docs/deployment-guide.md](docs/deployment-guide.md). See the updated version for the latest information.
+
+
 Production deployment instructions for the GGID IAM Platform.
 
 ## Table of Contents

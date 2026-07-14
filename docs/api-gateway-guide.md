@@ -1,5 +1,8 @@
 # API Gateway Guide
 
+> **Deprecated:** This document is superseded by [docs/api-gateway.md](docs/api-gateway.md). See the updated version for the latest information.
+
+
 Gateway configuration: route table, middleware chain, JWT verification, rate
 limiting, tenant resolution, health checks, graceful shutdown, and proxy
 timeout configuration.

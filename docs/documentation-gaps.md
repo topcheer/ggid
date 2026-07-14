@@ -38,3 +38,16 @@ Files affected: key-management-lifecycle.md, saml-federation-ecosystem.md, webau
 ## Previous Fixes
 
 - 2026-07-14 Round 1: Fixed 9 unclosed Markdown code blocks in docs/*.md files.
+
+## Duplicate Document Audit (2026-07-14 Round 3)
+
+Found 3 pairs of duplicate docs (older shorter versions alongside newer expanded versions):
+
+| Superseded (shorter) | Canonical (newer) | Lines (old/new) |
+|----------------------|-------------------|-----------------|
+| docs/api-gateway-guide.md | docs/api-gateway.md | 269 / 556 |
+| docs/guides/audit-api-reference.md | docs/api/audit-api.md | 161 / 348 |
+| docs/deployment.md | docs/deployment-guide.md | 702 / 1311 |
+
+Action: Added deprecation notices to the 3 superseded files pointing to canonical versions.
+Recommendation: Delete superseded files in next cleanup and add redirects if serving docs via HTTP.
