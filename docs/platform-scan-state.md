@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 8
-## Last scan focus: A (Interface Integrity)
-## Next scan focus: B (Route Wiring)
+## Current round: 9
+## Last scan focus: B (Route Wiring)
+## Next scan focus: C (Middleware Chain)
 ## Total findings: 14
 ## Done: 12
 ## Fixed (pending verification): 0
@@ -10,7 +10,7 @@
 ## Remaining: 1
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 8 is even: execute E2E regression tests if Docker infra is healthy; otherwise continue with completeness scan, focus B (Route Wiring).*
+*Round 9 is odd: execute completeness scan, focus C (Middleware Chain). Round 10 (even): E2E regression tests if Docker infra is healthy.*
 ## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
@@ -48,7 +48,8 @@ LOW (acceptable for now — short-lived or fallback):
 - 85114fa8: Sync platform-scan-state counts with completeness report
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
-- (current): Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
+- bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
+- (current): Round 9 focus B route wiring — gateway missing /api/v1/oauth, /api/v1/identity, /api/v1/agents routes
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (backend)
 - (round 7): Auth missing handlers wired to real service: /api/v1/auth/me, /api/v1/auth/mfa/status, /api/v1/auth/tokens (backend)

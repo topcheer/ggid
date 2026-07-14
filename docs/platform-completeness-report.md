@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 1
 - Remaining: 1
-- Last scan: 2026-07-14 round 8 (focus: A — Interface Integrity)
+- Last scan: 2026-07-14 round 9 (focus: B — Route Wiring)
 
 ## Findings
 
@@ -78,6 +78,7 @@
 | 2026-07-14 | Gap audit & deduplication | -5 false positives | 5 verified |
 | 2026-07-14 | CIBA + Client Branding verification | 0 | 2 verified as DONE |
 | 2026-07-14 | Round 8 — Focus A (Interface Integrity) | +4 route/handler interface gaps | 4 (gateway TODO, policy route aliases) |
+| 2026-07-14 | Round 9 — Focus B (Route Wiring) | +3 missing gateway prefixes | 3 (/api/v1/oauth, /api/v1/identity, /api/v1/agents) |
 
 ## Remaining Real Gaps (post-audit)
 

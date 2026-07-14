@@ -57,7 +57,10 @@ func Default() *Config {
 		PublicKeyPath: "configs/rsa_public.pem",
 		Routes: map[string]string{
 			"/api/v1/auth":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/identity":    envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/users":       envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/agents":      envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
+			"/api/v1/oauth":       envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/api/v1/roles":       envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/permissions": envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/policies":    envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
@@ -67,14 +70,11 @@ func Default() *Config {
 			"/api/v1/departments":  envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/teams":       envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/tenants":     envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
-			"/api/v1/identity":    envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/organizations": envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/notifications":   envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/scim":            envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/scim/v2":                envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/idp":             envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
-			"/api/v1/agents":          envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
-			"/api/v1/oauth":           envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/api/v1/webhooks":        envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/rate-limits":     envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/sod":             envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
@@ -171,6 +171,11 @@ func LoadFromEnv(cfg *Config) *Config {
 		if v := os.Getenv(envKey); v != "" {
 			cfg.Routes[route] = v
 		}
+	}
+	// OAuth service also hosts /api/v1/oauth and /api/v1/agents paths.
+	if v := os.Getenv("OAUTH_SERVICE_URL"); v != "" {
+		cfg.Routes["/api/v1/oauth"] = v
+		cfg.Routes["/api/v1/agents"] = v
 	}
 
 	return cfg
