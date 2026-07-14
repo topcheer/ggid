@@ -112,15 +112,14 @@ services:
       DATABASE_URL: "postgres://${DB_USER:-ggid}:${DB_PASSWORD:-ggid}@${DB_HOST:-postgres}:${DB_PORT:-5432}/${DB_DATABASE:-ggid}?sslmode=${DB_SSL_MODE:-disable}"
     entrypoint: ["sh"]
     command:
-      - sh
       - -c
       - |
         apk add --no-cache postgresql-client
-        TABLES=$(psql "$$DATABASE_URL" -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" | tr -d ' ')
-        if [ "$$TABLES" -gt 0 ]; then
-          echo "Database already initialized ($$TABLES tables), skipping migrations"
+        TABLES=$(psql "$DATABASE_URL" -t -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'" | tr -d ' ')
+        if [ "$TABLES" -gt 0 ]; then
+          echo "Database already initialized ($TABLES tables), skipping migrations"
         else
-          cat /migrations/*.sql | psql "$$DATABASE_URL" -v ON_ERROR_STOP=1 -q
+          cat /migrations/*.sql | psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q
           echo 'Migrations complete'
         fi
     volumes:
