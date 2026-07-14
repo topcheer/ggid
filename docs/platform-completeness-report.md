@@ -12,12 +12,12 @@
 
 ## Summary
 
-- Total findings: 17
-- Done: 16
+- Total findings: 19
+- Done: 18
 - Fixed (pending verification): 0
 - Partial: 1
 - Remaining: 0
-- Last scan: 2026-07-15 round 13 (focus: E — Error Handling)
+- Last scan: 2026-07-15 round 15 (focus: F — Test Coverage)
 
 ## Findings
 
@@ -43,6 +43,8 @@
 | 15 | OAuth server internal error exposure | oauth/internal/server/server.go, token_events.go | 500 responses returned raw err.Error() to clients (CreateClient, ListClients, DeleteClient, CreateDeviceAuthorization, ListAgents, IssueSAMLToken, BuildSAMLResponse). Added writeInternalError helper that logs error and returns sanitized "internal server error". | [DONE] | 5a40d929 |
 | 16 | Auth server internal error exposure | auth/internal/server/http.go, trust_store_handler.go, admin_config.go | 500 responses returned raw err.Error() to clients. Replaced with writeInternalError helper / sanitized messages. | [DONE] | 5a40d929 |
 | 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | 5a40d929 |
+| 18 | E2E Docker regression suite | deploy/e2e-docker-test.sh | Docker E2E tests were failing due to migrate container command typo. Fixed `sh` duplication; 11/11 E2E tests now PASS. | [DONE] | 6f7d68e0 |
+| 19 | Server handler coverage gaps | identity/internal/server, audit/internal/server, org/internal/server | Added focused HTTP handler tests for certification-status, management-chain, reassign, GDPR export, query-metrics, SIEM health, daily-aggregations, access-matrix, teams-export, membership-trends. | [DONE] | TBD |
 
 ### LOW Priority
 
@@ -83,6 +85,8 @@
 | 2026-07-14 | Round 9 — Focus B (Route Wiring) | +3 missing gateway prefixes | 3 (/api/v1/oauth, /api/v1/identity, /api/v1/agents) |
 | 2026-07-15 | Round 11 — Focus D (Data Persistence / Key Provider Wiring) | 0 | 1 (HSM/KMS KeyProvider wired in auth/oauth/gateway) |
 | 2026-07-15 | Round 13 — Focus E (Error Handling) | +3 | 3 (internal error exposure sanitized) |
+| 2026-07-15 | Round 14 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
+| 2026-07-15 | Round 15 — Focus F (Test Coverage) | +2 | 2 (server handler coverage gaps) |
 
 ## Remaining Real Gaps (post-audit)
 
@@ -91,6 +95,6 @@
 
 ## Next Actions
 
-- Round 14 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — blocked by Docker infra, see docs/research/docker-e2e-infra-gap.md
-- Round 15 (odd, Focus F): Test coverage scan
+- Round 16 (even): E2E regression test run (`deploy/e2e-docker-test.sh`)
+- Round 17 (odd, Focus G): SDK alignment scan
 - Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard
