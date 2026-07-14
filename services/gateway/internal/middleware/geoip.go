@@ -3,7 +3,11 @@ package middleware
 import (
 	"net"
 	"net/http"
+	"os"
 	"strings"
+	"sync"
+
+	"github.com/oschwald/maxminddb-golang"
 )
 
 // GeoIPConfig configures the GeoIP middleware.
@@ -21,6 +25,31 @@ type GeoIPConfig struct {
 	TrustXForwardedFor bool
 }
 
+// geoIPDB holds the MaxMind DB reader (lazily loaded).
+var (
+	geoIPDB     *maxminddb.Reader
+	geoIPDBOnce sync.Once
+	geoIPDBErr  error
+)
+
+// initGeoIPDB loads the MaxMind DB from GEOIP_DB_PATH env or cfg.DBPath.
+func initGeoIPDB(dbPath string) {
+	geoIPDBOnce.Do(func() {
+		path := dbPath
+		if path == "" {
+			path = os.Getenv("GEOIP_DB_PATH")
+		}
+		if path == "" {
+			return // No DB configured — private IP detection only
+		}
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			geoIPDBErr = err
+			return
+		}
+		geoIPDB, geoIPDBErr = maxminddb.Open(path)
+	})
+}
+
 // GeoIPMiddleware adds geographic information based on client IP.
 // When a MaxMind DB is loaded, it sets:
 //   - X-Geo-Country: <ISO code>
@@ -33,6 +62,9 @@ func GeoIPMiddleware(cfg *GeoIPConfig) func(http.Handler) http.Handler {
 	if cfg == nil {
 		cfg = &GeoIPConfig{}
 	}
+
+	// Initialize MaxMind DB if configured
+	initGeoIPDB(cfg.DBPath)
 
 	blocked := make(map[string]bool)
 	for _, c := range cfg.BlockedCountries {
@@ -90,8 +122,8 @@ func extractGeoIPClientIP(r *http.Request, trustXFF bool) string {
 }
 
 // lookupCountry resolves an IP to an ISO country code.
-// When a MaxMind DB path is configured, it uses the real GeoLite2 DB.
-// As a fallback, it uses private network detection (RFC1918 = "LOCAL").
+// When GEOIP_DB_PATH is set and the MaxMind DB is loaded, it performs a real lookup.
+// Otherwise, it uses private network detection (RFC1918 = "LOCAL").
 var lookupCountry = func(ip string) string {
 	// Check for private/loopback IPs first.
 	parsed := net.ParseIP(ip)
@@ -101,9 +133,22 @@ var lookupCountry = func(ip string) string {
 	if parsed.IsLoopback() || parsed.IsPrivate() || parsed.IsLinkLocalUnicast() {
 		return "LOCAL"
 	}
-	// TODO: When GEOIP_DB_PATH env is set, open MaxMind GeoLite2-City.mmdb
-	// and use db.Lookup(ip) for real country resolution.
-	// Without the DB file, we can only identify private networks.
+
+	// Use MaxMind DB if loaded
+	if geoIPDB != nil {
+		var record struct {
+			Country struct {
+				ISOCode string `maxminddb:"iso_code"`
+			} `maxminddb:"country"`
+			City struct {
+				Names map[string]string `maxminddb:"names"`
+			} `maxminddb:"city"`
+		}
+		if err := geoIPDB.Lookup(parsed, &record); err == nil && record.Country.ISOCode != "" {
+			return record.Country.ISOCode
+		}
+	}
+
 	return ""
 }
 
