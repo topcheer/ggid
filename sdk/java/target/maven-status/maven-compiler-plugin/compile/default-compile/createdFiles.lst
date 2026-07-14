@@ -1,7 +1,9 @@
 dev/ggid/sdk/ABACEvalRequest.class
+dev/ggid/sdk/IntrospectionResult.class
 dev/ggid/sdk/PolicyResult.class
 dev/ggid/sdk/GGIDClient$2.class
 dev/ggid/sdk/GGIDUser.class
+dev/ggid/sdk/Webhook.class
 dev/ggid/sdk/GGIDSecurityFilter.class
 dev/ggid/sdk/GGIDAuthFilter.class
 dev/ggid/sdk/PageResult.class

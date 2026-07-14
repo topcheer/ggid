@@ -55,3 +55,7 @@ export type {
   PolicyCheckRequest,
   Permission,
 } from './policy';
+
+// Token introspection
+import './introspect';
+export type { IntrospectResult } from './introspect';

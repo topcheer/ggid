@@ -373,6 +373,56 @@ public class GGIDClient {
     }
 
     // -----------------------------------------------------------------------
+    // Webhooks
+    // -----------------------------------------------------------------------
+
+    public List<Webhook> listWebhooks(String token) throws GGIDException, IOException {
+        Request request = buildRequest("GET", "/api/v1/webhooks", null);
+        if (token != null && !token.isEmpty()) {
+            request = request.newBuilder().header("Authorization", "Bearer " + token).build();
+        }
+        java.util.Map<String, Object> resp = execute(request, java.util.Map.class);
+        Object items = resp.get("webhooks");
+        if (items == null) items = resp.get("data");
+        if (items == null) return java.util.Collections.emptyList();
+        return mapper.convertValue(items,
+            mapper.getTypeFactory().constructCollectionType(List.class, Webhook.class));
+    }
+
+    public Webhook createWebhook(String token, Webhook webhook) throws GGIDException, IOException {
+        Request request = buildRequest("POST", "/api/v1/webhooks", webhook);
+        if (token != null && !token.isEmpty()) {
+            request = request.newBuilder().header("Authorization", "Bearer " + token).build();
+        }
+        return execute(request, Webhook.class);
+    }
+
+    public void deleteWebhook(String token, String webhookId) throws GGIDException, IOException {
+        Request request = buildRequest("DELETE", "/api/v1/webhooks?id=" + webhookId, null);
+        if (token != null && !token.isEmpty()) {
+            request = request.newBuilder().header("Authorization", "Bearer " + token).build();
+        }
+        execute(request, Void.class);
+    }
+
+    // -----------------------------------------------------------------------
+    // Token Introspection (RFC 7662)
+    // -----------------------------------------------------------------------
+
+    public IntrospectionResult introspectToken(String token, String tokenToCheck)
+            throws GGIDException, IOException {
+        java.util.Map<String, String> body = java.util.Map.of(
+            "token", tokenToCheck,
+            "token_type_hint", "access_token"
+        );
+        Request request = buildRequest("POST", "/api/v1/oauth/introspect", body);
+        if (token != null && !token.isEmpty()) {
+            request = request.newBuilder().header("Authorization", "Bearer " + token).build();
+        }
+        return execute(request, IntrospectionResult.class);
+    }
+
+    // -----------------------------------------------------------------------
     // Inner classes
     // -----------------------------------------------------------------------
 
