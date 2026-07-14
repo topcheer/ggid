@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Lock, Save, Shield } from "lucide-react";
 
 interface EndpointOverride {
@@ -30,6 +30,20 @@ export default function BruteForceConfigPage() {
   const [config, setConfig] = useState<Config>({ max_attempts: 5, lockout_duration_minutes: 15, progressive_delay: true, captcha_threshold: 3, ip_allowlist: ["127.0.0.1"], endpoint_overrides: [{ endpoint: "/api/v1/auth/login", max_attempts: 5, lockout_minutes: 15 }, { endpoint: "/api/v1/oauth/token", max_attempts: 10, lockout_minutes: 30 }] });
   const [lockouts, setLockouts] = useState<Lockout[]>([]);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/v1/auth/brute-force-config/lockouts", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json(); setLockouts(d.lockouts || []);
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const save = useCallback(async () => {
     setSaving(true);
@@ -38,7 +52,8 @@ export default function BruteForceConfigPage() {
     finally { setSaving(false); }
   }, [config]);
 
-  useState(() => { fetch("/api/v1/auth/brute-force-config/lockouts", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then((r) => r.json()).then((d) => setLockouts(d.lockouts || [])).catch(() => {}); });
+  if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" /></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
 
   return (
     <div className="space-y-6">
