@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 5
-## Last scan focus: E (Security Config)
-## Next scan focus: F (Functional Depth Verification)
+## Current round: 6
+## Last scan focus: F (Functional Depth Verification)
+## Next scan focus: G (SDK Alignment)
 ## Total findings: 22
 ## Fixed: 16
 ## Remaining: 4
@@ -66,3 +66,4 @@ LOW (acceptable for now — short-lived or fallback):
 - 7be8355c: Frontend loading/error states (frontend)
 - eec3a7bd: Docs code block fixes (docs)
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (arch)
+- (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (arch)

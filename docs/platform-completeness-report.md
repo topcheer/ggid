@@ -7,7 +7,7 @@
 - Fixed: 4
 - Partial: 1
 - Remaining: 8
-- Last scan: 2026-07-14 round 5 (focus: E — Security Config)
+- Last scan: 2026-07-14 round 6 (focus: F — Functional Depth Verification)
 
 ## Findings
 
@@ -61,3 +61,4 @@
 | 2026-07-14 | Initial manual scan (all dimensions) | 9 | 0 |
 | 2026-07-14 | Round 1 — Focus A (Stub/Placeholder/TODO) | +1 (#10) | 1 (#8) + 1 partial (#9) |
 | 2026-07-14 | Round 5 — Focus E (Security Config) | +2 (#4, #8) | 3 (#2, #4, #8) |
+| 2026-07-14 | Round 6 — Focus F (Functional Depth Verification) | +3 coverage gaps | 3 (identity health/tenant, OAuth helpers, org tree build/prune) |
