@@ -222,6 +222,39 @@ class GGIDClient
         $this->request('DELETE', "/api/v1/roles/{$roleId}", null, $token);
     }
 
+    // ─── Webhooks ────────────────────────────────────────────────
+
+    /**
+     * List all webhooks in the tenant.
+     */
+    public function listWebhooks(string $token): array
+    {
+        return $this->request('GET', '/api/v1/webhooks', null, $token);
+    }
+
+    /**
+     * Create a new webhook.
+     *
+     * @param string $token Admin token
+     * @param string $url Webhook endpoint URL
+     * @param array $events Event types to subscribe to (e.g. ['user.created', 'user.deleted'])
+     */
+    public function createWebhook(string $token, string $url, array $events): array
+    {
+        return $this->request('POST', '/api/v1/webhooks', [
+            'url' => $url,
+            'events' => $events,
+        ], $token);
+    }
+
+    /**
+     * Delete a webhook by ID.
+     */
+    public function deleteWebhook(string $token, string $webhookId): void
+    {
+        $this->request('DELETE', "/api/v1/webhooks/{$webhookId}", null, $token);
+    }
+
     // ─── Audit ────────────────────────────────────────────────────
 
     public function listAuditEvents(string $token, array $params = []): array

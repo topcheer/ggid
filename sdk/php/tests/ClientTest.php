@@ -398,6 +398,83 @@ class ClientTest extends TestCase
         $this->expectException(GGIDException::class);
         $resolver->resolve(AuthedController::class, 'dashboard', null);
     }
+
+    // ─── Webhook Tests ──────────────────────────────────────────
+
+    public function testListWebhooks(): void
+    {
+        $client = $this->mockClient([
+            new Response(200, [], json_encode([
+                ['id' => 'wh-1', 'url' => 'https://example.com/hook', 'events' => ['user.created']],
+                ['id' => 'wh-2', 'url' => 'https://example.com/hook2', 'events' => ['role.assigned']],
+            ])),
+        ]);
+
+        $result = $client->listWebhooks('token');
+
+        $this->assertCount(2, $result);
+        $this->assertEquals('wh-1', $result[0]['id']);
+        $this->assertEquals('https://example.com/hook', $result[0]['url']);
+    }
+
+    public function testCreateWebhook(): void
+    {
+        $client = $this->mockClient([
+            new Response(201, [], json_encode([
+                'id' => 'wh-3',
+                'url' => 'https://example.com/hook3',
+                'events' => ['user.created', 'user.deleted'],
+            ])),
+        ]);
+
+        $result = $client->createWebhook('token', 'https://example.com/hook3', ['user.created', 'user.deleted']);
+
+        $this->assertEquals('wh-3', $result['id']);
+        $this->assertEquals('https://example.com/hook3', $result['url']);
+        $this->assertCount(2, $result['events']);
+    }
+
+    public function testDeleteWebhook(): void
+    {
+        $client = $this->mockClient([
+            new Response(204, [], ''),
+        ]);
+
+        // Should not throw
+        $client->deleteWebhook('token', 'wh-1');
+        $this->assertTrue(true);
+    }
+
+    // ─── Introspect Tests ───────────────────────────────────────
+
+    public function testIntrospectTokenActive(): void
+    {
+        $client = $this->mockClient([
+            new Response(200, [], json_encode([
+                'active' => true,
+                'sub' => 'user-1',
+                'exp' => 1700000000,
+                'scope' => 'openid profile',
+            ])),
+        ]);
+
+        $result = $client->introspectToken('jwt-token', 'client-id', 'secret');
+
+        $this->assertTrue($result['active']);
+        $this->assertEquals('user-1', $result['sub']);
+        $this->assertEquals('openid profile', $result['scope']);
+    }
+
+    public function testIntrospectTokenInactive(): void
+    {
+        $client = $this->mockClient([
+            new Response(200, [], json_encode(['active' => false])),
+        ]);
+
+        $result = $client->introspectToken('revoked-token', 'client-id', 'secret');
+
+        $this->assertFalse($result['active']);
+    }
 }
 
 // Test controllers for middleware

@@ -102,6 +102,23 @@ module GGID
       http_delete("/api/v1/roles/#{role_id}", token: token)
     end
 
+    # ── Webhooks ─────────────────────────────────────────────
+
+    def list_webhooks(token)
+      http_get("/api/v1/webhooks", token: token)
+    end
+
+    def create_webhook(token, url:, events:)
+      http_post("/api/v1/webhooks", body: {
+        url: url,
+        events: events,
+      }, token: token)
+    end
+
+    def delete_webhook(token, webhook_id)
+      http_delete("/api/v1/webhooks/#{webhook_id}", token: token)
+    end
+
     # ── Audit ──────────────────────────────────────────────────
 
     def list_audit_events(token, params = {})
