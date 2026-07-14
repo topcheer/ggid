@@ -185,7 +185,70 @@ class GGIDClient:
     def list_audit_events(self, token: str, **params) -> dict:
         return self._request("GET", "/api/v1/audit/events", token=token, params=params)
 
-    # --- Webhooks ---
+    # --- Agent Identity ---
+
+    def register_agent(self, token: str, name: str, agent_type: str,
+                     allowed_scopes: list[str], owner_user_id: str = "",
+                     description: str = "", max_delegation_depth: int = 3,
+                     rate_limit_per_min: int = 60) -> dict:
+        """Register a new AI agent identity."""
+        body = {
+            "name": name,
+            "type": agent_type,
+            "owner_user_id": owner_user_id,
+            "description": description,
+            "allowed_scopes": allowed_scopes,
+            "max_delegation_depth": max_delegation_depth,
+            "rate_limit_per_min": rate_limit_per_min,
+        }
+        return self._request("POST", "/api/v1/agents/register", body, token=token)
+
+    def list_agents(self, token: str) -> dict:
+        """List all agents for the current tenant."""
+        return self._request("GET", "/api/v1/agents", token=token)
+
+    def exchange_agent_token(self, agent_id: str, subject_token: str,
+                             scopes: list[str]) -> dict:
+        """Exchange a user access token for an agent-scoped token."""
+        body = {
+            "agent_id": agent_id,
+            "subject_token": subject_token,
+            "scope": scopes,
+        }
+        return self._request("POST", "/api/v1/agents/token", body)
+
+    def verify_agent_token(self, token: str) -> dict:
+        """Verify an agent token and return its claims."""
+        return self._request("POST", "/api/v1/agents/verify", {"token": token})
+
+    # --- Access Request (IGA) ---
+
+    def create_access_request(self, token: str, user_id: str, resource: str,
+                              action: str, reason: str = "") -> dict:
+        """Create an access request for review/approval workflow."""
+        body = {
+            "user_id": user_id,
+            "resource": resource,
+            "action": action,
+            "reason": reason,
+        }
+        return self._request("POST", "/api/v1/access-requests", body, token=token)
+
+    def list_access_requests(self, token: str) -> dict:
+        """List access requests for the current tenant."""
+        return self._request("GET", "/api/v1/access-requests", token=token)
+
+    def approve_access_request(self, token: str, request_id: str,
+                               comment: str = "") -> dict:
+        """Approve an access request."""
+        body = {"comment": comment}
+        return self._request("POST", f"/api/v1/access-requests/{request_id}/approve", body, token=token)
+
+    def reject_access_request(self, token: str, request_id: str,
+                              comment: str = "") -> dict:
+        """Reject an access request."""
+        body = {"comment": comment}
+        return self._request("POST", f"/api/v1/access-requests/{request_id}/reject", body, token=token)
 
     def list_webhooks(self, token: str) -> list:
         """List all webhooks for the current tenant."""
