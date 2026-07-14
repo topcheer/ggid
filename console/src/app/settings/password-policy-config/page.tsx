@@ -5,7 +5,39 @@ interface PolicyConfig { min_length: number; require_uppercase: boolean; require
 export default function PasswordPolicyConfigPage() {
   const [config, setConfig] = useState<PolicyConfig>({ min_length: 12, require_uppercase: true, require_lowercase: true, require_digit: true, require_special: true, check_dictionary: true, check_breach: true, expiry_days: 90, history_count: 5, per_role: [{ role: "admin", min_length: 16, expiry_days: 30 }] });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadConfig = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/v1/auth/password-policy-config", { headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data) setConfig(prev => ({ ...prev, ...data }));
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { loadConfig(); }, [loadConfig]);
+
   const save = async () => { setSaving(true); try { await fetch("/api/v1/auth/password-policy-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); } catch { /* noop */ } finally { setSaving(false); } };
+
+  if (loading) return (
+    <div className="p-8 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="p-8">
+      <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
+        <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
+        <button onClick={loadConfig} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Lock className="w-6 h-6 text-blue-500" /> Password Policy</h1><p className="text-sm text-gray-500 mt-1">Configure password complexity and lifecycle rules.</p></div><button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button></div>

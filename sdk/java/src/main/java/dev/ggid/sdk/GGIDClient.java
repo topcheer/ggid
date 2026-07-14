@@ -376,6 +376,15 @@ public class GGIDClient {
     // Webhooks
     // -----------------------------------------------------------------------
 
+    public DiscoveryConfig getDiscovery() throws GGIDException, IOException {
+        Request request = buildRequest("GET", "/.well-known/openid-configuration", null);
+        return execute(request, DiscoveryConfig.class);
+    }
+
+    // -----------------------------------------------------------------------
+    // Webhook Management
+    // -----------------------------------------------------------------------
+
     public List<Webhook> listWebhooks(String token) throws GGIDException, IOException {
         Request request = buildRequest("GET", "/api/v1/webhooks", null);
         if (token != null && !token.isEmpty()) {

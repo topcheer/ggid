@@ -24,15 +24,17 @@ const sevColors: Record<string, string> = {
 export default function AnomalyDetectionPage() {
   const [events, setEvents] = useState<AnomalyEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState("");
   const [filterSeverity, setFilterSeverity] = useState("");
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError(null);
     try {
       const res = await fetch("/api/v1/audit/anomaly-detection", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (res.ok) { const d = await res.json(); setEvents(d.events || d || []); }
-    } catch { /* noop */ }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json(); setEvents(d.events || d || []);
+    } catch (err: any) { setError(err.message); }
     finally { setLoading(false); }
   }, []);
 
@@ -50,6 +52,15 @@ export default function AnomalyDetectionPage() {
   });
   const activeCount = events.filter((e) => e.status === "active").length;
   const types = [...new Set(events.map((e) => e.type))];
+
+  if (error) return (
+    <div className="p-8">
+      <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
+        <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
+        <button onClick={fetchData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">

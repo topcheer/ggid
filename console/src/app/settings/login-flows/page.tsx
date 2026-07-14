@@ -80,21 +80,21 @@ export default function LoginFlowsPage() {
   const [flow, setFlow] = useState<FlowConfig>(defaultFlow);
   const [msg, setMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
-  // Load from localStorage
-  useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setFlow({ ...defaultFlow, ...parsed });
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
+  const loadFlow = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/v1/settings/login-flows", { headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      if (res.ok) { const data = await res.json(); if (data) setFlow({ ...defaultFlow, ...data }); }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { loadFlow(); }, []);
 
   useEffect(() => {
     if (msg) {
@@ -177,6 +177,21 @@ export default function LoginFlowsPage() {
   const handleDragEnd = () => {
     setDragIndex(null);
   };
+
+  if (loading) return (
+    <div className="p-8 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="p-8">
+      <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
+        <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
+        <button onClick={loadFlow} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+      </div>
+    </div>
+  );
 
   return (
     <div>

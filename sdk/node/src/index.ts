@@ -59,3 +59,7 @@ export type {
 // Token introspection
 import './introspect';
 export type { IntrospectResult } from './introspect';
+
+// OIDC Discovery
+import './discovery';
+export type { DiscoveryConfig } from './discovery';

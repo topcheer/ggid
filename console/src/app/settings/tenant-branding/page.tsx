@@ -5,8 +5,40 @@ interface Branding { logo_url: string; primary_color: string; secondary_color: s
 export default function TenantBrandingPage() {
   const [branding, setBranding] = useState<Branding>({ logo_url: "", primary_color: "#3b82f6", secondary_color: "#1e40af", accent_color: "#f59e0b", custom_css: "", theme: "auto", custom_domain: "" });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  const loadBranding = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/v1/admin/branding", { headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data) setBranding(prev => ({ ...prev, ...data }));
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { loadBranding(); }, [loadBranding]);
+
   const save = async () => { setSaving(true); try { await fetch("/api/v1/admin/branding", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(branding) }); } catch { /* noop */ } finally { setSaving(false); } };
+
+  if (loading) return (
+    <div className="p-8 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="p-8">
+      <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
+        <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
+        <button onClick={loadBranding} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Palette className="w-6 h-6 text-purple-500" /> Tenant Branding</h1><p className="text-sm text-gray-500 mt-1">Customize logo, colors, and domain for your tenant.</p></div><button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button></div>
