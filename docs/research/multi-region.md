@@ -4,7 +4,7 @@
 
 This document analyzes multi-region deployment patterns for GGID — active-active, active-passive, read replicas, conflict resolution, and latency-based routing.
 
-> **Related**: [Disaster Recovery](disaster-recovery.md), [Disaster Recovery Guide](../guides/disaster-recovery.md), [Data Sovereignty](data-sovereignty.md), [Zero-Downtime Deployment](zero-downtime-deployment.md)
+> **Related**: zero-downtime deployment guide
 
 ## Region Topologies
 
@@ -248,5 +248,5 @@ Audit events stay in-region but can be replicated to a central analytics cluster
 
 - [Disaster Recovery](disaster-recovery.md)
 - [Data Sovereignty](data-sovereignty.md)
-- [Zero-Downtime Deployment](zero-downtime-deployment.md)
+- zero-downtime deployment guide
 - [Performance Tuning](../guides/performance-tuning.md)

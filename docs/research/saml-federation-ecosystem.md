@@ -41,7 +41,7 @@ Despite being a 2005 standard, SAML remains dominant in enterprise SSO:
 
 ### Coverage: 91.1%
 
-SAML package coverage at 91.1% (see [SAML Coverage Notes](../saml-coverage-91.md)).
+SAML package coverage at 91.1% (see saml coverage analysis).
 
 ---
 

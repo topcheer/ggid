@@ -4,7 +4,7 @@
 
 Cryptographic key management is fundamental to IAM security. This document analyzes the complete key lifecycle — generation, rotation, escrow, and destruction — and compares HSM, KMS, and software-based approaches, mapping each to GGID's implementation.
 
-> **Related**: [Access Key Management](access-key-management.md) (1403 lines, comprehensive design)
+> **Related**: Access Key Management (1403 lines, comprehensive design)
 
 ## Key Types in GGID
 
@@ -241,7 +241,7 @@ func (k *KMSKeyProvider) Sign(data []byte) ([]byte, error) {
 
 ## See Also
 
-- [Access Key Management](access-key-management.md)
-- [Certificates Management](certificates.md)
-- [Security Audit Checklist](../guides/security-audit-checklist.md)
-- [STRIDE Threat Analysis](stride-analysis.md)
+- Access Key Management
+- Certificates Management
+- Security Audit Checklist
+- STRIDE Threat Analysis

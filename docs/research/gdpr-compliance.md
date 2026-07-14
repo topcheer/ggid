@@ -228,6 +228,6 @@ GGID supports DPO requirements through:
 ## See Also
 
 - [Data Retention Policy](../guides/data-retention-policy.md)
-- [Access Reviews](access-reviews.md)
-- [Audit & SIEM Guide](audit-siem-guide.md)
+- access reviews
+- audit SIEM guide
 - [STRIDE Threat Analysis](stride-analysis.md)

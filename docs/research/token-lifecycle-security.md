@@ -5,7 +5,7 @@
 > For session timeout and refresh-rotation algorithm details, see
 > [session-management-design.md](./session-management-design.md).
 > For DPoP/mTLS binding implementation, see
-> [token-binding-dpop-mtls.md](./token-binding-dpop-mtls.md).
+> token-binding-dpop-mtls.md.
 
 ## 1. Overview
 
@@ -186,7 +186,7 @@ func (gw *Gateway) verifyDPoP(r *http.Request, at string) error {
 }
 ```
 
-See [token-binding-dpop-mtls.md](./token-binding-dpop-mtls.md) for full
+See token-binding-dpop-mtls.md for full
 implementation details.
 
 ### mTLS Binding

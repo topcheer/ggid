@@ -2408,7 +2408,7 @@ func ExampleRecoveryFlow() {
 
 12. [passkey-recovery.md](./passkey-recovery.md) — Basic recovery (synced vs device-bound,
     backup eligibility, sync platforms, recovery codes)
-13. [webauthn-roadmap.md](./webauthn-roadmap.md) — WebAuthn feature roadmap
+13. WebAuthn roadmap — WebAuthn feature roadmap
 14. [zero-trust-implementation.md](../design/zero-trust-implementation.md) — Zero Trust design
 15. `services/auth/internal/webauthn/` — Existing WebAuthn implementation
 

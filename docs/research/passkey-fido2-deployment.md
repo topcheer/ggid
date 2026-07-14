@@ -371,6 +371,6 @@ endpoint (`/api/v1/webauthn/credentials`) — use these for the sync-status dash
 
 ---
 
-*See also: [passkey-recovery-architecture.md](./passkey-recovery-architecture.md),
-[webauthn-implementation-guide.md](./webauthn-implementation-guide.md),
-[fido2-attestation-formats.md](./fido2-attestation-formats.md).*
+*See also: passkey recovery architecture,
+WebAuthn implementation guide,
+FIDO2 attestation formats.*

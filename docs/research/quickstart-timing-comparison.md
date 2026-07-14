@@ -881,7 +881,7 @@ echo "Try: curl -H 'Authorization: Bearer $JWT' -H 'X-Tenant-ID: $TENANT' $GATEW
 - [Docker Deployment Guide](../deploy/docker.md)
 - [Kubernetes Deployment Guide](../deploy/kubernetes.md)
 - [Gap Closure Report](gap-closure-report.md)
-- [Competitive Feature Matrix](competitive-feature-matrix.md)
+- competitive feature matrix
 
 ---
 

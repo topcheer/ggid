@@ -95,6 +95,6 @@ curl --cert client.crt --key client.key -X POST https://ggid/oauth/token
 
 ---
 
-*See: [OAuth Scopes Design](oauth-scopes-design.md) | [Token Binding & DPoP](token-binding-dpop.md) | [Security Audit](security-audit-checklist.md)*
+*See: OAuth Scopes Design | Token Binding & DPoP | Security Audit*
 
 *Last updated: 2025-07-11*

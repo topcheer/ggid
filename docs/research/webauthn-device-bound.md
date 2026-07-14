@@ -187,5 +187,5 @@ webauthn:
 ## See Also
 
 - [FIDO2 Passkey Ecosystem 2026](fido2-passkey-ecosystem-2026.md)
-- [Passwordless Setup Guide](passwordless-setup.md)
+- passwordless setup guide
 - [Device-Bound SSO Analysis](device-bound-sso-analysis.md)
