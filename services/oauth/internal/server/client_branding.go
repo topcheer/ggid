@@ -28,9 +28,19 @@ func handleClientBranding(w http.ResponseWriter, r *http.Request) {
 		// Sanitize custom_css: strip script tags
 		b.CustomCSS = strings.ReplaceAll(b.CustomCSS, "<script>", "")
 		b.CustomCSS = strings.ReplaceAll(b.CustomCSS, "</script>", "")
-		brandingMu.Lock(); brandingStore[clientID] = &b; brandingMu.Unlock()
+		if brandingAdapterVar != nil {
+			brandingAdapterVar.Put(clientID, &b)
+		} else {
+			brandingMu.Lock(); brandingStore[clientID] = &b; brandingMu.Unlock()
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "client_id": clientID, "branding": b})
 	case http.MethodGet:
+		if brandingAdapterVar != nil {
+			b, ok := brandingAdapterVar.Get(clientID)
+			if !ok { writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "branding": nil}); return }
+			writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "branding": b})
+			return
+		}
 		brandingMu.RLock(); b, ok := brandingStore[clientID]; brandingMu.RUnlock()
 		if !ok { writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "branding": nil}); return }
 		writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "branding": b})

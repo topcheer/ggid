@@ -34,7 +34,7 @@ func DefaultSessionTimeoutConfig() SessionTimeoutConfig {
 //     idle_timeout, the session is rejected.
 //
 // On each successful check, the last-activity timestamp is refreshed.
-func (sm *SessionManager) SessionTimeoutMiddleware(cfg SessionTimeoutConfig) func(http.Handler) http.Handler {
+func (sm *SessionManager) SessionTimeoutMiddleware(defaultCfg SessionTimeoutConfig) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip public paths.
@@ -55,6 +55,21 @@ func (sm *SessionManager) SessionTimeoutMiddleware(cfg SessionTimeoutConfig) fun
 			if sm.rdb == nil {
 				next.ServeHTTP(w, r)
 				return
+			}
+
+			cfg := defaultCfg
+			if sm.store != nil {
+				tenantID, _ := TenantIDFromRequest(r)
+				if tenantID == "" {
+					tenantID = "default"
+				}
+				sc := sm.store.Get(tenantID)
+				if sc.AuthSessionIdleTimeout > 0 {
+					cfg.IdleTimeout = sc.AuthSessionIdleTimeout
+				}
+				if sc.AuthSessionAbsoluteTimeout > 0 {
+					cfg.AbsoluteTimeout = sc.AuthSessionAbsoluteTimeout
+				}
 			}
 
 			ctx := r.Context()
@@ -100,9 +115,16 @@ func (sm *SessionManager) SessionTimeoutMiddleware(cfg SessionTimeoutConfig) fun
 
 // RecordSessionCreation stores the session creation time for absolute timeout checks.
 // Called when a new session is created.
-func (sm *SessionManager) RecordSessionCreation(ctx context.Context, sessionID string, cfg SessionTimeoutConfig) {
+func (sm *SessionManager) RecordSessionCreation(ctx context.Context, sessionID string, defaultCfg SessionTimeoutConfig) {
 	if sm.rdb == nil {
 		return
+	}
+	cfg := defaultCfg
+	if sm.store != nil {
+		sc := sm.store.Get("default")
+		if sc.AuthSessionAbsoluteTimeout > 0 {
+			cfg.AbsoluteTimeout = sc.AuthSessionAbsoluteTimeout
+		}
 	}
 	createdKey := fmt.Sprintf("ggid:session_created:%s", sessionID)
 	now := time.Now().Format(time.RFC3339)

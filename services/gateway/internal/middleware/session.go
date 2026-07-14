@@ -6,18 +6,25 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
 // SessionManager validates sessions against Redis.
 type SessionManager struct {
-	rdb *redis.Client
+	rdb   *redis.Client
+	store sysconfig.Store
 }
 
 // NewSessionManager creates a session validator backed by Redis.
 func NewSessionManager(rdb *redis.Client) *SessionManager {
 	return &SessionManager{rdb: rdb}
+}
+
+// SetSysconfigStore injects the system config store for hot-reloadable session timeouts.
+func (sm *SessionManager) SetSysconfigStore(store sysconfig.Store) {
+	sm.store = store
 }
 
 // SessionMiddleware extracts session_id from JWT claims or X-Session-ID header,

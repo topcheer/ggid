@@ -97,6 +97,12 @@ func (gw *Gateway) SetSysconfigStore(store sysconfig.Store) {
 	gw.mu.Lock()
 	defer gw.mu.Unlock()
 	gw.sysconfigStore = store
+	if gw.rateLimiter != nil {
+		gw.rateLimiter.SetSysconfigStore(store)
+	}
+	if gw.sessionMgr != nil {
+		gw.sessionMgr.SetSysconfigStore(store)
+	}
 }
 
 func (gw *Gateway) buildHealthChecker() {

@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/ggid/ggid/pkg/sysconfig"
 )
 
 // TokenBucket implements a classic token-bucket rate limiter.
@@ -128,6 +130,7 @@ type TenantBucketLimiter struct {
 	cfg     *BucketRateLimitConfig
 	mu      sync.RWMutex
 	buckets map[string]*TokenBucket // key: tenantID:ip
+	store   sysconfig.Store
 }
 
 // NewTenantBucketLimiter creates a new per-tenant bucket limiter.
@@ -141,8 +144,16 @@ func NewTenantBucketLimiter(cfg *BucketRateLimitConfig) *TenantBucketLimiter {
 	}
 }
 
+// SetSysconfigStore injects the system config store for hot-reloadable rate limits.
+func (tbl *TenantBucketLimiter) SetSysconfigStore(store sysconfig.Store) {
+	tbl.mu.Lock()
+	defer tbl.mu.Unlock()
+	tbl.store = store
+}
+
 // getBucket returns (or creates) the token bucket for the given key.
-func (tbl *TenantBucketLimiter) getBucket(key string, tier string) *TokenBucket {
+// When a sysconfig store is wired, new buckets use the current store values.
+func (tbl *TenantBucketLimiter) getBucket(key string, tier string, r *http.Request) *TokenBucket {
 	tbl.mu.RLock()
 	if b, ok := tbl.buckets[key]; ok {
 		tbl.mu.RUnlock()
@@ -156,6 +167,20 @@ func (tbl *TenantBucketLimiter) getBucket(key string, tier string) *TokenBucket 
 	if override, ok := tbl.cfg.TierOverrides[tier]; ok {
 		maxTokens = override.MaxTokens
 		refill = override.RefillPerSec
+	}
+
+	if tbl.store != nil && r != nil {
+		tenantID, _ := TenantIDFromRequest(r)
+		if tenantID == "" {
+			tenantID = "default"
+		}
+		sc := tbl.store.Get(tenantID)
+		if sc.GatewayRateLimitTokens > 0 {
+			maxTokens = sc.GatewayRateLimitTokens
+		}
+		if sc.GatewayRateLimitRefillPerSec > 0 {
+			refill = sc.GatewayRateLimitRefillPerSec
+		}
 	}
 
 	tbl.mu.Lock()
@@ -197,7 +222,7 @@ func (tbl *TenantBucketLimiter) Middleware(next http.Handler) http.Handler {
 		}
 
 		key := bucketKey(tenantID, ip)
-		bucket := tbl.getBucket(key, tier)
+		bucket := tbl.getBucket(key, tier, r)
 
 		if !bucket.Allow() {
 			retryAfter := bucket.RetryAfter()

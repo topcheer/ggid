@@ -378,9 +378,7 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 		return nil, errors.InvalidArgument("PKCE verification failed")
 	}
 
-	// 7. Issue tokens.
-	// Access token — delegated to the auth service in production.
-	// For now we issue a self-contained JWT as a placeholder.
+	// 7. Issue a signed self-contained JWT access token.
 	accessToken, expiresIn, err := s.issueAccessToken(code.UserID, code.TenantID, client.ClientID, joinScopes(code.Scope))
 	if err != nil {
 		return nil, err
