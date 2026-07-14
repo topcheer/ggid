@@ -44,7 +44,7 @@
 | 16 | Auth server internal error exposure | auth/internal/server/http.go, trust_store_handler.go, admin_config.go | 500 responses returned raw err.Error() to clients. Replaced with writeInternalError helper / sanitized messages. | [DONE] | 5a40d929 |
 | 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | 5a40d929 |
 | 18 | E2E Docker regression suite | deploy/e2e-docker-test.sh | Docker E2E tests were failing due to migrate container command typo. Fixed `sh` duplication; 11/11 E2E tests now PASS. | [DONE] | 6f7d68e0 |
-| 19 | Server handler coverage gaps | identity/internal/server, audit/internal/server, org/internal/server | Added focused HTTP handler tests for certification-status, management-chain, reassign, GDPR export, query-metrics, SIEM health, daily-aggregations, access-matrix, teams-export, membership-trends. | [DONE] | TBD |
+| 19 | Server handler coverage gaps | identity/internal/server, audit/internal/server, org/internal/server | Added focused HTTP handler tests for certification-status, management-chain, reassign, GDPR export, query-metrics, SIEM health, daily-aggregations, access-matrix, teams-export, membership-trends. | [DONE] | d0bdeb50 |
 
 ### LOW Priority
 

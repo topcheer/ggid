@@ -1,16 +1,16 @@
 # Platform Scan State
 
-## Current round: 15
+## Current round: 16
 ## Last scan focus: F (Test Coverage)
 ## Next scan focus: G (SDK Alignment)
 ## Total findings: 19
-## Done: 18
+## Done: 19
 ## Fixed (pending verification): 0
 ## Partial: 1
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 15 is odd: execute completeness scan (focus F — Test Coverage). Round 16 will be E2E regression tests.*
+*Round 16 is even: execute E2E regression tests (`deploy/e2e-docker-test.sh`).*
 ## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
