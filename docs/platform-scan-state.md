@@ -4,16 +4,18 @@
 ## Last scan focus: G (SDK Alignment)
 ## Next scan focus: A (Stub/Placeholder/TODO)
 ## Total findings: 13
-## Done: 10
+## Done: 8
 ## Fixed (pending verification): 1
 ## Partial: 1
-## Remaining: 1
+## Remaining: 3
 ## Source of truth: docs/platform-completeness-report.md
 
 *Note: Counts must be kept in sync with platform-completeness-report.md. If you update one, update the other.*
 
 ## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
+2. CIBA backchannel route — MEDIUM — [FIXED] pending functional verification
+3. Client Branding persistence — MEDIUM — `brandingStore` map in oauth service should be persistent
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
 All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
