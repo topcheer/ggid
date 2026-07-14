@@ -10,6 +10,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/pquerna/otp"
+	"github.com/pquerna/otp/totp"
 )
 
 type MFAFactor struct {
@@ -72,8 +74,19 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 		}
 
 		factorID := uuid.NewString()
-		// For TOTP, generate a placeholder secret (production would use otp.NewTOTP)
-		secret := "JBSWY3DPEHPK3PXP" // example TOTP secret
+		// Generate a unique random TOTP secret for each user.
+		key, err := totp.Generate(totp.GenerateOpts{
+			Issuer:      "GGID",
+			AccountName: userID,
+			Period:      30,
+			Digits:      otp.DigitsSix,
+			Algorithm:   otp.AlgorithmSHA1,
+		})
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to generate TOTP secret"})
+			return
+		}
+		secret := key.Secret()
 		factor := MFAFactor{
 			ID:        factorID,
 			UserID:    userID,
