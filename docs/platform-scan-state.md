@@ -4,22 +4,20 @@
 ## Last scan focus: D (Data Persistence) + G (SDK Alignment)
 ## Next scan focus: E (Security Config)
 ## Total findings: 22
-## Fixed: 11
-## Remaining: 9
+## Fixed: 13
+## Remaining: 7
 ## Partial: 2
 
 ## Current top incomplete features:
-1. Backup Codes in-memory — MEDIUM — [NEW] inMemBackupCodeRepo, lost on restart
-2. PAR store in-memory — LOW — [NEW] parStore map, short-lived (expires in 60s)
-3. Device Code store in-memory — LOW — [NEW] deviceCodeStore map, short-lived
-4. Custom Scopes in-memory — MEDIUM — [NEW] customScopes map, admin config lost
-5. DPoP bindings in-memory — LOW — [NEW] dpopBindings map
-6. Delegation chains in-memory — LOW — [NEW] delegationChains map
-7. Agent consent/review in-memory — LOW — [NEW] sync.Map stores
+1. Backup Codes in-memory — MEDIUM — [FIXED] PostgreSQL impl (backend, bc6c23ee)
+2. Custom Scopes in-memory — MEDIUM — [FIXED] PostgreSQL impl (backend, bc6c23ee)
+3. PAR store in-memory — LOW — [ACCEPTABLE] 60s expiry
+4. Device Code store in-memory — LOW — [ACCEPTABLE] 15min expiry
+5. DPoP bindings in-memory — LOW — [ACCEPTABLE] session-scoped
+6. Delegation chains in-memory — LOW — [ACCEPTABLE] debug/audit
+7. Agent consent/review in-memory — LOW — [ACCEPTABLE] session-scoped
 8. Client branding in-memory — MEDIUM — [NEW] brandingStore map
-9. CIBA store in-memory — LOW — [NEW] cibaStore sync.Map (fallback)
-10. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
-11. Scope i18n in-memory — LOW — [NEW] scopeDescStore (static defaults)
+9. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
 All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
