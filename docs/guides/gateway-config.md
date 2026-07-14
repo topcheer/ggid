@@ -376,5 +376,5 @@ GET /api/v1/health → Aggregated backend health
 
 - [Rate Limiting Guide](rate-limiting.md)
 - [Security Overview](../architecture/security-overview.md)
-- [STRIDE Threat Analysis](stride-analysis.md)
+- STRIDE Threat Analysis
 - [Security Audit Checklist](security-audit-checklist.md)

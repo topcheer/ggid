@@ -152,7 +152,7 @@ the original password.
 
 ### Q: How do I backup GGID?
 
-See the [Deployment Guide](./deployment.md#backup-strategy) for full details:
+See the Deployment Guide for full details:
 
 1. **PostgreSQL** — `pg_dump` daily + WAL archiving for PITR
 2. **RSA keys** — store private key in Vault/KMS
@@ -276,7 +276,7 @@ and the latest standard library improvements.
 
 ### Q: How do I add a new API endpoint?
 
-See the [Developer Guide > Adding a New API Endpoint](./developer-guide.md#adding-a-new-api-endpoint)
+See the Developer Guide > Adding a New API Endpoint
 for a step-by-step walkthrough.
 
 ### Q: How do I generate protobuf code?

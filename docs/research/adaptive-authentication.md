@@ -257,7 +257,7 @@ adaptive_policies:
 
 ## See Also
 
-- [MFA Setup Guide](mfa-setup.md)
-- [Passwordless Setup](passwordless-setup.md)
+- MFA Setup Guide
+- Passwordless Setup
 - [Risk Scoring & Adaptive Access](risk-scoring-adaptive-access.md)
 - [Security Overview](../architecture/security-overview.md)

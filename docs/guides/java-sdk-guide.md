@@ -294,4 +294,4 @@ public class GGIDExample {
 - [Node.js SDK Guide](node-sdk-guide.md)
 - [Quick Start](quick-start.md)
 - [API Reference](api-reference.md)
-- [REST API](rest-api.md)
+- REST API

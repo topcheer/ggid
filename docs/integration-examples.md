@@ -698,4 +698,4 @@ async function loginWithPasskey(username) {
 - [SDK Cookbook](./sdk-cookbook.md) — More integration recipes
 - [WebAuthn Guide](./webauthn-guide.md) — Passkey implementation
 - [SAML Guide](./saml-guide.md) — SSO configuration
-- [SCIM Guide](./scim-guide.md) — Provisioning API
+- SCIM Guide — Provisioning API

@@ -219,4 +219,4 @@ kubectl rollout restart deployment/app
 - [OAuth Client Lifecycle](oauth-client-lifecycle.md)
 - [OAuth Dynamic Client Registration](oauth-dynamic-client-registration.md)
 - [Competitive Analysis](competitive-analysis.md)
-- [Keycloak Migration Guide](../research/keycloak-migration.md)
+- Keycloak Migration Guide

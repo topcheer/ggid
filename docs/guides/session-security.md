@@ -175,4 +175,4 @@ Referrer-Policy: strict-origin-when-cross-origin
 - [JWT Security Best Practices](jwt-security-best-practices.md)
 - [Token Revocation Strategy](token-revocation-strategy.md)
 - [Multi-Factor Step-Up](multi-factor-step-up.md)
-- [CSRF Protection](csrf-protection.md)
+- CSRF Protection

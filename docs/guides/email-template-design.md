@@ -144,4 +144,4 @@ _dmarc.ggid.dev.  TXT  "v=DMARC1; p=quarantine; rua=mailto:dmarc@ggid.dev"
 
 - [Identity Lifecycle Automation](identity-lifecycle-automation.md)
 - [Digital Identity Lifecycle](digital-identity-lifecycle.md)
-- [Notification Templates](notification-templates.md)
+- Notification Templates

@@ -784,9 +784,9 @@ func onboardWarehouseManager(client *ggid.Client, adminToken, userID, warehouseI
 
 ## See Also
 
-- [Go SDK Documentation](./go-sdk-documentation.md)
-- [RBAC Implementation Guide](./rbac-implementation.md)
-- [ABAC Policy Guide](./abac-policy-guide.md)
-- [OAuth 2.1 Implementation](./oauth-2-1-implementation.md)
+- Go SDK Documentation
+- RBAC Implementation Guide
+- ABAC Policy Guide
+- OAuth 2.1 Implementation
 - [API Rate Limiting Strategy](./api-rate-limiting-strategy.md)
 - [Identity Provisioning Standards](./identity-provisioning-standards.md)

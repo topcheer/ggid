@@ -67,6 +67,6 @@ Priority: P2 (enterprise demand, not blocking).
 
 ---
 
-*See: [Per-Tenant IdP](per-tenant-idp.md) | [Gap Closure Report](gap-closure-report.md)*
+*See: Per-Tenant IdP | [Gap Closure Report](gap-closure-report.md)*
 
 *Last updated: 2025-07-11*

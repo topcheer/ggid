@@ -151,7 +151,7 @@ Even if layers 1 and 2 fail, layer 3 blocks cross-tenant access.
 ## References
 
 - [PostgreSQL RLS Documentation](https://www.postgresql.org/docs/16/ddl-rowsecurity.html)
-- [ADR-001: Database Choice](../design/adr-001-database-choice.md) — Full 4-alternative analysis
+- ADR-001: Database Choice — Full 4-alternative analysis
 - [Multi-Tenant Setup Guide](../../guides/multi-tenant-setup.md)
 - [Security Architecture](../../security-architecture.md)
 

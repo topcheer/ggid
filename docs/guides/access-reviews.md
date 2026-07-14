@@ -238,5 +238,5 @@ Define SoD policies that flag conflicting role assignments:
 
 - [Access Requests (IGA)](iga-workflows.md)
 - [SCIM Provisioning](scim-provisioning.md)
-- [Audit Guide](audit-configuration.md)
+- Audit Guide
 - [Security Center](security-audit-checklist.md)

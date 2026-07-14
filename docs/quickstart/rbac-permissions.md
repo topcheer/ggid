@@ -63,4 +63,4 @@ Resources: users, roles, orgs, audit, security, self, * (wildcard)
 
 ---
 
-*See: [RBAC Guide](../rbac-guide.md) | [Policy API](../api-reference.md#policy--abac-endpoints)*
+*See: [RBAC Guide](../rbac-guide.md) | Policy API*

@@ -186,4 +186,4 @@ tokenCache.Set(cacheKey, newToken, 4*time.Minute)
 - [JWT Security Best Practices](jwt-security-best-practices.md)
 - [OAuth Client Lifecycle](oauth-client-lifecycle.md)
 - [OAuth Scope Design](oauth-scope-design.md)
-- [AI Agent Identity](../research/ai-agent-identity.md)
+- AI Agent Identity

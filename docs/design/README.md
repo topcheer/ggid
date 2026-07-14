@@ -10,4 +10,4 @@ Each file documents:
 - **Consequences**: Trade-offs and implications
 
 ## Index
-- [Social Login Architecture](./social-login.md)
+- Social Login Architecture

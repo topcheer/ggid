@@ -185,13 +185,13 @@ Complete reference for all environment variables across every GGID service.
 
 | Variable | Required | Default | Description |
 |----------|:--------:|---------|-------------|
-| _(configured via `redis.conf`)_ | — | — | See [Security Hardening](./security-hardening.md#redis-hardening) |
+| _(configured via `redis.conf`)_ | — | — | See Security Hardening |
 
 ### NATS
 
 | Variable | Required | Default | Description |
 |----------|:--------:|---------|-------------|
-| _(configured via `nats-server.conf`)_ | — | — | See [Security Hardening](./security-hardening.md#nats-hardening) |
+| _(configured via `nats-server.conf`)_ | — | — | See Security Hardening |
 
 ---
 

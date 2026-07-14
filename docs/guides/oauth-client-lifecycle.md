@@ -147,5 +147,5 @@ Retirement checklist:
 
 - [OAuth API](../api/oauth.md)
 - [OAuth Error Handling](oauth-error-handling.md)
-- [OAuth Scope Design](../research/oauth-scope-design.md)
+- OAuth Scope Design
 - [JWT Security Best Practices](jwt-security-best-practices.md)

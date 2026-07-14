@@ -177,13 +177,13 @@ st, _ := status.New(codes.InvalidArgument, "validation failed").
 
 1. **Proto-first**: Design proto → generate REST + gRPC + SDKs
 2. **Never expose raw gRPC externally**: Always through gateway
-3. **Use mTLS internally**: See [gRPC TLS](../api/grpc-tls.md)
+3. **Use mTLS internally**: See gRPC TLS
 4. **Deadline propagation**: Set deadlines on every call
 5. **Interceptors**: Auth, logging, tenant-injection at gRPC layer
 6. **Connection pooling**: Keep gRPC channels warm
 
 ## See Also
 
-- [Architecture Overview](../research/architecture-overview.md)
+- Architecture Overview
 - [Authentication Flows](authentication-flows.md)
 - [REST API Reference](../api/rest-api.md)

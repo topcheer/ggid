@@ -241,5 +241,5 @@ if r.Header.Get("Sec-GPC") == "1" {
 
 - [OAuth Client Scoped Permissions](oauth-client-scoped-permissions.md)
 - [Privacy by Design](privacy-by-design.md)
-- [GDPR Compliance](gdpr-compliance.md)
+- GDPR Compliance
 - [OAuth Client Lifecycle](oauth-client-lifecycle.md)

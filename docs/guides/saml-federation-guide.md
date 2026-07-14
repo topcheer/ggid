@@ -226,6 +226,6 @@ openssl dgst -sha256 -verify idp-pubkey.pem -signature sig.bin response.xml
 ## See Also
 
 - [Per-Tenant IdP](per-tenant-idp.md)
-- [SSO Configuration](sso-providers.md)
+- SSO Configuration
 - [SAML Federation Ecosystem](../research/saml-federation-ecosystem.md)
-- [Certificates Management](certificates.md)
+- Certificates Management

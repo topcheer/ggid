@@ -103,6 +103,6 @@ ldapsearch -H ldaps://ldap.example.com:636 \
 
 ## See Also
 
-- [LDAP Provider](ldap-wiring.md)
+- LDAP Provider
 - [Auth API](../api/auth.md)
 - [Authentication Flows](authentication-flows.md)

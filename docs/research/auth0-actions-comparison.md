@@ -130,6 +130,6 @@ Priority: P2 (functional parity exists, UX gap only).
 
 ---
 
-*See: [Webhook Setup](webhook-setup.md) | [Custom Claims](custom-claims.md) | [Gap Closure Report](gap-closure-report.md)*
+*See: Webhook Setup | Custom Claims | [Gap Closure Report](gap-closure-report.md)*
 
 *Last updated: 2025-07-11*

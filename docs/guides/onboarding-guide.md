@@ -244,7 +244,7 @@ curl -X POST https://api.ggid.example.com/api/v1/audit/alerts/rules \
 
 ## Next Steps
 
-- [Configure OAuth clients](oauth-api.md) for your applications
+- Configure OAuth clients for your applications
 - [Set up SCIM provisioning](scim-provisioning.md) from Okta/Azure AD
 - [Configure webhooks](webhook-events-guide.md) for real-time notifications
 - [Review the [security checklist](security-audit-checklist.md)

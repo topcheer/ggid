@@ -171,7 +171,7 @@ curl -X POST https://api.ggid.example.com/api/v1/users/$USER_ID/unlock \
 
 ## See Also
 
-- [MFA Setup](mfa-setup.md)
+- MFA Setup
 - [Security Audit Checklist](security-audit-checklist.md)
 - [Session Management](../research/session-management.md)
 - [Rate Limiting](rate-limiting-guide.md)

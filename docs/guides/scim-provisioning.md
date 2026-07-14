@@ -78,6 +78,6 @@ curl https://ggid.example.com/scim/v2/Users?count=1 \
 
 ---
 
-*See: [SCIM API Reference](../api/scim-api.md) | [SCIM Ecosystem Analysis](scim-ecosystem.md) | [Tenant Onboarding](tenant-onboarding.md)*
+*See: [SCIM API Reference](../api/scim-api.md) | SCIM Ecosystem Analysis | [Tenant Onboarding](tenant-onboarding.md)*
 
 *Last updated: 2025-07-11*

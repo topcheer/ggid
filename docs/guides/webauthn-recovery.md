@@ -93,4 +93,4 @@ curl -X PUT https://api.ggid.example.com/api/v1/webauthn/devices/$CRED_ID \
 
 - [WebAuthn Deploy](webauthn-deploy.md)
 - [Passkey Conditional UI](passkey-conditional-ui.md)
-- [MFA Setup](mfa-setup.md)
+- MFA Setup

@@ -234,7 +234,7 @@ PII is obfuscated before entering logs:
 ## See Also
 
 - [Compliance Framework Mapping](compliance-framework-mapping.md)
-- [GDPR Compliance](gdpr-compliance.md)
+- GDPR Compliance
 - [Data Retention Policy](data-retention-policy.md)
 - [Database Security](database-security.md)
 - [OAuth Scope Design](oauth-scope-design.md)

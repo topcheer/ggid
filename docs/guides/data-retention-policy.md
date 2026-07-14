@@ -220,5 +220,5 @@ DROP TABLE audit_events_2024_01;
 
 - [Data Retention Policy Research](../research/data-retention-policy.md)
 - [Backup and Restore](backup-restore.md)
-- [Audit Configuration](audit-configuration.md)
+- Audit Configuration
 - [Security Audit Checklist](security-audit-checklist.md)

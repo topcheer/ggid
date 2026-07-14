@@ -164,7 +164,7 @@ curl https://api.ggid.example.com/api/v1/tenants/$TENANT_ID/export \
 
 ## See Also
 
-- [RLS Performance](performance-tuning.md#rls-performance)
+- RLS Performance
 - [Branding Guide](branding-guide.md)
 - [Session Management](session-management-guide.md)
 - [Data Sovereignty](../research/data-sovereignty.md)

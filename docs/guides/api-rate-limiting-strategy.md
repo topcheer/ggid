@@ -465,7 +465,7 @@ RateLimit-Reset: 60
 ## See Also
 
 - [Gateway Architecture](./gateway-architecture.md)
-- [API Security Guide](./api-security-guide.md)
-- [Security Headers Guide](./security-headers-guide.md)
-- [Token Bucket Rate Limiting](./token-bucket-rate-limiting.md)
-- [DDoS Protection Guide](./ddos-protection-guide.md)
+- API Security Guide
+- Security Headers Guide
+- Token Bucket Rate Limiting
+- DDoS Protection Guide

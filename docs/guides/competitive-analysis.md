@@ -90,7 +90,7 @@ Enterprise Grade ─────────────────────
 
 ## See Also
 
-- [Architecture Overview](../research/architecture-overview.md)
+- Architecture Overview
 - [Authentication Flows](authentication-flows.md)
 - [AI Agent Identity](ai-agent-identity.md)
-- [Keycloak Migration Guide](../research/keycloak-migration.md)
+- Keycloak Migration Guide

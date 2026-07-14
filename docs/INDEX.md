@@ -182,7 +182,7 @@
 - [Market Positioning](research/market-positioning-analysis.md)
 
 ### Compliance & Auditing
-- [Audit Tampering Detection](research/audit-tampering-detection.md), [Audit Log Compliance](research/audit-log-compliance-iam.md)
+- [Audit Tampering Detection](research/audit-tampering-detection.md), Audit Log Compliance
 - [SOC2 Compliance](research/compliance-soc2-iam.md), [Compliance Automation](research/compliance-automation.md)
 - [SIEM Security Monitoring](research/siem-security-monitoring.md)
 - [Wire Audit](research/wire-audit.md) — Code exists but not wired patterns

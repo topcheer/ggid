@@ -158,6 +158,6 @@ risk_score = base_score
 
 - [Conditional Access](conditional-access.md)
 - [Audit API](../api/audit-api.md)
-- [Fraud Detection](../research/fraud-detection.md)
-- [Threat Modeling](../research/threat-modeling.md)
+- Fraud Detection
+- Threat Modeling
 - [Competitive Analysis](competitive-analysis.md)

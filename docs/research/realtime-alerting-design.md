@@ -127,6 +127,6 @@ Priority: P2 (GGID has rate limiting + audit, but no proactive alerting).
 
 ---
 
-*See: [Event-Driven Architecture](../architecture/event-driven.md) | [Audit Compliance](audit-compliance.md) | [SIEM Connector Design](siem-connector-design.md)*
+*See: [Event-Driven Architecture](../architecture/event-driven.md) | Audit Compliance | [SIEM Connector Design](siem-connector-design.md)*
 
 *Last updated: 2025-07-11*

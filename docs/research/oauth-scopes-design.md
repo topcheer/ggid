@@ -104,6 +104,6 @@ mux.Handle("/api/v1/users", RequirePermission("users", "read", handler))
 
 ---
 
-*See: [RBAC Guide](role-based-access.md) | [OAuth Scopes Guide](../guides/oauth-scopes-design.md) | [REST API Reference](../api/rest-api.md)*
+*See: RBAC Guide | [OAuth Scopes Guide](../guides/oauth-scopes-design.md) | [REST API Reference](../api/rest-api.md)*
 
 *Last updated: 2025-07-11*

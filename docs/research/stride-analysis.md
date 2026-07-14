@@ -313,7 +313,7 @@ Internet → [API Gateway] → [Identity/Auth/OAuth/Policy/Org/Audit Services]
 
 ## See Also
 
-- [Security Audit Checklist](security-audit-checklist.md)
+- Security Audit Checklist
 - [Security Overview Architecture](../architecture/security-overview.md)
-- [P0 Security Fixes](p0-security-fixes.md)
-- [Rate Limiting Guide](rate-limiting.md)
+- P0 Security Fixes
+- Rate Limiting Guide

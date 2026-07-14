@@ -227,7 +227,7 @@ aws s3 ls s3://ggid-wal-archive/ | tail -5  # Recent WAL files present
 
 ## See Also
 
-- [Production Readiness Checklist (research)](../research/production-readiness.md)
+- Production Readiness Checklist (research)
 - [Security Audit Checklist](security-audit-checklist.md)
 - [Docker Deployment](docker-deployment.md)
 - [Kubernetes Deployment](kubernetes-deployment.md)

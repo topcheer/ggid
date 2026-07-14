@@ -101,6 +101,6 @@ rules:
 
 ## See Also
 
-- [SCIM 2.0 Integration](scim-integration.md)
-- [GDPR Compliance](gdpr-compliance.md)
+- SCIM 2.0 Integration
+- GDPR Compliance
 - [Access Reviews](access-reviews.md)

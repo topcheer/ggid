@@ -335,8 +335,8 @@ The GGID Admin Console provides built-in analytics dashboards:
 ## See Also
 
 - [Identity Threat Detection and Response](./identity-threat-detection-response.md)
-- [Audit Logging Guide](./audit-logging-guide.md)
-- [Security Monitoring Guide](./security-monitoring-guide.md)
-- [Access Review Guide](./access-review-guide.md)
-- [Risk Engine Guide](./risk-engine-guide.md)
-- [SIEM Forwarder Guide](./siem-forwarder-guide.md)
+- Audit Logging Guide
+- Security Monitoring Guide
+- Access Review Guide
+- Risk Engine Guide
+- SIEM Forwarder Guide

@@ -252,5 +252,5 @@ A DR drill should be conducted quarterly. Use this checklist:
 
 - [Disaster Recovery Guide](../guides/disaster-recovery.md)
 - [Disaster Recovery IAM Design](disaster-recovery-iam.md)
-- [Zero-Downtime Deployment](zero-downtime-deployment.md)
-- [Backup and Restore](backup-restore.md)
+- Zero-Downtime Deployment
+- Backup and Restore

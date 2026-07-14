@@ -266,4 +266,4 @@ Client                 Auth Service
 - [Passwordless Setup](passwordless-setup.md)
 - [Per-Tenant IdP](per-tenant-idp.md)
 - [AI Agent Identity](ai-agent-identity.md)
-- [MFA Setup](mfa-setup.md)
+- MFA Setup

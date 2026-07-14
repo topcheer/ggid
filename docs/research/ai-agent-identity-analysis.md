@@ -4,7 +4,7 @@
 > **Author**: GGID Competitive Analysis Team
 > **Date**: 2025-07
 > **Scope**: AI agent authentication, MCP (Model Context Protocol) auth, competitive landscape, GGID positioning
-> **Related Docs**: [Token Exchange RFC 8693](token-exchange-rfc8693.md), [Token Exchange IAM Patterns](token-exchange-iam.md), [Headless Auth](headless-auth-iam.md), [OAuth 2.1 Analysis](oauth-2.1-analysis.md), [Competitive Gap Audit](competitive-gap-audit.md)
+> **Related Docs**: [Token Exchange RFC 8693](token-exchange-rfc8693.md), [Token Exchange IAM Patterns](token-exchange-iam.md), [Headless Auth](headless-auth-iam.md), [OAuth 2.1 Analysis](oauth-2.1-analysis.md), Competitive Gap Audit
 
 ---
 
@@ -2029,7 +2029,7 @@ natural language.
 - [Token Exchange IAM Patterns](token-exchange-iam.md) (1028 lines)
 - [Headless and CLI Authentication](headless-auth-iam.md) (1553 lines)
 - [OAuth 2.1 Analysis](oauth-2.1-analysis.md)
-- [Competitive Gap Audit](competitive-gap-audit.md)
+- Competitive Gap Audit
 - [IAM Differentiation Strategy](iam-differentiation-strategy.md)
 - [OAuth Resource Indicators RFC 8707](oauth-resource-indicators-rfc8707.md)
 

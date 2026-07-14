@@ -519,8 +519,8 @@ GGID's deprovisioning pipeline:
 ## See Also
 
 - [SCIM 2.0 Implementation](./scim-2-0-implementation.md)
-- [Access Lifecycle Management](./access-lifecycle-management.md)
-- [Access Review Guide](./access-review-guide.md)
-- [Deprovisioning Automation](./deprovisioning-automation.md)
-- [Audit Logging Guide](./audit-logging-guide.md)
-- [HR Integration Guide](./hr-integration-guide.md)
+- Access Lifecycle Management
+- Access Review Guide
+- Deprovisioning Automation
+- Audit Logging Guide
+- HR Integration Guide

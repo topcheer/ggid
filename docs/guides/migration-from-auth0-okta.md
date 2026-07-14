@@ -292,4 +292,4 @@ Same SCIM import process as Auth0 migration (Step 3 above).
 - [Keycloak Migration](keycloak-migration.md)
 - [SDK Migration Guide](sdk-migration-guide.md)
 - [SCIM Provisioning](scim-provisioning.md)
-- [SSO Configuration](sso-providers.md)
+- SSO Configuration

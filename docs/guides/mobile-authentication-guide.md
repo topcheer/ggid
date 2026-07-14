@@ -452,8 +452,8 @@ GGID provides SDKs for mobile integration:
 
 ## See Also
 
-- [OAuth 2.1 Implementation Guide](./oauth-2-1-implementation.md)
+- OAuth 2.1 Implementation Guide
 - [WebAuthn Deployment Guide](./webauthn-deployment-guide.md)
-- [MFA Implementation Guide](./mfa-implementation-guide.md)
+- MFA Implementation Guide
 - [API Rate Limiting Strategy](./api-rate-limiting-strategy.md)
 - [Token Lifecycle Design](./token-lifecycle-design.md)

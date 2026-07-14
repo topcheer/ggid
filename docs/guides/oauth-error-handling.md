@@ -73,4 +73,4 @@ func doTokenExchange(code string) error {
 ## See Also
 
 - [OAuth API](../api/oauth.md)
-- [OAuth Scope Design](../research/oauth-scope-design.md)
+- OAuth Scope Design

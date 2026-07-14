@@ -32,7 +32,7 @@ These API paths are registered in code but not found in documentation:
 
 ## Broken Link Fixes Applied
 
-19 broken internal links fixed in `docs/research/` — converted `[text](nonexistent.md)` to plain text.
+19 broken internal links fixed in `docs/research/` — converted `text` to plain text.
 Files affected: key-management-lifecycle.md, saml-federation-ecosystem.md, webauthn-device-bound.md, multi-region.md, passkey-fido2-deployment.md, token-lifecycle-security.md, gdpr-compliance.md, passkey-recovery-strategies.md, quickstart-timing-comparison.md, iam-trends-2026.md, confidential-client-pkce.md, stride-analysis.md, ai-agent-identity-analysis.md, scim-conformance-testing.md.
 
 ## Previous Fixes

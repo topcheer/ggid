@@ -219,6 +219,6 @@ OIDC uses back-channel logout tokens (RFC) or front-channel iframe logout.
 ## See Also
 
 - [OAuth Client Lifecycle](oauth-client-lifecycle.md)
-- [SAML Federation](../research/saml-federation.md)
+- SAML Federation
 - [Identity Lifecycle Automation](identity-lifecycle-automation.md)
 - [Session Security](session-security.md)

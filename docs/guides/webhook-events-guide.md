@@ -2,7 +2,7 @@
 
 This guide covers webhook event types, payload schemas, HMAC signature verification, retry policies, and delivery configuration.
 
-> **Related**: [Webhook Integration Guide](webhook-integration-guide.md), [Webhook Events Reference](../webhook-events-reference.md)
+> **Related**: [Webhook Integration Guide](webhook-integration-guide.md), Webhook Events Reference
 
 ## Overview
 

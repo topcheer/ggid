@@ -1,6 +1,6 @@
 # Audit API Reference
 
-> **Deprecated:** This document is superseded by [docs/api/audit-api.md](docs/api/audit-api.md). See the updated version for the latest information.
+> **Deprecated:** This document is superseded by docs/api/audit-api.md. See the updated version for the latest information.
 
 
 Endpoints, query parameters, response schema, pagination, filtering, rate limiting, export, and hash chain verification.

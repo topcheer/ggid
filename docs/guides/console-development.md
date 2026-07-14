@@ -350,4 +350,4 @@ test('create user flow', async ({ page }) => {
 
 - [SDK Integration Guide](sdk-integration-guide.md)
 - [Gateway Architecture](gateway-architecture.md)
-- [Frontend i18n Sprint](../research/frontend-i18n.md)
+- Frontend i18n Sprint

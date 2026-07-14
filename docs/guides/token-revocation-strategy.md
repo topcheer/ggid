@@ -114,4 +114,4 @@ All users must re-authenticate. Use only for major incidents.
 
 - [Session Management](session-management-guide.md)
 - [OAuth API](../api/oauth.md)
-- [JWT Verification](jwt-verification.md)
+- JWT Verification

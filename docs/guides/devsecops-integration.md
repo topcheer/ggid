@@ -493,5 +493,5 @@ repos:
 - [NIST Secure Software Development Framework (SSDF)](https://csrc.nist.gov/Projects/ssdf)
 - [SLSA Framework](https://slsa.dev/)
 - [Continuous Compliance Monitoring](./continuous-compliance-monitoring.md)
-- [CI/CD Pipeline Security](./cicd-pipeline-security.md)
-- [Security Monitoring Guide](./security-monitoring-guide.md)
+- CI/CD Pipeline Security
+- Security Monitoring Guide

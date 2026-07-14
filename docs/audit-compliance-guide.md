@@ -429,7 +429,7 @@ reports the tampered event.
 
 ## References
 
-- [Audit API](./api-reference.md#audit) — REST endpoints
+- Audit API — REST endpoints
 - [Observability Guide](./observability-guide.md) — Monitoring
 - [Security Whitepaper](./security-whitepaper.md) — Threat model
 - [Webhooks Guide](./webhooks-guide.md) — Event subscriptions

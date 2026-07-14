@@ -123,7 +123,7 @@ ggid audit export --framework gdpr --period 2024
 ## See Also
 
 - [SOC2 Audit Preparation](soc2-audit-prep.md)
-- [GDPR Compliance](gdpr-compliance.md)
+- GDPR Compliance
 - [Penetration Testing](penetration-testing.md)
-- [Threat Modeling](../research/threat-modeling.md)
+- Threat Modeling
 - [Data Retention Policy](data-retention-policy.md)

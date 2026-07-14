@@ -188,4 +188,4 @@ server:
 
 ---
 
-*See: [SDK Reference](../sdk-reference.md) | [Java SDK](../sdk-reference.md#java-sdk)*
+*See: [SDK Reference](../sdk-reference.md) | Java SDK*

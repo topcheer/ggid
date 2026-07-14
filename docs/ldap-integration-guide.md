@@ -498,5 +498,5 @@ curl -X POST $API/api/v1/auth/login \
 ## References
 
 - [Configuration Reference](./configuration.md) — All env vars
-- [Auth Providers](./api-reference.md#auth-providers) — Provider API
+- Auth Providers — Provider API
 - [Troubleshooting](./troubleshooting.md) — Common issues
