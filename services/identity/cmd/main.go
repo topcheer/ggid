@@ -44,6 +44,7 @@ func main() {
 	defer cancel()
 
 	if err := srv.Run(ctx); err != nil {
+		cancel()
 		log.Fatalf("identity server error: %v", err)
 	}
 

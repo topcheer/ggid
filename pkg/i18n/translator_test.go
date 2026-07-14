@@ -121,7 +121,7 @@ func TestLoadDirectory(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Non-JSON file should be skipped
-	os.WriteFile(filepath.Join(dir, "README.md"), []byte("skip"), 0644)
+	os.WriteFile(filepath.Join(dir, "README.md"), []byte("skip"), 0644) //nolint:errcheck // test helper
 
 	tr := NewTranslator("en")
 	if err := tr.LoadDirectory(dir); err != nil {

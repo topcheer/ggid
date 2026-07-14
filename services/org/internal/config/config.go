@@ -28,8 +28,8 @@ func FromEnv() *Config {
 			Password:        getEnv("DB_PASSWORD", "ggid"),
 			Database:        getEnv("DB_DATABASE", "ggid"),
 			SSLMode:         getEnv("DB_SSL_MODE", "disable"),
-			MaxConns:        int32(getEnvInt("DB_MAX_CONNS", 20)),
-			MinConns:        int32(getEnvInt("DB_MIN_CONNS", 2)),
+			MaxConns:        int32(getEnvInt("DB_MAX_CONNS", 20)), //nolint:gosec // G115: safe, values are small
+			MinConns:        int32(getEnvInt("DB_MIN_CONNS", 2)),   //nolint:gosec // G115: safe, values are small
 			MaxConnLifetime: time.Duration(getEnvInt("DB_CONN_LIFETIME", 300)) * time.Second,
 		},
 		NATSURL: getEnv("NATS_URL", "nats://localhost:4222"),

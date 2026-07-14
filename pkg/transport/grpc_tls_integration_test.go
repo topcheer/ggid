@@ -165,7 +165,7 @@ func TestGRPCTLS_InsecureFallback(t *testing.T) {
 	healthpb.RegisterHealthServer(srv, hs)
 
 	go func() {
-		srv.Serve(lis)
+		_ = srv.Serve(lis)
 	}()
 
 	// Dial insecure

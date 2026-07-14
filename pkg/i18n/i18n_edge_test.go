@@ -201,11 +201,11 @@ func TestLoadDirectory_SkipsNonJSONFiles(t *testing.T) {
 
 	// Create a .txt file (should be skipped)
 	txtFile := filepath.Join(tmpDir, "readme.txt")
-	os.WriteFile(txtFile, []byte("text"), 0644)
+	os.WriteFile(txtFile, []byte("text"), 0644) //nolint:errcheck // test helper
 
 	// Create a .json file (should be loaded)
 	jsonFile := filepath.Join(tmpDir, "en.json")
-	os.WriteFile(jsonFile, []byte(`{"hello":"world"}`), 0644)
+	os.WriteFile(jsonFile, []byte(`{"hello":"world"}`), 0644) //nolint:errcheck // test helper
 
 	tr := NewTranslator("en")
 	if err := tr.LoadDirectory(tmpDir); err != nil {
@@ -223,7 +223,7 @@ func TestLoadDirectory_SkipsSubdirectories(t *testing.T) {
 
 	// Create a subdirectory (should be skipped)
 	subDir := filepath.Join(tmpDir, "subdir")
-	os.Mkdir(subDir, 0755)
+	os.Mkdir(subDir, 0755) //nolint:errcheck // test helper
 
 	tr := NewTranslator("en")
 	if err := tr.LoadDirectory(tmpDir); err != nil {
@@ -240,7 +240,7 @@ func TestLoadDirectory_SkipsSubdirectories(t *testing.T) {
 func TestLoadDirectory_InvalidJSONFile(t *testing.T) {
 	tmpDir := t.TempDir()
 	badFile := filepath.Join(tmpDir, "bad.json")
-	os.WriteFile(badFile, []byte("invalid"), 0644)
+	os.WriteFile(badFile, []byte("invalid"), 0644) //nolint:errcheck // test helper
 
 	tr := NewTranslator("en")
 	err := tr.LoadDirectory(tmpDir)
