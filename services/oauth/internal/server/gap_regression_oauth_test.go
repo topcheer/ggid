@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -190,5 +191,42 @@ func TestGapRegression_TokenBindingStats_CompliancePct(t *testing.T) {
 
 	if resp.CompliancePct < 0 || resp.CompliancePct > 100 {
 		t.Errorf("compliance_pct should be 0-100, got %f", resp.CompliancePct)
+	}
+}
+
+// Gap Regression: Client Branding Persistence (#branding-verified)
+// Validates: handleClientBranding uses brandingAdapterVar (PG-first, mem fallback).
+
+func TestGapRegression_ClientBranding_UsesAdapter(t *testing.T) {
+	brandingAdapterVar = newBrandingAdapter(nil)
+	clientID := "gap-test-client"
+
+	body := `{"logo_url":"https://example.com/logo.png","primary_color":"#ff0000","background_url":"","custom_css":""}`
+	req := httptest.NewRequest("PUT", "/api/v1/oauth/clients/"+clientID+"/branding", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	handleClientBranding(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("PUT branding expected 200, got %d", w.Code)
+	}
+
+	req = httptest.NewRequest("GET", "/api/v1/oauth/clients/"+clientID+"/branding", nil)
+	w = httptest.NewRecorder()
+	handleClientBranding(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET branding expected 200, got %d", w.Code)
+	}
+	var resp struct {
+		ClientID string          `json:"client_id"`
+		Branding *ClientBranding `json:"branding"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.ClientID != clientID {
+		t.Errorf("expected client_id %s, got %s", clientID, resp.ClientID)
+	}
+	if resp.Branding == nil || resp.Branding.LogoURL != "https://example.com/logo.png" {
+		t.Errorf("branding adapter read did not return persisted value: %+v", resp.Branding)
 	}
 }
