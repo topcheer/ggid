@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
-import { Activity, Save, Loader2, Radio, Server } from "lucide-react";
+import { Activity, Save, Loader2, Radio, Server, AlertCircle } from "lucide-react";
 
 interface SIEMConfig {
   provider: string;
@@ -36,40 +36,41 @@ export default function SIEMPage() {
   });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
   const [testing, setTesting] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true); setError("");
+    const stored = typeof window !== "undefined" ? localStorage.getItem("ggid_siem_config") : null;
+    if (stored) {
+      try { const parsed = JSON.parse(stored); if (parsed) setConfig(prev => ({ ...prev, ...parsed })); } catch { /* ignore */ }
+    }
+    fetch("/api/v1/settings/siem", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+      .then(async (res) => { if (res.ok) { const data = await res.json(); if (data) setConfig(data); } })
+      .catch(() => { /* use stored/local defaults */ })
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleSave = async () => {
-    setSaving(true);
+    setSaving(true); setError(""); setMsg("");
     try {
-      await apiFetch("/api/v1/settings/siem", {
-        method: "POST",
-        body: JSON.stringify(config),
-      });
+      await apiFetch("/api/v1/settings/siem", { method: "POST", body: JSON.stringify(config) });
       setMsg("SIEM configuration saved");
-    } catch {
-      // Endpoint may not exist yet — save to localStorage
+    } catch (e) {
       localStorage.setItem("ggid_siem_config", JSON.stringify(config));
-      setMsg("SIEM configuration saved (offline mode)");
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMsg(""), 4000);
-    }
+      setError(e instanceof Error ? e.message : "Failed to save SIEM configuration");
+    } finally { setSaving(false); setTimeout(() => setMsg(""), 4000); }
   };
 
   const handleTest = async () => {
-    setTesting(true);
+    setTesting(true); setError(""); setMsg("");
     try {
-      await apiFetch("/api/v1/settings/siem/test", {
-        method: "POST",
-        body: JSON.stringify(config),
-      });
+      await apiFetch("/api/v1/settings/siem/test", { method: "POST", body: JSON.stringify(config) });
       setMsg("Connection test succeeded!");
-    } catch {
-      setMsg("Connection test failed — check endpoint and API key");
-    } finally {
-      setTesting(false);
-      setTimeout(() => setMsg(""), 4000);
-    }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Connection test failed");
+    } finally { setTesting(false); setTimeout(() => setMsg(""), 4000); }
   };
 
   const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200";
@@ -91,6 +92,12 @@ export default function SIEMPage() {
           {msg}
         </div>
       )}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" /> {error}
+        </div>
+      )}
+      {loading && <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading SIEM configuration...</div>}
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Provider Selection */}
@@ -125,6 +132,7 @@ export default function SIEMPage() {
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Endpoint URL</label>
               <input
+                aria-label="SIEM endpoint URL"
                 value={config.endpoint}
                 onChange={(e) => setConfig({ ...config, endpoint: e.target.value })}
                 className={inputCls}
@@ -134,6 +142,7 @@ export default function SIEMPage() {
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">API Key / Token</label>
               <input
+                aria-label="SIEM API key"
                 type="password"
                 value={config.apiKey}
                 onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
@@ -145,6 +154,7 @@ export default function SIEMPage() {
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Index Name</label>
                 <input
+                  aria-label="SIEM index name"
                   value={config.indexName}
                   onChange={(e) => setConfig({ ...config, indexName: e.target.value })}
                   className={inputCls}
@@ -154,6 +164,7 @@ export default function SIEMPage() {
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Batch Size</label>
                 <input
+                  aria-label="SIEM batch size"
                   type="number"
                   value={config.batchSize}
                   onChange={(e) => setConfig({ ...config, batchSize: Number(e.target.value) })}
@@ -171,6 +182,7 @@ export default function SIEMPage() {
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-3">
           <input
+            aria-label="Enable SIEM forwarding"
             type="checkbox"
             checked={config.enabled}
             onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
@@ -180,6 +192,7 @@ export default function SIEMPage() {
         </label>
         <div className="flex gap-2">
           <button
+            aria-label="Test SIEM connection"
             onClick={handleTest}
             disabled={testing || !config.endpoint}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-700"
@@ -187,8 +200,9 @@ export default function SIEMPage() {
             {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Test Connection"}
           </button>
           <button
+            aria-label="Save SIEM configuration"
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || loading}
             className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save

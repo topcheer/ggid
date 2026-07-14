@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
-import { Archive, Save, Loader2, Plus, Trash2, Clock } from "lucide-react";
+import { Archive, Save, Loader2, Plus, Trash2, Clock, AlertCircle } from "lucide-react";
 
 interface RetentionPolicy {
   id: string;
@@ -38,22 +38,30 @@ export default function DataRetentionPage() {
   ]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true); setError("");
+    const stored = typeof window !== "undefined" ? localStorage.getItem("ggid_retention_policies") : null;
+    if (stored) {
+      try { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) setPolicies(parsed); } catch { /* ignore */ }
+    }
+    fetch("/api/v1/settings/data-retention", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+      .then(async (res) => { if (res.ok) { const data = await res.json(); if (Array.isArray(data.policies)) setPolicies(data.policies); } })
+      .catch(() => { /* use stored defaults */ })
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleSave = async () => {
-    setSaving(true);
+    setSaving(true); setError(""); setMsg("");
     try {
-      await apiFetch("/api/v1/settings/data-retention", {
-        method: "POST",
-        body: JSON.stringify({ policies }),
-      });
+      await apiFetch("/api/v1/settings/data-retention", { method: "POST", body: JSON.stringify({ policies }) });
       setMsg("Retention policies saved");
-    } catch {
+    } catch (e) {
       localStorage.setItem("ggid_retention_policies", JSON.stringify(policies));
-      setMsg("Retention policies saved (offline mode)");
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMsg(""), 4000);
-    }
+      setError(e instanceof Error ? e.message : "Failed to save retention policies");
+    } finally { setSaving(false); setTimeout(() => setMsg(""), 4000); }
   };
 
   const addPolicy = () => {
@@ -88,6 +96,7 @@ export default function DataRetentionPage() {
         <button
           onClick={addPolicy}
           className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+          aria-label="Add retention policy"
         >
           <Plus className="h-4 w-4" /> Add Policy
         </button>
@@ -98,6 +107,12 @@ export default function DataRetentionPage() {
           {msg}
         </div>
       )}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" /> {error}
+        </div>
+      )}
+      {loading && <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading retention policies...</div>}
 
       {/* Compliance summary */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -140,6 +155,7 @@ export default function DataRetentionPage() {
               <tr key={policy.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                 <td className="px-4 py-3">
                   <input
+                    aria-label="Policy name"
                     value={policy.name}
                     onChange={(e) => updatePolicy(policy.id, { name: e.target.value })}
                     className={inputCls}
@@ -147,6 +163,7 @@ export default function DataRetentionPage() {
                 </td>
                 <td className="px-4 py-3">
                   <select
+                    aria-label="Data type"
                     value={policy.dataType}
                     onChange={(e) => updatePolicy(policy.id, { dataType: e.target.value })}
                     className={inputCls}
@@ -159,6 +176,7 @@ export default function DataRetentionPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     <input
+                      aria-label="Retention days"
                       type="number"
                       value={policy.retentionDays}
                       onChange={(e) => updatePolicy(policy.id, { retentionDays: Number(e.target.value) })}
@@ -171,6 +189,7 @@ export default function DataRetentionPage() {
                 </td>
                 <td className="px-4 py-3">
                   <select
+                    aria-label="Retention action"
                     value={policy.action}
                     onChange={(e) => updatePolicy(policy.id, { action: e.target.value })}
                     className={inputCls}
@@ -182,6 +201,7 @@ export default function DataRetentionPage() {
                 </td>
                 <td className="px-4 py-3">
                   <input
+                    aria-label="Enable policy"
                     type="checkbox"
                     checked={policy.enabled}
                     onChange={(e) => updatePolicy(policy.id, { enabled: e.target.checked })}
@@ -192,6 +212,7 @@ export default function DataRetentionPage() {
                   <button
                     onClick={() => removePolicy(policy.id)}
                     title="Delete policy"
+                    aria-label="Delete policy"
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -206,7 +227,8 @@ export default function DataRetentionPage() {
       <div className="flex justify-end">
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || loading}
+          aria-label="Save retention policies"
           className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Policies
