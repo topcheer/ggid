@@ -38,6 +38,7 @@ var publicPaths = []string{
 	"/api/v1/oauth/introspect",
 	"/api/v1/oauth/device",
 	"/api/v1/oauth/register",
+	"/api/v1/oauth/backchannel",
 	"/api/v1/auth/saml/",
 	"/oauth/",
 	"/saml/",
