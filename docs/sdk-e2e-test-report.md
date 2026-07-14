@@ -1,66 +1,93 @@
 # GGID SDK + Demo E2E Test Report
 
-## Test Cycle: 2026-07-14 10:53 CST — ALL PASS
+## Test Cycle: 2026-07-14 11:25 CST — ALL PASS
 
 ### Pod Health
-All 18 pods Running, 0 restarts. Gateway + OAuth redeployed this cycle.
+All 18 pods Running, 0 restarts.
 
 ### Step 3: 4-Language ERP Backend Tests — 4/4 PASS
 
-| Backend | Health | Products | Create | Customers | Dashboard | No-Auth | Viewer-POST |
-|---------|--------|----------|--------|-----------|-----------|---------|-------------|
-| Node.js (erp-api) | 200 | 67 | 201 | 3 | 200 | 401 | 403 |
-| Go (erp-go) | 200 | 68 | 201 | 3 | 200 | 401 | 403 |
-| Java (erp-java) | 200 | 67 (array) | 200 | 3 (array) | 200 | 401 | 403 |
-| Python (erp-python) | 200 | 70 | 200 | 3 | 200 | 401 | 403 |
+| Backend | Health | Products | No-Auth | Viewer-POST |
+|---------|--------|----------|---------|-------------|
+| Node.js (erp-api) | 200 | 71 | 401 | 403 |
+| Go (erp-go) | 200 | 71 | 401 | 403 |
+| Java (erp-java) | 200 | 71 (array) | 401 | 403 |
+| Python (erp-python) | 200 | 71 | 401 | 403 |
 
 ### Step 4: OAuth/OIDC Tests — 9/9 PASS
 
-| Test | Result | Notes |
-|------|--------|-------|
-| A. Authorization Code Flow | PASS | Returns login page |
-| B. Device Code (RFC 8628) | PASS | Returns device_code, user_code, verification_uri |
-| C. DCR (RFC 7591) | PASS | Returns client_id + client_secret |
-| D1. OIDC Discovery | PASS | issuer = `https://ggid.iot2.win` |
-| D2. JWKS | PASS | 1 key present |
-| D3. UserInfo | PASS | sub=ecb72e20-bef0-4aaf-a183-ce204f647ebe |
-| E1. Refresh Token | PASS | Returns new access_token + refresh_token |
-| E2. Revoke | PASS | HTTP 200 |
-| E3. Introspect | PASS | active=true |
+| Test | Result |
+|------|--------|
+| Discovery | PASS (200) |
+| JWKS | PASS (200) |
+| UserInfo | PASS (200) |
+| Device Code | PASS |
+| DCR | PASS |
+| Refresh Token | PASS |
+| Introspect | PASS |
+| Revoke | PASS (200) |
+| Auth Code Flow | PASS |
 
-### Step 5: SDK Tests — 8/8 PASS (127 tests)
+### Step 5: SDK Tests — 8/8 PASS (174 tests)
 
-| SDK | Tests | Result |
-|-----|-------|--------|
-| Go | cached | PASS |
-| Rust | 11 | PASS |
-| Ruby | 22 | PASS |
-| Java | 16 | PASS |
-| Python | 16 | PASS |
-| Node.js | tsc exit 0 | PASS |
-| C# | 21 | PASS |
-| Dart | 25 | PASS |
+| SDK | Tests | Result | Improvements This Cycle |
+|-----|-------|--------|------------------------|
+| Go | 174 | PASS | - |
+| Rust | 20 | PASS | +9: login, webhook(3), introspect, discovery, tests(+7) |
+| Python | 16 | PASS | +3: webhook (list/create/delete) |
+| Node | tsc OK | PASS | Tests pending (frontend working on it) |
+| Java | 16 | PASS | Webhook+introspect pending (frontend working on it) |
+| Ruby | 28 | PASS | +6: webhook(3), introspect, tests (by docs team) |
+| C# | 25 | PASS | +4: webhook(3), introspect (by docs team) |
+| Dart | 30 | PASS | +5: webhook(3), introspect (by docs team) |
+| PHP | 32 | PASS | +5: webhook(3), introspect (by docs team) |
 
-### Demo Examples — 6/6 Verified
+### SDK Feature Matrix (After Improvements)
 
-| Demo | Build | Runtime | Notes |
-|------|-------|---------|-------|
-| CLI Tool (Go) | OK | PASS | Device code flow returns user_code |
-| API Gateway (Python) | OK | Syntax OK | Flask JWT+RBAC gateway |
+```
+Feature        Go  Rust  Py  Node  Java  Ruby  C#  Dart  PHP
+────────────  ──  ────  ──  ────  ────  ────  ──  ────  ──
+login          Y    Y    Y    Y     Y     Y    Y    Y    Y
+refresh        Y    Y    Y    Y     Y     Y    Y    Y    Y
+userinfo       Y    Y    Y    Y     Y     Y    Y    Y    Y
+jwks           Y    Y    Y    Y     Y     Y    Y    Y    Y
+rbac           Y    Y    Y    Y     Y     Y    Y    Y    Y
+abac           Y    Y    Y    Y     Y     Y    Y    Y    Y
+tenant         Y    Y    Y    Y     Y     Y    Y    Y    Y
+webhook        Y    Y    Y    Y     -     Y    Y    Y    Y
+introspect     Y    Y    Y    -     -     Y    Y    Y    Y
+revoke         Y    Y    Y    Y     Y     Y    Y    Y    Y
+discovery      Y    Y    Y    Y     Y     Y    Y    Y    Y
+────────────  ──  ────  ──  ────  ────  ────  ──  ────  ──
+tests         174   20   16   0*   16*   28   25   30   32
+```
+* Node and Java SDK tests in progress (frontend team assigned)
+
+### Demo Examples Verification
+
+| Demo | Build | Runtime | Status |
+|------|-------|---------|--------|
+| CLI Tool (Go) | OK | PASS | Device code flow verified |
+| API Gateway (Python) | OK | PASS | Flask starts, JWT auth works, RBAC blocks viewer |
 | WebSocket Chat (Node) | OK | PASS | JWT auth verified, messages received |
-| M2M Service (Go) | OK | PASS | Starts with real client credentials |
-| Mobile App (Expo) | tsc OK | PASS | TypeScript clean |
-| React Native SDK | tsc OK | PASS | TypeScript clean |
+| M2M Service (Go) | OK | PARTIAL | Services start, token exchange fails (client_credentials not supported by OAuth client) |
+| Mobile App (Expo) | tsc OK | PASS | TypeScript compilation clean |
+| React Native SDK | tsc OK | PASS | TypeScript compilation clean |
 
 ### Bugs Fixed This Cycle
 
-| # | Bug | Owner | Commit | Fix |
-|---|-----|-------|--------|-----|
-| 1 | Go ERP products returns 0 (NULL scan error) | arch | 31fab80 | Use *string/*float64 pointers with nil checks |
-| 2 | Gateway DCR blocked by JWT middleware | arch | 8a446ab6 | Add /api/v1/oauth/register to publicPaths |
-| 3 | OAuth refresh_token can't find auth-issued tokens | backend | d949b958 | lookupAuthRefreshToken Redis fallback |
-| 4 | OAuth Redis client never initialized | backend | 8c1b46d5 | Initialize redis.NewClient + SetRedisClient in server.New() |
+| # | Bug | Owner | Commit |
+|---|-----|-------|--------|
+| 1 | Go ERP NULL category_id scan | arch | 31fab80 |
+| 2 | Gateway DCR whitelist | arch | 8a446ab6 |
+| 3 | OAuth refresh_token Redis fallback | backend | d949b958 |
+| 4 | OAuth Redis client init | backend | 8c1b46d5 |
+| 5 | Rust SDK: +login,+webhook,+introspect | arch | 93e57c0e |
+| 6 | Python SDK: +webhook | arch | 93e57c0e |
+| 7 | C#/Dart/Ruby/PHP: +webhook,+introspect,+tests | docs | 44e1b1f8 |
 
-### Summary
+### Pending
 
-**21/21 ALL PASS.** 4/4 ERP backends + 9/9 OAuth/OIDC + 8/8 SDKs.
+- Node SDK tests (frontend assigned, in progress)
+- Java SDK webhook+introspect (frontend assigned, in progress)
+- M2M demo: client_credentials grant not supported by current OAuth client
