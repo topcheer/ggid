@@ -373,6 +373,200 @@ impl GGIDClient {
         Ok(resp.json().await?)
     }
 
+    // --- Agent Identity ---
+
+    /// Register a new AI agent.
+    pub async fn register_agent(
+        &self,
+        token: &str,
+        reg: AgentRegistration,
+    ) -> Result<Agent, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/agents/register", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&reg)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
+
+    /// List all agents for the current tenant.
+    pub async fn list_agents(&self, token: &str) -> Result<Vec<Agent>, GGIDError> {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct AgentList {
+            agents: Vec<Agent>,
+        }
+        let resp = self
+            .http
+            .get(format!("{}/api/v1/agents", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        let result: AgentList = resp.json().await?;
+        Ok(result.agents)
+    }
+
+    /// Exchange a user token for an agent-scoped token.
+    pub async fn exchange_agent_token(
+        &self,
+        agent_id: &str,
+        subject_token: &str,
+        scopes: &[&str],
+    ) -> Result<AgentTokenResponse, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/agents/token", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({
+                "agent_id": agent_id,
+                "subject_token": subject_token,
+                "scope": scopes,
+            }))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
+
+    /// Verify an agent token and return its claims.
+    pub async fn verify_agent_token(&self, token: &str) -> Result<AgentTokenClaims, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/agents/verify", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({"token": token}))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
+
+    // --- Access Request (IGA) ---
+
+    /// Create an access request.
+    pub async fn create_access_request(
+        &self,
+        token: &str,
+        req: AccessRequest,
+    ) -> Result<AccessRequestResponse, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/access-requests", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&req)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
+
+    /// List access requests for the current tenant.
+    pub async fn list_access_requests(
+        &self, token: &str
+    ) -> Result<Vec<AccessRequestResponse>, GGIDError> {
+        use serde::Deserialize;
+        #[derive(Deserialize)]
+        struct RequestList {
+            #[serde(default)]
+            requests: Vec<AccessRequestResponse>,
+        }
+        let resp = self
+            .http
+            .get(format!("{}/api/v1/access-requests", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        let result: RequestList = resp.json().await?;
+        Ok(result.requests)
+    }
+
+    /// Approve an access request.
+    pub async fn approve_access_request(
+        &self,
+        token: &str,
+        request_id: &str,
+        comment: &str,
+    ) -> Result<AccessRequestResponse, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/access-requests/{}/approve", self.base_url, request_id))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({"comment": comment}))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
+
+    /// Reject an access request.
+    pub async fn reject_access_request(
+        &self,
+        token: &str,
+        request_id: &str,
+        comment: &str,
+    ) -> Result<AccessRequestResponse, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/access-requests/{}/reject", self.base_url, request_id))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({"comment": comment}))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+        Ok(resp.json().await?)
+    }
+
     // --- ABAC ---
 
     /// Evaluate ABAC conditions.

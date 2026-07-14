@@ -126,3 +126,90 @@ pub struct Webhook {
     #[serde(default)]
     pub created_at: Option<String>,
 }
+
+/// AI Agent registration request.
+#[derive(Debug, Clone, Serialize)]
+pub struct AgentRegistration {
+    pub name: String,
+    #[serde(rename = "type")]
+    pub agent_type: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub owner_user_id: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub description: String,
+    pub allowed_scopes: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub allowed_mcp_servers: Vec<String>,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub max_delegation_depth: i32,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub rate_limit_per_min: i32,
+}
+
+fn is_zero(v: &i32) -> bool {
+    *v == 0
+}
+
+/// AI Agent.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Agent {
+    pub id: String,
+    pub tenant_id: String,
+    pub name: String,
+    #[serde(rename = "type")]
+    pub agent_type: String,
+    pub owner_user_id: String,
+    pub client_id: String,
+    pub status: String,
+    pub allowed_scopes: Vec<String>,
+    pub max_delegation_depth: i32,
+}
+
+/// Agent token exchange response.
+#[derive(Debug, Clone, Deserialize)]
+pub struct AgentTokenResponse {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_in: i64,
+    pub scope: String,
+    pub agent_id: String,
+    #[serde(rename = "delegation_depth_remaining")]
+    pub delegation_depth: i32,
+}
+
+/// Agent token claims.
+#[derive(Debug, Clone, Deserialize)]
+pub struct AgentTokenClaims {
+    pub sub: String,
+    pub iss: String,
+    pub exp: i64,
+    pub iat: i64,
+    pub agent_id: String,
+    #[serde(rename = "agent_type")]
+    pub agent_type: String,
+    #[serde(rename = "is_agent_token")]
+    pub is_agent_token: bool,
+    #[serde(rename = "max_delegation_depth")]
+    pub max_delegation_depth: i32,
+}
+
+/// Access request (IGA) request.
+#[derive(Debug, Clone, Serialize)]
+pub struct AccessRequest {
+    pub user_id: String,
+    pub resource: String,
+    pub action: String,
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub reason: String,
+}
+
+/// Access request response.
+#[derive(Debug, Clone, Deserialize)]
+pub struct AccessRequestResponse {
+    pub id: String,
+    pub user_id: String,
+    pub resource: String,
+    pub action: String,
+    pub status: String,
+    pub reason: Option<String>,
+}

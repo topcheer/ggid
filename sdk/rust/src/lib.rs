@@ -26,5 +26,5 @@ pub mod types;
 pub mod error;
 
 pub use client::GGIDClient;
-pub use types::{Claims, UserInfo, TokenResponse, Role, Permission, ABACEvalRequest, ABACEvalResult, ABACCondition, PolicyCheckRequest, PolicyCheckResult, IntrospectionResult, Webhook};
+pub use types::{Claims, UserInfo, TokenResponse, Role, Permission, ABACEvalRequest, ABACEvalResult, ABACCondition, PolicyCheckRequest, PolicyCheckResult, IntrospectionResult, Webhook, Agent, AgentRegistration, AgentTokenResponse, AgentTokenClaims, AccessRequest, AccessRequestResponse};
 pub use error::GGIDError;
