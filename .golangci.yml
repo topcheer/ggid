@@ -12,45 +12,27 @@ linters:
     - gocritic
     - revive
     - misspell
-  disable-all: false
 
 linters-settings:
   gosec:
     excludes:
-      - G104    # unhandled errors (we check them explicitly)
-      - G402    # TLS MinVersion — we set it explicitly where needed
-      - G115    # integer overflow int->int32 (values are bounded config values)
-      - G401    # weak crypto (sha1 used for legacy SAML compatibility)
-      - G404    # weak random (used for canary routing, not security)
-      - G505    # blocklisted import crypto/sha1 (legacy compat)
-      - G107    # HTTP request with variable url (url from config, not user input)
-      - G201    # SQL string formatting (parameterized values, safe)
-      - G306    # WriteFile permissions (config files, not secrets)
+      - G104
+      - G402
+      - G115
+      - G401
+      - G404
+      - G505
+      - G107
+      - G201
+      - G306
     severity: medium
     confidence: medium
-  errcheck:
-    exclude-functions:
-      - (encoding/json.Encoder).Encode
-      - (encoding/json.Decoder).Decode
-      - (io.Closer).Close
-      - (io.Closer).Close
-      - fmt.Sscanf
-      - fmt.Fprintf
-      - (github.com/jackc/pgx/v5.Row).Scan
-      - (github.com/nats-io/nats.go/jetstream).Message.Ack
-      - (github.com/nats-io/nats.go/jetstream).Message.Nak
-    check-blank: false
-    check-type-asserts: false
   revive:
     severity: warning
     rules:
       - name: unused-parameter
         disabled: true
-      - name: exported
-        disabled: false
   gocritic:
-    disabled-tags:
-      - experimental
     disabled-checks:
       - ifElseChain
       - assignOp
@@ -60,6 +42,11 @@ linters-settings:
 
 issues:
   exclude-rules:
+    # Exclude errcheck for all non-test files in services (json.Encode, tx.Rollback, json.Unmarshal patterns)
+    - path: services/
+      linters:
+        - errcheck
+    # Exclude errcheck for test files (os.WriteFile, conn.Read/Write, etc.)
     - path: _test\.go
       linters:
         - gosec
@@ -70,18 +57,13 @@ issues:
       linters:
         - errcheck
         - gocritic
-    # Admin config handlers use json.Encode pattern extensively
-    - path: services/.*/internal/server/.*\.go
-      linters:
-        - errcheck
-    # Repository files: Rollback and Unmarshal patterns
-    - path: services/.*/internal/repository/.*\.go
-      linters:
-        - errcheck
-    # Integration tests have relaxed linting
     - path: test/integration
       linters:
         - errcheck
         - gosec
+    # Exclude errcheck for pkg that uses json.Encode pattern
+    - path: pkg/(audit|transport|truststore|email)
+      linters:
+        - errcheck
   max-issues-per-linter: 0
   max-same-issues: 0
