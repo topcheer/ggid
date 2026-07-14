@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ggid/ggid/pkg/crypto"
+	pkgcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -202,7 +202,7 @@ func (s *OAuthService) RegisterAgent(ctx context.Context, reg *AgentRegistration
 
 	// Generate OAuth client credentials for the agent
 	reg.ClientID = "agent_" + reg.ID.String()[:8]
-	secret, err := crypto.GenerateRandomToken(32)
+	secret, err :=pkgcrypto.GenerateRandomToken(32)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate agent secret: %w", err)
 	}
@@ -395,10 +395,10 @@ func (s *OAuthService) signAgentToken(claims *AgentTokenClaims) (string, error) 
 	if s.keyProvider == nil {
 		return "", fmt.Errorf("key provider not configured")
 	}
-	key := s.keyProvider.PrivateKey()
+	key := s.keyProvider.Signer()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	kid := s.keyProvider.KeyID()
+	token := jwt.NewWithClaims(s.signingMethod(), claims)
+	kid := s.keyProvider.Metadata().KeyID
 	if kid != "" {
 		token.Header["kid"] = kid
 	}
@@ -412,13 +412,13 @@ func (s *OAuthService) VerifyAgentToken(ctx context.Context, tokenString string)
 		return nil, fmt.Errorf("key provider not configured")
 	}
 
-	pubKey := s.keyProvider.PublicKey()
+	pubKey := s.keyProvider.Public()
 	if pubKey == nil {
 		return nil, fmt.Errorf("public key not available")
 	}
 
 	token, err := jwt.ParseWithClaims(tokenString, &AgentTokenClaims{}, func(t *jwt.Token) (any, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+		if !isSupportedSigningMethod(t.Method) {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return pubKey, nil

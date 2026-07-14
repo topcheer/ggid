@@ -88,8 +88,8 @@ func TestIntrospection_ExpiredToken(t *testing.T) {
 		"iat":       time.Now().Add(-2 * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = svc.keyProvider.KeyID()
-	signed, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	token.Header["kid"] = svc.keyProvider.Metadata().KeyID
+	signed, _ := token.SignedString(svc.keyProvider.Signer())
 
 	resp := svc.IntrospectToken(signed)
 	if resp.Active {

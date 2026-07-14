@@ -4,6 +4,7 @@ package server
 import (
 	"bytes"
 	"context"
+	stdcrypto "crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -23,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/saml"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/conf"
@@ -46,32 +48,54 @@ type Server struct {
 	rotatingKP *service.RotatingKeyProvider
 }
 
-// keyProvider implements domain.KeyProvider by loading RSA keys from disk.
+// keyProvider implements pkg/crypto.KeyProvider by loading RSA keys from disk.
 type keyProvider struct {
 	priv *rsa.PrivateKey
 	pub  *rsa.PublicKey
 	kid  string
 }
 
-func (kp *keyProvider) PublicKey() *rsa.PublicKey   { return kp.pub }
-func (kp *keyProvider) PrivateKey() *rsa.PrivateKey { return kp.priv }
-func (kp *keyProvider) KeyID() string               { return kp.kid }
+func (kp *keyProvider) Metadata() crypto.KeyMetadata {
+	return crypto.KeyMetadata{
+		KeyID:     kp.kid,
+		Algorithm: crypto.RS256,
+		Use:       "sig",
+	}
+}
+func (kp *keyProvider) Public() stdcrypto.PublicKey   { return kp.pub }
+func (kp *keyProvider) Signer() stdcrypto.Signer        { return kp.priv }
+func (kp *keyProvider) Close() error               { return nil }
 
-// New constructs and wires up the OAuth server.
+// New constructs and wires up the OAuth server using a local key provider by default.
 func New(cfg *conf.Config) (*Server, error) {
-	ctx := context.Background()
-
 	// Load or create RSA keys — shares same paths as Auth Service.
 	kp, err := loadOrCreateKeyProvider(cfg.PrivateKeyPath, cfg.PublicKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("load keys: %w", err)
 	}
-	log.Printf("OAuth key loaded (kid=%s)", kp.KeyID())
+	log.Printf("OAuth key loaded (kid=%s)", kp.Metadata().KeyID)
 
-	// Wrap in RotatingKeyProvider for automatic key rotation with 24h grace period.
-	rotatingKP := service.NewRotatingKeyProvider(kp.PrivateKey(), 24*time.Hour)
-	stopTicker := rotatingKP.StartRotationTicker(24 * time.Hour)
-	log.Printf("OAuth key rotation enabled (24h interval, 24h grace period)")
+	return NewWithKeyProvider(cfg, kp)
+}
+
+// NewWithKeyProvider constructs and wires up the OAuth server using the supplied KeyProvider.
+func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error) {
+	ctx := context.Background()
+
+	var rotatingKP *service.RotatingKeyProvider
+	stopTicker := func() {}
+
+	// Wrap local RSA keys in a RotatingKeyProvider for automatic rotation.
+	// HSM/KMS providers cannot be rotated in-process, so use them directly.
+	if rsaPriv, ok := kp.Signer().(*rsa.PrivateKey); ok {
+		rotatingKP = service.NewRotatingKeyProvider(rsaPriv, 24*time.Hour)
+		stopTicker = rotatingKP.StartRotationTicker(24 * time.Hour)
+		log.Printf("OAuth key rotation enabled (24h interval, 24h grace period)")
+		kp = rotatingKP
+	} else {
+		log.Printf("OAuth key provider is not a local RSA key; rotation disabled")
+	}
+
 
 	var (
 		clientRepo repository.ClientRepository
@@ -116,7 +140,7 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 
 	// Create the OAuth service with rotating key provider.
-	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, rotatingKP, cfg.Issuer)
+	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, kp, cfg.Issuer)
 
 	// Initialize Redis client for refresh token lookup (shared with Auth service).
 	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {

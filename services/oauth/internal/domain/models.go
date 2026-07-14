@@ -2,7 +2,6 @@
 package domain
 
 import (
-	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -180,8 +179,11 @@ type JWKSKey struct {
 	Use string `json:"use"`
 	Alg string `json:"alg"`
 	KID string `json:"kid"`
-	N   string `json:"n"`
-	E   string `json:"e"`
+	N   string `json:"n,omitempty"`
+	E   string `json:"e,omitempty"`
+	X   string `json:"x,omitempty"`
+	Y   string `json:"y,omitempty"`
+	Crv string `json:"crv,omitempty"`
 }
 
 // JWKSResponse is the /oauth/jwks response.
@@ -204,11 +206,4 @@ type IDTokenClaims struct {
 	ExpiresAt time.Time
 	IssuedAt  time.Time
 	Extra     map[string]any
-}
-
-// KeyProvider supplies the RSA keys for JWT signing and JWKS.
-type KeyProvider interface {
-	PublicKey() *rsa.PublicKey
-	PrivateKey() *rsa.PrivateKey
-	KeyID() string
 }

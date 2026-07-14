@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -346,12 +347,13 @@ func extractTenantFromSubdomain(host, domainSuffix string) uuid.UUID {
 
 // JWKSClient manages JWT key verification with caching and optional JWKS endpoint refresh.
 type JWKSClient struct {
-	jwksURL    string
-	publicKey  *rsa.PublicKey
-	keyID      string
-	keys       map[string]*rsa.PublicKey
-	mu         sync.RWMutex
-	httpClient *http.Client
+	jwksURL     string
+	publicKey   *rsa.PublicKey
+	keyID       string
+	keys        map[string]*rsa.PublicKey
+	keyProvider crypto.KeyProvider
+	mu          sync.RWMutex
+	httpClient  *http.Client
 }
 
 // NewJWKSClient creates a JWKS client. If jwksURL is empty, uses the static public key.
@@ -480,7 +482,7 @@ func (c *JWKSClient) KeyID() string {
 func (c *JWKSClient) JWKSHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c.mu.RLock()
-		keys := make([]map[string]any, 0, len(c.keys))
+		keys := make([]map[string]any, 0, len(c.keys)+1)
 		for kid, pub := range c.keys {
 			keys = append(keys, map[string]any{
 				"kty": "RSA",
@@ -490,6 +492,12 @@ func (c *JWKSClient) JWKSHandler() http.HandlerFunc {
 				"n":   base64.RawURLEncoding.EncodeToString(pub.N.Bytes()),
 				"e":   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(pub.E)).Bytes()),
 			})
+		}
+		if c.keyProvider != nil {
+			meta := c.keyProvider.Metadata()
+			if key, err := publicKeyToJWK(meta.KeyID, c.keyProvider.Public()); err == nil {
+				keys = append(keys, key)
+			}
 		}
 		c.mu.RUnlock()
 

@@ -149,9 +149,24 @@ func newTestTokenSvc(t *testing.T, refreshRepo RefreshTokenRepo) (*TokenService,
 	t.Helper()
 	rdb := newTestRedis(t)
 	cfg := conf.Default()
-	cfg.JWT.PrivateKeyPath = t.TempDir() + "/test.pem"
-	cfg.JWT.PublicKeyPath = t.TempDir() + "/test.pub"
-	ts, err := NewTokenService(cfg.JWT, refreshRepo, rdb)
+	dir := t.TempDir()
+	cfg.JWT.PrivateKeyPath = dir + "/test.pem"
+	cfg.JWT.PublicKeyPath = dir + "/test.pub"
+	if _, err := loadOrCreatePrivateKey(cfg.JWT.PrivateKeyPath); err != nil {
+		t.Fatalf("loadOrCreatePrivateKey: %v", err)
+	}
+	kp, err := crypto.NewKeyProvider(context.Background(), crypto.KeyProviderConfig{
+		Provider: "local",
+		Local: crypto.LocalKeyProviderConfig{
+			PrivateKeyPath: cfg.JWT.PrivateKeyPath,
+			PublicKeyPath:  cfg.JWT.PublicKeyPath,
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewKeyProvider: %v", err)
+	}
+	t.Cleanup(func() { _ = kp.Close() })
+	ts, err := NewTokenService(kp, cfg.JWT.Issuer, cfg.JWT.Audience, cfg.JWT.AccessTokenTTL, refreshRepo, rdb)
 	if err != nil {
 		t.Fatalf("NewTokenService: %v", err)
 	}

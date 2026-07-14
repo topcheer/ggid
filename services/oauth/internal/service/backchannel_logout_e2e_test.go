@@ -15,8 +15,8 @@ func makeLogoutToken(kp *mockKeyProvider, claims jwt.MapClaims) string {
 		}
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = kp.KeyID()
-	signed, _ := token.SignedString(kp.PrivateKey())
+	token.Header["kid"] = kp.Metadata().KeyID
+	signed, _ := token.SignedString(kp.Signer())
 	return signed
 }
 
@@ -94,8 +94,8 @@ func TestBackchannelLogout_MissingEvents(t *testing.T) {
 		"jti": uuid.New().String(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = kp.KeyID()
-	signed, _ := token.SignedString(kp.PrivateKey())
+	token.Header["kid"] = kp.Metadata().KeyID
+	signed, _ := token.SignedString(kp.Signer())
 
 	err := svc.BackchannelLogoutEndpoint(signed)
 	if err == nil {

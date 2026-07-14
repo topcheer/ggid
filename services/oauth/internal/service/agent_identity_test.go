@@ -28,7 +28,7 @@ func makeSubjectToken(svc *OAuthService, sub string) string {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "test-kid"
-	str, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	str, _ := token.SignedString(svc.keyProvider.Signer())
 	return str
 }
 

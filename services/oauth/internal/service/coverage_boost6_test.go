@@ -176,8 +176,8 @@ func TestBoost_IntrospectToken_NilClaimsAfterParse(t *testing.T) {
 		"iat": now.Unix(), "exp": now.Add(15 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = svc.keyProvider.KeyID()
-	signed, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	token.Header["kid"] = svc.keyProvider.Metadata().KeyID
+	signed, _ := token.SignedString(svc.keyProvider.Signer())
 
 	resp := svc.IntrospectToken(signed)
 	if !resp.Active {

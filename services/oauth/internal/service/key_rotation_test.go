@@ -11,13 +11,13 @@ func TestRotatingKeyProvider_Initial(t *testing.T) {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	kp := NewRotatingKeyProvider(key, 24*time.Hour)
 
-	if kp.KeyID() == "" {
+	if kp.Metadata().KeyID == "" {
 		t.Error("expected non-empty KeyID")
 	}
-	if kp.PublicKey() == nil {
+	if kp.Public() == nil {
 		t.Error("expected non-nil PublicKey")
 	}
-	if kp.PrivateKey() != key {
+	if kp.Signer() != key {
 		t.Error("expected same private key pointer")
 	}
 	if kp.PreviousPublicKey() != nil {
@@ -29,17 +29,17 @@ func TestRotatingKeyProvider_RotateKey(t *testing.T) {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	kp := NewRotatingKeyProvider(key, 24*time.Hour)
 
-	oldKID := kp.KeyID()
-	oldPub := kp.PublicKey()
+	oldKID := kp.Metadata().KeyID
+	oldPub := kp.Public()
 
 	if err := kp.RotateKey(); err != nil {
 		t.Fatalf("RotateKey failed: %v", err)
 	}
 
-	if kp.KeyID() == oldKID {
+	if kp.Metadata().KeyID == oldKID {
 		t.Error("expected new KeyID after rotation")
 	}
-	if kp.PublicKey() == oldPub {
+	if kp.Public() == oldPub {
 		t.Error("expected new PublicKey after rotation")
 	}
 	if kp.PreviousPublicKey() == nil {
@@ -54,7 +54,7 @@ func TestRotatingKeyProvider_ResolveKeyByID(t *testing.T) {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	kp := NewRotatingKeyProvider(key, 24*time.Hour)
 
-	oldKID := kp.KeyID()
+	oldKID := kp.Metadata().KeyID
 
 	if kp.ResolveKeyByID(oldKID) == nil {
 		t.Error("expected to resolve current key by ID")
@@ -68,7 +68,7 @@ func TestRotatingKeyProvider_ResolveKeyByID(t *testing.T) {
 	if kp.ResolveKeyByID(oldKID) == nil {
 		t.Error("expected to resolve previous key by ID during grace period")
 	}
-	if kp.ResolveKeyByID(kp.KeyID()) == nil {
+	if kp.ResolveKeyByID(kp.Metadata().KeyID) == nil {
 		t.Error("expected to resolve new current key by ID")
 	}
 }
@@ -105,12 +105,12 @@ func TestStartRotationTicker(t *testing.T) {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	kp := NewRotatingKeyProvider(key, 1*time.Hour)
 
-	oldKID := kp.KeyID()
+	oldKID := kp.Metadata().KeyID
 	stop := kp.StartRotationTicker(50 * time.Millisecond)
 	time.Sleep(120 * time.Millisecond)
 	stop()
 
-	if kp.KeyID() == oldKID {
+	if kp.Metadata().KeyID == oldKID {
 		t.Error("expected key to rotate via ticker")
 	}
 }

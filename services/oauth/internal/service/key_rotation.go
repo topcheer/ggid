@@ -1,6 +1,7 @@
 package service
 
 import (
+	stdcrypto "crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -11,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ggid/ggid/services/oauth/internal/domain"
+	"github.com/ggid/ggid/pkg/crypto"
 )
 
-// RotatingKeyProvider implements domain.KeyProvider with support for graceful
+// RotatingKeyProvider implements pkg/crypto.KeyProvider with support for graceful
 // key rotation. The old key remains valid for a configurable grace period
 // after a new key is generated, allowing in-flight tokens to be verified.
 type RotatingKeyProvider struct {
@@ -39,7 +40,35 @@ func NewRotatingKeyProvider(initialKey *rsa.PrivateKey, gracePeriod time.Duratio
 	}
 }
 
-// PublicKey returns the current signing public key.
+// Public returns the current signing public key.
+func (r *RotatingKeyProvider) Public() stdcrypto.PublicKey {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return &r.current.PublicKey
+}
+
+// Signer returns the current signing private key as a crypto.Signer.
+func (r *RotatingKeyProvider) Signer() stdcrypto.Signer {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.current
+}
+
+// Metadata returns the current key identifier and algorithm.
+func (r *RotatingKeyProvider) Metadata() crypto.KeyMetadata {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return crypto.KeyMetadata{
+		KeyID:     r.currentID,
+		Algorithm: crypto.RS256,
+		Use:       "sig",
+	}
+}
+
+// Close releases resources held by the provider.
+func (r *RotatingKeyProvider) Close() error { return nil }
+
+// PublicKey returns the current signing public key (backward-compatible helper).
 func (r *RotatingKeyProvider) PublicKey() *rsa.PublicKey {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -178,4 +207,4 @@ func generateKeyID(key *rsa.PrivateKey) string {
 }
 
 // Compile-time interface check.
-var _ domain.KeyProvider = (*RotatingKeyProvider)(nil)
+var _ crypto.KeyProvider = (*RotatingKeyProvider)(nil)

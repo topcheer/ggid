@@ -720,7 +720,7 @@ func TestGetUserInfo_ValidToken(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "test-kid"
 	kp := newMockKeyProvider()
-	signed, err := token.SignedString(kp.PrivateKey())
+	signed, err := token.SignedString(kp.Signer())
 	if err != nil {
 		t.Fatalf("sign token: %v", err)
 	}
@@ -849,7 +849,7 @@ func TestExchangeToken_MissingSub(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "test-kid"
 	kp := newMockKeyProvider()
-	signed, err := token.SignedString(kp.PrivateKey())
+	signed, err := token.SignedString(kp.Signer())
 	if err != nil {
 		t.Fatalf("sign token: %v", err)
 	}
@@ -1423,7 +1423,7 @@ func TestIntrospectToken_WithScope(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "test-kid"
 	kp := newMockKeyProvider()
-	signed, err := token.SignedString(kp.PrivateKey())
+	signed, err := token.SignedString(kp.Signer())
 	if err != nil {
 		t.Fatalf("sign token: %v", err)
 	}

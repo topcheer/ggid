@@ -64,7 +64,7 @@ func (s *OAuthService) ValidateClientAssertion(assertion, expectedClientID, clie
 
 		// RSA/ECDSA algorithms: use the server's public key.
 		if s.keyProvider != nil {
-			return s.keyProvider.PublicKey(), nil
+			return s.keyProvider.Public(), nil
 		}
 
 		return nil, fmt.Errorf("no key available to verify %s assertion", alg)

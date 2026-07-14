@@ -149,8 +149,8 @@ func TestTokenExchange_SubjectTokenMissingSub(t *testing.T) {
 		"jti":   uuid.New().String(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = kp.KeyID()
-	signed, err := token.SignedString(kp.PrivateKey())
+	token.Header["kid"] = kp.Metadata().KeyID
+	signed, err := token.SignedString(kp.Signer())
 	if err != nil {
 		t.Fatalf("sign token: %v", err)
 	}

@@ -62,7 +62,7 @@ func TestSec_IntrospectToken_ExpiredToken(t *testing.T) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "test-kid"
-	signed, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	signed, _ := token.SignedString(svc.keyProvider.Signer())
 
 	resp := svc.IntrospectToken(signed)
 	if resp.Active {
@@ -98,8 +98,8 @@ func TestSec_IntrospectToken_WithScope(t *testing.T) {
 		"scope": "openid profile",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = svc.keyProvider.KeyID()
-	signed, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	token.Header["kid"] = svc.keyProvider.Metadata().KeyID
+	signed, _ := token.SignedString(svc.keyProvider.Signer())
 
 	resp := svc.IntrospectToken(signed)
 	if resp.Scope != "openid profile" {
@@ -119,8 +119,8 @@ func TestSec_IntrospectToken_WithUsername(t *testing.T) {
 		"preferred_username": "testuser@example.com",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = svc.keyProvider.KeyID()
-	signed, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	token.Header["kid"] = svc.keyProvider.Metadata().KeyID
+	signed, _ := token.SignedString(svc.keyProvider.Signer())
 
 	resp := svc.IntrospectToken(signed)
 	if resp.Username != "testuser@example.com" {
@@ -178,8 +178,8 @@ func TestSec_UserInfo_WithEmailVerified(t *testing.T) {
 		"name":           "Test User",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = svc.keyProvider.KeyID()
-	signed, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	token.Header["kid"] = svc.keyProvider.Metadata().KeyID
+	signed, _ := token.SignedString(svc.keyProvider.Signer())
 
 	info, err := svc.GetUserInfo(signed)
 	if err != nil {
@@ -309,7 +309,7 @@ func TestSec_JWT_AMR(t *testing.T) {
 		AMR: []string{"pwd", "otp"},
 	})
 	parsed, _ := jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
-		return svc.keyProvider.PublicKey(), nil
+		return svc.keyProvider.Public(), nil
 	})
 	claims := parsed.Claims.(jwt.MapClaims)
 	amr, ok := claims["amr"].([]any)
@@ -324,7 +324,7 @@ func TestSec_JWT_ACR(t *testing.T) {
 		ACR: "urn:mace:incommon:iap:silver",
 	})
 	parsed, _ := jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
-		return svc.keyProvider.PublicKey(), nil
+		return svc.keyProvider.Public(), nil
 	})
 	claims := parsed.Claims.(jwt.MapClaims)
 	if claims["acr"] != "urn:mace:incommon:iap:silver" {
@@ -339,7 +339,7 @@ func TestSec_JWT_AuthTime(t *testing.T) {
 		AuthTime: at,
 	})
 	parsed, _ := jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
-		return svc.keyProvider.PublicKey(), nil
+		return svc.keyProvider.Public(), nil
 	})
 	claims := parsed.Claims.(jwt.MapClaims)
 	val, ok := claims["auth_time"].(float64)
@@ -355,7 +355,7 @@ func TestSec_JWT_NoOptsNoExtraClaims(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 	token, _ := svc.issueIDToken(uuid.New(), testTenantID, "c4", "n4", nil)
 	parsed, _ := jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
-		return svc.keyProvider.PublicKey(), nil
+		return svc.keyProvider.Public(), nil
 	})
 	claims := parsed.Claims.(jwt.MapClaims)
 	for _, k := range []string{"amr", "acr", "auth_time"} {
@@ -371,7 +371,7 @@ func TestSec_JWT_AllClaimsCombined(t *testing.T) {
 		AMR: []string{"pwd", "mfa"}, ACR: "urn:ggid:2fa", AuthTime: time.Now().Unix(),
 	})
 	parsed, _ := jwt.ParseWithClaims(token, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
-		return svc.keyProvider.PublicKey(), nil
+		return svc.keyProvider.Public(), nil
 	})
 	claims := parsed.Claims.(jwt.MapClaims)
 	if _, ok := claims["amr"]; !ok {

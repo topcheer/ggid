@@ -229,7 +229,7 @@ func TestCovMTLS_Binding_Mismatch(t *testing.T) {
 // signTestToken signs a JWT with the service's RSA key for testing.
 func signTestToken(svc *OAuthService, claims jwt.MapClaims) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	signed, _ := token.SignedString(svc.keyProvider.PrivateKey())
+	signed, _ := token.SignedString(svc.keyProvider.Signer())
 	return signed
 }
 

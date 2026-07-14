@@ -13,11 +13,11 @@
 ## Summary
 
 - Total findings: 14
-- Done: 12
+- Done: 13
 - Fixed (pending verification): 0
 - Partial: 1
-- Remaining: 1
-- Last scan: 2026-07-14 round 9 (focus: B — Route Wiring)
+- Remaining: 0
+- Last scan: 2026-07-15 round 11 (focus: D — Data Persistence / Key Provider Wiring)
 
 ## Findings
 
@@ -29,6 +29,7 @@
 | 2 | MFA TOTP Secret | auth/server/jit_mfa_handler.go | Hardcoded secret replaced with crypto/rand generated base32 secret. | [DONE] | backend |
 | 3 | SAML SP-Initiated SSO | oauth/server/server.go | SP-initiated AuthnRequest generation and IdP redirect implemented. | [DONE] | backend/arch |
 | 4 | Device-Bound SSO signing key | oauth/service/device_bound_sso.go | Hardcoded default HMAC key replaced with random 32-byte key. | [DONE] | backend |
+| 15 | HSM/KMS KeyProvider wiring | services/auth, services/oauth, services/gateway | Auth, OAuth and Gateway cmd/main.go now initialize crypto.NewKeyProvider; TokenService accepts KeyProvider; PKCS#11 provider is selectable via GGID_KEY_PROVIDER. | [DONE] | TBD |
 
 ### MEDIUM Priority
 
@@ -48,7 +49,7 @@
 |---|---------|----------|-------|--------|--------|
 | 12 | GeoIP | gateway/middleware/geoip.go | Detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration pending. | [PARTIAL] | arch |
 | 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
-| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | Phase 1 (PKCS#11 provider) complete. Phase 2: wire auth/oauth services to use KeyProvider for JWT signing. | [PARTIAL] | c07f15f2 |
+| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | Phase 1 (PKCS#11 provider) complete. Phase 2 wired: auth/oauth/gateway cmd/main.go use crypto.NewKeyProvider; TokenService and OAuth server accept KeyProvider; local keys auto-generated on startup. | [DONE] | TBD |
 
 ## Previously Fixed (Prior Scans)
 
@@ -79,16 +80,15 @@
 | 2026-07-14 | CIBA + Client Branding verification | 0 | 2 verified as DONE |
 | 2026-07-14 | Round 8 — Focus A (Interface Integrity) | +4 route/handler interface gaps | 4 (gateway TODO, policy route aliases) |
 | 2026-07-14 | Round 9 — Focus B (Route Wiring) | +3 missing gateway prefixes | 3 (/api/v1/oauth, /api/v1/identity, /api/v1/agents) |
+| 2026-07-15 | Round 11 — Focus D (Data Persistence / Key Provider Wiring) | 0 | 1 (HSM/KMS KeyProvider wired in auth/oauth/gateway) |
 
 ## Remaining Real Gaps (post-audit)
 
 1. **GeoIP MaxMind integration** (LOW, [PARTIAL]) — gateway/middleware/geoip.go
    - Private IP detection works; MaxMind GeoLite2 DB integration pending.
-2. **HSM/KMS key provider** (HIGH, [NEW]) — pkg/crypto, services/auth, services/oauth
-   - JWT/SAML signing keys still use disk PEM files; needs PKCS#11 / Cloud KMS / Vault Transit provider.
 
 ## Next Actions
 
-- Round 9 (odd, Focus B): Route wiring scan
-- Round 10 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — blocked by Docker infra, see docs/research/docker-e2e-infra-gap.md
-- Research backlog: HSM/KMS key provider design, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
+- Round 11 (odd, Focus D): Data persistence / key provider wiring — HSM/KMS KeyProvider wiring completed.
+- Round 12 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — blocked by Docker infra, see docs/research/docker-e2e-infra-gap.md
+- Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard

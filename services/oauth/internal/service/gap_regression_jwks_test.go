@@ -6,6 +6,7 @@ package service
 // Date: 2026-07-25
 
 import (
+	"crypto/rsa"
 	"encoding/base64"
 	"math/big"
 	"testing"
@@ -102,7 +103,7 @@ func TestJWKS_KeyIDMatchesProvider(t *testing.T) {
 	svc, _, _, _ := newTestOAuthService()
 
 	jwks := svc.GetJWKS()
-	expectedKID := svc.keyProvider.KeyID()
+	expectedKID := svc.keyProvider.Metadata().KeyID
 
 	if jwks.Keys[0].KID != expectedKID {
 		t.Errorf("kid should be '%s', got '%s'", expectedKID, jwks.Keys[0].KID)
@@ -117,7 +118,7 @@ func TestJWKS_KeyMatchesProviderPublicKey(t *testing.T) {
 	jwks := svc.GetJWKS()
 	key := jwks.Keys[0]
 
-	pub := svc.keyProvider.PublicKey()
+	pub := svc.keyProvider.Public().(*rsa.PublicKey)
 
 	// Compare modulus
 	expectedN := base64.RawURLEncoding.EncodeToString(pub.N.Bytes())

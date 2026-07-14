@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	stdcrypto "crypto/rand"
+	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
@@ -12,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ggid/ggid/pkg/crypto"
+	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/golang-jwt/jwt/v5"
@@ -143,7 +144,7 @@ var (
 // dozens of tests run together, causing intermittent panics/timeouts.
 func newMockKeyProvider() *mockKeyProvider {
 	mockKeyOnce.Do(func() {
-		priv, err := rsa.GenerateKey(stdcrypto.Reader, 2048)
+		priv, err := rsa.GenerateKey(rand.Reader, 2048)
 		if err != nil {
 			// Use a deterministic key if randomness fails.
 			priv = &rsa.PrivateKey{
@@ -159,6 +160,14 @@ func newMockKeyProvider() *mockKeyProvider {
 func (kp *mockKeyProvider) PublicKey() *rsa.PublicKey   { return kp.pub }
 func (kp *mockKeyProvider) PrivateKey() *rsa.PrivateKey { return kp.priv }
 func (kp *mockKeyProvider) KeyID() string                { return kp.kid }
+
+// pkg/crypto.KeyProvider implementation.
+func (kp *mockKeyProvider) Metadata() ggidcrypto.KeyMetadata {
+	return ggidcrypto.KeyMetadata{KeyID: kp.kid, Algorithm: ggidcrypto.RS256, Use: "sig"}
+}
+func (kp *mockKeyProvider) Public() crypto.PublicKey { return kp.pub }
+func (kp *mockKeyProvider) Signer() crypto.Signer    { return kp.priv }
+func (kp *mockKeyProvider) Close() error                { return nil }
 
 // --- Helpers ---
 
@@ -208,7 +217,7 @@ func TestCreateClient_Confidential(t *testing.T) {
 	}
 
 	// Verify the secret can be verified.
-	ok, _ := crypto.VerifyPassword(result.ClientSecret, result.Client.ClientSecretHash)
+	ok, _ := ggidcrypto.VerifyPassword(result.ClientSecret, result.Client.ClientSecretHash)
 	if !ok {
 		t.Error("client secret verification failed")
 	}
@@ -403,7 +412,7 @@ func TestExchangeAuthorizationCode_Success(t *testing.T) {
 	clientDBID := uuid.New()
 
 	// Pre-create a confidential client with a known secret.
-	secretHash, _ := crypto.HashPassword("test-secret")
+	secretHash, _ := ggidcrypto.HashPassword("test-secret")
 	clientRepo.clients["test_client"] = &domain.OAuthClient{
 		ID:               clientDBID,
 		TenantID:         testTenantID,
@@ -459,7 +468,7 @@ func TestExchangeAuthorizationCode_Success(t *testing.T) {
 func TestExchangeAuthorizationCode_WrongClientSecret(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
-	secretHash, _ := crypto.HashPassword("correct-secret")
+	secretHash, _ := ggidcrypto.HashPassword("correct-secret")
 	clientRepo.clients["test_client"] = &domain.OAuthClient{
 		ID:               uuid.New(),
 		TenantID:         testTenantID,
@@ -494,7 +503,7 @@ func TestExchangeAuthorizationCode_WrongClientSecret(t *testing.T) {
 func TestExchangeAuthorizationCode_CodeReplayPrevented(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
-	secretHash, _ := crypto.HashPassword("secret")
+	secretHash, _ := ggidcrypto.HashPassword("secret")
 	clientRepo.clients["test_client"] = &domain.OAuthClient{
 		ID:               uuid.New(),
 		TenantID:         testTenantID,
@@ -545,7 +554,7 @@ func TestExchangeAuthorizationCode_CodeReplayPrevented(t *testing.T) {
 func TestExchangeAuthorizationCode_RedirectURIMismatch(t *testing.T) {
 	svc, clientRepo, _, _ := newTestOAuthService()
 
-	secretHash, _ := crypto.HashPassword("secret")
+	secretHash, _ := ggidcrypto.HashPassword("secret")
 	clientRepo.clients["test_client"] = &domain.OAuthClient{
 		ID:               uuid.New(),
 		TenantID:         testTenantID,
@@ -743,11 +752,11 @@ func TestRotateClientSecret_Success(t *testing.T) {
 
 	// Verify old secret no longer works.
 	stored := clientRepo.clients[result.Client.ClientID]
-	ok, _ := crypto.VerifyPassword(oldSecret, stored.ClientSecretHash)
+	ok, _ := ggidcrypto.VerifyPassword(oldSecret, stored.ClientSecretHash)
 	if ok {
 		t.Error("old secret should no longer match after rotation")
 	}
-	ok, _ = crypto.VerifyPassword(newSecret, stored.ClientSecretHash)
+	ok, _ = ggidcrypto.VerifyPassword(newSecret, stored.ClientSecretHash)
 	if !ok {
 		t.Error("new secret should match after rotation")
 	}

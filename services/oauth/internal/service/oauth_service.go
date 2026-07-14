@@ -3,6 +3,10 @@ package service
 
 import (
 	"context"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rsa"
 	crand "crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
@@ -15,7 +19,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ggid/ggid/pkg/crypto"
+	pkgcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/oauth/internal/domain"
@@ -29,7 +33,7 @@ type OAuthService struct {
 	clientRepo  repository.ClientRepository
 	codeRepo    repository.AuthorizationCodeRepository
 	tokenRepo   repository.IDTokenRepository
-	keyProvider domain.KeyProvider
+	keyProvider pkgcrypto.KeyProvider
 	issuer      string
 	rdb         RedisCmdable // optional Redis client for distributed state
 }
@@ -55,7 +59,7 @@ func NewOAuthService(
 	clientRepo repository.ClientRepository,
 	codeRepo repository.AuthorizationCodeRepository,
 	tokenRepo repository.IDTokenRepository,
-	keyProvider domain.KeyProvider,
+	keyProvider pkgcrypto.KeyProvider,
 	issuer string,
 ) *OAuthService {
 	return &OAuthService{
@@ -121,7 +125,7 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 	var plaintextSecret string
 	if client.IsConfidential() {
 		plaintextSecret = generateClientSecret()
-		hash, err := crypto.HashPassword(plaintextSecret)
+		hash, err :=pkgcrypto.HashPassword(plaintextSecret)
 		if err != nil {
 			return nil, errors.Internal("hash client secret", err)
 		}
@@ -278,7 +282,7 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		codeChallengeMethod = "S256"
 	}
 
-	plaintextCode, err := crypto.GenerateRandomToken(32)
+	plaintextCode, err :=pkgcrypto.GenerateRandomToken(32)
 	if err != nil {
 		return "", errors.Internal("generate auth code", err)
 	}
@@ -351,7 +355,7 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 
 	// 2. Verify client secret for confidential clients.
 	if client.IsConfidential() {
-		ok, _ := crypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		ok, _ :=pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
 		}
@@ -434,19 +438,73 @@ func (s *OAuthService) GetDiscoveryConfig() *domain.OIDCDiscoveryConfig {
 
 // GetJWKS returns the JSON Web Key Set containing the public key.
 func (s *OAuthService) GetJWKS() *domain.JWKSResponse {
-	pub := s.keyProvider.PublicKey()
-	return &domain.JWKSResponse{
-		Keys: []domain.JWKSKey{
-			{
-				KTY: "RSA",
-				Use: "sig",
-				Alg: "RS256",
-				KID: s.keyProvider.KeyID(),
-				N:   base64.RawURLEncoding.EncodeToString(pub.N.Bytes()),
-				E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(pub.E)).Bytes()),
-			},
-		},
+	key, err := publicKeyToJWK(s.keyProvider.Metadata().KeyID, s.keyProvider.Public())
+	if err != nil {
+		return &domain.JWKSResponse{Keys: []domain.JWKSKey{}}
 	}
+	return &domain.JWKSResponse{Keys: []domain.JWKSKey{key}}
+}
+
+func publicKeyToJWK(kid string, pub crypto.PublicKey) (domain.JWKSKey, error) {
+	switch k := pub.(type) {
+	case *rsa.PublicKey:
+		return domain.JWKSKey{
+			KTY: "RSA",
+			Use: "sig",
+			Alg: "RS256",
+			KID: kid,
+			N:   base64.RawURLEncoding.EncodeToString(k.N.Bytes()),
+			E:   base64.RawURLEncoding.EncodeToString(big.NewInt(int64(k.E)).Bytes()),
+		}, nil
+	case *ecdsa.PublicKey:
+		byteLen := (k.Curve.Params().BitSize + 7) / 8
+		return domain.JWKSKey{
+			KTY: "EC",
+			Use: "sig",
+			Alg: jwtAlgorithmForECDSA(k.Curve),
+			KID: kid,
+			X:   base64.RawURLEncoding.EncodeToString(padBytes(k.X.Bytes(), byteLen)),
+			Y:   base64.RawURLEncoding.EncodeToString(padBytes(k.Y.Bytes(), byteLen)),
+			Crv: crvForECDSA(k.Curve),
+		}, nil
+	default:
+		return domain.JWKSKey{}, fmt.Errorf("unsupported public key type: %T", pub)
+	}
+}
+
+func jwtAlgorithmForECDSA(curve elliptic.Curve) string {
+	switch curve {
+	case elliptic.P256():
+		return "ES256"
+	case elliptic.P384():
+		return "ES384"
+	case elliptic.P521():
+		return "ES512"
+	default:
+		return "ES256"
+	}
+}
+
+func crvForECDSA(curve elliptic.Curve) string {
+	switch curve {
+	case elliptic.P256():
+		return "P-256"
+	case elliptic.P384():
+		return "P-384"
+	case elliptic.P521():
+		return "P-521"
+	default:
+		return "P-256"
+	}
+}
+
+func padBytes(b []byte, length int) []byte {
+	if len(b) >= length {
+		return b
+	}
+	padded := make([]byte, length)
+	copy(padded[length-len(b):], b)
+	return padded
 }
 
 // --- Internal helpers ---
@@ -476,10 +534,10 @@ func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, sc
 		"scope":     scope,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claimsMap)
-	token.Header["kid"] = s.keyProvider.KeyID()
+	token := jwt.NewWithClaims(s.signingMethod(), claimsMap)
+	token.Header["kid"] = s.keyProvider.Metadata().KeyID
 
-	signed, err := token.SignedString(s.keyProvider.PrivateKey())
+	signed, err := token.SignedString(s.keyProvider.Signer())
 	if err != nil {
 		return "", 0, fmt.Errorf("sign access token: %w", err)
 	}
@@ -522,10 +580,10 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 		}
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = s.keyProvider.KeyID()
+	token := jwt.NewWithClaims(s.signingMethod(), claims)
+	token.Header["kid"] = s.keyProvider.Metadata().KeyID
 
-	signed, err := token.SignedString(s.keyProvider.PrivateKey())
+	signed, err := token.SignedString(s.keyProvider.Signer())
 	if err != nil {
 		return "", fmt.Errorf("sign id token: %w", err)
 	}
@@ -538,10 +596,10 @@ func (s *OAuthService) issueIDToken(userID, tenantID uuid.UUID, audience, nonce 
 // ParseAccessToken validates and parses an access token JWT.
 func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+		if !isSupportedSigningMethod(t.Method) {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return s.keyProvider.PublicKey(), nil
+		return s.keyProvider.Public(), nil
 	})
 	if err != nil {
 		return nil, err
@@ -551,6 +609,15 @@ func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) 
 		return nil, fmt.Errorf("invalid token")
 	}
 	return claims, nil
+}
+
+func isSupportedSigningMethod(method jwt.SigningMethod) bool {
+	switch method.(type) {
+	case *jwt.SigningMethodRSA, *jwt.SigningMethodRSAPSS, *jwt.SigningMethodECDSA, *jwt.SigningMethodEd25519:
+		return true
+	default:
+		return false
+	}
 }
 
 // UserInfoResponse holds the standard OIDC UserInfo claims.
@@ -811,7 +878,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 
 	// 2. Verify client secret for confidential clients.
 	if client.IsConfidential() {
-		ok, _ := crypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		ok, _ :=pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
 		}
@@ -860,7 +927,7 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	}
 
 	// 9. Issue new refresh token (rotation).
-	newRefreshToken, err := crypto.GenerateRandomToken(32)
+	newRefreshToken, err :=pkgcrypto.GenerateRandomToken(32)
 	if err != nil {
 		return nil, errors.Internal("generate refresh token", err)
 	}
@@ -934,7 +1001,7 @@ func (s *OAuthService) ClientCredentials(ctx context.Context, req *ClientCredent
 
 	// 2. Verify client secret.
 	if client.IsConfidential() {
-		ok, _ := crypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
+		ok, _ :=pkgcrypto.VerifyPassword(req.ClientSecret, client.ClientSecretHash)
 		if !ok {
 			return nil, errors.Unauthenticated("invalid client credentials")
 		}
@@ -978,7 +1045,7 @@ func (s *OAuthService) RotateClientSecret(ctx context.Context, tenantID uuid.UUI
 
 	// 2. Verify old secret for confidential clients.
 	if client.IsConfidential() {
-		ok, _ := crypto.VerifyPassword(oldSecret, client.ClientSecretHash)
+		ok, _ :=pkgcrypto.VerifyPassword(oldSecret, client.ClientSecretHash)
 		if !ok {
 			return "", errors.Unauthenticated("invalid client credentials — old secret does not match")
 		}
@@ -986,7 +1053,7 @@ func (s *OAuthService) RotateClientSecret(ctx context.Context, tenantID uuid.UUI
 
 	// 3. Generate new secret.
 	newSecret := generateClientSecret()
-	hash, err := crypto.HashPassword(newSecret)
+	hash, err :=pkgcrypto.HashPassword(newSecret)
 	if err != nil {
 		return "", errors.Internal("hash client secret", err)
 	}
@@ -1003,12 +1070,12 @@ func (s *OAuthService) RotateClientSecret(ctx context.Context, tenantID uuid.UUI
 
 // generateClientID generates a public client identifier.
 func generateClientID() string {
-	id, _ := crypto.GenerateRandomToken(16)
+	id, _ :=pkgcrypto.GenerateRandomToken(16)
 	return "gcid_" + id
 }
 
 func generateClientSecret() string {
-	secret, _ := crypto.GenerateRandomToken(32)
+	secret, _ :=pkgcrypto.GenerateRandomToken(32)
 	return "gcs_" + secret
 }
 
@@ -1180,7 +1247,7 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 	var plaintextSecret string
 	if client.IsConfidential() {
 		plaintextSecret = generateClientSecret()
-		hash, err := crypto.HashPassword(plaintextSecret)
+		hash, err :=pkgcrypto.HashPassword(plaintextSecret)
 		if err != nil {
 			return nil, errors.Internal("hash client secret", err)
 		}
@@ -1436,10 +1503,10 @@ func (s *OAuthService) issueDeviceAccessToken(tenantID, userID uuid.UUID) (strin
 		"jti":       uuid.New().String(),
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = s.keyProvider.KeyID()
+	token := jwt.NewWithClaims(s.signingMethod(), claims)
+	token.Header["kid"] = s.keyProvider.Metadata().KeyID
 
-	signed, err := token.SignedString(s.keyProvider.PrivateKey())
+	signed, err := token.SignedString(s.keyProvider.Signer())
 	if err != nil {
 		return "", 0, fmt.Errorf("sign device token: %w", err)
 	}
@@ -1530,6 +1597,35 @@ func (s *OAuthService) ParseBackchannelLogoutToken(tokenStr string) (jwt.MapClai
 	return claims, nil
 }
 
+// signingMethod returns the jwt.SigningMethod matching the key provider algorithm.
+func (s *OAuthService) signingMethod() jwt.SigningMethod {
+	alg := s.keyProvider.Metadata().Algorithm
+	switch alg {
+	case pkgcrypto.RS256:
+		return jwt.SigningMethodRS256
+	case pkgcrypto.RS384:
+		return jwt.SigningMethodRS384
+	case pkgcrypto.RS512:
+		return jwt.SigningMethodRS512
+	case pkgcrypto.PS256:
+		return jwt.SigningMethodPS256
+	case pkgcrypto.PS384:
+		return jwt.SigningMethodPS384
+	case pkgcrypto.PS512:
+		return jwt.SigningMethodPS512
+	case pkgcrypto.ES256:
+		return jwt.SigningMethodES256
+	case pkgcrypto.ES384:
+		return jwt.SigningMethodES384
+	case pkgcrypto.ES512:
+		return jwt.SigningMethodES512
+	case pkgcrypto.EdDSA:
+		return jwt.SigningMethodEdDSA
+	default:
+		return jwt.SigningMethodRS256
+	}
+}
+
 func cryptoRandInt(max int) int {
 	if max <= 0 {
 		return 0
@@ -1609,10 +1705,10 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		"assertion_iss": iss, // track the original assertion issuer
 	}
 
-	gidToken := jwt.NewWithClaims(jwt.SigningMethodRS256, gidClaims)
-	gidToken.Header["kid"] = s.keyProvider.KeyID()
+	gidToken := jwt.NewWithClaims(s.signingMethod(), gidClaims)
+	gidToken.Header["kid"] = s.keyProvider.Metadata().KeyID
 
-	signed, err := gidToken.SignedString(s.keyProvider.PrivateKey())
+	signed, err := gidToken.SignedString(s.keyProvider.Signer())
 	if err != nil {
 		return nil, fmt.Errorf("sign jwt-bearer token: %w", err)
 	}

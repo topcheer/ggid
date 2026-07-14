@@ -116,8 +116,8 @@ func TestExchangeToken_ProperlySignedNoSub3(t *testing.T) {
 	now := time.Now()
 	c := jwt.MapClaims{"iss": "https://test.ggid.dev", "aud": "tc", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
 	tok := jwt.NewWithClaims(jwt.SigningMethodRS256, c)
-	tok.Header["kid"] = kp.KeyID()
-	s, _ := tok.SignedString(kp.PrivateKey())
+	tok.Header["kid"] = kp.Metadata().KeyID
+	s, _ := tok.SignedString(kp.Signer())
 	_, err := svc.ExchangeToken(context.Background(), &TokenExchangeRequestRFC8693{TenantID: testTenantID, SubjectToken: s, SubjectTokenType: "urn:ietf:params:oauth:token-type:access_token"})
 	if err == nil {
 		t.Fatal("expected error for missing sub")
@@ -188,8 +188,8 @@ func TestIntrospectToken_ScopeNonString3(t *testing.T) {
 	now := time.Now()
 	c := jwt.MapClaims{"iss": "https://test.ggid.dev", "aud": "tc", "sub": "u", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix(), "scope": 12345}
 	tok := jwt.NewWithClaims(jwt.SigningMethodRS256, c)
-	tok.Header["kid"] = kp.KeyID()
-	s, _ := tok.SignedString(kp.PrivateKey())
+	tok.Header["kid"] = kp.Metadata().KeyID
+	s, _ := tok.SignedString(kp.Signer())
 	r := svc.IntrospectToken(s)
 	if !r.Active {
 		t.Error("expected active")
@@ -205,8 +205,8 @@ func TestIntrospectToken_StringScope3(t *testing.T) {
 	now := time.Now()
 	c := jwt.MapClaims{"iss": "https://test.ggid.dev", "aud": "tc", "sub": "u", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix(), "scope": "openid profile"}
 	tok := jwt.NewWithClaims(jwt.SigningMethodRS256, c)
-	tok.Header["kid"] = kp.KeyID()
-	s, _ := tok.SignedString(kp.PrivateKey())
+	tok.Header["kid"] = kp.Metadata().KeyID
+	s, _ := tok.SignedString(kp.Signer())
 	r := svc.IntrospectToken(s)
 	if !r.Active {
 		t.Error("expected active")

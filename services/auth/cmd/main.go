@@ -3,13 +3,17 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"net/http"
 	"net/smtp"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -59,8 +63,23 @@ func main() {
 	sessionRepo := repository.NewSessionRepository(pool)
 	refreshRepo := repository.NewRefreshTokenRepository(pool)
 
+	// 3a. Initialize key provider (local default, PKCS#11 via GGID_KEY_PROVIDER env)
+	keyProvider, err := initKeyProvider(ctx, cfg.JWT)
+	if err != nil {
+		log.Fatalf("failed to initialize key provider: %v", err)
+	}
+	defer keyProvider.Close()
+	log.Printf("key provider ready (kid=%s)", keyProvider.Metadata().KeyID)
+
 	// 4. Build services
-	tokenService, err := service.NewTokenService(cfg.JWT, refreshRepo, rdb)
+	tokenService, err := service.NewTokenService(
+		keyProvider,
+		cfg.JWT.Issuer,
+		cfg.JWT.Audience,
+		cfg.JWT.AccessTokenTTL,
+		refreshRepo,
+		rdb,
+	)
 	if err != nil {
 		log.Fatalf("failed to create token service: %v", err)
 	}
@@ -244,6 +263,62 @@ type smtpEmailSender struct {
 	port   int
 	from   string
 	caPool *x509.CertPool
+}
+
+// initKeyProvider creates a crypto.KeyProvider from auth service JWT config.
+// GGID_KEY_PROVIDER selects "local" (default) or "pkcs11"; PKCS#11 env vars are read by the provider.
+func initKeyProvider(ctx context.Context, jwtCfg conf.JWTConfig) (crypto.KeyProvider, error) {
+	providerType := os.Getenv("GGID_KEY_PROVIDER")
+	if providerType == "" {
+		providerType = "local"
+	}
+
+	if providerType == "local" {
+		if err := ensureLocalKeyPair(jwtCfg.PrivateKeyPath, jwtCfg.PublicKeyPath); err != nil {
+			return nil, fmt.Errorf("ensure local key pair: %w", err)
+		}
+	}
+
+	return crypto.NewKeyProvider(ctx, crypto.KeyProviderConfig{
+		Provider: providerType,
+		Local: crypto.LocalKeyProviderConfig{
+			PrivateKeyPath: jwtCfg.PrivateKeyPath,
+			PublicKeyPath:  jwtCfg.PublicKeyPath,
+		},
+	})
+}
+
+// ensureLocalKeyPair generates an RSA key pair on disk if the private key is missing.
+func ensureLocalKeyPair(privateKeyPath, publicKeyPath string) error {
+	if _, err := os.Stat(privateKeyPath); err == nil {
+		return nil
+	}
+	_ = os.MkdirAll(filepath.Dir(privateKeyPath), 0o700)
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return fmt.Errorf("generate RSA key: %w", err)
+	}
+	privData := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+	if err := os.WriteFile(privateKeyPath, privData, 0o600); err != nil {
+		return fmt.Errorf("write private key: %w", err)
+	}
+	pubBytes, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	if err != nil {
+		return fmt.Errorf("marshal public key: %w", err)
+	}
+	pubData := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pubBytes,
+	})
+	_ = os.MkdirAll(filepath.Dir(publicKeyPath), 0o700)
+	if err := os.WriteFile(publicKeyPath, pubData, 0o644); err != nil {
+		return fmt.Errorf("write public key: %w", err)
+	}
+	log.Printf("Generated new RSA key pair: %s + %s", privateKeyPath, publicKeyPath)
+	return nil
 }
 
 func (s *smtpEmailSender) SetCAPool(cp *x509.CertPool) {
