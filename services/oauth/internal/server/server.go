@@ -96,9 +96,15 @@ func New(cfg *conf.Config) (*Server, error) {
 				clientRepo = repository.NewPGClientRepository(pool)
 				codeRepo = repository.NewPGAuthorizationCodeRepository(pool)
 				tokenRepo = repository.NewPGIDTokenRepository(pool)
-				// Initialize persistent scope store
+				// Initialize persistent stores (PG-first, in-memory fallback)
 				scopeAdapter = newScopeStoreAdapter(pool)
 				scopeAdapterVar = scopeAdapter
+				brandingAdapterVar = newBrandingAdapter(pool)
+				parAdapterVar = newPARAdapter(pool)
+				dpopAdapterVar = newDPoPAdapter(pool)
+				delegationAdapterVar = newDelegationAdapter(pool)
+				reviewAdapterVar = newReviewAdapter(pool)
+				scopeLifecycleAdapterVar = newScopeLifecycleAdapter(pool)
 				log.Println("OAuth database connected")
 			} else if err != nil {
 				log.Printf("warning: failed to connect database: %v (running without DB)", err)
