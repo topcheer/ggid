@@ -28,7 +28,7 @@ type AccessRequestStore interface {
 // AccessRequestService implements the IGA approval workflow.
 type AccessRequestService struct {
 	store AccessRequestStore
-	mu    sync.Mutex
+	mu    sync.Mutex //nolint:unused // for future concurrency support
 }
 
 // NewAccessRequestService creates a new IGA workflow service.

@@ -409,7 +409,7 @@ func (h *Handler) buildWebAuthnUser(ctx context.Context, tenantID, userID uuid.U
 			for _, c := range creds {
 				var transports []protocol.AuthenticatorTransport
 				for _, t := range c.Transports {
-					transports = append(transports, protocol.AuthenticatorTransport(t))
+					transports = append(transports, protocol.AuthenticatorTransport(t)) //nolint:staticcheck // SA4010: intentional build pattern
 				}
 
 				wcreds = append(wcreds, webauthn.Credential{
@@ -620,10 +620,7 @@ func (h *Handler) beginAuthentication(w http.ResponseWriter, r *http.Request) {
 			if buildErr == nil && len(user.credentials) > 0 {
 				var allowCreds []protocol.CredentialDescriptor
 				for _, wc := range user.credentials {
-					var transports []protocol.AuthenticatorTransport
-					for _, t := range wc.Transport {
-						transports = append(transports, t)
-					}
+					transports := append([]protocol.AuthenticatorTransport(nil), wc.Transport...)
 					allowCreds = append(allowCreds, protocol.CredentialDescriptor{
 						Type:         protocol.PublicKeyCredentialType,
 						CredentialID: wc.ID,

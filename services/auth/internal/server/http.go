@@ -1320,6 +1320,8 @@ func writeAuthError(w http.ResponseWriter, err error) {
 // writeAuthErrorT is the i18n-aware version of writeAuthError.
 // It translates error messages using the handler's translator when available,
 // falling back to English defaults when translator is nil (backwards compatible).
+//
+//nolint:unused // kept for future i18n wiring
 func (h *Handler) writeAuthErrorT(w http.ResponseWriter, r *http.Request, err error) {
 	writeAuthErrorWithTranslator(w, err, h.translator, r)
 }

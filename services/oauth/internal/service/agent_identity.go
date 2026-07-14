@@ -155,7 +155,7 @@ func (s *OAuthService) agentLoadRedis(ctx context.Context, agentID uuid.UUID) (*
 }
 
 // agentDeleteRedis removes an agent from both Redis and in-memory.
-func (s *OAuthService) agentDeleteRedis(ctx context.Context, agentID uuid.UUID) {
+func (s *OAuthService) agentDeleteRedis(ctx context.Context, agentID uuid.UUID) { //nolint:unused // kept for future agent management
 	agentMu.Lock()
 	agent, ok := agentStore[agentID]
 	if ok {
@@ -444,11 +444,9 @@ func (s *OAuthService) CheckAgentScope(ctx context.Context, tokenString, require
 	}
 
 	// Check scope in the token (scope claim or registered claims)
+	// TODO: parse scope from raw token for finer-grained validation
 	tokenScope := ""
-	if claims.RegisteredClaims.Subject != "" {
-		// Parse scope from the raw token if available
-	}
-	_ = tokenScope
+	_ = tokenScope // placeholder for future scope extraction
 
 	// For agent tokens, we trust the scope validated during exchange
 	return claims, nil

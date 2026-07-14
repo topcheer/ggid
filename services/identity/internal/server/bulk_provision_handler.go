@@ -52,7 +52,7 @@ func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request
 			continue
 		}
 		tempPwd := uuid.New().String()[:12]
-		role := u.Role
+		role := u.Role //nolint:ineffassign // reassigned in next line if empty
 		if role == "" {
 			role = "user"
 		}

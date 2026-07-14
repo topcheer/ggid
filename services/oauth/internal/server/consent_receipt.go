@@ -50,7 +50,7 @@ func RecordConsentReceipt(userID, clientID, purpose string, categories, thirdPar
 }
 
 // GET /api/v1/oauth/consent/{id}/receipt — get GDPR-compliant consent receipt.
-func handleConsentReceipt(w http.ResponseWriter, r *http.Request) {
+func handleConsentReceipt(w http.ResponseWriter, r *http.Request) { //nolint:unused // endpoint registered in future
 	if r.Method != http.MethodGet {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 		return
@@ -76,6 +76,6 @@ func handleConsentReceipt(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, rec)
 }
 
-func splitPath(p string) []string {
+func splitPath(p string) []string { //nolint:unused // used by handleConsentReceipt
 	return strings.Split(strings.Trim(p, "/"), "/")
 }

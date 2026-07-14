@@ -108,10 +108,10 @@ func (s *OAuthService) CreateClient(ctx context.Context, input *CreateClientInpu
 	if client.Scopes == nil {
 		client.Scopes = []string{"openid", "profile", "email"}
 	}
-	if client.GrantTypes == nil || len(client.GrantTypes) == 0 {
+	if len(client.GrantTypes) == 0 {
 		client.GrantTypes = []string{"authorization_code", "refresh_token"}
 	}
-	if client.ResponseTypes == nil || len(client.ResponseTypes) == 0 {
+	if len(client.ResponseTypes) == 0 {
 		client.ResponseTypes = []string{"code"}
 	}
 	if client.RedirectURIs == nil {
@@ -251,7 +251,7 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		return "", errors.InvalidArgument("redirect_uri not registered for this client")
 	}
 
-	if client.ResponseTypes != nil && len(client.ResponseTypes) > 0 {
+	if len(client.ResponseTypes) > 0 {
 		if !contains(client.ResponseTypes, req.ResponseType) {
 			return "", errors.InvalidArgument("response_type not allowed for this client")
 		}

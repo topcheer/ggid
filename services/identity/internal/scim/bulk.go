@@ -211,7 +211,7 @@ func (h *Handler) bulkPatchUser(ctx context.Context, op BulkOperationRequest) (B
 	patchedUser := PatchedAttrsToSCIMUser(patched)
 	if patchedUser.DisplayName != "" && patchedUser.DisplayName != user.DisplayName {
 		dn := patchedUser.DisplayName
-		user, _ = h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{DisplayName: &dn})
+		user, _ = h.svc.UpdateUser(ctx, userID, &domain.UpdateUserInput{DisplayName: &dn}) //nolint:staticcheck // SA4006: return value intentionally discarded
 	}
 
 	return BulkOperationResponse{

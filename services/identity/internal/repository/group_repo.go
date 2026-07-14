@@ -76,7 +76,7 @@ func (r *GroupRepo) GetGroupByDisplayName(ctx context.Context, tenantID uuid.UUI
 func (r *GroupRepo) UpdateGroup(ctx context.Context, tenantID, id uuid.UUID, input *domain.UpdateGroupInput) (*domain.Group, error) {
 	setParts := []string{"updated_at = NOW()"}
 	args := []any{id, tenantID}
-	argIdx := 3
+	argIdx := 3 //nolint:ineffassign // incremented in conditional branches
 
 	if input.DisplayName != nil {
 		setParts = append(setParts, fmt.Sprintf("display_name = $%d", argIdx))

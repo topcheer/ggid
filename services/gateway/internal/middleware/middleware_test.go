@@ -482,7 +482,7 @@ func TestTenantIDFromRequest(t *testing.T) {
 
 // --- Helpers for tests ---
 
-func generateSeparateKey(t *testing.T) *rsa.PrivateKey {
+func generateSeparateKey(t *testing.T) *rsa.PrivateKey { //nolint:unused // test helper, may be used in future tests
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {

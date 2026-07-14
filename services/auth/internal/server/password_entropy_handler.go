@@ -54,7 +54,7 @@ func (h *Handler) handlePasswordEntropy(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Strength assessment
-	level := "weak"
+	var level string
 	var suggestions []string
 	switch {
 	case entropyBits < 28:
