@@ -40,10 +40,9 @@
 | 9 | NoopIdentityClient | auth/service/identity_client.go, auth/cmd/main.go | `NewHTTPIdentityClient` used when `IDENTITY_SERVICE_URL` is set; Noop is intentional degraded fallback. | [DONE] | backend |
 | 10 | CIBA backchannel route | oauth/server/server.go | CIBA backchannel endpoint `/api/v1/oauth/backchannel` registered and invokes BackchannelAuthentication. Service-layer tests in ciba_flow_test.go exercise the flow. | [DONE] | 2934fd98 |
 | 11 | Client Branding persistence | oauth/internal/server/client_branding.go | `handleClientBranding` uses `brandingAdapterVar` (PG-backed adapter with mem fallback). Regression test `TestGapRegression_ClientBranding_UsesAdapter` passes. | [DONE] | 2934fd98 |
-
-| 15 | OAuth server internal error exposure | oauth/internal/server/server.go, token_events.go | 500 responses returned raw err.Error() to clients (CreateClient, ListClients, DeleteClient, CreateDeviceAuthorization, ListAgents, IssueSAMLToken, BuildSAMLResponse). Added writeInternalError helper that logs error and returns sanitized "internal server error". | [DONE] | TBD |
-| 16 | Auth server internal error exposure | auth/internal/server/http.go, trust_store_handler.go, admin_config.go | 500 responses returned raw err.Error() to clients. Replaced with writeInternalError helper / sanitized messages. | [DONE] | TBD |
-| 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | TBD |
+| 15 | OAuth server internal error exposure | oauth/internal/server/server.go, token_events.go | 500 responses returned raw err.Error() to clients (CreateClient, ListClients, DeleteClient, CreateDeviceAuthorization, ListAgents, IssueSAMLToken, BuildSAMLResponse). Added writeInternalError helper that logs error and returns sanitized "internal server error". | [DONE] | 5a40d929 |
+| 16 | Auth server internal error exposure | auth/internal/server/http.go, trust_store_handler.go, admin_config.go | 500 responses returned raw err.Error() to clients. Replaced with writeInternalError helper / sanitized messages. | [DONE] | 5a40d929 |
+| 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | 5a40d929 |
 
 ### LOW Priority
 

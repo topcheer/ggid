@@ -1,6 +1,6 @@
 # Platform Scan State
 
-## Current round: 13
+## Current round: 14
 ## Last scan focus: E (Error Handling)
 ## Next scan focus: F (Test Coverage)
 ## Total findings: 17
@@ -10,7 +10,7 @@
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 13 is odd: execute completeness scan (focus F — Test Coverage).*
+*Round 14 is even: execute E2E regression tests (`deploy/e2e-docker-test.sh`) if Docker infra is healthy; otherwise record as infra gap.*
 ## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
