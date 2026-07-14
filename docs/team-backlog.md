@@ -20,7 +20,7 @@
 | # | Feature | Owner | Location | Status | Next Action |
 |---|---------|-------|----------|--------|-------------|
 | 1 | GeoIP MaxMind integration | arch | services/gateway/middleware | [PARTIAL] | Add optional GeoLite2/MMDB lookup with private-IP fallback |
-| 2 | SDK alignment for Agent Identity / IGA | backend/arch | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | [NEW] | Add RegisterAgent, ExchangeAgentToken, AccessRequest endpoints to 7 SDKs |
+| 2 | SDK alignment for Agent Identity / IGA | arch | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | [PARTIAL] | Python + Java DONE; Rust, Ruby, C#, Dart, PHP pending |
 
 ### P2 — Research-driven competitive/compliance gaps
 
@@ -45,11 +45,11 @@
 ## Currently Dispatched (Next 24h)
 
 ### Backend
-1. SDK alignment: Agent Identity / Access Request methods for 7 SDKs
+1. (standby)
 
 ### Arch
-1. GeoIP MaxMind design
-2. OAuth 2.1 / FAPI 2.0 gap analysis
+1. SDK alignment: Agent Identity / Access Request for Rust, Ruby, C#, Dart, PHP SDKs
+2. GeoIP MaxMind design
 
 ### Frontend
 1. Console loading/error states for remaining pages
