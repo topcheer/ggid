@@ -228,7 +228,7 @@ func (s *OAuthService) GetAgent(ctx context.Context, agentID uuid.UUID) (*AgentR
 func (s *OAuthService) ListAgents(ctx context.Context, tenantID uuid.UUID) ([]*AgentRegistration, error) {
 	agentMu.RLock()
 	defer agentMu.RUnlock()
-	var result []*AgentRegistration
+	result := make([]*AgentRegistration, 0)
 	for _, a := range agentStore {
 		if a.TenantID == tenantID {
 			result = append(result, a)

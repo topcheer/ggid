@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
 	"github.com/ggid/ggid/services/gateway/internal/router"
@@ -31,6 +33,21 @@ func main() {
 	// Start background JWKS refresh (every 15 min) if using JWKS URL
 	if cfg.JWKSURL != "" {
 		jwks.StartRefresh(ctx, 15*time.Minute)
+	}
+
+	// Connect to Redis for sysconfig hot-reload (optional — gateway degrades gracefully without it)
+	var sysconfigStore sysconfig.Store
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		log.Printf("Warning: Redis not available for gateway sysconfig (using defaults): %v", err)
+		sysconfigStore = sysconfig.NewStore(nil, nil) // DB-less, defaults only
+	} else {
+		log.Printf("connected to Redis for sysconfig")
+		sysconfigStore = sysconfig.NewStore(nil, rdb) // Gateway uses Redis cache only; DB writes go through auth service
 	}
 
 	// Create gateway router

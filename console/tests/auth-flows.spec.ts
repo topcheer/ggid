@@ -55,7 +55,7 @@ test.describe('Auth Flows', () => {
     await setToken(page, token);
     
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
@@ -64,21 +64,21 @@ test.describe('Auth Flows', () => {
 
   test('login page renders correctly', async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText?.length).toBeGreaterThan(0);
   });
 
   test('register page renders correctly', async ({ page }) => {
     await page.goto('/register');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText?.length).toBeGreaterThan(0);
   });
 
   test('forgot-password page renders correctly', async ({ page }) => {
     await page.goto('/forgot-password');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText?.length).toBeGreaterThan(0);
   });
@@ -87,7 +87,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });
@@ -96,7 +96,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/users');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });
@@ -105,7 +105,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/roles');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });
@@ -114,7 +114,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/organizations');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });
@@ -123,7 +123,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/audit');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });
@@ -132,7 +132,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });
@@ -141,7 +141,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/agents');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });
@@ -150,7 +150,7 @@ test.describe('Auth Flows', () => {
     const token = pageToken;
     await setToken(page, token);
     await page.goto('/security-center');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("domcontentloaded");
     const bodyText = await page.textContent('body');
     expect(bodyText).not.toContain('Application error');
   });

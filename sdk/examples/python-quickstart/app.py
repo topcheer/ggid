@@ -18,6 +18,7 @@ Test:
     curl http://localhost:9090/protected        → 401 (missing token)
     curl -H "Authorization: Bearer <token>" http://localhost:9090/protected → 200
 """
+import os
 from flask import Flask, request, jsonify
 from ggid import GGIDClient, GGIDMiddleware, get_current_user
 
@@ -28,7 +29,7 @@ app = Flask(__name__)
 
 # Step 1: Create client and login
 client = GGIDClient(GATEWAY_URL, tenant_id=TENANT_ID)
-tokens = client.login("admin", "Admin@123456")
+tokens = client.login("admin", os.environ.get("GGID_PASSWORD", ""))
 print(f"Login OK — token length: {len(tokens['access_token'])}")
 
 # Step 2: Public route (no auth)

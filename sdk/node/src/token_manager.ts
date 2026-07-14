@@ -12,7 +12,7 @@
  * const client = new GGIDClient({ gatewayUrl: 'https://iam.example.com' });
  * const tm = new TokenManager(client);
  *
- * await tm.login({ username: 'admin', password: 'Admin@123456' });
+ * await tm.login({ username: 'admin', password: process.env.GGID_PASSWORD });
  *
  * // Later — auto-refreshes if needed
  * const token = await tm.getAccessToken();

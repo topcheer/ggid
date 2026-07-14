@@ -1,37 +1,76 @@
-# Binaries
+# === Binaries ===
 bin/
 *.exe
+cmd
+!services/*/cmd/
+!services/*/cmd/**
 
-# Go
+# === Go ===
 vendor/
+*.test
+coverage.out
+coverage.html
 
-# IDE
+# === Node.js ===
+node_modules/
+*.tsbuildinfo
+.next/
+.turbo/
+
+# === Java ===
+sdk/java/target/
+sdk/java/java/target/
+*.class
+*.jar
+*.war
+
+# === Rust ===
+sdk/rust/target/
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+sdk/python/ggid.egg-info/
+
+# === C# / .NET ===
+sdk/csharp/obj/
+sdk/csharp/bin/
+
+# === Dart ===
+sdk/dart/.dart_tool/
+
+# === IDE ===
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS
+# === OS ===
 .DS_Store
 Thumbs.db
 
-# Environment
+# === Environment / Secrets ===
 .env
 .env.local
+.env.*.local
 *.pem
 *.key
 
-# Build
+# === Build ===
 tmp/
 dist/
 
-# Test
+# === Test ===
+console/test-results/
 coverage.out
 coverage.html
 
-# ggcode
+# === ggcode ===
 .ggcode/
 service.test
-sdk/python/ggid.egg-info/
-sdk/python/ggid/__pycache__/
-sdk/rust/target/
+
+# === Temp scripts ===
+transform_pages.py
+transform_pages_v2.py
+wire_pages.py

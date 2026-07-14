@@ -15,6 +15,7 @@ import (
 
 	"github.com/ggid/ggid/pkg/authprovider"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/pkg/truststore"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/repository"
@@ -172,8 +173,13 @@ func main() {
 	// 7. Start session cleanup goroutine
 	go startSessionCleanup(ctx, authSvc)
 
+	// 7b. Initialize system config store (hot-reloadable via DB + Redis Pub/Sub)
+	sysconfigStore := sysconfig.NewStore(pool, rdb)
+	log.Printf("System config store initialized (hot-reload via Redis Pub/Sub)")
+
 	// 8. Start HTTP server
 	handler := server.New(authSvc)
+	handler.SetSysconfigStore(sysconfigStore)
 	httpServer := &http.Server{
 		Addr:         cfg.Server.HTTP.Addr,
 		Handler:      handler,

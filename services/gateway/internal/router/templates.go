@@ -159,7 +159,7 @@ const hostedLoginHTML = `<!DOCTYPE html>
       <button class="btn-social" onclick="socialLogin('oidc')">SSO</button>
     </div>
 
-    <div class="hint">Default: admin / Admin@123456</div>
+    <div class="hint">Use the credentials you set up during registration</div>
     <div class="footer">
       <a href="/forgot-password">Forgot password?</a> ·
       <a href="/register">Create account</a>

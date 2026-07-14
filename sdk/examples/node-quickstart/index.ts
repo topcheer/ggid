@@ -37,7 +37,7 @@ const client = new GGIDClient({
 async function main() {
   const tokens = await client.login({
     username: 'admin',
-    password: 'Admin@123456',
+    password: process.env.GGID_PASSWORD || 'change-me',
   });
   console.log(`Login OK — token length: ${tokens.access_token.length}`);
 

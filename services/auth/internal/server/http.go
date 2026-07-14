@@ -19,6 +19,7 @@ import (
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/i18n"
 	"github.com/ggid/ggid/pkg/social"
+	"github.com/ggid/ggid/pkg/sysconfig"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/conf"
 	"github.com/ggid/ggid/services/auth/internal/service"
@@ -28,13 +29,14 @@ import (
 
 // Handler is the HTTP handler for the Auth Service.
 type Handler struct {
-	authSvc    *service.AuthService
-	mux        *http.ServeMux
-	socialReg  *social.Registry
-	hooks      *service.HookManager
-	idpConfigs map[string]*service.IdPConfig // keyed by config ID
-	translator *i18n.Translator
-	tsHandler  *TrustStoreHandler
+	authSvc        *service.AuthService
+	mux            *http.ServeMux
+	socialReg      *social.Registry
+	hooks          *service.HookManager
+	idpConfigs     map[string]*service.IdPConfig
+	translator     *i18n.Translator
+	tsHandler      *TrustStoreHandler
+	sysconfigStore sysconfig.Store
 }
 
 // New creates a new Auth Service HTTP handler.
@@ -49,6 +51,11 @@ func New(authSvc *service.AuthService) *Handler {
 	}
 	h.registerRoutes()
 	return h
+}
+
+// SetSysconfigStore injects the system config store for hot-reloadable settings.
+func (h *Handler) SetSysconfigStore(store sysconfig.Store) {
+	h.sysconfigStore = store
 }
 
 // t translates a message key for the given request's locale.
@@ -91,6 +98,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/reset-password", h.resetPassword)
 	h.mux.HandleFunc("/api/v1/auth/password/change", h.changePassword)
 	h.mux.HandleFunc("/api/v1/auth/sessions", h.handleSessions)
+	h.mux.HandleFunc("/api/v1/admin/config", h.handleAdminConfig)
+	h.mux.HandleFunc("/api/v1/admin/config/", h.handleAdminConfig)
 	h.mux.HandleFunc("/api/v1/auth/mfa/setup", h.mfaSetup)
 	h.mux.HandleFunc("/api/v1/auth/mfa/verify", h.mfaVerify)
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)

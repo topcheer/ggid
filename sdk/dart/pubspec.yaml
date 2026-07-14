@@ -1,0 +1,17 @@
+name: ggid
+description: Official Dart SDK for the GGID IAM Platform — JWT verification, RBAC/ABAC authorization, and Shelf middleware.
+version: 1.0.0
+homepage: https://github.com/ggid/ggid
+repository: https://github.com/ggid/ggid/tree/main/sdk/dart
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  http: ^1.2.0
+  dart_jsonwebtoken: ^2.14.0
+  shelf: ^1.4.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^4.0.0

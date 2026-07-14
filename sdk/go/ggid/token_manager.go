@@ -21,7 +21,7 @@ const refreshMargin = 30 * time.Second
 //	    ggid.WithTenantID("..."), ggid.WithJWKS(".../.well-known/jwks.json"))
 //
 //	tm := ggid.NewTokenManager(client)
-//	tokens, _ := tm.Login(ctx, "admin", "Admin@123456")
+//	tokens, _ := tm.Login(ctx, "admin", os.Getenv("GGID_PASSWORD"))
 //
 //	// Later — auto-refreshes if needed
 //	token, _ := tm.AccessToken(ctx)

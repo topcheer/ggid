@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	ggid "github.com/ggid/ggid/sdk/go/ggid"
 	ggidmw "github.com/ggid/ggid/sdk/go/middleware"
@@ -37,7 +38,7 @@ func main() {
 	client := ggid.NewClient("http://localhost:8080",
 		ggid.WithTenantID("00000000-0000-0000-0000-000000000001"))
 
-	tokens, err := client.Login(ctx, "admin", "Admin@123456")
+	tokens, err := client.Login(ctx, "admin", os.Getenv("GGID_PASSWORD"))
 	if err != nil {
 		log.Fatalf("Login failed: %v", err)
 	}

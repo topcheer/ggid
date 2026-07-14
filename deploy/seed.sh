@@ -56,7 +56,7 @@ psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c \
 
 echo "=== Seed data complete ==="
 echo "Admin user must be created via: POST /api/v1/auth/register"
-echo '  {"username":"admin","email":"admin@ggid.dev","password":"Admin@123456","name":"System Administrator"}'
+echo '  {"username":"admin","email":"admin@ggid.dev","password":"$ADMIN_PASSWORD","name":"System Administrator"}'
 echo ""
 echo "Then assign admin role:"
 echo "  See deploy/seed.sh for SQL"

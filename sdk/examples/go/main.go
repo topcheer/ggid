@@ -14,13 +14,13 @@
 // Run:
 //   export GGID_URL=http://localhost:8080
 //   export GGID_USER=admin
-//   export GGID_PASS=Admin@123456
+//   export GGID_PASS=${ADMIN_PASSWORD}
 //   go run main.go
 //
 // Test with curl:
 //   # Get a token
 //   TOKEN=$(curl -s -H 'Content-Type: application/json' \
-//     -d '{"username":"admin","password":"Admin@123456"}' \
+//     -d '{"username":"admin","password":"'"$GGID_PASS"'"}' \
 //     http://localhost:8080/api/v1/auth/login | jq -r .access_token)
 //
 //   # Public endpoint
@@ -52,7 +52,7 @@ func main() {
 
 	ggidURL := envOr("GGID_URL", "http://localhost:8080")
 	username := envOr("GGID_USER", "admin")
-	password := envOr("GGID_PASS", "Admin@123456")
+	password := envOr("GGID_PASS", "")
 	tenantID := envOr("GGID_TENANT", "00000000-0000-0000-0000-000000000001")
 
 	ctx := context.Background()

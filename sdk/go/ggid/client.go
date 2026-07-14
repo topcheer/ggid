@@ -7,7 +7,7 @@
 //
 //	client := ggid.NewClient("https://iam.example.com",
 //		ggid.WithTenantID("00000000-0000-0000-0000-000000000001"))
-//	tokens, err := client.Login(ctx, "admin", "Admin@123456")
+//	tokens, err := client.Login(ctx, "admin", os.Getenv("GGID_PASSWORD"))
 //	users, err := client.ListUsers(ctx, tokens.AccessToken)
 package ggid
 
