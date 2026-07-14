@@ -26,7 +26,10 @@ export default function ForgotPasswordPage() {
         setSent(true);
       } else {
         const data = await resp.json().catch(() => ({}));
-        setError(data.error || data.message || "Reset failed");
+        const errMsg = typeof data.error === 'string'
+          ? data.error
+          : data.error?.message || data.error?.code || data.message || "Reset failed";
+        setError(errMsg);
       }
     } catch {
       setError("Network error — is the API running?");

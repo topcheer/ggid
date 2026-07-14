@@ -84,7 +84,10 @@ export default function LoginPage() {
       const data = await resp.json();
 
       if (!resp.ok) {
-        setError(data.error || data.message || "Login failed");
+        const errMsg = typeof data.error === 'string'
+          ? data.error
+          : data.error?.message || data.error?.code || data.message || "Login failed";
+        setError(errMsg);
         return;
       }
 
@@ -95,15 +98,31 @@ export default function LoginPage() {
         return;
       }
 
-      // No MFA needed — store tokens and redirect
-      if (data.access_token) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("ggid_access_token", data.access_token);
-          localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
-          localStorage.setItem("ggid_session_id", data.session_id || "");
+      // Success — store token and check for OAuth redirect
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+
+      // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get("redirect_to");
+      if (redirectTo) {
+        // Extract user_id from JWT
+        const token = data.access_token;
+        try {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          const userId = payload.sub;
+          const url = new URL(redirectTo);
+          url.searchParams.set("user_id", userId);
+          window.location.href = url.toString();
+          return;
+        } catch {
+          // fallback: just redirect without user_id
+          window.location.href = redirectTo;
+          return;
         }
-        router.push("/");
       }
+
+      // No MFA needed — already stored tokens and handled redirect above
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error — is the API running?");
     } finally {
@@ -125,17 +144,35 @@ export default function LoginPage() {
       const data = await resp.json();
 
       if (!resp.ok) {
-        setError(data.error || "Invalid verification code");
+        const errMsg = typeof data.error === 'string'
+          ? data.error
+          : data.error?.message || data.error?.code || data.message || "Invalid verification code";
+        setError(errMsg);
         return;
       }
 
       if (data.access_token) {
         if (typeof window !== "undefined") {
-          localStorage.setItem("ggid_access_token", data.access_token);
-          localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
-          localStorage.setItem("ggid_session_id", data.session_id || "");
+          localStorage.setItem("token", data.access_token);
+          localStorage.setItem("refresh_token", data.refresh_token || "");
+
+          // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
+          const params = new URLSearchParams(window.location.search);
+          const redirectTo = params.get("redirect_to");
+          if (redirectTo) {
+            try {
+              const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+              const url = new URL(redirectTo);
+              url.searchParams.set("user_id", payload.sub);
+              window.location.href = url.toString();
+              return;
+            } catch {
+              window.location.href = redirectTo;
+              return;
+            }
+          }
         }
-        router.push("/");
+        router.push("/dashboard");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");

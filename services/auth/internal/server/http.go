@@ -2318,6 +2318,12 @@ func (h *Handler) handleSocial(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Special case: list available connectors
+	if provider == "connectors" {
+		h.listSocialConnectors(w, r)
+		return
+	}
+
 	isCallback := len(parts) == 2 && parts[1] == "callback"
 
 	if isCallback {
@@ -2325,6 +2331,26 @@ func (h *Handler) handleSocial(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.socialBegin(w, r, provider)
+}
+
+// listSocialConnectors returns the list of registered social login providers.
+func (h *Handler) listSocialConnectors(w http.ResponseWriter, _ *http.Request) {
+	ids := h.socialReg.List()
+	connectors := make([]map[string]string, 0, len(ids))
+	for _, id := range ids {
+		conn, err := h.socialReg.Get(id)
+		if err != nil {
+			continue
+		}
+		connectors = append(connectors, map[string]string{
+			"id":          conn.ID(),
+			"name":        conn.DisplayName(),
+			"provider":    conn.ID(),
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"connectors": connectors,
+	})
 }
 
 func (h *Handler) socialBegin(w http.ResponseWriter, r *http.Request, provider string) {

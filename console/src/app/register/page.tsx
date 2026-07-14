@@ -29,7 +29,10 @@ export default function RegisterPage() {
       if (resp.ok) {
         router.push("/login?registered=1");
       } else {
-        setError(data.error || data.message || "Registration failed");
+        const errMsg = typeof data.error === 'string'
+          ? data.error
+          : data.error?.message || data.error?.code || data.message || "Registration failed";
+        setError(errMsg);
       }
     } catch {
       setError("Network error — is the API running?");
