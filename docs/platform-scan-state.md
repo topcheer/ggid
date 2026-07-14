@@ -1,25 +1,29 @@
 # Platform Scan State
 
-## Current round: 3
-## Last scan focus: C (Middleware Chain) + F (Test Coverage Gaps)
-## Next scan focus: D (Data Persistence) + G (SDK Alignment)
-## Total findings: 12
-## Fixed: 9
-## Remaining: 2
-## Partial: 1
+## Current round: 4
+## Last scan focus: D (Data Persistence) + G (SDK Alignment)
+## Next scan focus: E (Security Config)
+## Total findings: 22
+## Fixed: 11
+## Remaining: 9
+## Partial: 2
 
 ## Current top incomplete features:
-1. DCR grant_types — HIGH — [FIXED] M2M token exchange PASS
-2. MFA TOTP hardcoded secret — HIGH — [FIXED] commit 27db0fd9
-3. SAML SP-Initiated SSO — HIGH — [FIXED] 302 redirect with SAMLRequest
-4. SAML SLO — MEDIUM — [FIXED] Real SLO handler (processes LogoutRequest/Response)
-5. SAML IdP — HIGH — [FIXED] Full IdP: BuildSAMLResponse+SignAssertion+IdPMetadata+3 endpoints (commit 8e099f93)
-6. CIBA backchannel route — MEDIUM — [FIXED] Route registered + gateway whitelisted
-7. GeoIP placeholder — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
-8. Device-Bound SSO — MEDIUM — [NEW] 6 TODOs, empty shell
-9. Backup Codes in-memory — MEDIUM — [NEW] inMemBackupCodeRepo
-10. NoopIdentityClient — MEDIUM — [NEW] stub fallback
-11. Frontend pages — LOW — [DONE] 4 pages verified complete
+1. Backup Codes in-memory — MEDIUM — [NEW] inMemBackupCodeRepo, lost on restart
+2. PAR store in-memory — LOW — [NEW] parStore map, short-lived (expires in 60s)
+3. Device Code store in-memory — LOW — [NEW] deviceCodeStore map, short-lived
+4. Custom Scopes in-memory — MEDIUM — [NEW] customScopes map, admin config lost
+5. DPoP bindings in-memory — LOW — [NEW] dpopBindings map
+6. Delegation chains in-memory — LOW — [NEW] delegationChains map
+7. Agent consent/review in-memory — LOW — [NEW] sync.Map stores
+8. Client branding in-memory — MEDIUM — [NEW] brandingStore map
+9. CIBA store in-memory — LOW — [NEW] cibaStore sync.Map (fallback)
+10. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
+11. Scope i18n in-memory — LOW — [NEW] scopeDescStore (static defaults)
+
+## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
+All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
+login, refresh, userinfo, jwks, rbac, abac, webhook, introspect, revoke, discovery
 
 ## Scan rotation order:
 A → B → C → D → E → F → G → A → ...
@@ -30,20 +34,36 @@ A → B → C → D → E → F → G → A → ...
 - Scan focus rotates within odd rounds: A→B→C→D→E→F→G→A
 
 ## Round 1 (Scan A - Stub/Placeholder): COMPLETE
-- Found: 9 issues (3 HIGH, 5 MEDIUM, 1 LOW)
-- Fixed: 5 (DCR, MFA TOTP, SAML SP-SSO, CIBA route, GeoIP partial)
-- SAML IdP implemented (commit 8e099f93, 422 lines + 12 tests)
-
 ## Round 2 (Scan B - Route Wiring): COMPLETE
-- Found: SAML IdP routes not deployed (404) → FIXED by rebuilding OAuth image
-- Found: SAML SLO placeholder → FIXED (replaced with real handler)
-- SCIM routes: /api/v1/scim works through gateway, /scim/v2/ not proxied (acceptable - SCIM is on identity service)
-- All gateway public paths verified correct
-- OAuth regression: PASS (Discovery 200, JWKS 200)
+## Round 3 (Scan C+F - Middleware+Test Gaps): COMPLETE (by frontend)
+## Round 3 (Scan D+G - Persistence+SDK Matrix): COMPLETE (by arch)
+
+## Risk Assessment of In-Memory Stores:
+HIGH (must fix for production):
+- Backup Codes (user-facing, security-critical)
+- Custom Scopes (admin config, lost on restart)
+
+MEDIUM (should fix):
+- Client Branding (admin config)
+- Introspection Cache (performance, safe to lose)
+
+LOW (acceptable for now — short-lived or fallback):
+- PAR store (60s expiry)
+- Device Code (15min expiry)
+- DPoP bindings (session-scoped)
+- Delegation chains (debug/audit)
+- Agent consent/review (session-scoped)
+- CIBA store (15min expiry, Redis fallback exists)
+- Scope i18n (static defaults)
+- OAuth state store (short-lived CSRF)
 
 ## Commits this cycle:
-- 0db7939d: CIBA backchannel route + GeoIP improvement (arch)
+- 0db7939d: CIBA backchannel route + GeoIP (arch)
 - ab3605ce: Gateway whitelist for CIBA (arch)
 - 27db0fd9: MFA TOTP dynamic secret (backend)
-- 8e099f93: SAML 2.0 IdP implementation (arch) — 422 lines + 12 tests
+- 8e099f93: SAML 2.0 IdP implementation (arch)
 - 1f9a36e0: GeoIP test fix (arch)
+- a19495e4: Device-Bound SSO + NoopIdentityClient (backend)
+- 8343bde3: SAML IdP roundtrip tests (arch)
+- 7be8355c: Frontend loading/error states (frontend)
+- eec3a7bd: Docs code block fixes (docs)
