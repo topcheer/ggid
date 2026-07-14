@@ -17,7 +17,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [gateway, identity, auth, oauth, policy, org, audit, console]
+        include:
+          - service: gateway
+            dockerfile: ./services/gateway/Dockerfile
+          - service: identity
+            dockerfile: ./services/identity/Dockerfile
+          - service: auth
+            dockerfile: ./services/auth/Dockerfile
+          - service: oauth
+            dockerfile: ./services/oauth/Dockerfile
+          - service: policy
+            dockerfile: ./services/policy/Dockerfile
+          - service: org
+            dockerfile: ./services/org/Dockerfile
+          - service: audit
+            dockerfile: ./services/audit/Dockerfile
+          - service: console
+            dockerfile: ./console/Dockerfile
     steps:
       - uses: actions/checkout@v4
 
@@ -57,7 +73,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./services/${{ matrix.service }}/Dockerfile
+          file: ${{ matrix.dockerfile }}
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
