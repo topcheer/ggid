@@ -1,16 +1,16 @@
 # Platform Scan State
 
-## Current round: 16
-## Last scan focus: F (Test Coverage)
+## Current round: 17
+## Last scan focus: E2E Regression Tests (11/11 PASS)
 ## Next scan focus: G (SDK Alignment)
 ## Total findings: 19
-## Done: 19
+## Done: 18
 ## Fixed (pending verification): 0
 ## Partial: 1
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 16 is even: execute E2E regression tests (`deploy/e2e-docker-test.sh`).*
+*Round 17 is odd: execute completeness scan (focus G — SDK Alignment).*
 ## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
@@ -49,8 +49,8 @@ LOW (acceptable for now — short-lived or fallback):
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
 - bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
-- (current): Round 15 focus F test coverage — add handler tests for identity/audit/org server packages
-- (round 14): Round 14 E2E regression — Docker Compose 11/11 PASS after migrate container fix
+- (current): Round 16 E2E regression — Docker Compose E2E 11/11 PASS
+- (round 15): Round 15 focus F test coverage — add handler tests for identity/audit/org server packages
 - (round 13): Round 13 focus E error handling — sanitize internal error exposure in oauth/internal/server and auth/internal/server
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (backend)

@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 1
 - Remaining: 0
-- Last scan: 2026-07-15 round 15 (focus: F — Test Coverage)
+- Last scan: 2026-07-15 round 16 (E2E regression tests — 11/11 PASS)
 
 ## Findings
 
@@ -95,6 +95,6 @@
 
 ## Next Actions
 
-- Round 16 (even): E2E regression test run (`deploy/e2e-docker-test.sh`)
+- Round 16 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS, verified
 - Round 17 (odd, Focus G): SDK alignment scan
 - Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard
