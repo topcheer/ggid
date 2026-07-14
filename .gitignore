@@ -34,3 +34,4 @@ coverage.html
 service.test
 sdk/python/ggid.egg-info/
 sdk/python/ggid/__pycache__/
+sdk/rust/target/
