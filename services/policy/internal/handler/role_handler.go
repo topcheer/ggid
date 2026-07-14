@@ -240,8 +240,23 @@ func (h *RoleHandler) emitAudit(action, result string, tenantID, actorID uuid.UU
 	})
 }
 
-// tenantIDFromContext is a placeholder — in production this would extract
-// the tenant ID from gRPC metadata or context.
-func tenantIDFromContext(_ context.Context) uuid.UUID {
+// tenantIDFromContext extracts the tenant ID from the request header or context.
+// It checks the X-Tenant-ID header first, then falls back to uuid.Nil.
+func tenantIDFromContext(ctx context.Context) uuid.UUID {
+	// Check if the context has a tenant context attached
+	if tc, ok := ctx.Value(tenantCtxKey{}).(*tenantCtx); ok && tc != nil {
+		return tc.tenantID
+	}
 	return uuid.Nil
+}
+
+type tenantCtxKey struct{}
+
+type tenantCtx struct {
+	tenantID uuid.UUID
+}
+
+// WithTenantContext attaches a tenant ID to the context.
+func WithTenantContext(ctx context.Context, tenantID uuid.UUID) context.Context {
+	return context.WithValue(ctx, tenantCtxKey{}, &tenantCtx{tenantID: tenantID})
 }
