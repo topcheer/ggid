@@ -140,19 +140,19 @@ export default function TenantConfigPage() {
             <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-700">
               {profile.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.logoUrl} alt="Logo" className="h-full w-full object-cover" />
+                <img src={profile.logoUrl} alt={t("tenant.logoPreview")} className="h-full w-full object-cover" />
               ) : <Building2 className="h-8 w-8 text-gray-400" />}
             </div>
             <div>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-              <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30">
+              <button onClick={() => fileInputRef.current?.click()} aria-label={t("branding.uploadLogo")} className="flex items-center gap-2 rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30">
                 <Upload className="h-4 w-4" /> {t("branding.uploadLogo")}
               </button>
-              {profile.logoUrl && <button onClick={() => setProfile({ ...profile, logoUrl: "" })} className="ml-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950">{t("tenant.removeLogo")}</button>}
+              {profile.logoUrl && <button onClick={() => setProfile({ ...profile, logoUrl: "" })} aria-label={t("tenant.removeLogo")} className="ml-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950">{t("tenant.removeLogo")}</button>}
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingProfile(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ name: profile.name, logo_url: profile.logoUrl, domain: profile.domain }) }); setMsg(t("tenant.profileSaved")); } catch { setMsg(t("tenant.profileSavedOffline")); } finally { setSavingProfile(false); } }} disabled={savingProfile} className={saveBtn}>
+            <button onClick={async () => { setSavingProfile(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ name: profile.name, logo_url: profile.logoUrl, domain: profile.domain }) }); setMsg(t("tenant.profileSaved")); } catch { setMsg(t("tenant.profileSavedOffline")); } finally { setSavingProfile(false); } }} disabled={savingProfile} aria-label={t("tenant.saveProfile")} className={saveBtn}>
               {savingProfile ? <Save className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("tenant.saveProfile")}
             </button>
           </div>
@@ -170,7 +170,7 @@ export default function TenantConfigPage() {
             ))}
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingFlags(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ feature_flags: flags }) }); setMsg(t("tenant.flagsSaved")); } catch { setMsg(t("tenant.flagsSavedOffline")); } finally { setSavingFlags(false); } }} disabled={savingFlags} className={saveBtn}>
+            <button onClick={async () => { setSavingFlags(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ feature_flags: flags }) }); setMsg(t("tenant.flagsSaved")); } catch { setMsg(t("tenant.flagsSavedOffline")); } finally { setSavingFlags(false); } }} disabled={savingFlags} aria-label={t("tenant.saveFlags")} className={saveBtn}>
               <Save className="h-4 w-4" /> {t("tenant.saveFlags")}
             </button>
           </div>
