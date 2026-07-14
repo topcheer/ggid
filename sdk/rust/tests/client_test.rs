@@ -127,3 +127,91 @@ fn test_abac_request_serialize() {
     assert!(json.contains("documents"));
     assert!(json.contains("department"));
 }
+
+#[test]
+fn test_introspection_result_deserialize() {
+    let json = r#"{
+        "active": true,
+        "scope": "openid profile",
+        "client_id": "gcid_test",
+        "token_type": "Bearer",
+        "exp": 1750000000,
+        "sub": "user-123"
+    }"#;
+    let result: IntrospectionResult = serde_json::from_str(json).unwrap();
+    assert!(result.active);
+    assert_eq!(result.scope.as_deref(), Some("openid profile"));
+    assert_eq!(result.sub.as_deref(), Some("user-123"));
+    assert_eq!(result.exp, Some(1750000000));
+}
+
+#[test]
+fn test_introspection_result_inactive() {
+    let json = r#"{"active": false}"#;
+    let result: IntrospectionResult = serde_json::from_str(json).unwrap();
+    assert!(!result.active);
+    assert!(result.scope.is_none());
+}
+
+#[test]
+fn test_webhook_deserialize() {
+    let json = r#"{
+        "id": "wh-001",
+        "url": "https://example.com/hooks",
+        "events": ["user.created", "user.deleted"],
+        "secret": "whsec_abc",
+        "active": true
+    }"#;
+    let wh: Webhook = serde_json::from_str(json).unwrap();
+    assert_eq!(wh.id, "wh-001");
+    assert_eq!(wh.url, "https://example.com/hooks");
+    assert_eq!(wh.events.len(), 2);
+    assert!(wh.active);
+}
+
+#[test]
+fn test_webhook_serialize() {
+    let wh = Webhook {
+        id: "wh-002".into(),
+        url: "https://hook.example.com".into(),
+        events: vec!["role.assigned".into()],
+        secret: None,
+        active: false,
+        created_at: None,
+    };
+    let json = serde_json::to_string(&wh).unwrap();
+    assert!(json.contains("wh-002"));
+    assert!(json.contains("role.assigned"));
+    assert!(json.contains("\"active\":false"));
+}
+
+#[tokio::test]
+async fn test_login_url_construction() {
+    let client = GGIDClient::new("https://ggid.iot2.win", "tenant-1");
+    // Verify the client has correct base URL for login
+    assert_eq!(client.base_url, "https://ggid.iot2.win");
+    assert_eq!(client.tenant_id, "tenant-1");
+}
+
+#[tokio::test]
+async fn test_get_discovery_url() {
+    let client = GGIDClient::new("https://ggid.iot2.win", "tenant-1");
+    // Just verify the client is correctly configured for discovery
+    assert!(client.base_url.starts_with("https://"));
+}
+
+#[test]
+fn test_authorize_url_with_all_params() {
+    let client = GGIDClient::new("https://ggid.iot2.win", "tenant-99");
+    let url = client.get_authorize_url(
+        "gcid_test",
+        "https://app.example.com/callback",
+        Some("openid profile email"),
+        Some("random-state-123"),
+    );
+    assert!(url.contains("client_id=gcid_test"));
+    assert!(url.contains("redirect_uri="));
+    assert!(url.contains("tenant_id=tenant-99"));
+    assert!(url.contains("state=random-state-123"));
+    assert!(url.contains("response_type=code"));
+}

@@ -88,3 +88,41 @@ pub struct PolicyCheckResult {
     pub matched_rules: Vec<String>,
     pub reason: Option<String>,
 }
+
+/// Token introspection result (RFC 7662).
+#[derive(Debug, Clone, Deserialize)]
+pub struct IntrospectionResult {
+    pub active: bool,
+    #[serde(default)]
+    pub scope: Option<String>,
+    #[serde(default)]
+    pub client_id: Option<String>,
+    #[serde(default)]
+    pub username: Option<String>,
+    #[serde(default)]
+    pub token_type: Option<String>,
+    #[serde(default)]
+    pub exp: Option<u64>,
+    #[serde(default)]
+    pub iat: Option<u64>,
+    #[serde(default)]
+    pub sub: Option<String>,
+    #[serde(default)]
+    pub aud: Option<Vec<String>>,
+    #[serde(default)]
+    pub iss: Option<String>,
+    #[serde(default)]
+    pub jti: Option<String>,
+}
+
+/// Webhook configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Webhook {
+    pub id: String,
+    pub url: String,
+    pub events: Vec<String>,
+    pub secret: Option<String>,
+    pub active: bool,
+    #[serde(default)]
+    pub created_at: Option<String>,
+}

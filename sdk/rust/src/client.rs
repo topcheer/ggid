@@ -173,6 +173,138 @@ impl GGIDClient {
         Ok(())
     }
 
+    // --- Auth Login ---
+
+    /// Login with username/password and get tokens.
+    ///
+    /// Uses the /api/v1/auth/login endpoint.
+    pub async fn login(
+        &self,
+        username: &str,
+        password: &str,
+    ) -> Result<TokenResponse, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/auth/login", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({
+                "username": username,
+                "password": password,
+            }))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+
+        Ok(resp.json().await?)
+    }
+
+    // --- OAuth Introspect ---
+
+    /// Introspect a token to check its status.
+    ///
+    /// Returns token metadata including active status, expiry, and scope.
+    pub async fn introspect_token(
+        &self,
+        token: &str,
+        client_id: &str,
+        client_secret: &str,
+    ) -> Result<IntrospectionResult, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/oauth/introspect", self.base_url))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(format!(
+                "token={}&client_id={}&client_secret={}",
+                urlencoding::encode(token),
+                urlencoding::encode(client_id),
+                urlencoding::encode(client_secret),
+            ))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+
+        Ok(resp.json().await?)
+    }
+
+    // --- Webhooks ---
+
+    /// List all webhooks for the current tenant.
+    pub async fn list_webhooks(&self, token: &str) -> Result<Vec<Webhook>, GGIDError> {
+        let resp = self
+            .http
+            .get(format!("{}/api/v1/webhooks", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+
+        Ok(resp.json().await?)
+    }
+
+    /// Create a new webhook.
+    pub async fn create_webhook(
+        &self,
+        token: &str,
+        url: &str,
+        events: &[&str],
+    ) -> Result<Webhook, GGIDError> {
+        let resp = self
+            .http
+            .post(format!("{}/api/v1/webhooks", self.base_url))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .json(&json!({
+                "url": url,
+                "events": events,
+            }))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+
+        Ok(resp.json().await?)
+    }
+
+    /// Delete a webhook by ID.
+    pub async fn delete_webhook(&self, token: &str, webhook_id: &str) -> Result<(), GGIDError> {
+        let resp = self
+            .http
+            .delete(format!("{}/api/v1/webhooks/{}", self.base_url, webhook_id))
+            .header("Authorization", format!("Bearer {}", token))
+            .header("X-Tenant-ID", &self.tenant_id)
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+
+        Ok(())
+    }
+
     // --- RBAC ---
 
     /// Check if a token has permission for a resource+action.
@@ -220,6 +352,25 @@ impl GGIDClient {
     /// List all permissions (permission tree).
     pub async fn list_permissions(&self, token: &str) -> Result<Vec<Permission>, GGIDError> {
         RBACService::new(self.clone()).list_permissions(token).await
+    }
+
+    // --- OAuth Discovery ---
+
+    /// Get OIDC discovery document.
+    pub async fn get_discovery(&self) -> Result<serde_json::Value, GGIDError> {
+        let resp = self
+            .http
+            .get(format!("{}/.well-known/openid-configuration", self.base_url))
+            .send()
+            .await?;
+
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            return Err(GGIDError::Api { status, body });
+        }
+
+        Ok(resp.json().await?)
     }
 
     // --- ABAC ---

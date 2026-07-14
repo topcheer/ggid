@@ -184,3 +184,28 @@ class GGIDClient:
 
     def list_audit_events(self, token: str, **params) -> dict:
         return self._request("GET", "/api/v1/audit/events", token=token, params=params)
+
+    # --- Webhooks ---
+
+    def list_webhooks(self, token: str) -> list:
+        """List all webhooks for the current tenant."""
+        return self._request("GET", "/api/v1/webhooks", token=token)
+
+    def create_webhook(self, token: str, url: str, events: list[str],
+                       secret: Optional[str] = None) -> dict:
+        """Create a new webhook.
+
+        Args:
+            token: Bearer token with webhook:write permission.
+            url: Webhook endpoint URL.
+            events: List of event types (e.g. ["user.created", "user.deleted"]).
+            secret: Optional shared secret for HMAC signature verification.
+        """
+        body: dict = {"url": url, "events": events}
+        if secret:
+            body["secret"] = secret
+        return self._request("POST", "/api/v1/webhooks", body, token=token)
+
+    def delete_webhook(self, token: str, webhook_id: str) -> dict:
+        """Delete a webhook by ID."""
+        return self._request("DELETE", f"/api/v1/webhooks/{webhook_id}", token=token)

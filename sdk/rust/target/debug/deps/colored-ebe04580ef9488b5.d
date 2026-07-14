@@ -1,0 +1,12 @@
+/Users/zhanju/ggai/ggid/sdk/rust/target/debug/deps/colored-ebe04580ef9488b5.d: /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/lib.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/color.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/control.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/error.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/style.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/customcolors.rs
+
+/Users/zhanju/ggai/ggid/sdk/rust/target/debug/deps/libcolored-ebe04580ef9488b5.rlib: /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/lib.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/color.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/control.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/error.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/style.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/customcolors.rs
+
+/Users/zhanju/ggai/ggid/sdk/rust/target/debug/deps/libcolored-ebe04580ef9488b5.rmeta: /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/lib.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/color.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/control.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/error.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/style.rs /Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/customcolors.rs
+
+/Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/lib.rs:
+/Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/color.rs:
+/Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/control.rs:
+/Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/error.rs:
+/Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/style.rs:
+/Users/zhanju/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/colored-3.1.1/src/customcolors.rs:

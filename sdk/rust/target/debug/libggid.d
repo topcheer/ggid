@@ -1,0 +1,1 @@
+/Users/zhanju/ggai/ggid/sdk/rust/target/debug/libggid.rlib: /Users/zhanju/ggai/ggid/sdk/rust/src/abac.rs /Users/zhanju/ggai/ggid/sdk/rust/src/auth.rs /Users/zhanju/ggai/ggid/sdk/rust/src/client.rs /Users/zhanju/ggai/ggid/sdk/rust/src/error.rs /Users/zhanju/ggai/ggid/sdk/rust/src/lib.rs /Users/zhanju/ggai/ggid/sdk/rust/src/rbac.rs /Users/zhanju/ggai/ggid/sdk/rust/src/types.rs
