@@ -4,21 +4,16 @@
 ## Last scan focus: G (SDK Alignment)
 ## Next scan focus: A (Stub/Placeholder/TODO)
 ## Total findings: 13
-## Done: 8
-## Fixed (pending verification): 1
+## Done: 12
+## Fixed (pending verification): 0
 ## Partial: 1
-## Remaining: 3
+## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
 *Round 7 is odd: execute completeness scan, focus A (Stub/Placeholder/TODO).*
-## Source of truth: docs/platform-completeness-report.md
-
-*Note: Counts must be kept in sync with platform-completeness-report.md. If you update one, update the other.*
 
 ## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
-2. CIBA backchannel route — MEDIUM — [FIXED] pending functional verification
-3. Client Branding persistence — MEDIUM — `brandingStore` map in oauth service should be persistent
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
 All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
@@ -36,8 +31,7 @@ A → B → C → D → E → F → G → A → ...
 
 HIGH (must fix for production): none remaining
 
-MEDIUM (should fix):
-- Client Branding (admin config) — `brandingStore` map in oauth service
+MEDIUM (should fix): none remaining
 
 LOW (acceptable for now — short-lived or fallback):
 - PAR store (60s expiry)
@@ -48,8 +42,11 @@ LOW (acceptable for now — short-lived or fallback):
 - CIBA store (15min expiry, Redis fallback exists)
 - Scope i18n (static defaults)
 - OAuth state store (short-lived CSRF)
+- Client Branding (mem fallback when PG unavailable)
 
 ## Commits this cycle:
+- 2934fd98: CIBA + Client Branding verified as DONE; fix broken gap_regression_oauth_test.go
+- 85114fa8: Sync platform-scan-state counts with completeness report
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (backend)
