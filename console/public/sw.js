@@ -1,7 +1,7 @@
 // GGID Console Service Worker
-// Basic offline support: cache static assets, network-first for API
-const CACHE_NAME = "ggid-console-v1";
-const STATIC_ASSETS = ["/", "/manifest.json"];
+// Network-first for HTML pages, cache-first for static assets
+const CACHE_NAME = "ggid-console-v2";
+const STATIC_ASSETS = ["/manifest.json"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -22,27 +22,31 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Network-first for API calls
-  if (url.pathname.startsWith("/api/")) {
+  // Skip non-GET requests
+  if (event.request.method !== "GET") return;
+
+  // Skip cross-origin requests
+  if (url.origin !== self.location.origin) return;
+
+  // Network-first for API calls and HTML pages (navigation)
+  if (url.pathname.startsWith("/api/") || event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Cache-first for static assets
-  if (event.request.method === "GET") {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((resp) => {
-          if (resp.ok && url.origin === self.location.origin) {
-            const respClone = resp.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
-          }
-          return resp;
-        });
-      })
-    );
-  }
+  // Cache-first for static assets (JS, CSS, images, fonts)
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((resp) => {
+        if (resp.ok) {
+          const respClone = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
+        }
+        return resp;
+      });
+    })
+  );
 });
