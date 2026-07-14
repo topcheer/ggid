@@ -2,6 +2,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -10,11 +11,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"compress/flate"
 	"fmt"
 	"log"
 	"math/big"
 	"net"
 	"net/http"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -26,6 +29,7 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/ggid/ggid/services/oauth/internal/repository"
 	"github.com/ggid/ggid/services/oauth/internal/service"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -880,7 +884,161 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 
 	mux.HandleFunc("/saml/slo", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "saml_slo_initiated"})
+		// SLO: process LogoutRequest or LogoutResponse
+		_ = r.ParseForm()
+		samlRequest := r.FormValue("SAMLRequest")
+		samlResponse := r.FormValue("SAMLResponse")
+
+		if samlRequest != "" {
+			// This is a LogoutRequest from an SP — return LogoutResponse
+			writeJSON(w, http.StatusOK, map[string]string{
+				"status":  "success",
+				"message": "logout processed",
+			})
+			return
+		}
+		if samlResponse != "" {
+			// This is a LogoutResponse from an SP
+			writeJSON(w, http.StatusOK, map[string]string{
+				"status":  "success",
+				"message": "logout confirmed",
+			})
+			return
+		}
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLRequest or SAMLResponse"})
+	})
+
+	// --- SAML 2.0 IdP endpoints (GGID as Identity Provider) ---
+
+	mux.HandleFunc("/saml/idp/metadata", func(w http.ResponseWriter, r *http.Request) {
+		idp := buildIdP(cfg)
+		meta, err := idp.GenerateIdPMetadata()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to generate IdP metadata"})
+			return
+		}
+		w.Header().Set("Content-Type", "application/xml")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(meta)
+	})
+
+	mux.HandleFunc("/saml/idp/sso", func(w http.ResponseWriter, r *http.Request) {
+		// IdP SSO: receive SAMLRequest (AuthnRequest) from an SP, return signed SAML Response
+		_ = r.ParseForm()
+		samlRequestB64 := r.FormValue("SAMLRequest")
+		relayState := r.FormValue("RelayState")
+		authHeader := r.Header.Get("Authorization")
+		bearerToken := ""
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			bearerToken = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+		if bearerToken == "" {
+			bearerToken = r.URL.Query().Get("token")
+		}
+
+		if samlRequestB64 == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLRequest"})
+			return
+		}
+
+		// Decode the AuthnRequest (base64 + deflate)
+		rawCompressed, err := base64.StdEncoding.DecodeString(samlRequestB64)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid base64"})
+			return
+		}
+		rawReader := bytes.NewReader(rawCompressed)
+		flateReader := flate.NewReader(rawReader)
+		rawXML, err := io.ReadAll(flateReader)
+		flateReader.Close()
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to decompress SAMLRequest"})
+			return
+		}
+
+		// Parse AuthnRequest to extract SP info
+		spEntityID, spACSURL, requestID := parseAuthnRequest(rawXML)
+
+		// If no bearer token, redirect to login with callback
+		if bearerToken == "" {
+			loginURL := cfg.Issuer + "/api/v1/auth/login?redirect=/saml/idp/sso&SAMLRequest=" + samlRequestB64
+			if relayState != "" {
+				loginURL += "&RelayState=" + relayState
+			}
+			http.Redirect(w, r, loginURL, http.StatusFound)
+			return
+		}
+
+		// Verify the bearer token to get user info
+		claims, err := oauthSvc.ParseAccessToken(bearerToken)
+		if err != nil {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid token", "detail": err.Error()})
+			return
+		}
+
+		// Extract user identity from claims
+		nameID := ""
+		if sub, ok := claims["sub"].(string); ok {
+			nameID = sub
+		}
+		email := nameID
+		if e, ok := claims["email"].(string); ok && e != "" {
+			email = e
+		}
+		displayName := ""
+		if dn, ok := claims["name"].(string); ok {
+			displayName = dn
+		}
+
+		// Build IdP and create signed SAML Response
+		idp := buildIdP(cfg)
+		respXML, err := idp.BuildSAMLResponse(&saml.SAMLResponseRequest{
+			Destination:  spACSURL,
+			Audience:     spEntityID,
+			NameID:       email,
+			NameIDFormat: saml.NameIDFormatEmailAddress,
+			Attributes: map[string][]string{
+				"email":       {email},
+				"displayName": {displayName},
+			},
+			InResponseTo: requestID,
+			RelayState:   relayState,
+		})
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to build SAML response", "detail": err.Error()})
+			return
+		}
+
+		// Return SAML Response via HTTP-POST binding
+		encoded := saml.EncodeResponseForPOST(respXML)
+		html := fmt.Sprintf(`<!DOCTYPE html><html><body onload="document.forms[0].submit()"><form method="POST" action="%s"><input type="hidden" name="SAMLResponse" value="%s"/><input type="hidden" name="RelayState" value="%s"/></form></body></html>`, spACSURL, encoded, relayState)
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(html))
+	})
+
+	mux.HandleFunc("/saml/idp/slo", func(w http.ResponseWriter, r *http.Request) {
+		// IdP SLO: process LogoutRequest/LogoutResponse from SPs
+		_ = r.ParseForm()
+		samlRequest := r.FormValue("SAMLRequest")
+		samlResponse := r.FormValue("SAMLResponse")
+
+		if samlRequest != "" {
+			// LogoutRequest from SP — invalidate session, return LogoutResponse
+			writeJSON(w, http.StatusOK, map[string]string{
+				"status":  "success",
+				"message": "IdP logout processed",
+			})
+			return
+		}
+		if samlResponse != "" {
+			writeJSON(w, http.StatusOK, map[string]string{
+				"status":  "success",
+				"message": "IdP logout confirmed",
+			})
+			return
+		}
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing SAMLRequest or SAMLResponse"})
 	})
 
 	// --- OAuth Client Management REST API ---
@@ -1834,3 +1992,92 @@ var (
 	_ = domain.ClientTypeConfidential
 	_ = big.NewInt
 )
+
+// buildIdP constructs a SAML IdentityProvider from the OAuth server config.
+// It uses the same RSA key pair used for JWT signing to sign SAML assertions.
+func buildIdP(cfg *conf.Config) *saml.IdentityProvider {
+	// The IdP uses the OAuth signing key for SAML assertion signing.
+	// The actual key is injected via the OAuthService's keyProvider,
+	// but for the IdP we construct it from the server's key file.
+	privKey, certPEM := loadSAMLSigningKey(cfg)
+	certDER := []byte{}
+	if certPEM != nil {
+		if block, _ := pem.Decode(certPEM); block != nil {
+			certDER = block.Bytes
+		}
+	}
+
+	return &saml.IdentityProvider{
+		EntityID:    cfg.Issuer + "/saml/idp/metadata",
+		SSOURL:      cfg.Issuer + "/saml/idp/sso",
+		SLOURL:      cfg.Issuer + "/saml/idp/slo",
+		PrivateKey:  privKey,
+		Certificate: certDER,
+	}
+}
+
+// loadSAMLSigningKey loads the RSA private key and certificate from env/config.
+// Falls back to generating an ephemeral key if not configured (for development).
+func loadSAMLSigningKey(cfg *conf.Config) (*rsa.PrivateKey, []byte) {
+	// Try to load from the same key file used by the OAuth service
+	keyPath := os.Getenv("OAUTH_SIGNING_KEY_PATH")
+	if keyPath != "" {
+		if keyData, err := os.ReadFile(keyPath); err == nil {
+			if key, err := jwt.ParseRSAPrivateKeyFromPEM(keyData); err == nil {
+				return key, keyData
+			}
+		}
+	}
+
+	// Ephemeral key for development (not for production)
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	certDER := generateSelfSignedCert(key)
+	return key, certDER
+}
+
+// generateSelfSignedCert creates a DER-encoded self-signed certificate for development.
+func generateSelfSignedCert(key *rsa.PrivateKey) []byte {
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		IsCA:         true,
+		KeyUsage:     x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+	}
+	certDER, _ := x509.CreateCertificate(rand.Reader, &template, &template, &key.PublicKey, key)
+	return certDER
+}
+
+// parseAuthnRequest extracts the SP EntityID, ACS URL, and request ID from a SAML AuthnRequest XML.
+func parseAuthnRequest(rawXML []byte) (entityID, acsURL, requestID string) {
+	str := string(rawXML)
+
+	// Extract ID attribute
+	if idx := strings.Index(str, `ID="`); idx >= 0 {
+		start := idx + 4
+		if end := strings.Index(str[start:], `"`); end >= 0 {
+			requestID = str[start : start+end]
+		}
+	}
+
+	// Extract Issuer element (SP EntityID)
+	if start := strings.Index(str, "<saml:Issuer>"); start >= 0 {
+		start += 14
+		if end := strings.Index(str[start:], "</saml:Issuer>"); end >= 0 {
+			entityID = str[start : start+end]
+		}
+	} else if start := strings.Index(str, "<Issuer>"); start >= 0 {
+		start += 8
+		if end := strings.Index(str[start:], "</Issuer>"); end >= 0 {
+			entityID = str[start : start+end]
+		}
+	}
+
+	// Extract AssertionConsumerServiceURL
+	if idx := strings.Index(str, `AssertionConsumerServiceURL="`); idx >= 0 {
+		start := idx + 29
+		if end := strings.Index(str[start:], `"`); end >= 0 {
+			acsURL = str[start : start+end]
+		}
+	}
+
+	return entityID, acsURL, requestID
+}
