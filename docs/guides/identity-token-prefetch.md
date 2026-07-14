@@ -17,18 +17,18 @@ class TokenManager {
     this.refreshThreshold = 60; // Refresh 60s before expiry
     this.timer = null;
   }
-  
+
   start() {
     this.scheduleRefresh();
   }
-  
+
   scheduleRefresh() {
     const token = this.authClient.getAccessToken();
     const decoded = jwtDecode(token);
     const expiresAt = decoded.exp * 1000;
     const refreshAt = expiresAt - (this.refreshThreshold * 1000);
     const delay = refreshAt - Date.now();
-    
+
     this.timer = setTimeout(async () => {
       try {
         await this.authClient.refreshToken();
@@ -39,7 +39,7 @@ class TokenManager {
       }
     }, delay);
   }
-  
+
   stop() {
     clearTimeout(this.timer);
   }
@@ -67,7 +67,7 @@ class UsageTracker {
   constructor() {
     this.activeHours = new Set();
   }
-  
+
   shouldPrefetch() {
     const hour = new Date().getHours();
     if (this.activeHours.has(hour)) {
@@ -75,7 +75,7 @@ class UsageTracker {
     }
     return false; // User typically inactive → skip (save resources)
   }
-  
+
   recordActivity() {
     this.activeHours.add(new Date().getHours());
   }
@@ -87,11 +87,11 @@ class UsageTracker {
 ```javascript
 async makeRequest(url, options) {
   const token = this.authClient.getAccessToken();
-  
+
   // Check if token is in grace period (expired but within grace window)
   const decoded = jwtDecode(token);
   const expiredBy = Date.now() / 1000 - decoded.exp;
-  
+
   if (expiredBy > 0 && expiredBy < this.gracePeriod) {
     // Token expired but within grace — try request, refresh on 401
     try {
@@ -104,7 +104,7 @@ async makeRequest(url, options) {
       throw err;
     }
   }
-  
+
   // Token valid or outside grace → normal request
   return fetch(url, { ...options, headers: { Authorization: `Bearer ${token}` } });
 }
@@ -119,7 +119,7 @@ class OfflineTokenStore {
   constructor() {
     this.queue = [];
   }
-  
+
   async makeRequest(url, options) {
     try {
       return await fetch(url, options);
@@ -133,7 +133,7 @@ class OfflineTokenStore {
       throw err;
     }
   }
-  
+
   onOnline() {
     // Process queued requests
     this.queue.forEach(async ({ url, options, resolve, reject }) => {
@@ -161,20 +161,20 @@ import { useGGID } from '@ggid/react-sdk';
 
 function App() {
   const { token, refreshToken, expiresAt } = useGGID();
-  
+
   useEffect(() => {
     if (!expiresAt) return;
-    
+
     const refreshIn = (expiresAt * 1000) - Date.now() - 60000;
     if (refreshIn <= 0) {
       refreshToken(); // Already expiring soon
       return;
     }
-    
+
     const timer = setTimeout(refreshToken, refreshIn);
     return () => clearTimeout(timer);
   }, [expiresAt, refreshToken]);
-  
+
   return <MainApp />;
 }
 ```
@@ -184,11 +184,11 @@ function App() {
 ```swift
 class TokenManager {
     private var refreshTimer: Timer?
-    
+
     func scheduleRefresh(expiresAt: Date) {
         let refreshDate = expiresAt.addingTimeInterval(-60) // 60s before
         let interval = refreshDate.timeIntervalSinceNow
-        
+
         refreshTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { _ in
             Task {
                 try? await self.authClient.refreshToken()
@@ -212,7 +212,7 @@ func (m *ServerTokenManager) GetToken(ctx context.Context) (string, error) {
     if time.Until(m.expires) < 60*time.Second {
         m.mu.Lock()
         defer m.mu.Unlock()
-        
+
         // Double-check after acquiring lock
         if time.Until(m.expires) < 60*time.Second {
             token, exp, err := m.fetchNewToken(ctx)

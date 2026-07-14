@@ -43,21 +43,21 @@ type KeyManager struct {
 func (km *KeyManager) Rotate() error {
     newKey, err := generateSigningKey()
     if err != nil { return err }
-    
+
     // Old key moves to "previous" (verify only)
     km.previous = km.current
     km.current = newKey
-    
+
     // Publish both in JWKS
     publishJWKS(km.current, km.previous)
-    
+
     // Schedule old key removal after grace period
     time.AfterFunc(gracePeriod, func() {
         km.previous = nil
         publishJWKS(km.current)  // Only new key now
         audit.Log("key.removed_old", newKey.ID)
     })
-    
+
     audit.Log("key.rotated", map[string]interface{}{
         "old_kid": km.previous.ID,
         "new_kid": km.current.ID,
@@ -71,26 +71,26 @@ func (km *KeyManager) Rotate() error {
 ```yaml
 rotation_pipeline:
   schedule: "0 3 1 * *"  # 1st of month, 3am
-  
+
   steps:
     - name: check_keys_needing_rotation
       query: "SELECT * FROM signing_keys WHERE expires_at < NOW() + INTERVAL '15 days'"
-    
+
     - name: generate_new_key
       action: HSM generate ECDSA P-256
-    
+
     - name: publish_dual_jwks
       action: Update /.well-known/jwks.json with both keys
-    
+
     - name: switch_signing
       action: Start signing new tokens with new key only
-    
+
     - name: wait_grace_period
       duration: 15_days
-    
+
     - name: remove_old_key
       action: Remove from JWKS, revoke signing capability
-    
+
     - name: audit
       action: Log rotation event with timestamps
 ```
@@ -128,23 +128,23 @@ func VerifyToken(token string) (*Claims, error) {
     // Parse header to get kid
     header := parseHeader(token)
     kid := header["kid"].(string)
-    
+
     // Try current key
     if kid == km.current.ID {
         return verifyWithKey(token, km.current)
     }
-    
+
     // Try previous key (grace period)
     if km.previous != nil && kid == km.previous.ID {
         return verifyWithKey(token, km.previous)
     }
-    
+
     // Unknown key → re-fetch JWKS (maybe rotation just happened)
     jwks := fetchJWKS()
     if key := jwks.Find(kid); key != nil {
         return verifyWithKey(token, key)
     }
-    
+
     return nil, ErrUnknownKeyID
 }
 ```
@@ -156,11 +156,11 @@ func generateSigningKey() (*SigningKey, error) {
     // Key generated inside HSM, private key never leaves
     keyHandle, err := hsm.GenerateECDSA("P-256")
     if err != nil { return nil, err }
-    
+
     // Export public key only
     pubKey, err := hsm.ExportPublic(keyHandle)
     if err != nil { return nil, err }
-    
+
     return &SigningKey{
         ID:        uuid.New(),
         PublicKey: pubKey,

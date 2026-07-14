@@ -108,16 +108,16 @@ func destroyKey(keyID string) error {
     if time.Since(key.ArchivedAt) < 7*365*24*time.Hour {
         return ErrKeyWithinRetention
     }
-    
+
     // Secure wipe from HSM/KMS
     err := kms.DestroyKey(keyID)
     if err != nil {
         return err
     }
-    
+
     // Audit
     audit.Log("key_destroyed", keyID, "key_management")
-    
+
     return nil
 }
 ```
@@ -180,7 +180,7 @@ key_management:
 func authorizeKeyAccess(userID, keyID, operation string) error {
     key := getKey(keyID)
     user := getUser(userID)
-    
+
     // Check if user's role is allowed
     allowed := false
     for _, role := range key.AllowedRoles {
@@ -192,20 +192,20 @@ func authorizeKeyAccess(userID, keyID, operation string) error {
     if !allowed {
         return ErrKeyAccessDenied
     }
-    
+
     // Check operation
     if !contains(key.AllowedOperations, operation) {
         return ErrOperationNotAllowed
     }
-    
+
     // Check dual control
     if key.RequireDualControl && !hasDualApproval(userID, keyID) {
         return ErrDualControlRequired
     }
-    
+
     // Audit
     audit.Log("key_access", userID, keyID, operation)
-    
+
     return nil
 }
 ```
@@ -322,7 +322,7 @@ func approveDualControl(requestID, approverID string) error {
 ```yaml
 key_management:
   provider: "aws-kms"  # or "vault", "azure-keyvault", "hsm"
-  
+
   keys:
     jwt_signing:
       algorithm: "RS256"
@@ -330,39 +330,39 @@ key_management:
       rotation: 90d
       overlap: 7d
       storage: "kms"
-    
+
     saml_signing:
       algorithm: "RSA-SHA256"
       key_size: 2048
       rotation: 365d
       overlap: 30d
       storage: "file"  # PEM files
-    
+
     database_mek:
       algorithm: "AES-256"
       rotation: 90d
       storage: "kms"
       dual_control: true
-    
+
     webhook_signing:
       algorithm: "HMAC-SHA256"
       rotation: 90d
       storage: "env"
-  
+
   access_control:
     per_key_rbac: true
     audit_all_access: true
-  
+
   dual_control:
     operations: ["generate_master", "rotate_master", "destroy_key"]
     approval_timeout: 24h
     cannot_self_approve: true
-  
+
   emergency:
     auto_revoke_tokens: true
     force_reauth: true
     notify_ciso: true
-  
+
   archive:
     enabled: true
     retention: 7y

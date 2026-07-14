@@ -48,19 +48,19 @@ func gatewayAuthz(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         // Validate JWT
         claims := validateJWT(r)
-        
+
         // Check route authorization
         if !hasRouteAccess(claims, r.URL.Path) {
             writeError(w, 403, "route_forbidden")
             return
         }
-        
+
         // Tenant check
         if claims.TenantID != getTenantFromRequest(r) {
             writeError(w, 403, "tenant_mismatch")
             return
         }
-        
+
         next.ServeHTTP(w, r)
     })
 }
@@ -78,14 +78,14 @@ func serviceAuthz(user *User, action string, resource *Resource) error {
     if !user.HasPermission(action) {
         return ErrPermissionDenied
     }
-    
+
     // ABAC check
     ctx := buildEvalContext(user, action, resource)
     decision := policyEngine.Evaluate(ctx)
     if decision != "permit" {
         return ErrPolicyDenied
     }
-    
+
     return nil
 }
 ```
@@ -133,16 +133,16 @@ func (p *PDP) Decide(request *AuthzRequest) string {
     if cached, ok := p.cache.Get(request); ok {
         return cached
     }
-    
+
     // Gather attributes from PIP
     ctx := p.pip.GatherAttributes(request)
-    
+
     // Evaluate policies
     decision := p.evaluate(ctx)
-    
+
     // Cache decision
     p.cache.Set(request, decision, 5*time.Minute)
-    
+
     return decision
 }
 ```
@@ -162,14 +162,14 @@ func (p *PEP) Enforce(user *User, action string, resource *Resource) error {
         Action: action,
         Resource: resource,
     }
-    
+
     decision := p.pdp.Decide(request)
-    
+
     if decision != "permit" {
         audit.Log("access_denied", user.ID, action, resource.ID)
         return ErrAccessDenied
     }
-    
+
     audit.Log("access_granted", user.ID, action, resource.ID)
     return nil
 }
@@ -189,14 +189,14 @@ type PIP struct {
 
 func (p *PIP) GatherAttributes(request *AuthzRequest) *EvalContext {
     ctx := &EvalContext{}
-    
+
     // Subject attributes (from JWT)
     ctx.Subject = map[string]interface{}{
         "role":        request.Subject.Role,
         "tenant_id":   request.Subject.TenantID,
         "mfa_verified": request.Subject.MFAVerified,
     }
-    
+
     // Resource attributes (from DB)
     ctx.Resource = map[string]interface{}{
         "type":        request.Resource.Type,
@@ -204,14 +204,14 @@ func (p *PIP) GatherAttributes(request *AuthzRequest) *EvalContext {
         "sensitivity": request.Resource.Classification,
         "tenant_id":   request.Resource.TenantID,
     }
-    
+
     // Environment attributes (computed)
     ctx.Environment = map[string]interface{}{
         "time":    classifyTime(time.Now()),
         "network": classifyNetwork(request.IP),
         "device":  classifyDevice(request.UserAgent),
     }
-    
+
     return ctx
 }
 ```
@@ -308,12 +308,12 @@ platform-admin
 func getEffectivePermissions(roleID string) []string {
     role := getRole(roleID)
     perms := make(map[string]bool)
-    
+
     // Add role's own permissions
     for _, p := range role.Permissions {
         perms[p] = true
     }
-    
+
     // Add parent role permissions (inheritance)
     if role.ParentID != "" {
         parentPerms := getEffectivePermissions(role.ParentID)
@@ -321,7 +321,7 @@ func getEffectivePermissions(roleID string) []string {
             perms[p] = true
         }
     }
-    
+
     return keys(perms)
 }
 ```

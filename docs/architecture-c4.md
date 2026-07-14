@@ -143,14 +143,14 @@ graph TB
     subgraph Auth Service
         Handler[HTTP Handler<br/>/api/v1/auth/*]
         Svc[Auth Service<br/>Business Logic]
-        
+
         subgraph Provider Chain
             Local[Local Provider<br/>Argon2id password]
             LDAP[LDAP Provider<br/>AD bind + search]
             Social[Social Provider<br/>Google/GitHub/MS]
             WebAuthn[WebAuthn Provider<br/>FIDO2/Passkey]
         end
-        
+
         JWT[JWT Issuer<br/>RS256 signing]
         MFA[MFA Engine<br/>TOTP/Email/WebAuthn]
         Hook[Hook Engine<br/>Pre/Post auth hooks]
@@ -170,7 +170,7 @@ graph TB
     Svc --> MFA
     Svc --> Hook
     Svc --> JWT
-    
+
     Local --> PG
     WebAuthn --> PG
     JWT --> Redis
@@ -191,14 +191,14 @@ graph TB
     subgraph Policy Service
         Handler[HTTP Handler<br/>/api/v1/policies/*]
         Engine[Policy Engine<br/>RBAC + ABAC evaluator]
-        
+
         subgraph Evaluation
             DenyCheck[1. Deny Rules<br/>Explicit deny check]
             RBAC[2. RBAC Check<br/>Roles → Permissions<br/>Wildcard match]
             ABAC[3. ABAC Check<br/>Attribute conditions<br/>JSON operators]
             Default[4. Default Action<br/>Configurable allow/deny]
         end
-        
+
         RoleCache[Role Cache<br/>Redis 5min TTL]
         PolicyCache[Policy Cache<br/>In-memory]
     end
@@ -279,12 +279,12 @@ graph LR
 graph TB
     subgraph Docker Compose / Kubernetes
         LB[Load Balancer<br/>nginx / Ingress]
-        
+
         subgraph Gateway Tier
             GW1[Gateway Replica 1]
             GW2[Gateway Replica 2]
         end
-        
+
         subgraph Service Tier
             Auth1[Auth :9001]
             Ident1[Identity :8080]
@@ -293,7 +293,7 @@ graph TB
             Org1[Org :8071]
             Aud1[Audit :8072]
         end
-        
+
         subgraph Data Tier
             PG[(PostgreSQL<br/>Primary + Replica)]
             Redis[(Redis Cluster)]
@@ -313,7 +313,7 @@ graph TB
     GW2 --> Auth1
     GW2 --> Ident1
     GW2 --> Pol1
-    
+
     Auth1 --> PG
     Auth1 --> Redis
     Ident1 --> PG
@@ -321,7 +321,7 @@ graph TB
     Org1 --> PG
     Aud1 --> PG
     Aud1 --> NATS
-    
+
     Auth1 -.-> NATS
 
     style Gateway Tier fill:#e1f5fe,stroke:#0288d1
@@ -343,18 +343,18 @@ sequenceDiagram
     participant NATS as NATS
 
     C->>GW: POST /api/v1/auth/login {username, password}
-    
+
     GW->>GW: Rate limit check (5/min/IP)
     GW->>GW: JWT bypass (public path)
     GW->>GW: Tenant injection (X-Tenant-ID)
-    
+
     GW->>Auth: Proxy request
-    
+
     Auth->>PG: Lookup credential (tenant-scoped)
     PG-->>Auth: User record + password hash
-    
+
     Auth->>Auth: Argon2id verify password
-    
+
     alt Password valid
         Auth->>R: Store session metadata
         Auth->>Auth: Generate JWT (RS256)
@@ -381,10 +381,10 @@ sequenceDiagram
     participant PG as PostgreSQL
 
     App->>GW: POST /api/v1/policies/check {user_id, resource, action}
-    
+
     GW->>GW: JWT verification
     GW->>Pol: Proxy request
-    
+
     Pol->>R: Get cached roles for user
     alt Cache hit
         R-->>Pol: Roles list
@@ -393,12 +393,12 @@ sequenceDiagram
         PG-->>Pol: Roles with inherited permissions
         Pol->>R: Cache roles (5min TTL)
     end
-    
+
     Pol->>Pol: 1. Check deny rules
     Pol->>Pol: 2. Check RBAC (wildcard match)
     Pol->>Pol: 3. Check ABAC conditions
     Pol->>Pol: 4. Apply default action
-    
+
     alt Allowed
         Pol-->>GW: {allowed: true, reason: "..."}
         GW-->>App: 200 {allowed: true}

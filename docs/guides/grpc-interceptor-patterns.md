@@ -48,23 +48,23 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
     if isHealthCheck(info.FullMethod) {
         return handler(ctx, req)
     }
-    
+
     // Extract token from metadata
     md, ok := metadata.FromIncomingContext(ctx)
     if !ok {
         return nil, status.Error(codes.Unauthenticated, "missing metadata")
     }
-    
+
     tokens := md.Get("authorization")
     if len(tokens) == 0 {
         return nil, status.Error(codes.Unauthenticated, "missing token")
     }
-    
+
     claims, err := verifyJWT(strings.TrimPrefix(tokens[0], "Bearer "))
     if err != nil {
         return nil, status.Error(codes.Unauthenticated, "invalid token")
     }
-    
+
     ctx = context.WithValue(ctx, "claims", claims)
     return handler(ctx, req)
 }
@@ -75,20 +75,20 @@ func AuthInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServe
 ```go
 func TenantInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
     md, _ := metadata.FromIncomingContext(ctx)
-    
+
     tenantIDs := md.Get("x-tenant-id")
     if len(tenantIDs) == 0 {
         return nil, status.Error(codes.InvalidArgument, "missing tenant")
     }
-    
+
     tenantID := tenantIDs[0]
-    
+
     // Verify tenant exists and is active
     tenant := tenantStore.Get(tenantID)
     if tenant == nil || tenant.Status != "active" {
         return nil, status.Error(codes.PermissionDenied, "tenant inactive")
     }
-    
+
     ctx = context.WithValue(ctx, "tenant_id", tenantID)
     return handler(ctx, req)
 }
@@ -112,20 +112,20 @@ func RateLimitInterceptor(limiter *rate.Limiter) grpc.UnaryServerInterceptor {
 ```go
 func LoggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
     start := time.Now()
-    
+
     resp, err := handler(ctx, req)
-    
+
     duration := time.Since(start)
     log.Info("grpc.request",
         "method", info.FullMethod,
         "duration_ms", duration.Milliseconds(),
         "error", err != nil,
     )
-    
+
     if duration > 500*time.Millisecond {
         log.Warn("slow gRPC call", "method", info.FullMethod, "duration", duration)
     }
-    
+
     return resp, err
 }
 ```
@@ -138,20 +138,20 @@ func LoggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 func TracingClientInterceptor(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
     ctx, span := otel.Tracer("ggid").Start(ctx, method)
     defer span.End()
-    
+
     // Inject trace context into gRPC metadata
     md, _ := metadata.FromOutgoingContext(ctx)
     if md == nil { md = metadata.New(nil) }
     propagation.TraceContext{}.Inject(ctx, &metadataWriter{md: md})
     ctx = metadata.NewOutgoingContext(ctx, md)
-    
+
     err := invoker(ctx, method, req, reply, cc, opts...)
-    
+
     if err != nil {
         span.RecordError(err)
         span.SetStatus(codes.Error, err.Error())
     }
-    
+
     return err
 }
 ```
@@ -177,12 +177,12 @@ func RetryInterceptor(maxRetries int) grpc.UnaryClientInterceptor {
         for i := 0; i <= maxRetries; i++ {
             err = invoker(ctx, method, req, reply, cc, opts)
             if err == nil { return nil }
-            
+
             st, _ := status.FromError(err)
             if st.Code() != codes.Unavailable && st.Code() != codes.DeadlineExceeded {
                 return err // Don't retry client errors
             }
-            
+
             time.Sleep(backoff(i))
         }
         return err
@@ -205,7 +205,7 @@ func TestAuthInterceptor(t *testing.T) {
         {"missing token", "", true},
         {"invalid token", "bad", true},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             ctx := metadata.AppendToIncomingContext(context.Background(), "authorization", "Bearer "+tt.token)

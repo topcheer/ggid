@@ -46,14 +46,14 @@ CREATE TRIGGER policy_change_trigger
 func (e *Engine) StartPolicyWatcher(ctx context.Context) {
     conn, _ := pgx.Connect(ctx, dbURL)
     conn.Exec(ctx, "LISTEN policy_changed")
-    
+
     for {
         notification, err := conn.WaitForNotification(ctx)
         if err != nil { continue }
-        
+
         var event PolicyChangeEvent
         json.Unmarshal([]byte(notification.Payload), &event)
-        
+
         e.ReloadPolicies()
     }
 }
@@ -70,7 +70,7 @@ func (e *Engine) ReloadPolicies() error {
     // 1. Load all policies from DB
     newSet, err := loadPoliciesFromDB()
     if err != nil { return err }
-    
+
     // 2. Compile all CEL conditions
     for _, p := range newSet.Policies {
         if p.Condition != "" {
@@ -81,20 +81,20 @@ func (e *Engine) ReloadPolicies() error {
             newSet.compiled[p.Name] = prog
         }
     }
-    
+
     // 3. Atomic swap (lock-free, all new requests use new policies)
     old := e.policies.Swap(newSet).(*PolicySet)
-    
+
     // 4. Invalidate cache
     e.cache.Clear()
-    
+
     // 5. Log
     audit.Log("policy.reloaded", map[string]interface{}{
         "old_version": old.Version,
         "new_version": newSet.Version,
         "policy_count": len(newSet.Policies),
     })
-    
+
     return nil
 }
 ```
@@ -113,11 +113,11 @@ func (e *Engine) ReloadPolicies() error {
     // Check version before full reload
     currentVersion := e.policies.Load().(*PolicySet).Version
     dbVersion := getLatestPolicyVersion()
-    
+
     if dbVersion <= currentVersion {
         return nil // Already up to date
     }
-    
+
     // Version changed → full reload
     return e.doReload(dbVersion)
 }
@@ -128,7 +128,7 @@ func (e *Engine) ReloadPolicies() error {
 ```go
 func (e *Engine) ReloadPolicies() error {
     oldSet := e.policies.Load().(*PolicySet)
-    
+
     newSet, err := loadAndCompile()
     if err != nil {
         // Compilation failed — keep old policies
@@ -136,18 +136,18 @@ func (e *Engine) ReloadPolicies() error {
         alert.Send("policy_reload_failed", err)
         return err
     }
-    
+
     // Test new policies with sample requests
     if !e.validatePolicies(newSet) {
         log.Error("policy validation failed, rolling back")
         alert.Send("policy_validation_failed")
         return ErrPolicyValidationFailed
     }
-    
+
     // Swap
     e.policies.Store(newSet)
     e.cache.Clear()
-    
+
     // Health check after swap
     time.AfterFunc(5*time.Second, func() {
         if e.errorRate() > 0.1 { // >10% error rate
@@ -158,7 +158,7 @@ func (e *Engine) ReloadPolicies() error {
             alert.Send("policy_auto_rollback", "error rate exceeded 10%")
         }
     })
-    
+
     return nil
 }
 ```
@@ -169,7 +169,7 @@ func (e *Engine) ReloadPolicies() error {
 func (e *Engine) invalidateCache() {
     // Full flush (simplest, safe)
     e.cache.Clear()
-    
+
     // Or selective invalidation (more efficient)
     // Flush only affected resource types
     for _, resource := range changedResources {

@@ -73,12 +73,12 @@ mappings:
   name.familyName: last_name
   emails[primary].value: email
   phoneNumbers[type eq "mobile"].value: phone
-  
+
   # HR extension → GGID field
   urn:hr:extension:1.0.department: department
   urn:hr:extension:1.0.employeeId: employee_id
   urn:hr:extension:1.0.manager: manager_email
-  
+
   # Derived attributes
   groups:
     - if: department == "Engineering"
@@ -96,13 +96,13 @@ transformations:
       - lowercase          # Normalize
       - strip_whitespace   # Clean
       - validate_format    # RFC 5322
-  
+
   - field: display_name
     rules:
       - trim               # Remove extra spaces
       - max_length: 100    # Truncate
       - required           # Must be present
-  
+
   - field: department
     rules:
       - default: "General" # If missing
@@ -118,21 +118,21 @@ func (v *ProvisioningValidator) Validate(user *User) error {
     // Required fields
     if user.Email == "" { return ErrEmailRequired }
     if user.DisplayName == "" { return ErrDisplayNameRequired }
-    
+
     // Format validation
     if !isValidEmail(user.Email) { return ErrInvalidEmail }
-    
+
     // Uniqueness
     if existing, _ := store.FindByEmail(user.Email); existing != nil {
         return ErrDuplicateEmail
     }
-    
+
     // Value constraints
     if len(user.DisplayName) > 100 { return ErrDisplayNameTooLong }
-    
+
     // Department enum
     if !validDepartment(user.Department) { return ErrInvalidDepartment }
-    
+
     return nil
 }
 ```
@@ -156,7 +156,7 @@ func QueueProvisioning(user *User) error {
         User:      user,
         Timestamp: time.Now(),
     }
-    
+
     _, err := js.Publish("provisioning.user.create",
         event.Marshal(),
         nats.MsgId(event.UserID),   // Dedup
@@ -175,7 +175,7 @@ for {
     msgs, _ := sub.Fetch(50, nats.MaxWait(5*time.Second))
     for _, msg := range msgs {
         event := parseProvisioningEvent(msg)
-        
+
         switch event.Action {
         case "create":
             provisionUser(event)
@@ -184,7 +184,7 @@ for {
         case "deactivate":
             deactivateUser(event)
         }
-        
+
         msg.Ack()
     }
 }
@@ -193,19 +193,19 @@ func provisionUser(event ProvisioningEvent) {
     // 1. Create user in PostgreSQL
     user, err := store.Create(event.User)
     if err != nil { log.Error(err); return }
-    
+
     // 2. Assign default roles
     roleSvc.AssignDefaultRoles(user.ID)
-    
+
     // 3. Add to default groups
     groupSvc.AddToDefaultGroups(user.ID)
-    
+
     // 4. Send welcome email
     emailSvc.SendWelcome(user)
-    
+
     // 5. Audit
     audit.Log("user.provisioned", user)
-    
+
     // 6. Trigger target app sync
     queueTargetSync(user)
 }
@@ -218,13 +218,13 @@ func syncToTargetApps(user *User) {
     for _, app := range getSubscribedApps(user.TenantID) {
         go func(app App) {
             payload := mapUserToAppSchema(user, app.Mapping)
-            
+
             resp, err := app.SCIMClient.CreateUser(payload)
             if err != nil {
                 retrySync(app, user, err)
                 return
             }
-            
+
             audit.Log("user.synced_to_app", map[string]interface{}{
                 "user_id": user.ID,
                 "app_id":  app.ID,
@@ -256,15 +256,15 @@ CREATE TABLE provisioning_sync_status (
 func retrySync(app App, user *User, err error) {
     status := getSyncStatus(user.ID, app.ID)
     status.RetryCount++
-    
+
     delay := backoff(status.RetryCount)  // 30s, 2m, 10m, 1h, 6h, 24h
-    
+
     if status.RetryCount >= 8 {
         status.Status = "failed"
         alert.Send("provisioning_sync_failed", app, user, err)
         return
     }
-    
+
     time.AfterFunc(delay, func() {
         syncToTargetApps(user)
     })

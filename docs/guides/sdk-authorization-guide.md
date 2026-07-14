@@ -48,7 +48,7 @@ import (
     "context"
     "fmt"
     "log"
-    
+
     "github.com/ggid/ggid/sdk/go/ggid"
 )
 
@@ -61,10 +61,10 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     ctx := context.Background()
     token := "eyJhbGciOiJSUzI1NiIs..." // JWT access token
-    
+
     // --- Scenario 1: CheckPermission ---
     // Check if user can delete a product
     result, err := client.CheckPermission(ctx, token, "product", "delete")
@@ -72,7 +72,7 @@ func main() {
         log.Fatal(err)
     }
     fmt.Printf("Can delete product: %v (reason: %s)\n", result.Allowed, result.Reason)
-    
+
     // --- Scenario 2: EvaluateABAC ---
     // Check if warehouse manager can transfer stock from specific warehouse
     abacResult, err := client.EvaluateABAC(ctx, token, ggid.ABACEvalRequest{
@@ -91,7 +91,7 @@ func main() {
         log.Fatal(err)
     }
     fmt.Printf("ABAC matched: %v, rules: %v\n", abacResult.Matched, abacResult.MatchedRules)
-    
+
     // --- Scenario 3: AssignRole ---
     // Assign admin role to a user
     err = client.AssignRole(ctx, token, "user-uuid-123", "role-uuid-admin")
@@ -99,7 +99,7 @@ func main() {
         log.Fatal(err)
     }
     fmt.Println("Role assigned successfully")
-    
+
     // --- Scenario 4: GetUserRoles ---
     // Query all roles for a user
     roles, err := client.GetUserRoles(ctx, token, "user-uuid-123")
@@ -109,7 +109,7 @@ func main() {
     for _, role := range roles {
         fmt.Printf("Role: %s (key: %s, system: %v)\n", role.Name, role.Key, role.SystemRole)
     }
-    
+
     // --- Scenario 5: CheckPolicy (full ABAC) ---
     // Full ABAC evaluation with subject, resource, action, and context
     policyResult, err := client.CheckPolicy(ctx, token, &ggid.PolicyCheckRequest{
@@ -137,7 +137,7 @@ package middleware
 import (
     "net/http"
     "strings"
-    
+
     "github.com/gin-gonic/gin"
     "github.com/ggid/ggid/sdk/go/ggid"
 )
@@ -150,14 +150,14 @@ func AuthMiddleware(client *ggid.Client) gin.HandlerFunc {
             return
         }
         token := strings.TrimPrefix(auth, "Bearer ")
-        
+
         // Verify JWT
         claims, err := client.VerifyToken(c.Request.Context(), token)
         if err != nil {
             c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
             return
         }
-        
+
         c.Set("user_id", claims["sub"])
         c.Set("tenant_id", claims["tenant_id"])
         c.Set("roles", claims["roles"])
@@ -190,7 +190,7 @@ package middleware
 import (
     "net/http"
     "strings"
-    
+
     "github.com/labstack/echo/v4"
     "github.com/ggid/ggid/sdk/go/ggid"
 )
@@ -683,7 +683,7 @@ router.DELETE("/api/products/:id", middleware.RequirePermission(ggidClient, "pro
 router.POST("/api/inventory/transfer", func(c *gin.Context) {
     token := c.GetString("token")
     warehouseID := c.Query("warehouse_id")
-    
+
     // ABAC check: can this user transfer from this specific warehouse?
     result, err := ggidClient.CheckPolicy(c.Request.Context(), token, &ggid.PolicyCheckRequest{
         Subject:  c.GetString("user_id"),
@@ -732,26 +732,26 @@ Configure ABAC policies in GGID for warehouse-scoped access:
 // Onboard new warehouse manager
 func onboardWarehouseManager(client *ggid.Client, adminToken, userID, warehouseID string) error {
     ctx := context.Background()
-    
+
     // Assign warehouse_manager role
     err := client.AssignRole(ctx, adminToken, userID, "role-warehouse-manager")
     if err != nil {
         return fmt.Errorf("assign role: %w", err)
     }
-    
+
     // Verify role assignment
     roles, err := client.GetUserRoles(ctx, adminToken, userID)
     if err != nil {
         return fmt.Errorf("verify roles: %w", err)
     }
-    
+
     for _, role := range roles {
         if role.Key == "warehouse_manager" {
             log.Printf("User %s assigned warehouse_manager role for warehouse %s", userID, warehouseID)
             return nil
         }
     }
-    
+
     return fmt.Errorf("role assignment verification failed")
 }
 ```

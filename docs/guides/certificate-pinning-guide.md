@@ -67,10 +67,10 @@ func urlSession(_ session: URLSession,
         completionHandler(.cancelAuthenticationChallenge, nil)
         return
     }
-    
+
     let serverSPKI = computeSPKIHash(cert)
     let pinnedSPKIs = ["sha256/base64-of-expected-spki"]
-    
+
     if pinnedSPKIs.contains(serverSPKI) {
         completionHandler(.useCredential, URLCredential(trust: trust))
     } else {
@@ -232,7 +232,7 @@ class PinningDelegate: NSObject, URLSessionDelegate {
         "sha256/primary-spki",
         "sha256/backup-spki"
     ]
-    
+
     func urlSession(_ session: URLSession,
                     didReceive challenge: URLAuthenticationChallenge,
                     completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
@@ -241,18 +241,18 @@ class PinningDelegate: NSObject, URLSessionDelegate {
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
-        
+
         // Evaluate trust chain first
         var error: CFError?
         guard SecTrustEvaluateWithError(serverTrust, &error) else {
             completionHandler(.cancelAuthenticationChallenge, nil)
             return
         }
-        
+
         // Check pin
         let cert = SecTrustGetCertificateAtIndex(serverTrust, 0)!
         let spkiHash = computeSPKIHash(cert)
-        
+
         if pinnedSPKIs.contains(spkiHash) {
             completionHandler(.useCredential, URLCredential(trust: serverTrust))
         } else {
@@ -269,27 +269,27 @@ class PinningInterceptor : Interceptor {
     private val pins = mapOf(
         "auth.ggid.example.com" to listOf("sha256/primary", "sha256/backup")
     )
-    
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val host = request.url.host
-        
+
         val response = chain.proceed(request)
-        
+
         // Verify pin
         val certs = response.handshake?.peerCertificates ?: emptyList()
         val pinnedHashes = pins[host] ?: return response
-        
+
         val matched = certs.any { cert ->
             val spki = computeSPKIHash(cert)
             pinnedHashes.contains("sha256/$spki")
         }
-        
+
         if (!matched) {
             response.close()
             throw SSLPeerUnverifiedException("Certificate pinning failure for $host")
         }
-        
+
         return response
     }
 }
@@ -305,7 +305,7 @@ func loadMTLSCredentialsWithPinning(certFile, keyFile, caFile string, pins map[s
     caCert, _ := os.ReadFile(caFile)
     caPool := x509.NewCertPool()
     caPool.AppendCertsFromPEM(caCert)
-    
+
     creds := credentials.NewTLS(&tls.Config{
         Certificates: []tls.Certificate{cert},
         RootCAs:      caPool,
@@ -318,7 +318,7 @@ func loadMTLSCredentialsWithPinning(certFile, keyFile, caFile string, pins map[s
             }
             cert := verifiedChains[0][0]
             spkiHash := computeSPKIHash(cert)
-            
+
             // Check against pins for the peer
             // pins keyed by expected hostname or service name
             for _, pinSet := range pins {
@@ -331,7 +331,7 @@ func loadMTLSCredentialsWithPinning(certFile, keyFile, caFile string, pins map[s
             return errors.New("certificate pin verification failed")
         },
     })
-    
+
     return creds, nil
 }
 ```
@@ -418,12 +418,12 @@ certificate_pinning:
     overlap_period: 30d
     pre_generate_backup: true
     max_pins_per_host: 3  # Current + 2 backups
-  
+
   mobile:
     ios: "in_code"
     android: "okhttp_certificate_pinner"
     preload: true
-  
+
   service_to_service:
     enabled: true
     mtls: true
