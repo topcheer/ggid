@@ -95,8 +95,12 @@ func TestListCAs(t *testing.T) {
 
 	pem1 := generateTestCertPEM(t, "ca1.example.com")
 	pem2 := generateTestCertPEM(t, "ca2.example.com")
-	s.AddCA("CA1", pem1, "admin")
-	s.AddCA("CA2", pem2, "admin")
+	if _, err := s.AddCA("CA1", pem1, "admin"); err != nil {
+		t.Fatalf("AddCA CA1 failed: %v", err)
+	}
+	if _, err := s.AddCA("CA2", pem2, "admin"); err != nil {
+		t.Fatalf("AddCA CA2 failed: %v", err)
+	}
 
 	cas, _ = s.ListCAs()
 	if len(cas) != 2 {
@@ -157,7 +161,9 @@ func TestHasCAs(t *testing.T) {
 	}
 
 	pem := generateTestCertPEM(t, "has-ca.example.com")
-	s.AddCA("Has CA", pem, "admin")
+	if _, err := s.AddCA("Has CA", pem, "admin"); err != nil {
+		t.Fatalf("AddCA failed: %v", err)
+	}
 
 	if !s.HasCAs() {
 		t.Error("expected true after adding CA")
