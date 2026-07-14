@@ -39,14 +39,15 @@
 | 7 | Backup Codes Storage | auth/service/backup_codes.go, auth/cmd/main.go | `NewPgBackupCodeRepo(pool)` wired in main.go; table created via `EnsureSchema`. Falls back to in-memory only when pool is nil. | [DONE] | backend |
 | 8 | Agent token scope enforcement | oauth/service/agent_identity.go | AgentTokenClaims carries scope; CheckAgentScope enforces it. | [DONE] | backend |
 | 9 | NoopIdentityClient | auth/service/identity_client.go, auth/cmd/main.go | `NewHTTPIdentityClient` used when `IDENTITY_SERVICE_URL` is set; Noop is intentional degraded fallback. | [DONE] | backend |
-| 10 | CIBA backchannel route | oauth/server/server.go | CIBA backchannel endpoint registered. | [FIXED] | arch (pending verification) |
+| 10 | CIBA backchannel route | oauth/server/server.go | CIBA backchannel endpoint `/api/v1/oauth/backchannel` registered and invokes BackchannelAuthentication. | [FIXED] | arch (pending verification) |
+| 11 | Client Branding persistence | oauth/internal/server/client_branding.go | `brandingAdapterVar` (PG-backed) is created in server.go, but `handleClientBranding` still writes/reads the in-memory `brandingStore`. Needs wiring to adapter. | [NEW] | backend |
 
 ### LOW Priority
 
 | # | Feature | Location | Issue | Status | Commit |
 |---|---------|----------|-------|--------|--------|
-| 11 | GeoIP | gateway/middleware/geoip.go | Detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration pending. | [PARTIAL] | arch |
-| 12 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
+| 12 | GeoIP | gateway/middleware/geoip.go | Detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration pending. | [PARTIAL] | arch |
+| 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
 
 ## Previously Fixed (Prior Scans)
 
