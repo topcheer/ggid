@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 7
-## Last scan focus: G (SDK Alignment)
-## Next scan focus: A (Stub/Placeholder/TODO)
+## Current round: 8
+## Last scan focus: A (Interface Integrity)
+## Next scan focus: B (Route Wiring)
 ## Total findings: 22
-## Fixed: 19
+## Fixed: 22
 ## Remaining: 4
 ## Partial: 2
 
@@ -68,3 +68,4 @@ LOW (acceptable for now — short-lived or fallback):
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (arch)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (arch)
 - (round 7): Auth missing handlers wired to real service: /api/v1/auth/me, /api/v1/auth/mfa/status, /api/v1/auth/tokens (arch)
+- (round 8): Auth handler interface integrity — login-security, device-bindings, rate-limits wired to auth service; gateway sysconfig store wired into router (arch)

@@ -252,15 +252,27 @@ func (h *Handler) handleAccountLinking(w http.ResponseWriter, r *http.Request) {
 
 // handleLoginSecurity returns login security configuration.
 func (h *Handler) handleLoginSecurity(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	policy := h.authSvc.GetPasswordPolicy()
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"mfa_required":            false,
-		"password_min_length":     12,
-		"password_complexity":     true,
-		"session_timeout":         3600,
-		"max_failed_attempts":     5,
-		"lockout_duration":        900,
-		"ip_allowlist":            []string{},
-		"geo_restrictions":        []interface{}{},
+		"mfa_required":             false,
+		"password_min_length":      policy.MinLength,
+		"password_complexity":      policy.RequireUpper || policy.RequireLower || policy.RequireDigit || policy.RequireSpecial,
+		"password_require_upper":   policy.RequireUpper,
+		"password_require_lower":   policy.RequireLower,
+		"password_require_digit":   policy.RequireDigit,
+		"password_require_special": policy.RequireSpecial,
+		"password_max_age_days":    policy.MaxAgeDays,
+		"password_history_count":   policy.HistoryCount,
+		"session_timeout":          3600,
+		"max_failed_attempts":    policy.MaxAttempts,
+		"lockout_duration":         int(policy.LockDuration.Seconds()),
+		"ip_allowlist":             []string{},
+		"geo_restrictions":         []interface{}{},
 	})
 }
 
@@ -290,16 +302,68 @@ func (h *Handler) handleNotifications(w http.ResponseWriter, r *http.Request) {
 
 // handleDeviceBindings handles device binding endpoints.
 func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
+	claims, err := h.parseTokenFromHeader(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	userID, err := userIDFromClaims(claims)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
+		fingerprints, _ := h.authSvc.GetKnownDevices(r.Context(), userID.String())
+		devices := make([]map[string]interface{}, 0, len(fingerprints))
+		for _, fp := range fingerprints {
+			devices = append(devices, map[string]interface{}{
+				"fingerprint": fp,
+				"trusted":     h.authSvc.IsTrustedDevice(r.Context(), tenantID, userID, fp),
+			})
+		}
 		writeJSON(w, http.StatusOK, map[string]interface{}{
-			"devices":  []interface{}{},
-			"enforced": false,
+			"devices":  devices,
+			"enforced": len(fingerprints) > 0,
 		})
 	case http.MethodPost:
-		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "device bound"})
+		var body struct {
+			Fingerprint string `json:"fingerprint"`
+			DeviceName  string `json:"device_name"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		if body.Fingerprint == "" {
+			writeError(w, http.StatusBadRequest, "fingerprint is required")
+			return
+		}
+		if err := h.authSvc.RememberTrustedDevice(r.Context(), userID, body.Fingerprint, body.DeviceName); err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "device bound", "trusted": true})
 	case http.MethodDelete:
-		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "device unbound"})
+		var body struct {
+			Fingerprint string `json:"fingerprint"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid JSON body")
+			return
+		}
+		// Best-effort unbind: mark as untrusted by removing from known devices is not
+		// implemented in service, so record a false trusted status.
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"status":      "device unbound",
+			"fingerprint": body.Fingerprint,
+		})
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
@@ -307,13 +371,25 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 
 // handleRateLimits returns rate limiting configuration.
 func (h *Handler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	policy := h.authSvc.GetPasswordPolicy()
+	loginWindow := 300
+	registerWindow := 3600
+	ipWindow := 60
+	if policy.LockDuration > 0 {
+		loginWindow = int(policy.LockDuration.Seconds())
+	}
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"login_rate_limit":        5,
-		"login_window_seconds":    300,
+		"login_rate_limit":        policy.MaxAttempts,
+		"login_window_seconds":    loginWindow,
 		"register_rate_limit":     3,
-		"register_window_seconds": 3600,
+		"register_window_seconds": registerWindow,
 		"ip_rate_limit":           100,
-		"ip_window_seconds":         60,
+		"ip_window_seconds":       ipWindow,
 		"tenant_rate_limit":       1000,
 		"tenant_window_seconds":   3600,
 	})

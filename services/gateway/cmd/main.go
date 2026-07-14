@@ -42,16 +42,18 @@ func main() {
 		redisAddr = "localhost:6379"
 	}
 	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
+	var store sysconfig.Store
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Printf("Warning: Redis not available for gateway sysconfig (using defaults): %v", err)
-		_ = sysconfig.NewStore(nil, nil) // DB-less, defaults only
+		store = sysconfig.NewStore(nil, nil) // DB-less, defaults only
 	} else {
 		log.Printf("connected to Redis for sysconfig")
-		_ = sysconfig.NewStore(nil, rdb) // Gateway uses Redis cache only; DB writes go through auth service
+		store = sysconfig.NewStore(nil, rdb) // Gateway uses Redis cache only; DB writes go through auth service
 	}
 
 	// Create gateway router
 	gw := router.New(cfg, jwks)
+	gw.SetSysconfigStore(store)
 	gw.PrintRoutes()
 
 	// HTTP server

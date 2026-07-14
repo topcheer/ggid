@@ -16,6 +16,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/healthcheck"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
@@ -52,18 +53,19 @@ var publicPaths = []string{
 
 // Gateway is the API Gateway HTTP handler.
 type Gateway struct {
-	cfg           *config.Config
-	jwks          *middleware.JWKSClient
-	proxies       map[string]*httputil.ReverseProxy
-	timeouts      map[string]time.Duration
-	healthChecker *healthcheck.Checker
-	rateLimiter   *middleware.TenantBucketLimiter
-	reloadFunc    ReloadFunc
-	routeVersion  int64
-	stats         *middleware.StatsCollector
-	graphql       *middleware.GraphQLResolver
-	sessionMgr    *middleware.SessionManager
-	mu            sync.RWMutex
+	cfg            *config.Config
+	jwks           *middleware.JWKSClient
+	proxies        map[string]*httputil.ReverseProxy
+	timeouts       map[string]time.Duration
+	healthChecker  *healthcheck.Checker
+	rateLimiter    *middleware.TenantBucketLimiter
+	reloadFunc     ReloadFunc
+	routeVersion   int64
+	stats          *middleware.StatsCollector
+	graphql        *middleware.GraphQLResolver
+	sessionMgr     *middleware.SessionManager
+	sysconfigStore sysconfig.Store
+	mu             sync.RWMutex
 }
 
 // New creates a new API Gateway handler.
@@ -88,6 +90,13 @@ func (gw *Gateway) SetHealthChecker(hc *healthcheck.Checker) {
 // SetSessionManager allows injecting a session manager for timeout enforcement.
 func (gw *Gateway) SetSessionManager(sm *middleware.SessionManager) {
 	gw.sessionMgr = sm
+}
+
+// SetSysconfigStore injects the system configuration store for hot-reloadable settings.
+func (gw *Gateway) SetSysconfigStore(store sysconfig.Store) {
+	gw.mu.Lock()
+	defer gw.mu.Unlock()
+	gw.sysconfigStore = store
 }
 
 func (gw *Gateway) buildHealthChecker() {
