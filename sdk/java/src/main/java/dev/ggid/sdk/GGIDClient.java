@@ -373,6 +373,114 @@ public class GGIDClient {
     }
 
     // -----------------------------------------------------------------------
+    // Agent Identity
+    // -----------------------------------------------------------------------
+
+    public Agent registerAgent(String token, String name, String agentType,
+                                String ownerUserId, List<String> allowedScopes)
+            throws GGIDException, IOException {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("name", name);
+        body.put("type", agentType);
+        body.put("owner_user_id", ownerUserId);
+        body.put("allowed_scopes", allowedScopes);
+        Request request = buildRequest("POST", "/api/v1/agents/register", body)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, Agent.class);
+    }
+
+    public List<Agent> listAgents(String token) throws GGIDException, IOException {
+        Request request = buildRequest("GET", "/api/v1/agents", null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        java.util.Map<String, Object> resp = execute(request, java.util.Map.class);
+        Object items = resp.get("agents");
+        if (items == null) return java.util.Collections.emptyList();
+        return mapper.convertValue(items,
+                mapper.getTypeFactory().constructCollectionType(List.class, Agent.class));
+    }
+
+    public AgentTokenResponse exchangeAgentToken(String agentId, String subjectToken,
+                                                  List<String> scopes)
+            throws GGIDException, IOException {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("agent_id", agentId);
+        body.put("subject_token", subjectToken);
+        body.put("scope", scopes);
+        Request request = buildRequest("POST", "/api/v1/agents/token", body);
+        return execute(request, AgentTokenResponse.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public java.util.Map<String, Object> verifyAgentToken(String token) throws GGIDException, IOException {
+        Request request = buildRequest("POST", "/api/v1/agents/verify",
+                java.util.Map.of("token", token));
+        return execute(request, java.util.Map.class);
+    }
+
+    // -----------------------------------------------------------------------
+    // Access Request (IGA)
+    // -----------------------------------------------------------------------
+
+    @SuppressWarnings("unchecked")
+    public java.util.Map<String, Object> createAccessRequest(String token, String userId,
+                                                               String resource, String action,
+                                                               String reason)
+            throws GGIDException, IOException {
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("user_id", userId);
+        body.put("resource", resource);
+        body.put("action", action);
+        body.put("reason", reason);
+        Request request = buildRequest("POST", "/api/v1/access-requests", body)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, java.util.Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<java.util.Map<String, Object>> listAccessRequests(String token)
+            throws GGIDException, IOException {
+        Request request = buildRequest("GET", "/api/v1/access-requests", null)
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        java.util.Map<String, Object> resp = execute(request, java.util.Map.class);
+        Object items = resp.get("requests");
+        if (items == null) items = resp.get("data");
+        if (items == null) return java.util.Collections.emptyList();
+        return (List<java.util.Map<String, Object>>) items;
+    }
+
+    @SuppressWarnings("unchecked")
+    public java.util.Map<String, Object> approveAccessRequest(String token, String requestId,
+                                                                String comment)
+            throws GGIDException, IOException {
+        Request request = buildRequest("POST", "/api/v1/access-requests/" + requestId + "/approve",
+                java.util.Map.of("comment", comment))
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, java.util.Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public java.util.Map<String, Object> rejectAccessRequest(String token, String requestId,
+                                                               String comment)
+            throws GGIDException, IOException {
+        Request request = buildRequest("POST", "/api/v1/access-requests/" + requestId + "/reject",
+                java.util.Map.of("comment", comment))
+                .newBuilder()
+                .header("Authorization", "Bearer " + token)
+                .build();
+        return execute(request, java.util.Map.class);
+    }
+
+    // -----------------------------------------------------------------------
     // Webhooks
     // -----------------------------------------------------------------------
 
