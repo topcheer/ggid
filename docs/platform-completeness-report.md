@@ -55,7 +55,6 @@
 | 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
 | 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | PKCS#11 provider + integration into auth/oauth/gateway cmd/main.go; TokenService and OAuth server accept KeyProvider; local keys auto-generated. | [DONE] | 12db3bac |
 
-| 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request endpoints exist in Go SDK and Node SDK, but missing in Python, Java, Rust, Ruby, C#, Dart, PHP SDKs. | [NEW] | arch |
 
 | Feature | Was | Fixed By | Commit | Date |
 |---------|------|----------|--------|------|
