@@ -51,13 +51,34 @@ func testPasswordPolicy() conf.PasswordPolicy {
 	}
 }
 
+func newTestKeyProvider(t *testing.T) crypto.KeyProvider {
+	t.Helper()
+	cfg := testJWTConfig(t)
+	// Ensure local key pair exists before creating the KeyProvider.
+	if _, err := loadOrCreatePrivateKey(cfg.PrivateKeyPath); err != nil {
+		t.Fatalf("loadOrCreatePrivateKey: %v", err)
+	}
+	kp, err := crypto.NewKeyProvider(context.Background(), crypto.KeyProviderConfig{
+		Provider: "local",
+		Local: crypto.LocalKeyProviderConfig{
+			PrivateKeyPath: cfg.PrivateKeyPath,
+			PublicKeyPath:  cfg.PublicKeyPath,
+		},
+	})
+	if err != nil {
+		t.Fatalf("newTestKeyProvider: %v", err)
+	}
+	t.Cleanup(func() { _ = kp.Close() })
+	return kp
+}
+
 // =====================================================================
 // TokenService Tests — JWT signing + refresh token lifecycle
 // =====================================================================
 
 func TestTokenService_IssueAccessToken(t *testing.T) {
 	cfg := testJWTConfig(t)
-	ts, err := NewTokenService(cfg, nil, nil)
+	ts, err := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 	if err != nil {
 		t.Fatalf("NewTokenService: %v", err)
 	}
@@ -113,7 +134,7 @@ func TestTokenService_IssueAccessToken(t *testing.T) {
 
 func TestTokenService_DifferentUsersDifferentTokens(t *testing.T) {
 	cfg := testJWTConfig(t)
-	ts, _ := NewTokenService(cfg, nil, nil)
+	ts, _ := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 
 	t1, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New())
 	t2, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New())
@@ -125,7 +146,7 @@ func TestTokenService_DifferentUsersDifferentTokens(t *testing.T) {
 
 func TestTokenService_RejectTamperedToken(t *testing.T) {
 	cfg := testJWTConfig(t)
-	ts, _ := NewTokenService(cfg, nil, nil)
+	ts, _ := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 
 	token, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New())
 
@@ -141,10 +162,10 @@ func TestTokenService_RejectTamperedToken(t *testing.T) {
 
 func TestTokenService_RejectWrongKey(t *testing.T) {
 	cfg1 := testJWTConfig(t)
-	ts1, _ := NewTokenService(cfg1, nil, nil)
+	ts1, _ := NewTokenService(newTestKeyProvider(t), cfg1.Issuer, cfg1.Audience, cfg1.AccessTokenTTL, nil, nil)
 
 	cfg2 := testJWTConfig(t)
-	ts2, _ := NewTokenService(cfg2, nil, nil)
+	ts2, _ := NewTokenService(newTestKeyProvider(t), cfg2.Issuer, cfg2.Audience, cfg2.AccessTokenTTL, nil, nil)
 
 	token, _, _ := ts1.IssueAccessToken(uuid.New(), uuid.New())
 
@@ -158,8 +179,8 @@ func TestTokenService_RejectWrongKey(t *testing.T) {
 
 func TestTokenService_KeyIDConsistent(t *testing.T) {
 	cfg := testJWTConfig(t)
-	ts1, _ := NewTokenService(cfg, nil, nil)
-	ts2, err := NewTokenService(cfg, nil, nil)
+	ts1, _ := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
+	ts2, err := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 	if err != nil {
 		t.Fatalf("second load: %v", err)
 	}
@@ -170,18 +191,22 @@ func TestTokenService_KeyIDConsistent(t *testing.T) {
 
 func TestTokenService_KeyFilesCreated(t *testing.T) {
 	cfg := testJWTConfig(t)
-	ts, _ := NewTokenService(cfg, nil, nil)
+	if _, err := loadOrCreatePrivateKey(cfg.PrivateKeyPath); err != nil {
+		t.Fatalf("loadOrCreatePrivateKey: %v", err)
+	}
+	kp := newTestKeyProvider(t)
+	ts, _ := NewTokenService(kp, cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 
+	// With KeyProvider, the local provider creates/reads the private key file.
+	// The public key is derived from the private key; no separate file is required.
 	if _, err := os.Stat(cfg.PrivateKeyPath); err != nil {
 		t.Errorf("private key not created: %v", err)
 	}
-	if _, err := os.Stat(cfg.PublicKeyPath); err != nil {
-		t.Errorf("public key not created: %v", err)
-	}
-
-	// Verify keyID is non-empty
 	if ts.KeyID() == "" {
 		t.Error("expected non-empty KeyID")
+	}
+	if kp.Public() == nil {
+		t.Error("expected public key from provider")
 	}
 }
 
