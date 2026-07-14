@@ -120,16 +120,16 @@ func backfillColumn(db *sql.DB) error {
     batchSize := 1000
     for {
         result, err := db.Exec(`
-            UPDATE users 
-            SET display_name = email 
-            WHERE display_name IS NULL 
+            UPDATE users
+            SET display_name = email
+            WHERE display_name IS NULL
             LIMIT $1
         `, batchSize)
         if err != nil { return err }
-        
+
         rows, _ := result.RowsAffected()
         if rows == 0 { break } // Done
-        
+
         time.Sleep(100 * time.Millisecond) // Throttle
     }
     return nil
@@ -160,7 +160,7 @@ END WHILE;
 CREATE TABLE audit_events_new (...) PARTITION BY RANGE (created_at);
 
 -- Migrate data per partition (minimal locking)
-INSERT INTO audit_events_new_2025_01 
+INSERT INTO audit_events_new_2025_01
   SELECT * FROM audit_events WHERE created_at >= '2025-01-01' AND created_at < '2025-02-01';
 
 -- Swap table names (brief lock)
@@ -217,19 +217,19 @@ migration_test:
   steps:
     - name: create-test-db
       run: createdb ggid_migration_test
-    
+
     - name: apply-all-migrations
       run: migrate -path migrations -database $TEST_DB up
-    
+
     - name: seed-large-data
       run: ./scripts/seed-1M-rows.sh
-    
+
     - name: apply-new-migration
       run: migrate -path migrations -database $TEST_DB up 1
-    
+
     - name: verify-data-integrity
       run: ./scripts/verify-data.sh
-    
+
     - name: test-rollback
       run: migrate -path migrations -database $TEST_DB down 1
 ```

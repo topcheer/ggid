@@ -635,7 +635,7 @@ vault:
     role: "ggid-app"
     credential_ttl: "24h"
     max_ttl: "48h"
-  
+
   transit:
     jwt_signing:
       enabled: true
@@ -667,19 +667,19 @@ audit:
     hot_days: 30           # Fast query (PostgreSQL)
     warm_days: 365         # Slower query (compressed partitions)
     cold_years: 7          # Archive (S3 Glacier / cold storage)
-    
+
     # Auto-partitioning by month
     partition_strategy: "monthly"
-    
+
     # Auto-purge expired records
     purge_cron: "0 2 * * *"    # Daily at 2 AM
     batch_size: 10000           # Purge in batches to avoid lock contention
-  
+
   storage:
     hot: "postgresql"
     warm: "postgresql_compressed"
     cold: "s3://ggid-audit-archive/"
-    
+
   compliance:
     immutable: true          # WORM (Write Once Read Many)
     tamper_proof: true       # Hash chain verification
@@ -730,19 +730,19 @@ curl http://localhost:8080/api/v1/admin/audit/verify-integrity \
 session:
   # Access token lifetime (short-lived JWT)
   access_token_ttl: "15m"
-  
+
   # Maximum session duration (hard limit regardless of activity)
   max_session_duration: "8h"
-  
+
   # Idle timeout (revoked after inactivity)
   idle_timeout: "1h"
-  
+
   # Require re-authentication after this period (even if active)
   reauth_interval: "168h"    # 7 days
-  
+
   # Concurrent session limit per user
   max_concurrent_sessions: 3
-  
+
   # Require step-up auth for sensitive operations
   step_up_auth:
     enabled: true
@@ -758,7 +758,7 @@ session:
 
 ```sql
 -- Longer sessions for service accounts, shorter for admins
-UPDATE tenant_settings 
+UPDATE tenant_settings
 SET session_policy = jsonb_set(
   session_policy,
   '{role_overrides}',

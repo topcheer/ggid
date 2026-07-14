@@ -106,22 +106,22 @@ type IntrospectionCache struct {
 
 func (c *IntrospectionCache) Introspect(token string) (*Result, error) {
     key := cacheKey(token)
-    
+
     // Singleflight ensures only one introspection per token
     result, err, _ := c.sf.Do(key, func() (interface{}, error) {
         // Check cache again (might have been populated by another goroutine)
         if cached, ok := c.cache.Get(key); ok {
             return cached, nil
         }
-        
+
         // Only one request hits the server
         result, err := serverIntrospect(token)
         if err != nil { return nil, err }
-        
+
         c.cache.Set(key, result, cacheTTL(result))
         return result, nil
     })
-    
+
     return result.(*Result), err
 }
 ```
@@ -132,7 +132,7 @@ func (c *IntrospectionCache) Introspect(token string) (*Result, error) {
 func (c *IntrospectionCache) getWithJitter(key string) (*Result, bool) {
     result, expiry, ok := c.cache.GetWithExpiry(key)
     if !ok { return nil, false }
-    
+
     // If within last 10% of TTL, probabilistically refresh early
     remaining := time.Until(expiry)
     if remaining < c.ttl/10 {
@@ -157,12 +157,12 @@ type IntrospectionCache struct {
 func (c *IntrospectionCache) Get(token, clientID string) (*IntrospectionResult, error) {
     key := cacheKey(token)
     ttl := c.getClientTTL(clientID)
-    
+
     // 1. Check ristretto (local, fast)
     if result, ok := c.cache.Get(key); ok {
         return result.(*IntrospectionResult), nil
     }
-    
+
     // 2. Singleflight (prevent stampede)
     result, err, _ := c.sf.Do(key, func() (interface{}, error) {
         // 3. Check Redis (distributed)
@@ -172,20 +172,20 @@ func (c *IntrospectionCache) Get(token, clientID string) (*IntrospectionResult, 
             c.cache.Set(key, r, ttl)
             return r, nil
         }
-        
+
         // 4. Introspect at server
         r, err := serverIntrospect(token)
         if err != nil { return nil, err }
-        
+
         // 5. Cache in both layers
         data, _ := json.Marshal(r)
         c.cache.Set(key, r, ttl)
         c.redis.Set(key, data, ttl)
         c.redis.SAdd("introspect:user:"+r.UserID, hashToken(token))
-        
+
         return r, nil
     })
-    
+
     return result.(*IntrospectionResult), err
 }
 ```

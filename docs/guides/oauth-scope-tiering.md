@@ -45,17 +45,17 @@ scope_packages:
     scopes: ["openid", "profile", "email", "users:read", "roles:read"]
     tier: 2
     consent: "user"
-    
+
   - name: "user-management"
     scopes: ["openid", "profile", "email", "users:read", "users:write", "roles:assign"]
     tier: 3
     consent: "admin"
-    
+
   - name: "audit-viewer"
     scopes: ["openid", "audit:read"]
     tier: 2
     consent: "admin"
-    
+
   - name: "full-admin"
     scopes: ["openid", "profile", "users:admin", "policy:admin"]
     tier: 3
@@ -80,7 +80,7 @@ roles:admin → implies → roles:assign → implies → roles:read
 ```go
 func resolveEffectiveScopes(granted []string) []string {
     effective := make(map[string]bool)
-    
+
     for _, scope := range granted {
         effective[scope] = true
         // Add all parent-implied scopes
@@ -88,7 +88,7 @@ func resolveEffectiveScopes(granted []string) []string {
             effective[implied] = true
         }
     }
-    
+
     return keys(effective)
 }
 ```
@@ -100,10 +100,10 @@ scope_hierarchy:
   "users:admin": ["users:write", "users:read", "users:delete"]
   "users:write": ["users:read"]
   "users:delete": ["users:read"]
-  
+
   "roles:admin": ["roles:assign", "roles:read"]
   "roles:assign": ["roles:read"]
-  
+
   "admin:tenant": ["users:admin", "roles:admin", "policy:admin"]
   "admin:super": ["admin:tenant", "audit:read", "audit:export"]
 ```
@@ -142,11 +142,11 @@ default_scopes:
   new_client:
     tier: 1
     scopes: ["openid", "profile", "email"]
-    
+
   authenticated_client:
     tier: 2
     scopes: ["openid", "profile", "email", "users:read"]
-    
+
   admin_approved_client:
     tier: 2
     scopes: ["openid", "profile", "email", "users:read", "users:write"]
@@ -183,7 +183,7 @@ migration_map:
   "read": "users:read"           # Tier 2
   "write": "users:write"         # Tier 2
   "admin": "users:admin"         # Tier 3
-  
+
 # Old tokens accepted during grace period
 # New tokens use tiered scopes
 ```

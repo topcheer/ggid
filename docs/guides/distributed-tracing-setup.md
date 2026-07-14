@@ -14,7 +14,7 @@ Gateway → Auth → Identity → PostgreSQL
    │         │        └── Span: DB query (2ms)
    │         └── Span: verify credentials (5ms)
    └── Span: route + JWT verify (1ms)
-       
+
 All spans share trace_id → visible as one waterfall in Jaeger
 ```
 
@@ -36,7 +36,7 @@ func InitTracer(serviceName string) (*trace.TracerProvider, error) {
         otlptracegrpc.WithTLSConfig(tlsConfig),
     )
     if err != nil { return nil, err }
-    
+
     tp := trace.NewTracerProvider(
         trace.WithBatcher(exporter),
         trace.WithResource(resource.NewWithAttributes(
@@ -45,10 +45,10 @@ func InitTracer(serviceName string) (*trace.TracerProvider, error) {
         )),
         trace.WithSampler(trace.TraceIDRatioBased(0.1)), // 10% sampling
     )
-    
+
     otel.SetTracerProvider(tp)
     otel.SetTextMapPropagator(propagation.TraceContext{})
-    
+
     return tp, nil
 }
 ```
@@ -124,31 +124,31 @@ db := otelsql.Open("pgx", connString)
 func (s *UserService) Create(ctx context.Context, req *CreateRequest) (*User, error) {
     ctx, span := otel.Tracer("identity").Start(ctx, "UserService.Create")
     defer span.End()
-    
+
     // Add attributes
     span.SetAttributes(
         attribute.String("user.email", req.Email),
         attribute.String("user.department", req.Department),
     )
-    
+
     // Validate (child span)
     ctx, validateSpan := otel.Tracer("identity").Start(ctx, "validate")
     err := validate(req)
     validateSpan.End()
-    
+
     if err != nil {
         span.RecordError(err)
         span.SetStatus(codes.Error, err.Error())
         return nil, err
     }
-    
+
     // DB insert (child span via otelsql)
     user, err := s.repo.Create(ctx, req)
     if err != nil {
         span.RecordError(err)
         return nil, err
     }
-    
+
     return user, nil
 }
 ```
@@ -170,11 +170,11 @@ tail_sampling:
     - name: "errors"
       type: status_code
       status_code: {status_codes: [ERROR]}
-      
+
     - name: "slow_requests"
       type: latency
       latency: {threshold_ms: 1000}
-      
+
     - name: "sample_rest"
       type: probabilistic
       probabilistic: {sampling_percentage: 5}
@@ -226,7 +226,7 @@ GET http://jaeger:16686/api/traces?service=identity&operation=UserService.Create
 func auditWithTrace(ctx context.Context, action string, data map[string]interface{}) {
     span := trace.SpanFromContext(ctx)
     traceID := span.SpanContext().TraceID().String()
-    
+
     data["trace_id"] = traceID
     audit.Log(action, data)
 }

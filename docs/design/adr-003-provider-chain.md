@@ -1,7 +1,7 @@
 # ADR-003: Pluggable Authentication Provider Chain
 
-**Status:** Accepted  
-**Date:** 2024-Q1  
+**Status:** Accepted
+**Date:** 2024-Q1
 **Deciders:** Architecture Team
 
 ---
@@ -32,13 +32,13 @@ func Authenticate(username, password string) (*User, error) {
     // Try local DB first
     user, err := localDB.Lookup(username, password)
     if err == nil { return user, nil }
-    
+
     // Try LDAP
     if ldapConfigured {
         user, err = ldap.Bind(username, password)
         if err == nil { return user, nil }
     }
-    
+
     // Try OAuth... (but OAuth doesn't use username/password)
     return nil, ErrInvalidCredentials
 }
@@ -119,11 +119,11 @@ Choose **Chain of Responsibility** with a common `Provider` interface.
 type Provider interface {
     // Name returns the provider identifier
     Name() string
-    
+
     // Authenticate attempts to verify the credentials
     // Returns AuthResult on success, error on failure
     Authenticate(ctx context.Context, cred Credentials) (*AuthResult, error)
-    
+
     // Available checks if the provider is configured and reachable
     Available(ctx context.Context) bool
 }
@@ -161,22 +161,22 @@ func NewChain(providers ...Provider) *Chain {
 
 func (c *Chain) Authenticate(ctx context.Context, cred Credentials) (*AuthResult, error) {
     var lastErr error
-    
+
     for _, provider := range c.providers {
         if !provider.Available(ctx) {
             continue  // Skip unavailable providers
         }
-        
+
         result, err := provider.Authenticate(ctx, cred)
         if err == nil {
             // Success — return immediately
             return result, nil
         }
-        
+
         // Remember error, try next provider
         lastErr = err
     }
-    
+
     // All providers failed
     return nil, fmt.Errorf("authentication failed: %w", lastErr)
 }

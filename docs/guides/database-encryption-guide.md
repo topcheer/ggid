@@ -179,25 +179,25 @@ func getDEK(tenantID, column string) ([]byte, error) {
     if dek, ok := keyCache.Get(cacheKey); ok {
         return dek.([]byte), nil
     }
-    
+
     // Get encrypted DEK from DB
     encDEK, err := db.GetEncryptedDEK(tenantID, column)
     if err != nil {
         return nil, err
     }
-    
+
     // Get KEK (from KMS, decrypts with MEK)
     kek, err := getKEK(tenantID)
     if err != nil {
         return nil, err
     }
-    
+
     // Decrypt DEK with KEK
     dek, err := decryptWithKey(encDEK, kek)
     if err != nil {
         return nil, err
     }
-    
+
     // Cache
     keyCache.Set(cacheKey, dek, 5*time.Minute)
     return dek, nil
@@ -209,13 +209,13 @@ func getKEK(tenantID string) ([]byte, error) {
     if err != nil {
         return nil, err
     }
-    
+
     // Decrypt KEK with MEK from KMS
     kek, err := kms.Decrypt(encKEK, "MEK")
     if err != nil {
         return nil, err
     }
-    
+
     return kek, nil
 }
 ```
@@ -388,14 +388,14 @@ func (s *EncryptionService) Encrypt(tenantID, column string, plaintext string) (
     if err != nil {
         return "", "", err
     }
-    
+
     encrypted, err := encryptAESGCM(plaintext, dek)
     if err != nil {
         return "", "", err
     }
-    
+
     blindIndex := computeBlindIndex(plaintext, s.config.BlindIndexKey)
-    
+
     return encrypted, blindIndex, nil
 }
 
@@ -404,7 +404,7 @@ func (s *EncryptionService) Decrypt(tenantID, column string, ciphertext string) 
     if err != nil {
         return "", err
     }
-    
+
     return decryptAESGCM(ciphertext, dek)
 }
 ```

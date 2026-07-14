@@ -207,20 +207,20 @@ func validateActClaim(claims jwt.MapClaims) error {
     if !ok {
         return nil  // No act claim (direct access, not delegated)
     }
-    
+
     // Check delegation depth
     depth := getDelegationDepth(claims)
     if depth > maxDepth {
         return ErrMaxDelegationDepthExceeded
     }
-    
+
     // Verify actor is authorized to exchange
     actorSub := act["sub"].(string)
     client := getClient(actorSub)
     if !client.TokenExchangeAllowed {
         return ErrClientCannotExchange
     }
-    
+
     return nil
 }
 
@@ -251,7 +251,7 @@ func (s *OAuthService) HandleTokenExchange(r *http.Request) (*TokenResponse, err
     audience := r.FormValue("audience")
     scope := r.FormValue("scope")
     actorToken := r.FormValue("actor_token")
-    
+
     // Validate client
     client := authenticateClient(r)
     if client == nil {
@@ -260,13 +260,13 @@ func (s *OAuthService) HandleTokenExchange(r *http.Request) (*TokenResponse, err
     if !client.TokenExchangeAllowed {
         return nil, ErrUnauthorizedClient
     }
-    
+
     // Validate subject token
     subjectClaims, err := s.parseToken(subjectToken)
     if err != nil {
         return nil, ErrInvalidToken
     }
-    
+
     // Build new token
     newClaims := jwt.MapClaims{
         "iss": s.config.Issuer,
@@ -276,7 +276,7 @@ func (s *OAuthService) HandleTokenExchange(r *http.Request) (*TokenResponse, err
         "iat": time.Now().Unix(),
         "scope": scope,
     }
-    
+
     // Add act claim (delegation)
     if actorToken != "" {
         actorClaims, _ := s.parseToken(actorToken)
@@ -289,22 +289,22 @@ func (s *OAuthService) HandleTokenExchange(r *http.Request) (*TokenResponse, err
             "sub": client.ID,
         }
     }
-    
+
     // Copy delegation chain
     if existingAct, ok := subjectClaims["act"]; ok {
         newClaims["act"].(map[string]interface{})["act"] = existingAct
     }
-    
+
     // Check delegation depth
     if getDelegationDepth(newClaims) > s.config.MaxDelegationDepth {
         return nil, ErrMaxDelegationDepthExceeded
     }
-    
+
     // Sign new token
     token := jwt.NewWithClaims(jwt.SigningMethodRS256, newClaims)
     token.Header["kid"] = s.config.KeyID
     signed, _ := token.SignedString(s.config.PrivateKey)
-    
+
     return &TokenResponse{
         AccessToken:       signed,
         IssuedTokenType:   "urn:ietf:params:oauth:token-type:access_token",

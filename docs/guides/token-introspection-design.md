@@ -55,16 +55,16 @@ func IntrospectHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "unauthorized resource server", 401)
         return
     }
-    
+
     // 2. Extract token to introspect
     token := r.PostFormValue("token")
-    
+
     // 3. Introspect
     result := introspectToken(token)
-    
+
     // 4. Filter response based on resource server's permissions
     filtered := filterForResourceServer(result, rsID)
-    
+
     json.NewEncoder(w).Encode(filtered)
 }
 ```
@@ -106,18 +106,18 @@ func (ic *IntrospectionCache) Introspect(token string) (*IntrospectionResult, er
             return result, nil
         }
     }
-    
+
     // Cache miss → introspect at server
     result, err := introspectAtServer(token)
     if err != nil { return nil, err }
-    
+
     // Cache until min(token_exp, max_cache_ttl)
     cacheTTL := min(
         time.Until(result.Expiry),
         60*time.Second, // Max 60s cache
     )
     ic.cache.Set(key, result, cacheTTL)
-    
+
     return result, nil
 }
 ```
@@ -173,7 +173,7 @@ func verifyToken(token string) (*Claims, error) {
             return claims, nil
         }
     }
-    
+
     // Fallback to introspection (opaque or revoked check)
     return introspect(token)
 }
@@ -190,7 +190,7 @@ introspection_response_policy:
   identity-svc:
     allow: [active, scope, sub, tenant_id, exp]
     deny: [username, email, client_id]
-    
+
   audit-svc:
     allow: [active, scope, sub, exp]
     deny: [everything_else]

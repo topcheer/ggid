@@ -152,7 +152,7 @@ func getUserGroups(conn *ldap.Conn, userDN string) ([]string, error) {
     )
     result, err := conn.Search(search)
     if err != nil { return nil, err }
-    
+
     groups := []string{}
     for _, entry := range result.Entries {
         for _, attr := range entry.Attributes {
@@ -195,10 +195,10 @@ search := ldap.NewSearchRequest(
 ```go
 func resolveNestedGroups(conn *ldap.Conn, userDN string, depth int) ([]string, error) {
     if depth > 10 { return nil, ErrMaxDepth }
-    
+
     direct := getDirectGroups(conn, userDN)
     all := make(map[string]bool)
-    
+
     for _, g := range direct {
         all[g] = true
         // Recursively resolve parent groups
@@ -219,7 +219,7 @@ func authenticateLDAP(conn *ldap.Conn, username, password, baseDN, filter string
     if err := conn.Bind(serviceBindDN, serviceBindPass); err != nil {
         return nil, ErrServiceBind
     }
-    
+
     // 2. Search for user
     userFilter := strings.Replace(filter, "{username}", ldap.EscapeFilter(username), 1)
     search := ldap.NewSearchRequest(baseDN, ldap.ScopeWholeSubtree, ...)
@@ -227,20 +227,20 @@ func authenticateLDAP(conn *ldap.Conn, username, password, baseDN, filter string
     if err != nil || len(result.Entries) == 0 {
         return nil, ErrUserNotFound
     }
-    
+
     userDN := result.Entries[0].DN
-    
+
     // 3. Bind as user (verify password)
     if err := conn.Bind(userDN, password); err != nil {
         return nil, ErrInvalidCredentials
     }
-    
+
     // 4. Auto-provision if configured
     user := mapLDAPEntry(result.Entries[0])
     if autoProvision {
         provisionUser(user) // Create GGID user from LDAP attributes
     }
-    
+
     return user, nil
 }
 ```
@@ -253,12 +253,12 @@ directories:
     url: "ldaps://ad.corp.com:636"
     base_dn: "dc=corp,dc=com"
     priority: 1               # Primary
-    
+
   - name: "Partner LDAP"
     url: "ldaps://ldap.partner.com:636"
     base_dn: "ou=partners,dc=partner,dc=com"
     priority: 2               # Fallback
-    
+
   - name: "Dev LDAP"
     url: "ldap://dev-ldap.internal:389"
     base_dn: "ou=dev,dc=internal"

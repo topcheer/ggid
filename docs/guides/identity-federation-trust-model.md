@@ -115,22 +115,22 @@ Establish → Monitor → Renew → Revoke
 func revokeTrust(entityID string, reason string) error {
     // Block all authentication from this entity
     redis.Set(ctx, "trust:revoked:"+entityID, reason, 0)
-    
+
     // Remove pinned certificates
     removePin(entityID)
-    
+
     // Invalidate cached metadata
     invalidateMetadata(entityID)
-    
+
     // Terminate active sessions from this IdP
     terminateFederatedSessions(entityID)
-    
+
     // Audit
     audit.Log("trust_revoked", entityID, reason)
-    
+
     // Notify
     notifyAdmin("Trust revoked: " + entityID + " — " + reason)
-    
+
     return nil
 }
 ```
@@ -150,20 +150,20 @@ func revokeTrust(entityID string, reason string) error {
 func validateTrustChain(entity *FederationEntity) error {
     // Check revocation
     if isRevoked(entity.ID) { return ErrRevoked }
-    
+
     // Check expiry
     if time.Now().After(entity.ValidUntil) { return ErrExpired }
-    
+
     // Verify metadata signature
     if err := verifyMetadataSignature(entity); err != nil {
         return err
     }
-    
+
     // Verify cert chain
     if err := verifyCertChain(entity.Cert, trustedRoots); err != nil {
         return err
     }
-    
+
     // Check pin
     if entity.PinnedHash != "" {
         certHash := sha256.Sum256(entity.Cert.Raw)
@@ -171,7 +171,7 @@ func validateTrustChain(entity *FederationEntity) error {
             return ErrPinMismatch
         }
     }
-    
+
     return nil
 }
 ```

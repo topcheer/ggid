@@ -75,7 +75,7 @@ func (s *Session) Serialize() ([]byte, error) {
 func (s *SessionStore) Create(session *Session) error {
     key := "session:" + session.ID
     data, _ := json.Marshal(session)
-    
+
     pipe := s.redis.Pipeline()
     pipe.Set(key, data, time.Until(session.ExpiresAt))
     pipe.SAdd("user:"+session.UserID+":sessions", session.ID)
@@ -92,7 +92,7 @@ func (s *SessionStore) Get(sessionID string) (*Session, error) {
     data, err := s.redis.Get("session:" + sessionID).Bytes()
     if err == redis.Nil { return nil, ErrSessionNotFound }
     if err != nil { return nil, err }
-    
+
     session := &Session{}
     return session, json.Unmarshal(data, session)
 }
@@ -105,7 +105,7 @@ func (s *SessionStore) Touch(sessionID string) error {
     // Get current session
     session, err := s.Get(sessionID)
     if err != nil { return err }
-    
+
     // Update last activity
     session.LastActivity = time.Now()
     return s.Save(session)
@@ -117,7 +117,7 @@ func (s *SessionStore) Touch(sessionID string) error {
 ```go
 func (s *SessionStore) Delete(sessionID string) error {
     session, _ := s.Get(sessionID)
-    
+
     pipe := s.redis.Pipeline()
     pipe.Del("session:" + sessionID)
     if session != nil {
@@ -134,7 +134,7 @@ func (s *SessionStore) Delete(sessionID string) error {
 func (s *SessionStore) ListForUser(userID string) ([]*Session, error) {
     sessionIDs, err := s.redis.SMembers("user:" + userID + ":sessions").Result()
     if err != nil { return nil, err }
-    
+
     sessions := []*Session{}
     for _, id := range sessionIDs {
         if sess, err := s.Get(id); err == nil {
@@ -171,7 +171,7 @@ tenant:{tenant_id}:active_sessions         # Tenant session count
 func (s *SessionStore) ListAll(tenantID string) ([]*Session, error) {
     pattern := "session:" + tenantID + ":*"
     var sessions []*Session
-    
+
     iter := s.redis.Scan(ctx, 0, pattern, 1000).Iterator()
     for iter.Next(ctx) {
         key := iter.Val()
@@ -200,13 +200,13 @@ pipe.Set(key, data, time.Until(session.ExpiresAt))
 func evictIdleSessions() {
     cutoff := time.Now().Add(-30 * time.Minute) // 30 min idle
     pattern := "session:*"
-    
+
     iter := redis.Scan(ctx, 0, pattern, 1000).Iterator()
     for iter.Next(ctx) {
         data, _ := redis.Get(iter.Val()).Bytes()
         sess := &Session{}
         json.Unmarshal(data, sess)
-        
+
         if sess.LastActivity.Before(cutoff) {
             redis.Del(iter.Val())
         }
@@ -228,7 +228,7 @@ maxmemory-policy volatile-ttl
 ```go
 func enforceSessionLimit(userID string, maxSessions int) error {
     sessions := store.ListForUser(userID)
-    
+
     if len(sessions) >= maxSessions {
         // Evict oldest session (FIFO)
         oldest := findOldest(sessions)

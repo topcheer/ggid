@@ -74,7 +74,7 @@ POST /api/v1/auth/webauthn/register/complete
 func VerifyRegistration(response WebAuthnRegistrationResponse, expectedChallenge string) (*Credential, error) {
     // 1. Parse clientDataJSON
     clientData := parseClientData(response.ClientDataJSON)
-    
+
     // 2. Verify clientData
     if clientData.Type != "webauthn.create" {
         return nil, ErrWrongCeremonyType
@@ -85,10 +85,10 @@ func VerifyRegistration(response WebAuthnRegistrationResponse, expectedChallenge
     if clientData.Origin != expectedOrigin {
         return nil, ErrOriginMismatch
     }
-    
+
     // 3. Parse attestation object
     attObj := parseAttestation(response.AttestationObject)
-    
+
     // 4. Verify authenticator data
     authData := attObj.AuthData
     rpIDHash := authData[:32]
@@ -101,17 +101,17 @@ func VerifyRegistration(response WebAuthnRegistrationResponse, expectedChallenge
     if authData.Flags&USER_VERIFIED == 0 && requireUV {
         return nil, ErrUserNotVerified
     }
-    
+
     // 5. Extract public key
     pubKey := extractPublicKey(authData)
-    
+
     // 6. Verify attestation (if requested)
     if attObj.Fmt != "none" {
         if err := verifyAttestation(attObj, clientData); err != nil {
             return nil, err
         }
     }
-    
+
     // 7. Store credential
     return &Credential{
         ID:        response.ID,
@@ -188,26 +188,26 @@ func VerifyAssertion(response WebAuthnAssertionResponse, expectedChallenge strin
     if clientData.Type != "webauthn.get" { return ErrWrongCeremonyType }
     if clientData.Challenge != expectedChallenge { return ErrChallengeMismatch }
     if clientData.Origin != expectedOrigin { return ErrOriginMismatch }
-    
+
     // 2. Parse authenticator data
     authData := parseAuthData(response.AuthenticatorData)
     if !bytes.Equal(authData.RPIDHash, sha256(expectedRPID)) { return ErrRPIDMismatch }
     if authData.Flags&USER_PRESENT == 0 { return ErrUserNotPresent }
-    
+
     // 3. Verify signature
     signedData := append(response.AuthenticatorData, sha256(response.ClientDataJSON)...)
     if !verifySignature(cred.PublicKey, signedData, response.Signature) {
         return ErrInvalidSignature
     }
-    
+
     // 4. Check counter (clone detection)
     if authData.Counter <= cred.Counter && cred.Counter > 0 {
         return ErrClonedAuthenticator  // Possible credential clone!
     }
-    
+
     // 5. Update counter
     cred.Counter = authData.Counter
-    
+
     return nil
 }
 ```

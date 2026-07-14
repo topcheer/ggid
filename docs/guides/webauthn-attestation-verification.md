@@ -104,7 +104,7 @@ func verifyTPM(attStmt map[string]interface{}, authData, clientDataHash []byte) 
 
     // Parse pubArea
     pubArea := parseTPMPubArea(attStmt["pubArea"].([]byte))
-    
+
     // Verify cert chain (TPM manufacturer roots)
     x5c := attStmt["x5c"].([]interface{})
     if err := verifyTPMCertChain(x5c); err != nil {
@@ -115,7 +115,7 @@ func verifyTPM(attStmt map[string]interface{}, authData, clientDataHash []byte) 
     sig := attStmt["sig"].([]byte)
     cert := parseCert(x5c[0])
     signedData := constructTPMSignedData(authData, clientDataHash, attStmt["info"])
-    
+
     return verifySignature(-7, cert.PublicKey, signedData, sig)
 }
 ```
@@ -155,7 +155,7 @@ func verifyAndroidKey(attStmt map[string]interface{}, challenge []byte, authData
 
     // Extract keyDescription extension
     keyDesc := extractAndroidKeyDescription(cert)
-    
+
     // Verify challenge matches
     if !bytes.Equal(keyDesc.AttestationChallenge, challenge) {
         return ErrChallengeMismatch
@@ -371,7 +371,7 @@ webauthn:
     required_formats: ["packed", "tpm"]  # If required, only accept these
     trust_threshold: "basic"     # Minimum trust level
     bypass_for_personal_devices: true   # Allow "none" for BYOD
-    
+
     per_tenant:
       high_security:
         required: true
@@ -394,12 +394,12 @@ func shouldVerifyAttestation(tenantConfig *WebAuthnConfig, deviceType string) bo
     if tenantConfig.Required {
         return true
     }
-    
+
     // Allow bypass for personal devices if configured
     if deviceType == "byod" && tenantConfig.BypassForPersonalDevices {
         return false
     }
-    
+
     // Default: verify if attestation present
     return true
 }
@@ -428,25 +428,25 @@ func (s *WebAuthnService) VerifyAttestation(
             return nil, fmt.Errorf("packed verification: %w", err)
         }
         result.TrustLevel = "basic"
-        
+
     case "tpm":
         if err := verifyTPM(attObj.AttStmt, authData, clientDataHash); err != nil {
             return nil, fmt.Errorf("tpm verification: %w", err)
         }
         result.TrustLevel = "basic"
-        
+
     case "android-key":
         if err := verifyAndroidKey(attObj.AttStmt, challenge, authData, clientDataHash); err != nil {
             return nil, fmt.Errorf("android-key verification: %w", err)
         }
         result.TrustLevel = "basic"
-        
+
     case "apple":
         if err := verifyApple(attObj.AttStmt, authData, clientDataHash); err != nil {
             return nil, fmt.Errorf("apple verification: %w", err)
         }
         result.TrustLevel = "basic"
-        
+
     case "none":
         if config.Required {
             return nil, ErrAttestationRequired
@@ -455,7 +455,7 @@ func (s *WebAuthnService) VerifyAttestation(
             return nil, err
         }
         result.TrustLevel = "none"
-        
+
     default:
         return nil, fmt.Errorf("unsupported attestation format: %s", attObj.Fmt)
     }

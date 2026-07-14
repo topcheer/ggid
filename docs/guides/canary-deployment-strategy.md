@@ -44,7 +44,7 @@ func canaryMiddleware(stable, canary http.Handler) http.Handler {
         // Hash user ID for consistent routing
         userID := getUserID(r)
         hash := fnv32(userID) % 100
-        
+
         if hash < canaryPercent {
             canary.ServeHTTP(w, r)
             w.Header().Set("X-Deployment", "canary")
@@ -68,21 +68,21 @@ canary_config:
       tenants: ["internal-test"]      # Internal team first
       percentage: 100
       duration: "1h"
-      
+
     - phase: 2
       tenants: ["beta-customer-1", "beta-customer-2"]
       percentage: 100
       duration: "4h"
-      
+
     - phase: 3
       tenants: "*"                    # All tenants
       percentage: 5
       duration: "2h"
-      
+
     - phase: 4
       percentage: 25
       duration: "4h"
-      
+
     - phase: 5
       percentage: 100
 ```
@@ -100,22 +100,22 @@ type CanaryMonitor struct {
 
 func (m *CanaryMonitor) Evaluate() DeploymentDecision {
     metrics := getCanaryMetrics(m.window)
-    
+
     // Compare canary vs stable
     if metrics.CanaryErrorRate > m.errorRateThreshold &&
        metrics.CanaryErrorRate > metrics.StableErrorRate*2 {
         return Rollback // Canary error rate >2x stable
     }
-    
+
     if metrics.CanaryP99Latency > m.latencyThreshold &&
        metrics.CanaryP99Latency > metrics.StableP99Latency*1.5 {
         return Rollback // Canary 50% slower
     }
-    
+
     if metrics.CanaryCrashRate > 0 {
         return Rollback // Any crashes
     }
-    
+
     return Promote
 }
 ```
@@ -170,15 +170,15 @@ deploy_canary:
   steps:
     - name: deploy-canary-5pct
       run: kubectl apply -f canary-5pct.yaml
-      
+
     - name: wait-and-evaluate
       run: ./scripts/evaluate-canary.sh --duration 1h
       # Exits non-zero if rollback needed
-      
+
     - name: promote-to-25pct
       if: success()
       run: kubectl apply -f canary-25pct.yaml
-      
+
     - name: auto-rollback
       if: failure()
       run: ./scripts/rollback-canary.sh
