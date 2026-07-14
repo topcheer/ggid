@@ -24,18 +24,23 @@ export default function PolicySimulationPage() {
   const [rules, setRules] = useState<SimRule[]>([{ id: "1", effect: "allow", resource: "documents:*", action: "read", condition: "dept == 'engineering'" }]);
   const [results, setResults] = useState<SimResult[] | null>(null);
   const [running, setRunning] = useState(false);
+  const [error, setError] = useState("");
+
+  const retry = () => { setError(""); runSim(); };
 
   const addRule = () => setRules([...rules, { id: Date.now().toString(), effect: "allow", resource: "", action: "", condition: "" }]);
   const removeRule = (id: string) => setRules(rules.filter((r) => r.id !== id));
   const updateRule = (id: string, field: keyof SimRule, val: string) => setRules(rules.map((r) => r.id === id ? { ...r, [field]: val } : r));
 
   const runSim = async () => {
-    setRunning(true);
+    setRunning(true); setError("");
     try {
       const res = await fetch("/api/v1/policy/simulate", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ rules }) });
-      if (res.ok) { const data = await res.json(); setResults(data.results || data || []); }
-    } catch { /* noop */ }
-    finally { setRunning(false); }
+      if (!res.ok) throw new Error(`Simulation failed: HTTP ${res.status}`);
+      const data = await res.json(); setResults(data.results || data || []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to run simulation");
+    } finally { setRunning(false); }
   };
 
   const wouldAllow = results?.filter((r) => r.status === "would_allow") || [];
@@ -74,11 +79,12 @@ export default function PolicySimulationPage() {
               </div>
             ))}
           </div>
-          <button onClick={runSim} disabled={running} className="w-full mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"><Play className="w-4 h-4" /> {running ? "Simulating..." : "Run Simulation"}</button>
+          <button onClick={runSim} disabled={running} className="w-full mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2" aria-label="Run policy simulation"><Play className="w-4 h-4" /> {running ? "Simulating..." : "Run Simulation"}</button>
         </div>
 
         {/* Results */}
         <div className="space-y-3">
+          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retry} className="text-xs underline hover:text-red-700">Retry</button></div>}
           {results ? (
             <>
               <div className="grid grid-cols-3 gap-2">

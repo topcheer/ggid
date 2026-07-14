@@ -81,8 +81,8 @@ export default function TokenClaimsPage() {
         payload: decodeB64(parts[1]),
         signature: parts[2],
       });
-    } catch (e: any) {
-      setError(e.message || "Failed to decode token");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to decode token");
     }
   }, [token]);
 

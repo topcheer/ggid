@@ -29,31 +29,42 @@ export default function OrgTransferPage() {
   const [previewing, setPreviewing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [executing, setExecuting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [transferError, setTransferError] = useState("");
 
   useEffect(() => {
+    setLoading(true); setError("");
     fetch("/api/v1/identity/users", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
-      if (res.ok) { const data = await res.json(); setUsers(data.users || data || []); }
-    }).catch(() => {});
+      if (!res.ok) throw new Error(`Failed to load users: HTTP ${res.status}`);
+      const data = await res.json(); setUsers(data.users || data || []);
+    }).catch((e) => {
+      setError(e instanceof Error ? e.message : "Failed to load users");
+    }).finally(() => setLoading(false));
   }, []);
 
   const previewImpact = useCallback(async () => {
     if (!selectedUser || !newOrgId) return;
-    setPreviewing(true);
+    setPreviewing(true); setTransferError("");
     try {
       const res = await fetch("/api/v1/identity/org-transfer/preview", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
-      if (res.ok) setImpact(await res.json());
-    } catch { /* noop */ }
-    finally { setPreviewing(false); }
+      if (!res.ok) throw new Error(`Preview failed: HTTP ${res.status}`);
+      setImpact(await res.json());
+    } catch (e) {
+      setTransferError(e instanceof Error ? e.message : "Failed to preview transfer");
+    } finally { setPreviewing(false); }
   }, [selectedUser, newOrgId]);
 
   const execute = async () => {
     if (!selectedUser) return;
-    setExecuting(true);
+    setExecuting(true); setTransferError("");
     try {
-      await fetch("/api/v1/identity/org-transfer/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
+      const res = await fetch("/api/v1/identity/org-transfer/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
+      if (!res.ok) throw new Error(`Transfer failed: HTTP ${res.status}`);
       setShowConfirm(false); setSelectedUser(null); setImpact(null); setNewOrgId("");
-    } catch { /* noop */ }
-    finally { setExecuting(false); }
+    } catch (e) {
+      setTransferError(e instanceof Error ? e.message : "Failed to execute transfer");
+    } finally { setExecuting(false); }
   };
 
   const filtered = users.filter((u) => !search || u.username.toLowerCase().includes(search.toLowerCase()));
@@ -72,9 +83,15 @@ export default function OrgTransferPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
           </div>
+          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600">{error}</div>}
+          {loading ? (
+            <div className="rounded-lg border dark:border-gray-800 p-8 text-center text-sm text-gray-500">Loading users...</div>
+          ) : (
           <div className="rounded-lg border dark:border-gray-800 max-h-80 overflow-y-auto">
             <div className="divide-y dark:divide-gray-800">
-              {filtered.slice(0, 30).map((u) => (
+              {filtered.length === 0 ? (
+                <div className="px-3 py-4 text-center text-sm text-gray-500">No users found.</div>
+              ) : filtered.slice(0, 30).map((u) => (
                 <button key={u.user_id} onClick={() => { setSelectedUser(u); setNewOrgId(""); setImpact(null); }} className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/30 ${selectedUser?.user_id === u.user_id ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}>
                   <div className="text-sm font-medium">{u.username}</div>
                   <div className="text-xs text-gray-400">{u.role} · {u.org_name}</div>
@@ -82,10 +99,12 @@ export default function OrgTransferPage() {
               ))}
             </div>
           </div>
+          )}
         </div>
 
         {/* Transfer form + impact */}
         <div className="lg:col-span-2">
+          {transferError && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600">{transferError}</div>}
           {selectedUser ? (
             <div className="space-y-4">
               <div className="rounded-lg border dark:border-gray-800 p-4">

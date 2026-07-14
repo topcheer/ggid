@@ -9,39 +9,45 @@ export default function PolicyExportPage() {
   const [diff, setDiff] = useState<{ added: string[]; removed: string[]; modified: string[] } | null>(null);
   const [importing, setImporting] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const doExport = useCallback(async () => {
-    setExporting(true);
+    setExporting(true); setError("");
     try {
       const res = await fetch("/api/v1/policy/export", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url; a.download = `policies-${new Date().toISOString().split("T")[0]}.json`; a.click();
-        URL.revokeObjectURL(url);
-      }
-    } catch { /* noop */ }
-    finally { setExporting(false); }
+      if (!res.ok) throw new Error(`Export failed: HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `policies-${new Date().toISOString().split("T")[0]}.json`; a.click();
+      URL.revokeObjectURL(url);
+      setMessage("Export completed successfully.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to export policies");
+    } finally { setExporting(false); }
   }, []);
 
   const previewImport = useCallback(async () => {
     if (!importJson) return;
-    setImporting(true);
+    setImporting(true); setError("");
     try {
       const res = await fetch("/api/v1/policy/import-preview", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
-      if (res.ok) setDiff(await res.json());
-    } catch { /* noop */ }
-    finally { setImporting(false); }
+      if (!res.ok) throw new Error(`Preview failed: HTTP ${res.status}`);
+      setDiff(await res.json());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to preview import");
+    } finally { setImporting(false); }
   }, [importJson]);
 
   const doImport = async () => {
-    setImporting(true);
+    setImporting(true); setError("");
     try {
-      await fetch("/api/v1/policy/import", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
+      const res = await fetch("/api/v1/policy/import", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
+      if (!res.ok) throw new Error(`Import failed: HTTP ${res.status}`);
       setMessage("Import completed successfully."); setDiff(null); setImportJson("");
-    } catch { /* noop */ }
-    finally { setImporting(false); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to import policies");
+    } finally { setImporting(false); }
   };
 
   return (
@@ -78,6 +84,7 @@ export default function PolicyExportPage() {
         </div>
       )}
 
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center gap-2"><X className="w-4 h-4" /> {error}</div>}
       {message && <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-700 dark:text-green-400 flex items-center gap-2"><Check className="w-4 h-4" /> {message}</div>}
     </div>
   );
