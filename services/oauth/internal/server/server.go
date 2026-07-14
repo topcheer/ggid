@@ -28,6 +28,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 )
 
 // Server encapsulates the OAuth HTTP server.
@@ -101,6 +102,22 @@ func New(cfg *conf.Config) (*Server, error) {
 
 	// Create the OAuth service with rotating key provider.
 	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, rotatingKP, cfg.Issuer)
+
+	// Initialize Redis client for refresh token lookup (shared with Auth service).
+	if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+		opts, err := redis.ParseURL(redisURL)
+		if err == nil {
+			rdb := redis.NewClient(opts)
+			if err := rdb.Ping(ctx).Err(); err == nil {
+				oauthSvc.SetRedisClient(&redisAdapter{rdb: rdb})
+				log.Println("OAuth Redis connected for refresh token lookup")
+			} else {
+				log.Printf("warning: Redis ping failed: %v (refresh token fallback disabled)", err)
+			}
+		} else {
+			log.Printf("warning: invalid REDIS_URL: %v", err)
+		}
+	}
 
 	// Build HTTP handler.
 	handler := buildHandler(oauthSvc, cfg, rotatingKP)
@@ -1597,6 +1614,27 @@ func shouldOverrideIssuer(issuer string) bool {
 		return true
 	}
 	return false
+}
+
+// redisAdapter wraps *redis.Client to satisfy the service.RedisCmdable interface.
+type redisAdapter struct {
+	rdb *redis.Client
+}
+
+func (a *redisAdapter) Set(ctx context.Context, key string, value any, ttl time.Duration) error {
+	return a.rdb.Set(ctx, key, value, ttl).Err()
+}
+
+func (a *redisAdapter) Get(ctx context.Context, key string) (string, error) {
+	return a.rdb.Get(ctx, key).Result()
+}
+
+func (a *redisAdapter) GetDel(ctx context.Context, key string) (string, error) {
+	return a.rdb.GetDel(ctx, key).Result()
+}
+
+func (a *redisAdapter) Del(ctx context.Context, key string) error {
+	return a.rdb.Del(ctx, key).Err()
 }
 
 func writeJSON(w http.ResponseWriter, code int, v any) {
