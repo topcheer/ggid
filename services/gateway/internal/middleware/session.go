@@ -199,6 +199,7 @@ var publicPathPrefixes = []string{
 	"/api/v1/auth/password/reset",
 	"/api/v1/auth/social/",
 	"/oauth/",
+	"/api/v1/oauth/register",
 	"/saml/",
 	"/.well-known/",
 	"/docs",
