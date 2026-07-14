@@ -30,7 +30,7 @@ export default function CompressionConfigPage() {
     try {
       const res = await fetch("/api/v1/gateway/compression-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); if (d.enabled !== undefined) setEnabled(d.enabled); if (d.algorithms) setAlgorithms(d.algorithms); if (d.min_size) setMinSize(d.min_size); if (d.level) setLevel(d.level); if (d.stats) setStats(d.stats); }
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }
     finally { setLoading(false); }
   }, []);
 

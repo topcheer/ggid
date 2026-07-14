@@ -12,7 +12,7 @@ export default function ParConfigPage() {
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
     try { const res = await fetch("/api/v1/oauth/par-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d) setConfig(prev => ({ ...prev, ...d })); } }
-    catch (err: any) { setError(err.message); } finally { setLoading(false); }
+    catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); } finally { setLoading(false); }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
   const save = useCallback(async () => { setSaving(true); try { await fetch("/api/v1/oauth/par-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); } catch { /* noop */ } finally { setSaving(false); } }, [config]);

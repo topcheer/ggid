@@ -17,7 +17,7 @@ export default function EmailTemplateEditorPage() {
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
     try { const res = await fetch("/api/v1/notification/email-templates?template=" + template, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d.content) { setContent(d.content); setContentByLang({ ...contentByLang, [template + "_" + lang]: d.content }); } } }
-    catch (err: any) { setError(err.message); } finally { setLoading(false); }
+    catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); } finally { setLoading(false); }
   }, [template, lang]);
   useEffect(() => { loadData(); }, [loadData]);
   const selectTemplate = (t: string) => { setTemplate(t); const key = t + "_" + lang; setContent(contentByLang[key] || defaultHtml[t as keyof typeof defaultHtml] || ""); };

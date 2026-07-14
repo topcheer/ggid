@@ -75,7 +75,7 @@ export default function APIExplorerPage() {
     setResponses(prev => { const c = { ...prev }; delete c[id]; return c; });
   };
 
-  const updateEndpoint = (id: string, field: keyof Endpoint, value: any) => {
+  const updateEndpoint = (id: string, field: keyof Endpoint, value: string | number | boolean) => {
     setEndpoints(endpoints.map(e => e.id === id ? { ...e, [field]: value } : e));
   };
 
@@ -119,9 +119,10 @@ export default function APIExplorerPage() {
       let body = text;
       try { body = JSON.stringify(JSON.parse(text), null, 2); } catch {}
       setResponses(prev => ({ ...prev, [ep.id]: { status: resp.status, body, time: elapsed } }));
-    } catch (err: any) {
+    } catch (err) {
       const elapsed = Math.round(performance.now() - start);
-      setResponses(prev => ({ ...prev, [ep.id]: { status: 0, body: `Error: ${err.message}`, time: elapsed } }));
+      const msg = err instanceof Error ? err.message : "Request failed";
+      setResponses(prev => ({ ...prev, [ep.id]: { status: 0, body: `Error: ${msg}`, time: elapsed } }));
     } finally {
       setLoading(null);
     }

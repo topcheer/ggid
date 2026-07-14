@@ -20,7 +20,7 @@ export default function AccessRequestPage() {
       ]);
       setMyRequests(mine.requests || mine || []);
       setApprovalQueue(queue.requests || queue || []);
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }
     finally { setLoading(false); }
   }, []);
 

@@ -39,7 +39,7 @@ export default function BruteForceConfigPage() {
       const res = await fetch("/api/v1/auth/brute-force-config/lockouts", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const d = await res.json(); setLockouts(d.lockouts || []);
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }
     finally { setLoading(false); }
   }, []);
 

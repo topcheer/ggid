@@ -34,7 +34,7 @@ export default function AnomalyDetectionPage() {
       const res = await fetch("/api/v1/audit/anomaly-detection", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const d = await res.json(); setEvents(d.events || d || []);
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }
     finally { setLoading(false); }
   }, []);
 

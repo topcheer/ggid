@@ -90,7 +90,7 @@ export default function LoginFlowsPage() {
     try {
       const res = await fetch("/api/v1/settings/login-flows", { headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); if (data) setFlow({ ...defaultFlow, ...data }); }
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }
     finally { setLoading(false); }
   };
 
