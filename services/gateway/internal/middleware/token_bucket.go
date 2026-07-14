@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -85,8 +86,9 @@ type BucketTierConfig struct {
 }
 
 // DefaultBucketRateLimitConfig returns sensible defaults.
+// Override with GATEWAY_RATE_LIMIT_TOKENS and GATEWAY_RATE_LIMIT_REFILL env vars.
 func DefaultBucketRateLimitConfig() *BucketRateLimitConfig {
-	return &BucketRateLimitConfig{
+	cfg := &BucketRateLimitConfig{
 		DefaultMaxTokens:    100,
 		DefaultRefillPerSec: 10, // 600/min sustained
 		TierOverrides: map[string]BucketTierConfig{
@@ -95,6 +97,30 @@ func DefaultBucketRateLimitConfig() *BucketRateLimitConfig {
 			"enterprise": {MaxTokens: 1000, RefillPerSec: 100}, // 6000/min
 		},
 	}
+
+	// Env var overrides (for test environments)
+	if v := os.Getenv("GATEWAY_RATE_LIMIT_TOKENS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			f := float64(n)
+			cfg.DefaultMaxTokens = f
+			for tier := range cfg.TierOverrides {
+				cfg.TierOverrides[tier] = BucketTierConfig{MaxTokens: f, RefillPerSec: f / 5}
+			}
+		}
+	}
+	if v := os.Getenv("GATEWAY_RATE_LIMIT_REFILL"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			f := float64(n)
+			cfg.DefaultRefillPerSec = f
+			for tier := range cfg.TierOverrides {
+				t := cfg.TierOverrides[tier]
+				t.RefillPerSec = f
+				cfg.TierOverrides[tier] = t
+			}
+		}
+	}
+
+	return cfg
 }
 
 // TenantBucketLimiter enforces per-tenant + IP token-bucket rate limits.
