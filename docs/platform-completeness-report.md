@@ -48,7 +48,7 @@
 |---|---------|----------|-------|--------|--------|
 | 12 | GeoIP | gateway/middleware/geoip.go | Detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration pending. | [PARTIAL] | arch |
 | 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
-| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | JWT/SAML signing keys stored in PEM files on disk. No PKCS#11, Cloud KMS, or Vault Transit provider. Research docs exist; implementation pending. | [NEW] | arch |
+| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | Phase 1 (PKCS#11 provider) complete. Phase 2: wire auth/oauth services to use KeyProvider for JWT signing. | [PARTIAL] | c07f15f2 |
 
 ## Previously Fixed (Prior Scans)
 

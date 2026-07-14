@@ -2,25 +2,12 @@
 
 *Last updated: 2026-07-15 (Round 9 Focus C / HSM-KMS architecture)*
 
-## Current Stats
-
-- **Docs**: 757 markdown files
-- **Console pages**: 629 page.tsx
-- **React hooks**: 492 use*.ts
-- **Go SDK**: 27 files, 154+ test functions
-- **Go services**: 271+ source files, 293+ test files
-- **Build**: `go build ./...` = CLEAN
-- **Tests**: 40/40 packages PASS, 0 FAIL
-- **Real productization gaps**: 2 (from platform-completeness-report.md)
-
-## Gap Closure Priority Queue
-
 ### P1 — Real productization gaps (from platform-completeness-report.md)
 
 | # | Feature | Owner | Location | Status | Next Action |
 |---|---------|-------|----------|--------|-------------|
 | 1 | GeoIP MaxMind integration | arch | services/gateway/middleware | [PARTIAL] | Add optional GeoLite2/MMDB lookup with private-IP fallback |
-| 2 | HSM/KMS key provider | backend/arch | pkg/crypto | [NEW] | Implement PKCS#11 provider (SoftHSM2); integrate into auth/oauth services |
+| 2 | HSM/KMS key provider | backend | services/auth, services/oauth | [PARTIAL] | Wire auth/oauth services to use pkg/crypto.KeyProvider for JWT signing |
 
 ### P2 — Research-driven competitive/compliance gaps
 
@@ -47,11 +34,12 @@
 ## Currently Dispatched (Next 24h)
 
 ### Backend
-1. 实现 PKCS#11 KeyProvider (pkg/crypto/key_provider_pkcs11.go + test)
+1. 将 auth/oauth 服务接入 pkg/crypto.KeyProvider（JWT 签名）
+2. 更新 JWKS endpoint 从 KeyProvider.Public() 获取公钥
 
 ### Arch
-1. 设计 auth/oauth 服务接入 KeyProvider 的迁移方案
-2. 继续 OAuth 2.1 / FAPI 2.0 研究
+1. 设计 OAuth 2.1 / FAPI 2.0 严格模式配置
+2. 继续 GeoIP MaxMind 设计
 
 ### Frontend
 1. Console loading/error states for remaining 5 pages
