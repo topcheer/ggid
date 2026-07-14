@@ -12,11 +12,11 @@
 
 ## Summary
 
-- Total findings: 13
+- Total findings: 14
 - Done: 12
 - Fixed (pending verification): 0
 - Partial: 1
-- Remaining: 0
+- Remaining: 1
 - Last scan: 2026-07-14 round 8 (focus: A — Interface Integrity)
 
 ## Findings
@@ -48,6 +48,7 @@
 |---|---------|----------|-------|--------|--------|
 | 12 | GeoIP | gateway/middleware/geoip.go | Detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration pending. | [PARTIAL] | arch |
 | 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
+| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | JWT/SAML signing keys stored in PEM files on disk. No PKCS#11, Cloud KMS, or Vault Transit provider. Research docs exist; implementation pending. | [NEW] | arch |
 
 ## Previously Fixed (Prior Scans)
 
@@ -82,9 +83,11 @@
 
 1. **GeoIP MaxMind integration** (LOW, [PARTIAL]) — gateway/middleware/geoip.go
    - Private IP detection works; MaxMind GeoLite2 DB integration pending.
+2. **HSM/KMS key provider** (HIGH, [NEW]) — pkg/crypto, services/auth, services/oauth
+   - JWT/SAML signing keys still use disk PEM files; needs PKCS#11 / Cloud KMS / Vault Transit provider.
 
 ## Next Actions
 
-- Round 8 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — currently blocked by Docker infra, see docs/research/docker-e2e-infra-gap.md
-- Round 9 (odd, Focus A): Stub/placeholder scan with stricter verification rules
-- Research backlog: ITDR fraud detection, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
+- Round 9 (odd, Focus B): Route wiring scan
+- Round 10 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — blocked by Docker infra, see docs/research/docker-e2e-infra-gap.md
+- Research backlog: HSM/KMS key provider design, OAuth 2.1 enforcement, PQC migration, passkey health dashboard

@@ -57,23 +57,19 @@
 ## Currently Dispatched (Next 24h)
 
 ### Backend
-1. Client Branding persistence
-2. Gateway sysconfigStore wiring
-3. OAuth placeholder JWT
+1. (idle — awaiting arch research outputs)
 
 ### Arch
-1. CIBA backchannel functional test
-2. GeoIP MaxMind integration design
-3. Research: OAuth 2.1 / FAPI 2.0 gap analysis
+1. HSM/KMS key provider interface design (pkg/crypto + docs/research/hsm-kms-key-provider.md)
+2. OAuth 2.1 / FAPI 2.0 compliance gap analysis
 
 ### Frontend
-1. security-center mockData replacement
-2. security page mockData replacement
-3. Console loading/error states for remaining 5 pages
+1. Console loading/error states for remaining 5 pages
+2. Passkey health dashboard
 
 ### Docs/Research
-1. Docker E2E infra gap analysis
-2. Console mock-pages audit
+1. Docker E2E infra gap analysis (already in progress)
+2. Console mock-pages audit (already in progress)
 
 ## Rules
 

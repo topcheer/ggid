@@ -3,11 +3,11 @@
 ## Current round: 8
 ## Last scan focus: A (Interface Integrity)
 ## Next scan focus: B (Route Wiring)
-## Total findings: 13
+## Total findings: 14
 ## Done: 12
 ## Fixed (pending verification): 0
 ## Partial: 1
-## Remaining: 0
+## Remaining: 1
 ## Source of truth: docs/platform-completeness-report.md
 
 *Round 8 is even: execute E2E regression tests if Docker infra is healthy; otherwise continue with completeness scan, focus B (Route Wiring).*
