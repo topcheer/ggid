@@ -1,8 +1,8 @@
 # HSM/KMS Key Provider Architecture Design
 
-*Author: arch/PM*  
-*Date: 2026-07-15*  
-*Target: v0.2.0 release*  
+*Author: arch/PM*
+*Date: 2026-07-15*
+*Target: v0.2.0 release*
 *Source: docs/research/hsm-kms-integration.md, docs/research/vault-kms-integration.md*
 
 ## 1. Problem
