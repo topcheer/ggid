@@ -1,7 +1,7 @@
 # Platform Scan State
 
-## Current round: 18
-## Last scan focus: G (SDK Alignment)
+## Current round: 19
+## Last scan focus: E2E Regression Tests (11/11 PASS)
 ## Next scan focus: A (Stub/Placeholder/TODO)
 ## Total findings: 20
 ## Done: 19
@@ -10,8 +10,7 @@
 ## Remaining: 1
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 18 is even: E2E regression tests completed (11/11 PASS). Round 19 will be focus A (Stub/Placeholder/TODO).*
-## Current top incomplete features:
+*Round 19 is odd: execute completeness scan (focus A — Stub/Placeholder/TODO).*## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
@@ -49,8 +48,8 @@ LOW (acceptable for now — short-lived or fallback):
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
 - bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
-- (current): Round 16 E2E regression — Docker Compose E2E 11/11 PASS
-- (round 15): Round 15 focus F test coverage — add handler tests for identity/audit/org server packages
+- (current): Round 18 E2E regression — Docker Compose E2E 11/11 PASS
+- (round 17): Round 17 focus G SDK alignment — Agent Identity / Access Request SDK gap #20 identified, assigned to arch
 - (round 13): Round 13 focus E error handling — sanitize internal error exposure in oauth/internal/server and auth/internal/server
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (backend)

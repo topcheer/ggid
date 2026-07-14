@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 1
 - Remaining: 1
-- Last scan: 2026-07-15 round 17 (focus: G — SDK Alignment)
+- Last scan: 2026-07-15 round 18 (E2E regression tests — 11/11 PASS)
 
 ## Findings
 
@@ -88,6 +88,9 @@
 | 2026-07-15 | Round 13 — Focus E (Error Handling) | +3 | 3 (internal error exposure sanitized) |
 | 2026-07-15 | Round 14 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 | 2026-07-15 | Round 15 — Focus F (Test Coverage) | +2 | 2 (server handler coverage gaps) |
+| 2026-07-15 | Round 16 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
+| 2026-07-15 | Round 17 — Focus G (SDK Alignment) | +1 | 0 (SDK gap #20 assigned to arch) |
+| 2026-07-15 | Round 18 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 
 ## Remaining Real Gaps (post-audit)
 
@@ -96,6 +99,7 @@
 
 ## Next Actions
 
-- Round 16 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS, verified
-- Round 17 (odd, Focus G): SDK alignment scan
+- Round 18 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS, verified
+- Round 19 (odd, Focus A): Stub/Placeholder/TODO scan
 - Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard
+
