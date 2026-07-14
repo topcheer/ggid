@@ -96,6 +96,7 @@ func Default() *Config {
 			"/api/v1/security":        envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/admin":           envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/compliance":      envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
+			"/api/v1/provisioning":   envOrDefault("OPERATOR_SERVICE_URL", "http://localhost:9090"),
 			"/oauth":                              envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/saml":                               envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/.well-known/openid-configuration":   envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),

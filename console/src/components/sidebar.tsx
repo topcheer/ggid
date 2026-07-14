@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Bot,
   FileCheck,
+  Cloud,
   X,
   Menu,
   AlertCircle,
@@ -97,6 +98,7 @@ export function Sidebar() {
     {
       label: "System",
       items: [
+        { href: "/provisioning", label: "Provisioning", icon: Cloud },
         { href: "/monitoring", label: t("nav.monitoring"), icon: Server },
         { href: "/api-explorer", label: t("nav.apiExplorer"), icon: Send },
         { href: "/settings", label: t("nav.settings"), icon: Settings },

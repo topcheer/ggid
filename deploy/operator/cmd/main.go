@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	"github.com/ggid/ggid/deploy/operator/internal/api"
 	iamv1alpha1 "github.com/ggid/ggid/deploy/operator/api/v1alpha1"
 	"github.com/ggid/ggid/deploy/operator/internal/controller"
 	"github.com/ggid/ggid/deploy/operator/internal/provisioning"
@@ -33,10 +34,12 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var gatewayURL string
+	var apiAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "Metrics server bind address")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "Probe server bind address")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election")
 	flag.StringVar(&gatewayURL, "gateway-url", os.Getenv("GGID_GATEWAY_URL"), "GGID gateway URL for shared-mode tenant provisioning")
+	flag.StringVar(&apiAddr, "api-bind-address", ":9090", "API server bind address for provisioning endpoints")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
@@ -88,7 +91,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupLog.Info("starting GGID operator", "gateway-url", gatewayURL)
+	// Start the provisioning API server in a goroutine.
+	// It uses the manager's cached client for CR operations.
+	apiServer := api.NewAPIServer(mgr.GetClient(), scheme, gatewayURL)
+	go func() {
+		if err := apiServer.Start(apiAddr); err != nil {
+			setupLog.Error(err, "API server stopped")
+		}
+	}()
+
+	setupLog.Info("starting GGID operator", "gateway-url", gatewayURL, "api-addr", apiAddr)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
