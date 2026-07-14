@@ -93,16 +93,16 @@ Each delegation can only narrow — never expand:
 func ExchangeAgentToken(ctx context.Context, subjectToken string, agentID string, requestedScope []string) (string, error) {
     claims, err := verifyToken(subjectToken)
     if err != nil { return "", err }
-    
+
     subjectScope := strings.Fields(claims["scope"].(string))
-    
+
     // Requested scope must be subset of subject scope
     for _, s := range requestedScope {
         if !containsScope(subjectScope, s) {
             return "", ErrScopeEscalation
         }
     }
-    
+
     // Build delegated token
     newClaims := jwt.MapClaims{
         "sub":   claims["sub"],       // Original user
@@ -115,12 +115,12 @@ func ExchangeAgentToken(ctx context.Context, subjectToken string, agentID string
         "exp": time.Now().Add(15 * time.Minute).Unix(),
         "max_delegation_depth": 3,
     }
-    
+
     // Copy existing act chain
     if existingAct, ok := claims["act"]; ok {
         newClaims["act"].(map[string]interface{})["act"] = existingAct
     }
-    
+
     return signToken(newClaims)
 }
 ```
@@ -183,22 +183,22 @@ DELETE /api/v1/agents/{agent_id}/delegation
 func RevokeAgentDelegation(agentID string) error {
     // 1. Add agent to blacklist
     redis.SAdd("agent:blacklist", agentID)
-    
+
     // 2. Find all tokens with this agent in act chain
     jtis := store.GetTokensByAgent(agentID)
     for _, jti := range jtis {
         redis.Set("jwt:blacklist:"+jti, "1", 15*time.Minute)
     }
-    
+
     // 3. Prevent new token exchanges for this agent
     store.RevokeAgent(agentID)
-    
+
     // 4. Audit
     audit.Log("agent.delegation_revoked", map[string]interface{}{
         "agent_id": agentID,
         "tokens_revoked": len(jtis),
     })
-    
+
     return nil
 }
 ```

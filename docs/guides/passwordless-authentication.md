@@ -332,7 +332,7 @@ passwordless:
 ```go
 func (s *AuthService) BeginPasskeyRegistration(userID string) (*RegistrationOptions, error) {
     user := s.getUser(userID)
-    
+
     options := &webauthn.PublicKeyCredentialCreationOptions{
         Challenge:        generateChallenge(32),
         RP: webauthn.RelyingParty{
@@ -358,10 +358,10 @@ func (s *AuthService) BeginPasskeyRegistration(userID string) (*RegistrationOpti
         Attestation:     s.config.Attestation,
         ExcludeCredentials: s.getExistingCredentials(user.ID),
     }
-    
+
     // Store challenge for verification
     s.storeChallenge(userID, options.Challenge)
-    
+
     return options, nil
 }
 ```

@@ -1074,29 +1074,29 @@ Flagger automatically promotes or rolls back based on error rate.
 frontend ggid_frontend
     bind *:443 ssl crt /etc/ssl/ggid.pem alpn h2,http/1.1
     mode http
-    
+
     # Security headers
     http-response set-header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
     http-response set-header X-Frame-Options "DENY"
     http-response set-header X-Content-Type-Options "nosniff"
-    
+
     # Rate limiting (40 req/s per IP)
     stick-table type ip size 100k expire 30s store req_rate(1s)
     http-request track-sc0 src
     http-request deny if { sc_req_rate(0) gt 40 }
-    
+
     # Route to backend
     default_backend ggid_servers
 
 backend ggid_servers
     mode http
     balance leastconn
-    
+
     # Health check: GET /healthz every 2s
     option httpchk GET /healthz
     http-check expect status 200
     default-server inter 2s fall 3 rise 2
-    
+
     # Graceful shutdown: respect Connection: close
     server ggid-1 10.0.1.10:8080 check
     server ggid-2 10.0.1.11:8080 check

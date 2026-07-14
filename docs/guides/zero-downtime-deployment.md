@@ -81,7 +81,7 @@ for svc in $SERVICES; do
     echo "=== Updating ggid-$svc ==="
     kubectl set image deployment/ggid-$svc $svc=ggid/$svc:$1
     kubectl rollout status deployment/ggid-$svc --timeout=300s
-    
+
     if [ $? -ne 0 ]; then
         echo "ROLLBACK: ggid-$svc failed, rolling back"
         kubectl rollout undo deployment/ggid-$svc

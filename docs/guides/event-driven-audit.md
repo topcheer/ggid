@@ -58,15 +58,15 @@ type AuditPublisher struct {
 
 func (p *AuditPublisher) Publish(event AuditEvent) error {
     data, _ := json.Marshal(event)
-    
+
     subject := "audit." + event.Action
-    
+
     _, err := p.js.Publish(subject, data,
         nats.MsgId(event.EventID),           // Dedup (idempotent)
         nats.AckWait(5*time.Second),         // Retry if unacked
         nats.MaxDeliver(10),                 // Max delivery attempts
     )
-    
+
     if err != nil {
         log.Error("audit publish failed", err)
         // Fallback: write to local file for later replay
@@ -96,7 +96,7 @@ sub, _ := js.Subscribe("audit.>", func(msg *nats.Msg) {
     storeEvent(event)
     updateHashChain(event)
     msg.Ack()
-}, 
+},
     nats.Durable("AUDIT_PERSISTER"),
     nats.MaxDeliver(10),
     nats.AckWait(30*time.Second),
@@ -115,15 +115,15 @@ sub, _ := js.PullSubscribe("audit.>", "AUDIT_BATCH",
 for {
     msgs, err := sub.Fetch(100, nats.MaxWait(5*time.Second))
     if err != nil { continue }
-    
+
     events := make([]AuditEvent, len(msgs))
     for i, msg := range msgs {
         events[i] = parseEvent(msg)
     }
-    
+
     // Batch insert to PostgreSQL
     batchStore(events)
-    
+
     // Ack all
     for _, msg := range msgs {
         msg.Ack()
@@ -157,7 +157,7 @@ js.Publish("audit.user.login", data, nats.MsgId("evt-uuid-123"))
 func storeEvent(event AuditEvent) error {
     // PostgreSQL INSERT ... ON CONFLICT DO NOTHING
     _, err := db.Exec(`
-        INSERT INTO audit_events (event_id, ...) 
+        INSERT INTO audit_events (event_id, ...)
         VALUES ($1, ...)
         ON CONFLICT (event_id) DO NOTHING
     `, event.EventID)
@@ -256,7 +256,7 @@ func processEvent(event AuditEvent) error {
     if processed := redis.SetNX(ctx, "processed:"+event.EventID, 1, 24*time.Hour); !processed {
         return nil // Already processed, skip
     }
-    
+
     // Process
     doWork(event)
     return nil

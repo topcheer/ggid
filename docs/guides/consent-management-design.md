@@ -70,7 +70,7 @@ POST /api/v1/auth/consent
 ```go
 func needsReconsent(consent Consent, requestedScopes []string) bool {
     if time.Now().After(consent.ExpiresAt) { return true }
-    
+
     for _, scope := range requestedScopes {
         if !contains(consent.Scopes, scope) { return true }
         if isHighRisk(scope) { return true } // Always re-consent
@@ -131,7 +131,7 @@ GET /api/v1/consent/receipts?user_id=uuid
 ```tsx
 function ConsentScreen({ client, requestedScopes, existingScopes }) {
   const newScopes = requestedScopes.filter(s => !existingScopes.includes(s));
-  
+
   return (
     <Dialog>
       <Header>

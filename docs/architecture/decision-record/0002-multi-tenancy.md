@@ -1,7 +1,7 @@
 # ADR-0002: Multi-Tenancy via PostgreSQL Row-Level Security
 
-**Status:** Accepted  
-**Date:** 2025-Q1  
+**Status:** Accepted
+**Date:** 2025-Q1
 **Deciders:** Architecture Team
 
 ---

@@ -63,12 +63,12 @@ data_residency:
     storage_region: "eu-west-1"
     replication: "eu-only"  # GDPR: EU data stays in EU
     condition: "user.country in EU_REGIONS"
-  
+
   us_users:
     storage_region: "us-east-1"
     replication: "us-only"
     condition: "user.country == 'US'"
-  
+
   default:
     storage_region: "us-east-1"
     replication: "cross-region"
@@ -143,7 +143,7 @@ record_sets:
     health_check_id: "hc-auth-primary"
     ttl: 30
     records: ["1.2.3.4"]
-  
+
   - name: "auth.ggid.dev"
     type: "A"
     set_identifier: "secondary"

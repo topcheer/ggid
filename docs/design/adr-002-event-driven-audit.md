@@ -1,7 +1,7 @@
 # ADR-002: NATS JetStream for the Audit Pipeline
 
-**Status:** Accepted  
-**Date:** 2024-Q1  
+**Status:** Accepted
+**Date:** 2024-Q1
 **Deciders:** Architecture Team
 
 ---

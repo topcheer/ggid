@@ -129,7 +129,7 @@ export function useUsers(opts?: { page?: number; perPage?: number }) {
     () => apiClient.users.list(opts),
     { revalidateOnFocus: false, refreshInterval: 30000 }
   );
-  
+
   return {
     users: data?.users ?? [],
     total: data?.total ?? 0,
@@ -145,13 +145,13 @@ export function useUsers(opts?: { page?: number; perPage?: number }) {
 ```tsx
 export function useCreateUser() {
   const { mutate: revalidate } = useUsers();
-  
+
   const createUser = async (input: CreateUserInput) => {
     const user = await apiClient.users.create(input);
     await revalidate();  // Refresh list
     return user;
   };
-  
+
   return { createUser };
 }
 ```
@@ -184,14 +184,14 @@ export async function GET(request: Request, { params }: { params: { path: string
 async function proxyRequest(request: Request, params: { path: string[] }) {
   const cookieStore = cookies();
   const accessToken = cookieStore.get('access_token')?.value;
-  
+
   const path = '/api/v1/' + params.path.join('/');
   const url = `${process.env.GATEWAY_URL}${path}`;
-  
+
   const headers = new Headers(request.headers);
   headers.set('Authorization', `Bearer ${accessToken}`);
   headers.set('X-Tenant-ID', process.env.TENANT_ID!);
-  
+
   const response = await fetch(url, { headers });
   return new Response(response.body, {
     status: response.status,
@@ -222,7 +222,7 @@ import { NextResponse } from 'next/server';
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('access_token')?.value;
   const isLoginPage = request.nextUrl.pathname === '/login';
-  
+
   if (!token && !isLoginPage) {
     return NextResponse.redirect(new URL('/login', request.url));
   }

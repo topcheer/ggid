@@ -89,16 +89,16 @@ TENANT_ID = "00000000-0000-0000-0000-000000000001"
 def transform_user(kc_user):
     # Keycloak attributes
     attrs = kc_user.get("attributes", {})
-    
+
     username = kc_user.get("username", "")
     email = kc_user.get("email", "")
     if not email:
         email = f"{username}@migrated.local"
-    
+
     # Password hash — Keycloak uses PBKDF2
     # GGID uses Argon2id, so we can't directly import hashes
     credentials = kc_user.get("credentials", [])
-    
+
     return {
         "username": username,
         "email": email,
@@ -282,7 +282,7 @@ def transform_client(kc_client):
     redirect_uris = []
     for redirect in kc_client.get("redirectUris", []):
         redirect_uris.append(redirect)
-    
+
     return {
         "name": kc_client.get("clientId", ""),
         "client_id": kc_client.get("clientId", ""),

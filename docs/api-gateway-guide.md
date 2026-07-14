@@ -174,12 +174,12 @@ gateway:
     ip:
       requests_per_minute: 100
       burst: 200
-    
+
     # Per-user (applies to authenticated requests)
     user:
       requests_per_minute: 1000
       burst: 500
-    
+
     # Per-endpoint overrides
     endpoints:
       /api/v1/auth/login:
@@ -235,7 +235,7 @@ gateway:
     max_idle_conns: 100
     max_idle_conns_per_host: 10
     keep_alive: 30s
-    
+
     # Per-route overrides
     route_overrides:
       /api/v1/auth/login:

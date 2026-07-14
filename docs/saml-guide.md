@@ -55,7 +55,7 @@ curl https://iam.example.com/api/v1/saml/metadata
     entityID="https://iam.example.com/saml/metadata">
   <SPSSODescriptor
       protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-    
+
     <KeyDescriptor use="signing">
       <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
         <X509Data>
@@ -63,14 +63,14 @@ curl https://iam.example.com/api/v1/saml/metadata
         </X509Data>
       </KeyInfo>
     </KeyDescriptor>
-    
+
     <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
-    
+
     <AssertionConsumerService
         index="0"
         Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         Location="https://iam.example.com/saml/acs" />
-    
+
     <SingleLogoutService
         Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         Location="https://iam.example.com/saml/sls" />

@@ -19,7 +19,7 @@ Each request consumes 1 token:
   Request → bucket.Allow() → true
   ... bucket drains ...
   Request → bucket.Allow() → false → 429 Too Many Requests
-  
+
 Bucket refills continuously:
   Idle 2 seconds → bucket refills by 20 tokens
 ```

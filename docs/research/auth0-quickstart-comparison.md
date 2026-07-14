@@ -439,7 +439,7 @@ function App() {
     gatewayURL: 'http://localhost:8080',
     tenantID: 'default',
   });
-  
+
   if (!user) return <GGIDLogin />;
   return <Dashboard user={user} />;
 }

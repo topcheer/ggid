@@ -158,7 +158,7 @@ func withLeakDetection(pool *pgxpool.Pool, fn func(*pgxpool.Pool) error) error {
     before := pool.Stat().AcquiredConns()
     err := fn(pool)
     after := pool.Stat().AcquiredConns()
-    
+
     if before != after {
         log.Error("connection leak detected",
             "before", before,
@@ -177,7 +177,7 @@ func getUser(ctx context.Context, pool *pgxpool.Pool, id string) (*User, error) 
     conn, err := pool.Acquire(ctx)
     if err != nil { return nil, err }
     defer conn.Release() // ALWAYS release
-    
+
     return queryUser(ctx, conn, id)
 }
 ```

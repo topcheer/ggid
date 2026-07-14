@@ -68,7 +68,7 @@ func CORSMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             origin := r.Header.Get("Origin")
-            
+
             // Validate origin against allowlist
             if isAllowed(origin, allowedOrigins) {
                 w.Header().Set("Access-Control-Allow-Origin", origin)
@@ -78,13 +78,13 @@ func CORSMiddleware(allowedOrigins []string) func(http.Handler) http.Handler {
                 w.Header().Set("Access-Control-Expose-Headers", "X-RateLimit-Remaining, X-Request-ID")
                 w.Header().Set("Access-Control-Max-Age", "600")
             }
-            
+
             // Handle preflight
             if r.Method == "OPTIONS" {
                 w.WriteHeader(204)
                 return
             }
-            
+
             next.ServeHTTP(w, r)
         })
     }

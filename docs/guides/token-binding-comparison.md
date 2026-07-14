@@ -153,17 +153,17 @@ func extractBinding(r *http.Request, claims jwt.MapClaims) (string, error) {
     if cert := r.TLS.PeerCertificates; len(cert) > 0 {
         return extractCertThumbprint(cert[0]), nil
     }
-    
+
     // 2. Try DPoP
     if dpop := r.Header.Get("DPoP"); dpop != "" {
         return extractDPoPThumbprint(dpop, claims), nil
     }
-    
+
     // 3. Try cookie binding
     if cookie := getCookieBinding(r); cookie != "" {
         return cookie, nil
     }
-    
+
     // 4. No binding (bearer token)
     if requireBinding(claims) {
         return "", ErrBindingRequired

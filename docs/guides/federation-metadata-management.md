@@ -11,7 +11,7 @@ The root element of SAML metadata describes a federation entity (SP or IdP):
 ```xml
 <EntityDescriptor entityID="https://auth.ggid.example.com/saml/metadata"
                   xmlns="urn:oasis:names:tc:SAML:2.0:metadata">
-  
+
   <!-- IDP role -->
   <IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
     <KeyDescriptor use="signing">
@@ -34,7 +34,7 @@ The root element of SAML metadata describes a federation entity (SP or IdP):
                          Location="https://idp.example.com/sso"/>
     <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
   </IDPSSODescriptor>
-  
+
   <!-- SP role -->
   <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
     <KeyDescriptor use="signing">
@@ -75,7 +75,7 @@ The root element of SAML metadata describes a federation entity (SP or IdP):
     <mdui:DisplayName xml:lang="en">GGID Identity Platform</mdui:DisplayName>
     <mdui:Logo width="100" height="40">https://auth.ggid.example.com/logo.png</mdui:Logo>
   </mdui:UIInfo>
-  
+
   <!-- Discovery service -->
   <mdui:DiscoHints>
     <mdui:DomainHint>example.com</mdui:DomainHint>

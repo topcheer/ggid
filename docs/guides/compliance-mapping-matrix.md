@@ -155,7 +155,7 @@ func calculateScore(framework string) ComplianceScore {
     compliant := 0
     partial := 0
     gaps := 0
-    
+
     for _, control := range controls {
         status := evaluateControl(control)
         switch status {
@@ -164,7 +164,7 @@ func calculateScore(framework string) ComplianceScore {
         case "gap": gaps++
         }
     }
-    
+
     score := float64(compliant) / float64(len(controls))
     return ComplianceScore{
         Framework: framework,

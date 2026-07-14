@@ -52,14 +52,14 @@ func retryDelay(attempt int) time.Duration {
 func deliver(webhook *Webhook, endpoint string) error {
     // Include event_id for consumer dedup
     payload, _ := json.Marshal(webhook)
-    
+
     resp, err := http.Post(endpoint, "application/json", payload)
     if err != nil { return err }
-    
+
     if resp.StatusCode >= 200 && resp.StatusCode < 300 {
         markDelivered(webhook.ID)
     }
-    
+
     // Consumer must use event_id for idempotency:
     // if seen(event_id) { return ok } else { process + mark seen }
 }

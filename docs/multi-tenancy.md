@@ -142,7 +142,7 @@ func (s *Service) GetUsers(ctx context.Context) ([]User, error) {
     }
 
     // SET LOCAL app.tenant_id before every query
-    _, err := s.db.ExecContext(ctx, 
+    _, err := s.db.ExecContext(ctx,
         fmt.Sprintf("SET LOCAL app.tenant_id = '%s'", tenantID))
     if err != nil {
         return nil, err

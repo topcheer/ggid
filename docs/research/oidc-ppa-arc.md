@@ -1,7 +1,7 @@
 # OIDC Privacy-Preserving Authorization and Authentication Context (RFC 9701)
 
-> Research document for the GGID IAM suite.  
-> Topic: RFC 9701 — Privacy-Preserving Authorization and Authentication Context in OpenID Connect.  
+> Research document for the GGID IAM suite.
+> Topic: RFC 9701 — Privacy-Preserving Authorization and Authentication Context in OpenID Connect.
 > Status: Research / Gap Analysis — not yet implemented in GGID.
 
 ---

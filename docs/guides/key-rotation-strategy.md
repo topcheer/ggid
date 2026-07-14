@@ -43,18 +43,18 @@ type KeyManager struct {
 func (km *KeyManager) Rotate() error {
     newKey, err := km.generateKey()  // HSM/KMS backed
     if err != nil { return err }
-    
+
     km.previous = km.current
     km.current = newKey
     publishJWKS(km.current, km.previous)
-    
+
     // Schedule old key removal
     time.AfterFunc(gracePeriod, func() {
         km.previous = nil
         publishJWKS(km.current)
         audit.Log("key.removed", newKey.ID)
     })
-    
+
     audit.Log("key.rotated", map[string]interface{}{
         "old_kid": km.previous.ID,
         "new_kid": km.current.ID,

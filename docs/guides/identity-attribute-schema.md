@@ -136,24 +136,24 @@ validation:
     max_length: 254
     unique: true
     normalize: lowercase
-  
+
   phone:
     format: e164
     sanitize: strip_non_digits
-    
+
   display_name:
     min_length: 1
     max_length: 100
     sanitize: trim_whitespace
     block_html: true
-    
+
   password:
     min_length: 12
     max_length: 128
     require: [upper, lower, digit, special]
     pepper: true
     breach_check: hibp
-  
+
   employee_id:
     pattern: "^EMP-[0-9]{4}$"
     unique: true

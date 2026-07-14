@@ -133,7 +133,7 @@ Device 3: Mac → same passkey via iCloud → can authenticate
 ### Hybrid Transport (Cross-Device)
 
 ```
-Laptop shows QR code → Phone scans → Phone authenticates → 
+Laptop shows QR code → Phone scans → Phone authenticates →
 Assertion sent to laptop via BLE/Wi-Fi → Laptop completes auth
 ```
 

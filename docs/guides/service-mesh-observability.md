@@ -120,11 +120,11 @@ anomaly_detection:
     - name: "unusual_service_traffic"
       condition: "request_rate > baseline * 3"
       action: alert
-    
+
     - name: "new_connection_pattern"
       condition: "new source-destination pair not in 7d baseline"
       action: log + review
-    
+
     - name: "protocol_anomaly"
       condition: "gRPC service receiving HTTP requests"
       action: alert
@@ -168,7 +168,7 @@ circuit_breaker:
     - name: "connections_pending"
       query: "envoy_cluster_upstream_pending_connections"
       alert: "> 10 → circuit breaker opening"
-    
+
     - name: "outlier_detection_ejections"
       query: "envoy_cluster_outlier_detection_ejections_total"
       alert: "> 0 → unhealthy upstream ejected"

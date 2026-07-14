@@ -134,7 +134,7 @@ if user.Status != "active" { return ErrSubjectInactive }
 func (v *Validator) RequireScope(claims jwt.MapClaims, required string) error {
     scopeStr, ok := claims["scope"].(string)
     if !ok { return ErrMissingScope }
-    
+
     scopes := strings.Fields(scopeStr)
     for _, s := range scopes {
         if s == required || s == required+":*" || s == "*" {

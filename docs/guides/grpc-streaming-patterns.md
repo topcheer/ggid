@@ -38,7 +38,7 @@ func (s *AuditServer) StreamEvents(req *StreamRequest, stream auditpb.AuditServi
     sub, err := s.nats.Subscribe("audit."+req.TenantId+".>", func(msg *nats.Msg) {
         event := &auditpb.AuditEvent{}
         proto.Unmarshal(msg.Data, event)
-        
+
         // Send to client stream
         if err := stream.Send(event); err != nil {
             log.Error("stream send failed", err)
@@ -46,7 +46,7 @@ func (s *AuditServer) StreamEvents(req *StreamRequest, stream auditpb.AuditServi
         }
     })
     if err != nil { return err }
-    
+
     // Block until client disconnects or context cancelled
     <-stream.Context().Done()
     sub.Unsubscribe()
@@ -85,14 +85,14 @@ service IdentityService {
 ```go
 func (s *IdentityServer) BatchCreateUsers(stream idpb.IdentityService_BatchCreateUsersServer) error {
     results := &idpb.BatchResponse{}
-    
+
     for {
         req, err := stream.Recv()
         if err == io.EOF {
             return stream.SendAndClose(results)
         }
         if err != nil { return err }
-        
+
         user, err := s.createUser(req)
         if err != nil {
             results.Failures = append(results.Failures, &idpb.BatchFailure{
@@ -122,7 +122,7 @@ service PolicyService {
 func (s *PolicyServer) WatchDecisions(stream policypb.PolicyService_WatchDecisionsServer) error {
     // Read requests and send responses concurrently
     errCh := make(chan error, 2)
-    
+
     // Receiver goroutine
     go func() {
         for {
@@ -131,7 +131,7 @@ func (s *PolicyServer) WatchDecisions(stream policypb.PolicyService_WatchDecisio
             s.enqueueDecision(req)
         }
     }()
-    
+
     // Sender goroutine
     go func() {
         for {
@@ -139,7 +139,7 @@ func (s *PolicyServer) WatchDecisions(stream policypb.PolicyService_WatchDecisio
             if err := stream.Send(resp); err != nil { errCh <- err; return }
         }
     }()
-    
+
     return <-errCh
 }
 ```
@@ -187,7 +187,7 @@ func watchWithReconnect(client pb.AuditServiceClient) {
             time.Sleep(5 * time.Second) // Backoff
             continue
         }
-        
+
         consumeStream(stream)
         // Stream ended → loop reconnects
     }

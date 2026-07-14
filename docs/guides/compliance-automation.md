@@ -49,7 +49,7 @@ type Control struct {
 func (m *ControlMonitor) Run() {
     for _, control := range m.controls {
         result := control.Check()
-        
+
         switch result.Status {
         case "pass":
             storeEvidence(control, result)
@@ -84,13 +84,13 @@ control_mapping:
     iso27001: "A.8.3"
     gdpr: "Art. 32"
     hipaa: "164.312(a)(1)"
-    
+
   "MFA_ENFORCED":
     soc2: "CC6.2"
     iso27001: "A.8.5"
     gdpr: "Art. 32(1)(b)"
     hipaa: "164.312(d)"
-    
+
   "ENCRYPTION_AT_REST":
     soc2: "CC6.8"
     iso27001: "A.6.3"
@@ -117,9 +117,9 @@ Detects configuration drift from approved baseline:
 func detectDrift() []Drift {
     baseline := loadApprovedBaseline()
     current := captureCurrentConfig()
-    
+
     drifts := []Drift{}
-    
+
     // Compare each config item
     for key, approved := baseline {
         actual := current[key]
@@ -132,7 +132,7 @@ func detectDrift() []Drift {
             })
         }
     }
-    
+
     return drifts
 }
 ```
@@ -156,14 +156,14 @@ remediation:
       - "Re-enable RLS: ALTER TABLE ... ENABLE ROW LEVEL SECURITY"
       - "Alert: security team"
       - "Audit log: drift remediated"
-      
+
   JWT_ALG_DRIFT:
     trigger: "allowed_algs contains 'none'"
     action:
       - "Revert config to approved baseline"
       - "Restart affected services"
       - "Page on-call (P0 security event)"
-      
+
   MFA_NOT_ENFORCED:
     trigger: "admin without MFA detected"
     action:

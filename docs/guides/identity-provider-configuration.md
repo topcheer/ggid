@@ -231,12 +231,12 @@ failover:
     idp_id: "idp-saml-corporate"
     health_check: true
     check_interval: 30s
-  
+
   fallback:
     idp_id: "idp-oidc-backup"
     trigger: "primary_unhealthy"
     auto_promote: true
-  
+
   rules:
     - If primary fails 3 consecutive health checks → use fallback
     - When primary recovers → wait 5 min before switching back

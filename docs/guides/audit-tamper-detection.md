@@ -75,14 +75,14 @@ GET /api/v1/audit/verify-chain?from=2025-01-01&to=2025-01-31
 func VerifyChain(from, to int64) (ChainVerificationResult, error) {
     entries := store.GetChainRange(from, to)
     brokenLinks := []BrokenLink{}
-    
+
     expectedPrev := getHashAt(from - 1)
-    
+
     for _, entry := range entries {
         // Recompute hash
         event := store.GetEvent(entry.EventID)
         recomputed := computeHash(event, entry.PrevHash)
-        
+
         // Check 1: Hash matches
         if recomputed != entry.EventHash {
             brokenLinks = append(brokenLinks, BrokenLink{
@@ -90,7 +90,7 @@ func VerifyChain(from, to int64) (ChainVerificationResult, error) {
                 Type: "hash_mismatch",
             })
         }
-        
+
         // Check 2: Chain continuity
         if entry.PrevHash != expectedPrev {
             brokenLinks = append(brokenLinks, BrokenLink{
@@ -98,10 +98,10 @@ func VerifyChain(from, to int64) (ChainVerificationResult, error) {
                 Type: "chain_break",
             })
         }
-        
+
         expectedPrev = entry.EventHash
     }
-    
+
     return ChainVerificationResult{
         Status:         len(brokenLinks) == 0 ? "valid" : "broken",
         BrokenLinks:    brokenLinks,
@@ -197,12 +197,12 @@ GET /api/v1/audit/verify-chain?detail=true
 
 ```sql
 -- Find all events around the break point
-SELECT * FROM audit_events 
+SELECT * FROM audit_events
 WHERE created_at BETWEEN '2025-01-15T10:29:00' AND '2025-01-15T10:31:00'
 ORDER BY created_at;
 
 -- Compare with backup to find what changed
-SELECT * FROM audit_events_backup 
+SELECT * FROM audit_events_backup
 WHERE event_id = 'evt-xyz';
 ```
 

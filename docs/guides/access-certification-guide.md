@@ -180,16 +180,16 @@ func (s *CertificationService) SubmitDecision(
     case DecisionCertify:
         // No action, access retained
         audit.Log("access_certified", item.UserID, item.RoleID, reviewerID)
-        
+
     case DecisionRevoke:
         // Remove access
         s.revokeAccess(item.UserID, item.RoleID)
         audit.Log("access_revoked", item.UserID, item.RoleID, reviewerID, comment)
-        
+
     case DecisionModify:
         // Adjust permissions (requires additional input)
         return ErrRequiresModificationDetails
-        
+
     case DecisionDefer:
         // Escalate to security team
         s.escalateToSecurity(item)
@@ -198,7 +198,7 @@ func (s *CertificationService) SubmitDecision(
 
     // Update campaign progress
     s.updateCampaignProgress(item.CampaignID)
-    
+
     return nil
 }
 ```

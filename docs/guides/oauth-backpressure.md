@@ -19,13 +19,13 @@ func (t *TokenEndpointThrottle) Middleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         clientID := extractClientID(r)
         limiter := t.getOrCreate(clientID)
-        
+
         if !limiter.Allow() {
             w.Header().Set("Retry-After", strconv.Itoa(int(limiter.Tokens())))
             http.Error(w, `{"error":"too_many_requests"}`, 429)
             return
         }
-        
+
         next.ServeHTTP(w, r)
     })
 }
@@ -112,7 +112,7 @@ func (fq *FairQueue) dispatch() {
         for i := 0; i < len(fq.roundRobin); i++ {
             idx := (fq.current + i) % len(fq.roundRobin)
             clientID := fq.roundRobin[idx]
-            
+
             select {
             case req := <-fq.queues[clientID]:
                 processTokenRequest(req)
@@ -150,11 +150,11 @@ When system is overwhelmed, degrade gracefully:
 ```go
 func TokenHandler(w http.ResponseWriter, r *http.Request) {
     load := getSystemLoad()
-    
+
     switch {
     case load < 0.7:
         processToken(w, r) // Normal
-        
+
     case load < 0.95:
         clientTier := getClientTier(r)
         if clientTier == "free" {
@@ -163,7 +163,7 @@ func TokenHandler(w http.ResponseWriter, r *http.Request) {
             return
         }
         processToken(w, r) // Paid clients served
-        
+
     default:
         w.Header().Set("Retry-After", "60")
         http.Error(w, `{"error":"server_overloaded"}`, 503)
@@ -188,7 +188,7 @@ func (cb *CircuitBreaker) Execute(fn func() error) error {
         }
         cb.state = "half-open" // Try again
     }
-    
+
     err := fn()
     if err != nil {
         cb.failures++
@@ -198,7 +198,7 @@ func (cb *CircuitBreaker) Execute(fn func() error) error {
         }
         return err
     }
-    
+
     cb.failures = 0
     cb.state = "closed"
     return nil

@@ -1,8 +1,8 @@
 # Auth0 Top 20 Features — GGID Competitive Benchmark
 
-> **Date:** 2025-07-11  
-> **Analyst:** Competitive Analysis Team  
-> **Purpose:** Feature-by-feature comparison of GGID against Auth0's top 20 enterprise features  
+> **Date:** 2025-07-11
+> **Analyst:** Competitive Analysis Team
+> **Purpose:** Feature-by-feature comparison of GGID against Auth0's top 20 enterprise features
 > **Methodology:** Each feature verified by grep/searching GGID source code at `/Users/zhanju/ggai/ggid`
 
 ---

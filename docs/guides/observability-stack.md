@@ -88,7 +88,7 @@ groups:
       for: 2m
       labels: {severity: critical}
       annotations: {summary: "Error rate >1%"}
-    
+
     - alert: HighLatency
       expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m])) > 0.5
       for: 5m

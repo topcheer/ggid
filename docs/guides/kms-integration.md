@@ -27,17 +27,17 @@ func encrypt(plaintext []byte, tekID string) (*Blob, error) {
     // 1. Generate fresh DEK
     dek := make([]byte, 32)
     rand.Read(dek)
-    
+
     // 2. Wrap DEK with TEK (via KMS)
     encDEK, err := kms.Encrypt(tekID, dek)
     if err != nil { return nil, err }
-    
+
     // 3. Encrypt data locally with DEK
     ciphertext := aesGCM(plaintext, dek)
-    
+
     // 4. Zero DEK from memory
     zero(dek)
-    
+
     return &Blob{EncDEK: encDEK, Ciphertext: ciphertext}, nil
 }
 ```

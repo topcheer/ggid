@@ -331,13 +331,13 @@ func (e *ABACEngine) Evaluate(ctx *EvalContext) string {
     if decision, ok := e.decisionCache.Get(cacheKey); ok {
         return decision.(string)
     }
-    
+
     // Evaluate
     decision := e.evaluatePolicies(ctx)
-    
+
     // Cache (short TTL — attributes may change)
     e.decisionCache.Set(cacheKey, decision, 5*time.Minute)
-    
+
     return decision
 }
 ```
@@ -367,7 +367,7 @@ abac:
           - subject.mfa_verified == true
           - env.network in ["corporate", "vpn"]
           - action.name in ["read", "write"]
-    
+
     - name: "restricted-data-access"
       description: "Restricted data requires security clearance + managed device"
       effect: permit
@@ -379,7 +379,7 @@ abac:
           - env.device == "managed"
           - env.network == "corporate"
           - action.name in ["read"]
-    
+
     - name: "after-hours-block"
       description: "Block write operations after hours for non-admins"
       effect: deny
@@ -388,12 +388,12 @@ abac:
           - env.time == "after_hours"
           - subject.role not in ["admin", "security-admin"]
           - action.category == "modify"
-    
+
     - name: "default-deny"
       description: "Deny by default"
       effect: deny
       condition: "true"
-  
+
   combiner: "permit-unless-deny"
 ```
 

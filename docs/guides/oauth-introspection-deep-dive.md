@@ -356,10 +356,10 @@ func (s *Server) HandleIntrospect(w http.ResponseWriter, r *http.Request) {
 
     // Introspect
     response := s.introspectToken(token)
-    
+
     // Cache result
     s.cache.Set(token, response)
-    
+
     writeJSON(w, response)
 }
 

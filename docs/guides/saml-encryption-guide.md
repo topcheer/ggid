@@ -292,7 +292,7 @@ func (s *SAMLService) DecryptAssertion(encAssertion *EncryptedAssertion) (*Asser
     if err == nil {
         return assertion, nil
     }
-    
+
     // Fall back to old key during rotation
     if s.oldPrivateKey != nil {
         assertion, err = tryDecrypt(encAssertion, s.oldPrivateKey)
@@ -301,7 +301,7 @@ func (s *SAMLService) DecryptAssertion(encAssertion *EncryptedAssertion) (*Asser
             return assertion, nil
         }
     }
-    
+
     return nil, fmt.Errorf("decryption failed with both keys: %w", err)
 }
 ```
@@ -373,7 +373,7 @@ type SAMLEncryptionService struct {
 func (s *SAMLEncryptionService) HandleEncryptedAssertion(
     response *saml.Response,
 ) (*saml.Assertion, error) {
-    
+
     if len(response.EncryptedAssertions) == 0 {
         if s.config.RequireEncrypted {
             return nil, ErrEncryptionRequired

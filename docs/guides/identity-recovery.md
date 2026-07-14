@@ -39,7 +39,7 @@ func initiateRecovery(userID string, method string) error {
             AvailableAt: time.Now().Add(24 * time.Hour),
         }
         store.Create(recovery)
-        
+
         // Notify user of pending recovery
         notifyUser(userID, "Recovery initiated. Available in 24h.")
         notifyAdmins("Recovery pending for " + userID)

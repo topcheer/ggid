@@ -55,7 +55,7 @@ alerts:
     query: "error_budget_remaining < 50"
     severity: warn
     message: "Error budget 50% consumed — review reliability"
-    
+
   - name: error_budget_90pct
     query: "error_budget_remaining < 10"
     severity: critical

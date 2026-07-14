@@ -37,23 +37,23 @@ Request → Gateway middleware collects:
 ```go
 func evaluateStepUp(signals RiskSignals) StepUpDecision {
     score := calculateRiskScore(signals)
-    
+
     switch {
     case score < 20:
         return StepUpDecision{Required: false}
-    
+
     case score < 60:
         if signals.DeviceTrusted && signals.RememberStepUp {
             return StepUpDecision{Required: false}  // Trusted device
         }
         return StepUpDecision{Factor: "totp", TTL: 600}
-    
+
     case score < 80:
         return StepUpDecision{Factor: "webauthn", TTL: 300}
-    
+
     default:
         return StepUpDecision{
-            Factor: "webauthn", 
+            Factor: "webauthn",
             RequireApproval: true,
             TTL: 300,
             Notify: "security@corp.com",

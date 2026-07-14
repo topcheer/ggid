@@ -111,15 +111,15 @@ User lost device with passkey
 Try multi-device sync (Layer 1)
     ├── Has synced device? → Login normally
     └── No synced device ↓
-    
+
 Try backup authenticator (Layer 2)
     ├── Has backup? → Login with backup
     └── No backup ↓
-    
+
 Try recovery codes (Layer 3)
     ├── Has codes? → Use code → Must enroll new passkey
     └── No codes ↓
-    
+
 Admin-assisted recovery (Layer 4)
     └── Identity verification → Admin re-enrollment
 ```

@@ -351,7 +351,7 @@ func logUserData(user *User) {
         "email":    user.Email,     // j***@example.com
         "phone":    user.Phone,     // +1-*-555-****
         "name":     user.Name,      // J** D**
-        "ssn":      user.SSN,       // ***-**-**** 
+        "ssn":      user.SSN,       // ***-**-****
     })
     log.Info("user data", "data", safe)
 }

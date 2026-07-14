@@ -52,7 +52,7 @@ func (e *RiskEngine) Score(signals RiskSignals) int {
 ```go
 func evaluateStepUp(signals RiskSignals) StepUpDecision {
     score := riskEngine.Score(signals)
-    
+
     switch {
     case score < 20:
         return StepUpDecision{Required: false}
@@ -101,14 +101,14 @@ type Session struct {
 // Re-evaluate every 5 minutes
 func (s *Session) ReEvaluate(currentSignals RiskSignals) {
     newScore := riskEngine.Score(currentSignals)
-    
+
     // If risk increased significantly
     if newScore > s.RiskScore + 20 {
         // Require step-up
         s.TrustLevel = 1 // Downgrade
         notifyUser("Risk increased — re-verification required")
     }
-    
+
     s.RiskScore = newScore
     s.LastEvaluated = time.Now()
 }
@@ -138,7 +138,7 @@ adaptive_policies:
       medium: 30
       high: 50
       critical: 70
-    
+
   - name: "standard"
     condition: "true"
     thresholds:

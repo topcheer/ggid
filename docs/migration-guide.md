@@ -891,7 +891,7 @@ oauth:
     # Primary signing key (GGID's own)
     signing_key: "/etc/ggid/keys/ggid-signing.key"
     signing_cert: "/etc/ggid/keys/ggid-signing.crt"
-    
+
     # Additional accepted keys (for migration overlap)
     accepted_keys:
       - cert: "/etc/ggid/keys/auth0-signing.crt"

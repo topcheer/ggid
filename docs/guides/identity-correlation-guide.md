@@ -192,13 +192,13 @@ Login Event → Extract Signals → Query Graph → Score → Decision
 ```go
 func (e *CorrelationEngine) EvaluateLogin(userID string, ctx *LoginContext) *FraudAssessment {
     assessment := &FraudAssessment{}
-    
+
     // Extract signals from login context
     signals := e.extractSignals(ctx)
-    
+
     // Query graph for correlations
     correlations := e.graph.FindCorrelations(userID, signals)
-    
+
     // Check for red flags
     for _, corr := range correlations {
         switch corr.Type {
@@ -215,10 +215,10 @@ func (e *CorrelationEngine) EvaluateLogin(userID string, ctx *LoginContext) *Fra
             assessment.Flags = append(assessment.Flags, "credential_reuse")
         }
     }
-    
+
     // Update graph with new signals
     e.graph.AddSignals(userID, signals)
-    
+
     return assessment
 }
 ```

@@ -84,7 +84,7 @@ Automated deletion runs nightly:
 
 ```sql
 -- Anonymize dormant users (>365 days inactive)
-UPDATE users SET 
+UPDATE users SET
   email = 'anonymized_' || md5(email::text),
   display_name = 'Deleted User',
   phone = NULL,

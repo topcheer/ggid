@@ -1,8 +1,8 @@
 # Identity Governance and Administration (IGA) Workflows Analysis
 
-> **Author:** GGID Research Team  
-> **Date:** 2025-01  
-> **Status:** Strategic Analysis  
+> **Author:** GGID Research Team
+> **Date:** 2025-01
+> **Status:** Strategic Analysis
 > **Scope:** IGA capability gap analysis for GGID, competitive benchmarking against Keycloak 26
 
 ---

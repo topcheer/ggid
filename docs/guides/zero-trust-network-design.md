@@ -40,7 +40,7 @@ func IAPMiddleware(next http.Handler) http.Handler {
             http.Error(w, "unauthorized", 401)
             return
         }
-        
+
         // 2. Check device trust
         if !isDeviceTrusted(claims, r) {
             if requireTrustedDevice(r.URL.Path) {
@@ -48,7 +48,7 @@ func IAPMiddleware(next http.Handler) http.Handler {
                 return
             }
         }
-        
+
         // 3. Evaluate context
         risk := evaluateRisk(claims, r)
         if risk > denyThreshold {
@@ -60,14 +60,14 @@ func IAPMiddleware(next http.Handler) http.Handler {
             w.Header().Set("X-Step-Up-Required", "true")
             return
         }
-        
+
         // 4. Authorize (policy engine)
         allowed := policyEngine.Evaluate(claims, r.URL.Path, r.Method)
         if !allowed {
             http.Error(w, "forbidden", 403)
             return
         }
-        
+
         next.ServeHTTP(w, r)
     })
 }

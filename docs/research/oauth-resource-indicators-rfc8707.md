@@ -1,7 +1,7 @@
 # RFC 8707: Resource Indicators for OAuth 2.0 — GGID Integration Research
 
-> **Status**: Research / Design Document  
-> **RFC**: [RFC 8707](https://www.rfc-editor.org/rfc/rfc8707.html) — Resource Indicators for OAuth 2.0  
+> **Status**: Research / Design Document
+> **RFC**: [RFC 8707](https://www.rfc-editor.org/rfc/rfc8707.html) — Resource Indicators for OAuth 2.0
 > **Priority**: P1 (critical for microservices token isolation)
 
 ---
@@ -372,7 +372,7 @@ The `resource` parameter is the **request-side** mechanism; `aud` is the
 | 4 | Authorize endpoint `resource` parameter + auth code storage | ~1 day | Phase 1 |
 | 5 | Discovery metadata: `resource_indicators` support | ~0.5 day | Phase 1 |
 
-**Total effort**: ~6-7 days  
+**Total effort**: ~6-7 days
 **Priority**: P1 — critical for microservices token isolation in multi-tenant deployments.
 
 ### Sequencing Notes

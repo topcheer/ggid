@@ -49,14 +49,14 @@ app.post('/webhooks/ggid', express.raw({type: 'application/json'}), (req, res) =
     .createHmac('sha256', process.env.GGID_WEBHOOK_SECRET)
     .update(req.body)
     .digest('hex');
-  
+
   if (`sha256=${expected}` !== sig) {
     return res.status(401).send('Invalid signature');
   }
-  
+
   // 2. Parse event
   const event = JSON.parse(req.body);
-  
+
   // 3. Idempotency check
   4. // Process event
   switch (event.event_type) {
@@ -70,7 +70,7 @@ app.post('/webhooks/ggid', express.raw({type: 'application/json'}), (req, res) =
       await updateLocalPermissions(event.data);
       break;
   }
-  
+
   // 5. Acknowledge
   res.status(200).send('OK');
 });

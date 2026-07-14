@@ -117,34 +117,34 @@ refresh:
 ```go
 func RefreshMetadata(idpID string) error {
     oldMetadata := store.GetMetadata(idpID)
-    
+
     newMetadata, err := fetchMetadata(idpID)
     if err != nil { return err }
-    
+
     if !metadataChanged(oldMetadata, newMetadata) {
         return nil // No change
     }
-    
+
     // Validate new metadata
     if err := validateMetadata(newMetadata); err != nil {
         alert.Send("metadata_validation_failed", idpID, err)
         return err // Keep old metadata
     }
-    
+
     // Apply new metadata
     store.UpdateMetadata(idpID, newMetadata)
-    
+
     // Diff for audit
     diff := diffMetadata(oldMetadata, newMetadata)
     audit.Log("metadata.updated", map[string]interface{}{
         "idp": idpID,
         "changes": diff,
     })
-    
+
     if diff.CertChanged {
         alert.Send("saml_cert_changed", idpID, diff)
     }
-    
+
     return nil
 }
 ```
@@ -154,7 +154,7 @@ func RefreshMetadata(idpID string) error {
 ```go
 func ImportMetadata(xml []byte) (*EntityDescriptor, error) {
     doc := parseXML(xml)
-    
+
     // Check if metadata is signed
     sig := findSignature(doc)
     if sig != nil {
@@ -165,7 +165,7 @@ func ImportMetadata(xml []byte) (*EntityDescriptor, error) {
     } else if requireSignedMetadata {
         return nil, ErrMetadataNotSigned
     }
-    
+
     return parseEntityDescriptor(doc)
 }
 ```

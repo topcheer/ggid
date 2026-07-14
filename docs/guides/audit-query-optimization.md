@@ -33,12 +33,12 @@ CREATE TABLE audit_events_2025_02 PARTITION OF audit_events
 func ensureNextMonthPartition() error {
     next := firstDayOfNextMonth()
     partitionName := "audit_events_" + next.Format("2006_01")
-    
+
     sql := fmt.Sprintf(`
         CREATE TABLE IF NOT EXISTS %s PARTITION OF audit_events
         FOR VALUES FROM ('%s') TO ('%s')
     `, partitionName, next.Format("2006-01-02"), next.AddDate(0, 1, 0).Format("2006-01-02"))
-    
+
     return db.Exec(sql).Error
 }
 ```
@@ -136,21 +136,21 @@ LIMIT 100;
 ```go
 func QueryWithCursor(cursor string, limit int) ([]Event, string, error) {
     query := db.Model(&AuditEvent{}).Limit(limit).Order("created_at DESC")
-    
+
     if cursor != "" {
         // Decode cursor → timestamp of last item
         after := decodeCursor(cursor)
         query = query.Where("created_at < ?", after)
     }
-    
+
     var events []AuditEvent
     query.Find(&events)
-    
+
     var nextCursor string
     if len(events) == limit {
         nextCursor = encodeCursor(events[len(events)-1].CreatedAt)
     }
-    
+
     return events, nextCursor, nil
 }
 ```

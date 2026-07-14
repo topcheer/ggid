@@ -27,20 +27,20 @@ func encryptWithKMS(plaintext []byte, cmkID string) (*EncryptedBlob, error) {
     // 1. Generate DEK
     dek := make([]byte, 32)
     rand.Read(dek)
-    
+
     // 2. Encrypt DEK with KMS CMK
     encDEK, err := kms.Encrypt(&kms.EncryptInput{
         KeyId:     aws.String(cmkID),
         Plaintext: dek,
     })
     if err != nil { return nil, err }
-    
+
     // 3. Encrypt data with DEK locally
     ciphertext := aesGCMEncrypt(plaintext, dek)
-    
+
     // 4. Zero DEK
     zeroBytes(dek)
-    
+
     return &EncryptedBlob{
         EncryptedDEK: encDEK.CiphertextBlob,
         Ciphertext:   ciphertext,

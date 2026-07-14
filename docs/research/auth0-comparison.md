@@ -1276,7 +1276,7 @@ PostgreSQL Database
 ### 9.3 Multi-Tenancy Comparison
 
 | Feature | Auth0 Organizations | GGID RLS | Winner |
-|---------|--------------------|---------|---------| 
+|---------|--------------------|---------|---------|
 | Isolation strength | Application-level (logical) | Database-enforced (RLS) | **GGID** — RLS is a stronger guarantee |
 | Per-tenant IdP | Each org has own SAML/OIDC/AD | LDAP per-tenant; social/OIDC global | **Auth0** |
 | Per-tenant branding | Full (universal login, custom domain) | Partial (branding page, no custom domain) | **Auth0** |

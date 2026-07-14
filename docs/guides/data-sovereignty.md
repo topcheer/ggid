@@ -34,7 +34,7 @@ localization:
       - no_cross_border_replication: true
       - encryption_keys_in_china: true
       - admin_access_from_china_only: true
-  
+
   eu-west-1:
     mode: moderate
     requirements:

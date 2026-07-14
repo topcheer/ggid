@@ -41,14 +41,14 @@ func WithTenant(ctx context.Context, db *pgxpool.Pool, tenantID string, fn func(
     tx, err := db.Begin(ctx)
     if err != nil { return err }
     defer tx.Rollback(ctx)
-    
+
     // SET LOCAL applies only to this transaction
     _, err = tx.Exec(ctx, "SET LOCAL app.tenant_id = $1", tenantID)
     if err != nil { return err }
-    
+
     // All queries in this tx are filtered by RLS
     if err := fn(tx); err != nil { return err }
-    
+
     return tx.Commit(ctx)
 }
 ```
@@ -88,16 +88,16 @@ func TenantMiddleware(next http.Handler) http.Handler {
             http.Error(w, "missing tenant", 401)
             return
         }
-        
+
         ctx := context.WithValue(r.Context(), "tenant_id", tenantID)
-        
+
         // Verify tenant exists and is active
         tenant := getTenant(tenantID)
         if tenant.Status != "active" {
             http.Error(w, "tenant suspended", 403)
             return
         }
-        
+
         next.ServeHTTP(w, r.WithContext(ctx))
     })
 }
@@ -210,12 +210,12 @@ func TestTenantIsolation(t *testing.T) {
     tx1 := beginTx(tenantA)
     tx1.Exec("INSERT INTO users (id, tenant_id, email) VALUES ('u1', $1, 'a@corp.com')", tenantA)
     tx1.Commit()
-    
+
     // Query from tenant B — should NOT see tenant A's user
     tx2 := beginTx(tenantB)
     var count int
     tx2.QueryRow("SELECT COUNT(*) FROM users WHERE email = 'a@corp.com'").Scan(&count)
-    
+
     assert.Equal(t, 0, count, "tenant B should not see tenant A's data")
 }
 ```

@@ -22,7 +22,7 @@ dlp_in_transit:
       request.destination NOT IN internal_domains AND
       response.contains(email_pattern OR ssn_pattern OR card_pattern)
     action: block + log + alert
-    
+
   - rule: mask_pii_in_api_response
     condition: response.contains(email_pattern)
     action: mask  # j***@corp.com
@@ -35,11 +35,11 @@ dlp_at_rest:
   - rule: encrypt_confidential
     condition: data.classification >= L3
     action: aes256_gcm_encrypt
-    
+
   - rule: no_plaintext_pii
     condition: column IN (email, phone, ssn, card_number)
     action: encrypt_or_hash
-    
+
   - rule: audit_log_masking
     condition: field IN (email, phone, ip)
     action: mask_in_logs
@@ -52,7 +52,7 @@ dlp_in_use:
   - rule: no_bulk_export_without_approval
     condition: request.select_count > 100 AND data.classification >= L3
     action: require_approval + limit_to_100
-    
+
   - rule: screen_share_warning
     condition: data.classification == L4
     action: warn + watermark

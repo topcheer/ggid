@@ -264,7 +264,7 @@ echo "Backup verification PASSED"
 ```yaml
 backup:
   enabled: true
-  
+
   postgresql:
     method: "pg_dump + WAL archiving"
     full: weekly
@@ -272,20 +272,20 @@ backup:
     rpo: 5m
     rto: 30m
     encryption: true
-  
+
   redis:
     method: "RDB + AOF"
     rdb: hourly
     aof: continuous
     rpo: 1m
     rto: 5m
-  
+
   nats:
     method: "stream snapshots"
     frequency: hourly
     rpo: 1h
     rto: 15m
-  
+
   offsite:
     destination: "s3://ggid-backups"
     replication: 1h
@@ -294,12 +294,12 @@ backup:
       warm: 30d
       cold: 365d
       delete: 2555d
-  
+
   verification:
     schedule: daily
     monthly_restore_test: true
     alert_on_failure: true
-  
+
   disaster_recovery:
     rto: 1h
     rpo: 5m

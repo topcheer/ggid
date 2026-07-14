@@ -119,13 +119,13 @@ terraform_deploy:
   steps:
     - name: fmt-check
       run: terraform fmt -check -recursive
-    
+
     - name: validate
       run: terraform validate
-    
+
     - name: plan
       run: terraform plan -out=tfplan
-    
+
     - name: apply (staging auto, prod manual)
       if: github.ref == 'refs/heads/main'
       run: terraform apply -auto-approve tfplan

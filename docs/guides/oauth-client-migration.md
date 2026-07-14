@@ -63,12 +63,12 @@ scope_mapping:
   "read:users": "users:read"
   "write:users": "users:write"
   "delete:users": "users:delete"
-  
+
   # Okta scopes
   "okta.users.read": "users:read"
   "okta.users.manage": "users:write"
   "okta.groups.read": "roles:read"
-  
+
   # Keycloak roles → GGID scopes
   "realm-admin": "admin:tenant"
   "view-realm": "users:read"

@@ -44,25 +44,25 @@ type RiskEngine struct {
 
 func (e *RiskEngine) Score(ctx context.Context, userID, ip string) int {
     score := 0
-    
+
     // Failed login count (last hour)
     fails := e.redis.Get(ctx, "login_fails:"+userID).Val()
     if n, _ := strconv.Atoi(fails); n >= 5 {
         score += 30
     }
-    
+
     // New IP
     known := e.redis.SIsMember(ctx, "known_ips:"+userID, ip).Val()
     if !known {
         score += 20
     }
-    
+
     // Off-hours
     hour := time.Now().Hour()
     if hour < 6 || hour > 22 {
         score += 10
     }
-    
+
     return score // 0-100
 }
 ```

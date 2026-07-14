@@ -117,7 +117,7 @@ TEMPLATE_DIR=/templates
     <div style="background: {{.PrimaryColor}}; padding: 24px; text-align: center;">
       <img src="{{.LogoURL}}" alt="{{.AppName}}" style="height: 40px;">
     </div>
-    
+
     <!-- Body -->
     <div style="padding: 32px;">
       <h1 style="color: #1f2937; font-size: 24px;">Welcome to {{.AppName}}!</h1>
@@ -127,20 +127,20 @@ TEMPLATE_DIR=/templates
       <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
         Your account has been created. Please verify your email address to get started.
       </p>
-      
+
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
-        <a href="{{.ActionURL}}" 
+        <a href="{{.ActionURL}}"
            style="background: {{.PrimaryColor}}; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: bold;">
           Verify Email
         </a>
       </div>
-      
+
       <p style="color: #6b7280; font-size: 14px;">
         This link expires in {{.ExpiryMinutes}} minutes.
       </p>
     </div>
-    
+
     <!-- Footer -->
     <div style="background: #f9fafb; padding: 20px; text-align: center;">
       <p style="color: #6b7280; font-size: 12px; margin: 0;">

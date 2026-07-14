@@ -69,17 +69,17 @@ X-GGID-Event-Id: evt-xyz789
 ```go
 func verifySignature(payload []byte, sigHeader, secret string) error {
     parts := parseSigHeader(sigHeader) // {t: timestamp, v1: hash}
-    
+
     // Check freshness (prevent replay)
     if time.Since(parts.Timestamp) > 5*time.Minute {
         return ErrStaleSignature
     }
-    
+
     // Recompute HMAC
     signedPayload := fmt.Sprintf("%d.%s", parts.Timestamp.Unix(), payload)
     expected := hmac.New(sha256.New, []byte(secret))
     expected.Write([]byte(signedPayload))
-    
+
     if !hmac.Equal([]byte(parts.V1), expected.Sum(nil)) {
         return ErrInvalidSignature
     }
@@ -97,7 +97,7 @@ func handleWebhook(event Event) error {
     if seen := redis.SetNX(ctx, "event:"+event.ID, 1, 24*time.Hour); !seen {
         return nil // Already processed, skip
     }
-    
+
     processEvent(event)
     return nil
 }

@@ -31,11 +31,11 @@ egress_rules:
   - client: "external-oauth-client"
     block_fields: [ssn, salary, password_hash, mfa_secret]
     allow_fields: [email, display_name]
-    
+
   - client: "internal-service"
     block_fields: [password_hash, mfa_secret]
     allow_fields: ["*"]
-    
+
   - tenant: "tenant-restricted"
     block_endpoints: ["/api/v1/admin/*"]
 ```

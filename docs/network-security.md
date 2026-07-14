@@ -212,16 +212,16 @@ ldap.internal.example     → OpenLDAP (internal only)
 frontend https_front
     bind *:443 ssl crt /etc/ssl/ggid.pem
     mode http
-    
+
     # Security headers
     http-response set-header Strict-Transport-Security "max-age=31536000; includeSubDomains"
     http-response set-header X-Content-Type-Options "nosniff"
     http-response set-header X-Frame-Options "DENY"
-    
+
     # Rate limiting
     stick-table type ip size 100k expire 30s store http_req_rate(10s)
     http-request deny if { src_http_req_rate ge 100 }
-    
+
     # Route to gateway
     default_backend gateway_backend
 

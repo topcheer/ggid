@@ -1,9 +1,9 @@
 # Tenant Onboarding and Lifecycle for Multi-Tenant IAM Systems
 
-**Document Type:** Security Research & Architecture Analysis  
-**Project:** GGID IAM Suite  
-**Date:** 2025-01-20  
-**Author:** Security Research Team  
+**Document Type:** Security Research & Architecture Analysis
+**Project:** GGID IAM Suite
+**Date:** 2025-01-20
+**Author:** Security Research Team
 
 ---
 
@@ -45,7 +45,7 @@ User → POST /api/v1/signup
          ├── Generate email verification token
          ├── Send verification email
          └── Return 202 Accepted
-         
+
 User clicks email link → GET /api/v1/signup/verify?token=xxx
          │
          ├── Consume verification token
@@ -2025,7 +2025,7 @@ key areas:
 - **Provides**: Basic `TenantService` with `Create`, `Get`, `GetBySlug`, `Update`,
   `Delete`. The `Tenant` domain model has `Plan` (free/pro/enterprise), `Status`
   (active/suspended/deleted), `MaxUsers`, and a `Settings` map.
-- **Missing**: 
+- **Missing**:
   - No self-service signup flow — `Create` is a bare CRUD that accepts a pre-built
     `Tenant` struct with no validation beyond slug non-empty.
   - No email verification for the admin who creates a tenant.

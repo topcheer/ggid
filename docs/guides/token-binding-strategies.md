@@ -122,22 +122,22 @@ func verifySessionBinding(r *http.Request, session *Session) error {
 func (g *Gateway) verifyBinding(r *http.Request, claims jwt.MapClaims) error {
     cnf, ok := claims["cnf"].(map[string]interface{})
     if !ok { return nil } // No binding (bearer token)
-    
+
     // Try DPoP
     if dpop := r.Header.Get("DPoP"); dpop != "" {
         return verifyDPoP(dpop, cnf["jkt"].(string))
     }
-    
+
     // Try mTLS
     if r.TLS != nil && len(r.TLS.PeerCertificates) > 0 {
         return verifyCert(r.TLS.PeerCertificates[0], cnf["x5t#S256"].(string))
     }
-    
+
     // Try tag
     if tag, ok := cnf["tag"]; ok {
         return verifyTag(tag.(string), r)
     }
-    
+
     // Binding required but no proof provided
     return ErrBindingRequired
 }

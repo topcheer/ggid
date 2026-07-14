@@ -78,17 +78,17 @@ func (a *AccountLockoutAction) Execute(event *AuditEvent) error {
     user.LockReason = "automated: credential_stuffing_detected"
     user.LockedAt = time.Now()
     saveUser(user)
-    
+
     // Revoke all sessions
     revokeAllSessions(event.UserID)
-    
+
     // Audit
     audit.Log("account_locked", event.UserID, "automated_response")
-    
+
     // Notify
     notifyUser(event.UserID, "Your account has been locked due to suspicious activity")
     notifyAdmin("Account locked: " + event.UserID)
-    
+
     return nil
 }
 
@@ -111,7 +111,7 @@ soar:
   platform: "splunk-soar"  # or "cortex-xsoar", "ibm-resilient"
   api_url: "https://soar.example.com/api"
   api_key: "<soar-api-key>"
-  
+
   # Map GGID events to SOAR incidents
   event_mapping:
     critical:

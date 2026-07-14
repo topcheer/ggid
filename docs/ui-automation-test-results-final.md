@@ -1,9 +1,9 @@
 # UI Automation Test Results — Final Report
 
-**Date:** 2026-07-12  
-**Tester:** ggcxf_frontend&uiux&i18n_agent  
-**Environment:** https://ggid-console.iot2.win  
-**Browser:** Chromium (headless via CDP)  
+**Date:** 2026-07-12
+**Tester:** ggcxf_frontend&uiux&i18n_agent
+**Environment:** https://ggid-console.iot2.win
+**Browser:** Chromium (headless via CDP)
 
 ---
 

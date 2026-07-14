@@ -313,10 +313,10 @@ service IdentityService {
 func TestUserService_Create_DuplicateEmail(t *testing.T) {
     // Arrange
     svc := NewService(mockRepo, testConfig())
-    
+
     // Act
     _, err := svc.Create(ctx, validUser)
-    
+
     // Assert
     require.ErrorIs(t, err, ErrDuplicateEmail)
 }
@@ -397,7 +397,7 @@ func TestValidatePassword(t *testing.T) {
         {"no uppercase", "abcdef1!", true},
         {"valid", "Abcdefg1!", false},
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             err := ValidatePassword(tt.password)

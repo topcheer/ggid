@@ -98,7 +98,7 @@ func VerifyDualSignedJWT(token string) (Claims, error) {
         }
         return claims, nil
     }
-    
+
     // 3. Try PQC-only (future)
     return verifyMLDSA(token)
 }
@@ -122,7 +122,7 @@ SAML uses XML signatures. PQC migration requires:
 ```
 1. New signature algorithm URIs:
    http://www.w3.org/2024/pqc/dilithium3
-   
+
 2. Larger certificate sizes in metadata
 3. Dual-signed assertions during transition
 4. XML Canonicalization must handle larger payloads
@@ -147,11 +147,11 @@ mTLS_migration:
   phase_2_2026:
     server_cert: "RSA + Dilithium (dual)"
     client_cert: "RSA (backward compat)"
-    
+
   phase_3_2027:
     server_cert: "Dilithium (PQC primary)"
     client_cert: "RSA + Dilithium (dual)"
-    
+
   phase_4_2028:
     server_cert: "Dilithium only"
     client_cert: "Dilithium only"
@@ -167,7 +167,7 @@ func TestMLDSAVerify(t *testing.T) {
     pub, priv := ml_dsa.GenerateKey()
     msg := []byte("test message")
     sig := ml_dsa.Sign(priv, msg)
-    
+
     assert.True(t, ml_dsa.Verify(pub, msg, sig))
     assert.False(t, ml_dsa.Verify(pub, []byte("tampered"), sig))
 }
@@ -181,7 +181,7 @@ func TestHybridFallback(t *testing.T) {
     token := signRS256(claims)
     _, err := verify(token)
     assert.NoError(t, err) // Classical still works
-    
+
     // Client supports hybrid
     tokenDual := signDual(claims)
     _, err = verify(tokenDual)

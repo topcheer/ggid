@@ -1,7 +1,7 @@
 # Competitor Analysis: Clerk, Logto, and Casdoor (2024 Q3/Q4 Updates)
 
-> **Research date:** January 2025  
-> **Focus period:** 2024 Q3–Q4 (July–December 2024)  
+> **Research date:** January 2025
+> **Focus period:** 2024 Q3–Q4 (July–December 2024)
 > **Purpose:** Competitive positioning analysis for GGID IAM Suite
 
 ---

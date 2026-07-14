@@ -65,12 +65,12 @@ secret_scan:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Full history
-    
+
     - name: gitleaks
       uses: gitleaks/gitleaks-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
+
     - name: trivy-fs-scan
       run: trivy fs --scanners secret .
 ```
@@ -134,11 +134,11 @@ dbPass := secret["password"]
 ```go
 func checkRotationCompliance() []RotationViolation {
     violations := []RotationViolation{}
-    
+
     for _, secret := range getAllSecrets() {
         age := time.Since(secret.RotatedAt)
         maxAge := rotationPolicy[secret.Type]
-        
+
         if age > maxAge {
             violations = append(violations, RotationViolation{
                 Secret: secret.Path,
@@ -178,7 +178,7 @@ func validateSecrets() error {
         "REDIS_URL",
         "NATS_URL",
     }
-    
+
     for _, key := range required {
         val := os.Getenv(key)
         if val == "" {
@@ -189,14 +189,14 @@ func validateSecrets() error {
             return fmt.Errorf("placeholder secret detected: %s", key)
         }
     }
-    
+
     // Verify DB connectivity with the secret
     db, err := sql.Open("pgx", os.Getenv("DATABASE_URL"))
     if err != nil {
         return fmt.Errorf("DB connection failed with configured secret")
     }
     db.Close()
-    
+
     return nil
 }
 ```

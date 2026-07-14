@@ -26,7 +26,7 @@ Test JWT verification logic without network:
 func TestVerifyToken_ValidJWT(t *testing.T) {
     // Generate test key
     key, _ := rsa.GenerateKey(rand.Reader, 2048)
-    
+
     // Create test JWT
     claims := jwt.MapClaims{
         "sub": "usr_123",
@@ -36,11 +36,11 @@ func TestVerifyToken_ValidJWT(t *testing.T) {
     }
     token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
     tokenString, _ := token.SignedString(key)
-    
+
     // Verify
     verifier := NewTestVerifier(key)
     user, err := verifier.Verify(tokenString)
-    
+
     assert.NoError(t, err)
     assert.Equal(t, "usr_123", user.UserID)
 }
@@ -55,7 +55,7 @@ Test against a running GGID instance:
 ```go
 func TestIntegration_LoginAndListUsers(t *testing.T) {
     client := ggid.New(os.Getenv("GGID_URL"), ggid.WithJWKS(5*time.Minute))
-    
+
     // Register
     user, err := client.CreateUser(ctx, &ggid.CreateUserRequest{
         Username: "testuser",
@@ -63,12 +63,12 @@ func TestIntegration_LoginAndListUsers(t *testing.T) {
         Password: "Test1234!",
     })
     assert.NoError(t, err)
-    
+
     // Login
     token, err := client.Login(ctx, "testuser", "Test1234!")
     assert.NoError(t, err)
     assert.NotEmpty(t, token.AccessToken)
-    
+
     // List users with JWT
     authCtx := ggid.WithToken(ctx, token.AccessToken)
     users, err := client.ListUsers(authCtx)

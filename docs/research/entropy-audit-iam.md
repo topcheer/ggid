@@ -1,9 +1,9 @@
 # Entropy Audit: Random Number Generation Security for IAM Systems
 
-**Audit Date:** 2025-07-11  
-**Scope:** GGID IAM Suite — all Go source files across `pkg/`, `services/`, `sdk/`  
-**Classification:** CRITICAL — Security Audit  
-**Auditor:** Security Research Team  
+**Audit Date:** 2025-07-11
+**Scope:** GGID IAM Suite — all Go source files across `pkg/`, `services/`, `sdk/`
+**Classification:** CRITICAL — Security Audit
+**Auditor:** Security Research Team
 
 ---
 

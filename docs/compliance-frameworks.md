@@ -350,11 +350,11 @@ auth:
     require_special: true
     max_age_days: 90
     history_count: 12
-  
+
   mfa:
     required: true
     allowed_methods: ["totp", "webauthn"]
-  
+
   session:
     max_duration: "8h"
     idle_timeout: "30m"

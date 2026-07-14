@@ -54,9 +54,9 @@ GGID supports OIDC Back-Channel Logout (draft):
 User logs out at GGID → GGID sends POST to all registered clients:
   POST https://app.example.com/backchannel-logout
   Content-Type: application/x-www-form-urlencoded
-  
+
   logout_token=<JWT containing sub and iat>
-  
+
 Client verifies JWT → destroys local session
 ```
 ### Logout Token Claims

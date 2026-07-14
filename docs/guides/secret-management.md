@@ -61,7 +61,7 @@ rotation:
       generator: "random_32_char"
       consumers: ["identity-svc", "auth-svc"]
       notify_before: 7d
-      
+
     - path: "secret/ggid/prod/jwt-signing"
       rotate_every: 90d
       generator: "ecdsa_p256"
@@ -96,7 +96,7 @@ secret_access:
   - identity-svc:
       allowed: ["secret/ggid/prod/db", "secret/ggid/prod/jwt-signing"]
       denied: ["secret/ggid/prod/payment-*"]
-      
+
   - audit-svc:
       allowed: ["secret/ggid/prod/audit-db"]
       denied: ["*"]

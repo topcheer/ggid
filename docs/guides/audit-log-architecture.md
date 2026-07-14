@@ -126,11 +126,11 @@ type ChainEntry struct {
 
 func updateHashChain(event AuditEvent) {
     prev := getLatestChainEntry()
-    
-    payload := fmt.Sprintf("%s|%s|%s|%s", 
+
+    payload := fmt.Sprintf("%s|%s|%s|%s",
         event.EventID, event.Timestamp, event.Action, prev.EventHash)
     hash := sha256.Sum256([]byte(payload))
-    
+
     entry := ChainEntry{
         EventID:   event.EventID,
         EventHash: hex.EncodeToString(hash[:]),
@@ -199,11 +199,11 @@ GET /api/v1/audit/events  # No filters → full scan, rate-limited
 ```sql
 -- Automated nightly cleanup
 -- Move events older than 1 year to archive table
-INSERT INTO audit_events_archive 
-  SELECT * FROM audit_events 
+INSERT INTO audit_events_archive
+  SELECT * FROM audit_events
   WHERE created_at < NOW() - INTERVAL '1 year';
 
-DELETE FROM audit_events 
+DELETE FROM audit_events
   WHERE created_at < NOW() - INTERVAL '1 year';
 
 -- Purge archive after 7 years (compliance retention met)

@@ -26,12 +26,12 @@ type TokenBucket struct {
 func (b *TokenBucket) Allow() bool {
     b.mu.Lock()
     defer b.mu.Unlock()
-    
+
     now := time.Now()
     elapsed := now.Sub(b.lastRefill).Seconds()
     b.tokens = math.Min(b.burst, b.tokens + elapsed*b.rate)
     b.lastRefill = now
-    
+
     if b.tokens >= 1 {
         b.tokens--
         return true
@@ -80,7 +80,7 @@ retry_strategy:
     fallback_delay: 30s
     backoff: exponential
     max_retries: 3
-    
+
   headers_to_read:
     - Retry-After        # Server-recommended wait
     - X-RateLimit-Reset  # When limit resets (unix timestamp)

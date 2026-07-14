@@ -28,20 +28,20 @@ curl http://localhost:8080/api/v1/saml/metadata \
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
-<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" 
+<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
   entityID="https://ggid.example.com">
   <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
     <NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</NameIDFormat>
-    
-    <AssertionConsumerService 
+
+    <AssertionConsumerService
       Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
       Location="https://ggid.example.com/api/v1/saml/acs"
       index="0" />
-    
+
     <SingleLogoutService
       Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
       Location="https://ggid.example.com/api/v1/saml/slo" />
-      
+
     <KeyDescriptor use="signing">
       <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
         <X509Data>

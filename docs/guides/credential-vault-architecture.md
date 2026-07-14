@@ -19,10 +19,10 @@ func encryptData(plaintext []byte, tenantID string) ([]byte, error) {
     // 1. Get or generate DEK (encrypted by TEK)
     dek := generateAESKey() // 256-bit random
     encDEK := encryptWithKey(dek, getTEK(tenantID))
-    
+
     // 2. Encrypt data with DEK
     ciphertext := aesGCMEncrypt(plaintext, dek)
-    
+
     // 3. Store: encDEK + ciphertext
     return append(encDEK, ciphertext...), nil
 }
@@ -30,10 +30,10 @@ func encryptData(plaintext []byte, tenantID string) ([]byte, error) {
 func decryptData(blob []byte, tenantID string) ([]byte, error) {
     encDEK := blob[:256]
     ciphertext := blob[256:]
-    
+
     // 1. Decrypt DEK with TEK
     dek := decryptWithKey(encDEK, getTEK(tenantID))
-    
+
     // 2. Decrypt data with DEK
     return aesGCMDecrypt(ciphertext, dek)
 }
@@ -51,7 +51,7 @@ func (h *HSMProvider) Sign(data []byte) ([]byte, error) {
     // Signing key never leaves HSM
     session := h.openSession()
     defer h.closeSession(session)
-    
+
     h.login(session)
     key := h.findKey(session, "ggid-mek")
     return h.sign(session, key, data)
@@ -81,7 +81,7 @@ func (h *HSMProvider) Sign(data []byte) ([]byte, error) {
 func rotateTEK(tenantID string) error {
     oldTEK := getTEK(tenantID)
     newTEK := generateAESKey()
-    
+
     // 1. Re-encrypt all DEKs with new TEK
     deks := getAllDEKs(tenantID)
     for _, dek := range deks {
@@ -89,15 +89,15 @@ func rotateTEK(tenantID string) error {
         dek.Encrypted = encryptWithKey(plaintextDEK, newTEK)
         store.Update(dek)
     }
-    
+
     // 2. Store new TEK (keep old for grace period)
     store.SetTEK(tenantID, newTEK, oldTEK, time.Now().Add(7*24*time.Hour))
-    
+
     // 3. After grace period, remove old TEK
     time.AfterFunc(7*24*time.Hour, func() {
         store.RemoveOldTEK(tenantID)
     })
-    
+
     audit.Log("key.rotated", map[string]interface{}{
         "type": "TEK", "tenant": tenantID,
     })

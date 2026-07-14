@@ -34,16 +34,16 @@ joiner:
     action: POST /scim/v2/Users
     assign_default_roles: [user]
     assign_default_groups: [all_users]
-    
+
   - step: send_activation
     action: email activation link
     ttl: 7_days
-    
+
   - step: first_login
     action: force_password_set
     action: mfa_enrollment_required
     action: accept_terms
-    
+
   - step: provision_apps
     action: webhook to connected apps
     action: SCIM sync to downstream
@@ -76,16 +76,16 @@ PATCH /scim/v2/Users/uuid
 func onAttributeChange(user *User, changes map[string]interface{}) {
     // Re-evaluate dynamic roles
     roleService.ReassignDynamicRoles(user.ID)
-    
+
     // Update group membership
     groupService.SyncGroupsByAttribute(user.ID, changes)
-    
+
     // Trigger access review
     accessReviewService.ScheduleForUser(user.ID)
-    
+
     // Notify connected apps
     webhookService.Notify("user.updated", user)
-    
+
     // Audit
     audit.Log("user.moved", user, changes)
 }
@@ -102,14 +102,14 @@ leaver:
     - revoke_all_tokens
     - disable_mfa_factors
     - set_status: suspended
-    
+
   within_24h:
     - remove_from_all_groups
     - revoke_oauth_grants
     - revoke_api_keys
     - disable_in_connected_apps (SCIM PATCH active=false)
     - send_webhook: user.deprovisioned
-    
+
   retain:
     - audit_logs: 7_years
     - anonymize_after: 90_days

@@ -85,24 +85,24 @@ retry_strategy:
     max_delay: 60s
     backoff: exponential
     max_attempts: 3
-    
+
   temporarily_unavailable:
     retry: true
     initial_delay: 30s
     max_attempts: 5
-    
+
   authorization_pending:
     retry: true
     delay: interval_seconds  # From device flow response
-    
+
   invalid_grant:
     retry: false
     action: "Restart authorization flow"
-    
+
   invalid_client:
     retry: false
     action: "Check client credentials"
-    
+
   access_denied:
     retry: false
     action: "User explicitly denied — do not retry"

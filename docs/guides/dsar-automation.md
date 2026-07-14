@@ -58,7 +58,7 @@ POST /api/v1/admin/dsar/discover
 ```go
 func executeDSAR(userID string, requestType string) (*DSARResult, error) {
     data := map[string]interface{}{}
-    
+
     // Collect from all services
     data["user"] = userService.Get(userID)
     data["audit_events"] = auditService.QueryByUser(userID)
@@ -66,20 +66,20 @@ func executeDSAR(userID string, requestType string) (*DSARResult, error) {
     data["oauth_grants"] = oauthService.ListGrants(userID)
     data["mfa_factors"] = mfaService.ListFactors(userID)
     data["consents"] = consentService.ListForUser(userID)
-    
+
     // Redact third-party PII
     redactThirdPartyPII(data)
-    
+
     // Generate export
     export := packageExport(data, requestType)
-    
+
     // Audit
     audit.Log("dsar.completed", map[string]interface{}{
         "user_id": userID,
         "type": requestType,
         "records_collected": countRecords(data),
     })
-    
+
     return export, nil
 }
 ```
@@ -111,7 +111,7 @@ Delivery via signed download URL (TTL 24h) or encrypted email.
 func checkDSARDeadlines() {
     for _, req := range dsarStore.GetOpen() {
         daysLeft := 30 - daysSince(req.CreatedAt)
-        
+
         switch {
         case daysLeft <= 0:
             alert.Send("dsar_breach", req) // Escalate to DPO

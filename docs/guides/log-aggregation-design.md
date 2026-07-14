@@ -71,10 +71,10 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
         if requestID == "" {
             requestID = uuid.New().String()
         }
-        
+
         ctx := context.WithValue(r.Context(), "request_id", requestID)
         w.Header().Set("X-Request-ID", requestID)
-        
+
         next.ServeHTTP(w, r.WithContext(ctx))
     })
 }
@@ -212,13 +212,13 @@ retention:
 func shouldLog(level slog.Level, msg string) bool {
     // Always log errors and warnings
     if level <= slog.LevelWarn { return true }
-    
+
     // Skip health check noise
     if strings.Contains(msg, "health.check") { return false }
-    
+
     // Sample INFO logs (10%)
     if level == slog.LevelInfo && rand.Float32() > 0.1 { return false }
-    
+
     return true
 }
 ```

@@ -99,22 +99,22 @@ POST /api/v1/identity/vc/issue
 func VerifyVC(vc *VerifiableCredential) error {
     // 1. Resolve issuer DID
     issuerDoc := resolveDID(vc.Issuer)
-    
+
     // 2. Verify proof
     if err := verifyProof(vc.Proof, issuerDoc); err != nil {
         return ErrInvalidProof
     }
-    
+
     // 3. Check revocation status
     if revoked := checkRevocation(vc.ID); revoked {
         return ErrRevoked
     }
-    
+
     // 4. Check expiry
     if vc.ExpirationDate != "" && time.Now().After(parseTime(vc.ExpirationDate)) {
         return ErrExpired
     }
-    
+
     return nil
 }
 ```

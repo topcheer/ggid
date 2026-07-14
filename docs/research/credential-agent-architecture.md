@@ -248,7 +248,7 @@ The browser matches the request against installed wallets and presents a chooser
 
 if (response) {
   const { data, protocol } = response.digital;
-  
+
   if (protocol === "openid4vp") {
     // data contains the VP token (verifiable presentation)
     // Send to backend for verification
@@ -260,7 +260,7 @@ if (response) {
         vp_token: data
       })
     });
-    
+
     if (verifyResult.ok) {
       // User is authenticated / verified
       console.log("Credential accepted");

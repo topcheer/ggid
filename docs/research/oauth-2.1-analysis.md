@@ -1,9 +1,9 @@
 # OAuth 2.1 Draft Analysis & GGID Migration Audit
 
-**Document Type:** Research / Gap Analysis  
-**Subject:** OAuth 2.1 (draft-ietf-oauth-v2-1) vs GGID OAuth Service  
-**Status:** Draft-15 (latest revision as of 2024)  
-**Date:** 2025-01-XX  
+**Document Type:** Research / Gap Analysis
+**Subject:** OAuth 2.1 (draft-ietf-oauth-v2-1) vs GGID OAuth Service
+**Status:** Draft-15 (latest revision as of 2024)
+**Date:** 2025-01-XX
 
 ---
 

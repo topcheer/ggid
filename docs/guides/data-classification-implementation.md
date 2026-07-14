@@ -26,14 +26,14 @@ classification:
     status: L2
     created_at: L2
     last_login_at: L3
-    
+
   audit_events:
     event_id: L1
     actor_user_id: L3
     actor_ip: L3
     action: L2
     details: L3     # May contain PII
-    
+
   oauth_clients:
     client_id: L1
     client_secret: L4
@@ -73,8 +73,8 @@ ggid scan pii --database ggid --format json
 
 ```sql
 -- Find L3/L4 columns not encrypted
-SELECT table_name, column_name 
-FROM information_schema.columns 
+SELECT table_name, column_name
+FROM information_schema.columns
 WHERE table_schema = 'public'
   AND column_name IN ('email', 'phone', 'ssn', 'password_hash', 'mfa_secret')
   AND table_name NOT IN (
@@ -184,13 +184,13 @@ cross_border:
     replication: "eu-only"
     classification_allowed: [L1, L2, L3, L4]
     cross_border_transfer: "denied"
-    
+
   # US data
   us_origin:
     storage_region: "us-east-1"
     replication: "us-only"
     cross_border_transfer: "approved_if_dpa_exists"
-    
+
   # China data (PIPL)
   cn_origin:
     storage_region: "cn-north-1"

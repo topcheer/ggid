@@ -123,16 +123,16 @@ proofing_rules:
   - tier: low
     required: [email]
     provider: internal
-    
+
   - tier: medium
     required: [email, phone, document]
     document_provider: onfido
-    
+
   - tier: high
     required: [email, phone, document, liveness]
     document_provider: jumio
     liveness_provider: jumio
-    
+
   - tier: critical
     required: [email, phone, document, liveness, kba]
     document_provider: persona

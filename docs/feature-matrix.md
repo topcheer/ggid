@@ -248,7 +248,7 @@
 ## Overall Feature Coverage Scorecard
 
 | Category | Total Features | ✅ Implemented | ⚠️ Partial/Skeleton | ❌ Not Implemented | Coverage |
-|----------|---------------|----------------|---------------------|--------------------|---------| 
+|----------|---------------|----------------|---------------------|--------------------|---------|
 | Authentication | 30 | 6 | 7 | 17 | 20% |
 | User Management | 24 | 10 | 5 | 9 | 42% |
 | Authorization | 15 | 9 | 3 | 3 | 60% |

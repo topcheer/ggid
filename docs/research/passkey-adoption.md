@@ -56,7 +56,7 @@ func (s *AuthService) Login(ctx context.Context, username string) (*LoginOptions
     if err != nil {
         return &LoginOptions{Methods: []string{"password"}}, nil
     }
-    
+
     creds, _ := s.webauthn.ListCredentials(ctx, user.ID)
     if len(creds) > 0 {
         return &LoginOptions{

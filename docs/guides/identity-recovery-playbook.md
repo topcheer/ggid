@@ -148,12 +148,12 @@ DELETE /api/v1/auth/sessions?tenant_id={tenant_id}
 func invalidateAllTokensForUser(userID string) {
     // Get all active JWT IDs for user
     jtis := store.GetActiveJTIs(userID)
-    
+
     for _, jti := range jtis {
         // Add to Redis blacklist (expires when token would expire)
         redis.Set("jwt:blacklist:"+jti, "1", 15*time.Minute)
     }
-    
+
     audit.Log("tokens_invalidated", map[string]interface{}{
         "user_id": userID,
         "count": len(jtis),

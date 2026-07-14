@@ -48,13 +48,13 @@ func afterLogin(session *Session) {
     // Regenerate session ID (invalidate old)
     oldID := session.ID
     session.ID = generateSessionID()
-    
+
     // Delete old session from Redis
     redis.Del("session:" + oldID)
-    
+
     // Store new session
     redis.Set("session:"+session.ID, session.Serialize(), sessionTTL)
-    
+
     // Set new cookie
     setCookie(w, "ggid_session", session.ID, Secure|HttpOnly|SameSiteLax)
 }
@@ -67,7 +67,7 @@ Triggers for regeneration: login, MFA step-up, privilege change, device change.
 ```go
 func enforceSessionLimit(userID string, maxSessions int) {
     sessions := redis.SMembers("user:" + userID + ":sessions")
-    
+
     if len(sessions) >= maxSessions {
         // Evict oldest (FIFO)
         oldest := findOldest(sessions)
@@ -167,14 +167,14 @@ DELETE /api/v1/admin/users/{user_id}/sessions
 func revokeSession(sessionID string) {
     // 1. Delete from Redis (immediate)
     redis.Del("session:" + sessionID)
-    
+
     // 2. Add JWT jti to blacklist (for JWT-based access)
     jti := getJTIForSession(sessionID)
     redis.Set("jwt:blacklist:"+jti, "1", 15*time.Minute) // Until JWT expires
-    
+
     // 3. Publish NATS event (other services update local cache)
     nats.Publish("session.revoked", sessionID)
-    
+
     // 4. Audit
     audit.Log("session.revoked", map[string]interface{}{
         "session_id": sessionID,

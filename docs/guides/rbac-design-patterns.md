@@ -29,13 +29,13 @@ type Role struct {
 
 func resolvePermissions(role *Role, roleStore RoleStore) []Permission {
     perms := role.Permissions
-    
+
     // Walk up the hierarchy
     if role.ParentID != nil {
         parent := roleStore.Get(*role.ParentID)
         perms = append(perms, resolvePermissions(parent, roleStore)...)
     }
-    
+
     return dedup(perms)
 }
 ```
@@ -104,7 +104,7 @@ dynamic_roles:
       - resource: projects
         actions: [read, write]
         scope: department
-    
+
   - name: "on_call_role"
     condition: |
       schedule.is_on_call(user.id) &&
@@ -204,7 +204,7 @@ sod_constraints:
 func checkSoDViolation(userID string, newRoleID string) error {
     conflictingRoles := sodMap[newRoleID]
     userRoles := getUserRoles(userID)
-    
+
     for _, r := range userRoles {
         if contains(conflictingRoles, r) {
             return ErrSoDViolation

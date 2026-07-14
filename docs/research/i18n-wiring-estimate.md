@@ -529,7 +529,7 @@ func main() {
 
 ### 8.2 Error Wrapping
 
-Go's `fmt.Errorf("...: %w", err)` pattern wraps errors for chain inspection. Replacing the format string with an i18n key risks breaking error comparison via `errors.Is()` and `errors.As()`. 
+Go's `fmt.Errorf("...: %w", err)` pattern wraps errors for chain inspection. Replacing the format string with an i18n key risks breaking error comparison via `errors.Is()` and `errors.As()`.
 
 **Recommendation:** Use sentinel errors for known error types and only translate the user-facing message at the HTTP response layer, not at every error creation site:
 

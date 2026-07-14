@@ -37,25 +37,25 @@ Request → JWT verify → Rate limit → Route → Transform → Backend
 func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     // 1. Recover from panics
     defer recoverMiddleware(w, r)
-    
+
     // 2. Verify JWT
     claims, err := g.auth.Verify(r)
     if err != nil { writeError(w, 401, "unauthorized"); return }
-    
+
     // 3. Rate limit
     if !g.limiter.Allow(claims.TenantID) {
         writeError(w, 429, "rate limited"); return
     }
-    
+
     // 4. Route + proxy
     backend := g.router.Match(r.URL.Path)
     if backend == nil { writeError(w, 404, "not found"); return }
-    
+
     // 5. Circuit breaker
     if g.breaker.IsOpen(backend) {
         writeError(w, 503, "backend unavailable"); return
     }
-    
+
     // 6. Transform + proxy
     g.proxy.ServeHTTP(w, r, backend, claims)
 }

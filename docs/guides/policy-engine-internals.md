@@ -73,7 +73,7 @@ policies:
   - name: "allow-engineering-access"
     effect: allow
     condition: |
-      user.department == "engineering" 
+      user.department == "engineering"
       && resource.type == "project"
       && action == "read"
       && time.hour >= 9 && time.hour < 18
@@ -81,7 +81,7 @@ policies:
   - name: "deny-offhours-delete"
     effect: deny
     condition: |
-      action == "delete" 
+      action == "delete"
       && (time.hour < 6 || time.hour > 22)
       && user.clearance != "admin"
 ```
@@ -97,12 +97,12 @@ func (e *Engine) evaluateABAC(ctx context.Context, policy Policy) (bool, error) 
         "time":     time.Now(),
         "env":      ctx.Environment,
     }
-    
+
     prog, err := cel.Compile(policy.Condition)
     if err != nil {
         return false, fmt.Errorf("policy compile error: %w", err)
     }
-    
+
     result, err := prog.Eval(env)
     return result.Value().(bool), err
 }
@@ -158,7 +158,7 @@ policies:
     priority: 1000        # Higher = evaluated first
     effect: allow
     condition: "user.break_glass == true"
-    
+
   - name: "normal-access"
     priority: 100
     effect: allow

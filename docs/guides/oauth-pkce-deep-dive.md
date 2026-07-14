@@ -175,13 +175,13 @@ Deprecation: PKCE recommended
 func TestPKCEVerification(t *testing.T) {
     verifier := "dBjftJeZ4CVKjm7gCL0m4QyO5OqO5oWvAB4O9Gr9l2Y"
     challenge := "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
-    
+
     // Correct verifier
     assert.NoError(t, verifyPKCE(challenge, verifier, "S256"))
-    
+
     // Wrong verifier
     assert.Error(t, verifyPKCE(challenge, "wrong", "S256"))
-    
+
     // Plain method rejected
     assert.Error(t, verifyPKCE(verifier, verifier, "plain"))
 }
@@ -193,14 +193,14 @@ func TestPKCEVerification(t *testing.T) {
 test('full PKCE flow', async () => {
   const verifier = generateCodeVerifier();
   const challenge = await generateCodeChallenge(verifier);
-  
+
   // Authorize
   const code = await authorize({ code_challenge: challenge, code_challenge_method: 'S256' });
-  
+
   // Exchange with correct verifier
   const tokens = await exchangeCode(code, verifier);
   assert(tokens.access_token);
-  
+
   // Exchange with wrong verifier should fail
   await expect(exchangeCode(code, 'wrong')).rejects.toThrow();
 });

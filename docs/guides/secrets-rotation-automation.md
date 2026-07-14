@@ -157,16 +157,16 @@ rotation_schedule:
     health_check: true
     rollback_on_failure: true
     notify: [security@corp.com]
-  
+
   db_credentials:
     cron: "0 4 1 */3 *"
     rolling_restart: true
     health_check: true
-  
+
   api_keys:
     cron: "0 5 1 1 *"  # Yearly
     grace_days: 7
-  
+
   oauth_secrets:
     cron: "0 3 15 */3 *"
     grace_days: 7

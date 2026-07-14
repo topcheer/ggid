@@ -147,12 +147,12 @@ grant_type=urn:ietf:params:oauth:grant-type:device_code
 func pollForToken(deviceCode, clientID string, interval int) (*TokenResponse, error) {
     for {
         time.Sleep(time.Duration(interval) * time.Second)
-        
+
         resp, err := requestToken(deviceCode, clientID)
         if err == nil {
             return resp, nil // Success
         }
-        
+
         switch resp.Error {
         case "authorization_pending":
             continue // Wait and retry

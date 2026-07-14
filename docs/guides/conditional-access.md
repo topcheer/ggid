@@ -84,7 +84,7 @@ GGID uses CEL (Common Expression Language) for policy conditions:
 
 ```cel
 // Block impossible travel
-location.country != last_login.country && 
+location.country != last_login.country &&
 time_diff(last_login.timestamp, now) < flight_time(last_login.country, location.country)
 
 // Require WebAuthn for admin access
@@ -122,7 +122,7 @@ Conditional access feeds into ABAC evaluation:
 func evaluateAccess(ctx context.Context, req AccessRequest) Decision {
     signals := collectSignals(ctx, req)
     policy := matchPolicy(signals)
-    
+
     if policy.Decision == StepUp {
         return Decision{Allow: false, Challenge: policy.StepUpFactor}
     }
@@ -130,7 +130,7 @@ func evaluateAccess(ctx context.Context, req AccessRequest) Decision {
         audit.Log("conditional_access_denied", req, signals)
         return Decision{Allow: false}
     }
-    
+
     // Merge session controls into ABAC context
     return abac.Evaluate(req.WithSessionControls(policy.SessionControl))
 }
@@ -146,7 +146,7 @@ func ConditionalAccessMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         signals := collectSignals(r.Context(), r)
         decision := policyEngine.Evaluate(signals)
-        
+
         switch decision {
         case Deny:
             http.Error(w, "access denied", 403)
@@ -168,7 +168,7 @@ This means a session can be terminated mid-use if conditions change (e.g., user'
 ## Risk Score Calculation
 
 ```
-risk_score = 
+risk_score =
     device_risk * 0.25 +      // managed/unmanaged, last seen
     location_risk * 0.20 +    // known country, TOR
     behavior_risk * 0.20 +    // login pattern deviation

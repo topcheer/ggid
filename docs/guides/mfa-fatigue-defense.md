@@ -194,17 +194,17 @@ After detecting push fatigue patterns, automatically deny subsequent pushes:
 func shouldAutoDeny(userID string, pushHistory *PushHistory) bool {
     // Auto-deny if too many pushes in short time
     if pushHistory.PushCount10Min >= 5 {
-        log.Security("auto-denying push due to fatigue pattern", 
+        log.Security("auto-denying push due to fatigue pattern",
             "user_id", userID,
             "push_count_10min", pushHistory.PushCount10Min)
         return true
     }
-    
+
     // Auto-deny if user has denied 3+ in a row
     if pushHistory.ConsecutiveDenials >= 3 {
         return true
     }
-    
+
     return false
 }
 ```
@@ -257,7 +257,7 @@ func MFAPushMiddleware(config *FatigueConfig) func(http.Handler) http.Handler {
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             userID := getUserID(r)
-            
+
             // Check rate limit
             if isRateLimited(userID, config.RateLimit) {
                 notifyAdmin(userID, "push_rate_limited")
@@ -265,16 +265,16 @@ func MFAPushMiddleware(config *FatigueConfig) func(http.Handler) http.Handler {
                 writeError(w, 429, "mfa_push_rate_limited")
                 return
             }
-            
+
             // Check for auto-deny
             if shouldAutoDeny(userID, getPushHistory(userID)) {
                 writeError(w, 403, "mfa_auto_denied")
                 return
             }
-            
+
             // Select challenge method
             method := selectMFAChallenge(getRiskContext(r), getPushHistory(userID))
-            
+
             if method == "push" {
                 // Generate number matching challenge
                 challenge := GenerateNumberChallenge()
@@ -288,7 +288,7 @@ func MFAPushMiddleware(config *FatigueConfig) func(http.Handler) http.Handler {
                 })
                 return
             }
-            
+
             next.ServeHTTP(w, r)
         })
     }

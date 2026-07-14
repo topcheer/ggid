@@ -37,7 +37,7 @@ template AgeCheck() {
     signal private input dob_year;
     signal input threshold;
     signal input current_year;
-    
+
     signal diff = current_year - dob_year;
     diff >= threshold;
 }
@@ -51,18 +51,18 @@ component main = AgeCheck();
 func GenerateAgeProof(dobYear, threshold, currentYear int) (*ZKProof, error) {
     // 1. Compile circuit (pre-compiled, cached)
     circuit := loadCompiledCircuit("age_check")
-    
+
     // 2. Prepare inputs
     inputs := map[string]interface{}{
         "dob_year":     dobYear,      // Private
         "threshold":    threshold,     // Public
         "current_year": currentYear,  // Public
     }
-    
+
     // 3. Generate proof (witness + proof)
     proof, err := groth16.Prove(circuit, inputs)
     if err != nil { return nil, err }
-    
+
     // 4. Return proof (no private data in output)
     return &ZKProof{
         Proof:     proof,

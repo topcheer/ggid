@@ -157,7 +157,7 @@ attribute_mappings:
   "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress": "email"
   "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name": "display_name"
   "urn:oid:2.5.4.11": "department"
-  
+
   # OIDC claim → GGID field
   "preferred_username": "username"
   "given_name": "first_name"

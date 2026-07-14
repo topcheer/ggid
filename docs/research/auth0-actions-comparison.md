@@ -22,7 +22,7 @@ Auth0 Actions are serverless functions that run at specific points in the authen
 exports.onExecutePostLogin = async (event, api) => {
   // Add custom claim to JWT
   api.idToken.setCustomClaim('https://myapp/role', event.user.app_metadata.role);
-  
+
   // Deny access based on condition
   if (event.user.blocked) {
     api.access.deny('User is blocked');

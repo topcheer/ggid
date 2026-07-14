@@ -22,26 +22,26 @@ type FlagEngine struct {
 func (e *FlagEngine) Evaluate(ctx context.Context, flagKey string, user UserContext) (bool, error) {
     flag := e.store.Get(flagKey)
     if flag == nil { return false, nil } // Default: off
-    
+
     switch flag.Strategy {
     case "boolean":
         return flag.Enabled, nil
-        
+
     case "percentage":
         return hashPercentage(user.ID, flag.Key) < flag.Percentage, nil
-        
+
     case "allowlist":
         return contains(flag.AllowedUsers, user.ID), nil
-        
+
     case "tenant":
         return contains(flag.AllowedTenants, user.TenantID), nil
-        
+
     case "attribute":
         return evalAttributeRule(flag.Rule, user.Attributes), nil
-        
+
     case "kill_switch":
         return flag.Enabled && !flag.Killed, nil
-        
+
     default:
         return false, nil
     }
@@ -114,7 +114,7 @@ variants:
   - name: "treatment"
     weight: 50
     value: "v2_layout"
-    
+
 metrics:
   primary: "checkout_completion_rate"
   secondary: ["time_to_checkout", "error_rate"]

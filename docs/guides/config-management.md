@@ -120,7 +120,7 @@ func main() {
 func watchConfig() {
     watcher, _ := fsnotify.NewWatcher()
     watcher.Add("/etc/ggid/config/")
-    
+
     for {
         select {
         case event := <-watcher.Events:

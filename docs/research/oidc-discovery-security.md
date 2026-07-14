@@ -1,7 +1,7 @@
 # OIDC Discovery Metadata Security for IAM Systems
 
-> **Research Document** — GGID IAM Suite  
-> Topic: Security analysis of OpenID Connect Discovery metadata, JWKS handling, and RP-side validation  
+> **Research Document** — GGID IAM Suite
+> Topic: Security analysis of OpenID Connect Discovery metadata, JWKS handling, and RP-side validation
 > Audience: Security engineers, platform developers, and relying party integrators
 
 ---
@@ -998,7 +998,7 @@ The tenant ID is part of the discovery URL. The issuer in the metadata includes 
 issuer: https://auth.example.com/{tenant_id}
 ```
 
-**Pros**: Clean separation, distinct issuers per tenant.  
+**Pros**: Clean separation, distinct issuers per tenant.
 **Cons**: Requires tenant to be in the URL path.
 
 #### Metadata-Based Tenant Resolution
@@ -1013,7 +1013,7 @@ issuer: https://auth.example.com
 token_endpoint: https://auth.example.com/oauth/token?tenant={tenant_id}
 ```
 
-**Pros**: Single discovery document.  
+**Pros**: Single discovery document.
 **Cons**: Query-param-based tenant resolution is fragile and cache-unfriendly.
 
 ### Recommendation

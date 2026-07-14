@@ -100,7 +100,7 @@ GGID sends transactional emails with per-tenant branding:
   <h1 style="color: {{primary_color}};">{{title}}</h1>
   <p>Hi {{name}},</p>
   <p>{{body}}</p>
-  <a href="{{action_url}}" 
+  <a href="{{action_url}}"
      style="background: {{primary_color}}; color: white; padding: 12px 24px; border-radius: 4px; text-decoration: none;">
     {{action_text}}
   </a>

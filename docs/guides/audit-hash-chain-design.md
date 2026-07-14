@@ -21,7 +21,7 @@ type AuditBlock struct {
     TenantID    string          `json:"tenant_id"`
     Timestamp   time.Time       `json:"timestamp"`
     Payload     json.RawMessage `json:"payload"`
-    
+
     // Chain metadata
     Sequence    int64           `json:"sequence"`     // Monotonic sequence number
     PrevHash    string          `json:"prev_hash"`    // Hash of previous block
@@ -201,7 +201,7 @@ func buildMerkleTree(blocks []*AuditBlock) *MerkleTree {
     }
 
     tree := &MerkleTree{leaves: leaves}
-    
+
     // Build up to root
     current := leaves
     for len(current) > 1 {

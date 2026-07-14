@@ -70,16 +70,16 @@ func executeErasure(userID string) error {
     // 1. Revoke sessions + tokens
     revokeAllSessions(userID)
     revokeAllTokens(userID)
-    
+
     // 2. Remove OAuth grants
     oauthStore.RemoveAllForUser(userID)
-    
+
     // 3. Remove MFA factors
     mfaStore.RemoveAllForUser(userID)
-    
+
     // 4. Remove group memberships
     groupStore.RemoveAllForUser(userID)
-    
+
     // 5. Anonymize user record
     userStore.Update(userID, map[string]interface{}{
         "email":       "anonymized_" + hash(userID),
@@ -87,18 +87,18 @@ func executeErasure(userID string) error {
         "phone":        nil,
         "status":       "archived",
     })
-    
+
     // 6. Retain audit logs (anonymized) for 7 years
     // audit_events: actor_user_id → hashed
-    
+
     // 7. Delete Redis keys
     redis.Del("user:" + userID + ":*")
-    
+
     audit.Log("dsar.erasure_completed", map[string]interface{}{
         "user_id": userID,
         "tables_anonymized": 6,
     })
-    
+
     return nil
 }
 ```

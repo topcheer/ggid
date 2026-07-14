@@ -51,7 +51,7 @@ func doTokenExchange(code string) error {
     for attempt := 0; attempt < 3; attempt++ {
         resp, err := exchange(code)
         if err == nil { return nil }
-        
+
         switch resp.Error {
         case "server_error", "temporarily_unavailable":
             time.Sleep(backoff(attempt)) // 1s, 2s, 4s

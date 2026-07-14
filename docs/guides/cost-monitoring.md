@@ -51,11 +51,11 @@ right_sizing_rules:
   - metric: cpu_avg
     threshold: "<20% for 14 days"
     action: "recommend smaller instance"
-    
+
   - metric: memory_avg
     threshold: "<30% for 14 days"
     action: "reduce memory request"
-    
+
   - metric: cpu_p99
     threshold: ">90% regularly"
     action: "increase replicas or size"
@@ -75,7 +75,7 @@ budgets:
         channel: "#finops"
         page: true
         message: "Production budget exceeded"
-  
+
   - name: "development-monthly"
     limit: 500
     alerts:

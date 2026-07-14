@@ -1,7 +1,7 @@
 # ADR-0001: JWT RSA Shared Key Between Auth and Gateway
 
-**Status:** Accepted  
-**Date:** 2025-Q1  
+**Status:** Accepted
+**Date:** 2025-Q1
 **Deciders:** Architecture Team
 
 ---

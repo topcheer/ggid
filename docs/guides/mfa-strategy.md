@@ -74,16 +74,16 @@ mfa_policies:
   - name: "standard"
     condition: "true"
     min_factor: "totp"
-    
+
   - name: "financial"
     condition: "user.department == 'Finance'"
     min_factor: "webauthn"
-    
+
   - name: "admin"
     condition: "user.has_role('admin')"
     min_factor: "webauthn"
     require_backup: true
-    
+
   - name: "break_glass"
     condition: "operation == 'break_glass'"
     min_factor: "webauthn"

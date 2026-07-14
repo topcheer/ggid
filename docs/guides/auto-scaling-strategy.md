@@ -117,7 +117,7 @@ predictive_scaling:
   model: "seasonal_naive"
   history: "30d"
   forecast_horizon: "1h"
-  
+
   patterns:
     - description: "Morning rush 8-10am"
       scale_up_before: "07:45"
@@ -133,16 +133,16 @@ predictive_scaling:
 cost_aware:
   max_monthly_budget: 5000  # USD
   current_spend: 3200
-  
+
   rules:
     - if: spend > budget * 0.8
       then: "reduce_max_replicas by 20%"
       alert: "cost_threshold_approaching"
-    
+
     - if: spend > budget
       then: "force_scale_down_to_min"
       alert: "budget_exceeded"
-    
+
     - prefer_spot_instances: true
     - prefer_smaller_instances: true
 ```

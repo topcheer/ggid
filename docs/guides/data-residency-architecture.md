@@ -26,17 +26,17 @@ regions:
     countries: [DE, FR, IT, ES, NL, BE, AT, IE, PT, FI, ...]
     data_law: GDPR
     replication: "eu-only"
-    
+
   us-east-1:
     countries: [US, CA, MX, BR, AR, ...]
     data_law: CCPA/LGPD
     replication: "us-only"
-    
+
   cn-north-1:
     countries: [CN]
     data_law: PIPL
     replication: "cn-only"
-    
+
   ap-southeast-1:
     countries: [JP, KR, SG, AU, NZ, ...]
     data_law: APPI/Privacy Act
@@ -93,7 +93,7 @@ encryption:
   eu-west-1:
     kms_key_id: "arn:aws:kms:eu-west-1:.../eu-ggid-key"
     jwt_signing_key: "eu-signing-key"
-    
+
   us-east-1:
     kms_key_id: "arn:aws:kms:us-east-1:.../us-ggid-key"
     jwt_signing_key: "us-signing-key"
@@ -122,19 +122,19 @@ Before transferring data across borders:
 ```yaml
 transfer_assessment:
   trigger: "data_access_request from different region"
-  
+
   checks:
     - legal_basis:
         - "explicit_consent"           # GDPR Art. 49(1)(a)
         - "standard_contractual_clauses" # GDPR Art. 46
         - "adequacy_decision"           # GDPR Art. 45
         - "government_approval"         # PIPL Art. 38
-    
+
     - data_minimization:
         - "anonymize"    # Remove PII before transfer
         - "aggregate"    # Only send aggregated stats
         - "pseudonymize" # Hash identifiers
-    
+
     - documentation:
         - "record_transfer_in_audit"
         - "notify_dpo"
@@ -169,12 +169,12 @@ When a region fails, users should NOT be redirected to another region (data resi
 ```yaml
 failover:
   strategy: "region_isolation"
-  
+
   eu-west-1_down:
     action: "show_maintenance_page"
     redirect: "DO NOT redirect to us-east-1"
     message: "EU service temporarily unavailable"
-    
+
   exception:
     # Only if explicit consent for cross-border
     consent_required: true

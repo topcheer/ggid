@@ -34,16 +34,16 @@ Passkeys ARE WebAuthn credentials with platform-managed sync.
 // Simplified enrollment — minimal friction
 async function enrollPasskey() {
   const options = await fetch('/webauthn/register/begin').then(r => r.json());
-  
+
   // Browser handles Face ID / Touch ID / Windows Hello
   const credential = await navigator.credentials.create({ publicKey: options });
-  
+
   // Send to server — done!
   await fetch('/webauthn/register/complete', {
     method: 'POST',
     body: JSON.stringify(credential)
   });
-  
+
   showSuccess("Passkey created! It syncs to your devices automatically.");
 }
 ```

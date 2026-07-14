@@ -73,17 +73,17 @@ res.redirect(authorizeURL);
 app.get('/callback', (req, res) => {
   const returnedState = req.query.state;
   const storedState = req.cookies.oauth_state;
-  
+
   if (!returnedState || !storedState) {
     return res.status(400).send('Missing state parameter');
   }
   if (returnedState !== storedState) {
     return res.status(403).send('State mismatch — possible CSRF');
   }
-  
+
   // Clear state cookie
   res.clearCookie('oauth_state');
-  
+
   // Proceed with code exchange
   exchangeCode(req.query.code);
 });
@@ -155,12 +155,12 @@ func ValidateState(returned, stored string) error {
     if returned == "" { return ErrMissingState }
     if stored == "" { return ErrNoStoredState }
     if returned != stored { return ErrStateMismatch }
-    
+
     // Check TTL (state should be used within 10 minutes)
     if time.Since(stateCreatedAt) > 10*time.Minute {
         return ErrStateExpired
     }
-    
+
     return nil
 }
 ```

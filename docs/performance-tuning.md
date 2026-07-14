@@ -10,7 +10,7 @@
 ### Memory Configuration
 
 | Parameter | Default | Recommended (8GB) | Recommended (32GB) | Description |
-|-----------|---------|-------------------|--------------------|-------------| 
+|-----------|---------|-------------------|--------------------|-------------|
 | `shared_buffers` | 128MB | 2GB | 8GB | Shared memory buffer pool (25% of RAM) |
 | `effective_cache_size` | 4GB | 6GB | 24GB | OS cache estimate (75% of RAM) |
 | `work_mem` | 4MB | 16MB | 64MB | Per-sort/hash memory |

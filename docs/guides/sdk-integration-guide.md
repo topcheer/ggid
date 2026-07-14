@@ -254,7 +254,7 @@ import { usePermission } from '@ggid/react-sdk';
 
 function DeleteButton({ user }) {
   const { allowed } = usePermission({ resource: 'users', action: 'delete' });
-  
+
   if (!allowed) return null;
   return <button onClick={() => deleteUser(user.id)}>Delete</button>;
 }

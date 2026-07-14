@@ -73,11 +73,11 @@ regression_rules:
   - metric: p99_latency
     threshold: "baseline * 1.5"
     action: "fail CI"
-    
+
   - metric: error_rate
     threshold: "0.01"
     action: "fail CI"
-    
+
   - metric: qps_max
     threshold: "baseline * 0.8"
     action: "warn"

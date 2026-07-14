@@ -152,7 +152,7 @@ renewal:
     check_interval: "daily"
     alert_before_expiry: "30d"
     auto_renew: false  # Manual for federation trust
-    
+
   metadata:
     refresh_interval: "hourly"
     alert_on_change: true
@@ -182,13 +182,13 @@ attribute_mappings:
     "http://...emailaddress": "email"
     "http://...name": "display_name"
     "urn:oid:2.5.4.11": "department"
-    
+
   "oidc-partner-b":
     # OIDC claim → GGID field
     "email": "email"
     "name": "display_name"
     "groups": "groups"
-    
+
   "social-google":
     "email": "email"
     "name": "display_name"

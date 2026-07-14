@@ -33,23 +33,23 @@ POST /api/v1/agents/register
 func detectPrivilegeDrift(agentID string) []Drift {
     baseline := getAgentBaseline(agentID)   // Registered scopes
     current := getAgentActiveScopes(agentID) // Scopes in active tokens
-    
+
     drifts := []Drift{}
-    
+
     // Scope expansion
     for _, s := range current {
         if !contains(baseline.Scopes, s) {
             drifts = append(drifts, Drift{Type: "scope_added", Scope: s})
         }
     }
-    
+
     // MCP tool access beyond registered
     for _, tool := range getAgentMCPUsage(agentID) {
         if !contains(baseline.MCPTools, tool) {
             drifts = append(drifts, Drift{Type: "unauthorized_tool", Tool: tool})
         }
     }
-    
+
     return drifts
 }
 ```

@@ -49,7 +49,7 @@ sod:
 func detectConflicts(userID string, newRole string) []SoDConflict {
     userRoles := getUserRoles(userID)
     var conflicts []SoDConflict
-    
+
     for _, rule := range sodRules {
         if contains(rule.Conflict, newRole) {
             // Check if user already has the conflicting role
@@ -75,7 +75,7 @@ func detectConflicts(userID string, newRole string) []SoDConflict {
 ```go
 func assignRole(userID, roleID string) error {
     conflicts := detectConflicts(userID, roleID)
-    
+
     for _, c := range conflicts {
         if c.Action == "prevent" {
             return fmt.Errorf("SoD violation: %s", c.Message)
@@ -85,7 +85,7 @@ func assignRole(userID, roleID string) error {
             notifyAdmin("SoD warning: " + c.Message)
         }
     }
-    
+
     return doAssignRole(userID, roleID)
 }
 ```

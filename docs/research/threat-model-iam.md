@@ -4,9 +4,9 @@
 > Grounded in source code analysis of all 7 microservices, shared packages, and
 > infrastructure. Cross-references 20+ prior research documents.
 
-**Document version:** 1.0  
-**Date:** 2025-01-20  
-**Scope:** GGID IAM Platform — Gateway, Identity, Auth, OAuth, Policy, Org, Audit services  
+**Document version:** 1.0
+**Date:** 2025-01-20
+**Scope:** GGID IAM Platform — Gateway, Identity, Auth, OAuth, Policy, Org, Audit services
 **Classification:** Internal Security Research
 
 ---

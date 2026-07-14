@@ -297,7 +297,7 @@ func calculateConfidence(signals []AnomalySignal) float64 {
 ```go
 func recordAnalystFeedback(alertID string, isTruePositive bool) {
     alert := getAlert(alertID)
-    
+
     if isTruePositive {
         // Reinforce: similar patterns are more likely anomalies
         reinforceModel(alert.Signals, alert.Features)
@@ -306,7 +306,7 @@ func recordAnalystFeedback(alertID string, isTruePositive bool) {
         suppressModel(alert.Signals, alert.Features)
         addWhitelistPattern(alert.Features)
     }
-    
+
     audit.Log("anomaly_feedback", alertID, isTruePositive)
 }
 ```

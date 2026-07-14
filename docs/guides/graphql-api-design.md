@@ -102,7 +102,7 @@ func (r *queryResolver) Users(ctx context.Context) ([]*User, error) {
     users := fetchUsers(ctx)
     // BAD: N+1 queries for roles
     // for _, u := range users { u.Roles = fetchRoles(u.ID) }
-    
+
     // GOOD: Batch with dataloader
     loader := dataloader.ForContext(ctx)
     for _, u := range users {

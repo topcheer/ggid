@@ -250,8 +250,8 @@ GGID uses PostgreSQL Row-Level Security to enforce tenant isolation:
 
 ```sql
 -- Verify RLS is enabled
-SELECT relname, relrowsecurity 
-FROM pg_class 
+SELECT relname, relrowsecurity
+FROM pg_class
 WHERE relname IN ('users', 'roles', 'audit_events');
 
 -- Test isolation: query as tenant A, should not see tenant B data
