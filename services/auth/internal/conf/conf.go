@@ -2,6 +2,7 @@
 package conf
 
 import (
+	"fmt"
 	"os"
 	"time"
 )
@@ -134,5 +135,32 @@ func LoadFromEnv(cfg *Config) *Config {
 	if v := os.Getenv("JWT_PUBLIC_KEY_PATH"); v != "" {
 		cfg.JWT.PublicKeyPath = v
 	}
+	// Account lockout configuration
+	if v := os.Getenv("AUTH_MAX_ATTEMPTS"); v != "" {
+		if n, err := parseIntDefault(v, cfg.Password.MaxAttempts); err == nil {
+			cfg.Password.MaxAttempts = n
+		}
+	}
+	if v := os.Getenv("AUTH_LOCK_DURATION"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			cfg.Password.LockDuration = d
+		}
+	}
+	// Rate limit configuration
+	if v := os.Getenv("AUTH_RATE_LIMIT_PER_MINUTE"); v != "" {
+		if n, err := parseIntDefault(v, cfg.RateLimit.LoginPerMinute); err == nil {
+			cfg.RateLimit.LoginPerMinute = n
+		}
+	}
 	return cfg
+}
+
+// parseIntDefault converts s to int, returning default on error.
+func parseIntDefault(s string, def int) (int, error) {
+	var n int
+	_, err := fmt.Sscanf(s, "%d", &n)
+	if err != nil {
+		return def, err
+	}
+	return n, nil
 }
