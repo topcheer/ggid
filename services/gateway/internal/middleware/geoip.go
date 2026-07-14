@@ -49,8 +49,8 @@ func GeoIPMiddleware(cfg *GeoIPConfig) func(http.Handler) http.Handler {
 			clientIP := extractGeoIPClientIP(r, cfg.TrustXForwardedFor)
 			country := lookupCountry(clientIP)
 
-			// If country is known, set headers and check policies
-			if country != "" {
+			// If country is known (and not just LOCAL), set headers and check policies
+			if country != "" && country != "LOCAL" {
 				w.Header().Set("X-Geo-Country", country)
 
 				// Check blocklist (takes precedence)
@@ -65,7 +65,7 @@ func GeoIPMiddleware(cfg *GeoIPConfig) func(http.Handler) http.Handler {
 					return
 				}
 			} else if upstreamCountry := r.Header.Get("X-Geo-Country"); upstreamCountry != "" {
-				// Preserve upstream country header
+				// Preserve upstream country header (e.g., from Cloudflare or CDN)
 				w.Header().Set("X-Geo-Country", upstreamCountry)
 			}
 
