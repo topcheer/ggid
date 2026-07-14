@@ -399,6 +399,7 @@ export default function SAMLPage() {
           </h2>
           <button
             onClick={handleDownloadMetadata}
+            aria-label="Download SP metadata"
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
           >
             <Download className="h-4 w-4" /> Download Metadata
@@ -439,6 +440,7 @@ export default function SAMLPage() {
                 onChange={(e) => setIdpConfig({ ...idpConfig, entity_id: e.target.value })}
                 placeholder="https://idp.example.com"
                 className={`${inputCls} font-mono`}
+                aria-label="Entity ID"
               />
             </div>
             <div>
@@ -449,6 +451,7 @@ export default function SAMLPage() {
                 onChange={(e) => setIdpConfig({ ...idpConfig, sso_url: e.target.value })}
                 placeholder="https://idp.example.com/sso"
                 className={`${inputCls} font-mono`}
+                aria-label="SSO URL"
               />
             </div>
             <div>
@@ -459,6 +462,7 @@ export default function SAMLPage() {
                 onChange={(e) => setIdpConfig({ ...idpConfig, slo_url: e.target.value })}
                 placeholder="https://idp.example.com/slo"
                 className={`${inputCls} font-mono`}
+                aria-label="SLO URL"
               />
             </div>
             <div>
@@ -513,6 +517,7 @@ export default function SAMLPage() {
                 placeholder="-----BEGIN CERTIFICATE-----&#10;Paste certificate content here...&#10;-----END CERTIFICATE-----"
                 rows={5}
                 className={`${inputCls} font-mono text-xs`}
+                aria-label="IdP certificate"
               />
             </div>
 
@@ -543,6 +548,7 @@ export default function SAMLPage() {
             <button
               onClick={handleSaveIdP}
               disabled={saving}
+              aria-label="Save IdP configuration"
               className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {saving ? (
@@ -568,6 +574,7 @@ export default function SAMLPage() {
           <button
             onClick={handleTestConnection}
             disabled={testing}
+            aria-label="Test IdP connection"
             className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
           >
             {testing ? (
@@ -670,6 +677,7 @@ export default function SAMLPage() {
                       onChange={(e) => updateMapping(m.id, "saml_attr", e.target.value)}
                       placeholder="e.g. email, givenName, memberOf"
                       className={`${inputCls} font-mono text-xs`}
+                      aria-label={`SAML attribute ${m.id}`}
                     />
                   </td>
                   <td className="py-2 pr-4">
@@ -677,6 +685,7 @@ export default function SAMLPage() {
                       value={m.ggid_field}
                       onChange={(e) => updateMapping(m.id, "ggid_field", e.target.value)}
                       className={`${inputCls} text-xs`}
+                      aria-label={`GGID field ${m.id}`}
                     >
                       {GGID_FIELDS.map((f) => (
                         <option key={f.value} value={f.value}>{f.label}</option>
