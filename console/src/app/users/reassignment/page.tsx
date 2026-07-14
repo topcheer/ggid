@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { UserCog, Search, AlertTriangle, X, Building2, Shield, User as UserIcon, Play, Eye } from "lucide-react";
+import { UserCog, Search, AlertTriangle, X, Building2, Shield, User as UserIcon, Play, Eye, Loader2 } from "lucide-react";
 
 interface User {
   user_id: string;
@@ -32,15 +32,21 @@ export default function UserReassignmentPage() {
   const [previewing, setPreviewing] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fetchUsers = useCallback(async () => {
+    setLoading(true); setError("");
     try {
       const res = await fetch("/api/v1/identity/users", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || data || []);
+      } else {
+        setError(`Failed to load users: HTTP ${res.status}`);
       }
-    } catch { /* noop */ }
+    } catch (e) { setError(e instanceof Error ? e.message : "Failed to load users"); }
+    finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
@@ -76,17 +82,18 @@ export default function UserReassignmentPage() {
 
   const execute = async () => {
     if (!selectedUser) return;
-    setExecuting(true);
+    setExecuting(true); setError("");
     try {
-      await fetch("/api/v1/identity/reassignment/execute", {
+      const res = await fetch("/api/v1/identity/reassignment/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ user_id: selectedUser.user_id, new_org: newOrg, new_role: newRole, new_manager: newManager }),
       });
+      if (!res.ok) throw new Error(`Execute failed: HTTP ${res.status}`);
       setShowConfirm(false);
       setSelectedUser(null);
       setImpact(null);
-    } catch { /* noop */ }
+    } catch (e) { setError(e instanceof Error ? e.message : "Reassignment failed"); }
     finally { setExecuting(false); }
   };
 
@@ -105,6 +112,13 @@ export default function UserReassignmentPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input type="text" placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4" /> {error}
+        </div>
+      )}
+      {loading && <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading users...</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* User list */}
@@ -140,20 +154,20 @@ export default function UserReassignmentPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="text-xs text-gray-400">New Org ID</label>
-                    <input type="text" value={newOrg} onChange={(e) => setNewOrg(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
+                    <input aria-label="New organization ID" type="text" value={newOrg} onChange={(e) => setNewOrg(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-400">New Role</label>
-                    <input type="text" value={newRole} onChange={(e) => setNewRole(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                    <input aria-label="New role" type="text" value={newRole} onChange={(e) => setNewRole(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-400">New Manager</label>
-                    <input type="text" value={newManager} onChange={(e) => setNewManager(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
+                    <input aria-label="New manager" type="text" value={newManager} onChange={(e) => setNewManager(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pt-2">
-                  <button onClick={previewImpact} disabled={!hasChanges || previewing} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {previewing ? "Previewing..." : "Preview Impact"}</button>
-                  <button onClick={() => setShowConfirm(true)} disabled={!impact} className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> Execute</button>
+                  <button aria-label="Preview impact" onClick={previewImpact} disabled={!hasChanges || previewing} className="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {previewing ? "Previewing..." : "Preview Impact"}</button>
+                  <button aria-label="Execute reassignment" onClick={() => setShowConfirm(true)} disabled={!impact} className="px-3 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> Execute</button>
                 </div>
               </div>
 
@@ -199,8 +213,8 @@ export default function UserReassignmentPage() {
               {impact && <p className="text-orange-600">This will revoke {impact.sessions_revoked} active sessions.</p>}
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
-              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">{executing ? "Executing..." : "Confirm Reassignment"}</button>
+              <button aria-label="Cancel reassignment" onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
+              <button aria-label="Confirm reassignment" onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">{executing ? "Executing..." : "Confirm Reassignment"}</button>
             </div>
           </div>
         </div>
