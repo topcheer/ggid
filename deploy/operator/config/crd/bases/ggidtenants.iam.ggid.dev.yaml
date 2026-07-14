@@ -1,0 +1,84 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ggidtenants.iam.ggid.dev
+spec:
+  group: iam.ggid.dev
+  names:
+    kind: GGIDTenant
+    listKind: GGIDTenantList
+    plural: ggidtenants
+    singular: ggidtenant
+    shortNames:
+      - ggt
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - tier
+                - tenantName
+                - slug
+                - adminEmail
+              properties:
+                tier:
+                  type: string
+                  default: shared
+                tenantName:
+                  type: string
+                slug:
+                  type: string
+                plan:
+                  type: string
+                  default: starter
+                maxUsers:
+                  type: integer
+                  default: 1000
+                adminEmail:
+                  type: string
+                adminPassword:
+                  type: string
+                ggidInstanceRef:
+                  type: string
+                idpConfig:
+                  type: object
+                  properties:
+                    provider:
+                      type: string
+                    entityId:
+                      type: string
+                    ssoUrl:
+                      type: string
+                    certificate:
+                      type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                tenantId:
+                  type: string
+                gatewayUrl:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+      subresources:
+        status: {}

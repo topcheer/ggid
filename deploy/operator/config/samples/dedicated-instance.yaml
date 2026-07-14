@@ -1,0 +1,26 @@
+# Example: Create a dedicated GGID instance for a large enterprise customer
+apiVersion: iam.ggid.dev/v1alpha1
+kind: GGIDInstance
+metadata:
+  name: enterprise-acme
+  namespace: ggid-operator
+spec:
+  tier: dedicated
+  organizationName: Enterprise ACME
+  namespace: ggid-acme
+  replicas: 3
+  database:
+    driver: postgres
+    host: acme-db.internal
+    port: 5432
+    name: ggid_acme
+    sslMode: require
+  adminEmail: admin@acme.com
+  idpConfig:
+    provider: saml
+    entityId: https://idp.acme.com/saml
+    ssoUrl: https://idp.acme.com/sso
+    certificate: |
+      -----BEGIN CERTIFICATE-----
+      MIIB...
+      -----END CERTIFICATE-----

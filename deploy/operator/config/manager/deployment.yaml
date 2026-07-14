@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ggid-operator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ggid-operator
+  namespace: ggid-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ggid-operator
+  template:
+    metadata:
+      labels:
+        app: ggid-operator
+    spec:
+      serviceAccountName: ggid-operator
+      containers:
+        - name: operator
+          image: registry.iot2.win/ggid/operator:latest
+          imagePullPolicy: Always
+          args:
+            - --gateway-url=$(GGID_GATEWAY_URL)
+            - --health-probe-bind-address=:8081
+            - --metrics-bind-address=:8080
+          env:
+            - name: GGID_GATEWAY_URL
+              value: https://ggid.iot2.win
+          ports:
+            - containerPort: 8081
+              name: health
+            - containerPort: 8080
+              name: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ggid-operator
+  namespace: ggid-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ggid-operator
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces", "secrets", "configmaps", "pods", "services"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["iam.ggid.dev"]
+    resources: ["ggidinstances", "ggidtenants", "ggidinstances/status", "ggidtenants/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ggid-operator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ggid-operator
+subjects:
+  - kind: ServiceAccount
+    name: ggid-operator
+    namespace: ggid-operator

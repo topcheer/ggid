@@ -1,0 +1,14 @@
+# Example: Create a shared tenant in existing GGID instance
+apiVersion: iam.ggid.dev/v1alpha1
+kind: GGIDTenant
+metadata:
+  name: acme-corp
+  namespace: ggid-operator
+spec:
+  tier: shared
+  tenantName: ACME Corporation
+  slug: acme-corp
+  plan: pro
+  maxUsers: 5000
+  adminEmail: admin@acme.com
+  adminPassword: ChangeMe123!@
