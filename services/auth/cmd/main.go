@@ -290,7 +290,6 @@ func loadTrustStoreCAs(ctx context.Context, pool *pgxpool.Pool) *truststore.Memo
 	if count == 0 {
 		return nil
 	}
-	certPool, _ := ts.CertPool()
-	log.Printf("Trust store: %d CA(s) loaded (pool has %d certs)", count, len(certPool.Subjects()))
+	log.Printf("Trust store: %d CA(s) loaded", count)
 	return ts
 }

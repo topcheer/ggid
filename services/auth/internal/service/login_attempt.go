@@ -61,7 +61,7 @@ func (s *AuthService) GetLoginAttempts(ctx context.Context, username string, lim
 	}
 
 	key := fmt.Sprintf("ggid:login_attempts:%s", username)
-	results, err := s.rateLimiter.rdb.ZRevRange(ctx, key, 0, int64(limit-1)).Result()
+	results, err := s.rateLimiter.rdb.ZRevRange(ctx, key, 0, int64(limit-1)).Result() //nolint:staticcheck // SA1019: ZRevRange deprecated but functional
 	if err != nil {
 		return nil, err
 	}
