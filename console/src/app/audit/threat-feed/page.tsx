@@ -37,9 +37,9 @@ export default function ThreatFeedPage() {
   const pausedRef = useRef(false);
 
   const connect = () => {
-    const tok = typeof window !== "undefined" ? localStorage.getItem("ggid_token") || "" : "";
-    const baseUrl = typeof window !== "undefined" ? localStorage.getItem("ggid_api_base") || "" : "";
-    const tenantId = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "" : "";
+    const tok = typeof window !== "undefined" ? localStorage.getItem("ggid_access_token") || "" : "";
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const tenantId = typeof window !== "undefined" ? localStorage.getItem("ggid_tenant_id") || "00000000-0000-0000-0000-000000000001" : "";
     if (!tok || !window.EventSource) return;
     if (esRef.current) esRef.current.close();
     const url = `${baseUrl}/api/v1/audit/threat-feed/stream?token=${encodeURIComponent(tok)}&tenant_id=${encodeURIComponent(tenantId)}`;

@@ -106,13 +106,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
 
   if (resp.status === 401 && typeof window !== "undefined" && !path.includes("/auth/")) {
-    // Token expired — clear and redirect to login (skip auth endpoints like /auth/login)
-    localStorage.removeItem("ggid_access_token");
-    localStorage.removeItem("ggid_refresh_token");
-    localStorage.removeItem("ggid_session_id");
-    if (!window.location.pathname.startsWith("/login")) {
-      window.location.href = "/login?expired=1";
-    }
+    // Emit event so AuthGuard can redirect without full page reload
+    window.dispatchEvent(new CustomEvent("ggid:unauthorized"));
     throw parseApiError(401, "{\"detail\":\"Session expired\"}");
   }
 
@@ -170,6 +165,10 @@ export function useAuth() {
       localStorage.removeItem("ggid_access_token");
       localStorage.removeItem("ggid_refresh_token");
       localStorage.removeItem("ggid_session_id");
+      localStorage.removeItem("ggid_tenant_id");
+      localStorage.removeItem("ggid_user_id");
+      localStorage.removeItem("ggid_user_name");
+      localStorage.removeItem("ggid_user_email");
     }
     setIsAuthenticated(false);
   };

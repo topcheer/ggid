@@ -96,10 +96,10 @@ export default function DashboardPage() {
 
   // Live audit event stream via SSE
   useEffect(() => {
-    const tok = localStorage.getItem("ggid_token");
+    const tok = localStorage.getItem("ggid_access_token");
     if (!tok || typeof window === "undefined" || !window.EventSource) return;
     const apiBase = window.location.origin;
-    const tenantId = localStorage.getItem("ggid_tenant_id") || "";
+    const tenantId = localStorage.getItem("ggid_tenant_id") || "00000000-0000-0000-0000-000000000001";
     const url = `${apiBase}/api/v1/audit/stream?token=${encodeURIComponent(tok)}&tenant_id=${encodeURIComponent(tenantId)}`;
     const es = new EventSource(url);
     es.onopen = () => setIsLive(true);

@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Sidebar } from "@/components/sidebar";
 import { AuthGuard } from "@/components/auth-guard";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
@@ -40,14 +39,9 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
-            <AuthGuard>
-              <div className="flex h-screen dark:bg-gray-950">
-                <Sidebar />
-                <main id="main-content" className="flex-1 overflow-auto">
-                  <div className="p-4 md:p-6">{children}</div>
-                </main>
-              </div>
-            </AuthGuard>
+              <AuthGuard>
+                {children}
+              </AuthGuard>
             </ToastProvider>
           </I18nProvider>
         </ThemeProvider>

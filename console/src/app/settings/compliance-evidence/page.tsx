@@ -89,7 +89,7 @@ export default function ComplianceEvidencePage() {
 
   const handleExport = async () => {
     try {
-      const resp = await fetch(`/api/v1/audit/compliance-evidence/export?framework=${framework}`, { headers: { Authorization: `Bearer ${localStorage.getItem("ggid_token") || ""}` } });
+      const resp = await fetch(`/api/v1/audit/compliance-evidence/export?framework=${framework}`, { headers: { Authorization: `Bearer ${localStorage.getItem("ggid_access_token") || ""}` } });
       if (!resp.ok) throw new Error("Export failed");
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);

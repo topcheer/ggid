@@ -105,6 +105,15 @@ export default function LoginPage() {
         localStorage.setItem("ggid_session_id", data.session_id);
       }
 
+      // Extract user info from JWT for pages that need it
+      try {
+        const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+        if (payload.tenant_id) localStorage.setItem("ggid_tenant_id", payload.tenant_id);
+        if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
+        if (payload.username) localStorage.setItem("ggid_user_name", payload.username);
+        if (payload.email) localStorage.setItem("ggid_user_email", payload.email);
+      } catch {}
+
       // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get("redirect_to");
@@ -158,6 +167,15 @@ export default function LoginPage() {
         if (typeof window !== "undefined") {
           localStorage.setItem("ggid_access_token", data.access_token);
           localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
+
+          // Extract user info from JWT
+          try {
+            const payload = JSON.parse(atob(data.access_token.split(".")[1]));
+            if (payload.tenant_id) localStorage.setItem("ggid_tenant_id", payload.tenant_id);
+            if (payload.sub) localStorage.setItem("ggid_user_id", payload.sub);
+            if (payload.username) localStorage.setItem("ggid_user_name", payload.username);
+            if (payload.email) localStorage.setItem("ggid_user_email", payload.email);
+          } catch {}
 
           // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
           const params = new URLSearchParams(window.location.search);
