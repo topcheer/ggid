@@ -134,7 +134,8 @@ export default function LoginPage() {
         }
       }
 
-      // No MFA needed — already stored tokens and handled redirect above
+      // No MFA needed — redirect to dashboard
+      router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error — is the API running?");
     } finally {
