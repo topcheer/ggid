@@ -1,6 +1,6 @@
 [package]
 name = "ggid"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "GGID IAM SDK for Rust — JWT verification, RBAC/ABAC authorization, OAuth/OIDC"
 license = "Apache-2.0"

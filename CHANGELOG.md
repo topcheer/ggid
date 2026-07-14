@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] — HSM/KMS Key Provider Release
+
+### Added
+- `pkg/crypto.KeyProvider` abstraction supporting local PEM, PKCS#11 HSM, AWS KMS, GCP KMS, Azure Key Vault, and HashiCorp Vault Transit.
+- PKCS#11 KeyProvider implementation with SoftHSM2 integration tests (build tag `pkcs11`).
+- Auth, OAuth, and Gateway services now initialize `crypto.NewKeyProvider` at startup via `GGID_KEY_PROVIDER` env var.
+- JWKS endpoint dynamically serves the public key from the active KeyProvider.
+- SoftHSM2 development environment under `deploy/softhsm2/`.
+- `GGID_KEY_PROVIDER`, `GGID_PKCS11_LIB`, `GGID_PKCS11_SLOT`, `GGID_PKCS11_PIN`, `GGID_PKCS11_KEY_LABEL` configuration env vars.
+
+### Changed
+- `TokenService` and OAuth server now accept a `crypto.KeyProvider` instead of loading PEM files directly.
+- Local RSA key auto-generation is now handled by the local KeyProvider fallback.
+
+### Fixed
+- Removed duplicate stub provider functions in `pkg/crypto`.
+- Updated `TestTokenService_KeyFilesCreated` to match KeyProvider model (public key derived from private key).
+
+---
+
 ## [Unreleased]
 
 ### Added — Phase 9-10 Features
