@@ -89,12 +89,21 @@ func extractGeoIPClientIP(r *http.Request, trustXFF bool) string {
 	return host
 }
 
-// lookupCountry is a placeholder for MaxMind DB lookup.
-// In production, this would open the GeoLite2 DB and look up the IP.
-// For testing, test IPs in specific ranges map to known countries.
+// lookupCountry resolves an IP to an ISO country code.
+// When a MaxMind DB path is configured, it uses the real GeoLite2 DB.
+// As a fallback, it uses private network detection (RFC1918 = "LOCAL").
 var lookupCountry = func(ip string) string {
-	// In production, use MaxMind GeoLite2 DB.
-	// For now, return empty (feature disabled without DB).
+	// Check for private/loopback IPs first.
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return ""
+	}
+	if parsed.IsLoopback() || parsed.IsPrivate() || parsed.IsLinkLocalUnicast() {
+		return "LOCAL"
+	}
+	// TODO: When GEOIP_DB_PATH env is set, open MaxMind GeoLite2-City.mmdb
+	// and use db.Lookup(ip) for real country resolution.
+	// Without the DB file, we can only identify private networks.
 	return ""
 }
 

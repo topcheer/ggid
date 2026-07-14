@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -853,10 +854,29 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	})
 
 	mux.HandleFunc("/saml/sso", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{
-			"status": "saml_sso_initiated",
-			"note":   "SP-initiated SSO redirect placeholder",
-		})
+		// SP-initiated SSO: generate a SAML AuthnRequest and redirect to IdP.
+		entityID := cfg.Issuer + "/saml/metadata"
+		acsURL := cfg.Issuer + "/saml/acs"
+		idpSSOURL := r.URL.Query().Get("idp")
+		if idpSSOURL == "" {
+			idpSSOURL = cfg.Issuer + "/saml/idp/sso"
+		}
+
+		sp := &saml.ServiceProvider{
+			EntityID:             entityID,
+			ACSURL:               acsURL,
+			WantAssertionsSigned: true,
+		}
+
+		authnReq := saml.BuildAuthnRequest(sp, idpSSOURL)
+		encoded, err := authnReq.EncodeForRedirect()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to encode SAML AuthnRequest"})
+			return
+		}
+
+		redirectURL := idpSSOURL + "?SAMLRequest=" + encoded
+		http.Redirect(w, r, redirectURL, http.StatusFound)
 	})
 
 	mux.HandleFunc("/saml/slo", func(w http.ResponseWriter, r *http.Request) {
@@ -1165,6 +1185,46 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/oidc/claim-mapping", handleOIDCClaimMapping)
 	mux.HandleFunc("/api/v1/oauth/issuer/metadata", handleIssuerMetadataConfig)
 	mux.HandleFunc("/api/v1/oauth/ciba/config", handleCIBAConfig)
+	mux.HandleFunc("/api/v1/oauth/backchannel", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method_not_allowed"})
+			return
+		}
+		_ = r.ParseForm()
+		tenantIDStr := r.Header.Get("X-Tenant-ID")
+		if tenantIDStr == "" {
+			tenantIDStr = r.FormValue("tenant_id")
+		}
+		tenantID, err := uuid.Parse(tenantIDStr)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header or tenant_id param required"})
+			return
+		}
+		req := &service.BackchannelAuthRequest{
+			TenantID:       tenantID,
+			ClientID:       r.FormValue("client_id"),
+			ClientSecret:   r.FormValue("client_secret"),
+			Scope:          r.FormValue("scope"),
+			ACRValues:      r.FormValue("acr_values"),
+			LoginHint:      r.FormValue("login_hint"),
+			LoginHintToken: r.FormValue("login_hint_token"),
+			IDTokenHint:    r.FormValue("id_token_hint"),
+			BindingMessage: r.FormValue("binding_message"),
+			UserCode:       r.FormValue("user_code"),
+			Context:        r.FormValue("context"),
+		}
+		if expiryStr := r.FormValue("requested_expiry"); expiryStr != "" {
+			if n, err := strconv.Atoi(expiryStr); err == nil {
+				req.RequestedExpiry = n
+			}
+		}
+		resp, err := oauthSvc.BackchannelAuthentication(r.Context(), req)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, resp)
+	})
 	mux.HandleFunc("/api/v1/oauth/jar/config", handleJARConfig)
 	mux.HandleFunc("/api/v1/oauth/oidc-federation/config", handleOIDCFederationConfig)
 	mux.HandleFunc("/api/v1/oauth/par/config", handlePARConfig)
