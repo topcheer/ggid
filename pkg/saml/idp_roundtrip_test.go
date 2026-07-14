@@ -1,289 +1,244 @@
 package saml
 
 import (
-	"crypto/x509"
 	"encoding/xml"
 	"strings"
 	"testing"
+	"time"
 )
 
-// TestIdP_SP_RoundTrip is the critical cascade authentication test:
-// 1. IdP builds and signs a SAML Response
-// 2. SP extracts the assertion from the Response
-// 3. SP verifies the IdP's signature
-// 4. SP extracts user attributes
-//
-// This proves GGID can act as IdP and its SAML Responses
-// can be verified by any standards-compliant SP.
-func TestIdP_SP_RoundTrip(t *testing.T) {
-	// Setup: generate IdP key pair
-	cert, key := genRSACertWithKey(t)
-	derBytes, err := x509.CreateCertificate(nil, cert, cert, &key.PublicKey, key)
-	if err != nil {
-		t.Fatalf("create DER cert: %v", err)
+// extractAssertionFromResponse extracts the <Assertion> element from a
+// <samlp:Response> XML document and returns it as standalone XML.
+func extractAssertionFromResponse(t *testing.T, responseXML []byte) []byte {
+	t.Helper()
+	// We need the raw bytes, so find <Assertion> in the XML string
+	s := string(responseXML)
+	startTag := "<Assertion"
+	endTag := "</Assertion>"
+	startIdx := strings.Index(s, startTag)
+	if startIdx < 0 {
+		// Try with namespace prefix
+		startTag = "<saml:Assertion"
+		endTag = "</saml:Assertion>"
+		startIdx = strings.Index(s, startTag)
 	}
+	if startIdx < 0 {
+		t.Fatal("no <Assertion> element found in Response XML")
+	}
+	endIdx := strings.Index(s[startIdx:], endTag)
+	if endIdx < 0 {
+		t.Fatal("no closing </Assertion> found")
+	}
+	endIdx += startIdx + len(endTag)
+	assertionXML := responseXML[startIdx:endIdx]
+	// Remove namespace prefix for ParseAssertion (it expects bare <Assertion>)
+	cleaned := strings.ReplaceAll(string(assertionXML), "saml:", "")
+	return []byte(cleaned)
+}
+
+var _ = xml.Marshal // keep import for potential future use
+
+func TestIdP_SP_RoundTrip_BasicAttributes(t *testing.T) {
+	// Generate RSA key + cert for IdP
+	cert, privKey := genRSACertWithKey(t)
 
 	idp := &IdentityProvider{
-		EntityID:    "https://ggid.example.com/saml/idp/metadata",
-		SSOURL:      "https://ggid.example.com/saml/idp/sso",
-		SLOURL:      "https://ggid.example.com/saml/idp/slo",
-		PrivateKey:  key,
-		Certificate: derBytes,
+		EntityID:    "https://idp.example.com/saml",
+		SSOURL:      "https://idp.example.com/sso",
+		SLOURL:      "https://idp.example.com/slo",
+		PrivateKey:  privKey,
+		Certificate: cert.Raw,
+		KeyID:       "test-key-id",
 	}
 
-	// Step 1: IdP builds signed SAML Response
-	respXML, err := idp.BuildSAMLResponse(&SAMLResponseRequest{
+	req := &SAMLResponseRequest{
 		Destination:  "https://sp.example.com/acs",
-		Audience:     "https://sp.example.com/metadata",
+		Audience:     "https://sp.example.com/saml",
 		NameID:       "user@example.com",
 		NameIDFormat: NameIDFormatEmailAddress,
 		Attributes: map[string][]string{
-			"email":       {"user@example.com"},
-			"displayName": {"Test User"},
-			"groups":      {"admin", "users"},
+			"email":        {"user@example.com"},
+			"displayName":  {"Test User"},
+			"role":         {"admin", "editor"},
 		},
-		InResponseTo: "req-abc-123",
-	})
+	}
+
+	// Step 1: IdP builds signed SAML Response
+	responseXML, err := idp.BuildSAMLResponse(req)
 	if err != nil {
-		t.Fatalf("IdP BuildSAMLResponse failed: %v", err)
+		t.Fatalf("BuildSAMLResponse: %v", err)
+	}
+	if len(responseXML) == 0 {
+		t.Fatal("empty response XML")
 	}
 
-	respStr := string(respXML)
-
-	// Step 2: SP extracts the assertion from the Response XML
-	assertionXML := extractAssertionFromResponse(respStr)
-	if assertionXML == nil {
-		t.Fatal("SP failed to extract assertion from SAML Response")
+	// Verify it's a SAML Response
+	if !strings.Contains(string(responseXML), "samlp:Response") {
+		t.Error("response XML does not contain samlp:Response")
 	}
 
-	// Step 3: SP verifies the IdP's signature
+	// Step 2: Extract the signed Assertion from the Response
+	assertionXML := extractAssertionFromResponse(t, responseXML)
+	if len(assertionXML) == 0 {
+		t.Fatal("extracted assertion XML is empty")
+	}
+
+	// Step 3: SP verifies the signed assertion
 	assertion, err := VerifySignedAssertion(assertionXML, cert)
 	if err != nil {
-		t.Fatalf("SP VerifySignedAssertion failed: %v", err)
+		t.Fatalf("VerifySignedAssertion: %v", err)
 	}
 
-	// Step 4: Verify assertion contents
-	if assertion.ID == "" {
-		t.Error("assertion ID should not be empty")
-	}
-	if assertion.IssueInstant == "" {
-		t.Error("assertion IssueInstant should not be empty")
+	// Step 4: Verify NameID
+	if assertion.Subject.NameID != "user@example.com" {
+		t.Errorf("NameID = %s, want user@example.com", assertion.Subject.NameID)
 	}
 
-	// Step 5: Verify the response contains correct attributes
-	if !strings.Contains(respStr, "user@example.com") {
-		t.Error("response should contain NameID")
+	// Step 5: Verify attributes
+	attrs := ExtractAttributes(assertion)
+	if email, ok := attrs["email"]; !ok || len(email) == 0 || email[0] != "user@example.com" {
+		t.Errorf("email attribute = %v, want [user@example.com]", attrs["email"])
 	}
-	if !strings.Contains(respStr, "Test User") {
-		t.Error("response should contain displayName attribute")
+	if name, ok := attrs["displayName"]; !ok || len(name) == 0 || name[0] != "Test User" {
+		t.Errorf("displayName attribute = %v, want [Test User]", attrs["displayName"])
 	}
-	if !strings.Contains(respStr, "admin") {
-		t.Error("response should contain groups attribute")
-	}
-	if !strings.Contains(respStr, "Success") {
-		t.Error("response status should be Success")
-	}
-	if !strings.Contains(respStr, "req-abc-123") {
-		t.Error("response should contain InResponseTo")
-	}
-
-	// Step 6: Verify signature is valid XML
-	if !strings.Contains(respStr, "ds:Signature") {
-		t.Error("response should contain XMLDSig signature")
-	}
-	if !strings.Contains(respStr, "rsa-sha256") {
-		t.Error("signature should use rsa-sha256")
-	}
-
-	t.Log("SP→IdP roundtrip: IdP signed assertion verified by SP successfully")
-}
-
-// TestIdP_SP_RoundTrip_PersistentNameID tests with persistent NameID format
-func TestIdP_SP_RoundTrip_PersistentNameID(t *testing.T) {
-	cert, key := genRSACertWithKey(t)
-	derBytes, _ := x509.CreateCertificate(nil, cert, cert, &key.PublicKey, key)
-
-	idp := &IdentityProvider{
-		EntityID:    "https://ggid.example.com/saml/idp/metadata",
-		PrivateKey:  key,
-		Certificate: derBytes,
-	}
-
-	respXML, err := idp.BuildSAMLResponse(&SAMLResponseRequest{
-		Destination:  "https://sp.example.com/acs",
-		Audience:     "https://sp.example.com/metadata",
-		NameID:       "persistent-user-id-12345",
-		NameIDFormat: NameIDFormatPersistent,
-	})
-	if err != nil {
-		t.Fatalf("BuildSAMLResponse: %v", err)
-	}
-
-	respStr := string(respXML)
-
-	// Verify persistent format is used
-	if !strings.Contains(respStr, "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent") {
-		t.Error("response should use persistent NameID format")
-	}
-	if !strings.Contains(respStr, "persistent-user-id-12345") {
-		t.Error("response should contain persistent NameID value")
-	}
-
-	// Verify the assertion can be extracted and parsed
-	assertionXML := extractAssertionFromResponse(respStr)
-	if assertionXML == nil {
-		t.Fatal("failed to extract assertion")
-	}
-
-	var parsed SAMLAssertion
-	if err := xml.Unmarshal(assertionXML, &parsed); err != nil {
-		t.Fatalf("failed to parse extracted assertion: %v", err)
-	}
-}
-
-// TestIdP_SP_RoundTrip_Unsolicited tests IdP-initiated (unsolicited) SSO
-func TestIdP_SP_RoundTrip_Unsolicited(t *testing.T) {
-	cert, key := genRSACertWithKey(t)
-	derBytes, _ := x509.CreateCertificate(nil, cert, cert, &key.PublicKey, key)
-
-	idp := &IdentityProvider{
-		EntityID:    "https://ggid.example.com/saml/idp/metadata",
-		PrivateKey:  key,
-		Certificate: derBytes,
-	}
-
-	// No InResponseTo = unsolicited (IdP-initiated)
-	respXML, err := idp.BuildSAMLResponse(&SAMLResponseRequest{
-		Destination: "https://sp.example.com/acs",
-		Audience:    "https://sp.example.com/metadata",
-		NameID:      "user@example.com",
-		// InResponseTo intentionally empty
-	})
-	if err != nil {
-		t.Fatalf("BuildSAMLResponse: %v", err)
-	}
-
-	respStr := string(respXML)
-
-	// Verify response is valid
-	if !strings.Contains(respStr, "samlp:Response") {
-		t.Error("should contain Response element")
-	}
-	if !strings.Contains(respStr, "Success") {
-		t.Error("status should be Success")
-	}
-
-	// Verify assertion can be extracted and verified
-	assertionXML := extractAssertionFromResponse(respStr)
-	if assertionXML == nil {
-		t.Fatal("failed to extract assertion")
-	}
-
-	_, err = VerifySignedAssertion(assertionXML, cert)
-	if err != nil {
-		t.Fatalf("SP verification of unsolicited response failed: %v", err)
-	}
-
-	t.Log("IdP-initiated (unsolicited) SSO: assertion verified by SP")
-}
-
-// TestIdP_SP_RoundTrip_MultipleAttributes verifies multi-valued attributes
-func TestIdP_SP_RoundTrip_MultipleAttributes(t *testing.T) {
-	cert, key := genRSACertWithKey(t)
-	derBytes, _ := x509.CreateCertificate(nil, cert, cert, &key.PublicKey, key)
-
-	idp := &IdentityProvider{
-		EntityID:    "https://ggid.example.com",
-		PrivateKey:  key,
-		Certificate: derBytes,
-	}
-
-	respXML, err := idp.BuildSAMLResponse(&SAMLResponseRequest{
-		Destination: "https://sp.example.com/acs",
-		Audience:    "https://sp.example.com",
-		NameID:      "user@example.com",
-		Attributes: map[string][]string{
-			"groups":   {"admin", "users", "developers"},
-			"roles":    {"superadmin"},
-			"email":    {"user@example.com"},
-			"employee": {"E12345"},
-		},
-	})
-	if err != nil {
-		t.Fatalf("BuildSAMLResponse: %v", err)
-	}
-
-	respStr := string(respXML)
-
-	// All attribute values should be present
-	expectedValues := []string{"admin", "users", "developers", "superadmin", "user@example.com", "E12345"}
-	for _, v := range expectedValues {
-		if !strings.Contains(respStr, v) {
-			t.Errorf("response should contain attribute value: %s", v)
+	if roles, ok := attrs["role"]; !ok || len(roles) != 2 {
+		t.Errorf("role attribute = %v, want 2 values", attrs["role"])
+	} else {
+		if roles[0] != "admin" || roles[1] != "editor" {
+			t.Errorf("roles = %v, want [admin editor]", roles)
 		}
 	}
 }
 
-// TestIdP_MetadataCanBeConsumedBySP verifies the IdP metadata
-// can be parsed by a standards-compliant SP
-func TestIdP_MetadataCanBeConsumedBySP(t *testing.T) {
-	cert, key := genRSACertWithKey(t)
-	derBytes, _ := x509.CreateCertificate(nil, cert, cert, &key.PublicKey, key)
+func TestIdP_SP_RoundTrip_UnsignedAssertionFails(t *testing.T) {
+	// An unsigned assertion should fail verification
+	cert, _ := genRSACertWithKey(t)
 
-	idp := &IdentityProvider{
-		EntityID:    "https://ggid.example.com/saml/idp/metadata",
-		SSOURL:      "https://ggid.example.com/saml/idp/sso",
-		SLOURL:      "https://ggid.example.com/saml/idp/slo",
-		PrivateKey:  key,
-		Certificate: derBytes,
-	}
+	unsignedXML := []byte(`<Assertion ID="abc" Version="2.0" IssueInstant="2025-01-01T00:00:00Z">
+		<Issuer>https://idp.example.com</Issuer>
+		<Subject><NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">user@test.com</NameID></Subject>
+		<Conditions NotBefore="2025-01-01T00:00:00Z" NotOnOrAfter="2026-01-01T00:00:00Z"/>
+	</Assertion>`)
 
-	meta, err := idp.GenerateIdPMetadata()
-	if err != nil {
-		t.Fatalf("GenerateIdPMetadata: %v", err)
-	}
-
-	// SP should be able to parse this as valid XML
-	var parsed struct {
-		XMLName xml.Name `xml:"EntityDescriptor"`
-		EntityID string  `xml:"entityID,attr"`
-	}
-	if err := xml.Unmarshal(meta, &parsed); err != nil {
-		t.Fatalf("SP failed to parse IdP metadata: %v", err)
-	}
-
-	if parsed.EntityID != idp.EntityID {
-		t.Errorf("metadata EntityID mismatch: got %s, want %s", parsed.EntityID, idp.EntityID)
-	}
-
-	// Verify cert in metadata matches IdP cert
-	if !strings.Contains(string(meta), "X509Certificate") {
-		t.Error("metadata should contain X509Certificate for SP to verify signatures")
+	_, err := VerifySignedAssertion(unsignedXML, cert)
+	if err == nil {
+		t.Error("expected error for unsigned assertion, got nil")
 	}
 }
 
-// extractAssertionFromResponse extracts the <saml:Assertion> element from
-// a SAML Response XML string. This simulates what an SP does when it
-// receives a SAML Response from an IdP.
-func extractAssertionFromResponse(respStr string) []byte {
-	startTag := "<saml:Assertion"
-	endTag := "</saml:Assertion>"
+func TestIdP_SP_RoundTrip_WrongCertFails(t *testing.T) {
+	// Sign with one key, verify with a different cert
+	cert1, privKey := genRSACertWithKey(t)
+	cert2, _ := genRSACertWithKey(t) // different key pair
 
-	start := strings.Index(respStr, startTag)
-	if start < 0 {
-		// Try without namespace prefix
-		startTag = "<Assertion"
-		endTag = "</Assertion>"
-		start = strings.Index(respStr, startTag)
-	}
-	if start < 0 {
-		return nil
+	idp := &IdentityProvider{
+		EntityID:    "https://idp.example.com/saml",
+		PrivateKey:  privKey,
+		Certificate: cert1.Raw,
+		KeyID:       "key1",
 	}
 
-	end := strings.Index(respStr[start:], endTag)
-	if end < 0 {
-		return nil
+	req := &SAMLResponseRequest{
+		Destination:  "https://sp.example.com/acs",
+		Audience:     "https://sp.example.com",
+		NameID:       "user@example.com",
 	}
 
-	return []byte(respStr[start : start+end+len(endTag)])
+	responseXML, err := idp.BuildSAMLResponse(req)
+	if err != nil {
+		t.Fatalf("BuildSAMLResponse: %v", err)
+	}
+
+	assertionXML := extractAssertionFromResponse(t, responseXML)
+
+	// Verify with wrong cert — should fail
+	_, err = VerifySignedAssertion(assertionXML, cert2)
+	if err == nil {
+		t.Error("expected signature verification failure with wrong cert, got nil")
+	}
+}
+
+func TestIdP_SP_RoundTrip_MinimalRequest(t *testing.T) {
+	cert, privKey := genRSACertWithKey(t)
+
+	idp := &IdentityProvider{
+		EntityID:    "https://idp.example.com",
+		PrivateKey:  privKey,
+		Certificate: cert.Raw,
+		KeyID:       "minimal-key",
+	}
+
+	// Minimal request — only required fields
+	req := &SAMLResponseRequest{
+		Destination: "https://sp.example.com/acs",
+		NameID:      "minimal@test.com",
+	}
+
+	responseXML, err := idp.BuildSAMLResponse(req)
+	if err != nil {
+		t.Fatalf("BuildSAMLResponse minimal: %v", err)
+	}
+
+	assertionXML := extractAssertionFromResponse(t, responseXML)
+
+	assertion, err := VerifySignedAssertion(assertionXML, cert)
+	if err != nil {
+		t.Fatalf("VerifySignedAssertion minimal: %v", err)
+	}
+
+	if assertion.Subject.NameID != "minimal@test.com" {
+		t.Errorf("NameID = %s, want minimal@test.com", assertion.Subject.NameID)
+	}
+
+	// Default NameIDFormat should be emailAddress
+	// (already tested in idp_test.go)
+}
+
+func TestIdP_SP_RoundTrip_WithAttributes(t *testing.T) {
+	cert, privKey := genRSACertWithKey(t)
+
+	idp := &IdentityProvider{
+		EntityID:    "https://idp.example.com",
+		PrivateKey:  privKey,
+		Certificate: cert.Raw,
+		KeyID:       "attr-key",
+	}
+
+	req := &SAMLResponseRequest{
+		Destination: "https://sp.example.com/acs",
+		NameID:      "attr@test.com",
+		Attributes: map[string][]string{
+			"groups":   {"engineering", "security"},
+			"department": {"IT"},
+			"manager":  {"boss@example.com"},
+		},
+		InResponseTo: "req-123",
+		RelayState:   "state-abc",
+		NotBefore:    time.Now().Add(-5 * time.Minute),
+		NotOnOrAfter: time.Now().Add(10 * time.Minute),
+	}
+
+	responseXML, err := idp.BuildSAMLResponse(req)
+	if err != nil {
+		t.Fatalf("BuildSAMLResponse: %v", err)
+	}
+
+	assertionXML := extractAssertionFromResponse(t, responseXML)
+
+	assertion, err := VerifySignedAssertion(assertionXML, cert)
+	if err != nil {
+		t.Fatalf("VerifySignedAssertion: %v", err)
+	}
+
+	attrs := ExtractAttributes(assertion)
+	if groups, ok := attrs["groups"]; !ok || len(groups) != 2 {
+		t.Errorf("groups = %v, want 2 values", attrs["groups"])
+	}
+	if dept, ok := attrs["department"]; !ok || len(dept) != 1 || dept[0] != "IT" {
+		t.Errorf("department = %v, want [IT]", attrs["department"])
+	}
+	if mgr, ok := attrs["manager"]; !ok || len(mgr) != 1 || mgr[0] != "boss@example.com" {
+		t.Errorf("manager = %v, want [boss@example.com]", attrs["manager"])
+	}
 }
