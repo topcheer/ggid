@@ -12,12 +12,12 @@
 
 ## Summary
 
-- Total findings: 19
-- Done: 18
+- Total findings: 20
+- Done: 19
 - Fixed (pending verification): 0
 - Partial: 1
-- Remaining: 0
-- Last scan: 2026-07-15 round 16 (E2E regression tests — 11/11 PASS)
+- Remaining: 1
+- Last scan: 2026-07-15 round 17 (focus: G — SDK Alignment)
 
 ## Findings
 
@@ -45,6 +45,7 @@
 | 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | 5a40d929 |
 | 18 | E2E Docker regression suite | deploy/e2e-docker-test.sh | Docker E2E tests were failing due to migrate container command typo. Fixed `sh` duplication; 11/11 E2E tests now PASS. | [DONE] | 6f7d68e0 |
 | 19 | Server handler coverage gaps | identity/internal/server, audit/internal/server, org/internal/server | Added focused HTTP handler tests for certification-status, management-chain, reassign, GDPR export, query-metrics, SIEM health, daily-aggregations, access-matrix, teams-export, membership-trends. | [DONE] | d0bdeb50 |
+| 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request endpoints exist in Go SDK and Node SDK, but missing in Python, Java, Rust, Ruby, C#, Dart, PHP SDKs. | [NEW] | arch |
 
 ### LOW Priority
 
@@ -54,7 +55,7 @@
 | 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
 | 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | PKCS#11 provider + integration into auth/oauth/gateway cmd/main.go; TokenService and OAuth server accept KeyProvider; local keys auto-generated. | [DONE] | 12db3bac |
 
-## Previously Fixed (Prior Scans)
+| 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request endpoints exist in Go SDK and Node SDK, but missing in Python, Java, Rust, Ruby, C#, Dart, PHP SDKs. | [NEW] | arch |
 
 | Feature | Was | Fixed By | Commit | Date |
 |---------|------|----------|--------|------|
