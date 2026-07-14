@@ -38,9 +38,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/permissions", s.handlePermissions)
 	mux.HandleFunc("/api/v1/policies", s.handlePolicies)
 	mux.HandleFunc("/api/v1/policies/", s.handlePolicyByID)
-	mux.HandleFunc("/api/v1/policy-versions", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]interface{}{"versions": []interface{}{}, "total": 0})
-	})
+	mux.HandleFunc("/api/v1/policy-versions", s.handlePolicyVersions)
 	mux.HandleFunc("/api/v1/policies/check", s.handleCheck)
 	mux.HandleFunc("/api/v1/policies/evaluate", s.handleEvaluate)
 	mux.HandleFunc("/api/v1/policies/export", s.handlePolicyExport)
@@ -91,9 +89,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/role-templates", s.handleRoleTemplates)
 	mux.HandleFunc("/api/v1/policies/role-templates/apply", s.handleRoleTemplateApply)
 	mux.HandleFunc("/api/v1/role-templates", s.handleRoleTemplates) // alias for frontend
-	mux.HandleFunc("/api/v1/scope-management/scopes", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]interface{}{"scopes": []interface{}{}, "total": 0})
-	})
+	mux.HandleFunc("/api/v1/scope-management/scopes", s.handlePermissions)
 	mux.HandleFunc("/api/v1/policies/diff", s.handlePolicyDiff)
 	mux.HandleFunc("/api/v1/policies/analyze", s.handleAnalyze)
 	mux.HandleFunc("/api/v1/policies/decision-log", s.handleDecisionLog)
@@ -126,9 +122,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/rate-limits", s.handleRateLimitsAlias)
 	mux.HandleFunc("/api/v1/permissions/tree", s.handlePermissionTreeAlias)
 	mux.HandleFunc("/api/v1/sod/rules", s.handleSoDRulesAlias)
-	mux.HandleFunc("/api/v1/sod/conflicts", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]interface{}{"conflicts": []interface{}{}, "total": 0})
-	})
+	mux.HandleFunc("/api/v1/sod/conflicts", s.handleSoDViolations)
 	mux.HandleFunc("/api/v1/policies/tags", s.handlePolicyTags)
 	mux.HandleFunc("/api/v1/policies/access-reviews/auto-assign", s.handleAutoAssign)
 	mux.HandleFunc("/api/v1/policies/policy-set/evaluate", s.handlePolicySetEvaluate)

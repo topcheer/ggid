@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 1
 - Remaining: 0
-- Last scan: 2026-07-14 round 7 (focus: G — SDK Alignment)
+- Last scan: 2026-07-14 round 8 (focus: A — Interface Integrity)
 
 ## Findings
 
@@ -76,6 +76,7 @@
 | 2026-07-14 | Round 7 — Focus G | +3 SDK gaps | 3 |
 | 2026-07-14 | Gap audit & deduplication | -5 false positives | 5 verified |
 | 2026-07-14 | CIBA + Client Branding verification | 0 | 2 verified as DONE |
+| 2026-07-14 | Round 8 — Focus A (Interface Integrity) | +4 route/handler interface gaps | 4 (gateway TODO, policy route aliases) |
 
 ## Remaining Real Gaps (post-audit)
 

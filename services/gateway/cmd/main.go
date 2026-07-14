@@ -36,7 +36,6 @@ func main() {
 	}
 
 	// Connect to Redis for sysconfig hot-reload (optional — gateway degrades gracefully without it)
-	// TODO: wire sysconfigStore into gateway middleware for rate-limit / session-timeout hot-reload
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
