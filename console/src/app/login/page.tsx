@@ -42,7 +42,8 @@ export default function LoginPage() {
       // The backend /api/v1/webauthn/auth/begin endpoint supports discoverable credentials.
       (async () => {
         try {
-          const isConditional = await (PublicKeyCredential as any).isConditionalMediationAvailable?.();
+          const pkc = PublicKeyCredential as unknown as typeof PublicKeyCredential & { isConditionalMediationAvailable?: () => Promise<boolean> };
+          const isConditional = await pkc.isConditionalMediationAvailable?.();
           if (!isConditional) return;
           // Trigger a conditional passkey authentication.
           // The browser will show the passkey in the autofill dropdown.
@@ -292,6 +293,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
+              aria-label={loading ? t("login.signingIn") : t("login.signIn")}
               className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {loading ? t("login.signingIn") : t("login.signIn")}
@@ -310,6 +312,7 @@ export default function LoginPage() {
                   key={conn.id}
                   type="button"
                   onClick={() => handleSocialLogin(conn.provider)}
+                  aria-label={`Sign in with ${conn.name}`}
                   className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-950"
                 >
                   <SocialIcon provider={conn.provider} />
@@ -370,6 +373,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || totpCode.length !== 6}
+              aria-label={loading ? t("login.verifying") : t("login.verifySignIn")}
               className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {loading ? t("login.verifying") : t("login.verifySignIn")}
@@ -378,6 +382,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setStep("credentials"); setError(""); setTotpCode(""); }}
+              aria-label={t("login.backToLogin")}
               className="mt-3 flex w-full items-center justify-center gap-1 text-sm text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft className="h-4 w-4" /> {t("login.backToLogin")}
