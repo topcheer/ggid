@@ -16,7 +16,7 @@ export default function TenantBrandingPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data) setBranding(prev => ({ ...prev, ...data }));
-    } catch (err: any) { setError(err.message); }
+    } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }
     finally { setLoading(false); }
   }, []);
 

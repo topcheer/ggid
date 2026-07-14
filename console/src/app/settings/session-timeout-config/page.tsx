@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { Clock, Save, Shield } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Clock, Save, Shield, Loader2, AlertCircle } from "lucide-react";
 
 interface RoleOverride {
   role: string;
@@ -22,12 +22,26 @@ export default function SessionTimeoutConfigPage() {
   const [config, setConfig] = useState<Config>({ idle_timeout_minutes: 30, absolute_timeout_hours: 8, warning_before_minutes: 5, grace_period: true, enforce_on_mobile: false, role_overrides: [{ role: "admin", idle_timeout_minutes: 15, absolute_timeout_hours: 4 }, { role: "viewer", idle_timeout_minutes: 60, absolute_timeout_hours: 12 }] });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setLoading(true); setError("");
+    fetch("/api/v1/auth/session-timeout-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+      .then(async (res) => { if (res.ok) { const data = await res.json(); if (data) setConfig(data); } })
+      .catch(() => { /* use defaults */ })
+      .finally(() => setLoading(false));
+  }, []);
 
   const save = useCallback(async () => {
-    setSaving(true);
-    try { await fetch("/api/v1/auth/session-timeout-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); setSaved(true); setTimeout(() => setSaved(false), 2000); }
-    catch { /* noop */ }
-    finally { setSaving(false); }
+    setSaving(true); setError("");
+    try {
+      const res = await fetch("/api/v1/auth/session-timeout-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
+      if (!res.ok) throw new Error(`Save failed: HTTP ${res.status}`);
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save configuration");
+    } finally { setSaving(false); }
   }, [config]);
 
   return (
@@ -37,6 +51,8 @@ export default function SessionTimeoutConfigPage() {
         <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
       </div>
       {saved && <div className="text-sm text-green-600">Saved!</div>}
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {error}</div>}
+      {loading && <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Loading configuration...</div>}
 
       <div className="rounded-lg border dark:border-gray-800 p-6 space-y-4 max-w-lg">
         <div><label className="text-sm font-medium">Idle Timeout (minutes)</label><div className="flex items-center gap-3 mt-1"><input type="range" min={5} max={120} value={config.idle_timeout_minutes} onChange={(e) => setConfig({ ...config, idle_timeout_minutes: parseInt(e.target.value) })} className="flex-1" /><span className="text-sm font-bold w-12 text-right">{config.idle_timeout_minutes}m</span></div></div>
