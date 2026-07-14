@@ -553,7 +553,8 @@ func (h *Handler) replaceUser(ctx context.Context, w http.ResponseWriter, r *htt
 		input.AvatarURL = &avatar
 	}
 
-	user, err := h.svc.UpdateUser(ctx, userID, input) //nolint:ineffassign // user reassigned below
+	var user *domain.User
+	_, err = h.svc.UpdateUser(ctx, userID, input)
 	if err != nil {
 		writeSCIMErrorWithType(w, http.StatusBadRequest, ScimTypeInvalidValue, err.Error())
 		return

@@ -86,7 +86,7 @@ func (r *GroupRepo) UpdateGroup(ctx context.Context, tenantID, id uuid.UUID, inp
 	if input.ExternalID != nil {
 		setParts = append(setParts, fmt.Sprintf("external_id = $%d", argIdx))
 		args = append(args, *input.ExternalID)
-		argIdx++
+		_ = argIdx // argIdx would increment here but is not used after
 	}
 
 	query := fmt.Sprintf(`UPDATE scim_groups SET %s WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
