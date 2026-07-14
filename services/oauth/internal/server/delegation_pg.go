@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"context"
 	"encoding/json"
 	"sync"
@@ -31,13 +32,13 @@ func newDelegationAdapter(pool *pgxpool.Pool) *delegationAdapter {
 
 func (s *pgDelegationStore) EnsureSchema(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS delegation_chains (token_id TEXT PRIMARY KEY, chain JSONB NOT NULL DEFAULT '[]', created_at TIMESTAMPTZ DEFAULT NOW())`)
-	return err
+	return fmt.Errorf("schema operation failed: %w", err)
 }
 
 func (s *pgDelegationStore) Put(ctx context.Context, tokenID string, chain []DelegationEntry) error {
 	chainJSON, _ := json.Marshal(chain)
 	_, err := s.pool.Exec(ctx, `INSERT INTO delegation_chains (token_id, chain, created_at) VALUES ($1,$2,NOW()) ON CONFLICT (token_id) DO UPDATE SET chain=$2`, tokenID, chainJSON)
-	return err
+	return fmt.Errorf("schema operation failed: %w", err)
 }
 
 func (s *pgDelegationStore) Get(ctx context.Context, tokenID string) ([]DelegationEntry, bool) {

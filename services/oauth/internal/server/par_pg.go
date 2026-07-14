@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"context"
 	"encoding/json"
 	"sync"
@@ -31,13 +32,13 @@ func newPARAdapter(pool *pgxpool.Pool) *parAdapter {
 
 func (s *pgPARStore) EnsureSchema(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS par_requests (request_uri TEXT PRIMARY KEY, client_id TEXT NOT NULL, params JSONB DEFAULT '{}', signed_request_object TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW(), expires_at TIMESTAMPTZ NOT NULL, used BOOLEAN DEFAULT FALSE)`)
-	return err
+	return fmt.Errorf("schema operation failed: %w", err)
 }
 
 func (s *pgPARStore) Put(ctx context.Context, e *PAREntry) error {
 	params, _ := json.Marshal(e.Params)
 	_, err := s.pool.Exec(ctx, `INSERT INTO par_requests (request_uri, client_id, params, signed_request_object, created_at, expires_at, used) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (request_uri) DO UPDATE SET used=$7`, e.RequestURI, e.ClientID, params, e.SignedRequestObject, e.CreatedAt, e.ExpiresAt, e.Used)
-	return err
+	return fmt.Errorf("schema operation failed: %w", err)
 }
 
 func (s *pgPARStore) Get(ctx context.Context, requestURI string) (*PAREntry, bool) {
@@ -50,12 +51,12 @@ func (s *pgPARStore) Get(ctx context.Context, requestURI string) (*PAREntry, boo
 
 func (s *pgPARStore) MarkUsed(ctx context.Context, requestURI string) error {
 	_, err := s.pool.Exec(ctx, `UPDATE par_requests SET used = TRUE WHERE request_uri = $1`, requestURI)
-	return err
+	return fmt.Errorf("schema operation failed: %w", err)
 }
 
 func (s *pgPARStore) CleanExpired(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `DELETE FROM par_requests WHERE expires_at < NOW()`, )
-	return err
+	return fmt.Errorf("schema operation failed: %w", err)
 }
 
 func (a *parAdapter) Put(e *PAREntry) {
