@@ -33,6 +33,13 @@ export default function OrgTransferPage() {
   const [error, setError] = useState("");
   const [transferError, setTransferError] = useState("");
 
+  const retryLoadUsers = () => { setError(""); setLoading(true); fetch("/api/v1/identity/users", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
+    if (!res.ok) throw new Error(`Failed to load users: HTTP ${res.status}`);
+    const data = await res.json(); setUsers(data.users || data || []);
+  }).catch((e) => {
+    setError(e instanceof Error ? e.message : "Failed to load users");
+  }).finally(() => setLoading(false)); };
+
   useEffect(() => {
     setLoading(true); setError("");
     fetch("/api/v1/identity/users", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
@@ -83,9 +90,12 @@ export default function OrgTransferPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input type="text" placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
           </div>
-          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600">{error}</div>}
+          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retryLoadUsers} className="text-xs underline hover:text-red-700">Retry</button></div>}
           {loading ? (
-            <div className="rounded-lg border dark:border-gray-800 p-8 text-center text-sm text-gray-500">Loading users...</div>
+            <div className="rounded-lg border dark:border-gray-800 p-8 text-center">
+              <div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" />
+              <div className="text-sm text-gray-500">Loading users...</div>
+            </div>
           ) : (
           <div className="rounded-lg border dark:border-gray-800 max-h-80 overflow-y-auto">
             <div className="divide-y dark:divide-gray-800">
@@ -111,6 +121,12 @@ export default function OrgTransferPage() {
                 <div className="flex items-center gap-2 mb-3"><Building2 className="w-4 h-4 text-gray-400" /><span className="text-sm text-gray-500">Current: <span className="font-medium text-gray-700 dark:text-gray-300">{selectedUser.org_name}</span> ({selectedUser.role})</span></div>
                 <div className="flex items-center gap-2 mb-3"><ArrowRightLeft className="w-4 h-4 text-blue-400" /><span className="text-sm text-gray-500">Transfer to:</span><input type="text" value={newOrgId} onChange={(e) => setNewOrgId(e.target.value)} placeholder="new-org-uuid" className="flex-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
                 <button onClick={previewImpact} disabled={!newOrgId || previewing} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{previewing ? "Previewing..." : "Preview Impact"}</button>
+                {previewing && (
+                  <div className="mt-2 rounded-lg border dark:border-gray-800 p-3 text-center">
+                    <div className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-1" />
+                    <div className="text-xs text-gray-500">Previewing impact...</div>
+                  </div>
+                )}
               </div>
 
               {impact && (

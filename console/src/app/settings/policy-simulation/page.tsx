@@ -85,7 +85,13 @@ export default function PolicySimulationPage() {
         {/* Results */}
         <div className="space-y-3">
           {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retry} className="text-xs underline hover:text-red-700">Retry</button></div>}
-          {results ? (
+          {running && (
+            <div className="rounded-lg border dark:border-gray-800 p-8 text-center">
+              <div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" />
+              <div className="text-sm text-gray-500">Running simulation...</div>
+            </div>
+          )}
+          {!running && results ? (
             <>
               <div className="grid grid-cols-3 gap-2">
                 <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3 text-center"><span className="text-xs text-gray-500">Would Allow</span><p className="text-xl font-bold text-green-600">{wouldAllow.length}</p></div>

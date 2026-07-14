@@ -17,6 +17,8 @@ export default function OAuthClientMigrationPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const retryPreview = () => { setError(""); doPreview(); };
+
   const doPreview = async () => {
     setPreviewing(true); setError(""); setPreview(null);
     try {
@@ -55,11 +57,11 @@ export default function OAuthClientMigrationPage() {
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={notifyUsers} onChange={(e) => setNotifyUsers(e.target.checked)} className="rounded" /> Notify Users</label>
         </div>
         <div className="flex gap-2"><button onClick={doPreview} disabled={!source || !target || previewing} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm disabled:opacity-50" aria-label="Preview migration">{previewing ? "Previewing..." : "Preview"}</button><button onClick={execute} disabled={executing || !source || !target} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2" aria-label="Execute migration"><Play className="w-4 h-4" /> {executing ? "Migrating..." : "Execute"}</button></div>
-        {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600">{error}</div>}
+        {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retryPreview} className="text-xs underline hover:text-red-700">Retry</button></div>}
         {success && <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-700 dark:text-green-400">{success}</div>}
       </div>
 
-      {previewing && <div className="rounded-lg border dark:border-gray-800 p-8 text-center text-sm text-gray-500">Loading preview...</div>}
+      {previewing && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading preview...</div></div>}
       {preview && (<div className="rounded-lg border dark:border-gray-800 p-4 space-y-2"><h3 className="text-sm font-semibold">Migration Preview</h3><div className="grid grid-cols-3 gap-4 text-sm"><div><span className="text-gray-500">Scopes:</span> <span className="font-bold">{preview.scopes_to_migrate}</span></div><div><span className="text-gray-500">Grants:</span> <span className="font-bold">{preview.grants_to_migrate}</span></div><div><span className="text-gray-500">Tokens:</span> <span className="font-bold">{preview.tokens_to_migrate}</span></div></div>{preview.conflicts.length > 0 && (<div className="mt-2"><span className="text-xs font-semibold text-red-600">Conflicts:</span><div className="mt-1 space-y-1">{preview.conflicts.map((c, i) => (<div key={i} className="text-xs text-red-500">{c}</div>))}</div></div>)}</div>)}
     </div>
   );

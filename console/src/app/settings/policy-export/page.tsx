@@ -11,6 +11,8 @@ export default function PolicyExportPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const retryExport = () => { setError(""); doExport(); };
+
   const doExport = useCallback(async () => {
     setExporting(true); setError("");
     try {
@@ -84,7 +86,7 @@ export default function PolicyExportPage() {
         </div>
       )}
 
-      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center gap-2"><X className="w-4 h-4" /> {error}</div>}
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retryExport} className="text-xs underline hover:text-red-700">Retry</button></div>}
       {message && <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 p-3 text-sm text-green-700 dark:text-green-400 flex items-center gap-2"><Check className="w-4 h-4" /> {message}</div>}
     </div>
   );
