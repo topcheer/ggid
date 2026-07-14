@@ -1,0 +1,25 @@
+{
+  "name": "@ggid/react-native-sdk",
+  "version": "1.0.0",
+  "description": "GGID IAM SDK for React Native — OAuth login, JWT verification, RBAC",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "peerDependencies": {
+    "react-native": ">=0.72",
+    "expo-auth-session": "*",
+    "expo-web-browser": "*",
+    "expo-secure-store": "*"
+  },
+  "dependencies": {
+    "zustand": "^4.5"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/react": "^18",
+    "jest": "^29"
+  }
+}
