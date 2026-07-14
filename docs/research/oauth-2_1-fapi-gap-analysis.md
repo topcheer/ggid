@@ -1,33 +1,31 @@
-# OAuth 2.1 / FAPI 2.0 Compliance Gap Analysis
+# OAuth 2.1 / FAPI 2.0 Compliance Gap — Research Update
 
-*Research date: 2026-07-14*
-## Key requirements for GGID
+*Research date: 2026-07-15*
 
-1. **Mandatory PKCE for all authorization_code clients** — including confidential clients.
-2. **Reject implicit grant** and **Resource Owner Password Credentials (ROPC)**.
-3. **Exact redirect URI matching** (no path-based or wildcard looseness).
-4. **Refresh token rotation** with automatic reuse detection.
-5. **PAR (Pushed Authorization Requests)** should be default for high-assurance clients.
-6. **JAR/JARM** for request/response integrity.
-7. **Sender-constrained tokens** via DPoP or mTLS for FAPI 2.0.
+## Summary
 
-## GGID current status (arch assessment)
+OAuth 2.1 (draft, but de facto standard) consolidates RFC 6749 + RFC 7636 (PKCE) + RFC 9700 (Security BCP) and removes dangerous legacy options. FAPI 2.0 Security Profile is final and widely adopted by financial/enterprise IAM systems.
 
-| Requirement | Status | Notes |
-|-------------|--------|-------|
-| PKCE | PARTIAL | PKCE exists; not enforced for all clients |
-| Implicit/ROPC | NEEDS_REVIEW | Implicit may still be present in grant_types |
-| Redirect URI matching | NEEDS_REVIEW | Likely exact, but needs audit |
-| Refresh token rotation | IMPLEMENTED | Exists |
-| PAR | IMPLEMENTED | Exists |
-| JAR/JARM | IMPLEMENTED | JAR exists; JARM may not |
-| DPoP | IMPLEMENTED | Exists |
+## Mandatory changes for GGID
 
-## Recommended backlog items
+| Requirement | OAuth 2.0 | OAuth 2.1 / FAPI 2.0 | GGID Status |
+|-------------|-----------|----------------------|-------------|
+| PKCE | Optional for confidential | Mandatory for all authorization_code | PARTIAL |
+| Implicit grant | Allowed | Removed | NEEDS_REVIEW |
+| ROPC / password grant | Allowed | Removed | NEEDS_REVIEW |
+| Redirect URI matching | Implementation-defined | Exact string comparison | NEEDS_REVIEW |
+| Refresh token rotation | Optional | Mandatory for public clients | IMPLEMENTED |
+| Bearer token in query | Allowed | Forbidden | NEEDS_REVIEW |
+| state parameter | Recommended | Absorbed by PKCE (still for app state) | IMPLEMENTED |
 
-1. Add `oauth_2_1_strict` config flag to OAuth service.
-2. Reject authorization requests without `code_challenge` when flag is enabled.
-3. Remove `implicit` and `password` from allowed default grant_types in strict mode.
-4. Add FAPI 2.0 compliance test suite.
-5. Document migration guide for existing GGID deployments.
+## Recommended actions
 
+1. Add `oauth_2_1_strict` config flag (default false for backward compatibility).
+2. Reject authorization requests without `code_challenge` when strict mode is enabled.
+3. Reject `response_type=token` (implicit) and `grant_type=password` in strict mode.
+4. Enforce exact redirect URI matching in strict mode.
+5. Add FAPI 2.0 client profile flag with PAR/JAR/JARM/DPoP requirements.
+
+## Next step
+
+Add to backlog as P2 competitive/compliance gap after HSM/KMS phase 1 is complete.
