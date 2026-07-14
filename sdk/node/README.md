@@ -1,13 +1,13 @@
 # GGID Node.js SDK
 
-A production-ready Node.js/TypeScript client SDK for the [GGID](https://github.com/ggid/ggid) IAM platform.
+A production-ready Node.js/TypeScript client SDK for the [GGID](https://github.com/topcheer/ggid) IAM platform.
 
 ## Installation
 
 ```bash
-npm install @ggid/node
+npm install @ggid/sdk
 # or
-yarn add @ggid/node
+yarn add @ggid/sdk
 ```
 
 ### Peer Dependencies
@@ -21,7 +21,7 @@ npm install express
 ## Quick Start
 
 ```typescript
-import { GGIDClient } from '@ggid/node';
+import { GGIDClient } from '@ggid/sdk';
 
 // Create a client.
 const client = new GGIDClient({
@@ -54,7 +54,7 @@ console.log('Allowed:', result.allowed);
 ### JWT Verification
 
 ```typescript
-import { GGIDClient } from '@ggid/node';
+import { GGIDClient } from '@ggid/sdk';
 
 const client = new GGIDClient({
   gatewayUrl: 'https://iam.example.com',
@@ -113,7 +113,7 @@ await client.removeRole('user-id', 'role-id');
 
 ```typescript
 import express from 'express';
-import { expressAuth } from '@ggid/node';
+import { expressAuth } from '@ggid/sdk';
 
 const app = express();
 
@@ -127,7 +127,7 @@ app.use(expressAuth({
 ### Role-Based Access Control
 
 ```typescript
-import { requireRole } from '@ggid/node';
+import { requireRole } from '@ggid/sdk';
 
 // Require 'admin' role (checked from JWT claims, no API call).
 app.delete('/api/users/:id', requireRole('admin'), deleteUserHandler);
@@ -136,7 +136,7 @@ app.delete('/api/users/:id', requireRole('admin'), deleteUserHandler);
 ### Permission-Based Access Control
 
 ```typescript
-import { requirePermission } from '@ggid/node';
+import { requirePermission } from '@ggid/sdk';
 
 // Check permission via the GGID policy engine.
 app.get('/api/documents', requirePermission(
@@ -149,7 +149,7 @@ app.get('/api/documents', requirePermission(
 ### Access User Info in Handlers
 
 ```typescript
-import { getClaims } from '@ggid/node';
+import { getClaims } from '@ggid/sdk';
 
 app.get('/api/me', (req, res) => {
   const claims = getClaims(req);
@@ -160,7 +160,7 @@ app.get('/api/me', (req, res) => {
 ## Error Handling
 
 ```typescript
-import { GGIDError } from '@ggid/node';
+import { GGIDError } from '@ggid/sdk';
 
 try {
   await client.getUser('nonexistent');

@@ -1,14 +1,43 @@
 {
-  "name": "@ggid/node",
+  "name": "@ggid/sdk",
   "version": "1.0.0",
-  "description": "GGID IAM Platform Node.js SDK — JWT verification, RBAC, user management",
+  "description": "GGID IAM Platform Node.js SDK — JWT verification, RBAC, user management, OAuth/OIDC, and tenant-aware middleware.",
   "license": "Apache-2.0",
+  "author": "GGID Contributors (https://github.com/topcheer/ggid)",
+  "homepage": "https://github.com/topcheer/ggid/tree/main/sdk/node",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/topcheer/ggid.git",
+    "directory": "sdk/node"
+  },
+  "bugs": {
+    "url": "https://github.com/topcheer/ggid/issues"
+  },
+  "keywords": [
+    "ggid",
+    "iam",
+    "identity",
+    "access-management",
+    "oauth",
+    "oidc",
+    "jwt",
+    "rbac",
+    "abac",
+    "tenant",
+    "sdk"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "jose": ">=5.0"
@@ -22,5 +51,11 @@
     "express": "^5.2.1",
     "typescript": ">=5.3",
     "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
