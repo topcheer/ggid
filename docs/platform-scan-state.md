@@ -1,7 +1,7 @@
 # Platform Scan State
 
-## Current round: 19
-## Last scan focus: A (Stub/Placeholder/TODO)
+## Current round: 21
+## Last scan focus: E2E Regression Tests (11/11 PASS)
 ## Next scan focus: B (Route Wiring)
 ## Total findings: 20
 ## Done: 19
@@ -10,7 +10,7 @@
 ## Remaining: 1
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 19 Focus A completed: no new productization gaps. Remaining TODOs are intentional build-tag stubs or console mock pages. Round 20 will be E2E regression tests.*## Current top incomplete features:
+*Round 21 is odd: execute completeness scan (focus B — Route Wiring).*
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
@@ -48,8 +48,8 @@ LOW (acceptable for now — short-lived or fallback):
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
 - bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
-- (current): Round 18 E2E regression — Docker Compose E2E 11/11 PASS
-- (round 17): Round 17 focus G SDK alignment — Agent Identity / Access Request SDK gap #20 identified, assigned to arch
+- (current): Round 20 E2E regression — Docker Compose E2E 11/11 PASS
+- (round 19): Round 19 focus A stub/placeholder — no new productization gaps
 - (round 13): Round 13 focus E error handling — sanitize internal error exposure in oauth/internal/server and auth/internal/server
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (backend)
