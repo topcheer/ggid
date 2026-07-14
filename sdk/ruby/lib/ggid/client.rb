@@ -119,6 +119,64 @@ module GGID
       http_delete("/api/v1/webhooks/#{webhook_id}", token: token)
     end
 
+    # ── Agent Identity ─────────────────────────────────────
+
+    def register_agent(token, name:, type:, owner_user_id: "",
+                        allowed_scopes: [], max_delegation_depth: 3,
+                        rate_limit_per_min: 60)
+      http_post("/api/v1/agents/register", body: {
+        name: name,
+        type: type,
+        owner_user_id: owner_user_id,
+        allowed_scopes: allowed_scopes,
+        max_delegation_depth: max_delegation_depth,
+        rate_limit_per_min: rate_limit_per_min,
+      }, token: token)
+    end
+
+    def list_agents(token)
+      http_get("/api/v1/agents", token: token)
+    end
+
+    def exchange_agent_token(agent_id:, subject_token:, scopes: [])
+      http_post("/api/v1/agents/token", body: {
+        agent_id: agent_id,
+        subject_token: subject_token,
+        scope: scopes,
+      })
+    end
+
+    def verify_agent_token(token)
+      http_post("/api/v1/agents/verify", body: { token: token })
+    end
+
+    # ── Access Request (IGA) ───────────────────────────────
+
+    def create_access_request(token, user_id:, resource:, action:, reason: "")
+      http_post("/api/v1/access-requests", body: {
+        user_id: user_id,
+        resource: resource,
+        action: action,
+        reason: reason,
+      }, token: token)
+    end
+
+    def list_access_requests(token)
+      http_get("/api/v1/access-requests", token: token)
+    end
+
+    def approve_access_request(token, request_id, comment: "")
+      http_post("/api/v1/access-requests/#{request_id}/approve", body: {
+        comment: comment,
+      }, token: token)
+    end
+
+    def reject_access_request(token, request_id, comment: "")
+      http_post("/api/v1/access-requests/#{request_id}/reject", body: {
+        comment: comment,
+      }, token: token)
+    end
+
     # ── Audit ──────────────────────────────────────────────────
 
     def list_audit_events(token, params = {})

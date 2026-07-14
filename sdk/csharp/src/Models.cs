@@ -170,6 +170,74 @@ public record User
     [JsonPropertyName("created_at")] public string? CreatedAt { get; init; }
 }
 
+
+/// <summary>
+/// AI Agent registration request.
+/// </summary>
+public record AgentRegistration
+{
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("type")] public string AgentType { get; init; } = "";
+    [JsonPropertyName("owner_user_id")] public string? OwnerUserId { get; init; }
+    [JsonPropertyName("description")] public string? Description { get; init; }
+    [JsonPropertyName("allowed_scopes")] public List<string> AllowedScopes { get; init; } = new();
+    [JsonPropertyName("max_delegation_depth")] public int MaxDelegationDepth { get; init; } = 3;
+    [JsonPropertyName("rate_limit_per_min")] public int RateLimitPerMin { get; init; } = 60;
+}
+
+/// <summary>
+/// AI Agent.
+/// </summary>
+public record Agent
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("tenant_id")] public string TenantId { get; init; } = "";
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("type")] public string AgentType { get; init; } = "";
+    [JsonPropertyName("owner_user_id")] public string OwnerUserId { get; init; } = "";
+    [JsonPropertyName("client_id")] public string ClientId { get; init; } = "";
+    [JsonPropertyName("status")] public string Status { get; init; } = "";
+    [JsonPropertyName("allowed_scopes")] public List<string> AllowedScopes { get; init; } = new();
+    [JsonPropertyName("max_delegation_depth")] public int MaxDelegationDepth { get; init; }
+}
+
+/// <summary>
+/// Agent token exchange response.
+/// </summary>
+public record AgentTokenResponse
+{
+    [JsonPropertyName("access_token")] public string AccessToken { get; init; } = "";
+    [JsonPropertyName("token_type")] public string TokenType { get; init; } = "Bearer";
+    [JsonPropertyName("expires_in")] public int ExpiresIn { get; init; }
+    [JsonPropertyName("scope")] public string Scope { get; init; } = "";
+    [JsonPropertyName("agent_id")] public string AgentId { get; init; } = "";
+    [JsonPropertyName("delegation_depth_remaining")] public int DelegationDepthRemaining { get; init; }
+}
+
+/// <summary>
+/// Access request (IGA) request.
+/// </summary>
+public record AccessRequest
+{
+    [JsonPropertyName("user_id")] public string UserId { get; init; } = "";
+    [JsonPropertyName("resource")] public string Resource { get; init; } = "";
+    [JsonPropertyName("action")] public string Action { get; init; } = "";
+    [JsonPropertyName("reason")] public string? Reason { get; init; }
+}
+
+/// <summary>
+/// Access request response.
+/// </summary>
+public record AccessRequestResponse
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("user_id")] public string UserId { get; init; } = "";
+    [JsonPropertyName("resource")] public string Resource { get; init; } = "";
+    [JsonPropertyName("action")] public string Action { get; init; } = "";
+    [JsonPropertyName("status")] public string Status { get; init; } = "";
+    [JsonPropertyName("reason")] public string? Reason { get; init; }
+}
+
 /// <summary>
 /// Custom exception for GGID API errors.
 /// </summary>

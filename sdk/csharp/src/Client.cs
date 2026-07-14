@@ -191,6 +191,88 @@ public class GGIDClient
         await DeleteAsync($"/api/v1/webhooks/{webhookId}", token, ct);
     }
 
+    // ── Agent Identity ──
+
+    /// <summary>
+    /// Register a new AI agent.
+    /// </summary>
+    public async Task<Agent> RegisterAgentAsync(string token, AgentRegistration reg, CancellationToken ct = default)
+    {
+        return await PostAsync<Agent>("/api/v1/agents/register", reg, token, ct);
+    }
+
+    /// <summary>
+    /// List all agents for the current tenant.
+    /// </summary>
+    public async Task<List<Agent>> ListAgentsAsync(string token, CancellationToken ct = default)
+    {
+        var data = await GetAsync<JsonElement>("/api/v1/agents", token, ct);
+        if (data.ValueKind == JsonValueKind.Array)
+            return data.Deserialize<List<Agent>>() ?? new();
+        if (data.TryGetProperty("agents", out var agentsEl))
+            return agentsEl.Deserialize<List<Agent>>() ?? new();
+        return new();
+    }
+
+    /// <summary>
+    /// Exchange a user token for an agent-scoped token.
+    /// </summary>
+    public async Task<AgentTokenResponse> ExchangeAgentTokenAsync(string agentId, string subjectToken, List<string>? scopes = null, CancellationToken ct = default)
+    {
+        var body = new { agent_id = agentId, subject_token = subjectToken, scope = scopes ?? new List<string>() };
+        return await PostAsync<AgentTokenResponse>("/api/v1/agents/token", body, token: null, ct);
+    }
+
+    /// <summary>
+    /// Verify an agent token and return its claims.
+    /// </summary>
+    public async Task<JsonElement> VerifyAgentTokenAsync(string token, CancellationToken ct = default)
+    {
+        var body = new { token };
+        return await PostAsync<JsonElement>("/api/v1/agents/verify", body, token: null, ct);
+    }
+
+    // ── Access Request (IGA) ──
+
+    /// <summary>
+    /// Create an access request.
+    /// </summary>
+    public async Task<AccessRequestResponse> CreateAccessRequestAsync(string token, AccessRequest req, CancellationToken ct = default)
+    {
+        return await PostAsync<AccessRequestResponse>("/api/v1/access-requests", req, token, ct);
+    }
+
+    /// <summary>
+    /// List access requests for the current tenant.
+    /// </summary>
+    public async Task<List<AccessRequestResponse>> ListAccessRequestsAsync(string token, CancellationToken ct = default)
+    {
+        var data = await GetAsync<JsonElement>("/api/v1/access-requests", token, ct);
+        if (data.ValueKind == JsonValueKind.Array)
+            return data.Deserialize<List<AccessRequestResponse>>() ?? new();
+        if (data.TryGetProperty("requests", out var requestsEl))
+            return requestsEl.Deserialize<List<AccessRequestResponse>>() ?? new();
+        return new();
+    }
+
+    /// <summary>
+    /// Approve an access request.
+    /// </summary>
+    public async Task<AccessRequestResponse> ApproveAccessRequestAsync(string token, string requestId, string comment = "", CancellationToken ct = default)
+    {
+        var body = new { comment };
+        return await PostAsync<AccessRequestResponse>($"/api/v1/access-requests/{requestId}/approve", body, token, ct);
+    }
+
+    /// <summary>
+    /// Reject an access request.
+    /// </summary>
+    public async Task<AccessRequestResponse> RejectAccessRequestAsync(string token, string requestId, string comment = "", CancellationToken ct = default)
+    {
+        var body = new { comment };
+        return await PostAsync<AccessRequestResponse>($"/api/v1/access-requests/{requestId}/reject", body, token, ct);
+    }
+
     // ── User Management ──
 
     /// <summary>
