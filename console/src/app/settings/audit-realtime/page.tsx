@@ -28,12 +28,17 @@ export default function AuditRealtimePage() {
   const [filterType, setFilterType] = useState("");
   const feedRef = useRef<HTMLDivElement>(null);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const fetchData = useCallback(async () => {
     if (paused) return;
     try {
       const res = await fetch("/api/v1/audit/realtime?limit=50", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (res.ok) { const d = await res.json(); setEvents((d.events || d || []).slice(0, 50)); }
-    } catch { /* noop */ }
+      if (res.ok) { const d = await res.json(); setEvents((d.events || d || []).slice(0, 50)); setError(null); }
+      else { setError(`HTTP ${res.status}`); }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
   }, [paused]);
 
   useEffect(() => { fetchData(); const interval = setInterval(fetchData, 5000); return () => clearInterval(interval); }, [fetchData]);
@@ -43,6 +48,9 @@ export default function AuditRealtimePage() {
   const exportSnapshot = () => { const json = JSON.stringify(events, null, 2); const blob = new Blob([json], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "audit-snapshot-" + Date.now() + ".json"; a.click(); };
 
   const filtered = events.filter((e) => { if (filterSeverity && e.severity !== filterSeverity) return false; if (filterType && !e.action.includes(filterType)) return false; return true; });
+
+  if (loading && events.length === 0) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
+  if (error && events.length === 0) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={() => { setLoading(true); fetchData(); }} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
 
   return (
     <div className="space-y-4">

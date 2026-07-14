@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Mail, Send, Eye } from "lucide-react";
 const templates = ["welcome", "password_reset", "mfa_setup", "account_locked", "access_granted"];
 const variables = ["{{.UserName}}", "{{.UserEmail}}", "{{.ResetLink}}", "{{.OrgName}}", "{{.LoginURL}}", "{{.OTPCode}}", "{{.RoleName}}", "{{.ExpiryTime}}"];
@@ -11,12 +11,22 @@ export default function EmailTemplateEditorPage() {
   const [content, setContent] = useState(defaultHtml.welcome);
   const [preview, setPreview] = useState(true);
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [contentByLang, setContentByLang] = useState<Record<string, string>>({ en: defaultHtml.welcome });
+  const loadData = useCallback(async () => {
+    setLoading(true); setError(null);
+    try { const res = await fetch("/api/v1/notification/email-templates?template=" + template, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d.content) { setContent(d.content); setContentByLang({ ...contentByLang, [template + "_" + lang]: d.content }); } } }
+    catch (err: any) { setError(err.message); } finally { setLoading(false); }
+  }, [template, lang]);
+  useEffect(() => { loadData(); }, [loadData]);
   const selectTemplate = (t: string) => { setTemplate(t); const key = t + "_" + lang; setContent(contentByLang[key] || defaultHtml[t as keyof typeof defaultHtml] || ""); };
   const selectLang = (l: string) => { setLang(l); const key = template + "_" + l; setContent(contentByLang[key] || defaultHtml[template as keyof typeof defaultHtml] || ""); };
   const updateContent = (c: string) => { setContent(c); setContentByLang({ ...contentByLang, [template + "_" + lang]: c }); };
   const insertVar = (v: string) => updateContent(content + v);
   const sendTest = async () => { setSending(true); try { await fetch("/api/v1/notification/email-test", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ template, lang, content }) }); } catch { /* noop */ } finally { setSending(false); } };
+  if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><Mail className="w-6 h-6 text-blue-500" /> Email Template Editor</h1><p className="text-sm text-gray-500 mt-1">Edit and preview email templates with variable insertion.</p></div>
