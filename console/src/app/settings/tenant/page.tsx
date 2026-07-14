@@ -29,6 +29,8 @@ export default function TenantSettingsPage() {
   const { apiFetch, TENANT_ID } = useApi();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [config, setConfig] = useState({
@@ -69,8 +71,11 @@ export default function TenantSettingsPage() {
         };
         setConfig(next);
         setSnapshot(next);
-      } catch {
+      } catch (err) {
+        setError("Failed to load tenant configuration. Using defaults.");
         // Use defaults if API unavailable
+      } finally {
+        setLoading(false);
       }
     };
     fetchTenant();
@@ -133,8 +138,22 @@ export default function TenantSettingsPage() {
   const cardCls = "rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const headingCls = "mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100";
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+        <span className="ml-2 text-sm text-gray-500">Loading tenant settings...</span>
+      </div>
+    );
+  }
+
   return (
     <div>
+      {error && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 p-3">
+          <p className="text-sm text-amber-600 dark:text-amber-400">{error}</p>
+        </div>
+      )}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
           <Building2 className="h-7 w-7 text-brand-600" />

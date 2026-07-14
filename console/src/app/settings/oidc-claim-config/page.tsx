@@ -1,22 +1,57 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { Settings2, Plus, X, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings2, Plus, X, Save, Loader2 } from "lucide-react";
+import { useApi } from "@/lib/api";
 interface CustomClaim { name: string; source: string; value: string; }
 interface ClaimConfig { standard_claims: Record<string, boolean>; custom_claims: CustomClaim[]; scope_mappings: Record<string, string[]>; token_type: string; }
 const standardClaims = ["sub", "name", "email", "email_verified", "given_name", "family_name", "middle_name", "nickname", "preferred_username", "profile", "picture", "website", "gender", "birthdate", "zoneinfo", "locale", "phone_number", "address", "updated_at"];
 const scopes = ["openid", "profile", "email", "address", "phone", "offline_access"];
+const defaultConfig: ClaimConfig = { standard_claims: { sub: true, name: true, email: true, email_verified: true }, custom_claims: [{ name: "department", source: "ldap", value: "ou" }], scope_mappings: { openid: ["sub"], profile: ["name", "family_name"], email: ["email", "email_verified"] }, token_type: "id_token" };
 export default function OidcClaimConfigPage() {
-  const [config, setConfig] = useState<ClaimConfig>({ standard_claims: { sub: true, name: true, email: true, email_verified: true }, custom_claims: [{ name: "department", source: "ldap", value: "ou" }], scope_mappings: { openid: ["sub"], profile: ["name", "family_name"], email: ["email", "email_verified"] }, token_type: "id_token" });
+  const { apiFetch, TENANT_ID } = useApi();
+  const [config, setConfig] = useState<ClaimConfig>(defaultConfig);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", source: "", value: "" });
-  const save = async () => { setSaving(true); try { await fetch("/api/v1/oauth/oidc-claim-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); } catch { /* noop */ } finally { setSaving(false); } };
+
+  useEffect(() => {
+    const loadConfig = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await apiFetch<ClaimConfig>("/api/v1/oauth/oidc-claim-config");
+        if (data) setConfig(data);
+      } catch {
+        // Use defaults if API unavailable
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadConfig();
+  }, [apiFetch]);
+
+  const save = async () => { setSaving(true); try { await apiFetch("/api/v1/oauth/oidc-claim-config", { method: "PUT", body: JSON.stringify(config) }); } catch (err) { setError("Failed to save OIDC claim config"); } finally { setSaving(false); } };
   const toggleClaim = (c: string) => setConfig({ ...config, standard_claims: { ...config.standard_claims, [c]: !config.standard_claims[c] } });
   const addCustom = () => { if (!form.name) return; setConfig({ ...config, custom_claims: [...config.custom_claims, { ...form }] }); setShowAdd(false); setForm({ name: "", source: "", value: "" }); };
   const removeCustom = (i: number) => setConfig({ ...config, custom_claims: config.custom_claims.filter((_, idx) => idx !== i) });
   const toggleMapping = (scope: string, claim: string) => { const cur = config.scope_mappings[scope] || []; const next = cur.includes(claim) ? cur.filter((c) => c !== claim) : [...cur, claim]; setConfig({ ...config, scope_mappings: { ...config.scope_mappings, [scope]: next } }); };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <span className="ml-2 text-sm text-gray-500">Loading OIDC claim config...</span>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30 p-3">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
       <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Settings2 className="w-6 h-6 text-blue-500" /> OIDC Claim Config</h1><p className="text-sm text-gray-500 mt-1">Configure standard and custom OIDC claims and scope mappings.</p></div><button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button></div>
       <div className="rounded-lg border dark:border-gray-800 p-4"><div className="flex items-center gap-3 mb-3"><label className="text-sm font-medium">Token Type</label><select value={config.token_type} onChange={(e) => setConfig({ ...config, token_type: e.target.value })} className="px-2 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs"><option value="id_token">ID Token</option><option value="access_token">Access Token</option><option value="userinfo">UserInfo</option></select></div><h3 className="text-sm font-semibold mb-2">Standard Claims</h3><div className="grid grid-cols-3 md:grid-cols-4 gap-2">{standardClaims.map((c) => <label key={c} className="flex items-center gap-1.5 text-xs"><input type="checkbox" checked={config.standard_claims[c] || false} onChange={() => toggleClaim(c)} className="rounded" /> {c}</label>)}</div></div>
       <div className="rounded-lg border dark:border-gray-800 p-4"><div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold">Custom Claims</h3><button onClick={() => setShowAdd(true)} className="text-xs text-blue-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Add</button></div><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-3 py-2 text-left font-medium">Name</th><th className="px-3 py-2 text-left font-medium">Source</th><th className="px-3 py-2 text-left font-medium">Value</th><th className="px-3 py-2 text-left font-medium"></th></tr></thead><tbody className="divide-y dark:divide-gray-800">{config.custom_claims.map((c, i) => (<tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-2 font-mono text-xs">{c.name}</td><td className="px-3 py-2 text-xs text-gray-500">{c.source}</td><td className="px-3 py-2 text-xs font-mono">{c.value}</td><td className="px-3 py-2"><button onClick={() => removeCustom(i)} className="text-red-500"><X className="w-3.5 h-3.5" /></button></td></tr>))}</tbody></table></div></div>

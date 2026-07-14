@@ -106,6 +106,8 @@ export default function PasswordPolicyPage() {
   const [saving, setSaving] = useState(false);
   const [testPw, setTestPw] = useState("");
   const [testUsername, setTestUsername] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load from localStorage or API
   useEffect(() => {
@@ -169,6 +171,24 @@ export default function PasswordPolicyPage() {
     },
     [testPw, testUsername, config],
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+        <span className="ml-2 text-sm text-gray-500">Loading password policy...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30 p-4">
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <button onClick={() => window.location.reload()} className="mt-2 text-xs text-red-600 underline">Retry</button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl">
