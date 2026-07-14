@@ -35,11 +35,12 @@ func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request
 	}
 
 	type Result struct {
-		Username   string `json:"username"`
-		Email      string `json:"email"`
-		Status     string `json:"status"` // created, skipped, error
+		Username     string `json:"username"`
+		Email        string `json:"email"`
+		Status       string `json:"status"` // created, skipped, error
 		TempPassword string `json:"temp_password,omitempty"`
-		Error      string `json:"error,omitempty"`
+		Role         string `json:"role,omitempty"`
+		Error        string `json:"error,omitempty"`
 	}
 
 	results := make([]Result, 0, len(req.Users))
@@ -60,6 +61,7 @@ func (h *HTTPHandler) handleBulkProvision(w http.ResponseWriter, r *http.Request
 		results = append(results, Result{
 			Username: u.Username, Email: u.Email, Status: "created",
 			TempPassword: tempPwd,
+			Role:        role,
 		})
 		created++
 	}
