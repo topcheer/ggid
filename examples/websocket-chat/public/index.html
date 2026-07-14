@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GGID WebSocket Chat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1117;
+      color: #e4e4e7;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .header {
+      background: #1a1b26;
+      padding: 12px 20px;
+      border-bottom: 1px solid #2a2b3d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header h1 { font-size: 16px; font-weight: 600; color: #7dd3fc; }
+    .header .status {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #2a2b3d;
+    }
+    .status.connected { color: #4ade80; }
+    .status.disconnected { color: #f87171; }
+    .status.connecting { color: #fbbf24; }
+
+    .login-panel {
+      padding: 40px 20px;
+      max-width: 500px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .login-panel h2 { font-size: 18px; margin-bottom: 8px; }
+    .login-panel p { font-size: 13px; color: #a1a1aa; margin-bottom: 20px; }
+    .login-panel input {
+      width: 100%;
+      padding: 10px 14px;
+      background: #1a1b26;
+      border: 1px solid #2a2b3d;
+      border-radius: 8px;
+      color: #e4e4e7;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .login-panel input:focus { outline: none; border-color: #7dd3fc; }
+    .login-panel button {
+      width: 100%;
+      padding: 10px;
+      background: #0ea5e9;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login-panel button:hover { background: #0284c7; }
+    .login-panel button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .login-panel .alt {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #71717a;
+    }
+    .login-panel .alt a { color: #7dd3fc; cursor: pointer; text-decoration: underline; }
+    .login-panel .error { color: #f87171; font-size: 12px; margin-top: 8px; min-height: 16px; }
+
+    .chat-panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .chat-panel.visible { display: flex; }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+    }
+    .message {
+      margin-bottom: 12px;
+      max-width: 70%;
+    }
+    .message .meta {
+      font-size: 11px;
+      color: #71717a;
+      margin-bottom: 2px;
+    }
+    .message .meta .name { font-weight: 600; color: #a1a1aa; }
+    .message .meta .role {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      background: #2a2b3d;
+      color: #7dd3fc;
+      margin-left: 4px;
+    }
+    .message .bubble {
+      background: #1a1b26;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      word-wrap: break-word;
+    }
+    .message.own { margin-left: auto; }
+    .message.own .bubble { background: #0c4a6e; }
+    .message.own .meta { text-align: right; }
+    .message.system .bubble {
+      background: transparent;
+      color: #71717a;
+      font-style: italic;
+      font-size: 12px;
+      text-align: center;
+      border: none;
+    }
+    .message.system .meta { text-align: center; }
+
+    .input-bar {
+      padding: 12px 20px;
+      background: #1a1b26;
+      border-top: 1px solid #2a2b3d;
+      display: flex;
+      gap: 10px;
+    }
+    .input-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      background: #0f1117;
+      border: 1px solid #2a2b3d;
+      border-radius: 8px;
+      color: #e4e4e7;
+      font-size: 14px;
+    }
+    .input-bar input:focus { outline: none; border-color: #7dd3fc; }
+    .input-bar button {
+      padding: 10px 20px;
+      background: #0ea5e9;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .input-bar button:hover { background: #0284c7; }
+    .input-bar button:disabled { opacity: 0.5; }
+
+    .online-badge {
+      font-size: 11px;
+      color: #71717a;
+      margin-right: 8px;
+    }
+    .scrollbar::-webkit-scrollbar { width: 6px; }
+    .scrollbar::-webkit-scrollbar-thumb { background: #2a2b3d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>GGID WebSocket Chat</h1>
+  <div>
+    <span class="online-badge" id="online-count">0 online</span>
+    <span class="status disconnected" id="status">Disconnected</span>
+  </div>
+</div>
+
+<!-- Login Panel -->
+<div class="login-panel" id="login-panel">
+  <h2>Login with GGID</h2>
+  <p>Authenticate to join the real-time chat room.</p>
+  <input type="text" id="username" placeholder="Username" autocomplete="username">
+  <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+  <button id="login-btn" onclick="doLogin()">Login & Connect</button>
+  <div class="error" id="login-error"></div>
+  <div class="alt">
+    Or <a onclick="toggleTokenInput()">connect with a JWT token directly</a>
+  </div>
+  <div id="token-input-wrap" style="display:none; margin-top:12px;">
+    <input type="text" id="token-input" placeholder="Paste JWT token here">
+    <button onclick="connectWithToken(document.getElementById('token-input').value)">Connect</button>
+  </div>
+</div>
+
+<!-- Chat Panel -->
+<div class="chat-panel" id="chat-panel">
+  <div class="messages scrollbar" id="messages"></div>
+  <div class="input-bar">
+    <input type="text" id="msg-input" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendMsg()">
+    <button onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<script>
+  const GGID_URL = location.protocol === 'https:'
+    ? 'https://' + location.hostname.replace(/:\d+$/, '')
+    : (window.GGID_URL || 'https://ggid.iot2.win');
+  const TENANT_ID = window.GGID_TENANT_ID || '00000000-0000-0000-0000-000000000001';
+  const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
+
+  let ws = null;
+  let myUserId = null;
+  let myName = null;
+
+  // ── Login via GGID API ──
+  async function doLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
+    if (!username || !password) {
+      errEl.textContent = 'Please enter username and password';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Logging in...';
+    errEl.textContent = '';
+
+    try {
+      const resp = await fetch(`${GGID_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': TENANT_ID,
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+        throw new Error(err.detail || err.error || `HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      connectWithToken(data.access_token);
+    } catch (e) {
+      errEl.textContent = e.message;
+      btn.disabled = false;
+      btn.textContent = 'Login & Connect';
+    }
+  }
+
+  // ── Connect WebSocket with JWT ──
+  function connectWithToken(token) {
+    if (!token) return;
+
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = 'Connecting...';
+    statusEl.className = 'status connecting';
+
+    ws = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
+
+    ws.onopen = () => {
+      statusEl.textContent = 'Connected';
+      statusEl.className = 'status connected';
+      document.getElementById('login-panel').style.display = 'none';
+      document.getElementById('chat-panel').classList.add('visible');
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      handleMessage(data);
+    };
+
+    ws.onclose = (event) => {
+      statusEl.textContent = 'Disconnected';
+      statusEl.className = 'status disconnected';
+
+      if (event.code === 4001) {
+        // JWT verification failed
+        document.getElementById('login-panel').style.display = 'block';
+        document.getElementById('chat-panel').classList.remove('visible');
+        document.getElementById('login-error').textContent = `Authentication failed: ${event.reason || 'invalid token'}`;
+        document.getElementById('login-btn').disabled = false;
+        document.getElementById('login-btn').textContent = 'Login & Connect';
+      }
+    };
+
+    ws.onerror = () => {
+      statusEl.textContent = 'Error';
+      statusEl.className = 'status disconnected';
+    };
+  }
+
+  // ── Handle incoming messages ──
+  function handleMessage(data) {
+    const container = document.getElementById('messages');
+
+    if (data.type === 'system') {
+      // System welcome message — store our identity
+      if (data.user) {
+        myUserId = data.user.userId;
+        myName = data.user.name;
+      }
+      addMessage('system', data);
+    } else if (data.type === 'user_joined') {
+      addMessage('system', {
+        ...data,
+        text: `${data.user.name} joined the chat`,
+      });
+      updateOnline(data.online);
+    } else if (data.type === 'user_left') {
+      addMessage('system', {
+        ...data,
+        text: `${data.user.name} left the chat`,
+      });
+      updateOnline(data.online);
+    } else if (data.type === 'message') {
+      const isOwn = data.user.userId === myUserId;
+      addMessage(isOwn ? 'own' : 'other', data);
+    }
+
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function addMessage(cls, data) {
+    const container = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = `message ${cls}`;
+
+    if (cls === 'system') {
+      div.innerHTML = `<div class="meta">${formatTime(data.timestamp)}</div><div class="bubble">${escapeHtml(data.text || data.message || '')}</div>`;
+    } else {
+      const roles = (data.user.roles || []).map(r => `<span class="role">${escapeHtml(r)}</span>`).join('');
+      div.innerHTML = `
+        <div class="meta"><span class="name">${escapeHtml(data.user.name)}</span>${roles} · ${formatTime(data.timestamp)}</div>
+        <div class="bubble">${escapeHtml(data.text || data.message || '')}</div>
+      `;
+    }
+
+    container.appendChild(div);
+  }
+
+  // ── Send message ──
+  function sendMsg() {
+    const input = document.getElementById('msg-input');
+    const text = input.value.trim();
+    if (!text || !ws || ws.readyState !== 1) return;
+
+    ws.send(JSON.stringify({ type: 'message', text }));
+    input.value = '';
+  }
+
+  // ── Helpers ──
+  function updateOnline(count) {
+    document.getElementById('online-count').textContent = `${count || 0} online`;
+  }
+
+  function formatTime(ts) {
+    if (!ts) return '';
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function toggleTokenInput() {
+    const wrap = document.getElementById('token-input-wrap');
+    wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // Ping every 30s to keep connection alive
+  setInterval(() => {
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: 'ping' }));
+    }
+  }, 30000);
+</script>
+
+</body>
+</html>
