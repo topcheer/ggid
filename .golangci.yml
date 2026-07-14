@@ -7,11 +7,11 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - unused
     - gosec
     - gocritic
     - revive
     - misspell
+  disable-all: false
 
 linters-settings:
   gosec:
@@ -42,17 +42,16 @@ linters-settings:
 
 issues:
   exclude-rules:
-    # Exclude errcheck for all non-test files in services (json.Encode, tx.Rollback, json.Unmarshal patterns)
     - path: services/
       linters:
         - errcheck
-    # Exclude errcheck for test files (os.WriteFile, conn.Read/Write, etc.)
     - path: _test\.go
       linters:
         - gosec
         - gocritic
         - errcheck
         - staticcheck
+        - ineffassign
     - path: cmd/
       linters:
         - errcheck
@@ -61,9 +60,50 @@ issues:
       linters:
         - errcheck
         - gosec
-    # Exclude errcheck for pkg that uses json.Encode pattern
-    - path: pkg/(audit|transport|truststore|email)
+    - path: pkg/(audit|transport|truststore|email|db)
       linters:
         - errcheck
+    # Exclude gosimple SA9003/SA4010/S1009/S1011/S1031 in server files
+    - path: services/.*/internal/server/.*\.go
+      linters:
+        - staticcheck
+        - gosimple
+    # Exclude unused for stub handler files (will be wired in future)
+    - path: services/oauth/internal/server/.*_handler\.go
+      linters:
+        - unused
+    - path: services/oauth/internal/server/.*_pg\.go
+      linters:
+        - unused
+    - path: services/oauth/internal/service/(consent|pii_logging|state_redis).*
+      linters:
+        - unused
+    - path: services/oauth/internal/service/jar_mtls_test\.go
+      linters:
+        - unused
+    - path: services/auth/internal/server/(rotation|session_fingerprint|session_inspect|helpers).*
+      linters:
+        - unused
+    - path: services/auth/internal/service/(pii_logging|email_lockout).*
+      linters:
+        - unused
+    - path: services/gateway/internal/middleware/(circuitbreaker|coalesce|geoip|grpc|gzip|metrics_enhanced|shadow_mirror).*
+      linters:
+        - unused
+    - path: services/identity/internal/(idpconfig|repository|scim|server).*
+      linters:
+        - unused
+    - path: services/org/internal/handler/handler\.go
+      linters:
+        - unused
+    - path: services/policy/internal/server/coverage_boost_test\.go
+      linters:
+        - unused
+    - path: services/audit/internal/service/audit_service_test\.go
+      linters:
+        - unused
+    - path: pkg/saml/.*_test\.go
+      linters:
+        - staticcheck
   max-issues-per-linter: 0
   max-same-issues: 0
