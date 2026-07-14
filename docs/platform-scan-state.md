@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 6
-## Last scan focus: F (Functional Depth Verification)
-## Next scan focus: G (SDK Alignment)
+## Current round: 7
+## Last scan focus: G (SDK Alignment)
+## Next scan focus: A (Stub/Placeholder/TODO)
 ## Total findings: 22
-## Fixed: 16
+## Fixed: 19
 ## Remaining: 4
 ## Partial: 2
 
@@ -67,3 +67,4 @@ LOW (acceptable for now — short-lived or fallback):
 - eec3a7bd: Docs code block fixes (docs)
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (arch)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (arch)
+- (round 7): Auth missing handlers wired to real service: /api/v1/auth/me, /api/v1/auth/mfa/status, /api/v1/auth/tokens (arch)

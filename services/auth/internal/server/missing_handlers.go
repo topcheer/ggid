@@ -1,19 +1,204 @@
 package server
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
+
+// parseTokenFromHeader extracts and validates the JWT from the Authorization header.
+func (h *Handler) parseTokenFromHeader(r *http.Request) (jwt.MapClaims, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil, fmt.Errorf("missing authorization header")
+	}
+	parts := strings.SplitN(authHeader, " ", 2)
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
+		return nil, fmt.Errorf("invalid authorization header format")
+	}
+	token, err := jwt.Parse(parts[1], func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return h.authSvc.PublicKey(), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, fmt.Errorf("invalid token claims")
+	}
+	return claims, nil
+}
+
+// userIDFromClaims extracts the user UUID from the 'sub' claim.
+func userIDFromClaims(claims jwt.MapClaims) (uuid.UUID, error) {
+	sub, _ := claims["sub"].(string)
+	if sub == "" {
+		return uuid.Nil, fmt.Errorf("missing sub claim")
+	}
+	uid, err := uuid.Parse(sub)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid sub claim")
+	}
+	return uid, nil
+}
+
+// tenantIDFromClaimsOrHeader extracts tenant UUID from claims or X-Tenant-ID header.
+func tenantIDFromClaimsOrHeader(claims jwt.MapClaims, r *http.Request) (uuid.UUID, error) {
+	if tid, ok := claims["tenant_id"].(string); ok && tid != "" {
+		return uuid.Parse(tid)
+	}
+	return uuid.Parse(r.Header.Get("X-Tenant-ID"))
+}
 
 // handleMFAStatus returns MFA enrollment status for the current user.
 func (h *Handler) handleMFAStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	claims, err := h.parseTokenFromHeader(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	userID, err := userIDFromClaims(claims)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		return
+	}
+
+	mfaSvc := h.authSvc.MFAService()
+	enrolled := mfaSvc.HasMFAEnabled(r.Context(), tenantID, userID)
+	devices, _ := mfaSvc.ListDevices(r.Context(), userID)
+	methods := make([]string, 0, len(devices))
+	for _, d := range devices {
+		if d.Algorithm != "" {
+			methods = append(methods, d.Algorithm)
+		} else if d.Name != "" {
+			methods = append(methods, d.Name)
+		}
+	}
+	if len(methods) == 0 {
+		methods = []string{"totp", "webauthn", "email"}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"enrolled":         false,
-		"methods":          []string{},
-		"required":         false,
+		"enrolled":         enrolled,
+		"methods":          methods,
+		"required":         h.authSvc.IsForceMFA(r.Context(), tenantID),
 		"available_methods": []string{"totp", "webauthn", "email"},
+		"user_id":          userID.String(),
+	})
+}
+
+// handleTokens handles token management endpoints.
+func (h *Handler) handleTokens(w http.ResponseWriter, r *http.Request) {
+	claims, err := h.parseTokenFromHeader(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	userID, err := userIDFromClaims(claims)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		sessions, err := h.authSvc.ListSessions(r.Context(), tenantID, userID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to list sessions")
+			return
+		}
+		tokens := make([]map[string]interface{}, 0, len(sessions))
+		for _, s := range sessions {
+			tokens = append(tokens, map[string]interface{}{
+				"session_id": s.ID.String(),
+				"user_id":    s.UserID.String(),
+				"tenant_id":  s.TenantID.String(),
+				"created_at": s.CreatedAt,
+				"expires_at": s.ExpiresAt,
+				"active":     s.ExpiresAt.After(time.Now()),
+			})
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"tokens":       tokens,
+			"active_count": len(tokens),
+		})
+	case http.MethodDelete:
+		if err := h.authSvc.LogoutAll(r.Context(), tenantID, userID, uuid.Nil); err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to revoke tokens")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "token revoked"})
+	default:
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+	}
+}
+
+// handleAuthMe returns the current authenticated user's profile.
+func (h *Handler) handleAuthMe(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+
+	claims, err := h.parseTokenFromHeader(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	userID, err := userIDFromClaims(claims)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, err.Error())
+		return
+	}
+	tenantID, err := tenantIDFromClaimsOrHeader(claims, r)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "valid tenant_id required")
+		return
+	}
+
+	// Best-effort lookup for richer profile; fall back to token claims on error.
+	user, err := h.authSvc.LookupUser(r.Context(), tenantID, userID.String())
+	if err == nil && user != nil {
+		writeJSON(w, http.StatusOK, map[string]interface{}{
+			"user_id":   user.ID.String(),
+			"username":  user.Username,
+			"email":     user.Email,
+			"status":    string(user.Status),
+			"tenant_id": user.TenantID.String(),
+			"roles":     []string{},
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"user_id":   userID.String(),
+		"username":  "",
+		"email":     "",
+		"roles":     []string{},
+		"tenant_id": tenantID.String(),
 	})
 }
 
@@ -68,14 +253,14 @@ func (h *Handler) handleAccountLinking(w http.ResponseWriter, r *http.Request) {
 // handleLoginSecurity returns login security configuration.
 func (h *Handler) handleLoginSecurity(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"mfa_required":         false,
-		"password_min_length":  12,
-		"password_complexity":  true,
-		"session_timeout":      3600,
-		"max_failed_attempts":  5,
-		"lockout_duration":     900,
-		"ip_allowlist":         []string{},
-		"geo_restrictions":     []interface{}{},
+		"mfa_required":            false,
+		"password_min_length":     12,
+		"password_complexity":     true,
+		"session_timeout":         3600,
+		"max_failed_attempts":     5,
+		"lockout_duration":        900,
+		"ip_allowlist":            []string{},
+		"geo_restrictions":        []interface{}{},
 	})
 }
 
@@ -86,21 +271,6 @@ func (h *Handler) handleIntrospectionConfig(w http.ResponseWriter, r *http.Reque
 		"cache_ttl":           60,
 		"require_client_auth": true,
 	})
-}
-
-// handleTokens handles token management endpoints.
-func (h *Handler) handleTokens(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		writeJSON(w, http.StatusOK, map[string]interface{}{
-			"tokens":    []interface{}{},
-			"active_count": 0,
-		})
-	case http.MethodDelete:
-		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "token revoked"})
-	default:
-		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
-	}
 }
 
 // handleNotifications handles notification endpoints.
@@ -118,31 +288,13 @@ func (h *Handler) handleNotifications(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleAuthMe returns the current authenticated user's profile.
-func (h *Handler) handleAuthMe(w http.ResponseWriter, r *http.Request) {
-	// Extract user ID from JWT token in Authorization header
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		writeError(w, http.StatusUnauthorized, "missing authorization header")
-		return
-	}
-	// Return a basic profile based on what we know
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"user_id":   "current",
-		"username":  "current_user",
-		"email":     "",
-		"roles":     []string{},
-		"tenant_id": r.Header.Get("X-Tenant-ID"),
-	})
-}
-
 // handleDeviceBindings handles device binding endpoints.
 func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		writeJSON(w, http.StatusOK, map[string]interface{}{
-			"devices":   []interface{}{},
-			"enforced":  false,
+			"devices":  []interface{}{},
+			"enforced": false,
 		})
 	case http.MethodPost:
 		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "device bound"})
@@ -156,19 +308,17 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 // handleRateLimits returns rate limiting configuration.
 func (h *Handler) handleRateLimits(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"login_rate_limit":       5,
-		"login_window_seconds":   300,
-		"register_rate_limit":    3,
+		"login_rate_limit":        5,
+		"login_window_seconds":    300,
+		"register_rate_limit":     3,
 		"register_window_seconds": 3600,
-		"ip_rate_limit":          100,
-		"ip_window_seconds":      60,
-		"tenant_rate_limit":      1000,
-		"tenant_window_seconds": 3600,
+		"ip_rate_limit":           100,
+		"ip_window_seconds":         60,
+		"tenant_rate_limit":       1000,
+		"tenant_window_seconds":   3600,
 	})
 }
 
-// writeJSON is already defined in http.go
-
-// Ensure writeError exists (it may already be defined elsewhere)
-var _ = status.Errorf
-var _ = codes.NotFound
+// Ensure imports are used.
+var _ = json.Marshal
+var _ = fmt.Sprintf

@@ -7,7 +7,7 @@
 - Fixed: 4
 - Partial: 1
 - Remaining: 8
-- Last scan: 2026-07-14 round 6 (focus: F — Functional Depth Verification)
+- Last scan: 2026-07-14 round 7 (focus: G — SDK Alignment)
 
 ## Findings
 
@@ -62,3 +62,4 @@
 | 2026-07-14 | Round 1 — Focus A (Stub/Placeholder/TODO) | +1 (#10) | 1 (#8) + 1 partial (#9) |
 | 2026-07-14 | Round 5 — Focus E (Security Config) | +2 (#4, #8) | 3 (#2, #4, #8) |
 | 2026-07-14 | Round 6 — Focus F (Functional Depth Verification) | +3 coverage gaps | 3 (identity health/tenant, OAuth helpers, org tree build/prune) |
+| 2026-07-14 | Round 7 — Focus G (SDK Alignment) | +3 SDK alignment gaps | 3 (auth /me, /mfa/status, /tokens wired to real service) |
