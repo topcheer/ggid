@@ -2,6 +2,7 @@ package service
 
 import (
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -21,14 +22,22 @@ type DeviceBoundSSO struct {
 }
 
 // NewDeviceBoundSSO creates a new DeviceBoundSSO instance.
-// The signingKey is used to HMAC-sign tokens. If empty, a default key
-// derived from the package is used (production should set a proper key).
+// The signingKey is used to HMAC-sign tokens. If empty, a cryptographically
+// random 256-bit key is generated for this process instance. A random key
+// means tokens will not survive restarts, so production deployments should
+// always provide a persistent key.
 func NewDeviceBoundSSO(signingKey ...[]byte) *DeviceBoundSSO {
 	if len(signingKey) > 0 && len(signingKey[0]) > 0 {
 		return &DeviceBoundSSO{signingKey: signingKey[0]}
 	}
-	// Default key — production should always provide a proper key
-	return &DeviceBoundSSO{signingKey: []byte("ggid-device-bound-sso-default-key-change-in-prod")}
+	// Secure-by-default: generate a random 32-byte key instead of a hardcoded one.
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		// Fallback is extremely unlikely on modern systems; fail closed with a
+		// deterministic panic rather than silently using weak entropy.
+		panic("device bound SSO: failed to generate random signing key: " + err.Error())
+	}
+	return &DeviceBoundSSO{signingKey: key}
 }
 
 // DeviceToken represents a token bound to a specific device.

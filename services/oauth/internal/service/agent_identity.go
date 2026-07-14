@@ -75,6 +75,8 @@ type AgentTokenClaims struct {
 	MCPServers []string `json:"mcp_servers,omitempty"`
 	// Maximum remaining delegation depth (how many more hops allowed)
 	MaxDelegationDepth int `json:"max_delegation_depth,omitempty"`
+	// Scope granted to this agent token (space-separated).
+	Scope string `json:"scope,omitempty"`
 	// Actor who delegated to this agent (RFC 8693 act claim)
 	ActorSubject string `json:"act_sub,omitempty"`
 	// Whether this is an agent token (for quick introspection filtering)
@@ -366,6 +368,7 @@ func (s *OAuthService) ExchangeAgentToken(ctx context.Context, req *AgentTokenEx
 		DelegationChain:    chain,
 		MCPServers:         req.MCPServers,
 		MaxDelegationDepth: remainingDepth,
+		Scope:              scopeStr,
 		ActorSubject:       subjectSub,
 		IsAgentToken:       true,
 	}
@@ -443,12 +446,16 @@ func (s *OAuthService) CheckAgentScope(ctx context.Context, tokenString, require
 		return nil, err
 	}
 
-	// Check scope in the token (scope claim or registered claims)
-	// TODO: parse scope from raw token for finer-grained validation
-	tokenScope := ""
-	_ = tokenScope // placeholder for future scope extraction
+	// Check scope in the token (space-separated string, following OAuth convention).
+	granted := strings.Fields(claims.Scope)
+	allowed := make(map[string]bool, len(granted))
+	for _, s := range granted {
+		allowed[s] = true
+	}
+	if requiredScope != "" && !allowed[requiredScope] {
+		return nil, fmt.Errorf("agent token missing required scope '%s'", requiredScope)
+	}
 
-	// For agent tokens, we trust the scope validated during exchange
 	return claims, nil
 }
 

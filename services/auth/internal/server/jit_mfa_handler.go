@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/rand"
+	"encoding/base32"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -56,7 +58,12 @@ func (h *Handler) handleJITMFAEnroll(w http.ResponseWriter, r *http.Request) {
 
 	// Generate enrollment
 	enrollmentID := uuid.New().String()
-	secret := "JBSWY3DPEHPK3PXP" // demo TOTP secret
+	secretBytes := make([]byte, 20)
+	if _, err := rand.Read(secretBytes); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to generate TOTP secret")
+		return
+	}
+	secret := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(secretBytes)
 	token := uuid.New().String()
 
 	writeJSON(w, http.StatusOK, map[string]any{

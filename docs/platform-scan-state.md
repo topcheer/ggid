@@ -1,11 +1,11 @@
 # Platform Scan State
 
-## Current round: 4
-## Last scan focus: D (Data Persistence) + G (SDK Alignment)
-## Next scan focus: E (Security Config)
+## Current round: 5
+## Last scan focus: E (Security Config)
+## Next scan focus: F (Functional Depth Verification)
 ## Total findings: 22
-## Fixed: 13
-## Remaining: 7
+## Fixed: 16
+## Remaining: 4
 ## Partial: 2
 
 ## Current top incomplete features:
@@ -65,3 +65,4 @@ LOW (acceptable for now — short-lived or fallback):
 - 8343bde3: SAML IdP roundtrip tests (arch)
 - 7be8355c: Frontend loading/error states (frontend)
 - eec3a7bd: Docs code block fixes (docs)
+- (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (arch)
