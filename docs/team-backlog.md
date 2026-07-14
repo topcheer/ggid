@@ -1,13 +1,26 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-15 (Round 9 Focus C / HSM-KMS architecture)*
+*Last updated: 2026-07-15 (HSM/KMS KeyProvider wired into services)*
+
+## Current Stats
+
+- **Docs**: 757 markdown files
+- **Console pages**: 629 page.tsx
+- **React hooks**: 492 use*.ts
+- **Go SDK**: 27 files, 154+ test functions
+- **Go services**: 271+ source files, 293+ test files
+- **Build**: `go build ./...` = CLEAN
+- **Tests**: 40/40 packages PASS, 0 FAIL
+- **Real productization gaps**: 1 (GeoIP PARTIAL)
+
+## Gap Closure Priority Queue
 
 ### P1 — Real productization gaps (from platform-completeness-report.md)
 
 | # | Feature | Owner | Location | Status | Next Action |
 |---|---------|-------|----------|--------|-------------|
 | 1 | GeoIP MaxMind integration | arch | services/gateway/middleware | [PARTIAL] | Add optional GeoLite2/MMDB lookup with private-IP fallback |
-| 2 | HSM/KMS key provider | backend | services/auth, services/oauth | [PARTIAL] | Wire auth/oauth services to use pkg/crypto.KeyProvider for JWT signing |
+| 2 | HSM/KMS key provider | backend | pkg/crypto, services/auth, services/oauth | [DONE] | 12db3bac — wired into auth/oauth/gateway |
 
 ### P2 — Research-driven competitive/compliance gaps
 
@@ -28,21 +41,20 @@
 | 10 | Docker E2E infra | devops | docker compose up 未启动，E2E 测试 0/11 FAIL |
 | 11 | Gateway middleware coverage | arch | BehavioralBotDetect, PII obfuscation wiring |
 | 12 | i18n extraction | frontend | 1051 hardcoded strings -> messages/en.json, zh.json |
-| 13 | Console loading/error states | frontend | Remaining 5 页面：ip-allowlist, tenant-config, branding-custom, settings/page, notifications/templates |
+| 13 | Console loading/error states | frontend | Remaining pages: ip-allowlist, tenant-config, branding-custom, settings/page, notifications/templates |
 | 14 | SDK parity completion | arch | Node SDK admin extensions, React hooks for risk/SOD/PAR |
 
 ## Currently Dispatched (Next 24h)
 
 ### Backend
-1. 将 auth/oauth 服务接入 pkg/crypto.KeyProvider（JWT 签名）
-2. 更新 JWKS endpoint 从 KeyProvider.Public() 获取公钥
+1. (standby — HSM/KMS Phase 2 complete)
 
 ### Arch
-1. 设计 OAuth 2.1 / FAPI 2.0 严格模式配置
-2. 继续 GeoIP MaxMind 设计
+1. Focus E scan (Error Handling) in services/
+2. GeoIP MaxMind design
 
 ### Frontend
-1. Console loading/error states for remaining 5 pages
+1. Console loading/error states for remaining pages
 2. Passkey health dashboard
 
 ### Docs/Research
@@ -60,7 +72,6 @@
 ## Research Pipeline
 
 Active research topics:
-- HSM/KMS key provider implementation (in progress)
 - OAuth 2.1 / FAPI 2.0 compliance gap analysis
 - PQC migration for IAM systems
 - AI agent identity governance patterns

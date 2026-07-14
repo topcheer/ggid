@@ -29,8 +29,6 @@
 | 2 | MFA TOTP Secret | auth/server/jit_mfa_handler.go | Hardcoded secret replaced with crypto/rand generated base32 secret. | [DONE] | backend |
 | 3 | SAML SP-Initiated SSO | oauth/server/server.go | SP-initiated AuthnRequest generation and IdP redirect implemented. | [DONE] | backend/arch |
 | 4 | Device-Bound SSO signing key | oauth/service/device_bound_sso.go | Hardcoded default HMAC key replaced with random 32-byte key. | [DONE] | backend |
-| 15 | HSM/KMS KeyProvider wiring | services/auth, services/oauth, services/gateway | Auth, OAuth and Gateway cmd/main.go now initialize crypto.NewKeyProvider; TokenService accepts KeyProvider; PKCS#11 provider is selectable via GGID_KEY_PROVIDER. | [DONE] | TBD |
-
 ### MEDIUM Priority
 
 | # | Feature | Location | Issue | Status | Commit |
@@ -49,7 +47,7 @@
 |---|---------|----------|-------|--------|--------|
 | 12 | GeoIP | gateway/middleware/geoip.go | Detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration pending. | [PARTIAL] | arch |
 | 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
-| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | Phase 1 (PKCS#11 provider) complete. Phase 2 wired: auth/oauth/gateway cmd/main.go use crypto.NewKeyProvider; TokenService and OAuth server accept KeyProvider; local keys auto-generated on startup. | [DONE] | TBD |
+| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | PKCS#11 provider + integration into auth/oauth/gateway cmd/main.go; TokenService and OAuth server accept KeyProvider; local keys auto-generated. | [DONE] | 12db3bac |
 
 ## Previously Fixed (Prior Scans)
 
