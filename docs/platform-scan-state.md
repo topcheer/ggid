@@ -10,6 +10,9 @@
 ## Remaining: 3
 ## Source of truth: docs/platform-completeness-report.md
 
+*Round 7 is odd: execute completeness scan, focus A (Stub/Placeholder/TODO).*
+## Source of truth: docs/platform-completeness-report.md
+
 *Note: Counts must be kept in sync with platform-completeness-report.md. If you update one, update the other.*
 
 ## Current top incomplete features:
