@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// Connect to Redis for sysconfig hot-reload (optional — gateway degrades gracefully without it)
-	var sysconfigStore sysconfig.Store
+	// TODO: wire sysconfigStore into gateway middleware for rate-limit / session-timeout hot-reload
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		redisAddr = "localhost:6379"
@@ -44,10 +44,10 @@ func main() {
 	rdb := redis.NewClient(&redis.Options{Addr: redisAddr})
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		log.Printf("Warning: Redis not available for gateway sysconfig (using defaults): %v", err)
-		sysconfigStore = sysconfig.NewStore(nil, nil) // DB-less, defaults only
+		_ = sysconfig.NewStore(nil, nil) // DB-less, defaults only
 	} else {
 		log.Printf("connected to Redis for sysconfig")
-		sysconfigStore = sysconfig.NewStore(nil, rdb) // Gateway uses Redis cache only; DB writes go through auth service
+		_ = sysconfig.NewStore(nil, rdb) // Gateway uses Redis cache only; DB writes go through auth service
 	}
 
 	// Create gateway router
