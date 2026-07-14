@@ -129,7 +129,7 @@ func (p *Publisher) PublishAsync(event Event) {
 	}
 
 	// Use PublishAsync — fire-and-forget for audit events.
-	p.js.PublishAsync(p.subject, data)
+	_, _ = p.js.PublishAsync(p.subject, data)
 }
 
 // Close closes the underlying NATS connection.

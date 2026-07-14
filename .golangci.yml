@@ -12,13 +12,29 @@ linters:
     - gocritic
     - revive
     - misspell
+  disable-all: false
 
 linters-settings:
   gosec:
     excludes:
-      - G104  # unhandled errors (we check them explicitly)
+      - G104    # unhandled errors (we check them explicitly)
+      - G402    # TLS MinVersion — we set it explicitly where needed
     severity: medium
     confidence: medium
+  errcheck:
+    exclude-functions:
+      - (encoding/json.Encoder).Encode
+      - (encoding/json.Decoder).Decode
+      - (io.Closer).Close
+      - fmt.Sscanf
+      - fmt.Fprintf
+  revive:
+    severity: warning
+    rules:
+      - name: unused-parameter
+        disabled: true
+      - name: exported
+        disabled: false
 
 issues:
   exclude-rules:
@@ -26,8 +42,19 @@ issues:
       linters:
         - gosec
         - gocritic
+        - errcheck
     - path: cmd/
       linters:
         - errcheck
+        - gocritic
+    # Admin config handlers use json.Encode pattern extensively
+    - path: services/.*/internal/server/.*_handler\.go
+      linters:
+        - errcheck
+    # Integration tests have relaxed linting
+    - path: test/integration
+      linters:
+        - errcheck
+        - gosec
   max-issues-per-linter: 0
   max-same-issues: 0

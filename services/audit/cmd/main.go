@@ -63,6 +63,7 @@ func main() {
 
 	db, err := data.New(ctx, cfg.DB)
 	if err != nil {
+		cancel()
 		log.Fatalf("failed to connect database: %v", err)
 	}
 	defer db.Close()

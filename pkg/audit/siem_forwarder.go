@@ -89,7 +89,8 @@ func (f *SIEMForwarder) SetCAPool(pool *x509.CertPool) {
 		Timeout: f.config.Timeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs: pool,
+				RootCAs:    pool,
+				MinVersion: tls.VersionTLS12,
 			},
 		},
 	}

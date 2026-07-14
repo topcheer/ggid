@@ -19,7 +19,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"sync"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -177,11 +176,6 @@ func NewPool(driver, url string) (Pool, error) {
 		return nil, fmt.Errorf("unsupported database driver: %s (use postgres, mysql, or sqlite)", driver)
 	}
 }
-
-var (
-	pgInitOnce sync.Once
-	pgInitErr  error
-)
 
 func newPostgresPool(url string) (Pool, error) {
 	ctx := context.Background()
