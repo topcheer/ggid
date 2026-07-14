@@ -7,7 +7,6 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
@@ -368,14 +367,4 @@ func derivePublicKeyPath(privateKeyPath string) string {
 		return privateKeyPath[:len(privateKeyPath)-4] + ".pub"
 	}
 	return privateKeyPath + ".pub"
-}
-
-// computeKID derives a key ID from an RSA public key.
-func computeKID(pub *rsa.PublicKey) string {
-	data, err := x509.MarshalPKIXPublicKey(pub)
-	if err != nil {
-		return ""
-	}
-	h := sha256.Sum256(data)
-	return base64.RawURLEncoding.EncodeToString(h[:8])
 }
