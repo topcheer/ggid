@@ -1122,10 +1122,6 @@ type DynamicRegistrationResponse struct {
 // DynamicClientRegister implements RFC 7591 dynamic client registration.
 // It creates a new OAuth2 client based on the provided metadata.
 func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRegistrationRequest) (*DynamicRegistrationResponse, error) {
-	if len(req.RedirectURIs) == 0 {
-		return nil, errors.New(errors.ErrInvalidArgument, "redirect_uris is required")
-	}
-
 	tc, err := tenant.FromContext(ctx)
 	if err != nil {
 		return nil, errors.New(errors.ErrFailedPrecondition, "missing tenant context")
@@ -1143,6 +1139,18 @@ func (s *OAuthService) DynamicClientRegister(ctx context.Context, req *DynamicRe
 	}
 	if req.Scope == "" {
 		req.Scope = "openid profile email"
+	}
+
+	// Redirect URIs are required for redirect-based grants (authorization_code, implicit).
+	hasRedirectGrant := false
+	for _, gt := range req.GrantTypes {
+		if gt == "authorization_code" || gt == "implicit" {
+			hasRedirectGrant = true
+			break
+		}
+	}
+	if hasRedirectGrant && len(req.RedirectURIs) == 0 {
+		return nil, errors.New(errors.ErrInvalidArgument, "redirect_uris is required for authorization_code/implicit grants")
 	}
 
 	clientID := generateClientID()

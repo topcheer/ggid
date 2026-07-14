@@ -15,7 +15,7 @@
 
 | # | Feature | Location | Issue | Status | Commit |
 |---|---------|----------|-------|--------|--------|
-| 1 | DCR grant_types | oauth/server/server.go | DCR accepts grant_types param but doesn't persist. Registered clients can't use client_credentials. | [NEW] | - |
+| 1 | DCR grant_types | oauth/server/server.go | DCR accepts grant_types param and persists via CreateClient → PG repo. Verified by regression test: register client_credentials via DCR, then successfully obtain token. | [DONE] | arch |
 | 2 | MFA TOTP Secret | auth/server/jit_mfa_handler.go:59 | Hardcoded "JBSWY3DPEHPK3PXP" instead of crypto/rand generated secret. All JIT-enrolled users shared same secret. | [DONE] | arch |
 | 3 | SAML SP-Initiated SSO | oauth/server/server.go:858 | Returns {"note":"SP-initiated SSO redirect placeholder"}. No actual SAML AuthnRequest. | [NEW] | - |
 | 4 | Device-Bound SSO signing key | oauth/service/device_bound_sso.go:31 | Hardcoded default HMAC key in NewDeviceBoundSSO. Tokens could be forged by anyone knowing the package default. | [DONE] | arch |
