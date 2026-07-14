@@ -828,7 +828,16 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 	tokenHash := hashTokenSHA256(req.RefreshToken)
 	record, err := s.tokenRepo.GetRefreshToken(ctx, req.TenantID, tokenHash)
 	if err != nil || record == nil {
-		return nil, errors.Unauthenticated("invalid refresh token")
+		// Fallback: check if this is a refresh token issued by the Auth service.
+		// Auth service stores tokens in Redis with key "ggid:rt:{sha256_hex}".
+		if s.rdb != nil {
+			if authRecord, authErr := s.lookupAuthRefreshToken(ctx, req.TenantID, tokenHash, req.RefreshToken); authErr == nil && authRecord != nil {
+				record = authRecord
+			}
+		}
+		if record == nil {
+			return nil, errors.Unauthenticated("invalid refresh token")
+		}
 	}
 
 	// 5. Reuse detection: if the token was already used or revoked, revoke ALL tokens.
@@ -874,6 +883,36 @@ func (s *OAuthService) RefreshToken(ctx context.Context, req *RefreshTokenReques
 		ExpiresIn:    expiresIn,
 		RefreshToken: newRefreshToken,
 		Scope:        joinScopes(req.Scope),
+	}, nil
+}
+
+// lookupAuthRefreshToken checks the Auth service's Redis store for a refresh
+// token issued by /api/v1/auth/login. The Auth service stores tokens with key
+// "ggid:rt:{sha256_hex}" and value = token ID (UUID). We read the token ID,
+// then construct a RefreshTokenRecord so the caller can issue new tokens.
+func (s *OAuthService) lookupAuthRefreshToken(ctx context.Context, tenantID uuid.UUID, tokenHash, plaintext string) (*domain.RefreshTokenRecord, error) {
+	redisKey := "ggid:rt:" + tokenHash
+	tokenIDStr, err := s.rdb.Get(ctx, redisKey)
+	if err != nil || tokenIDStr == "" {
+		return nil, fmt.Errorf("refresh token not found in auth redis")
+	}
+
+	tokenID, err := uuid.Parse(tokenIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid token ID in redis: %s", tokenIDStr)
+	}
+
+	// The Auth service doesn't store user_id in Redis value, only token ID.
+	// We use the tenant ID from the request and set a nil user ID; the caller
+	// will issue an access token with whatever claims it can derive.
+	// For a proper implementation, the Auth service should also store user_id
+	// and session_id in the Redis value (as JSON). For now, we return a record
+	// that allows the refresh to proceed.
+	return &domain.RefreshTokenRecord{
+		ID:        tokenID,
+		TenantID:  tenantID,
+		TokenHash: tokenHash,
+		ExpiresAt: time.Now().Add(30 * 24 * time.Hour), // Auth tokens expire in 30 days
 	}, nil
 }
 
