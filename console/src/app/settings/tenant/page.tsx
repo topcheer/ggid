@@ -218,7 +218,7 @@ export default function TenantSettingsPage() {
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-700">
               {config.logoDataUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={config.logoDataUrl} alt="Logo" className="h-full w-full object-cover" />
+                <img src={config.logoDataUrl} alt="Tenant logo" className="h-full w-full object-cover" />
               ) : (
                 <Building2 className="h-10 w-10 text-gray-400" />
               )}

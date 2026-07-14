@@ -211,7 +211,7 @@ export default function BrandingCustomPage() {
                   <button
                     onClick={handleRemoveLogo}
                     className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
-                   aria-label="Close">
+                    aria-label="Remove logo">
                     <X className="h-3.5 w-3.5" /> Remove
                   </button>
                 </div>

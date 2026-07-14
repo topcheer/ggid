@@ -115,7 +115,7 @@ export default function BrandingPage() {
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
                 {logo ? (
-                  <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+                  <img src={logo} alt="Brand logo" className="w-full h-full object-contain" />
                 ) : (
                   <span className="text-xs text-gray-400">No logo</span>
                 )}
@@ -211,7 +211,7 @@ export default function BrandingPage() {
                 <div className="max-w-xs mx-auto space-y-4">
                   <div className="flex justify-center">
                     {logo ? (
-                      <img src={logo} alt="Logo" className="h-12 object-contain" />
+                      <img src={logo} alt="Branded header logo" className="h-12 object-contain" />
                     ) : (
                       <div className="h-12 w-12 rounded-xl flex items-center justify-center text-white font-bold text-xl" style={{ backgroundColor: primaryColor }}>
                         GG
@@ -232,7 +232,7 @@ export default function BrandingPage() {
             ) : (
               <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                 <div className="h-16 flex items-center px-4" style={{ backgroundColor: primaryColor }}>
-                  {logo ? <img src={logo} alt="Logo" className="h-8" /> : <span className="text-white font-bold">Your Brand</span>}
+                  {logo ? <img src={logo} alt="Branded login logo" className="h-8" /> : <span className="text-white font-bold">Your Brand</span>}
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-900">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Welcome to GGID</h4>
