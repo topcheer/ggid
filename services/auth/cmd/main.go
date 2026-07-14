@@ -122,6 +122,11 @@ func main() {
 	mfaRepo := repository.NewPGMFADeviceRepository(pool)
 	mfaService := service.NewMFAService(mfaRepo)
 
+	// 5b. Backup code service (PostgreSQL-backed for persistence)
+	backupCodeRepo := service.NewPgBackupCodeRepo(pool)
+	backupCodeService := service.NewBackupCodeService(backupCodeRepo)
+	_ = backupCodeService // used by MFA handlers
+
 	// 6. Build identity client (HTTP-based, connects to Identity Service)
 	var identityClient service.IdentityClient
 	identityURL := os.Getenv("IDENTITY_SERVICE_URL")

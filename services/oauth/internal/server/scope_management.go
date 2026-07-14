@@ -20,7 +20,7 @@ type CustomScope struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-// scopeStore holds custom scopes in memory (in production, use DB).
+// scopeStore holds custom scopes in memory (fallback when DB unavailable).
 type scopeStore struct {
 	mu     sync.RWMutex
 	scopes map[string]*CustomScope // keyed by scope name
@@ -28,20 +28,23 @@ type scopeStore struct {
 
 var customScopes = &scopeStore{scopes: make(map[string]*CustomScope)}
 
-// handleScopes handles GET/POST/DELETE /api/v1/oauth/scopes.
-// GET    /api/v1/oauth/scopes          — list all custom scopes
-// GET    /api/v1/oauth/scopes?name=X    — get specific scope
-// POST   /api/v1/oauth/scopes          — create new custom scope
-// PUT    /api/v1/oauth/scopes          — update existing scope
-// DELETE /api/v1/oauth/scopes?name=X    — delete scope
+// scopeAdapterVar holds the active scope store adapter (PG or in-memory fallback).
+// Set during server.New() initialization.
+var scopeAdapterVar *scopeStoreAdapter
+
+// handleScopes handles GET/POST/PUT/DELETE /api/v1/oauth/scopes.
+// Uses the persistent scope store (PostgreSQL) with in-memory fallback.
 func handleScopes(w http.ResponseWriter, r *http.Request) {
+	store := scopeAdapterVar
+	if store == nil {
+		store = newScopeStoreAdapter(nil)
+	}
+
 	switch r.Method {
 	case http.MethodGet:
 		name := r.URL.Query().Get("name")
 		if name != "" {
-			customScopes.mu.RLock()
-			scope, ok := customScopes.scopes[name]
-			customScopes.mu.RUnlock()
+			scope, ok := store.Get(name)
 			if !ok {
 				writeJSON(w, http.StatusNotFound, map[string]any{"error": "scope not found"})
 				return
@@ -49,12 +52,7 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, scope)
 			return
 		}
-		customScopes.mu.RLock()
-		scopes := make([]*CustomScope, 0, len(customScopes.scopes))
-		for _, s := range customScopes.scopes {
-			scopes = append(scopes, s)
-		}
-		customScopes.mu.RUnlock()
+		scopes := store.List()
 		writeJSON(w, http.StatusOK, map[string]any{
 			"scopes": scopes,
 			"count":  len(scopes),
@@ -75,10 +73,7 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "name is required"})
 			return
 		}
-
-		customScopes.mu.Lock()
-		if _, exists := customScopes.scopes[req.Name]; exists {
-			customScopes.mu.Unlock()
+		if _, exists := store.Get(req.Name); exists {
 			writeJSON(w, http.StatusConflict, map[string]any{"error": "scope already exists"})
 			return
 		}
@@ -92,9 +87,10 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 			CreatedAt:   now,
 			UpdatedAt:   now,
 		}
-		customScopes.scopes[req.Name] = scope
-		customScopes.mu.Unlock()
-
+		if err := store.Create(scope); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error()})
+			return
+		}
 		writeJSON(w, http.StatusCreated, scope)
 
 	case http.MethodPut:
@@ -112,11 +108,8 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "name is required"})
 			return
 		}
-
-		customScopes.mu.Lock()
-		scope, ok := customScopes.scopes[req.Name]
+		scope, ok := store.Get(req.Name)
 		if !ok {
-			customScopes.mu.Unlock()
 			writeJSON(w, http.StatusNotFound, map[string]any{"error": "scope not found"})
 			return
 		}
@@ -124,8 +117,10 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 		scope.Attributes = req.Attributes
 		scope.Required = req.Required
 		scope.UpdatedAt = time.Now().UTC()
-		customScopes.mu.Unlock()
-
+		if err := store.Update(scope); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error()})
+			return
+		}
 		writeJSON(w, http.StatusOK, scope)
 
 	case http.MethodDelete:
@@ -134,16 +129,11 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "name is required"})
 			return
 		}
-		customScopes.mu.Lock()
-		_, ok := customScopes.scopes[name]
-		if !ok {
-			customScopes.mu.Unlock()
+		if _, ok := store.Get(name); !ok {
 			writeJSON(w, http.StatusNotFound, map[string]any{"error": "scope not found"})
 			return
 		}
-		delete(customScopes.scopes, name)
-		customScopes.mu.Unlock()
-
+		store.Delete(name)
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "scope": name})
 
 	default:

@@ -78,6 +78,7 @@ func New(cfg *conf.Config) (*Server, error) {
 		codeRepo   repository.AuthorizationCodeRepository
 		tokenRepo  repository.IDTokenRepository
 		pool       *pgxpool.Pool
+		scopeAdapter *scopeStoreAdapter
 	)
 
 	if cfg.Database.URL != "" {
@@ -95,6 +96,9 @@ func New(cfg *conf.Config) (*Server, error) {
 				clientRepo = repository.NewPGClientRepository(pool)
 				codeRepo = repository.NewPGAuthorizationCodeRepository(pool)
 				tokenRepo = repository.NewPGIDTokenRepository(pool)
+				// Initialize persistent scope store
+				scopeAdapter = newScopeStoreAdapter(pool)
+				scopeAdapterVar = scopeAdapter
 				log.Println("OAuth database connected")
 			} else if err != nil {
 				log.Printf("warning: failed to connect database: %v (running without DB)", err)
