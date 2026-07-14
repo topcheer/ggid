@@ -83,58 +83,6 @@ function geoToXY(lat: number, lng: number): { x: number; y: number } {
   return { x, y };
 }
 
-// --- Mock data fallback ---
-
-function mockData(): SecurityCenterData {
-  return {
-    total_active_sessions: 247,
-    failed_logins_24h: 89,
-    mfa_coverage_pct: 78,
-    blocked_ips: 14,
-    mfa_enrolled: 1934,
-    mfa_not_enrolled: 547,
-    mfa_methods: [
-      { method: "TOTP", count: 1204, color: "#6366f1" },
-      { method: "WebAuthn", count: 489, color: "#8b5cf6" },
-      { method: "SMS", count: 156, color: "#f59e0b" },
-      { method: "Email", count: 85, color: "#10b981" },
-    ],
-    session_locations: [
-      { user: "admin@ggid.dev", ip: "10.0.1.24", city: "San Francisco", country: "US", lat: 37.77, lng: -122.42, device: "Chrome / macOS", last_active: "2 min ago" },
-      { user: "j.doe@ggid.dev", ip: "203.0.113.5", city: "New York", country: "US", lat: 40.71, lng: -74.01, device: "Firefox / Windows", last_active: "5 min ago" },
-      { user: "a.smith@ggid.dev", ip: "198.51.100.22", city: "London", country: "UK", lat: 51.51, lng: -0.13, device: "Safari / iOS", last_active: "12 min ago" },
-      { user: "k.tanaka@ggid.dev", ip: "192.0.2.88", city: "Tokyo", country: "JP", lat: 35.68, lng: 139.69, device: "Chrome / Android", last_active: "30 min ago" },
-      { user: "m.singh@ggid.dev", ip: "172.16.0.5", city: "Mumbai", country: "IN", lat: 19.08, lng: 72.88, device: "Edge / Windows", last_active: "1 hr ago" },
-      { user: "l.muller@ggid.dev", ip: "10.2.3.40", city: "Berlin", country: "DE", lat: 52.52, lng: 13.40, device: "Chrome / Linux", last_active: "2 hr ago" },
-      { user: "c.silva@ggid.dev", ip: "203.0.113.77", city: "São Paulo", country: "BR", lat: -23.55, lng: -46.63, device: "Safari / macOS", last_active: "3 hr ago" },
-      { user: "y.lee@ggid.dev", ip: "198.51.100.99", city: "Seoul", country: "KR", lat: 37.57, lng: 126.98, device: "Chrome / Windows", last_active: "4 hr ago" },
-    ],
-    failed_login_chart: [
-      { date: "Mon", count: 34, top_ips: ["198.51.100.10", "203.0.113.50"] },
-      { date: "Tue", count: 52, top_ips: ["198.51.100.10", "192.0.2.44"] },
-      { date: "Wed", count: 28, top_ips: ["203.0.113.50", "198.51.100.10"] },
-      { date: "Thu", count: 67, top_ips: ["198.51.100.10", "203.0.113.77"] },
-      { date: "Fri", count: 41, top_ips: ["192.0.2.44", "198.51.100.10"] },
-      { date: "Sat", count: 19, top_ips: ["203.0.113.50", "192.0.2.44"] },
-      { date: "Sun", count: 23, top_ips: ["198.51.100.10", "203.0.113.77"] },
-    ],
-    risky_ips: [
-      { ip: "198.51.100.10", location: "Unknown, RU", attempts: 284, last_attempt: "5 min ago", risk: "high" },
-      { ip: "203.0.113.50", location: "Lagos, NG", attempts: 156, last_attempt: "20 min ago", risk: "high" },
-      { ip: "192.0.2.44", location: "Shenzhen, CN", attempts: 89, last_attempt: "1 hr ago", risk: "medium" },
-      { ip: "203.0.113.77", location: "São Paulo, BR", attempts: 42, last_attempt: "2 hr ago", risk: "medium" },
-      { ip: "198.51.100.99", location: "Unknown, VN", attempts: 17, last_attempt: "5 hr ago", risk: "low" },
-    ],
-    webauthn_devices: [
-      { id: "d1", name: "MacBook Pro Touch ID", type: "platform", last_used: "2 min ago", status: "active" },
-      { id: "d2", name: "YubiKey 5C NFC", type: "roaming", last_used: "1 hr ago", status: "active" },
-      { id: "d3", name: "iPhone Face ID", type: "platform", last_used: "3 hr ago", status: "active" },
-      { id: "d4", name: "Windows Hello", type: "platform", last_used: "2 days ago", status: "inactive" },
-      { id: "d5", name: "Titan Security Key", type: "roaming", last_used: "5 days ago", status: "inactive" },
-    ],
-  };
-}
-
 // --- Component ---
 
 export default function SecurityCenterDashboardPage() {
@@ -143,17 +91,19 @@ export default function SecurityCenterDashboardPage() {
   const [data, setData] = useState<SecurityCenterData | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [hoveredSession, setHoveredSession] = useState<SessionLocation | null>(null);
   const [hoveredBar, setHoveredBar] = useState<FailedLoginDay | null>(null);
   const [blockedIPs, setBlockedIPs] = useState<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const result = await apiFetch<SecurityCenterData>("/api/v1/security/dashboard");
       setData(result);
-    } catch {
-      setData(mockData());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load security dashboard");
     } finally {
       setLoading(false);
     }
@@ -198,6 +148,17 @@ export default function SecurityCenterDashboardPage() {
       setMsg(t("security.deviceRevoked"));
     }
   };
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
+          <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
+          <button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -470,6 +431,7 @@ export default function SecurityCenterDashboardPage() {
                         ) : (
                           <button
                             onClick={() => blockIP(r.ip)}
+                            aria-label={`Block IP ${r.ip}`}
                             className="rounded-lg border border-red-300 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                           >
                             {t("security.block")}
@@ -530,6 +492,7 @@ export default function SecurityCenterDashboardPage() {
                   <button
                     onClick={() => revokeDevice(dev.id)}
                     className="rounded-lg border border-red-300 p-1.5 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
+                    aria-label={`Revoke device ${dev.name}`}
                     title="Revoke device"
                   >
                     <Ban className="h-4 w-4" />

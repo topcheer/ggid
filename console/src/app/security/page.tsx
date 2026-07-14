@@ -57,66 +57,6 @@ interface SecurityRecommendation {
   done: boolean;
 }
 
-// --- Mock data fallback ---
-
-function mockData(): SecurityData {
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const heatmap: HeatmapCell[] = [];
-  for (const day of days) {
-    for (let h = 0; h < 24; h++) {
-      heatmap.push({
-        day,
-        hour: h,
-        count: Math.floor(Math.random() * h < 6 || h > 22 ? 15 : 5),
-      });
-    }
-  }
-  return {
-    overview: {
-      failed_logins_24h: 142,
-      locked_accounts: 7,
-      suspicious_ips: 12,
-      active_threats: 3,
-    },
-    heatmap,
-    anomalies: [
-      {
-        id: "a1",
-        type: "impossible_travel",
-        severity: "high",
-        description: "User j.doe logged in from Tokyo and New York within 30 minutes",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        ip: "203.0.113.50",
-      },
-      {
-        id: "a2",
-        type: "brute_force",
-        severity: "high",
-        description: "28 failed login attempts on account admin@ggid.dev from 198.51.100.10",
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        ip: "198.51.100.10",
-      },
-      {
-        id: "a3",
-        type: "credential_stuffing",
-        severity: "medium",
-        description: "Spike in login attempts using leaked credential patterns from 5 unique IPs",
-        timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-        ip: "192.0.2.44",
-      },
-    ],
-    ip_allowlist: ["10.0.0.0/8", "172.16.0.0/12"],
-    ip_denylist: ["198.51.100.10", "203.0.113.50"],
-    recommendations: [
-      { id: "r1", title: "Enable MFA for all admin accounts", description: "Require multi-factor authentication for privileged users", done: true },
-      { id: "r2", title: "Review recent failed logins", description: "142 failed login attempts in the last 24 hours", done: false },
-      { id: "r3", title: "Update expiring certificates", description: "SAML signing certificate expires in 15 days", done: false },
-      { id: "r4", title: "Review IP denylist", description: "2 IPs currently blocked — verify they are still needed", done: false },
-      { id: "r5", title: "Enable session timeout policy", description: "Force re-authentication after 8 hours of inactivity", done: true },
-    ],
-  };
-}
-
 // --- Component ---
 
 export default function SecurityCenterPage() {
@@ -127,14 +67,16 @@ export default function SecurityCenterPage() {
   const [allowInput, setAllowInput] = useState("");
   const [denyInput, setDenyInput] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const result = await apiFetch<SecurityData>("/api/v1/security/overview");
       setData(result);
-    } catch {
-      setData(mockData());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load security overview");
     } finally {
       setLoading(false);
     }
@@ -150,6 +92,17 @@ export default function SecurityCenterPage() {
       return () => clearTimeout(t);
     }
   }, [msg]);
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
+          <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
+          <button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -376,6 +329,7 @@ export default function SecurityCenterPage() {
                   </div>
                   <button
                     onClick={() => dismissAnomaly(alert.id)}
+                    aria-label={`Dismiss anomaly ${alert.id}`}
                     className="ml-2 rounded-lg border border-gray-300 p-1.5 text-gray-400 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                     title="Dismiss"
                   >
@@ -401,10 +355,12 @@ export default function SecurityCenterPage() {
               onChange={(e) => setAllowInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addAllow()}
               placeholder="e.g. 10.0.0.0/8"
+              aria-label="Allowlist IP or CIDR"
               className={`${inputCls} font-mono`}
             />
             <button
               onClick={addAllow}
+              aria-label="Add to allowlist"
               className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
             >
               <Plus className="h-4 w-4" /> Allow
@@ -422,6 +378,7 @@ export default function SecurityCenterPage() {
                   <span className="font-mono text-sm text-gray-700 dark:text-gray-300">{ip}</span>
                   <button
                     onClick={() => removeAllow(ip)}
+                    aria-label={`Remove ${ip} from allowlist`}
                     className="text-gray-400 hover:text-red-500"
                   >
                     <X className="h-4 w-4" />
@@ -443,10 +400,12 @@ export default function SecurityCenterPage() {
               onChange={(e) => setDenyInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addDeny()}
               placeholder="e.g. 198.51.100.10"
+              aria-label="Denylist IP or CIDR"
               className={`${inputCls} font-mono`}
             />
             <button
               onClick={addDeny}
+              aria-label="Add to denylist"
               className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-sm text-white hover:bg-red-700"
             >
               <Plus className="h-4 w-4" /> Deny
@@ -464,6 +423,7 @@ export default function SecurityCenterPage() {
                   <span className="font-mono text-sm text-gray-700 dark:text-gray-300">{ip}</span>
                   <button
                     onClick={() => removeDeny(ip)}
+                    aria-label={`Remove ${ip} from denylist`}
                     className="text-gray-400 hover:text-red-500"
                   >
                     <X className="h-4 w-4" />
@@ -487,7 +447,7 @@ export default function SecurityCenterPage() {
               className="flex items-start justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700"
             >
               <div className="flex items-start gap-3">
-                <button onClick={() => toggleRec(rec.id)} className="mt-0.5 shrink-0">
+                <button onClick={() => toggleRec(rec.id)} aria-label={`Toggle recommendation ${rec.title}`} className="mt-0.5 shrink-0">
                   {rec.done ? (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   ) : (
