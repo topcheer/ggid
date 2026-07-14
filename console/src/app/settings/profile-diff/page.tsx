@@ -1,58 +1,43 @@
 "use client";
-
 import { useState, useCallback } from "react";
-import { GitCompare, ArrowRight, Save, X } from "lucide-react";
-
-interface DiffEntry {
-  field: string;
-  old_value: string;
-  new_value: string;
-  changed_by: string;
-  changed_at: string;
-}
-
-interface DiffResult {
-  user_id: string;
-  username: string;
-  version_a: string;
-  version_b: string;
-  diffs: DiffEntry[];
-}
-
+import { GitCompare, ArrowRight, AlertTriangle } from "lucide-react";
+interface DiffEntry { field: string; old_value: string; new_value: string; changed_by: string; changed_at: string; }
+interface DiffResult { user_id: string; username: string; version_a: string; version_b: string; diffs: DiffEntry[]; }
 export default function ProfileDiffPage() {
   const [userId, setUserId] = useState("");
   const [versionA, setVersionA] = useState("");
   const [versionB, setVersionB] = useState("");
   const [result, setResult] = useState<DiffResult | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
   const diff = useCallback(async () => {
     if (!userId || !versionA || !versionB) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/v1/identity/profile-diff?user_id=${encodeURIComponent(userId)}&a=${encodeURIComponent(versionA)}&b=${encodeURIComponent(versionB)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (res.ok) setResult(await res.json());
-    } catch { /* noop */ }
+      if (!res.ok) throw new Error(`Failed to compare profiles: HTTP ${res.status}`);
+      setResult(await res.json());
+    } catch (e) { setError(e instanceof Error ? e.message : "Failed to compare profiles"); }
     finally { setLoading(false); }
   }, [userId, versionA, versionB]);
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-purple-500" /> Profile Diff</h1>
         <p className="text-sm text-gray-500 mt-1">Compare two versions of a user profile side by side.</p>
       </div>
-
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => setError(null)} className="text-xs underline hover:text-red-700">Dismiss</button></div>}
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label className="text-sm font-medium">User ID</label><input type="text" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="usr-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">Version A</label><input type="text" value={versionA} onChange={(e) => setVersionA(e.target.value)} placeholder="v1.0 or timestamp" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">Version B</label><input type="text" value={versionB} onChange={(e) => setVersionB(e.target.value)} placeholder="v2.0 or timestamp" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">User ID</label><input type="text" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="usr-xxxx" aria-label="User ID" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Version A</label><input type="text" value={versionA} onChange={(e) => setVersionA(e.target.value)} placeholder="v1.0 or timestamp" aria-label="Version A" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Version B</label><input type="text" value={versionB} onChange={(e) => setVersionB(e.target.value)} placeholder="v2.0 or timestamp" aria-label="Version B" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
         </div>
-        <button onClick={diff} disabled={loading || !userId || !versionA || !versionB} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> {loading ? "Comparing..." : "Compare"}</button>
+        <button onClick={diff} disabled={loading || !userId || !versionA || !versionB} aria-label="Compare profile versions" className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> {loading ? "Comparing..." : "Compare"}</button>
       </div>
-
-      {result && (
+      {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Comparing profiles...</div></div>}
+      {result && !loading && (
         <>
           {result.diffs.length === 0 ? (
             <div className="rounded-lg border border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4 text-sm text-green-700 dark:text-green-400">No differences found between versions.</div>

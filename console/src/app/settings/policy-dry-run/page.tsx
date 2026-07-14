@@ -1,26 +1,13 @@
 "use client";
-
 import { useState } from "react";
-import { Play, ShieldCheck, ShieldX, MinusCircle, Clock } from "lucide-react";
-
-interface DryRunResult {
-  decision: "allow" | "deny" | "no_match";
-  matched_rules: { rule_id: string; rule_name: string; effect: string }[];
-  explanation: string;
-  decision_time_ms: number;
-}
-
-interface Policy {
-  id: string;
-  name: string;
-}
-
+import { Play, ShieldCheck, ShieldX, MinusCircle, Clock, AlertTriangle } from "lucide-react";
+interface DryRunResult { decision: "allow" | "deny" | "no_match"; matched_rules: { rule_id: string; rule_name: string; effect: string }[]; explanation: string; decision_time_ms: number; }
+interface Policy { id: string; name: string; }
 const decisionConfig: Record<string, { color: string; icon: typeof ShieldCheck; label: string }> = {
   allow: { color: "text-green-600", icon: ShieldCheck, label: "Allow" },
   deny: { color: "text-red-600", icon: ShieldX, label: "Deny" },
   no_match: { color: "text-gray-500", icon: MinusCircle, label: "No Match" },
 };
-
 export default function PolicyDryRunPage() {
   const [policies] = useState<Policy[]>([{ id: "p1", name: "Data Access" }, { id: "p2", name: "Admin Access" }]);
   const [policyId, setPolicyId] = useState("");
@@ -29,34 +16,31 @@ export default function PolicyDryRunPage() {
   const [action, setAction] = useState("");
   const [result, setResult] = useState<DryRunResult | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
   const evaluate = async () => {
     if (!policyId || !subject || !resource) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/v1/policy/dry-run", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ policy_id: policyId, subject, resource, action: action || "access" }) });
-      if (res.ok) setResult(await res.json());
-    } catch { /* noop */ }
+      if (!res.ok) throw new Error(`Evaluation failed: HTTP ${res.status}`);
+      setResult(await res.json());
+    } catch (e) { setError(e instanceof Error ? e.message : "Failed to evaluate policy"); }
     finally { setLoading(false); }
   };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Play className="w-6 h-6 text-blue-500" /> Policy Dry Run</h1>
-        <p className="text-sm text-gray-500 mt-1">Test policy evaluation without affecting production.</p>
-      </div>
-
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Play className="w-6 h-6 text-blue-500" /> Policy Dry Run</h1><p className="text-sm text-gray-500 mt-1">Test policy evaluation without affecting production.</p></div>
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => setError(null)} className="text-xs underline hover:text-red-700">Dismiss</button></div>}
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
-        <div><label className="text-sm font-medium">Policy</label><select value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+        <div><label className="text-sm font-medium">Policy</label><select value={policyId} onChange={(e) => setPolicyId(e.target.value)} aria-label="Select policy" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label className="text-sm font-medium">Subject</label><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="user:alice" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">Resource</label><input type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project-plan" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">Action</label><input type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Subject</label><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="user:alice" aria-label="Subject" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Resource</label><input type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project-plan" aria-label="Resource" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Action</label><input type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access" aria-label="Action" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
         </div>
-        <button onClick={evaluate} disabled={loading || !policyId || !subject || !resource} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Evaluating..." : "Evaluate"}</button>
+        <button onClick={evaluate} disabled={loading || !policyId || !subject || !resource} aria-label="Evaluate policy" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Evaluating..." : "Evaluate"}</button>
       </div>
-
       {result && (() => {
         const cfg = decisionConfig[result.decision] || decisionConfig.no_match;
         const Icon = cfg.icon;
@@ -66,11 +50,9 @@ export default function PolicyDryRunPage() {
               <Icon className={"w-10 h-10 " + cfg.color} />
               <div><span className="text-sm text-gray-500">Decision</span><p className={"text-2xl font-bold " + cfg.color}>{cfg.label}</p><p className="text-xs text-gray-400 flex items-center gap-1 mt-1"><Clock className="w-3 h-3" /> {result.decision_time_ms}ms</p></div>
             </div>
-
             {result.matched_rules.length > 0 && (
               <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">Matched Rules</h3><div className="space-y-2">{result.matched_rules.map((r) => (<div key={r.rule_id} className="flex items-center gap-2"><span className="font-mono text-xs text-gray-500">{r.rule_id}</span><span className="text-sm flex-1">{r.rule_name}</span><span className={"px-2 py-0.5 rounded text-xs " + (r.effect === "allow" ? "bg-green-100 dark:bg-green-900/30 dark:text-green-400" : "bg-red-100 dark:bg-red-900/30 dark:text-red-400")}>{r.effect}</span></div>))}</div></div>
             )}
-
             <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-2">Explanation</h3><p className="text-sm text-gray-600 dark:text-gray-400">{result.explanation}</p></div>
           </>
         );
