@@ -7,8 +7,18 @@ const channels = ["email", "sms", "push", "webhook"] as const;
 export default function NotificationPreferencesPage() {
   const [data, setData] = useState<PrefData>({ matrix: Object.fromEntries(events.map((e) => [e, { email: true, sms: false, push: false, webhook: false }])), quiet_hours: { enabled: false, start: "22:00", end: "07:00", timezone: "UTC" }, digest_frequency: "daily", per_user_override: [] });
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const loadData = useCallback(async () => {
+    setLoading(true); setError(null);
+    try { const res = await fetch("/api/v1/notification/preferences", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d) setData(prev => ({ ...prev, ...d })); } }
+    catch (err: any) { setError(err.message); } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { loadData(); }, [loadData]);
   const save = async () => { setSaving(true); try { await fetch("/api/v1/notification/preferences", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) }); } catch { /* noop */ } finally { setSaving(false); } };
   const toggle = (event: string, channel: string) => { setData({ ...data, matrix: { ...data.matrix, [event]: { ...data.matrix[event], [channel]: !data.matrix[event][channel as keyof typeof data.matrix[string]] } } }); };
+  if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Bell className="w-6 h-6 text-blue-500" /> Notification Preferences</h1><p className="text-sm text-gray-500 mt-1">Configure event-channel routing, quiet hours, and digest settings.</p></div><button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button></div>

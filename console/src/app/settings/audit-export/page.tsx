@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Download, Calendar, Filter, FileDown } from "lucide-react";
 
 interface ExportHistoryItem { id: string; filename: string; size_kb: number; rows: number; format: string; status: "completed" | "processing" | "failed"; created_at: string; }
@@ -14,14 +14,26 @@ export default function AuditExportPage() {
   const [destination, setDestination] = useState("download");
   const [scheduled, setScheduled] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [history] = useState<ExportHistoryItem[]>([]);
+  const [history, setHistory] = useState<ExportHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true); setError(null);
+    try { const res = await fetch("/api/v1/audit/export/history", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setHistory(d.exports || d.history || []); } }
+    catch (err: any) { setError(err.message); } finally { setLoading(false); }
+  }, []);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const doExport = async () => {
     setExporting(true);
-    try { await fetch("/api/v1/audit/export", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ format, start_date: startDate, end_date: endDate, user: filterUser, action: filterAction, severity: filterSeverity, destination, scheduled }) }); }
+    try { await fetch("/api/v1/audit/export", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ format, start_date: startDate, end_date: endDate, user: filterUser, action: filterAction, severity: filterSeverity, destination, scheduled }) }); loadData(); }
     catch { /* noop */ }
     finally { setExporting(false); }
   };
+
+  if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
 
   return (
     <div className="space-y-6">
