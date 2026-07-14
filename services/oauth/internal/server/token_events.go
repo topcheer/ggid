@@ -48,7 +48,7 @@ func handleTokenEventStream(w http.ResponseWriter, r *http.Request) {
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "streaming not supported"})
+		writeJSON(w, http.StatusNotImplemented, map[string]any{"error": "streaming not supported by this server"})
 		return
 	}
 

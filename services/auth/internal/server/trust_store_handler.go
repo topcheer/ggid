@@ -61,19 +61,19 @@ func (h *TrustStoreHandler) addCA(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uploadedBy := "admin"
-	ca, err := h.store.AddCA(req.Name, req.PEMData, uploadedBy)
-	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
+		ca, err := h.store.AddCA(req.Name, req.PEMData, uploadedBy)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid CA certificate"})
+			return
+		}
 
-	writeJSON(w, http.StatusCreated, ca)
-}
+		writeJSON(w, http.StatusCreated, ca)
+	}
 
 func (h *TrustStoreHandler) listCAs(w http.ResponseWriter, r *http.Request) {
 	cas, err := h.store.ListCAs()
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list trust store CAs"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"trusted_cas": cas})
@@ -380,7 +380,7 @@ func (h *TrustStoreHandler) HandleVerifyCert(w http.ResponseWriter, r *http.Requ
 	// Get the trust pool
 	pool, err := h.store.CertPool()
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to build cert pool: " + err.Error()})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to build cert pool"})
 		return
 	}
 

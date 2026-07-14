@@ -1,16 +1,16 @@
 # Platform Scan State
 
-## Current round: 11
-## Last scan focus: D (Data Persistence / Key Provider Wiring)
-## Next scan focus: E (Error Handling)
-## Total findings: 14
-## Done: 13
+## Current round: 13
+## Last scan focus: E (Error Handling)
+## Next scan focus: F (Test Coverage)
+## Total findings: 17
+## Done: 16
 ## Fixed (pending verification): 0
 ## Partial: 1
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 11 is odd: execute completeness scan (focus E — Error Handling).*
+*Round 13 is odd: execute completeness scan (focus F — Test Coverage).*
 ## Current top incomplete features:
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
@@ -49,7 +49,8 @@ LOW (acceptable for now — short-lived or fallback):
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
 - bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
-- (current): Round 11 focus D data persistence — HSM/KMS KeyProvider wired into auth/oauth/gateway cmd/main.go
+- (current): Round 13 focus E error handling — sanitize internal error exposure in oauth/internal/server and auth/internal/server
+- (round 11): Round 11 focus D data persistence — HSM/KMS KeyProvider wired into auth/oauth/gateway cmd/main.go
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
 - (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (backend)
 - (round 7): Auth missing handlers wired to real service: /api/v1/auth/me, /api/v1/auth/mfa/status, /api/v1/auth/tokens (backend)

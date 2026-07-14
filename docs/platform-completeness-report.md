@@ -12,12 +12,12 @@
 
 ## Summary
 
-- Total findings: 14
-- Done: 13
+- Total findings: 17
+- Done: 16
 - Fixed (pending verification): 0
 - Partial: 1
 - Remaining: 0
-- Last scan: 2026-07-15 round 11 (focus: D — Data Persistence / Key Provider Wiring)
+- Last scan: 2026-07-15 round 13 (focus: E — Error Handling)
 
 ## Findings
 
@@ -40,6 +40,10 @@
 | 9 | NoopIdentityClient | auth/service/identity_client.go, auth/cmd/main.go | `NewHTTPIdentityClient` used when `IDENTITY_SERVICE_URL` is set; Noop is intentional degraded fallback. | [DONE] | backend |
 | 10 | CIBA backchannel route | oauth/server/server.go | CIBA backchannel endpoint `/api/v1/oauth/backchannel` registered and invokes BackchannelAuthentication. Service-layer tests in ciba_flow_test.go exercise the flow. | [DONE] | 2934fd98 |
 | 11 | Client Branding persistence | oauth/internal/server/client_branding.go | `handleClientBranding` uses `brandingAdapterVar` (PG-backed adapter with mem fallback). Regression test `TestGapRegression_ClientBranding_UsesAdapter` passes. | [DONE] | 2934fd98 |
+
+| 15 | OAuth server internal error exposure | oauth/internal/server/server.go, token_events.go | 500 responses returned raw err.Error() to clients (CreateClient, ListClients, DeleteClient, CreateDeviceAuthorization, ListAgents, IssueSAMLToken, BuildSAMLResponse). Added writeInternalError helper that logs error and returns sanitized "internal server error". | [DONE] | TBD |
+| 16 | Auth server internal error exposure | auth/internal/server/http.go, trust_store_handler.go, admin_config.go | 500 responses returned raw err.Error() to clients. Replaced with writeInternalError helper / sanitized messages. | [DONE] | TBD |
+| 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | TBD |
 
 ### LOW Priority
 
@@ -79,6 +83,7 @@
 | 2026-07-14 | Round 8 — Focus A (Interface Integrity) | +4 route/handler interface gaps | 4 (gateway TODO, policy route aliases) |
 | 2026-07-14 | Round 9 — Focus B (Route Wiring) | +3 missing gateway prefixes | 3 (/api/v1/oauth, /api/v1/identity, /api/v1/agents) |
 | 2026-07-15 | Round 11 — Focus D (Data Persistence / Key Provider Wiring) | 0 | 1 (HSM/KMS KeyProvider wired in auth/oauth/gateway) |
+| 2026-07-15 | Round 13 — Focus E (Error Handling) | +3 | 3 (internal error exposure sanitized) |
 
 ## Remaining Real Gaps (post-audit)
 
@@ -87,6 +92,6 @@
 
 ## Next Actions
 
-- Round 11 (odd, Focus D): Data persistence / key provider wiring — HSM/KMS KeyProvider wiring completed.
-- Round 12 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — blocked by Docker infra, see docs/research/docker-e2e-infra-gap.md
+- Round 14 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — blocked by Docker infra, see docs/research/docker-e2e-infra-gap.md
+- Round 15 (odd, Focus F): Test coverage scan
 - Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard

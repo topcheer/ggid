@@ -346,7 +346,7 @@ func (h *Handler) handleDeviceBindings(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := h.authSvc.RememberTrustedDevice(r.Context(), userID, body.Fingerprint, body.DeviceName); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeInternalError(w, "auth handler", err)
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]interface{}{"status": "device bound", "trusted": true})

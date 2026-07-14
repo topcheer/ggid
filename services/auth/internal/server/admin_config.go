@@ -47,7 +47,7 @@ func (h *Handler) handleAdminConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := h.sysconfigStore.Set(r.Context(), tenantID, key, body.Value); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update config: " + err.Error()})
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update config"})
 			return
 		}
 
@@ -77,7 +77,7 @@ func (h *Handler) handleAdminConfig(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if err := h.sysconfigStore.Reset(r.Context(), tenantID, key); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to reset config: " + err.Error()})
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to reset config"})
 			return
 		}
 

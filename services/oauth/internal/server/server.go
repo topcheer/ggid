@@ -877,7 +877,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		accessToken, expiresIn, err := oauthSvc.IssueSAMLToken(tenantID, nameID, email, displayName)
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to issue token", "detail": err.Error()})
+			writeInternalError(w, "IssueSAMLToken", err)
 			return
 		}
 
@@ -1039,7 +1039,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			RelayState:   relayState,
 		})
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to build SAML response", "detail": err.Error()})
+			writeInternalError(w, "BuildSAMLResponse", err)
 			return
 		}
 
@@ -1130,7 +1130,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Scopes:        body.Scopes,
 			})
 			if err != nil {
-				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				writeInternalError(w, "CreateClient", err)
 				return
 			}
 
@@ -1140,7 +1140,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			// List clients.
 			clients, _, err := oauthSvc.ListClients(ctx, 20, 0)
 			if err != nil {
-				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				writeInternalError(w, "ListClients", err)
 				return
 			}
 			writeJSON(w, http.StatusOK, map[string]any{"clients": clients})
@@ -1227,7 +1227,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		case http.MethodDelete:
 			if err := oauthSvc.DeleteClient(ctx, clientID); err != nil {
-				writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+				writeInternalError(w, "DeleteClient", err)
 				return
 			}
 			writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
@@ -1280,7 +1280,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			Issuer:   cfg.Issuer,
 		})
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			writeInternalError(w, "CreateDeviceAuthorization", err)
 			return
 		}
 		writeJSON(w, http.StatusOK, resp)
@@ -1562,7 +1562,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		}
 		agents, err := oauthSvc.ListAgents(r.Context(), tenantID)
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			writeInternalError(w, "ListAgents", err)
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"agents": agents, "total": len(agents)})
@@ -1893,6 +1893,13 @@ func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+// writeInternalError logs the actual error and returns a sanitized 500 response.
+// Never expose internal error details to the HTTP client.
+func writeInternalError(w http.ResponseWriter, op string, err error) {
+	log.Printf("internal error in %s: %v", op, err)
+	writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 }
 
 // extractBearerToken extracts the token from an "Authorization: Bearer <token>" header.

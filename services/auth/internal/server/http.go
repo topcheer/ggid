@@ -836,7 +836,7 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 	resp, err := h.authSvc.MFAService().SetupMFA(r.Context(), user, req.DeviceName)
 	if err != nil {
 		log.Printf("MFA setup error for user %s: %v", req.UserID, err)
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -871,7 +871,7 @@ func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusUnauthorized, "invalid MFA code")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -901,7 +901,7 @@ func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.authSvc.MFAService().DisableMFA(r.Context(), deviceID); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -993,7 +993,7 @@ func (h *Handler) passwordHistory(w http.ResponseWriter, r *http.Request) {
 
 	history, err := h.authSvc.GetPasswordHistory(r.Context(), userID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -1313,6 +1313,13 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	ggiderrors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
 }
 
+// writeInternalError logs the actual error and returns a sanitized 500 response.
+// Never expose internal error details to the HTTP client.
+func writeInternalError(w http.ResponseWriter, op string, err error) {
+	log.Printf("internal error in %s: %v", op, err)
+	writeError(w, http.StatusInternalServerError, "internal server error")
+}
+
 func writeAuthError(w http.ResponseWriter, err error) {
 	writeAuthErrorWithTranslator(w, err, nil, nil)
 }
@@ -1528,7 +1535,7 @@ func (h *Handler) stepUpChallenge(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.authSvc.InitStepUp(r.Context(), userID, body.Method)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -1640,7 +1647,7 @@ func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.authSvc.InitStepUp(r.Context(), userID, body.Method)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -1682,7 +1689,7 @@ func (h *Handler) stepUpACRCheck(w http.ResponseWriter, r *http.Request) {
 
 	satisfied, challenge, err := h.authSvc.ACRStepUpCheck(r.Context(), userID, currentACR, acrValues)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -1920,7 +1927,7 @@ func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.authSvc.RememberTrustedDevice(r.Context(), userUUID, body.Fingerprint, body.DeviceName); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -2487,7 +2494,7 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 
 	count, err := h.authSvc.ForceLogout(r.Context(), tenantID, userID, exceptSessionID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
@@ -2527,7 +2534,7 @@ func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.authSvc.EnforceSessionLimit(r.Context(), tenantID, userID); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeInternalError(w, "auth handler", err)
 		return
 	}
 
