@@ -1,170 +1,77 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-13 01:00 (PM cycle + research)*
+*Last updated: 2026-07-14 (arch/PM gap audit + research)*
 
 ## Current Stats
-- **Docs**: 661 markdown files
+
+- **Docs**: 757 markdown files
 - **Console pages**: 629 page.tsx
 - **React hooks**: 492 use*.ts
 - **Go SDK**: 27 files, 154+ test functions
 - **Go services**: 271+ source files, 293+ test files
 - **Build**: `go build ./...` = CLEAN
 - **Tests**: 40/40 packages PASS, 0 FAIL
-- **Session commits**: 260+ across all teams
+- **Real productization gaps**: 3 (1 MEDIUM, 1 LOW, 1 verification pending)
 
-## Completed This Session (All Teams)
+## Gap Closure Priority Queue
 
-### Arch Commits (This Cycle)
-- OpenAPI spec updated: +5 config endpoints (user-lifecycle, ABAC condition, SCIM provisioning, export schedule, token rotation)
-- Gap regression tests: 42 tests (policy 17, audit 14, oauth 11)
-- Go SDK analytics extensions: 17 methods (commit `28f1180`)
-- Research backlog: ITDR/fraud/agent-lifecycle/PIPL/OAuth2.1 (29 items)
+### P1 — Real productization gaps (from platform-completeness-report.md)
 
-### Backend Commits
-- `05c1a4d`: User lifecycle config, ABAC condition config, SCIM provisioning config, export schedule config, token rotation config (40/40 PASS)
-- `ffa6ad4`: CIBA, JAR, federation metadata, session binding, PAR config
-- `d26f702`: Permission inheritance, alert webhook, permission tree, rate limits, session stream
-- `c1d6ba8`: Delegation validate, password history, SIEM health, account linking, consent mgmt
-- `a01d849`: ABAC evaluate, compliance schedule CRUD, import validate
-- `4c10363`: Role templates, correlation route confirm, bulk status, RFC 7592
+| # | Feature | Owner | Location | Status | Next Action |
+|---|---------|-------|----------|--------|-------------|
+| 1 | Client Branding persistence | backend | services/oauth | [NEW] | Replace `brandingStore` map with PostgreSQL repo; add migration |
+| 2 | CIBA backchannel route verification | arch | services/oauth/server | [FIXED] | Write functional test that exercises backchannel endpoint |
+| 3 | GeoIP MaxMind integration | arch | services/gateway/middleware | [PARTIAL] | Add optional GeoLite2/MMDB lookup with fallback |
 
-### Frontend Commits
-- `997a952`: gRPC interceptor + connection pool + feature flag + log aggregation + health check config pages
-- `1814f4f`: Distributed tracing + canary deployment + database migration + OAuth scope tiering + secret sprawl config pages
-- `c1d6ba8`: Agent delegation + zero trust + PQC migration + compliance automation + identity recovery config pages
-- `d24051d`: OAuth 2.1 checker + identity schema + error catalog + webhook catalog + tenant isolation config pages
-- `6029adf`: Introspection cache + token prefetch + policy hot-reload + audit query optimization + OAuth backpressure pages
+### P2 — Research-driven competitive/compliance gaps
 
-### Docs Commits
-- `d03e391`: mTLS between services, webhook retry, config management, gRPC streaming, API rate limit tuning (454 docs)
-- `f66e005`: Performance benchmarking, blue-green deploy, IaC, cost monitoring, security hardening (449 docs)
-- `1fd0528`: Auto-scaling, service mesh observability, DR testing, incident command, SRE practices (444 docs)
-- `4c10363`: gRPC interceptors, connection pool tuning, feature flags, log aggregation, health checks (439 docs)
-- `c075395`: Distributed tracing, canary deployment, DB migration, OAuth scope tiering, secret sprawl (434 docs)
+| # | Feature | Owner | Driver | Notes |
+|---|---------|-------|--------|-------|
+| 4 | OAuth 2.1 enforcement mode | backend | RFC 9700 / OAuth 2.1 | Mandatory PKCE, reject implicit/ROPC, exact redirect URI matching |
+| 5 | FAPI 2.0 profile | backend | OpenID FAPI | JAR/JARM, PAR, sender-constrained tokens, DPoP |
+| 6 | Passkey health dashboard | frontend | passkey adoption | Console page showing passkey enrollment status, recovery risk |
+| 7 | PQC migration (ML-DSA / ML-KEM) | arch | NIST PQC | Hybrid TLS + JWT signing in pkg/crypto |
+| 8 | NIS2 / CRA compliance dashboard | frontend | EU regulation | Security incident reporting, SBOM, vulnerability tracking |
+| 9 | AI agent identity lifecycle | backend | agentic AI | Persistent registry, consent flow, credential rotation, drift detection |
+| 10 | Fraud: TOR/VPN/proxy detection | backend | ITDR/fraud | IP intelligence integration, geo-velocity anomaly |
 
-## Currently Dispatched (In Progress)
+### P3 — Quality/infrastructure improvements
 
-### Backend (Batch — dispatched, awaiting report)
-1. Import validation config (formats, batch size, field mapping, conflict resolution)
-2. Delegation config (max depth, allowed roles, expiry, consent, cascade revoke)
-3. Dynamic registration config (open registration, grant types, software statement)
-4. Alert evaluation config (rules, correlation window, dedup, escalation)
-5. Impersonation config (allowed impersonators, reason, duration, audit level)
+| # | Feature | Owner | Notes |
+|---|---------|-------|-------|
+| 11 | Gateway middleware coverage | arch | BehavioralBotDetect, PII obfuscation wiring |
+| 12 | i18n extraction | frontend | 1051 hardcoded strings -> messages/en.json, zh.json |
+| 13 | Console loading/error states | frontend | Remaining 5 pages: ip-allowlist, tenant-config, branding-custom, settings/page, notifications/templates |
+| 14 | SDK parity completion | arch | Node SDK admin extensions, React hooks for risk/SOD/PAR |
 
-### Frontend (Batch — dispatched, awaiting report)
-1. SCIM provisioning page
-2. Risk engine config page
-3. Token binding config page
-4. API versioning config page
-5. Credential vault page
+## Currently Dispatched (Next 24h)
 
-### Docs (Batch — dispatched, awaiting report)
-1. Email template design guide
-2. WebAuthn deployment guide
-3. Audit API reference
-4. Multi-tenant architecture guide
-5. Zero-trust network design guide
+### Backend
+1. Client Branding persistence (services/oauth/internal/service/branding.go)
 
-## Pending Backlog (Not Yet Dispatched)
+### Arch
+1. CIBA backchannel functional test
+2. Research: OAuth 2.1 enforcement gap analysis
+3. GeoIP MaxMind integration design
 
-### Backend (Next)
-- [ ] ITDR: detection rules catalog (services/auth/internal/server/itdr_handler.go)
-- [ ] ITDR: automated response playbooks (block→revoke→notify→ticket)
-- [ ] ITDR: lateral movement detection + privilege escalation detection
-- [ ] Fraud: device fingerprinting service (pkg/fraud/)
-- [ ] Fraud: velocity rules engine + synthetic identity detection
-- [ ] Agent: persistent registry (database-backed) + behavioral monitoring
-- [ ] **P1** ML-DSA JWT signing in pkg/crypto (PQC)
-- [ ] **P1** Hybrid PQC TLS in gateway (ML-KEM)
-- [ ] **P1** Workload identity federation (SPIFFE/SPIRE)
-- [ ] **P1** OAuth 2.1 enforcement (mandatory PKCE, reject implicit)
-- [ ] **P2** Crypto-agility registry in pkg/crypto
-- [ ] **P2** Geo-velocity anomaly detection
-- [ ] **P2** Device posture API + conditional access integration
+### Frontend
+1. Passkey health dashboard (console/src/app/settings/passkey-health/)
+2. Console loading/error states for remaining 5 pages
 
-### Frontend (Next)
-- [ ] ITDR dashboard (console/src/app/settings/itdr-dashboard/)
-- [ ] Fraud detection dashboard (console/src/app/settings/fraud-detection/)
-- [ ] Agent lifecycle dashboard (console/src/app/settings/agent-lifecycle/)
-- [ ] Settings - Email templates editor
-- [ ] Users - Bulk import wizard (CSV upload + preview)
-- [ ] Audit - Real-time event heatmap
-- [ ] **P2** Machine identity inventory dashboard
+## Rules
 
-### Docs (Next)
-- [ ] docs/guides/itdr-implementation.md
-- [ ] docs/guides/fraud-detection.md
-- [ ] docs/guides/ai-agent-lifecycle.md
-- [ ] docs/guides/pipl-compliance.md
-- [ ] docs/guides/high-availability.md
-- [ ] docs/api/org-api.md
-- [ ] docs/research/iam-market-landscape-2026.md
+- Each task owner must report: commit hash + make test result
+- No modification of other teammates' directories
+- Gap status changes require verification (see docs/gap-maintenance-rules.md)
+- Research findings go to docs/research/*.md before entering backlog
+- All dependencies use @latest
 
-### SDK (Next)
-- [ ] Go SDK: risk scoring, SOD, PAR, SIEM forwarder, password policy client methods
-- [ ] Node SDK: admin extensions (matching Go)
-- [ ] React SDK: useRiskScoring, useSODConfig, usePARConfig hooks
+## Research Pipeline
 
----
+Active research topics:
+- OAuth 2.1 / FAPI 2.0 compliance gap analysis
+- PQC migration for IAM systems
+- AI agent identity governance patterns
+- NIS2 / CRA compliance for IAM vendors
 
-## Research-Driven Backlog
-*Source: docs/research/itdr-fraud-agent-lifecycle-gaps.md*
-
-### Backend (P1)
-- [ ] **P1** ITDR: MITRE ATT&CK identity mapping
-- [ ] **P1** Fraud: TOR/VPN/proxy detection
-- [ ] **P1** Agent: consent flow (user approves agent scope)
-- [ ] **P1** Agent: credential rotation automation
-
-### Backend (P2)
-- [ ] **P2** PIPL: data handling rules for Chinese users
-- [ ] **P2** PIPL: cross-border transfer assessment
-- [ ] **P2** OAuth 2.1: compliance audit tool + deprecation enforcement
-- [ ] **P2** Passkey: health dashboard API
-
-### Frontend (P2)
-- [ ] **P2** Passkey health dashboard
-- [ ] **P2** OAuth 2.1 compliance checker page
-- [ ] **P2** PIPL compliance config page
-
-### Docs (P2)
-- [ ] **P2** docs/guides/pqc-migration-guide.md
-
----
-
-## Research-Driven Backlog (2026 IAM Trends)
-*Source: docs/research/iam-trends-2026.md*
-
-### P0: Agentic AI Identity Governance
-- [x] Backend: Agent privilege drift detector (services/oauth/internal/service/agent_drift.go) ✅ 0583672
-- [x] Backend: Shadow agent scanner (services/oauth/internal/service/shadow_scanner.go) ✅ 0583672
-- [x] Backend: Agent access review CRUD (services/oauth/internal/server/agent_review_handler.go) ✅ 0583672
-- [x] Frontend: Agent delegation chain visualization (console/src/app/settings/agent-delegation-graph/) ✅ 29c6d7e
-- [x] Frontend: Agent access review page (console/src/app/settings/agent-access-review/) ✅ 29c6d7e
-- [x] SDK: GetAgentAccessReview, SubmitAgentReview methods ✅ 79c01f9
-- [x] Docs: Agentic AI governance guide (docs/guides/agentic-ai-governance.md) ✅ 9254a95
-
-### P1: Non-Human Identity Lifecycle
-- [x] Backend: NHI inventory endpoint (services/identity/internal/service/nhi_lifecycle.go) ✅ 0583672
-- [x] Backend: NHI lifecycle automation (services/identity/internal/service/nhi_lifecycle.go) ✅ 0583672
-- [x] Backend: Credential rotation scheduler (services/auth/internal/service/rotation_scheduler.go) ✅ 0583672
-- [x] Frontend: NHI inventory dashboard (console/src/app/settings/nhi-inventory/) ✅ 29c6d7e
-- [x] Frontend: Credential rotation config (console/src/app/settings/credential-rotation/) ✅ 29c6d7e
-- [x] SDK: ListNHI, GetNHIDetails, RotateNHI, DecommissionNHI methods ✅ 79c01f9
-- [x] Docs: NHI lifecycle management guide (docs/guides/nhi-lifecycle-management.md) ✅ 9254a95
-
-### P1: Passkeys
-- [x] Frontend: Passkey management page (console/src/app/settings/passkey-management/) ✅ 29c6d7e
-- [x] Backend: Passkey enrollment endpoint (services/auth/internal/server/passkey_handler.go) ✅ 33632e9
-- [x] Docs: Passkey deployment guide (docs/guides/passkey-deployment.md) ✅ 9254a95
-
-### P2: Decentralized Identity
-- [x] Backend: DID resolver (services/identity/internal/service/did_resolver.go) ✅ 33632e9
-- [x] Backend: VC issuer (services/identity/internal/service/vc_issuer.go) ✅ 33632e9
-- [x] Frontend: VC management page (console/src/app/settings/verifiable-credentials/) ✅ 4de81ee
-- [x] Docs: Decentralized identity guide (docs/guides/decentralized-identity.md) ✅ 9254a95
-
-### P2: CRA Compliance
-- [x] Backend: SBOM endpoint (services/audit/internal/server/sbom_handler.go) ✅ 501777c
-- [x] Docs: CRA compliance guide (docs/guides/cra-compliance.md) ✅ 9254a95
-- [ ] **P2** docs/oauth-2-1-compliance-statement.md
+See docs/research/ for full research docs.
