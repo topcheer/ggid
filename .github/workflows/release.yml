@@ -62,7 +62,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ggid/${{ matrix.service }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service }}
             ghcr.io/${{ github.repository }}/${{ matrix.service }}
           tags: |
             type=semver,pattern={{version}}
