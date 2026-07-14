@@ -625,3 +625,5 @@ groups:
           severity: warning
         annotations:
           summary: "Unusual token revocation rate"
+
+```

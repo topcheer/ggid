@@ -398,3 +398,5 @@ claims, wallet disclosure selection API, EUDI-format compatibility tests.
 - [IETF SD-JWT](https://datatracker.ietf.org/doc/draft-ietf-oauth-selective-disclosure-jwt/) | [SD-JWT VC](https://datatracker.ietf.org/doc/draft-ietf-oauth-sd-jwt-vc/)
 - [DIF Presentation Exchange](https://identity.foundation/presentation-exchange/) | [DIDComm v2](https://identity.foundation/didcomm-messaging/spec/)
 - [EUDI ARF](https://digital-strategy.ec.europa.eu/en/library/european-digital-identity-wallet-architecture-and-reference-framework)
+
+```

@@ -479,3 +479,5 @@ sum(rate(ggid_ratelimit_denied_total[5m])) by (endpoint)
 
 # Top rate-limited tenants
 topk(10, sum(rate(ggid_ratelimit_denied_total[5m])) by (tenant_id))
+
+```

@@ -1220,3 +1220,5 @@ redis-cli -h dr-redis SLAVEOF NO ONE
 # 3. Switch DNS back to primary region
 # 4. Demote DR back to standby
 ```
+
+```

@@ -170,3 +170,5 @@ NATS monitoring at `http://localhost:8222/streaming`:
 *See: [Microservices](microservices.md) | [Data Flow](data-flow.md) | [Audit Compliance](../guides/audit-compliance.md)*
 
 *Last updated: 2025-07-11*
+
+```

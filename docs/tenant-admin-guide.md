@@ -376,3 +376,4 @@ curl ".../audit/events?user_id=$USER_ID&limit=10"
 # 5. After grace period: soft delete
 curl -X DELETE .../admin/users/$USER_ID
 ```
+```

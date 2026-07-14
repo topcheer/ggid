@@ -3,10 +3,11 @@
 *Auto-updated by cron-16 platform completeness scanner.*
 
 ## Summary
-- Total findings: 9
-- Fixed: 0
-- Remaining: 9
-- Last scan: 2026-07-14 initial scan
+- Total findings: 10
+- Fixed: 1
+- Partial: 1
+- Remaining: 8
+- Last scan: 2026-07-14 round 1 (focus: A — Stub/Placeholder/TODO)
 
 ## Findings
 
@@ -26,18 +27,20 @@
 | 5 | Device-Bound SSO | oauth/service/device_bound_sso.go | 6 TODOs. Empty shell: no WebAuthn verify, no JWT sign, no device_id compare. | [NEW] | - |
 | 6 | Backup Codes Storage | auth/service/backup_codes.go | Uses inMemBackupCodeRepo. Lost on restart. Needs DB implementation. | [NEW] | - |
 | 7 | NoopIdentityClient | auth/service/identity_client.go | All methods return "not configured". Social login user creation fails when Identity Service unavailable. | [NEW] | - |
-| 8 | CIBA backchannel route | oauth/server/server.go | CIBA service fully implemented but backchannel_auth endpoint not registered in routes. Only config endpoint routed. | [NEW] | - |
+| 8 | CIBA backchannel route | oauth/server/server.go | CIBA service fully implemented but backchannel_auth endpoint not registered in routes. Only config endpoint routed. | [FIXED] | arch (pending) |
 
 ### LOW Priority
 
 | # | Feature | Location | Issue | Status | Commit |
 |---|---------|----------|-------|--------|--------|
-| 9 | GeoIP | gateway/middleware/geoip.go:92 | lookupCountry is placeholder. "In production, use MaxMind GeoLite2 DB". | [NEW] | - |
+| 9 | GeoIP | gateway/middleware/geoip.go:92 | Was placeholder returning unknown. Now detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration still pending. | [PARTIAL] | arch (pending) |
+| 10 | Frontend page completeness | console/src/app/ | Verified 4 key pages exist and are fully functional: SAML settings, OAuth clients, API keys, Certificates. All have proper API wiring. | [DONE] | - |
 
 ## Previously Fixed (Prior Scans)
 
 | Feature | Was | Fixed By | Commit | Date |
 |---------|------|----------|--------|------|
+| CIBA backchannel route | Route not registered, only config endpoint routed | arch | pending | 2026-07-14 |
 | BotDetect not wired | BotDetect existed but not in Handler() chain | arch | - | 2026-07-12 |
 | PII Obfuscate not called | pii.Obfuscate never called | backend | - | 2026-07-12 |
 | CheckSessionTimeout not wired | Never invoked in request pipeline | backend | - | 2026-07-12 |
@@ -54,3 +57,4 @@
 | Date | Focus | New Findings | Fixed |
 |------|-------|-------------|-------|
 | 2026-07-14 | Initial manual scan (all dimensions) | 9 | 0 |
+| 2026-07-14 | Round 1 — Focus A (Stub/Placeholder/TODO) | +1 (#10) | 1 (#8) + 1 partial (#9) |
