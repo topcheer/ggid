@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface ContentType { type: string; enabled: boolean; }
 
@@ -21,7 +21,20 @@ export default function CompressionConfigPage() {
   const [skipTypes, setSkipTypes] = useState(['image/jpeg', 'image/png', 'video/mp4', 'application/zip']);
   const [newContentType, setNewContentType] = useState('');
   const [newSkipType, setNewSkipType] = useState('');
-  const [stats] = useState({ bytesSaved: '4.2 GB', ratio: 68.5, requestsCompressed: 15420 });
+  const [stats, setStats] = useState({ bytesSaved: '4.2 GB', ratio: 68.5, requestsCompressed: 15420 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/v1/gateway/compression-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      if (res.ok) { const d = await res.json(); if (d.enabled !== undefined) setEnabled(d.enabled); if (d.algorithms) setAlgorithms(d.algorithms); if (d.min_size) setMinSize(d.min_size); if (d.level) setLevel(d.level); if (d.stats) setStats(d.stats); }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const allAlgorithms = ['gzip', 'brotli', 'zstd'];
   const toggleAlg = (a: string) => setAlgorithms(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
@@ -29,6 +42,9 @@ export default function CompressionConfigPage() {
   const addContentType = () => { if (newContentType) { setContentTypes(prev => [...prev, { type: newContentType, enabled: true }]); setNewContentType(''); } };
   const addSkipType = () => { if (newSkipType) { setSkipTypes(prev => [...prev, newSkipType]); setNewSkipType(''); } };
   const removeSkipType = (t: string) => setSkipTypes(prev => prev.filter(x => x !== t));
+
+  if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">

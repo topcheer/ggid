@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sliders, Save, AlertTriangle } from "lucide-react";
 
 interface RiskConfig {
@@ -29,6 +29,19 @@ export default function RiskScoringConfigPage() {
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/v1/auth/risk-scoring-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      if (res.ok) { const d = await res.json(); if (d) setConfig(prev => ({ ...prev, ...d })); }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   const totalWeight = Object.values(config.weights).reduce((a, b) => a + b, 0);
 
@@ -38,6 +51,9 @@ export default function RiskScoringConfigPage() {
     catch { /* noop */ }
     finally { setSaving(false); }
   }, [config]);
+
+  if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600" /></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
 
   return (
     <div className="space-y-6">
