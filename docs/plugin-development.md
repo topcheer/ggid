@@ -1732,10 +1732,10 @@ package authprovider
 type AuthProvider interface {
     // Authenticate validates credentials and returns user identity.
     Authenticate(ctx context.Context, username, password string) (*AuthResult, error)
-    
+
     // ProviderName returns the provider identifier.
     ProviderName() string
-    
+
     // Priority sets order in the chain (lower = higher priority).
     Priority() int
 }
@@ -1793,11 +1793,11 @@ func (p *RESTProvider) Authenticate(ctx context.Context, username, password stri
         return nil, fmt.Errorf("rest provider: %w", err)
     }
     defer resp.Body.Close()
-    
+
     if resp.StatusCode != http.StatusOK {
         return nil, fmt.Errorf("authentication failed: status %d", resp.StatusCode)
     }
-    
+
     var result struct {
         UserID string `json:"user_id"`
         Name   string `json:"display_name"`
@@ -1807,7 +1807,7 @@ func (p *RESTProvider) Authenticate(ctx context.Context, username, password stri
     if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
         return nil, fmt.Errorf("decode response: %w", err)
     }
-    
+
     return &authprovider.AuthResult{
         UserID:      result.UserID,
         Username:    username,
@@ -1825,18 +1825,18 @@ func (p *RESTProvider) Authenticate(ctx context.Context, username, password stri
 // In your service initialization (main.go)
 func main() {
     chain := authprovider.NewChain()
-    
+
     // Add built-in providers
     chain.Add(localProvider)
     chain.Add(ldapProvider)
-    
+
     // Add custom provider
     restProvider := myprovider.NewRESTProvider(
         os.Getenv("CUSTOM_API_URL"),
         os.Getenv("CUSTOM_API_KEY"),
     )
     chain.Add(restProvider)
-    
+
     // Auth service uses the chain — tries each provider in priority order
     authSvc := auth.NewService(chain, ...)
 }
@@ -1868,10 +1868,10 @@ package audit
 type AuditSink interface {
     // Publish sends an event to the sink.
     Publish(ctx context.Context, event *AuditEvent) error
-    
+
     // SinkName returns the sink identifier.
     SinkName() string
-    
+
     // Close cleans up resources.
     Close() error
 }
@@ -1928,21 +1928,21 @@ func (s *SplunkSink) Publish(ctx context.Context, event *AuditEvent) error {
         "sourcetype": "ggid:audit",
         "event":      event,
     }
-    
+
     body, _ := json.Marshal(payload)
-    
+
     req, err := http.NewRequestWithContext(ctx, "POST", s.hecURL, bytes.NewReader(body))
     if err != nil {
         return err
     }
     req.Header.Set("Authorization", "Splunk "+s.token)
-    
+
     resp, err := s.client.Do(req)
     if err != nil {
         return err
     }
     resp.Body.Close()
-    
+
     if resp.StatusCode != http.StatusOK {
         return fmt.Errorf("splunk HEC returned %d", resp.StatusCode)
     }
@@ -1958,26 +1958,26 @@ func (s *SplunkSink) Close() error { return nil }
 // In audit service initialization
 func main() {
     publisher := audit.NewPublisher()
-    
+
     // Built-in: NATS JetStream
     publisher.AddSink(natsSink)
-    
+
     // Built-in: PostgreSQL
     publisher.AddSink(pgSink)
-    
+
     // Custom: Splunk
     splunkSink := NewSplunkSink(
         os.Getenv("SPLUNK_HEC_URL"),
         os.Getenv("SPLUNK_HEC_TOKEN"),
     )
     publisher.AddSink(splunkSink)
-    
+
     // Custom: Datadog
     if os.Getenv("DATADOG_API_KEY") != "" {
         ddSink := datadog.NewSink(os.Getenv("DATADOG_API_KEY"))
         publisher.AddSink(ddSink)
     }
-    
+
     // Publisher fans out to all sinks asynchronously
     auditSvc := audit.NewService(publisher, ...)
 }
@@ -2026,7 +2026,7 @@ func IPAllowlist(allowedCIDRs []string) middleware.Middleware {
         _, n, _ := net.ParseCIDR(cidr)
         networks = append(networks, n)
     }
-    
+
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
             ip := net.ParseIP(extractIP(r))
@@ -2034,7 +2034,7 @@ func IPAllowlist(allowedCIDRs []string) middleware.Middleware {
                 http.Error(w, "forbidden", http.StatusForbidden)
                 return
             }
-            
+
             allowed := false
             for _, n := range networks {
                 if n.Contains(ip) {
@@ -2042,12 +2042,12 @@ func IPAllowlist(allowedCIDRs []string) middleware.Middleware {
                     break
                 }
             }
-            
+
             if !allowed {
                 http.Error(w, "IP not allowed", http.StatusForbidden)
                 return
             }
-            
+
             next.ServeHTTP(w, r)
         })
     }
@@ -2060,15 +2060,15 @@ func IPAllowlist(allowedCIDRs []string) middleware.Middleware {
 // In Gateway initialization
 func main() {
     r := router.New()
-    
+
     // Built-in middleware
     r.Use(middleware.RequestID())
     r.Use(middleware.TenantContext())
     r.Use(middleware.JWTAuth(authSvc))
-    
+
     // Custom middleware
     r.Use(myplugin.IPAllowlist(os.Getenv("ALLOWED_CIDR").split(",")))
-    
+
     r.Use(middleware.RateLimiter())
     r.Use(middleware.Logger())
 }

@@ -17,7 +17,7 @@ GET /saml/metadata.xml
   entityID="https://auth.ggid.dev/saml">
 
   <SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
-    
+
     <KeyDescriptor use="signing">
       <KeyInfo>
         <X509Data>
@@ -25,7 +25,7 @@ GET /saml/metadata.xml
         </X509Data>
       </KeyInfo>
     </KeyDescriptor>
-    
+
     <KeyDescriptor use="encryption">
       <KeyInfo>
         <X509Data>
@@ -34,18 +34,18 @@ GET /saml/metadata.xml
       </KeyInfo>
       <EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-gcm"/>
     </KeyDescriptor>
-    
+
     <NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</NameIDFormat>
-    
+
     <AssertionConsumerService
       Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
       Location="https://auth.ggid.dev/saml/acs"
       index="0" isDefault="true"/>
-    
+
     <SingleLogoutService
       Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
       Location="https://auth.ggid.dev/saml/slo"/>
-    
+
   </SPSSODescriptor>
 </EntityDescriptor>
 ```
@@ -57,7 +57,7 @@ GET /saml/metadata.xml
 ```go
 func GenerateAuthnRequest(idpID, acsURL string) (string, error) {
     requestID := generateID() // UUID
-    
+
     authnRequest := saml.AuthnRequest{
         ID:           requestID,
         Version:      "2.0",
@@ -78,7 +78,7 @@ func GenerateAuthnRequest(idpID, acsURL string) (string, error) {
             },
         },
     }
-    
+
     // Sign and encode as redirect URL
     return EncodeForRedirect(authnRequest, spPrivateKey)
 }
@@ -110,26 +110,26 @@ func ACSHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "invalid SAML response", 400)
         return
     }
-    
+
     // 2. Verify response status
     if response.Status.StatusCode.Value != "urn:oasis:names:tc:SAML:2.0:status:Success" {
         handleSAMLFailure(w, response.Status)
         return
     }
-    
+
     // 3. Verify conditions
     assertion := response.Assertion
     if err := verifyConditions(assertion, spEntityID); err != nil {
         http.Error(w, "assertion conditions not met", 403)
         return
     }
-    
+
     // 4. Verify signature
     if err := verifySignature(assertion, idpCert); err != nil {
         http.Error(w, "invalid signature", 403)
         return
     }
-    
+
     // 5. Decrypt assertion (if encrypted)
     if assertion.EncryptedAssertion != nil {
         assertion, err = decryptAssertion(assertion, spPrivateKey)
@@ -138,19 +138,19 @@ func ACSHandler(w http.ResponseWriter, r *http.Request) {
             return
         }
     }
-    
+
     // 6. Verify timestamps
     if time.Now().After(assertion.Conditions.NotOnOrAfter) {
         http.Error(w, "assertion expired", 403)
         return
     }
-    
+
     // 7. Extract attributes
     attrs := extractAttributes(assertion)
-    
+
     // 8. Provision/update user (JIT)
     user := provisionOrLookupUser(attrs)
-    
+
     // 9. Issue GGID session
     issueSession(w, user)
 }
@@ -164,20 +164,20 @@ func verifySignature(assertion *saml.Assertion, cert *x509.Certificate) error {
     if sig == nil {
         return ErrNoSignature
     }
-    
+
     // Extract SignedInfo
     signedInfo := sig.SignedInfo
-    
+
     // Compute canonical XML (C14N) of SignedInfo
     canonical, err := canonicalize(signedInfo)
     if err != nil {
         return err
     }
-    
+
     // Verify signature
     hash := crypto.SHA256.New()
     hash.Write(canonical)
-    
+
     return cert.CheckSignature(x509.SHA256WithRSA, canonical, sig.SignatureValue)
 }
 ```
@@ -203,16 +203,16 @@ func decryptAssertion(encrypted *saml.EncryptedAssertion, privKey *rsa.PrivateKe
     if err != nil {
         return nil, ErrKeyDecryption
     }
-    
+
     // 2. Decrypt assertion using AES-256-GCM
     block, _ := aes.NewCipher(symmetricKey)
     gcm, _ := cipher.NewGCM(block)
-    
+
     plaintext, err := gcm.Open(nil, encrypted.IV, encrypted.CipherValue, encrypted.AuthTag)
     if err != nil {
         return nil, ErrAssertionDecryption
     }
-    
+
     // 3. Parse decrypted assertion
     return parseAssertion(plaintext)
 }
@@ -233,7 +233,7 @@ func InitiateLogout(w http.ResponseWriter, r *http.Request) {
         NameID:       session.NameID,
         SessionIndex: session.SessionIndex,
     }
-    
+
     // Redirect to IdP SLO endpoint
     redirectURL := EncodeForRedirect(logoutRequest, spPrivateKey)
     http.Redirect(w, r, redirectURL, 302)
@@ -248,10 +248,10 @@ IdP sends LogoutRequest to GGID's SLO endpoint:
 func SLOHandler(w http.ResponseWriter, r *http.Request) {
     // 1. Parse LogoutRequest
     req := decodeLogoutRequest(r)
-    
+
     // 2. Terminate user session
     terminateSession(req.NameID, req.SessionIndex)
-    
+
     // 3. Respond with LogoutResponse
     resp := saml.LogoutResponse{
         ID:           generateID(),
@@ -261,7 +261,7 @@ func SLOHandler(w http.ResponseWriter, r *http.Request) {
         Destination:  idpSLOURL,
         Status:       saml.Status{StatusCode: saml.Success},
     }
-    
+
     // Redirect back to IdP
     redirectURL := EncodeForRedirect(resp, spPrivateKey)
     http.Redirect(w, r, redirectURL, 302)
@@ -278,11 +278,11 @@ func handleIdPInitiated(response *saml.Response) error {
     if response.InResponseTo != "" {
         return ErrUnexpectedResponse // Should be empty for IdP-initiated
     }
-    
+
     // 2. Verify assertion (same as ACS handler)
     // 3. Look up user by NameID or attributes
     // 4. If no matching AuthnRequest, check RelayState for target
-    
+
     // Allow only if configured
     if !allowIdPInitiated {
         return ErrIdPInitiatedDisabled

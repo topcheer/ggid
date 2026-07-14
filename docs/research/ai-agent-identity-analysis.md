@@ -484,7 +484,7 @@ human-in-the-loop approval:
 ```python
 class HumanInTheLoopAgent:
     SENSITIVE_SCOPES = {"email:send", "payment:execute", "data:delete"}
-    
+
     def request_action(self, scope, user_session):
         if scope in self.SENSITIVE_SCOPES:
             auth_url = build_auth_url(scope=scope, prompt="consent")
@@ -878,7 +878,7 @@ func (e *AgentTokenExchanger) ExchangeForAgent(
     formData.Set("grant_type", "urn:ietf:params:oauth:grant-type:token-exchange")
     formData.Set("subject_token", req.SubjectToken)
     formData.Set("subject_token_type", "urn:ietf:params:oauth:token-type:access_token")
-    
+
     if len(req.RequestedScopes) > 0 {
         formData.Set("scope", strings.Join(req.RequestedScopes, " "))
     }
@@ -890,7 +890,7 @@ func (e *AgentTokenExchanger) ExchangeForAgent(
         formData.Set("actor_token", req.ActorToken)
         formData.Set("actor_token_type", "urn:ietf:params:oauth:token-type:access_token")
     }
-    
+
     tokenType := req.TokenType
     if tokenType == "" {
         tokenType = "urn:ietf:params:oauth:token-type:access_token"
@@ -947,12 +947,12 @@ func extractActClaim(tokenStr string) (*ActClaim, error) {
     if err != nil {
         return nil, err
     }
-    
+
     actRaw, ok := claims["act"]
     if !ok {
         return nil, nil // No act claim = impersonation mode
     }
-    
+
     actBytes, _ := json.Marshal(actRaw)
     var act ActClaim
     json.Unmarshal(actBytes, &act)
@@ -993,7 +993,7 @@ func MultiHopExchange(
     if err != nil {
         return "", fmt.Errorf("hop 2 (agent→sub-agent): %w", err)
     }
-    // subAgentResult.ActClaim = { sub: "user@example.com", 
+    // subAgentResult.ActClaim = { sub: "user@example.com",
     //   act: { sub: "coding-agent", act: { sub: "research-subagent" } } }
 
     // Hop 3: Sub-agent → MCP Server (final exchange for target API)
@@ -1070,23 +1070,23 @@ func EnrollAgent(ctx context.Context, oauthURL, agentName string) (*AgentCredent
         return nil, err
     }
     challenge := generateCodeChallenge(verifier) // S256
-    
+
     // Step 2: Initiate device authorization flow
     deviceResp, err := initiateDeviceAuth(ctx, oauthURL, agentName, challenge)
     if err != nil {
         return nil, err
     }
-    
+
     // Step 3: Display instructions to user
     fmt.Printf("Visit %s and enter code: %s\n",
         deviceResp.VerificationURI, deviceResp.UserCode)
-    
+
     // Step 4: Poll for token
     token, err := pollForToken(ctx, oauthURL, deviceResp, verifier)
     if err != nil {
         return nil, err
     }
-    
+
     // Step 5: Store credentials securely
     return &AgentCredentials{
         AgentID:       generateAgentID(),
@@ -1196,13 +1196,13 @@ func (c *AgentOAuthClient) CallTool(
 ) (*ToolResponse, error) {
     // Look up required scopes for this tool
     scopes, audience := getToolScopes(toolName)
-    
+
     // Get a scoped token for this specific tool
     token, err := c.GetScopedToken(ctx, scopes, audience)
     if err != nil {
         return nil, fmt.Errorf("getting scoped token for %s: %w", toolName, err)
     }
-    
+
     // Make the authenticated request
     req, err := http.NewRequestWithContext(ctx, "POST", toolEndpoint, bytes.NewReader(payload))
     if err != nil {
@@ -1212,13 +1212,13 @@ func (c *AgentOAuthClient) CallTool(
     req.Header.Set("Content-Type", "application/json")
     req.Header.Set("X-Agent-ID", c.AgentID)
     req.Header.Set("X-Tool-Name", toolName)
-    
+
     resp, err := c.HTTPClient.Do(req)
     if err != nil {
         return nil, fmt.Errorf("tool call %s: %w", toolName, err)
     }
     defer resp.Body.Close()
-    
+
     // Audit log the tool call
     auditLog(ctx, AuditEntry{
         AgentID:   c.AgentID,
@@ -1227,7 +1227,7 @@ func (c *AgentOAuthClient) CallTool(
         Status:    resp.StatusCode,
         Timestamp: time.Now(),
     })
-    
+
     return parseToolResponse(resp)
 }
 ```
@@ -1256,7 +1256,7 @@ func (a *StepUpAuthorizer) CheckAuthorization(
             Reason:   "non-sensitive action",
         }, nil
     }
-    
+
     // Check if agent already has elevated scope
     requiredScope := getScopeForAction(action)
     if containsScope(currentScopes, requiredScope) {
@@ -1265,13 +1265,13 @@ func (a *StepUpAuthorizer) CheckAuthorization(
             Reason:   "already has required scope",
         }, nil
     }
-    
+
     // Need human approval — initiate device flow
     deviceCode, err := initiateDeviceAuth(ctx, a.OAuthURL, agentID, requiredScope)
     if err != nil {
         return nil, err
     }
-    
+
     return &AuthorizationDecision{
         Allowed:     false,
         Reason:      "requires human approval",
@@ -1346,42 +1346,42 @@ type Agent struct {
     AgentID     string         `json:"agent_id" db:"agent_id"`        // Unique agent identifier
     Name        string         `json:"name" db:"name"`               // Human-readable name
     Description string         `json:"description" db:"description"`
-    
+
     // Identity
     Type        AgentType      `json:"type" db:"type"`
     Status      AgentStatus    `json:"status" db:"status"`
-    
+
     // Ownership
     OwnerID     uuid.UUID      `json:"owner_id" db:"owner_id"`       // User who registered the agent
     OwnerEmail  string         `json:"owner_email" db:"owner_email"`
-    
+
     // Authorization
     Scopes      []string       `json:"scopes" db:"scopes"`           // Allowed scopes
     Audiences   []string       `json:"audiences" db:"audiences"`     // Allowed target services
-    
+
     // Rate Limiting
     RateLimitPerMinute int     `json:"rate_limit_per_minute" db:"rate_limit_per_minute"`
     RateLimitPerHour   int     `json:"rate_limit_per_hour" db:"rate_limit_per_hour"`
     RateLimitPerDay    int     `json:"rate_limit_per_day" db:"rate_limit_per_day"`
-    
+
     // Token Configuration
     MaxTokenTTL        time.Duration `json:"max_token_ttl" db:"max_token_ttl"`
     AllowRefresh       bool          `json:"allow_refresh" db:"allow_refresh"`
     RefreshTTL         time.Duration `json:"refresh_ttl" db:"refresh_ttl"`
-    
+
     // Monitoring
     TrustScore         float64       `json:"trust_score" db:"trust_score"`     // 0.0 to 1.0
     AnomalyThreshold   float64       `json:"anomaly_threshold" db:"anomaly_threshold"`
     AutoRevokeOnAnomaly bool         `json:"auto_revoke_on_anomaly" db:"auto_revoke_on_anomaly"`
-    
+
     // Sensitive Actions
     SensitiveActions   []string      `json:"sensitive_actions" db:"sensitive_actions"`
     RequireHumanApproval bool        `json:"require_human_approval" db:"require_human_approval"`
-    
+
     // Metadata
     ClientID           string        `json:"client_id" db:"client_id"`       // OAuth client ID
     Metadata           map[string]any `json:"metadata" db:"metadata"`
-    
+
     // Timestamps
     CreatedAt          time.Time     `json:"created_at" db:"created_at"`
     UpdatedAt          time.Time     `json:"updated_at" db:"updated_at"`
@@ -1445,7 +1445,7 @@ func (s *AgentService) RegisterAgent(
     if err != nil {
         return nil, fmt.Errorf("owner lookup: %w", err)
     }
-    
+
     // Create OAuth client for the agent
     clientResult, err := s.oauthService.CreateClient(ctx, &CreateClientInput{
         TenantID:   owner.TenantID,
@@ -1461,7 +1461,7 @@ func (s *AgentService) RegisterAgent(
     if err != nil {
         return nil, fmt.Errorf("creating OAuth client: %w", err)
     }
-    
+
     // Create agent record
     agent := &Agent{
         ID:                  uuid.New(),
@@ -1488,11 +1488,11 @@ func (s *AgentService) RegisterAgent(
         CreatedAt:           time.Now(),
         UpdatedAt:           time.Now(),
     }
-    
+
     if err := s.agentRepo.Create(ctx, agent); err != nil {
         return nil, fmt.Errorf("creating agent: %w", err)
     }
-    
+
     // Log registration
     s.auditLog(ctx, AuditEntry{
         EventType: "agent_registered",
@@ -1500,7 +1500,7 @@ func (s *AgentService) RegisterAgent(
         UserID:    ownerID.String(),
         Details:   fmt.Sprintf("Agent %s registered by %s", agent.Name, owner.Email),
     })
-    
+
     return agent, nil
 }
 ```
@@ -1521,27 +1521,27 @@ func (s *AgentService) IssueAgentToken(
     if err != nil {
         return nil, fmt.Errorf("agent lookup: %w", err)
     }
-    
+
     // 2. Validate agent is active
     if agent.Status != AgentStatusActive {
         return nil, ErrAgentNotActive
     }
-    
+
     // 3. Validate requested scopes are within agent's allowed scopes
     if !isSubset(requestedScopes, agent.Scopes) {
         return nil, ErrScopeExceedsAgentPermissions
     }
-    
+
     // 4. Validate audience is in agent's allowed audiences
     if !contains(agent.Audiences, audience) {
         return nil, ErrAudienceNotAllowed
     }
-    
+
     // 5. Check rate limits
     if err := s.checkRateLimit(ctx, agent); err != nil {
         return nil, err
     }
-    
+
     // 6. Perform token exchange
     result, err := s.exchanger.ExchangeForAgent(ctx, &ExchangeRequest{
         SubjectToken:    userToken,
@@ -1552,10 +1552,10 @@ func (s *AgentService) IssueAgentToken(
     if err != nil {
         return nil, fmt.Errorf("token exchange: %w", err)
     }
-    
+
     // 7. Update agent's last active time
     s.agentRepo.UpdateLastActive(ctx, agent.ID)
-    
+
     // 8. Audit log
     s.auditLog(ctx, AuditEntry{
         EventType: "agent_token_issued",
@@ -1563,7 +1563,7 @@ func (s *AgentService) IssueAgentToken(
         Scopes:    requestedScopes,
         Audience:  audience,
     })
-    
+
     return &TokenResponse{
         AccessToken: result.AccessToken,
         ExpiresIn:   result.ExpiresIn,
@@ -1592,15 +1592,15 @@ func (m *AgentMonitor) CheckAnomaly(
     if err != nil {
         return nil, err
     }
-    
+
     // Get baseline profile
     profile, err := m.getBehaviorProfile(ctx, agentID)
     if err != nil {
         return nil, err
     }
-    
+
     report := &AnomalyReport{AgentID: agentID}
-    
+
     // Check request volume anomaly
     currentVolume := float64(len(recentActions))
     if currentVolume > profile.AvgRequestsPerHour*3 {
@@ -1611,7 +1611,7 @@ func (m *AgentMonitor) CheckAnomaly(
             Severity: "high",
         })
     }
-    
+
     // Check new tools being accessed
     for _, action := range recentActions {
         if _, known := profile.CommonTools[action.Tool]; !known && action.Tool != "" {
@@ -1622,7 +1622,7 @@ func (m *AgentMonitor) CheckAnomaly(
             })
         }
     }
-    
+
     // Check error rate spike
     errorCount := 0
     for _, a := range recentActions {
@@ -1639,7 +1639,7 @@ func (m *AgentMonitor) CheckAnomaly(
             Severity: "high",
         })
     }
-    
+
     // Auto-revoke if anomalies exceed threshold
     if len(report.Anomalies) > 0 {
         agent, _ := m.agentRepo.GetByAgentID(ctx, agentID)
@@ -1656,7 +1656,7 @@ func (m *AgentMonitor) CheckAnomaly(
             }
         }
     }
-    
+
     return report, nil
 }
 ```

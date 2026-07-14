@@ -1,13 +1,13 @@
 # GGID IAM Differentiation Strategy
 
-> **Document Type**: Strategic Analysis & Competitive Positioning  
-> **Scope**: GGID IAM Platform — market positioning, competitive differentiation,  
-> roadmap, and go-to-market strategy  
-> **Date**: January 2025  
-> **Grounded In**: 145+ research documents, source-level competitive analyses  
-> (auth0-keycloak-ggid-matrix.md, ggid-vs-ory.md, competitor-update-2025.md,  
-> competitor-update-clerk-logto-casdoor.md), STRIDE threat model, security  
-> whitepaper, architecture C4 model, feature matrix, and performance benchmarks.  
+> **Document Type**: Strategic Analysis & Competitive Positioning
+> **Scope**: GGID IAM Platform — market positioning, competitive differentiation,
+> roadmap, and go-to-market strategy
+> **Date**: January 2025
+> **Grounded In**: 145+ research documents, source-level competitive analyses
+> (auth0-keycloak-ggid-matrix.md, ggid-vs-ory.md, competitor-update-2025.md,
+> competitor-update-clerk-logto-casdoor.md), STRIDE threat model, security
+> whitepaper, architecture C4 model, feature matrix, and performance benchmarks.
 > **Classification**: Strategic — Internal
 
 ---
@@ -51,10 +51,10 @@ within these segments is the foundation of any differentiation strategy.
 
 #### Segment 1: Workforce IAM (Enterprise SSO, Provisioning, PAM)
 
-**Who buys it**: CISOs, IT directors at mid-to-large enterprises.  
+**Who buys it**: CISOs, IT directors at mid-to-large enterprises.
 **What they need**: SSO across SaaS apps, SCIM provisioning, directory
-integration (AD/LDAP), compliance reporting (SOC 2, ISO 27001, HIPAA).  
-**Budget**: $50K–$500K/year, typically enterprise procurement.  
+integration (AD/LDAP), compliance reporting (SOC 2, ISO 27001, HIPAA).
+**Budget**: $50K–$500K/year, typically enterprise procurement.
 **Key players**:
 
 | Player | Positioning | Strengths | Weaknesses |
@@ -72,10 +72,10 @@ short term.
 #### Segment 2: CIAM (Customer Identity & Access Management)
 
 **Who buys it**: CTOs, VP Engineering, product teams at SaaS companies,
-consumer apps, and digital platforms.  
+consumer apps, and digital platforms.
 **What they need**: Social login, passwordless, MFA, multi-tenancy, custom
-branding, developer SDKs, scalable performance.  
-**Budget**: $500–$50K/month, typically self-serve to mid-market.  
+branding, developer SDKs, scalable performance.
+**Budget**: $500–$50K/month, typically self-serve to mid-market.
 **Key players**:
 
 | Player | Positioning | Strengths | Weaknesses |
@@ -94,10 +94,10 @@ managed cloud offering (self-host only).
 #### Segment 3: B2B IAM (Organizations, Enterprise SSO for SaaS)
 
 **Who buys it**: Founders and engineering leads building B2B SaaS platforms who
-need to offer enterprise SSO (SAML/OIDC) to their own customers.  
+need to offer enterprise SSO (SAML/OIDC) to their own customers.
 **What they need**: Multi-tenant org management, SAML IdP/SP, directory sync
-(SCIM), per-tenant branding and auth policies, domain verification.  
-**Budget**: $100–$10K/month, typically usage-based.  
+(SCIM), per-tenant branding and auth policies, domain verification.
+**Budget**: $100–$10K/month, typically usage-based.
 **Key players**:
 
 | Player | Positioning | Strengths | Weaknesses |
@@ -112,10 +112,10 @@ self-hosting and protocol depth over SDK breadth — exactly GGID's strengths.
 
 #### Segment 4: B2C IAM (Consumer Identity)
 
-**Who buys it**: Consumer app developers, e-commerce platforms, media companies.  
+**Who buys it**: Consumer app developers, e-commerce platforms, media companies.
 **What they need**: Social login, passwordless, massive scale, data residency
-(GDPR/CCPA), age verification, parental consent, consent management.  
-**Budget**: Usage-based, can be millions/month at scale.  
+(GDPR/CCPA), age verification, parental consent, consent management.
+**Budget**: Usage-based, can be millions/month at scale.
 **Key players**:
 
 | Player | Positioning | Strengths | Weaknesses |
@@ -364,7 +364,7 @@ GGID uses NATS JetStream for audit event streaming:
 
 #### W1: No Managed Cloud Offering
 
-**Impact**: HIGH  
+**Impact**: HIGH
 GGID is self-hosted only. Companies that want a managed IAM experience (the
 majority of CIAM buyers) cannot use GGID without managing infrastructure
 themselves. This eliminates the largest segment of paying customers.
@@ -379,7 +379,7 @@ month effort and requires a commercial entity.
 
 #### W2: Small Community and Brand Awareness
 
-**Impact**: HIGH  
+**Impact**: HIGH
 GGID has minimal community presence. Compare:
 
 | Platform | GitHub Stars | Community Size |
@@ -395,7 +395,7 @@ blog posts, fewer conference talks, and less trust from enterprise buyers.
 
 #### W3: Limited SDK Ecosystem
 
-**Impact**: MEDIUM  
+**Impact**: MEDIUM
 GGID has 3 official SDKs (Go, Java, Node.js). Auth0 has 15+ (React, Next.js,
 Angular, Vue, Python, .NET, Ruby, PHP, Swift, Android, Go, Java, Node.js).
 Logto has 30+ framework SDKs. Clerk has best-in-class React components.
@@ -405,7 +405,7 @@ if there's no SDK for their language/framework, they'll choose a competitor.
 
 #### W4: Security Gaps (STRIDE 5.3 -> 7.5, target 8.5)
 
-**Impact**: MEDIUM  
+**Impact**: MEDIUM
 GGID started with a STRIDE score of approximately 5.3/10 (assessed via the
 STRIDE threat model). Through systematic remediation (20 P0 fixes applied),
 the score has improved to approximately 7.5/10. Three P0 issues remain:
@@ -419,14 +419,14 @@ at the 8.5+ level needed for enterprise sales conversations.
 
 #### W5: No Enterprise Customers or Case Studies
 
-**Impact**: MEDIUM  
+**Impact**: MEDIUM
 GGID has zero production deployments at external organizations. Enterprise
 buyers need social proof — case studies, reference customers, production
 warp-up stories. Without them, GGID cannot close enterprise deals.
 
 #### W6: Incomplete Feature Implementations
 
-**Impact**: MEDIUM  
+**Impact**: MEDIUM
 Several features are skeleton-only:
 
 - SCIM 2.0: Endpoints exist but no full CRUD, filtering, bulk, or PATCH
@@ -440,7 +440,7 @@ These gaps prevent GGID from being a drop-in replacement for incumbents.
 
 #### W7: No Compliance Certifications
 
-**Impact**: LOW (short-term) / HIGH (medium-term)  
+**Impact**: LOW (short-term) / HIGH (medium-term)
 GGID has no SOC 2, no ISO 27001, no FedRAMP, no HIPAA BAA. These certifications
 are prerequisites for enterprise procurement. Obtaining SOC 2 Type II takes
 6–12 months and costs $50K–$200K.
@@ -686,8 +686,8 @@ positioning, but not the sole message.
 
 ### 3.3 Recommended Positioning
 
-**Primary positioning**: Option A — "The Most Audited IAM in Existence"  
-**Supporting pillar 1**: Option C — Multi-tenant isolation by design  
+**Primary positioning**: Option A — "The Most Audited IAM in Existence"
+**Supporting pillar 1**: Option C — Multi-tenant isolation by design
 **Supporting pillar 2**: Option B — Cloud-native architecture (Go + microservices)
 
 **One-sentence positioning**:
@@ -1893,9 +1893,9 @@ it the obvious choice.
 
 ---
 
-> **Document Status**: Living document. Review and update quarterly.  
-> **Next Review**: April 2025  
-> **Owner**: GGID Strategy  
+> **Document Status**: Living document. Review and update quarterly.
+> **Next Review**: April 2025
+> **Owner**: GGID Strategy
 > **Feedback**: Submit issues to the GGID repository with label `strategy`
 
 ---

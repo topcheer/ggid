@@ -325,13 +325,13 @@ For conformance testing, some production security controls must be relaxed:
 type ConformanceConfig struct {
     // Disable rate limiting — tools send rapid bursts
     DisableRateLimit bool `yaml:"disable_rate_limit"`
-    
+
     // Disable tenant isolation — tools don't send X-Tenant-ID
     DefaultTenantID  string `yaml:"default_tenant_id"`
-    
+
     // Disable CSRF — tools use direct API calls
     DisableCSRF      bool `yaml:"disable_csrf"`
-    
+
     // Accept test origins
     AllowedOrigins   []string `yaml:"allowed_origins"`
 }
@@ -444,13 +444,13 @@ func NewConformanceServer(rpID, rpName string, origins []string) (*ConformanceSe
         // AttestationPreference: This controls what the server requests.
         // For conformance testing, accept all attestation formats.
         AttestationPreference: protocol.PreferDirectAttestation,
-        
+
         // Authenticator selection — conformance tools test all variants
         AuthenticatorSelection: protocol.AuthenticatorSelection{
             ResidentKey:      protocol.ResidentKeyRequirementPreferred,
             UserVerification: protocol.VerificationPreferred,
         },
-        
+
         // Debug mode — log all attestation details for troubleshooting
         Timeout: 60000, // 60 seconds (conformance tools may be slow)
     }
@@ -853,26 +853,26 @@ GGID should support per-tenant policies:
 // Per-tenant authenticator policy
 type WebAuthnPolicy struct {
     TenantID              uuid.UUID
-    
+
     // Minimum authenticator certification level
     // 0 = any, 1 = L1, 2 = L2, 3 = L3
     MinAuthenticatorLevel int `json:"min_authenticator_level"`
-    
+
     // Allowed attestation formats (empty = all allowed)
     AllowedAttestationFormats []string `json:"allowed_attestation_formats"`
-    
+
     // Require user verification
     RequireUserVerification bool `json:"require_user_verification"`
-    
+
     // Require backup-eligible credentials
     RequireBackupEligible bool `json:"require_backup_eligible"`
-    
+
     // Allowed AAGUIDs (empty = all allowed, populated = whitelist)
     AllowedAAGUIDs []string `json:"allowed_aaguids"`
-    
+
     // Blocked AAGUIDs (specific models banned)
     BlockedAAGUIDs []string `json:"blocked_aaguids"`
-    
+
     // Authenticator attachment preference
     AttachmentPreference string `json:"attachment_preference"`
     // "any", "platform", "cross-platform"
@@ -911,16 +911,16 @@ func EnforceAuthenticatorPolicy(
             return fmt.Errorf("attestation format %s not allowed by policy", attestationFormat)
         }
     }
-    
+
     // 2. Check AAGUID whitelist/blocklist
     aaguidStr := formatAAGUID(aaguid)
-    
+
     for _, blocked := range policy.BlockedAAGUIDs {
         if blocked == aaguidStr {
             return fmt.Errorf("authenticator %s is blocked by policy", aaguidStr)
         }
     }
-    
+
     if len(policy.AllowedAAGUIDs) > 0 {
         allowed := false
         for _, a := range policy.AllowedAAGUIDs {
@@ -933,17 +933,17 @@ func EnforceAuthenticatorPolicy(
             return fmt.Errorf("authenticator %s not in allowed list", aaguidStr)
         }
     }
-    
+
     // 3. Check user verification
     if policy.RequireUserVerification && !userVerified {
         return fmt.Errorf("user verification required but not performed")
     }
-    
+
     // 4. Check backup eligibility
     if policy.RequireBackupEligible && !backupEligible {
         return fmt.Errorf("backup-eligible credential required")
     }
-    
+
     // 5. Check certification level via MDS
     if policy.MinAuthenticatorLevel > 0 && mds != nil {
         meta := mds.Lookup(aaguidStr)
@@ -962,7 +962,7 @@ func EnforceAuthenticatorPolicy(
             }
         }
     }
-    
+
     return nil
 }
 ```
@@ -1670,21 +1670,21 @@ func TestRegistrationWithAuthenticator(t *testing.T) {
     if testing.Short() {
         t.Skip("skipping interop test in short mode")
     }
-    
+
     serverURL := getEnvOrDefault("WEBAUTHN_TEST_SERVER", "https://ggid.local:8080")
-    
+
     for _, tc := range TestMatrix {
         tc := tc
         t.Run(tc.Name, func(t *testing.T) {
             ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
             defer cancel()
-            
+
             // Step 1: Call /register/begin
             beginResp, err := callRegistrationBegin(ctx, serverURL)
             if err != nil {
                 t.Fatalf("register/begin failed: %v", err)
             }
-            
+
             // Step 2: Verify PublicKeyCredentialCreationOptions
             if beginResp.PublicKey.RP.ID == "" {
                 t.Error("RP ID is empty")
@@ -1692,37 +1692,37 @@ func TestRegistrationWithAuthenticator(t *testing.T) {
             if len(beginResp.PublicKey.User.ID) == 0 {
                 t.Error("User ID is empty")
             }
-            
+
             // Step 3: Use browser automation to create credential
             // (requires Selenium or similar browser driver)
             attestation, err := browserCreateCredential(ctx, tc, beginResp.PublicKey)
             if err != nil {
                 t.Fatalf("browser create credential failed: %v", err)
             }
-            
+
             // Step 4: Call /register/finish with attestation
             finishResp, err := callRegistrationFinish(ctx, serverURL, attestation)
             if err != nil {
                 t.Fatalf("register/finish failed: %v", err)
             }
-            
+
             // Step 5: Verify response
             if finishResp.Status != "registered" {
                 t.Errorf("expected status 'registered', got '%s'", finishResp.Status)
             }
-            
+
             // Step 6: Verify stored credential properties
             cred := getCredentialFromDB(t, finishResp.CredentialID)
-            
+
             if cred.AttestationType == "" {
                 t.Error("attestation type not stored")
             }
-            
+
             if tc.AttestationFormat != "" && cred.AttestationFormat != tc.AttestationFormat {
                 t.Errorf("expected attestation format %s, got %s",
                     tc.AttestationFormat, cred.AttestationFormat)
             }
-            
+
             if cred.UserVerified != tc.UserVerification {
                 t.Errorf("expected UV=%v, got %v", tc.UserVerification, cred.UserVerified)
             }
@@ -1735,36 +1735,36 @@ func TestAuthenticationWithAuthenticator(t *testing.T) {
     if testing.Short() {
         t.Skip("skipping interop test in short mode")
     }
-    
+
     serverURL := getEnvOrDefault("WEBAUTHN_TEST_SERVER", "https://ggid.local:8080")
-    
+
     for _, tc := range TestMatrix {
         tc := tc
         t.Run(tc.Name, func(t *testing.T) {
             ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
             defer cancel()
-            
+
             // Step 1: Register a credential first
             credentialID := registerTestCredential(t, ctx, serverURL, tc)
-            
+
             // Step 2: Call /auth/begin
             beginResp, err := callAuthenticationBegin(ctx, serverURL, credentialID)
             if err != nil {
                 t.Fatalf("auth/begin failed: %v", err)
             }
-            
+
             // Step 3: Use browser to get assertion
             assertion, err := browserGetAssertion(ctx, tc, beginResp.PublicKey)
             if err != nil {
                 t.Fatalf("browser get assertion failed: %v", err)
             }
-            
+
             // Step 4: Call /auth/finish
             finishResp, err := callAuthenticationFinish(ctx, serverURL, assertion)
             if err != nil {
                 t.Fatalf("auth/finish failed: %v", err)
             }
-            
+
             // Step 5: Verify
             if finishResp.Status != "authenticated" {
                 t.Errorf("expected status 'authenticated', got '%s'", finishResp.Status)
@@ -1779,15 +1779,15 @@ func TestCloneDetection(t *testing.T) {
     if testing.Short() {
         t.Skip("skipping interop test in short mode")
     }
-    
+
     serverURL := getEnvOrDefault("WEBAUTHN_TEST_SERVER", "https://ggid.local:8080")
-    
+
     // Register a credential
     credID := registerTestCredential(t, context.Background(), serverURL, TestMatrix[0])
-    
+
     // First authentication — counter increases
     authenticateAndAssertCounter(t, serverURL, credID, 1)
-    
+
     // Replay the same assertion — should be rejected
     err := replayAssertion(t, serverURL, credID)
     if err == nil {
@@ -1800,18 +1800,18 @@ func TestDiscoverableCredentialLogin(t *testing.T) {
     if testing.Short() {
         t.Skip("skipping interop test in short mode")
     }
-    
+
     serverURL := getEnvOrDefault("WEBAUTHN_TEST_SERVER", "https://ggid.local:8080")
-    
+
     // Register a discoverable credential
     registerDiscoverableCredential(t, context.Background(), serverURL)
-    
+
     // Authenticate without user_id
     resp, err := callAuthenticationBeginNoUser(context.Background(), serverURL)
     if err != nil {
         t.Fatalf("auth/begin without user_id failed: %v", err)
     }
-    
+
     // The response should not contain allowCredentials (discoverable flow)
     if len(resp.PublicKey.AllowCredentials) > 0 {
         t.Error("expected empty allowCredentials for discoverable flow")
@@ -1843,26 +1843,26 @@ jobs:
     name: FIDO2 Server Conformance
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
-      
+
       - name: Build server
         run: |
           go build -o bin/ggid-auth ./services/auth/cmd
-      
+
       - name: Start test server
         run: |
           ./bin/ggid-auth &
           sleep 5
           # Verify server is up
           curl -f http://localhost:9001/healthz
-      
+
       - name: Run FIDO Conformance Tools
         env:
           FIDO_TOOLS_API_KEY: ${{ secrets.FIDO_TOOLS_API_KEY }}
@@ -1874,7 +1874,7 @@ jobs:
             -category=authentication \
             -format=json \
             -output=conformance-report.json
-      
+
       - name: Check pass rate
         run: |
           PASS_RATE=$(jq '.pass_rate' conformance-report.json)
@@ -1884,7 +1884,7 @@ jobs:
             echo "Conformance pass rate below 95%"
             exit 1
           fi
-      
+
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
@@ -2384,34 +2384,34 @@ func verifyFidoU2FAttestationComplete(
     if len(certBytes) == 0 {
         return fmt.Errorf("fido-u2f: missing attestation certificate")
     }
-    
+
     cert, err := x509.ParseCertificate(certBytes)
     if err != nil {
         return fmt.Errorf("fido-u2f: parse cert: %w", err)
     }
-    
+
     // Verify certificate validity period
     if time.Now().After(cert.NotAfter) {
         return fmt.Errorf("fido-u2f: attestation cert expired")
     }
-    
+
     // Verify cert is ECDSA P-256
     pubKey, ok := cert.PublicKey.(*ecdsa.PublicKey)
     if !ok {
         return fmt.Errorf("fido-u2f: cert must be ECDSA P-256")
     }
-    
+
     // Check curve is P-256
     if pubKey.Curve != elliptic.P256() {
         return fmt.Errorf("fido-u2f: cert must use P-256 curve")
     }
-    
+
     // Extract rpIdHash from authData
     if len(authData) < 32 {
         return fmt.Errorf("fido-u2f: authData too short")
     }
     rpIdHash := authData[:32]
-    
+
     // Extract credential ID from authData
     // authData structure: rpIdHash(32) || flags(1) || signCount(4) || attData
     // attData: aaguid(16) || credIdLen(2) || credId || pubKey
@@ -2423,7 +2423,7 @@ func verifyFidoU2FAttestationComplete(
         return fmt.Errorf("fido-u2f: authData credential ID truncated")
     }
     credentialId := authData[55 : 55+int(credIdLen)]
-    
+
     // Construct verification data
     // 0x00 || rpIdHash || clientDataHash || credentialId || publicKey
     verificationData := make([]byte, 0, 1+32+32+len(credentialId)+65)
@@ -2432,15 +2432,15 @@ func verifyFidoU2FAttestationComplete(
     verificationData = append(verificationData, clientDataHash...)
     verificationData = append(verificationData, credentialId...)
     verificationData = append(verificationData, publicKeyBytes...)
-    
+
     // Hash the verification data
     hash := sha256.Sum256(verificationData)
-    
+
     // Verify signature
     if !ecdsa.VerifyASN1(pubKey, hash[:], sig) {
         return fmt.Errorf("fido-u2f: signature verification failed")
     }
-    
+
     return nil
 }
 ```
@@ -2530,45 +2530,45 @@ func New(token string) *MetadataService {
 // Download fetches the latest MDS BLOB from the FIDO Alliance.
 func (s *MetadataService) Download(ctx context.Context) error {
     url := fmt.Sprintf("%s/?token=%s", s.baseURL, s.token)
-    
+
     req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
     if err != nil {
         return fmt.Errorf("create request: %w", err)
     }
-    
+
     resp, err := s.client.Do(req)
     if err != nil {
         return fmt.Errorf("download MDS BLOB: %w", err)
     }
     defer resp.Body.Close()
-    
+
     if resp.StatusCode != http.StatusOK {
         return fmt.Errorf("MDS API returned status %d", resp.StatusCode)
     }
-    
+
     // Response is a JWT containing the BLOB as payload
     // Parse JWT (simplified — production should verify signature)
     body, err := io.ReadAll(resp.Body)
     if err != nil {
         return fmt.Errorf("read response: %w", err)
     }
-    
+
     // Decode JWT payload
     parts := strings.Split(string(body), ".")
     if len(parts) != 3 {
         return fmt.Errorf("invalid JWT format")
     }
-    
+
     payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
     if err != nil {
         return fmt.Errorf("decode JWT payload: %w", err)
     }
-    
+
     var blob FIDOMetadataBLOB
     if err := json.Unmarshal(payloadBytes, &blob); err != nil {
         return fmt.Errorf("parse MDS BLOB: %w", err)
     }
-    
+
     // Build cache entries
     entries := make(map[string]*MetadataBLOBPayloadEntry)
     for i := range blob.Entries {
@@ -2577,13 +2577,13 @@ func (s *MetadataService) Download(ctx context.Context) error {
             entries[strings.ToLower(entry.AAGUID)] = entry
         }
     }
-    
+
     s.cache = &MetadataCache{
         BLOB:      &blob,
         UpdatedAt: time.Now(),
         Entries:   entries,
     }
-    
+
     return nil
 }
 
@@ -2598,7 +2598,7 @@ func (s *MetadataService) GetCertificationLevel(aaguid string) int {
     if entry == nil {
         return 0
     }
-    
+
     maxLevel := 0
     for _, report := range entry.StatusReports {
         switch report.CertificationLevel {
@@ -2616,7 +2616,7 @@ func (s *MetadataService) GetCertificationLevel(aaguid string) int {
             }
         }
     }
-    
+
     return maxLevel
 }
 
@@ -2626,13 +2626,13 @@ func (s *MetadataService) IsRevoked(aaguid string) bool {
     if entry == nil {
         return false
     }
-    
+
     for _, report := range entry.StatusReports {
         if report.Status == "REVOKED" {
             return true
         }
     }
-    
+
     return false
 }
 
@@ -2662,7 +2662,7 @@ import (
     "log"
     "net/http"
     "os"
-    
+
     "github.com/ggid/ggid/services/auth/internal/webauthn"
 )
 
@@ -2672,16 +2672,16 @@ type Config struct {
     RPID       string
     RPName     string
     Origins    []string
-    
+
     // For conformance testing, use a simple in-memory credential store
     // rather than connecting to PostgreSQL
     UseMemoryStore bool
-    
+
     // Disable security controls that interfere with conformance testing
     DisableJWT      bool
     DisableCSRF     bool
     DisableRateLimit bool
-    
+
     // Default tenant for conformance (tools don't send X-Tenant-ID)
     DefaultTenantID string
 }
@@ -2711,21 +2711,21 @@ func Start(cfg *Config) error {
     if err != nil {
         return err
     }
-    
+
     mux := http.NewServeMux()
     handler.RegisterRoutes(mux)
-    
+
     // Add conformance-specific endpoints
     mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
         w.WriteHeader(http.StatusOK)
         w.Write([]byte("OK"))
     })
-    
+
     addr := ":" + cfg.Port
     log.Printf("FIDO Conformance Test Server listening on %s", addr)
     log.Printf("RP ID: %s", cfg.RPID)
     log.Printf("Origins: %v", cfg.Origins)
-    
+
     return http.ListenAndServe(addr, mux)
 }
 
@@ -2853,7 +2853,7 @@ func main() {
 interop_test:
   server_url: "https://ggid-staging.example.com"
   admin_token: "${ADMIN_TOKEN}"
-  
+
   devices:
     - name: "YubiKey 5 NFC"
       browser: "chrome"
@@ -2861,7 +2861,7 @@ interop_test:
       transport: "usb"
       attestation_format: "packed"
       user_verification: true
-      
+
     - name: "Touch ID"
       browser: "safari"
       platform: "macOS"
@@ -2869,14 +2869,14 @@ interop_test:
       attestation_format: "apple"
       user_verification: true
       backup_eligible: true
-      
+
     - name: "Windows Hello"
       browser: "edge"
       platform: "Windows"
       transport: "internal"
       attestation_format: "tpm"
       user_verification: true
-      
+
     - name: "Android Biometric"
       browser: "chrome"
       platform: "Android"
@@ -2884,7 +2884,7 @@ interop_test:
       attestation_format: "android-key"
       user_verification: true
       backup_eligible: true
-  
+
   scenarios:
     - registration
     - authentication
@@ -2894,7 +2894,7 @@ interop_test:
     - uv_required
     - uv_preferred
     - uv_discouraged
-  
+
   assertions:
     - "registration returns 201 with credential_id"
     - "authentication returns 200 with sign_count"
@@ -2926,27 +2926,27 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
-      
+
       - name: Build
         run: go build ./services/auth/...
-      
+
       - name: Vet
         run: go vet ./services/auth/internal/webauthn/...
-      
+
       - name: Unit tests
         run: go test -v -race ./services/auth/internal/webauthn/...
-      
+
       - name: Coverage
         run: |
           go test -coverprofile=coverage.out ./services/auth/internal/webauthn/...
           go tool cover -func=coverage.out | tail -1
-      
+
       - name: Start conformance server
         run: |
           go run ./services/auth/cmd &
           sleep 5
           curl -f http://localhost:9001/healthz || exit 1
-      
+
       - name: Run conformance tests (mock)
         run: |
           go test -v -tags=conformance ./test/fido-conformance/...
