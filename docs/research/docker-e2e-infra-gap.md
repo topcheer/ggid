@@ -195,3 +195,11 @@ This is a **real infrastructure gap**, not a false positive. It should be tracke
 ## Suggested Assignee
 
 DevOps / backend integration teammate (owns `deploy/`).
+
+## Status Update (2026-07-15)
+
+- Root cause fixed: `deploy/docker-compose.yaml` migrate service had duplicated `sh` in command list.
+- After fix: `docker compose up -d --build` starts all 12 containers healthy.
+- E2E test: `bash deploy/e2e-docker-test.sh` → **11/11 PASS**.
+- commit: 6f7d68e0
+- This infra gap can be marked as [DONE] in the next platform scan.
