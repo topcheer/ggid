@@ -45,7 +45,7 @@ func NewRouter(services map[string]string) http.Handler {
             backend := services[matchService(req.URL.Path)]
             req.URL.Scheme = "http"
             req.URL.Host = backend
-            
+
             // Inject tenant context
             if tenantID := req.Context().Value("tenant_id"); tenantID != nil {
                 req.Header.Set("X-Tenant-ID", tenantID.(string))
@@ -94,26 +94,26 @@ func AuthMiddleware(next http.Handler) http.Handler {
             next.ServeHTTP(w, r)
             return
         }
-        
+
         token := extractBearerToken(r)
         if token == "" {
             http.Error(w, "missing token", 401)
             return
         }
-        
+
         claims, err := jwtVerifier.Verify(token)
         if err != nil {
             http.Error(w, "invalid token", 401)
             return
         }
-        
+
         // Tenant from JWT claim (priority over header)
         tenantID := claims["tenant_id"].(string)
-        
+
         ctx := context.WithValue(r.Context(), "user_id", claims["sub"])
         ctx = context.WithValue(ctx, "tenant_id", tenantID)
         ctx = context.WithValue(ctx, "scopes", claims["scope"])
-        
+
         next.ServeHTTP(w, r.WithContext(ctx))
     })
 }
@@ -188,10 +188,10 @@ func proxyWithCircuitBreaker(service string, next http.Handler) http.Handler {
             http.Error(w, "service unavailable", 503)
             return
         }
-        
+
         rec := &statusRecorder{ResponseWriter: w}
         next.ServeHTTP(rec, r)
-        
+
         if rec.status >= 500 {
             breaker.RecordFailure(service)
         } else {
@@ -258,23 +258,23 @@ func (h *HealthChecker) CheckAll() map[string]bool {
 ```go
 func main() {
     srv := &http.Server{Addr: ":8080", Handler: router}
-    
+
     go func() {
         if err := srv.ListenAndServe(); err != http.ErrServerClosed {
             log.Fatal(err)
         }
     }()
-    
+
     // Wait for shutdown signal
     quit := make(chan os.Signal, 1)
     signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
     <-quit
-    
+
     // Drain: stop accepting new connections, finish in-flight
     ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer cancel()
     srv.Shutdown(ctx)
-    
+
     log.Println("Gateway shut down gracefully")
 }
 ```

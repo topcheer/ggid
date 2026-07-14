@@ -49,12 +49,12 @@ func RotateRefreshToken(ctx context.Context, oldTokenID string) (*TokenPair, err
     // 1. Look up the presented refresh token
     oldToken, err := store.Get(oldTokenID)
     if err != nil { return nil, ErrInvalidToken }
-    
+
     // 2. Check expiry
     if time.Now().After(oldToken.ExpiresAt) {
         return nil, ErrTokenExpired
     }
-    
+
     // 3. Check if already used (REUSE DETECTION)
     if oldToken.UsedAt != nil {
         // TOKEN THEFT! Attacker is replaying an old token
@@ -62,12 +62,12 @@ func RotateRefreshToken(ctx context.Context, oldTokenID string) (*TokenPair, err
         audit.Log("refresh_token_reuse", oldToken)
         return nil, ErrTokenReuseDetected
     }
-    
+
     // 4. Mark old token as used
     now := time.Now()
     oldToken.UsedAt = &now
     store.Update(oldToken)
-    
+
     // 5. Issue new tokens (same family)
     newRefresh := &RefreshToken{
         ID:       uuid.New(),
@@ -76,9 +76,9 @@ func RotateRefreshToken(ctx context.Context, oldTokenID string) (*TokenPair, err
         Scopes:   oldToken.Scopes,
         ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
     }
-    
+
     newAccess := issueAccessToken(oldToken.UserID, oldToken.Scopes)
-    
+
     store.Create(newRefresh)
     return &TokenPair{Access: newAccess, Refresh: newRefresh.ID}, nil
 }
@@ -90,25 +90,25 @@ func RotateRefreshToken(ctx context.Context, oldTokenID string) (*TokenPair, err
 func revokeEntireFamily(ctx context.Context, familyID string) error {
     tokens, err := store.GetByFamily(familyID)
     if err != nil { return err }
-    
+
     now := time.Now()
     for _, t := range tokens {
         t.RevokedAt = &now
         store.Update(t)
     }
-    
+
     // Also revoke all access tokens from this family
     jtiList := store.GetJTIsByFamily(familyID)
     for _, jti := range jtiList {
         redis.Set("jwt:blacklist:"+jti, "1", 15*time.Minute)
     }
-    
+
     // Security alert
     alert.Send("refresh_token_theft_detected", map[string]interface{}{
         "family_id": familyID,
         "action": "all_tokens_revoked",
     })
-    
+
     return nil
 }
 ```
@@ -156,7 +156,7 @@ const GracePeriod = 30 * time.Second
 
 func RotateRefreshToken(ctx context.Context, oldTokenID string) (*TokenPair, error) {
     oldToken := store.Get(oldTokenID)
-    
+
     if oldToken.UsedAt != nil {
         // Within grace period → allow (likely race condition)
         if time.Since(*oldToken.UsedAt) < GracePeriod {
@@ -188,12 +188,12 @@ func RotateRefreshToken(ctx context.Context, oldTokenID string) (*TokenPair, err
 // Detect token type at refresh
 func Refresh(ctx context.Context, tokenID string) (*TokenPair, error) {
     token := store.Get(tokenID)
-    
+
     if token.FamilyID != "" {
         // New rotating token
         return RotateRefreshToken(ctx, tokenID)
     }
-    
+
     // Legacy non-rotating token — still valid but no reuse detection
     if token.RotatingEnabled {
         return RotateRefreshToken(ctx, tokenID)

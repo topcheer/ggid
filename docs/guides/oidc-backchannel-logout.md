@@ -78,19 +78,19 @@ GET /.well-known/openid-configuration
 func SendBackchannelLogout(userID, sessionID string, clients []Client) {
     for _, client := range clients {
         if client.BackchannelLogoutURI == "" { continue }
-        
+
         token := createLogoutToken(client, userID, sessionID)
-        
+
         go func(uri, token string) {
             resp, err := http.PostForm(uri, url.Values{
                 "logout_token": {token},
             })
-            
+
             if err != nil || resp.StatusCode != 200 {
                 // Retry with backoff
                 retryBackchannelLogout(uri, token)
             }
-            
+
             audit.Log("backchannel_logout_sent", map[string]interface{}{
                 "client_id": client.ID,
                 "status":    resp.StatusCode,
@@ -123,11 +123,11 @@ func HandleBackchannelLogout(w http.ResponseWriter, r *http.Request) {
     // 1. Extract logout token
     token := r.PostFormValue("logout_token")
     if token == "" { http.Error(w, "missing token", 400); return }
-    
+
     // 2. Verify JWT signature
     claims, err := verifyLogoutToken(token)
     if err != nil { http.Error(w, "invalid token", 400); return }
-    
+
     // 3. Verify required claims
     events, ok := claims["events"].(map[string]interface{})
     if !ok || events["http://schemas.openid.net/event/backchannel-logout"] == nil {
@@ -137,16 +137,16 @@ func HandleBackchannelLogout(w http.ResponseWriter, r *http.Request) {
     if claims["sub"] == nil && claims["sid"] == nil {
         http.Error(w, "missing sub and sid", 400); return
     }
-    
+
     // 4. Prevent replay (jti tracking)
     if seen := redis.SetNX(ctx, "logout:"+claims["jti"].(string), 1, 5*time.Minute); !seen {
         http.Error(w, "duplicate", 400); return
     }
-    
+
     // 5. Terminate session
     sid := claims["sid"].(string)
     sessionStore.Delete(sid)
-    
+
     w.WriteHeader(200)
 }
 ```
@@ -224,17 +224,17 @@ GET https://app.example.com/session-status
 func TestBackchannelLogout(t *testing.T) {
     // Start mock RP with backchannel endpoint
     rp := startMockRP()
-    
+
     // Login
     session := login(rp.ClientID)
     assert(rp.HasSession(session.SID))
-    
+
     // Logout at GGID
     logout(session.Token)
-    
+
     // Wait for backchannel notification
     time.Sleep(2 * time.Second)
-    
+
     // Verify RP session terminated
     assert(!rp.HasSession(session.SID))
 }

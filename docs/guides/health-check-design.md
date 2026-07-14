@@ -29,19 +29,19 @@ func ReadinessHandler(hc *HealthChecker) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         results := hc.CheckAll()
         allReady := true
-        
+
         for _, result := range results {
             if !result.Healthy {
                 allReady = false
             }
         }
-        
+
         if allReady {
             w.WriteHeader(200)
         } else {
             w.WriteHeader(503) // LB removes from rotation
         }
-        
+
         json.NewEncoder(w).Encode(map[string]interface{}{
             "status": allReady ? "ready" : "degraded",
             "checks": results,
@@ -72,11 +72,11 @@ func ReadinessHandler(hc *HealthChecker) http.HandlerFunc {
 func (hc *HealthChecker) checkDB() CheckResult {
     ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
     defer cancel()
-    
+
     start := time.Now()
     err := hc.db.Ping(ctx)
     latency := time.Since(start)
-    
+
     if err != nil {
         return CheckResult{Healthy: false, Error: err.Error()}
     }
@@ -90,10 +90,10 @@ func (hc *HealthChecker) checkDB() CheckResult {
 func (hc *HealthChecker) checkRedis() CheckResult {
     ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
     defer cancel()
-    
+
     start := time.Now()
     err := hc.redis.Ping(ctx).Err()
-    
+
     return CheckResult{Healthy: err == nil, Latency: time.Since(start)}
 }
 ```
@@ -105,7 +105,7 @@ func (hc *HealthChecker) checkNATS() CheckResult {
     if !hc.nats.Conn().IsConnected() {
         return CheckResult{Healthy: false, Error: "not connected"}
     }
-    
+
     start := time.Now()
     _, err := hc.nats.JetStream().StreamInfo("AUDIT_EVENTS")
     return CheckResult{Healthy: err == nil, Latency: time.Since(start)}
@@ -119,13 +119,13 @@ func (hc *HealthChecker) checkLDAP() CheckResult {
     if hc.ldapURL == "" {
         return CheckResult{Healthy: true, Skipped: true, Reason: "LDAP not configured"}
     }
-    
+
     conn, err := ldap.DialURL(hc.ldapURL, ldap.DialWithTimeout(2*time.Second))
     if err != nil {
         return CheckResult{Healthy: false, Error: err.Error()}
     }
     defer conn.Close()
-    
+
     return CheckResult{Healthy: true}
 }
 ```
@@ -165,7 +165,7 @@ When a non-critical dependency is down, degrade rather than fail:
 ```go
 func (hc *HealthChecker) CheckAll() map[string]CheckResult {
     results := map[string]CheckResult{}
-    
+
     // Critical: DB must be healthy
     dbCheck := hc.checkDB()
     results["database"] = dbCheck
@@ -173,7 +173,7 @@ func (hc *HealthChecker) CheckAll() map[string]CheckResult {
         results["status"] = "not_ready"
         return results // Can't operate without DB
     }
-    
+
     // Non-critical: Redis (degrade to stateless)
     redisCheck := hc.checkRedis()
     results["redis"] = redisCheck
@@ -182,7 +182,7 @@ func (hc *HealthChecker) CheckAll() map[string]CheckResult {
         // Still serve requests, but without cache
         return results
     }
-    
+
     // Non-critical: LDAP (degrade to local auth)
     ldapCheck := hc.checkLDAP()
     results["ldap"] = ldapCheck
@@ -190,7 +190,7 @@ func (hc *HealthChecker) CheckAll() map[string]CheckResult {
         results["status"] = "degraded"
         // Still serve, LDAP auth will fail but local auth works
     }
-    
+
     results["status"] = "ready"
     return results
 }
@@ -204,12 +204,12 @@ auto_healing:
     trigger: "liveness_fail > 3"
     action: "restart pod"
     cooldown: "60s"
-    
+
   db_connection_pool_reset:
     trigger: "db_check fail > 5"
     action: "reset connection pool"
     cooldown: "30s"
-    
+
   redis_reconnect:
     trigger: "redis_check fail"
     action: "reconnect Redis client"

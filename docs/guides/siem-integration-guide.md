@@ -97,7 +97,7 @@ func (f *SplunkForwarder) Forward(event *AuditEvent) error {
             "details":    event.Details,
         },
     }
-    
+
     f.batchMu.Lock()
     f.batch = append(f.batch, splunkEvent)
     if len(f.batch) >= f.config.BatchSize {
@@ -111,21 +111,21 @@ func (f *SplunkForwarder) flush() error {
     if len(f.batch) == 0 {
         return nil
     }
-    
+
     body, _ := json.Marshal(f.batch)
     req, _ := http.NewRequest("POST", f.hecURL, bytes.NewReader(body))
     req.Header.Set("Authorization", "Splunk "+f.token)
     req.Header.Set("Content-Type", "application/json")
-    
+
     resp, err := f.client.Do(req)
     if err != nil {
         return f.retry(f.batch, err)
     }
-    
+
     if resp.StatusCode >= 400 {
         return f.retry(f.batch, fmt.Errorf("splunk HEC returned %d", resp.StatusCode))
     }
-    
+
     f.batch = f.batch[:0]  // Clear batch
     return nil
 }
@@ -257,13 +257,13 @@ func (f *SyslogForwarder) Forward(event *AuditEvent) error {
         f.pid,
         cefEvent,
     )
-    
+
     conn, err := net.Dial(f.protocol, f.addr)
     if err != nil {
         return f.retry(event, err)
     }
     defer conn.Close()
-    
+
     _, err = fmt.Fprintln(conn, syslogMsg)
     return err
 }
@@ -304,21 +304,21 @@ func shouldForward(event *AuditEvent, config *FilterConfig) bool {
     if !contains(config.Include.Severity, event.Severity) {
         return false
     }
-    
+
     // Check event type
     if !matchesPatterns(config.Include.EventTypes, event.Type) {
         return false
     }
-    
+
     // Check exclusions
     if contains(config.Exclude.EventTypes, event.Type) {
         return false
     }
-    
+
     if inCIDRRange(config.Exclude.IPRanges, event.IP) {
         return false
     }
-    
+
     return true
 }
 ```
@@ -364,11 +364,11 @@ func (q *BatchQueue) Add(event *AuditEvent) error {
 func (q *BatchQueue) Flush() error {
     q.mu.Lock()
     defer q.mu.Unlock()
-    
+
     if len(q.batch) == 0 {
         return nil
     }
-    
+
     err := q.forward(q.batch)
     if err != nil {
         q.moveToRetry(q.batch)
@@ -398,7 +398,7 @@ func newTLSClient(config *TLSConfig) *http.Client {
     caCert, _ := os.ReadFile(config.CACert)
     caPool := x509.NewCertPool()
     caPool.AppendCertsFromPEM(caCert)
-    
+
     return &http.Client{
         Transport: &http.Transport{
             TLSClientConfig: &tls.Config{
@@ -435,7 +435,7 @@ type CircuitBreaker struct {
 func (cb *CircuitBreaker) Allow() bool {
     cb.mu.Lock()
     defer cb.mu.Unlock()
-    
+
     switch cb.state {
     case "closed":
         return true

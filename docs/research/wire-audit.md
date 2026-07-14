@@ -1,9 +1,9 @@
 # Wire Audit — Code That Exists But Is Not Called in Production
 
-**Date:** 2025-07-14  
-**Auditor:** Security Research Team  
-**Scope:** GGID monorepo — gateway middleware chain, PII handling, session timeout, i18n  
-**Classification:** Internal Security Audit  
+**Date:** 2025-07-14
+**Auditor:** Security Research Team
+**Scope:** GGID monorepo — gateway middleware chain, PII handling, session timeout, i18n
+**Classification:** Internal Security Audit
 
 ---
 
@@ -27,8 +27,8 @@ authorization boundary. The other two create compliance and usability gaps.
 
 ### Location
 
-**File:** `services/gateway/internal/middleware/botdetect.go`  
-**Lines:** 52-114  
+**File:** `services/gateway/internal/middleware/botdetect.go`
+**Lines:** 52-114
 
 ### What Exists
 
@@ -115,10 +115,10 @@ handler = gw.botDetect.Middleware(handler)
 
 ### Location
 
-**File:** `pkg/pii/pii.go` (lines 1-70)  
-**Wrapper Files:**  
-- `services/auth/internal/service/pii_logging.go`  
-- `services/oauth/internal/service/pii_logging.go`  
+**File:** `pkg/pii/pii.go` (lines 1-70)
+**Wrapper Files:**
+- `services/auth/internal/service/pii_logging.go`
+- `services/oauth/internal/service/pii_logging.go`
 
 ### What Exists
 
@@ -229,12 +229,12 @@ func (s *AuthService) CheckSessionTimeout(
 
 There are two integration points, both currently broken:
 
-**Integration Point A — Auth service handlers:**  
+**Integration Point A — Auth service handlers:**
 `CheckSessionTimeout` should be called at the start of every authenticated request
 handler in the auth service (token refresh, session validation, MFA challenge).
 Currently, no production handler calls this method.
 
-**Integration Point B — Gateway middleware:**  
+**Integration Point B — Gateway middleware:**
 `services/gateway/internal/middleware/session_timeout.go` provides
 `SessionTimeoutMiddleware` — a middleware equivalent of `CheckSessionTimeout` that
 operates at the gateway level using Redis directly. This middleware IS referenced

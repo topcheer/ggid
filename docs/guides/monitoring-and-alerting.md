@@ -63,7 +63,7 @@ scrape_configs:
     static_configs:
       - targets: ['gateway:8080']
     scrape_interval: 15s
-    
+
   - job_name: 'ggid-services'
     static_configs:
       - targets: ['auth:9001', 'identity:8081', 'oauth:9005',
@@ -130,7 +130,7 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
         "redis":    pingRedis(),
         "nats":     pingNATS(),
     }
-    
+
     allHealthy := true
     status := make(map[string]string)
     for dep, err := range checks {
@@ -141,7 +141,7 @@ func readinessHandler(w http.ResponseWriter, r *http.Request) {
             status[dep] = "ok"
         }
     }
-    
+
     code := 200
     if !allHealthy { code = 503 }
     w.WriteHeader(code)
@@ -185,7 +185,7 @@ GGID uses structured JSON logging:
 loki:
   image: grafana/loki:latest
   ports: ["3100:3100"]
-  
+
 promtail:
   image: grafana/promtail:latest
   volumes:
@@ -213,23 +213,23 @@ groups:
           severity: critical
         annotations:
           summary: "{{ $labels.job }} is down"
-      
+
       - alert: HighErrorRate
         expr: |
-          rate(ggid_http_requests_total{status=~"5.."}[5m]) 
+          rate(ggid_http_requests_total{status=~"5.."}[5m])
           / rate(ggid_http_requests_total[5m]) > 0.05
         for: 5m
         labels:
           severity: critical
         annotations:
           summary: "Error rate >5% on {{ $labels.job }}"
-      
+
       - alert: DatabaseConnectionsExhausted
         expr: ggid_db_connections_active > 24
         for: 1m
         labels:
           severity: critical
-      
+
       - alert: AuditChainBroken
         expr: ggid_audit_chain_valid == 0
         for: 30s
@@ -248,13 +248,13 @@ groups:
         for: 5m
         labels:
           severity: warning
-      
+
       - alert: CircuitBreakerOpen
         expr: ggid_circuit_breaker_state{state="open"} == 1
         for: 1m
         labels:
           severity: warning
-      
+
       - alert: RateLimitExceeded
         expr: rate(ggid_rate_limit_hits_total[5m]) > 50
         for: 5m
@@ -296,12 +296,12 @@ func traceHandler(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         ctx, span := otel.Tracer("ggid").Start(r.Context(), r.URL.Path)
         defer span.End()
-        
+
         span.SetAttributes(
             attribute.String("user.id", getUserID(ctx)),
             attribute.String("tenant.id", getTenantID(ctx)),
         )
-        
+
         next.ServeHTTP(w, r.WithContext(ctx))
     })
 }

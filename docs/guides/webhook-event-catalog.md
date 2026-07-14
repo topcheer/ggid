@@ -197,13 +197,13 @@ const crypto = require('crypto');
 
 function verifyWebhook(rawBody, signature, secret) {
   const { t, v1 } = parseSigHeader(signature);
-  
+
   const signedPayload = `${t}.${rawBody}`;
   const expected = crypto
     .createHmac('sha256', secret)
     .update(signedPayload)
     .digest('hex');
-  
+
   if (expected !== v1) throw new Error('Invalid signature');
   if (Date.now() / 1000 - t > 300) throw new Error('Stale');
 }
@@ -217,13 +217,13 @@ import hmac, hashlib, time
 def verify_webhook(payload: bytes, signature: str, secret: str):
     parts = dict(p.split('=') for p in signature.split(','))
     t, v1 = parts['t'], parts['v1']
-    
+
     if time.time() - int(t) > 300:
         raise ValueError('Stale signature')
-    
+
     signed = f"{t}.".encode() + payload
     expected = hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
-    
+
     if not hmac.compare_digest(expected, v1):
         raise ValueError('Invalid signature')
 ```
@@ -236,21 +236,21 @@ def verify_webhook(payload: bytes, signature: str, secret: str):
 func webhookHandler(w http.ResponseWriter, r *http.Request) {
     payload, _ := io.ReadAll(r.Body)
     sigHeader := r.Header.Get("X-GGID-Signature")
-    
+
     if err := verifySignature(payload, sigHeader, webhookSecret); err != nil {
         http.Error(w, "invalid signature", 401)
         return
     }
-    
+
     var event WebhookEvent
     json.Unmarshal(payload, &event)
-    
+
     // Idempotency check
     if seen := redis.SetNX(ctx, "event:"+event.EventID, 1, 24*time.Hour); !seen {
         w.WriteHeader(200) // Already processed
         return
     }
-    
+
     // Route to handler
     switch event.EventType {
     case "user.created":
@@ -258,7 +258,7 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
     case "user.deleted":
         handleUserDeleted(event.Data)
     }
-    
+
     w.WriteHeader(200)
 }
 ```
@@ -269,17 +269,17 @@ func webhookHandler(w http.ResponseWriter, r *http.Request) {
 app.post('/webhooks/ggid', express.raw({ type: 'application/json' }), (req, res) => {
   try {
     verifyWebhook(req.body, req.get('X-GGID-Signature'), SECRET);
-    
+
     const event = JSON.parse(req.body);
-    
+
     // Idempotency
     if (await cache.has(`event:${event.event_id}`)) {
       return res.status(200).send();
     }
-    
+
     await handleEvent(event);
     await cache.set(`event:${event.event_id}`, 1, 86400);
-    
+
     res.status(200).send();
   } catch (err) {
     res.status(401).send('Verification failed');

@@ -53,12 +53,12 @@ approval_chain:
     approver: "direct_manager"
     sla_hours: 2
     required: true
-    
+
   - step: 2
     approver: "resource_owner"
     sla_hours: 4
     required: true
-    
+
   - step: 3
     approver: "security_team"
     sla_hours: 8
@@ -86,7 +86,7 @@ auto_approval:
     action: "auto_approve"
     duration_hours: 8
     notify: ["manager"]
-    
+
   - name: "read-access-same-dept"
     condition: |
       requester.department == resource.department &&
@@ -110,17 +110,17 @@ auto_approval:
 func provisionAccess(request *AccessRequest) error {
     // 1. Assign role/scopes
     roleSvc.AssignRole(request.RequesterID, request.ResourceID)
-    
+
     // 2. Set expiry
     expiry := time.Now().Add(time.Duration(request.DurationHours) * time.Hour)
     store.SetAccessExpiry(request.RequesterID, request.ResourceID, expiry)
-    
+
     // 3. Notify user
     notify.Send(request.RequesterID, "access_granted", map[string]interface{}{
         "resource": request.ResourceID,
         "expires":  expiry,
     })
-    
+
     // 4. Audit
     audit.Log("access.provisioned", map[string]interface{}{
         "user_id":    request.RequesterID,
@@ -129,7 +129,7 @@ func provisionAccess(request *AccessRequest) error {
         "expires_at": expiry,
         "request_id": request.ID,
     })
-    
+
     return nil
 }
 ```
@@ -166,21 +166,21 @@ POST /api/v1/admin/access-reviews/{review_id}/items/{item_id}
 // Cron job runs every 5 minutes
 func checkExpiringAccess() {
     expiring := store.GetExpiringBefore(time.Now())
-    
+
     for _, grant := range expiring {
         // Revoke access
         roleSvc.RevokeRole(grant.UserID, grant.ResourceID)
-        
+
         // Notify user
         notify.Send(grant.UserID, "access_expired", map[string]interface{}{
             "resource": grant.ResourceID,
             "expired_at": grant.Expiry,
         })
-        
+
         // Audit
         audit.Log("access.expired", grant)
     }
-    
+
     // Notify before expiry (24h warning)
     upcoming := store.GetExpiringBefore(time.Now().Add(24 * time.Hour))
     for _, grant := range upcoming {
@@ -221,13 +221,13 @@ func checkSLABreaches() {
     for _, req := range pending {
         elapsed := time.Since(req.CreatedAt)
         sla := getSLA(req.Urgency)
-        
+
         if elapsed > sla/2 && !req.Escalated {
             // First escalation: notify backup approver
             notify.Send(req.BackupApprover, "approval_escalation", req)
             req.Escalated = true
         }
-        
+
         if elapsed > sla {
             // SLA breach: auto-deny or auto-approve based on policy
             if autoApproveOnBreach {

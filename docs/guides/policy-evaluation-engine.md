@@ -33,7 +33,7 @@ func (e *Engine) evaluateRBAC(userID, resource, action string) (Decision, bool) 
     if decision, ok := e.cache.Get(key); ok {
         return decision.(Decision), true // Cache hit
     }
-    
+
     // Resolve effective permissions (with inheritance)
     roles := e.getUserRoles(userID)
     for _, role := range roles {
@@ -45,7 +45,7 @@ func (e *Engine) evaluateRBAC(userID, resource, action string) (Decision, bool) 
             }
         }
     }
-    
+
     return Deny, false // Fall through to ABAC
 }
 ```
@@ -61,25 +61,25 @@ For decisions that need context beyond roles:
 ```go
 func (e *Engine) evaluateABAC(ctx EvalContext) Decision {
     matchingPolicies := e.findMatchingPolicies(ctx.Resource, ctx.Action)
-    
+
     decisions := []PolicyDecision{}
     for _, policy := range matchingPolicies {
         // Use compiled CEL program (cached)
         prog := e.celCache.GetOrCompile(policy.Condition)
-        
+
         env := map[string]interface{}{
             "user":     ctx.UserAttributes,
             "resource": ctx.ResourceAttributes,
             "action":   ctx.Action,
             "time":     time.Now(),
         }
-        
+
         result, err := prog.Eval(env)
         if err != nil {
             audit.Log("policy.eval_error", policy, err)
             continue
         }
-        
+
         if result.Value().(bool) {
             decisions = append(decisions, PolicyDecision{
                 Policy: policy.Name,
@@ -87,7 +87,7 @@ func (e *Engine) evaluateABAC(ctx EvalContext) Decision {
             })
         }
     }
-    
+
     return resolvePrecedence(decisions)
 }
 ```
@@ -107,15 +107,15 @@ func (c *CELCache) GetOrCompile(condition string) cel.Program {
         return prog
     }
     c.mu.RUnlock()
-    
+
     // Compile (expensive — only once per condition)
     ast, _ := cel.Compile(condition)
     prog, _ := cel.Program(ast)
-    
+
     c.mu.Lock()
     c.programs[condition] = prog
     c.mu.Unlock()
-    
+
     return prog
 }
 ```
@@ -135,7 +135,7 @@ type PolicyIndex struct {
 func (idx *PolicyIndex) Find(resource, action string) []*Policy {
     candidates := idx.byResource[resource]    // Exact match
     candidates = append(candidates, idx.byPattern...)  // Wildcards
-    
+
     // Filter by action
     var matching []*Policy
     for _, p := range candidates {
@@ -238,7 +238,7 @@ func resolvePrecedence(decisions []PolicyDecision) Decision {
     sort.Slice(decisions, func(i, j int) bool {
         return decisions[i].Priority > decisions[j].Priority
     })
-    
+
     for _, d := range decisions {
         if d.Effect == Deny {
             return Deny  // Any deny wins
