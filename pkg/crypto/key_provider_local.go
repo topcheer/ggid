@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"context"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -67,10 +66,10 @@ func newLocalKeyProvider(cfg LocalKeyProviderConfig) (*localKeyProvider, error) 
 	}, nil
 }
 
-func (p *localKeyProvider) Metadata() KeyMetadata { return p.metadata }
-func (p *localKeyProvider) Public() crypto.PublicKey { return p.pubKey }
-func (p *localKeyProvider) Signer() crypto.Signer  { return p.signer }
-func (p *localKeyProvider) Close() error           { return nil }
+func (p *localKeyProvider) Metadata() KeyMetadata      { return p.metadata }
+func (p *localKeyProvider) Public() crypto.PublicKey    { return p.pubKey }
+func (p *localKeyProvider) Signer() crypto.Signer     { return p.signer }
+func (p *localKeyProvider) Close() error              { return nil }
 
 func inferAlgorithm(pub crypto.PublicKey) KeyAlgorithm {
 	switch k := pub.(type) {
@@ -85,26 +84,4 @@ func inferAlgorithm(pub crypto.PublicKey) KeyAlgorithm {
 	default:
 		return RS256
 	}
-}
-
-// Stubs for external providers — backend teams implement per-provider packages.
-
-func newPKCS11KeyProvider(_ context.Context, _ PKCS11KeyProviderConfig) (KeyProvider, error) {
-	return nil, fmt.Errorf("pkcs11 provider: %w", ErrKeyProviderNotSupported)
-}
-
-func newAWSKMSKeyProvider(_ context.Context, _ AWSKMSConfig) (KeyProvider, error) {
-	return nil, fmt.Errorf("aws kms provider: %w", ErrKeyProviderNotSupported)
-}
-
-func newGCPKMSKeyProvider(_ context.Context, _ GCPKMSConfig) (KeyProvider, error) {
-	return nil, fmt.Errorf("gcp kms provider: %w", ErrKeyProviderNotSupported)
-}
-
-func newAzureKMSKeyProvider(_ context.Context, _ AzureKMSConfig) (KeyProvider, error) {
-	return nil, fmt.Errorf("azure key vault provider: %w", ErrKeyProviderNotSupported)
-}
-
-func newVaultTransitKeyProvider(_ context.Context, _ VaultTransitConfig) (KeyProvider, error) {
-	return nil, fmt.Errorf("vault transit provider: %w", ErrKeyProviderNotSupported)
 }
