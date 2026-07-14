@@ -97,7 +97,10 @@ Layer 2: Connection — SET LOCAL app.tenant_id per transaction
          ↓
 Layer 3: Database — PostgreSQL RLS policy enforces row-level filter
          (even if layers 1+2 fail, RLS blocks cross-tenant access)
+         (MySQL/SQLite: application-layer enforcement only, no RLS)
 ```
+
+> **Note**: PostgreSQL is the recommended database for production because RLS provides defense-in-depth at the database level. MySQL and SQLite rely on application-layer tenant isolation only. See [Database Setup Guide](../guides/database-setup.md) for details.
 
 ### Tenant Lifecycle
 
@@ -136,7 +139,9 @@ Layer 3: Database — PostgreSQL RLS policy enforces row-level filter
 | Layer | Technology | Why |
 |-------|-----------|-----|
 | Language | Go 1.25 | Performance, concurrency, small binaries |
-| Database | PostgreSQL 16 | RLS, JSONB, mature ecosystem |
+| Database | PostgreSQL 16 (primary) | RLS, JSONB, mature ecosystem |
+| | MySQL 8.0 (enterprise) | Compatibility for MySQL-standard orgs |
+| | SQLite 3.40 (dev/test) | Zero-config local development |
 | Cache | Redis 7 | Sessions, rate limiting, JTI anti-replay |
 | Message Bus | NATS JetStream | Lightweight, durable, audit pipeline |
 | Frontend | Next.js 15 + React | SSR, type-safe, fast DX |
