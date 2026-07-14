@@ -99,8 +99,11 @@ export default function LoginPage() {
       }
 
       // Success — store token and check for OAuth redirect
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      localStorage.setItem("ggid_access_token", data.access_token);
+      localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
+      if (data.session_id) {
+        localStorage.setItem("ggid_session_id", data.session_id);
+      }
 
       // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
       const params = new URLSearchParams(window.location.search);
@@ -153,8 +156,8 @@ export default function LoginPage() {
 
       if (data.access_token) {
         if (typeof window !== "undefined") {
-          localStorage.setItem("token", data.access_token);
-          localStorage.setItem("refresh_token", data.refresh_token || "");
+          localStorage.setItem("ggid_access_token", data.access_token);
+          localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
 
           // If redirect_to is set (OAuth flow), redirect back to authorize with user_id
           const params = new URLSearchParams(window.location.search);
