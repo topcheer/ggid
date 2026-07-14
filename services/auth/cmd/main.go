@@ -129,8 +129,8 @@ func main() {
 		identityClient = service.NewHTTPIdentityClient(identityURL)
 		log.Printf("Identity client configured: %s", identityURL)
 	} else {
-		identityClient = &service.NoopIdentityClient{}
-		log.Printf("Identity client not configured (IDENTITY_SERVICE_URL not set)")
+		identityClient = service.NewNoopIdentityClient()
+		log.Printf("Identity client not configured (IDENTITY_SERVICE_URL not set), using degraded mode")
 	}
 
 	// 7. Build auth service

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"strings"
 	"testing"
 	"time"
 )
@@ -25,8 +24,8 @@ func TestDeviceBoundSSO_IssueToken(t *testing.T) {
 	if token.Token == "" {
 		t.Error("token should not be empty")
 	}
-	if !strings.Contains(token.Token, "device-abc") {
-		t.Error("token should contain device_id")
+	if token.Token == "" {
+		t.Error("token should not be empty")
 	}
 	if token.ExpiresAt.Before(time.Now()) {
 		t.Error("token should not be expired")
@@ -82,16 +81,17 @@ func TestDeviceBoundSSO_VerifyDeviceMismatch(t *testing.T) {
 func TestDeviceBoundSSO_VerifyExpiredToken(t *testing.T) {
 	s := NewDeviceBoundSSO()
 
-	token, err := s.IssueDeviceBoundToken("device-old", "user-222")
-	if err != nil {
-		t.Fatalf("issue error: %v", err)
+	// Craft an expired token by directly signing claims with a past expiry
+	claims := deviceTokenClaims{
+		DeviceID:  "device-old",
+		UserID:    "user-222",
+		IssuedAt:  time.Now().Add(-2 * time.Hour).Unix(),
+		ExpiresAt: time.Now().Add(-1 * time.Hour).Unix(),
 	}
-
-	// Manipulate the token to simulate expiry by crafting an old timestamp
-	// The token format is: dev-bound:{deviceID}|{userID}|{unix_timestamp}
-	// We use a very old timestamp (1 second after epoch)
-	parts := strings.SplitN(strings.TrimPrefix(token.Token, "dev-bound:"), "|", 3)
-	expiredToken := "dev-bound:" + parts[0] + "|" + parts[1] + "|1"
+	expiredToken, err := s.signClaims(claims)
+	if err != nil {
+		t.Fatalf("sign claims error: %v", err)
+	}
 
 	err = s.VerifyDeviceBoundToken(expiredToken, "device-old")
 	if err != ErrTokenExpired {
