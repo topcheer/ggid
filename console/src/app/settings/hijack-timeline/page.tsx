@@ -49,20 +49,20 @@ export default function HijackTimelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-red-500" /> {t("hijackTimeline.title")}</h1>
-        <p className="text-sm text-gray-500 mt-1">Account takeover detection with confidence scoring and recommended actions.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-red-500" /> {t("big1.hijackTimeline.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("big1.hijackTimeline.accountTakeoverDetectionWithConfidenceScoringAndRecommendedActions")}</p>
       </div>
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-md"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") fetchTimeline(); }} placeholder="user:alice or usr-xxxx" className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-        <button onClick={fetchTimeline} disabled={loading || !search} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50">Analyze</button>
+        <button onClick={fetchTimeline} disabled={loading || !search} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50">{t("big1.hijackTimeline.analyze")}</button>
       </div>
 
       {data && (
         <>
           <div className="rounded-lg border dark:border-gray-800 p-4 flex items-center gap-4">
-            <div className="relative w-24 h-24"><svg viewBox="0 0 64 64" className="w-full h-full"><circle cx={32} cy={32} r={28} fill="none" stroke="currentColor" strokeWidth={6} className="text-gray-200 dark:text-gray-800" /><circle cx={32} cy={32} r={28} fill="none" stroke={scoreColor} strokeWidth={6} strokeDasharray={`${(data.confidence_score / 100) * 176} 176`} strokeLinecap="round" transform="rotate(-90 32 32)" /></svg><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: scoreColor }}>{data.confidence_score.toFixed(0)}</span><span className="text-[9px] text-gray-400">confidence</span></div></div>
-            <div><h3 className="font-semibold">{data.username}</h3><p className="text-sm text-gray-500 mt-1">Hijack confidence score</p>{data.confidence_score >= 70 && <span className="text-xs text-red-600 font-medium">High risk - immediate action recommended</span>}{data.confidence_score < 40 && <span className="text-xs text-green-600">Low risk</span>}</div>
+            <div className="relative w-24 h-24"><svg viewBox="0 0 64 64" className="w-full h-full"><circle cx={32} cy={32} r={28} fill="none" stroke="currentColor" strokeWidth={6} className="text-gray-200 dark:text-gray-800" /><circle cx={32} cy={32} r={28} fill="none" stroke={scoreColor} strokeWidth={6} strokeDasharray={`${(data.confidence_score / 100) * 176} 176`} strokeLinecap="round" transform="rotate(-90 32 32)" /></svg><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: scoreColor }}>{data.confidence_score.toFixed(0)}</span><span className="text-[9px] text-gray-400">{t("big1.hijackTimeline.confidence")}</span></div></div>
+            <div><h3 className="font-semibold">{data.username}</h3><p className="text-sm text-gray-500 mt-1">{t("big1.hijackTimeline.hijackConfidenceScore")}</p>{data.confidence_score >= 70 && <span className="text-xs text-red-600 font-medium">{t("big1.hijackTimeline.highRiskImmediateActionRecommended")}</span>}{data.confidence_score < 40 && <span className="text-xs text-green-600">{t("big1.hijackTimeline.lowRisk")}</span>}</div>
           </div>
 
           <div className="relative pl-8">
@@ -78,13 +78,13 @@ export default function HijackTimelinePage() {
                   </div>
                 </div>
               ); })}
-              {data.events.length === 0 && <p className="text-sm text-gray-500 py-4 ml-2">No suspicious events detected.</p>}
+              {data.events.length === 0 && <p className="text-sm text-gray-500 py-4 ml-2">{t("big1.hijackTimeline.noSuspiciousEventsDetected")}</p>}
             </div>
           </div>
 
           {data.recommended_actions.length > 0 && (
             <div className="rounded-lg border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 p-4">
-              <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><ShieldAlert className="w-4 h-4 text-orange-500" /> Recommended Actions</h3>
+              <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><ShieldAlert className="w-4 h-4 text-orange-500" />{t("big1.hijackTimeline.recommendedActions")}</h3>
               <div className="space-y-1">{data.recommended_actions.map((a, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="text-xs text-gray-400">{i + 1}.</span><span>{a}</span></div>
               ))}</div>
@@ -92,7 +92,7 @@ export default function HijackTimelinePage() {
           )}
         </>
       )}
-      {!data && !loading && search && <p className="text-sm text-gray-500 text-center py-8">Click Analyze to view timeline.</p>}
+      {!data && !loading && search && <p className="text-sm text-gray-500 text-center py-8">{t("big1.hijackTimeline.clickAnalyzeToViewTimeline")}</p>}
     </div>
   );
 }

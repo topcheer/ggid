@@ -24,7 +24,7 @@ function riskColor(score: number): string {
 }
 
 export default function HijackDetectionPage() {
-  const { apiFetch } = useApi();
+  const t = useTranslations();  const { apiFetch } = useApi();
   const [sessions, setSessions] = useState<SuspiciousSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

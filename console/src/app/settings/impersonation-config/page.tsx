@@ -57,78 +57,78 @@ export default function ImpersonationConfigPage() {
   const statusColor = (s: string): string =>
     s === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600';
 
-  if (loading) return <div className="p-6"><p>Loading...</p></div>;
-  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
+  if (loading) return <div className="p-6"><p>{t("big1.impersonationConfig.loading")}</p></div>;
+  if (error) return <div className="p-6 text-red-600">{t("big1.impersonationConfig.error")}{error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Impersonation Configuration</h1>
-        <p className="text-gray-600">Configure admin impersonation policies, restrictions, and audit trail.</p>
+        <h1 className="text-2xl font-bold">{t("big1.impersonationConfig.title")}</h1>
+        <p className="text-gray-600">{t("big1.impersonationConfig.configureAdminImpersonationPoliciesRestrictionsAndAuditTrail")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
-          <span className="text-sm font-medium">Require Reason</span>
+          <span className="text-sm font-medium">{t("big1.impersonationConfig.requireReason")}</span>
           <input type="checkbox" checked={requireReason} onChange={e => setRequireReason(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
-          <span className="text-sm font-medium">Require Target Consent</span>
+          <span className="text-sm font-medium">{t("big1.impersonationConfig.requireTargetConsent")}</span>
           <input type="checkbox" checked={requireTargetConsent} onChange={e => setRequireTargetConsent(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
-          <span className="text-sm font-medium">Auto-Revoke on Idle</span>
+          <span className="text-sm font-medium">{t("big1.impersonationConfig.autoRevokeOnIdle")}</span>
           <input type="checkbox" checked={autoRevokeOnIdle} onChange={e => setAutoRevokeOnIdle(e.target.checked)} className="rounded" />
         </label>
         <div className="bg-white rounded-lg shadow p-4">
-          <label className="text-sm font-medium">Audit Level</label>
+          <label className="text-sm font-medium">{t("big1.impersonationConfig.auditLevel")}</label>
           <select value={auditLevel} onChange={e => setAuditLevel(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
-            <option value="full">Full (all actions logged)</option>
-            <option value="summary">Summary (start/end only)</option>
-            <option value="disabled">Disabled (not recommended)</option>
+            <option value="full">{t("big1.impersonationConfig.fullAllActionsLogged")}</option>
+            <option value="summary">{t("big1.impersonationConfig.summaryStartEndOnly")}</option>
+            <option value="disabled">{t("big1.impersonationConfig.disabledNotRecommended")}</option>
           </select>
         </div>
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Max Duration: {maxDuration} minutes</h2>
+        <h2 className="text-lg font-semibold">{t("big1.impersonationConfig.maxDuration")}{maxDuration}{t("big1.impersonationConfig.minutes")}</h2>
         <input type="range" min={5} max={480} step={5} value={maxDuration} onChange={e => setMaxDuration(parseInt(e.target.value))} className="w-full" />
-        <div className="flex justify-between text-xs text-gray-400"><span>5min</span><span>8h</span></div>
+        <div className="flex justify-between text-xs text-gray-400"><span>{t("big1.impersonationConfig.5min")}</span><span>{t("big1.impersonationConfig.8h")}</span></div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Allowed Impersonators</h2>
+        <h2 className="text-lg font-semibold">{t("big1.impersonationConfig.allowedImpersonators")}</h2>
         <div className="space-y-2">
           {allowedImpersonators.map(u => (
-            <div key={u} className="flex items-center gap-2"><span className="font-mono text-sm flex-1">{u}</span><button onClick={() => removeImpersonator(u)}aria-label={"Remove impersonator " + u} className="text-red-600 text-xs">Remove</button></div>
+            <div key={u} className="flex items-center gap-2"><span className="font-mono text-sm flex-1">{u}</span><button onClick={() => removeImpersonator(u)}aria-label={"Remove impersonator " + u} className="text-red-600 text-xs">{t("big1.impersonationConfig.remove")}</button></div>
           ))}
         </div>
         <div className="flex gap-2">
           <input type="text" placeholder="user@ggid.io" value={newImpersonator} onChange={e => setNewImpersonator(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
-          <button onClick={addImpersonator} aria-label="Add impersonator" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
+          <button onClick={addImpersonator} aria-label="Add impersonator" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("big1.impersonationConfig.add")}</button>
         </div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Restricted to Roles</h2>
-        <p className="text-sm text-gray-500">Only users with these roles can be impersonated.</p>
+        <h2 className="text-lg font-semibold">{t("big1.impersonationConfig.restrictedToRoles")}</h2>
+        <p className="text-sm text-gray-500">{t("big1.impersonationConfig.onlyUsersWithTheseRolesCanBeImpersonated")}</p>
         <div className="flex flex-wrap gap-2">
           {restrictToRoles.map(r => (
-            <div key={r} className="flex items-center gap-1"><span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">{r}</span><button onClick={() => removeRole(r)}aria-label={"Remove role " + r} className="text-red-600 text-xs">x</button></div>
+            <div key={r} className="flex items-center gap-1"><span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">{r}</span><button onClick={() => removeRole(r)}aria-label={"Remove role " + r} className="text-red-600 text-xs">{t("big1.impersonationConfig.x")}</button></div>
           ))}
         </div>
         <div className="flex gap-2">
           <input type="text" placeholder="role-name" value={newRole} onChange={e => setNewRole(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
-          <button onClick={addRole} aria-label="Add restricted role" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
+          <button onClick={addRole} aria-label="Add restricted role" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("big1.impersonationConfig.add")}</button>
         </div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Impersonation History</h2>
+        <h2 className="text-lg font-semibold">{t("big1.impersonationConfig.impersonationHistory")}</h2>
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Impersonator</th><th className="p-3">Target</th><th className="p-3">Reason</th><th className="p-3">Started</th><th className="p-3">Duration</th><th className="p-3">Status</th>
+              <th className="p-3">{t("big1.impersonationConfig.impersonator")}</th><th className="p-3">{t("big1.impersonationConfig.target")}</th><th className="p-3">{t("big1.impersonationConfig.reason")}</th><th className="p-3">{t("big1.impersonationConfig.started")}</th><th className="p-3">{t("big1.impersonationConfig.duration")}</th><th className="p-3">{t("big1.impersonationConfig.status")}</th>
             </tr>
           </thead>
           <tbody>

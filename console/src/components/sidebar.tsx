@@ -23,6 +23,8 @@ import {
   Bot,
   FileCheck,
   Cloud,
+  Network,
+  RefreshCw,
   X,
   Menu,
   AlertCircle,
@@ -93,6 +95,9 @@ export function Sidebar() {
         { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
         { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
         { href: "/scim", label: t("nav.scim"), icon: BookOpen },
+        { href: "/settings/scim", label: "SCIM Config", icon: BookOpen },
+        { href: "/settings/ldap-config", label: "LDAP Config", icon: Network },
+        { href: "/settings/ldap-sync-config", label: "LDAP Sync", icon: RefreshCw },
       ],
     },
     {

@@ -44,19 +44,19 @@ export default function GrantTypeStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-purple-500" /> {t("grantTypeStats.title")}</h1>
-        <p className="text-sm text-gray-500 mt-1">OAuth grant type distribution and 30-day trends.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-purple-500" /> {t("big1.grantTypeStats.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("big1.grantTypeStats.oauthGrantTypeDistributionAnd30DayTrends")}</p>
       </div>
 
-      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">Retry</button></div>}
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">{t("big1.grantTypeStats.retry")}</button></div>}
 
-      {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading stats...</div></div>}
+      {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">{t("big1.grantTypeStats.loadingStats")}</div></div>}
 
       {data && (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="rounded-lg border dark:border-gray-800 p-4">
-              <h3 className="text-sm font-semibold mb-3">Bar Chart</h3>
+              <h3 className="text-sm font-semibold mb-3">{t("big1.grantTypeStats.barChart")}</h3>
               <div className="space-y-2">
                 {data.counts.map((d) => (
                   <div key={d.grant_type} className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export default function GrantTypeStatsPage() {
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><PieIcon className="w-4 h-4" /> Percentage</h3>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><PieIcon className="w-4 h-4" />{t("big1.grantTypeStats.percentage")}</h3>
               <div className="flex items-center gap-4">
                 <div className="relative w-24 h-24">
                   <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
@@ -85,7 +85,7 @@ export default function GrantTypeStatsPage() {
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4" /> 30-Day Trend</h3>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4" />{t("big1.grantTypeStats.30DayTrend")}</h3>
               <svg viewBox="0 0 200 60" className="w-full h-16">
                 {trendKeys.map((key) => { const pts = data.trend.map((t, i) => `${(i / (data.trend.length - 1 || 1)) * 200},${55 - ((t)[key] as number / maxTrend) * 50}`).join(" "); return <polyline key={key} fill="none" stroke={typeColors[key] || "#ccc"} strokeWidth={1.5} points={pts} />; })}
               </svg>
@@ -95,7 +95,7 @@ export default function GrantTypeStatsPage() {
 
           <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">Grant Type</th><th className="px-4 py-3 text-left font-medium">Count</th><th className="px-4 py-3 text-left font-medium">Share</th></tr></thead>
+              <thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-4 py-3 text-left font-medium">{t("big1.grantTypeStats.grantType")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.grantTypeStats.count")}</th><th className="px-4 py-3 text-left font-medium">{t("big1.grantTypeStats.share")}</th></tr></thead>
               <tbody className="divide-y dark:divide-gray-800">{data.counts.map((d) => (<tr key={d.grant_type} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
                 <td className="px-4 py-3 font-mono text-xs">{d.grant_type}</td><td className="px-4 py-3 font-bold">{d.count}</td><td className="px-4 py-3 text-gray-500">{((d.count / total) * 100).toFixed(1)}%</td>
               </tr>))}</tbody>

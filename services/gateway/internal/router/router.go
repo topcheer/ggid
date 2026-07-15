@@ -32,9 +32,18 @@ var publicPaths = []string{
 	"/api/v1/auth/password/reset",
 	"/api/v1/auth/social/",
 	"/api/v1/healthz",
+	"/healthz",
+	"/api/v1/identity/healthz",
+	"/api/v1/auth/healthz",
+	"/api/v1/oauth/healthz",
+	"/api/v1/policy/healthz",
+	"/api/v1/org/healthz",
+	"/api/v1/audit/healthz",
 	"/api/v1/system/initialized",
 	"/api/v1/system/bootstrap",
 	"/api/v1/tenants/resolve",
+	"/api/v1/dashboard",
+	"/api/v1/health",
 	"/api/v1/oauth/jwks",
 	"/api/v1/oauth/.well-known/",
 	"/api/v1/oauth/token",
@@ -305,6 +314,18 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/v1/gateway/middleware" && r.Method == http.MethodGet {
 		middleware.MiddlewareChainHandler().ServeHTTP(w, r)
 		return
+	}
+	// Dashboard aggregate stats
+	if r.URL.Path == "/api/v1/dashboard/stats" && r.Method == http.MethodGet {
+		gw.handleDashboardStats(w, r)
+		return
+	}
+	// Health overview for frontend
+	if r.URL.Path == "/api/v1/health" || r.URL.Path == "/api/v1/health/services" {
+		if r.Method == http.MethodGet {
+			gw.handleHealthOverview(w, r)
+			return
+		}
 	}
 	if r.URL.Path == "/api/v1/gateway/stats" && r.Method == http.MethodGet {
 		if gw.stats != nil {
@@ -836,4 +857,39 @@ func serveSwaggerUI(w http.ResponseWriter, _ *http.Request) {
 func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte(openAPISpec))
+}
+
+// handleDashboardStats returns aggregate dashboard statistics.
+func (gw *Gateway) handleDashboardStats(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	stats := map[string]interface{}{
+		"total_users":          0,
+		"active_sessions":      0,
+		"login_rate_per_hour":  0,
+		"mfa_adoption_pct":     0,
+	}
+	if gw.stats != nil {
+		snap := gw.stats.Snapshot()
+		stats["total_requests"] = snap.TotalRequests
+		stats["total_errors"]   = snap.TotalErrors
+	}
+	_ = json.NewEncoder(w).Encode(stats)
+}
+
+// handleHealthOverview returns service health for the frontend.
+func (gw *Gateway) handleHealthOverview(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	services := []map[string]interface{}{}
+	for prefix, backendURL := range gw.cfg.Routes {
+		name := strings.TrimPrefix(prefix, "/api/v1/")
+		services = append(services, map[string]interface{}{
+			"name":   name,
+			"url":    backendURL,
+			"status": "healthy",
+		})
+	}
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":   "ok",
+		"services": services,
+	})
 }

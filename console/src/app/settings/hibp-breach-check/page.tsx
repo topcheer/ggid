@@ -52,58 +52,58 @@ export default function HibpBreachCheckPage() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, []);
 
-  if (loading) return <div className="p-6"><p>Loading...</p></div>;
-  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
+  if (loading) return <div className="p-6"><p>{t("big1.hibpBreachCheck.loading")}</p></div>;
+  if (error) return <div className="p-6 text-red-600">{t("big1.hibpBreachCheck.error")}{error}</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">HIBP Breach Check</h1>
-        <p className="text-gray-600">Have I Been Pwned integration for credential breach monitoring.</p>
+        <h1 className="text-2xl font-bold">{t("big1.hibpBreachCheck.title")}</h1>
+        <p className="text-gray-600">{t("big1.hibpBreachCheck.haveIBeenPwnedIntegrationForCredentialBreachMonitoring")}</p>
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">API Configuration</h2>
+        <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.apiConfiguration")}</h2>
         <label className="flex items-center justify-between">
-          <span className="text-sm font-medium">Enable HIBP Breach Check</span>
+          <span className="text-sm font-medium">{t("big1.hibpBreachCheck.enableHibpBreachCheck")}</span>
           <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
         </label>
         <div>
-          <label className="text-sm font-medium">HIBP API Key</label>
+          <label className="text-sm font-medium">{t("big1.hibpBreachCheck.hibpApiKey")}</label>
           <input type="password" placeholder="Enter HIBP API key" value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" />
-          <p className="text-xs text-gray-400 mt-1">Get your API key at https://haveibeenpwned.com/API/Key</p>
+          <p className="text-xs text-gray-400 mt-1">{t("big1.hibpBreachCheck.getYourAPIKeyAtHttpsHaveibeenpwnedComAPIKey")}</p>
         </div>
-        <div className="text-sm text-gray-500">Last check: {lastCheck}</div>
-        <button onClick={() => setLastCheck(new Date().toISOString().slice(0, 16).replace('T', ' '))} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Run Check Now</button>
+        <div className="text-sm text-gray-500">{t("big1.hibpBreachCheck.lastCheck")}{lastCheck}</div>
+        <button onClick={() => setLastCheck(new Date().toISOString().slice(0, 16).replace('T', ' '))} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{t("big1.hibpBreachCheck.runCheckNow")}</button>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Check Triggers</h2>
+        <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.checkTriggers")}</h2>
         <div className="space-y-2">
-          <label className="flex items-center justify-between"><span className="text-sm">Check on Login</span><input type="checkbox" checked={checkOnLogin} onChange={e => setCheckOnLogin(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">Check on Password Change</span><input type="checkbox" checked={checkOnPasswordChange} onChange={e => setCheckOnPasswordChange(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">Check on Register</span><input type="checkbox" checked={checkOnRegister} onChange={e => setCheckOnRegister(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnLogin")}</span><input type="checkbox" checked={checkOnLogin} onChange={e => setCheckOnLogin(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnPasswordChange")}</span><input type="checkbox" checked={checkOnPasswordChange} onChange={e => setCheckOnPasswordChange(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnRegister")}</span><input type="checkbox" checked={checkOnRegister} onChange={e => setCheckOnRegister(e.target.checked)} className="rounded" /></label>
         </div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Response Actions</h2>
+        <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.responseActions")}</h2>
         <div className="space-y-2">
-          <label className="flex items-center justify-between"><span className="text-sm">Auto-Force Password Reset on Breach</span><input type="checkbox" checked={autoForceReset} onChange={e => setAutoForceReset(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">Notify User</span><input type="checkbox" checked={notifyUser} onChange={e => setNotifyUser(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">Notify Admin</span><input type="checkbox" checked={notifyAdmin} onChange={e => setNotifyAdmin(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.autoForcePasswordResetOnBreach")}</span><input type="checkbox" checked={autoForceReset} onChange={e => setAutoForceReset(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.notifyUser")}</span><input type="checkbox" checked={notifyUser} onChange={e => setNotifyUser(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.notifyAdmin")}</span><input type="checkbox" checked={notifyAdmin} onChange={e => setNotifyAdmin(e.target.checked)} className="rounded" /></label>
         </div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Breach History</h2>
+        <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.breachHistory")}</h2>
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">User</th>
-              <th className="p-3">Breach</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Data Classes</th>
+              <th className="p-3">{t("big1.hibpBreachCheck.user")}</th>
+              <th className="p-3">{t("big1.hibpBreachCheck.breach")}</th>
+              <th className="p-3">{t("big1.hibpBreachCheck.date")}</th>
+              <th className="p-3">{t("big1.hibpBreachCheck.dataClasses")}</th>
             </tr>
           </thead>
           <tbody>
@@ -120,13 +120,13 @@ export default function HibpBreachCheckPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Compromised Password Blocklist ({compromisedPasswords.length})</h2>
+        <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.compromisedPasswordBlocklist")}{compromisedPasswords.length})</h2>
         <div className="flex flex-wrap gap-2">
           {compromisedPasswords.map(p => (
             <span key={p} className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-mono">{p}</span>
           ))}
         </div>
-        <p className="text-xs text-gray-400">Passwords matching these entries are rejected during registration and password change.</p>
+        <p className="text-xs text-gray-400">{t("big1.hibpBreachCheck.passwordsMatchingTheseEntriesAreRejectedDuringRegistrationAndPasswordChange")}</p>
       </section>
     </div>
   );

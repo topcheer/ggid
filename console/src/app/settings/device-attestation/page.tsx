@@ -50,24 +50,24 @@ export default function DeviceAttestationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-blue-500" /> {t("deviceAttestation.title")}</h1>
-        <p className="text-sm text-gray-500 mt-1">Monitor device hardware attestation status and trust levels.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-blue-500" /> {t("big1.deviceAttestation.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("big1.deviceAttestation.monitorDeviceHardwareAttestationStatusAndTrustLevels")}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Devices</span><p className="text-2xl font-bold mt-1">{devices.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Trusted</span><p className="text-2xl font-bold mt-1 text-green-600">{devices.filter((d) => d.trust_level === "trusted").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Managed</span><p className="text-2xl font-bold mt-1 text-yellow-600">{devices.filter((d) => d.trust_level === "managed").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Untrusted</span><p className="text-2xl font-bold mt-1 text-red-600">{devices.filter((d) => d.trust_level === "untrusted").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.totalDevices")}</span><p className="text-2xl font-bold mt-1">{devices.length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.trusted")}</span><p className="text-2xl font-bold mt-1 text-green-600">{devices.filter((d) => d.trust_level === "trusted").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.managed")}</span><p className="text-2xl font-bold mt-1 text-yellow-600">{devices.filter((d) => d.trust_level === "managed").length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.deviceAttestation.untrusted")}</span><p className="text-2xl font-bold mt-1 text-red-600">{devices.filter((d) => d.trust_level === "untrusted").length}</p></div>
       </div>
 
       {/* Filter */}
       <select value={filterTrust} onChange={(e) => setFilterTrust(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-        <option value="all">All Trust Levels</option>
-        <option value="trusted">Trusted</option>
-        <option value="managed">Managed</option>
-        <option value="untrusted">Untrusted</option>
+        <option value="all">{t("big1.deviceAttestation.allTrustLevels")}</option>
+        <option value="trusted">{t("big1.deviceAttestation.trusted")}</option>
+        <option value="managed">{t("big1.deviceAttestation.managed")}</option>
+        <option value="untrusted">{t("big1.deviceAttestation.untrusted")}</option>
       </select>
 
       {/* Device list */}
@@ -86,33 +86,33 @@ export default function DeviceAttestationPage() {
                       <span className="text-xs text-gray-400">{d.device_type}</span>
                       <span className={`px-2 py-0.5 rounded text-xs ${trustColors[d.trust_level]}`}>{d.trust_level}</span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5">{d.username} · Last attested: {d.last_attested}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{d.username}{t("big1.deviceAttestation.lastAttested")}{d.last_attested}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-xs">
                   {/* TPM */}
                   <div className="flex items-center gap-1">
                     {d.tpm_status === "verified" ? <ShieldCheck className="w-4 h-4 text-green-500" /> : <ShieldX className="w-4 h-4 text-red-500" />}
-                    <span className="text-gray-500">TPM</span>
+                    <span className="text-gray-500">{t("big1.deviceAttestation.tpm")}</span>
                   </div>
                   {/* Secure Boot */}
                   <div className="flex items-center gap-1">
                     {d.secure_boot ? <Lock className="w-4 h-4 text-green-500" /> : <Lock className="w-4 h-4 text-gray-300" />}
-                    <span className="text-gray-500">Boot</span>
+                    <span className="text-gray-500">{t("big1.deviceAttestation.boot")}</span>
                   </div>
                   {/* Code Integrity */}
                   <div className="flex items-center gap-1">
                     {d.code_integrity ? <Cpu className="w-4 h-4 text-green-500" /> : <Cpu className="w-4 h-4 text-gray-300" />}
-                    <span className="text-gray-500">Integrity</span>
+                    <span className="text-gray-500">{t("big1.deviceAttestation.integrity")}</span>
                   </div>
                 </div>
               </div>
               {d.tpm_status === "failed" && (
-                <div className="mt-2 flex items-center gap-2 text-xs text-red-600"><ShieldAlert className="w-3 h-3" /> TPM attestation failed — device may be compromised.</div>
+                <div className="mt-2 flex items-center gap-2 text-xs text-red-600"><ShieldAlert className="w-3 h-3" />{t("big1.deviceAttestation.tpmAttestationFailedDeviceMayBeCompromised")}</div>
               )}
             </div>
           ))}
-          {filtered.length === 0 && !loading && <p className="px-4 py-8 text-center text-sm text-gray-500">No devices found.</p>}
+          {filtered.length === 0 && !loading && <p className="px-4 py-8 text-center text-sm text-gray-500">{t("big1.deviceAttestation.noDevicesFound")}</p>}
         </div>
       </div>
     </div>

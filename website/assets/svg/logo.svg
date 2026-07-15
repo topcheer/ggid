@@ -1,0 +1,51 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ggidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="ggidGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0.6"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Shield outline -->
+  <path d="M60 8 L102 24 L102 60 C102 86 84 104 60 112 C36 104 18 86 18 60 L18 24 Z" 
+        fill="url(#ggidGrad2)" stroke="url(#ggidGrad)" stroke-width="2.5"/>
+  
+  <!-- Inner shield highlight -->
+  <path d="M60 14 L96 27 L96 60 C96 82 80 98 60 105 C40 98 24 82 24 60 L24 27 Z" 
+        fill="none" stroke="url(#ggidGrad)" stroke-width="0.8" opacity="0.4"/>
+  
+  <!-- Key/Identity motif: Two interlocking G shapes forming a circuit -->
+  <g filter="url(#glow)">
+    <!-- Left G arc -->
+    <path d="M52 38 C44 38 38 44 38 52 L38 68 C38 76 44 82 52 82 L56 82" 
+          fill="none" stroke="url(#ggidGrad)" stroke-width="4" stroke-linecap="round"/>
+    <!-- Right G arc -->
+    <path d="M68 82 C76 82 82 76 82 68 L82 52 C82 44 76 38 68 38 L64 38" 
+          fill="none" stroke="url(#ggidGrad)" stroke-width="4" stroke-linecap="round"/>
+    <!-- Center connection node -->
+    <circle cx="60" cy="60" r="5" fill="url(#ggidGrad)"/>
+    <circle cx="60" cy="60" r="2.5" fill="#0a0a0f"/>
+    <!-- Identity check mark inside center -->
+    <path d="M57.5 60 L59 62 L63 57.5" stroke="#06b6d4" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
+  
+  <!-- Corner accent dots -->
+    <circle cx="60" cy="18" r="2" fill="#8b5cf6" opacity="0.8"/>
+  <circle cx="93" cy="35" r="1.5" fill="#06b6d4" opacity="0.6"/>
+  <circle cx="93" cy="85" r="1.5" fill="#6366f1" opacity="0.6"/>
+  <circle cx="60" cy="102" r="2" fill="#8b5cf6" opacity="0.8"/>
+  <circle cx="27" cy="85" r="1.5" fill="#06b6d4" opacity="0.6"/>
+  <circle cx="27" cy="35" r="1.5" fill="#6366f1" opacity="0.6"/>
+</svg>

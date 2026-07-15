@@ -67,32 +67,32 @@ export default function JoinerFlowPage() {
   const tasksDone = form.preboarding.filter((t) => t.done).length;
 
   if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
-  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">{t("big1.joinerFlow.error")}{error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("big1.joinerFlow.retry")}</button></div></div>);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> {t("joinerFlow.title")}</h1>
-        <p className="text-sm text-gray-500 mt-1">Automate employee onboarding with role templates and app provisioning.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> {t("big1.joinerFlow.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("big1.joinerFlow.automateEmployeeOnboardingWithRoleTemplatesAndAppProvisioning")}</p>
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label className="text-sm font-medium">Employee ID</label><input type="text" value={form.employee_id} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} placeholder="emp-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">Start Date</label><input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-          <div><label className="text-sm font-medium">Department</label><input type="text" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="Engineering" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+          <div><label className="text-sm font-medium">{t("big1.joinerFlow.employeeId")}</label><input type="text" value={form.employee_id} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} placeholder="emp-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">{t("big1.joinerFlow.startDate")}</label><input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+          <div><label className="text-sm font-medium">{t("big1.joinerFlow.department")}</label><input type="text" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="Engineering" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
         </div>
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4">
-        <h3 className="text-sm font-semibold mb-3">Role Templates</h3>
+        <h3 className="text-sm font-semibold mb-3">{t("big1.joinerFlow.roleTemplates")}</h3>
         <div className="flex flex-wrap gap-2">{availableTemplates.map((t) => (
           <button key={t} onClick={() => toggleTemplate(t)} className={`px-3 py-1.5 rounded-lg text-xs font-mono ${form.role_templates.includes(t) ? "bg-blue-600 text-white" : "border dark:border-gray-700"}`}>{t}</button>
         ))}</div>
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4">
-        <h3 className="text-sm font-semibold mb-3">Auto-Provisioned Apps</h3>
+        <h3 className="text-sm font-semibold mb-3">{t("big1.joinerFlow.autoProvisionedApps")}</h3>
         <div className="space-y-1">{form.provision_apps.map((a) => (
           <button key={a.id} onClick={() => toggleApp(a.id)} className="flex items-center gap-2 text-sm w-full hover:bg-gray-50 dark:hover:bg-gray-900/30 px-2 py-1 rounded">
             {a.auto ? <CheckSquare className="w-4 h-4 text-green-500" /> : <Square className="w-4 h-4 text-gray-400" />}
@@ -102,7 +102,7 @@ export default function JoinerFlowPage() {
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4">
-        <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold">Preboarding Tasks</h3><span className="text-xs text-gray-400">{tasksDone}/{form.preboarding.length} done</span></div>
+        <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold">{t("big1.joinerFlow.preboardingTasks")}</h3><span className="text-xs text-gray-400">{tasksDone}/{form.preboarding.length}{t("big1.joinerFlow.done")}</span></div>
         <div className="space-y-1">{form.preboarding.map((t) => (
           <button key={t.id} onClick={() => toggleTask(t.id)} className="flex items-center gap-2 text-sm w-full hover:bg-gray-50 dark:hover:bg-gray-900/30 px-2 py-1 rounded">
             {t.done ? <CheckSquare className="w-4 h-4 text-green-500" /> : <Square className="w-4 h-4 text-gray-400" />}
@@ -112,8 +112,8 @@ export default function JoinerFlowPage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <span className={`px-2 py-0.5 rounded text-xs ${statusColors[submitted ? "in_progress" : form.status]}`}>{submitted ? "in_progress" : form.status}</span>
-        <button onClick={submit} disabled={!form.employee_id || !form.start_date || submitted} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Rocket className="w-4 h-4" /> {submitted ? "Started" : "Start Onboarding"}</button>
+        <span className={`px-2 py-0.5 rounded text-xs ${statusColors[submitted ? "in_progress" : form.status]}`}>{submitted ? t("big1.joinerFlow.inProgress") : form.status}</span>
+        <button onClick={submit} disabled={!form.employee_id || !form.start_date || submitted} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Rocket className="w-4 h-4" /> {submitted ? t("big1.joinerFlow.started") : t("big1.joinerFlow.startOnboarding")}</button>
       </div>
     </div>
   );

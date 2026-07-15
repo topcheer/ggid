@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
 )
@@ -126,10 +127,12 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// 1. Create tenant.
+	// 1. Create tenant (or use existing if already present).
 	var tenantIDStr string
 	err := h.svc.Pool().QueryRow(ctx,
-		`INSERT INTO tenants (name, slug, status, plan) VALUES ($1, $2, 'active', 'enterprise') RETURNING id::text`,
+		`INSERT INTO tenants (name, slug, status, plan) VALUES ($1, $2, 'active', 'enterprise')
+		 ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+		 RETURNING id::text`,
 		req.TenantName, req.TenantSlug).Scan(&tenantIDStr)
 	if err != nil {
 		log.Printf("bootstrap: failed to create tenant: %v", err)
@@ -137,6 +140,9 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	tenantID, _ := uuid.Parse(tenantIDStr)
+
+	// Inject tenant context for CreateUser
+	ctx = tenant.WithContext(ctx, &tenant.Context{TenantID: tenantID})
 
 	// 2. Create admin user via IdentityService.
 	user, err := h.svc.CreateUser(ctx, &domain.CreateUserInput{
@@ -160,9 +166,10 @@ func (h *HTTPHandler) handleSystemBootstrap(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	_, err = h.svc.Pool().Exec(ctx,
-		`INSERT INTO credentials (user_id, tenant_id, password_hash, mfa_enabled) VALUES ($1, $2, $3, false)
-		 ON CONFLICT (user_id) DO UPDATE SET password_hash = EXCLUDED.password_hash`,
-		user.ID, tenantID, hash)
+		`INSERT INTO credentials (tenant_id, user_id, type, identifier, secret, enabled)
+		 VALUES ($1, $2, 'password', $3, $4, true)
+		 ON CONFLICT DO NOTHING`,
+		tenantID, user.ID, req.AdminUsername, hash)
 	if err != nil {
 		log.Printf("bootstrap: failed to insert credential: %v", err)
 		// Non-fatal — user is created, credential can be set via password reset.

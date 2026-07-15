@@ -27,25 +27,24 @@ export default function GrantHistoryPage() {
   const filtered = events.filter((e) => { if (filterType && e.grant_type !== filterType) return false; if (search) { const q = search.toLowerCase(); return e.username.toLowerCase().includes(q) || e.client_name.toLowerCase().includes(q); } return true; });
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> {t("grantHistory.title")}</h1><p className="text-sm text-gray-500 mt-1">Track OAuth grant events over time.</p></div>
-      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} aria-label="Retry loading grant history" className="text-xs underline hover:text-red-700">Retry</button></div>}
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> {t("big1.grantHistory.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("big1.grantHistory.trackOAuthGrantEventsOverTime")}</p></div>
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} aria-label="Retry loading grant history" className="text-xs underline hover:text-red-700">{t("big1.grantHistory.retry")}</button></div>}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search client/user..." aria-label="Search grant history" className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)} aria-label="Filter by grant type" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-          <option value="">All Grant Types</option>
-          <option value="authorization_code">Authorization Code</option>
-          <option value="client_credentials">Client Credentials</option>
-          <option value="refresh_token">Refresh Token</option>
-          <option value="device_code">Device Code</option>
+          <option value="">{t("big1.grantHistory.allGrantTypes")}</option>
+          <option value="authorization_code">{t("big1.grantHistory.authorizationCode")}</option>
+          <option value="client_credentials">{t("big1.grantHistory.clientCredentials")}</option>
+          <option value="refresh_token">{t("big1.grantHistory.refreshToken")}</option>
+          <option value="device_code">{t("big1.grantHistory.deviceCode")}</option>
         </select>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={showEvidence} onChange={(e) => setShowEvidence(e.target.checked)} aria-label="Show consent evidence" className="rounded" /> Consent Evidence
-        </label>
+          <input type="checkbox" checked={showEvidence} onChange={(e) => setShowEvidence(e.target.checked)} aria-label="Show consent evidence" className="rounded" />{t("big1.grantHistory.consentEvidence")}</label>
       </div>
-      {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading grant history...</div></div>}
+      {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">{t("big1.grantHistory.loadingGrantHistory")}</div></div>}
       <div className="relative pl-8">
         <div className="absolute left-3 top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
         <div className="space-y-3">
@@ -60,14 +59,14 @@ export default function GrantHistoryPage() {
                   </div>
                   <span className="text-xs text-gray-400">{e.granted_at}</span>
                 </div>
-                <div className="mt-1 text-sm"><span className="text-gray-500">User: </span><span className="font-medium">{e.username}</span></div>
+                <div className="mt-1 text-sm"><span className="text-gray-500">{t("big1.grantHistory.user")}</span><span className="font-medium">{e.username}</span></div>
                 <div className="mt-1 flex flex-wrap gap-1">{e.scopes.map((s, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{s}</span>)}</div>
-                <div className="mt-1 text-xs text-gray-400">Expires: {e.expires_at}{e.revoked_at && <span className="text-red-500 ml-2">Revoked: {e.revoked_at}</span>}</div>
-                {showEvidence && <div className="mt-2 border-t dark:border-gray-800 pt-1 text-xs text-gray-400">Consent IP: 192.168.1.100 | Evidence hash: 0xabc123...</div>}
+                <div className="mt-1 text-xs text-gray-400">{t("big1.grantHistory.expires")}{e.expires_at}{e.revoked_at && <span className="text-red-500 ml-2">{t("big1.grantHistory.revoked")}{e.revoked_at}</span>}</div>
+                {showEvidence && <div className="mt-2 border-t dark:border-gray-800 pt-1 text-xs text-gray-400">{t("big1.grantHistory.consentIP1921681100EvidenceHash0xabc123")}</div>}
               </div>
             </div>
           ))}
-          {filtered.length === 0 && !loading && <p className="text-sm text-gray-500 py-4 ml-2">No grant events.</p>}
+          {filtered.length === 0 && !loading && <p className="text-sm text-gray-500 py-4 ml-2">{t("big1.grantHistory.noGrantEvents")}</p>}
         </div>
       </div>
     </div>

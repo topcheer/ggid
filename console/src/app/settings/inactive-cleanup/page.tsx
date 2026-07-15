@@ -82,29 +82,29 @@ export default function InactiveCleanupPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><UserX className="w-6 h-6 text-gray-500" /> {t("inactiveCleanup.title")}</h1>
-        <p className="text-sm text-gray-500 mt-1">Identify inactive users and schedule cleanup actions.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><UserX className="w-6 h-6 text-gray-500" /> {t("big1.inactiveCleanup.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("big1.inactiveCleanup.identifyInactiveUsersAndScheduleCleanupActions")}</p>
       </div>
 
       {/* Controls */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium">Inactive threshold:</label>
+          <label className="text-sm font-medium">{t("big1.inactiveCleanup.inactiveThreshold")}</label>
           <input type="number" value={threshold} onChange={(e) => setThreshold(parseInt(e.target.value) || 90)} min={1} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm" />
-          <span className="text-sm text-gray-400">days</span>
+          <span className="text-sm text-gray-400">{t("big1.inactiveCleanup.days")}</span>
         </div>
-        <button onClick={fetchUsers} disabled={loading} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? "Loading..." : "Refresh"}</button>
+        <button onClick={fetchUsers} disabled={loading} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? t("big1.inactiveCleanup.loading") : t("big1.inactiveCleanup.refresh")}</button>
         {selectedIds.size > 0 && (
-          <button onClick={() => setShowConfirm(true)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 flex items-center gap-2"><Play className="w-4 h-4" /> Schedule Cleanup ({selectedIds.size})</button>
+          <button onClick={() => setShowConfirm(true)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 flex items-center gap-2"><Play className="w-4 h-4" />{t("big1.inactiveCleanup.scheduleCleanup")}{selectedIds.size})</button>
         )}
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Inactive Users</span><p className="text-2xl font-bold mt-1">{users.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">90+ Days</span><p className="text-2xl font-bold mt-1 text-yellow-600">{users.filter((u) => u.days_inactive >= 90).length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">180+ Days</span><p className="text-2xl font-bold mt-1 text-orange-600">{users.filter((u) => u.days_inactive >= 180).length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Never Logged In</span><p className="text-2xl font-bold mt-1 text-red-600">{users.filter((u) => !u.last_login).length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.inactiveUsers")}</span><p className="text-2xl font-bold mt-1">{users.length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.90Days")}</span><p className="text-2xl font-bold mt-1 text-yellow-600">{users.filter((u) => u.days_inactive >= 90).length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.180Days")}</span><p className="text-2xl font-bold mt-1 text-orange-600">{users.filter((u) => u.days_inactive >= 180).length}</p></div>
+        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("big1.inactiveCleanup.neverLoggedIn")}</span><p className="text-2xl font-bold mt-1 text-red-600">{users.filter((u) => !u.last_login).length}</p></div>
       </div>
 
       {/* Table */}
@@ -113,10 +113,10 @@ export default function InactiveCleanupPage() {
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
               <th className="px-4 py-3 text-left font-medium w-8"><input type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(users.map((u) => u.user_id)) : new Set())} className="rounded" /></th>
-              <th className="px-4 py-3 text-left font-medium">User</th>
-              <th className="px-4 py-3 text-left font-medium">Last Login</th>
-              <th className="px-4 py-3 text-left font-medium">Days Inactive</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
+              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.user")}</th>
+              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.lastLogin")}</th>
+              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.daysInactive")}</th>
+              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.status")}</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
@@ -132,7 +132,7 @@ export default function InactiveCleanupPage() {
                 </tr>
               );
             })}
-            {users.length === 0 && !loading && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No inactive users found.</td></tr>}
+            {users.length === 0 && !loading && <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">{t("big1.inactiveCleanup.noInactiveUsersFound")}</td></tr>}
           </tbody>
         </table>
       </div>
@@ -142,12 +142,12 @@ export default function InactiveCleanupPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowConfirm(false)}>
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800">
-              <h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-orange-500" /> Schedule Cleanup</h3>
+              <h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-orange-500" />{t("big1.inactiveCleanup.scheduleCleanup")}</h3>
               <button onClick={() => setShowConfirm(false)}><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-4 text-sm">
               <div>
-                <label className="font-medium">Action</label>
+                <label className="font-medium">{t("big1.inactiveCleanup.action")}</label>
                 <div className="flex gap-2 mt-1">
                   {(["disable", "archive", "delete"] as const).map((a) => {
                     const cfg = actionConfig[a];
@@ -161,18 +161,18 @@ export default function InactiveCleanupPage() {
                 </div>
               </div>
               <div>
-                <label className="font-medium">Schedule Date (optional)</label>
+                <label className="font-medium">{t("big1.inactiveCleanup.scheduleDateOptional")}</label>
                 <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
-                <p className="text-xs text-gray-400 mt-1">Leave empty to execute immediately.</p>
+                <p className="text-xs text-gray-400 mt-1">{t("big1.inactiveCleanup.leaveEmptyToExecuteImmediately")}</p>
               </div>
               <div className="text-gray-500">
-                <p>{selectedIds.size} user{selectedIds.size > 1 ? "s" : ""} will be {action === "delete" ? "permanently deleted" : action + "d"}.</p>
-                {action === "delete" && <p className="text-red-600 mt-1">This action cannot be undone.</p>}
+                <p>{selectedIds.size}{t("big1.inactiveCleanup.user")}{selectedIds.size > 1 ? t("big1.inactiveCleanup.s") : ""}{t("big1.inactiveCleanup.willBe")}{action === t("big1.inactiveCleanup.delete") ? t("big1.inactiveCleanup.permanentlyDeleted") : action + t("big1.inactiveCleanup.d")}.</p>
+                {action === t("big1.inactiveCleanup.delete") && <p className="text-red-600 mt-1">{t("big1.inactiveCleanup.thisActionCannotBeUndone")}</p>}
               </div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
-              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={scheduleCleanup} disabled={scheduling} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50">{scheduling ? "Scheduling..." : "Schedule Cleanup"}</button>
+              <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">{t("big1.inactiveCleanup.cancel")}</button>
+              <button onClick={scheduleCleanup} disabled={scheduling} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50">{scheduling ? t("big1.inactiveCleanup.scheduling") : t("big1.inactiveCleanup.scheduleCleanup")}</button>
             </div>
           </div>
         </div>

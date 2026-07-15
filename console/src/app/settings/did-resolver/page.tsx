@@ -46,8 +46,8 @@ export default function DidResolverPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">DID Resolver</h1>
-        <p className="text-gray-600">Resolve Decentralized Identifiers and view DID documents.</p>
+        <h1 className="text-2xl font-bold">{t("big1.didResolver.title")}</h1>
+        <p className="text-gray-600">{t("big1.didResolver.resolveDecentralizedIdentifiersAndViewDIDDocuments")}</p>
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
@@ -63,7 +63,7 @@ export default function DidResolverPage() {
             className="flex-1 border rounded px-3 py-2 text-sm font-mono"
           />
           <button onClick={resolve} disabled={loading} aria-label="Resolve DID" className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">
-            {loading ? 'Resolving...' : 'Resolve'}
+            {loading ? t("big1.didResolver.resolving") : t("big1.didResolver.resolve")}
           </button>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
@@ -72,29 +72,29 @@ export default function DidResolverPage() {
       {result && (
         <>
           <section className="bg-white rounded-lg shadow p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Resolution Result</h2>
+            <h2 className="text-lg font-semibold">{t("big1.didResolver.resolutionResult")}</h2>
             <div className="flex items-center gap-4">
               <div>
-                <div className="text-xs text-gray-500">DID</div>
+                <div className="text-xs text-gray-500">{t("big1.didResolver.did")}</div>
                 <div className="font-mono text-sm">{result.id}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-500">Method</div>
+                <div className="text-xs text-gray-500">{t("big1.didResolver.method")}</div>
                 <div className="text-sm font-medium">{result.method}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-500">Verification</div>
+                <div className="text-xs text-gray-500">{t("big1.didResolver.verification")}</div>
                 <span className={`px-2 py-0.5 rounded text-xs ${result.verificationStatus === 'verified' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{result.verificationStatus}</span>
               </div>
               <div>
-                <div className="text-xs text-gray-500">Linked VCs</div>
+                <div className="text-xs text-gray-500">{t("big1.didResolver.linkedVcs")}</div>
                 <div className="text-sm font-bold">{result.linkedVCs}</div>
               </div>
             </div>
           </section>
 
           <section className="bg-white rounded-lg shadow p-6 space-y-4">
-            <h2 className="text-lg font-semibold">Service Endpoints</h2>
+            <h2 className="text-lg font-semibold">{t("big1.didResolver.serviceEndpoints")}</h2>
             <div className="space-y-2">
               {result.serviceEndpoints.map(ep => (
                 <div key={ep.id} className="flex items-center gap-3 border-b pb-2">
@@ -107,7 +107,7 @@ export default function DidResolverPage() {
           </section>
 
           <section className="bg-white rounded-lg shadow p-6 space-y-4">
-            <h2 className="text-lg font-semibold">DID Document</h2>
+            <h2 className="text-lg font-semibold">{t("big1.didResolver.didDocument")}</h2>
             <pre className="bg-gray-900 text-green-400 rounded p-4 text-xs overflow-x-auto max-h-96">{result.raw}</pre>
           </section>
         </>

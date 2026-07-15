@@ -22,12 +22,12 @@ interface GatewayStats {
 
 const SERVICES: Omit<ServiceHealth, "status">[] = [
   { name: "Gateway", url: "/healthz" },
-  { name: "Identity", url: "/api/v1/identity/healthz" },
-  { name: "Auth", url: "/api/v1/auth/healthz" },
-  { name: "OAuth", url: "/api/v1/oauth/healthz" },
-  { name: "Policy", url: "/api/v1/policy/healthz" },
-  { name: "Org", url: "/api/v1/org/healthz" },
-  { name: "Audit", url: "/api/v1/audit/healthz" },
+  { name: "Identity", url: "http://127.0.0.1:8081/healthz" },
+  { name: "Auth", url: "http://127.0.0.1:9001/healthz" },
+  { name: "OAuth", url: "http://127.0.0.1:9005/healthz" },
+  { name: "Policy", url: "http://127.0.0.1:8070/healthz" },
+  { name: "Org", url: "http://127.0.0.1:8071/healthz" },
+  { name: "Audit", url: "http://127.0.0.1:8072/healthz" },
 ];
 
 export default function MonitoringPage() {

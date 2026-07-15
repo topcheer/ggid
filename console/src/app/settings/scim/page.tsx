@@ -53,7 +53,7 @@ export default function SCIMPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await apiFetch<SCIMConfig & { syncStatus?: SyncStatus[] }>("/api/v1/settings/scim");
+        const data = await apiFetch<SCIMConfig & { syncStatus?: SyncStatus[] }>("/api/v1/identity/scim/config");
         setConfig({
           endpoint: data.endpoint || `${window.location.origin}/api/v1/scim/v2`,
           bearerToken: data.bearerToken || "",
@@ -75,7 +75,7 @@ export default function SCIMPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await apiFetch("/api/v1/settings/scim", {
+      await apiFetch("/api/v1/identity/scim/config", {
         method: "POST",
         body: JSON.stringify(config),
       });
@@ -95,7 +95,7 @@ export default function SCIMPage() {
       prev.map((s) => (s.resourceType === resourceType ? { ...s, status: "syncing" } : s))
     );
     try {
-      const data = await apiFetch<SyncStatus>(`/api/v1/settings/scim/sync`, {
+      const data = await apiFetch<SyncStatus>(`/api/v1/identity/scim/config/sync`, {
         method: "POST",
         body: JSON.stringify({ resourceType }),
       });

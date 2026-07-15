@@ -38,7 +38,7 @@ function riskColor(score: number): string {
 }
 
 export default function SessionRiskPage() {
-  const { apiFetch } = useApi();
+  const t = useTranslations();  const { apiFetch } = useApi();
   const [sessions, setSessions] = useState<SessionRiskEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

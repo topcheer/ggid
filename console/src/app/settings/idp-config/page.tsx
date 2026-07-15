@@ -154,12 +154,8 @@ export default function IdPConfigPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <KeyRound className="h-7 w-7 text-indigo-600" />
-            Identity Provider Configuration
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Configure SAML, OIDC, and LDAP identity providers for per-tenant federated authentication.
-          </p>
+            <KeyRound className="h-7 w-7 text-indigo-600" />{t("big1.idpConfig.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("big1.idpConfig.configureSAMLOIDCAndLDAPIdentityProvidersForPerTenantFederatedAuthentication")}</p>
         </div>
         <div className="flex items-center gap-2">
           {msg && <span className="text-sm text-green-600">{msg}</span>}
@@ -168,9 +164,7 @@ export default function IdPConfigPage() {
             disabled={saving}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            {saving ? <Loader2 className="mr-1 inline h-4 w-4 animate-spin" /> : <Save className="mr-1 inline h-4 w-4" />}
-            Save All
-          </button>
+            {saving ? <Loader2 className="mr-1 inline h-4 w-4 animate-spin" /> : <Save className="mr-1 inline h-4 w-4" />}{t("big1.idpConfig.saveAll")}</button>
         </div>
       </div>
 
@@ -180,20 +174,17 @@ export default function IdPConfigPage() {
           onClick={() => handleAdd("saml")}
           className="flex items-center gap-1 rounded-lg border border-blue-300 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
         >
-          <Plus className="h-4 w-4" /> Add SAML
-        </button>
+          <Plus className="h-4 w-4" />{t("big1.idpConfig.addSAML")}</button>
         <button
           onClick={() => handleAdd("oidc")}
           className="flex items-center gap-1 rounded-lg border border-green-300 px-4 py-2 text-sm font-medium text-green-600 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-900/20"
         >
-          <Plus className="h-4 w-4" /> Add OIDC
-        </button>
+          <Plus className="h-4 w-4" />{t("big1.idpConfig.addOIDC")}</button>
         <button
           onClick={() => handleAdd("ldap")}
           className="flex items-center gap-1 rounded-lg border border-purple-300 px-4 py-2 text-sm font-medium text-purple-600 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/20"
         >
-          <Plus className="h-4 w-4" /> Add LDAP
-        </button>
+          <Plus className="h-4 w-4" />{t("big1.idpConfig.addLDAP")}</button>
       </div>
 
       {/* Config list */}
@@ -204,9 +195,7 @@ export default function IdPConfigPage() {
       ) : configs.length === 0 ? (
         <div className={`${cardCls} text-center`}>
           <KeyRound className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-          <p className="text-gray-500 dark:text-gray-400">
-            No identity providers configured. Add a SAML, OIDC, or LDAP provider above.
-          </p>
+          <p className="text-gray-500 dark:text-gray-400">{t("big1.idpConfig.noIdentityProvidersConfiguredAddASAMLOIDCOrLDAPProviderAbove")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -265,7 +254,7 @@ export default function IdPConfigPage() {
                   {/* Common fields */}
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Domain / Email Domain</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">{t("big1.idpConfig.domainEmailDomain")}</label>
                       <input
                         className={inputCls}
                         placeholder="example.com"
@@ -281,9 +270,7 @@ export default function IdPConfigPage() {
                         onChange={(e) => handleUpdate(cfg.id, "autoProvision", e.target.checked)}
                         className="h-4 w-4 rounded border-gray-300 text-indigo-600"
                       />
-                      <label htmlFor={`autoprov-${cfg.id}`} className="text-sm text-gray-700 dark:text-gray-300">
-                        Auto-provision users on first login
-                      </label>
+                      <label htmlFor={`autoprov-${cfg.id}`} className="text-sm text-gray-700 dark:text-gray-300">{t("big1.idpConfig.autoProvisionUsersOnFirstLogin")}</label>
                     </div>
                   </div>
 
@@ -291,19 +278,19 @@ export default function IdPConfigPage() {
                   {cfg.type === "saml" && (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Entity ID</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.entityId")}</label>
                         <input className={inputCls} placeholder="https://idp.example.com/entity" value={cfg.entityId ?? ""} onChange={(e) => handleUpdate(cfg.id, "entityId", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">SSO URL</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.ssoUrl")}</label>
                         <input className={inputCls} placeholder="https://idp.example.com/sso" value={cfg.ssoUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "ssoUrl", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">SLO URL</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.sloUrl")}</label>
                         <input className={inputCls} placeholder="https://idp.example.com/slo" value={cfg.sloUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "sloUrl", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Certificate Fingerprint (SHA-256)</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.certificateFingerprintSHA256")}</label>
                         <input className={inputCls} placeholder="AB:CD:EF:..." value={cfg.certFingerprint ?? ""} onChange={(e) => handleUpdate(cfg.id, "certFingerprint", e.target.value)} />
                       </div>
                     </div>
@@ -313,27 +300,27 @@ export default function IdPConfigPage() {
                   {cfg.type === "oidc" && (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Issuer URL</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.issuerUrl")}</label>
                         <input className={inputCls} placeholder="https://accounts.google.com" value={cfg.issuerUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "issuerUrl", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Client ID</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.clientId")}</label>
                         <input className={inputCls} placeholder="your-client-id" value={cfg.clientId ?? ""} onChange={(e) => handleUpdate(cfg.id, "clientId", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Client Secret</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.clientSecret")}</label>
                         <input className={inputCls} type="password" placeholder="••••••••" value={cfg.clientSecret ?? ""} onChange={(e) => handleUpdate(cfg.id, "clientSecret", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Scopes</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.scopes")}</label>
                         <input className={inputCls} placeholder="openid profile email" value={cfg.scopes ?? ""} onChange={(e) => handleUpdate(cfg.id, "scopes", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Authorization Endpoint</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.authorizationEndpoint")}</label>
                         <input className={inputCls} placeholder="https://idp/authorize" value={cfg.authorizationEndpoint ?? ""} onChange={(e) => handleUpdate(cfg.id, "authorizationEndpoint", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Token Endpoint</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.tokenEndpoint")}</label>
                         <input className={inputCls} placeholder="https://idp/token" value={cfg.tokenEndpoint ?? ""} onChange={(e) => handleUpdate(cfg.id, "tokenEndpoint", e.target.value)} />
                       </div>
                     </div>
@@ -343,19 +330,19 @@ export default function IdPConfigPage() {
                   {cfg.type === "ldap" && (
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">LDAP URL</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.ldapUrl")}</label>
                         <input className={inputCls} placeholder="ldap://ldap.example.com:389" value={cfg.ldapUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "ldapUrl", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Bind DN</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.bindDn")}</label>
                         <input className={inputCls} placeholder="cn=admin,dc=example,dc=com" value={cfg.bindDn ?? ""} onChange={(e) => handleUpdate(cfg.id, "bindDn", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Base DN</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.baseDn")}</label>
                         <input className={inputCls} placeholder="ou=users,dc=example,dc=com" value={cfg.baseDn ?? ""} onChange={(e) => handleUpdate(cfg.id, "baseDn", e.target.value)} />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">User Filter</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.userFilter")}</label>
                         <input className={inputCls} placeholder="(uid={username})" value={cfg.userFilter ?? ""} onChange={(e) => handleUpdate(cfg.id, "userFilter", e.target.value)} />
                       </div>
                       <div className="flex items-center gap-2 pt-5">
@@ -366,9 +353,7 @@ export default function IdPConfigPage() {
                           onChange={(e) => handleUpdate(cfg.id, "startTls", e.target.checked)}
                           className="h-4 w-4 rounded border-gray-300 text-indigo-600"
                         />
-                        <label htmlFor={`starttls-${cfg.id}`} className="text-sm text-gray-700 dark:text-gray-300">
-                          Use StartTLS
-                        </label>
+                        <label htmlFor={`starttls-${cfg.id}`} className="text-sm text-gray-700 dark:text-gray-300">{t("big1.idpConfig.useStartTLS")}</label>
                       </div>
                     </div>
                   )}

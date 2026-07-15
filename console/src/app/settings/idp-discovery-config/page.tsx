@@ -9,22 +9,22 @@ export default function IdpDiscoveryConfigPage() {
 
   const { data, loading, error, refresh, testDiscovery } = useIdpDiscoveryConfig();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading IdP discovery config...</div>;
-  if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("big1.idpDiscoveryConfig.loadingIdPDiscoveryConfig")}</div>;
+  if (error) return <div className="p-8 text-red-400">{t("big1.idpDiscoveryConfig.error")}{error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">IdP Discovery Configuration</h1>
-          <p className="text-sm text-gray-400 mt-1">Configure identity provider discovery methods</p>
+          <h1 className="text-2xl font-bold">{t("big1.idpDiscoveryConfig.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("big1.idpDiscoveryConfig.configureIdentityProviderDiscoveryMethods")}</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("big1.idpDiscoveryConfig.refresh")}</button>
       </div>
 
       {/* Discovery Methods */}
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
-        <h2 className="text-sm font-semibold mb-4">Discovery Methods</h2>
+        <h2 className="text-sm font-semibold mb-4">{t("big1.idpDiscoveryConfig.discoveryMethods")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {(data?.discovery_methods ?? []).map((m) => (
             <div key={m.method} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -43,7 +43,7 @@ export default function IdpDiscoveryConfigPage() {
 
       {/* Email Domain Rules */}
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
-        <h2 className="text-sm font-semibold mb-4">Email Domain → IdP Mapping</h2>
+        <h2 className="text-sm font-semibold mb-4">{t("big1.idpDiscoveryConfig.emailDomainIdPMapping")}</h2>
         <div className="space-y-2">
           {(data?.email_domain_rules ?? []).map((r) => (
             <div key={r.domain} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
@@ -59,21 +59,20 @@ export default function IdpDiscoveryConfigPage() {
       {/* Fallback Policy & Test */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-3">Fallback Policy</h2>
-          <p className="text-sm text-gray-300">{data?.fallback_policy ?? "Show login form"}</p>
+          <h2 className="text-sm font-semibold mb-3">{t("big1.idpDiscoveryConfig.fallbackPolicy")}</h2>
+          <p className="text-sm text-gray-300">{data?.fallback_policy ?? t("big1.idpDiscoveryConfig.showLoginForm")}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-3">Test Discovery</h2>
+          <h2 className="text-sm font-semibold mb-3">{t("big1.idpDiscoveryConfig.testDiscovery")}</h2>
           <button onClick={() => testDiscovery("test@corp.com")} className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition">
-            <Search className="w-4 h-4" /> Test with sample email
-          </button>
+            <Search className="w-4 h-4" />{t("big1.idpDiscoveryConfig.testWithSampleEmail")}</button>
         </div>
       </div>
 
       {/* Discovery Log */}
       {data?.discovery_log && data.discovery_log.length > 0 && (
         <div className="bg-gray-900 rounded-xl p-6 mt-6">
-          <h2 className="text-sm font-semibold mb-3">Recent Discovery Log</h2>
+          <h2 className="text-sm font-semibold mb-3">{t("big1.idpDiscoveryConfig.recentDiscoveryLog")}</h2>
           <div className="space-y-1">
             {data.discovery_log.map((log) => (
               <div key={log.id} className="flex items-center gap-2 bg-gray-800 rounded p-2 text-xs">

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GGID — Production-grade Identity & Access Management for the AI era. Open source IAM platform with OAuth/OIDC, SAML, MFA, RBAC/ABAC, SCIM, audit logging, and AI agent identity.">
+  <meta name="keywords" content="IAM, identity, access management, OAuth, OIDC, SAML, SSO, MFA, WebAuthn, RBAC, ABAC, SCIM, Go, open source">
+  <meta property="og:title" content="GGID — Identity & Access Management for the AI Era">
+  <meta property="og:description" content="Production-grade IAM platform: authentication, authorization, SSO, multi-tenancy, audit, and AI agent identity. Built with Go. Open source.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ggid.dev">
+  <meta property="og:image" content="https://ggid.dev/assets/svg/logo.svg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GGID — Identity & Access Management">
+  <meta name="twitter:description" content="Production-grade IAM platform for the AI era. Open source.">
+
+  <title>GGID — Identity & Access Management for the AI Era</title>
+
+  <link rel="icon" type="image/svg+xml" href="assets/svg/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-brand">
+        <img src="assets/svg/logo.svg" alt="GGID">
+        <span class="brand-text">GGID</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features" data-i18n="nav.features">Features</a></li>
+        <li><a href="#architecture" data-i18n="nav.architecture">Architecture</a></li>
+        <li><a href="#security" data-i18n="nav.security">Security</a></li>
+        <li><a href="https://github.com/ggid/ggid" target="_blank" data-i18n="nav.github">GitHub</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <!-- Language Switcher -->
+        <div class="lang-switcher">
+          <button class="lang-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <span class="lang-current">English</span>
+          </button>
+          <div class="lang-dropdown">
+            <button data-lang="en" class="active">
+              <span>🇬🇧</span> English
+            </button>
+            <button data-lang="zh">
+              <span>🇨🇳</span> 中文
+            </button>
+          </div>
+        </div>
+
+        <a href="https://github.com/ggid/ggid" target="_blank" class="btn btn-primary" data-i18n="nav.getStarted">Get Started</a>
+
+        <button class="mobile-toggle" aria-label="Menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-inner">
+        <div class="hero-badge">
+          <span class="pulse"></span>
+          <span data-i18n="hero.badge">Apache 2.0 · Production Ready · v0.3.5</span>
+        </div>
+
+        <h1>
+          <span data-i18n="hero.title1">Identity &amp; Access</span><br>
+          <span class="gradient-text" data-i18n="hero.title2">for the AI Era</span>
+        </h1>
+
+        <p data-i18n="hero.desc">
+          A production-grade IAM platform: authentication, authorization, SSO,
+          multi-tenancy, audit logging, and AI agent identity. Built with Go
+          microservices. Open source.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#quickstart" class="btn btn-primary btn-lg" data-i18n="hero.cta.primary">Quick Start</a>
+          <a href="https://github.com/ggid/ggid" target="_blank" class="btn btn-ghost btn-lg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+            </svg>
+            <span data-i18n="hero.cta.secondary">View on GitHub</span>
+          </a>
+        </div>
+
+        <!-- Terminal Mockup -->
+        <div class="hero-terminal">
+          <div class="terminal-bar">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+          </div>
+          <div class="terminal-body">
+            <div><span class="comment" data-i18n="hero.terminal.comment"># Start the entire stack in one command</span></div>
+            <div><span class="cmd" data-i18n="hero.terminal.cmd">docker compose</span> <span class="flag" data-i18n="hero.terminal.flag">-f</span> <span class="str" data-i18n="hero.terminal.up">deploy/docker-compose.yaml</span> <span class="str" data-i18n="hero.terminal.up2">up -d</span></div>
+            <br>
+            <div><span class="output" data-i18n="hero.terminal.output1">&#10003; Gateway healthz ........................ PASS</span></div>
+            <div><span class="output" data-i18n="hero.terminal.output2">&#10003; Register user ............................ PASS</span></div>
+            <div><span class="output" data-i18n="hero.terminal.output3">&#10003; Login + JWT .............................. PASS</span></div>
+            <div><span class="output" data-i18n="hero.terminal.output4">&#10003; 11/11 E2E tests ......................... ALL PASS</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Bar -->
+  <section class="stats-bar">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-num" data-count="7">7</div>
+          <div class="stat-label" data-i18n="stat.services">Microservices</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" data-count="10">10</div>
+          <div class="stat-label" data-i18n="stat.sdks">Language SDKs</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" data-count="600" data-suffix="+">600+</div>
+          <div class="stat-label" data-i18n="stat.apis">API Endpoints</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">Apache 2.0</div>
+          <div class="stat-label" data-i18n="stat.license">Open Source</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label" data-i18n="features.label">Core Capabilities</span>
+        <h2 class="section-title" data-i18n="features.title">Everything You Need for Identity</h2>
+        <p class="section-subtitle" data-i18n="features.subtitle">From passwordless WebAuthn to SAML federation, GGID covers the entire identity lifecycle with enterprise-grade features.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon">&#128274;</div>
+          <h3 data-i18n="feat.oauth.title">OAuth 2.0 / OIDC</h3>
+          <p data-i18n="feat.oauth.desc">Full RFC compliance: dynamic client registration, PKCE, PAR, device flow, FAPI 2.0, and token introspection.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">RFC 7591</span>
+            <span class="feature-tag">PKCE</span>
+            <span class="feature-tag">PAR</span>
+            <span class="feature-tag">FAPI 2.0</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon">&#128640;</div>
+          <h3 data-i18n="feat.saml.title">SAML 2.0 SSO</h3>
+          <p data-i18n="feat.saml.desc">SP-initiated and IdP-initiated SSO with signed assertions, SLO, and SP metadata generation.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">SSO</span>
+            <span class="feature-tag">SLO</span>
+            <span class="feature-tag">Signed Assertions</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon">&#128737;</div>
+          <h3 data-i18n="feat.mfa.title">Multi-Factor Auth</h3>
+          <p data-i18n="feat.mfa.desc">TOTP, WebAuthn/FIDO2, backup codes, and adaptive MFA with risk-based step-up authentication.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">TOTP</span>
+            <span class="feature-tag">WebAuthn</span>
+            <span class="feature-tag">Backup Codes</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon">&#9881;</div>
+          <h3 data-i18n="feat.rbac.title">RBAC &amp; ABAC</h3>
+          <p data-i18n="feat.rbac.desc">Role-based and attribute-based access control with policy engine, dry-run evaluation, and permission inheritance.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">RBAC</span>
+            <span class="feature-tag">ABAC</span>
+            <span class="feature-tag">Policy Engine</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon">&#127970;</div>
+          <h3 data-i18n="feat.multi.title">Multi-Tenancy</h3>
+          <p data-i18n="feat.multi.desc">Native multi-tenant architecture with PostgreSQL Row-Level Security, tenant isolation, and per-tenant branding.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">RLS</span>
+            <span class="feature-tag">Isolation</span>
+            <span class="feature-tag">Branding</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-icon">&#128260;</div>
+          <h3 data-i18n="feat.scim.title">SCIM 2.0</h3>
+          <p data-i18n="feat.scim.desc">Automated user provisioning and de-provisioning with SCIM 2.0 protocol support for enterprise SSO.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">Provisioning</span>
+            <span class="feature-tag">De-provisioning</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-icon">&#128203;</div>
+          <h3 data-i18n="feat.audit.title">Audit &amp; SIEM</h3>
+          <p data-i18n="feat.audit.desc">Tamper-evident audit logging with hash chain, NATS JetStream delivery, and SIEM forwarding via webhook.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">Hash Chain</span>
+            <span class="feature-tag">JetStream</span>
+            <span class="feature-tag">SIEM</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-icon">&#129302;</div>
+          <h3 data-i18n="feat.agent.title">AI Agent Identity</h3>
+          <p data-i18n="feat.agent.desc">First-class identity for AI agents: registration, token exchange, delegation chains, and MCP auth integration.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">MCP Auth</span>
+            <span class="feature-tag">Delegation</span>
+            <span class="feature-tag">Scopes</span>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-icon">&#128100;</div>
+          <h3 data-i18n="feat.webauthn.title">WebAuthn / Passkeys</h3>
+          <p data-i18n="feat.webauthn.desc">Passwordless authentication with 6 attestation formats, passkey autofill, and device-bound SSO.</p>
+          <div class="feature-tags">
+            <span class="feature-tag">FIDO2</span>
+            <span class="feature-tag">Passkeys</span>
+            <span class="feature-tag">Device-Bound</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section id="architecture" class="arch-section">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label" data-i18n="arch.label">System Design</span>
+        <h2 class="section-title" data-i18n="arch.title">Microservices Architecture</h2>
+        <p class="section-subtitle" data-i18n="arch.subtitle">Seven independently deployable services communicating via gRPC and REST, with a centralized API gateway.</p>
+      </div>
+
+      <div class="arch-diagram reveal">
+        <!-- Gateway Layer -->
+        <div class="arch-layer">
+          <div class="arch-box gateway">
+            <span data-i18n="arch.gateway">API Gateway</span>
+            <span class="arch-desc" data-i18n="arch.gateway.desc">JWT Verification · Rate Limiting · Routing</span>
+          </div>
+        </div>
+
+        <div class="arch-arrow">&darr;</div>
+
+        <!-- Services Layer -->
+        <div class="arch-layer">
+          <div class="arch-box service">
+            <span data-i18n="arch.identity">Identity</span>
+            <span class="arch-desc" data-i18n="arch.identity.desc">Users · Tenants · SCIM</span>
+          </div>
+          <div class="arch-box service">
+            <span data-i18n="arch.auth">Auth</span>
+            <span class="arch-desc" data-i18n="arch.auth.desc">Login · MFA · Sessions</span>
+          </div>
+          <div class="arch-box service">
+            <span data-i18n="arch.oauth">OAuth</span>
+            <span class="arch-desc" data-i18n="arch.oauth.desc">OAuth 2.0 · OIDC · SAML</span>
+          </div>
+          <div class="arch-box service">
+            <span data-i18n="arch.policy">Policy</span>
+            <span class="arch-desc" data-i18n="arch.policy.desc">RBAC · ABAC · Rules</span>
+          </div>
+          <div class="arch-box service">
+            <span data-i18n="arch.org">Organization</span>
+            <span class="arch-desc" data-i18n="arch.org.desc">Teams · Departments</span>
+          </div>
+          <div class="arch-box service">
+            <span data-i18n="arch.audit">Audit</span>
+            <span class="arch-desc" data-i18n="arch.audit.desc">Events · SIEM · Hash Chain</span>
+          </div>
+        </div>
+
+        <div class="arch-arrow">&darr;</div>
+
+        <!-- Infrastructure Layer -->
+        <div class="arch-layer">
+          <div class="arch-box infra">
+            <span data-i18n="arch.postgres">PostgreSQL 16</span>
+            <span class="arch-desc" data-i18n="arch.postgres.desc">RLS · Multi-tenant</span>
+          </div>
+          <div class="arch-box infra">
+            <span data-i18n="arch.redis">Redis 7</span>
+            <span class="arch-desc" data-i18n="arch.redis.desc">Sessions · Cache</span>
+          </div>
+          <div class="arch-box infra">
+            <span data-i18n="arch.nats">NATS JetStream</span>
+            <span class="arch-desc" data-i18n="arch.nats.desc">Event Bus</span>
+          </div>
+          <div class="arch-box infra">
+            <span data-i18n="arch.ldap">OpenLDAP</span>
+            <span class="arch-desc" data-i18n="arch.ldap.desc">Directory</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Code Examples / Developer Experience -->
+  <section id="quickstart" class="code-section">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label" data-i18n="code.label">Developer Experience</span>
+        <h2 class="section-title" data-i18n="code.title">Build in Minutes, Not Days</h2>
+        <p class="section-subtitle" data-i18n="code.subtitle">Clean SDKs in 10 languages. Type-safe. Consistent. Documented.</p>
+      </div>
+
+      <!-- Code Tabs -->
+      <div class="reveal">
+        <div class="code-tabs">
+          <button class="code-tab active" data-tab="go">Go</button>
+          <button class="code-tab" data-tab="curl">cURL</button>
+          <button class="code-tab" data-tab="node">Node.js</button>
+          <button class="code-tab" data-tab="python">Python</button>
+          <button class="code-tab" data-tab="docker">Docker</button>
+        </div>
+
+        <div class="code-block-wrapper">
+          <!-- Go -->
+          <div class="code-block active" id="code-go">
+<pre><span class="comment">// Register a user via GGID Go SDK</span>
+<span class="kw">import</span> <span class="str">"github.com/ggid/ggid/sdk/go/ggid"</span>
+
+<span class="kw">func</span> <span class="fn">main</span>() {
+    client <span class="kw">:=</span> ggid.<span class="fn">New</span>(<span class="str">"https://ggid.dev"</span>,
+        ggid.<span class="fn">WithTenantID</span>(<span class="str">"00000000-0000-0000-0000-000000000001"</span>),
+    )
+
+    <span class="comment">// Register a new user</span>
+    user, err <span class="kw">:=</span> client.<span class="fn">Register</span>(<span class="kw">&amp;</span>ggid.RegisterRequest{
+        Username: <span class="str">"alice"</span>,
+        Email:    <span class="str">"alice@example.com"</span>,
+        Password: <span class="str">"SecurePass123!"</span>,
+    })
+
+    <span class="comment">// Login and get JWT</span>
+    token, err <span class="kw">:=</span> client.<span class="fn">Login</span>(<span class="str">"alice"</span>, <span class="str">"SecurePass123!"</span>)
+    <span class="fn">fmt</span>.<span class="fn">Printf</span>(<span class="str">"Token: %s"</span>, token.AccessToken)
+}</pre>
+          </div>
+
+          <!-- cURL -->
+          <div class="code-block" id="code-curl">
+<pre><span class="comment"># Register a user</span>
+curl -X POST https://ggid.dev/api/v1/auth/register \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -H <span class="str">"X-Tenant-ID: 00000000-0000-0000-0000-000000000001"</span> \
+  -d <span class="str">'{"username":"alice","email":"alice@example.com","password":"SecurePass123!"}'</span>
+
+<span class="comment"># Login and receive JWT</span>
+curl -X POST https://ggid.dev/api/v1/auth/login \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -H <span class="str">"X-Tenant-ID: 00000000-0000-0000-0000-000000000001"</span> \
+  -d <span class="str">'{"username":"alice","password":"SecurePass123!"}'</span>
+
+<span class="comment"># Access protected resource</span>
+curl https://ggid.dev/api/v1/users \
+  -H <span class="str">"Authorization: Bearer &lt;jwt-token&gt;"</span></pre>
+          </div>
+
+          <!-- Node.js -->
+          <div class="code-block" id="code-node">
+<pre><span class="comment">// Register a user via GGID Node.js SDK</span>
+<span class="kw">import</span> { GGIDClient } <span class="kw">from</span> <span class="str">'@ggid/sdk-node'</span>;
+
+<span class="kw">const</span> client = <span class="kw">new</span> <span class="type">GGIDClient</span>({
+  baseUrl: <span class="str">'https://ggid.dev'</span>,
+  tenantId: <span class="str">'00000000-0000-0000-0000-000000000001'</span>,
+});
+
+<span class="comment">// Register + Login</span>
+<span class="kw">const</span> user = <span class="kw">await</span> client.<span class="fn">register</span>({
+  username: <span class="str">'alice'</span>,
+  email: <span class="str">'alice@example.com'</span>,
+  password: <span class="str">'SecurePass123!'</span>,
+});
+
+<span class="kw">const</span> token = <span class="kw">await</span> client.<span class="fn">login</span>(<span class="str">'alice'</span>, <span class="str">'SecurePass123!'</span>);
+console.<span class="fn">log</span>(<span class="str">'JWT:'</span>, token.accessToken);</pre>
+          </div>
+
+          <!-- Python -->
+          <div class="code-block" id="code-python">
+<pre><span class="comment"># Register a user via GGID Python SDK</span>
+<span class="kw">from</span> ggid <span class="kw">import</span> GGIDClient
+
+client = <span class="type">GGIDClient</span>(
+    base_url=<span class="str">"https://ggid.dev"</span>,
+    tenant_id=<span class="str">"00000000-0000-0000-0000-000000000001"</span>,
+)
+
+<span class="comment"># Register + Login</span>
+user = client.<span class="fn">register</span>(
+    username=<span class="str">"alice"</span>,
+    email=<span class="str">"alice@example.com"</span>,
+    password=<span class="str">"SecurePass123!"</span>,
+)
+
+token = client.<span class="fn">login</span>(<span class="str">"alice"</span>, <span class="str">"SecurePass123!"</span>)
+<span class="fn">print</span>(<span class="str">f"JWT: {token.access_token}"</span>)</pre>
+          </div>
+
+          <!-- Docker -->
+          <div class="code-block" id="code-docker">
+<pre><span class="comment"># All-in-one: single container with everything</span>
+docker run -d \
+  -p <span class="num">8080</span>:<span class="num">8080</span> \
+  -p <span class="num">3000</span>:<span class="num">3000</span> \
+  --name ggid \
+  ggid/ggid-all-in-one:latest
+
+<span class="comment"># Or full stack via Docker Compose</span>
+git clone https://github.com/ggid/ggid.git
+<span class="kw">cd</span> ggid/deploy
+docker compose up -d
+
+<span class="comment"># Verify: 11/11 E2E tests pass</span>
+bash e2e-docker-test.sh
+
+<span class="comment"># Access points</span>
+<span class="comment"># Console  -> http://localhost:3000</span>
+<span class="comment"># Gateway  -> http://localhost:8080</span>
+<span class="comment"># Docs     -> http://localhost:8080/docs</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security & Compliance -->
+  <section id="security">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label" data-i18n="security.label">Enterprise Ready</span>
+        <h2 class="section-title" data-i18n="security.title">Security &amp; Compliance</h2>
+        <p class="section-subtitle" data-i18n="security.subtitle">Hardened by design with defense-in-depth at every layer.</p>
+      </div>
+
+      <div class="security-grid">
+        <div class="security-card reveal reveal-delay-1">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.gRPC">gRPC TLS Between Services</h4>
+            <p data-i18n="sec.gRPC.desc">mTLS with fail-secure fallback for all inter-service communication.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-2">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.sanitized">Sanitized Error Responses</h4>
+            <p data-i18n="sec.sanitized.desc">Internal errors never leak to clients. All 500 responses are sanitized.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-1">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.rate">Adaptive Rate Limiting</h4>
+            <p data-i18n="sec.rate.desc">Per-IP, per-tenant, and per-endpoint rate limits with token bucket algorithm.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-2">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.body">Request Body Size Limits</h4>
+            <p data-i18n="sec.body.desc">Configurable payload limits to prevent DoS via oversized requests.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-3">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.host">Host Header Validation</h4>
+            <p data-i18n="sec.host.desc">DNS rebinding protection with configurable allowed hosts.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-4">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.hsm">HSM / KMS Key Management</h4>
+            <p data-i18n="sec.hsm.desc">PKCS#11 integration for hardware-backed JWT signing keys.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-1">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.pii">PII Obfuscation</h4>
+            <p data-i18n="sec.pii.desc">Automatic PII redaction in audit logs and SIEM forwarding.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-2">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.csrf">CSRF Protection</h4>
+            <p data-i18n="sec.csrf.desc">Cryptographically secure tokens with SameSite cookie enforcement.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-3">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.ssrf">SSRF Prevention</h4>
+            <p data-i18n="sec.ssrf.desc">Webhook URL validation with private IP range blocking.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-4">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.chain">Tamper-Evident Audit</h4>
+            <p data-i18n="sec.chain.desc">Cryptographic hash chain ensures audit log integrity.</p>
+          </div>
+        </div>
+
+        <div class="security-card reveal reveal-delay-1">
+          <div class="security-check">&#10003;</div>
+          <div>
+            <h4 data-i18n="sec.compliance">NIS2 / CRA / PIPL</h4>
+            <p data-i18n="sec.compliance.desc">Research-backed compliance frameworks for EU and China.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SDK Matrix -->
+  <section class="sdk-section">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="section-label" data-i18n="sdk.label">SDKs</span>
+        <h2 class="section-title" data-i18n="sdk.title">10 Language SDKs</h2>
+        <p class="section-subtitle" data-i18n="sdk.subtitle">Official SDKs with consistent APIs across all supported languages.</p>
+      </div>
+
+      <div class="sdk-grid reveal">
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#128020;</div>
+          <div class="sdk-name">Go</div>
+          <div class="sdk-lang">sdk/go</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#129309;</div>
+          <div class="sdk-name">Node.js</div>
+          <div class="sdk-lang">sdk/node</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#9749;</div>
+          <div class="sdk-name">Java</div>
+          <div class="sdk-lang">sdk/java</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#128013;</div>
+          <div class="sdk-name">Python</div>
+          <div class="sdk-lang">sdk/python</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#128142;</div>
+          <div class="sdk-name">Ruby</div>
+          <div class="sdk-lang">sdk/ruby</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#3594;</div>
+          <div class="sdk-name">C#</div>
+          <div class="sdk-lang">sdk/csharp</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#127919;</div>
+          <div class="sdk-name">Dart</div>
+          <div class="sdk-lang">sdk/dart</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#128181;</div>
+          <div class="sdk-name">PHP</div>
+          <div class="sdk-lang">sdk/php</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#9881;</div>
+          <div class="sdk-name">Rust</div>
+          <div class="sdk-lang">sdk/rust</div>
+        </div>
+        <div class="sdk-badge">
+          <div class="sdk-icon">&#9883;</div>
+          <div class="sdk-name">React</div>
+          <div class="sdk-lang">sdk/react</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box reveal">
+        <h2 data-i18n="cta.title">Ready to Get Started?</h2>
+        <p data-i18n="cta.desc">Deploy GGID in under 5 minutes with Docker Compose or the all-in-one image.</p>
+        <div class="hero-actions">
+          <a href="https://ggid.dev/docs" class="btn btn-primary btn-lg" data-i18n="cta.primary">Read the Docs</a>
+          <a href="https://github.com/ggid/ggid" target="_blank" class="btn btn-ghost btn-lg" data-i18n="cta.secondary">Star on GitHub</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="nav-brand">
+            <img src="assets/svg/logo.svg" alt="GGID" width="36">
+            <span class="brand-text">GGID</span>
+          </a>
+          <p data-i18n="footer.tagline">Production-grade Identity &amp; Access Management for the AI era.</p>
+        </div>
+
+        <div class="footer-col">
+          <h5 data-i18n="footer.product">Product</h5>
+          <ul>
+            <li><a href="#features" data-i18n="nav.features">Features</a></li>
+            <li><a href="#architecture" data-i18n="footer.architecture">Architecture</a></li>
+            <li><a href="#security" data-i18n="nav.security">Security</a></li>
+            <li><a href="#" data-i18n="footer.changelog">Changelog</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5 data-i18n="footer.developers">Developers</h5>
+          <ul>
+            <li><a href="https://ggid.dev/docs" data-i18n="footer.docs">Documentation</a></li>
+            <li><a href="https://ggid.dev/docs" data-i18n="footer.api">API Reference</a></li>
+            <li><a href="#" data-i18n="footer.sdks">SDKs</a></li>
+            <li><a href="#quickstart" data-i18n="footer.quickstart">Quick Start</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5 data-i18n="footer.resources">Resources</h5>
+          <ul>
+            <li><a href="https://github.com/ggid/ggid" target="_blank" data-i18n="footer.github">GitHub</a></li>
+            <li><a href="https://github.com/ggid/ggid/blob/main/CONTRIBUTING.md" target="_blank" data-i18n="footer.contributing">Contributing</a></li>
+            <li><a href="https://github.com/ggid/ggid/blob/main/LICENSE" target="_blank" data-i18n="footer.license">Apache 2.0 License</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span data-i18n="footer.copyright">&copy; 2024-2026 GGID. All rights reserved.</span>
+        <div class="footer-social">
+          <a href="https://github.com/ggid/ggid" target="_blank" aria-label="GitHub">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+            </svg>
+          </a>
+          <a href="#" aria-label="X">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="assets/js/i18n.js"></script>
+  <script src="assets/js/main.js"></script>
+</body>
+</html>

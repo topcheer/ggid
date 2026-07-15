@@ -57,7 +57,7 @@ export default function DeviceRegistryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><HardDrive className="h-6 w-6 text-blue-600" /> {t("deviceRegistry.title")}</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><HardDrive className="h-6 w-6 text-blue-600" /> {t("big1.deviceRegistry.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("big1.deviceRegistry.allRegisteredDevicesWithFingerprintsSessionsAndTrustStatus")}</p>
       </div>
 

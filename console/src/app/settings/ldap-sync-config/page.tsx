@@ -14,12 +14,12 @@ export default function LdapSyncConfigPage() {
   const [error, setError] = useState<string | null>(null);
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
-    try { const res = await fetch("/api/v1/auth/ldap-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d) setConfig(prev => ({ ...prev, ...d })); } }
+    try { const res = await fetch("/api/v1/identity/ldap/sync-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d) setConfig(prev => ({ ...prev, ...d })); } }
     catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); } finally { setLoading(false); }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
-  const save = async () => { setSaving(true); try { await fetch("/api/v1/auth/ldap-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); } catch { /* noop */ } finally { setSaving(false); } };
-  const test = async () => { setTesting(true); setTestResult(null); try { const res = await fetch("/api/v1/auth/ldap-config/test", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); setTestResult(res.ok); } catch { setTestResult(false); } finally { setTesting(false); } };
+  const save = async () => { setSaving(true); try { await fetch("/api/v1/identity/ldap/sync-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); } catch { /* noop */ } finally { setSaving(false); } };
+  const test = async () => { setTesting(true); setTestResult(null); try { const res = await fetch("/api/v1/identity/ldap/sync-config/test", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); setTestResult(res.ok); } catch { setTestResult(false); } finally { setTesting(false); } };
   if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
   if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
   return (
