@@ -151,6 +151,7 @@ export default function APIExplorerPage() {
             <button
               key={`${qe.method}-${qe.path}`}
               onClick={() => loadQuickEndpoint(qe.method, qe.path)}
+              aria-label={`Load ${qe.method} ${qe.path}`}
               className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${methodColor(qe.method)}`}>{qe.method}</span>
@@ -185,6 +186,7 @@ export default function APIExplorerPage() {
                 <button
                   onClick={() => sendRequest(ep)}
                   disabled={loading === ep.id}
+                  aria-label={`Send ${ep.method} request to ${ep.path}`}
                   className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
                 >
                   <Send className="h-4 w-4" />
@@ -192,6 +194,7 @@ export default function APIExplorerPage() {
                 </button>
                 <button
                   onClick={() => removeEndpoint(ep.id)}
+                  aria-label="Remove endpoint"
                   className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -202,7 +205,7 @@ export default function APIExplorerPage() {
               <div className="border-t border-gray-100 px-4 py-3 dark:border-gray-700">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Headers</span>
-                  <button onClick={() => addHeader(ep.id)} className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                  <button onClick={() => addHeader(ep.id)} aria-label="Add header" className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
                     <Plus className="h-3 w-3" /> Add
                   </button>
                 </div>
@@ -222,7 +225,7 @@ export default function APIExplorerPage() {
                       placeholder="Header value"
                       className="flex-1 rounded border border-gray-200 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
                     />
-                    <button onClick={() => removeHeader(ep.id, i)} className="text-gray-400 hover:text-red-600">
+                    <button onClick={() => removeHeader(ep.id, i)} aria-label="Remove header" className="text-gray-400 hover:text-red-600">
                       <Trash2 className="h-3 w-3" />
                     </button>
                   </div>
@@ -253,7 +256,7 @@ export default function APIExplorerPage() {
                         const newSnippets = { ...snippets };
                         newSnippets[ep.id] = lang;
                         setSnippets(newSnippets);
-                      }} className={`px-2 py-0.5 text-[10px] font-medium rounded transition ${snippets[ep.id] === lang ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"}`}>
+                      }} aria-label={`Generate ${lang} snippet`} className={`px-2 py-0.5 text-[10px] font-medium rounded transition ${snippets[ep.id] === lang ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"}`}>
                         {lang === "javascript" ? "JS" : lang.charAt(0).toUpperCase() + lang.slice(1)}
                       </button>
                     ))}
@@ -290,6 +293,7 @@ export default function APIExplorerPage() {
 
         <button
           onClick={addEndpoint}
+          aria-label="Add new request"
           className="mt-4 flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-2 text-sm text-gray-600 hover:border-blue-400 hover:text-blue-600 dark:border-gray-600 dark:text-gray-400"
         >
           <Plus className="h-4 w-4" /> Add Request

@@ -86,17 +86,17 @@ export default function TokenEventsPage() {
             <Radio className={`h-4 w-4 ${connected ? "text-green-500" : "text-gray-400"}`} />
             <span className="text-xs text-gray-400">{connected ? "Live" : "Disconnected"}</span>
           </div>
-          <button onClick={togglePause} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${paused ? "bg-green-600 text-white hover:bg-green-700" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30"}`}>{paused ? <><Play className="h-4 w-4" /> Resume</> : <><Pause className="h-4 w-4" /> Pause</>}</button>
-          <button onClick={clearEvents} className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"><Trash2 className="h-4 w-4" /> Clear</button>
+          <button onClick={togglePause} aria-label={paused ? "Resume stream" : "Pause stream"} aria-pressed={paused} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${paused ? "bg-green-600 text-white hover:bg-green-700" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30"}`}>{paused ? <><Play className="h-4 w-4" /> Resume</> : <><Pause className="h-4 w-4" /> Pause</>}</button>
+          <button onClick={clearEvents} aria-label="Clear event log" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"><Trash2 className="h-4 w-4" /> Clear</button>
         </div>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {/* Filter tabs */}
       <div className="flex gap-2">
         {["all", "issued", "refreshed", "revoked", "expired", "introspected", "exchanged"].map((f) => (
-          <button key={f} onClick={() => setFilter(f)} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>{f}</button>
+          <button key={f} onClick={() => setFilter(f)} aria-label={`Filter by ${f}`} aria-pressed={filter === f} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${filter === f ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"}`}>{f}</button>
         ))}
       </div>
 
