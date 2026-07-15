@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Mail, Plus, X, AlertCircle, Loader2, Check, Save, Send,
   ToggleLeft, ToggleRight, Trash2, Clock, Globe,
@@ -17,6 +18,7 @@ interface MagicLinkConfig {
 }
 
 export default function MagicLinkPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [config, setConfig] = useState<MagicLinkConfig | null>(null);
   const [draft, setDraft] = useState<MagicLinkConfig>({ enabled: false, expiry_minutes: 15, single_use: true, allowed_domains: [], require_https: true, redirect_url: "" });

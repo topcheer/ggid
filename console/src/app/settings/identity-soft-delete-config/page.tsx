@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState } from "react";
 import { useIdentitySoftDeleteConfig } from "@ggid/sdk-react";
 import { Trash2, RotateCcw, Clock, AlertTriangle, Archive } from "lucide-react";
 
 export default function IdentitySoftDeleteConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, restoreItem, purgeAll } = useIdentitySoftDeleteConfig();
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
 

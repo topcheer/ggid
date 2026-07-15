@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Save, ToggleLeft, ToggleRight, Clock } from "lucide-react";
@@ -12,6 +13,7 @@ interface PasswordPolicy {
 }
 
 export default function PasswordAgePolicyPage() {
+  const t = useTranslations();
   const [policy, setPolicy] = useState<PasswordPolicy | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,7 +41,7 @@ export default function PasswordAgePolicyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-orange-500" /> Password Age Policy</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-orange-500" />{t("passwordAgePolicy.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Configure password expiration policies with per-organization overrides.</p>
       </div>
 

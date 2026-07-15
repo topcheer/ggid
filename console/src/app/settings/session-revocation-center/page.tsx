@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface Session {
@@ -12,6 +13,7 @@ interface Session {
 }
 
 export default function SessionRevocationCenterPage() {
+  const t = useTranslations();
   const [sessions, setSessions] = useState<Session[]>([
     { id: 's1', userId: 'alice@ggid.io', device: 'MacBook Pro', ip: '10.0.0.15', created: '2026-07-12 08:00', lastActive: '2026-07-12 14:30', tenant: 'default' },
     { id: 's2', userId: 'bob@ggid.io', device: 'iPhone 15', ip: '10.0.0.22', created: '2026-07-11 20:00', lastActive: '2026-07-12 13:45', tenant: 'default' },

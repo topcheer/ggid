@@ -1,12 +1,14 @@
 "use client";
 
+import { useTranslations } from "@/lib/i18n";
 import { usePolicyLifecycleDashboard } from "@ggid/sdk-react";
 import { RotateCcw, Clock, GitCommit, PieChart } from "lucide-react";
 
 export default function PolicyLifecycleDashboardPage() {
   const { data, loading, error, refresh } = usePolicyLifecycleDashboard();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading policy lifecycle dashboard...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("policyLifecycle.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const statusColors: Record<string, string> = {
@@ -21,10 +23,10 @@ export default function PolicyLifecycleDashboardPage() {
   const totalPolicies = statusEntries.reduce((a, [, c]) => a + c, 0);
 
   const pipelineSteps = [
-    { label: "Submitted", count: data?.approval_pipeline?.submitted ?? 0, color: "bg-blue-600" },
-    { label: "Reviewing", count: data?.approval_pipeline?.reviewing ?? 0, color: "bg-yellow-600" },
-    { label: "Approved", count: data?.approval_pipeline?.approved ?? 0, color: "bg-green-600" },
-    { label: "Active", count: data?.approval_pipeline?.active ?? 0, color: "bg-emerald-600" },
+    { label: t("policyLifecycle.submitted"), count: data?.approval_pipeline?.submitted ?? 0, color: "bg-blue-600" },
+    { label: t("policyLifecycle.reviewing"), count: data?.approval_pipeline?.reviewing ?? 0, color: "bg-yellow-600" },
+    { label: t("policyLifecycle.approved"), count: data?.approval_pipeline?.approved ?? 0, color: "bg-green-600" },
+    { label: t("policyLifecycle.active"), count: data?.approval_pipeline?.active ?? 0, color: "bg-emerald-600" },
   ];
 
   const maxAge = Math.max(...(data?.policy_age_histogram ?? [{ count: 1 }]).map((h) => h.count), 1);
@@ -33,14 +35,14 @@ export default function PolicyLifecycleDashboardPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Policy Lifecycle Dashboard</h1>
-          <p className="text-sm text-gray-400 mt-1">Track policy status, approval pipeline, and lifecycle metrics</p>
+          <h1 className="text-2xl font-bold">{t("policyLifecycle.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("policyLifecycle.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition"
         >
-          Refresh
+          {t("policyLifecycle.refresh")}
         </button>
       </div>
 
@@ -49,7 +51,7 @@ export default function PolicyLifecycleDashboardPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold flex items-center gap-2 mb-4">
             <PieChart className="w-4 h-4" />
-            Policies by Status
+            {t("policyLifecycle.policiesByStatus")}
           </h2>
           <div className="flex items-center justify-center">
             <svg viewBox="0 0 100 100" className="w-40 h-40 -rotate-90">
@@ -95,7 +97,7 @@ export default function PolicyLifecycleDashboardPage() {
 
         {/* Approval Pipeline */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Approval Pipeline</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("policyLifecycle.approvalPipeline")}</h2>
           <div className="space-y-3">
             {pipelineSteps.map((step, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -112,7 +114,7 @@ export default function PolicyLifecycleDashboardPage() {
           <div className="mt-4 pt-4 border-t border-gray-800">
             <div className="flex items-center gap-2 mb-1 text-gray-400">
               <Clock className="w-3 h-3" />
-              <span className="text-xs">Avg Approval Time</span>
+              <span className="text-xs">{t("policyLifecycle.avgApprovalTime")}</span>
             </div>
             <p className="text-lg font-bold">{data?.avg_approval_time_hours ?? 0}h</p>
           </div>
@@ -120,23 +122,23 @@ export default function PolicyLifecycleDashboardPage() {
 
         {/* Quick Stats */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Quick Stats</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("policyLifecycle.quickStats")}</h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-              <span className="text-sm text-gray-400">Total Policies</span>
+              <span className="text-sm text-gray-400">{t("policyLifecycle.totalPolicies")}</span>
               <span className="text-lg font-bold">{totalPolicies}</span>
             </div>
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
               <span className="flex items-center gap-2 text-sm text-gray-400">
                 <RotateCcw className="w-3 h-3" />
-                Rollbacks (30d)
+                {t("policyLifecycle.rollbacks30d")}
               </span>
               <span className="text-lg font-bold text-red-400">{data?.rollback_count ?? 0}</span>
             </div>
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
               <span className="flex items-center gap-2 text-sm text-gray-400">
                 <GitCommit className="w-3 h-3" />
-                Changes (7d)
+                {t("policyLifecycle.changes7d")}
               </span>
               <span className="text-lg font-bold text-blue-400">{data?.recent_changes?.length ?? 0}</span>
             </div>
@@ -147,7 +149,7 @@ export default function PolicyLifecycleDashboardPage() {
       {/* Recent Changes + Age Histogram */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Recent Changes</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("policyLifecycle.recentChanges")}</h2>
           <div className="space-y-2">
             {(data?.recent_changes ?? []).map((change, i) => (
               <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">
@@ -164,7 +166,7 @@ export default function PolicyLifecycleDashboardPage() {
         </div>
 
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Policy Age Distribution</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("policyLifecycle.policyAgeDistribution")}</h2>
           <div className="flex items-end gap-2 h-40">
             {(data?.policy_age_histogram ?? []).map((bin, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">

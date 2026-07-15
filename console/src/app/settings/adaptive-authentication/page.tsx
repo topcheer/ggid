@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface RiskRule {
@@ -17,6 +18,7 @@ interface DeviceTrust {
 }
 
 export default function AdaptiveAuthenticationPage() {
+  const t = useTranslations();
   const [rules, setRules] = useState<RiskRule[]>([]);
   const [thresholds, setThresholds] = useState([
     { level: 'low', minScore: 0, maxScore: 25, action: 'allow' },

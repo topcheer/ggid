@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useAuthRiskEngineConfig } from "@ggid/sdk-react";
 import { Zap, Activity, Brain, TrendingUp, RefreshCw } from "lucide-react";
 
 export default function AuthRiskEngineConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, retrainModel } = useAuthRiskEngineConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading risk engine config...</div>;

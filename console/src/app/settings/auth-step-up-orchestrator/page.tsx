@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useAuthStepUpOrchestrator } from "@ggid/sdk-react";
 import { Zap, CheckCircle, AlertTriangle, ArrowRight, Clock } from "lucide-react";
 
 export default function AuthStepUpOrchestratorPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuthStepUpOrchestrator();
 
   if (loading) return <div className="p-8 text-gray-400">Loading step-up orchestrator...</div>;

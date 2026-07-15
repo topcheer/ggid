@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { LifeBuoy, ShieldCheck, Ban, AlertTriangle, RotateCcw } from "lucide-react";
 interface RecoveryCode { user_id: string; username: string; total: number; used: number; remaining: number; generated_at: string; }
 interface RecoveryConfig { methods: string[]; verification_steps: string[]; enabled: boolean; }
 interface AuditEntry { id: string; user: string; action: string; timestamp: string; ip: string; }
 export default function AccountRecoveryPage() {
+  const t = useTranslations();
   const [config, setConfig] = useState<RecoveryConfig | null>(null);
   const [codes, setCodes] = useState<RecoveryCode[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -44,7 +46,7 @@ export default function AccountRecoveryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><LifeBuoy className="w-6 h-6 text-blue-500" /> Account Recovery</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><LifeBuoy className="w-6 h-6 text-blue-500" />{t("accountRecovery.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Configure recovery methods, identity verification, and recovery codes.</p>
         </div>
         <label className="flex items-center gap-2 text-sm">

@@ -1,8 +1,10 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { useUserLifecycleConfig, UserLifecycleConfig, DormantDetectionRule, StageTransitionRule, PerRoleOverride } from "@ggid/sdk-react";
 
 export default function UserLifecycleConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useUserLifecycleConfig();
   const [form, setForm] = useState<UserLifecycleConfig | null>(null);
   const [saving, setSaving] = useState(false);

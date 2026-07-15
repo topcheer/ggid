@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Mail, Loader2, AlertCircle, X, Send, Save, Plus, Trash2,
 } from "lucide-react";
@@ -16,6 +17,7 @@ interface EmailOTPConfig {
 }
 
 export default function EmailOTPPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [config, setConfig] = useState<EmailOTPConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ export default function EmailOTPPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Mail className="h-6 w-6 text-blue-600" /> Email OTP</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Mail className="h-6 w-6 text-blue-600" />{t("emailOtp.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Email-based one-time password configuration and testing.</p>
       </div>
 

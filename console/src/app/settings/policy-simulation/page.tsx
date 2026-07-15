@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "@/lib/i18n";
 import { useState } from "react";
 import { Play, Plus, Trash2, Check, X, Minus, GitCompare } from "lucide-react";
 
@@ -25,6 +26,7 @@ export default function PolicySimulationPage() {
   const [results, setResults] = useState<SimResult[] | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
+  const t = useTranslations();
 
   const retry = () => { setError(""); runSim(); };
 
@@ -50,15 +52,15 @@ export default function PolicySimulationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Play className="w-6 h-6 text-blue-500" /> Policy Simulation</h1>
-        <p className="text-sm text-gray-500 mt-1">Test proposed policy rules before deployment with before/after impact analysis.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Play className="w-6 h-6 text-blue-500" /> {t("policySimulation.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("policySimulation.subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Proposed rules editor */}
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">Proposed Rules ({rules.length})</h3>
+            <h3 className="font-semibold">{t("policySimulation.proposedRules")} ({rules.length})</h3>
             <button onClick={addRule} className="p-1 rounded bg-blue-600 text-white"><Plus className="w-4 h-4" /></button>
           </div>
           <div className="space-y-2">
@@ -79,24 +81,24 @@ export default function PolicySimulationPage() {
               </div>
             ))}
           </div>
-          <button onClick={runSim} disabled={running} className="w-full mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2" aria-label="Run policy simulation"><Play className="w-4 h-4" /> {running ? "Simulating..." : "Run Simulation"}</button>
+          <button onClick={runSim} disabled={running} className="w-full mt-3 px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2" aria-label="Run policy simulation"><Play className="w-4 h-4" /> {running ? t("policySimulation.simulating") : t("policySimulation.runSimulation")}</button>
         </div>
 
         {/* Results */}
         <div className="space-y-3">
-          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retry} className="text-xs underline hover:text-red-700">Retry</button></div>}
+          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retry} className="text-xs underline hover:text-red-700">{t("policySimulation.retry")}</button></div>}
           {running && (
             <div className="rounded-lg border dark:border-gray-800 p-8 text-center">
               <div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" />
-              <div className="text-sm text-gray-500">Running simulation...</div>
+              <div className="text-sm text-gray-500">{t("policySimulation.runningSim")}</div>
             </div>
           )}
           {!running && results ? (
             <>
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3 text-center"><span className="text-xs text-gray-500">Would Allow</span><p className="text-xl font-bold text-green-600">{wouldAllow.length}</p></div>
-                <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-center"><span className="text-xs text-gray-500">Would Deny</span><p className="text-xl font-bold text-red-600">{wouldDeny.length}</p></div>
-                <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3 text-center"><span className="text-xs text-gray-500">Unchanged</span><p className="text-xl font-bold text-gray-500">{unchanged.length}</p></div>
+                <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-3 text-center"><span className="text-xs text-gray-500">{t("policySimulation.wouldAllow")}</span><p className="text-xl font-bold text-green-600">{wouldAllow.length}</p></div>
+                <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-3 text-center"><span className="text-xs text-gray-500">{t("policySimulation.wouldDeny")}</span><p className="text-xl font-bold text-red-600">{wouldDeny.length}</p></div>
+                <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3 text-center"><span className="text-xs text-gray-500">{t("policySimulation.unchanged")}</span><p className="text-xl font-bold text-gray-500">{unchanged.length}</p></div>
               </div>
               <div className="rounded-lg border dark:border-gray-800 max-h-80 overflow-y-auto">
                 <div className="divide-y dark:divide-gray-800">
@@ -117,7 +119,7 @@ export default function PolicySimulationPage() {
               </div>
             </>
           ) : (
-            <div className="rounded-lg border dark:border-gray-800 p-8 text-center text-sm text-gray-500">Run simulation to see impact results.</div>
+            <div className="rounded-lg border dark:border-gray-800 p-8 text-center text-sm text-gray-500">{t("policySimulation.runToSeeResults")}</div>
           )}
         </div>
       </div>

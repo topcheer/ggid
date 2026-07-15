@@ -1,7 +1,9 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 export default function PasswordHistoryConfigPage() {
+  const t = useTranslations();
   const [maxHistory, setMaxHistory] = useState(12);
   const [checkOnChange, setCheckOnChange] = useState(true);
   const [purgeAfter, setPurgeAfter] = useState(365);

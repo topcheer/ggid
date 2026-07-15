@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Zap, Loader2, AlertCircle, X, Check, Save, Shield, Users,
 } from "lucide-react";
@@ -22,6 +23,7 @@ interface JITConfig {
 }
 
 export default function JITProvisioningPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [config, setConfig] = useState<JITConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function JITProvisioningPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Zap className="h-6 w-6 text-indigo-600" /> JIT Provisioning</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Zap className="h-6 w-6 text-indigo-600" />{t("jitProvisioning.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Auto-provision users on first login from external identity providers.</p>
       </div>
 

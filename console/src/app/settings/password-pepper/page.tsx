@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Key, RotateCcw, AlertTriangle, Loader2, X, Check, Shield,
   Clock,
@@ -18,6 +19,7 @@ interface PepperStatus {
 }
 
 export default function PasswordPepperPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [status, setStatus] = useState<PepperStatus | null>(null);
   const [loading, setLoading] = useState(true);

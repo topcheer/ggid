@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldAlert, ScanLine, AlertTriangle, RotateCcw } from "lucide-react";
@@ -21,6 +22,7 @@ const sevColors: Record<string, string> = {
 };
 
 export default function PasswordBreachCheckPage() {
+  const t = useTranslations();
   const [results, setResults] = useState<BreachResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -52,7 +54,7 @@ export default function PasswordBreachCheckPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ShieldAlert className="w-6 h-6 text-red-500" /> Password Breach Check</h1><p className="text-sm text-gray-500 mt-1">Check passwords against known breach databases (HIBP).</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ShieldAlert className="w-6 h-6 text-red-500" />{t("passwordBreachCheck.title")}</h1><p className="text-sm text-gray-500 mt-1">Check passwords against known breach databases (HIBP).</p></div>
         <div className="flex items-center gap-2"><select value={frequency} onChange={(e) => setFrequency(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select><button onClick={scanNow} disabled={scanning} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"><ScanLine className={"w-4 h-4 " + (scanning ? "animate-spin" : "")} /> {scanning ? "Scanning..." : "Scan Now"}</button></div>
       </div>
 

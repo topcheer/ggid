@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Shield, Plus, Trash2, X, AlertCircle, Loader2, Check, Globe,
   Clock, Smartphone, AlertTriangle, ShieldCheck,
@@ -29,6 +30,7 @@ const ACTION_CONFIG = {
 };
 
 export default function ConditionalAccessPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,7 @@ export default function ConditionalAccessPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-indigo-600" /> Conditional Access</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-indigo-600" />{t("conditionalAccess.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Context-aware access policies with IP, time, device, and risk conditions.</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Plus className="h-4 w-4" /> New Policy</button>

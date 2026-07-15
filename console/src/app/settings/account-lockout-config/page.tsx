@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface LockoutRecord {
@@ -10,6 +11,7 @@ interface LockoutRecord {
 }
 
 export default function AccountLockoutConfigPage() {
+  const t = useTranslations();
   const [maxAttempts, setMaxAttempts] = useState(5);
   const [windowMinutes, setWindowMinutes] = useState(15);
   const [lockoutDuration, setLockoutDuration] = useState(30);

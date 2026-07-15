@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface LinkedAccount {
@@ -12,6 +13,7 @@ interface LinkedAccount {
 }
 
 export default function AccountLinkingConfigPage() {
+  const t = useTranslations();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);

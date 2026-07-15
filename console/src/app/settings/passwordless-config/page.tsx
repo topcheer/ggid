@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { usePasswordlessConfig } from "@ggid/sdk-react";
 import { KeyRound, Mail, Smartphone, Fingerprint } from "lucide-react";
 
 export default function PasswordlessConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = usePasswordlessConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading passwordless config...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

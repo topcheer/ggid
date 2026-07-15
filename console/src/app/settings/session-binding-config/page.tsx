@@ -1,8 +1,10 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { useSessionBindingConfig, SessionBindingConfig, PerAppBinding } from "@ggid/sdk-react";
 
 export default function SessionBindingConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useSessionBindingConfig();
   const [form, setForm] = useState<SessionBindingConfig | null>(null);
   const [saving, setSaving] = useState(false);
