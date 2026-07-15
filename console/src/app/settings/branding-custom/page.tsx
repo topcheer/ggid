@@ -360,7 +360,7 @@ export default function BrandingCustomPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={config.logo_url}
-                    alt="Logo"
+                    alt="Header logo preview"
                     className="h-6 object-contain"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
@@ -384,7 +384,7 @@ export default function BrandingCustomPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={config.logo_url}
-                        alt="Logo"
+                        alt="Login card logo preview"
                         className="h-12 object-contain"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                       />
@@ -449,7 +449,7 @@ export default function BrandingCustomPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={config.logo_url}
-                    alt="Logo"
+                    alt="Email header logo preview"
                     className="h-5 object-contain"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                   />
