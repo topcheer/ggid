@@ -29,7 +29,7 @@ export default function AccessReviewCenterPage() {
     fetch("/api/v1/policies/access-reviews/campaigns", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setReviews(Array.isArray(data) ? data : (data.reviews || data.campaigns || [])); setLoading(false); })
       .catch(err => { setError(err.message); setLoading(false); });
   }, []);

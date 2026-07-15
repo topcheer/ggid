@@ -14,7 +14,7 @@ export default function PolicyRecommendationPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/policy/recommendations", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load recommendations: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setRecs(d.recommendations || d || []);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load recommendations"); }
@@ -24,14 +24,14 @@ export default function PolicyRecommendationPage() {
   const apply = async (id: string) => {
     try {
       const res = await fetch("/api/v1/policy/recommendations/" + id + "/apply", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Apply failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setRecs(recs.filter((r) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to apply recommendation"); }
   };
   const dismiss = async (id: string) => {
     try {
       const res = await fetch("/api/v1/policy/recommendations/" + id + "/dismiss", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Dismiss failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setRecs(recs.filter((r) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to dismiss recommendation"); }
   };

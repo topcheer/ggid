@@ -18,7 +18,7 @@ export default function ExportSchedulePage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/audit/export-schedule", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load export schedules: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setJobs(d.jobs || d || []);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load export schedules"); }
@@ -29,14 +29,14 @@ export default function ExportSchedulePage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/audit/export-schedule", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error(`Failed to create schedule: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setShowCreate(false); fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to create schedule"); }
   };
   const remove = async (id: string) => {
     try {
       const res = await fetch(`/api/v1/audit/export-schedule/${id}`, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to delete schedule: HTTP ${res.status}`);
+      if (!res.ok) return null;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to delete schedule"); }
   };

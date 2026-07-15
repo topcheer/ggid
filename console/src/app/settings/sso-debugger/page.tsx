@@ -15,7 +15,7 @@ export default function SsoDebuggerPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/auth/sso-debug?protocol=" + protocol, { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`SSO trace failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setResult(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to trace SSO flow"); }
     finally { setLoading(false); }

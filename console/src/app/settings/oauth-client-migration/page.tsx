@@ -26,7 +26,7 @@ export default function OAuthClientMigrationPage() {
     setPreviewing(true); setError(""); setPreview(null);
     try {
       const res = await fetch("/api/v1/oauth/client-migration/preview", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ source, target }) });
-      if (!res.ok) throw new Error(`Preview failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setPreview(await res.json());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to preview migration");
@@ -37,7 +37,7 @@ export default function OAuthClientMigrationPage() {
     setExecuting(true); setError(""); setSuccess("");
     try {
       const res = await fetch("/api/v1/oauth/client-migration/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ source, target, migrate_scopes: migrateScopes, migrate_grants: migrateGrants, migrate_tokens: migrateTokens, notify_users: notifyUsers }) });
-      if (!res.ok) throw new Error(`Execute failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setSuccess("Migration completed successfully."); setPreview(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to execute migration");

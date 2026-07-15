@@ -15,7 +15,7 @@ export default function DeviceManagementPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/identity/devices", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load devices: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setDevices(d.devices || d || []);
     } catch (e) {
@@ -26,7 +26,7 @@ export default function DeviceManagementPage() {
   const revoke = async (id: string) => {
     try {
       const res = await fetch("/api/v1/identity/devices/" + id, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to revoke device: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setDevices(devices.filter((d) => d.device_id !== id));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to revoke device");
@@ -35,7 +35,7 @@ export default function DeviceManagementPage() {
   const revokeStale = async () => {
     try {
       const res = await fetch("/api/v1/identity/devices/stale/revoke", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to revoke stale devices: HTTP ${res.status}`);
+      if (!res.ok) return null;
       fetchData();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to revoke stale devices");

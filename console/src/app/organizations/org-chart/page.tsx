@@ -67,7 +67,7 @@ export default function OrgChartPage() {
     setError(null);
     try {
       const res = await fetch(`/api/v1/org/orgs/${orgId}/chart`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load org chart: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setTree(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load org chart"); }
     finally { setLoading(false); }

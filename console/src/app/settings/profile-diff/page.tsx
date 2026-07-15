@@ -19,7 +19,7 @@ export default function ProfileDiffPage() {
     setError(null);
     try {
       const res = await fetch(`/api/v1/identity/profile-diff?user_id=${encodeURIComponent(userId)}&a=${encodeURIComponent(versionA)}&b=${encodeURIComponent(versionB)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to compare profiles: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setResult(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to compare profiles"); }
     finally { setLoading(false); }

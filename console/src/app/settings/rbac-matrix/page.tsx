@@ -19,7 +19,7 @@ export default function RbacMatrixPage() {
     fetch("/api/v1/policy/rbac-matrix", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         setRoles(data.roles || []);
         setPermissions(data.permissions || []);
@@ -40,7 +40,7 @@ export default function RbacMatrixPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify(newRole),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         setRoles(prev => [...prev, data]);
         setMatrix(prev => ({ ...prev, [data.id]: new Array(permissions.length).fill(false) }));

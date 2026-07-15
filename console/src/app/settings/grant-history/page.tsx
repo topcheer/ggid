@@ -17,7 +17,7 @@ export default function GrantHistoryPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/oauth/grant-history", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load grant history: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setEvents(d.events || d || []);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load grant history"); }

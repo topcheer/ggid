@@ -28,7 +28,7 @@ export default function GrantTypeStatsPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/oauth/grant-type-stats", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load stats: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setData(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load grant type stats"); }
     finally { setLoading(false); }

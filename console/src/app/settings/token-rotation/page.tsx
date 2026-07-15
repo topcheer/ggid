@@ -16,7 +16,7 @@ export default function TokenRotationPage() {
   const fetchClients = useCallback(async () => {
     try {
       const res = await fetch("/api/v1/oauth/clients", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load clients: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setClients(d.clients || d || []);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load clients"); }
@@ -26,7 +26,7 @@ export default function TokenRotationPage() {
     setError(null);
     try {
       const res = await fetch(`/api/v1/oauth/token-rotation?client_id=${encodeURIComponent(id)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load rotation config: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setConfig(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load rotation config"); }
     finally { setLoading(false); }
@@ -39,7 +39,7 @@ export default function TokenRotationPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/oauth/token-rotation", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
-      if (!res.ok) throw new Error(`Failed to save rotation config: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to save rotation config"); }
     finally { setSaving(false); }

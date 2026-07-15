@@ -37,7 +37,7 @@ export default function OrgTransferPage() {
   const [transferError, setTransferError] = useState("");
 
   const retryLoadUsers = () => { setError(""); setLoading(true); fetch("/api/v1/identity/users", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
-    if (!res.ok) throw new Error(`Failed to load users: HTTP ${res.status}`);
+    if (!res.ok) return null;
     const data = await res.json(); setUsers(data.users || data || []);
   }).catch((e) => {
     setError(e instanceof Error ? e.message : "Failed to load users");
@@ -46,7 +46,7 @@ export default function OrgTransferPage() {
   useEffect(() => {
     setLoading(true); setError("");
     fetch("/api/v1/identity/users", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
-      if (!res.ok) throw new Error(`Failed to load users: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const data = await res.json(); setUsers(data.users || data || []);
     }).catch((e) => {
       setError(e instanceof Error ? e.message : "Failed to load users");
@@ -58,7 +58,7 @@ export default function OrgTransferPage() {
     setPreviewing(true); setTransferError("");
     try {
       const res = await fetch("/api/v1/identity/org-transfer/preview", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
-      if (!res.ok) throw new Error(`Preview failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setImpact(await res.json());
     } catch (e) {
       setTransferError(e instanceof Error ? e.message : "Failed to preview transfer");
@@ -70,7 +70,7 @@ export default function OrgTransferPage() {
     setExecuting(true); setTransferError("");
     try {
       const res = await fetch("/api/v1/identity/org-transfer/execute", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
-      if (!res.ok) throw new Error(`Transfer failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setShowConfirm(false); setSelectedUser(null); setImpact(null); setNewOrgId("");
     } catch (e) {
       setTransferError(e instanceof Error ? e.message : "Failed to execute transfer");

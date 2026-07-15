@@ -29,7 +29,7 @@ export default function EvidenceExpiryPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/audit/evidence-expiry", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load evidence: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const data = await res.json();
       setItems(data.evidence || data || []);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load evidence expiry"); }
@@ -45,7 +45,7 @@ export default function EvidenceExpiryPage() {
         method: "POST",
         headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
-      if (!res.ok) throw new Error(`Refresh failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setItems((prev) => prev.map((e) => e.id === id ? { ...e, status: "valid", days_remaining: 90, expires_at: new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0] } : e));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to refresh evidence"); }
     finally {

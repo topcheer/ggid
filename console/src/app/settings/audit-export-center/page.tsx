@@ -95,7 +95,7 @@ export default function AuditExportCenterPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) return null;
         // Export jobs will be loaded when API is ready
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");

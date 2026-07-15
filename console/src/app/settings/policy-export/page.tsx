@@ -19,7 +19,7 @@ export default function PolicyExportPage() {
     setExporting(true); setError("");
     try {
       const res = await fetch("/api/v1/policy/export", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Export failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -36,7 +36,7 @@ export default function PolicyExportPage() {
     setImporting(true); setError("");
     try {
       const res = await fetch("/api/v1/policy/import-preview", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
-      if (!res.ok) throw new Error(`Preview failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setDiff(await res.json());
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to preview import");
@@ -47,7 +47,7 @@ export default function PolicyExportPage() {
     setImporting(true); setError("");
     try {
       const res = await fetch("/api/v1/policy/import", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
-      if (!res.ok) throw new Error(`Import failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setMessage("Import completed successfully."); setDiff(null); setImportJson("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to import policies");

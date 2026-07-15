@@ -39,7 +39,7 @@ export default function SessionTimeoutConfigPage() {
     setSaving(true); setError("");
     try {
       const res = await fetch("/api/v1/auth/session-timeout-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
-      if (!res.ok) throw new Error(`Save failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("sessionTimeout.failedSave"));

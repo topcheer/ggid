@@ -41,7 +41,7 @@ export default function DelegationValidatorPage() {
     fetch("/api/v1/policies/delegations", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setRules(data.rules || []); setLoading(false); })
       .catch(err => { setError(err.message); setLoading(false); });
   }, []);
@@ -57,7 +57,7 @@ export default function DelegationValidatorPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ delegator, delegatee, scopes: scopes.split(',').map(s => s.trim()).filter(Boolean), maxDepth }),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setResult(data); setValidating(false); })
       .catch(err => { setError(err.message); setValidating(false); });
   }, [delegator, delegatee, scopes, maxDepth]);

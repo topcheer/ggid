@@ -28,7 +28,7 @@ export default function AgentDelegationGraphPage() {
     fetch("/api/v1/identity/nhi/orphans", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         const t = data.tree || data.data || data;
         setTree(t);

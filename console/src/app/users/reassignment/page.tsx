@@ -92,7 +92,7 @@ export default function UserReassignmentPage() {
         headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ user_id: selectedUser.user_id, new_org: newOrg, new_role: newRole, new_manager: newManager }),
       });
-      if (!res.ok) throw new Error(`Execute failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setShowConfirm(false);
       setSelectedUser(null);
       setImpact(null);

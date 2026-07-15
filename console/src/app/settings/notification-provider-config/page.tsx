@@ -23,7 +23,7 @@ export default function NotificationProviderConfigPage() {
     fetch("/api/v1/auth/notification-preferences", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setProviders(Array.isArray(data) ? data : (data.providers || data.items || [])); setLoading(false); })
       .catch(err => { setError(err.message); setLoading(false); });
   }, []);

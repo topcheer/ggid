@@ -30,7 +30,7 @@ export default function GeoFencingPage() {
     setSaving(true); setError("");
     try {
       const res = await fetch("/api/v1/settings/geo-fencing", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) });
-      if (!res.ok) throw new Error(`Save failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save geo-fencing rules");

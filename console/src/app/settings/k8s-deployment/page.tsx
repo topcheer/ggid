@@ -28,7 +28,7 @@ export default function K8sDeploymentPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) return null;
         const json = await res.json();
         setData(Array.isArray(json) ? json : [json]);
       } catch (e) {

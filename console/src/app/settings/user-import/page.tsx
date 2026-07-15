@@ -25,7 +25,7 @@ export default function UserImportPage() {
     setImportError("");
     try {
       const res = await fetch("/api/v1/identity/users/import", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ file: fileName, mappings, dry_run: dryRun }) });
-      if (!res.ok) throw new Error(`Import failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const data = await res.json();
       setResults({ created: data.created ?? 0, updated: data.updated ?? 0, skipped: data.skipped ?? 0, failed: data.failed ?? 0, errors: data.errors || [] });
     } catch (e) {

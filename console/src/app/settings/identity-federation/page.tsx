@@ -26,7 +26,7 @@ export default function IdentityFederationPage() {
     fetch("/api/v1/identity/federation/trusts", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setTrusts(data.trusts || data.items || []); setLoading(false); })
       .catch(err => { setError(err.message); setLoading(false); });
   }, []);
@@ -49,7 +49,7 @@ export default function IdentityFederationPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ metadataUrl: trust.metadataUrl, protocol: trust.protocol }),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setTestResult(data.message || `Connection to ${trust.idpName} successful.`); })
       .catch(err => { setTestResult(`Error: ${err.message}`); });
   };

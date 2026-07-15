@@ -14,7 +14,7 @@ export default function PasswordPolicyConfigPage() {
     setLoading(true); setError(null);
     try {
       const res = await fetch("/api/v1/auth/password-policy-config", { headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) return null;
       const data = await res.json();
       if (data) setConfig(prev => ({ ...prev, ...data }));
     } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }

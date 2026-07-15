@@ -17,7 +17,7 @@ export default function OauthConsentFlowPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/oauth/consent-flow-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load config: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setConfig(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedLoad")); }
     finally { setLoading(false); }
@@ -31,7 +31,7 @@ export default function OauthConsentFlowPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/oauth/consent-flow-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
-      if (!res.ok) throw new Error(`Save failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
     } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedSave")); }
     finally { setSaving(false); }
   };

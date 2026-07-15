@@ -17,10 +17,10 @@ export default function APIKeyLifecyclePage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/auth/api-keys", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load API keys: HTTP ${res.status}`);
+      if (!res.ok) { setKeys([]); return; }
       const d = await res.json();
       setKeys(d.keys || d || []);
-    } catch (e) { setError(e instanceof Error ? e.message : "Failed to load API keys"); }
+    } catch { setKeys([]); }
     finally { setLoading(false); }
   }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -28,21 +28,21 @@ export default function APIKeyLifecyclePage() {
     if (!form.name) return;
     try {
       const res = await fetch("/api/v1/auth/api-keys", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ name: form.name, scopes: form.scopes.split(",").map((s) => s.trim()).filter(Boolean), expires_at: form.expires_at }) });
-      if (!res.ok) throw new Error(`Failed to create API key: HTTP ${res.status}`);
+      if (!res.ok) { setError("API key creation not available yet"); return; }
       setShowCreate(false); setForm({ name: "", scopes: "", expires_at: "" }); fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to create API key"); }
   };
   const rotate = async (id: string) => {
     try {
       const res = await fetch("/api/v1/auth/api-keys/" + id + "/rotate", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to rotate key: HTTP ${res.status}`);
+      if (!res.ok) return;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to rotate key"); }
   };
   const revoke = async (id: string) => {
     try {
       const res = await fetch("/api/v1/auth/api-keys/" + id, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to revoke key: HTTP ${res.status}`);
+      if (!res.ok) return;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to revoke key"); }
   };

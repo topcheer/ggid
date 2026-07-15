@@ -18,7 +18,7 @@ export default function PolicySimulationLabPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/policy/simulation-lab", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subject, resource, action: action || "access" }) });
-      if (!res.ok) throw new Error(`Simulation failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setResults(d.results || []);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to run simulation"); }

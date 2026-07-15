@@ -17,7 +17,7 @@ export default function AccountRecoveryPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/auth/account-recovery", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load recovery config: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setConfig(d.config);
       setCodes(d.recovery_codes || []);

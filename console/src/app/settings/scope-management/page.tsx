@@ -24,7 +24,7 @@ export default function ScopeManagementPage() {
     fetch("/api/v1/oauth/scopes", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         setScopes(data.scopes || data.items || []);
         setClients(data.clients || []);
@@ -39,14 +39,14 @@ export default function ScopeManagementPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify(newScope),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setScopes(prev => [...prev, data]); setShowForm(false); setNewScope({ name: '', description: '', isSystem: false, defaultForClients: false, parent: '-' }); })
       .catch(err => setError(err.message));
   };
 
   const deleteScope = (id: string) => {
     fetch(`/api/v1/oauth/scopes/${id}`, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); setScopes(prev => prev.filter(s => s.id !== id)); })
+      .then(res => { if (!res.ok) return null; setScopes(prev => prev.filter(s => s.id !== id)); })
       .catch(err => setError(err.message));
   };
 

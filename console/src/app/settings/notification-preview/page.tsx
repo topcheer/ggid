@@ -44,7 +44,7 @@ export default function NotificationPreviewPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ template, variables, to: "preview@example.com" }),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(() => { setSendResult('Test email sent to preview@example.com'); setTimeout(() => setSendResult(''), 3000); })
       .catch(err => setSendResult(`Error: ${err.message}`))
       .finally(() => setSending(false));

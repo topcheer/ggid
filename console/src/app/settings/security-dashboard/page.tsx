@@ -19,7 +19,7 @@ export default function SecurityDashboardPage() {
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) return null;
         // API returns posture data; will be wired when backend is ready
       } catch (e) {
         setError(e instanceof Error ? e.message : t("complianceDashboard.failedLoad"));

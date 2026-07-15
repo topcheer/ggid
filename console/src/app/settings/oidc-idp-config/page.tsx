@@ -25,7 +25,7 @@ export default function OidcIdpConfigPage() {
     fetch("/api/v1/identity/oidc-idp-config", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         if (data.discoveryUrl) setDiscoveryUrl(data.discoveryUrl);
         if (data.clientId) setClientId(data.clientId);
@@ -52,7 +52,7 @@ export default function OidcIdpConfigPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ discoveryUrl }),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         setTestResult(data.message || 'Discovery successful');
         if (data.issuerUrl) setIssuerUrl(data.issuerUrl);

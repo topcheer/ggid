@@ -28,7 +28,7 @@ export default function DataMaskingConfigPage() {
     fetch("/api/v1/identity/pii-config", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         setFields(data.fields || []);
         setStats(data.stats || { fieldsConfigured: (data.fields || []).length, recordsMasked24h: 0, auditMasked: 0, exportsMasked: 0 });

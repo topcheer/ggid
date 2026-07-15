@@ -16,7 +16,7 @@ export default function SessionInspectorPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/auth/session-inspector?user=" + encodeURIComponent(search), { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Search failed: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setSessions(d.sessions || d || []);
     } catch (e) {
@@ -26,7 +26,7 @@ export default function SessionInspectorPage() {
   const revoke = async (id: string) => {
     try {
       const res = await fetch("/api/v1/auth/session-inspector/" + id, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to revoke session: HTTP ${res.status}`);
+      if (!res.ok) return null;
       setSessions(sessions.filter((s) => s.id !== id));
       if (selected?.id === id) setSelected(null);
     } catch (e) {

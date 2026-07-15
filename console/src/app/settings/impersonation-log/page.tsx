@@ -15,7 +15,7 @@ export default function ImpersonationLogPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/auth/impersonation-log", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to load impersonation log: HTTP ${res.status}`);
+      if (!res.ok) return null;
       const d = await res.json();
       setEvents(d.events || d || []);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load impersonation log"); }
@@ -25,7 +25,7 @@ export default function ImpersonationLogPage() {
   const revoke = async (id: string) => {
     try {
       const res = await fetch("/api/v1/auth/impersonation-log/" + id + "/revoke", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (!res.ok) throw new Error(`Failed to revoke session: HTTP ${res.status}`);
+      if (!res.ok) return null;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to revoke session"); }
   };

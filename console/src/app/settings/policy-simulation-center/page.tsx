@@ -29,7 +29,7 @@ export default function PolicySimulationCenterPage() {
     fetch("/api/v1/policy/policies", {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
         const items = data.policies || data.items || [];
         setPolicies(items);
@@ -46,7 +46,7 @@ export default function PolicySimulationCenterPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ policyId: selectedPolicy, subject: subjectAttrs, resource: resourceAttrs, action, environment }),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setResult(data); setSimulating(false); })
       .catch(err => { setError(err.message); setSimulating(false); });
   }, [selectedPolicy, subjectAttrs, resourceAttrs, action, environment]);
@@ -57,7 +57,7 @@ export default function PolicySimulationCenterPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ csv: csvInput }),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setBatchResults(data.results || []); })
       .catch(err => { setError(err.message); });
   }, [csvInput]);
@@ -68,7 +68,7 @@ export default function PolicySimulationCenterPage() {
       headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ policyId: selectedPolicy }),
     })
-      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setImpact(data); })
       .catch(err => { setError(err.message); });
   }, [selectedPolicy]);
