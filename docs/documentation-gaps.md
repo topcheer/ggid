@@ -51,3 +51,23 @@ Found 3 pairs of duplicate docs (older shorter versions alongside newer expanded
 
 Action: Added deprecation notices to the 3 superseded files pointing to canonical versions.
 Recommendation: Delete superseded files in next cleanup and add redirects if serving docs via HTTP.
+
+## Hourly Quality Optimization (2026-07-15 Round 40)
+
+Files scanned (newer than docs/.last-scan): 4
+- docs/research/nis2-cra-pipl-compliance.md
+- docs/team-backlog.md
+- docs/platform-scan-state.md
+- docs/platform-completeness-report.md
+
+Fixes applied:
+- docs/team-backlog.md: Removed duplicate numbering in P2 queue (two items both labeled #5/#6; renumbered #8-#12).
+- docs/platform-completeness-report.md:
+  - Renumbered MEDIUM Priority findings to be sequential (5-26).
+  - Replaced placeholder "TBD" commits for gap #22 (642bda6b) and gap #26 (d0a26620).
+  - Merged split Scan History table (Round 18 → Round 19) into one continuous table.
+  - Added Round 40 E2E regression result.
+- docs/platform-scan-state.md: Removed orphaned GeoIP list item; updated round 40/41 status.
+
+New/verified gaps:
+- No new documentation-critical gaps identified this round. OAuth 2.1 audit endpoint (`/api/v1/oauth/stats/oauth-2-1-audit`) and FAPI config endpoint (`/api/v1/oauth/fapi-config`) are covered by `docs/research/oauth21-fapi-fedcm-gap.md`.

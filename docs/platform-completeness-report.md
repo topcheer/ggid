@@ -34,9 +34,6 @@
 
 | # | Feature | Location | Issue | Status | Commit |
 |---|---------|----------|-------|--------|--------|
-| 23 | OAuth 2.1 compliance audit | services/oauth/internal/server/oauth21_audit_handler.go | Dynamic analyzer implemented: reads ListClients, checks grant_types, redirect_uris, PKCE, auth_method. Tests cover compliant/non_compliant/mixed/method-not-allowed. | [DONE] | dfcb8a7f |
-| 24 | FAPI 2.0 profile | services/oauth | Added  client flag and enforcement: PKCE S256, PAR, DPoP, response_type=code;  GET/PUT; tests added. | [DONE] | ccae234f |
-| 25 | FedCM support | services/oauth | No FedCM endpoints. Browser consumer-identity feature; not required for B2B IAM productization. Tracked in backlog for future. | [ACCEPTABLE] | research |
 | 5 | SAML SLO | oauth/server/server.go | `/saml/slo` and `/saml/idp/slo` handlers process LogoutRequest/Response. | [DONE] | arch |
 | 6 | Device-Bound SSO | oauth/service/device_bound_sso.go | IssueDeviceBoundToken, VerifyDeviceBoundToken, signClaims, verifyClaims implemented. No remaining TODOs. | [DONE] | backend |
 | 7 | Backup Codes Storage | auth/service/backup_codes.go, auth/cmd/main.go | `NewPgBackupCodeRepo(pool)` wired in main.go; table created via `EnsureSchema`. Falls back to in-memory only when pool is nil. | [DONE] | backend |
@@ -44,6 +41,9 @@
 | 9 | NoopIdentityClient | auth/service/identity_client.go, auth/cmd/main.go | `NewHTTPIdentityClient` used when `IDENTITY_SERVICE_URL` is set; Noop is intentional degraded fallback. | [DONE] | backend |
 | 10 | CIBA backchannel route | oauth/server/server.go | CIBA backchannel endpoint `/api/v1/oauth/backchannel` registered and invokes BackchannelAuthentication. Service-layer tests in ciba_flow_test.go exercise the flow. | [DONE] | 2934fd98 |
 | 11 | Client Branding persistence | oauth/internal/server/client_branding.go | `handleClientBranding` uses `brandingAdapterVar` (PG-backed adapter with mem fallback). Regression test `TestGapRegression_ClientBranding_UsesAdapter` passes. | [DONE] | 2934fd98 |
+| 12 | GeoIP | gateway/middleware/geoip.go | MaxMind GeoLite2 DB integration via GEOIP_DB_PATH; private IP detection; block/allow country lists; X-Geo-Country header. Verified by geoip_test.go. | [DONE] | 852a297b |
+| 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
+| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | PKCS#11 provider + integration into auth/oauth/gateway cmd/main.go; TokenService and OAuth server accept KeyProvider; local keys auto-generated. | [DONE] | 12db3bac |
 | 15 | OAuth server internal error exposure | oauth/internal/server/server.go, token_events.go | 500 responses returned raw err.Error() to clients (CreateClient, ListClients, DeleteClient, CreateDeviceAuthorization, ListAgents, IssueSAMLToken, BuildSAMLResponse). Added writeInternalError helper that logs error and returns sanitized "internal server error". | [DONE] | 5a40d929 |
 | 16 | Auth server internal error exposure | auth/internal/server/http.go, trust_store_handler.go, admin_config.go | 500 responses returned raw err.Error() to clients. Replaced with writeInternalError helper / sanitized messages. | [DONE] | 5a40d929 |
 | 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | 5a40d929 |
@@ -51,16 +51,11 @@
 | 19 | Server handler coverage gaps | identity/internal/server, audit/internal/server, org/internal/server | Added focused HTTP handler tests for certification-status, management-chain, reassign, GDPR export, query-metrics, SIEM health, daily-aggregations, access-matrix, teams-export, membership-trends. | [DONE] | d0bdeb50 |
 | 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request methods added to all 7 SDKs (Python, Java, Rust, Ruby, C#, Dart, PHP). | [DONE] | 5cd72023 |
 | 21 | Gateway missing route prefixes | services/gateway/internal/config/config.go | Service routes `/api/v1/org/*`, `/api/v1/policy/*`, and `/api/v1/webauthn/*` were not registered in the API Gateway, causing 404 for those endpoints. Added prefixes mapping to org, policy, and auth services. | [DONE] | ab4a1030 |
-| 22 | Gateway middleware chain gaps | services/gateway/internal/router/router.go | `MaxBodySize`, `HostValidation`, and `TimeoutMiddleware` existed in the middleware package but were not applied in the gateway `Handler()` chain. Wired all three with configurable defaults. | [DONE] | TBD |
-| 26 | gRPC TLS fail-secure + HTTP client timeouts | services/identity/internal/server/server.go, services/org/cmd/main.go, services/policy/cmd/main.go, services/audit/cmd/main.go, services/audit/internal/service/alert_webhook.go, services/auth/internal/service/http_identity_client.go, services/gateway/internal/middleware/graphql.go | gRPC TLS fallback from enabled to plaintext was silent and unsafe. Made fallback require explicit `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true`. Replaced `http.DefaultClient` and no-timeout `http.Client{}` in audit alert webhooks, auth identity client, and gateway GraphQL resolver with timeouts. | [DONE] | TBD |
-
-### LOW Priority
-
-| # | Feature | Location | Issue | Status | Commit |
-|---|---------|----------|-------|--------|--------|
-| 12 | GeoIP | gateway/middleware/geoip.go | MaxMind GeoLite2 DB integration via GEOIP_DB_PATH; private IP detection; block/allow country lists; X-Geo-Country header. Verified by geoip_test.go. | [DONE] | 852a297b |
-| 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
-| 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | PKCS#11 provider + integration into auth/oauth/gateway cmd/main.go; TokenService and OAuth server accept KeyProvider; local keys auto-generated. | [DONE] | 12db3bac |
+| 22 | Gateway middleware chain gaps | services/gateway/internal/router/router.go | `MaxBodySize`, `HostValidation`, and `TimeoutMiddleware` existed in the middleware package but were not applied in the gateway `Handler()` chain. Wired all three with configurable defaults. | [DONE] | 642bda6b |
+| 23 | OAuth 2.1 compliance audit | services/oauth/internal/server/oauth21_audit_handler.go | Dynamic analyzer implemented: reads ListClients, checks grant_types, redirect_uris, PKCE, auth_method. Tests cover compliant/non_compliant/mixed/method-not-allowed. | [DONE] | dfcb8a7f |
+| 24 | FAPI 2.0 profile | services/oauth | Added  client flag and enforcement: PKCE S256, PAR, DPoP, response_type=code;  GET/PUT; tests added. | [DONE] | ccae234f |
+| 25 | FedCM support | services/oauth | No FedCM endpoints. Browser consumer-identity feature; not required for B2B IAM productization. Tracked in backlog for future. | [ACCEPTABLE] | research |
+| 26 | gRPC TLS fail-secure + HTTP client timeouts | services/identity/internal/server/server.go, services/org/cmd/main.go, services/policy/cmd/main.go, services/audit/cmd/main.go, services/audit/internal/service/alert_webhook.go, services/auth/internal/service/http_identity_client.go, services/gateway/internal/middleware/graphql.go | gRPC TLS fallback from enabled to plaintext was silent and unsafe. Made fallback require explicit `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true`. Replaced `http.DefaultClient` and no-timeout `http.Client{}` in audit alert webhooks, auth identity client, and gateway GraphQL resolver with timeouts. | [DONE] | d0a26620 |
 
 
 | Feature | Was | Fixed By | Commit | Date |
@@ -97,7 +92,6 @@
 | 2026-07-15 | Round 16 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 | 2026-07-15 | Round 17 — Focus G (SDK Alignment) | +1 | 0 (SDK gap #20 assigned to arch) |
 | 2026-07-15 | Round 18 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
-
 | 2026-07-15 | Round 19 — Focus A (Stub/Placeholder/TODO) | 0 | 0 (remaining stubs are intentional) |
 | 2026-07-15 | Round 20 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 | 2026-07-15 | Round 21 — Focus B (Route Wiring) | +1 | 1 (gateway missing /api/v1/org, /api/v1/policy, /api/v1/webauthn prefixes) |
@@ -107,6 +101,7 @@
 | 2026-07-15 | Round 31 — Focus E (Security Config / Error Handling) | +1 | 1 (gRPC TLS fail-secure + HTTP client timeouts) |
 | 2026-07-15 | Round 38 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS, current verification) |
 | 2026-07-15 | Round 39 — Focus D (Data Persistence) | 0 | 0 (no new productization-critical gaps; repository CRUD patterns reviewed) |
+| 2026-07-15 | Round 40 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 ## Remaining Real Gaps (post-audit)
 
 1. **GeoIP MaxMind integration** (LOW, [DONE]) — gateway/middleware/geoip.go
@@ -114,8 +109,8 @@
 
 ## Next Actions
 
-- Round 39 (odd, Focus D): Data Persistence scan — no new gaps; repository CRUD patterns verified
-- Round 40 (even): E2E regression tests 11/11 PASS (`deploy/e2e-docker-test.sh`)
+- Round 40 (even): E2E regression tests 11/11 PASS (`deploy/e2e-docker-test.sh`) — completed
+- Round 41 (odd, Focus E): Error Handling / Security Config scan
 - Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
 
 
