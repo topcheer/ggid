@@ -30,6 +30,7 @@
 | 2 | MFA TOTP Secret | auth/server/jit_mfa_handler.go | Hardcoded secret replaced with crypto/rand generated base32 secret. | [DONE] | backend |
 | 3 | SAML SP-Initiated SSO | oauth/server/server.go | SP-initiated AuthnRequest generation and IdP redirect implemented. | [DONE] | backend/arch |
 | 4 | Device-Bound SSO signing key | oauth/service/device_bound_sso.go | Hardcoded default HMAC key replaced with random 32-byte key. | [DONE] | backend |
+
 ### MEDIUM Priority
 
 | # | Feature | Location | Issue | Status | Commit |
@@ -57,6 +58,7 @@
 | 25 | FedCM support | services/oauth | No FedCM endpoints. Browser consumer-identity feature; not required for B2B IAM productization. Tracked in backlog for future. | [ACCEPTABLE] | research |
 | 26 | gRPC TLS fail-secure + HTTP client timeouts | services/identity/internal/server/server.go, services/org/cmd/main.go, services/policy/cmd/main.go, services/audit/cmd/main.go, services/audit/internal/service/alert_webhook.go, services/auth/internal/service/http_identity_client.go, services/gateway/internal/middleware/graphql.go | gRPC TLS fallback from enabled to plaintext was silent and unsafe. Made fallback require explicit `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true`. Replaced `http.DefaultClient` and no-timeout `http.Client{}` in audit alert webhooks, auth identity client, and gateway GraphQL resolver with timeouts. | [DONE] | d0a26620 |
 
+## Previously Fixed (pre-audit)
 
 | Feature | Was | Fixed By | Commit | Date |
 |---------|------|----------|--------|------|
@@ -114,12 +116,4 @@
 - Round 46 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS, verified
 - Round 47 (odd, Focus A): Interface Integrity scan
 - Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
-
-
-
-
-
-
-
-
 
