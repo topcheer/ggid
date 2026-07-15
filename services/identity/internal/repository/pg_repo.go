@@ -161,7 +161,7 @@ func (r *pgRepo) GetUserByID(ctx context.Context, tenantID, id uuid.UUID) (*doma
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get user", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return user, nil
 }
 
@@ -194,7 +194,7 @@ func (r *pgRepo) getUserByColumn(ctx context.Context, tenantID uuid.UUID, where,
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get user", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return user, nil
 }
 
@@ -231,7 +231,7 @@ func (r *pgRepo) UpdateUser(ctx context.Context, tenantID, id uuid.UUID, input *
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "update user", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return user, nil
 }
 
@@ -346,7 +346,7 @@ func (r *pgRepo) ListUsers(ctx context.Context, filter *domain.ListUsersFilter) 
 		result.NextOffset = filter.Offset + pageSize
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return result, nil
 }
 
@@ -376,7 +376,7 @@ func (r *pgRepo) SetUserStatus(ctx context.Context, tenantID, id uuid.UUID, stat
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "set user status", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return user, nil
 }
 
@@ -461,7 +461,7 @@ func (r *pgRepo) GetCredentialByUsername(ctx context.Context, tenantID uuid.UUID
 	}
 	cred.Status = status
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return &cred, nil
 }
 
@@ -505,7 +505,7 @@ func (r *pgRepo) ListUserEmails(ctx context.Context, tenantID, userID uuid.UUID)
 		emails = append(emails, e)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return emails, nil
 }
 
@@ -631,7 +631,7 @@ func (r *pgRepo) GetUserByEmailID(ctx context.Context, tenantID, emailID uuid.UU
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get email", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return ue, nil
 }
 
@@ -737,7 +737,7 @@ func (r *pgRepo) ListExternalIdentities(ctx context.Context, tenantID, userID uu
 		identities = append(identities, ei)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return identities, nil
 }
 
@@ -831,6 +831,6 @@ func (r *pgRepo) FindExternalIdentity(ctx context.Context, tenantID uuid.UUID, p
 	}
 	ei.TenantID = tenantID
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return ei, nil
 }
