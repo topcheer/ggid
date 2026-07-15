@@ -34,6 +34,8 @@ type Config struct {
 	ReadTimeout     time.Duration       `yaml:"read_timeout"`
 	WriteTimeout    time.Duration       `yaml:"write_timeout"`
 	UpstreamTimeout time.Duration       `yaml:"upstream_timeout"`
+	MaxBodySize     int64               `yaml:"max_body_size"`
+	AllowedHosts    []string            `yaml:"allowed_hosts"`
 }
 
 // Default returns the default gateway configuration.

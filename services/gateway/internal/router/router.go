@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -408,9 +409,11 @@ func (gw *Gateway) Handler() http.Handler {
 		}
 	})
 
-	// Apply outer middleware: PanicRecovery → SecurityHeaders → CORS → RequestID → StructuredLogging → RateLimit → BotDetect → TenantResolver → inner
+	// Apply outer middleware: PanicRecovery → SecurityHeaders → CORS → RequestID → StructuredLogging → RateLimit → BotDetect → TenantResolver → Timeout → MaxBodySize → inner
 	logger := middleware.NewStructuredLogger("ggid-gateway")
-	handler := middleware.TenantResolver(gw.cfg.DomainSuffix)(inner)
+	handler := middleware.MaxBodySize(gw.maxBodySize())(inner)
+	handler = middleware.TimeoutMiddleware(middleware.DefaultTimeoutConfig())(handler)
+	handler = middleware.TenantResolver(gw.cfg.DomainSuffix)(handler)
 	handler = middleware.BotDetect(handler)
 	handler = gw.rateLimiter.Middleware(handler)
 	handler = middleware.ContentTypeValidator(handler)
@@ -418,10 +421,44 @@ func (gw *Gateway) Handler() http.Handler {
 	handler = middleware.RequestID(handler)
 	handler = middleware.Gzip(handler)
 	handler = middleware.CORS(handler)
+	handler = middleware.HostValidation(gw.hostValidationConfig())(handler)
 	handler = middleware.SecurityHeaders(handler)
 	handler = middleware.PanicRecovery(logger)(handler)
 
 	return handler
+}
+
+// maxBodySize returns the configured maximum request body size.
+// Defaults to 10 MiB; override via GATEWAY_MAX_BODY_SIZE_BYTES env var.
+func (gw *Gateway) maxBodySize() int64 {
+	const defaultMax = 10 * 1024 * 1024
+	if gw.cfg != nil && gw.cfg.MaxBodySize > 0 {
+		return gw.cfg.MaxBodySize
+	}
+	if v := os.Getenv("GATEWAY_MAX_BODY_SIZE_BYTES"); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+			return n
+		}
+	}
+	return defaultMax
+}
+
+// hostValidationConfig returns the Host header validation config.
+// Allowed hosts can be set via GATEWAY_ALLOWED_HOSTS (comma-separated).
+// Empty allowlist disables validation (allow all), which is the safe default for development.
+func (gw *Gateway) hostValidationConfig() middleware.HostValidationConfig {
+	cfg := middleware.HostValidationConfig{}
+	if gw.cfg != nil && len(gw.cfg.AllowedHosts) > 0 {
+		cfg.AllowedHosts = gw.cfg.AllowedHosts
+		return cfg
+	}
+	if v := os.Getenv("GATEWAY_ALLOWED_HOSTS"); v != "" {
+		cfg.AllowedHosts = strings.Split(v, ",")
+		for i := range cfg.AllowedHosts {
+			cfg.AllowedHosts[i] = strings.TrimSpace(cfg.AllowedHosts[i])
+		}
+	}
+	return cfg
 }
 
 // injectTenantIntoBody injects tenant_id into the JSON body of POST/PUT/PATCH requests.

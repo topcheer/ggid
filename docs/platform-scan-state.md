@@ -1,16 +1,16 @@
 # Platform Scan State
 
 ## Current round: 24
-## Last scan focus: E2E Regression Tests (11/11 PASS after auth container restart)
-## Next scan focus: C (Middleware Chain)
-## Total findings: 21
-## Done: 21
+## Last scan focus: C (Middleware Chain)
+## Next scan focus: E2E Regression Tests
+## Total findings: 22
+## Done: 22
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 23 is odd: execute completeness scan (focus C — Middleware Chain). Round 24 will be E2E regression tests.*
+*Round 24 is even: execute E2E regression tests (`deploy/e2e-docker-test.sh`).*
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
@@ -48,7 +48,7 @@ LOW (acceptable for now — short-lived or fallback):
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
 - bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
-- (current): Round 22 E2E regression — Docker Compose E2E 11/11 PASS after auth container restart (transient auth session cache issue)
+- (current): Round 23 focus C middleware chain — wire MaxBodySize, HostValidation, TimeoutMiddleware into gateway Handler()
 - (round 19): Round 19 focus A stub/placeholder — no new productization gaps
 - (round 13): Round 13 focus E error handling — sanitize internal error exposure in oauth/internal/server and auth/internal/server
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
