@@ -33,6 +33,7 @@ var publicPaths = []string{
 	"/api/v1/auth/social/",
 	"/api/v1/healthz",
 	"/api/v1/system/initialized",
+	"/api/v1/system/bootstrap",
 	"/api/v1/tenants/resolve",
 	"/api/v1/oauth/jwks",
 	"/api/v1/oauth/.well-known/",
