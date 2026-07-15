@@ -40,7 +40,7 @@ export default function ScimSyncHealthPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold flex items-center gap-2"><Server className="w-6 h-6 text-blue-500" /> SCIM Sync Health</h1><p className="text-sm text-gray-500 mt-1">Monitor SCIM user provisioning sync status and errors.</p></div>
-        <button onClick={fetchData} className="px-3 py-2 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Refresh</button>
+        <button onClick={fetchData} aria-label="Refresh data" className="px-3 py-2 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Refresh</button>
       </div>
 
       {data && (

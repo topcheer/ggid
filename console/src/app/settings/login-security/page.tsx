@@ -194,7 +194,7 @@ export default function LoginSecurityPage() {
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-sm font-semibold uppercase text-gray-500"><Globe className="h-4 w-4" /> IP Allowlist ({ipAllow.length})</h2>
-            <button onClick={() => setShowIpAdd(true)} className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"><Plus className="h-3 w-3" /> Add</button>
+            <button onClick={() => setShowIpAdd(true)} aria-label="Add IP address" className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"><Plus className="h-3 w-3" /> Add</button>
           </div>
           {ipAllow.length === 0 ? (
             <div className={cardCls}><div className="py-8 text-center"><Globe className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No IP restrictions. All IPs allowed.</p></div></div>
