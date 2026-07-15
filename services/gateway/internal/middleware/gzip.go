@@ -71,6 +71,15 @@ func (g *gzipResponseWriter) WriteHeader(code int) {
 		g.ResponseWriter.WriteHeader(code)
 		return
 	}
+	// Set Content-Encoding BEFORE flushing headers, otherwise the browser
+	// receives gzip bytes without knowing to decompress them.
+	if !g.wrote {
+		g.wrote = true
+		g.Header().Set("Content-Encoding", "gzip")
+		g.Header().Del("Content-Length")
+		g.writer = g.pool.Get().(*gzip.Writer)
+		g.writer.Reset(g.ResponseWriter)
+	}
 	g.ResponseWriter.WriteHeader(code)
 }
 
