@@ -1,6 +1,7 @@
 'use client';
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 
 interface AuditEvent { id: string; timestamp: string; actor: string; action: string; resource: string; tenant: string; severity: string; ip: string; }
 
@@ -9,7 +10,6 @@ export default function AuditLogViewerPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +23,6 @@ export default function AuditLogViewerPage() {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -33,9 +32,12 @@ export default function AuditLogViewerPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [actionFilter, setActionFilter] = useState('');
+  const [selected, setSelected] = useState<AuditEvent | null>(null);
+  const [realtime, setRealtime] = useState(true);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [events] = useState<AuditEvent[]>([
     { id: 'e1', timestamp: '2026-07-12 14:32:15', actor: 'admin@ggid.io', action: 'user.create', resource: 'user/alice', tenant: 'default', severity: 'info', ip: '10.0.0.5' },
     { id: 'e2', timestamp: '2026-07-12 14:30:08', actor: 'system', action: 'auth.login', resource: 'auth/session', tenant: 'default', severity: 'info', ip: '192.168.1.50' },
@@ -43,10 +45,6 @@ export default function AuditLogViewerPage() {
     { id: 'e4', timestamp: '2026-07-12 14:20:01', actor: 'admin@ggid.io', action: 'policy.update', resource: 'policy/rbac', tenant: 'default', severity: 'medium', ip: '10.0.0.5' },
     { id: 'e5', timestamp: '2026-07-12 14:15:30', actor: 'system', action: 'token.revoke', resource: 'token/abc123', tenant: 'default', severity: 'info', ip: '127.0.0.1' },
   ]);
-  const [severityFilter, setSeverityFilter] = useState('all');
-  const [actionFilter, setActionFilter] = useState('');
-  const [selected, setSelected] = useState<AuditEvent | null>(null);
-  const [realtime, setRealtime] = useState(true);
 
   const sevColor = (s: string): string => s === 'high' ? 'bg-red-100 text-red-700' : s === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
   const filtered = events.filter(e => (severityFilter === 'all' || e.severity === severityFilter) && (!actionFilter || e.action.includes(actionFilter)));

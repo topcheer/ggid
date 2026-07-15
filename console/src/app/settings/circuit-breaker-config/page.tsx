@@ -1,12 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 export default function CircuitBreakerConfigPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   const t = useTranslations();
 
@@ -22,7 +22,6 @@ export default function CircuitBreakerConfigPage() {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -32,9 +31,6 @@ export default function CircuitBreakerConfigPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.circuitBreakerConfig.noData")}</div>;
   const [failureThreshold, setFailureThreshold] = useState(5);
   const [successThreshold, setSuccessThreshold] = useState(3);
   const [timeoutDuration, setTimeoutDuration] = useState(30);
@@ -43,6 +39,8 @@ export default function CircuitBreakerConfigPage() {
   const [lastFailure, setLastFailure] = useState('never');
   const [autoRestore, setAutoRestore] = useState(true);
   const [excludeClientErrors, setExcludeClientErrors] = useState(false);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const [rules, setRules] = useState([
     { service: 'identity-service', threshold: 5, enabled: true },
     { service: 'policy-service', threshold: 8, enabled: true },

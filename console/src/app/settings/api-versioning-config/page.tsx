@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface ApiVersion {
@@ -14,7 +15,6 @@ export default function ApiVersioningConfigPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   const t = useTranslations();
 
@@ -30,7 +30,6 @@ export default function ApiVersioningConfigPage() {
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -40,13 +39,12 @@ export default function ApiVersioningConfigPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.apiVersioning.noData")}</div>;
   const [currentVersion, setCurrentVersion] = useState('v2');
   const [sunsetPolicy, setSunsetPolicy] = useState('deprecation');
   const [deprecationPeriod, setDeprecationPeriod] = useState(180);
   const [versioningStyle, setVersioningStyle] = useState('header');
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const [versions, setVersions] = useState<ApiVersion[]>([
     { version: 'v2', status: 'active', releaseDate: '2026-06-01', sunsetDate: '-', consumers: 142 },
     { version: 'v1', status: 'deprecated', releaseDate: '2025-01-15', sunsetDate: '2026-12-31', consumers: 23 },
