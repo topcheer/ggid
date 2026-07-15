@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuditRealtimeAlerts, ActiveAlert } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import {
   Bell,
   BellOff,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 export default function AuditRealTimeAlertsPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, acknowledgeAlert, testAlert } = useAuditRealtimeAlerts();
 
   const [ack, setAck] = useState<Record<string, boolean>>({});

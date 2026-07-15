@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditAnomalyScoringConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Sliders, Activity, RefreshCw, Brain, Target, TrendingUp } from "lucide-react";
 
 export default function AuditAnomalyScoringConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, retrainModel } = useAuditAnomalyScoringConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading anomaly scoring config...</div>;

@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditSiemForwarding } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Send, AlertTriangle, CheckCircle, Activity } from "lucide-react";
 
 export default function AuditSiemForwardingPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testForward } = useAuditSiemForwarding();
 
   if (loading) return <div className="p-8 text-gray-400">Loading SIEM forwarding...</div>;

@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditStreamProcessing } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Activity, Zap, AlertTriangle, RefreshCw, TrendingDown, Server, Clock } from "lucide-react";
 
 export default function AuditStreamProcessingPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuditStreamProcessing();
 
   if (loading) return <div className="p-8 text-gray-400">Loading stream processing...</div>;

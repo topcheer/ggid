@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditDataLineage } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Database, ArrowRight, GitBranch, Trash2, Shield } from "lucide-react";
 
 export default function AuditDataLineagePage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuditDataLineage();
 
   if (loading) return <div className="p-8 text-gray-400">Loading data lineage...</div>;

@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditEvidenceCollection } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { FileCheck, Upload, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 
 export default function AuditEvidenceCollectionPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuditEvidenceCollection();
 
   if (loading) return <div className="p-8 text-gray-400">Loading evidence collection...</div>;

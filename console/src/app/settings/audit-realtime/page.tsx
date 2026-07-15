@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Radio, Pause, Play, Download } from "lucide-react";
@@ -22,6 +23,7 @@ const resultColors: Record<string, string> = {
 };
 
 export default function AuditRealtimePage() {
+  const t = useTranslations();
   const [events, setEvents] = useState<LiveEvent[]>([]);
   const [paused, setPaused] = useState(false);
   const [filterSeverity, setFilterSeverity] = useState("");
@@ -55,7 +57,7 @@ export default function AuditRealtimePage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Radio className={"w-6 h-6 text-red-500 " + (!paused ? "animate-pulse" : "")} /> Audit Realtime</h1><p className="text-sm text-gray-500 mt-1">Live audit event stream with filtering and export.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Radio className={"w-6 h-6 text-red-500 " + (!paused ? "animate-pulse" : "")} />{t("auditRealtime.title")}</h1><p className="text-sm text-gray-500 mt-1">Live audit event stream with filtering and export.</p></div>
         <div className="flex items-center gap-2"><button onClick={() => setPaused(!paused)} className={"px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 " + (paused ? "bg-green-600 text-white" : "border dark:border-gray-700")}>{paused ? <><Play className="w-3.5 h-3.5" /> Resume</> : <><Pause className="w-3.5 h-3.5" /> Pause</>}</button><button onClick={exportSnapshot} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-1"><Download className="w-3.5 h-3.5" /> Snapshot</button></div>
       </div>
 

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useAuditComplianceScheduler } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Calendar, Plus, CheckCircle, AlertTriangle, Clock, FileText } from "lucide-react";
 
 export default function AuditComplianceSchedulerPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuditComplianceScheduler();
   const [showModal, setShowModal] = useState(false);
 

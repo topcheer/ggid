@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useAuditQueryLibrary } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Bookmark, Share2, Clock, Tag, Play, Plus, Search } from "lucide-react";
 
 export default function AuditQueryLibraryPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuditQueryLibrary();
   const [showCreate, setShowCreate] = useState(false);
   const [tagFilter, setTagFilter] = useState("all");

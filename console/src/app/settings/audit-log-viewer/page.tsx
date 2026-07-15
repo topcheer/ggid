@@ -1,9 +1,11 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface AuditEvent { id: string; timestamp: string; actor: string; action: string; resource: string; tenant: string; severity: string; ip: string; }
 
 export default function AuditLogViewerPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

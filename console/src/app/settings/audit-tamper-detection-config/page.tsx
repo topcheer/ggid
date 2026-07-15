@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuditTamperDetectionConfig, AuditTamperDetectionConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuditTamperDetectionConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useAuditTamperDetectionConfig();
   const [form, setForm] = useState<AuditTamperDetectionConfig | null>(null);
   const [saving, setSaving] = useState(false);

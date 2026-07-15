@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditSiemMapping } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { ArrowRight, Filter, Tag, Play, Activity, Zap } from "lucide-react";
 
 export default function AuditSiemMappingPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testMapping } = useAuditSiemMapping();
 
   if (loading) return <div className="p-8 text-gray-400">Loading SIEM mapping...</div>;

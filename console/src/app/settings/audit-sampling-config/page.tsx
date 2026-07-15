@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditSamplingConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { FlaskConical, Target, BarChart3, CheckCircle } from "lucide-react";
 
 export default function AuditSamplingConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuditSamplingConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading sampling config...</div>;

@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditPipelineHealth } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Activity, ArrowRight, AlertTriangle, TrendingUp, Server, Zap } from "lucide-react";
 
 export default function AuditPipelineHealthPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useAuditPipelineHealth();
 
   if (loading) return <div className="p-8 text-gray-400">Loading pipeline health...</div>;

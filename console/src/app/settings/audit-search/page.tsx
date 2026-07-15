@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useCallback } from "react";
 import { Search, Download, Save, ChevronLeft, ChevronRight } from "lucide-react";
@@ -21,6 +22,7 @@ const sevColors: Record<string, string> = {
 };
 
 export default function AuditSearchPage() {
+  const t = useTranslations();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({ user: "", action: "", resource: "", severity: "", start_date: "", end_date: "" });
   const [results, setResults] = useState<AuditEntry[]>([]);
@@ -46,7 +48,7 @@ export default function AuditSearchPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Search className="w-6 h-6 text-blue-500" /> Audit Search</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Search className="w-6 h-6 text-blue-500" />{t("auditSearch.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Full-text search across audit events with advanced filters.</p>
       </div>
 

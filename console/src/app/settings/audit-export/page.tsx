@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Download, Calendar, Filter, FileDown } from "lucide-react";
 
 interface ExportHistoryItem { id: string; filename: string; size_kb: number; rows: number; format: string; status: "completed" | "processing" | "failed"; created_at: string; }
 
 export default function AuditExportPage() {
+  const t = useTranslations();
   const [format, setFormat] = useState("csv");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -37,7 +39,7 @@ export default function AuditExportPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Download className="w-6 h-6 text-blue-500" /> Audit Export</h1><p className="text-sm text-gray-500 mt-1">Export audit logs with filters in multiple formats.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Download className="w-6 h-6 text-blue-500" />{t("auditExport.title")}</h1><p className="text-sm text-gray-500 mt-1">Export audit logs with filters in multiple formats.</p></div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

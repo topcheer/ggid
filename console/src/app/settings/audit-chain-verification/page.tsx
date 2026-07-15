@@ -1,9 +1,11 @@
 "use client";
 
 import { useAuditChainVerification } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { ShieldCheck, CheckCircle, XCircle, AlertTriangle, Clock, Zap } from "lucide-react";
 
 export default function AuditChainVerificationPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, verifyNow } = useAuditChainVerification();
 
   if (loading) return <div className="p-8 text-gray-400">Loading chain verification...</div>;
