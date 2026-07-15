@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Shield,
   Plus,
@@ -89,6 +90,7 @@ function makeAbacRule(): AbacRule {
 }
 
 export default function PoliciesPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -394,7 +396,7 @@ export default function PoliciesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-2xl font-bold dark:text-gray-100">
-          <Shield className="h-6 w-6 text-brand-600" /> Policy Editor
+          <Shield className="h-6 w-6 text-brand-600" /> {t("policies.policyEditor")}
         </h1>
         <div className="flex gap-2">
           <input
@@ -407,30 +409,30 @@ export default function PoliciesPage() {
           <button
             onClick={() => importFileRef.current?.click()}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
-            title="Import policy from JSON file"
+            title={t("policies.importPolicy")}
           >
-            <Upload className="h-4 w-4" /> Import
+            <Upload className="h-4 w-4" /> {t("policies.import")}
           </button>
           <button
             onClick={handleExportJson}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
-            title="Export current policy as JSON file"
+            title={t("policies.exportPolicy")}
           >
-            <Download className="h-4 w-4" /> Export
+            <Download className="h-4 w-4" /> {t("policies.export")}
           </button>
           <button
             onClick={handleExportAllJson}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
-            title="Export ALL policies as JSON file"
+            title={t("policies.exportAll")}
           >
-            <FileJson className="h-4 w-4" /> Export All
+            <FileJson className="h-4 w-4" /> {t("policies.exportAllBtn")}
           </button>
           {selectedPolicy && (
             <button
               onClick={resetEditor}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
             >
-              New Policy
+              {t("policies.newPolicy")}
             </button>
           )}
         </div>
@@ -451,15 +453,15 @@ export default function PoliciesPage() {
         <div className="lg:col-span-1">
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="border-b border-gray-100 p-4 dark:border-gray-700">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Policies</h2>
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t("policies.policies")}</h2>
             </div>
             <div className="max-h-[500px] overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center gap-2 p-8 text-gray-500">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("common.loading")}
                 </div>
               ) : policies.length === 0 ? (
-                <p className="p-8 text-center text-sm text-gray-500">No policies yet</p>
+                <p className="p-8 text-center text-sm text-gray-500">{t("policies.nopoliciesyet")}</p>
               ) : (
                 <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                   {policies.map((p) => (
@@ -488,7 +490,7 @@ export default function PoliciesPage() {
                         <button
                           onClick={() => handleDeletePolicy(p.id!, p.name)}
                           className="rounded p-1 text-gray-400 opacity-0 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
-                          title="Delete"
+                          title={t("common.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -508,20 +510,20 @@ export default function PoliciesPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
                 <FileJson className="h-5 w-5 text-brand-600" />
-                {selectedPolicy ? "Edit Policy" : "Create New Policy"}
+                {selectedPolicy ? t("policies.editPolicy") : t("policies.createNew")}
               </h2>
               <div className="flex gap-2">
                 <button
                   onClick={handleCreatePolicy}
                   className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
                 >
-                  <Save className="h-4 w-4" /> {selectedPolicy ? "Update" : "Create"}
+                  <Save className="h-4 w-4" /> {selectedPolicy ? t("policies.update") : t("common.create")}
                 </button>
               </div>
             </div>
 
             <div className="mb-4">
-              <label className="mb-1 block text-xs font-medium text-gray-500">Policy Name</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">{t("policies.policyName")}</label>
               <input
                 value={policyName}
                 onChange={(e) => setPolicyName(e.target.value)}
@@ -534,7 +536,7 @@ export default function PoliciesPage() {
             <div className="mb-4 grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">
-                  Priority: <span className="font-bold text-brand-600">{policyPriority}</span>
+                  {t("policies.priority")}: <span className="font-bold text-brand-600">{policyPriority}</span>
                 </label>
                 <input
                   type="range"
@@ -545,12 +547,12 @@ export default function PoliciesPage() {
                   className="w-full accent-brand-600"
                 />
                 <div className="flex justify-between text-xs text-gray-400">
-                  <span>Low (0)</span>
-                  <span>High (100)</span>
+                  <span>{t("policies.lowPriority")}</span>
+                  <span>{t("policies.highPriority")}</span>
                 </div>
               </div>
               <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500">Default Effect</label>
+                <label className="mb-1 block text-xs font-medium text-gray-500">{t("policies.defaulteffect")}</label>
                 <select
                   value={policyEffect}
                   onChange={(e) => setPolicyEffect(e.target.value as "allow" | "deny")}
@@ -568,17 +570,17 @@ export default function PoliciesPage() {
 
             {/* Basic Rules */}
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Basic Rules</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("policies.basicrules")}</span>
               <button
                 onClick={addRule}
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
               >
-                <Plus className="h-3.5 w-3.5" /> Add Rule
+                <Plus className="h-3.5 w-3.5" /> {t("policies.addRule")}
               </button>
             </div>
 
             {rules.length === 0 ? (
-              <p className="py-4 text-center text-sm text-gray-400">No rules. Click "Add Rule" to start.</p>
+              <p className="py-4 text-center text-sm text-gray-400">{t("policies.noRules")}</p>
             ) : (
               <div className="space-y-2">
                 {rules.map((rule, i) => (
@@ -629,14 +631,14 @@ export default function PoliciesPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
-                <Grid3x3 className="h-5 w-5 text-brand-600" /> RBAC Permission Matrix
+                <Grid3x3 className="h-5 w-5 text-brand-600" /> {t("policies.rbacMatrix")}
               </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={addRbacRole}
                   className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Role
+                  <Plus className="h-3.5 w-3.5" /> {t("policies.addRole")}
                 </button>
                 <button
                   onClick={() => setRbacCollapsed(!rbacCollapsed)}
@@ -706,14 +708,14 @@ export default function PoliciesPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
-                <Layers className="h-5 w-5 text-brand-600" /> ABAC Visual Rule Builder
+                <Layers className="h-5 w-5 text-brand-600" /> {t("policies.abacBuilder")}
               </h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={addAbacRule}
                   className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Add Rule
+                  <Plus className="h-3.5 w-3.5" /> {t("policies.addRule")}
                 </button>
                 <button
                   onClick={() => setAbacCollapsed(!abacCollapsed)}
@@ -731,7 +733,7 @@ export default function PoliciesPage() {
                 </p>
                 {abacRules.length === 0 ? (
                   <p className="py-4 text-center text-sm text-gray-400">
-                    No ABAC rules. Click "Add Rule" to start building attribute-based policies.
+                    {t("policies.noAbacRules")}
                   </p>
                 ) : (
                   <div className="space-y-4">
@@ -742,7 +744,7 @@ export default function PoliciesPage() {
                       >
                         <div className="mb-3 flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold uppercase text-gray-400">IF</span>
+                            <span className="text-xs font-bold uppercase text-gray-400">{t("policies.if")}</span>
                           </div>
                           <button
                             onClick={() => removeAbacRule(rule.id)}
@@ -808,7 +810,7 @@ export default function PoliciesPage() {
                             onClick={() => addAbacCondition(rule.id)}
                             className="flex items-center gap-1 text-xs text-brand-600 hover:underline"
                           >
-                            <Plus className="h-3 w-3" /> Add condition
+                            <Plus className="h-3 w-3" /> {t("policies.addCondition")}
                           </button>
                         </div>
 
@@ -838,25 +840,25 @@ export default function PoliciesPage() {
           {/* JSON Editor */}
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold dark:text-gray-100">Raw JSON</h2>
+              <h2 className="text-lg font-semibold dark:text-gray-100">{t("policies.rawjson")}</h2>
               <div className="flex gap-2">
                 <button
                   onClick={() => importFileRef.current?.click()}
                   className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
-                  <Upload className="h-3.5 w-3.5" /> Import File
+                  <Upload className="h-3.5 w-3.5" /> {t("policies.importFile")}
                 </button>
                 <button
                   onClick={handleExportJson}
                   className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
-                  <Download className="h-3.5 w-3.5" /> Export
+                  <Download className="h-3.5 w-3.5" /> {t("policies.export")}
                 </button>
                 <button
                   onClick={syncJsonToRules}
                   className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
-                  Sync JSON → Rules
+                  {t("policies.syncJsonToRules")}
                 </button>
               </div>
             </div>
@@ -872,7 +874,7 @@ export default function PoliciesPage() {
           {/* Dry-Run Test */}
           <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
-              <Play className="h-5 w-5 text-brand-600" /> Test Evaluator
+              <Play className="h-5 w-5 text-brand-600" /> {t("policies.testEvaluator")}
             </h2>
             <div className="grid grid-cols-3 gap-3">
               <div>
@@ -909,7 +911,7 @@ export default function PoliciesPage() {
               className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {dryRunLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              Evaluate
+              {t("policies.evaluate")}
             </button>
 
             {dryRunResult && (

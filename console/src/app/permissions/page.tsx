@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Shield,
   Search,
@@ -170,6 +171,7 @@ const getRoleBadgeClass = (roleKey: string): string =>
 // ===== Main Component =====
 
 export default function PermissionsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [roles, setRoles] = useState<Role[]>(DEFAULT_ROLES);
 
@@ -349,7 +351,7 @@ export default function PermissionsPage() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">Loading permissions...</p>
+        <p className="text-gray-500 dark:text-gray-400">{t("common.loading")}</p>
       </div>
     );
   }
@@ -404,7 +406,7 @@ export default function PermissionsPage() {
             onChange={(e) => setBatchRole(e.target.value)}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
           >
-            <option value="">Select role...</option>
+            <option value="">{t("permissions.selectRole")}</option>
             {roles.map((r) => (
               <option key={r.id} value={r.key}>
                 {r.name}
@@ -609,7 +611,7 @@ export default function PermissionsPage() {
       {visibleGroups.length === 0 && (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <Search className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-gray-500">No permissions match "{search}"</p>
+          <p className="text-gray-500">{t("permissions.noPermissions")}</p>
         </div>
       )}
 

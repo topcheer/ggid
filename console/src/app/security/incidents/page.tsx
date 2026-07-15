@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   ShieldAlert, Loader2, AlertCircle, X, Plus, CheckCircle, Clock, Zap,
 } from "lucide-react";
@@ -38,6 +39,7 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 export default function IncidentsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function IncidentsPage() {
   useState(() => {
     (async () => {
       try { setIncidents(await apiFetch<Incident[]>("/api/v1/audit/incidents").catch(() => [])); }
-      catch { setError("Failed to load incidents"); }
+      catch { setError(t("incidents.failedLoad")); }
       finally { setLoading(false); }
     })();
   });
@@ -65,7 +67,7 @@ export default function IncidentsPage() {
       setIncidents((p) => [created, ...p]);
       setShowCreate(false);
       setForm({ title: "", type: "unauthorized_access", severity: "medium", description: "" });
-    } catch { setError("Create failed"); }
+    } catch { setError(t("incidents.createFailed")); }
     finally { setCreating(false); }
   };
 
@@ -76,7 +78,7 @@ export default function IncidentsPage() {
       await apiFetch(`/api/v1/audit/incidents/${resolveIncident.id}/resolve`, { method: "POST", body: JSON.stringify({ resolution_notes: resolveNotes }) });
       setIncidents((p) => p.map((i) => i.id === resolveIncident.id ? { ...i, status: "resolved", resolution_notes: resolveNotes, resolved_at: new Date().toISOString() } : i));
       setResolveIncident(null); setResolveNotes("");
-    } catch { setError("Resolve failed"); }
+    } catch { setError(t("incidents.resolveFailed")); }
     finally { setResolving(null); }
   };
 
@@ -88,10 +90,10 @@ export default function IncidentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldAlert className="h-6 w-6 text-red-600" /> Incident Response</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Security incident tracking, investigation, and resolution.</p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldAlert className="h-6 w-6 text-red-600" /> {t("incidents.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("incidents.subtitle")}</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><Plus className="h-4 w-4" /> New Incident</button>
+        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><Plus className="h-4 w-4" /> {t("incidents.new")}</button>
       </div>
 
       {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
@@ -109,7 +111,7 @@ export default function IncidentsPage() {
 
           {/* Incidents table */}
           {incidents.length === 0 ? (
-            <div className={cardCls}><div className="py-12 text-center"><ShieldAlert className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No incidents recorded.</p></div></div>
+            <div className={cardCls}><div className="py-12 text-center"><ShieldAlert className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("incidents.noIncidents")}</p></div></div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="w-full text-sm">
@@ -149,7 +151,7 @@ export default function IncidentsPage() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">New Incident</h3><button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">{t("incidents.new")}</h3><button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="space-y-4">
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Title</label><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <div className="flex gap-4">
@@ -157,7 +159,7 @@ export default function IncidentsPage() {
                 <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Severity</label><select value={form.severity} onChange={(e) => setForm({ ...form, severity: e.target.value as Incident["severity"] })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></div>
               </div>
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Description</label><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
-              <button onClick={handleCreate} disabled={!form.title || creating} className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Create Incident</button>
+              <button onClick={handleCreate} disabled={!form.title || creating} className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : null}{t("incidents.createIncident")}</button>
             </div>
           </div>
         </div>
@@ -170,7 +172,7 @@ export default function IncidentsPage() {
             <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Resolve: {resolveIncident.title}</h3><button onClick={() => setResolveIncident(null)}><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="mb-4 rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-900"><span className="text-gray-400">Severity:</span> <span className={`font-medium ${resolveIncident.severity === "critical" ? "text-red-600" : resolveIncident.severity === "high" ? "text-orange-600" : "text-gray-600"}`}>{resolveIncident.severity}</span></div>
             <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Resolution Notes</label><textarea value={resolveNotes} onChange={(e) => setResolveNotes(e.target.value)} rows={4} placeholder="Describe the investigation, root cause, and actions taken..." className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
-            <button onClick={handleResolve} disabled={!resolveNotes.trim() || resolving !== null} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">{resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}Resolve Incident</button>
+            <button onClick={handleResolve} disabled={!resolveNotes.trim() || resolving !== null} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">{resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}{t("incidents.resolveIncident")}</button>
           </div>
         </div>
       )}

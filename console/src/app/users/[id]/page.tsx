@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   ArrowLeft,
   Lock,
@@ -124,6 +125,7 @@ function credentialTypeColor(type: string): string {
 }
 
 export default function UserDetailPage({ params }: { params: { id: string } }) {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -426,7 +428,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={closeDrawer}>
         <div className="rounded-lg bg-white p-6 text-red-700 dark:bg-gray-800 dark:text-red-400" onClick={(e) => e.stopPropagation()}>
           {error}
-          <button onClick={closeDrawer} className="mt-3 block text-sm text-brand-600">Go back</button>
+          <button onClick={closeDrawer} className="mt-3 block text-sm text-brand-600">{t("userDetail.goBack")}</button>
         </div>
       </div>
     );
@@ -434,7 +436,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   if (!user)
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={closeDrawer}>
-        <p className="text-white">User not found</p>
+        <p className="text-white">{t("userDetail.userNotFound")}</p>
       </div>
     );
 
@@ -543,7 +545,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
               {/* User Info */}
               <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold dark:text-gray-100">User Information</h3>
+                  <h3 className="text-sm font-semibold dark:text-gray-100">{t("userDetail.userInformation")}</h3>
                   <button
                     onClick={() => setEditing(!editing)}
                     className="rounded-lg px-2 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50"
@@ -555,7 +557,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 {editing ? (
                   <div className="space-y-3">
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-500">Display Name</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">{t("userDetail.displayName")}</label>
                       <input
                         value={editForm.display_name}
                         onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
@@ -571,7 +573,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-500">Phone</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">{t("userDetail.phone")}</label>
                       <input
                         value={editForm.phone}
                         onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
@@ -579,7 +581,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-gray-500">Status</label>
+                      <label className="mb-1 block text-xs font-medium text-gray-500">{t("common.status")}</label>
                       <select
                         value={editForm.status}
                         onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
@@ -587,7 +589,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                       >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
-                        <option value="locked">Locked</option>
+                        <option value="locked">{t("userDetail.locked")}</option>
                       </select>
                     </div>
                     <button
@@ -600,7 +602,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                 ) : (
                   <dl className="space-y-2">
                     <div className="flex justify-between">
-                      <dt className="text-sm text-gray-500">Username</dt>
+                      <dt className="text-sm text-gray-500">{t("userDetail.username")}</dt>
                       <dd className="text-sm font-medium dark:text-gray-200">{user.username}</dd>
                     </div>
                     <div className="flex justify-between">
@@ -649,7 +651,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                   </h3>
                   <div className="flex flex-wrap gap-1.5">
                     {userRoles.length === 0 ? (
-                      <span className="text-xs text-gray-400">No roles assigned</span>
+                      <span className="text-xs text-gray-400">{t("userDetail.noRoles")}</span>
                     ) : (
                       userRoles.map((role) => (
                         <span key={role.id} className="rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">
@@ -664,7 +666,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
                     <Building2 className="h-3.5 w-3.5 text-gray-400" /> Orgs ({orgs.length})
                   </h3>
                   {orgs.length === 0 ? (
-                    <span className="text-xs text-gray-400">No memberships</span>
+                    <span className="text-xs text-gray-400">{t("userDetail.noMemberships")}</span>
                   ) : (
                     orgs.map((org) => (
                       <div key={org.id} className="text-xs text-gray-600 dark:text-gray-300">
@@ -677,7 +679,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
               {/* Actions */}
               <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <h3 className="mb-2 text-xs font-semibold dark:text-gray-100">Account Actions</h3>
+                <h3 className="mb-2 text-xs font-semibold dark:text-gray-100">{t("userDetail.accountActions")}</h3>
                 <div className="flex flex-wrap gap-2">
                   {user.status === "locked" ? (
                     <button
@@ -705,7 +707,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
               {/* Reset Password */}
               <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                <h3 className="mb-2 text-xs font-semibold dark:text-gray-100">Reset Password</h3>
+                <h3 className="mb-2 text-xs font-semibold dark:text-gray-100">{t("userDetail.resetPassword")}</h3>
                 <div className="flex gap-2">
                   <input
                     type="password"

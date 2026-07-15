@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   AppWindow, Plus, Trash2, Copy, Check, X, AlertCircle, Loader2,
   RefreshCw, Eye, EyeOff, Shield, ExternalLink,
@@ -23,6 +24,7 @@ const GRANT_TYPES = ["authorization_code", "client_credentials", "refresh_token"
 const DEFAULT_SCOPES = ["openid", "profile", "email", "offline_access"];
 
 export default function OAuthClientsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [clients, setClients] = useState<OAuthClient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function OAuthClientsPage() {
       const data = await apiFetch<{ clients?: OAuthClient[]; items?: OAuthClient[] }>("/api/v1/oauth/clients").catch(() => null);
       setClients(data?.clients ?? data?.items ?? []);
     } catch {
-      setError("Failed to load OAuth clients");
+      setError(t("oauth.failedLoadClients"));
     } finally {
       setLoading(false);
     }
@@ -81,7 +83,7 @@ export default function OAuthClientsPage() {
       setShowCreate(false);
       await load();
     } catch {
-      setError("Failed to create OAuth client");
+      setError(t("oauth.failedCreateClient"));
     } finally {
       setCreating(false);
     }
@@ -97,7 +99,7 @@ export default function OAuthClientsPage() {
       setEditClient(null);
       await load();
     } catch {
-      setError("Failed to update client");
+      setError(t("oauth.failedUpdateClient"));
     }
   };
 
@@ -107,7 +109,7 @@ export default function OAuthClientsPage() {
       setConfirmDelete(null);
       await load();
     } catch {
-      setError("Failed to delete client");
+      setError(t("oauth.failedDeleteClient"));
     }
   };
 
@@ -139,14 +141,14 @@ export default function OAuthClientsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <AppWindow className="h-6 w-6 text-indigo-600" /> OAuth Clients
+            <AppWindow className="h-6 w-6 text-indigo-600" /> {t("oauth.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Register applications for OAuth 2.0 / OIDC authentication.
+            {t("oauth.subtitle2")}
           </p>
         </div>
         <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-          <Plus className="h-4 w-4" /> Register Client
+          <Plus className="h-4 w-4" /> {t("oauth.registerClient")}
         </button>
       </div>
 
@@ -161,14 +163,14 @@ export default function OAuthClientsPage() {
       {newSecret && (
         <div className="rounded-xl border border-green-300 bg-green-50 p-5 dark:border-green-700 dark:bg-green-900/20">
           <div className="flex items-center gap-2 text-sm font-semibold text-green-800 dark:text-green-400">
-            <Check className="h-5 w-5" /> Client Secret Generated — Copy Now (shown only once)
+            <Check className="h-5 w-5" /> {t("oauth.clientSecretGenerated")}
           </div>
           <div className="mt-3 flex items-center gap-2">
             <code className="flex-1 truncate rounded-lg bg-white px-3 py-2 font-mono text-sm dark:bg-gray-900">{newSecret.secret}</code>
             <button onClick={() => copy(newSecret.secret, "secret")} className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
               {copiedField === "secret" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </button>
-            <button onClick={() => setNewSecret(null)} className="text-sm text-gray-500">Dismiss</button>
+            <button onClick={() => setNewSecret(null)} className="text-sm text-gray-500">{t("oauth.dismiss")}</button>
           </div>
         </div>
       )}
@@ -179,7 +181,7 @@ export default function OAuthClientsPage() {
         <div className={cardCls}>
           <div className="py-12 text-center">
             <AppWindow className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-4 text-sm text-gray-400">No OAuth clients registered yet.</p>
+            <p className="mt-4 text-sm text-gray-400">{t("oauth.noClients2")}</p>
           </div>
         </div>
       ) : (
@@ -269,20 +271,20 @@ export default function OAuthClientsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Register OAuth Client</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("oauth.registerTitle")}</h2>
               <button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Client Name</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("oauth.clientName")}</label>
                 <input value={form.client_name} onChange={(e) => setForm((p) => ({ ...p, client_name: e.target.value }))} placeholder="e.g. My Web App" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Redirect URIs (one per line)</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("oauth.redirectUrisHint")}</label>
                 <textarea value={form.redirect_uris} onChange={(e) => setForm((p) => ({ ...p, redirect_uris: e.target.value }))} placeholder={"https://app.example.com/callback\nhttps://app.example.com/auth/callback"} rows={3} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Grant Types</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("oauth.grantTypes")}</label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {GRANT_TYPES.map((g) => (
                     <button key={g} onClick={() => toggleGrant(g)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${form.grant_types.includes(g) ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
@@ -292,7 +294,7 @@ export default function OAuthClientsPage() {
                 </div>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Scopes</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("common.scopes")}</label>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {DEFAULT_SCOPES.map((s) => (
                     <button key={s} onClick={() => toggleScope(s)} className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${form.scopes.includes(s) ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
@@ -303,9 +305,9 @@ export default function OAuthClientsPage() {
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
               <button onClick={handleCreate} disabled={!form.client_name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-                {creating && <Loader2 className="h-4 w-4 animate-spin" />} Register
+                {creating && <Loader2 className="h-4 w-4 animate-spin" />} {t("oauth.register")}
               </button>
             </div>
           </div>
@@ -317,14 +319,14 @@ export default function OAuthClientsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setEditClient(null)}>
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Edit Redirect URIs</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("oauth.editRedirectUris")}</h2>
               <button onClick={() => setEditClient(null)}><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <p className="mt-1 text-sm text-gray-500">{editClient.client_name}</p>
             <textarea value={editUris} onChange={(e) => setEditUris(e.target.value)} rows={5} className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setEditClient(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={handleSaveEdit} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><RefreshCw className="h-4 w-4" /> Save</button>
+              <button onClick={() => setEditClient(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
+              <button onClick={handleSaveEdit} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><RefreshCw className="h-4 w-4" /> {t("common.save")}</button>
             </div>
           </div>
         </div>
@@ -337,13 +339,13 @@ export default function OAuthClientsPage() {
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><Trash2 className="h-5 w-5 text-red-600" /></div>
               <div>
-                <h2 className="font-semibold text-gray-900 dark:text-white">Delete OAuth Client?</h2>
-                <p className="text-sm text-gray-500"><strong>{confirmDelete.client_name}</strong> will be permanently removed. All tokens issued will be revoked.</p>
+                <h2 className="font-semibold text-gray-900 dark:text-white">{t("oauth.deleteConfirmTitle")}</h2>
+                <p className="text-sm text-gray-500"><strong>{confirmDelete.client_name}</strong> {t("oauth.deleteWarning")}</p>
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete.client_id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
+              <button onClick={() => handleDelete(confirmDelete.client_id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("common.delete")}</button>
             </div>
           </div>
         </div>

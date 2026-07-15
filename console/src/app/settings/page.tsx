@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
 import {
   Save, Shield, Key, Lock, Globe, Server, Mail, Palette, Moon, Sun, Monitor,
@@ -47,6 +48,7 @@ interface ConnectedApp {
 }
 
 export default function SettingsPage() {
+  const t = useTranslations();
   const { apiFetch, API_BASE, TENANT_ID } = useApi();
   const { mode, setMode, theme } = useTheme();
   const [tab, setTab] = useState<Tab>("profile");
@@ -213,26 +215,26 @@ export default function SettingsPage() {
           timezone: profile.timezone,
         }),
       });
-      setMsg("Profile saved successfully");
+      setMsg(t("settingsPage.profileSaved"));
       // Persist to localStorage for fallback
       localStorage.setItem("ggid_user_name", profile.display_name);
     } catch {
-      setMsg("Profile saved (offline mode)");
+      setMsg(t("settingsPage.profileSavedLocal"));
     }
   };
 
   const changePassword = async () => {
     setPwError(null);
     if (!pwForm.current || !pwForm.new) {
-      setPwError("Please fill in all password fields");
+      setPwError(t("settingsPage.allPwFields"));
       return;
     }
     if (pwForm.new !== pwForm.confirm) {
-      setPwError("New passwords do not match");
+      setPwError(t("settingsPage.pwNotMatch"));
       return;
     }
     if (pwForm.new.length < 8) {
-      setPwError("Password must be at least 8 characters");
+      setPwError(t("settingsPage.pwMinLength"));
       return;
     }
     try {
@@ -243,10 +245,10 @@ export default function SettingsPage() {
           new_password: pwForm.new,
         }),
       });
-      setMsg("Password changed successfully");
+      setMsg(t("settingsPage.pwChanged"));
       setPwForm({ current: "", new: "", confirm: "" });
     } catch {
-      setMsg("Password change failed");
+      setMsg(t("settingsPage.pwChangeFailed"));
     }
   };
 
@@ -254,10 +256,10 @@ export default function SettingsPage() {
     try {
       await apiFetch(`/api/v1/users/me/sessions/${id}`, { method: "DELETE" });
       setSessions((prev) => prev.filter((s) => s.id !== id));
-      setMsg("Session revoked");
+      setMsg(t("settingsPage.sessionRevoked"));
     } catch {
       setSessions((prev) => prev.filter((s) => s.id !== id));
-      setMsg("Session revoked");
+      setMsg(t("settingsPage.sessionRevoked"));
     }
   };
 
@@ -265,23 +267,23 @@ export default function SettingsPage() {
     try {
       await apiFetch(`/api/v1/users/me/authorized-apps/${id}`, { method: "DELETE" });
       setConnectedApps((prev) => prev.filter((a) => a.id !== id));
-      setMsg("App access revoked");
+      setMsg(t("settingsPage.appRevoked"));
     } catch {
       setConnectedApps((prev) => prev.filter((a) => a.id !== id));
-      setMsg("App access revoked");
+      setMsg(t("settingsPage.appRevoked"));
     }
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "account", label: "Account", icon: Shield },
-    { id: "security", label: "Security", icon: Key },
-    { id: "ldap", label: "LDAP / AD", icon: Server },
-    { id: "smtp", label: "SMTP", icon: Mail },
-    { id: "branding", label: "Branding", icon: Palette },
-    { id: "general", label: "General", icon: Globe },
-    { id: "oidc", label: "OIDC", icon: Key },
-    { id: "saml", label: "SAML SP", icon: Globe },
+    { id: "profile", label: t("settingsPage.profileTab"), icon: User },
+    { id: "account", label: t("settingsPage.accountTab"), icon: Shield },
+    { id: "security", label: t("settingsPage.securityTab"), icon: Key },
+    { id: "ldap", label: t("settingsPage.ldapTab"), icon: Server },
+    { id: "smtp", label: t("settingsPage.smtpTab"), icon: Mail },
+    { id: "branding", label: t("settingsPage.brandingTab"), icon: Palette },
+    { id: "general", label: t("settingsPage.generalTab"), icon: Globe },
+    { id: "oidc", label: t("settingsPage.oidcTab"), icon: Key },
+    { id: "saml", label: t("settingsPage.samlTab"), icon: Globe },
   ];
 
   const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200";
@@ -291,7 +293,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+      <h1 className="mb-6 text-2xl font-bold text-gray-900 dark:text-gray-100">{t("settings.title")}</h1>
 
       {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">{msg}</div>}
 
@@ -322,7 +324,7 @@ export default function SettingsPage() {
                 <User className="mr-2 inline h-5 w-5 text-brand-600" /> Profile Information
               </h2>
               <button onClick={saveProfile} aria-label="Save profile changes" className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700">
-                <Save className="h-4 w-4" /> Save Changes
+                <Save className="h-4 w-4" /> {t("common.save")} Changes
               </button>
             </div>
             <div className="mb-6 flex items-center gap-4">

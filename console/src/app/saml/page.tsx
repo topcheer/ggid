@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, ReactNode } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Save, Download, Upload, Trash2, Plus, RefreshCw,
   CheckCircle, XCircle, Loader2, FileCode2, Shield,
@@ -177,6 +178,7 @@ function highlightXml(xml: string): ReactNode[] {
 }
 
 export default function SAMLPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -255,9 +257,9 @@ export default function SAMLPage() {
       const info = parseCert(content);
       setCertInfo(info);
       if (info) {
-        showMsg("Certificate parsed successfully");
+        showMsg(t("saml.certParsedSuccess"));
       } else {
-        showMsg("File uploaded (cert info not parseable)", "error");
+        showMsg(t("saml.certNotParseable"), "error");
       }
     };
     reader.readAsText(file);
@@ -284,7 +286,7 @@ export default function SAMLPage() {
 
   const handleSaveIdP = async () => {
     if (!idpConfig.entity_id || !idpConfig.sso_url) {
-      showMsg("Entity ID and SSO URL are required", "error");
+      showMsg(t("saml.entityIdRequired"), "error");
       return;
     }
     setSaving(true);
@@ -293,9 +295,9 @@ export default function SAMLPage() {
         method: "POST",
         body: JSON.stringify({ ...idpConfig, mappings }),
       });
-      showMsg("IdP configuration saved successfully");
+      showMsg(t("saml.idpSaved"));
     } catch {
-      showMsg("Failed to save IdP config (API may not be available)", "error");
+      showMsg(t("saml.idpSaveFailed"), "error");
     } finally {
       setSaving(false);
     }
@@ -303,7 +305,7 @@ export default function SAMLPage() {
 
   const handleTestConnection = async () => {
     if (!idpConfig.sso_url) {
-      showMsg("SSO URL is required to test connection", "error");
+      showMsg(t("saml.ssoUrlRequired"), "error");
       return;
     }
     setTesting(true);
@@ -330,7 +332,7 @@ export default function SAMLPage() {
         setTestResult({
           success: false,
           response_time_ms: elapsed,
-          error: "Connection failed — API returned an error or is not available",
+          error: t("saml.connFailedApi"),
         });
       }
     } catch {
@@ -338,7 +340,7 @@ export default function SAMLPage() {
       setTestResult({
         success: false,
         response_time_ms: elapsed,
-        error: "Network error — unable to reach the IdP endpoint",
+        error: t("saml.networkError"),
       });
     } finally {
       setTesting(false);
@@ -383,9 +385,9 @@ export default function SAMLPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">SAML Configuration</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("saml.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage Service Provider metadata, Identity Provider settings, and attribute mappings
+            {t("saml.subtitle")}
           </p>
         </div>
       </div>
@@ -395,14 +397,14 @@ export default function SAMLPage() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
             <FileCode2 className="h-5 w-5 text-brand-600" />
-            SP Metadata
+            {t("saml.spMetadata")}
           </h2>
           <button
             onClick={handleDownloadMetadata}
-            aria-label="Download SP metadata"
+            aria-label={t("saml.downloadMetadata")}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
           >
-            <Download className="h-4 w-4" /> Download Metadata
+            <Download className="h-4 w-4" /> {t("saml.downloadMetadata")}
           </button>
         </div>
         <div className="overflow-x-auto rounded-lg bg-gray-50 p-4 dark:bg-gray-900">
@@ -428,12 +430,12 @@ export default function SAMLPage() {
         <div className={`${cardCls} lg:col-span-2`}>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
             <Shield className="h-5 w-5 text-brand-600" />
-            Identity Provider Configuration
+            {t("saml.idpConfig")}
           </h2>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className={labelCls}>Entity ID</label>
+              <label className={labelCls}>{t("saml.entityIdLabel")}</label>
               <input
                 type="text"
                 value={idpConfig.entity_id}
@@ -444,7 +446,7 @@ export default function SAMLPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>SSO URL</label>
+              <label className={labelCls}>{t("saml.ssoUrlLabel")}</label>
               <input
                 type="text"
                 value={idpConfig.sso_url}
@@ -455,7 +457,7 @@ export default function SAMLPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>SLO URL <span className="text-gray-400">(optional)</span></label>
+              <label className={labelCls}>{t("saml.sloUrlLabel")} <span className="text-gray-400">(optional)</span></label>
               <input
                 type="text"
                 value={idpConfig.slo_url}
@@ -466,7 +468,7 @@ export default function SAMLPage() {
               />
             </div>
             <div>
-              <label className={labelCls}>NameID Format</label>
+              <label className={labelCls}>{t("saml.nameIdFormatLabel")}</label>
               <select
                 value={idpConfig.name_id_format}
                 onChange={(e) => setIdpConfig({ ...idpConfig, name_id_format: e.target.value })}
@@ -478,7 +480,7 @@ export default function SAMLPage() {
               </select>
             </div>
             <div>
-              <label className={labelCls}>AuthnContextClass</label>
+              <label className={labelCls}>{t("saml.authnContextClassLabel")}</label>
               <select
                 value={idpConfig.authn_context_class}
                 onChange={(e) => setIdpConfig({ ...idpConfig, authn_context_class: e.target.value })}
@@ -493,14 +495,14 @@ export default function SAMLPage() {
 
           {/* Certificate upload */}
           <div className="mt-4">
-            <label className={labelCls}>IdP Certificate (PEM/CRT)</label>
+            <label className={labelCls}>{t("saml.idpCert")}</label>
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
-                  <Upload className="h-4 w-4" /> Upload File
+                  <Upload className="h-4 w-4" /> {t("saml.uploadFile")}
                 </button>
                 <input
                   ref={fileInputRef}
@@ -509,7 +511,7 @@ export default function SAMLPage() {
                   onChange={handleCertUpload}
                   className="hidden"
                 />
-                <span className="text-xs text-gray-400">Accepts .pem, .crt, .cer</span>
+                <span className="text-xs text-gray-400">{t("saml.acceptsCert")}</span>
               </div>
               <textarea
                 value={idpConfig.cert}
@@ -525,7 +527,7 @@ export default function SAMLPage() {
             {certInfo && (
               <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-950/30">
                 <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-green-700 dark:text-green-400">
-                  <CheckCircle className="h-4 w-4" /> Certificate Parsed
+                  <CheckCircle className="h-4 w-4" /> {t("saml.certificateParsed")}
                 </div>
                 <dl className="grid grid-cols-2 gap-2 text-xs">
                   <dt className="text-gray-500 dark:text-gray-400">Issuer</dt>
@@ -556,7 +558,7 @@ export default function SAMLPage() {
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              Save IdP Config
+              {t("saml.saveIdpConfig")}
             </button>
           </div>
         </div>
@@ -565,10 +567,10 @@ export default function SAMLPage() {
         <div className={cardCls}>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
             <Link2 className="h-5 w-5 text-brand-600" />
-            Test Connection
+            {t("saml.testConnection")}
           </h2>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Verify connectivity to the Identity Provider
+            {t("saml.testConnectionDesc")}
           </p>
 
           <button
@@ -579,11 +581,11 @@ export default function SAMLPage() {
           >
             {testing ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Testing...
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("saml.testing")}
               </>
             ) : (
               <>
-                <RefreshCw className="h-4 w-4" /> Test Connection
+                <RefreshCw className="h-4 w-4" /> {t("saml.testConnection")}
               </>
             )}
           </button>
@@ -603,7 +605,7 @@ export default function SAMLPage() {
                 ) : (
                   <XCircle className="h-4 w-4" />
                 )}
-                {testResult.success ? "Connection Successful" : "Connection Failed"}
+                {testResult.success ? t("saml.connectionSuccess") : t("saml.connectionFailed")}
                 <span className="ml-auto text-xs opacity-70">{testResult.response_time_ms}ms</span>
               </div>
 
@@ -645,13 +647,13 @@ export default function SAMLPage() {
         <div className="mb-4 flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
             <Settings2 className="h-5 w-5 text-brand-600" />
-            Attribute Mapping
+            {t("saml.attributeMapping")}
           </h2>
           <button
             onClick={addMapping}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"
           >
-            <Plus className="h-4 w-4" /> Add Mapping
+            <Plus className="h-4 w-4" /> {t("saml.addMapping")}
           </button>
         </div>
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
@@ -662,9 +664,9 @@ export default function SAMLPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                <th className="pb-2 pr-4">SAML Attribute</th>
-                <th className="pb-2 pr-4">GGID Field</th>
-                <th className="pb-2 w-20">Action</th>
+                <th className="pb-2 pr-4">{t("saml.samlAttribute")}</th>
+                <th className="pb-2 pr-4">{t("saml.ggidField")}</th>
+                <th className="pb-2 w-20">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -709,7 +711,7 @@ export default function SAMLPage() {
 
         {mappings.length === 0 && (
           <div className="py-8 text-center text-sm text-gray-400">
-            No attribute mappings configured. Click "Add Mapping" to create one.
+            {t("saml.noMappings")}
           </div>
         )}
       </div>

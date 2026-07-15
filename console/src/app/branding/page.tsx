@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import { Upload, Save, RotateCcw, Palette, Code, Mail, Eye, Check, Loader2, AlertCircle } from "lucide-react";
 
 const PRESET_COLORS = [
@@ -14,6 +15,7 @@ const PRESET_COLORS = [
 ];
 
 export default function BrandingPage() {
+  const t = useTranslations();
   const { API_BASE, TENANT_ID } = useApi();
   const [logo, setLogo] = useState<string>("");
   const [logoName, setLogoName] = useState<string>("");
@@ -84,15 +86,15 @@ export default function BrandingPage() {
     <div className="p-6 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Branding Settings</h1>
-          <p className="text-sm text-gray-500 mt-1">Customize logos, colors, and styling</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("branding.title")}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t("branding2.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <button aria-label="Reset branding" onClick={handleReset} className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition">
-            <RotateCcw className="w-4 h-4" /> Reset
+            <RotateCcw className="w-4 h-4" /> {t("branding2.reset")}
           </button>
           <button aria-label="Save branding" onClick={handleSave} disabled={saving || loading} className="flex items-center gap-1.5 px-4 py-2 text-sm text-white rounded-lg transition disabled:opacity-50" style={{ backgroundColor: primaryColor }}>
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : saved ? <><Check className="w-4 h-4" /> Saved!</> : <><Save className="w-4 h-4" /> Save</>}
+            {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("branding2.saving")}</> : saved ? <><Check className="w-4 h-4" /> {t("branding2.saved")}</> : <><Save className="w-4 h-4" /> {t("common.save")}</>}
           </button>
         </div>
       </div>
@@ -102,7 +104,7 @@ export default function BrandingPage() {
           <AlertCircle className="h-4 w-4" /> {error}
         </div>
       )}
-      {loading && <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading branding configuration...</div>}
+      {loading && <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> {t("branding2.loadingConfig")}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Configuration */}
@@ -110,20 +112,20 @@ export default function BrandingPage() {
           {/* Logo Upload */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Upload className="w-4 h-4" /> Logo Upload
+              <Upload className="w-4 h-4" /> {t("branding2.logoUpload")}
             </h3>
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
                 {logo ? (
                   <img src={logo} alt="Brand logo" className="w-full h-full object-contain" />
                 ) : (
-                  <span className="text-xs text-gray-400">No logo</span>
+                  <span className="text-xs text-gray-400">{t("branding2.noLogo")}</span>
                 )}
               </div>
               <div className="flex-1">
                 <input aria-label="Logo file input" ref={fileRef} type="file" accept="image/png,image/svg+xml,image/jpeg" onChange={handleLogoUpload} className="hidden" />
                 <button aria-label="Choose logo file" onClick={() => fileRef.current?.click()} className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition">
-                  Choose File
+                  {t("branding2.chooseFile")}
                 </button>
                 {logoName && <p className="text-xs text-gray-500 mt-1">{logoName}</p>}
                 <p className="text-xs text-gray-400 mt-1">PNG, SVG. Max 1MB.</p>
@@ -134,7 +136,7 @@ export default function BrandingPage() {
           {/* Color Scheme */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Palette className="w-4 h-4" /> Color Scheme
+              <Palette className="w-4 h-4" /> {t("branding2.colorScheme")}
             </h3>
             <div className="space-y-4">
               {[
@@ -151,7 +153,7 @@ export default function BrandingPage() {
             </div>
             {/* Presets */}
             <div className="mt-4">
-              <p className="text-xs text-gray-400 mb-2">Presets</p>
+              <p className="text-xs text-gray-400 mb-2">{t("branding2.presets")}</p>
               <div className="flex flex-wrap gap-2">
                 {PRESET_COLORS.map((preset) => (
                   <button aria-label={`Apply ${preset.name} color preset`} key={preset.name} onClick={() => { setPrimaryColor(preset.primary); setSecondaryColor(preset.secondary); setAccentColor(preset.accent); }}
@@ -177,14 +179,14 @@ export default function BrandingPage() {
           {/* Custom CSS */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Code className="w-4 h-4" /> Custom CSS Injection
+              <Code className="w-4 h-4" /> {t("branding2.customCss")}
             </h3>
             <textarea aria-label="Custom CSS" value={customCss} onChange={(e) => setCustomCss(e.target.value)}
               placeholder="/* Custom CSS */&#10;.login-form { border-radius: 12px; }"
               className="w-full h-40 px-3 py-2 text-sm font-mono border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none" />
             <div className="flex items-center justify-between mt-2">
               <span className="text-xs text-gray-400">{customCss.length} / 10240 bytes</span>
-              <button aria-label="Reset custom CSS" onClick={() => setCustomCss("")} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">Reset CSS</button>
+              <button aria-label="Reset custom CSS" onClick={() => setCustomCss("")} className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">{t("branding2.resetCss")}</button>
             </div>
           </div>
         </div>
@@ -194,11 +196,11 @@ export default function BrandingPage() {
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Eye className="w-4 h-4" /> Live Preview
+                <Eye className="w-4 h-4" /> {t("branding2.livePreview")}
               </h3>
               <div className="flex gap-1">
                 <button aria-label="Show login preview" onClick={() => setActiveTab("login")} className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-md transition ${activeTab === "login" ? "text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} style={activeTab === "login" ? { backgroundColor: primaryColor } : {}}>
-                  Login Page
+                  {t("branding2.loginPage")}
                 </button>
                 <button aria-label="Show email preview" onClick={() => setActiveTab("email")} className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-md transition ${activeTab === "email" ? "text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"}`} style={activeTab === "email" ? { backgroundColor: primaryColor } : {}}>
                   <Mail className="w-3 h-3" /> Email
@@ -218,7 +220,7 @@ export default function BrandingPage() {
                       </div>
                     )}
                   </div>
-                  <h2 className="text-center text-lg font-semibold text-gray-900 dark:text-white">Sign In</h2>
+                  <h2 className="text-center text-lg font-semibold text-gray-900 dark:text-white">{t("branding.signIn")}</h2>
                   <input type="email" placeholder="Email address" disabled className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-900 text-gray-500" style={{ borderColor: `${primaryColor}40` }} />
                   <input type="password" placeholder="Password" disabled className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-900 text-gray-500" style={{ borderColor: `${primaryColor}40` }} />
                   <button disabled className="w-full py-2 text-sm font-medium text-white rounded-lg" style={{ backgroundColor: primaryColor }}>

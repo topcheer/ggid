@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Monitor,
   Smartphone,
@@ -30,6 +31,7 @@ interface Session {
 }
 
 export default function SessionsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +59,10 @@ export default function SessionsPage() {
         method: "DELETE",
       });
       setSessions(sessions.filter((s) => s.id !== sessionId));
-      setMsg("Session revoked");
+      setMsg(t("secSessions.sessionRevoked"));
     } catch {
       setSessions(sessions.filter((s) => s.id !== sessionId));
-      setMsg("Session revoked (offline)");
+      setMsg(t("secSessions.sessionRevokedOffline"));
     } finally {
       setRevoking(null);
       setTimeout(() => setMsg(""), 3000);
@@ -113,10 +115,10 @@ export default function SessionsPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
             <Globe className="h-7 w-7 text-indigo-600" />
-            Active Sessions
+            {t("secSessions.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Monitor and revoke active user sessions across all devices.
+            {t("secSessions.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -127,7 +129,7 @@ export default function SessionsPage() {
               className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
             >
               <ShieldAlert className="mr-1 inline h-4 w-4" />
-              Revoke All Others
+              {t("secSessions.revokeAll")}
             </button>
           )}
         </div>
@@ -141,7 +143,7 @@ export default function SessionsPage() {
         <div className={`${cardCls} text-center`}>
           <Globe className="mx-auto mb-3 h-12 w-12 text-gray-300" />
           <p className="text-gray-500 dark:text-gray-400">
-            No active sessions. Sessions will appear here when users log in.
+            {t("secSessions.noSessions")}
           </p>
         </div>
       ) : (
@@ -149,7 +151,7 @@ export default function SessionsPage() {
           {/* Current session */}
           {activeSessions.length > 0 && (
             <div>
-              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">Current Session</h3>
+              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("secSessions.currentSession")}</h3>
               <div className="space-y-3">
                 {activeSessions.map((s) => (
                   <div key={s.id} className={`${cardCls} border-indigo-200 dark:border-indigo-800`}>
@@ -162,7 +164,7 @@ export default function SessionsPage() {
                               {s.browser} on {s.os}
                             </span>
                             <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
-                              This device
+                              {t("secSessions.thisDevice")}
                             </span>
                           </div>
                           <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-400">
@@ -188,7 +190,7 @@ export default function SessionsPage() {
           {/* Other sessions */}
           {otherSessions.length > 0 && (
             <div>
-              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">Other Sessions</h3>
+              <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("secSessions.otherSessions")}</h3>
               <div className="space-y-3">
                 {otherSessions.map((s) => (
                   <div key={s.id} className={cardCls}>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   ShieldAlert,
   Lock,
@@ -60,6 +61,7 @@ interface SecurityRecommendation {
 // --- Component ---
 
 export default function SecurityCenterPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [data, setData] = useState<SecurityData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +100,7 @@ export default function SecurityCenterPage() {
       <div className="p-8">
         <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
           <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
-          <button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+          <button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("common.refresh")}</button>
         </div>
       </div>
     );
@@ -108,7 +110,7 @@ export default function SecurityCenterPage() {
     return (
       <div className="flex h-64 items-center justify-center">
         <Activity className="h-6 w-6 animate-pulse text-gray-400" />
-        <span className="ml-2 text-gray-500">Loading security data...</span>
+        <span className="ml-2 text-gray-500">{t("security.loading")}</span>
       </div>
     );
   }
@@ -198,9 +200,9 @@ export default function SecurityCenterPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Security Center</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("security.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Monitor threats, anomalies, and security posture across your organization.
+          {t("security.subtitle")}
         </p>
       </div>
 

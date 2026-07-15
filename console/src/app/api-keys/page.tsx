@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Key,
   Plus,
@@ -42,6 +43,7 @@ const EXPIRY_OPTIONS = [
 ];
 
 export default function ApiKeysPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export default function ApiKeysPage() {
       }
       setKeys(Array.isArray(data) ? data : data.keys || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load API keys");
+      setError(err instanceof Error ? err.message : t("apiKeys.failedLoad"));
       setKeys([]);
     } finally {
       setLoading(false);
@@ -99,11 +101,11 @@ export default function ApiKeysPage() {
 
   const handleCreate = async () => {
     if (!keyName.trim()) {
-      setError("Please enter a name for the API key");
+      setError(t("apiKeys.enterKeyName"));
       return;
     }
     if (keyScopes.size === 0) {
-      setError("Please select at least one scope");
+      setError(t("apiKeys.selectScope"));
       return;
     }
     setCreating(true);
@@ -155,21 +157,21 @@ export default function ApiKeysPage() {
       setKeyScopes(new Set(["read"]));
       setKeyExpiry("30d");
       setShowCreate(false);
-      showMessage("API key created (demo mode)");
+      showMessage(t("apiKeys.createdDemo"));
     } finally {
       setCreating(false);
     }
   };
 
   const handleRevoke = async (keyId: string) => {
-    if (!confirm("Revoke this API key? This action cannot be undone.")) return;
+    if (!confirm(t("apiKeys.confirmRevoke"))) return;
     try {
       await apiFetch(`/api/v1/api-keys/${keyId}`, { method: "DELETE" });
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
-      showMessage("API key revoked");
+      showMessage(t("apiKeys.keyRevoked"));
     } catch {
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
-      showMessage("API key revoked");
+      showMessage(t("apiKeys.keyRevoked"));
     }
   };
 
@@ -187,7 +189,7 @@ export default function ApiKeysPage() {
   };
 
   const formatDate = (ts: string | null | undefined) => {
-    if (!ts) return "Never";
+    if (!ts) return t("apiKeys.never");
     return new Date(ts).toLocaleDateString();
   };
 
@@ -198,9 +200,9 @@ export default function ApiKeysPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">API Keys</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("apiKeys.title")}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Manage API keys for programmatic access
+            {t("apiKeys.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -208,13 +210,13 @@ export default function ApiKeysPage() {
             onClick={loadKeys}
             className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            <RefreshCw className="h-4 w-4" /> Refresh
+            <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
           </button>
           <button
             onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
           >
-            <Plus className="h-4 w-4" /> Create Key
+            <Plus className="h-4 w-4" /> {t("apiKeys.createKey")}
           </button>
         </div>
       </div>
@@ -235,7 +237,7 @@ export default function ApiKeysPage() {
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Create New API Key
+              {t("apiKeys.createNew")}
             </h2>
             <button
               onClick={() => setShowCreate(false)}
@@ -246,7 +248,7 @@ export default function ApiKeysPage() {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Key Name</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">{t("apiKeys.keyName")}</label>
               <input
                 type="text"
                 value={keyName}
@@ -256,7 +258,7 @@ export default function ApiKeysPage() {
               />
             </div>
             <div>
-              <label className="mb-2 block text-xs font-medium text-gray-500">Scopes</label>
+              <label className="mb-2 block text-xs font-medium text-gray-500">{t("common.scopes")}</label>
               <div className="flex flex-wrap gap-2">
                 {SCOPE_OPTIONS.map((scope) => (
                   <button
@@ -275,7 +277,7 @@ export default function ApiKeysPage() {
               </div>
             </div>
             <div>
-              <label className="mb-2 block text-xs font-medium text-gray-500">Expiration</label>
+              <label className="mb-2 block text-xs font-medium text-gray-500">{t("apiKeys.expiration")}</label>
               <div className="flex flex-wrap gap-2">
                 {EXPIRY_OPTIONS.map((opt) => (
                   <button
@@ -299,13 +301,13 @@ export default function ApiKeysPage() {
                 className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
-                Generate Key
+                {t("apiKeys.generateKey")}
               </button>
               <button
                 onClick={() => setShowCreate(false)}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
             </div>
           </div>
@@ -316,14 +318,14 @@ export default function ApiKeysPage() {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-          <span className="ml-2 text-gray-500">Loading...</span>
+          <span className="ml-2 text-gray-500">{t("common.loading")}</span>
         </div>
       ) : keys.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <Key className="mx-auto mb-4 h-12 w-12 text-gray-300 dark:text-gray-600" />
-          <p className="text-gray-500 dark:text-gray-400">No API keys created yet</p>
+          <p className="text-gray-500 dark:text-gray-400">{t("apiKeys.noKeys")}</p>
           <p className="mt-1 text-xs text-gray-400">
-            Create an API key to enable programmatic access to the GGID API.
+            {t("apiKeys.createDesc")}
           </p>
         </div>
       ) : (
@@ -331,14 +333,14 @@ export default function ApiKeysPage() {
           <table className="w-full">
             <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Key</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Scopes</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Created</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Last Used</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Expires</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.name")}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.key")}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.scopes")}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.created")}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("apiKeys.lastUsed")}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.expires")}</th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.status")}</th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -390,14 +392,14 @@ export default function ApiKeysPage() {
                             : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400"
                         }`}
                       >
-                        {expired ? "Expired" : key.status || "Active"}
+                        {expired ? t("apiKeys.expired") : key.status || t("apiKeys.activeStatus")}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleRevoke(key.id)}
                         className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
-                        title="Revoke key"
+                        title={t("apiKeys.revokeKey")}
                         disabled={expired}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -427,23 +429,22 @@ export default function ApiKeysPage() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  API Key Created
+                  {t("apiKeys.keyCreated")}
                 </h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Copy your key now</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{t("apiKeys.copyNow")}</p>
               </div>
             </div>
 
             <div className="mb-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
               <p className="text-xs text-amber-700 dark:text-amber-400">
-                <strong>This key will not be shown again.</strong> Store it in a secure
-                location. You will not be able to retrieve it later.
+                <strong>{t("apiKeys.keyNotShownAgain")}</strong> {t("apiKeys.storeSecurely")}
               </p>
             </div>
 
             <div className="mb-4">
               <label className="mb-1 block text-xs font-medium text-gray-500">
-                Your API Key
+                {t("apiKeys.yourApiKey")}
               </label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
@@ -454,7 +455,7 @@ export default function ApiKeysPage() {
                   className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   {keyCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  {keyCopied ? "Copied!" : "Copy"}
+                  {keyCopied ? t("apiKeys.copied") : t("apiKeys.copy")}
                 </button>
               </div>
             </div>
@@ -467,7 +468,7 @@ export default function ApiKeysPage() {
                 }}
                 className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
               >
-                Done
+                {t("apiKeys.done")}
               </button>
             </div>
           </div>

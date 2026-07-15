@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Fragment } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   RefreshCw,
   Users,
@@ -188,6 +189,7 @@ function formatTime(dateStr: string): string {
 let mappingSeq = 100;
 
 export default function ScimPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [apps, setApps] = useState<ScimApp[]>(MOCK_APPS);
   const [syncEvents] = useState<SyncEvent[]>(MOCK_SYNC_EVENTS);
@@ -295,17 +297,17 @@ export default function ScimPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            SCIM Provisioning
+            {t("scim.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage user and group provisioning across connected applications
+            {t("scim.subtitle")}
           </p>
         </div>
         <button
           onClick={loadApps}
           className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
         >
-          <RefreshCw className="h-4 w-4" /> Refresh
+          <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
         </button>
       </div>
 
@@ -316,7 +318,7 @@ export default function ScimPage() {
       )}
 
       {loading ? (
-        <div className="py-12 text-center text-gray-500">Loading SCIM apps...</div>
+        <div className="py-12 text-center text-gray-500">{t("scim.loadingApps")}</div>
       ) : (
         <>
           {/* Connected Apps */}
@@ -371,7 +373,7 @@ export default function ScimPage() {
                   {app.total_users && (
                     <div className="mb-2">
                       <div className="mb-0.5 flex justify-between text-xs text-gray-400">
-                        <span>User Sync</span>
+                <span>{t("scim.userSync")}</span>
                         <span>{userProgress}%</span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
@@ -385,7 +387,7 @@ export default function ScimPage() {
                   {app.total_groups && (
                     <div className="mb-2">
                       <div className="mb-0.5 flex justify-between text-xs text-gray-400">
-                        <span>Group Sync</span>
+                <span>{t("scim.groupSync")}</span>
                         <span>{groupProgress}%</span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
@@ -410,7 +412,7 @@ export default function ScimPage() {
                       disabled={app.status === "pending"}
                       className="flex items-center gap-1 rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-50"
                     >
-                      <Zap className="h-3 w-3" /> Sync Now
+                      <Zap className="h-3 w-3" /> {t("scim.syncNow")}
                     </button>
                   </div>
                 </div>
@@ -423,7 +425,7 @@ export default function ScimPage() {
             {/* User Sync Events */}
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                <Users className="h-4 w-4 text-gray-400" /> Recent User Sync Events
+                <Users className="h-4 w-4 text-gray-400" /> {t("scim.recentUserSync")}
               </h2>
               <div className="space-y-2">
                 {syncEvents.filter((e) => e.type.startsWith("user")).map((event) => (
@@ -466,7 +468,7 @@ export default function ScimPage() {
             {/* Group Sync Events */}
             <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                <FolderTree className="h-4 w-4 text-gray-400" /> Recent Group Sync Events
+                <FolderTree className="h-4 w-4 text-gray-400" /> {t("scim.recentGroupSync")}
               </h2>
               <div className="space-y-2">
                 {syncEvents.filter((e) => e.type.startsWith("group")).map((event) => (
@@ -504,7 +506,7 @@ export default function ScimPage() {
                   </div>
                 ))}
                 {syncEvents.filter((e) => e.type.startsWith("group")).length === 0 && (
-                  <p className="py-4 text-center text-xs text-gray-400">No group sync events yet</p>
+                  <p className="py-4 text-center text-xs text-gray-400">{t("scim.noGroupSyncEvents")}</p>
                 )}
               </div>
             </div>
@@ -513,9 +515,9 @@ export default function ScimPage() {
           {/* Attribute Mappings */}
           <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-              <Link2 className="h-4 w-4 text-gray-400" /> Attribute Mappings
+              <Link2 className="h-4 w-4 text-gray-400" /> {t("scim.attributeMappings")}
               <span className="text-xs font-normal text-gray-400">
-                (Source → Target SCIM Attribute)
+                {t("scim.sourceToTarget")}
               </span>
             </h2>
             <div className="space-y-2">
@@ -526,7 +528,7 @@ export default function ScimPage() {
                     onChange={(e) => updateMapping(mapping.id, "source", e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Source attribute...</option>
+                    <option value="">{t("scim.sourceAttr")}</option>
                     {SOURCE_ATTRIBUTES.map((a) => (
                       <option key={a} value={a}>{a}</option>
                     ))}
@@ -537,7 +539,7 @@ export default function ScimPage() {
                     onChange={(e) => updateMapping(mapping.id, "target", e.target.value)}
                     className={inputCls}
                   >
-                    <option value="">Target attribute...</option>
+                    <option value="">{t("scim.targetAttr")}</option>
                     {TARGET_ATTRIBUTES.map((a) => (
                       <option key={a} value={a}>{a}</option>
                     ))}
@@ -554,7 +556,7 @@ export default function ScimPage() {
                 onClick={addMapping}
                 className="flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 hover:border-brand-400 hover:text-brand-600 dark:border-gray-600 dark:text-gray-400"
               >
-                <Plus className="h-3.5 w-3.5" /> Add Mapping
+                <Plus className="h-3.5 w-3.5" /> {t("scim.addMapping")}
               </button>
             </div>
           </div>
@@ -562,18 +564,18 @@ export default function ScimPage() {
           {/* Sync History */}
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="border-b border-gray-100 p-4 text-sm font-semibold text-gray-900 dark:border-gray-700 dark:text-gray-100">
-              Sync History
+              {t("scim.syncHistory")}
             </h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-xs text-gray-400 dark:border-gray-700">
-                    <th className="px-4 py-2 text-left font-medium">Timestamp</th>
-                    <th className="px-4 py-2 text-left font-medium">App</th>
-                    <th className="px-4 py-2 text-left font-medium">Type</th>
-                    <th className="px-4 py-2 text-left font-medium">Users</th>
-                    <th className="px-4 py-2 text-left font-medium">Status</th>
-                    <th className="px-4 py-2 text-left font-medium">Duration</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("scim.timestamp")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("scim.app")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("scim.type")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("scim.users")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("scim.status")}</th>
+                    <th className="px-4 py-2 text-left font-medium">{t("scim.duration")}</th>
                     <th className="px-4 py-2 text-left font-medium"></th>
                   </tr>
                 </thead>
@@ -652,7 +654,7 @@ export default function ScimPage() {
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-gray-100">
                 <span className="text-xl">{syncTarget.icon}</span>
-                Sync {syncTarget.name}
+                {t("scim.sync")} {syncTarget.name}
               </h2>
               <button
                 onClick={() => setSyncTarget(null)}
@@ -663,7 +665,7 @@ export default function ScimPage() {
             </div>
 
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Choose a sync type. Full sync will re-provision all users and groups. Incremental sync only processes changes since the last sync.
+              {t("scim.syncDesc")}
             </p>
 
             <div className="mb-4 space-y-2">
@@ -677,8 +679,8 @@ export default function ScimPage() {
                   className="h-4 w-4"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Incremental Sync</p>
-                  <p className="text-xs text-gray-400">Only sync changes since last sync</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t("scim.incrementalSync")}</p>
+                  <p className="text-xs text-gray-400">{t("scim.incrementalDesc")}</p>
                 </div>
               </label>
               <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
@@ -691,8 +693,8 @@ export default function ScimPage() {
                   className="h-4 w-4"
                 />
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Full Sync</p>
-                  <p className="text-xs text-gray-400">Re-provision all users and groups</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{t("scim.fullSync")}</p>
+                  <p className="text-xs text-gray-400">{t("scim.fullDesc")}</p>
                 </div>
               </label>
             </div>
@@ -702,7 +704,7 @@ export default function ScimPage() {
                 onClick={() => setSyncTarget(null)}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
               >
-                Cancel
+                {t("scim.cancel")}
               </button>
               <button
                 onClick={handleSyncNow}
@@ -711,11 +713,11 @@ export default function ScimPage() {
               >
                 {syncing ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" /> Syncing...
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t("scim.syncing")}
                   </>
                 ) : (
                   <>
-                    <Zap className="h-4 w-4" /> Start Sync
+                    <Zap className="h-4 w-4" /> {t("scim.startSync")}
                   </>
                 )}
               </button>

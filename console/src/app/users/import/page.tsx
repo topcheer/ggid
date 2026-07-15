@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useMemo } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import Link from "next/link";
 import {
   Upload,
@@ -187,6 +188,7 @@ function getRowFieldErrors(
 const STEPS = ["Upload", "Field Mapping", "Preview", "Dry Run", "Import"];
 
 export default function UserImportPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -403,7 +405,7 @@ export default function UserImportPage() {
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <Link href="/users" className="hover:text-brand-600">Users</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-gray-600 dark:text-gray-300">Import</span>
+            <span className="text-gray-600 dark:text-gray-300">{t("userImport.import")}</span>
           </div>
           <h1 className="mt-1 flex items-center gap-2 text-2xl font-bold dark:text-gray-100">
             <Upload className="h-6 w-6 text-brand-600" />
@@ -487,7 +489,7 @@ export default function UserImportPage() {
               <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                 Drop CSV file here or click to browse
               </p>
-              <p className="mt-1 text-xs text-gray-400">Supports .csv files</p>
+              <p className="mt-1 text-xs text-gray-400">{t("userImport.supportsCsv")}</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -569,8 +571,8 @@ export default function UserImportPage() {
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
                     <th className="px-4 py-2 text-left font-medium text-gray-500">CSV Column</th>
-                    <th className="px-4 py-2 text-left font-medium text-gray-500">Sample Value</th>
-                    <th className="px-4 py-2 text-left font-medium text-gray-500">Map To</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500">{t("userImport.sampleValue")}</th>
+                    <th className="px-4 py-2 text-left font-medium text-gray-500">{t("userImport.mapTo")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -704,17 +706,17 @@ export default function UserImportPage() {
                   <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-950">
                     <CheckCircle2 className="mx-auto mb-1 h-6 w-6 text-green-500" />
                     <p className="text-2xl font-bold text-green-700 dark:text-green-400">{validationResult.valid}</p>
-                    <p className="text-xs text-gray-500">Valid Rows</p>
+                    <p className="text-xs text-gray-500">{t("userImport.validRows")}</p>
                   </div>
                   <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center dark:border-red-800 dark:bg-red-950">
                     <XCircle className="mx-auto mb-1 h-6 w-6 text-red-500" />
                     <p className="text-2xl font-bold text-red-700 dark:text-red-400">{validationResult.errors}</p>
-                    <p className="text-xs text-gray-500">Errors</p>
+                    <p className="text-xs text-gray-500">{t("common.error")}</p>
                   </div>
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center dark:border-amber-800 dark:bg-amber-950">
                     <AlertCircle className="mx-auto mb-1 h-6 w-6 text-amber-500" />
                     <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{validationResult.duplicates}</p>
-                    <p className="text-xs text-gray-500">Duplicates</p>
+                    <p className="text-xs text-gray-500">{t("userImport.duplicates")}</p>
                   </div>
                 </div>
 
@@ -728,9 +730,9 @@ export default function UserImportPage() {
                       <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-gray-50 dark:bg-gray-900">
                           <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">Row</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">Field</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">Error</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("userImport.row")}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("userImport.field")}</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("common.error")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -842,7 +844,7 @@ export default function UserImportPage() {
                   <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-950">
                     <CheckCircle2 className="h-8 w-8 text-green-600" />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Import Complete</h2>
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">{t("userImport.importComplete")}</h2>
                   <p className="mt-1 text-sm text-gray-500">
                     Processed {rows.length} rows
                   </p>
@@ -851,7 +853,7 @@ export default function UserImportPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center dark:border-green-800 dark:bg-green-950">
                     <p className="text-3xl font-bold text-green-700 dark:text-green-400">{importStats.created}</p>
-                    <p className="text-xs text-gray-500">Users Created</p>
+                    <p className="text-xs text-gray-500">{t("userImport.usersCreated")}</p>
                   </div>
                   <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-center dark:border-amber-800 dark:bg-amber-950">
                     <p className="text-3xl font-bold text-amber-700 dark:text-amber-400">{importStats.skipped}</p>
