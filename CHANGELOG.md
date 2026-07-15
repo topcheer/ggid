@@ -63,6 +63,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] — Security Hardening Release
+
+### Fixed
+- gRPC TLS fail-secure: services reject startup when cert/key invalid and GRPC_TLS_ENABLED=true (unless explicit dev fallback).
+- Audit alert webhook HTTP client timeout (10s).
+- Auth HTTP identity client timeout (10s).
+- Gateway GraphQL resolver HTTP client timeout (30s).
+
+### Changed
+- OAuth 2.1 dynamic compliance analyzer now active in production server.
+- FAPI 2.0 client profile enforcement active.
+
+
 ## [0.3.3] — Node SDK 1.0.5 Release
 
 ### Fixed
