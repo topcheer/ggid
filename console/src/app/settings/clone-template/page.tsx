@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Copy, Save, Play, Search, Shield, Users as UsersIcon, Key, X, Check } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface UserSummary {
   user_id: string;
@@ -27,6 +28,8 @@ interface SavedTemplate {
 }
 
 export default function CloneTemplatePage() {
+  const t = useTranslations();
+
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [search, setSearch] = useState("");
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -114,7 +117,7 @@ export default function CloneTemplatePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Copy className="w-6 h-6 text-blue-500" /> Clone Template</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Copy className="w-6 h-6 text-blue-500" /> {t("cloneTemplate.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Clone user roles, groups, and permissions as reusable templates.</p>
         </div>
         <div className="flex gap-2">

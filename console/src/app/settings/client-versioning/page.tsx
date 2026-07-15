@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { GitBranch, History, RotateCcw, X, AlertTriangle, MonitorSmartphone } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientVersion {
   version: number;
@@ -21,6 +22,8 @@ interface ClientSummary {
 }
 
 export default function ClientVersioningPage() {
+  const t = useTranslations();
+
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [versions, setVersions] = useState<ClientVersion[]>([]);
@@ -86,7 +89,7 @@ export default function ClientVersioningPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><GitBranch className="w-6 h-6 text-blue-500" /> Client Versioning</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><GitBranch className="w-6 h-6 text-blue-500" /> {t("clientVersioning.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">View client config version history, diff versions, and rollback.</p>
       </div>
 

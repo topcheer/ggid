@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSecretSprawlPreventionConfig, SecretSprawlPreventionConfig, SecretInventoryEntry } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SecretSprawlPreventionConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useSecretSprawlPreventionConfig();
   const [form, setForm] = useState<SecretSprawlPreventionConfig | null>(null);
   const [saving, setSaving] = useState(false);

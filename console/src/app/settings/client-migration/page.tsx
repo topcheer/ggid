@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRightLeft, Save, Play, Plus, Trash2, GitCompare, AlertTriangle, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientConfig {
   client_id: string;
@@ -18,6 +19,8 @@ interface DiffResult {
 }
 
 export default function ClientMigrationPage() {
+  const t = useTranslations();
+
   const [clients, setClients] = useState<ClientConfig[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [original, setOriginal] = useState<ClientConfig | null>(null);
@@ -141,7 +144,7 @@ export default function ClientMigrationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ArrowRightLeft className="w-6 h-6 text-blue-500" /> Client Migration</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ArrowRightLeft className="w-6 h-6 text-blue-500" /> {t("clientMigration.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Migrate OAuth client config with diff preview and grace period.</p>
       </div>
 

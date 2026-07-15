@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAgentIdentityDelegationConfig, AgentIdentityDelegationConfig, ScopeNarrowingRule, PerAgentTrust } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AgentIdentityDelegationConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useAgentIdentityDelegationConfig();
   const [form, setForm] = useState<AgentIdentityDelegationConfig | null>(null);
   const [saving, setSaving] = useState(false);

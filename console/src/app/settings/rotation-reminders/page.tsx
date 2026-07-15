@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Clock, Send, AlertTriangle, KeyRound, Shield } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RotationItem {
   id: string;
@@ -22,6 +23,8 @@ const sevColors: Record<string, string> = {
 };
 
 export default function RotationRemindersPage() {
+  const t = useTranslations();
+
   const [items, setItems] = useState<RotationItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -49,7 +52,7 @@ export default function RotationRemindersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="w-6 h-6 text-orange-500" /> Rotation Reminders</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="w-6 h-6 text-orange-500" /> {t("rotationReminders.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track overdue credential rotations and send reminders.</p>
       </div>
 

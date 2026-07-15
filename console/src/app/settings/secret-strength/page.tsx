@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Search, Gauge, Lightbulb, CheckCircle2, XCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SecretReport {
   client_id: string;
@@ -26,6 +27,8 @@ interface Client {
 }
 
 export default function SecretStrengthPage() {
+  const t = useTranslations();
+
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [reports, setReports] = useState<SecretReport[]>([]);
@@ -66,7 +69,7 @@ export default function SecretStrengthPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> Secret Strength</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> {t("secretStrength.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Audit OAuth client secret strength and get improvement suggestions.</p>
       </div>
 

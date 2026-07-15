@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { KeyRound, Clock, GitCompare } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RotationEntry {
   id: string;
@@ -22,6 +23,8 @@ interface SecretHistory {
 interface Client { client_id: string; client_name: string; }
 
 export default function SecretHistoryPage() {
+  const t = useTranslations();
+
   const [clients] = useState<Client[]>([{ client_id: "c1", client_name: "Web App" }, { client_id: "c2", client_name: "Mobile App" }, { client_id: "c3", client_name: "API Service" }]);
   const [clientId, setClientId] = useState("");
   const [data, setData] = useState<SecretHistory | null>(null);
@@ -40,7 +43,7 @@ export default function SecretHistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-yellow-500" /> Secret History</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-yellow-500" /> {t("secretHistory.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track client secret rotation history with thumbprint verification.</p>
       </div>
 

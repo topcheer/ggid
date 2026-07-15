@@ -2,8 +2,11 @@
 
 import { useAgentBehavioralMonitor } from "@ggid/sdk-react";
 import { Activity, AlertTriangle, Bot, Gauge } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AgentBehavioralMonitorPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAgentBehavioralMonitor();
 
   if (loading) return <div className="p-8 text-gray-400">Loading agent behavioral monitor...</div>;

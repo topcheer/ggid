@@ -2,8 +2,11 @@
 
 import { useAgentConsentFlow } from "@ggid/sdk-react";
 import { Bot, CheckCircle, XCircle, Clock, Shield } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AgentConsentFlowPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, approve, deny } = useAgentConsentFlow();
 
   if (loading) return <div className="p-8 text-gray-400">Loading agent consent...</div>;

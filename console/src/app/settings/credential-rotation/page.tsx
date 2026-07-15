@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface RotationSchedule {
   id: string;
@@ -20,6 +21,8 @@ interface NewSchedule {
 }
 
 export default function CredentialRotationPage() {
+  const t = useTranslations();
+
   const [schedules, setSchedules] = useState<RotationSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -2,8 +2,11 @@
 
 import { useAgentLifecycle } from "@ggid/sdk-react";
 import { Bot, Plus, Key, AlertTriangle, Activity, RotateCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AgentLifecyclePage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAgentLifecycle();
 
   if (loading) return <div className="p-8 text-gray-400">Loading agent lifecycle...</div>;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Heart, Activity, AlertTriangle, KeyRound, ShieldCheck } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientHealth {
   client_id: string;
@@ -21,6 +22,8 @@ const statusConfig: Record<string, { color: string; bg: string; icon: string }> 
 };
 
 export default function ClientHealthPage() {
+  const t = useTranslations();
+
   const [clients, setClients] = useState<ClientHealth[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +43,7 @@ export default function ClientHealthPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Heart className="w-6 h-6 text-pink-500" /> Client Health</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Heart className="w-6 h-6 text-pink-500" /> {t("clientHealth.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Monitor OAuth client health, token usage, and credential expiry.</p>
       </div>
 

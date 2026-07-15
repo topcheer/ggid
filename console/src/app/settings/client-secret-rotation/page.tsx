@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientSecret {
   id: string;
@@ -15,6 +16,8 @@ interface ClientSecret {
 }
 
 export default function ClientSecretRotationPage() {
+  const t = useTranslations();
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

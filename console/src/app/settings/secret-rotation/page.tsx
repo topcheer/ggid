@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   RefreshCw, Loader2, AlertCircle, X, KeyRound, Clock, Save, AlertOctagon,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SecretStatus {
   id: string;
@@ -21,6 +22,8 @@ interface SecretStatus {
 }
 
 export default function SecretRotationPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [secrets, setSecrets] = useState<SecretStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +60,7 @@ export default function SecretRotationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><RefreshCw className="h-6 w-6 text-blue-600" /> Secret Rotation</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><RefreshCw className="h-6 w-6 text-blue-600" /> {t("secretRotation.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">OAuth client secret lifecycle with grace period and auto-rotation.</p>
       </div>
 
