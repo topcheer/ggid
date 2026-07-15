@@ -18,13 +18,7 @@ type passwordViolation struct {
 var passwordAuditStore = struct {
 	sync.RWMutex
 	violations []passwordViolation
-}{violations: []passwordViolation{
-	{UserID: "user-001", Email: "bob@ex.com", Rule: "min_length", Detail: "Password is 6 chars, minimum is 12", Severity: "high"},
-	{UserID: "user-003", Email: "carol@ex.com", Rule: "complexity", Detail: "Missing uppercase and special character", Severity: "medium"},
-	{UserID: "user-005", Email: "eve@ex.com", Rule: "expiry", Detail: "Password age is 180 days, max is 90", Severity: "high"},
-	{UserID: "user-007", Email: "grace@ex.com", Rule: "history", Detail: "Password reused from last 5 passwords", Severity: "critical"},
-	{UserID: "user-009", Email: "ivan@ex.com", Rule: "reuse", Detail: "Same password as another account", Severity: "critical"},
-}}
+}{violations: []passwordViolation{}}
 
 // GET /api/v1/auth/password-policy/audit
 func (h *Handler) handlePasswordPolicyAudit(w http.ResponseWriter, r *http.Request) {
@@ -46,15 +40,13 @@ func (h *Handler) handlePasswordPolicyAudit(w http.ResponseWriter, r *http.Reque
 		bySeverity[v.Severity]++
 	}
 
-	totalUsers := 15420 // simulated total
 	nonCompliant := len(violations)
-	compliant := totalUsers - nonCompliant
 
 	writeJSON(w, http.StatusOK, map[string]any{
-		"total_users":         totalUsers,
-		"compliant_count":     compliant,
+		"total_users":         0, // requires DB aggregate query
+		"compliant_count":     0,
 		"non_compliant_count": nonCompliant,
-		"compliance_rate_pct": float64(compliant) / float64(totalUsers) * 100,
+		"compliance_rate_pct": 0.0,
 		"violations":          violations,
 		"total_violations":    len(violations),
 		"by_rule":             byRule,
