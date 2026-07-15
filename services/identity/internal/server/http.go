@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/mail"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
@@ -35,6 +37,7 @@ type HTTPHandler struct {
 	brandingStore    *service.BrandingStore
 	accessRequestSvc *service.AccessRequestService
 	idpConfigSvc     *idpconfig.Service
+	auditPublisher   *audit.Publisher
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -44,6 +47,14 @@ func NewHTTPHandler(svc *service.IdentityService) *HTTPHandler {
 		brandingStore:    service.NewBrandingStore(),
 		accessRequestSvc: service.NewAccessRequestService(service.NewMemoryAccessRequestStore()),
 		idpConfigSvc:     idpconfig.NewService(idpconfig.NewMemoryStore()),
+	}
+	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
+		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
+			h.auditPublisher = pub
+			log.Println("Identity: audit publisher connected to NATS")
+		} else {
+			log.Printf("Identity: audit publisher disabled (%v)", err)
+		}
 	}
 	h.registerRoutes()
 	return h
@@ -406,6 +417,11 @@ func (h *HTTPHandler) createUser(ctx context.Context, w http.ResponseWriter, r *
 	}
 
 	writeJSON(w, http.StatusCreated, userToJSON(user))
+
+	// Audit event: user created
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.create", "success", "user", user.ID, tc.TenantID, uuid.Nil)
+	}
 }
 
 func (h *HTTPHandler) getUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
@@ -500,6 +516,10 @@ func (h *HTTPHandler) deleteUser(ctx context.Context, userID uuid.UUID, w http.R
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.delete", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 }
 
 func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
@@ -533,6 +553,10 @@ func (h *HTTPHandler) lockUser(ctx context.Context, userID uuid.UUID, w http.Res
 		return
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
+
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.lock", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 }
 
 func (h *HTTPHandler) unlockUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
@@ -542,6 +566,10 @@ func (h *HTTPHandler) unlockUser(ctx context.Context, userID uuid.UUID, w http.R
 		return
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
+
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.unlock", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 }
 
 func (h *HTTPHandler) deactivateUser(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
