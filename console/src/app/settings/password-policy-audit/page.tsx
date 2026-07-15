@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, AlertTriangle, Filter } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Violation {
   id: string;
@@ -15,6 +16,8 @@ interface Violation {
 const ruleTypes = ["min_length", "complexity", "history", "expiry", "reused", "common", "breached"];
 
 export default function PasswordPolicyAuditPage() {
+  const t = useTranslations();
+
   const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterRule, setFilterRule] = useState("");
@@ -38,7 +41,7 @@ export default function PasswordPolicyAuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> Password Policy Audit</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> {t("passwordPolicyAudit.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Audit password policy compliance across all users.</p>
       </div>
 

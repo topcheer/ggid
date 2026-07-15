@@ -2,8 +2,11 @@
 
 import { useAuthSessionResilience } from "@ggid/sdk-react";
 import { Database, Server, ShieldCheck, Zap, Activity, AlertTriangle, Play } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthSessionResiliencePage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, testRecovery } = useAuthSessionResilience();
 
   if (loading) return <div className="p-8 text-gray-400">Loading session resilience...</div>;

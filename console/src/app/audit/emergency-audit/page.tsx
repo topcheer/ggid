@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertTriangle, Calendar, Clock, Activity, Zap, Shield } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface BreakGlassRecord {
   id: string;
@@ -22,6 +23,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function EmergencyAccessAuditPage() {
+  const t = useTranslations();
+
   const [records, setRecords] = useState<BreakGlassRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -57,7 +60,7 @@ export default function EmergencyAccessAuditPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-red-500" /> Emergency Access Audit</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-red-500" /> {t("auditEmergencyAudit.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Break-glass usage records and post-incident review tracking.</p>
       </div>
 

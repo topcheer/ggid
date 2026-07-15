@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Send, AlertCircle, Clock, Server, Activity, Calendar } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SIEMMetrics {
   total_forwarded: number;
@@ -22,6 +23,8 @@ interface SIEMMetrics {
 }
 
 export default function SIEMMetricsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<SIEMMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -53,7 +56,7 @@ export default function SIEMMetricsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Send className="w-6 h-6 text-blue-500" /> SIEM Metrics</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Send className="w-6 h-6 text-blue-500" /> {t("auditSiemMetrics.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Monitor SIEM forwarding health, latency, and per-destination status.</p>
       </div>
 

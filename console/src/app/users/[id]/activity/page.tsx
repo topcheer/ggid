@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { Search, Download, Filter, LogIn, LogOut, Shield, Key, UserCheck, FileEdit, AlertTriangle, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ActivityEvent {
   id: string;
@@ -27,6 +28,8 @@ const EVENT_TYPES = [
 ];
 
 const getEventIcon = (type: string) => {
+  const t = useTranslations();
+
   switch (type) {
     case "login": return LogIn;
     case "logout": return LogOut;

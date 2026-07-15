@@ -6,6 +6,7 @@ import {
   Gauge, TrendingDown, TrendingUp, AlertTriangle, ShieldCheck,
   Loader2, Lightbulb, Activity, Lock, UserPlus,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RiskData {
   current_score: number;
@@ -30,6 +31,8 @@ const SCORE_GRADE = (score: number) =>
   score >= 90 ? "A" : score >= 80 ? "B" : score >= 70 ? "C" : score >= 60 ? "D" : "F";
 
 export default function RiskScorePage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [data, setData] = useState<RiskData | null>(null);
   const [loading, setLoading] = useState(true);

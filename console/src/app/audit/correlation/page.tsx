@@ -6,6 +6,7 @@ import {
   Zap, Plus, Trash2, X, AlertCircle, Loader2, Check, Clock,
   Activity, AlertTriangle, ShieldAlert,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface CorrelationRule {
   id: string;
@@ -38,6 +39,8 @@ const SEV_CONFIG = {
 };
 
 export default function EventCorrelationPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<CorrelationRule[]>([]);
   const [results, setResults] = useState<CorrelatedGroup[]>([]);

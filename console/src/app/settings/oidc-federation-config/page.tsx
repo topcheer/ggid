@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useTranslations } from "@/lib/i18n";
 import { useOidcFederationConfig, OidcFederationConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LocalTrustAnchor {
   issuer: string;
@@ -26,9 +28,12 @@ interface LocalOidcFederationConfig extends OidcFederationConfig {
 }
 
 export default function OidcFederationConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useOidcFederationConfig();
   const [form, setForm] = useState<LocalOidcFederationConfig | null>(null);
   const [saving, setSaving] = useState(false);
+  const t = useTranslations();
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
   useEffect(() => { if (config) setForm(config as unknown as LocalOidcFederationConfig); }, [config]);
@@ -40,14 +45,14 @@ export default function OidcFederationConfigPage() {
     setSaving(false);
   };
 
-  if (loading && !form) return <div className="p-8">Loading...</div>;
+  if (loading && !form) return <div className="p-8">{t("oidcFederation.loading")}</div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">No data</div>;
+  if (!form) return <div className="p-8">{t("oidcFederation.noData")}</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">OIDC Federation Configuration</h1>
-      <p className="text-gray-600">Configure OpenID Connect Federation (RFC 8411 / Federation Entities).</p>
+      <h1 className="text-2xl font-bold">{t("oidcFederation.title")}</h1>
+      <p className="text-gray-600">{t("oidcFederation.subtitle")}</p>
 
       {/* Auto Discovery */}
       <div className="flex items-center gap-3 bg-white rounded-lg p-4 shadow">
@@ -57,32 +62,32 @@ export default function OidcFederationConfigPage() {
           onChange={(e) => setForm({ ...form, auto_discovery: e.target.checked })}
           className="w-5 h-5"
         />
-        <label className="font-medium">Auto Discovery</label>
+        <label className="font-medium">{t("oidcFederation.autoDiscovery")}</label>
       </div>
 
       {/* Trust Resolution Policy */}
       <div className="bg-white rounded-lg p-6 shadow">
-        <label className="block text-sm font-medium mb-2">Trust Resolution Policy</label>
+        <label className="block text-sm font-medium mb-2">{t("oidcFederation.trustResolution")}</label>
         <select
           value={form.trust_resolution_policy}
           onChange={(e) => setForm({ ...form, trust_resolution_policy: e.target.value as LocalOidcFederationConfig["trust_resolution_policy"] })}
           className="border rounded px-3 py-2"
         >
-          <option value="tree">Tree</option>
-          <option value="path">Path</option>
-          <option value="graph">Graph</option>
+          <option value="tree">{t("oidcFederation.tree")}</option>
+          <option value="path">{t("oidcFederation.path")}</option>
+          <option value="graph">{t("oidcFederation.graph")}</option>
         </select>
       </div>
 
       {/* Trust Anchors */}
       <div className="bg-white rounded-lg p-6 shadow">
-        <h2 className="text-lg font-semibold mb-4">Trust Anchors</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("oidcFederation.trustAnchors")}</h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">Issuer</th>
-              <th>JWKS URI</th>
-              <th>Trust Mark</th>
+              <th className="py-2">{t("oidcFederation.issuer")}</th>
+              <th>{t("oidcFederation.jwksUri")}</th>
+              <th>{t("oidcFederation.trustMark")}</th>
             </tr>
           </thead>
           <tbody>
@@ -99,7 +104,7 @@ export default function OidcFederationConfigPage() {
 
       {/* Federated Providers */}
       <div className="bg-white rounded-lg p-6 shadow">
-        <h2 className="text-lg font-semibold mb-4">Federated Providers</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("oidcFederation.federatedProviders")}</h2>
         <div className="space-y-2">
           {form.federated_providers.map((p, i) => (
             <div key={i} className="flex items-center justify-between border-b py-2">
@@ -117,7 +122,7 @@ export default function OidcFederationConfigPage() {
 
       {/* Entity Category Requirements */}
       <div className="bg-white rounded-lg p-6 shadow">
-        <h2 className="text-lg font-semibold mb-4">Entity Category Requirements</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("oidcFederation.entityCategory")}</h2>
         <div className="space-y-3">
           {form.entity_category_requirements.map((ecr, i) => (
             <div key={i} className="border-b pb-2">

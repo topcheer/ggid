@@ -6,6 +6,7 @@ import {
   ArrowDown, ArrowRight, User, Server, Key, CheckCircle2,
   Clock, RefreshCw, Activity, Zap,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface OAuthClient {
   id: string;
@@ -51,6 +52,8 @@ const STEP_STATUS = {
 };
 
 export default function OAuthFlowsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [clients, setClients] = useState<OAuthClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>("");

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LoginAttempt {
   user: string;
@@ -11,6 +12,8 @@ interface LoginAttempt {
 }
 
 export default function LoginSecurityCenterPage() {
+  const t = useTranslations();
+
   const [attempts, setAttempts] = useState<LoginAttempt[]>([]);
   const [blocklist, setBlocklist] = useState<string[]>([]);
   const [newIp, setNewIp] = useState("");

@@ -21,6 +21,7 @@ import {
   Lock,
   Globe,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Certificate {
   id: string;
@@ -56,6 +57,8 @@ const STATUS_CONFIG = {
 };
 
 function getCertStatus(expiry: string): "valid" | "expiring" | "expired" {
+  const t = useTranslations();
+
   const now = new Date();
   const exp = new Date(expiry);
   const daysUntilExpiry = Math.floor((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));

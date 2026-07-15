@@ -22,6 +22,7 @@ import {
   Clock,
   MapPin,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AuditEvent {
   id: string;
@@ -77,6 +78,8 @@ const ACTION_ICONS: Record<string, React.ElementType> = {
 };
 
 function getActionIcon(action: string): React.ElementType {
+  const t = useTranslations();
+
   return (
     ACTION_ICONS[action] ||
     (action.includes("login")

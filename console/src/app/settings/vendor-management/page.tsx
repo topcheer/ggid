@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Building, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Vendor {
   id: string;
@@ -29,6 +30,7 @@ const complianceColors: Record<string, string> = {
 };
 
 export default function VendorManagementPage() {
+  const t = useTranslations();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(false);
 

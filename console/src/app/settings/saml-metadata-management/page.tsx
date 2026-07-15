@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSamlMetadataManagement, SamlMetadataManagement, IdpMetadata } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SamlMetadataManagementPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useSamlMetadataManagement();
   const [form, setForm] = useState<SamlMetadataManagement | null>(null);
   const [saving, setSaving] = useState(false);

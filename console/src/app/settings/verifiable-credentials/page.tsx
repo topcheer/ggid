@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface VC {
   id: string;
@@ -13,6 +14,7 @@ interface VC {
 }
 
 export default function VerifiableCredentialsPage() {
+  const t = useTranslations();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [credentials, setCredentials] = useState<VC[]>([]);

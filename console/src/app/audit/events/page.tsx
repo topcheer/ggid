@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Download,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AuditEvent {
   id: string;
@@ -63,6 +64,8 @@ const RESOURCE_TYPES = [
 ];
 
 export default function AuditEventsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);

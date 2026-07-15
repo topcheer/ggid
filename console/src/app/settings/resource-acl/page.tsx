@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   FolderTree, Loader2, AlertCircle, X, Plus, Trash2, Save, ChevronRight, Folder, File,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ACLRule {
   id: string;
@@ -38,6 +39,8 @@ const principalTypeColors: Record<string, string> = {
 };
 
 export default function ResourceACLPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<ACLRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -120,7 +123,7 @@ export default function ResourceACLPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FolderTree className="h-6 w-6 text-emerald-600" /> Resource ACL</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FolderTree className="h-6 w-6 text-emerald-600" /> {t("resourceAcl.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Path-based access control with inherited rules and per-node ACLs.</p>
         </div>
         <button onClick={() => setEditing({ id: "", resource_path: selectedPath || "/", principal: "", principal_type: "role", effect: "allow", permissions: [], conditions: "", inherited: false, created_at: "" })} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"><Plus className="h-4 w-4" /> Add Rule</button>

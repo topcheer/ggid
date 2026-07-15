@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Check,
   X,
@@ -62,7 +63,9 @@ type Tab = "consent" | "history" | "settings";
 const DEFAULT_CONSENT_TEXT =
   "{{.ClientName}} is requesting access to your account. Review the permissions below carefully before approving.";
 
+const t_hook = useTranslations;
 export default function ConsentPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [activeTab, setActiveTab] = useState<Tab>("consent");
 

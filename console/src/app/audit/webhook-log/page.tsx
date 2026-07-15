@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Webhook, Loader2, AlertCircle, X, Check, Clock, Zap,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DeliveryEntry {
   id: string;
@@ -26,6 +27,8 @@ const STATUS_CONFIG = {
 };
 
 export default function WebhookLogPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [entries, setEntries] = useState<DeliveryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +51,7 @@ export default function WebhookLogPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Webhook className="h-6 w-6 text-indigo-600" /> Webhook Delivery Log</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Webhook className="h-6 w-6 text-indigo-600" /> {t("auditWebhookLog.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Timeline of all webhook delivery attempts with HTTP status and latency.</p>
       </div>
 

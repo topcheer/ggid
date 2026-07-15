@@ -13,6 +13,7 @@ import {
   Users,
   Shield,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AccessReview {
   id: string;
@@ -47,6 +48,8 @@ interface ReviewItem {
 }
 
 export default function AccessReviewsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [reviews, setReviews] = useState<AccessReview[]>([]);
   const [items, setItems] = useState<ReviewItem[]>([]);

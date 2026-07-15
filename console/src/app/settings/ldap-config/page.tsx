@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 export default function LdapConfigPage() {
+  const t = useTranslations();
+
   const [ldapUrl, setLdapUrl] = useState('ldaps://ldap.ggid.io:636');
   const [bindDn, setBindDn] = useState('cn=admin,dc=ggid,dc=io');
   const [bindPassword, setBindPassword] = useState('');

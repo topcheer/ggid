@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Webhook, Plus, Trash2, X, Save, Send, Settings, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ProvisioningWebhook {
   id: string;
@@ -18,6 +19,8 @@ interface ProvisioningWebhook {
 const eventTypes = ["user.created", "user.updated", "user.deleted", "role.granted", "role.revoked", "org.member_added", "org.member_removed"];
 
 export default function ProvisioningWebhooksPage() {
+  const t = useTranslations();
+
   const [webhooks, setWebhooks] = useState<ProvisioningWebhook[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -94,7 +97,7 @@ export default function ProvisioningWebhooksPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Webhook className="w-6 h-6 text-blue-500" /> Provisioning Webhooks</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Webhook className="w-6 h-6 text-blue-500" /> {t("provisioningWebhooks.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Configure SCIM provisioning webhooks for lifecycle events.</p>
         </div>
         <button onClick={() => { setEditId(null); setForm({ url: "", events: [], secret: "" }); setShowCreate(true); }} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> Add Webhook</button>

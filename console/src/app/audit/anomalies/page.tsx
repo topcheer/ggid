@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   AlertTriangle, Loader2, AlertCircle, X, ChevronDown, ChevronRight, CheckCircle, TrendingUp,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RelatedEvent {
   event_id: string;
@@ -40,6 +41,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AnomaliesPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [anomalies, setAnomalies] = useState<Anomaly[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +78,7 @@ export default function AnomaliesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><AlertTriangle className="h-6 w-6 text-orange-600" /> Anomaly Detection</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><AlertTriangle className="h-6 w-6 text-orange-600" /> {t("auditAnomalies.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">ML-based behavioral anomaly detection with confidence scoring.</p>
       </div>
 

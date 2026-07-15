@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useServiceMeshConfig, ServiceMeshConfig, TrafficPolicy } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ServiceMeshConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useServiceMeshConfig();
   const [form, setForm] = useState<ServiceMeshConfig | null>(null);
   const [saving, setSaving] = useState(false);

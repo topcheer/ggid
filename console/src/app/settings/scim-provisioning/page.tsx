@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Cloud, AlertTriangle, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface Mapping { scim_attr: string; local_attr: string; }
 interface ErrorItem { id: string; user: string; error: string; timestamp: string; }
 interface Config { endpoint_url: string; mappings: Mapping[]; rules: { create: boolean; update: boolean; deactivate: boolean; }; sync_direction: "inbound" | "outbound" | "bidirectional"; last_sync: string; last_status: "success" | "partial" | "failed"; error_queue: ErrorItem[]; }
 export default function ScimProvisioningPage() {
+  const t = useTranslations();
   const [data, setData] = useState<Config | null>(null);
   const [loading, setLoading] = useState(false);
   const fetchData = useCallback(async () => {

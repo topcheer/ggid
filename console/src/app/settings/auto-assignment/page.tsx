@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Users, RefreshCw, Shuffle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Assignment {
   id: string;
@@ -25,6 +26,8 @@ const strategyColors: Record<string, string> = {
 };
 
 export default function AutoAssignmentPage() {
+  const t = useTranslations();
+
   const [campaign, setCampaign] = useState("");
   const [campaigns, setCampaigns] = useState<string[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -63,7 +66,7 @@ export default function AutoAssignmentPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-indigo-500" /> Auto-Assignment</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-indigo-500" /> {t("autoAssignment.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Manage reviewer assignment strategies for access review campaigns.</p>
       </div>
 

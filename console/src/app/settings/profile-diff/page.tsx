@@ -1,9 +1,12 @@
 "use client";
 import { useState, useCallback } from "react";
 import { GitCompare, ArrowRight, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface DiffEntry { field: string; old_value: string; new_value: string; changed_by: string; changed_at: string; }
 interface DiffResult { user_id: string; username: string; version_a: string; version_b: string; diffs: DiffEntry[]; }
 export default function ProfileDiffPage() {
+  const t = useTranslations();
+
   const [userId, setUserId] = useState("");
   const [versionA, setVersionA] = useState("");
   const [versionB, setVersionB] = useState("");
@@ -24,7 +27,7 @@ export default function ProfileDiffPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-purple-500" /> Profile Diff</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-purple-500" /> {t("profileDiff.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Compare two versions of a user profile side by side.</p>
       </div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => setError(null)} className="text-xs underline hover:text-red-700">Dismiss</button></div>}

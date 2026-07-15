@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useApi } from "@/lib/api";
 import { Send, RefreshCw, Shield, Clock, AlertCircle, CheckCircle2, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DeliveryAttempt {
   id: string;
@@ -26,6 +27,8 @@ const WEBHOOK_EVENTS = [
 ];
 
 export default function WebhookTesterPage() {
+  const t = useTranslations();
+
   const { API_BASE, TENANT_ID } = useApi();
   const [selectedEvent, setSelectedEvent] = useState("user.created");
   const [webhookUrl, setWebhookUrl] = useState("https://example.com/webhook");

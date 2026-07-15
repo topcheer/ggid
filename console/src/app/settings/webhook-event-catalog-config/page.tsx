@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useWebhookEventCatalogConfig, WebhookEventCatalogConfig, EventTypeEntry } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function WebhookEventCatalogConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig, testEvent } = useWebhookEventCatalogConfig();
   const [form, setForm] = useState<WebhookEventCatalogConfig | null>(null);
   const [saving, setSaving] = useState(false);

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useApi } from "@/lib/api";
 import {
+import { useTranslations } from "@/lib/i18n";
   GitBranch, ChevronRight, ChevronDown, Users, Shield, Loader2,
   AlertCircle, X,
 } from "lucide-react";
@@ -37,6 +38,7 @@ function TreeNode({ node, depth }: { node: RoleNode; depth: number }) {
 }
 
 export default function RoleHierarchyPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [tree, setTree] = useState<RoleNode[]>([]);
   const [loading, setLoading] = useState(true);

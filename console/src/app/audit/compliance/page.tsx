@@ -12,6 +12,7 @@ import {
   XCircle,
   AlertTriangle,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ComplianceReport {
   id: string;
@@ -90,6 +91,8 @@ const MOCK_CONTROLS: ControlItem[] = [
 ];
 
 export default function ComplianceReportPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [reports, setReports] = useState<ComplianceReport[]>([]);
   const [selectedFramework, setSelectedFramework] = useState("all");

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Network, Search, Building2, User as UserIcon, Briefcase, ChevronRight } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ChainMember {
   id: string;
@@ -18,6 +19,8 @@ interface ChainData {
 }
 
 export default function ManagementChainPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<ChainData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +51,7 @@ export default function ManagementChainPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> Management Chain</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("managementChain.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">View the reporting hierarchy from user to executive level.</p>
       </div>
 

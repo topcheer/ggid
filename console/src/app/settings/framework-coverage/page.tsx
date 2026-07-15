@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, AlertCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface FrameworkInfo {
   framework: string;
@@ -18,6 +19,8 @@ interface CoverageData {
 const frameworks = ["SOC 2", "HIPAA", "ISO 27001", "GDPR"];
 
 export default function FrameworkCoveragePage() {
+  const t = useTranslations();
+
   const [activeTab, setActiveTab] = useState("SOC 2");
   const [data, setData] = useState<CoverageData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,7 +42,7 @@ export default function FrameworkCoveragePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> Framework Coverage</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> {t("frameworkCoverage.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Compliance control coverage across regulatory frameworks.</p>
       </div>
 
@@ -52,9 +55,9 @@ export default function FrameworkCoveragePage() {
       {current && (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Controls</span><p className="text-2xl font-bold mt-1">{current.total_controls}</p></div>
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Covered</span><p className="text-2xl font-bold text-green-600 mt-1">{current.covered}</p></div>
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Gaps</span><p className="text-2xl font-bold text-red-600 mt-1">{current.gaps.length}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.frameworkCoverage.totalControls")}</span><p className="text-2xl font-bold mt-1">{current.total_controls}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.frameworkCoverage.covered")}</span><p className="text-2xl font-bold text-green-600 mt-1">{current.covered}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.frameworkCoverage.gaps")}</span><p className="text-2xl font-bold text-red-600 mt-1">{current.gaps.length}</p></div>
           </div>
 
           <div className="rounded-lg border dark:border-gray-800 p-4">

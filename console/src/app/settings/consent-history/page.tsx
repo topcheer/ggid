@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { History, Check, X, Search } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ConsentEntry {
   id: string;
@@ -16,6 +17,8 @@ interface ConsentEntry {
 }
 
 export default function ConsentHistoryPage() {
+  const t = useTranslations();
+
   const [entries, setEntries] = useState<ConsentEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<string>("");

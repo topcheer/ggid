@@ -6,6 +6,7 @@ import {
   FileText, Plus, Trash2, X, AlertCircle, Loader2, Check,
   Download, Clock, Calendar, Mail,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ComplianceSchedule {
   id: string;
@@ -38,6 +39,8 @@ const FREQUENCIES = [
 ];
 
 export default function ComplianceReportsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [schedules, setSchedules] = useState<ComplianceSchedule[]>([]);
   const [pastReports, setPastReports] = useState<PastReport[]>([]);

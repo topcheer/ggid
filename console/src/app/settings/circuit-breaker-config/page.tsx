@@ -34,7 +34,7 @@ export default function CircuitBreakerConfigPage() {
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.circuitBreakerConfig.noData")}</div>;
   const [failureThreshold, setFailureThreshold] = useState(5);
   const [successThreshold, setSuccessThreshold] = useState(3);
   const [timeoutDuration, setTimeoutDuration] = useState(30);
@@ -72,16 +72,16 @@ export default function CircuitBreakerConfigPage() {
         <div className="flex items-center gap-4">
           <div className={`w-4 h-4 rounded-full ${statusColor}`} />
           <div>
-            <div className="text-sm font-medium">{t("backend2.circuitBreakerConfig.status")}</div>
+            <div className="text-sm font-medium">{"Status"}</div>
             <div className="text-2xl font-bold">
-              {status === 'closed' ? t("backend2.circuitBreakerConfig.statusClosed") :
-               status === 'open' ? t("backend2.circuitBreakerConfig.statusOpen") :
-               t("backend2.circuitBreakerConfig.statusHalfOpen")}
+              {status === 'closed' ? "Closed" :
+               status === 'open' ? "Open" :
+               "Half Open"}
             </div>
           </div>
         </div>
         <div className="text-sm text-gray-500">
-          {t("backend2.circuitBreakerConfig.lastFailure")}: {lastFailure}
+          {"Last Failure"}: {lastFailure}
         </div>
       </section>
 
@@ -100,7 +100,7 @@ export default function CircuitBreakerConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.circuitBreakerConfig.successThreshold")}</label>
+            <label className="text-sm text-gray-600">{"Success Threshold"}</label>
             <input
               type="number"
               min={1}
@@ -111,7 +111,7 @@ export default function CircuitBreakerConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.circuitBreakerConfig.timeoutDuration")}</label>
+            <label className="text-sm text-gray-600">{"Timeout Duration"}</label>
             <input
               type="number"
               min={1}
@@ -122,7 +122,7 @@ export default function CircuitBreakerConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.circuitBreakerConfig.halfOpenMaxCalls")}</label>
+            <label className="text-sm text-gray-600">{"Half Open Max Calls"}</label>
             <input
               type="number"
               min={1}

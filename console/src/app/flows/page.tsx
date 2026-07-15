@@ -8,6 +8,7 @@ import {
   GripVertical, ChevronDown, ChevronRight, Save, Power, GitBranch,
   ArrowDown, Layers, User,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 // ===== Types =====
 
@@ -70,6 +71,8 @@ const STEP_MAP: Record<string, StepTypeDef> = Object.fromEntries(
 );
 
 function getStepDef(type: StepType): StepTypeDef {
+  const t = useTranslations();
+
   return STEP_MAP[type] || STEP_TYPES[0];
 }
 

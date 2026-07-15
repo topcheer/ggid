@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Policy { id: string; name: string; subject: string; resource: string; action: string; effect: string; priority: number; enabled: boolean; }
 
 export default function AbacPolicyEditorPage() {
+  const t = useTranslations();
+
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newPolicy, setNewPolicy] = useState({ name: '', subject: '', resource: '', action: '', effect: 'allow' });

@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Trash2, Loader2, AlertCircle, X, Search, AlertOctagon, CheckCircle, History,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SearchResult { user_id: string; username: string; email: string; record_count: number; }
 interface ForgetRecord {
@@ -22,6 +23,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function GDPRForgetPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [query, setQuery] = useState("");
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
@@ -66,7 +69,7 @@ export default function GDPRForgetPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Trash2 className="h-6 w-6 text-red-600" /> GDPR Right to be Forgotten</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Trash2 className="h-6 w-6 text-red-600" /> {t("auditGdprForget.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Permanently delete all PII for a user. This action is irreversible.</p>
       </div>
 

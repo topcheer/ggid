@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Users, AlertTriangle, TrendingDown } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TeamInsights {
   cohesion_score: number;
@@ -19,6 +20,8 @@ const riskColors: Record<string, string> = {
 };
 
 export default function TeamInsightsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<TeamInsights | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +43,7 @@ export default function TeamInsightsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-teal-500" /> Team Insights</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-teal-500" /> {t("teamInsights.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Organizational collaboration patterns, silos, and attrition risk analysis.</p>
       </div>
 

@@ -6,6 +6,7 @@ import {
   Save, RotateCcw, Shield, Clock, Building2, Palette, Upload,
   Lock, Fingerprint, Smartphone, Mail, Server, Globe, Key, Check,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AuthMethod {
   key: string;
@@ -26,6 +27,8 @@ const AUTH_METHODS: AuthMethod[] = [
 ];
 
 export default function TenantSettingsPage() {
+  const t = useTranslations();
+
   const { apiFetch, TENANT_ID } = useApi();
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);

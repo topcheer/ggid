@@ -1,9 +1,12 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Key, Plus, X, RotateCcw, Ban, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface ApiKey { id: string; name: string; scopes: string[]; created_at: string; expires_at: string; last_used: string | null; status: "active" | "expired" | "revoked"; usage_count: number; }
 const statusColors: Record<string, string> = { active: "bg-green-100 dark:bg-green-900/30 dark:text-green-400", expired: "bg-gray-100 dark:bg-gray-800 dark:text-gray-400", revoked: "bg-red-100 dark:bg-red-900/30 dark:text-red-400" };
 export default function APIKeyLifecyclePage() {
+  const t = useTranslations();
+
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export default function APIKeyLifecyclePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Key className="w-6 h-6 text-blue-500" /> API Key Lifecycle</h1><p className="text-sm text-gray-500 mt-1">Manage API keys: create, rotate, revoke.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Key className="w-6 h-6 text-blue-500" /> {t("apiKeyLifecycle.title")}</h1><p className="text-sm text-gray-500 mt-1">Manage API keys: create, rotate, revoke.</p></div>
         <button onClick={() => { setShowCreate(true); setError(null); }} aria-label="Create new API key" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2"><Plus className="w-4 h-4" /> Create Key</button>
       </div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => { setError(null); fetchData(); }} className="text-xs underline hover:text-red-700">Retry</button></div>}

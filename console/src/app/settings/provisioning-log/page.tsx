@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ListChecks, RefreshCw, Filter, ChevronDown } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LogEvent {
   id: string;
@@ -21,6 +22,8 @@ const sourceColors: Record<string, string> = {
 };
 
 export default function ProvisioningLogPage() {
+  const t = useTranslations();
+
   const [events, setEvents] = useState<LogEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterSource, setFilterSource] = useState("");
@@ -49,7 +52,7 @@ export default function ProvisioningLogPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><ListChecks className="w-6 h-6 text-blue-500" /> Provisioning Log</h1><p className="text-sm text-gray-500 mt-1">Track user provisioning events across connected applications.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><ListChecks className="w-6 h-6 text-blue-500" /> {t("provisioningLog.title")}</h1><p className="text-sm text-gray-500 mt-1">Track user provisioning events across connected applications.</p></div>
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Events</span><p className="text-xl font-bold mt-1">{events.length}</p></div>

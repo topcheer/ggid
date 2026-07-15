@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { Eye, Loader2, AlertCircle, X, Save, Monitor } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ConsentConfig {
   logo_url: string;
@@ -31,6 +32,8 @@ const defaultConfig: ConsentConfig = {
 };
 
 export default function ConsentScreenPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [config, setConfig] = useState<ConsentConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +76,7 @@ export default function ConsentScreenPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Eye className="h-6 w-6 text-indigo-600" /> Consent Screen</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Eye className="h-6 w-6 text-indigo-600" /> {t("consentScreen.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Customize the OAuth consent page with live preview.</p>
       </div>
 

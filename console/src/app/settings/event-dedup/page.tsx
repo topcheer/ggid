@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, Trash2, Play, BarChart3 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DedupStats {
   original_count: number;
@@ -18,6 +19,8 @@ const methods = [
 ];
 
 export default function EventDedupPage() {
+  const t = useTranslations();
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [method, setMethod] = useState("exact");
@@ -37,7 +40,7 @@ export default function EventDedupPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Copy className="w-6 h-6 text-purple-500" /> Event Deduplication</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Copy className="w-6 h-6 text-purple-500" /> {t("eventDedup.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Identify and remove duplicate audit events within a date range.</p>
       </div>
 

@@ -2,8 +2,10 @@
 
 import { useSocialProviderStats } from "@ggid/sdk-react";
 import { Users, TrendingUp, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SocialProviderStatsPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useSocialProviderStats();
 
   if (loading) return <div className="p-8 text-gray-400">Loading social provider stats...</div>;

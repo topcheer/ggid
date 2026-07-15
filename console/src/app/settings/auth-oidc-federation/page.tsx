@@ -2,8 +2,11 @@
 
 import { useAuthOidcFederation } from "@ggid/sdk-react";
 import { Globe, ShieldCheck, Link2, FileText, Search, CheckCircle, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthOidcFederationPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAuthOidcFederation();
 
   if (loading) return <div className="p-8 text-gray-400">Loading OIDC federation...</div>;

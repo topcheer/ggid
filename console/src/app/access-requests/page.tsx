@@ -5,6 +5,7 @@ import {
   FileCheck, Plus, X, Check, Ban, Loader2, Filter, Clock, CheckCircle2, XCircle,
 } from "lucide-react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 
 interface AccessRequest {
   id: string;
@@ -29,6 +30,8 @@ const btnPrimary = "flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 te
 const btnGhost = "rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700";
 
 export default function AccessRequestsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [loading, setLoading] = useState(true);

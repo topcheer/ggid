@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Activity, Sliders } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface Signal { name: string; weight: number; }
 interface ScoreEntry { username: string; score: number; top_signal: string; last_event: string; }
 interface ModelStats { accuracy: number; precision: number; recall: number; false_positive_rate: number; }
 interface Data { signals: Signal[]; thresholds: { low: number; medium: number; high: number; critical: number }; distribution: { bucket: string; count: number }[]; top_users: ScoreEntry[]; model_stats: ModelStats; }
 export default function AnomalyScoringPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(false);
   const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/auth/anomaly-scoring", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
@@ -13,7 +16,7 @@ export default function AnomalyScoringPage() {
   const maxBucket = Math.max(...(data?.distribution.map((d) => d.count) || [1]), 1);
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-orange-500" /> Anomaly Scoring</h1><p className="text-sm text-gray-500 mt-1">Configure risk-based anomaly detection scoring model.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-orange-500" /> {t("anomalyScoring.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure risk-based anomaly detection scoring model.</p></div>
       {data && (<>
         <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Sliders className="w-4 h-4 text-gray-400" /> Signal Weights</h3><div className="space-y-3">{data.signals.map((s, i) => (<div key={s.name} className="flex items-center gap-3"><span className="text-sm w-28 capitalize">{s.name}</span><input type="range" min={0} max={50} defaultValue={s.weight} className="flex-1" /><span className="text-sm font-bold w-10 text-right">{s.weight}</span></div>))}</div></div>
         <div className="rounded-lg border dark:border-gray-800 p-4"><h3 className="text-sm font-semibold mb-3">Thresholds</h3><div className="grid grid-cols-4 gap-3">{(["low", "medium", "high", "critical"] as const).map((level) => (<div key={level} className="text-center"><label className="text-xs text-gray-500 capitalize">{level}</label><div className="mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 text-sm font-bold">{data.thresholds[level]}</div></div>))}</div></div>

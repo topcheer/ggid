@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   ShieldAlert, Loader2, AlertCircle, X, XCircle, MapPin, Activity, Zap,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface GeoLocation { ip: string; city: string; country: string; timestamp: string; }
 interface SuspiciousSession {
@@ -15,6 +16,8 @@ interface SuspiciousSession {
 }
 
 function riskColor(score: number): string {
+  const t = useTranslations();
+
   if (score >= 80) return "text-red-600";
   if (score >= 60) return "text-orange-600";
   return "text-yellow-600";
@@ -47,7 +50,7 @@ export default function HijackDetectionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldAlert className="h-6 w-6 text-red-600" /> Hijack Detection</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldAlert className="h-6 w-6 text-red-600" /> {t("securityHijackDetection.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Suspicious sessions detected via concurrent IP usage and geo-velocity analysis.</p>
       </div>
 

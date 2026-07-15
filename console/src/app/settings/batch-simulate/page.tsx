@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { FlaskConical, Plus, X, Check, Ban } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SimResult {
   subject: string;
@@ -17,6 +18,8 @@ interface BatchData {
 }
 
 export default function BatchSimulatePage() {
+  const t = useTranslations();
+
   const [subjects, setSubjects] = useState<string[]>([]);
   const [resources, setResources] = useState<string[]>([]);
   const [actions, setActions] = useState<string[]>([]);
@@ -46,7 +49,7 @@ export default function BatchSimulatePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><FlaskConical className="w-6 h-6 text-teal-500" /> Batch Simulate</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><FlaskConical className="w-6 h-6 text-teal-500" /> {t("batchSimulate.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Batch-evaluate policy decisions across multiple subjects, resources, and actions.</p>
       </div>
 

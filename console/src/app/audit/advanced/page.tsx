@@ -20,6 +20,7 @@ import {
   Clock,
   Download,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AuditEvent {
   id: string;
@@ -99,6 +100,8 @@ const SEVERITIES = ["info", "warning", "critical", "error"];
 const RESULTS = ["success", "failure", "denied"];
 
 function genId() {
+  const t = useTranslations();
+
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 

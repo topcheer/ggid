@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
 import {
+import { useTranslations } from "@/lib/i18n";
   Globe,
   Plus,
   Trash2,
@@ -42,6 +43,7 @@ interface SSOProvider {
 const ATTR_KEYS = ["username", "email", "firstName", "lastName", "displayName", "groups", "department"];
 
 export default function SSOProvidersPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [providers, setProviders] = useState<SSOProvider[]>([]);
   const [loading, setLoading] = useState(true);

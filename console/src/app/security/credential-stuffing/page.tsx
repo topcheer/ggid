@@ -6,6 +6,7 @@ import {
   ShieldBan, Loader2, AlertCircle, X, Check, Ban, ToggleLeft, ToggleRight,
   Globe, Activity,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface StuffingData {
   detection_enabled: boolean;
@@ -16,6 +17,8 @@ interface StuffingData {
 }
 
 export default function CredentialStuffingPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [data, setData] = useState<StuffingData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +48,7 @@ export default function CredentialStuffingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldBan className="h-6 w-6 text-red-600" /> Credential Stuffing Protection</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldBan className="h-6 w-6 text-red-600" /> {t("securityCredentialStuffing.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Automated detection of credential stuffing attacks across login endpoints.</p>
         </div>
         {data && <button onClick={handleToggle} disabled={toggling} className="flex items-center gap-2">{toggling ? <Loader2 className="h-5 w-5 animate-spin" /> : data.detection_enabled ? <ToggleRight className="h-6 w-6 text-green-600" /> : <ToggleLeft className="h-6 w-6 text-gray-300" />}<span className="text-sm font-medium">{data.detection_enabled ? "Detection On" : "Detection Off"}</span></button>}

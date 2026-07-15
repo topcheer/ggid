@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   ShieldCheck, Loader2, AlertCircle, X, TrendingUp, KeyRound, Users, Lightbulb, ArrowRight,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Recommendation {
   id: string;
@@ -55,6 +56,7 @@ function PostureGauge({ score, grade }: { score: number; grade: string }) {
 }
 
 export default function SecurityPosturePage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [posture, setPosture] = useState<Posture | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,7 @@ export default function SecurityPosturePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-emerald-600" /> Security Posture</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-emerald-600" /> {t("securityPosture.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Overall security score based on MFA adoption, password strength, and session hygiene.</p>
       </div>
 

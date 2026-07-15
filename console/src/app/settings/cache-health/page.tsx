@@ -38,7 +38,7 @@ export default function CacheHealthPage() {
   };
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
-  if (!stats.length) return <div className="p-8 text-center text-gray-500">{t("backend2.cacheHealth.noData")}</div>;
+  if (!stats.length) return <div className="p-8 text-center text-gray-500">{"No Data"}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -49,13 +49,13 @@ export default function CacheHealthPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
-              <th className="px-4 py-3">{t("backend2.cacheHealth.cacheType")}</th>
+              <th className="px-4 py-3">{"Cache Type"}</th>
               <th className="px-4 py-3">{t("backend2.cacheHealth.hitRate")}</th>
-              <th className="px-4 py-3">{t("backend2.cacheHealth.misses")}</th>
-              <th className="px-4 py-3">{t("backend2.cacheHealth.size")}</th>
+              <th className="px-4 py-3">{"Misses"}</th>
+              <th className="px-4 py-3">{"Size"}</th>
               <th className="px-4 py-3">{t("backend2.cacheHealth.memory")}</th>
               <th className="px-4 py-3">Healthy</th>
-              <th className="px-4 py-3">{t("backend2.cacheHealth.actions")}</th>
+              <th className="px-4 py-3">{"Actions"}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -77,8 +77,8 @@ export default function CacheHealthPage() {
                   <span className={`px-2 py-1 rounded text-xs ${s.healthy ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{s.healthy ? 'Yes' : 'No'}</span>
                 </td>
                 <td className="px-4 py-3 flex gap-2">
-                  <button onClick={() => refresh(s.name)} className="px-2 py-1 text-xs border rounded hover:bg-gray-100">{t("backend2.cacheHealth.refresh")}</button>
-                  <button onClick={() => clear(s.name)} className="px-2 py-1 text-xs border rounded text-red-600 hover:bg-red-50">{t("backend2.cacheHealth.clear")}</button>
+                  <button onClick={() => refresh(s.name)} className="px-2 py-1 text-xs border rounded hover:bg-gray-100">{"Refresh"}</button>
+                  <button onClick={() => clear(s.name)} className="px-2 py-1 text-xs border rounded text-red-600 hover:bg-red-50">{"Clear"}</button>
                 </td>
               </tr>
             ))}

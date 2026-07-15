@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { UserCog, Plus, X, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Delegation {
   id: string;
@@ -20,6 +21,8 @@ const statusConfig: Record<string, { color: string; icon: typeof CheckCircle }> 
 };
 
 export default function DelegatedReviewPage() {
+  const t = useTranslations();
+
   const [delegations, setDelegations] = useState<Delegation[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -53,7 +56,7 @@ export default function DelegatedReviewPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-indigo-500" /> Delegated Review</h1><p className="text-sm text-gray-500 mt-1">Delegate access review responsibilities to other users with scoped permissions.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-indigo-500" /> {t("delegatedReview.title")}</h1><p className="text-sm text-gray-500 mt-1">Delegate access review responsibilities to other users with scoped permissions.</p></div>
         <button onClick={() => setShowCreate(true)}aria-label="Create new delegation" className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 flex items-center gap-2"><Plus className="w-4 h-4" /> New Delegation</button>
       </div>
 

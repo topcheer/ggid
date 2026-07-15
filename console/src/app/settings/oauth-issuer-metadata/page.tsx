@@ -5,19 +5,19 @@ import { Globe, FileJson, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthIssuerMetadataPage() {
-  const t = useTranslations();
 
   const { data, loading, error, refresh } = useOAuthIssuerMetadata();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading issuer metadata...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("oauthIssuerMeta.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Issuer Metadata</h1>
-          <p className="text-sm text-gray-400 mt-1">OAuth/OIDC well-known discovery document configuration</p>
+          <h1 className="text-2xl font-bold">{t("oauthIssuerMeta.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("oauthIssuerMeta.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -33,7 +33,7 @@ export default function OAuthIssuerMetadataPage() {
         <div className="flex items-center gap-3">
           <Globe className="w-5 h-5 text-blue-400" />
           <div>
-            <p className="text-xs text-gray-400">Issuer URL</p>
+            <p className="text-xs text-gray-400">{t("oauthIssuerMeta.issuerUrl")}</p>
             <p className="text-sm font-mono">{data?.issuer_url}</p>
           </div>
           <span className="text-xs text-gray-500 ml-auto">{data?.well_known_path}</span>
@@ -43,7 +43,7 @@ export default function OAuthIssuerMetadataPage() {
       {/* Supported Capabilities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Supported Response Types</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("oauthIssuerMeta.supportedResponseTypes")}</h2>
           <div className="flex flex-wrap gap-2">
             {(data?.supported_response_types ?? []).map((rt) => (
               <span key={rt} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700 font-mono">{rt}</span>
@@ -51,7 +51,7 @@ export default function OAuthIssuerMetadataPage() {
           </div>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Supported Subject Types</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("oauthIssuerMeta.supportedSubjectTypes")}</h2>
           <div className="flex flex-wrap gap-2">
             {(data?.supported_subject_types ?? []).map((st) => (
               <span key={st} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700 font-mono">{st}</span>
@@ -62,7 +62,7 @@ export default function OAuthIssuerMetadataPage() {
 
       {/* Feature Toggles */}
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
-        <h2 className="text-sm font-semibold mb-4">Feature Support</h2>
+        <h2 className="text-sm font-semibold mb-4">{t("oauthIssuerMeta.featureSupport")}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Claim Types Supported", value: data?.claim_types_supported ?? [] },

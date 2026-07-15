@@ -6,6 +6,7 @@ import {
   Lock, Shield, Unlock, AlertCircle, Loader2, X, Plus,
   Trash2, Save, Clock, Ban, Globe,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Lockout {
   id: string;
@@ -30,6 +31,8 @@ interface IpAllowEntry {
 }
 
 export default function LoginSecurityPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [lockouts, setLockouts] = useState<Lockout[]>([]);
   const [policy, setPolicy] = useState<LoginPolicy>({ max_attempts: 5, lockout_duration_minutes: 30 });

@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePostQuantumMigrationConfig, PostQuantumMigrationConfig, ImpactAssessment } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PostQuantumMigrationConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = usePostQuantumMigrationConfig();
   const [form, setForm] = useState<PostQuantumMigrationConfig | null>(null);
   const [saving, setSaving] = useState(false);

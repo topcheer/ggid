@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   BarChart3, Loader2, AlertCircle, X, KeyRound, Users, AlertOctagon, Activity,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientStat {
   client_id: string;
@@ -19,6 +20,8 @@ interface ClientStat {
 }
 
 export default function ClientAnalyticsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [stats, setStats] = useState<ClientStat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +45,7 @@ export default function ClientAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><BarChart3 className="h-6 w-6 text-indigo-600" /> OAuth Client Analytics</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><BarChart3 className="h-6 w-6 text-indigo-600" /> {t("oauthClientAnalytics.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Usage metrics across all OAuth clients: tokens, users, errors, top scopes.</p>
       </div>
 

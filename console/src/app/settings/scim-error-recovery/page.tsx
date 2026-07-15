@@ -2,8 +2,10 @@
 
 import { useScimErrorRecovery } from "@ggid/sdk-react";
 import { AlertTriangle, RotateCw, CheckCircle, Settings } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ScimErrorRecoveryPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, retryError, bulkRetry } = useScimErrorRecovery();
 
   if (loading) return <div className="p-8 text-gray-400">Loading SCIM error recovery...</div>;

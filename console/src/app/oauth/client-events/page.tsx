@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Activity, MonitorSmartphone, User, Clock, Plus, Key, Pause, Play, Edit3 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientEvent {
   id: string;
@@ -27,6 +28,8 @@ const eventIcons: Record<string, { icon: typeof Plus; color: string }> = {
 };
 
 export default function ClientEventsPage() {
+  const t = useTranslations();
+
   const [clients, setClients] = useState<ClientSummary[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [events, setEvents] = useState<ClientEvent[]>([]);
@@ -61,7 +64,7 @@ export default function ClientEventsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> Client Event Log</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> {t("oauthClientEvents.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track OAuth client lifecycle events with actor attribution.</p>
       </div>
 

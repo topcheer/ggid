@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePolicyBreakGlassConfig, PolicyBreakGlassConfig, BreakGlassRole } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyBreakGlassConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = usePolicyBreakGlassConfig();
   const [form, setForm] = useState<PolicyBreakGlassConfig | null>(null);
   const [saving, setSaving] = useState(false);

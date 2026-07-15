@@ -12,6 +12,7 @@ import {
   Clock,
   Filter,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AlertHistoryEntry {
   id: string;
@@ -37,6 +38,8 @@ interface AlertRule {
 }
 
 export default function AuditAlertsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<AlertRule[]>([]);
   const [history, setHistory] = useState<AlertHistoryEntry[]>([]);

@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRight, Save, Play } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Mapping { id: string; source_attribute: string; target_field: string; transform: "direct" | "regex" | "constant"; transform_value: string; }
 interface IdpOverride { idp_id: string; idp_name: string; overrides: number; }
 
 export default function SamlAttributeMappingPage() {
+  const t = useTranslations();
   const [mappings, setMappings] = useState<Mapping[]>([]);
   const [overrides, setOverrides] = useState<IdpOverride[]>([]);
   const [loading, setLoading] = useState(false);

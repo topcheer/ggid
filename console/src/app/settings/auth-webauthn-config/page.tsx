@@ -2,8 +2,11 @@
 
 import { useAuthWebauthnConfig } from "@ggid/sdk-react";
 import { Fingerprint, Key, Shield, CheckCircle, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthWebauthnConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAuthWebauthnConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading WebAuthn config...</div>;

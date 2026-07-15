@@ -42,7 +42,7 @@ export default function K8sDeploymentPage() {
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.k8sDeployment.noData")}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{"No Data"}</div>;
   const [deployments, setDeployments] = useState<Deployment[]>(defaultDeployments);
 
   const addDeployment = () => {
@@ -66,7 +66,7 @@ export default function K8sDeploymentPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("backend2.k8sDeployment.title")}</h1>
-        <button onClick={addDeployment} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.k8sDeployment.addDeployment")}</button>
+        <button onClick={addDeployment} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Deployment"}</button>
       </div>
       <p className="text-gray-600">Manage Kubernetes deployment manifests and resource settings.</p>
 
@@ -74,13 +74,13 @@ export default function K8sDeploymentPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
-              <th className="px-4 py-3">{t("backend2.k8sDeployment.serviceName")}</th>
+              <th className="px-4 py-3">{"Service Name"}</th>
               <th className="px-4 py-3">{t("backend2.k8sDeployment.image")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeployment.replicas")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeployment.cpu")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeployment.memory")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeployment.status")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeployment.actions")}</th>
+              <th className="px-4 py-3">{"Replicas"}</th>
+              <th className="px-4 py-3">{"Cpu"}</th>
+              <th className="px-4 py-3">{"Memory"}</th>
+              <th className="px-4 py-3">{"Status"}</th>
+              <th className="px-4 py-3">{"Actions"}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -95,8 +95,8 @@ export default function K8sDeploymentPage() {
                   <span className={`px-2 py-1 rounded text-xs font-medium ${statusClass(d.status)}`}>{d.status}</span>
                 </td>
                 <td className="px-4 py-3 flex gap-2">
-                  <button className="text-xs text-blue-600 hover:underline">{t("backend2.k8sDeployment.edit")}</button>
-                  <button onClick={() => deleteDeployment(idx)} className="text-xs text-red-600 hover:underline">{t("backend2.k8sDeployment.delete")}</button>
+                  <button className="text-xs text-blue-600 hover:underline">{"Edit"}</button>
+                  <button onClick={() => deleteDeployment(idx)} className="text-xs text-red-600 hover:underline">{"Delete"}</button>
                 </td>
               </tr>
             ))}

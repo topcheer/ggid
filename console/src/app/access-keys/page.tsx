@@ -20,6 +20,7 @@ import {
   Globe,
   Lock,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AccessKey {
   id: string;
@@ -58,6 +59,8 @@ const EXPIRY_PRESETS = [
 ];
 
 function scopeColor(scope: string): string {
+  const t = useTranslations();
+
   return SCOPE_OPTIONS.find((s) => s.value === scope)?.color || "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
 }
 

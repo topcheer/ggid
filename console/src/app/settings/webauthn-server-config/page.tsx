@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useWebauthnServerConfig, WebauthnServerConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function WebauthnServerConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useWebauthnServerConfig();
   const [form, setForm] = useState<WebauthnServerConfig | null>(null);
   const [saving, setSaving] = useState(false);

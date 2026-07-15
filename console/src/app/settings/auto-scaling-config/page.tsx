@@ -34,7 +34,7 @@ export default function AutoScalingConfigPage() {
             onChange={(e) => setEnabled(e.target.checked)}
             className="w-4 h-4"
           />
-          <span className="font-medium">{t("backend2.autoScaling.enabled")}</span>
+          <span className="font-medium">{"Enabled"}</span>
         </label>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -61,7 +61,7 @@ export default function AutoScalingConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.autoScaling.targetCpu")}</label>
+            <label className="text-sm text-gray-600">{"Target Cpu"}</label>
             <input
               type="range"
               min={10}
@@ -74,7 +74,7 @@ export default function AutoScalingConfigPage() {
             <div className="text-sm font-medium text-center">{targetCpu}%</div>
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.autoScaling.targetMemory")}</label>
+            <label className="text-sm text-gray-600">{"Target Memory"}</label>
             <input
               type="range"
               min={10}
@@ -87,7 +87,7 @@ export default function AutoScalingConfigPage() {
             <div className="text-sm font-medium text-center">{targetMemory}%</div>
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.autoScaling.scaleUpDelay")}</label>
+            <label className="text-sm text-gray-600">{"Scale Up Delay"}</label>
             <input
               type="number"
               min={0}
@@ -98,7 +98,7 @@ export default function AutoScalingConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.autoScaling.scaleDownDelay")}</label>
+            <label className="text-sm text-gray-600">{"Scale Down Delay"}</label>
             <input
               type="number"
               min={0}
@@ -112,7 +112,7 @@ export default function AutoScalingConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">{t("backend2.autoScaling.metrics")}</h2>
+        <h2 className="text-lg font-semibold">{"Metrics"}</h2>
         <div className="space-y-3">
           {metrics.map((m) => (
             <div key={m.service} className="border rounded p-3">
@@ -141,7 +141,7 @@ export default function AutoScalingConfigPage() {
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.autoScaling.save")}
+          {"Save"}
         </button>
       </div>
     </div>

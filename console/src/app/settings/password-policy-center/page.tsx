@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ComplexityRules {
   min_length: number;
@@ -17,6 +18,8 @@ interface PerRoleOverride {
 }
 
 export default function PasswordPolicyCenterPage() {
+  const t = useTranslations();
+
   const [complexity, setComplexity] = useState<ComplexityRules>({ min_length: 12, require_uppercase: true, require_lowercase: true, require_digit: true, require_special: true });
   const [breachDetection, setBreachDetection] = useState(true);
   const [hibpApiKey, setHibpApiKey] = useState("");

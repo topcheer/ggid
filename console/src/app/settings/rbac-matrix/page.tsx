@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Role { id: string; name: string; description: string; }
 
 export default function RbacMatrixPage() {
+  const t = useTranslations();
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
   const [matrix, setMatrix] = useState<Record<string, boolean[]>>({});

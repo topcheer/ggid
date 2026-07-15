@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface NHIEntry {
   id: string;
@@ -19,6 +20,8 @@ interface DecommissionModal {
 }
 
 export default function NHIInventoryPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [entries, setEntries] = useState<NHIEntry[]>([]);

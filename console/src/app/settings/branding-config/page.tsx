@@ -2,8 +2,11 @@
 
 import { useBrandingConfig } from "@ggid/sdk-react";
 import { Palette, Upload } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function BrandingConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useBrandingConfig();
   if (loading) return (
     <div className="p-8 flex flex-col items-center justify-center">

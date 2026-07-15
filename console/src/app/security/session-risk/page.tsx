@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   ShieldCheck, Loader2, AlertCircle, X, RefreshCw, Activity, TrendingUp, TrendingDown,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RiskFactor {
   type: string;
@@ -28,6 +29,8 @@ interface SessionRiskEntry {
 }
 
 function riskColor(score: number): string {
+  const t = useTranslations();
+
   if (score >= 75) return "text-red-600";
   if (score >= 50) return "text-orange-600";
   if (score >= 25) return "text-yellow-600";
@@ -75,7 +78,7 @@ export default function SessionRiskPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-orange-600" /> Session Risk Re-evaluation</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-orange-600" /> {t("securitySessionRisk.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Continuous risk assessment of active sessions based on contextual signals.</p>
         </div>
         <button onClick={handleReevaluateAll} disabled={evaluatingAll} className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50">{evaluatingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Re-evaluate All</button>

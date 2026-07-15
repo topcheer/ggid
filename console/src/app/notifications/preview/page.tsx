@@ -6,6 +6,7 @@ import {
   Mail, Smartphone, Send, Eye, MessageSquare, AlertCircle, Check,
   RefreshCw, ChevronDown, Search, User, Clock, Phone,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 type TemplateType =
   | "welcome" | "password_reset" | "mfa_code" | "account_locked"
@@ -287,6 +288,8 @@ const TEMPLATES: Record<TemplateType, TemplateDef> = {
 };
 
 function interpolate(template: string, data: Record<string, string>): string {
+  const t = useTranslations();
+
   return template.replace(/\{(\w+)\}/g, (_, key: string) => data[key] ?? `{${key}}`);
 }
 

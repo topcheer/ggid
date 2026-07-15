@@ -13,6 +13,7 @@ import {
   ArrowRight,
   GitBranch,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 // ===== Types =====
 
@@ -66,6 +67,8 @@ const ALL_PERMISSION_KEYS = PERMISSION_GROUPS.flatMap((g) => g.permissions);
 // ===== Main Component =====
 
 export default function RolePermissionsMatrixPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [roles, setRoles] = useState<Role[]>([]);
   const [permissions, setPermissions] = useState<Permission[]>([]);

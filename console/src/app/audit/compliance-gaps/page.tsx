@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, X, AlertCircle, Calendar, User } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ComplianceGap {
   id: string;
@@ -30,6 +31,8 @@ const severityColors: Record<string, string> = {
 };
 
 export default function ComplianceGapsPage() {
+  const t = useTranslations();
+
   const [gaps, setGaps] = useState<ComplianceGap[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
@@ -83,7 +86,7 @@ export default function ComplianceGapsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> Compliance Gaps</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> {t("auditComplianceGaps.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track and remediate compliance control gaps across frameworks.</p>
       </div>
 

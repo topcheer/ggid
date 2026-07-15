@@ -6,6 +6,7 @@ import {
   Shield, Save, Download, Search, ChevronDown, ChevronRight,
   CheckCircle2, XCircle, Lock, Settings2,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 // ===== Types =====
 
@@ -111,6 +112,8 @@ const DEFAULT_MATRIX: Record<string, Set<string>> = {
 };
 
 export default function PermissionMatrixPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [roles] = useState<Role[]>(DEFAULT_ROLES);
   const [matrix, setMatrix] = useState<Record<string, Set<string>>>(() => {

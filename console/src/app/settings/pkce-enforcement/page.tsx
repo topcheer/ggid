@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Shield, Save } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientOverride {
   client_id: string;
@@ -18,6 +19,7 @@ interface Config {
 }
 
 export default function PkceEnforcementPage() {
+  const t = useTranslations();
   const [config, setConfig] = useState<Config | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

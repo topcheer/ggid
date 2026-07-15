@@ -39,24 +39,24 @@ export default function HostValidationConfigPage() {
             onChange={(e) => setEnabled(e.target.checked)}
             className="w-4 h-4"
           />
-          <span className="font-medium">{t("backend2.hostValidation.enabled")}</span>
+          <span className="font-medium">{"Enabled"}</span>
         </label>
 
         <div className="space-y-1">
-          <label className="text-sm text-gray-600">{t("backend2.hostValidation.mode")}</label>
+          <label className="text-sm text-gray-600">{"Mode"}</label>
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value)}
             className="w-full border rounded px-3 py-2 text-sm"
             disabled={!enabled}
           >
-            <option value="whitelist">{t("backend2.hostValidation.whitelist")}</option>
-            <option value="blacklist">{t("backend2.hostValidation.blacklist")}</option>
+            <option value="whitelist">{"Whitelist"}</option>
+            <option value="blacklist">{"Blacklist"}</option>
           </select>
         </div>
 
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">{mode === "whitelist" ? t("backend2.hostValidation.whitelist") : t("backend2.hostValidation.blacklist")}</h2>
+          <h2 className="text-lg font-semibold">{mode === "whitelist" ? "Whitelist" : "Blacklist"}</h2>
           <div className="flex flex-wrap gap-2">
             {activeList.map((host) => (
               <span
@@ -68,7 +68,7 @@ export default function HostValidationConfigPage() {
                   onClick={() => deleteHost(host)}
                   className="text-red-500 hover:text-red-700 text-xs"
                 >
-                  {t("backend2.hostValidation.delete")}
+                  {"Delete"}
                 </button>
               </span>
             ))}
@@ -85,7 +85,7 @@ export default function HostValidationConfigPage() {
               onClick={addHost}
               className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
             >
-              {t("backend2.hostValidation.addHost")}
+              {"Add Host"}
             </button>
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function HostValidationConfigPage() {
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.hostValidation.save")}
+          {"Save"}
         </button>
       </div>
     </div>

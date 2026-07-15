@@ -6,6 +6,7 @@ import {
   Users, UserCheck, Clock, Plus, X, AlertCircle, Loader2,
   Shield, ArrowRight, Trash2, XCircle, CheckCircle2,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Delegation {
   id: string;
@@ -22,6 +23,8 @@ interface Delegation {
 }
 
 export default function DelegationPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [delegations, setDelegations] = useState<Delegation[]>([]);
   const [loading, setLoading] = useState(true);

@@ -2,8 +2,10 @@
 
 import { useScimGroupMappingConfig } from "@ggid/sdk-react";
 import { RefreshCw, Plus } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ScimGroupMappingConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useScimGroupMappingConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading SCIM group mapping...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
 import { Zap, Loader2, AlertCircle, X, Plus, Trash2, Save, Play, ToggleLeft, ToggleRight } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface CorrelationRule {
   id: string; name: string; pattern: string; window_minutes: number;
@@ -11,6 +12,8 @@ interface CorrelationRule {
 }
 
 export default function CorrelationRulesPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<CorrelationRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +39,7 @@ export default function CorrelationRulesPage() {
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between"><div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Zap className="h-6 w-6 text-orange-600" /> Correlation Rules</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Event correlation rules with pattern matching, time windows, and thresholds.</p></div><button onClick={() => setEditing({ id: "", name: "", pattern: "", window_minutes: 5, threshold: 3, enabled: true, action: "alert", created_at: "", last_triggered: "", trigger_count: 0 })} className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"><Plus className="h-4 w-4" /> New Rule</button></div>
+      <div className="flex items-center justify-between"><div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Zap className="h-6 w-6 text-orange-600" /> {t("correlationRules.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Event correlation rules with pattern matching, time windows, and thresholds.</p></div><button onClick={() => setEditing({ id: "", name: "", pattern: "", window_minutes: 5, threshold: 3, enabled: true, action: "alert", created_at: "", last_triggered: "", trigger_count: 0 })} className="flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"><Plus className="h-4 w-4" /> New Rule</button></div>
       {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-orange-600" /></div> : rules.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><Zap className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No correlation rules.</p></div></div> : (
         <div className="space-y-2">{rules.map((r) => (

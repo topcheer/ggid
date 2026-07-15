@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   BellRing,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AlertRule {
   id: string;
@@ -62,6 +63,8 @@ const defaultRule: Omit<AlertRule, "id"> = {
 };
 
 export default function AlertingRulesPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<AlertRule[]>([]);
   const [loading, setLoading] = useState(true);

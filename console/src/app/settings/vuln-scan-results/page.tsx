@@ -2,8 +2,10 @@
 
 import { useVulnScanResults } from "@ggid/sdk-react";
 import { Bug, RefreshCw, Filter } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function VulnScanResultsPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useVulnScanResults();
 
   if (loading) return <div className="p-8 text-gray-400">Loading vulnerability scan...</div>;

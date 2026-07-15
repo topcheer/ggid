@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface MfaFactor {
   type: "TOTP" | "WebAuthn" | "Push" | "SMS";
@@ -17,6 +18,8 @@ interface ComplianceStats {
 }
 
 export default function MfaEnrollmentCenterPage() {
+  const t = useTranslations();
+
   const [factors, setFactors] = useState<MfaFactor[]>([]);
   const [compliance, setCompliance] = useState<ComplianceStats>({ total_users: 0, enrolled: 0, pending: 0, exemptions: 0 });
   const [factorPriority, setFactorPriority] = useState<string[]>(["WebAuthn", "TOTP", "Push", "SMS"]);

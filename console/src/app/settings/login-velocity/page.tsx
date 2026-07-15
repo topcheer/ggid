@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, Activity, Globe, TrendingUp, Clock, Zap, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface VelocityData {
   user_id: string;
@@ -35,6 +36,8 @@ interface VelocityEvent {
 }
 
 export default function LoginVelocityPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<VelocityData | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -75,7 +78,7 @@ export default function LoginVelocityPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-yellow-500" /> Login Velocity</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-yellow-500" /> {t("loginVelocity.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Monitor real-time login patterns and detect anomalies.</p>
         </div>
         <label className="flex items-center gap-2 text-sm cursor-pointer">

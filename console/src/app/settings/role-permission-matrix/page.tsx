@@ -1,10 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Grid3x3, Download } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface MatrixData { roles: string[]; permissions: string[]; assignments: Record<string, Record<string, "allow" | "deny" | "inherit">>; }
 
 export default function RolePermissionMatrixPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<MatrixData | null>(null);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -37,7 +40,7 @@ export default function RolePermissionMatrixPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" /> Role Permission Matrix</h1><p className="text-sm text-gray-500 mt-1">Click cells to toggle allow/deny/inherit for each role-permission combination.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" /> {t("rolePermissionMatrix.title")}</h1><p className="text-sm text-gray-500 mt-1">Click cells to toggle allow/deny/inherit for each role-permission combination.</p></div>
         <button className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-2"><Download className="w-4 h-4" /> Export</button>
       </div>
 

@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   FileCheck, Loader2, AlertCircle, X, Upload, Download, Plus, Trash2, Save,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ABACCondition {
   attribute: string;
@@ -23,6 +24,8 @@ interface ABACPolicy {
 }
 
 export default function ABACPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [policies, setPolicies] = useState<ABACPolicy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,7 +102,7 @@ export default function ABACPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCheck className="h-6 w-6 text-indigo-600" /> ABAC Policy Manager</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCheck className="h-6 w-6 text-indigo-600" /> {t("abac.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Attribute-Based Access Control policy management with import/export.</p>
         </div>
         <div className="flex items-center gap-2">

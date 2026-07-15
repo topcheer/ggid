@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Smartphone, Gauge, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface MFAStats {
   method_distribution: { method: string; count: number }[];
@@ -15,6 +16,8 @@ const methodColors: Record<string, string> = {
 };
 
 export default function MFAEnrollmentStatsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<MFAStats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +38,7 @@ export default function MFAEnrollmentStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="w-6 h-6 text-blue-500" /> MFA Enrollment Stats</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="w-6 h-6 text-blue-500" /> {t("mfaEnrollmentStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Multi-factor authentication enrollment across the organization.</p>
       </div>
 

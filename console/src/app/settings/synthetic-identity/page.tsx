@@ -2,8 +2,10 @@
 
 import { useSyntheticIdentity } from "@ggid/sdk-react";
 import { UserX, Mail, Ban, Shield, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SyntheticIdentityPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useSyntheticIdentity();
 
   if (loading) return <div className="p-8 text-gray-400">Loading synthetic identity...</div>;

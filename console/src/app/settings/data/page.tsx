@@ -14,6 +14,7 @@ import {
   Database,
   ArrowRight,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 type DataType = "users" | "groups" | "roles";
 
@@ -131,6 +132,7 @@ function downloadFile(content: string, filename: string, mimeType: string) {
 }
 
 export default function DataPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [activeTab, setActiveTab] = useState<DataType>("users");
 

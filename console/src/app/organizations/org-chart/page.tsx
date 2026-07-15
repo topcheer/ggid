@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Network, Search, ChevronDown, ChevronRight, Building2, User as UserIcon, Briefcase, AlertTriangle, RotateCcw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface OrgNode { id: string; name: string; title: string; email: string; manager_id: string | null; department: string; children?: OrgNode[]; }
 interface TreeNodeProps { node: OrgNode; depth: number; collapsedIds: Set<string | null>; toggleNode: (id: string) => void; highlight: string; }
 function TreeNode({ node, depth, collapsedIds, toggleNode, highlight }: TreeNodeProps) {
@@ -44,6 +45,7 @@ function TreeNode({ node, depth, collapsedIds, toggleNode, highlight }: TreeNode
   );
 }
 export default function OrgChartPage() {
+  const t = useTranslations();
   const [orgs, setOrgs] = useState<{ id: string; name: string }[]>([]);
   const [selectedOrg, setSelectedOrg] = useState("");
   const [tree, setTree] = useState<OrgNode | null>(null);
@@ -96,7 +98,7 @@ export default function OrgChartPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> Organization Chart</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("organizationsOrgChart.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Interactive org chart with expand/collapse and person search.</p>
       </div>
       <div className="flex items-center gap-3 flex-wrap">

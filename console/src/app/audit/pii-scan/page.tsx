@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   ScanSearch, Loader2, AlertCircle, X, Play, Database, ShieldCheck,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PIIFinding {
   id: string;
@@ -39,6 +40,8 @@ const severityColors: Record<string, string> = {
 };
 
 export default function PIIScanPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [result, setResult] = useState<ScanResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +71,7 @@ export default function PIIScanPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ScanSearch className="h-6 w-6 text-purple-600" /> PII Discovery</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ScanSearch className="h-6 w-6 text-purple-600" /> {t("auditPiiScan.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Automated discovery of personally identifiable information across all data stores.</p>
         </div>
         <button onClick={handleScan} disabled={scanning} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">{scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Run Scan</button>

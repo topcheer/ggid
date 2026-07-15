@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAbacConditionConfig, AttributeSource } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LocalConditionTemplate {
   name: string;
@@ -17,6 +18,8 @@ interface LocalAbacConditionConfig {
 }
 
 export default function AbacConditionConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useAbacConditionConfig();
   const [form, setForm] = useState<LocalAbacConditionConfig | null>(null);
   const [saving, setSaving] = useState(false);

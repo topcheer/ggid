@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Route, Loader2, AlertCircle, X, ChevronRight, Folder, Lock, AlertOctagon, Search,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AccessPathNode {
   resource: string;
@@ -42,6 +43,7 @@ function PathNode({ node, depth }: { node: AccessPathNode; depth: number }) {
 }
 
 export default function AccessPathsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [userId, setUserId] = useState("");
   const [result, setResult] = useState<AccessPathResult | null>(null);
@@ -61,7 +63,7 @@ export default function AccessPathsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Route className="h-6 w-6 text-indigo-600" /> Access Path Analysis</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Route className="h-6 w-6 text-indigo-600" /> {t("securityAccessPaths.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Trace user privilege paths and identify over-privileged resources.</p>
       </div>
 

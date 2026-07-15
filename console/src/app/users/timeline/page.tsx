@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Clock, Loader2, AlertCircle, X, LogIn, LogOut, KeyRound, Shield, Users2, RefreshCw, Filter,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TimelineEvent {
   id: string;
@@ -29,6 +30,8 @@ const typeIcons: Record<string, React.ReactNode> = {
 const filterTypes = ["all", "login", "logout", "password_change", "mfa_enroll", "mfa_remove", "role_change", "permission_grant", "permission_revoke", "session_revoke", "api_key_create"];
 
 export default function UserTimelinePage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [userId, setUserId] = useState("");
   const [events, setEvents] = useState<TimelineEvent[]>([]);
@@ -55,7 +58,7 @@ export default function UserTimelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Clock className="h-6 w-6 text-indigo-600" /> User Activity Timeline</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Clock className="h-6 w-6 text-indigo-600" /> {t("usersTimeline.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Chronological activity log: logins, password changes, MFA, role changes.</p>
       </div>
 

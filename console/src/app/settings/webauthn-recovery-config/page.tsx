@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useWebauthnRecoveryConfig, WebauthnRecoveryConfig, ReEnrollmentStep } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function WebauthnRecoveryConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useWebauthnRecoveryConfig();
   const [form, setForm] = useState<WebauthnRecoveryConfig | null>(null);
   const [saving, setSaving] = useState(false);

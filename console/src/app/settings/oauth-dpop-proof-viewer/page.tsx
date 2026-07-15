@@ -5,11 +5,11 @@ import { KeyRound, Fingerprint, Clock, CheckCircle, XCircle, AlertTriangle } fro
 import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthDpopProofViewerPage() {
-  const t = useTranslations();
 
   const { data, loading, error, refresh } = useOAuthDpopProofViewer();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading DPoP proof viewer...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("oauthDpopViewer.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const proof = data?.proof;
@@ -18,8 +18,8 @@ export default function OAuthDpopProofViewerPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">DPoP Proof Viewer</h1>
-          <p className="text-sm text-gray-400 mt-1">Decode and inspect DPoP proof JWT (RFC 9449)</p>
+          <h1 className="text-2xl font-bold">{t("oauthDpopViewer.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("oauthDpopViewer.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -46,7 +46,7 @@ export default function OAuthDpopProofViewerPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Header */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-400 mb-3">JWT Header</h2>
+          <h2 className="text-sm font-semibold text-gray-400 mb-3">{t("oauthDpopViewer.jwtHeader")}</h2>
           <div className="space-y-2">
             <div className="bg-gray-800 rounded-lg p-3">
               <p className="text-xs text-gray-500">typ</p>
@@ -65,7 +65,7 @@ export default function OAuthDpopProofViewerPage() {
 
         {/* Payload */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-400 mb-3">JWT Payload</h2>
+          <h2 className="text-sm font-semibold text-gray-400 mb-3">{t("oauthDpopViewer.jwtPayload")}</h2>
           <div className="space-y-2">
             <PayloadItem icon={<KeyRound className="w-3 h-3" />} label="htm" value={proof?.payload?.htm ?? "POST"} />
             <PayloadItem icon={<Clock className="w-3 h-3" />} label="htu" value={proof?.payload?.htu ?? "https://api.example.com/token"} />
@@ -77,14 +77,14 @@ export default function OAuthDpopProofViewerPage() {
 
         {/* Signature */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-400 mb-3">Signature</h2>
+          <h2 className="text-sm font-semibold text-gray-400 mb-3">{t("oauthDpopViewer.signature")}</h2>
           <div className="bg-gray-800 rounded-lg p-3">
-            <p className="text-xs text-gray-500 mb-1">Encoded</p>
+            <p className="text-xs text-gray-500 mb-1">{t("oauthDpopViewer.encoded")}</p>
             <p className="text-xs font-mono break-all text-gray-300">{proof?.signature ?? "ZmFrZXNpZ25hdHVyZQ"}</p>
           </div>
           <div className="mt-3">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs text-gray-500">Key Binding</span>
+              <span className="text-xs text-gray-500">{t("oauthDpopViewer.keyBinding")}</span>
               {proof?.key_binding_verified ? (
                 <span className="flex items-center gap-1 text-xs text-green-400"><CheckCircle className="w-3 h-3" /> Verified</span>
               ) : (
@@ -99,7 +99,7 @@ export default function OAuthDpopProofViewerPage() {
       {/* Proof Validity Timeline + Error Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Proof Validity Timeline</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("oauthDpopViewer.proofValidity")}</h2>
           <div className="space-y-2">
             {(data?.validity_timeline ?? []).map((step, i) => (
               <div key={i} className="flex items-center gap-3">
@@ -131,12 +131,12 @@ export default function OAuthDpopProofViewerPage() {
                 </div>
                 <p className="text-xs text-gray-400">{err.description}</p>
                 {err.remediation && (
-                  <p className="text-xs text-blue-400 mt-1">Fix: {err.remediation}</p>
+                  <p className="text-xs text-blue-400 mt-1">{t("oauthDpopViewer.fix")} {err.remediation}</p>
                 )}
               </div>
             ))}
             {(data?.error_analysis ?? []).length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">No errors detected in this proof.</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t("oauthDpopViewer.noErrors")}</p>
             )}
           </div>
         </div>

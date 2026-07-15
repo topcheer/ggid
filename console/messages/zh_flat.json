@@ -3335,5 +3335,21 @@
   "webhooks.userEvents": "用户事件",
   "webhooksTest.title": "Webhook 测试器",
   "zeroTrustNetworkConfig.title": "零信任网络配置",
-  "zeroTrustPosture.title": "Zero-Trust Posture"
+  "zeroTrustPosture.title": "Zero-Trust Posture",
+  "accessFrequency.title": "访问频率",
+  "accessGraph.title": "访问图",
+  "accessOptimization.title": "访问路径优化",
+  "accessRequestApprovalWorkflow.title": "访问请求审批工作流",
+  "accessRequestLifecycleConfig.title": "访问请求生命周期配置",
+  "accessReviewCenter.title": "访问审查中心",
+  "attributeGovernance.title": "属性治理",
+  "audienceMismatches.title": "受众不匹配",
+  "budgetTracking.title": "预算跟踪",
+  "costCenters.title": "成本中心",
+  "coverageMatrix.title": "覆盖矩阵",
+  "departmentAnalytics.title": "部门分析",
+  "frameworkCoverage.title": "框架覆盖",
+  "sod.title": "职责分离",
+  "sodConflictDetection.title": "SoD 冲突检测",
+  "sodRulesConfig.title": "SoD 规则配置"
 }

@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   ShieldCheck, Loader2, AlertCircle, X, RefreshCw, CheckCircle, AlertOctagon, ShieldAlert,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TamperStatus {
   last_scan: string;
@@ -33,6 +34,8 @@ const sevColors: Record<string, string> = {
 };
 
 export default function TamperCheckPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [status, setStatus] = useState<TamperStatus | null>(null);
   const [issues, setIssues] = useState<TamperIssue[]>([]);
@@ -69,7 +72,7 @@ export default function TamperCheckPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-green-600" /> Audit Tamper Check</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-green-600" /> {t("auditTamperCheck.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Verify audit log integrity via hash chain verification.</p>
         </div>
         <button onClick={handleScan} disabled={scanning} className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">{scanning ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />} Run Scan</button>

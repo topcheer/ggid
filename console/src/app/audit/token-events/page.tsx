@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   KeyRound, Loader2, AlertCircle, X, Play, Pause, Radio, Trash2,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TokenEvent {
   id: string;
@@ -27,6 +28,8 @@ const eventColors: Record<string, string> = {
 };
 
 export default function TokenEventsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [events, setEvents] = useState<TokenEvent[]>([]);
   const [connected, setConnected] = useState(false);
@@ -78,7 +81,7 @@ export default function TokenEventsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-indigo-600" /> Token Events</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-indigo-600" /> {t("auditTokenEvents.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Real-time token lifecycle events via SSE stream.</p>
         </div>
         <div className="flex items-center gap-2">

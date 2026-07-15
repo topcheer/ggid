@@ -44,7 +44,7 @@ export default function LogAggregationConfigPage() {
             onChange={(e) => setEnabled(e.target.checked)}
             className="w-4 h-4"
           />
-          <span className="font-medium">{t("backend2.logAggregation.enabled")}</span>
+          <span className="font-medium">{"Enabled"}</span>
         </label>
 
         <div className="space-y-1">
@@ -64,7 +64,7 @@ export default function LogAggregationConfigPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.logAggregation.flushInterval")}</label>
+            <label className="text-sm text-gray-600">{"Flush Interval"}</label>
             <input
               type="number"
               min={1}
@@ -75,7 +75,7 @@ export default function LogAggregationConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.logAggregation.bufferSize")}</label>
+            <label className="text-sm text-gray-600">{"Buffer Size"}</label>
             <input
               type="number"
               min={100}
@@ -90,12 +90,12 @@ export default function LogAggregationConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t("backend2.logAggregation.outputs")}</h2>
+          <h2 className="text-lg font-semibold">{"Outputs"}</h2>
           <button
             onClick={addOutput}
             className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
           >
-            {t("backend2.logAggregation.addOutput")}
+            {"Add Output"}
           </button>
         </div>
         <div className="space-y-3">
@@ -119,7 +119,7 @@ export default function LogAggregationConfigPage() {
                 onClick={() => deleteOutput(output.id)}
                 className="text-sm text-red-600 hover:text-red-700"
               >
-                {t("backend2.logAggregation.delete")}
+                {"Delete"}
               </button>
             </div>
           ))}
@@ -128,7 +128,7 @@ export default function LogAggregationConfigPage() {
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.logAggregation.save")}
+          {"Save"}
         </button>
       </div>
     </div>

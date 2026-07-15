@@ -2,8 +2,10 @@
 
 import { useRoleMiningResults } from "@ggid/sdk-react";
 import { TrendingDown, Layers, Gauge } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function RoleMiningResultsPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useRoleMiningResults();
   if (loading) return <div className="p-8 text-gray-400">Loading role mining...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

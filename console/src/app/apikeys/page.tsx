@@ -6,6 +6,7 @@ import {
   Key, Plus, Trash2, Copy, Check, X, AlertCircle, Loader2,
   Shield, Clock, Eye, EyeOff,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ApiKey {
   id: string;
@@ -39,6 +40,8 @@ const EXPIRY_OPTIONS = [
 ];
 
 export default function ApiKeysPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);

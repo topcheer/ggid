@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { HeartPulse, CheckCircle, XCircle, AlertTriangle, Clock, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SpHealth {
   sp_entity_id: string;
@@ -20,6 +21,7 @@ interface SpHealth {
 }
 
 export default function SamlSpHealthPage() {
+  const t = useTranslations();
   const [data, setData] = useState<SpHealth | null>(null);
   const [loading, setLoading] = useState(false);
 

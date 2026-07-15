@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Building2, ChevronRight, AlertTriangle, Layers as LayersIcon } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TreeNode {
   id: string;
@@ -22,6 +23,8 @@ interface OrgTreeData {
 }
 
 export default function ReportingStructurePage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<OrgTreeData | null>(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -60,7 +63,7 @@ export default function ReportingStructurePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Building2 className="w-6 h-6 text-blue-500" /> Reporting Structure</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Building2 className="w-6 h-6 text-blue-500" /> {t("reportingStructure.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Organization hierarchy with span of control and anomaly detection.</p>
       </div>
 

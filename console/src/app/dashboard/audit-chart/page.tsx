@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   BarChart3, TrendingUp, Users, Activity, Loader2, AlertCircle, X,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface HourBucket {
   hour: string;
@@ -17,6 +18,8 @@ interface TopItem {
 }
 
 export default function AuditChartPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [hourly, setHourly] = useState<HourBucket[]>([]);
   const [topTypes, setTopTypes] = useState<TopItem[]>([]);

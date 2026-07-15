@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useApi } from "@/lib/api";
 import { ShieldCheck, Loader2, AlertCircle, X, Trash2, ToggleLeft, ToggleRight, Smartphone, Monitor } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TrustedDevice {
   id: string; user_id: string; username: string;
@@ -11,6 +12,7 @@ interface TrustedDevice {
 }
 
 export default function TrustedDevicesPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [devices, setDevices] = useState<TrustedDevice[]>([]);
   const [loading, setLoading] = useState(true);

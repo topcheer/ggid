@@ -7,6 +7,7 @@ import {
   Search, UserCheck, LogOut, Clock, Mail, Building2,
   KeyRound, History,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SearchResult {
   id: string;
@@ -39,6 +40,8 @@ interface HistoryEntry {
 const STORAGE_KEY = "ggid_impersonation_state";
 
 export default function ImpersonatePage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
 
   // Search state

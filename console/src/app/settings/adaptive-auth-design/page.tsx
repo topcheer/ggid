@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAdaptiveAuthDesign, AdaptiveAuthDesign, SignalConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AdaptiveAuthDesignPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useAdaptiveAuthDesign();
   const [form, setForm] = useState<AdaptiveAuthDesign | null>(null);
   const [saving, setSaving] = useState(false);

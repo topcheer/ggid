@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Review {
   id: string;
@@ -13,6 +14,8 @@ interface Review {
 }
 
 export default function AccessReviewCenterPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -79,26 +82,26 @@ export default function AccessReviewCenterPage() {
   const overdueCount = reviews.filter(r => r.overdue).length;
 
   if (loading) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Access Review Center</h1><p>Loading...</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4"> {t("backend3.accessReviewCenter.title")}</h1><p>Loading...</p></div>
   );
   if (error) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Access Review Center</h1><p className="text-red-600">Error: {error}</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4"> {t("backend3.accessReviewCenter.title")}</h1><p className="text-red-600">Error: {error}</p></div>
   );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Access Review Center</h1>
+          <h1 className="text-2xl font-bold"> {t("backend3.accessReviewCenter.title")}</h1>
           <p className="text-gray-600">Certify user access, manage review schedules, and track overdue reviews.</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {showForm ? 'Cancel' : 'Create Review'}
+          {showForm ? 'Cancel' : t("backend3.accessReviewCenter.createReview")}
         </button>
       </div>
 
       {showForm && (
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Create Access Review</h2>
+          <h2 className="text-lg font-semibold">{t("backend3.accessReviewCenter.createAccessReview")}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">User</label>
@@ -120,7 +123,7 @@ export default function AccessReviewCenterPage() {
               ))}
             </div>
           </div>
-          <button onClick={createReview} disabled={!newReview.user} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Create Review</button>
+          <button onClick={createReview} disabled={!newReview.user} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.accessReviewCenter.createReview")}</button>
         </section>
       )}
 
@@ -131,11 +134,11 @@ export default function AccessReviewCenterPage() {
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-blue-600">{pendingCount}</div>
-          <div className="text-sm text-gray-500">Pending</div>
+          <div className="text-sm text-gray-500">{t("backend3.accessReviewCenter.pending")}</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-red-600">{overdueCount}</div>
-          <div className="text-sm text-gray-500">Overdue</div>
+          <div className="text-sm text-gray-500">{t("backend3.accessReviewCenter.overdue")}</div>
         </div>
       </div>
 
@@ -147,10 +150,10 @@ export default function AccessReviewCenterPage() {
         <section className="bg-white rounded-lg shadow p-4">
           <label className="text-sm font-medium">Review Frequency</label>
           <select value={reviewFrequency} onChange={e => setReviewFrequency(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
-            <option value="monthly">Monthly</option>
-            <option value="quarterly">Quarterly</option>
+            <option value="monthly">{t("backend3.accessReviewCenter.monthly")}</option>
+            <option value="quarterly">{t("backend3.accessReviewCenter.quarterly")}</option>
             <option value="semiannual">Semi-Annual</option>
-            <option value="annual">Annual</option>
+            <option value="annual">{t("backend3.accessReviewCenter.annual")}</option>
           </select>
         </section>
       </div>
@@ -158,8 +161,8 @@ export default function AccessReviewCenterPage() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 bg-blue-50 rounded p-3">
           <span className="text-sm">{selectedIds.size} selected</span>
-          <button onClick={bulkApprove} className="px-3 py-1 bg-green-600 text-white rounded text-sm">Bulk Approve</button>
-          <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1 border rounded text-sm">Clear</button>
+          <button onClick={bulkApprove} className="px-3 py-1 bg-green-600 text-white rounded text-sm">{t("backend3.accessReviewCenter.bulkApprove")}</button>
+          <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1 border rounded text-sm">{t("backend3.accessReviewCenter.clear")}</button>
         </div>
       )}
 
@@ -171,9 +174,9 @@ export default function AccessReviewCenterPage() {
               <th className="p-3">User</th>
               <th className="p-3">Reviewer</th>
               <th className="p-3">Scopes</th>
-              <th className="p-3">Decision</th>
-              <th className="p-3">Date</th>
-              <th className="p-3">Actions</th>
+              <th className="p-3">{t("backend3.accessReviewCenter.decision")}</th>
+              <th className="p-3">{t("backend3.accessReviewCenter.date")}</th>
+              <th className="p-3">{t("backend3.accessReviewCenter.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -182,7 +185,7 @@ export default function AccessReviewCenterPage() {
                 <td className="p-3"><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} className="rounded" /></td>
                 <td className="p-3 font-medium">
                   {r.user}
-                  {r.overdue && <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">Overdue</span>}
+                  {r.overdue && <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">{t("backend3.accessReviewCenter.overdue")}</span>}
                 </td>
                 <td className="p-3 text-gray-600">{r.reviewer}</td>
                 <td className="p-3"><div className="flex flex-wrap gap-1">{r.scopes.map(s => <span key={s} className="px-1.5 py-0.5 bg-gray-100 rounded text-xs">{s}</span>)}</div></td>
@@ -191,8 +194,8 @@ export default function AccessReviewCenterPage() {
                 <td className="p-3">
                   {r.decision === 'pending' && (
                     <div className="flex gap-1">
-                      <button onClick={() => setDecision(r.id, 'approved')} className="text-green-600 text-xs hover:underline">Approve</button>
-                      <button onClick={() => setDecision(r.id, 'rejected')} className="text-red-600 text-xs hover:underline">Reject</button>
+                      <button onClick={() => setDecision(r.id, 'approved')} className="text-green-600 text-xs hover:underline">{t("backend3.accessReviewCenter.approve")}</button>
+                      <button onClick={() => setDecision(r.id, 'rejected')} className="text-red-600 text-xs hover:underline">{t("backend3.accessReviewCenter.reject")}</button>
                       <button onClick={() => setDecision(r.id, 'revoked')} className="text-amber-600 text-xs hover:underline">Revoke</button>
                     </div>
                   )}

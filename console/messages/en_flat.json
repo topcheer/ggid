@@ -3335,5 +3335,21 @@
   "webhooks.userEvents": "User Events",
   "webhooksTest.title": "Webhook Tester",
   "zeroTrustNetworkConfig.title": "Zero Trust Network Configuration",
-  "zeroTrustPosture.title": "Zero-Trust Posture"
+  "zeroTrustPosture.title": "Zero-Trust Posture",
+  "accessFrequency.title": "Access Frequency",
+  "accessGraph.title": "Access Graph",
+  "accessOptimization.title": "Access Path Optimization",
+  "accessRequestApprovalWorkflow.title": "Access Request Approval Workflow",
+  "accessRequestLifecycleConfig.title": "Access Request Lifecycle Configuration",
+  "accessReviewCenter.title": "Access Review Center",
+  "attributeGovernance.title": "Attribute Governance",
+  "audienceMismatches.title": "Audience Mismatches",
+  "budgetTracking.title": "Budget Tracking",
+  "costCenters.title": "Cost Centers",
+  "coverageMatrix.title": "Coverage Matrix",
+  "departmentAnalytics.title": "Department Analytics",
+  "frameworkCoverage.title": "Framework Coverage",
+  "sod.title": "Separation of Duties",
+  "sodConflictDetection.title": "SoD Conflict Detection",
+  "sodRulesConfig.title": "SoD Rules Configuration"
 }

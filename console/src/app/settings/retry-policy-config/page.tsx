@@ -60,7 +60,7 @@ export default function RetryPolicyConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.retryPolicy.defaultAttempts")}</label>
+            <label className="text-sm text-gray-600">{"Default Attempts"}</label>
             <input
               type="number"
               min={0}
@@ -70,7 +70,7 @@ export default function RetryPolicyConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.retryPolicy.defaultBackoff")}</label>
+            <label className="text-sm text-gray-600">{"Default Backoff"}</label>
             <input
               type="number"
               min={0}
@@ -83,7 +83,7 @@ export default function RetryPolicyConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">{t("backend2.retryPolicy.retryOn")}</h2>
+        <h2 className="text-lg font-semibold">{"Retry On"}</h2>
         <div className="flex flex-wrap gap-2">
           {retryOn.map((condition) => (
             <span
@@ -95,7 +95,7 @@ export default function RetryPolicyConfigPage() {
                 onClick={() => removeRetryOn(condition)}
                 className="text-red-500 hover:text-red-700 text-xs"
               >
-                {t("backend2.retryPolicy.delete")}
+                {"Delete"}
               </button>
             </span>
           ))}
@@ -112,19 +112,19 @@ export default function RetryPolicyConfigPage() {
             onClick={addRetryOn}
             className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
           >
-            {t("backend2.retryPolicy.addRetryOn")}
+            {"Add Retry On"}
           </button>
         </div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t("backend2.retryPolicy.perRoute")}</h2>
+          <h2 className="text-lg font-semibold">{"Per Route"}</h2>
           <button
             onClick={addRoute}
             className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
           >
-            {t("backend2.retryPolicy.addRoute")}
+            {"Add Route"}
           </button>
         </div>
         <div className="space-y-3">
@@ -156,7 +156,7 @@ export default function RetryPolicyConfigPage() {
                 onClick={() => removeRoute(index)}
                 className="text-sm text-red-600 hover:text-red-700 text-left"
               >
-                {t("backend2.retryPolicy.delete")}
+                {"Delete"}
               </button>
             </div>
           ))}
@@ -165,7 +165,7 @@ export default function RetryPolicyConfigPage() {
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.retryPolicy.save")}
+          {"Save"}
         </button>
       </div>
     </div>

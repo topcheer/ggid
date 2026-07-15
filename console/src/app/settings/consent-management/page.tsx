@@ -2,8 +2,11 @@
 
 import { useConsentManagement } from "@ggid/sdk-react";
 import { CheckCircle, XCircle, FileText, Users } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ConsentManagementPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, withdrawConsent } = useConsentManagement();
 
   if (loading) return <div className="p-8 text-gray-400">Loading consent management...</div>;

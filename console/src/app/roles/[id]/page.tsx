@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -42,6 +43,7 @@ interface AssignedUser {
 export default function RoleDetailPage() {
   const params = useParams();
   const roleId = params.id as string;
+  const t = useTranslations();
   const { apiFetch } = useApi();
 
   const [role, setRole] = useState<Role | null>(null);

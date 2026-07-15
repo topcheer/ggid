@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSamlSpConfig, SamlSpConfig, AttributeConsumingService } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SamlSpConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useSamlSpConfig();
   const [form, setForm] = useState<SamlSpConfig | null>(null);
   const [saving, setSaving] = useState(false);

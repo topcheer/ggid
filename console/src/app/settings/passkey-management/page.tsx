@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Passkey {
   id: string;
@@ -13,6 +14,8 @@ interface Passkey {
 }
 
 export default function PasskeyManagementPage() {
+  const t = useTranslations();
+
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

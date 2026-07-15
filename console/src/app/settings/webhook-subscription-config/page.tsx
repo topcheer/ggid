@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Subscription {
   id: string;
@@ -19,6 +20,7 @@ interface Delivery {
 }
 
 export default function WebhookSubscriptionConfigPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

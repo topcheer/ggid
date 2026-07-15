@@ -6,6 +6,7 @@ import {
   ClipboardCheck, Check, X, Loader2, AlertCircle, Clock,
   User, Shield, CheckCircle2, History,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AccessReviewItem {
   id: string;
@@ -31,6 +32,8 @@ interface ReviewSummary {
 }
 
 export default function AccessReviewsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [reviews, setReviews] = useState<AccessReviewItem[]>([]);
   const [history, setHistory] = useState<AccessReviewItem[]>([]);

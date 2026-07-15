@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useVelocityRulesConfig } from "@ggid/sdk-react";
 import { Gauge, Plus, Activity, Globe } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function VelocityRulesConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useVelocityRulesConfig();
   const [showModal, setShowModal] = useState(false);
 

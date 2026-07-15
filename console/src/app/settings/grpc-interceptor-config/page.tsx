@@ -67,7 +67,7 @@ export default function GrpcInterceptorConfigPage() {
       <p className="text-gray-600">Configure unary and streaming interceptors for gRPC services.</p>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">{t("backend2.grpcInterceptor.serviceName")}</h2>
+        <h2 className="text-lg font-semibold">{"Service Name"}</h2>
         <input
           type="text"
           value={serviceName}
@@ -78,8 +78,8 @@ export default function GrpcInterceptorConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t("backend2.grpcInterceptor.interceptors")}</h2>
-          <button onClick={addInterceptor} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.grpcInterceptor.addInterceptor")}</button>
+          <h2 className="text-lg font-semibold">{"Interceptors"}</h2>
+          <button onClick={addInterceptor} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Interceptor"}</button>
         </div>
         <div className="space-y-3">
           {interceptors.map(i => (
@@ -94,11 +94,11 @@ export default function GrpcInterceptorConfigPage() {
                   />
                   <span className="font-mono font-medium">{i.type}</span>
                 </div>
-                <button onClick={() => deleteInterceptor(i.id)} className="text-xs text-red-600 hover:underline">{t("backend2.grpcInterceptor.delete")}</button>
+                <button onClick={() => deleteInterceptor(i.id)} className="text-xs text-red-600 hover:underline">{"Delete"}</button>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs text-gray-500">{t("backend2.grpcInterceptor.type")}</label>
+                  <label className="text-xs text-gray-500">{"Type"}</label>
                   <input
                     type="text"
                     value={i.type}

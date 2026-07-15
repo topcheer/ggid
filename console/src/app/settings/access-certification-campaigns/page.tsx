@@ -2,8 +2,11 @@
 
 import { useAccessCertificationCampaigns } from "@ggid/sdk-react";
 import { ClipboardCheck, Users, AlertCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AccessCertificationCampaignsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAccessCertificationCampaigns();
 
   if (loading) return <div className="p-8 text-gray-400">Loading access certification campaigns...</div>;

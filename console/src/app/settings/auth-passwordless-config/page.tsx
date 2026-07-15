@@ -2,8 +2,11 @@
 
 import { useAuthPasswordlessConfig } from "@ggid/sdk-react";
 import { Mail, Key, Fingerprint, ScanFace, ShieldCheck, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthPasswordlessConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAuthPasswordlessConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading passwordless config...</div>;

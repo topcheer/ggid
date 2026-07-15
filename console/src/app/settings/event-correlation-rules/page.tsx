@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface CorrelationRule {
   id: string;
@@ -34,6 +35,8 @@ const TEST_EVENTS: CorrelationEvent[] = [
 ];
 
 export default function EventCorrelationRulesPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rules, setRules] = useState<CorrelationRule[]>(INITIAL_RULES);

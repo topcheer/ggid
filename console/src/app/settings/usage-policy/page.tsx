@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Sliders, Save, Plus, Trash2, MonitorSmartphone } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientPolicy {
   client_id: string;
@@ -13,6 +14,7 @@ interface ClientPolicy {
 }
 
 export default function UsagePolicyPage() {
+  const t = useTranslations();
   const [policies, setPolicies] = useState<ClientPolicy[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

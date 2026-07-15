@@ -6,6 +6,7 @@ import {
   LayoutTemplate, Check, AlertCircle, Loader2, X, Shield,
   ChevronRight, ChevronDown, Eye, Settings, Zap,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PermissionNode {
   id: string;
@@ -56,6 +57,7 @@ function PermissionTree({ nodes, depth = 0 }: { nodes: PermissionNode[]; depth?:
 }
 
 export default function RoleTemplatesPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [templates, setTemplates] = useState<RoleTemplate[]>([]);
   const [loading, setLoading] = useState(true);

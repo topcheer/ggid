@@ -2,8 +2,11 @@
 
 import { usePolicyDecisionStats } from "@ggid/sdk-react";
 import { CheckCircle, XCircle, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyDecisionStatsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = usePolicyDecisionStats();
 
   if (loading) return <div className="p-8 text-gray-400">Loading decision stats...</div>;

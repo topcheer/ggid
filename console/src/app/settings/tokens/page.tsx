@@ -6,6 +6,7 @@ import {
   KeyRound, Trash2, X, AlertCircle, Loader2, Save,
   Clock, ShieldCheck,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ActiveToken {
   id: string;
@@ -28,6 +29,8 @@ interface TokenConfig {
 }
 
 export default function TokensPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [tokens, setTokens] = useState<ActiveToken[]>([]);
   const [config, setConfig] = useState<TokenConfig | null>(null);

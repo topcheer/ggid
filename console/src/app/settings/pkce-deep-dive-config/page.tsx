@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePkceDeepDiveConfig, PkceDeepDiveConfig, PkceClientEntry } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PkceDeepDiveConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = usePkceDeepDiveConfig();
   const [form, setForm] = useState<PkceDeepDiveConfig | null>(null);
   const [saving, setSaving] = useState(false);

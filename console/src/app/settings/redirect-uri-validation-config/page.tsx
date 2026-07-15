@@ -2,8 +2,10 @@
 
 import { useRedirectURIValidationConfig } from "@ggid/sdk-react";
 import { Link2, ShieldCheck } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function RedirectURIValidationConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testUri } = useRedirectURIValidationConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading redirect URI validation...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

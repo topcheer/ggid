@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SCIMConfig {
   endpoint: string;
@@ -31,6 +32,8 @@ interface SyncStatus {
 }
 
 export default function SCIMPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [config, setConfig] = useState<SCIMConfig>({
     endpoint: "",

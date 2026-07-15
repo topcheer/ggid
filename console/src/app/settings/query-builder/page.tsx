@@ -1,11 +1,14 @@
 "use client";
 import { useState } from "react";
 import { Search, Play, Save, Download, Plus, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface WhereClause { id: string; field: string; operator: string; value: string; }
 interface QueryResult { timestamp: string; user: string; action: string; resource: string; result: string; }
 const fields = ["timestamp", "user_id", "action", "resource", "result", "ip_address", "tenant_id"];
 const operators = ["=", "!=", "LIKE", "IN", ">", "<", ">=", "<="];
 export default function QueryBuilderPage() {
+  const t = useTranslations();
+
   const [selectFields, setSelectFields] = useState<string[]>(["timestamp", "user_id", "action", "resource"]);
   const [whereClauses, setWhereClauses] = useState<WhereClause[]>([{ id: "w1", field: "action", operator: "=", value: "login" }]);
   const [groupBy, setGroupBy] = useState("");
@@ -21,7 +24,7 @@ export default function QueryBuilderPage() {
   const exportData = (format: string) => { window.open("/api/v1/audit/query/export?format=" + format, "_blank"); };
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Search className="w-6 h-6 text-blue-500" /> Query Builder</h1><p className="text-sm text-gray-500 mt-1">Build and execute audit log queries.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Search className="w-6 h-6 text-blue-500" /> {t("queryBuilder.title")}</h1><p className="text-sm text-gray-500 mt-1">Build and execute audit log queries.</p></div>
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-4">
         <div><label className="text-sm font-medium">SELECT</label><div className="flex flex-wrap gap-1 mt-1">{fields.map((f) => <label key={f} className="flex items-center gap-1 text-xs"><input type="checkbox" checked={selectFields.includes(f)} onChange={(e) => { if (e.target.checked) setSelectFields([...selectFields, f]); else setSelectFields(selectFields.filter((s) => s !== f)); }} /> {f}</label>)}</div></div>
         <div><label className="text-sm font-medium">WHERE</label><div className="space-y-2 mt-1">{whereClauses.map((w) => (<div key={w.id} className="flex items-center gap-2"><select value={w.field} onChange={(e) => updateWhere(w.id, "field", e.target.value)} className="px-2 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs font-mono">{fields.map((f) => <option key={f} value={f}>{f}</option>)}</select><select value={w.operator} onChange={(e) => updateWhere(w.id, "operator", e.target.value)} className="px-2 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs">{operators.map((o) => <option key={o} value={o}>{o}</option>)}</select><input type="text" value={w.value} onChange={(e) => updateWhere(w.id, "value", e.target.value)} placeholder="value" className="flex-1 px-2 py-1.5 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs font-mono" /><button onClick={() => removeWhere(w.id)} className="text-red-500"><X className="w-4 h-4" /></button></div>))}<button onClick={addWhere} className="text-xs text-blue-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Add</button></div></div>

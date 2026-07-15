@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Search, Shield, GitBranch, Layers } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Permission {
   resource: string;
@@ -19,6 +20,8 @@ interface AccessData {
 }
 
 export default function AccessGraphPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<AccessData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,13 +39,13 @@ export default function AccessGraphPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Layers className="w-6 h-6 text-indigo-500" /> Access Graph</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Layers className="w-6 h-6 text-indigo-500" /> {t("accessGraph.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Visualize effective permissions for a subject including inherited access.</p>
       </div>
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-md"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") fetchGraph(); }} placeholder="user:alice or role:admin" className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-        <button onClick={fetchGraph} disabled={loading || !search} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">Analyze</button>
+        <button onClick={fetchGraph} disabled={loading || !search} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">{t("backend3.accessGraph.analyze")}</button>
       </div>
 
       {data && (
@@ -59,22 +62,22 @@ export default function AccessGraphPage() {
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><Shield className="w-4 h-4 text-green-500" /> Direct Permissions</h3>
               <div className="space-y-1">{data.direct_permissions.map((p, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs text-gray-500">{p.action}</span><span className="flex-1">{p.resource}</span><span className="text-xs text-gray-400">{p.source}</span></div>
-              ))}{data.direct_permissions.length === 0 && <p className="text-xs text-gray-400">None</p>}</div>
+              ))}{data.direct_permissions.length === 0 && <p className="text-xs text-gray-400">{t("backend3.accessGraph.none")}</p>}</div>
             </div>
 
             <div className="rounded-lg border dark:border-gray-800 p-4">
               <h3 className="text-sm font-semibold flex items-center gap-2 mb-3"><GitBranch className="w-4 h-4 text-purple-500" /> Inherited Permissions</h3>
               <div className="space-y-1">{data.inherited_permissions.map((p, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs text-gray-500">{p.action}</span><span className="flex-1">{p.resource}</span><span className="text-xs text-gray-400">via {p.source}</span></div>
-              ))}{data.inherited_permissions.length === 0 && <p className="text-xs text-gray-400">None</p>}</div>
+              ))}{data.inherited_permissions.length === 0 && <p className="text-xs text-gray-400">{t("backend3.accessGraph.none")}</p>}</div>
             </div>
           </div>
 
           <div className="rounded-lg border dark:border-gray-800 p-4">
-            <h3 className="text-sm font-semibold mb-3">Effective Permissions Summary</h3>
+            <h3 className="text-sm font-semibold mb-3">{t("backend3.accessGraph.effectivePermissionsSummary")}</h3>
             <div className="space-y-2">{data.effective_permissions.map((p) => (
               <div key={p.resource} className="flex items-center gap-2"><span className="font-mono text-sm flex-1">{p.resource}</span><div className="flex gap-1">{p.actions.map((a) => <span key={a} className="px-1.5 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-800 font-mono">{a}</span>)}</div></div>
-            ))}{data.effective_permissions.length === 0 && <p className="text-xs text-gray-400">None</p>}</div>
+            ))}{data.effective_permissions.length === 0 && <p className="text-xs text-gray-400">{t("backend3.accessGraph.none")}</p>}</div>
           </div>
         </>
       )}

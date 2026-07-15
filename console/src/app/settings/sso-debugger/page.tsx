@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import { Bug, Play, CheckCircle, XCircle, Clock, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface FlowStep { name: string; duration_ms: number; status: "ok" | "error" | "pending"; detail?: string; }
 interface SsoResult { steps: FlowStep[]; total_ms: number; success: boolean; request_url: string; response_status: number; response_body: string; error?: string; }
 export default function SsoDebuggerPage() {
+  const t = useTranslations();
   const [protocol, setProtocol] = useState("saml");
   const [result, setResult] = useState<SsoResult | null>(null);
   const [loading, setLoading] = useState(false);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
 import {
+import { useTranslations } from "@/lib/i18n";
   Lock,
   Shield,
   Smartphone,
@@ -69,6 +70,7 @@ const DEVICE_ICONS: Record<string, React.ElementType> = {
 };
 
 export default function SecuritySettingsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

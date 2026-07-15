@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   UserRound, ArrowRight, Filter, Loader2, AlertCircle, X, Clock,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Entry {
   id: string;
@@ -19,6 +20,8 @@ interface Entry {
 }
 
 export default function ImpersonationLogPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);

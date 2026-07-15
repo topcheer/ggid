@@ -13,6 +13,7 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ImpersonationRecord {
   id: string;
@@ -30,6 +31,8 @@ interface ImpersonationRecord {
 }
 
 export default function ImpersonationLogPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [records, setRecords] = useState<ImpersonationRecord[]>([]);
   const [loading, setLoading] = useState(true);

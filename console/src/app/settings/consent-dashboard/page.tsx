@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, Ban, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Consent {
   client_id: string;
@@ -19,6 +20,8 @@ interface Dashboard {
 }
 
 export default function ConsentDashboardPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<Dashboard | null>(null);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -43,7 +46,7 @@ export default function ConsentDashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> Consent Dashboard</h1><p className="text-sm text-gray-500 mt-1">Monitor active consent grants across all OAuth clients.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-green-500" /> {t("consentDashboard.title")}</h1><p className="text-sm text-gray-500 mt-1">Monitor active consent grants across all OAuth clients.</p></div>
         {selected.length > 0 && <button onClick={bulkRevoke} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 flex items-center gap-2"><Ban className="w-4 h-4" /> Revoke ({selected.length})</button>}
       </div>
 

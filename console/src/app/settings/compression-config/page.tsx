@@ -41,12 +41,12 @@ export default function CompressionConfigPage() {
             onChange={(e) => setEnabled(e.target.checked)}
             className="w-4 h-4"
           />
-          <span className="font-medium">{t("backend2.compression.enabled")}</span>
+          <span className="font-medium">{"Enabled"}</span>
         </label>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.compression.minSize")}</label>
+            <label className="text-sm text-gray-600">{"Min Size"}</label>
             <input
               type="number"
               min={0}
@@ -58,7 +58,7 @@ export default function CompressionConfigPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.compression.level")}</label>
+            <label className="text-sm text-gray-600">{"Level"}</label>
             <input
               type="range"
               min={1}
@@ -74,7 +74,7 @@ export default function CompressionConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">{t("backend2.compression.mimeTypes")}</h2>
+        <h2 className="text-lg font-semibold">{"Mime Types"}</h2>
         <div className="flex flex-wrap gap-2">
           {mimeTypes.map((type) => (
             <span
@@ -86,7 +86,7 @@ export default function CompressionConfigPage() {
                 onClick={() => removeMimeType(type)}
                 className="text-red-500 hover:text-red-700 text-xs"
               >
-                {t("backend2.compression.delete")}
+                {"Delete"}
               </button>
             </span>
           ))}
@@ -103,14 +103,14 @@ export default function CompressionConfigPage() {
             onClick={addMimeType}
             className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
           >
-            {t("backend2.compression.addMimeType")}
+            {"Add Mime Type"}
           </button>
         </div>
       </section>
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.compression.save")}
+          {"Save"}
         </button>
       </div>
     </div>

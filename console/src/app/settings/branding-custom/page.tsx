@@ -16,6 +16,7 @@ import {
   Moon,
   FileWarning,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface BrandingCustomConfig {
   logo_url: string;
@@ -47,6 +48,8 @@ const COLOR_PRESETS = [
 ];
 
 export default function BrandingCustomPage() {
+  const t = useTranslations();
+
   const { apiFetch, TENANT_ID } = useApi();
   const [config, setConfig] = useState<BrandingCustomConfig>(defaultConfig);
   const [savedConfig, setSavedConfig] = useState<BrandingCustomConfig>(defaultConfig);

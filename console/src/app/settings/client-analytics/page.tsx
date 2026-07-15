@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { BarChart3, Gauge, Users, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientData {
   token_usage_30d: { day: string; count: number }[];
@@ -16,6 +17,8 @@ interface ClientData {
 interface Client { client_id: string; client_name: string; }
 
 export default function ClientAnalyticsPage() {
+  const t = useTranslations();
+
   const [clients] = useState<Client[]>([{ client_id: "c1", client_name: "Web App" }, { client_id: "c2", client_name: "Mobile App" }, { client_id: "c3", client_name: "API Gateway" }]);
   const [selectedId, setSelectedId] = useState("");
   const [data, setData] = useState<ClientData | null>(null);
@@ -36,7 +39,7 @@ export default function ClientAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-blue-500" /> Client Analytics</h1><p className="text-sm text-gray-500 mt-1">OAuth client usage patterns and performance metrics.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-blue-500" /> {t("clientAnalytics.title")}</h1><p className="text-sm text-gray-500 mt-1">OAuth client usage patterns and performance metrics.</p></div>
 
       <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Client</option>{clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}</select>
 

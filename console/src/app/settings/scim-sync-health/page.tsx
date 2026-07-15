@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, AlertTriangle, Activity, Server } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ScimHealth {
   endpoint_url: string;
@@ -20,6 +21,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ScimSyncHealthPage() {
+  const t = useTranslations();
   const [data, setData] = useState<ScimHealth | null>(null);
   const [loading, setLoading] = useState(false);
 

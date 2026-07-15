@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DeprovisionUser {
   user_id: string;
@@ -15,6 +16,8 @@ const defaultQueue: DeprovisionUser[] = [];
 const stages = ["notify", "disable", "revoke", "archive", "done"] as const;
 
 export default function DeprovisioningWorkflowPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<DeprovisionUser[]>(defaultQueue);

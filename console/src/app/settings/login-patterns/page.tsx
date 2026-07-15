@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Clock, Smartphone, Globe, Activity, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LoginPatternData {
   time_of_day: { hour: number; count: number }[];
@@ -20,6 +21,8 @@ const sevColors: Record<string, string> = {
 const deviceColors = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
 
 export default function LoginPatternsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<LoginPatternData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -42,7 +45,7 @@ export default function LoginPatternsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> Login Patterns</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> {t("loginPatterns.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Analyze authentication patterns and detect anomalies.</p>
       </div>
 

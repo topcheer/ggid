@@ -6,6 +6,7 @@ import {
   ClipboardCheck, Plus, Trash2, X, AlertCircle, Loader2, Check,
   Clock, Users, Calendar,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Campaign {
   id: string;
@@ -27,6 +28,8 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function AccessReviewsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,11 +86,11 @@ export default function AccessReviewsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <ClipboardCheck className="h-6 w-6 text-indigo-600" /> Access Reviews
+            <ClipboardCheck className="h-6 w-6 text-indigo-600" /> {t("accessReviews.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Periodic access recertification campaigns for compliance.</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Plus className="h-4 w-4" /> New Campaign</button>
+        <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Plus className="h-4 w-4" />{t("backend3.accessReviews.newCampaign")}</button>
       </div>
 
       {error && (
@@ -114,8 +117,8 @@ export default function AccessReviewsPage() {
                     </div>
                     <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
                       <span className="flex items-center gap-1"><Users className="h-3 w-3" />Scope: {c.scope || "all"}</span>
-                      <span className="flex items-center gap-1"><ClipboardCheck className="h-3 w-3" />Reviewer: {c.reviewer}</span>
-                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />Deadline: {new Date(c.deadline).toLocaleDateString()}</span>
+                      <span className="flex items-center gap-1"><ClipboardCheck className="h-3 w-3" />{t("backend3.accessReviews.reviewer")}: {c.reviewer}</span>
+                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{t("backend3.accessReviews.deadline")}: {new Date(c.deadline).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <button onClick={() => setConfirmDelete(c)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-4 w-4" /></button>
@@ -141,17 +144,17 @@ export default function AccessReviewsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !creating && setShowCreate(false)}>
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">New Campaign</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("backend3.accessReviews.newCampaign")}</h2>
               <button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-3">
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Q3 Access Review" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.accessReviews.name")}</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Q3 Access Review" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Scope (org/unit)</label><input value={form.scope} onChange={(e) => setForm((p) => ({ ...p, scope: e.target.value }))} placeholder="engineering" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reviewer</label><input value={form.reviewer} onChange={(e) => setForm((p) => ({ ...p, reviewer: e.target.value }))} placeholder="compliance@company.com" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Deadline</label><input type="date" value={form.deadline} onChange={(e) => setForm((p) => ({ ...p, deadline: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.accessReviews.reviewer")}</label><input value={form.reviewer} onChange={(e) => setForm((p) => ({ ...p, reviewer: e.target.value }))} placeholder="compliance@company.com" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.accessReviews.deadline")}</label><input type="date" value={form.deadline} onChange={(e) => setForm((p) => ({ ...p, deadline: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+              <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("backend3.accessReviews.cancel")}</button>
               <button onClick={handleCreate} disabled={!form.name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Create</button>
             </div>
           </div>
@@ -163,7 +166,7 @@ export default function AccessReviewsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
           <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3"><div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><Trash2 className="h-5 w-5 text-red-600" /></div><div><h2 className="font-semibold text-gray-900 dark:text-white">Delete Campaign?</h2><p className="text-sm text-gray-500"><strong>{confirmDelete.name}</strong> and all review items will be removed.</p></div></div>
-            <div className="mt-5 flex justify-end gap-2"><button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button><button onClick={() => handleDelete(confirmDelete.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button></div>
+            <div className="mt-5 flex justify-end gap-2"><button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("backend3.accessReviews.cancel")}</button><button onClick={() => handleDelete(confirmDelete.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("backend3.accessReviews.delete")}</button></div>
           </div>
         </div>
       )}

@@ -6,6 +6,7 @@ import {
   Smartphone, Trash2, X, AlertCircle, Loader2, Shield,
   Fingerprint, Monitor, Tablet,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DeviceBinding {
   id: string;
@@ -27,6 +28,8 @@ const TYPE_ICON = {
 };
 
 const maskFingerprint = (fp: string) => {
+  const t = useTranslations();
+
   if (fp.length <= 8) return fp;
   return `${fp.substring(0, 6)}••••${fp.substring(fp.length - 4)}`;
 };

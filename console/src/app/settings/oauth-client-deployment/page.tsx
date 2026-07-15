@@ -5,19 +5,19 @@ import { Rocket, RotateCcw, GitCompare, Download, HeartPulse, CheckCircle, Clock
 import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthClientDeploymentPage() {
-  const t = useTranslations();
 
   const { data, loading, error, refresh, promote, rollback } = useOAuthClientDeployment();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading client deployment...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("oauthClientDeploy.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">OAuth Client Deployment</h1>
-          <p className="text-sm text-gray-400 mt-1">Manage client configurations across dev, staging, and production</p>
+          <h1 className="text-2xl font-bold">{t("oauthClientDeploy.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("oauthClientDeploy.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition">
@@ -60,15 +60,15 @@ export default function OAuthClientDeploymentPage() {
             </div>
             <div className="space-y-1 text-xs">
               <div className="flex justify-between">
-                <span className="text-gray-400">Version</span>
+                <span className="text-gray-400">{t("oauthClientDeploy.version")}</span>
                 <span className="font-medium">{env.version}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Last Deploy</span>
+                <span className="text-gray-400">{t("oauthClientDeploy.lastDeploy")}</span>
                 <span>{env.last_deploy}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Active Clients</span>
+                <span className="text-gray-400">{t("oauthClientDeploy.activeClients")}</span>
                 <span className="font-medium">{env.active_clients}</span>
               </div>
             </div>
@@ -109,18 +109,18 @@ export default function OAuthClientDeploymentPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-gray-500">From: </span>
+                    <span className="text-gray-500">{t("oauthClientDeploy.from")}</span>
                     <span className="text-red-400">{d.old_value || "-"}</span>
                   </div>
                   <div>
-                    <span className="text-gray-500">To: </span>
+                    <span className="text-gray-500">{t("oauthClientDeploy.to")}</span>
                     <span className="text-green-400">{d.new_value || "-"}</span>
                   </div>
                 </div>
               </div>
             ))}
             {(data?.config_diff ?? []).length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-4">No differences between staging and prod.</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t("oauthClientDeploy.noDiff")}</p>
             )}
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function OAuthClientDeploymentPage() {
         <div className="space-y-6">
           {/* Deployment History */}
           <div className="bg-gray-900 rounded-xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Deployment History</h2>
+            <h2 className="text-lg font-semibold mb-4">{t("oauthClientDeploy.deploymentHistory")}</h2>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {(data?.deployment_history ?? []).map((dep, i) => (
                 <div key={i} className="flex items-center gap-3 bg-gray-800 rounded-lg p-3">

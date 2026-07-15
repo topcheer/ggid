@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useApi } from "@/lib/api";
 import { ArrowLeft, Trash2, Plus, X, KeyRound, Save } from "lucide-react";
 import { CopyButton } from "@/components/ui/copy-button";
+import { useTranslations } from "@/lib/i18n";
 
 interface Client {
   id: string;
@@ -19,6 +20,7 @@ interface Client {
 }
 
 export default function OAuthClientDetailPage({ params }: { params: { id: string } }) {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const router = useRouter();
   const [client, setClient] = useState<Client | null>(null);

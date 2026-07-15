@@ -6,6 +6,7 @@ import {
   UserX, Search, Check, X, AlertCircle, Loader2, ChevronRight,
   History, ArrowRight, ClipboardList, Shield,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DeprovisionAction {
   name: string;
@@ -38,6 +39,8 @@ const CHECKLIST = [
 ];
 
 export default function DeprovisioningPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [step, setStep] = useState<"search" | "confirm" | "result">("search");
   const [searchQuery, setSearchQuery] = useState("");

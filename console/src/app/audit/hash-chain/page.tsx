@@ -6,6 +6,7 @@ import {
   Link2, ShieldCheck, ShieldX, RefreshCw, AlertCircle, Loader2,
   Check, X, Clock, Hash, FileLock,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ChainBlock {
   index: number;
@@ -26,6 +27,8 @@ interface ChainStatus {
 }
 
 export default function HashChainPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [status, setStatus] = useState<ChainStatus | null>(null);
   const [loading, setLoading] = useState(true);

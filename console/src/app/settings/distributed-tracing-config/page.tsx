@@ -41,11 +41,11 @@ export default function DistributedTracingConfigPage() {
             onChange={(e) => setEnabled(e.target.checked)}
             className="w-4 h-4"
           />
-          <span className="font-medium">{t("backend2.distributedTracing.enabled")}</span>
+          <span className="font-medium">{"Enabled"}</span>
         </label>
 
         <div className="space-y-1">
-          <label className="text-sm text-gray-600">{t("backend2.distributedTracing.sampler")}</label>
+          <label className="text-sm text-gray-600">{"Sampler"}</label>
           <select
             value={sampler}
             onChange={(e) => setSampler(e.target.value)}
@@ -74,7 +74,7 @@ export default function DistributedTracingConfigPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm text-gray-600">{t("backend2.distributedTracing.collectorUrl")}</label>
+          <label className="text-sm text-gray-600">{"Collector Url"}</label>
           <input
             type="text"
             value={collectorUrl}
@@ -86,7 +86,7 @@ export default function DistributedTracingConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">{t("backend2.distributedTracing.baggageKeys")}</h2>
+        <h2 className="text-lg font-semibold">{"Baggage Keys"}</h2>
         <div className="flex flex-wrap gap-2">
           {baggageKeys.map((key) => (
             <span
@@ -98,7 +98,7 @@ export default function DistributedTracingConfigPage() {
                 onClick={() => removeBaggage(key)}
                 className="text-red-500 hover:text-red-700 text-xs"
               >
-                {t("backend2.distributedTracing.delete")}
+                {"Delete"}
               </button>
             </span>
           ))}
@@ -115,14 +115,14 @@ export default function DistributedTracingConfigPage() {
             onClick={addBaggage}
             className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
           >
-            {t("backend2.distributedTracing.addBaggage")}
+            {"Add Baggage"}
           </button>
         </div>
       </section>
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.distributedTracing.save")}
+          {"Save"}
         </button>
       </div>
     </div>

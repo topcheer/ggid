@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { DollarSign, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DeptBudget {
   department: string;
@@ -20,6 +21,8 @@ interface BudgetData {
 }
 
 export default function BudgetTrackingPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,16 +42,16 @@ export default function BudgetTrackingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><DollarSign className="w-6 h-6 text-green-500" /> Budget Tracking</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><DollarSign className="w-6 h-6 text-green-500" /> {t("budgetTracking.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track departmental spending with burn rate and end-of-year projections.</p>
       </div>
 
       {data && (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Spent</span><p className="text-xl font-bold mt-1">{fmt(data.total_spent)}</p></div>
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total Budget</span><p className="text-xl font-bold mt-1">{fmt(data.total_budget)}</p></div>
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Remaining</span><p className={`text-xl font-bold mt-1 ${data.total_budget - data.total_spent < 0 ? "text-red-600" : "text-green-600"}`}>{fmt(data.total_budget - data.total_spent)}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.budgetTracking.totalSpent")}</span><p className="text-xl font-bold mt-1">{fmt(data.total_spent)}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.budgetTracking.totalBudget")}</span><p className="text-xl font-bold mt-1">{fmt(data.total_budget)}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.budgetTracking.remaining")}</span><p className={`text-xl font-bold mt-1 ${data.total_budget - data.total_spent < 0 ? "text-red-600" : "text-green-600"}`}>{fmt(data.total_budget - data.total_spent)}</p></div>
           </div>
 
           <div className="space-y-3">{data.departments.map((d) => {
@@ -64,10 +67,10 @@ export default function BudgetTrackingPage() {
                 </div>
                 <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3 overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: isOver ? "#ef4444" : isWarning ? "#f59e0b" : "#10b981" }} /></div>
                 <div className="grid grid-cols-4 gap-2 text-sm">
-                  <div><span className="text-gray-500 text-xs">Burn Rate</span><p className="font-medium">{fmt(d.burn_rate)}/mo</p></div>
-                  <div><span className="text-gray-500 text-xs">Projected EOY</span><p className={`font-medium ${projectedOver ? "text-red-600" : ""}`}>{fmt(d.projected_eoy)}</p></div>
+                  <div><span className="text-gray-500 text-xs">{t("backend3.budgetTracking.burnRate")}</span><p className="font-medium">{fmt(d.burn_rate)}/mo</p></div>
+                  <div><span className="text-gray-500 text-xs">{t("backend3.budgetTracking.projectedEOY")}</span><p className={`font-medium ${projectedOver ? "text-red-600" : ""}`}>{fmt(d.projected_eoy)}</p></div>
                   <div><span className="text-gray-500 text-xs">Cost/User</span><p className="font-medium">{fmt(d.cost_per_user)}</p></div>
-                  <div><span className="text-gray-500 text-xs">Users</span><p className="font-medium">{d.member_count}</p></div>
+                  <div><span className="text-gray-500 text-xs">{t("backend3.budgetTracking.users")}</span><p className="font-medium">{d.member_count}</p></div>
                 </div>
               </div>
             );

@@ -42,13 +42,13 @@ export default function ConnectionPoolTuningPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Per-Service Pool Settings</h2>
-          <button onClick={addService} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.connPoolTuning.addService")}</button>
+          <button onClick={addService} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Service"}</button>
         </div>
         <div className="space-y-4">
           {pools.map((pool, index) => (
             <div key={index} className="border rounded p-4 grid grid-cols-5 gap-3 items-end">
               <div className="space-y-1">
-                <label className="text-xs text-gray-500">Service</label>
+                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.service")}</label>
                 <input
                   type="text"
                   value={pool.service}
@@ -57,7 +57,7 @@ export default function ConnectionPoolTuningPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.minIdle")}</label>
+                <label className="text-xs text-gray-500">{"Min Idle"}</label>
                 <input
                   type="number"
                   min={0}
@@ -67,7 +67,7 @@ export default function ConnectionPoolTuningPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.maxOpen")}</label>
+                <label className="text-xs text-gray-500">{"Max Open"}</label>
                 <input
                   type="number"
                   min={1}
@@ -77,7 +77,7 @@ export default function ConnectionPoolTuningPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.maxLifetime")}</label>
+                <label className="text-xs text-gray-500">{"Max Lifetime"}</label>
                 <input
                   type="number"
                   min={1}
@@ -87,7 +87,7 @@ export default function ConnectionPoolTuningPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.idleTimeout")}</label>
+                <label className="text-xs text-gray-500">{"Idle Timeout"}</label>
                 <input
                   type="number"
                   min={1}
@@ -100,7 +100,7 @@ export default function ConnectionPoolTuningPage() {
                 onClick={() => deleteService(index)}
                 className="text-sm text-red-600 hover:text-red-700"
               >
-                {t("backend2.connPoolTuning.delete")}
+                {"Delete"}
               </button>
             </div>
           ))}
@@ -109,7 +109,7 @@ export default function ConnectionPoolTuningPage() {
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.connPoolTuning.save")}
+          {"Save"}
         </button>
       </div>
     </div>

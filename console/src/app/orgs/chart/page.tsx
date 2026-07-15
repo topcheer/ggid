@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 // ===== Types =====
 
@@ -44,6 +45,8 @@ interface OrgNode extends Organization {
 }
 
 function buildTree(orgs: Organization[]): OrgNode[] {
+  const t = useTranslations();
+
   const map = new Map<string, OrgNode>();
   const roots: OrgNode[] = [];
 

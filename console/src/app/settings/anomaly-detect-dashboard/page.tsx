@@ -2,8 +2,11 @@
 
 import { useAnomalyDetectDashboard } from "@ggid/sdk-react";
 import { AlertTriangle, CheckCircle, XCircle, Activity } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AnomalyDetectDashboardPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, acknowledge } = useAnomalyDetectDashboard();
 
   if (loading) return <div className="p-8 text-gray-400">Loading anomaly dashboard...</div>;

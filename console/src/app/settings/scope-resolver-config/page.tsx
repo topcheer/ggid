@@ -1,11 +1,14 @@
 'use client';
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ScopeNode { name: string; description: string; children: string[]; parent: string | null; }
 interface ClientScopeMapping { client: string; allowedScopes: string[]; }
 interface ScopeRestriction { id: string; name: string; description: string; enabled: boolean; }
 
 export default function ScopeResolverConfigPage() {
+  const t = useTranslations();
+
   const [scopeTree, setScopeTree] = useState<Record<string, ScopeNode>>({});
   const [clientMappings, setClientMappings] = useState<ClientScopeMapping[]>([]);
   const [restrictions, setRestrictions] = useState<ScopeRestriction[]>([]);

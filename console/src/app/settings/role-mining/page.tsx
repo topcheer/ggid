@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, Sparkles, AlertTriangle, Check, User, Shield, TrendingDown } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PermissionGrant {
   permission: string;
@@ -30,6 +31,7 @@ interface UserAnalysis {
 }
 
 export default function RoleMiningPage() {
+  const t = useTranslations();
   const [users, setUsers] = useState<UserAnalysis[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [loading, setLoading] = useState(false);

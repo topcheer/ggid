@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Users, TrendingDown, Ban } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface UserEntry {
   id: string;
@@ -22,6 +23,7 @@ const stageColors: Record<string, string> = {
 };
 
 export default function UserLifecyclePage() {
+  const t = useTranslations();
   const [tab, setTab] = useState<string>("active");
   const [users, setUsers] = useState<UserEntry[]>([]);
   const [loading, setLoading] = useState(false);

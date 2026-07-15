@@ -7,6 +7,7 @@ import {
   Save, Trash2, Clock, Mail, Filter, FileBarChart, RefreshCw,
   FolderOpen, Plus,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 // ---- Types ----
 interface ReportConfig {
@@ -55,6 +56,8 @@ const labelCls = "mb-1 block text-sm font-medium text-gray-700 dark:text-gray-30
 const cardCls = "rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
 export default function AuditReportsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [msg, setMsg] = useState<string | null>(null);
   const [msgType, setMsgType] = useState<"success" | "error">("success");

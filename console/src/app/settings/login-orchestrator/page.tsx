@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Shuffle, Loader2, AlertCircle, X, ChevronUp, ChevronDown, ToggleLeft, ToggleRight, Play, CheckCircle,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AuthMethod {
   id: string;
@@ -24,6 +25,8 @@ interface Provider {
 }
 
 export default function LoginOrchestratorPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [methods, setMethods] = useState<AuthMethod[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -85,7 +88,7 @@ export default function LoginOrchestratorPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shuffle className="h-6 w-6 text-violet-600" /> Login Orchestrator</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shuffle className="h-6 w-6 text-violet-600" /> {t("loginOrchestrator.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Configure authentication method priority, provider enablement, and identifier resolution.</p>
       </div>
 

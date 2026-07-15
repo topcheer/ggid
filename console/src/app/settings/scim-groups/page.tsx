@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
 import {
+import { useTranslations } from "@/lib/i18n";
   Users, Plus, Trash2, X, AlertCircle, Loader2, Check, UserMinus,
 } from "lucide-react";
 
@@ -14,6 +15,7 @@ interface ScimGroup {
 }
 
 export default function ScimGroupsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [groups, setGroups] = useState<ScimGroup[]>([]);
   const [loading, setLoading] = useState(true);

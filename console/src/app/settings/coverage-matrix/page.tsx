@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Grid3x3, AlertTriangle, Layers } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface MatrixData {
   subjects: string[];
@@ -13,6 +14,8 @@ interface MatrixData {
 }
 
 function cellColor(pct: number) {
+  const t = useTranslations();
+
   if (pct >= 100) return "bg-green-500";
   if (pct >= 50) return "bg-yellow-500";
   if (pct > 0) return "bg-orange-500";
@@ -37,21 +40,21 @@ export default function CoverageMatrixPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-indigo-500" /> Coverage Matrix</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-indigo-500" /> {t("coverageMatrix.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Policy coverage across subject-resource combinations with gap detection.</p>
       </div>
 
       {data && (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Subjects</span><p className="text-xl font-bold mt-1">{data.subjects.length}</p></div>
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Resources</span><p className="text-xl font-bold mt-1">{data.resources.length}</p></div>
-            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Gaps</span><p className="text-xl font-bold text-red-600 mt-1">{data.gaps_count}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.coverageMatrix.subjects")}</span><p className="text-xl font-bold mt-1">{data.subjects.length}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.coverageMatrix.resources")}</span><p className="text-xl font-bold mt-1">{data.resources.length}</p></div>
+            <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend3.coverageMatrix.gaps")}</span><p className="text-xl font-bold text-red-600 mt-1">{data.gaps_count}</p></div>
           </div>
 
           {data.subjects.length > 0 && data.resources.length > 0 && (
             <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
-              <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-3 py-2 text-left font-medium sticky">Subject</th>{data.resources.map((r) => <th key={r} className="px-2 py-2 text-center text-xs font-mono">{r}</th>)}</tr></thead>
+              <table className="w-full text-sm"><thead className="bg-gray-50 dark:bg-gray-900/50"><tr><th className="px-3 py-2 text-left font-medium sticky">{t("backend3.coverageMatrix.subject")}</th>{data.resources.map((r) => <th key={r} className="px-2 py-2 text-center text-xs font-mono">{r}</th>)}</tr></thead>
                 <tbody className="divide-y dark:divide-gray-800">{data.subjects.map((subj) => (
                   <tr key={subj} className="hover:bg-gray-50 dark:hover:bg-gray-900/30"><td className="px-3 py-2 font-mono text-xs">{subj}</td>{data.resources.map((res) => { const cell = data.cells.find((c) => c.subject === subj && c.resource === res); const pct = cell?.coverage_pct ?? 0; return (<td key={res} className="px-2 py-2 text-center"><div className={`inline-block w-10 h-7 rounded ${cellColor(pct)} flex items-center justify-center text-xs font-bold text-white`}>{pct > 0 ? pct + "%" : "-"}</div></td>); })}</tr>
                 ))}</tbody>

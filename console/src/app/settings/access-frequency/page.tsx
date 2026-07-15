@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Activity, Search, AlertTriangle, TrendingUp, Users, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface HourlyBucket {
   hour: string;
@@ -22,6 +23,8 @@ interface FrequencyData {
 }
 
 export default function AccessFrequencyPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<FrequencyData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -47,7 +50,7 @@ export default function AccessFrequencyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> Access Frequency</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> {t("accessFrequency.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Hourly access patterns with anomaly detection per resource.</p>
       </div>
 
@@ -62,7 +65,7 @@ export default function AccessFrequencyPage() {
           {/* Stats cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="rounded-lg border p-4 dark:border-gray-800">
-              <span className="text-sm text-gray-500">Total Accesses</span>
+              <span className="text-sm text-gray-500">{t("backend3.accessFrequency.totalAccesses")}</span>
               <p className="text-2xl font-bold mt-1">{data.total_accesses.toLocaleString()}</p>
             </div>
             <div className="rounded-lg border p-4 dark:border-gray-800">
@@ -70,15 +73,15 @@ export default function AccessFrequencyPage() {
               <p className="text-2xl font-bold mt-1">{data.avg_per_hour.toFixed(1)}</p>
             </div>
             <div className="rounded-lg border p-4 dark:border-gray-800">
-              <div className="flex items-center justify-between"><span className="text-sm text-gray-500">Anomalies</span><AlertTriangle className="w-4 h-4 text-orange-400" /></div>
+              <div className="flex items-center justify-between"><span className="text-sm text-gray-500">{t("backend3.accessFrequency.anomalies")}</span><AlertTriangle className="w-4 h-4 text-orange-400" /></div>
               <p className="text-2xl font-bold mt-1 text-orange-600">{data.anomaly_count}</p>
             </div>
             <div className="rounded-lg border p-4 dark:border-gray-800">
-              <div className="flex items-center justify-between"><span className="text-sm text-gray-500">Peak Hour</span><Clock className="w-4 h-4 text-gray-400" /></div>
+              <div className="flex items-center justify-between"><span className="text-sm text-gray-500">{t("backend3.accessFrequency.peakHour")}</span><Clock className="w-4 h-4 text-gray-400" /></div>
               <p className="text-sm font-bold mt-1">{data.peak_hour}</p>
             </div>
             <div className="rounded-lg border p-4 dark:border-gray-800">
-              <div className="flex items-center justify-between"><span className="text-sm text-gray-500">Peak Count</span><TrendingUp className="w-4 h-4 text-gray-400" /></div>
+              <div className="flex items-center justify-between"><span className="text-sm text-gray-500">{t("backend3.accessFrequency.peakCount")}</span><TrendingUp className="w-4 h-4 text-gray-400" /></div>
               <p className="text-2xl font-bold mt-1">{data.peak_count}</p>
             </div>
           </div>

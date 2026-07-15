@@ -2,8 +2,10 @@
 
 import { useSamlIdpInitiatedSSO } from "@ggid/sdk-react";
 import { Globe, Shield, Link2, AlertTriangle, Play, CheckCircle, Settings } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SamlIdpInitiatedSSOPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testSso } = useSamlIdpInitiatedSSO();
 
   if (loading) return <div className="p-8 text-gray-400">Loading IdP-initiated SSO config...</div>;

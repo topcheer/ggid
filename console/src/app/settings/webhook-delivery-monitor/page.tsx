@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Delivery { id: string; webhook: string; event: string; status: string; attempts: number; latency: string; nextRetry: string; }
 
 export default function WebhookDeliveryMonitorPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

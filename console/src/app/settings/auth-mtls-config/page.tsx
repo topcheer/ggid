@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuthMtlsConfig, AuthMtlsConfig, TrustedCaCert } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthMtlsConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useAuthMtlsConfig();
   const [form, setForm] = useState<AuthMtlsConfig | null>(null);
   const [saving, setSaving] = useState(false);

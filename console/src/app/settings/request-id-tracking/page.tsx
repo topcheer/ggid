@@ -26,7 +26,7 @@ export default function RequestIdTrackingPage() {
             onChange={(e) => setEnabled(e.target.checked)}
             className="w-4 h-4"
           />
-          <span className="font-medium">{t("backend2.requestIdTracking.enabled")}</span>
+          <span className="font-medium">{"Enabled"}</span>
         </label>
 
         <div className="space-y-1">
@@ -48,7 +48,7 @@ export default function RequestIdTrackingPage() {
               onChange={(e) => setGenerateMissing(e.target.checked)}
               disabled={!enabled}
             />
-            {t("backend2.requestIdTracking.generateMissing")}
+            {"Generate Missing"}
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -57,7 +57,7 @@ export default function RequestIdTrackingPage() {
               onChange={(e) => setPropagate(e.target.checked)}
               disabled={!enabled}
             />
-            {t("backend2.requestIdTracking.propagate")}
+            {"Propagate"}
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -66,12 +66,12 @@ export default function RequestIdTrackingPage() {
               onChange={(e) => setIncludeInResponse(e.target.checked)}
               disabled={!enabled}
             />
-            {t("backend2.requestIdTracking.includeInResponse")}
+            {"Include In Response"}
           </label>
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm text-gray-600">{t("backend2.requestIdTracking.sample")}</label>
+          <label className="text-sm text-gray-600">{"Sample"}</label>
           <input
             type="range"
             min={0}
@@ -88,7 +88,7 @@ export default function RequestIdTrackingPage() {
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.requestIdTracking.save")}
+          {"Save"}
         </button>
       </div>
     </div>

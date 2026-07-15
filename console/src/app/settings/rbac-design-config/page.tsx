@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRbacDesignConfig, SodPair } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LocalRoleNode {
   level: number;
@@ -25,6 +26,7 @@ interface LocalRbacDesignConfig {
 }
 
 export default function RbacDesignConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useRbacDesignConfig();
   const [form, setForm] = useState<LocalRbacDesignConfig | null>(null);
   const [saving, setSaving] = useState(false);

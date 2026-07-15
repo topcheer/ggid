@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Activity, TrendingDown, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Analytics {
   total_attempts: number;
@@ -14,6 +15,8 @@ interface Analytics {
 }
 
 export default function AuthorizeFlowAnalyticsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +37,7 @@ export default function AuthorizeFlowAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> Authorize Flow Analytics</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-blue-500" /> {t("authorizeFlowAnalytics.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">OAuth authorize endpoint analytics with consent rates and abandonment funnel.</p>
       </div>
 

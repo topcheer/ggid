@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePolicyEvaluationEngineConfig, PolicyEvaluationEngineConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyEvaluationEngineConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = usePolicyEvaluationEngineConfig();
   const [form, setForm] = useState<PolicyEvaluationEngineConfig | null>(null);
   const [saving, setSaving] = useState(false);

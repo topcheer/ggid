@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Template { id: string; name: string; category: string; permissions: string[]; version: string; }
 
 export default function RoleTemplatesConfigPage() {
+  const t = useTranslations();
+
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

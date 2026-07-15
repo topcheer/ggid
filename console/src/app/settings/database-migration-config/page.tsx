@@ -75,11 +75,11 @@ export default function DatabaseMigrationConfigPage() {
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
               <th className="px-4 py-3">ID</th>
-              <th className="px-4 py-3">{t("backend2.dbMigration.migration")}</th>
-              <th className="px-4 py-3">{t("backend2.dbMigration.status")}</th>
-              <th className="px-4 py-3">{t("backend2.dbMigration.appliedAt")}</th>
-              <th className="px-4 py-3">{t("backend2.dbMigration.duration")}</th>
-              <th className="px-4 py-3">{t("backend2.dbMigration.actions")}</th>
+              <th className="px-4 py-3">{"Migration"}</th>
+              <th className="px-4 py-3">{"Status"}</th>
+              <th className="px-4 py-3">{"Applied At"}</th>
+              <th className="px-4 py-3">{"Duration"}</th>
+              <th className="px-4 py-3">{"Actions"}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -94,10 +94,10 @@ export default function DatabaseMigrationConfigPage() {
                 <td className="px-4 py-3">{m.duration}</td>
                 <td className="px-4 py-3 flex gap-2">
                   {m.status === 'pending' || m.status === 'failed' ? (
-                    <button onClick={() => runMigration(m.id)} className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{t("backend2.dbMigration.run")}</button>
+                    <button onClick={() => runMigration(m.id)} className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{"Run"}</button>
                   ) : null}
                   {m.status === 'applied' ? (
-                    <button onClick={() => rollbackMigration(m.id)} className="px-2 py-1 text-xs border rounded">{t("backend2.dbMigration.rollback")}</button>
+                    <button onClick={() => rollbackMigration(m.id)} className="px-2 py-1 text-xs border rounded">{"Rollback"}</button>
                   ) : null}
                 </td>
               </tr>

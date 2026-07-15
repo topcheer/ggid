@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Search, Trash2, Smartphone, Monitor, MessageSquare, ShieldCheck, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface MFAFactor {
   id: string;
@@ -27,6 +28,8 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function MFAFactorsPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [factors, setFactors] = useState<MFAFactor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,7 +74,7 @@ export default function MFAFactorsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> MFA Factor Management</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> {t("mfaFactors.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">View and remove multi-factor authentication factors per user.</p>
       </div>
 

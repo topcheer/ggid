@@ -17,6 +17,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ExportJob {
   id: string;
@@ -57,6 +58,8 @@ const RECURRENCE_OPTIONS = [
 ];
 
 function statusBadge(status: string) {
+  const t = useTranslations();
+
   switch (status) {
     case "completed":
       return "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400";

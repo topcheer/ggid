@@ -18,6 +18,7 @@ import {
   Clock,
   ChevronDown,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TemplateContent {
   subject: string;
@@ -166,6 +167,7 @@ function genId() {
 }
 
 export default function NotificationTemplatesPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [templates, setTemplates] = useState<TemplateRecord[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);

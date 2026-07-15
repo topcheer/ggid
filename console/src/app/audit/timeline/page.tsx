@@ -6,6 +6,7 @@ import {
   LogIn, LogOut, Shield, FileEdit, UserCheck, Key,
   RefreshCw, Download, Search, Filter,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AuditEvent {
   id: string;
@@ -60,6 +61,8 @@ const ACTION_ICONS: Record<string, React.ElementType> = {
 };
 
 function getEventIcon(action: string): React.ElementType {
+  const t = useTranslations();
+
   return ACTION_ICONS[action] || (action.includes("login") ? LogIn : action.includes("logout") ? LogOut : action.includes("mfa") ? Shield : action.includes("policy") ? FileEdit : action.includes("role") ? UserCheck : action.includes("token") || action.includes("oauth") ? Key : FileEdit);
 }
 

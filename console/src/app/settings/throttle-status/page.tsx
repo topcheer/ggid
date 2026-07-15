@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Gauge, Search, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ThrottleData {
   user_id: string;
@@ -16,6 +17,8 @@ interface ThrottleData {
 }
 
 export default function ThrottleStatusPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<ThrottleData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,7 +42,7 @@ export default function ThrottleStatusPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Gauge className="w-6 h-6 text-blue-500" /> Throttle Status</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Gauge className="w-6 h-6 text-blue-500" /> {t("throttleStatus.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Check login throttle state and rate limit countdown per user.</p>
       </div>
 

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface LockoutRecord {
   user: string;
@@ -9,6 +10,8 @@ interface LockoutRecord {
 }
 
 export default function LoginSecurityPolicyPage() {
+  const t = useTranslations();
+
   const [maxAttempts, setMaxAttempts] = useState(5);
   const [lockoutDuration, setLockoutDuration] = useState(900);
   const [captchaAfter, setCaptchaAfter] = useState(3);

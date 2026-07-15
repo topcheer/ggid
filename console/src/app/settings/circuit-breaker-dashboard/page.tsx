@@ -58,12 +58,12 @@ export default function CircuitBreakerDashboardPage() {
               <tr className="text-left border-b">
                 <th className="px-4 py-3">{t("backend2.circuitBreakerDash.service")}</th>
                 <th className="px-4 py-3">{t("backend2.circuitBreakerDash.state")}</th>
-                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.failures")}</th>
-                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.lastMinute")}</th>
-                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.last5Minutes")}</th>
-                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.lastHour")}</th>
+                <th className="px-4 py-3">{"Failures"}</th>
+                <th className="px-4 py-3">{"Last Minute"}</th>
+                <th className="px-4 py-3">{"Last 5 Minutes"}</th>
+                <th className="px-4 py-3">{"Last Hour"}</th>
                 <th className="px-4 py-3">Slow</th>
-                <th className="px-4 py-3">Action</th>
+                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.action")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -83,7 +83,7 @@ export default function CircuitBreakerDashboardPage() {
                       onClick={() => resetService(row.service)}
                       className="px-2 py-1 text-xs border rounded hover:bg-gray-100"
                     >
-                      {t("backend2.circuitBreakerDash.resetService")}
+                      {"Reset Service"}
                     </button>
                   </td>
                 </tr>
@@ -94,7 +94,7 @@ export default function CircuitBreakerDashboardPage() {
       )}
 
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold mb-3">{t("backend2.circuitBreakerDash.perService")}</h2>
+        <h2 className="text-lg font-semibold mb-3">{"Per Service"}</h2>
         <div className="space-y-3">
           {rows.map(row => (
             <div key={row.service} className="flex items-center gap-4">

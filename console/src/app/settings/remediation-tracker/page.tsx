@@ -2,8 +2,10 @@
 
 import { useRemediationTracker } from "@ggid/sdk-react";
 import { Wrench, AlertTriangle, TrendingUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function RemediationTrackerPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useRemediationTracker();
 
   if (loading) return <div className="p-8 text-gray-400">Loading remediation tracker...</div>;

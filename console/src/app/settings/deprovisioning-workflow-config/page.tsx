@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface WorkflowStep {
   id: string;
@@ -9,6 +10,8 @@ interface WorkflowStep {
 }
 
 export default function DeprovisioningWorkflowConfigPage() {
+  const t = useTranslations();
+
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [rollback, setRollback] = useState(true);
   const [dryRun, setDryRun] = useState(false);

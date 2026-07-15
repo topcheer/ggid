@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { LogOut, CheckCircle, XCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Stats {
   total_requests: number;
@@ -13,6 +14,8 @@ interface Stats {
 }
 
 export default function BackchannelLogoutStatsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,7 +35,7 @@ export default function BackchannelLogoutStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><LogOut className="w-6 h-6 text-purple-500" /> Backchannel Logout Stats</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><LogOut className="w-6 h-6 text-purple-500" /> {t("backchannelLogoutStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">OIDC backchannel logout endpoint statistics and failure analysis.</p>
       </div>
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useApi } from "@/lib/api";
 import { Send, Plus, Trash2, ChevronDown } from "lucide-react";
 import { CopyButton } from "@/components/ui/copy-button";
+import { useTranslations } from "@/lib/i18n";
 
 interface Endpoint {
   id: string;
@@ -27,6 +28,8 @@ const QUICK_ENDPOINTS = [
 ];
 
 export default function APIExplorerPage() {
+  const t = useTranslations();
+
   const { API_BASE, TENANT_ID } = useApi();
   const [endpoints, setEndpoints] = useState<Endpoint[]>([
     {

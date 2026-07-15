@@ -1,12 +1,15 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Radio, Server, Users } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Stream { name: string; subjects: string[]; msgs: number; bytes: number; consumer_count: number; last_msg: string; }
 interface Consumer { name: string; stream: string; delivered: number; ack_floor: number; pending: number; status: string; }
 interface JetStreamData { streams: Stream[]; consumers: Consumer[]; connections: number; total_msgs: number; total_bytes: number; throughput_per_sec: number; status: string; }
 
 export default function NatsJetstreamPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<JetStreamData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +28,7 @@ export default function NatsJetstreamPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Radio className="w-6 h-6 text-blue-500" /> NATS JetStream</h1><p className="text-sm text-gray-500 mt-1">Monitor streams, consumers, and messaging throughput.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Radio className="w-6 h-6 text-blue-500" /> {t("natsJetstream.title")}</h1><p className="text-sm text-gray-500 mt-1">Monitor streams, consumers, and messaging throughput.</p></div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800 flex items-center gap-3"><Server className="w-8 h-8 text-blue-500" /><div><span className="text-sm text-gray-500">Streams</span><p className="text-xl font-bold">{data.streams.length}</p></div></div>

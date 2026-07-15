@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { UserPlus, Check, X, Clock, ArrowRight } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RoleRequest {
   id: string;
@@ -24,6 +25,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function RoleRequestsPage() {
+  const t = useTranslations();
+
   const [requests, setRequests] = useState<RoleRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<"pending" | "mine">("pending");
@@ -83,7 +86,7 @@ export default function RoleRequestsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-blue-500" /> Role Requests</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-blue-500" /> {t("roleRequests.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Request and approve role assignments with multi-step approval workflow.</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><UserPlus className="w-4 h-4" /> Request Role</button>

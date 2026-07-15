@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   ShieldAlert, Download, AlertTriangle, Loader2, X, AlertCircle,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SoDViolation {
   id: string;
@@ -23,6 +24,8 @@ const SEV_CONFIG = {
 };
 
 export default function SoDViolationsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [violations, setViolations] = useState<SoDViolation[]>([]);
   const [loading, setLoading] = useState(true);

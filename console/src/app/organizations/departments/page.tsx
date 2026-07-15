@@ -6,6 +6,7 @@ import {
   Building2, Plus, Trash2, X, AlertCircle, Loader2, Check, Pencil,
   ChevronRight, ChevronDown, Users, DollarSign, Hash,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Department {
   id: string;
@@ -18,6 +19,8 @@ interface Department {
 }
 
 export default function DepartmentsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useJarConfig, JarConfig, JarPerClient } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function JarConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useJarConfig();
   const [form, setForm] = useState<JarConfig | null>(null);
   const [saving, setSaving] = useState(false);

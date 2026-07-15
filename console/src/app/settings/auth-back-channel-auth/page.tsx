@@ -2,8 +2,11 @@
 
 import { useAuthBackChannelAuth } from "@ggid/sdk-react";
 import { Smartphone, MessageSquare, Clock, Activity, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthBackChannelAuthPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAuthBackChannelAuth();
 
   if (loading) return <div className="p-8 text-gray-400">Loading CIBA config...</div>;

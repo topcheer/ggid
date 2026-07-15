@@ -50,7 +50,7 @@ export default function K8sDeploymentManagementPage() {
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.k8sDeploymentManagement.noData")}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{"No Data"}</div>;
   const [deployments, setDeployments] = useState<K8sDeployment[]>(defaultDeployments);
 
   const scale = (name: string, delta: number) => {
@@ -80,11 +80,11 @@ export default function K8sDeploymentManagementPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
-              <th className="px-4 py-3">{t("backend2.k8sDeploymentManagement.deployment")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeploymentManagement.namespace")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeploymentManagement.replicas")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeploymentManagement.strategy")}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeploymentManagement.status")}</th>
+              <th className="px-4 py-3">{"Deployment"}</th>
+              <th className="px-4 py-3">{"Namespace"}</th>
+              <th className="px-4 py-3">{"Replicas"}</th>
+              <th className="px-4 py-3">{"Strategy"}</th>
+              <th className="px-4 py-3">{"Status"}</th>
               <th className="px-4 py-3">{t("backend2.k8sDeploymentManagement.actions")}</th>
             </tr>
           </thead>
@@ -101,8 +101,8 @@ export default function K8sDeploymentManagementPage() {
                 <td className="px-4 py-3 flex gap-2">
                   <button onClick={() => scale(d.name, 1)} className="px-2 py-1 text-xs border rounded">+1</button>
                   <button onClick={() => scale(d.name, -1)} className="px-2 py-1 text-xs border rounded">-1</button>
-                  <button onClick={() => restart(d.name)} className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{t("backend2.k8sDeploymentManagement.restart")}</button>
-                  <button className="px-2 py-1 text-xs border rounded">{t("backend2.k8sDeploymentManagement.edit")}</button>
+                  <button onClick={() => restart(d.name)} className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{"Restart"}</button>
+                  <button className="px-2 py-1 text-xs border rounded">{"Edit"}</button>
                 </td>
               </tr>
             ))}

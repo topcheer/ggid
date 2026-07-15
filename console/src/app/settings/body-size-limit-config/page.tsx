@@ -37,7 +37,7 @@ export default function BodySizeLimitConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.bodySizeLimit.maxRequestBody")}</label>
+            <label className="text-sm text-gray-600">{"Max Request Body"}</label>
             <input
               type="number"
               min={0}
@@ -47,7 +47,7 @@ export default function BodySizeLimitConfigPage() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.bodySizeLimit.maxResponseBody")}</label>
+            <label className="text-sm text-gray-600">{"Max Response Body"}</label>
             <input
               type="number"
               min={0}
@@ -65,12 +65,12 @@ export default function BodySizeLimitConfigPage() {
             onChange={(e) => setAllowFileUpload(e.target.checked)}
             className="w-4 h-4"
           />
-          {t("backend2.bodySizeLimit.allowFileUpload")}
+          {"Allow File Upload"}
         </label>
 
         {allowFileUpload && (
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.bodySizeLimit.maxFileSize")}</label>
+            <label className="text-sm text-gray-600">{"Max File Size"}</label>
             <input
               type="number"
               min={0}
@@ -84,8 +84,8 @@ export default function BodySizeLimitConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{t("backend2.bodySizeLimit.routeOverrides")}</h2>
-          <button onClick={addRoute} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.bodySizeLimit.addRoute")}</button>
+          <h2 className="text-lg font-semibold">{"Route Overrides"}</h2>
+          <button onClick={addRoute} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Route"}</button>
         </div>
         <div className="space-y-3">
           {routes.map((route, index) => (
@@ -117,7 +117,7 @@ export default function BodySizeLimitConfigPage() {
 
       <div className="flex justify-end">
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {t("backend2.bodySizeLimit.save")}
+          {"Save"}
         </button>
       </div>
     </div>

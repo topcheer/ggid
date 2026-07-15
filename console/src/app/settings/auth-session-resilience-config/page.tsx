@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuthSessionResilienceConfig, AuthSessionResilienceConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthSessionResilienceConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig, testRecovery } = useAuthSessionResilienceConfig();
   const [form, setForm] = useState<AuthSessionResilienceConfig | null>(null);
   const [saving, setSaving] = useState(false);

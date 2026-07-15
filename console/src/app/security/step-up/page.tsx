@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   ShieldCheck, Send, AlertCircle, Loader2, X, Check, Clock, KeyRound,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Challenge {
   id: string;
@@ -18,6 +19,8 @@ interface Challenge {
 }
 
 export default function StepUpAuthPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +58,7 @@ export default function StepUpAuthPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-indigo-600" /> Step-Up Authentication</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-indigo-600" /> {t("securityStepUp.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Additional verification challenges for sensitive operations.</p>
         </div>
         <button onClick={() => setShowTrigger(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Send className="h-4 w-4" /> Trigger Challenge</button>

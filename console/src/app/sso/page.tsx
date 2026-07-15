@@ -6,6 +6,7 @@ import {
   Shield, Plus, Trash2, Upload, X, AlertCircle, Loader2, Check,
   Link2, FileText, Zap, RefreshCw,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 type ProviderType = "saml" | "oidc" | "ldap";
 
@@ -29,6 +30,8 @@ const PROVIDER_TYPES: { value: ProviderType; label: string; icon: typeof Shield 
 ];
 
 export default function SSOPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [providers, setProviders] = useState<SSOProvider[]>([]);
   const [loading, setLoading] = useState(true);

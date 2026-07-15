@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Search, ShieldCheck, History, Save } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ConsentEntry {
   key: string;
@@ -19,6 +20,8 @@ interface ConsentData {
 }
 
 export default function ConsentRegistryPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<ConsentData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +51,7 @@ export default function ConsentRegistryPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-blue-500" /> Consent Registry</h1><p className="text-sm text-gray-500 mt-1">Manage user consent preferences with version history.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-blue-500" /> {t("consentRegistry.title")}</h1><p className="text-sm text-gray-500 mt-1">Manage user consent preferences with version history.</p></div>
         {data && <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>}
       </div>
 

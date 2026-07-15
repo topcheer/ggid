@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Grid3x3, Loader2, AlertCircle, X, XCircle, Info,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SoDRule {
   id: string;
@@ -15,6 +16,8 @@ interface SoDRule {
 }
 
 export default function SoDMatrixPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [roles, setRoles] = useState<string[]>([]);
   const [matrix, setMatrix] = useState<boolean[][]>([]);
@@ -47,7 +50,7 @@ export default function SoDMatrixPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Grid3x3 className="h-6 w-6 text-red-600" /> Separation of Duties Matrix</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Grid3x3 className="h-6 w-6 text-red-600" /> {t("securitySodMatrix.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Role exclusion grid preventing conflicts of interest.</p>
       </div>
 

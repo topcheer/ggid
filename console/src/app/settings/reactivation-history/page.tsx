@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { History, UserX, UserCheck, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TimelineEvent {
   id: string;
@@ -18,6 +19,8 @@ interface User {
 }
 
 export default function ReactivationHistoryPage() {
+  const t = useTranslations();
+
   const [users, setUsers] = useState<User[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
@@ -48,7 +51,7 @@ export default function ReactivationHistoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><History className="w-6 h-6 text-indigo-500" /> Reactivation History</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><History className="w-6 h-6 text-indigo-500" /> {t("reactivationHistory.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track user deactivation/reactivation events with reasons and actors.</p>
       </div>
 

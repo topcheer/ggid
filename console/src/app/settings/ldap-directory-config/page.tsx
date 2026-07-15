@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useLdapDirectoryConfig, LdapDirectoryConfig, DirectoryFederation } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function LdapDirectoryConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useLdapDirectoryConfig();
   const [form, setForm] = useState<LdapDirectoryConfig | null>(null);
   const [saving, setSaving] = useState(false);

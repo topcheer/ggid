@@ -6,6 +6,7 @@ import {
   ShieldAlert, Send, Loader2, AlertCircle, X, Check, Bell,
   Users, Database,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface BreachStatus {
   hibp_enabled: boolean;
@@ -17,6 +18,8 @@ interface BreachStatus {
 }
 
 export default function PasswordBreachPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [status, setStatus] = useState<BreachStatus | null>(null);
   const [loading, setLoading] = useState(true);

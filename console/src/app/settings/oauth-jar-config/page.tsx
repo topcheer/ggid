@@ -5,19 +5,19 @@ import { Shield, FileJson, Clock, BarChart3, RefreshCw } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthJarConfigPage() {
-  const t = useTranslations();
 
   const { data, loading, error, refresh } = useOAuthJarConfig();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading JAR config...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("oauthJarConfig.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">JAR Configuration</h1>
-          <p className="text-sm text-gray-400 mt-1">JWT-Secured Authorization Request (RFC 9101) settings</p>
+          <h1 className="text-2xl font-bold">{t("oauthJarConfig.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("oauthJarConfig.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -33,28 +33,28 @@ export default function OAuthJarConfigPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-green-400">
             <Shield className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Require JAR</span>
+            <span className="text-xs text-gray-400">{t("oauthJarConfig.requireJAR")}</span>
           </div>
           <p className="text-lg font-bold">{data?.require_jar ? "Yes" : "No"}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
             <Clock className="w-4 h-4" />
-            <span className="text-xs text-gray-400">JAR Lifetime</span>
+            <span className="text-xs text-gray-400">{t("oauthJarConfig.jarLifetime")}</span>
           </div>
           <p className="text-lg font-bold">{data?.jar_lifetime_seconds ?? 0}s</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-purple-400">
             <FileJson className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Signing Algorithm</span>
+            <span className="text-xs text-gray-400">{t("oauthJarConfig.signingAlgorithm")}</span>
           </div>
           <p className="text-lg font-bold font-mono">{data?.signing_alg ?? "RS256"}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-yellow-400">
             <Shield className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Encryption Optional</span>
+            <span className="text-xs text-gray-400">{t("oauthJarConfig.encryptionOptional")}</span>
           </div>
           <p className="text-lg font-bold">{data?.encryption_optional ? "Yes" : "No"}</p>
         </div>
@@ -63,15 +63,15 @@ export default function OAuthJarConfigPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Per-Client Override Table */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Per-Client Override</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("oauthJarConfig.perClientOverride")}</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-3">Client ID</th>
-                  <th className="text-left py-2 pr-3">JAR Required</th>
-                  <th className="text-left py-2 pr-3">Signing Alg</th>
-                  <th className="text-left py-2 pr-3">Lifetime</th>
+                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.clientId")}</th>
+                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.jarRequired")}</th>
+                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.signingAlg")}</th>
+                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.lifetime")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -100,19 +100,19 @@ export default function OAuthJarConfigPage() {
           </h2>
           <div className="space-y-2">
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-              <span className="text-sm text-gray-300">Total Requests (24h)</span>
+              <span className="text-sm text-gray-300">{t("oauthJarConfig.totalRequests24h")}</span>
               <span className="text-sm font-bold">{data?.jar_usage_stats.total_requests_24h.toLocaleString() ?? 0}</span>
             </div>
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-              <span className="text-sm text-gray-300">JAR Requests (24h)</span>
+              <span className="text-sm text-gray-300">{t("oauthJarConfig.jarRequests24h")}</span>
               <span className="text-sm font-bold text-green-400">{data?.jar_usage_stats.jar_requests_24h.toLocaleString() ?? 0}</span>
             </div>
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-              <span className="text-sm text-gray-300">Adoption Rate</span>
+              <span className="text-sm text-gray-300">{t("oauthJarConfig.adoptionRate")}</span>
               <span className="text-sm font-bold text-blue-400">{data?.jar_usage_stats.adoption_rate_pct ?? 0}%</span>
             </div>
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-              <span className="text-sm text-gray-300">Validation Failures</span>
+              <span className="text-sm text-gray-300">{t("oauthJarConfig.validationFailures")}</span>
               <span className="text-sm font-bold text-red-400">{data?.jar_usage_stats.validation_failures_24h ?? 0}</span>
             </div>
           </div>

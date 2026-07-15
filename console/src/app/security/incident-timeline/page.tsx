@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
 import { GitCommitVertical, Loader2, AlertCircle, X, Radio, Shield, Eye, Wrench, CheckCircle, FileSearch } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TimelineEvent {
   id: string; incident_id: string; phase: string;
@@ -25,6 +26,8 @@ const phaseIcons: Record<string, React.ReactNode> = {
 };
 
 export default function IncidentTimelinePage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export default function IncidentTimelinePage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><GitCommitVertical className="h-6 w-6 text-blue-600" /> Incident Timeline</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Track incident lifecycle: detection, escalation, response, and resolution.</p></div>
+      <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><GitCommitVertical className="h-6 w-6 text-blue-600" /> {t("securityIncidentTimeline.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Track incident lifecycle: detection, escalation, response, and resolution.</p></div>
       {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
       <div className="grid grid-cols-4 gap-6">
         {/* Incident selector */}

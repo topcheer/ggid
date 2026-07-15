@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, Gauge, TrendingDown, Zap, Lightbulb, Shield, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface OptimizationData {
   user_id: string;
@@ -13,6 +14,8 @@ interface OptimizationData {
 }
 
 export default function AccessOptimizationPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<OptimizationData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,7 @@ export default function AccessOptimizationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-blue-500" /> Access Path Optimization</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-blue-500" /> {t("accessOptimization.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Identify redundant roles, unused access paths, and consolidation opportunities.</p>
       </div>
 

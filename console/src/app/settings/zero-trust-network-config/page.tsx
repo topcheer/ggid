@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useZeroTrustNetworkConfig, ZeroTrustNetworkConfig, DeviceTrustSignal, NetworkAccessPolicy } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ZeroTrustNetworkConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useZeroTrustNetworkConfig();
   const [form, setForm] = useState<ZeroTrustNetworkConfig | null>(null);
   const [saving, setSaving] = useState(false);

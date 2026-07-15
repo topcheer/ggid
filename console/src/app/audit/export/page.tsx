@@ -5,8 +5,11 @@ import { useApi } from "@/lib/api";
 import {
   Download, Loader2, AlertCircle, X, Check, FileText, Filter,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuditExportPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [format, setFormat] = useState<"csv" | "json">("csv");
   const [dateFrom, setDateFrom] = useState("");

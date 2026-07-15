@@ -2,8 +2,11 @@
 
 import { useMitreAttackMapping } from "@ggid/sdk-react";
 import { Crosshair, Download, Activity } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function MitreAttackMappingPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useMitreAttackMapping();
 
   if (loading) return <div className="p-8 text-gray-400">Loading MITRE ATT&CK mapping...</div>;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Globe, Save, Search, Shield, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface GeofenceRule {
   allowed_countries: string[];
@@ -14,6 +15,8 @@ const countries = ["US", "CN", "GB", "DE", "FR", "JP", "KR", "AU", "CA", "IN", "
 const regions = ["EU", "NA", "APAC", "LATAM", "MEA", "EEU"];
 
 export default function GeofencingPage() {
+  const t = useTranslations();
+
   const [rule, setRule] = useState<GeofenceRule>({ allowed_countries: [], denied_regions: [], action: "mfa", enabled: true });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -51,7 +54,7 @@ export default function GeofencingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Globe className="w-6 h-6 text-blue-500" /> Geofencing</h1><p className="text-sm text-gray-500 mt-1">Configure geo-based access rules with country/region controls.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Globe className="w-6 h-6 text-blue-500" /> {t("geofencing.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure geo-based access rules with country/region controls.</p></div>
         <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Rules"}</button>
       </div>
 

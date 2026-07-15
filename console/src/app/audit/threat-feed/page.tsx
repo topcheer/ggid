@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Radio, Loader2, AlertCircle, X, Play, Pause, Trash2, Shield, Activity,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ThreatEvent {
   id: string;
@@ -27,6 +28,8 @@ const sevColors: Record<string, string> = {
 };
 
 export default function ThreatFeedPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [threats, setThreats] = useState<ThreatEvent[]>([]);
   const [connected, setConnected] = useState(false);
@@ -64,7 +67,7 @@ export default function ThreatFeedPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-red-600" /> Threat Feed</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-red-600" /> {t("auditThreatFeed.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Real-time threat intelligence via SSE stream.</p>
         </div>
         <div className="flex items-center gap-2">

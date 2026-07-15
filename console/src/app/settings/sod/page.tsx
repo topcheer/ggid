@@ -6,6 +6,7 @@ import {
   ShieldAlert, Plus, Trash2, X, AlertCircle, Loader2, Check,
   ShieldX, ShieldCheck, AlertTriangle,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SoDRule {
   id: string;
@@ -33,6 +34,8 @@ const SEVERITY_COLOR = {
 };
 
 export default function SoDPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<SoDRule[]>([]);
   const [violations, setViolations] = useState<SoDViolation[]>([]);
@@ -119,7 +122,7 @@ export default function SoDPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <ShieldAlert className="h-6 w-6 text-indigo-600" /> Separation of Duties
+            <ShieldAlert className="h-6 w-6 text-indigo-600" /> {t("sod.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Define mutually exclusive roles and detect violations.
@@ -133,19 +136,19 @@ export default function SoDPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">Active Rules</p>
+          <p className="text-xs font-medium text-gray-400">{t("backend3.sod.activeRules")}</p>
           <p className="mt-1 text-2xl font-bold text-indigo-600">{activeRules}</p>
         </div>
         <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">Total Violations</p>
+          <p className="text-xs font-medium text-gray-400">{t("backend3.sod.totalViolations")}</p>
           <p className="mt-1 text-2xl font-bold text-red-600">{violations.length}</p>
         </div>
         <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">Critical</p>
+          <p className="text-xs font-medium text-gray-400">{t("backend3.sod.critical")}</p>
           <p className="mt-1 text-2xl font-bold text-red-600">{violCount}</p>
         </div>
         <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">Clean Users</p>
+          <p className="text-xs font-medium text-gray-400">{t("backend3.sod.cleanUsers")}</p>
           <p className="mt-1 text-2xl font-bold text-green-600">
             {violations.length === 0 ? "All" : "Review"}
           </p>
@@ -271,7 +274,7 @@ export default function SoDPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAdd(false)}>
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Add SoD Rule</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("backend3.sod.addRule")}</h2>
               <button onClick={() => setShowAdd(false)}><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-4">
@@ -281,11 +284,11 @@ export default function SoDPage() {
                 <p className="mt-1 text-xs text-gray-400">These roles will be mutually exclusive — a user cannot hold all of them simultaneously.</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.sod.description")}</label>
                 <input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Admin and auditor roles are mutually exclusive" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Severity</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.sod.severity")}</label>
                 <div className="mt-2 flex gap-2">
                   {(["critical", "high", "medium"] as const).map((s) => {
                     const colors = SEVERITY_COLOR[s];
@@ -300,7 +303,7 @@ export default function SoDPage() {
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setShowAdd(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+              <button onClick={() => setShowAdd(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("backend3.sod.cancel")}</button>
               <button
                 onClick={handleCreate}
                 disabled={form.roles.split(",").filter((r) => r.trim()).length < 2 || !form.description.trim() || creating}
@@ -325,8 +328,8 @@ export default function SoDPage() {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("backend3.sod.cancel")}</button>
+              <button onClick={() => handleDelete(confirmDelete.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("backend3.sod.delete")}</button>
             </div>
           </div>
         </div>

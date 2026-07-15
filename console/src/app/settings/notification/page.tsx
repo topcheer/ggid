@@ -6,6 +6,7 @@ import {
   Bell, Mail, MessageSquare, Smartphone, Plus, Trash2, X,
   AlertCircle, Loader2, Send, Check, Pencil, Eye,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 type Channel = "email" | "sms" | "push";
 
@@ -45,6 +46,8 @@ const CHANNEL_LABEL: Record<Channel, string> = {
 };
 
 export default function NotificationPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);

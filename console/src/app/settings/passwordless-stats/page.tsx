@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Fingerprint, Clock, TrendingDown } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Stats {
   method_distribution: { method: string; count: number }[];
@@ -16,6 +17,8 @@ const methodColors: Record<string, string> = {
 };
 
 export default function PasswordlessStatsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +39,7 @@ export default function PasswordlessStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Fingerprint className="w-6 h-6 text-purple-500" /> Passwordless Stats</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Fingerprint className="w-6 h-6 text-purple-500" /> {t("passwordlessStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Passwordless authentication adoption and success metrics.</p>
       </div>
 

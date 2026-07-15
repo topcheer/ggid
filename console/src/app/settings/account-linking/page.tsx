@@ -6,6 +6,7 @@ import {
   Link2, Unlink, AlertCircle, Loader2, X, Check, Globe,
   Mail, Building2, AppWindow, Apple,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LinkedAccount {
   id: string;
@@ -34,6 +35,8 @@ const AVAILABLE_PROVIDERS = [
 ];
 
 export default function AccountLinkingPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [accounts, setAccounts] = useState<LinkedAccount[]>([]);
   const [loading, setLoading] = useState(true);

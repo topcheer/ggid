@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Bug, Play, RotateCcw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface DeliveryLog { id: string; timestamp: string; status: number; latency_ms: number; success: boolean; }
 interface TestResult { status: number; status_text: string; headers: Record<string, string>; body: string; latency_ms: number; success?: boolean; }
 export default function WebhookDebuggerPage() {
+  const t = useTranslations();
   const [endpoints, setEndpoints] = useState<string[]>([]);
   const [selected, setSelected] = useState("");
   const [payload, setPayload] = useState("{\n  \"event\": \"user.created\",\n  \"data\": {\n    \"user_id\": \"usr-123\"\n  }\n}");

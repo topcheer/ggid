@@ -18,6 +18,7 @@ import {
   Shield,
   Layers,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 // ===== Types =====
 
@@ -78,6 +79,8 @@ type Tab = "instances" | "tenants";
 // ===== Main Component =====
 
 export default function ProvisioningPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [tab, setTab] = useState<Tab>("instances");
   const [loading, setLoading] = useState(true);

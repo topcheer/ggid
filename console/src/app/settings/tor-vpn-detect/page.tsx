@@ -2,8 +2,10 @@
 
 import { useTorVpnDetect } from "@ggid/sdk-react";
 import { Globe, Network, Shield, AlertTriangle, Eye } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function TorVpnDetectPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useTorVpnDetect();
 
   if (loading) return <div className="p-8 text-gray-400">Loading TOR/VPN detection...</div>;

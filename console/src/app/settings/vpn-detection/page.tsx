@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ShieldAlert, Search, Globe, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface VPNResult {
   ip: string;
@@ -24,6 +25,7 @@ const riskColors: Record<string, string> = {
 };
 
 export default function VPNDetectionPage() {
+  const t = useTranslations();
   const [ipInput, setIpInput] = useState("");
   const [results, setResults] = useState<VPNResult[]>([]);
   const [loading, setLoading] = useState(false);

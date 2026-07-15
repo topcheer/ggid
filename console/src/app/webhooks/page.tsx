@@ -18,6 +18,7 @@ import {
   RotateCw,
   History,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 const WEBHOOK_EVENTS = [
   "user.created", "user.updated", "user.deleted",
@@ -56,6 +57,8 @@ interface TestResult {
 }
 
 function statusCodeColor(code: number): string {
+  const t = useTranslations();
+
   if (code >= 200 && code < 300) return "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400";
   if (code >= 300 && code < 400) return "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400";
   if (code >= 400 && code < 500) return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400";

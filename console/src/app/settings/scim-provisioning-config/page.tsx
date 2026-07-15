@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useScimProvisioningConfig, ScimProvisioningConfig, ScimMappingRule } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ScimProvisioningConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig, testConnection } = useScimProvisioningConfig();
   const [form, setForm] = useState<ScimProvisioningConfig | null>(null);
   const [saving, setSaving] = useState(false);

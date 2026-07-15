@@ -36,7 +36,7 @@ export default function CanaryDeploymentConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="space-y-1">
-          <label className="text-sm text-gray-600">{t("backend2.canaryConfig.service")}</label>
+          <label className="text-sm text-gray-600">{"Service"}</label>
           <select
             value={service}
             onChange={(e) => setService(e.target.value)}
@@ -50,7 +50,7 @@ export default function CanaryDeploymentConfigPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.canaryConfig.canaryWeight")}</label>
+            <label className="text-sm text-gray-600">{"Canary Weight"}</label>
             <input
               type="range"
               min={0}
@@ -62,7 +62,7 @@ export default function CanaryDeploymentConfigPage() {
             <div className="text-sm font-medium text-center">{canaryWeight}%</div>
           </div>
           <div className="space-y-1">
-            <label className="text-sm text-gray-600">{t("backend2.canaryConfig.stableWeight")}</label>
+            <label className="text-sm text-gray-600">{"Stable Weight"}</label>
             <div className="h-2 bg-gray-200 rounded-full mt-4">
               <div className="h-2 bg-blue-600 rounded-full" style={{ width: `${stableWeight}%` }} />
             </div>
@@ -72,7 +72,7 @@ export default function CanaryDeploymentConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">{t("backend2.canaryConfig.headerMatch")}</h2>
+        <h2 className="text-lg font-semibold">{"Header Match"}</h2>
         <div className="space-y-2">
           {headerMatches.map((match, index) => (
             <div key={index} className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function CanaryDeploymentConfigPage() {
                 onClick={() => deleteMatch(index)}
                 className="text-sm text-red-600 hover:text-red-700"
               >
-                {t("backend2.canaryConfig.delete")}
+                {"Delete"}
               </button>
             </div>
           ))}
@@ -116,14 +116,14 @@ export default function CanaryDeploymentConfigPage() {
             onClick={addMatch}
             className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
           >
-            {t("backend2.canaryConfig.addMatch")}
+            {"Add Match"}
           </button>
         </div>
       </section>
 
       <div className="flex justify-end gap-3">
-        <button className="px-4 py-2 border rounded text-sm">{t("backend2.canaryConfig.rollback")}</button>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{t("backend2.canaryConfig.promote")}</button>
+        <button className="px-4 py-2 border rounded text-sm">{"Rollback"}</button>
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{"Promote"}</button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Clock, Link2, AlertTriangle, Eye } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TimelineEvent {
   id: string;
@@ -21,6 +22,7 @@ interface ReconstructData {
 }
 
 export default function TimelineReconstructPage() {
+  const t = useTranslations();
   const [userId, setUserId] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [data, setData] = useState<ReconstructData | null>(null);

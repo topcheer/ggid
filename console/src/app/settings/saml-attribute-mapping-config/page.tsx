@@ -2,8 +2,10 @@
 
 import { useSamlAttributeMappingConfig } from "@ggid/sdk-react";
 import { ArrowRight, Plus } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SamlAttributeMappingConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testMapping } = useSamlAttributeMappingConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading SAML attribute mapping...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

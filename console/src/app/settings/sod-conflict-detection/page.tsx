@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface SodRule {
   id: string;
@@ -20,6 +21,8 @@ interface Violation {
 const roles = ['admin', 'developer', 'auditor', 'finance', 'security', 'operations', 'support'];
 
 export default function SodConflictDetectionPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rules, setRules] = useState<SodRule[]>([]);
@@ -73,15 +76,15 @@ export default function SodConflictDetectionPage() {
     'bg-gray-50 text-gray-300';
 
   if (loading) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">SoD Conflict Detection</h1><p>Loading...</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4"> {t("backend3.sodConflictDetection.title")}</h1><p>Loading...</p></div>
   );
   if (error) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">SoD Conflict Detection</h1><p className="text-red-600">Error: {error}</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4"> {t("backend3.sodConflictDetection.title")}</h1><p className="text-red-600">Error: {error}</p></div>
   );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Separation of Duties Conflict Detection</h1>
+        <h1 className="text-2xl font-bold">{t("backend3.sodConflictDetection.title")}</h1>
         <p className="text-gray-600">Detect and prevent conflicting role assignments across the organization.</p>
       </div>
 
@@ -92,17 +95,17 @@ export default function SodConflictDetectionPage() {
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-red-600">{violations.filter(v => v.status === 'open').length}</div>
-          <div className="text-sm text-gray-500">Open Violations</div>
+          <div className="text-sm text-gray-500">{t("backend3.sodConflictDetection.openViolations")}</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{violations.filter(v => v.status === 'resolved' || v.status === 'remediated').length}</div>
-          <div className="text-sm text-gray-500">Resolved</div>
+          <div className="text-sm text-gray-500">{t("backend3.sodConflictDetection.resolved")}</div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Sensitivity Level</h2>
+          <h2 className="text-lg font-semibold">{t("backend3.sodConflictDetection.sensitivityLevel")}</h2>
           <select value={sensitivity} onChange={e => setSensitivity(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             <option value="strict">Strict - All conflict levels trigger violation</option>
             <option value="moderate">Moderate - High and critical trigger violation</option>
@@ -113,7 +116,7 @@ export default function SodConflictDetectionPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Auto-Remediation</h2>
           <label className="flex items-center justify-between">
-            <span className="text-sm">Automatically remove conflicting roles</span>
+            <span className="text-sm">{t("backend3.sodConflictDetection.autoRemove")}</span>
             <input type="checkbox" checked={autoRemediate} onChange={e => setAutoRemediate(e.target.checked)} className="rounded" />
           </label>
           <p className="text-xs text-gray-400">When enabled, the system automatically removes the less recently assigned role upon conflict detection.</p>
@@ -124,7 +127,7 @@ export default function SodConflictDetectionPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">SOD Rules</h2>
           <button onClick={() => setShowForm(!showForm)} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-            {showForm ? 'Cancel' : 'Add Rule'}
+            {showForm ? 'Cancel' : t("backend3.sodConflictDetection.addRule")}
           </button>
         </div>
 
@@ -138,21 +141,21 @@ export default function SodConflictDetectionPage() {
               {roles.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
             <select value={newRule.conflictLevel} onChange={e => setNewRule(prev => ({ ...prev, conflictLevel: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
+              <option value="critical">{t("backend3.sodConflictDetection.critical")}</option>
+              <option value="high">{t("backend3.sodConflictDetection.high")}</option>
+              <option value="medium">{t("backend3.sodConflictDetection.medium")}</option>
             </select>
-            <button onClick={addRule} disabled={!newRule.ruleName} className="col-span-4 px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add Rule</button>
+            <button onClick={addRule} disabled={!newRule.ruleName} className="col-span-4 px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.sodConflictDetection.addRule")}</button>
           </div>
         )}
 
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Rule</th>
-              <th className="p-3">Role A</th>
-              <th className="p-3">Role B</th>
-              <th className="p-3">Conflict Level</th>
+              <th className="p-3">{t("backend3.sodConflictDetection.rule")}</th>
+              <th className="p-3">{t("backend3.sodConflictDetection.roleA")}</th>
+              <th className="p-3">{t("backend3.sodConflictDetection.roleB")}</th>
+              <th className="p-3">{t("backend3.sodConflictDetection.conflictLevel")}</th>
             </tr>
           </thead>
           <tbody>
@@ -169,7 +172,7 @@ export default function SodConflictDetectionPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Conflict Matrix Heatmap</h2>
+        <h2 className="text-lg font-semibold">{t("backend3.sodConflictDetection.conflictMatrixHeatmap")}</h2>
         <table className="text-xs">
           <thead>
             <tr>
@@ -204,8 +207,8 @@ export default function SodConflictDetectionPage() {
           <thead className="bg-gray-50">
             <tr className="text-left">
               <th className="p-3">User</th>
-              <th className="p-3">Rule</th>
-              <th className="p-3">Date</th>
+              <th className="p-3">{t("backend3.sodConflictDetection.rule")}</th>
+              <th className="p-3">{t("backend3.sodConflictDetection.date")}</th>
               <th className="p-3">Status</th>
             </tr>
           </thead>

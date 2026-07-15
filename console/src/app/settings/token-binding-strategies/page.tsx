@@ -17,8 +17,6 @@ interface Thumbprint {
 }
 
 export default function TokenBindingStrategiesPage() {
-  const t = useTranslations();
-
   const [configs, setConfigs] = useState<BindingConfig[]>([]);
 
   const [proofLifetime, setProofLifetime] = useState(300);
@@ -29,6 +27,7 @@ export default function TokenBindingStrategiesPage() {
   const [newThumb, setNewThumb] = useState({ certName: '', thumbprint: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations();
 
   useEffect(() => {
     fetch('/api/v1/auth/sessions/anomaly-score', {
@@ -73,29 +72,29 @@ export default function TokenBindingStrategiesPage() {
     v === 'optional' ? 'bg-amber-50 text-amber-700' :
     'bg-gray-100 text-gray-500';
 
-  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (loading) return <div className="p-6"><p>{t("tokenBindingStrategies.loading")}</p></div>;
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Token Binding Strategies</h1>
-        <p className="text-gray-600">Configure sender-constrained token binding methods and enforcement policies.</p>
+        <h1 className="text-2xl font-bold">{t("tokenBindingStrategies.title")}</h1>
+        <p className="text-gray-600">{t("tokenBindingStrategies.subtitle")}</p>
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Binding Methods Comparison</h2>
+        <h2 className="text-lg font-semibold">{t("tokenBindingStrategies.bindingMethods")}</h2>
         <div className="grid grid-cols-3 gap-4">
           {methods.map(m => (
             <div key={m.name} className="border rounded p-4">
               <div className="font-medium text-sm">{m.name}</div>
               <div className="text-xs text-gray-500 mt-1">{m.desc}</div>
               <div className="mt-2 text-xs">
-                <div className="font-medium text-green-600">Pros:</div>
+                <div className="font-medium text-green-600">{t("tokenBindingStrategies.pros")}</div>
                 <ul className="list-disc list-inside text-gray-600">{m.pros.map(p => <li key={p}>{p}</li>)}</ul>
               </div>
               <div className="mt-2 text-xs">
-                <div className="font-medium text-red-600">Cons:</div>
+                <div className="font-medium text-red-600">{t("tokenBindingStrategies.cons")}</div>
                 <ul className="list-disc list-inside text-gray-600">{m.cons.map(c => <li key={c}>{c}</li>)}</ul>
               </div>
             </div>
@@ -104,14 +103,14 @@ export default function TokenBindingStrategiesPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Binding Enforcement Matrix</h2>
+        <h2 className="text-lg font-semibold">{t("tokenBindingStrategies.bindingEnforcement")}</h2>
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Client</th>
-              <th className="p-3">DPoP</th>
+              <th className="p-3">{t("tokenBindingStrategies.client")}</th>
+              <th className="p-3">{t("tokenBindingStrategies.dpop")}</th>
               <th className="p-3">mTLS</th>
-              <th className="p-3">Sender-Constrained</th>
+              <th className="p-3">{t("tokenBindingStrategies.senderConstrained")}</th>
             </tr>
           </thead>
           <tbody>
@@ -125,9 +124,9 @@ export default function TokenBindingStrategiesPage() {
                       onChange={e => updateConfig(idx, field, e.target.value)}
                       className={`border rounded px-2 py-1 text-xs ${enforcementColor(c[field])}`}
                     >
-                      <option value="required">Required</option>
-                      <option value="optional">Optional</option>
-                      <option value="disabled">Disabled</option>
+                      <option value="required">{t("tokenBindingStrategies.required")}</option>
+                      <option value="optional">{t("tokenBindingStrategies.optional")}</option>
+                      <option value="disabled">{t("tokenBindingStrategies.disabled")}</option>
                     </select>
                   </td>
                 ))}
@@ -139,9 +138,9 @@ export default function TokenBindingStrategiesPage() {
 
       <div className="grid grid-cols-2 gap-6">
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Proof Token Settings</h2>
+          <h2 className="text-lg font-semibold">{t("tokenBindingStrategies.proofTokenSettings")}</h2>
           <div>
-            <label className="text-sm font-medium">Proof Token Lifetime (seconds)</label>
+            <label className="text-sm font-medium">{t("tokenBindingStrategies.proofTokenLifetime")}</label>
             <input type="number" min={30} max={3600} value={proofLifetime} onChange={e => setProofLifetime(parseInt(e.target.value) || 300)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
           </div>
           <label className="flex items-center justify-between">
@@ -150,7 +149,7 @@ export default function TokenBindingStrategiesPage() {
           </label>
           {replayDetection && (
             <div>
-              <label className="text-sm font-medium">Replay Window (seconds)</label>
+              <label className="text-sm font-medium">{t("tokenBindingStrategies.replayWindow")}</label>
               <input type="number" min={10} max={300} value={replayWindow} onChange={e => setReplayWindow(parseInt(e.target.value) || 60)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
               <p className="text-xs text-gray-400 mt-1">Tokens presented within this window after first use are rejected as replays.</p>
             </div>
@@ -159,7 +158,7 @@ export default function TokenBindingStrategiesPage() {
 
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Certificate Thumbprint Allowlist</h2>
+            <h2 className="text-lg font-semibold">{t("tokenBindingStrategies.certThumbprint")}</h2>
             <button onClick={() => setShowAddThumb(!showAddThumb)} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
               {showAddThumb ? 'Cancel' : 'Add'}
             </button>
@@ -168,7 +167,7 @@ export default function TokenBindingStrategiesPage() {
             <div className="space-y-2 border rounded p-3">
               <input type="text" placeholder="Certificate name" value={newThumb.certName} onChange={e => setNewThumb(prev => ({ ...prev, certName: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm" />
               <input type="text" placeholder="SHA-256 thumbprint (hex:colon)" value={newThumb.thumbprint} onChange={e => setNewThumb(prev => ({ ...prev, thumbprint: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm font-mono" />
-              <button onClick={addThumbprint} disabled={!newThumb.certName || !newThumb.thumbprint} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add to Allowlist</button>
+              <button onClick={addThumbprint} disabled={!newThumb.certName || !newThumb.thumbprint} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("tokenBindingStrategies.addToAllowlist")}</button>
             </div>
           )}
           <div className="space-y-2">
@@ -176,7 +175,7 @@ export default function TokenBindingStrategiesPage() {
               <div key={t.id} className="flex items-center gap-2 border-b pb-1">
                 <span className="text-sm font-medium flex-1">{t.certName}</span>
                 <span className="font-mono text-xs text-gray-500">{t.thumbprint}</span>
-                <button onClick={() => removeThumbprint(t.id)} className="text-red-600 text-xs">Remove</button>
+                <button onClick={() => removeThumbprint(t.id)} className="text-red-600 text-xs">{t("tokenBindingStrategies.remove")}</button>
               </div>
             ))}
           </div>

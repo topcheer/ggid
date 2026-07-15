@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { GitBranch, Search, Trash2, AlertTriangle, X, KeyRound } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface CascadeNode {
   token_id: string;
@@ -14,6 +15,7 @@ interface CascadeNode {
 }
 
 export default function RevokeCascadePage() {
+  const t = useTranslations();
   const [tokenInput, setTokenInput] = useState("");
   const [tree, setTree] = useState<CascadeNode | null>(null);
   const [revokedCount, setRevokedCount] = useState<number | null>(null);

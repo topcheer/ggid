@@ -2,8 +2,11 @@
 
 import { useLockoutPolicyConfig } from "@ggid/sdk-react";
 import { Lock, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function LockoutPolicyConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useLockoutPolicyConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading lockout policy...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

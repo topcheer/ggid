@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Plus, Pencil, Trash2, RefreshCw, Copy, Eye, EyeOff, RotateCw, X, Key, Check,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface OAuthClient {
   id: string;
@@ -24,6 +25,8 @@ const GRANT_TYPES = ["authorization_code", "implicit", "password", "client_crede
 const STANDARD_SCOPES = ["openid", "profile", "email", "offline_access"];
 
 export default function OAuthClientsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [clients, setClients] = useState<OAuthClient[]>([]);
   const [loading, setLoading] = useState(true);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { BarChart3, Calendar, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AnalyticsData {
   total_attempts: number;
@@ -17,6 +18,8 @@ interface AnalyticsData {
 const pieColors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function LoginAnalyticsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -62,7 +65,7 @@ export default function LoginAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-blue-500" /> Login Analytics</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-blue-500" /> {t("loginAnalytics.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Analyze login patterns, method distribution, and failure reasons.</p>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useZeroTrustPosture } from "@ggid/sdk-react";
 import {
+import { useTranslations } from "@/lib/i18n";
   ShieldCheck,
   ShieldAlert,
   Cpu,
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 
 export default function ZeroTrustPosturePage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useZeroTrustPosture();
 
   if (loading) return <div className="p-8 text-gray-400">Loading zero-trust posture...</div>;

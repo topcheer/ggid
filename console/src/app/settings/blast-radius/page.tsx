@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Bomb, Eye, Users, Shield, FileText, ChevronRight } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface BlastRadiusData {
   affected_users_count: number;
@@ -13,6 +14,7 @@ interface BlastRadiusData {
 interface Policy { id: string; name: string; }
 
 export default function BlastRadiusPage() {
+  const t = useTranslations();
   const [policies] = useState<Policy[]>([{ id: "p1", name: "Admin Access" }, { id: "p2", name: "Data Access" }, { id: "p3", name: "External Partner" }]);
   const [policyId, setPolicyId] = useState("");
   const [previewMode, setPreviewMode] = useState(true);

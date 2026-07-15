@@ -2,8 +2,11 @@
 
 import { useAuthSessionBinding } from "@ggid/sdk-react";
 import { KeyRound, Shield, RefreshCw, Smartphone, Cookie } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthSessionBindingPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAuthSessionBinding();
 
   if (loading) return <div className="p-8 text-gray-400">Loading session binding...</div>;

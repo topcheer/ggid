@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { UserCog, Search, AlertTriangle, X, Building2, Shield, User as UserIcon, Play, Eye, Loader2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface User {
   user_id: string;
@@ -22,6 +23,8 @@ interface ImpactPreview {
 }
 
 export default function UserReassignmentPage() {
+  const t = useTranslations();
+
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -103,7 +106,7 @@ export default function UserReassignmentPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-blue-500" /> User Reassignment</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-blue-500" /> {t("usersReassignment.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Reassign users across orgs, roles, and managers with impact preview.</p>
       </div>
 

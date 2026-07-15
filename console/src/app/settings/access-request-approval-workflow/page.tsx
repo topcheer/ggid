@@ -2,8 +2,11 @@
 
 import { useAccessRequestApprovalWorkflow } from "@ggid/sdk-react";
 import { Clock, CheckCircle, XCircle, ChevronRight, Zap, User } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AccessRequestApprovalWorkflowPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, approve, reject } = useAccessRequestApprovalWorkflow();
 
   if (loading) return <div className="p-8 text-gray-400">Loading access approval workflow...</div>;
@@ -13,8 +16,8 @@ export default function AccessRequestApprovalWorkflowPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Access Request Approval Workflow</h1>
-          <p className="text-sm text-gray-400 mt-1">Manage pending access requests and approval chains</p>
+          <h1 className="text-2xl font-bold"> {t("backend3.accessRequestApproval.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("backend3.accessRequestApproval.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -50,7 +53,7 @@ export default function AccessRequestApprovalWorkflowPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500">SLA Remaining</p>
+                    <p className="text-xs text-gray-500">{t("backend3.accessRequestApproval.slaRemaining")}</p>
                     <p
                       className={`text-sm font-bold ${
                         slaExpired

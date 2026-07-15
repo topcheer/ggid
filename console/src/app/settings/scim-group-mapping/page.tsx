@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Users, RefreshCw, Plus, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface GroupMap { id: string; external_group: string; local_role: string; auto_provision: boolean; sync_direction: "inbound" | "outbound" | "bidirectional"; last_sync: string; last_status: "success" | "failed" | "pending"; }
 
 export default function ScimGroupMappingPage() {
+  const t = useTranslations();
   const [mappings, setMappings] = useState<GroupMap[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
