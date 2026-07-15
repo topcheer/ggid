@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, ArrowLeft, KeyRound } from "lucide-react";
+import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2 } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 
 const API_BASE = API_BASE_URL;
-const TENANT_ID = DEFAULT_TENANT_ID;
 
 type Step = "credentials" | "mfa";
 
@@ -32,6 +31,9 @@ export default function LoginPage() {
   const [connectors, setConnectors] = useState<SocialConnector[]>([]);
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
+  const [tenantSlug, setTenantSlug] = useState("default");
+  const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);
+  const [initUserCount, setInitUserCount] = useState(0);
 
   // Check for WebAuthn / Passkey support and attempt conditional mediation (autofill)
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function LoginPage() {
   // Load social connectors from API
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/auth/social/connectors`, {
-      headers: { "X-Tenant-ID": TENANT_ID },
+      headers: { "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -69,6 +71,25 @@ export default function LoginPage() {
         setConnectorsLoaded(true);
       })
       .catch(() => setConnectorsLoaded(true));
+  }, [tenantSlug]);
+
+  // Check system initialization status on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/api/v1/system/initialized`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          setSystemInitialized(data.initialized !== false);
+          setInitUserCount(data.user_count ?? 0);
+        } else {
+          setSystemInitialized(true); // assume initialized if endpoint unavailable
+          setInitUserCount(1);
+        }
+      })
+      .catch(() => {
+        setSystemInitialized(true); // assume initialized on network error
+        setInitUserCount(1);
+      });
   }, []);
 
   const handleCredentials = async (e: React.FormEvent) => {
@@ -79,8 +100,8 @@ export default function LoginPage() {
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
-        body: JSON.stringify({ username, password }),
+        headers: { "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+        body: JSON.stringify({ username, password, tenant_slug: tenantSlug || "default" }),
       });
       const data = await resp.json();
 
@@ -152,7 +173,7 @@ export default function LoginPage() {
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
+        headers: { "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
         body: JSON.stringify({ mfa_token: mfaToken, code: totpCode }),
       });
       const data = await resp.json();
@@ -208,7 +229,7 @@ export default function LoginPage() {
     setError("");
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/social/${provider}?redirect_uri=/`, {
-        headers: { "X-Tenant-ID": TENANT_ID },
+        headers: { "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
       });
       const data = await resp.json();
       if (data.auth_url) {
@@ -241,7 +262,30 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("login.subtitle")}</p>
         </div>
 
-        {step === "credentials" ? (
+        {systemInitialized === null ? (
+          /* ===== System init checking ===== */
+          <div className="flex items-center justify-center rounded-xl border border-gray-200 bg-white p-12 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
+            <span className="ml-3 text-sm text-gray-500 dark:text-gray-400">{t("login.initializing")}</span>
+          </div>
+        ) : initUserCount === 0 ? (
+          /* ===== System not initialized ===== */
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-8 shadow-sm dark:border-amber-800 dark:bg-amber-950/30">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("login.systemNotInitialized")}</h2>
+            </div>
+            <p className="mb-5 text-sm text-gray-600 dark:text-gray-400">{t("login.systemNotInitializedDesc")}</p>
+            <a
+              href="/register"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700"
+            >
+              <KeyRound className="h-4 w-4" /> {t("login.registerAdmin")}
+            </a>
+          </div>
+        ) : step === "credentials" ? (
           /* ===== Step 1: Credentials ===== */
           <form onSubmit={handleCredentials} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             {error && (
@@ -249,6 +293,22 @@ export default function LoginPage() {
                 {error}
               </div>
             )}
+
+            <div className="mb-4">
+              <label className="mb-1 block text-sm font-medium">{t("login.tenant")}</label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  aria-label={t("login.tenant")}
+                  value={tenantSlug}
+                  onChange={(e) => setTenantSlug(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  placeholder={t("login.tenantPlaceholder")}
+                />
+              </div>
+              <p className="mt-1 text-xs text-gray-400">{t("login.tenantHint")}</p>
+            </div>
 
             <div className="mb-4">
               <label className="mb-1 block text-sm font-medium">{t("login.username")}</label>
