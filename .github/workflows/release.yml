@@ -140,7 +140,14 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install and build
-        run: npm ci && npm run build
+        run: |
+          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+          npm run build
+        working-directory: sdk/node
 
       - name: Publish
         run: npm publish --access public
