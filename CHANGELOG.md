@@ -63,6 +63,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] — Console Docker Build Fix
+
+### Fixed
+- console/Dockerfile: sdk-builder stage now installs typescript as dependency and runs  instead of 
+[41m                                                                               [0m
+[41m[37m                This is not the tsc command you are looking for                [0m
+[41m                                                                               [0m
+
+To get access to the TypeScript compiler, [34mtsc[0m, from the command line either:
+
+- Use [1mnpm install typescript[0m to first add TypeScript to your project [1mbefore[0m using npx
+- Use [1myarn[0m to avoid accidentally running code from packages which haven't been installed.
+- Resolves missing  error during Release Docker build.
+
+### Changed
+- sdk/node: bump to 1.0.7.
+
+
 ## [0.3.4] — Security Hardening Release
 
 ### Fixed
