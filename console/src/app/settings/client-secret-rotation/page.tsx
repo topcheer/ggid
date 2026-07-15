@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface ClientSecret {
@@ -21,7 +22,6 @@ export default function ClientSecretRotationPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,7 +35,6 @@ export default function ClientSecretRotationPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -45,9 +44,10 @@ export default function ClientSecretRotationPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [rotateTarget, setRotateTarget] = useState<ClientSecret | null>(null);
+  const [newSecret, setNewSecret] = useState('');
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [clients, setClients] = useState<ClientSecret[]>([
     { id: 'c1', clientId: 'web-app', clientName: 'Web Application', lastRotated: '2026-06-01', nextRotation: '2026-09-01', ageDays: 42, autoRotate: true, intervalDays: 90, dualSecret: true, dualPeriodDays: 7 },
     { id: 'c2', clientId: 'mobile-app', clientName: 'Mobile App', lastRotated: '2026-04-15', nextRotation: '2026-07-15', ageDays: 89, autoRotate: false, intervalDays: 90, dualSecret: false, dualPeriodDays: 0 },
@@ -55,8 +55,6 @@ export default function ClientSecretRotationPage() {
     { id: 'c4', clientId: 'api-gateway', clientName: 'API Gateway', lastRotated: '2026-07-01', nextRotation: '2027-01-01', ageDays: 12, autoRotate: true, intervalDays: 180, dualSecret: false, dualPeriodDays: 0 },
   ]);
 
-  const [rotateTarget, setRotateTarget] = useState<ClientSecret | null>(null);
-  const [newSecret, setNewSecret] = useState('');
   const [history] = useState([
     { clientId: 'web-app', rotatedAt: '2026-06-01', rotatedBy: 'admin@ggid.io' },
     { clientId: 'mobile-app', rotatedAt: '2026-04-15', rotatedBy: 'dev-team@ggid.io' },

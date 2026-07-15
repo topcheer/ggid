@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface ChainBlock {
@@ -32,7 +33,6 @@ export default function HashChainVerificationPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,7 +46,6 @@ export default function HashChainVerificationPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -56,14 +55,13 @@ export default function HashChainVerificationPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [blocks] = useState<ChainBlock[]>(defaultBlocks);
   const [integrityStatus, setIntegrityStatus] = useState<"verified" | "tampered">("verified");
   const [verifying, setVerifying] = useState(false);
   const [verifyInterval, setVerifyInterval] = useState(15);
   const [alerts, setAlerts] = useState<TamperAlert[]>([]);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
 
   const handleVerify = async () => {
     setVerifying(true);

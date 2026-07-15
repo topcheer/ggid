@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface VersionEntry {
@@ -23,7 +24,6 @@ export default function ApiVersioningStrategyPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +37,6 @@ export default function ApiVersioningStrategyPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -47,13 +46,12 @@ export default function ApiVersioningStrategyPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [approach, setApproach] = useState('url');
   const [sunsetMonths, setSunsetMonths] = useState(6);
   const [noticeTemplate, setNoticeTemplate] = useState('API version {{old_version}} is deprecated and will be sunset on {{sunset_date}}. Please migrate to {{new_version}}. See migration guide: {{migration_url}}');
   const [showMigrationBuilder, setShowMigrationBuilder] = useState(false);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const [migrationSteps, setMigrationSteps] = useState([
     { step: 'Update API base URL from /api/v1 to /api/v2', done: false },
     { step: 'Replace /users/legacy with /users endpoint', done: false },

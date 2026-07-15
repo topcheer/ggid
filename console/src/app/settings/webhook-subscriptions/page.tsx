@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface WebhookSubscription {
@@ -24,7 +25,6 @@ export default function WebhookSubscriptionsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +38,6 @@ export default function WebhookSubscriptionsPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : t("webhookSubs.failedToLoad"));
       } finally {
@@ -48,9 +47,9 @@ export default function WebhookSubscriptionsPage() {
     fetchData();
   }, [t]);
 
-  if (loading) return <div className="p-8">{t("common.loading")}</div>;
+  const [showAdd, setShowAdd] = useState(false);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("webhookSubs.noData")}</div>;
   const [subs] = useState<WebhookSubscription[]>([
     { id: "wh-001", url: "https://hooks.example.com/users", events: ["user.created", "user.updated"], enabled: true, last_delivery: "2025-01-15 16:01", status: "delivered" },
     { id: "wh-002", url: "https://api.slack.com/hooks/xyz", events: ["auth.login_failed", "policy.violation"], enabled: true, last_delivery: "2025-01-15 15:45", status: "delivered" },
@@ -62,7 +61,6 @@ export default function WebhookSubscriptionsPage() {
     { timestamp: "15:45:15", event: "auth.login_failed", status_code: 500, latency_ms: 3021, success: false },
     { timestamp: "15:30:00", event: "user.created", status_code: 200, latency_ms: 167, success: true },
   ]);
-  const [showAdd, setShowAdd] = useState(false);
   const eventCatalog = ["user.created", "user.updated", "user.deleted", "auth.login", "auth.login_failed", "auth.logout", "policy.violation", "role.assigned", "audit.*"];
 
   return (

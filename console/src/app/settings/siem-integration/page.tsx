@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface PiiPattern {
@@ -27,7 +28,6 @@ export default function SiemIntegrationPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,7 +41,6 @@ export default function SiemIntegrationPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : t("siem.failedToLoad"));
       } finally {
@@ -51,15 +50,14 @@ export default function SiemIntegrationPage() {
     fetchData();
   }, [t]);
 
-  if (loading) return <div className="p-8">{t("common.loading")}</div>;
-  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("siem.noData")}</div>;
   const [destination, setDestination] = useState("Splunk");
   const [endpoint, setEndpoint] = useState("splunk.hec.internal:8088");
   const [logFormat, setLogFormat] = useState("CEF");
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [filters, setFilters] = useState({ include_types: ["auth_failure", "privilege_escalation", "policy_violation"], min_severity: "warn", tenant_filter: "" });
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
 
   const metrics = { events_per_sec: 847, queue_depth: 12, delivery_success_pct: 99.8, circuit_breaker: "closed" as const };
 

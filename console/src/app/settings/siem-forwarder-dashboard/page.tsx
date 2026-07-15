@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface Destination {
@@ -18,7 +19,6 @@ export default function SiemForwarderDashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +32,6 @@ export default function SiemForwarderDashboardPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -42,9 +41,11 @@ export default function SiemForwarderDashboardPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [stats] = useState({ eventsPerSec: 142, batchSize: 50, successRate: 98.5, retryQueueDepth: 23 });
+  const [showFilterPreview, setShowFilterPreview] = useState(false);
+  const [testTarget, setTestTarget] = useState('');
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [destinations] = useState<Destination[]>([
     { id: 'd1', name: 'Splunk Prod', type: 'Splunk', status: 'healthy', lastForward: '2026-07-12 14:32', latency: '45ms', circuitBreaker: 'closed' },
     { id: 'd2', name: 'ELK Cluster', type: 'ELK', status: 'healthy', lastForward: '2026-07-12 14:32', latency: '120ms', circuitBreaker: 'closed' },
@@ -52,9 +53,6 @@ export default function SiemForwarderDashboardPage() {
     { id: 'd4', name: 'Webhook', type: 'HTTP', status: 'down', lastForward: '2026-07-12 13:15', latency: '-', circuitBreaker: 'open' },
   ]);
 
-  const [stats] = useState({ eventsPerSec: 142, batchSize: 50, successRate: 98.5, retryQueueDepth: 23 });
-  const [showFilterPreview, setShowFilterPreview] = useState(false);
-  const [testTarget, setTestTarget] = useState('');
 
   const statusColor = (s: string): string =>
     s === 'healthy' ? 'bg-green-100 text-green-700' : s === 'degraded' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';

@@ -1,6 +1,7 @@
 "use client";
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { Rocket, Check, ChevronRight, Copy } from "lucide-react";
 const grantTypes = ["authorization_code", "client_credentials", "refresh_token", "password", "device_code", "implicit"];
 const allScopes = ["openid", "profile", "email", "read:users", "write:users", "read:roles", "write:roles", "audit:read"];
@@ -10,7 +11,6 @@ export default function ClientOnboardingPage() {
   const t = useTranslations();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,7 +24,6 @@ export default function ClientOnboardingPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -34,13 +33,12 @@ export default function ClientOnboardingPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend.clientOnboarding.noData")}</div>;
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ name: "", description: "", grants: ["authorization_code"], redirects: [""], scopes: ["openid", "profile"] });
   const [creds, setCreds] = useState<{ client_id: string; client_secret: string } | null>(null);
   const [copied, setCopied] = useState("");
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const toggle = (arr: string[], val: string, key: "grants" | "scopes") => setForm({ ...form, [key]: arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val] });
   const submit = () => { setCreds({ client_id: "cli_" + Math.random().toString(36).substring(2, 12), client_secret: "sec_" + Math.random().toString(36).substring(2, 20) }); };
   const copy = (val: string, label: string) => { navigator.clipboard.writeText(val); setCopied(label); setTimeout(() => setCopied(""), 2000); };

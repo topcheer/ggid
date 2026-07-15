@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface GraphNode {
@@ -37,7 +38,6 @@ export default function ServiceDependencyGraphPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,7 +51,6 @@ export default function ServiceDependencyGraphPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -62,10 +61,9 @@ export default function ServiceDependencyGraphPage() {
   }, []);
 
   const t = useTranslations();
-  if (loading) return <div className="p-8">{t("serviceDependencyGraph.loading")}</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("serviceDependencyGraph.noData")}</div>;
   const [selected, setSelected] = useState<GraphNode | null>(null);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const healthColors: Record<string, string> = { healthy: "#10b981", degraded: "#f59e0b", down: "#ef4444" };
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 

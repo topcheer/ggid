@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface Consent {
@@ -17,7 +18,6 @@ export default function ConsentManagementCenterPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,7 +31,6 @@ export default function ConsentManagementCenterPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -41,9 +40,11 @@ export default function ConsentManagementCenterPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [filterPurpose, setFilterPurpose] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [showReceipt, setShowReceipt] = useState<Consent | null>(null);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [consents, setConsents] = useState<Consent[]>([
     { id: 'cn1', user: 'alice@ggid.io', purpose: 'marketing', grantedAt: '2026-06-01', expires: '2027-06-01', status: 'active' },
     { id: 'cn2', user: 'bob@ggid.io', purpose: 'data-sharing', grantedAt: '2026-05-15', expires: '2026-11-15', status: 'active' },
@@ -52,9 +53,6 @@ export default function ConsentManagementCenterPage() {
     { id: 'cn5', user: 'alice@ggid.io', purpose: 'analytics', grantedAt: '2026-04-01', expires: '2026-10-01', status: 'revoked' },
   ]);
 
-  const [filterPurpose, setFilterPurpose] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [showReceipt, setShowReceipt] = useState<Consent | null>(null);
   const [purposes] = useState([
     { name: 'marketing', count: 2, description: 'Marketing communications' },
     { name: 'data-sharing', count: 1, description: 'Share data with partners' },

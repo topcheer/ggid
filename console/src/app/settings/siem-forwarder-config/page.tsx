@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface SiemDestination {
@@ -25,7 +26,6 @@ export default function SiemForwarderConfigPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +39,6 @@ export default function SiemForwarderConfigPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : t("siemForwarder.failedToLoad"));
       } finally {
@@ -49,9 +48,15 @@ export default function SiemForwarderConfigPage() {
     fetchData();
   }, [t]);
 
-  if (loading) return <div className="p-8">{t("common.loading")}</div>;
+  const [retry, setRetry] = useState({ maxRetries: 5, backoff: 'exponential', circuitBreakerThreshold: 10 });
+  const [tlsEnabled, setTlsEnabled] = useState(true);
+  const [tlsVerify, setTlsVerify] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [newDest, setNewDest] = useState({ name: '', type: 'HTTP Webhook', url: '', authMethod: 'Bearer Token', batchSize: 100 });
+  const [testTarget, setTestTarget] = useState<SiemDestination | null>(null);
+  const [testResult, setTestResult] = useState('');
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("siemForwarder.noData")}</div>;
   const [destinations, setDestinations] = useState<SiemDestination[]>([
     { id: 'd1', name: 'Splunk Production', type: 'Splunk', url: 'https://splunk.ggid.io:8088/services/collector', authMethod: 'HEC Token', batchSize: 100, status: 'active', eventsForwarded: 15420 },
     { id: 'd2', name: 'ELK Stack', type: 'ELK', url: 'https://elastic.ggid.io:9200/audit/_bulk', authMethod: 'API Key', batchSize: 200, status: 'active', eventsForwarded: 8230 },
@@ -64,13 +69,6 @@ export default function SiemForwarderConfigPage() {
     { id: 'f3', field: 'tenant', operator: '!=', value: 'test-tenant' },
   ]);
 
-  const [retry, setRetry] = useState({ maxRetries: 5, backoff: 'exponential', circuitBreakerThreshold: 10 });
-  const [tlsEnabled, setTlsEnabled] = useState(true);
-  const [tlsVerify, setTlsVerify] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [newDest, setNewDest] = useState({ name: '', type: 'HTTP Webhook', url: '', authMethod: 'Bearer Token', batchSize: 100 });
-  const [testTarget, setTestTarget] = useState<SiemDestination | null>(null);
-  const [testResult, setTestResult] = useState('');
 
   const types = ['Splunk', 'ELK', 'Datadog', 'HTTP Webhook'];
   const authMethods = ['HEC Token', 'API Key', 'Bearer Token', 'Basic Auth', 'None'];

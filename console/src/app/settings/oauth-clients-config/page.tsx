@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface Client {
@@ -21,7 +22,6 @@ export default function OauthClientsConfigPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,7 +35,6 @@ export default function OauthClientsConfigPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -45,9 +44,12 @@ export default function OauthClientsConfigPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Client | null>(null);
+  const [showSecret, setShowSecret] = useState(false);
+  const [newClient, setNewClient] = useState({ name: '', clientId: '', grantTypes: [] as string[], scopes: [] as string[], redirectUris: '' });
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [clients, setClients] = useState<Client[]>([
     { id: 'c1', clientId: 'web-app', name: 'Web Application', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'profile'], redirectUris: ['https://app.ggid.io/callback'], status: 'active', tokenLifetime: 3600, logoUri: 'https://app.ggid.io/logo.png', policyUri: 'https://app.ggid.io/privacy' },
     { id: 'c2', clientId: 'mobile-app', name: 'Mobile App', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'profile', 'offline_access'], redirectUris: ['com.ggid.app://callback'], status: 'active', tokenLifetime: 7200, logoUri: '', policyUri: '' },
@@ -55,10 +57,6 @@ export default function OauthClientsConfigPage() {
     { id: 'c4', clientId: 'legacy-svc', name: 'Legacy Service', grantTypes: ['password'], scopes: ['read:users'], redirectUris: ['https://legacy.ggid.io/cb'], status: 'disabled', tokenLifetime: 3600, logoUri: '', policyUri: '' },
   ]);
 
-  const [showForm, setShowForm] = useState(false);
-  const [editing, setEditing] = useState<Client | null>(null);
-  const [showSecret, setShowSecret] = useState(false);
-  const [newClient, setNewClient] = useState({ name: '', clientId: '', grantTypes: [] as string[], scopes: [] as string[], redirectUris: '' });
 
   const allGrants = ['authorization_code', 'refresh_token', 'client_credentials', 'password', 'implicit', 'urn:ietf:params:oauth:grant-type:device_code'];
   const allScopes = ['openid', 'profile', 'email', 'offline_access', 'read:users', 'write:users', 'admin:all'];

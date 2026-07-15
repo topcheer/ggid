@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface ClientPar {
@@ -13,7 +14,6 @@ export default function ParConfigManagementPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,7 +27,6 @@ export default function ParConfigManagementPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -37,18 +36,17 @@ export default function ParConfigManagementPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [requirePar, setRequirePar] = useState(false);
   const [parExpiry, setParExpiry] = useState(120);
   const [cleanupInterval, setCleanupInterval] = useState(300);
+  const [showViewer, setShowViewer] = useState(false);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const [clients, setClients] = useState<ClientPar[]>([
     { clientId: 'web-app', requirePar: true },
     { clientId: 'mobile-app', requirePar: false },
     { clientId: 'api-gateway', requirePar: true },
   ]);
-  const [showViewer, setShowViewer] = useState(false);
 
   const toggleClient = (idx: number) => {
     setClients(prev => prev.map((c, i) => i === idx ? { ...c, requirePar: !c.requirePar } : c));

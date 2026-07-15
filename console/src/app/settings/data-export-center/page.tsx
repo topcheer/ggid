@@ -1,6 +1,7 @@
 'use client';
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 
 interface ExportJob { id: string; type: string; status: string; size: string; created: string; download: boolean; }
 
@@ -9,7 +10,6 @@ export default function DataExportCenterPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +23,6 @@ export default function DataExportCenterPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -33,17 +32,16 @@ export default function DataExportCenterPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [showForm, setShowForm] = useState(false);
+  const [newJob, setNewJob] = useState({ type: 'users', format: 'csv', startDate: '', endDate: '', maskPii: true });
+  const [scheduled, setScheduled] = useState(false);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [jobs, setJobs] = useState<ExportJob[]>([
     { id: 'j1', type: 'users', status: 'completed', size: '2.3 MB', created: '2026-07-12 10:00', download: true },
     { id: 'j2', type: 'audit_events', status: 'completed', size: '15.7 MB', created: '2026-07-11 14:00', download: true },
     { id: 'j3', type: 'roles', status: 'processing', size: '-', created: '2026-07-12 14:30', download: false },
   ]);
-  const [showForm, setShowForm] = useState(false);
-  const [newJob, setNewJob] = useState({ type: 'users', format: 'csv', startDate: '', endDate: '', maskPii: true });
-  const [scheduled, setScheduled] = useState(false);
 
   const exportTypes = ['users', 'roles', 'audit_events', 'config', 'organizations'];
   const formats = ['CSV', 'JSON', 'Parquet'];

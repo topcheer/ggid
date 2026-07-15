@@ -1,6 +1,7 @@
 "use client";
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 interface OAuthClient {
   client_id: string;
@@ -17,7 +18,6 @@ export default function OAuthClientRegistryPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,7 +31,6 @@ export default function OAuthClientRegistryPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -41,16 +40,15 @@ export default function OAuthClientRegistryPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [showRegister, setShowRegister] = useState(false);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [clients] = useState<OAuthClient[]>([
     { client_id: "cli-001", name: "Web Dashboard", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile", "email"], status: "active", pkce_required: true, redirect_uris: ["https://dashboard.example.com/callback"] },
     { client_id: "cli-002", name: "Mobile App", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile"], status: "active", pkce_required: true, redirect_uris: ["myapp://callback"] },
     { client_id: "cli-003", name: "Legacy Service", grant_types: ["client_credentials"], scopes: ["users:read"], status: "active", pkce_required: false, redirect_uris: [] },
     { client_id: "cli-004", name: "Partner Integration", grant_types: ["authorization_code"], scopes: ["openid", "profile", "audit:read"], status: "disabled", pkce_required: true, redirect_uris: ["https://partner.io/auth/cb"] },
   ]);
-  const [showRegister, setShowRegister] = useState(false);
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">

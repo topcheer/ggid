@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 
 interface ChainBlock {
@@ -24,7 +25,6 @@ export default function HashChainStatusPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +38,6 @@ export default function HashChainStatusPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -48,9 +47,12 @@ export default function HashChainStatusPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [chainValid, setChainValid] = useState(true);
+  const [lastVerified, setLastVerified] = useState('2026-07-12 14:30');
+  const [verifying, setVerifying] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState<ChainBlock | null>(null);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [blocks] = useState<ChainBlock[]>([
     { index: 0, hash: 'a1b2c3...', prevHash: '000000...', timestamp: '2026-07-10 00:00', eventCount: 142 },
     { index: 1, hash: 'd4e5f6...', prevHash: 'a1b2c3...', timestamp: '2026-07-11 00:00', eventCount: 98 },
@@ -62,10 +64,6 @@ export default function HashChainStatusPage() {
     { id: 'a1', blockIndex: 1, expectedHash: 'd4e5f6...', actualHash: 'x9y8z7...', detectedAt: '2026-07-12 03:15' },
   ]);
 
-  const [chainValid, setChainValid] = useState(true);
-  const [lastVerified, setLastVerified] = useState('2026-07-12 14:30');
-  const [verifying, setVerifying] = useState(false);
-  const [selectedBlock, setSelectedBlock] = useState<ChainBlock | null>(null);
 
   const verify = () => {
     setVerifying(true);
