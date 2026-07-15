@@ -161,7 +161,7 @@ export default function SSOProvidersPage() {
                   <button onClick={() => handleTest(p.id)} disabled={testing === p.id} className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
                     {testing === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="mr-1 inline h-3.5 w-3.5" />} Test
                   </button>
-                  <button onClick={() => setExpandedId(expandedId === p.id ? null : p.id)} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                  <button onClick={() => setExpandedId(expandedId === p.id ? null : p.id)} aria-label="Toggle provider details" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
                     {expandedId === p.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </button>
                   <button onClick={() => handleDelete(p.id)} className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">

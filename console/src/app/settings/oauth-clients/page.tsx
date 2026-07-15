@@ -261,10 +261,10 @@ export default function OAuthClientsSettingsPage() {
             <code className="flex-1 rounded-lg bg-white px-3 py-2 font-mono text-sm break-all">
               {showSecret ? newSecret.secret : "••••••••••••••••••••••••••••"}
             </code>
-            <button onClick={() => setShowSecret(!showSecret)} className="rounded-lg border p-2" title={t("common.toggleVisibility")}>
+            <button onClick={() => setShowSecret(!showSecret)} aria-label="Toggle secret visibility" className="rounded-lg border p-2" title={t("common.toggleVisibility")}>
               {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
-            <button onClick={() => copyToClipboard(newSecret.secret)} className="rounded-lg border p-2" title={t("common.copy")}>
+            <button onClick={() => copyToClipboard(newSecret.secret)} aria-label="Copy secret" className="rounded-lg border p-2" title={t("common.copy")}>
               {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>

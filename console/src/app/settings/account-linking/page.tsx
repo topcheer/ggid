@@ -143,7 +143,7 @@ export default function AccountLinkingPage() {
                             {a.linked_name && a.linked_name !== a.linked_email && <p className="text-xs text-gray-400">{a.linked_name}</p>}
                           </div>
                         </div>
-                        <button onClick={() => setConfirmUnlink(a)} className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20">
+                        <button onClick={() => setConfirmUnlink(a)} aria-label="Unlink account" className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20">
                           <Unlink className="h-3.5 w-3.5" /> Unlink
                         </button>
                       </div>

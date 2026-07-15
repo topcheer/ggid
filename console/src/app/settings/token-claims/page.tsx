@@ -35,7 +35,7 @@ function JsonNode({ label, value, depth }: { label: string; value: unknown; dept
   const entries = Object.entries(value as Record<string, unknown>);
   return (
     <div>
-      <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900/30 rounded px-1" style={{ paddingLeft: `${depth * 16}px` }}>
+      <button onClick={() => setExpanded(!expanded)} aria-label="Toggle node" className="flex items-center gap-1 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-900/30 rounded px-1" style={{ paddingLeft: `${depth * 16}px` }}>
         {expanded ? <ChevronDown className="w-3 h-3 text-gray-400" /> : <ChevronRight className="w-3 h-3 text-gray-400" />}
         <span className="text-gray-500">{label}:</span>
         <span className="text-gray-400 text-xs">{isArray ? `[${entries.length}]` : `{${entries.length}}`}</span>

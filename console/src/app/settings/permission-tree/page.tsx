@@ -61,7 +61,7 @@ export default function PermissionTreePage() {
     <li key={node.id} className="ml-4">
       <div className="flex items-center gap-2">
         {node.children.length > 0 && (
-          <button onClick={() => toggleCollapse(node)} className="text-xs text-gray-400 hover:text-gray-600">
+          <button onClick={() => toggleCollapse(node)} aria-label="Toggle collapse" className="text-xs text-gray-400 hover:text-gray-600">
             {node.collapsed ? '+' : '-'}
           </button>
         )}
