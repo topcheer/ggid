@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { GitCompare, Plus, Minus, Edit3, AlertTriangle } from "lucide-react";
+import { GitCompare, Plus, Minus, Edit3, AlertTriangle, X } from "lucide-react";
 
 interface FieldChange {
   field: string;
@@ -33,17 +33,26 @@ export default function PolicyVersionDiffPage() {
   const [versionB, setVersionB] = useState("");
   const [data, setData] = useState<VersionDiff | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const selectedPolicy = policies.find((p) => p.id === policyId);
 
   const diff = useCallback(async () => {
     if (!policyId || !versionA || !versionB) return;
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/v1/policy/version-diff?id=${encodeURIComponent(policyId)}&a=${encodeURIComponent(versionA)}&b=${encodeURIComponent(versionB)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (res.ok) setData(await res.json());
-    } catch { /* noop */ }
-    finally { setLoading(false); }
+      if (!res.ok) {
+        setError(`Failed to compare versions: ${res.status} ${res.statusText}`);
+      } else {
+        setData(await res.json());
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to compare versions");
+    } finally {
+      setLoading(false);
+    }
   }, [policyId, versionA, versionB]);
 
   return (
@@ -55,12 +64,20 @@ export default function PolicyVersionDiffPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label className="text-sm font-medium">Policy</label><select value={policyId} onChange={(e) => { setPolicyId(e.target.value); setVersionA(""); setVersionB(""); }} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Policy</label><select value={policyId} onChange={(e) => { setPolicyId(e.target.value); setVersionA(""); setVersionB(""); setData(null); }} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
           <div><label className="text-sm font-medium">Version A</label><select value={versionA} onChange={(e) => setVersionA(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{selectedPolicy?.versions.map((v) => <option key={v} value={v}>{v}</option>)}</select></div>
           <div><label className="text-sm font-medium">Version B</label><select value={versionB} onChange={(e) => setVersionB(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select</option>{selectedPolicy?.versions.map((v) => <option key={v} value={v}>{v}</option>)}</select></div>
         </div>
-        <button onClick={diff} disabled={loading || !policyId || !versionA || !versionB} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> {loading ? "Comparing..." : "Compare Versions"}</button>
+        <button onClick={diff} disabled={loading || !policyId || !versionA || !versionB} aria-label="Compare selected policy versions" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> {loading ? "Comparing..." : "Compare Versions"}</button>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          {error}
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
+        </div>
+      )}
 
       {data && (
         <>

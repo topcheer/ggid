@@ -10,6 +10,8 @@ import {
   Clock,
   Filter,
   Download,
+  AlertCircle,
+  X,
 } from "lucide-react";
 
 interface ImpersonationRecord {
@@ -31,15 +33,19 @@ export default function ImpersonationLogPage() {
   const { apiFetch } = useApi();
   const [records, setRecords] = useState<ImpersonationRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = statusFilter ? `?status=${statusFilter}` : "";
       const data = await apiFetch<{ records?: ImpersonationRecord[] }>(`/api/v1/audit/impersonation${params}`).catch(() => ({ records: [] }));
       setRecords(data.records ?? []);
-    } catch { /* ignore */ } finally {
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load impersonation records");
+    } finally {
       setLoading(false);
     }
   }, [apiFetch, statusFilter]);
@@ -87,7 +93,7 @@ export default function ImpersonationLogPage() {
             Audit trail of all user impersonation sessions.
           </p>
         </div>
-        <button onClick={handleExport} className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
+        <button onClick={handleExport} aria-label="Export impersonation log as CSV" className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
           <Download className="mr-1 inline h-4 w-4" /> Export
         </button>
       </div>
@@ -96,6 +102,7 @@ export default function ImpersonationLogPage() {
       <div className="flex items-center gap-3">
         <Filter className="h-4 w-4 text-gray-400" />
         <select
+          aria-label="Filter by status"
           className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -106,6 +113,16 @@ export default function ImpersonationLogPage() {
           <option value="terminated">Terminated</option>
         </select>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          {error}
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
