@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Shield, Edit3, Save, X, Plus, Trash2, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PermissionBoundary {
   id: string;
@@ -20,6 +21,8 @@ interface Violation {
 }
 
 export default function PermissionBoundariesPage() {
+  const t = useTranslations();
+
   const [boundaries, setBoundaries] = useState<PermissionBoundary[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -98,7 +101,7 @@ export default function PermissionBoundariesPage() {
     <div className="space-y-6">
       {error && <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"><AlertTriangle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto text-red-700 hover:text-red-900"><X className="h-4 w-4" /></button></div>}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> Permission Boundaries</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> {t("permissionBoundaries.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Configure per-role scope limits and denied actions to enforce least privilege.</p>
       </div>
 

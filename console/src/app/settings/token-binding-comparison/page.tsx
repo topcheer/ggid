@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useTokenBindingComparison, TokenBindingComparison, ComparisonRow, RecommendationEntry, BenchmarkResult, PerClientMethod } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function TokenBindingComparisonPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig } = useTokenBindingComparison();
   const [form, setForm] = useState<TokenBindingComparison | null>(null);
 

@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
 import { FlaskConical, Play, Save, Check, X, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface SimResult { subject: string; resource: string; action: string; current_decision: string; proposed_decision: string; changed: boolean; }
 export default function PolicySimulationLabPage() {
+  const t = useTranslations();
+
   const [subject, setSubject] = useState("");
   const [resource, setResource] = useState("");
   const [action, setAction] = useState("");
@@ -24,7 +27,7 @@ export default function PolicySimulationLabPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><FlaskConical className="w-6 h-6 text-purple-500" /> Policy Simulation Lab</h1><p className="text-sm text-gray-500 mt-1">Test policy changes in a sandbox with current vs proposed comparison.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><FlaskConical className="w-6 h-6 text-purple-500" /> {t("policySimulationLab.title")}</h1><p className="text-sm text-gray-500 mt-1">Test policy changes in a sandbox with current vs proposed comparison.</p></div>
         <button aria-label="Save scenario" className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-2"><Save className="w-4 h-4" /> Save Scenario</button>
       </div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => setError(null)} className="text-xs underline hover:text-red-700">Dismiss</button></div>}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Play, ShieldCheck, ShieldX, MinusCircle, ChevronRight } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PolicyResult {
   policy_id: string;
@@ -17,6 +18,8 @@ const decisionConfig: Record<string, { color: string; icon: typeof ShieldCheck; 
 };
 
 export default function PolicySetEvalPage() {
+  const t = useTranslations();
+
   const [subject, setSubject] = useState("");
   const [resource, setResource] = useState("");
   const [action, setAction] = useState("");
@@ -38,7 +41,7 @@ export default function PolicySetEvalPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Play className="w-6 h-6 text-blue-500" /> Policy Set Evaluation</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Play className="w-6 h-6 text-blue-500" /> {t("policySetEval.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Batch-evaluate a request against all active policies in a policy set.</p>
       </div>
 

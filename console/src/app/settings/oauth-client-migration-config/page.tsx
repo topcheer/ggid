@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthClientMigrationConfig, OAuthClientMigrationConfig, MappingPreview, CutoverPhase } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthClientMigrationConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useOAuthClientMigrationConfig();
   const [form, setForm] = useState<OAuthClientMigrationConfig | null>(null);
   const [saving, setSaving] = useState(false);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ExportJob {
   id: string;
@@ -55,6 +56,8 @@ const AUDIT_TRAIL: AuditTrailEntry[] = [
 const EVENT_TYPES = ['login', 'logout', 'create', 'update', 'delete', 'grant', 'revoke', 'export', 'config_change'];
 
 function formatSize(bytes: number): string {
+  const t = useTranslations();
+
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;

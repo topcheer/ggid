@@ -2,8 +2,11 @@
 
 import { usePolicyTimeBasedAccess } from "@ggid/sdk-react";
 import { Clock, Calendar, Globe, AlertTriangle, CheckCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyTimeBasedAccessPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = usePolicyTimeBasedAccess();
 
   if (loading) return <div className="p-8 text-gray-400">Loading time-based access...</div>;

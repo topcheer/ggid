@@ -2,8 +2,11 @@
 
 import { useSessionTokenBindingCoverage } from "@ggid/sdk-react";
 import { Shield, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SessionTokenBindingCoveragePage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useSessionTokenBindingCoverage();
 
   if (loading) return <div className="p-8 text-gray-400">Loading token binding coverage...</div>;

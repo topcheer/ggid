@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Destination {
   id: string;
@@ -12,6 +13,8 @@ interface Destination {
 }
 
 export default function SiemForwarderDashboardPage() {
+  const t = useTranslations();
+
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

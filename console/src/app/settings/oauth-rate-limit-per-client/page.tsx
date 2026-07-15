@@ -2,8 +2,11 @@
 
 import { useOAuthRateLimitPerClient } from "@ggid/sdk-react";
 import { Gauge, Shield, AlertTriangle, Activity, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthRateLimitPerClientPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useOAuthRateLimitPerClient();
 
   if (loading) return <div className="p-8 text-gray-400">Loading rate limits...</div>;

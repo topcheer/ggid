@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useEventDrivenAuditConfig, EventDrivenAuditConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function EventDrivenAuditConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useEventDrivenAuditConfig();
   const [form, setForm] = useState<EventDrivenAuditConfig | null>(null);
   const [saving, setSaving] = useState(false);

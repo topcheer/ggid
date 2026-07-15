@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
 import { GitFork, Loader2, AlertCircle, X, ChevronRight, Folder, Lock, Plus, AlertOctagon } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PolicyNode {
   id: string; name: string; parent_id: string;
@@ -11,6 +12,8 @@ interface PolicyNode {
 }
 
 export default function PolicyInheritancePage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [policies, setPolicies] = useState<PolicyNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +42,7 @@ export default function PolicyInheritancePage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><GitFork className="h-6 w-6 text-blue-600" /> Policy Inheritance</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Policy tree with parent-child inheritance and override management.</p></div>
+      <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><GitFork className="h-6 w-6 text-blue-600" /> {t("policyInheritance.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Policy tree with parent-child inheritance and override management.</p></div>
       {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div> : policies.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><GitFork className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No policy tree.</p></div></div> : <div className={cardCls}><h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Policy Tree</h3><div className="max-h-[500px] overflow-y-auto">{policies.map((p) => renderNode(p, 0))}</div></div>}
       {/* Override modal */}

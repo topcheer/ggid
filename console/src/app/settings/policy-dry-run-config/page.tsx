@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePolicyDryRunConfig, PolicyDryRunConfig, ContextValue } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyDryRunConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = usePolicyDryRunConfig();
   const [form, setForm] = useState<PolicyDryRunConfig | null>(null);
   const [saving, setSaving] = useState(false);

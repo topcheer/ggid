@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { FileWarning, RefreshCw, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface EvidenceItem {
   id: string;
@@ -15,6 +16,8 @@ interface EvidenceItem {
 }
 
 export default function EvidenceExpiryPage() {
+  const t = useTranslations();
+
   const [items, setItems] = useState<EvidenceItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState<Set<string>>(new Set());
@@ -78,7 +81,7 @@ export default function EvidenceExpiryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><FileWarning className="w-6 h-6 text-orange-500" /> Evidence Expiry</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><FileWarning className="w-6 h-6 text-orange-500" /> {t("evidenceExpiry.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Monitor and refresh expiring compliance evidence.</p>
         </div>
         {(expired.length > 0 || expiring.length > 0) && (

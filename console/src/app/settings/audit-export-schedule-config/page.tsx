@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuditExportScheduleConfig, AuditExportScheduleConfig, ScheduledExportJob } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuditExportScheduleConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useAuditExportScheduleConfig();
   const [form, setForm] = useState<AuditExportScheduleConfig | null>(null);
   const [saving, setSaving] = useState(false);

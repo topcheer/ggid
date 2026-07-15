@@ -2,8 +2,11 @@
 
 import { useOAuthIssuerMetadata } from "@ggid/sdk-react";
 import { Globe, FileJson, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthIssuerMetadataPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useOAuthIssuerMetadata();
 
   if (loading) return <div className="p-8 text-gray-400">Loading issuer metadata...</div>;

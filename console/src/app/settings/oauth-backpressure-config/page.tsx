@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthBackpressureConfig, OAuthBackpressureConfig, DegradationRule } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthBackpressureConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useOAuthBackpressureConfig();
   const [form, setForm] = useState<OAuthBackpressureConfig | null>(null);
   const [saving, setSaving] = useState(false);

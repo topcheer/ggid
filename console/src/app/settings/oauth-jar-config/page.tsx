@@ -2,8 +2,11 @@
 
 import { useOAuthJarConfig } from "@ggid/sdk-react";
 import { Shield, FileJson, Clock, BarChart3, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthJarConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useOAuthJarConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading JAR config...</div>;

@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useTokenIntrospectionDesign, TokenIntrospectionDesign, ResourceServerAuth } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function TokenIntrospectionDesignPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useTokenIntrospectionDesign();
   const [form, setForm] = useState<TokenIntrospectionDesign | null>(null);
   const [saving, setSaving] = useState(false);

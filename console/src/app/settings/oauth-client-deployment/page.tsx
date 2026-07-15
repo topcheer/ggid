@@ -2,8 +2,11 @@
 
 import { useOAuthClientDeployment } from "@ggid/sdk-react";
 import { Rocket, RotateCcw, GitCompare, Download, HeartPulse, CheckCircle, Clock, ArrowUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthClientDeploymentPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, promote, rollback } = useOAuthClientDeployment();
 
   if (loading) return <div className="p-8 text-gray-400">Loading client deployment...</div>;

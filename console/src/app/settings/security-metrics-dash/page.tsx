@@ -2,8 +2,11 @@
 
 import { useSecurityMetricsDash } from "@ggid/sdk-react";
 import { Clock, AlertTriangle, Shield, Download, Activity } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SecurityMetricsDashPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useSecurityMetricsDash();
 
   if (loading) return <div className="p-8 text-gray-400">Loading security metrics...</div>;

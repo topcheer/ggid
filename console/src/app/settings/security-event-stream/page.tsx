@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useSecurityEventStream } from "@ggid/sdk-react";
 import { Activity, Pause, Play, Download } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SecurityEventStreamPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useSecurityEventStream();
   const [paused, setPaused] = useState(false);
   const [severityFilter, setSeverityFilter] = useState("all");

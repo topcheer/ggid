@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { History, Plus, RotateCcw, X, FileText, GitCompare } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface EvidenceVersion {
   version: number;
@@ -22,6 +23,8 @@ interface EvidenceItem {
 }
 
 export default function EvidenceVersioningPage() {
+  const t = useTranslations();
+
   const [items, setItems] = useState<EvidenceItem[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -78,7 +81,7 @@ export default function EvidenceVersioningPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><History className="w-6 h-6 text-blue-500" /> Evidence Versioning</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><History className="w-6 h-6 text-blue-500" /> {t("evidenceVersioning.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Track evidence content changes with version history and rollback.</p>
         </div>
         {selectedId && <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> New Version</button>}

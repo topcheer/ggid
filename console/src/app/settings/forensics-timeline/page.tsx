@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Fingerprint, ShieldCheck, AlertTriangle, ShieldAlert } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ForensicsData {
   hash_chain_verified: boolean;
@@ -14,6 +15,8 @@ interface ForensicsData {
 }
 
 export default function ForensicsTimelinePage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<ForensicsData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -33,7 +36,7 @@ export default function ForensicsTimelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Fingerprint className="w-6 h-6 text-purple-500" /> Forensics Timeline</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Fingerprint className="w-6 h-6 text-purple-500" /> {t("forensicsTimeline.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Audit log integrity verification with hash chain and tamper detection.</p>
       </div>
 

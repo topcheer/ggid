@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface BindingConfig {
   clientId: string;
@@ -16,6 +17,8 @@ interface Thumbprint {
 }
 
 export default function TokenBindingStrategiesPage() {
+  const t = useTranslations();
+
   const [configs, setConfigs] = useState<BindingConfig[]>([]);
 
   const [proofLifetime, setProofLifetime] = useState(300);

@@ -2,8 +2,11 @@
 
 import { useAuthTokenBindingEnforcement } from "@ggid/sdk-react";
 import { Shield, ShieldAlert, ShieldCheck, Clock, AlertTriangle, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuthTokenBindingEnforcementPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAuthTokenBindingEnforcement();
 
   if (loading) return <div className="p-8 text-gray-400">Loading token binding enforcement...</div>;

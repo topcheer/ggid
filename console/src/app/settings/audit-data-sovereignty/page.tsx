@@ -2,8 +2,11 @@
 
 import { useAuditDataSovereignty } from "@ggid/sdk-react";
 import { Globe, Shield, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuditDataSovereigntyPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useAuditDataSovereignty();
 
   if (loading) return <div className="p-8 text-gray-400">Loading data sovereignty...</div>;

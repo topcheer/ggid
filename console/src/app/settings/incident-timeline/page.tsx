@@ -2,8 +2,11 @@
 
 import { useIncidentTimeline } from "@ggid/sdk-react";
 import { Clock, AlertTriangle, Link2, FileText } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IncidentTimelinePage() {
+  const t = useTranslations();
+
   const { events, isLoading, error, fetchTimeline } = useIncidentTimeline();
 
   if (isLoading) return <div className="p-8 text-gray-400">Loading timeline...</div>;

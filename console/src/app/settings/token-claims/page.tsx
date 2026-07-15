@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Code2, ChevronRight, ChevronDown, Copy, AlertCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DecodedToken {
   header: Record<string, unknown>;
@@ -51,6 +52,7 @@ function JsonNode({ label, value, depth }: { label: string; value: unknown; dept
 }
 
 export default function TokenClaimsPage() {
+  const t = useTranslations();
   const [token, setToken] = useState("");
   const [decoded, setDecoded] = useState<DecodedToken | null>(null);
   const [error, setError] = useState("");
@@ -93,7 +95,7 @@ export default function TokenClaimsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Code2 className="w-6 h-6 text-blue-500" /> Token Claims Viewer</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Code2 className="w-6 h-6 text-blue-500" /> {t("tokenClaims.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Decode and inspect JWT access tokens.</p>
       </div>
 

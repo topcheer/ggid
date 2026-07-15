@@ -2,8 +2,11 @@
 
 import { useSessionTokenForgery } from "@ggid/sdk-react";
 import { KeyRound, AlertTriangle, Shield, Activity, Ban } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SessionTokenForgeryPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useSessionTokenForgery();
 
   if (loading) return <div className="p-8 text-gray-400">Loading token forgery detection...</div>;

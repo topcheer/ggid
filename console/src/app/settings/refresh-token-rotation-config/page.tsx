@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRefreshTokenRotationConfig, RefreshTokenRotationConfig, RefreshTokenClientOverride } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function RefreshTokenRotationConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useRefreshTokenRotationConfig();
   const [form, setForm] = useState<RefreshTokenRotationConfig | null>(null);
   const [saving, setSaving] = useState(false);

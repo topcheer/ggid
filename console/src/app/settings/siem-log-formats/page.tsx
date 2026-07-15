@@ -2,8 +2,11 @@
 
 import { useSiemLogFormats } from "@ggid/sdk-react";
 import { FileCode, CheckCircle, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SiemLogFormatsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useSiemLogFormats();
 
   if (loading) return <div className="p-8 text-gray-400">Loading log formats...</div>;

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { GitCompare, Plus, Minus, Edit3, AlertTriangle, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface FieldChange {
   field: string;
@@ -27,6 +28,8 @@ const changeConfig: Record<string, { icon: typeof Plus; color: string }> = {
 };
 
 export default function PolicyVersionDiffPage() {
+  const t = useTranslations();
+
   const [policies] = useState<Policy[]>([{ id: "p1", name: "Data Access", versions: ["v1.0", "v1.1", "v2.0"] }, { id: "p2", name: "Admin Access", versions: ["v1.0", "v2.0"] }]);
   const [policyId, setPolicyId] = useState("");
   const [versionA, setVersionA] = useState("");
@@ -58,7 +61,7 @@ export default function PolicyVersionDiffPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-blue-500" /> Policy Version Diff</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-blue-500" /> {t("policyVersionDiff.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Compare policy versions to identify field changes and breaking modifications.</p>
       </div>
 

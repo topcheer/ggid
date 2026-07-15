@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useOAuthClientOnboardingWizard } from "@ggid/sdk-react";
 import { CheckCircle, ArrowRight, Key, Zap } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthClientOnboardingWizardPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useOAuthClientOnboardingWizard();
   const [step, setStep] = useState(1);
 

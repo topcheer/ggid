@@ -2,8 +2,11 @@
 
 import { useAuditGdprRequests } from "@ggid/sdk-react";
 import { FileText, UserCheck, CheckCircle, Clock, AlertTriangle, Play, ShieldCheck } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuditGdprRequestsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, processRequest } = useAuditGdprRequests();
 
   if (loading) return <div className="p-8 text-gray-400">Loading GDPR requests...</div>;

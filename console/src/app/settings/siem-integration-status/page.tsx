@@ -2,8 +2,11 @@
 
 import { useSiemIntegrationStatus } from "@ggid/sdk-react";
 import { Activity, Server, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SiemIntegrationStatusPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, testConnection } = useSiemIntegrationStatus();
 
   if (loading) return <div className="p-8 text-gray-400">Loading SIEM integration status...</div>;

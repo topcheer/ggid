@@ -2,8 +2,11 @@
 
 import { useOAuthParUsage } from "@ggid/sdk-react";
 import { Database, Zap, Activity } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthParUsagePage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useOAuthParUsage();
   if (loading) return <div className="p-8 text-gray-400">Loading PAR usage...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

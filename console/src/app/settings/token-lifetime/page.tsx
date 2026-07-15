@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Clock, Gauge, TrendingUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LifetimeData {
   avg_lifetime_minutes: number;
@@ -13,6 +14,8 @@ interface LifetimeData {
 }
 
 export default function TokenLifetimePage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<LifetimeData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,7 +35,7 @@ export default function TokenLifetimePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="w-6 h-6 text-blue-500" /> Token Lifetime Analytics</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="w-6 h-6 text-blue-500" /> {t("tokenLifetime.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Analyze token lifetimes across clients with distribution and short/long-lived breakdown.</p>
       </div>
 

@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthDynamicClientReg, OAuthDynamicClientRegConfig, RegisteredClient } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthDynamicClientRegPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, registerClient, deleteClient } = useOAuthDynamicClientReg();
   const [form, setForm] = useState<OAuthDynamicClientRegConfig | null>(null);
   const [showModal, setShowModal] = useState(false);

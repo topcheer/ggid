@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Gavel, Upload, CheckCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Challenge { id: string; title: string; control: string; severity: string; status: "open" | "responded" | "resolved"; opened_at: string; compliance_impact: string; }
 interface ResolvedChallenge extends Challenge { resolved_at: string; resolution: string; }
 
 export default function AuditChallengeResponsePage() {
+  const t = useTranslations();
+
   const [open, setOpen] = useState<Challenge[]>([]);
   const [resolved, setResolved] = useState<ResolvedChallenge[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,7 +35,7 @@ export default function AuditChallengeResponsePage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Gavel className="w-6 h-6 text-orange-500" /> Audit Challenge Response</h1><p className="text-sm text-gray-500 mt-1">Respond to compliance challenges with evidence and resolution.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Gavel className="w-6 h-6 text-orange-500" /> {t("auditChallengeResponse.title")}</h1><p className="text-sm text-gray-500 mt-1">Respond to compliance challenges with evidence and resolution.</p></div>
 
       <div className="grid grid-cols-3 gap-4"><div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Open</span><p className="text-xl font-bold text-orange-600 mt-1">{open.length}</p></div><div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Resolved</span><p className="text-xl font-bold text-green-600 mt-1">{resolved.length}</p></div><div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Score Impact</span><p className="text-xl font-bold text-red-600 mt-1">-{open.length * 2}pts</p></div></div>
 

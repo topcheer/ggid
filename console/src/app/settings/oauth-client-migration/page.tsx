@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
 import { ArrowRight, Play, RotateCcw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface MigrationPreview { scopes_to_migrate: number; grants_to_migrate: number; tokens_to_migrate: number; conflicts: string[]; }
 
 export default function OAuthClientMigrationPage() {
+  const t = useTranslations();
+
   const [source, setSource] = useState("");
   const [target, setTarget] = useState("");
   const [migrateScopes, setMigrateScopes] = useState(true);
@@ -43,7 +46,7 @@ export default function OAuthClientMigrationPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><ArrowRight className="w-6 h-6 text-blue-500" /> Client Migration</h1><p className="text-sm text-gray-500 mt-1">Migrate OAuth clients with scope, grant, and token transfer.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><ArrowRight className="w-6 h-6 text-blue-500" /> {t("oauthClientMigration.title")}</h1><p className="text-sm text-gray-500 mt-1">Migrate OAuth clients with scope, grant, and token transfer.</p></div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">

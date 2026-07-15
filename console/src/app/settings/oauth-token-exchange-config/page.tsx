@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthTokenExchangeConfig, OAuthTokenExchangeConfig, PerClientScopes } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthTokenExchangeConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useOAuthTokenExchangeConfig();
   const [form, setForm] = useState<OAuthTokenExchangeConfig | null>(null);
   const [saving, setSaving] = useState(false);

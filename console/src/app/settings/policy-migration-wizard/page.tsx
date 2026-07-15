@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { usePolicyMigrationWizard } from "@ggid/sdk-react";
 import { Upload, ArrowRight, CheckCircle, AlertTriangle, XCircle, RotateCcw, FileJson } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyMigrationWizardPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, executeMigration, rollback } = usePolicyMigrationWizard();
   const [step, setStep] = useState(0);
 

@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { usePolicyDryRunHistory } from "@ggid/sdk-react";
 import { FlaskConical, Play, GitCompare, Download, Filter } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyDryRunHistoryPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, replayRun } = usePolicyDryRunHistory();
   const [filterDecision, setFilterDecision] = useState("all");
   const [compareRuns, setCompareRuns] = useState<string[]>([]);

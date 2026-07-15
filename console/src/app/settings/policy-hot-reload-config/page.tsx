@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePolicyHotReloadConfig, PolicyHotReloadConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyHotReloadConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = usePolicyHotReloadConfig();
   const [form, setForm] = useState<PolicyHotReloadConfig | null>(null);
   const [saving, setSaving] = useState(false);

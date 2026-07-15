@@ -2,8 +2,11 @@
 
 import { useSecurityKPITracker } from "@ggid/sdk-react";
 import { Target, TrendingUp, Download, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function SecurityKPITrackerPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useSecurityKPITracker();
 
   if (loading) return <div className="p-8 text-gray-400">Loading KPI tracker...</div>;

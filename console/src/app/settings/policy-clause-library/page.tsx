@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { usePolicyClauseLibrary } from "@ggid/sdk-react";
 import { BookOpen, Plus, Search, FileText, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyClauseLibraryPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = usePolicyClauseLibrary();
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");

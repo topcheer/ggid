@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuditQueryOptimizationConfig, AuditQueryOptimizationConfig, IndexConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function AuditQueryOptimizationConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useAuditQueryOptimizationConfig();
   const [form, setForm] = useState<AuditQueryOptimizationConfig | null>(null);
   const [saving, setSaving] = useState(false);

@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { usePolicyEmergencyChanges } from "@ggid/sdk-react";
 import { AlertTriangle, Clock, Plus, CheckCircle, XCircle, FileText } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyEmergencyChangesPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, requestEmergency } = usePolicyEmergencyChanges();
   const [showModal, setShowModal] = useState(false);
 

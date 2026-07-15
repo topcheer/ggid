@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { usePolicyContextualConditions } from "@ggid/sdk-react";
 import { GitBranch, Plus, Layers, TestTube, Save } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PolicyContextualConditionsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, testEvaluation } = usePolicyContextualConditions();
   const [selectedCategory, setSelectedCategory] = useState("");
 

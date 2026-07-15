@@ -2,8 +2,11 @@
 
 import { useOAuthDpopProofViewer } from "@ggid/sdk-react";
 import { KeyRound, Fingerprint, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthDpopProofViewerPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useOAuthDpopProofViewer();
 
   if (loading) return <div className="p-8 text-gray-400">Loading DPoP proof viewer...</div>;

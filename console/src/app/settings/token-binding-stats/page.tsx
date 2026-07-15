@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Shield, PieChart as PieIcon } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface BindingStats {
   bound: number;
@@ -15,6 +16,8 @@ interface BindingStats {
 const methodColors: Record<string, string> = { mTLS: "#3b82f6", DPoP: "#8b5cf6", PKI: "#10b981", none: "#ef4444" };
 
 export default function TokenBindingStatsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<BindingStats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +38,7 @@ export default function TokenBindingStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> Token Binding Stats</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> {t("tokenBindingStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Token sender-constraint binding compliance across all OAuth clients.</p>
       </div>
 

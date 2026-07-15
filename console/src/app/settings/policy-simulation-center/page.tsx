@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface PolicyRule { id: string; name: string; effect: 'allow' | 'deny'; matched: boolean; priority: number; }
 interface SimulationResult { decision: 'allow' | 'deny' | 'indeterminate'; matchedRules: PolicyRule[]; trace: string[]; evaluatedAt: string; durationMs: number; }
@@ -7,6 +8,8 @@ interface BatchResult { rowIndex: number; subject: string; resource: string; act
 interface ImpactAnalysis { affectedUsers: number; allowCount: number; denyCount: number; indeterminateCount: number; }
 
 export default function PolicySimulationCenterPage() {
+  const t = useTranslations();
+
   const [policies, setPolicies] = useState<{ id: string; name: string; effect: 'allow' | 'deny'; priority: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
