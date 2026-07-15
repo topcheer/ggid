@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-15 (Round 40 E2E; PIPL/NIS2/CRA research complete — no new gaps)*
+*Last updated: 2026-07-15 (Round 54 E2E; multi-tenant login + onboarding gaps identified by user)*
 
 ## Current Stats
 
@@ -37,6 +37,16 @@
 | 11 | AI agent identity lifecycle | backend | agentic AI | Persistent registry, consent flow, credential rotation, drift detection |
 | 12 | Fraud: TOR/VPN/proxy detection | backend | ITDR/fraud | IP intelligence integration, geo-velocity anomaly |
 
+### P1 — Productization gaps (user-reported)
+
+| # | Feature | Owner | Location | Status | Next Action |
+|---|---------|-------|----------|--------|-------------|
+| 13 | Login page lacks tenant selection | frontend | console/src/app/login/page.tsx | [NEW] | Add tenant slug input + resolve API call |
+| 14 | No first-deploy onboarding flow | frontend+backend | console/src/app/onboarding/ | [NEW] | Detect un-initialized system, guide tenant+admin setup |
+| 15 | Hardcoded DEFAULT_TENANT_ID | frontend | console/src/lib/api-config.ts | [NEW] | Dynamic from JWT or tenant resolve API |
+| 16 | System init detection API | backend | services/identity/ | [NEW] | GET /api/v1/system/initialized |
+| 17 | Tenant resolve API | backend | services/identity/ | [NEW] | GET /api/v1/tenants/resolve?slug=xxx |
+
 ### P3 — Quality/infrastructure improvements
 
 | # | Feature | Owner | Notes |
@@ -56,8 +66,10 @@
 3. Release v0.2.5 verification
 
 ### Frontend
-1. Console loading/error states for remaining pages
-2. Passkey health dashboard
+1. i18n Batch 2+3: internationalize remaining 700 pages (ACTIVE)
+2. Login page: add tenant selection (after backend API ready)
+3. Onboarding flow: real first-deploy setup wizard
+4. Console loading/error states for remaining pages
 
 ### Docs/Research
 1. OAuth 2.1 / FAPI 2.0 research → DONE

@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 53
-## Last scan focus: D (Data Persistence) — Round 53
-## Next scan focus: E (Security Config) — Round 54
+## Current round: 54
+## Last scan focus: E2E Regression (7/7 PASS via all-in-one) + Focus E Security Config
+## Next scan focus: F (Functional Depth) — Round 55
 ## Total findings: 32
 ## Done: 31
 ## Fixed (pending verification): 0
@@ -11,7 +11,7 @@
 ## Remaining (non-gap): 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 51 Focus C (Middleware Chain): Gateway chain complete (14 layers all wired). Services/ no fixable gaps — shared middleware extraction to pkg/ is arch scope. Round 52 E2E: 11/11 PASS.*
+*Round 53 Focus D: 0 new gaps. Round 54 E2E 7/7 PASS (all-in-one container). Focus E: backend fixed 4 security config issues (CORS, gRPC TLS). User reported 5 productization gaps (#13-17): multi-tenant login, onboarding flow, hardcoded tenant ID.*
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
 All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
@@ -49,4 +49,9 @@ LOW (acceptable for now — short-lived or fallback):
 - Agent consent (session-scoped)
 
 ## Commits this cycle:
-- (current): Round 49 Focus B — Route Wiring scan, no new gaps; generated identity/auth/oauth pb code
+- c5482496: Frontend i18n Batch 1 (dashboard, profile, sessions, groups)
+- 8f2cf868: All-in-one run.sh + port mapping
+- 4ca0d0ec: gzip Content-Encoding fix
+- 8e7625bf: Security config fixes (CORS, gRPC TLS)
+- eb504dca: Round 53 Focus D scan
+- ebe8cb75: Shared pkg/middleware
