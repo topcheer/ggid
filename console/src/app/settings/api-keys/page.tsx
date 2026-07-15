@@ -46,6 +46,7 @@ export default function ApiKeysPage() {
   const [keyScopes, setKeyScopes] = useState<Set<string>>(new Set(["read"]));
   const [keyExpiry, setKeyExpiry] = useState("30d");
   const [creating, setCreating] = useState(false);
+  const [revoking, setRevoking] = useState<string | null>(null);
 
   // New key modal
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -144,6 +145,7 @@ export default function ApiKeysPage() {
 
   const handleRevoke = async (keyId: string) => {
     if (!confirm("Revoke this API key? This action cannot be undone.")) return;
+    setRevoking(keyId);
     try {
       await apiFetch(`/api/v1/api-keys/${keyId}`, { method: "DELETE" });
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
@@ -151,6 +153,8 @@ export default function ApiKeysPage() {
     } catch {
       setKeys((prev) => prev.filter((k) => k.id !== keyId));
       showMessage(t("apiKeys.keyRevoked"));
+    } finally {
+      setRevoking(null);
     }
   };
 
@@ -265,6 +269,7 @@ export default function ApiKeysPage() {
               <button
                 onClick={handleCreate}
                 disabled={creating || !keyName.trim()}
+                aria-label="Create API key"
                 className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
@@ -350,11 +355,12 @@ export default function ApiKeysPage() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleRevoke(key.id)}
+                        aria-label={"Revoke key " + key.name}
                         className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950"
                         title={t("apiKeys.revokeKey")}
-                        disabled={expired}
+                        disabled={expired || revoking === key.id}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        {revoking === key.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       </button>
                     </td>
                   </tr>

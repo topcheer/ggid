@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
   KeyRound,
+  Loader2,
   Plus,
   X,
   Trash2,
@@ -56,6 +57,7 @@ export default function OAuthClientsSettingsPage() {
   const t = useTranslations();
   const [clients, setClients] = useState<OAuthClient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
@@ -100,6 +102,7 @@ export default function OAuthClientsSettingsPage() {
   };
 
   const handleCreate = async () => {
+    setCreating(true);
     try {
       const result = await apiFetch<OAuthClient>("/api/v1/oauth/clients", {
         method: "POST",
@@ -121,6 +124,8 @@ export default function OAuthClientsSettingsPage() {
       loadClients();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -312,10 +317,11 @@ export default function OAuthClientsSettingsPage() {
           <div className="mt-4 flex gap-2">
             <button
               onClick={handleCreate}
-              disabled={!form.name}
+              disabled={!form.name || creating}
+              aria-label="Create OAuth client"
               className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
-              {t("oauth.createClient")}
+              {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : null} {t("oauth.createClient")}
             </button>
             <button
               onClick={() => { setShowCreate(false); setForm(emptyForm); }}
@@ -440,6 +446,7 @@ export default function OAuthClientsSettingsPage() {
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleEdit(client)}
+                        aria-label={"Edit " + client.name}
                         title={t("oauth.edit")}
                         className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
                       >
@@ -448,6 +455,7 @@ export default function OAuthClientsSettingsPage() {
                       <button
                         onClick={() => handleRotateSecret(client.client_id)}
                         disabled={rotating === client.client_id}
+                        aria-label={"Rotate secret for " + client.name}
                         title={t("oauth.rotateSecret")}
                         className="rounded p-1.5 text-gray-400 hover:bg-amber-50 hover:text-amber-600 disabled:opacity-50"
                       >
@@ -455,6 +463,7 @@ export default function OAuthClientsSettingsPage() {
                       </button>
                       <button
                         onClick={() => handleDelete(client.client_id, client.name)}
+                        aria-label={"Delete " + client.name}
                         title={t("oauth.delete")}
                         className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600"
                       >
