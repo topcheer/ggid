@@ -373,10 +373,22 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		prefix == "/api/v1/password-history" || prefix == "/api/v1/delegation" ||
 		prefix == "/api/v1/account-linking" || prefix == "/api/v1/consent" ||
 		prefix == "/api/v1/notifications" || prefix == "/api/v1/introspection" ||
-		prefix == "/api/v1/device-bindings" {
+		prefix == "/api/v1/device-bindings" ||
+		prefix == "/api/v1/api-keys" || prefix == "/api/v1/access-keys" ||
+		prefix == "/api/v1/sessions" {
 		// Rewrite /api/v1/<feature>/... -> /api/v1/auth/<feature>/...
 		r.URL.Path = strings.Replace(r.URL.Path, "/api/v1/"+strings.TrimPrefix(prefix, "/api/v1/")+"/", "/api/v1/auth/"+strings.TrimPrefix(prefix, "/api/v1/")+"/", 1)
 		r.URL.Path = strings.Replace(r.URL.Path, "/api/v1/"+strings.TrimPrefix(prefix, "/api/v1/"), "/api/v1/auth/"+strings.TrimPrefix(prefix, "/api/v1/"), 1)
+	}
+
+	// Identity rewrites: /api/v1/<feature>/... -> /api/v1/identity/<feature>/...
+	if prefix == "/api/v1/dashboard" || prefix == "/api/v1/groups" || prefix == "/api/v1/flows" {
+		r.URL.Path = strings.Replace(r.URL.Path, "/api/v1/"+strings.TrimPrefix(prefix, "/api/v1/"), "/api/v1/identity/"+strings.TrimPrefix(prefix, "/api/v1/"), 1)
+	}
+
+	// Audit rewrites: /api/v1/<feature>/... -> /api/v1/audit/<feature>/...
+	if prefix == "/api/v1/access-reviews" || prefix == "/api/v1/activity" || prefix == "/api/v1/exports" {
+		r.URL.Path = strings.Replace(r.URL.Path, "/api/v1/"+strings.TrimPrefix(prefix, "/api/v1/"), "/api/v1/audit/"+strings.TrimPrefix(prefix, "/api/v1/"), 1)
 	}
 
 	// Apply per-route timeout if configured

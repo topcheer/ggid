@@ -293,6 +293,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/login-policy", h.handleLoginPolicy)
 	h.mux.HandleFunc("/api/v1/auth/api-keys", h.handleAPIKeys)
 	h.mux.HandleFunc("/api/v1/auth/api-keys/", h.handleAPIKeys)
+	h.mux.HandleFunc("/api/v1/auth/access-keys", h.handleAccessKeys)
+	h.mux.HandleFunc("/api/v1/auth/access-keys/", h.handleAccessKeys)
 	h.mux.HandleFunc("/api/v1/auth/break-glass/history", h.handleBreakGlassHistory)
 	h.mux.HandleFunc("/api/v1/admin/feature-flags", h.handleFeatureFlags)
 	h.mux.HandleFunc("/api/v1/admin/feature-flags/", h.handleFeatureFlags)

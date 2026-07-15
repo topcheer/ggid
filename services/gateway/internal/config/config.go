@@ -104,6 +104,16 @@ func Default() *Config {
 			"/api/v1/certificates":    envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/compliance":      envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/settings":        envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			// Frontend calls without service prefix — need rewrite rules in router
+			"/api/v1/api-keys":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/access-keys":     envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/sessions":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/dashboard":       envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/groups":          envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/flows":           envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/access-reviews":  envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
+			"/api/v1/activity":        envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
+			"/api/v1/exports":         envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			// Provisioning service handled by gateway stub (no separate service exists)
 			"/oauth":                              envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/saml":                               envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),

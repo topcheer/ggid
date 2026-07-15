@@ -146,9 +146,11 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/directory/reconcile", h.handleDirectoryReconcile)
 
 	// Membership graph
+	h.mux.HandleFunc("/api/v1/identity/groups", h.handleMembershipGraph)
 	h.mux.HandleFunc("/api/v1/identity/groups/", h.handleMembershipGraph)
 	h.mux.HandleFunc("/api/v1/identity/role-mining", h.handleRoleMining)
 	h.mux.HandleFunc("/api/v1/identity/joiner-flow", h.handleJoinerFlow)
+	h.mux.HandleFunc("/api/v1/identity/flows", h.handleJoinerFlow) // alias for frontend /api/v1/flows
 	h.mux.HandleFunc("/api/v1/identity/access-review/campaigns", h.handleAccessReviewCampaigns)
 	h.mux.HandleFunc("/api/v1/identity/saml/sp-health", h.handleSPHealth)
 	h.mux.HandleFunc("/api/v1/identity/scim/sync-health", h.handleSCIMSyncHealth)
