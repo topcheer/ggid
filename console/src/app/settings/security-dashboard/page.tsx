@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 export default function SecurityDashboardPage() {
@@ -7,7 +8,6 @@ export default function SecurityDashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,8 +20,7 @@ export default function SecurityDashboardPage() {
           },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
+        // API returns posture data; will be wired when backend is ready
       } catch (e) {
         setError(e instanceof Error ? e.message : t("complianceDashboard.failedLoad"));
       } finally {
@@ -29,17 +28,15 @@ export default function SecurityDashboardPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
-  if (loading) return <div className="p-8">{t("common.loading")}</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("secDashboard.noData")}</div>;
-  const [score] = useState(7.8);
-  const [incidents] = useState([
+  // Static demo data (API not yet returning structured data)
+  const score = 7.8;
+  const incidents = [
     { id: 'i1', severity: 'high', title: 'Brute force attempt blocked', time: '14:30' },
     { id: 'i2', severity: 'medium', title: 'Expired certificate detected', time: '13:15' },
-  ]);
-  const [owasp] = useState([
+  ];
+  const owasp = [
     { id: 'a01', name: 'Access Control', status: 'pass' },
     { id: 'a02', name: 'Cryptographic Failures', status: 'pass' },
     { id: 'a03', name: 'Injection', status: 'pass' },
@@ -50,32 +47,35 @@ export default function SecurityDashboardPage() {
     { id: 'a08', name: 'Software/Data Integrity', status: 'pass' },
     { id: 'a09', name: 'Logging/Monitoring', status: 'pass' },
     { id: 'a10', name: 'SSRF', status: 'pass' },
-  ]);
-  const [compliance] = useState([
+  ];
+  const compliance = [
     { name: 'SOC 2', status: 'compliant' },
     { name: 'GDPR', status: 'compliant' },
     { name: 'HIPAA', status: 'pending' },
     { name: 'ISO 27001', status: 'compliant' },
     { name: 'PCI DSS', status: 'n/a' },
-  ]);
-  const [threats] = useState([
+  ];
+  const threats = [
     { name: 'Brute Force', level: 'low', count: 3 },
     { name: 'Credential Stuffing', level: 'low', count: 1 },
     { name: 'Suspicious Logins', level: 'medium', count: 5 },
     { name: 'Privilege Escalation', level: 'none', count: 0 },
-  ]);
-  const [recommendations] = useState([
+  ];
+  const recommendations = [
     'Update expired TLS certificate for oauth.ggid.io',
     'Enable DPoP for all OAuth clients',
     'Review SoD violations for admin role holders',
     'Enable audit hash chain verification',
-  ]);
+  ];
 
   const sevColor = (s: string) => s === 'high' ? 'bg-red-100 text-red-700' : s === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
   const statusColor = (s: string) => s === 'pass' ? 'text-green-600' : s === 'warn' ? 'text-amber-600' : 'text-red-600';
   const compColor = (s: string) => s === 'compliant' ? 'bg-green-100 text-green-700' : s === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500';
   const threatColor = (l: string) => l === 'high' ? 'bg-red-100 text-red-700' : l === 'medium' ? 'bg-amber-100 text-amber-700' : l === 'low' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700';
   const scoreColor = score >= 8 ? 'text-green-600' : score >= 6 ? 'text-amber-600' : 'text-red-600';
+
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -99,8 +99,8 @@ export default function SecurityDashboardPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("secDashboard.threatIndicators")}</h2>
-        <div className="grid grid-cols-4 gap-4">{threats.map(t => (
-          <div key={t.name} className="border rounded p-3 text-center"><div className={`text-xs ${threatColor(t.level)} px-2 py-0.5 rounded inline-block capitalize`}>{t.level}</div><div className="text-sm font-medium mt-2">{t.name}</div><div className="text-2xl font-bold mt-1">{t.count}</div></div>
+        <div className="grid grid-cols-4 gap-4">{threats.map(th => (
+          <div key={th.name} className="border rounded p-3 text-center"><div className={`text-xs ${threatColor(th.level)} px-2 py-0.5 rounded inline-block capitalize`}>{th.level}</div><div className="text-sm font-medium mt-2">{th.name}</div><div className="text-2xl font-bold mt-1">{th.count}</div></div>
         ))}</div>
       </section>
 

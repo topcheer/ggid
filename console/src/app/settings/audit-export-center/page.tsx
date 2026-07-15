@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface ExportJob {
@@ -56,8 +57,6 @@ const AUDIT_TRAIL: AuditTrailEntry[] = [
 const EVENT_TYPES = ['login', 'logout', 'create', 'update', 'delete', 'grant', 'revoke', 'export', 'config_change'];
 
 function formatSize(bytes: number): string {
-  const t = useTranslations();
-
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
@@ -75,7 +74,16 @@ export default function AuditExportCenterPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
+  const [startDate, setStartDate] = useState('2025-01-01');
+  const [endDate, setEndDate] = useState('2025-01-15');
+  const [eventType, setEventType] = useState('all');
+  const [tenant, setTenant] = useState('all');
+  const [format, setFormat] = useState<'CSV' | 'JSON' | 'Parquet'>('CSV');
+  const [piiMasking, setPiiMasking] = useState(true);
+  const [maxRecords] = useState(100000);
+  const [jobs, setJobs] = useState<ExportJob[]>(INITIAL_JOBS);
+  const [scheduled, setScheduled] = useState<ScheduledExport[]>(SCHEDULED_EXPORTS);
+  const [activeTab, setActiveTab] = useState<'create' | 'jobs' | 'scheduled' | 'trail'>('create');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,8 +96,7 @@ export default function AuditExportCenterPage() {
           },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
+        // Export jobs will be loaded when API is ready
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -99,19 +106,8 @@ export default function AuditExportCenterPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
-  const [startDate, setStartDate] = useState('2025-01-01');
-  const [endDate, setEndDate] = useState('2025-01-15');
-  const [eventType, setEventType] = useState('all');
-  const [tenant, setTenant] = useState('all');
-  const [format, setFormat] = useState<'CSV' | 'JSON' | 'Parquet'>('CSV');
-  const [piiMasking, setPiiMasking] = useState(true);
-  const [maxRecords] = useState(100000);
-  const [jobs, setJobs] = useState<ExportJob[]>(INITIAL_JOBS);
-  const [scheduled, setScheduled] = useState<ScheduledExport[]>(SCHEDULED_EXPORTS);
-  const [activeTab, setActiveTab] = useState<'create' | 'jobs' | 'scheduled' | 'trail'>('create');
 
   const createExport = useCallback(() => {
     const newJob: ExportJob = {

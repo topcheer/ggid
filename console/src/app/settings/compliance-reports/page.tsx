@@ -1,15 +1,34 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface Section { name: string; score: number; status: string; gaps: number; }
+interface Remediation { id: string; gap: string; priority: string; status: string; }
 
 export default function ComplianceReportsPage() {
   const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
+  const [framework, setFramework] = useState('SOC2');
+  const [dateRange, setDateRange] = useState({ start: '2026-06-01', end: '2026-07-12' });
+  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated] = useState(false);
+
+  const sections: Section[] = [
+    { name: 'Access Control', score: 92, status: 'compliant', gaps: 1 },
+    { name: 'Audit Logging', score: 98, status: 'compliant', gaps: 0 },
+    { name: 'Data Protection', score: 85, status: 'partial', gaps: 3 },
+    { name: 'Incident Response', score: 78, status: 'partial', gaps: 5 },
+    { name: 'Risk Assessment', score: 88, status: 'compliant', gaps: 2 },
+  ];
+
+  const remediations: Remediation[] = [
+    { id: 'rm1', gap: 'Data-at-rest encryption for backup storage', priority: 'high', status: 'in_progress' },
+    { id: 'rm2', gap: 'Documented incident response runbook', priority: 'medium', status: 'open' },
+    { id: 'rm3', gap: 'Quarterly access review records', priority: 'medium', status: 'resolved' },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,8 +41,7 @@ export default function ComplianceReportsPage() {
           },
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
+        // Compliance data will be wired when API returns structured data
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -33,26 +51,6 @@ export default function ComplianceReportsPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">{t("common.loading")}</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("secDashboard.noData")}</div>;
-  const [framework, setFramework] = useState('SOC2');
-  const [dateRange, setDateRange] = useState({ start: '2026-06-01', end: '2026-07-12' });
-  const [generating, setGenerating] = useState(false);
-  const [generated, setGenerated] = useState(false);
-  const [sections] = useState<Section[]>([
-    { name: 'Access Control', score: 92, status: 'compliant', gaps: 1 },
-    { name: 'Audit Logging', score: 98, status: 'compliant', gaps: 0 },
-    { name: 'Data Protection', score: 85, status: 'partial', gaps: 3 },
-    { name: 'Incident Response', score: 78, status: 'partial', gaps: 5 },
-    { name: 'Risk Assessment', score: 88, status: 'compliant', gaps: 2 },
-  ]);
-  const [remediations] = useState([
-    { id: 'rm1', gap: 'Data-at-rest encryption for backup storage', priority: 'high', status: 'in_progress' },
-    { id: 'rm2', gap: 'Documented incident response runbook', priority: 'medium', status: 'open' },
-    { id: 'rm3', gap: 'Quarterly access review records', priority: 'medium', status: 'resolved' },
-  ]);
-
   const frameworks = ['SOC2', 'ISO27001', 'HIPAA', 'GDPR', 'PCI-DSS'];
   const overallScore = Math.round(sections.reduce((s, x) => s + x.score, 0) / sections.length);
   const statusColor = (s: string) => s === 'compliant' ? 'bg-green-100 text-green-700' : s === 'partial' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
@@ -61,6 +59,9 @@ export default function ComplianceReportsPage() {
 
   const generate = () => { setGenerating(true); setTimeout(() => { setGenerating(false); setGenerated(true); }, 1500); };
   const exportReport = (format: 'pdf' | 'csv') => { const a = document.createElement('a'); a.href = '#'; a.download = `compliance-${framework}.${format}`; a.click(); };
+
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
