@@ -103,7 +103,7 @@ export default function DepartmentsPage() {
     return (
       <div key={dept.id}>
         <div className={`flex items-center gap-3 rounded-lg py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50`} style={{ paddingLeft: depth * 24 + 12 }}>
-          <button onClick={() => hasChildren && toggle(dept.id)} className="shrink-0">
+          <button onClick={() => hasChildren && toggle(dept.id)} aria-label="Toggle department children" className="shrink-0">
             {hasChildren ? (isOpen ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />) : <span className="inline-block w-4" />}
           </button>
           <Building2 className="h-4 w-4 shrink-0 text-indigo-500" />

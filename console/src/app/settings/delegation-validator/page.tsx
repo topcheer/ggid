@@ -137,7 +137,7 @@ export default function DelegationValidatorPage() {
                     <span className="text-sm font-medium text-gray-700">{r.name}</span>
                     <p className="text-xs text-gray-400">{r.description}</p>
                   </div>
-                  <button onClick={() => toggleRule(r.id)} className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${r.enabled ? 'bg-green-500' : 'bg-gray-200'}`}>
+                  <button onClick={() => toggleRule(r.id)} aria-label={`Toggle rule ${r.name}`} className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${r.enabled ? 'bg-green-500' : 'bg-gray-200'}`}>
                     <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${r.enabled ? 'translate-x-5' : 'translate-x-1'}`} />
                   </button>
                 </div>

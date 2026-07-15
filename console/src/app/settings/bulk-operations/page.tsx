@@ -7,7 +7,7 @@ export default function BulkOperationsPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bundles, setBundles] = useState<any[]>([]);
+  const [bundles, setBundles] = useState<Record<string, unknown>[]>([]);
   const [opType, setOpType] = useState('bulk_user_create');
   const [csvPreview, setCsvPreview] = useState('');
   const [progress, setProgress] = useState(0);

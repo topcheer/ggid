@@ -73,7 +73,7 @@ export default function BlastRadiusPage() {
             <div className="space-y-1">
               {data.affected_resources.map((r) => (
                 <div key={r.name}>
-                  <button onClick={() => setExpanded(expanded === r.name ? null : r.name)} className="flex items-center gap-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-900/30 w-full px-2 py-1 rounded">
+                  <button onClick={() => setExpanded(expanded === r.name ? null : r.name)} aria-label={`Toggle ${r.name}`} className="flex items-center gap-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-900/30 w-full px-2 py-1 rounded">
                     <ChevronRight className={`w-3 h-3 text-gray-400 transition-transform ${expanded === r.name ? "rotate-90" : ""}`} />
                     <span className="font-mono text-xs">{r.name}</span>
                     <span className="text-xs text-gray-400">({r.type})</span>

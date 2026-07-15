@@ -130,7 +130,7 @@ export default function MFAFactorsPage() {
                     </div>
                   </div>
                 </div>
-                <button onClick={() => deleteFactor(f.id)} disabled={deletingId === f.id} className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-900 disabled:opacity-50 flex items-center gap-1">
+                <button onClick={() => deleteFactor(f.id)} aria-label={`Delete ${f.type}`} disabled={deletingId === f.id} className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-900 disabled:opacity-50 flex items-center gap-1">
                   <Trash2 className="w-4 h-4" />
                   {deletingId === f.id ? "Deleting..." : "Delete"}
                 </button>
