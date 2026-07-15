@@ -7,6 +7,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 )
 
 // APIKey represents an API key for programmatic access.
@@ -63,6 +66,12 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 		apiKeysMu.Lock()
 		apiKeys = append(apiKeys, key)
 		apiKeysMu.Unlock()
+
+		// Audit: API key created
+		if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+			h.publishAuditEvent("api_key.create", "success", tc.TenantID, uuid.Nil)
+		}
+
 		writeJSON(w, http.StatusCreated, key)
 
 	case strings.HasPrefix(r.URL.Path, "/api/v1/auth/api-keys/") && r.Method == http.MethodPost:
@@ -90,8 +99,12 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 			defer apiKeysMu.Unlock()
 			for i := range apiKeys {
 				if apiKeys[i].ID == parts[4] {
-					apiKeys[i].Status = "revoked"
-					writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
+				apiKeys[i].Status = "revoked"
+				// Audit: API key revoked
+				if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+					h.publishAuditEvent("api_key.delete", "success", tc.TenantID, uuid.Nil)
+				}
+				writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
 					return
 				}
 			}

@@ -17,6 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	ggiderrors "github.com/ggid/ggid/pkg/errors"
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/i18n"
 	"github.com/ggid/ggid/pkg/social"
@@ -38,6 +39,7 @@ type Handler struct {
 	translator     *i18n.Translator
 	tsHandler      *TrustStoreHandler
 	sysconfigStore sysconfig.Store
+	auditPublisher *audit.Publisher
 }
 
 // New creates a new Auth Service HTTP handler.
@@ -49,6 +51,14 @@ func New(authSvc *service.AuthService) *Handler {
 		idpConfigs: make(map[string]*service.IdPConfig),
 		translator: i18n.NewTranslator("en"),
 		tsHandler:  NewTrustStoreHandler(),
+	}
+	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
+		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
+			h.auditPublisher = pub
+			log.Println("Auth: audit publisher connected to NATS")
+		} else {
+			log.Printf("Auth: audit publisher disabled (%v)", err)
+		}
 	}
 	h.registerRoutes()
 	return h
@@ -508,6 +518,10 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		// Log the failed attempt for security audit.
 		h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, false, err.Error())
 		log.Printf("login error for user %s: %v", req.Username, err)
+		// Audit: login failure
+		if tc, terr := ggidtenant.FromContext(r.Context()); terr == nil {
+			h.publishAuditEvent("user.login", "failure", tc.TenantID, uuid.Nil)
+		}
 		writeAuthError(w, err)
 		return
 	}
@@ -518,6 +532,11 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	}
 	// Log the successful attempt.
 	h.authSvc.RecordLoginAttempt(r.Context(), req.Username, ip, userAgent, true, "")
+
+	// Audit: login success
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		h.publishAuditEvent("user.login", "success", tc.TenantID, uuid.Nil)
+	}
 
 	writeJSON(w, http.StatusOK, tokens)
 }
@@ -608,6 +627,11 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	if err := h.authSvc.Logout(r.Context(), req.RefreshToken); err != nil {
 		writeError(w, http.StatusInternalServerError, "logout failed")
 		return
+	}
+
+	// Audit: logout
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		h.publishAuditEvent("user.logout", "success", tc.TenantID, uuid.Nil)
 	}
 
 	writeJSON(w, http.StatusOK, map[string]bool{"logged_out": true})
@@ -707,6 +731,11 @@ func (h *Handler) resetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Audit: password reset
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil {
+		h.publishAuditEvent("user.password.reset", "success", tc.TenantID, uuid.Nil)
+	}
+
 	writeJSON(w, http.StatusOK, map[string]bool{"password_reset": true})
 }
 
@@ -766,6 +795,9 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 		writeAuthError(w, err)
 		return
 	}
+
+	// Audit: password change
+	h.publishAuditEvent("user.password.change", "success", tc.TenantID, userID)
 
 	writeJSON(w, http.StatusOK, map[string]bool{"password_changed": true})
 }

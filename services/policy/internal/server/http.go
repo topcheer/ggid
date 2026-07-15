@@ -7,12 +7,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
 	"github.com/ggid/ggid/services/policy/internal/service"
@@ -21,14 +24,24 @@ import (
 
 // HTTPServer exposes the Policy Engine as a REST API.
 type HTTPServer struct {
-	roleSvc   *service.RoleService
-	policySvc *service.PolicyService
-	evaluator *service.Evaluator
+	roleSvc       *service.RoleService
+	policySvc     *service.PolicyService
+	evaluator     *service.Evaluator
+	auditPublisher *audit.Publisher
 }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.
 func NewHTTPServer(roleSvc *service.RoleService, policySvc *service.PolicyService, evaluator *service.Evaluator) *HTTPServer {
-	return &HTTPServer{roleSvc: roleSvc, policySvc: policySvc, evaluator: evaluator}
+	s := &HTTPServer{roleSvc: roleSvc, policySvc: policySvc, evaluator: evaluator}
+	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
+		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
+			s.auditPublisher = pub
+			log.Println("Policy: audit publisher connected to NATS")
+		} else {
+			log.Printf("Policy: audit publisher disabled (%v)", err)
+		}
+	}
+	return s
 }
 
 // RegisterRoutes registers all Policy Engine HTTP routes on the given mux.
@@ -258,6 +271,7 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
+		s.publishAuditEvent("role.delete", "success", "role", id, uuid.Nil)
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -488,6 +502,7 @@ func (s *HTTPServer) createRole(w http.ResponseWriter, r *http.Request) {
 		writeServiceError(w, err)
 		return
 	}
+	s.publishAuditEvent("role.create", "success", "role", role.ID, tenantID)
 	writeJSON(w, http.StatusCreated, roleToJSON(role))
 }
 
@@ -663,6 +678,7 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
+		s.publishAuditEvent("policy.delete", "success", "policy", id, uuid.Nil)
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -703,6 +719,7 @@ func (s *HTTPServer) createPolicy(w http.ResponseWriter, r *http.Request) {
 		writeServiceError(w, err)
 		return
 	}
+	s.publishAuditEvent("policy.create", "success", "policy", policy.ID, tenantID)
 	writeJSON(w, http.StatusCreated, policyToJSON(policy))
 }
 

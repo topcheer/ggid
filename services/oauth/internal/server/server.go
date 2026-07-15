@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/saml"
 	"github.com/ggid/ggid/pkg/tenant"
@@ -40,12 +41,13 @@ import (
 
 // Server encapsulates the OAuth HTTP server.
 type Server struct {
-	cfg        *conf.Config
-	httpSrv    *http.Server
-	oauthSvc   *service.OAuthService
-	pool       *pgxpool.Pool
-	stopTicker func()
-	rotatingKP *service.RotatingKeyProvider
+	cfg           *conf.Config
+	httpSrv      *http.Server
+	oauthSvc     *service.OAuthService
+	pool         *pgxpool.Pool
+	stopTicker   func()
+	rotatingKP   *service.RotatingKeyProvider
+	auditPub     *audit.Publisher
 }
 
 // keyProvider implements pkg/crypto.KeyProvider by loading RSA keys from disk.
@@ -170,8 +172,19 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 		}
 	}
 
+	// Initialize audit publisher before building handler so it's available in routes.
+	var auditPub *audit.Publisher
+	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
+		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
+			auditPub = pub
+			log.Println("OAuth: audit publisher connected to NATS")
+		} else {
+			log.Printf("OAuth: audit publisher disabled (%v)", err)
+		}
+	}
+
 	// Build HTTP handler.
-	handler := buildHandler(oauthSvc, cfg, rotatingKP)
+	handler := buildHandler(oauthSvc, cfg, rotatingKP, auditPub)
 
 	httpSrv := &http.Server{
 		Addr:         cfg.HTTP.Addr,
@@ -180,7 +193,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 		WriteTimeout: 30 * time.Second,
 	}
 
-	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool, stopTicker: stopTicker, rotatingKP: rotatingKP}, nil
+	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool, stopTicker: stopTicker, rotatingKP: rotatingKP, auditPub: auditPub}, nil
 }
 
 // Run starts the server and blocks until ctx is cancelled.
@@ -217,7 +230,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // buildHandler creates the HTTP mux with all OAuth/OIDC endpoints.
-func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *service.RotatingKeyProvider) http.Handler {
+func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *service.RotatingKeyProvider, auditPub *audit.Publisher) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -1166,6 +1179,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				return
 			}
 
+			// Audit: client created
+			if auditPub != nil {
+				ev := audit.NewEvent("oauth_client.create", "success", tenantID, uuid.Nil)
+				ev.ResourceType = "oauth_client"
+				if result.Client != nil {
+					ev.ResourceID = result.Client.ID
+				}
+				auditPub.PublishAsync(ev)
+			}
+
 			writeJSON(w, http.StatusCreated, result)
 
 		case http.MethodGet:
@@ -1271,6 +1294,12 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			if err := oauthSvc.DeleteClient(ctx, clientID); err != nil {
 				writeInternalError(w, "DeleteClient", err)
 				return
+			}
+			// Audit: client deleted
+			if auditPub != nil {
+				ev := audit.NewEvent("oauth_client.delete", "success", tenantID, uuid.Nil)
+				ev.ResourceType = "oauth_client"
+				auditPub.PublishAsync(ev)
 			}
 			writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 

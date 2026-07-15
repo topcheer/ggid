@@ -4,15 +4,19 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/org/internal/domain"
 	"github.com/ggid/ggid/services/org/internal/repository"
@@ -22,15 +26,25 @@ import (
 
 // HTTPServer exposes the Org Service as a REST API.
 type HTTPServer struct {
-	orgSvc    *service.OrgService
-	deptSvc   *service.DeptService
-	teamSvc   *service.TeamService
-	memberSvc *service.MembershipService
+	orgSvc        *service.OrgService
+	deptSvc       *service.DeptService
+	teamSvc       *service.TeamService
+	memberSvc     *service.MembershipService
+	auditPublisher *audit.Publisher
 }
 
 // NewHTTPServer creates a new Org Service HTTP server.
 func NewHTTPServer(orgSvc *service.OrgService, deptSvc *service.DeptService, teamSvc *service.TeamService, memberSvc *service.MembershipService) *HTTPServer {
-	return &HTTPServer{orgSvc: orgSvc, deptSvc: deptSvc, teamSvc: teamSvc, memberSvc: memberSvc}
+	s := &HTTPServer{orgSvc: orgSvc, deptSvc: deptSvc, teamSvc: teamSvc, memberSvc: memberSvc}
+	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
+		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
+			s.auditPublisher = pub
+			log.Println("Org: audit publisher connected to NATS")
+		} else {
+			log.Printf("Org: audit publisher disabled (%v)", err)
+		}
+	}
+	return s
 }
 
 // RegisterRoutes registers all Org Service HTTP routes on the given mux.
@@ -258,6 +272,7 @@ func (s *HTTPServer) handleOrgByID(w http.ResponseWriter, r *http.Request) {
 			writeServiceError(w, err)
 			return
 		}
+		s.publishAuditEvent("org.delete", "success", "organization", id, uuid.Nil)
 		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 	case http.MethodPut:
 		s.updateOrg(w, r, id)
@@ -411,6 +426,7 @@ func (s *HTTPServer) createOrg(w http.ResponseWriter, r *http.Request) {
 		writeServiceError(w, err)
 		return
 	}
+	s.publishAuditEvent("org.create", "success", "organization", created.ID, created.TenantID)
 	writeJSON(w, http.StatusCreated, orgToJSON(created))
 }
 
