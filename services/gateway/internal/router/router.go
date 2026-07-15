@@ -860,20 +860,24 @@ func serveOpenAPISpec(w http.ResponseWriter, _ *http.Request) {
 }
 
 // handleDashboardStats returns aggregate dashboard statistics.
-func (gw *Gateway) handleDashboardStats(w http.ResponseWriter, _ *http.Request) {
+// Proxies to identity service for real data.
+func (gw *Gateway) handleDashboardStats(w http.ResponseWriter, r *http.Request) {
+	// Use identity proxy for real stats
+	if proxy, prefix := gw.matchBackend("/api/v1/identity/dashboard/stats"); proxy != nil {
+		_ = prefix
+		r2 := r.Clone(r.Context())
+		r2.URL.Path = "/api/v1/identity/dashboard/stats"
+		proxy.ServeHTTP(w, r2)
+		return
+	}
+	// Fallback
 	w.Header().Set("Content-Type", "application/json")
-	stats := map[string]interface{}{
-		"total_users":          0,
-		"active_sessions":      0,
-		"login_rate_per_hour":  0,
-		"mfa_adoption_pct":     0,
-	}
-	if gw.stats != nil {
-		snap := gw.stats.Snapshot()
-		stats["total_requests"] = snap.TotalRequests
-		stats["total_errors"]   = snap.TotalErrors
-	}
-	_ = json.NewEncoder(w).Encode(stats)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"total_users":         0,
+		"active_sessions":     0,
+		"login_rate_per_hour": 0,
+		"mfa_adoption_pct":    0,
+	})
 }
 
 // handleHealthOverview returns service health for the frontend.

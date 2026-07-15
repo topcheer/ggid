@@ -43,7 +43,7 @@ export default function MFAPage() {
   const startTotpEnrollment = async () => {
     setError(null);
     try {
-      const data = await apiFetch<{ secret?: string; qr_code_url?: string }>("/api/v1/auth/mfa/totp/setup", {
+      const data = await apiFetch<{ secret?: string; qr_code_url?: string }>("/api/v1/auth/mfa/setup", {
         method: "POST",
       });
       setTotpSecret(data.secret || "");
@@ -68,7 +68,7 @@ export default function MFAPage() {
     setVerifying(true);
     setError(null);
     try {
-      const data = await apiFetch<{ recovery_codes?: string[] }>("/api/v1/auth/mfa/totp/verify", {
+      const data = await apiFetch<{ recovery_codes?: string[] }>("/api/v1/auth/mfa/verify", {
         method: "POST",
         body: JSON.stringify({ code: verifyCode }),
       });

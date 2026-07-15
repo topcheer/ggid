@@ -1,10 +1,10 @@
 # Platform Scan State
 
 ## Current round: 60
-## Last scan focus: D (Data Persistence) — pgxpool config, transactions, context propagation, SQL injection audit all clean. 0 new GAPs
+## Last scan focus: D (Data Persistence) + E2E chain verification — 4 broken chains fixed
 ## Next scan focus: E (E2E Regression) — Round 61
-## Total findings: 32
-## Done: 31
+## Total findings: 36
+## Done: 35
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
