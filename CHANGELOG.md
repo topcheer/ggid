@@ -63,6 +63,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.6] — Stable Milestone (All Productization Gaps Closed)
+
+### Summary
+- All productization gaps closed: Total 26 / Done 25 / Acceptable 1 (FedCM) / Remaining 0.
+- Docker E2E: 11/11 PASS for 6 consecutive rounds.
+- make test: 0 FAIL.
+- console/src/app/: 0 TypeScript errors.
+
+### Added
+- OAuth 2.1 dynamic compliance analyzer.
+- FAPI 2.0 client profile with enforcement.
+
+### Fixed
+- gRPC TLS fail-secure behavior.
+- HTTP client timeouts in audit/auth/gateway.
+- Console Docker build ( typescript dependency).
+
+### Changed
+- Go SDK now has 137 methods; other SDK languages are tracked as competitive gaps.
+
+
 ## [0.3.5] — Console Docker Build Fix
 
 ### Fixed
