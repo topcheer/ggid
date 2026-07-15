@@ -63,6 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.5] — Release Workflow Fix + Node SDK 1.0.3
+
+### Fixed
+- .github/workflows/release.yml: Publish Go SDK job no longer tries to npm publish; only tags SDK modules.
+- .github/workflows/release.yml: add per-language SDK tags (Python, Java, Rust, C#, Dart, PHP, Ruby).
+
+### Changed
+- sdk/node/package.json: bump to 1.0.3.
+
+
 ## [0.2.4] — React SDK TypeScript Fix + Release Pipeline
 
 ### Fixed
