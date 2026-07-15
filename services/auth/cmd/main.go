@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/smtp"
 	"os"
@@ -27,6 +28,7 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -210,6 +212,26 @@ func main() {
 		log.Printf("Auth Service listening on %s", cfg.Server.HTTP.Addr)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("HTTP server error: %v", err)
+		}
+	}()
+
+	// 8b. Start gRPC server (optional, if GRPC_ADDR is set)
+	grpcAddr := os.Getenv("AUTH_GRPC_ADDR")
+	if grpcAddr == "" {
+		grpcAddr = ":50052"
+	}
+	go func() {
+		lis, err := net.Listen("tcp", grpcAddr)
+		if err != nil {
+			log.Printf("Auth gRPC: failed to listen on %s: %v (continuing HTTP-only)", grpcAddr, err)
+			return
+		}
+		grpcServer := grpc.NewServer()
+		authGRPCHandler := server.NewAuthGRPCHandler(authSvc)
+		authGRPCHandler.RegisterGRPC(grpcServer)
+		log.Printf("Auth gRPC server listening on %s", grpcAddr)
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Printf("Auth gRPC server error: %v", err)
 		}
 	}()
 
