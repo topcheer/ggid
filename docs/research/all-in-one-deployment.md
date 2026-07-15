@@ -354,5 +354,5 @@ The all-in-one image is intentionally **not** designed for production: it runs a
 
 - `docs/research/onboarding-and-multi-tenant-design.md` — Onboarding wizard and multi-tenant login design
 - `docs/deployment-guide.md` — Full deployment options (Compose, Kubernetes, Helm)
-- `docs/docker-deployment-state.md` — Docker Compose multi-service deployment status
+- `docs/guides/docker-deployment.md` — Docker Compose multi-service deployment guide
 - `docs/research/docker-e2e-infra-gap.md` — Historical Docker E2E infrastructure fixes
