@@ -1,28 +1,34 @@
 "use client";
+import { useEffect, useState } from "react";
+import { useAuditRealtimeAlerts, ActiveAlert } from "@ggid/sdk-react";
+import {
+  Bell,
+  BellOff,
+  AlertTriangle,
+  CheckCircle,
+  ArrowUp,
+  Zap,
+  RefreshCw,
+} from "lucide-react";
 
-import { useState, useEffect } from "react";
-import { useAuditRealtimeAlerts } from "@ggid/sdk-react";
-import { Bell, AlertTriangle, CheckCircle, BellOff, Zap, ArrowUp } from "lucide-react";
-
-export default function AuditRealtimeAlertsPage() {
+export default function AuditRealTimeAlertsPage() {
   const { data, loading, error, refresh, acknowledgeAlert, testAlert } = useAuditRealtimeAlerts();
-  const [feed, setFeed] = useState<typeof data extends null ? never[] : NonNullable<typeof data>["active_alerts"]>([]);
 
-  useEffect(() => {
-    if (data?.active_alerts) setFeed(data.active_alerts as never[]);
-    const interval = setInterval(() => { refresh(); }, 30000);
-    return () => clearInterval(interval);
-  }, [data, refresh]);
+  const [ack, setAck] = useState<Record<string, boolean>>({});
 
-  if (loading && !data) return <div className="p-8 text-gray-400">Loading real-time alerts...</div>;
-  if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
+  useEffect(() => { refresh(); }, [refresh]);
 
   const severityColors: Record<string, string> = {
-    critical: "bg-red-900 text-red-300 border-red-800",
-    high: "bg-orange-900 text-orange-300 border-orange-800",
-    medium: "bg-yellow-900 text-yellow-300 border-yellow-800",
-    low: "bg-blue-900 text-blue-300 border-blue-800",
+    critical: "bg-red-900/30 text-red-300 border-red-800",
+    high: "bg-orange-900/30 text-orange-300 border-orange-800",
+    medium: "bg-yellow-900/30 text-yellow-300 border-yellow-800",
+    low: "bg-blue-900/30 text-blue-300 border-blue-800",
   };
+
+  if (loading) return <div className="p-8 text-gray-400">Loading alerts...</div>;
+  if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
+
+  const alerts = data?.active_alerts ?? [];
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -34,6 +40,7 @@ export default function AuditRealtimeAlertsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => testAlert()}
+            aria-label="Send test alert"
             className="flex items-center gap-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition"
           >
             <Zap className="w-4 h-4" />
@@ -41,9 +48,10 @@ export default function AuditRealtimeAlertsPage() {
           </button>
           <button
             onClick={refresh}
+            aria-label="Refresh alerts"
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition"
           >
-            Refresh
+            <RefreshCw className="w-4 h-4 inline mr-1" /> Refresh
           </button>
         </div>
       </div>
@@ -59,34 +67,36 @@ export default function AuditRealtimeAlertsPage() {
             <span className="text-xs text-gray-400 auto-refresh-badge">Auto-refresh: 30s</span>
           </div>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {feed.map((alert: Record<string, unknown>, i: number) => {
-              const severity = (alert.severity as string) || "low";
+            {alerts.map((alert: ActiveAlert, i) => {
+              const severity = alert.severity || "low";
               return (
-                <div key={i} className={"rounded-lg p-3 border " + (severityColors[severity] || severityColors.low)}>
+                <div key={alert.id || i} className={"rounded-lg p-3 border " + (severityColors[severity] || severityColors.low)}>
                   <div className="flex items-start justify-between mb-1">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="w-4 h-4" />
-                      <p className="text-sm font-medium">{alert.rule_name as string}</p>
+                      <p className="text-sm font-medium">{alert.rule_name}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs px-2 py-0.5 rounded bg-black/30 uppercase">{severity}</span>
                       <button
-                        onClick={() => acknowledgeAlert(alert.id as string)}
-                        className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded"
+                        onClick={() => { acknowledgeAlert(alert.id); setAck({ ...ack, [alert.id]: true }); }}
+                        disabled={ack[alert.id]}
+                        aria-label={`Acknowledge alert ${alert.rule_name}`}
+                        className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded disabled:opacity-50"
                       >
                         <CheckCircle className="w-3 h-3 inline" /> Ack
                       </button>
                     </div>
                   </div>
-                  <p className="text-xs opacity-80">{alert.message as string}</p>
+                  <p className="text-xs opacity-80">{alert.message}</p>
                   <div className="flex items-center gap-3 mt-1 text-xs opacity-60">
-                    <span>Channel: {alert.channel as string}</span>
-                    <span>Triggered: {alert.triggered_at as string}</span>
+                    <span>Channel: {alert.channel}</span>
+                    <span>Triggered: {alert.triggered_at}</span>
                   </div>
                 </div>
               );
             })}
-            {feed.length === 0 && (
+            {alerts.length === 0 && (
               <p className="text-sm text-gray-500 text-center py-8">No active alerts.</p>
             )}
           </div>
