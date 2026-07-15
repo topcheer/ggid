@@ -31,13 +31,12 @@ export default function ApiHealthMonitorPage() {
     fetchData();
   }, []);
 
-  const t = useTranslations();const [alerts] = useState([
+  const t = useTranslations();
+  const [alerts] = useState([
     { time: '14:30', msg: 'Policy evaluate latency p99 > 500ms', level: 'warn' },
     { time: '13:15', msg: 'Org create endpoint returning 500', level: 'critical' },
   ]);
 
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const [endpoints] = useState<Endpoint[]>([
     { id: 'e1', path: '/api/v1/auth/login', method: 'POST', status: 'healthy', latency: '45ms', uptime: '99.98%', errorRate: '0.02%' },
     { id: 'e2', path: '/api/v1/users', method: 'GET', status: 'healthy', latency: '32ms', uptime: '99.99%', errorRate: '0.01%' },
@@ -51,7 +50,10 @@ export default function ApiHealthMonitorPage() {
     { name: 'NATS JetStream', status: 'healthy', latency: '5ms' },
     { name: 'SMTP Server', status: 'degraded', latency: '450ms' },
   ]);
-  
+
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+
   const statusColor = (s: string) => s === 'healthy' ? 'bg-green-100 text-green-700' : s === 'degraded' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';
   const depColor = (s: string) => s === 'healthy' ? 'text-green-600' : 'text-amber-600';
 
