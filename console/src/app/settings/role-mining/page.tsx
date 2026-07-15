@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, Sparkles, AlertTriangle, Check, User, Shield, TrendingDown } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PermissionGrant {
   permission: string;
@@ -30,6 +31,7 @@ interface UserAnalysis {
 }
 
 export default function RoleMiningPage() {
+  const t = useTranslations();
   const [users, setUsers] = useState<UserAnalysis[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -83,29 +85,29 @@ export default function RoleMiningPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Sparkles className="w-6 h-6 text-blue-500" /> Role Mining</h1>
-        <p className="text-sm text-gray-500 mt-1">Analyze permission usage and recommend least-privilege role adjustments.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Sparkles className="w-6 h-6 text-blue-500" /> {t("roleMining.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("roleMining.subtitle")}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">Users Analyzed</span>
+            <span className="text-sm text-gray-500">{t("roleMining.usersAnalyzed")}</span>
             <User className="w-5 h-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold mt-2">{users.length}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">Unused Permissions</span>
+            <span className="text-sm text-gray-500">{t("roleMining.unusedPermissions")}</span>
             <TrendingDown className="w-5 h-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold mt-2 text-yellow-600">{users.reduce((s, u) => s + u.unused_count, 0)}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-500">Over-Granted</span>
+            <span className="text-sm text-gray-500">{t("roleMining.overGranted")}</span>
             <AlertTriangle className="w-5 h-5 text-gray-400" />
           </div>
           <p className="text-2xl font-bold mt-2 text-red-600">{users.reduce((s, u) => s + u.over_granted_count, 0)}</p>
@@ -118,7 +120,7 @@ export default function RoleMiningPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder={t("roleMining.searchUsers")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"
@@ -129,14 +131,14 @@ export default function RoleMiningPage() {
           onChange={(e) => setSelectedUserId(e.target.value)}
           className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"
         >
-          <option value="">Select a user...</option>
+          <option value="">{t("roleMining.selectUser")}</option>
           {filteredUsers.map((u) => (
             <option key={u.user_id} value={u.user_id}>{u.username} ({u.unused_count} unused, {u.over_granted_count} over-granted)</option>
           ))}
         </select>
       </div>
 
-      {loading && <p className="text-sm text-gray-500">Loading analysis...</p>}
+      {loading && <p className="text-sm text-gray-500">{t("roleMining.loadingAnalysis")}</p>}
 
       {/* Selected user detail */}
       {selectedUser && (
@@ -144,7 +146,7 @@ export default function RoleMiningPage() {
           {/* Unused permissions */}
           <div className="rounded-lg border dark:border-gray-800">
             <div className="px-4 py-3 border-b dark:border-gray-800">
-              <h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4" /> Unused Permissions ({selectedUser.permissions.filter((p) => p.usage_count === 0).length})</h3>
+              <h3 className="font-semibold flex items-center gap-2"><Shield className="w-4 h-4" /> {t("roleMining.unusedPermissions")} ({selectedUser.permissions.filter((p) => p.usage_count === 0).length})</h3>
             </div>
             <div className="divide-y dark:divide-gray-800">
               {selectedUser.permissions.filter((p) => p.usage_count === 0).map((p, i) => (
@@ -153,11 +155,11 @@ export default function RoleMiningPage() {
                     <span className="font-mono">{p.permission}</span>
                     <span className="text-gray-400 ml-2">on {p.resource}</span>
                   </div>
-                  <span className="text-gray-400">Never used</span>
+                  <span className="text-gray-400">{t("roleMining.neverUsed")}</span>
                 </div>
               ))}
               {selectedUser.permissions.filter((p) => p.usage_count === 0).length === 0 && (
-                <p className="px-4 py-3 text-sm text-gray-500">No unused permissions.</p>
+                <p className="px-4 py-3 text-sm text-gray-500">{t("roleMining.noUnused")}</p>
               )}
             </div>
           </div>
@@ -165,7 +167,7 @@ export default function RoleMiningPage() {
           {/* Over-granted badges */}
           {selectedUser.recommendations.flatMap((r) => r.over_granted).length > 0 && (
             <div className="rounded-lg border dark:border-gray-800 p-4">
-              <h3 className="font-semibold mb-2">Over-Granted Permissions</h3>
+              <h3 className="font-semibold mb-2">{t("roleMining.overGrantedPermissions")}</h3>
               <div className="flex flex-wrap gap-2">
                 {[...new Set(selectedUser.recommendations.flatMap((r) => r.over_granted))].map((perm, i) => (
                   <span key={i} className="px-2 py-1 rounded text-xs bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">{perm}</span>
@@ -177,7 +179,7 @@ export default function RoleMiningPage() {
           {/* Recommendations */}
           <div className="rounded-lg border dark:border-gray-800">
             <div className="px-4 py-3 border-b dark:border-gray-800">
-              <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-500" /> Recommended Roles ({selectedUser.recommendations.length})</h3>
+              <h3 className="font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-blue-500" /> {t("roleMining.recommendedRoles")} ({selectedUser.recommendations.length})</h3>
             </div>
             <div className="divide-y dark:divide-gray-800">
               {selectedUser.recommendations.map((rec, i) => (
@@ -189,10 +191,10 @@ export default function RoleMiningPage() {
                         <span className="text-gray-400">&rarr;</span>
                         <span className="font-medium text-blue-600">{rec.recommended_role}</span>
                         <span className={`px-2 py-0.5 rounded text-xs ${riskColor[rec.risk_level]}`}>{rec.risk_level}</span>
-                        <span className="text-xs text-gray-400">{rec.confidence}% confidence</span>
+                        <span className="text-xs text-gray-400">{rec.confidence}% {t("roleMining.confidence")}</span>
                       </div>
                       {rec.unused_permissions.length > 0 && (
-                        <p className="text-xs text-gray-500 mt-1">Removes {rec.unused_permissions.length} unused permissions</p>
+                        <p className="text-xs text-gray-500 mt-1">{t("roleMining.removesUnused").replace("{n}", String(rec.unused_permissions.length))}</p>
                       )}
                     </div>
                     <button
@@ -201,7 +203,7 @@ export default function RoleMiningPage() {
                       className="ml-4 px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
                     >
                       <Check className="w-4 h-4" />
-                      {applying === selectedUser.user_id ? "Applying..." : "Apply"}
+                      {applying === selectedUser.user_id ? "Applying..." : t("roleMining.apply")}
                     </button>
                   </div>
                 </div>

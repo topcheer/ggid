@@ -2,22 +2,24 @@
 
 import { useEmailTemplateConfig } from "@ggid/sdk-react";
 import { Mail, Eye } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 import { useState } from "react";
 
 export default function EmailTemplateConfigPage() {
   const { data, loading, error, refresh } = useEmailTemplateConfig();
+  const t = useTranslations();
   const [selected, setSelected] = useState("welcome");
   const [lang, setLang] = useState("en");
-  if (loading) return <div className="p-8 text-gray-400">Loading...</div>;
-  if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("common.loading")}</div>;
+  if (error) return <div className="p-8 text-red-400">{t("common.error")}: {error}</div>;
 
   const tmpl = (data?.templates ?? []).find((t) => t.id === selected);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-6">
-        <div><h1 className="text-2xl font-bold">Email Template Configuration</h1><p className="text-sm text-gray-400 mt-1">Customize system emails</p></div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Save</button>
+        <div><h1 className="text-2xl font-bold">{t("emailTpl.title")}</h1><p className="text-sm text-gray-400 mt-1">{t("emailTpl.subtitle")}</p></div>
+        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("common.save")}</button>
       </div>
 
       <div className="flex gap-2 mb-4">
@@ -32,15 +34,15 @@ export default function EmailTemplateConfigPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-900 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><Mail className="w-4 h-4 text-blue-400" /><h2 className="text-sm font-semibold">HTML Editor</h2></div>
+          <div className="flex items-center gap-2 mb-2"><Mail className="w-4 h-4 text-blue-400" /><h2 className="text-sm font-semibold">{t("emailTpl.htmlEditor")}</h2></div>
           <div className="mb-2 flex flex-wrap gap-1">
             {tmpl?.variables.map((v) => <span key={v} className="text-xs font-mono px-1.5 py-0.5 bg-gray-800 rounded text-blue-400 cursor-pointer">{v}</span>)}
           </div>
           <textarea defaultValue={tmpl?.body_html} rows={12} className="w-full px-3 py-2 bg-gray-800 rounded-lg text-xs font-mono" />
-          <label className="flex items-center gap-2 mt-2 text-xs"><input type="checkbox" defaultChecked={tmpl?.enabled} /> Enabled</label>
+          <label className="flex items-center gap-2 mt-2 text-xs"><input type="checkbox" defaultChecked={tmpl?.enabled} /> {t("common.enabled")}</label>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-2"><Eye className="w-4 h-4 text-green-400" /><h2 className="text-sm font-semibold">Preview</h2></div>
+          <div className="flex items-center gap-2 mb-2"><Eye className="w-4 h-4 text-green-400" /><h2 className="text-sm font-semibold">{t("common.preview")}</h2></div>
           <div className="bg-white rounded-lg p-4 text-black text-sm" dangerouslySetInnerHTML={{ __html: tmpl?.body_html?.replace(/\{\{user_name\}\}/g, "John Doe").replace(/\{\{reset_link\}\}/g, "https://ggid.dev/reset?token=xxx") ?? "" }} />
         </div>
       </div>

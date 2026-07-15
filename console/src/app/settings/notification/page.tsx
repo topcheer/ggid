@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Bell, Mail, MessageSquare, Smartphone, Plus, Trash2, X,
   AlertCircle, Loader2, Send, Check, Pencil, Eye,
@@ -46,6 +47,7 @@ const CHANNEL_LABEL: Record<Channel, string> = {
 
 export default function NotificationPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export default function NotificationPage() {
       const data = await apiFetch<NotificationSettings>("/api/v1/settings/notifications").catch(() => null);
       if (data) setSettings(data);
     } catch {
-      setError("Failed to load notification settings");
+      setError(t("notif.errLoad"));
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,7 @@ export default function NotificationPage() {
         providers: { ...settings.providers, [ch]: { ...current, enabled: !current.enabled } },
       });
     } catch {
-      setError("Failed to toggle provider");
+      setError(t("notif.errToggle"));
     }
   };
 
@@ -100,9 +102,9 @@ export default function NotificationPage() {
       await apiFetch(`/api/v1/settings/notifications/test`, {
         method: "POST", body: JSON.stringify({ channel: ch }),
       });
-      setTestResult(`${CHANNEL_LABEL[ch]} test message sent successfully.`);
+      setTestResult(t("notif.testSent"));
     } catch {
-      setTestResult(`${CHANNEL_LABEL[ch]} test failed. Check provider configuration.`);
+      setTestResult(t("notif.testFailed"));
     } finally {
       setTesting(null);
       setTimeout(() => setTestResult(null), 5000);
@@ -118,7 +120,7 @@ export default function NotificationPage() {
       setEditTemplate(null);
       await load();
     } catch {
-      setError("Failed to save template");
+      setError(t("notif.errSaveTemplate"));
     }
   };
 
@@ -132,7 +134,7 @@ export default function NotificationPage() {
       setShowTemplate(false);
       await load();
     } catch {
-      setError("Failed to create template");
+      setError(t("notif.errCreateTemplate"));
     }
   };
 
@@ -141,7 +143,7 @@ export default function NotificationPage() {
       await apiFetch(`/api/v1/settings/notifications/templates/${id}`, { method: "DELETE" });
       await load();
     } catch {
-      setError("Failed to delete template");
+      setError(t("notif.errDeleteTemplate"));
     }
   };
 
@@ -156,14 +158,14 @@ export default function NotificationPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <Bell className="h-6 w-6 text-indigo-600" /> Notifications
+            <Bell className="h-6 w-6 text-indigo-600" /> {t("notif.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Configure notification channels and message templates.
+            {t("notif.subtitle")}
           </p>
         </div>
         <button onClick={() => setShowTemplate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-          <Plus className="h-4 w-4" /> New Template
+          <Plus className="h-4 w-4" /> {t("notif.newTemplate")}
         </button>
       </div>
 
@@ -193,7 +195,7 @@ export default function NotificationPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800 dark:text-gray-200">{CHANNEL_LABEL[ch]}</h3>
-                    <p className="text-xs text-gray-400">{cfg.provider || "Not configured"}</p>
+                    <p className="text-xs text-gray-400">{cfg.provider || t("notif.notConfigured")}</p>
                   </div>
                 </div>
                 <label className="relative inline-flex cursor-pointer items-center">

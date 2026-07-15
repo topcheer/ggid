@@ -1,22 +1,24 @@
 "use client";
 
+import { useTranslations } from "@/lib/i18n";
 import { useConsentManagement } from "@ggid/sdk-react";
 import { CheckCircle, XCircle, FileText, Users } from "lucide-react";
 
 export default function ConsentManagementPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, withdrawConsent } = useConsentManagement();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading consent management...</div>;
-  if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("consentManagement.loading")}</div>;
+  if (error) return <div className="p-8 text-red-400">{t("consentManagement.error")} {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Consent Management</h1>
-          <p className="text-sm text-gray-400 mt-1">Track user consent across purposes and regions</p>
+          <h1 className="text-2xl font-bold">{t("consentManagement.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("consentManagement.subtitle")}</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("consentManagement.refresh")}</button>
       </div>
 
       {/* Region Compliance */}
@@ -25,7 +27,7 @@ export default function ConsentManagementPage() {
           <div key={r.region} className="bg-gray-900 rounded-xl p-4">
             <p className="text-xs text-gray-400 mb-1">{r.region}</p>
             <p className="text-xl font-bold text-green-400">{r.compliance_pct}%</p>
-            <p className="text-xs text-gray-500 mt-0.5">{r.active_consents} active consents</p>
+            <p className="text-xs text-gray-500 mt-0.5">{r.active_consents} {t("consentManagement.activeConsents")}</p>
           </div>
         ))}
       </div>
@@ -35,7 +37,7 @@ export default function ConsentManagementPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold flex items-center gap-2 mb-4">
             <Users className="w-4 h-4 text-blue-400" />
-            Consent Registry
+            {t("consentManagement.consentRegistry")}
           </h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {(data?.user_consent_registry ?? []).map((c, i) => (
@@ -52,12 +54,12 @@ export default function ConsentManagementPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-3 text-xs text-gray-500">
-                  <span>Granted: {c.granted_at}</span>
-                  {!c.withdrawn_at && c.expires_at && <span>Expires: {c.expires_at}</span>}
-                  {c.withdrawn_at && <span className="text-red-400">Withdrawn: {c.withdrawn_at}</span>}
+                  <span>{t("consentManagement.granted")} {c.granted_at}</span>
+                  {!c.withdrawn_at && c.expires_at && <span>{t("consentManagement.expires")} {c.expires_at}</span>}
+                  {c.withdrawn_at && <span className="text-red-400">{t("consentManagement.withdrawn")} {c.withdrawn_at}</span>}
                 </div>
                 {!c.withdrawn_at && (
-                  <button onClick={() => withdrawConsent(c.user, c.purpose)} className="text-xs text-red-400 hover:text-red-300 mt-1">Withdraw</button>
+                  <button onClick={() => withdrawConsent(c.user, c.purpose)} className="text-xs text-red-400 hover:text-red-300 mt-1">{t("consentManagement.withdraw")}</button>
                 )}
               </div>
             ))}
@@ -68,19 +70,19 @@ export default function ConsentManagementPage() {
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold flex items-center gap-2 mb-4">
             <FileText className="w-4 h-4 text-purple-400" />
-            Consent Templates
+            {t("consentManagement.consentTemplates")}
           </h2>
           <div className="space-y-2">
-            {(data?.consent_templates ?? []).map((t, i) => (
+            {(data?.consent_templates ?? []).map((tmpl, i) => (
               <div key={i} className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-sm font-medium">{t.purpose}</p>
-                  <span className={"text-xs px-1.5 py-0.5 rounded " + (t.required ? "bg-red-900 text-red-300" : "bg-gray-700 text-gray-400")}>
-                    {t.required ? "Required" : "Optional"}
+                  <p className="text-sm font-medium">{tmpl.purpose}</p>
+                  <span className={"text-xs px-1.5 py-0.5 rounded " + (tmpl.required ? "bg-red-900 text-red-300" : "bg-gray-700 text-gray-400")}>
+                    {tmpl.required ? t("consentManagement.required") : t("consentManagement.optional")}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mb-1">{t.purpose_text}</p>
-                <p className="text-xs text-gray-500">Legal basis: {t.legal_basis}</p>
+                <p className="text-xs text-gray-400 mb-1">{tmpl.purpose_text}</p>
+                <p className="text-xs text-gray-500">{t("consentManagement.legalBasis")} {tmpl.legal_basis}</p>
               </div>
             ))}
           </div>
