@@ -18,7 +18,7 @@
 - Partial: 0
 - Acceptable: 1
 - Remaining: 0
-- Last scan: 2026-07-15 round 41 (Focus E — Security Config, no new gaps)
+- Last scan: 2026-07-15 round 42 (E2E regression tests — 11/11 PASS)
 
 ## Findings
 
