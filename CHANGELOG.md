@@ -63,6 +63,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] — Node SDK Version Bump
+
+### Fixed
+- Bump Node SDK to 1.0.4 to avoid npm publish conflict.
+
+
 ## [0.3.0] — All Productization Gaps Closed
 
 ### Added
