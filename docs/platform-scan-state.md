@@ -11,6 +11,7 @@
 ## Source of truth: docs/platform-completeness-report.md
 
 *Round 47 odd: Focus A interface integrity scan completed — 3 OAuth handler registration gaps fixed; 3 NEW gRPC service gaps identified (identity/auth/oauth proto services lack generated pb + server implementations). Round 48 will be E2E regression tests.*
+
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
 All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
 login, refresh, userinfo, jwks, rbac, abac, webhook, introspect, revoke, discovery

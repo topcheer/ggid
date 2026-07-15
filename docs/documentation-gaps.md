@@ -85,5 +85,23 @@ Fixes applied:
   - Removed 8 trailing consecutive blank lines at end of file.
 - docs/platform-scan-state.md: No format issues found; content already current with Round 46.
 
+## Hourly Quality Optimization (2026-07-15 Round 47)
+
+Files scanned (newer than docs/.last-scan): 2
+- docs/platform-scan-state.md
+- docs/platform-completeness-report.md
+
+Fixes applied:
+- docs/platform-completeness-report.md:
+  - Added blank line between Scan History table and "## Remaining Real Gaps" heading.
+  - Removed duplicate "Research backlog" line at end of file.
+- docs/platform-scan-state.md:
+  - Added blank line between italic round summary and "## SDK Feature Matrix" heading.
+
 New/verified gaps:
-- No new documentation gaps. Platform completeness report and scan state are consistent with current code (Round 46 E2E 11/11 PASS).
+- Platform completeness report updated to Round 47: 3 OAuth handler registration gaps fixed (client versioning, client health, consent receipt).
+- 3 NEW gRPC service implementation gaps identified in platform-completeness-report.md:
+  - #30 Identity gRPC service (`services/identity/internal/server/server.go`) — proto methods not registered.
+  - #31 Auth gRPC service (`services/auth/cmd/main.go`, `services/auth/internal/server`) — no gRPC server or generated pb import.
+  - #32 OAuth gRPC service (`services/oauth/internal/server/server.go`) — proto methods not registered.
+- No new documentation gaps for existing HTTP/REST features.
