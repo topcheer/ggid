@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, AlertTriangle, FileCheck, Zap } from "lucide-reac
 
 export default function OAuth21AuditPage() {
   const { data, loading, error, refresh } = useOAuth21Audit();
+  const pct = data?.overall_compliance_pct ?? 0;
 
   if (loading) return <div className="p-8 text-gray-400">Loading OAuth 2.1 audit...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
@@ -16,7 +17,7 @@ export default function OAuth21AuditPage() {
           <h1 className="text-2xl font-bold">OAuth 2.1 Compliance Audit</h1>
           <p className="text-sm text-gray-400 mt-1">Verify OAuth 2.1 specification compliance</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} aria-label="Refresh audit" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
       </div>
 
       {/* Overall Compliance */}
@@ -28,15 +29,15 @@ export default function OAuth21AuditPage() {
               <circle
                 cx="50" cy="50" r="40"
                 fill="none"
-                stroke={data?.overall_compliance_pct === 100 ? "#22c55e" : data?.overall_compliance_pct >= 80 ? "#eab308" : "#ef4444"}
+                stroke={pct === 100 ? "#22c55e" : pct >= 80 ? "#eab308" : "#ef4444"}
                 strokeWidth="10"
-                strokeDasharray={((data?.overall_compliance_pct ?? 0) / 100 * 251.2) + " " + 251.2}
+                strokeDasharray={((pct) / 100 * 251.2) + " " + 251.2}
                 strokeLinecap="round"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className={"text-xl font-bold " + (data?.overall_compliance_pct === 100 ? "text-green-400" : data?.overall_compliance_pct >= 80 ? "text-yellow-400" : "text-red-400")}>
-                {data?.overall_compliance_pct ?? 0}%
+              <span className={"text-xl font-bold " + (pct === 100 ? "text-green-400" : pct >= 80 ? "text-yellow-400" : "text-red-400")}>
+                {pct}%
               </span>
             </div>
           </div>

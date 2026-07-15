@@ -17,10 +17,10 @@ export default function SecurityKPITrackerPage() {
           <p className="text-sm text-gray-400 mt-1">Track security KPIs against targets</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition">
+          <button className="flex items-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition" aria-label="Download board report">
             <Download className="w-4 h-4" /> Board Report
           </button>
-          <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+          <button onClick={refresh} aria-label="Refresh KPI data" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default function SecurityKPITrackerPage() {
           <h2 className="text-sm font-semibold mb-4">Monthly History</h2>
           <div className="flex items-end gap-2 h-32">
             {(data?.monthly_history ?? []).map((m, i) => {
-              const max = Math.max(...(data?.monthly_history ?? [1]));
+              const max = Math.max(...(data?.monthly_history ?? []).map((x) => x.value), 1);
               return (
                 <div key={i} className="flex-1 flex flex-col items-center">
                   <div className="w-full bg-blue-500 rounded-t" style={{ height: max > 0 ? (m.value / max) * 100 + "%" : "0" }} />

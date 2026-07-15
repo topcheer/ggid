@@ -51,7 +51,7 @@ export default function SmtpConfigPage() {
 
   const sendTest = () => {
     setTesting(true);
-    setTimeout(() => { setTestResult(`Test email sent to ${testEmail}`); setTesting(false); }, 1000);
+    window.setTimeout(() => { setTestResult(`Test email sent to ${testEmail}`); setTesting(false); }, 1000);
   };
 
   if (loading) return <div className="p-6"><p>Loading...</p></div>;
@@ -78,7 +78,7 @@ export default function SmtpConfigPage() {
           <div><label className="text-sm font-medium">Username</label><input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">Password</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
-        <div><label className="text-sm font-medium">Connection Timeout (s)</label><input type="number" min={5} max={120} value={timeout} onChange={e => setTimeout_val(parseInt(e.target.value) || 30)} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
+        <div><label className="text-sm font-medium">Connection Timeout (s)</label><input type="number" min={5} max={120} value={timeout} onChange={e => setTimeout(parseInt(e.target.value) || 30)} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
@@ -113,7 +113,7 @@ export default function SmtpConfigPage() {
         <h2 className="text-lg font-semibold">Test Email</h2>
         <div className="flex gap-3">
           <input type="email" placeholder="recipient@example.com" value={testEmail} onChange={e => setTestEmail(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
-          <button onClick={sendTest} disabled={testing || !testEmail} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? 'Sending...' : 'Send Test'}</button>
+          <button onClick={sendTest} disabled={testing || !testEmail} aria-label="Send test email" className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? 'Sending...' : 'Send Test'}</button>
         </div>
         {testResult && <div className="text-sm p-3 rounded bg-green-50 text-green-700">{testResult}</div>}
       </section>

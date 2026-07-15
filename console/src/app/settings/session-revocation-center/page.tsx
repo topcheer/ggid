@@ -22,6 +22,8 @@ export default function SessionRevocationCenterPage() {
   const [reason, setReason] = useState('');
   const [bulkConfirm, setBulkConfirm] = useState(false);
   const [auditLog, setAuditLog] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/auth/sessions/revoke', {
@@ -124,9 +126,9 @@ export default function SessionRevocationCenterPage() {
                 <td className="p-3"><span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{s.tenant}</span></td>
                 <td className="p-3">
                   <div className="flex gap-2">
-                    <button onClick={() => revoke(s.id, s.userId)} className="text-red-600 text-xs hover:underline">Revoke</button>
-                    <button onClick={() => revokeAllForUser(s.userId)} className="text-amber-600 text-xs hover:underline">Revoke All User</button>
-                    <button onClick={() => revokeByTenant(s.tenant)} className="text-purple-600 text-xs hover:underline">Revoke Tenant</button>
+                    <button onClick={() => revoke(s.id, s.userId)} aria-label={`Revoke session for ${s.userId}`} className="text-red-600 text-xs hover:underline">Revoke</button>
+                    <button onClick={() => revokeAllForUser(s.userId)} aria-label={`Revoke all sessions for ${s.userId}`} className="text-amber-600 text-xs hover:underline">Revoke All User</button>
+                    <button onClick={() => revokeByTenant(s.tenant)} aria-label={`Revoke all sessions for tenant ${s.tenant}`} className="text-purple-600 text-xs hover:underline">Revoke Tenant</button>
                   </div>
                 </td>
               </tr>
