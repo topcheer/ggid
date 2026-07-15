@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface DynamicClient {
@@ -18,7 +19,6 @@ export default function DynamicClientRegistrationPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +32,6 @@ export default function DynamicClientRegistrationPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -42,15 +41,6 @@ export default function DynamicClientRegistrationPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
-  const [clients, setClients] = useState<DynamicClient[]>([
-    { id: 'dc1', clientId: 'dyn-client-001', created: '2026-07-01', grantTypes: ['authorization_code'], scopes: ['openid', 'profile'], softwareStatement: true, status: 'active' },
-    { id: 'dc2', clientId: 'dyn-client-002', created: '2026-06-15', grantTypes: ['client_credentials'], scopes: ['read:users'], softwareStatement: false, status: 'active' },
-    { id: 'dc3', clientId: 'dyn-client-003', created: '2026-05-20', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'email'], softwareStatement: true, status: 'disabled' },
-  ]);
-
   const [showForm, setShowForm] = useState(false);
   const [autoApprove, setAutoApprove] = useState(true);
   const [openRegistration, setOpenRegistration] = useState(true);
@@ -58,8 +48,16 @@ export default function DynamicClientRegistrationPage() {
   const [validateUri, setValidateUri] = useState(true);
   const [validateLogo, setValidateLogo] = useState(false);
   const [maxRedirectUris, setMaxRedirectUris] = useState(5);
-
   const [form, setForm] = useState({ clientName: '', redirectUris: '', grantTypes: '', scopes: '', softwareStatement: false });
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  const [clients, setClients] = useState<DynamicClient[]>([
+    { id: 'dc1', clientId: 'dyn-client-001', created: '2026-07-01', grantTypes: ['authorization_code'], scopes: ['openid', 'profile'], softwareStatement: true, status: 'active' },
+    { id: 'dc2', clientId: 'dyn-client-002', created: '2026-06-15', grantTypes: ['client_credentials'], scopes: ['read:users'], softwareStatement: false, status: 'active' },
+    { id: 'dc3', clientId: 'dyn-client-003', created: '2026-05-20', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'email'], softwareStatement: true, status: 'disabled' },
+  ]);
+
+
 
   const register = () => {
     const newClient: DynamicClient = {

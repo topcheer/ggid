@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface SbomComponent {
@@ -24,7 +25,6 @@ export default function SbomCenterPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +38,6 @@ export default function SbomCenterPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -48,9 +47,10 @@ export default function SbomCenterPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [selectedComponent, setSelectedComponent] = useState<SbomComponent | null>(null);
+  const [showJson, setShowJson] = useState(false);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [components, setComponents] = useState<SbomComponent[]>([
     { name: 'gin-gonic/gin', version: 'v1.10.0', license: 'MIT', severity: 'low', description: 'HTTP web framework for Go', cpe: 'cpe:2.3:a:gin-gonic:gin:1.10.0:*:*:*:*:*:*:*', purl: 'pkg:golang/github.com/gin-gonic/gin@v1.10.0', vulnerabilities: 0 },
     { name: 'golang-jwt/jwt', version: 'v5.2.1', license: 'MIT', severity: 'medium', description: 'JWT implementation for Go', cpe: 'cpe:2.3:a:golang-jwt:jwt:5.2.1:*:*:*:*:*:*:*', purl: 'pkg:golang/github.com/golang-jwt/jwt/v5@v5.2.1', vulnerabilities: 2 },
@@ -59,8 +59,6 @@ export default function SbomCenterPage() {
     { name: 'nats-io/nats.go', version: 'v1.36.0', license: 'Apache-2.0', severity: 'low', description: 'NATS client for Go', cpe: 'cpe:2.3:a:nats-io:nats.go:1.36.0:*:*:*:*:*:*:*', purl: 'pkg:golang/github.com/nats-io/nats.go@v1.36.0', vulnerabilities: 1 },
   ]);
 
-  const [selectedComponent, setSelectedComponent] = useState<SbomComponent | null>(null);
-  const [showJson, setShowJson] = useState(false);
 
   const severityColor = (s: string): string =>
     s === 'high' ? 'bg-red-100 text-red-700' :

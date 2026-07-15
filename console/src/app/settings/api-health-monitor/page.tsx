@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface Endpoint { id: string; path: string; method: string; status: string; latency: string; uptime: string; errorRate: string; }
@@ -8,7 +9,6 @@ export default function ApiHealthMonitorPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,7 +22,6 @@ export default function ApiHealthMonitorPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -33,9 +32,8 @@ export default function ApiHealthMonitorPage() {
   }, []);
 
   const t = useTranslations();
-  if (loading) return <div className="p-8">{t("apiHealthMonitor.loading")}</div>;
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("apiHealthMonitor.noData")}</div>;
   const [endpoints] = useState<Endpoint[]>([
     { id: 'e1', path: '/api/v1/auth/login', method: 'POST', status: 'healthy', latency: '45ms', uptime: '99.98%', errorRate: '0.02%' },
     { id: 'e2', path: '/api/v1/users', method: 'GET', status: 'healthy', latency: '32ms', uptime: '99.99%', errorRate: '0.01%' },

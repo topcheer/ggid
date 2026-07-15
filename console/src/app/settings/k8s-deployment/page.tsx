@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface Deployment { serviceName: string; image: string; replicas: number; cpu: string; memory: string; status: string; }
@@ -14,7 +15,6 @@ export default function K8sDeploymentPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   const t = useTranslations();
 
@@ -30,7 +30,6 @@ export default function K8sDeploymentPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -40,10 +39,9 @@ export default function K8sDeploymentPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{"No Data"}</div>;
   const [deployments, setDeployments] = useState<Deployment[]>(defaultDeployments);
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
 
   const addDeployment = () => {
     setDeployments(prev => [...prev, { serviceName: 'new-service', image: 'ggid/new:latest', replicas: 1, cpu: '100m', memory: '128Mi', status: 'Pending' }]);

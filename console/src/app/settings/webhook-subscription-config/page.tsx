@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useTranslations } from "@/lib/i18n";
 
 interface Subscription {
@@ -24,7 +25,6 @@ export default function WebhookSubscriptionConfigPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,7 +38,6 @@ export default function WebhookSubscriptionConfigPage() {
         });
         if (!res.ok) return null;
         const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Failed to load");
       } finally {
@@ -48,9 +47,10 @@ export default function WebhookSubscriptionConfigPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const [showForm, setShowForm] = useState(false);
+  const [newSub, setNewSub] = useState({ eventType: '', endpointUrl: '', secret: '', maxRetries: 3 });
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([
     { id: 'sub1', eventType: 'user.created', endpointUrl: 'https://app.example.com/hooks/user', enabled: true, retryCount: 0, maxRetries: 3 },
     { id: 'sub2', eventType: 'user.deleted', endpointUrl: 'https://app.example.com/hooks/user', enabled: true, retryCount: 2, maxRetries: 3 },
@@ -58,8 +58,6 @@ export default function WebhookSubscriptionConfigPage() {
     { id: 'sub4', eventType: 'org.created', endpointUrl: 'https://billing.example.com/hooks', enabled: false, retryCount: 5, maxRetries: 3 },
   ]);
 
-  const [showForm, setShowForm] = useState(false);
-  const [newSub, setNewSub] = useState({ eventType: '', endpointUrl: '', secret: '', maxRetries: 3 });
   const [deliveries] = useState<Delivery[]>([
     { id: 'd1', subscription: 'user.created', status: 'success', timestamp: '2026-07-12 14:30', statusCode: 200 },
     { id: 'd2', subscription: 'user.deleted', status: 'retry', timestamp: '2026-07-12 14:15', statusCode: 500 },
