@@ -63,6 +63,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — All Productization Gaps Closed
+
+### Added
+- OAuth 2.1 dynamic compliance analyzer (services/oauth/internal/server/oauth21_audit_handler.go).
+- FAPI 2.0 client profile with PKCE/PAR/DPoP enforcement and  endpoint.
+
+### Fixed
+- React SDK duplicate identifier exports (75 aliases).
+- Release workflow npm/publish job conflicts.
+- Gateway middleware wiring: MaxBodySize, HostValidation, TimeoutMiddleware.
+
+### Changed
+- SDK React TypeScript: npx tsc --noEmit passes.
+- Node SDK published at 1.0.3.
+- All productization gaps: Total 25, Done 24, Remaining 0.
+
+
 ## [0.2.5] — Release Workflow Fix + Node SDK 1.0.3
 
 ### Fixed
