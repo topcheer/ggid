@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 0
 - Remaining: 0
-- Last scan: 2026-07-15 round 27 (Focus E — Security Config)
+- Last scan: 2026-07-15 round 28 (E2E regression tests — 11/11 PASS)
 
 ## Findings
 
