@@ -103,7 +103,7 @@
 ## Next Actions
 
 - Round 21 (odd, Focus B): Route Wiring scan — /api/v1/org, /api/v1/policy, /api/v1/webauthn prefixes added to gateway config
-- Round 22 (even): E2E regression test run (`deploy/e2e-docker-test.sh`)
+- Round 22 (even): E2E regression tests 11/11 PASS (`deploy/e2e-docker-test.sh`)
 - Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard
 
 
