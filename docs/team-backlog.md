@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-15 (Round 25 Focus D — Data Persistence; research on OAuth 2.1/FAPI/FedCM)*
+*Last updated: 2026-07-15 (Round 40 E2E; PIPL/NIS2/CRA research complete — no new gaps)*
 
 ## Current Stats
 
@@ -27,9 +27,10 @@
 
 | # | Feature | Owner | Driver | Notes |
 |---|---------|-------|--------|-------|
-| 4 | OAuth 2.1 enforcement mode | backend | RFC 9700 / OAuth 2.1 | Mandatory PKCE, reject implicit/ROPC, exact redirect URI matching |
-| 5 | FAPI 2.0 profile | backend | OpenID FAPI | JAR/JARM, PAR, sender-constrained tokens, DPoP |
-| 6 | FedCM support | backend | Chrome/Edge default | FedCM config.json + accounts + login endpoints |
+| 4 | OAuth 2.1 enforcement mode | backend | RFC 9700 / OAuth 2.1 | [DONE] dfcb8a7f |
+| 5 | FAPI 2.0 profile | backend | OpenID FAPI | [DONE] ccae234f |
+| 6 | FedCM support | backend | Chrome/Edge default | [ACCEPTABLE] future consumer identity |
+| 7 | PIPL/NIS2/CRA compliance research | docs/arch | PIPL amended CSL / NIS2 / CRA | [DONE] docs/research/nis2-cra-pipl-compliance.md |
 | 5 | Passkey health dashboard | frontend | passkey adoption | Console page showing passkey enrollment status, recovery risk |
 | 6 | PQC migration (ML-DSA / ML-KEM) | arch | NIST PQC | Hybrid TLS + JWT signing in pkg/crypto |
 | 7 | NIS2 / CRA compliance dashboard | frontend | EU regulation | Security incident reporting, SBOM, vulnerability tracking |
