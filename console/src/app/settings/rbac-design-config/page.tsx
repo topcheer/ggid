@@ -1,16 +1,38 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRbacDesignConfig, RbacDesignConfig, RoleNode, RoleTemplate, SodPair } from "@ggid/sdk-react";
+import { useRbacDesignConfig, SodPair } from "@ggid/sdk-react";
+
+interface LocalRoleNode {
+  level: number;
+  name: string;
+  parent?: string;
+}
+
+interface LocalRoleTemplate {
+  name: string;
+  description: string;
+  permissions: string[];
+}
+
+interface LocalRbacDesignConfig {
+  inheritance_enabled: boolean;
+  auto_inherit_from_parent: boolean;
+  max_depth: number;
+  delegation_max_depth: number;
+  role_hierarchy: LocalRoleNode[];
+  role_templates: LocalRoleTemplate[];
+  sod_pairs: SodPair[];
+}
 
 export default function RbacDesignConfigPage() {
   const { config, loading, error, fetchConfig, updateConfig } = useRbacDesignConfig();
-  const [form, setForm] = useState<RbacDesignConfig | null>(null);
+  const [form, setForm] = useState<LocalRbacDesignConfig | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
-  useEffect(() => { if (config) setForm(config); }, [config]);
+  useEffect(() => { if (config) setForm(config as unknown as LocalRbacDesignConfig); }, [config]);
 
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
+  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form as unknown as Parameters<typeof updateConfig>[0]); setSaving(false); };
 
   if (loading && !form) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
@@ -52,7 +74,7 @@ export default function RbacDesignConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Role Hierarchy</h2>
         <div className="space-y-1">
-          {form.role_hierarchy.map((r: RoleNode, i: number) => (
+          {form.role_hierarchy.map((r, i) => (
             <div key={i} className="flex items-center py-1" style={{ paddingLeft: `${r.level * 24}px` }}>
               <span className="text-gray-400 mr-2">{r.level > 0 ? "|-" : ""}</span>
               <span className="font-medium">{r.name}</span>
@@ -65,7 +87,7 @@ export default function RbacDesignConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Role Templates</h2>
         <div className="space-y-3">
-          {form.role_templates.map((t: RoleTemplate, i: number) => (
+          {form.role_templates.map((t, i) => (
             <div key={i} className="border-b pb-2">
               <div className="font-medium">{t.name}</div>
               <div className="text-sm text-gray-600">{t.description}</div>
@@ -86,7 +108,7 @@ export default function RbacDesignConfigPage() {
             </tr>
           </thead>
           <tbody>
-            {form.sod_pairs.map((p: SodPair, i: number) => (
+            {form.sod_pairs.map((p, i) => (
               <tr key={i} className="border-b">
                 <td className="py-2">{p.role_a}</td>
                 <td>{p.role_b}</td>
@@ -97,7 +119,7 @@ export default function RbacDesignConfigPage() {
         </table>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button onClick={handleSave} disabled={saving} aria-label="Save RBAC design changes" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }
