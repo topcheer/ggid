@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import { API_BASE_URL } from "@/lib/api-config";
 import {
   ShieldCheck,
@@ -51,6 +52,7 @@ const entityId = `${GATEWAY_BASE}/saml/metadata`;
 const acsUrl = `${GATEWAY_BASE}/saml/acs`;
 
 export default function SamlSettingsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [config, setConfig] = useState<SamlConfig>(defaultConfig);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -182,7 +184,7 @@ export default function SamlSettingsPage() {
         <button
           onClick={() => copyToClipboard(value, fieldKey)}
           className="rounded-lg border border-gray-300 p-2 text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-          title="Copy"
+          title={t("common.copy")}
         >
           {copiedField === fieldKey ? (
             <Check className="h-4 w-4 text-green-500" />
@@ -288,7 +290,7 @@ export default function SamlSettingsPage() {
             <FileText className="h-5 w-5 text-brand-600" /> Service Provider Endpoints
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {readOnlyField("Entity ID (auto-generated)", entityId, "entityId")}
+            {readOnlyField(t("samlSettings.entityIdAuto"), entityId, "entityId")}
             {readOnlyField("ACS URL (Assertion Consumer)", acsUrl, "acsUrl")}
           </div>
         </div>
@@ -351,7 +353,7 @@ export default function SamlSettingsPage() {
               </label>
               <input
                 readOnly
-                value={config.cert_fingerprint || "Not configured"}
+                value={config.cert_fingerprint || t("samlSettings.notConfigured")}
                 className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-xs text-gray-600 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-400"
               />
             </div>

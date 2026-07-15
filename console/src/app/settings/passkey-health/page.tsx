@@ -1,12 +1,14 @@
 "use client";
 
 import { usePasskeyHealth } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Fingerprint, Smartphone, CheckCircle, Clock, Shield } from "lucide-react";
 
 export default function PasskeyHealthPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = usePasskeyHealth();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading passkey health...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("passkeyHealth.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const platColors: Record<string, string> = {
@@ -24,32 +26,32 @@ export default function PasskeyHealthPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Passkey Health</h1>
-          <p className="text-sm text-gray-400 mt-1">Monitor WebAuthn passkey adoption and status</p>
+          <h1 className="text-2xl font-bold">{t("passkeyHealth.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("passkeyHealth.subtitle")}</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("common.refresh")}</button>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-900 rounded-xl p-4">
           <Fingerprint className="w-5 h-5 text-blue-400 mb-1" />
-          <p className="text-xs text-gray-400">Total Passkeys</p>
+          <p className="text-xs text-gray-400">{t("passkeyHealth.totalPasskeys")}</p>
           <p className="text-xl font-bold">{data?.registered_passkeys?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <CheckCircle className="w-5 h-5 text-green-400 mb-1" />
-          <p className="text-xs text-gray-400">Adoption Rate</p>
+          <p className="text-xs text-gray-400">{t("passkeyHealth.adoptionRate")}</p>
           <p className="text-xl font-bold text-green-400">{data?.adoption_rate_pct ?? 0}%</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Clock className="w-5 h-5 text-yellow-400 mb-1" />
-          <p className="text-xs text-gray-400">Stale Passkeys (90d+)</p>
+          <p className="text-xs text-gray-400">{t("passkeyHealth.stalePasskeys")}</p>
           <p className="text-xl font-bold text-yellow-400">{data?.stale_passkeys?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Shield className="w-5 h-5 text-purple-400 mb-1" />
-          <p className="text-xs text-gray-400">Backup Eligible</p>
+          <p className="text-xs text-gray-400">{t("passkeyHealth.backupEligible")}</p>
           <p className="text-xl font-bold">{data?.registered_passkeys?.filter((p) => p.backup_eligible).length ?? 0}</p>
         </div>
       </div>
@@ -57,7 +59,7 @@ export default function PasskeyHealthPage() {
       {/* Adoption Gauge + Platform Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Adoption Rate</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("passkeyHealth.adoptionRate")}</h2>
           <div className="relative w-32 h-32 mx-auto">
             <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
               <circle cx="50" cy="50" r="40" fill="none" stroke="#374151" strokeWidth="12" />
@@ -77,7 +79,7 @@ export default function PasskeyHealthPage() {
         </div>
 
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Platform Distribution</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("passkeyHealth.platformDist")}</h2>
           <div className="relative w-32 h-32 mx-auto">
             <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
               {(() => {
@@ -120,7 +122,7 @@ export default function PasskeyHealthPage() {
               <div key={opt.method} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
                 <span className="text-sm">{opt.method}</span>
                 <span className={"text-xs px-2 py-0.5 rounded " + (opt.enabled ? "bg-green-900 text-green-300" : "bg-gray-700 text-gray-400")}>
-                  {opt.enabled ? "On" : "Off"}
+                  {opt.enabled ? t("rateLimits.on") : t("rateLimits.off")}
                 </span>
               </div>
             ))}
@@ -160,7 +162,7 @@ export default function PasskeyHealthPage() {
                     <div className="flex items-center gap-1">
                       {p.backup_eligible ? (
                         <span className={"text-xs " + (p.backup_state === "synced" ? "text-green-400" : "text-yellow-400")}>
-                          {p.backup_eligible ? "Eligible" : ""} ({p.backup_state})
+                          {p.backup_eligible ? t("passkeyHealth.eligible") : ""} ({p.backup_state})
                         </span>
                       ) : (
                         <span className="text-xs text-gray-500">Not eligible</span>

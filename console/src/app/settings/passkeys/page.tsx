@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Key, Trash2, Smartphone, Monitor, Fingerprint, Check, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Passkey {
   id: string;
@@ -23,6 +24,7 @@ const platformIcons: Record<string, typeof Smartphone> = {
 };
 
 export default function PasskeysPage() {
+  const t = useTranslations();
   const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [loading, setLoading] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -64,22 +66,22 @@ export default function PasskeysPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Key className="w-6 h-6 text-blue-500" /> Passkey Management</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage registered passkeys and WebAuthn credentials.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Key className="w-6 h-6 text-blue-500" /> {t("passkeys.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("passkeys.subtitle")}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800">
-          <span className="text-sm text-gray-500">Total Passkeys</span>
+          <span className="text-sm text-gray-500">{t("passkeys.total")}</span>
           <p className="text-2xl font-bold mt-1">{passkeys.length}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
-          <span className="text-sm text-gray-500">Synced (iCloud/Google)</span>
+          <span className="text-sm text-gray-500">{t("passkeys.synced")}</span>
           <p className="text-2xl font-bold mt-1 text-blue-600">{passkeys.filter((p) => p.synced).length}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
-          <span className="text-sm text-gray-500">Never Used</span>
+          <span className="text-sm text-gray-500">{t("passkeys.neverUsed")}</span>
           <p className="text-2xl font-bold mt-1 text-yellow-600">{passkeys.filter((p) => !p.last_used).length}</p>
         </div>
       </div>
@@ -87,7 +89,7 @@ export default function PasskeysPage() {
       {/* Passkey list */}
       <div className="rounded-lg border dark:border-gray-800">
         <div className="px-4 py-3 border-b dark:border-gray-800">
-          <h3 className="font-semibold">Registered Passkeys</h3>
+          <h3 className="font-semibold">{t("passkeys.registered")}</h3>
         </div>
         <div className="divide-y dark:divide-gray-800">
           {passkeys.map((pk) => {
@@ -102,13 +104,13 @@ export default function PasskeysPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{pk.label}</span>
                       {pk.synced ? (
-                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"><Check className="w-3 h-3" /> Synced</span>
+                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"><Check className="w-3 h-3" /> {t("passkeys.syncedLabel")}</span>
                       ) : (
-                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"><X className="w-3 h-3" /> Device-only</span>
+                        <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"><X className="w-3 h-3" /> {t("passkeys.deviceOnly")}</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">{pk.device} &middot; {pk.platform} &middot; Created {pk.created_at}</p>
-                    <p className="text-xs text-gray-400">Last used: {pk.last_used || "Never"}</p>
+                    <p className="text-xs text-gray-400">Last used: {pk.last_used || t("passkeys.never")}</p>
                   </div>
                 </div>
                 <button
@@ -117,15 +119,15 @@ export default function PasskeysPage() {
                   className="px-3 py-1.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-900 disabled:opacity-50 flex items-center gap-1"
                 >
                   <Trash2 className="w-4 h-4" />
-                  {revokingId === pk.id ? "Revoking..." : "Revoke"}
+                  {revokingId === pk.id ? t("passkeys.revoking") : t("passkeys.revoke")}
                 </button>
               </div>
             );
           })}
           {passkeys.length === 0 && !loading && (
-            <p className="px-4 py-8 text-center text-gray-500">No passkeys registered.</p>
+            <p className="px-4 py-8 text-center text-gray-500">{t("passkeys.noPasskeys")}</p>
           )}
-          {loading && <p className="px-4 py-8 text-center text-gray-500">Loading...</p>}
+          {loading && <p className="px-4 py-8 text-center text-gray-500">{t("common.loading")}</p>}
         </div>
       </div>
     </div>
