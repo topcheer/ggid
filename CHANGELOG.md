@@ -63,6 +63,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] — React SDK TypeScript Fix + Release Pipeline
+
+### Fixed
+- sdk/react/src/index.ts: resolve 75 duplicate identifier exports by aliasing repeated types.
+- sdk/react/src/useIdPConfig.ts: add uploadSAMLMetadata and downloadSPMetadata to interface.
+- sdk/react/src/useOrgTree.ts: align refetch return type with fetchTree.
+
+### Changed
+- .github/workflows/release.yml: fix Publish Go SDK job to run npm install/build in sdk/node.
+- sdk/node/package.json: bump to 1.0.2.
+
+
 
 
 
