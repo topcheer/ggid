@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Users, Plus, Trash2, X, Save, Calendar, Shield } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Delegation {
   id: string;
@@ -22,6 +23,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function DelegationsPage() {
+  const t = useTranslations();
+
   const [delegations, setDelegations] = useState<Delegation[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -88,7 +91,7 @@ export default function DelegationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-blue-500" /> Delegation Management</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-blue-500" /> {t("delegations.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Manage access delegations between users with scope and time limits.</p>
         </div>
         <button onClick={() => { setEditId(null); setForm({ delegated_to: "", scope: "", start_date: "", end_date: "", reason: "" }); setShowCreate(true); }} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> New Delegation</button>

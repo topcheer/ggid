@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface FieldMapping {
   sourceField: string;
@@ -25,6 +26,8 @@ interface ExecutionLog {
 }
 
 export default function UserProvisioningRulesPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rules, setRules] = useState<ProvisioningRule[]>([]);

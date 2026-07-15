@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Users, GitBranch, Clock, ShieldCheck } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface GroupInfo {
   id: string;
@@ -23,6 +24,8 @@ const reviewColors: Record<string, string> = {
 };
 
 export default function GroupAnalyticsPage() {
+  const t = useTranslations();
+
   const [groups, setGroups] = useState<GroupInfo[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +42,7 @@ export default function GroupAnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-purple-500" /> Group Analytics</h1><p className="text-sm text-gray-500 mt-1">Group membership analytics with trends and review status.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-purple-500" /> {t("groupAnalytics.title")}</h1><p className="text-sm text-gray-500 mt-1">Group membership analytics with trends and review status.</p></div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {groups.map((g) => (

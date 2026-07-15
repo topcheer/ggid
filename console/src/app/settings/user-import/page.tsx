@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
 import { Upload, FileText, CheckCircle, AlertTriangle, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface Mapping { csv_column: string; user_attribute: string; }
 interface ImportResults { created: number; updated: number; skipped: number; failed: number; errors: string[]; }
 const userAttributes = ["username", "email", "first_name", "last_name", "department", "role", "phone"];
 export default function UserImportPage() {
+  const t = useTranslations();
+
   const [fileName, setFileName] = useState("");
   const [mappings, setMappings] = useState<Mapping[]>([{ csv_column: "name", user_attribute: "username" }, { csv_column: "email", user_attribute: "email" }]);
   const [dryRun, setDryRun] = useState(true);
@@ -31,7 +34,7 @@ export default function UserImportPage() {
   };
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Upload className="w-6 h-6 text-blue-500" /> User Import</h1><p className="text-sm text-gray-500 mt-1">Bulk import users from CSV or JSON files.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Upload className="w-6 h-6 text-blue-500" /> {t("userImport.title")}</h1><p className="text-sm text-gray-500 mt-1">Bulk import users from CSV or JSON files.</p></div>
       {importError && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{importError}</span><button onClick={() => setImportError("")} className="text-xs underline hover:text-red-700">Dismiss</button></div>}
       {!fileName ? (
         <div onDrop={onDrop} onDragOver={(e) => e.preventDefault()} className="border-2 border-dashed dark:border-gray-700 rounded-lg p-12 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/30">

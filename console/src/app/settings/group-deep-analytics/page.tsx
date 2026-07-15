@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useGroupDeepAnalytics } from "@ggid/sdk-react";
 import { Layers, Grid, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function GroupDeepAnalyticsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useGroupDeepAnalytics();
   const [selectedGroup, setSelectedGroup] = useState("");
 

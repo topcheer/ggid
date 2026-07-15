@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Search, ShieldCheck, ShieldX, Shield, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Permission {
   id: string;
@@ -22,6 +23,8 @@ const recConfig: Record<string, { color: string; icon: typeof ShieldCheck; label
 };
 
 export default function EntitlementReviewPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [perms, setPerms] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,7 +45,7 @@ export default function EntitlementReviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> Entitlement Review</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> {t("entitlementReview.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Review user permissions with usage analytics and recommendations.</p>
       </div>
 

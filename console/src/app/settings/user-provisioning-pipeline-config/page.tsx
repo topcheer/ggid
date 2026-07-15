@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useUserProvisioningPipelineConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LocalPipelineStage {
   stage: string;
@@ -16,6 +17,8 @@ interface LocalUserProvisioningPipelineConfig {
 }
 
 export default function UserProvisioningPipelineConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useUserProvisioningPipelineConfig();
   const [form, setForm] = useState<LocalUserProvisioningPipelineConfig | null>(null);
   const [saving, setSaving] = useState(false);

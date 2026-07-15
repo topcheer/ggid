@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Network, Users, GitBranch, AlertCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface GraphData {
   group_id: string;
@@ -17,6 +18,8 @@ interface GraphData {
 interface Group { id: string; name: string; }
 
 export default function MembershipGraphPage() {
+  const t = useTranslations();
+
   const [groups] = useState<Group[]>([{ id: "g1", name: "Engineering" }, { id: "g2", name: "Admins" }, { id: "g3", name: "Contractors" }]);
   const [groupId, setGroupId] = useState("");
   const [data, setData] = useState<GraphData | null>(null);
@@ -35,7 +38,7 @@ export default function MembershipGraphPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-indigo-500" /> Membership Graph</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-indigo-500" /> {t("membershipGraph.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Visualize group membership hierarchies and detect circular dependencies.</p>
       </div>
 

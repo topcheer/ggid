@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface SyncHistory {
   timestamp: string;
@@ -14,6 +15,8 @@ interface MappingRule {
 }
 
 export default function UserProvisioningCenterPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sources, setSources] = useState<{ name: string; status: string }[]>([]);

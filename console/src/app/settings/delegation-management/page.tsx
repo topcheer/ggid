@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Delegation { id: string; delegator: string; delegatee: string; scopes: string[]; created: string; expires: string; maxDepth: number; }
 
 export default function DelegationManagementPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [delegations, setDelegations] = useState<Delegation[]>([]);

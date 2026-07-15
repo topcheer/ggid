@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, Save, Sliders, Bell, Palette, Code } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface UserPreferences {
   user_id: string;
@@ -21,6 +22,8 @@ const locales = ["en", "zh", "es", "fr", "de", "ja", "ko", "pt", "ru"];
 const timezones = ["UTC", "America/New_York", "America/Los_Angeles", "Europe/London", "Europe/Paris", "Asia/Shanghai", "Asia/Tokyo", "Australia/Sydney"];
 
 export default function UserPreferencesPage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [prefs, setPrefs] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,7 +82,7 @@ export default function UserPreferencesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Sliders className="w-6 h-6 text-blue-500" /> User Preferences</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Sliders className="w-6 h-6 text-blue-500" /> {t("userPreferences.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Manage locale, timezone, theme, notification channels, and dashboard layout.</p>
       </div>
 

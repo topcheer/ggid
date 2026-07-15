@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ClipboardCheck, Users, Check, X, Edit3, MessageSquare, Send } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RecertUser {
   user_id: string;
@@ -19,6 +20,8 @@ interface Team {
 }
 
 export default function RecertificationPage() {
+  const t = useTranslations();
+
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState("");
   const [users, setUsers] = useState<RecertUser[]>([]);
@@ -82,7 +85,7 @@ export default function RecertificationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ClipboardCheck className="w-6 h-6 text-blue-500" /> Access Recertification</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ClipboardCheck className="w-6 h-6 text-blue-500" /> {t("recertification.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Review and certify team member access with batch decisions.</p>
       </div>
 

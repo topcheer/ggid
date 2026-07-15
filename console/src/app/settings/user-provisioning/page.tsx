@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { UserPlus, Play, AlertCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ProvRule { id: string; source: string; trigger: string; action: string; target_app: string; enabled: boolean; }
 interface QueueItem { id: string; user: string; app: string; status: "pending" | "processing" | "completed" | "failed"; error: string | null; }
 
 export default function UserProvisioningPage() {
+  const t = useTranslations();
+
   const [rules, setRules] = useState<ProvRule[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +33,7 @@ export default function UserProvisioningPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> User Provisioning</h1><p className="text-sm text-gray-500 mt-1">Manage automated provisioning rules across connected apps.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> {t("userProvisioning.title")}</h1><p className="text-sm text-gray-500 mt-1">Manage automated provisioning rules across connected apps.</p></div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="rounded" /> Dry Run</label>
       </div>
 

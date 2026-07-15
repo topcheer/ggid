@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   FileText, Loader2, AlertCircle, X, Download, Trash2, FileDown, Calendar, FileCheck, Plus, Save,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AttestationRecord {
   id: string;
@@ -30,6 +31,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function UserAttestationPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [records, setRecords] = useState<AttestationRecord[]>([]);
   const [config, setConfig] = useState<AttestationConfig | null>(null);
@@ -84,7 +87,7 @@ export default function UserAttestationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCheck className="h-6 w-6 text-teal-600" /> User Attestation</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCheck className="h-6 w-6 text-teal-600" /> {t("userAttestation.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Periodic user data attestation with reminders and configurable required fields.</p>
       </div>
 

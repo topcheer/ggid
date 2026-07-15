@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface DelegationRule {
   id: string;
@@ -24,6 +25,8 @@ const INITIAL_RULES: DelegationRule[] = [];
 const HISTORY: ValidationHistoryEntry[] = [];
 
 export default function DelegationValidatorPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rules, setRules] = useState<DelegationRule[]>(INITIAL_RULES);

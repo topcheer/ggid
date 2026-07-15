@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Users, Loader2, AlertCircle, X, Download, Layers,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface UserSegment {
   id: string;
@@ -15,6 +16,8 @@ interface UserSegment {
 }
 
 export default function UserSegmentsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [segments, setSegments] = useState<UserSegment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +46,7 @@ export default function UserSegmentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Layers className="h-6 w-6 text-cyan-600" /> User Segments</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Layers className="h-6 w-6 text-cyan-600" /> {t("userSegments.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Segment users by role, activity, risk, or department. Export to CSV.</p>
       </div>
 

@@ -2,8 +2,11 @@
 
 import { useUserBehaviorAnalytics } from "@ggid/sdk-react";
 import { Activity, AlertTriangle, Smartphone, MapPin, Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function UserBehaviorAnalyticsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useUserBehaviorAnalytics();
 
   if (loading) return <div className="p-8 text-gray-400">Loading user behavior analytics...</div>;

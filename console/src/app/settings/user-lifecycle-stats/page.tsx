@@ -2,8 +2,11 @@
 
 import { useUserLifecycleStats } from "@ggid/sdk-react";
 import { Users } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function UserLifecycleStatsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useUserLifecycleStats();
 
   if (loading) return <div className="p-8 text-gray-400">Loading lifecycle stats...</div>;

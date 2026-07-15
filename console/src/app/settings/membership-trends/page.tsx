@@ -2,8 +2,11 @@
 
 import { useMembershipTrends } from "@ggid/sdk-react";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function MembershipTrendsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useMembershipTrends();
 
   if (loading) return <div className="p-8 text-gray-400">Loading membership trends...</div>;
