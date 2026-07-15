@@ -65,14 +65,14 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 		apiKeysMu.Unlock()
 		writeJSON(w, http.StatusCreated, key)
 
-	case r.URL.Path == "/api/v1/auth/api-keys/" && r.Method == http.MethodPost:
+	case strings.HasPrefix(r.URL.Path, "/api/v1/auth/api-keys/") && r.Method == http.MethodPost:
 		// Handle /api/v1/auth/api-keys/{id}/rotate
 		parts := splitPath(r.URL.Path)
-		if len(parts) >= 5 && parts[4] == "rotate" {
+		if len(parts) >= 6 && parts[5] == "rotate" {
 			apiKeysMu.Lock()
 			defer apiKeysMu.Unlock()
 			for i := range apiKeys {
-				if apiKeys[i].ID == parts[3] {
+				if apiKeys[i].ID == parts[4] {
 					apiKeys[i].ID = fmt.Sprintf("key-%d", time.Now().UnixNano())
 					writeJSON(w, http.StatusOK, apiKeys[i])
 					return
@@ -83,13 +83,13 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 		}
 		writeError(w, http.StatusNotFound, "unknown path")
 
-	case r.URL.Path == "/api/v1/auth/api-keys/" && r.Method == http.MethodDelete:
+	case strings.HasPrefix(r.URL.Path, "/api/v1/auth/api-keys/") && r.Method == http.MethodDelete:
 		parts := splitPath(r.URL.Path)
-		if len(parts) >= 4 {
+		if len(parts) >= 5 {
 			apiKeysMu.Lock()
 			defer apiKeysMu.Unlock()
 			for i := range apiKeys {
-				if apiKeys[i].ID == parts[3] {
+				if apiKeys[i].ID == parts[4] {
 					apiKeys[i].Status = "revoked"
 					writeJSON(w, http.StatusOK, map[string]string{"status": "revoked"})
 					return
