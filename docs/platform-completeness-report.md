@@ -18,7 +18,7 @@
 - Partial: 0
 - Acceptable: 1
 - Remaining: 0
-- Last scan: 2026-07-15 round 43 (Focus F — Functional Depth, no new gaps)
+- Last scan: 2026-07-15 round 44 (E2E regression tests — 11/11 PASS)
 
 ## Findings
 
@@ -111,7 +111,7 @@
 ## Next Actions
 
 - Round 43 (odd, Focus F): Functional Depth / Test Coverage scan — no new gaps; coverage patterns verified
-- Round 44 (even): E2E regression test run (`deploy/e2e-docker-test.sh`)
+- Round 44 (even): E2E regression tests 11/11 PASS (`deploy/e2e-docker-test.sh`)
 - Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
 
 
