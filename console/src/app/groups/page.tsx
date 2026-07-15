@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "@/lib/i18n";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useApi } from "@/lib/api";
 import {
@@ -51,6 +52,7 @@ interface User {
 }
 
 export default function GroupsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [groups, setGroups] = useState<Group[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -138,7 +140,7 @@ export default function GroupsPage() {
       }).catch(() => {});
       setForm({ name: "", description: "", parent_id: "" });
       setShowCreate(false);
-      setMsg("Group created");
+      setMsg(t("groups.groupcreated"));
       loadGroups();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create group");
@@ -158,7 +160,7 @@ export default function GroupsPage() {
       }).catch(() => {});
       setEditingGroup(null);
       setForm({ name: "", description: "", parent_id: "" });
-      setMsg("Group updated");
+      setMsg(t("groups.groupupdated"));
       loadGroups();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update group");
@@ -178,7 +180,7 @@ export default function GroupsPage() {
   const handleDelete = async (groupId: string) => {
     try {
       await apiFetch(`/api/v1/groups/${groupId}`, { method: "DELETE" }).catch(() => {});
-      setMsg("Group deleted");
+      setMsg(t("groups.groupdeleted"));
       setShowDeleteConfirm([]);
       loadGroups();
     } catch (err) {
@@ -207,7 +209,7 @@ export default function GroupsPage() {
         method: "POST",
         body: JSON.stringify({ role_id: roleId }),
       }).catch(() => {});
-      setMsg("Role assigned");
+      setMsg(t("groups.roleassigned"));
       loadGroups();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to assign role");
@@ -217,10 +219,10 @@ export default function GroupsPage() {
   const handleRemoveRole = async (groupId: string, roleId: string) => {
     try {
       await apiFetch(`/api/v1/groups/${groupId}/roles/${roleId}`, { method: "DELETE" }).catch(() => {});
-      setMsg("Role removed");
+      setMsg(t("groups.roleremoved"));
       loadGroups();
     } catch {
-      setError("Failed to remove role");
+      setError(t("groups.failedtoremoverole"));
     }
   };
 
@@ -233,7 +235,7 @@ export default function GroupsPage() {
         body: JSON.stringify({ username: name }),
       }).catch(() => {});
       if (!username) setAddMemberInput("");
-      setMsg("Member added");
+      setMsg(t("groups.memberadded"));
       setShowMemberPicker(null);
       setMemberSearch("");
       loadGroups();
@@ -245,7 +247,7 @@ export default function GroupsPage() {
   const handleRemoveMember = async (groupId: string, memberId: string) => {
     try {
       await apiFetch(`/api/v1/groups/${groupId}/members/${memberId}`, { method: "DELETE" }).catch(() => {});
-      setMsg("Member removed");
+      setMsg(t("groups.memberremoved"));
       loadGroups();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to remove member");
@@ -368,7 +370,7 @@ export default function GroupsPage() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
+          <label className="mb-1 block text-xs font-medium text-gray-500">{t("groups.description")}</label>
           <input
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -377,7 +379,7 @@ export default function GroupsPage() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-gray-500">Parent Group</label>
+          <label className="mb-1 block text-xs font-medium text-gray-500">{t("groups.parentgroup")}</label>
           <select
             value={form.parent_id}
             onChange={(e) => setForm({ ...form, parent_id: e.target.value })}
@@ -407,7 +409,7 @@ export default function GroupsPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold dark:text-gray-100">Groups / Teams</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{t("groups.groupsteams")}</h1>
           <p className="text-sm text-gray-500">Manage groups, roles, and memberships</p>
         </div>
         <button
@@ -427,22 +429,22 @@ export default function GroupsPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <UsersIcon className="mx-auto mb-1 h-5 w-5 text-brand-600" />
             <p className="text-xl font-bold dark:text-gray-100">{groups.length}</p>
-            <p className="text-xs text-gray-500">Groups</p>
+            <p className="text-xs text-gray-500">{t("groups.groups")}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <UserPlus className="mx-auto mb-1 h-5 w-5 text-blue-600" />
             <p className="text-xl font-bold dark:text-gray-100">{totalMembers}</p>
-            <p className="text-xs text-gray-500">Total Members</p>
+            <p className="text-xs text-gray-500">{t("groups.totalmembers")}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <FolderTree className="mx-auto mb-1 h-5 w-5 text-purple-600" />
             <p className="text-xl font-bold dark:text-gray-100">{rootGroups}</p>
-            <p className="text-xs text-gray-500">Root Groups</p>
+            <p className="text-xs text-gray-500">{t("groups.rootgroups")}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <Crown className="mx-auto mb-1 h-5 w-5 text-amber-600" />
             <p className="text-xl font-bold dark:text-gray-100">{maxDepth + 1}</p>
-            <p className="text-xs text-gray-500">Hierarchy Depth</p>
+            <p className="text-xs text-gray-500">{t("groups.hierarchydepth")}</p>
           </div>
         </div>
       )}
@@ -515,12 +517,12 @@ export default function GroupsPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Members</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Parent</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Roles</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Created</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.name")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.members")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.parent")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.roles")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.created")}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("groups.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -560,7 +562,7 @@ export default function GroupsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowMemberPicker(null)}>
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold dark:text-gray-100">Add Members</h3>
+              <h3 className="text-sm font-semibold dark:text-gray-100">{t("groups.addmembers")}</h3>
               <button onClick={() => setShowMemberPicker(null)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
             </div>
             <div className="relative mb-3">
@@ -629,7 +631,7 @@ export default function GroupsPage() {
               ))}
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setShowBulkRolePicker(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">Cancel</button>
+              <button onClick={() => setShowBulkRolePicker(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">{t("groups.cancel")}</button>
               <button
                 onClick={handleBulkAddRole}
                 disabled={bulkRoleSelection.size === 0}
@@ -659,7 +661,7 @@ export default function GroupsPage() {
               autoFocus
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setShowBulkMemberPicker(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">Cancel</button>
+              <button onClick={() => setShowBulkMemberPicker(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm">{t("groups.cancel")}</button>
               <button
                 onClick={handleBulkAddMember}
                 disabled={!bulkMemberInput.trim()}

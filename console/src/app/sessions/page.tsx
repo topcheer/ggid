@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { useTranslations } from "@/lib/i18n";
 import { useApi } from "@/lib/api";
 import {
   Monitor,
@@ -48,6 +49,7 @@ type SortDir = "asc" | "desc";
 const DEVICE_FILTERS = ["All", "Desktop", "Mobile", "Tablet"];
 
 export default function SessionsPage() {
+  const t = useTranslations();
   const { apiFetch, TENANT_ID } = useApi();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,10 +128,10 @@ export default function SessionsPage() {
     try {
       await apiFetch(`/api/v1/sessions/${sessionId}`, { method: "DELETE" }).catch(() => {});
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      showMessage("Session revoked");
+      showMessage(t("sessions.sessionrevoked"));
     } catch {
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      showMessage("Session revoked");
+      showMessage(t("sessions.sessionrevoked"));
     } finally {
       setRevokingId(null);
       setRevokeTarget(null);
@@ -141,10 +143,10 @@ export default function SessionsPage() {
     try {
       await apiFetch("/api/v1/sessions", { method: "DELETE" }).catch(() => {});
       setSessions((prev) => prev.filter((s) => s.current));
-      showMessage("All other sessions revoked");
+      showMessage(t("sessions.allothersessionsrevoked"));
     } catch {
       setSessions((prev) => prev.filter((s) => s.current));
-      showMessage("All other sessions revoked");
+      showMessage(t("sessions.allothersessionsrevoked"));
     } finally {
       setRevokingAll(false);
       setShowRevokeAllModal(false);
@@ -162,7 +164,7 @@ export default function SessionsPage() {
           max_concurrent_sessions: limitConcurrent ? maxConcurrent : 0,
         }),
       }).catch(() => {});
-      showMessage("Session policy saved");
+      showMessage(t("sessions.sessionpolicysaved"));
     } catch {
       showMessage("Session policy saved (offline mode)");
     } finally {
@@ -399,7 +401,7 @@ export default function SessionsPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Active Sessions</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("sessions.activesessions")}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Monitor and revoke active sessions across your devices
           </p>
@@ -564,7 +566,7 @@ export default function SessionsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by user, email, or IP..."
+            placeholder={t("sessions.placeholdersearchbyuseremailori")}
             className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
           />
         </div>
@@ -627,8 +629,8 @@ export default function SessionsPage() {
                   <SortHeader field="location" label="Location" />
                   <SortHeader field="last_active_at" label="Last Active" />
                   <SortHeader field="expires_at" label="Expires In" />
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t("sessions.status")}</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t("sessions.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -737,7 +739,7 @@ export default function SessionsPage() {
                             Revoke
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-400">Current</span>
+                          <span className="text-xs text-gray-400">{t("sessions.current")}</span>
                         )}
                       </td>
                     </tr>

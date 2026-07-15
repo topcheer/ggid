@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "@/lib/i18n";
 import { useApi } from "@/lib/api";
 import { User, Lock, Shield, Monitor, Smartphone, Globe } from "lucide-react";
 
@@ -16,6 +17,7 @@ interface Session {
 }
 
 export default function ProfilePage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [tab, setTab] = useState<Tab>("profile");
   const [msg, setMsg] = useState<string | null>(null);
@@ -44,22 +46,22 @@ export default function ProfilePage() {
   }, [msg]);
 
   const handleSaveProfile = async () => {
-    setMsg("Profile saved");
+    setMsg(t("profile.profilesaved"));
   };
 
   const handleChangePassword = async () => {
-    if (passwords.new !== passwords.confirm) { setError("Passwords don't match"); return; }
-    if (passwords.new.length < 8) { setError("Password must be at least 8 characters"); return; }
+    if (passwords.new !== passwords.confirm) { setError(t("profile.passwordsdontmatch")); return; }
+    if (passwords.new.length < 8) { setError(t("profile.passwordmustbeatleast8characte")); return; }
     try {
       await apiFetch("/api/v1/auth/change-password", {
         method: "POST",
         body: JSON.stringify({ current_password: passwords.current, new_password: passwords.new }),
       });
-      setMsg("Password changed");
+      setMsg(t("profile.passwordchanged"));
       setPasswords({ current: "", new: "", confirm: "" });
       setError(null);
     } catch {
-      setMsg("Password changed (demo mode)");
+      setMsg(t("profile.passwordchangeddemomode"));
       setPasswords({ current: "", new: "", confirm: "" });
     }
   };
@@ -71,18 +73,18 @@ export default function ProfilePage() {
 
   const handleRevokeSession = (id: string) => {
     setSessions(sessions.filter((s) => s.id !== id));
-    setMsg("Session revoked");
+    setMsg(t("profile.sessionrevoked"));
   };
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "security", label: "Security", icon: Lock },
-    { id: "sessions", label: "Sessions", icon: Monitor },
+    { id: "profile", label: t("profile.profile"), icon: User },
+    { id: "security", label: t("profile.security"), icon: Lock },
+    { id: "sessions", label: t("profile.sessions"), icon: Monitor },
   ];
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold dark:text-gray-100">My Profile</h1>
+      <h1 className="mb-6 text-2xl font-bold dark:text-gray-100">{t("profile.myprofile")}</h1>
 
       {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">{msg}</div>}
       {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">{error}</div>}
@@ -161,7 +163,7 @@ export default function ProfilePage() {
                   <Shield className={`h-5 w-5 ${mfaEnabled ? "text-green-600" : "text-gray-400 dark:text-gray-500"}`} />
                 </div>
                 <div>
-                  <h2 className="text-sm font-semibold">Two-Factor Authentication (TOTP)</h2>
+                  <h2 className="text-sm font-semibold">{t("profile.twofactorauthenticationtotp")}</h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{mfaEnabled ? "Enabled — scan QR in your authenticator app" : "Add an extra layer of security"}</p>
                 </div>
               </div>
@@ -175,7 +177,7 @@ export default function ProfilePage() {
 
       {tab === "sessions" && (
         <div className="max-w-2xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <h2 className="mb-4 text-lg font-semibold dark:text-gray-100">Active Sessions</h2>
+          <h2 className="mb-4 text-lg font-semibold dark:text-gray-100">{t("profile.activesessions")}</h2>
           <div className="space-y-3">
             {sessions.map((s) => (
               <div key={s.id} className="flex items-center justify-between rounded-lg border border-gray-100 p-3">
@@ -196,7 +198,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {s.current && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">Current</span>}
+                  {s.current && <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">{t("profile.current")}</span>}
                   {!s.current && (
                     <button onClick={() => handleRevokeSession(s.id)} className="rounded-lg border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50">
                       Revoke

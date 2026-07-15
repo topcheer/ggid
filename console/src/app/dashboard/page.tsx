@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Users,
   Shield,
@@ -59,6 +60,7 @@ interface AccessReviewInfo {
 }
 
 export default function DashboardPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
@@ -135,14 +137,14 @@ export default function DashboardPage() {
     : "text-gray-400";
 
   const statCards = stats ? [
-    { label: "Total Users", value: stats.total_users, icon: Users, color: "text-indigo-600" },
-    { label: "Active Sessions", value: stats.active_sessions, icon: Shield, color: "text-green-600" },
-    { label: "Logins (24h)", value: stats.successful_logins_24h, icon: TrendingUp, color: "text-blue-600" },
-    { label: "Failed Logins", value: stats.failed_logins_24h, icon: AlertTriangle, color: "text-red-600" },
-    { label: "MFA Enrollment", value: `${stats.mfa_enrollment_rate}%`, icon: Shield, color: "text-purple-600" },
-    { label: "Audit Events", value: stats.audit_events_24h, icon: Activity, color: "text-orange-600" },
-    { label: "Access Requests", value: stats.pending_access_requests, icon: Clock, color: "text-cyan-600" },
-    { label: "Services Up", value: `${health.filter((s) => s.status === "healthy").length}/${health.length}`, icon: CheckCircle2, color: "text-green-600" },
+    { label: t("dashboard.totalusers"), value: stats.total_users, icon: Users, color: "text-indigo-600" },
+    { label: t("dashboard.activesessions"), value: stats.active_sessions, icon: Shield, color: "text-green-600" },
+    { label: t("dashboard.logins24h"), value: stats.successful_logins_24h, icon: TrendingUp, color: "text-blue-600" },
+    { label: t("dashboard.failedlogins"), value: stats.failed_logins_24h, icon: AlertTriangle, color: "text-red-600" },
+    { label: t("dashboard.mfaenrollment"), value: `${stats.mfa_enrollment_rate}%`, icon: Shield, color: "text-purple-600" },
+    { label: t("dashboard.auditevents"), value: stats.audit_events_24h, icon: Activity, color: "text-orange-600" },
+    { label: t("dashboard.accessrequests"), value: stats.pending_access_requests, icon: Clock, color: "text-cyan-600" },
+    { label: t("dashboard.servicesup"), value: `${health.filter((s) => s.status === "healthy").length}/${health.length}`, icon: CheckCircle2, color: "text-green-600" },
   ] : [];
 
   if (loading && !stats) {
@@ -156,7 +158,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("dashboard.dashboard")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Real-time overview. Auto-refreshes every 30s.
         </p>
@@ -250,7 +252,7 @@ export default function DashboardPage() {
               {isLive && <span className="flex items-center gap-1 text-xs text-green-500"><Radio className="h-3 w-3 animate-pulse" /> LIVE</span>}
             </h3>
             {(liveEvents.length > 0 ? liveEvents : activity).length === 0 ? (
-              <p className="py-6 text-center text-sm text-gray-400">No recent activity.</p>
+              <p className="py-6 text-center text-sm text-gray-400">{t("dashboard.norecentactivity")}</p>
             ) : (
               <div className="space-y-2">
                 {(liveEvents.length > 0 ? liveEvents : activity).map((item) => (
@@ -277,7 +279,7 @@ export default function DashboardPage() {
               <Shield className="h-4 w-4" /> Service Health
             </h3>
             {health.length === 0 ? (
-              <p className="py-6 text-center text-sm text-gray-400">No health data.</p>
+              <p className="py-6 text-center text-sm text-gray-400">{t("dashboard.nohealthdata")}</p>
             ) : (
               <div className="space-y-2">
                 {health.map((svc) => (
