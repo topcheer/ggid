@@ -4,13 +4,13 @@
 ## Last scan focus: E2E Regression Tests (11/11 PASS)
 ## Next scan focus: D (Data Persistence)
 ## Total findings: 25
-## Done: 22
+## Done: 23
 ## Fixed (pending verification): 0
 ## Partial: 0
-## Remaining: 3
+## Remaining: 2
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 30 even: E2E regression tests 11/11 PASS. Research identified 3 new compliance gaps (OAuth 2.1, FAPI 2.0, FedCM). Round 31 will be focus D (Data Persistence).*
+*Round 30 even: E2E regression tests 11/11 PASS. OAuth 2.1 gap fixed by backend. Round 31 will be focus D (Data Persistence).*
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
