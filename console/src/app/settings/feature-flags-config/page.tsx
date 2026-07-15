@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from '@/lib/i18n';
 
 interface FeatureFlag {
   id: string;
@@ -46,6 +47,7 @@ export default function FeatureFlagsConfigPage() {
   const [newDescription, setNewDescription] = useState('');
   const [newDefaultState, setNewDefaultState] = useState(false);
   const [selectedFlag, setSelectedFlag] = useState<FeatureFlag | null>(null);
+  const t = useTranslations();
 
   const toggleFlag = useCallback((id: string) => {
     setFlags(flags.map(f => f.id === id ? { ...f, enabled: !f.enabled, killSwitch: false } : f));
@@ -98,13 +100,13 @@ export default function FeatureFlagsConfigPage() {
       .catch(err => { setError(err.message); setLoading(false); });
   }, []);
 
-  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Feature Flags Config</h1><p>Loading...</p></div>);
-  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">Feature Flags Config</h1><p className="text-red-600">Error: {error}</p></div>);
+  if (loading) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">{t("featureFlagsConfig.title")}</h1><p>{t("featureFlagsConfig.loading")}</p></div>);
+  if (error) return (<div className="p-6"><h1 className="text-2xl font-bold mb-4">{t("featureFlagsConfig.title")}</h1><p className="text-red-600">Error: {error}</p></div>);
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Feature Flags Configuration</h1>
-        <p className="mt-1 text-sm text-gray-500">Manage feature flags with environment-specific config, percentage rollout, targeting, and kill switches.</p>
+        <p className="mt-1 text-sm text-gray-500">{t("featureFlagsConfig.subtitle")}</p>
       </div>
 
       <div className="flex gap-2 border-b border-gray-200">
@@ -127,13 +129,13 @@ export default function FeatureFlagsConfigPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                  <th className="pb-2">Name</th>
-                  <th className="pb-2">Description</th>
-                  <th className="pb-2">Enabled</th>
-                  <th className="pb-2">Environment</th>
-                  <th className="pb-2">Rollout</th>
-                  <th className="pb-2">Created</th>
-                  <th className="pb-2">Actions</th>
+                  <th className="pb-2">{t("featureFlagsConfig.name")}</th>
+                  <th className="pb-2">{t("featureFlagsConfig.description")}</th>
+                  <th className="pb-2">{t("featureFlagsConfig.enabled")}</th>
+                  <th className="pb-2">{t("featureFlagsConfig.environment")}</th>
+                  <th className="pb-2">{t("featureFlagsConfig.rollout")}</th>
+                  <th className="pb-2">{t("featureFlagsConfig.created")}</th>
+                  <th className="pb-2">{t("featureFlagsConfig.actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,7 +147,7 @@ export default function FeatureFlagsConfigPage() {
                   >
                     <td className="py-2">
                       <div className="font-mono text-xs font-medium">{f.name}</div>
-                      {f.killSwitch && <span className="inline-flex rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700 mt-0.5">KILL</span>}
+                      {f.killSwitch && <span className="inline-flex rounded bg-red-100 px-1.5 py-0.5 text-[10px] text-red-700 mt-0.5">{t("featureFlagsConfig.kill")}</span>}
                     </td>
                     <td className="py-2 text-xs text-gray-600 max-w-[200px] truncate">{f.description}</td>
                     <td className="py-2">
@@ -172,7 +174,7 @@ export default function FeatureFlagsConfigPage() {
                       <button
                         onClick={(e) => { e.stopPropagation(); killSwitchFlag(f.id); }}
                         className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 hover:bg-red-200"
-                      >Kill</button>
+                      >{t("featureFlagsConfig.killBtn")}</button>
                     </td>
                   </tr>
                 ))}
@@ -202,7 +204,7 @@ export default function FeatureFlagsConfigPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600">Percentage Rollout: {selectedFlag.percentage}%</label>
+                  <label className="block text-xs font-medium text-gray-600">{t("featureFlagsConfig.percentageRollout")} {selectedFlag.percentage}%</label>
                   <input
                     type="range"
                     min={0}
@@ -217,10 +219,10 @@ export default function FeatureFlagsConfigPage() {
 
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600">Targeted Users ({selectedFlag.targetedUsers.length})</label>
+                  <label className="block text-xs font-medium text-gray-600">{t("featureFlagsConfig.targetedUsers")} ({selectedFlag.targetedUsers.length})</label>
                   <div className="mt-1 space-y-1">
                     {selectedFlag.targetedUsers.length === 0 ? (
-                      <span className="text-xs text-gray-400">None</span>
+                      <span className="text-xs text-gray-400">{t("featureFlagsConfig.none")}</span>
                     ) : (
                       selectedFlag.targetedUsers.map(u => <div key={u} className="font-mono text-xs bg-gray-100 rounded px-2 py-0.5">{u}</div>)
                     )}
@@ -230,7 +232,7 @@ export default function FeatureFlagsConfigPage() {
                   <label className="block text-xs font-medium text-gray-600">Targeted Roles ({selectedFlag.targetedRoles.length})</label>
                   <div className="mt-1 space-y-1">
                     {selectedFlag.targetedRoles.length === 0 ? (
-                      <span className="text-xs text-gray-400">None</span>
+                      <span className="text-xs text-gray-400">{t("featureFlagsConfig.none")}</span>
                     ) : (
                       selectedFlag.targetedRoles.map(r => <div key={r} className="font-mono text-xs bg-gray-100 rounded px-2 py-0.5">{r}</div>)
                     )}
@@ -240,7 +242,7 @@ export default function FeatureFlagsConfigPage() {
                   <label className="block text-xs font-medium text-gray-600">Targeted Tenants ({selectedFlag.targetedTenants.length})</label>
                   <div className="mt-1 space-y-1">
                     {selectedFlag.targetedTenants.length === 0 ? (
-                      <span className="text-xs text-gray-400">None</span>
+                      <span className="text-xs text-gray-400">{t("featureFlagsConfig.none")}</span>
                     ) : (
                       selectedFlag.targetedTenants.map(t => <div key={t} className="font-mono text-xs bg-gray-100 rounded px-2 py-0.5">{t}</div>)
                     )}

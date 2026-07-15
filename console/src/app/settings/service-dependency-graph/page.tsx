@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface GraphNode {
   id: string;
@@ -60,17 +61,18 @@ export default function ServiceDependencyGraphPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  const t = useTranslations();
+  if (loading) return <div className="p-8">{t("serviceDependencyGraph.loading")}</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("serviceDependencyGraph.noData")}</div>;
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const healthColors: Record<string, string> = { healthy: "#10b981", degraded: "#f59e0b", down: "#ef4444" };
   const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">
-      <h1 className="text-2xl font-bold">Service Dependency Graph</h1>
-      <p className="text-gray-600">Visualize service dependencies, health status, and communication patterns.</p>
+      <h1 className="text-2xl font-bold">{t("serviceDependencyGraph.title")}</h1>
+      <p className="text-gray-600">{t("serviceDependencyGraph.subtitle")}</p>
 
       <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3">
         <span className="text-sm font-medium text-yellow-800">{"Warning: Circular dependency detected (identity -> org -> audit -> identity)"}</span>
@@ -103,9 +105,9 @@ export default function ServiceDependencyGraphPage() {
         {selected && (
           <div className="w-64 bg-white rounded-lg p-6 shadow space-y-3">
             <h2 className="text-lg font-semibold">{selected.label}</h2>
-            <div><span className="text-sm text-gray-500">Health: </span><span className={`px-2 py-0.5 rounded text-xs ${selected.health === "healthy" ? "bg-green-100 text-green-700" : selected.health === "degraded" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{selected.health}</span></div>
-            <div className="text-sm"><span className="text-gray-500">SLO: </span><span className="font-medium">{selected.slo}%</span></div>
-            <div className="text-sm"><span className="text-gray-500">Error Budget: </span><span className="font-medium">{selected.error_budget}%</span></div>
+            <div><span className="text-sm text-gray-500">{t("serviceDependencyGraph.health")} </span><span className={`px-2 py-0.5 rounded text-xs ${selected.health === "healthy" ? "bg-green-100 text-green-700" : selected.health === "degraded" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>{selected.health}</span></div>
+            <div className="text-sm"><span className="text-gray-500">{t("serviceDependencyGraph.slo")} </span><span className="font-medium">{selected.slo}%</span></div>
+            <div className="text-sm"><span className="text-gray-500">{t("serviceDependencyGraph.errorBudget")} </span><span className="font-medium">{selected.error_budget}%</span></div>
             <div className="text-sm"><span className="text-gray-500">Dependencies: </span>{selected.dependencies.length > 0 ? selected.dependencies.join(", ") : "none"}</div>
           </div>
         )}

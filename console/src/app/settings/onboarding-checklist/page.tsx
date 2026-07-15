@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { CheckSquare, Square, ArrowRight, MonitorSmartphone } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ChecklistStep {
   key: string;
@@ -38,6 +39,7 @@ export default function OnboardingChecklistPage() {
   const [checklist, setChecklist] = useState<Checklist | null>(null);
   const [loading, setLoading] = useState(false);
   const [togglingStep, setTogglingStep] = useState<string | null>(null);
+  const t = useTranslations();
 
   const fetchClients = useCallback(async () => {
     try {
@@ -85,11 +87,11 @@ export default function OnboardingChecklistPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2"><CheckSquare className="w-6 h-6 text-blue-500" /> Onboarding Checklist</h1>
-        <p className="text-sm text-gray-500 mt-1">Track OAuth client onboarding progress with a 6-step checklist.</p>
+        <p className="text-sm text-gray-500 mt-1">{t("onboardingChecklist.subtitle")}</p>
       </div>
 
       <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-        <option value="">Select a client...</option>
+        <option value="">{t("onboardingChecklist.selectClient")}</option>
         {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
       </select>
 
@@ -123,10 +125,10 @@ export default function OnboardingChecklistPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className={`font-medium text-sm ${step.completed ? "text-gray-400 line-through" : ""}`}>Step {i + 1}: {step.label}</span>
-                          {step.completed && <span className="px-2 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 dark:text-green-400">Done</span>}
+                          {step.completed && <span className="px-2 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 dark:text-green-400">{t("onboardingChecklist.done")}</span>}
                         </div>
                         <p className="text-xs text-gray-500 mt-0.5">{step.description}</p>
-                        {step.completed_at && <p className="text-xs text-gray-400 mt-0.5">Completed: {step.completed_at}</p>}
+                        {step.completed_at && <p className="text-xs text-gray-400 mt-0.5">{t("onboardingChecklist.completed")} {step.completed_at}</p>}
                       </div>
                     </div>
                     {!step.completed && i > 0 && checklist.steps[i - 1].completed && (
@@ -140,14 +142,14 @@ export default function OnboardingChecklistPage() {
           {checklist.completion_pct === 100 && (
             <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/20 p-4 flex items-center gap-2">
               <CheckSquare className="w-5 h-5 text-green-500" />
-              <span className="font-semibold text-green-700 dark:text-green-400">Onboarding complete! Client is ready for production use.</span>
+              <span className="font-semibold text-green-700 dark:text-green-400">{t("onboardingChecklist.complete")}</span>
             </div>
           )}
         </>
       )}
 
-      {!checklist && !loading && selectedId && <p className="text-sm text-gray-500">No checklist found.</p>}
-      {!selectedId && <p className="text-sm text-gray-500 text-center py-8">Select a client to view onboarding progress.</p>}
+      {!checklist && !loading && selectedId && <p className="text-sm text-gray-500">{t("onboardingChecklist.noChecklist")}</p>}
+      {!selectedId && <p className="text-sm text-gray-500 text-center py-8">{t("onboardingChecklist.selectToView")}</p>}
     </div>
   );
 }

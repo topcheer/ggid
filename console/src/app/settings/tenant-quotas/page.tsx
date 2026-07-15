@@ -1,12 +1,14 @@
 "use client";
 
 import { useTenantQuotas } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Users, Phone, Database, MonitorSmartphone, KeyRound, AlertTriangle, TrendingUp, ArrowUpCircle } from "lucide-react";
 
 export default function TenantQuotasPage() {
   const { data, loading, error, refresh } = useTenantQuotas();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading tenant quotas...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("tenantQuotas.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const usageIcons: Record<string, React.ReactNode> = {
@@ -23,8 +25,8 @@ export default function TenantQuotasPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Tenant Quotas</h1>
-          <p className="text-sm text-gray-400 mt-1">Resource usage and plan limits for the current tenant</p>
+          <h1 className="text-2xl font-bold">{t("tenantQuotas.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("tenantQuotas.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-1 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition">
@@ -43,17 +45,17 @@ export default function TenantQuotasPage() {
       {/* Current Plan Banner */}
       <div className="bg-gray-900 rounded-xl p-4 mb-6 flex items-center justify-between">
         <div>
-          <span className="text-sm text-gray-400">Current Plan: </span>
+          <span className="text-sm text-gray-400">{t("tenantQuotas.currentPlan")} </span>
           <span className="text-lg font-bold text-blue-400 capitalize">{data?.current_plan ?? "free"}</span>
         </div>
         <div className="flex items-center gap-4 text-sm text-gray-400">
-          <span>Billing cycle resets in {data?.days_until_reset ?? 0} days</span>
+          <span>{t("tenantQuotas.billingReset")} {data?.days_until_reset ?? 0} {t("tenantQuotas.days")}</span>
         </div>
       </div>
 
       {/* Usage Table */}
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Resource Usage</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("tenantQuotas.resourceUsage")}</h2>
         <div className="space-y-4">
           {(data?.usage ?? []).map((u) => {
             const pct = u.limit > 0 ? (u.used / u.limit) * 100 : 0;
@@ -84,12 +86,12 @@ export default function TenantQuotasPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Per-Plan Limits */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Plan Limits Comparison</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("tenantQuotas.planLimitsComparison")}</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-4">Resource</th>
+                  <th className="text-left py-2 pr-4">{t("tenantQuotas.resource")}</th>
                   {(data?.per_plan_limits ?? []).map((p) => (
                     <th key={p.plan} className="text-right py-2 px-2 capitalize">{p.plan}</th>
                   ))}
@@ -132,7 +134,7 @@ export default function TenantQuotasPage() {
                 </div>
               ))}
               {(data?.overage_alerts ?? []).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No overage alerts.</p>
+                <p className="text-sm text-gray-500 text-center py-4">{t("tenantQuotas.noOverage")}</p>
               )}
             </div>
           </div>
