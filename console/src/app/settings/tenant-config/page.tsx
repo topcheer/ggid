@@ -55,9 +55,13 @@ export default function TenantConfigPage() {
   // MFA enforcement
   const [mfa, setMfa] = useState({ requireMfa: false, method: "TOTP", gracePeriod: 7 });
   const [savingMfa, setSavingMfa] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setFetchError(null);
       try {
         const data = await apiFetch<Record<string, unknown>>(`/api/v1/tenants/${TENANT_ID}`);
         if (data.name) setProfile({ name: data.name as string, logoUrl: (data.logo_url as string) || "", domain: (data.domain as string) || "" });
@@ -83,7 +87,11 @@ export default function TenantConfigPage() {
           const mc = data.mfa_config as Record<string, unknown>;
           setMfa({ requireMfa: Boolean(mc.require_mfa), method: (mc.method as string) || "TOTP", gracePeriod: Number(mc.grace_period) || 7 });
         }
-      } catch { /* use defaults */ }
+      } catch (err) {
+        setFetchError(err instanceof Error ? err.message : "Failed to load tenant config");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [apiFetch, TENANT_ID]);
@@ -106,11 +114,14 @@ export default function TenantConfigPage() {
   const headingCls = "mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100";
   const saveBtn = "flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50";
 
-  const Toggle = ({ on, onClick }: { on: boolean; onClick: () => void }) => (
-    <button onClick={onClick} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${on ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"}`}>
+  const Toggle = ({ on, onClick, label }: { on: boolean; onClick: () => void; label?: string }) => (
+    <button onClick={onClick} aria-label={label || (on ? "Toggle off" : "Toggle on")} aria-pressed={on} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${on ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"}`}>
       <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${on ? "translate-x-6" : "translate-x-1"}`} />
     </button>
   );
+
+  if (loading) return <div className="p-8 text-gray-400">Loading tenant config...</div>;
+  if (fetchError) return <div className="p-8 text-red-400">Error: {fetchError}</div>;
 
   return (
     <div>
