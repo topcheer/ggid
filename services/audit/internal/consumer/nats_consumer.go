@@ -145,6 +145,11 @@ func (c *EventConsumer) processMessage(ctx context.Context, msg jetstream.Msg) e
 		return nil // returning nil so msg.Ack() is called
 	}
 
+	// Defensive: default ActorType to "user" if empty — DB enum rejects "".
+	if event.ActorType == "" {
+		event.ActorType = domain.ActorUser
+	}
+
 	if event.CreatedAt.IsZero() {
 		event.CreatedAt = time.Now()
 	}

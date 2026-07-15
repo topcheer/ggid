@@ -28,23 +28,23 @@ const (
 
 // AuditEvent represents a single audit log entry.
 type AuditEvent struct {
-	ID           uuid.UUID
-	TenantID     uuid.UUID
-	ActorType    ActorType
-	ActorID      *uuid.UUID
-	ActorName    string
-	Action       string // e.g. "user.login", "role.assign"
-	ResourceType string
-	ResourceID   *uuid.UUID
-	ResourceName string
-	Result       EventResult
-	IPAddress    string
-	UserAgent    string
-	RequestID    string
-	Metadata     map[string]any
-	Hash         string // HMAC-SHA256 chain hash for tamper detection
-	PrevHash     string // Hash of the previous event in the chain
-	CreatedAt    time.Time
+	ID           uuid.UUID      `json:"id"`
+	TenantID     uuid.UUID      `json:"tenant_id"`
+	ActorType    ActorType      `json:"actor_type"`
+	ActorID      *uuid.UUID     `json:"actor_id,omitempty"`
+	ActorName    string         `json:"actor_name,omitempty"`
+	Action       string         `json:"action"`                 // e.g. "user.login", "role.assign"
+	ResourceType string         `json:"resource_type,omitempty"`
+	ResourceID   *uuid.UUID     `json:"resource_id,omitempty"`
+	ResourceName string         `json:"resource_name,omitempty"`
+	Result       EventResult    `json:"result"`
+	IPAddress    string         `json:"ip_address,omitempty"`
+	UserAgent    string         `json:"user_agent,omitempty"`
+	RequestID    string         `json:"request_id,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+	Hash         string         `json:"hash,omitempty"`         // HMAC-SHA256 chain hash for tamper detection
+	PrevHash     string         `json:"prev_hash,omitempty"`    // Hash of the previous event in the chain
+	CreatedAt    time.Time      `json:"created_at"`
 }
 
 // ListFilter holds parameters for querying audit events.
