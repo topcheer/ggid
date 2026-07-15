@@ -255,6 +255,108 @@ class GGIDClient
         $this->request('DELETE', "/api/v1/webhooks/{$webhookId}", null, $token);
     }
 
+    // ─── Agent Identity ───────────────────────────────────────────
+
+    /**
+     * Register a new AI agent.
+     */
+    public function registerAgent(
+        string $token,
+        string $name,
+        string $type,
+        array $allowedScopes,
+        string $ownerUserId = '',
+        string $description = '',
+        int $maxDelegationDepth = 3,
+        int $rateLimitPerMin = 60,
+    ): array {
+        return $this->request('POST', '/api/v1/agents/register', [
+            'name' => $name,
+            'type' => $type,
+            'owner_user_id' => $ownerUserId,
+            'description' => $description,
+            'allowed_scopes' => $allowedScopes,
+            'max_delegation_depth' => $maxDelegationDepth,
+            'rate_limit_per_min' => $rateLimitPerMin,
+        ], $token);
+    }
+
+    /**
+     * List all agents in the tenant.
+     */
+    public function listAgents(string $token): array
+    {
+        return $this->request('GET', '/api/v1/agents', null, $token);
+    }
+
+    /**
+     * Exchange a user token for an agent-scoped token.
+     */
+    public function exchangeAgentToken(string $agentId, string $subjectToken, array $scopes = []): array
+    {
+        return $this->request('POST', '/api/v1/agents/token', [
+            'agent_id' => $agentId,
+            'subject_token' => $subjectToken,
+            'scope' => $scopes,
+        ]);
+    }
+
+    /**
+     * Verify an agent token and return its claims.
+     */
+    public function verifyAgentToken(string $token): array
+    {
+        return $this->request('POST', '/api/v1/agents/verify', ['token' => $token]);
+    }
+
+    // ─── Access Request (IGA) ────────────────────────────────────
+
+    /**
+     * Create an access request.
+     */
+    public function createAccessRequest(
+        string $token,
+        string $userId,
+        string $resource,
+        string $action,
+        string $reason = '',
+    ): array {
+        return $this->request('POST', '/api/v1/access-requests', [
+            'user_id' => $userId,
+            'resource' => $resource,
+            'action' => $action,
+            'reason' => $reason,
+        ], $token);
+    }
+
+    /**
+     * List access requests in the tenant.
+     */
+    public function listAccessRequests(string $token): array
+    {
+        return $this->request('GET', '/api/v1/access-requests', null, $token);
+    }
+
+    /**
+     * Approve an access request.
+     */
+    public function approveAccessRequest(string $token, string $requestId, string $comment = ''): array
+    {
+        return $this->request('POST', "/api/v1/access-requests/{$requestId}/approve", [
+            'comment' => $comment,
+        ], $token);
+    }
+
+    /**
+     * Reject an access request.
+     */
+    public function rejectAccessRequest(string $token, string $requestId, string $comment = ''): array
+    {
+        return $this->request('POST', "/api/v1/access-requests/{$requestId}/reject", [
+            'comment' => $comment,
+        ], $token);
+    }
+
     // ─── Audit ────────────────────────────────────────────────────
 
     public function listAuditEvents(string $token, array $params = []): array

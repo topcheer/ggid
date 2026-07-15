@@ -356,6 +356,124 @@ class GGIDClient {
     return PolicyResult.fromJson(json as Map<String, dynamic>);
   }
 
+  // ── Agent Identity ──
+
+  /// Register a new AI agent.
+  Future<Map<String, dynamic>> registerAgent(
+    String token, {
+    required String name,
+    required String type,
+    String ownerUserId = '',
+    String description = '',
+    List<String> allowedScopes = const [],
+    int maxDelegationDepth = 3,
+    int rateLimitPerMin = 60,
+  }) async {
+    final json = await _post('/api/v1/agents/register', {
+      'name': name,
+      'type': type,
+      'owner_user_id': ownerUserId,
+      'description': description,
+      'allowed_scopes': allowedScopes,
+      'max_delegation_depth': maxDelegationDepth,
+      'rate_limit_per_min': rateLimitPerMin,
+    }, token);
+    return json as Map<String, dynamic>;
+  }
+
+  /// List all agents for the current tenant.
+  Future<List<Map<String, dynamic>>> listAgents(String token) async {
+    final json = await _get('/api/v1/agents', token);
+    List? list;
+    if (json is List) {
+      list = json;
+    } else if (json is Map && json['agents'] is List) {
+      list = json['agents'] as List;
+    }
+    if (list != null) {
+      return list.cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  /// Exchange a user token for an agent-scoped token.
+  Future<Map<String, dynamic>> exchangeAgentToken({
+    required String agentId,
+    required String subjectToken,
+    List<String> scopes = const [],
+  }) async {
+    final json = await _post('/api/v1/agents/token', {
+      'agent_id': agentId,
+      'subject_token': subjectToken,
+      'scope': scopes,
+    });
+    return json as Map<String, dynamic>;
+  }
+
+  /// Verify an agent token and return its claims.
+  Future<Map<String, dynamic>> verifyAgentToken(String token) async {
+    final json = await _post('/api/v1/agents/verify', {'token': token});
+    return json as Map<String, dynamic>;
+  }
+
+  // ── Access Request (IGA) ──
+
+  /// Create an access request.
+  Future<Map<String, dynamic>> createAccessRequest(
+    String token, {
+    required String userId,
+    required String resource,
+    required String action,
+    String reason = '',
+  }) async {
+    final json = await _post('/api/v1/access-requests', {
+      'user_id': userId,
+      'resource': resource,
+      'action': action,
+      'reason': reason,
+    }, token);
+    return json as Map<String, dynamic>;
+  }
+
+  /// List access requests for the current tenant.
+  Future<List<Map<String, dynamic>>> listAccessRequests(String token) async {
+    final json = await _get('/api/v1/access-requests', token);
+    List? list;
+    if (json is List) {
+      list = json;
+    } else if (json is Map && json['requests'] is List) {
+      list = json['requests'] as List;
+    }
+    if (list != null) {
+      return list.cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
+  /// Approve an access request.
+  Future<Map<String, dynamic>> approveAccessRequest(
+    String token,
+    String requestId, {
+    String comment = '',
+  }) async {
+    final json = await _post('/api/v1/access-requests/$requestId/approve', {
+      'comment': comment,
+    }, token);
+    return json as Map<String, dynamic>;
+  }
+
+  /// Reject an access request.
+  Future<Map<String, dynamic>> rejectAccessRequest(
+    String token,
+    String requestId, {
+    String comment = '',
+  }) async {
+    final json = await _post('/api/v1/access-requests/$requestId/reject', {
+      'comment': comment,
+    }, token);
+    return json as Map<String, dynamic>;
+  }
+
   // ── Internal HTTP ──
 
   Future<dynamic> _get(String path, String? token) async {
