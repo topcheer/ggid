@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Grid3x3, Check, Save } from "lucide-react";
@@ -11,6 +12,7 @@ interface MatrixData {
 }
 
 export default function ScopeMatrixPage() {
+  const t = useTranslations();
   const [data, setData] = useState<MatrixData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,7 +60,7 @@ export default function ScopeMatrixPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" /> Scope Matrix</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" />{t("scopeMatrix.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Manage scope grants per client with usage analytics.</p>
         </div>
         <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Changes"}</button>

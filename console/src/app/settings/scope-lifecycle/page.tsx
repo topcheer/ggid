@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, Clock, AlertTriangle } from "lucide-react";
@@ -29,6 +30,7 @@ const riskColors: Record<string, string> = {
 };
 
 export default function ScopeLifecyclePage() {
+  const t = useTranslations();
   const [requests, setRequests] = useState<ScopeRequest[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -48,7 +50,7 @@ export default function ScopeLifecyclePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-purple-500" /> Scope Lifecycle</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldCheck className="w-6 h-6 text-purple-500" />{t("scopeLifecycle.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">OAuth scope request approval workflow with risk assessment.</p>
       </div>
 

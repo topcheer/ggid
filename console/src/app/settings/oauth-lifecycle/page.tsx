@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Workflow, Loader2, AlertCircle, X, Pause, Play, RefreshCw, Clock, KeyRound, AlertOctagon,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function OAuthLifecyclePage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [clients, setClients] = useState<ClientLifecycle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,7 @@ export default function OAuthLifecyclePage() {
   useState(() => {
     (async () => {
       try { setClients(await apiFetch<ClientLifecycle[]>("/api/v1/oauth/clients/lifecycle").catch(() => [])); }
-      catch { setError("Failed to load client lifecycle data"); }
+      catch { setError(t("oauthLifecycle.failedLoad")); }
       finally { setLoading(false); }
     })();
   });
@@ -76,7 +78,7 @@ export default function OAuthLifecyclePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Workflow className="h-6 w-6 text-indigo-600" /> OAuth Client Lifecycle</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Workflow className="h-6 w-6 text-indigo-600" />{t("oauthLifecycle.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Monitor and manage OAuth client status: active, suspended, expired, revoked.</p>
       </div>
 

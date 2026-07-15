@@ -1,8 +1,10 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { useCibaConfig, CibaConfig, CibaPerClient } from "@ggid/sdk-react";
 
 export default function CibaConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useCibaConfig();
   const [form, setForm] = useState<CibaConfig | null>(null);
   const [saving, setSaving] = useState(false);
@@ -137,7 +139,7 @@ export default function CibaConfigPage() {
       )}
 
       <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-        {saving ? "Saving..." : "Save Changes"}
+        {saving ? t("cibaConfig.saving") : t("cibaConfig.saveChanges")}
       </button>
     </div>
   );

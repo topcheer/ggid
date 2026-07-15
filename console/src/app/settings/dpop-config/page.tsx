@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface ClientDpop {
@@ -7,6 +8,7 @@ interface ClientDpop {
 }
 
 export default function DpopConfigPage() {
+  const t = useTranslations();
   const [enabled, setEnabled] = useState(true);
   const [proofExpiry, setProofExpiry] = useState(60);
   const [nonceTtl, setNonceTtl] = useState(600);

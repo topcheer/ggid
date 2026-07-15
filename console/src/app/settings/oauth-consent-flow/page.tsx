@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Eye, Save, Play, AlertTriangle, RotateCcw } from "lucide-react";
 
 interface ConsentConfig { logo_url: string; privacy_policy_url: string; tos_url: string; show_skip_consent: boolean; remember_consent_duration_days: number; scope_descriptions: Record<string, string>; pre_approved_apps: { client_id: string; client_name: string }[]; }
 
 export default function OauthConsentFlowPage() {
+  const t = useTranslations();
   const [config, setConfig] = useState<ConsentConfig | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -17,7 +19,7 @@ export default function OauthConsentFlowPage() {
       const res = await fetch("/api/v1/oauth/consent-flow-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) throw new Error(`Failed to load config: HTTP ${res.status}`);
       setConfig(await res.json());
-    } catch (e) { setError(e instanceof Error ? e.message : "Failed to load consent config"); }
+    } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedLoad")); }
     finally { setLoading(false); }
   }, []);
 
@@ -30,7 +32,7 @@ export default function OauthConsentFlowPage() {
     try {
       const res = await fetch("/api/v1/oauth/consent-flow-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
       if (!res.ok) throw new Error(`Save failed: HTTP ${res.status}`);
-    } catch (e) { setError(e instanceof Error ? e.message : "Failed to save consent config"); }
+    } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedSave")); }
     finally { setSaving(false); }
   };
 
@@ -48,7 +50,7 @@ export default function OauthConsentFlowPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Eye className="w-6 h-6 text-blue-500" /> OAuth Consent Flow</h1><p className="text-sm text-gray-500 mt-1">Configure the consent screen, scope descriptions, and pre-approved apps.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Eye className="w-6 h-6 text-blue-500" />{t("oauthConsentFlow.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure the consent screen, scope descriptions, and pre-approved apps.</p></div>
         <div className="flex gap-2">
           <button onClick={save} disabled={saving} aria-label="Save consent configuration" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
         </div>

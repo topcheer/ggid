@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useOAuthScopeAnalytics } from "@ggid/sdk-react";
 import { BarChart3, Grid3x3, TrendingUp, AlertCircle } from "lucide-react";
 
 export default function OAuthScopeAnalyticsPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuthScopeAnalytics();
 
   if (loading) return <div className="p-8 text-gray-400">Loading scope analytics...</div>;

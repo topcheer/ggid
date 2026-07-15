@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useOAuthMtlsConfig } from "@ggid/sdk-react";
 import { Lock, Shield, Award, AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function OAuthMtlsConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuthMtlsConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading mTLS config...</div>;

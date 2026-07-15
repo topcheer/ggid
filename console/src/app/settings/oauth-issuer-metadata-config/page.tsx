@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useOAuthIssuerMetadataConfig } from "@ggid/sdk-react";
 import { Globe, Code } from "lucide-react";
 
 export default function OAuthIssuerMetadataConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuthIssuerMetadataConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

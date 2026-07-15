@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface Scope {
@@ -11,6 +12,7 @@ interface Scope {
 }
 
 export default function ScopeManagementPage() {
+  const t = useTranslations();
   const [scopes, setScopes] = useState<Scope[]>([]);
   const [clients, setClients] = useState<{ name: string; scopes: string[] }[]>([]);
   const [loading, setLoading] = useState(true);

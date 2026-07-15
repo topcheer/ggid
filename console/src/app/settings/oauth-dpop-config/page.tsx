@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useOAuthDpopConfig } from "@ggid/sdk-react";
 import { Shield, Key, AlertTriangle, Activity, Settings } from "lucide-react";
 
 export default function OAuthDpopConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, toggleRequireDpop } = useOAuthDpopConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading DPoP configuration...</div>;

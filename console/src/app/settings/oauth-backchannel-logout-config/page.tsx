@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useOAuthBackchannelLogoutConfig } from "@ggid/sdk-react";
 import { LogOut, RefreshCw, AlertTriangle, CheckCircle, Clock, RotateCcw } from "lucide-react";
 
 export default function OAuthBackchannelLogoutConfigPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testLogout } = useOAuthBackchannelLogoutConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading backchannel logout config...</div>;

@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useOAuthParManagement } from "@ggid/sdk-react";
 import { Database, Zap, Trash2, AlertTriangle, CheckCircle } from "lucide-react";
 
 export default function OAuthParManagementPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuthParManagement();
 
   if (loading) return <div className="p-8 text-gray-400">Loading PAR management...</div>;

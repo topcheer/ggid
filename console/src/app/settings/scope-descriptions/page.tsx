@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Languages, Save, Search, Globe } from "lucide-react";
@@ -17,6 +18,7 @@ const languages = [
 ];
 
 export default function ScopeDescriptionsPage() {
+  const t = useTranslations();
   const [scopes, setScopes] = useState<ScopeDescription[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -66,7 +68,7 @@ export default function ScopeDescriptionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Languages className="w-6 h-6 text-blue-500" /> Scope Description i18n</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Languages className="w-6 h-6 text-blue-500" />{t("scopeDescriptions.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Edit OAuth scope descriptions across multiple languages.</p>
       </div>
 

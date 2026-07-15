@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { TrendingDown, AlertTriangle, Ban, Trash2 } from "lucide-react";
 interface UnusedScope { scope: string; last_used_days_ago: number; severity: "low" | "medium" | "high"; }
 interface DriftData { unused_scopes: UnusedScope[]; unregistered_scopes: string[]; drift_trend_30d: { date: string; value: number }[]; recommendations: string[]; }
 const sevColors: Record<string, string> = { low: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", high: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 export default function ScopeDriftPage() {
+  const t = useTranslations();
   const [clients] = useState([{ id: "c1", name: "Web App" }, { id: "c2", name: "Mobile App" }]);
   const [clientId, setClientId] = useState("");
   const [data, setData] = useState<DriftData | null>(null);
@@ -20,7 +22,7 @@ export default function ScopeDriftPage() {
   const maxTrend = Math.max(...(data?.drift_trend_30d.map((d) => d.value) || [1]), 1);
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><TrendingDown className="w-6 h-6 text-orange-500" /> Scope Drift</h1><p className="text-sm text-gray-500 mt-1">Detect unused and unregistered OAuth scopes per client.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><TrendingDown className="w-6 h-6 text-orange-500" />{t("scopeDrift.title")}</h1><p className="text-sm text-gray-500 mt-1">Detect unused and unregistered OAuth scopes per client.</p></div>
       <div className="flex items-center gap-3"><select value={clientId} onChange={(e) => setClientId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Client</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
       {data && (<>
         {data.unregistered_scopes.length > 0 && <div className="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3"><div className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-red-500" /><span className="font-semibold text-red-700 dark:text-red-400">Unregistered scopes detected</span></div><div className="mt-1 flex flex-wrap gap-1">{data.unregistered_scopes.map((s) => <span key={s} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-mono">{s}</span>)}</div></div>}

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useEffect, useState } from "react";
 import { useOAuthJwksRotationConfig, OAuthJwksRotationConfig } from "@ggid/sdk-react";
 
@@ -13,6 +14,7 @@ interface LocalOAuthJwksRotationConfig extends OAuthJwksRotationConfig {
 }
 
 export default function OAuthJwksRotationConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig, rotateNow } = useOAuthJwksRotationConfig();
   const [form, setForm] = useState<LocalOAuthJwksRotationConfig | null>(null);
   const [saving, setSaving] = useState(false);
