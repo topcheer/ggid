@@ -180,7 +180,8 @@ func (w *AlertWebhookSender) Post(ctx context.Context, payload []byte) error {
 		mac.Write(payload)
 		req.Header.Set("X-GGID-Signature", "sha256="+hex.EncodeToString(mac.Sum(nil)))
 	}
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}

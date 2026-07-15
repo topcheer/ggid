@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // GraphQLRequest represents a GraphQL query request.
@@ -39,7 +40,7 @@ type GraphQLResolver struct {
 func NewGraphQLResolver(urls map[string]string) *GraphQLResolver {
 	return &GraphQLResolver{
 		BackendURLs: urls,
-		HTTPClient:  &http.Client{},
+		HTTPClient:  &http.Client{Timeout: 30 * time.Second},
 	}
 }
 

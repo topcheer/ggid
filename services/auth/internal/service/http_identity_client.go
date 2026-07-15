@@ -21,7 +21,7 @@ type HTTPIdentityClient struct {
 func NewHTTPIdentityClient(baseURL string) *HTTPIdentityClient {
 	return &HTTPIdentityClient{
 		baseURL: baseURL,
-		client:  &http.Client{},
+		client:  &http.Client{Timeout: 10 * time.Second},
 	}
 }
 

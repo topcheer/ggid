@@ -1,16 +1,16 @@
 # Platform Scan State
 
-## Current round: 30
-## Last scan focus: E2E Regression Tests (11/11 PASS)
-## Next scan focus: E (Security Config)
-## Total findings: 25
-## Done: 24
+## Current round: 31
+## Last scan focus: E (Security Config / Error Handling)
+## Next scan focus: E2E Regression Tests
+## Total findings: 26
+## Done: 25
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 31 odd: Data Persistence scan + E2E regression tests 11/11 PASS. FedCM marked [ACCEPTABLE] (future consumer-identity feature, not B2B productization blocker). Round 32 will be E2E regression tests.*
+*Round 31 odd: Focus E Security Config / Error Handling completed (gRPC TLS fail-secure, HTTP client timeouts). FedCM marked [ACCEPTABLE] (future consumer-identity feature, not B2B productization blocker). Round 32 will be E2E regression tests.*
 1. GeoIP — LOW — [PARTIAL] Private IP detection, MaxMind DB pending
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
@@ -48,7 +48,8 @@ LOW (acceptable for now — short-lived or fallback):
 - ff6e2c0e: DCR grant_types audit + regression tests (arch)
 - 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
 - bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
-- (current): Round 30 E2E regression — Docker Compose E2E 11/11 PASS
+- (current): Round 31 focus E security config — gRPC TLS fail-secure + HTTP client timeouts
+- (round 30): Round 30 E2E regression — Docker Compose E2E 11/11 PASS
 - (round 19): Round 19 focus A stub/placeholder — no new productization gaps
 - (round 13): Round 13 focus E error handling — sanitize internal error exposure in oauth/internal/server and auth/internal/server
 - (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)

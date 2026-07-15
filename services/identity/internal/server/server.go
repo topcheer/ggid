@@ -27,6 +27,8 @@ type Server struct {
 }
 
 // newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
+// When TLS is explicitly enabled but cert/key is invalid, the server fails secure by default.
+// Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in development environments to allow fallback.
 func newGRPCServer() *grpc.Server {
 	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
 		certFile := os.Getenv("GRPC_TLS_CERT")
@@ -39,7 +41,10 @@ func newGRPCServer() *grpc.Server {
 					MinVersion:   tls.VersionTLS12,
 				})))
 			}
-			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext", err)
+			if os.Getenv("GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK") != "true" {
+				log.Fatalf("GRPC_TLS_ENABLED but cert/key invalid: %v; refusing to start with plaintext fallback. Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in dev.", err)
+			}
+			log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext because GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true", err)
 		}
 	}
 	return grpc.NewServer()

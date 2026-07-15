@@ -12,13 +12,13 @@
 
 ## Summary
 
-- Total findings: 25
-- Done: 24
+- Total findings: 26
+- Done: 25
 - Fixed (pending verification): 0
 - Partial: 0
 - Acceptable: 1
 - Remaining: 0
-- Last scan: 2026-07-15 round 31 (Data Persistence scan + E2E — 11/11 PASS); remaining productization gaps closed
+- Last scan: 2026-07-15 round 31 (Focus E — Security Config / Error Handling)
 
 ## Findings
 
@@ -52,6 +52,7 @@
 | 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request methods added to all 7 SDKs (Python, Java, Rust, Ruby, C#, Dart, PHP). | [DONE] | 5cd72023 |
 | 21 | Gateway missing route prefixes | services/gateway/internal/config/config.go | Service routes `/api/v1/org/*`, `/api/v1/policy/*`, and `/api/v1/webauthn/*` were not registered in the API Gateway, causing 404 for those endpoints. Added prefixes mapping to org, policy, and auth services. | [DONE] | ab4a1030 |
 | 22 | Gateway middleware chain gaps | services/gateway/internal/router/router.go | `MaxBodySize`, `HostValidation`, and `TimeoutMiddleware` existed in the middleware package but were not applied in the gateway `Handler()` chain. Wired all three with configurable defaults. | [DONE] | TBD |
+| 26 | gRPC TLS fail-secure + HTTP client timeouts | services/identity/internal/server/server.go, services/org/cmd/main.go, services/policy/cmd/main.go, services/audit/cmd/main.go, services/audit/internal/service/alert_webhook.go, services/auth/internal/service/http_identity_client.go, services/gateway/internal/middleware/graphql.go | gRPC TLS fallback from enabled to plaintext was silent and unsafe. Made fallback require explicit `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true`. Replaced `http.DefaultClient` and no-timeout `http.Client{}` in audit alert webhooks, auth identity client, and gateway GraphQL resolver with timeouts. | [DONE] | TBD |
 
 ### LOW Priority
 
@@ -103,6 +104,7 @@
 | 2026-07-15 | Round 22 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS after auth container restart) |
 | 2026-07-15 | Round 23 — Focus C (Middleware Chain) | +1 | 1 (gateway MaxBodySize, HostValidation, TimeoutMiddleware wired) |
 | 2026-07-15 | Round 30 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS, current verification) |
+| 2026-07-15 | Round 31 — Focus E (Security Config / Error Handling) | +1 | 1 (gRPC TLS fail-secure + HTTP client timeouts) |
 ## Remaining Real Gaps (post-audit)
 
 1. **GeoIP MaxMind integration** (LOW, [DONE]) — gateway/middleware/geoip.go
@@ -110,10 +112,10 @@
 
 ## Next Actions
 
-- Round 24–29: E2E regression and completeness scans executed by arch/PM (scan state advanced)
-- Round 30 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS, verified
-- Round 31 (odd, Focus D): Data Persistence scan
-- Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard
+- Round 31 (odd, Focus E): Security Config / Error Handling — gRPC TLS fail-secure + HTTP client timeouts fixed
+- Round 32 (even): E2E regression test run (`deploy/e2e-docker-test.sh`)
+- Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
+
 
 
 
