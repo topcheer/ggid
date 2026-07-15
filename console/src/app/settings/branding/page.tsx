@@ -317,7 +317,7 @@ export default function BrandingSettingsPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={config.logo_url}
-                    alt="Logo"
+                    alt="Preview header logo"
                     className="h-6 object-contain"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
@@ -346,7 +346,7 @@ export default function BrandingSettingsPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={config.logo_url}
-                        alt="Logo"
+                        alt="Preview login card logo"
                         className="h-12 object-contain"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
@@ -431,7 +431,7 @@ export default function BrandingSettingsPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={config.logo_url}
-                    alt="Logo"
+                    alt="Preview email header logo"
                     className="h-5 object-contain"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";

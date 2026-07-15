@@ -205,7 +205,7 @@ export default function BrandingCustomPage() {
                 <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-600">
                   <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={logoPreview} alt="Logo" className="max-h-12 max-w-12 object-contain" />
+                    <img src={logoPreview} alt="Uploaded logo preview" className="max-h-12 max-w-12 object-contain" />
                   </div>
                   <span className="flex-1 truncate text-xs text-gray-500">{config.logo_url.substring(0, 60)}...</span>
                   <button
@@ -240,7 +240,7 @@ export default function BrandingCustomPage() {
                     }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={logoPreview} alt="Logo preview" className="max-h-16 max-w-full object-contain" />
+                    <img src={logoPreview} alt="Logo preview on selected background" className="max-h-16 max-w-full object-contain" />
                   </div>
                 </div>
               </div>
