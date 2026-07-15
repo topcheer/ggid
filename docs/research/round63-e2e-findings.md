@@ -30,7 +30,7 @@ but no service runs on :9090 in all-in-one Docker.
 
 ## Positive Findings
 - User Create: working with real DB
-- Policy Create: working with real DB  
+- Policy Create: working with real DB
 - OAuth Client Create: working with memory repo fallback
 - Webhook Create: working
 - MFA Setup: TOTP secret generated
