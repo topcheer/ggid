@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 52
-## Last scan focus: E2E Regression Tests (11/11 PASS)
-## Next scan focus: D (Data Persistence) — Round 53
+## Current round: 53
+## Last scan focus: D (Data Persistence) — Round 53
+## Next scan focus: E (Security Config) — Round 54
 ## Total findings: 32
 ## Done: 31
 ## Fixed (pending verification): 0
@@ -40,6 +40,13 @@ LOW (acceptable for now — short-lived or fallback):
 - Scope i18n (static defaults)
 - OAuth state store (short-lived CSRF)
 - Client Branding (mem fallback when PG unavailable)
+- Role Mining stats (operational analytics, no persistence needed)
+- Access Review campaigns (short-lived workflow)
+- Joiner flows (short-lived workflow)
+- Impersonation audit (session-scoped)
+- Lifecycle rules (configuration cache)
+- Introspection stats (operational analytics)
+- Agent consent (session-scoped)
 
 ## Commits this cycle:
 - (current): Round 49 Focus B — Route Wiring scan, no new gaps; generated identity/auth/oauth pb code
