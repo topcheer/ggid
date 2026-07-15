@@ -77,10 +77,10 @@ export default function DelegatedAdminPage() {
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Users className="h-6 w-6 text-purple-600" /> Delegated Admin</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Scoped administrative delegation with expiry and revocation.</p>
         </div>
-        <button onClick={() => setShowGrant(true)} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"><Plus className="h-4 w-4" /> Grant</button>
+        <button onClick={() => setShowGrant(true)}aria-label="Grant delegation" className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"><Plus className="h-4 w-4" /> Grant</button>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)}aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-purple-600" /></div>
       : (
@@ -114,7 +114,7 @@ export default function DelegatedAdminPage() {
                       <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{d.permissions.map((p) => <span key={p} className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{p}</span>)}</div></td>
                       <td className="px-4 py-3 text-gray-400">{d.granted_by.slice(0, 12)}</td>
                       <td className="px-4 py-3"><span className={`${d.expires_at && new Date(d.expires_at) < new Date() ? "text-red-500" : "text-gray-400"}`}>{d.expires_at ? new Date(d.expires_at).toLocaleDateString() : "—"}</span>{d.revoked && <span className="ml-1 text-xs text-red-500">revoked</span>}</td>
-                      <td className="px-4 py-3 text-right">{!d.revoked && <button onClick={() => handleRevoke(d.id)} disabled={revoking === d.id} className="text-red-500 hover:text-red-700">{revoking === d.id ? <Loader2 className="inline h-3 w-3 animate-spin" /> : "Revoke"}</button>}</td>
+                      <td className="px-4 py-3 text-right">{!d.revoked && <button onClick={() => handleRevoke(d.id)} disabled={revoking === d.id} aria-label={revoking === d.id ? "Revoking delegation" : "Revoke delegation"} className="text-red-500 hover:text-red-700">{revoking === d.id ? <Loader2 className="inline h-3 w-3 animate-spin" /> : "Revoke"}</button>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -128,7 +128,7 @@ export default function DelegatedAdminPage() {
       {showGrant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowGrant(false)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Grant Delegation</h3><button onClick={() => setShowGrant(false)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Grant Delegation</h3><button onClick={() => setShowGrant(false)} aria-label="Close grant dialog"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="space-y-4">
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Delegate (User ID)</label><input value={form.delegate} onChange={(e) => setForm({ ...form, delegate: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <div className="flex gap-4">
@@ -137,7 +137,7 @@ export default function DelegatedAdminPage() {
               </div>
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Permissions</label><div className="flex gap-2">{allPerms.map((p) => <button key={p} onClick={() => togglePerm(p)} className={`rounded-lg px-3 py-1.5 text-xs font-medium ${form.permissions.includes(p) ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-700"}`}>{p}</button>)}</div></div>
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Expires At</label><input type="datetime-local" value={form.expires_at} onChange={(e) => setForm({ ...form, expires_at: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
-              <button onClick={handleGrant} disabled={!form.delegate || form.permissions.length === 0} className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"><ShieldCheck className="h-4 w-4" /> Grant Access</button>
+              <button onClick={handleGrant} disabled={!form.delegate || form.permissions.length === 0} aria-label="Grant delegated access" className="flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"><ShieldCheck className="h-4 w-4" /> Grant Access</button>
             </div>
           </div>
         </div>

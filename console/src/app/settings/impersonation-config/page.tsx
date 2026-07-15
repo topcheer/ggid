@@ -97,12 +97,12 @@ export default function ImpersonationConfigPage() {
         <h2 className="text-lg font-semibold">Allowed Impersonators</h2>
         <div className="space-y-2">
           {allowedImpersonators.map(u => (
-            <div key={u} className="flex items-center gap-2"><span className="font-mono text-sm flex-1">{u}</span><button onClick={() => removeImpersonator(u)} className="text-red-600 text-xs">Remove</button></div>
+            <div key={u} className="flex items-center gap-2"><span className="font-mono text-sm flex-1">{u}</span><button onClick={() => removeImpersonator(u)}aria-label={"Remove impersonator " + u} className="text-red-600 text-xs">Remove</button></div>
           ))}
         </div>
         <div className="flex gap-2">
           <input type="text" placeholder="user@ggid.io" value={newImpersonator} onChange={e => setNewImpersonator(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
-          <button onClick={addImpersonator} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
+          <button onClick={addImpersonator} aria-label="Add impersonator" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
         </div>
       </section>
 
@@ -111,12 +111,12 @@ export default function ImpersonationConfigPage() {
         <p className="text-sm text-gray-500">Only users with these roles can be impersonated.</p>
         <div className="flex flex-wrap gap-2">
           {restrictToRoles.map(r => (
-            <div key={r} className="flex items-center gap-1"><span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">{r}</span><button onClick={() => removeRole(r)} className="text-red-600 text-xs">x</button></div>
+            <div key={r} className="flex items-center gap-1"><span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">{r}</span><button onClick={() => removeRole(r)}aria-label={"Remove role " + r} className="text-red-600 text-xs">x</button></div>
           ))}
         </div>
         <div className="flex gap-2">
           <input type="text" placeholder="role-name" value={newRole} onChange={e => setNewRole(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
-          <button onClick={addRole} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
+          <button onClick={addRole} aria-label="Add restricted role" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
         </div>
       </section>
 
