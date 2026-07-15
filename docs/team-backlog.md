@@ -41,9 +41,9 @@
 
 | # | Feature | Owner | Location | Status | Next Action |
 |---|---------|-------|----------|--------|-------------|
-| 13 | Login page lacks tenant selection | frontend | console/src/app/login/page.tsx | [IN PROGRESS] | Frontend implementing tenant slug input |
-| 14 | No first-deploy onboarding flow | frontend+backend | console/src/app/onboarding/ | [NEW] | Use system/initialized API to detect first-deploy |
-| 15 | Hardcoded DEFAULT_TENANT_ID | frontend | console/src/lib/api-config.ts | [IN PROGRESS] | Frontend removing hardcoded ID |
+| 13 | Login page lacks tenant selection | frontend | console/src/app/login/page.tsx | [DONE] 53771ccc | Tenant slug input + system init check |
+| 14 | No first-deploy onboarding flow | frontend+backend | console/src/app/onboarding/ | [PARTIAL] | Login page shows warning when user_count=0; full onboarding wizard pending |
+| 15 | Hardcoded DEFAULT_TENANT_ID | frontend | console/src/lib/api-config.ts | [DONE] 53771ccc | Now uses tenant_slug from login form, DEFAULT_TENANT_ID only as fallback |
 | 16 | System init detection API | backend | services/identity/ | [DONE] 6f23b400 | GET /api/v1/system/initialized works |
 | 17 | Tenant resolve API | backend | services/identity/ | [DONE] 6f23b400 | GET /api/v1/tenants/resolve works |
 
