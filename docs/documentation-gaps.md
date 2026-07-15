@@ -105,3 +105,52 @@ New/verified gaps:
   - #31 Auth gRPC service (`services/auth/cmd/main.go`, `services/auth/internal/server`) — no gRPC server or generated pb import.
   - #32 OAuth gRPC service (`services/oauth/internal/server/server.go`) — proto methods not registered.
 - No new documentation gaps for existing HTTP/REST features.
+
+## Undocumented API Endpoints Audit (2026-07-15 Round 60)
+
+Full route scan of `services/auth/internal/server/http.go` and `services/oauth/internal/server/` against `docs/api-reference.md`.
+
+### Auth service — undocumented endpoints (high priority)
+
+These routes are registered in production `http.go` but not documented in `docs/api-reference.md`:
+
+| Category | Endpoints | Count |
+|----------|-----------|-------|
+| Session security | `/api/v1/auth/sessions/{bind-device,check-device,enforce-limit,geo-stats,hijack-check,limits,stream,termination-reasons,unbind-device}` | 9 |
+| Login security | `/api/v1/auth/{login-analytics,login-flow/record,login-geo/enrich,login-notify,login-notify/config,login-patterns/,login-policy,login-security,login-velocity,login/orchestrate}` | 10 |
+| Credential protection | `/api/v1/auth/{credentials/store,credential-exposure,credential-stuffing/{block,blocked},detect-credential-stuffing,password-breach/notify,password-entropy/check,password-history-check,password-pepper/{rotate,status}}` | 10 |
+| MFA & WebAuthn | `/api/v1/auth/{mfa/{config,factors/,jit-enroll,status},webauthn/{conditional,config,passwordless/{begin,finish}},passkey/auth/{begin,finish},adaptive-mfa/evaluate}` | 10 |
+| Device management | `/api/v1/auth/{devices/{attest,list,register,trusted,trusted/},device-bindings,device-fingerprint/analytics}` | 7 |
+| Threat detection | `/api/v1/auth/{anomaly/detect,detect-impossible-travel,detect-password-spray,golden-ticket/detect,hijack/timeline,lateral-movement/detect,privilege-escalation/detect,synthetic-identity/detect,replay-check,fraud/score}` | 10 |
+| Password policy | `/api/v1/auth/{password-policy/{audit,check},password-strength/distribution,password-reset/analytics,rate-limits,rotation-reminders}` | 6 |
+| Account & identity | `/api/v1/auth/{account-linking,delegation,impersonate/revoke,biometric/{enroll,verify}}` | 5 |
+| Config & compliance | `/api/v1/auth/{admin/config,brute-force/config,introspection/config,mtls/config,session-binding/config,passwordless/{config,stats},trust-store/{cas,cas/,verify}}` | 11 |
+| Notifications & analytics | `/api/v1/auth/{notifications,risk-notify,login-notify,tokens,stats/{credential-stuffing,social-providers},threat-intel/feed,vpn-check,geofencing,dlp/policies}` | 11 |
+
+**Total undocumented auth endpoints: ~89**
+
+### OAuth service — undocumented endpoints
+
+| Category | Endpoints | Count |
+|----------|-----------|-------|
+| Token management | `/api/v1/oauth/{token-lifetime,token-lifetime/analytics,token-entropy,token-rotation/config,token-scope-diff,token-families/,token-exchange-delegation,token/{claims,downscope,dpop-bind,dpop-verify},tokens/validate-audience}` | 12 |
+| Introspection & revocation | `/api/v1/oauth/{introspect/batch,introspection/{config,stats},revoke-cascade}` | 5 |
+| Client management | `/api/v1/oauth/{clients/{dependency-graph,onboarding},client-lifecycle/config,dynamic-registration/config}` | 5 |
+| Consent | `/api/v1/oauth/{consent/{admin-override,analytics,config,list},consents/{dashboard,history}}` | 6 |
+| Security features | `/api/v1/oauth/{dpop/{config,verify},par/{,config},jar/config,frontchannel-logout,redirect-uri-validation/config,resource-{allowed,indicator},audience-mismatches}` | 10 |
+| Scope management | `/api/v1/oauth/{scope-delegation,scope-lifecycle,scopes/{deprecations,hierarchy,resolve-dependencies}}` | 5 |
+| JWKS & federation | `/api/v1/oauth/{jwks/{rotate,rotation-status},issuer/metadata,oidc-federation/config,oidc/claim-mapping,grant-flows}` | 7 |
+| Analytics | `/api/v1/oauth/{analytics/summary,stats/{authorize-flow,backchannel-logout,grant-types,token-binding,token-revocation},token-events/stream}` | 8 |
+| Config | `/api/v1/oauth/{ciba/config,introspection/config,token-events/stream}` | 3 |
+| SAML IdP | `/saml/idp/{metadata,sso}` | 2 |
+
+**Total undocumented OAuth endpoints: ~63**
+
+### Recommendation
+
+These endpoints are registered in production code but have no documentation in `docs/api-reference.md`. Many are security-critical (threat detection, credential stuffing, MFA config, session security). Priority actions:
+
+1. Add auth session/security endpoints to api-reference.md (P1)
+2. Add OAuth token/consent/security endpoints to api-reference.md (P1)
+3. Document SAML IdP endpoints (P2)
+4. Consider if some endpoints are internal-only and should be marked as such
