@@ -138,7 +138,7 @@ export default function PasswordPolicyPage() {
       setMsg(t("passwordPolicy.policySaved"));
     } catch {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      setMsg("Endpoint unavailable — saved to localStorage");
+      setMsg(t("settings.endpointUnavailable"));
     } finally {
       setSaving(false);
     }
@@ -252,37 +252,37 @@ export default function PasswordPolicyPage() {
               checked={config.require_uppercase}
               onChange={(v) => setConfig({ ...config, require_uppercase: v })}
               label={t("passwordPolicy.requireUppercase")}
-              description="At least one A-Z character"
+              description={t("settings.atLeastUpper")}
             />
             <Toggle
               checked={config.require_lowercase}
               onChange={(v) => setConfig({ ...config, require_lowercase: v })}
               label={t("passwordPolicy.requireLowercase")}
-              description="At least one a-z character"
+              description={t("settings.atLeastLower")}
             />
             <Toggle
               checked={config.require_digit}
               onChange={(v) => setConfig({ ...config, require_digit: v })}
               label={t("passwordPolicy.requireDigits")}
-              description="At least one 0-9 character"
+              description={t("settings.atLeastDigit")}
             />
             <Toggle
               checked={config.require_special}
               onChange={(v) => setConfig({ ...config, require_special: v })}
               label={t("passwordPolicy.requireSpecial")}
-              description="At least one non-alphanumeric character"
+              description={t("settings.atLeastSpecial")}
             />
             <Toggle
               checked={config.prevent_username}
               onChange={(v) => setConfig({ ...config, prevent_username: v })}
               label={t("passwordPolicy.preventUsername")}
-              description="Password cannot contain the user's username"
+              description={t("settings.noUsername")}
             />
             <Toggle
               checked={config.prevent_common}
               onChange={(v) => setConfig({ ...config, prevent_common: v })}
               label={t("passwordPolicy.preventCommon")}
-              description="Reject passwords from a known dictionary of common passwords"
+              description={t("settings.dictPassword")}
             />
           </div>
         </div>
@@ -372,7 +372,7 @@ export default function PasswordPolicyPage() {
               type="text"
               value={testUsername}
               onChange={(e) => setTestUsername(e.target.value)}
-              placeholder="Test username (for username check)"
+              placeholder={t("settings.testUsername")}
               className="mb-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
             />
           )}
@@ -380,7 +380,7 @@ export default function PasswordPolicyPage() {
             type="text"
             value={testPw}
             onChange={(e) => setTestPw(e.target.value)}
-            placeholder="Type a test password..."
+            placeholder={t("settings.testPassword")}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
           />
           {testPw && (
@@ -396,7 +396,7 @@ export default function PasswordPolicyPage() {
               />
               <RuleCheck
                 passes={checkRule("require_digit") || !config.require_digit}
-                label="Contains digit"
+                label={t("settings.containsDigit")}
               />
               <RuleCheck
                 passes={checkRule("require_special") || !config.require_special}

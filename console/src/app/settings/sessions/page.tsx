@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, useTranslations } from "@/lib/i18n";
 import {
   Monitor, Smartphone, Tablet, Globe, Trash2, RefreshCw, Clock,
   MapPin, Wifi, X, AlertTriangle,
@@ -21,6 +21,7 @@ interface Session {
 }
 
 export default function SessionsSettingsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +43,7 @@ export default function SessionsSettingsPage() {
       // Mark first session as current if no explicit flag
       setSessions(list.map((s, i) => ({ ...s, current: s.current ?? (i === 0) })));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load sessions");
+      setError(err instanceof Error ? err.message : t("settings.failedLoadSessions"));
       setSessions([]);
     } finally {
       setLoading(false);
@@ -60,10 +61,10 @@ export default function SessionsSettingsPage() {
     try {
       await apiFetch(`/api/v1/sessions/${sessionId}`, { method: "DELETE" });
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      showMessage("Session revoked");
+      showMessage(t("settings.sessionRevoked"));
     } catch {
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      showMessage("Session revoked");
+      showMessage(t("settings.sessionRevoked"));
     }
   };
 
@@ -73,10 +74,10 @@ export default function SessionsSettingsPage() {
       await apiFetch("/api/v1/sessions", { method: "DELETE" });
       // Keep only the current session
       setSessions((prev) => prev.filter((s) => s.current));
-      showMessage("All other sessions revoked");
+      showMessage(t("settings.allSessionsRevoked"));
     } catch {
       setSessions((prev) => prev.filter((s) => s.current));
-      showMessage("All other sessions revoked");
+      showMessage(t("settings.allSessionsRevoked"));
     } finally {
       setRevokingAll(false);
       setShowRevokeAllModal(false);
@@ -203,7 +204,7 @@ export default function SessionsSettingsPage() {
                   <button
                     onClick={() => handleRevoke(session.id)}
                     className="rounded-lg border border-red-300 p-1.5 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
-                    title="Revoke session"
+                    title={t("settingsPage.sessionRevoked")}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

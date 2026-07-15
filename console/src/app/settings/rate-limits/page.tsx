@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Gauge, Plus, Trash2, X, AlertCircle, Loader2, Check, Pencil,
   RefreshCw, ToggleLeft, ToggleRight,
@@ -18,6 +19,7 @@ interface RateLimit {
 }
 
 export default function RateLimitsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [limits, setLimits] = useState<RateLimit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function RateLimitsPage() {
       const data = await apiFetch<{ limits?: RateLimit[]; items?: RateLimit[] }>("/api/v1/policy/rate-limits").catch(() => null);
       setLimits(data?.limits ?? data?.items ?? []);
     } catch {
-      setError("Failed to load rate limits");
+      setError(t("settings.failedLoadRateLimits"));
     } finally {
       setLoading(false);
     }
@@ -57,7 +59,7 @@ export default function RateLimitsPage() {
       setDraft({});
       await load();
     } catch {
-      setError("Failed to save rate limit");
+      setError(t("settings.failedSaveRateLimit"));
     }
   };
 
@@ -77,7 +79,7 @@ export default function RateLimitsPage() {
       setDraft({});
       await load();
     } catch {
-      setError("Failed to create rate limit");
+      setError(t("settings.failedCreateRateLimit"));
     }
   };
 
@@ -88,7 +90,7 @@ export default function RateLimitsPage() {
       });
       await load();
     } catch {
-      setError("Failed to toggle rate limit");
+      setError(t("settings.failedToggleRateLimit"));
     }
   };
 
@@ -98,7 +100,7 @@ export default function RateLimitsPage() {
       setConfirmDelete(null);
       await load();
     } catch {
-      setError("Failed to delete rate limit");
+      setError(t("settings.failedDeleteRateLimit"));
     }
   };
 
@@ -110,14 +112,14 @@ export default function RateLimitsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <Gauge className="h-6 w-6 text-indigo-600" /> Rate Limits
+            <Gauge className="h-6 w-6 text-indigo-600" /> {t("rateLimits.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Configure per-endpoint request throttling with burst capacity.
+            {t("rateLimits.subtitle")}
           </p>
         </div>
         <button onClick={() => { setDraft({ method: "GET", requests_per_minute: 60, burst: 10, per_tenant: false }); setShowCreate(true); }} aria-label="Create new rate limit" className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-          <Plus className="h-4 w-4" /> Add Limit
+          <Plus className="h-4 w-4" /> {t("rateLimits.addLimit")}
         </button>
       </div>
 
@@ -134,7 +136,7 @@ export default function RateLimitsPage() {
         <div className={cardCls}>
           <div className="py-12 text-center">
             <Gauge className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-4 text-sm text-gray-400">No rate limits configured.</p>
+            <p className="mt-4 text-sm text-gray-400">{t("rateLimits.noLimits")}</p>
           </div>
         </div>
       ) : (
@@ -142,13 +144,13 @@ export default function RateLimitsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                <th className="px-4 py-3">Path Pattern</th>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Req/Min</th>
-                <th className="px-4 py-3">Burst</th>
-                <th className="px-4 py-3">Per-Tenant</th>
-                <th className="px-4 py-3">Enabled</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th className="px-4 py-3">{t("rateLimits.pathPattern")}</th>
+                <th className="px-4 py-3">{t("rateLimits.method")}</th>
+                <th className="px-4 py-3">{t("rateLimits.reqMin")}</th>
+                <th className="px-4 py-3">{t("rateLimits.burst")}</th>
+                <th className="px-4 py-3">{t("rateLimits.perTenant")}</th>
+                <th className="px-4 py-3">{t("settings.enabled")}</th>
+                <th className="px-4 py-3 text-right">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -182,7 +184,7 @@ export default function RateLimitsPage() {
                       <td className="px-4 py-3">{l.per_tenant ? <ToggleRight className="h-5 w-5 text-indigo-600" /> : <ToggleLeft className="h-5 w-5 text-gray-300" />}</td>
                       <td className="px-4 py-3">
                         <button onClick={() => handleToggle(l)}>
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${l.enabled ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-500"}`}>{l.enabled ? "On" : "Off"}</span>
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${l.enabled ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-500"}`}>{l.enabled ? t("rateLimits.on") : t("rateLimits.off")}</span>
                         </button>
                       </td>
                       <td className="px-4 py-3">
@@ -227,7 +229,7 @@ export default function RateLimitsPage() {
             <div key={l.id} className={cardCls}>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs text-gray-700 dark:text-gray-300">{l.path_pattern}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${l.enabled ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-500"}`}>{l.enabled ? "On" : "Off"}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${l.enabled ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 text-gray-500"}`}>{l.enabled ? t("rateLimits.on") : t("rateLimits.off")}</span>
               </div>
               <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
                 <span className="rounded bg-blue-100 px-1.5 py-0.5 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{l.method}</span>
@@ -235,8 +237,8 @@ export default function RateLimitsPage() {
                 <span>{l.burst} burst</span>
               </div>
               <div className="mt-2 flex gap-2">
-                <button onClick={() => startEdit(l)} aria-label={"Edit " + l.path_pattern} className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"><Pencil className="h-3 w-3" /> Edit</button>
-                <button onClick={() => setConfirmDelete(l.id)} aria-label={"Delete " + l.path_pattern} className="flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs text-red-500"><Trash2 className="h-3 w-3" /> Delete</button>
+                <button onClick={() => startEdit(l)} aria-label={"Edit " + l.path_pattern} className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"><Pencil className="h-3 w-3" /> {t("common.edit")}</button>
+                <button onClick={() => setConfirmDelete(l.id)} aria-label={"Delete " + l.path_pattern} className="flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs text-red-500"><Trash2 className="h-3 w-3" /> {t("common.delete")}</button>
               </div>
             </div>
           ))}
@@ -250,13 +252,13 @@ export default function RateLimitsPage() {
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><Trash2 className="h-5 w-5 text-red-600" /></div>
               <div>
-                <h2 className="font-semibold text-gray-900 dark:text-white">Delete Rate Limit?</h2>
-                <p className="text-sm text-gray-500">This rate limit rule will be removed. Requests to the matching pattern will no longer be throttled.</p>
+                <h2 className="font-semibold text-gray-900 dark:text-white">{t("rateLimits.deleteTitle")}</h2>
+                <p className="text-sm text-gray-500">{t("rateLimits.deleteDesc")}</p>
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmDelete(null)} aria-label="Cancel delete" className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)} aria-label="Confirm delete" className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} aria-label="Cancel delete" className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
+              <button onClick={() => handleDelete(confirmDelete)} aria-label="Confirm delete" className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("common.delete")}</button>
             </div>
           </div>
         </div>

@@ -841,7 +841,7 @@ export default function SSOConnectionsPage() {
                           : "bg-gray-100 text-gray-500"
                       }`}
                     >
-                      {provider.active ? "Active" : "Inactive"}
+                      {provider.active ? t("settings.active") : t("settings.inactive")}
                     </span>
                   </div>
 
@@ -876,7 +876,7 @@ export default function SSOConnectionsPage() {
                           <XCircle className="h-4 w-4 text-red-600" />
                         )}
                         <span className={`font-semibold ${result.status === "success" ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}>
-                          {result.status === "success" ? "Connected" : "Failed"}
+                          {result.status === "success" ? t("settings.connected") : t("settings.failed")}
                         </span>
                         <span className="text-gray-400">{result.responseTime}ms</span>
                       </div>
@@ -908,7 +908,7 @@ export default function SSOConnectionsPage() {
                       onClick={() => toggleProviderActive(provider.id)}
                       className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                     >
-                      {provider.active ? "Deactivate" : "Activate"}
+                      {provider.active ? t("settings.deactivate") : t("settings.activate")}
                     </button>
                     <button
                       onClick={() => deleteProvider(provider.id)}

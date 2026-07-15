@@ -63,7 +63,7 @@ export default function ApiKeysPage() {
       }
       setKeys(Array.isArray(data) ? data : data.keys || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load API keys");
+      setError(err instanceof Error ? err.message : t("settings.failedLoadApiKeys"));
       setKeys([]);
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ export default function ApiKeysPage() {
 
   const handleCreate = async () => {
     if (!keyName.trim()) {
-      setError("Please enter a name for the API key");
+      setError(t("settings.enterKeyName"));
       return;
     }
     if (keyScopes.size === 0) {
@@ -144,7 +144,7 @@ export default function ApiKeysPage() {
   };
 
   const handleRevoke = async (keyId: string) => {
-    if (!confirm("Revoke this API key? This action cannot be undone.")) return;
+    if (!confirm(t("settings.confirmRevokeKey"))) return;
     setRevoking(keyId);
     try {
       await apiFetch(`/api/v1/api-keys/${keyId}`, { method: "DELETE" });
@@ -172,7 +172,7 @@ export default function ApiKeysPage() {
   };
 
   const formatDate = (ts: string | null) => {
-    if (!ts) return "Never";
+    if (!ts) return t("settings.never");
     return new Date(ts).toLocaleDateString();
   };
 
@@ -349,7 +349,7 @@ export default function ApiKeysPage() {
                           ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-400"
                           : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400"
                       }`}>
-                        {expired ? "Expired" : key.status || "Active"}
+                        {expired ? t("settings.expired") : key.status || t("settings.activeStatus")}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">

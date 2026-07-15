@@ -62,7 +62,7 @@ export default function MFAPage() {
 
   const verifyTotp = async () => {
     if (verifyCode.length !== 6) {
-      setError("Please enter a 6-digit code");
+      setError(t("settings.enterCode"));
       return;
     }
     setVerifying(true);
@@ -117,7 +117,7 @@ export default function MFAPage() {
 
   const registerPasskey = async () => {
     if (!webauthnName.trim()) {
-      setError("Please enter a name for your passkey");
+      setError(t("settings.enterPasskeyName"));
       return;
     }
     setWebauthnLoading(true);
@@ -250,12 +250,12 @@ export default function MFAPage() {
                         onClick={() => setShowSecret(!showSecret)}
                         className="rounded-lg border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                       >
-                        {showSecret ? "Hide" : "Show"}
+                        {showSecret ? t("settings.hide") : t("settings.show")}
                       </button>
                       <button
                         onClick={() => { navigator.clipboard.writeText(totpSecret); }}
                         className="rounded-lg border border-gray-300 p-2 text-gray-500 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                        title="Copy secret"
+                        title={t("settings.copySecret")}
                       >
                         <Copy className="h-4 w-4" />
                       </button>
@@ -319,7 +319,7 @@ export default function MFAPage() {
                   className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   {codesCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                  {codesCopied ? "Copied!" : "Copy All"}
+                  {codesCopied ? t("settings.copied") : t("settings.copyAll")}
                 </button>
               </div>
             </div>
@@ -352,7 +352,7 @@ export default function MFAPage() {
               type="text"
               value={webauthnName}
               onChange={(e) => setWebauthnName(e.target.value)}
-              placeholder="Passkey name (e.g. MacBook Touch ID)"
+              placeholder={t("settings.passkeyPlaceholder")}
               className={inputCls}
             />
             <button

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useApi } from "@/lib/api";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, useTranslations } from "@/lib/i18n";
 import {
   Save,
   Loader2,
@@ -76,6 +76,7 @@ function checkIP(ip: string, rules: IPRule[]): boolean {
 }
 
 export default function IPAllowlistPage() {
+  const t = useTranslations();
   const { apiFetch, TENANT_ID } = useApi();
   const [rules, setRules] = useState<IPRule[]>(defaultRules);
   const [allowlistEnabled, setAllowlistEnabled] = useState(true);
@@ -120,16 +121,16 @@ export default function IPAllowlistPage() {
     setCidrError(null);
     const cidr = newCIDR.trim();
     if (!cidr) {
-      setCidrError("Please enter a CIDR notation");
+      setCidrError(t("settings.enterCidr"));
       return;
     }
     if (!isValidCIDR(cidr)) {
-      setCidrError("Invalid CIDR format. Use x.x.x.x/y (e.g., 192.168.1.0/24)");
+      setCidrError(t("settings.invalidCidr"));
       return;
     }
     // Check duplicate
     if (rules.some((r) => r.cidr === cidr)) {
-      setCidrError("This CIDR rule already exists");
+      setCidrError(t("settings.duplicateCidr"));
       return;
     }
     setRules((prev) => [
@@ -143,7 +144,7 @@ export default function IPAllowlistPage() {
     setRules((prev) =>
       prev.filter((r) => r.id !== id).map((r, i) => ({ ...r, priority: i + 1 })),
     );
-    setMsg("Rule deleted");
+    setMsg(t("settings.ruleDeleted"));
   };
 
   const handleToggleRule = (id: string) => {
@@ -186,7 +187,7 @@ export default function IPAllowlistPage() {
   const handleTestIP = () => {
     setTestResult(null);
     if (!isValidIP(testIP.trim())) {
-      setCidrError("Invalid IP address format");
+      setCidrError(t("settings.invalidIp"));
       return;
     }
     setCidrError(null);
@@ -236,13 +237,13 @@ export default function IPAllowlistPage() {
             }
             setMsg(`Imported ${validRules.length} rules`);
           } else {
-            setCidrError("No valid CIDR rules found in file");
+            setCidrError(t("settings.noCidrInFile"));
           }
         } else {
-          setCidrError("Invalid file format: missing rules array");
+          setCidrError(t("settings.invalidFileFormat"));
         }
       } catch {
-        setCidrError("Failed to parse JSON file");
+        setCidrError(t("settings.failedParseJson"));
       }
     };
     reader.readAsText(file);
@@ -262,7 +263,7 @@ export default function IPAllowlistPage() {
         STORAGE_KEY,
         JSON.stringify({ allowlist_enabled: allowlistEnabled, rules }),
       );
-      setMsg("Endpoint unavailable — saved to localStorage");
+      setMsg(t("settings.endpointUnavailable"));
     } finally {
       setSaving(false);
     }
@@ -283,7 +284,7 @@ export default function IPAllowlistPage() {
         {/* Master toggle */}
         <label className="flex cursor-pointer items-center gap-3">
           <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-            {allowlistEnabled ? "Enabled" : "Disabled"}
+            {allowlistEnabled ? t("settings.enabled") : t("settings.disabled")}
           </span>
           <button
             type="button"

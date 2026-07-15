@@ -77,7 +77,7 @@ export default function OAuthClientsSettingsPage() {
       ).catch(() => ({ clients: [], items: [] }));
       setClients(data.clients || data.items || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load");
+      setError(err instanceof Error ? err.message : t("settings.failedLoad"));
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ export default function OAuthClientsSettingsPage() {
       setMsg(t("oauth.created"));
       loadClients();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create");
+      setError(err instanceof Error ? err.message : t("settings.failedCreate"));
     } finally {
       setCreating(false);
     }
@@ -158,7 +158,7 @@ export default function OAuthClientsSettingsPage() {
       setMsg(t("oauth.updated"));
       loadClients();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update");
+      setError(err instanceof Error ? err.message : t("settings.failedUpdate"));
     }
   };
 
@@ -169,7 +169,7 @@ export default function OAuthClientsSettingsPage() {
       setMsg(t("oauth.deleted"));
       loadClients();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
+      setError(err instanceof Error ? err.message : t("settings.failedDelete"));
     }
   };
 
@@ -193,7 +193,7 @@ export default function OAuthClientsSettingsPage() {
         setMsg(t("oauth.secretRotated"));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to rotate secret");
+      setError(err instanceof Error ? err.message : t("settings.failedRotate"));
     } finally {
       setRotating(null);
     }
