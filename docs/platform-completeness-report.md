@@ -13,9 +13,9 @@
 ## Summary
 
 - Total findings: 20
-- Done: 20
+- Done: 21
 - Fixed (pending verification): 0
-- Partial: 1
+- Partial: 0
 - Remaining: 0
 - Last scan: 2026-07-15 round 20 (E2E regression tests — 11/11 PASS)
 
@@ -51,7 +51,7 @@
 
 | # | Feature | Location | Issue | Status | Commit |
 |---|---------|----------|-------|--------|--------|
-| 12 | GeoIP | gateway/middleware/geoip.go | Detects private IPs (returns 'LOCAL'). MaxMind GeoLite2 DB integration pending. | [PARTIAL] | arch |
+| 12 | GeoIP | gateway/middleware/geoip.go | MaxMind GeoLite2 DB integration via GEOIP_DB_PATH; private IP detection; block/allow country lists; X-Geo-Country header. Verified by geoip_test.go. | [DONE] | 852a297b |
 | 13 | Frontend page completeness | console/src/app/ | Key pages exist and are wired to APIs. | [DONE] | frontend |
 | 14 | HSM/KMS key provider | pkg/crypto, services/auth, services/oauth | PKCS#11 provider + integration into auth/oauth/gateway cmd/main.go; TokenService and OAuth server accept KeyProvider; local keys auto-generated. | [DONE] | 12db3bac |
 
@@ -95,8 +95,8 @@
 | 2026-07-15 | Round 20 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 ## Remaining Real Gaps (post-audit)
 
-1. **GeoIP MaxMind integration** (LOW, [PARTIAL]) — gateway/middleware/geoip.go
-   - Private IP detection works; MaxMind GeoLite2 DB integration pending.
+1. **GeoIP MaxMind integration** (LOW, [DONE]) — gateway/middleware/geoip.go
+   - MaxMind GeoLite2 DB integration via GEOIP_DB_PATH; private IP detection; country block/allow lists; tests in geoip_test.go.
 
 ## Next Actions
 

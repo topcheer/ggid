@@ -4,9 +4,9 @@
 ## Last scan focus: E2E Regression Tests (11/11 PASS)
 ## Next scan focus: B (Route Wiring)
 ## Total findings: 20
-## Done: 20
+## Done: 21
 ## Fixed (pending verification): 0
-## Partial: 1
+## Partial: 0
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
