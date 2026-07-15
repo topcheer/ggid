@@ -42,7 +42,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - : all productization gaps now [DONE].
 - : synchronized counts (Total 20 / Done 21 / Partial 0 / Remaining 0).
 
+## [0.2.2] — Route Wiring + Release Workflow Fix
+
+### Fixed
+- Gateway route wiring: add , , and  routes to gateway config.
+- Release workflow  job: run npm install/build in  instead of repo root.
+
+### Changed
+- docs/platform-completeness-report.md: finding #21 [DONE]; counts synchronized.
+- docs/platform-scan-state.md: round 22, next focus E2E regression.
+
 ## [Unreleased]
+
 
 
 ### Added — Phase 9-10 Features
