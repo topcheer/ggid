@@ -24,6 +24,7 @@ type Server struct {
 	cfg      *conf.Config
 	grpcSrv  *grpc.Server
 	httpSrv  *http.Server
+	idSvc    *service.IdentityService
 }
 
 // newGRPCServer creates a gRPC server with optional TLS based on GRPC_TLS_ENABLED env var.
@@ -85,6 +86,7 @@ func New(cfg *conf.Config) (*Server, error) {
 		cfg:     cfg,
 		grpcSrv: grpcSrv,
 		httpSrv: httpSrv,
+		idSvc:   identitySvc,
 	}, nil
 }
 
