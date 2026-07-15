@@ -170,3 +170,21 @@ The arch/PM E2E verification found that `POST /api/v1/users/{id}/roles` returns 
 **Fix needed:** Register `POST /api/v1/users/{id}/roles` (or `/api/v1/identity/users/{id}/roles`) in identity or policy service HTTP server, wiring to `RoleService.AssignRole`.
 
 **Also missing from docs:** `POST /users/{id}/roles` is not documented in `docs/api-reference.md`.
+
+## E2E Verification Gap: Lock/Unlock No-Op + Audit Events Missing (2026-07-16 Round 64)
+
+### P0: Lock/Unlock returns 200 but doesn't persist
+
+**Symptom:** `POST /api/v1/users/{id}/lock` returns 200 with user object, but `status` field stays `"active"`. Handler returns data without executing DB UPDATE.
+
+**Root cause:** Identity service lock/unlock handler likely reads the user and returns it without calling the repository's update method to change the status field.
+
+**Fix needed:** Ensure `services/identity/internal/service/` lock/unlock methods call `repo.Update()` or equivalent to persist the status change.
+
+### P1: Audit events not published on write operations
+
+**Symptom:** After creating users, policies, OAuth clients — audit event count stays 0. NATS consumer is connected but no events arrive.
+
+**Root cause:** Identity/policy/oauth services have NATS publisher available but don't call `publisher.Publish()` or `PublishAsync()` after write operations (create/update/delete/lock/unlock).
+
+**Fix needed:** Wire audit event publishing into all write-path service methods across identity, policy, and oauth services.
