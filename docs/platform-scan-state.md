@@ -1,17 +1,16 @@
 # Platform Scan State
 
-## Current round: 46
-## Last scan focus: E2E Regression Tests (11/11 PASS)
-## Next scan focus: A (Interface Integrity)
-## Total findings: 26
-## Done: 25
+## Current round: 47
+## Last scan focus: A (Interface Integrity)
+## Next scan focus: E2E Regression Tests (Round 48)
+## Total findings: 32
+## Done: 28
 ## Fixed (pending verification): 0
 ## Partial: 0
-## Remaining: 0
+## Remaining: 3
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 46 even: E2E regression tests completed — 11/11 PASS. Round 47 will be Focus A (Interface Integrity).*
-
+*Round 47 odd: Focus A interface integrity scan completed — 3 OAuth handler registration gaps fixed; 3 NEW gRPC service gaps identified (identity/auth/oauth proto services lack generated pb + server implementations). Round 48 will be E2E regression tests.*
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
 All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
 login, refresh, userinfo, jwks, rbac, abac, webhook, introspect, revoke, discovery

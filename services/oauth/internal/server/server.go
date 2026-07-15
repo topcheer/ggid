@@ -1200,6 +1200,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			handleClientBranding(w, r)
 			return
 		}
+		// Sub-path: client versioning
+		if strings.HasSuffix(r.URL.Path, "/version") || strings.HasSuffix(r.URL.Path, "/versions") {
+			handleClientVersioning(w, r)
+			return
+		}
+		// Sub-path: client health
+		if strings.HasSuffix(r.URL.Path, "/health") {
+			handleClientHealth(w, r)
+			return
+		}
 		// Sub-path: client lifecycle (suspend/reinstate)
 		if strings.HasSuffix(r.URL.Path, "/suspend") || strings.HasSuffix(r.URL.Path, "/reinstate") {
 			handleClientLifecycle(w, r)
@@ -1375,6 +1385,10 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		writeJSON(w, http.StatusOK, map[string]any{"consents": []any{}})
 	})
 	mux.HandleFunc("/api/v1/oauth/consent/", func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/receipt") {
+			handleConsentReceipt(w, r)
+			return
+		}
 		if r.Method != http.MethodDelete {
 			writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
 			return

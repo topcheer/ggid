@@ -230,3 +230,150 @@ func TestGapRegression_ClientBranding_UsesAdapter(t *testing.T) {
 		t.Errorf("branding adapter read did not return persisted value: %+v", resp.Branding)
 	}
 }
+
+// Gap Regression: Client Versioning and Health endpoints registered (#interface-integrity)
+// Validates: handleClientVersioning and handleClientHealth are reachable via /api/v1/oauth/clients/{id}/... sub-paths.
+
+func TestGapRegression_ClientVersioning_CRUD(t *testing.T) {
+	clientID := "version-test-client"
+	body := `{"config":{"redirect_uris":["https://example.com"]},"note":"v1"}`
+	req := httptest.NewRequest("POST", "/api/v1/oauth/clients/"+clientID+"/version", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	handleClientVersioning(w, req)
+	if w.Code != http.StatusCreated {
+		t.Fatalf("POST version expected 201, got %d", w.Code)
+	}
+	var createResp struct {
+		ClientID string        `json:"client_id"`
+		Version  ClientVersion `json:"version"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &createResp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if createResp.ClientID != clientID || createResp.Version.Version != 1 {
+		t.Errorf("expected client_id=%s version=1, got %+v", clientID, createResp)
+	}
+
+	req = httptest.NewRequest("GET", "/api/v1/oauth/clients/"+clientID+"/versions", nil)
+	w = httptest.NewRecorder()
+	handleClientVersioning(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET versions expected 200, got %d", w.Code)
+	}
+	var listResp struct {
+		ClientID string `json:"client_id"`
+		Total    int    `json:"total"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &listResp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if listResp.ClientID != clientID || listResp.Total != 1 {
+		t.Errorf("expected client_id=%s total=1, got %+v", clientID, listResp)
+	}
+}
+
+func TestGapRegression_ClientVersioning_InvalidClient(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/v1/oauth/clients//version", nil)
+	w := httptest.NewRecorder()
+	handleClientVersioning(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
+	}
+}
+
+func TestGapRegression_ClientHealth_KnownClient(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/oauth/clients/web-app/health", nil)
+	w := httptest.NewRecorder()
+	handleClientHealth(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET health expected 200, got %d", w.Code)
+	}
+	var resp struct {
+		ClientID       string `json:"client_id"`
+		OverallHealth  string `json:"overall_health"`
+		ActiveTokens   int    `json:"active_tokens"`
+		RecentErrors   int    `json:"recent_errors_24h"`
+		ErrorRatePct   float64 `json:"error_rate_pct"`
+		CertStatus     string `json:"cert_status"`
+		SecretStatus   string `json:"secret_status"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.ClientID != "web-app" {
+		t.Errorf("expected client_id web-app, got %s", resp.ClientID)
+	}
+	if resp.OverallHealth != "healthy" {
+		t.Errorf("expected overall_health healthy, got %s", resp.OverallHealth)
+	}
+	if resp.ActiveTokens != 320 {
+		t.Errorf("expected active_tokens 320, got %d", resp.ActiveTokens)
+	}
+}
+
+func TestGapRegression_ClientHealth_UnknownClient(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/oauth/clients/unknown-client/health", nil)
+	w := httptest.NewRecorder()
+	handleClientHealth(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET health expected 200, got %d", w.Code)
+	}
+	var resp struct {
+		OverallHealth string `json:"overall_health"`
+		Message       string `json:"message"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.OverallHealth != "unknown" {
+		t.Errorf("expected unknown health, got %s", resp.OverallHealth)
+	}
+}
+
+func TestGapRegression_ClientHealth_MethodNotAllowed(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/v1/oauth/clients/web-app/health", nil)
+	w := httptest.NewRecorder()
+	handleClientHealth(w, req)
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", w.Code)
+	}
+}
+
+// Gap Regression: Consent Receipt endpoint registered (#interface-integrity)
+// Validates: handleConsentReceipt is reachable via /api/v1/oauth/consent/{id}/receipt.
+
+func TestGapRegression_ConsentReceipt_Registered(t *testing.T) {
+	rec := RecordConsentReceipt("user-1", "client-1", "analytics", []string{"usage"}, []string{})
+	req := httptest.NewRequest("GET", "/api/v1/oauth/consent/"+rec.ID+"/receipt", nil)
+	w := httptest.NewRecorder()
+	handleConsentReceipt(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("GET consent receipt expected 200, got %d", w.Code)
+	}
+	var resp ConsentReceipt
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.ID != rec.ID || resp.UserID != "user-1" || resp.ClientID != "client-1" {
+		t.Errorf("consent receipt mismatch: %+v", resp)
+	}
+}
+
+func TestGapRegression_ConsentReceipt_NotFound(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/oauth/consent/non-existent-id/receipt", nil)
+	w := httptest.NewRecorder()
+	handleConsentReceipt(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", w.Code)
+	}
+}
+
+func TestGapRegression_ConsentReceipt_MethodNotAllowed(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/v1/oauth/consent/some-id/receipt", nil)
+	w := httptest.NewRecorder()
+	handleConsentReceipt(w, req)
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Fatalf("expected 405, got %d", w.Code)
+	}
+}

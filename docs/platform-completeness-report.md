@@ -12,13 +12,13 @@
 
 ## Summary
 
-- Total findings: 26
-- Done: 25
-- Fixed (pending verification): 0
-- Partial: 0
-- Acceptable: 1
-- Remaining: 0
-- Last scan: 2026-07-15 round 46 (E2E regression tests — 11/11 PASS)
+- Total findings: 32
+  - Done: 28
+  - Fixed (pending verification): 0
+  - Partial: 0
+  - Acceptable: 1
+  - Remaining: 3
+  - Last scan: 2026-07-15 round 47 (Focus A — Interface Integrity)
 
 ## Findings
 
@@ -57,6 +57,12 @@
 | 24 | FAPI 2.0 profile | services/oauth | Added  client flag and enforcement: PKCE S256, PAR, DPoP, response_type=code;  GET/PUT; tests added. | [DONE] | ccae234f |
 | 25 | FedCM support | services/oauth | No FedCM endpoints. Browser consumer-identity feature; not required for B2B IAM productization. Tracked in backlog for future. | [ACCEPTABLE] | research |
 | 26 | gRPC TLS fail-secure + HTTP client timeouts | services/identity/internal/server/server.go, services/org/cmd/main.go, services/policy/cmd/main.go, services/audit/cmd/main.go, services/audit/internal/service/alert_webhook.go, services/auth/internal/service/http_identity_client.go, services/gateway/internal/middleware/graphql.go | gRPC TLS fallback from enabled to plaintext was silent and unsafe. Made fallback require explicit `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true`. Replaced `http.DefaultClient` and no-timeout `http.Client{}` in audit alert webhooks, auth identity client, and gateway GraphQL resolver with timeouts. | [DONE] | d0a26620 |
+| 27 | OAuth client versioning endpoint | services/oauth/internal/server/server.go | `handleClientVersioning` was defined but not registered in `/api/v1/oauth/clients/{id}/` sub-path routing. Added `/version` and `/versions` sub-path dispatch. Regression tests cover POST/GET and invalid client. | [DONE] | (current) |
+| 28 | OAuth client health endpoint | services/oauth/internal/server/server.go | `handleClientHealth` was defined but not registered in `/api/v1/oauth/clients/{id}/` sub-path routing. Added `/health` sub-path dispatch. Regression tests cover known client, unknown client, and method not allowed. | [DONE] | (current) |
+| 29 | OAuth consent receipt endpoint | services/oauth/internal/server/server.go, services/oauth/internal/server/consent_receipt.go | `handleConsentReceipt` was defined but marked `//nolint:unused` and not registered; also had a path-index bug (`pathParts[3]` instead of `pathParts[4]`). Registered under `/api/v1/oauth/consent/{id}/receipt` and fixed path parsing. Regression tests cover receipt retrieval, not found, and method not allowed. | [DONE] | (current) |
+| 30 | Identity gRPC service not implemented | services/identity/internal/server/server.go | Identity proto defines 16 methods (CreateUser, GetUser, ListUsers, etc.) but the gRPC `Server` only implements `Run`. No gRPC handlers are registered in `New`. Requires generated `api/gen/identity/v1` pb code (outside services/). | [NEW] | — |
+| 31 | Auth gRPC service not implemented | services/auth/cmd/main.go, services/auth/internal/server | Auth proto defines 10 methods (Login, Register, Logout, RefreshToken, etc.) but there is no gRPC server, no `RegisterAuthServiceServer`, and no generated pb package imported. Service only exposes HTTP. Requires generated `api/gen/auth/v1` pb code (outside services/). | [NEW] | — |
+| 32 | OAuth gRPC service not implemented | services/oauth/internal/server/server.go | OAuth proto defines 5 methods (CreateClient, GetClient, ListClients, UpdateClient, DeleteClient) but the gRPC server only implements `Run`. No gRPC handlers registered. Requires generated `api/gen/oauth/v1` pb code (outside services/). | [NEW] | — |
 
 ## Previously Fixed (pre-audit)
 
@@ -106,6 +112,7 @@
 | 2026-07-15 | Round 40 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 | 2026-07-15 | Round 43 — Focus F (Functional Depth / Test Coverage) | 0 | 0 (no new productization gaps; regression tests pass) |
 | 2026-07-15 | Round 46 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS, current verification) |
+| 2026-07-15 | Round 47 — Focus A (Interface Integrity) | +3 (OAuth handler registration gaps) | 3 (client versioning, client health, consent receipt); +3 NEW gRPC gaps require api/gen work |
 ## Remaining Real Gaps (post-audit)
 
 1. **GeoIP MaxMind integration** (LOW, [DONE]) — gateway/middleware/geoip.go
@@ -113,7 +120,8 @@
 
 ## Next Actions
 
-- Round 46 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS, verified
-- Round 47 (odd, Focus A): Interface Integrity scan
+- Round 47 (odd, Focus A): Interface Integrity scan completed. Fixed 3 OAuth handler registration gaps; identified 3 NEW gRPC service gaps that require generated pb code outside services/.
+- Round 48 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — pending
+- Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
 - Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
 
