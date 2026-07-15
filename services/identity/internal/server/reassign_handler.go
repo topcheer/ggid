@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -30,4 +31,9 @@ func (h *HTTPHandler) reassignUser(ctx context.Context, userID uuid.UUID, w http
 		"reassigned_at": time.Now().UTC().Format(time.RFC3339),
 		"actions_triggered": []string{"access_review", "session_revoke", "notify_old_manager", "notify_new_manager"},
 	})
+
+	// Audit: user reassigned
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.reassign", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 }

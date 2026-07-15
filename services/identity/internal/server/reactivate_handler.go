@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
 )
 
@@ -33,4 +34,9 @@ func (h *HTTPHandler) reactivateUser(ctx context.Context, userID uuid.UUID, w ht
 		"welcome_email":     "queued",
 		"default_role":      "user",
 	})
+
+	// Audit: user reactivated
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.reactivate", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 }

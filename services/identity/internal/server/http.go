@@ -545,6 +545,9 @@ func (h *HTTPHandler) updateUser(ctx context.Context, userID uuid.UUID, w http.R
 		writeServiceError(w, err)
 		return
 	}
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.update", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
 
@@ -580,6 +583,9 @@ func (h *HTTPHandler) deactivateUser(ctx context.Context, userID uuid.UUID, w ht
 		writeServiceError(w, err)
 		return
 	}
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.deactivate", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
 
@@ -589,6 +595,9 @@ func (h *HTTPHandler) activateUser(ctx context.Context, userID uuid.UUID, w http
 		writeServiceError(w, err)
 		return
 	}
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.activate", "success", "user", userID, tc.TenantID, uuid.Nil)
+	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }
 
@@ -597,6 +606,9 @@ func (h *HTTPHandler) restoreUser(ctx context.Context, userID uuid.UUID, w http.
 	if err != nil {
 		writeServiceError(w, err)
 		return
+	}
+	if tc, e := ggidtenant.FromContext(ctx); e == nil {
+		h.publishAuditEvent("user.restore", "success", "user", userID, tc.TenantID, uuid.Nil)
 	}
 	writeJSON(w, http.StatusOK, userToJSON(user))
 }

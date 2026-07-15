@@ -603,6 +603,9 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Audit: user registration
+	h.publishAuditEvent("user.register", "success", tc.TenantID, uuid.Nil)
+
 	writeJSON(w, http.StatusCreated, map[string]string{"user_id": userID.String()})
 }
 
@@ -2568,6 +2571,9 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 		writeInternalError(w, "auth handler", err)
 		return
 	}
+
+	// Audit: force logout (admin action)
+	h.publishAuditEvent("user.force_logout", "success", tenantID, userID)
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":        "ok",
