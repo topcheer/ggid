@@ -1,8 +1,7 @@
 "use client";
 
 import { useZeroTrustPosture } from "@ggid/sdk-react";
-import {
-import { useTranslations } from "@/lib/i18n";
+import { useTranslations } from "@/lib/i18n";import {
   ShieldCheck,
   ShieldAlert,
   Cpu,

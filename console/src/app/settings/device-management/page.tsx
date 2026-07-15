@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Smartphone, Ban, Trash2, AlertTriangle, RotateCcw } from "lucide-react";
 interface Device { device_id: string; user_id: string; username: string; device_name: string; platform: string; last_seen: string; trust_level: "managed" | "byod" | "untrusted"; enrolled_at: string; fingerprint: string; }
 const trustColors: Record<string, string> = { managed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", byod: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", untrusted: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 export default function DeviceManagementPage() {
+  const t = useTranslations();
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,23 +47,23 @@ export default function DeviceManagementPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="w-6 h-6 text-blue-500" /> Device Management</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="w-6 h-6 text-blue-500" /> {t("backend.deviceManagement.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Manage registered devices and trust levels.</p>
         </div>
         {stale > 0 && <button onClick={revokeStale} aria-label={`Revoke ${stale} stale devices`} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium flex items-center gap-2"><Trash2 className="w-4 h-4" /> Revoke {stale} Stale</button>}
       </div>
-      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">Retry</button></div>}
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">{t("backend.deviceManagement.retry")}</button></div>}
       {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading devices...</div></div>}
-      <div className="grid grid-cols-4 gap-4">{(["managed", "byod", "untrusted"] as const).map((t) => <div key={t} className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500 capitalize">{t}</span><p className="text-xl font-bold mt-1">{devices.filter((d) => d.trust_level === t).length}</p></div>)} <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total</span><p className="text-xl font-bold mt-1">{devices.length}</p></div></div>
+      <div className="grid grid-cols-4 gap-4">{(["managed", "byod", "untrusted"] as const).map((t) => <div key={t} className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500 capitalize">{t}</span><p className="text-xl font-bold mt-1">{devices.filter((d) => d.trust_level === t).length}</p></div>)} <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">{t("backend.deviceManagement.total")}</span><p className="text-xl font-bold mt-1">{devices.length}</p></div></div>
       <div className="flex items-center gap-2">
         <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by trust level" className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-          <option value="">All Trust Levels</option><option value="managed">Managed</option><option value="byod">BYOD</option><option value="untrusted">Untrusted</option>
+          <option value="">{t("backend.deviceManagement.allTrustLevels")}</option><option value="managed">{t("backend.deviceManagement.managed")}</option><option value="byod">{t("backend.deviceManagement.byod")}</option><option value="untrusted">Untrusted</option>
         </select>
       </div>
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
-            <tr><th className="px-4 py-3 text-left font-medium">Device</th><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">Platform</th><th className="px-4 py-3 text-left font-medium">Last Seen</th><th className="px-4 py-3 text-left font-medium">Trust</th><th className="px-4 py-3 text-left font-medium">Fingerprint</th><th className="px-4 py-3 text-left font-medium">Action</th></tr>
+            <tr><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.device")}</th><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.platform")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.lastSeen")}</th><th className="px-4 py-3 text-left font-medium">Trust</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.fingerprint")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.action")}</th></tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
             {filtered.map((d) => (

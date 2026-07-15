@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface Client {
@@ -15,6 +16,7 @@ interface Client {
 
 export default function ClientLifecyclePage() {
 
+  const t = useTranslations();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any[]>([]);
@@ -101,7 +103,7 @@ export default function ClientLifecyclePage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">OAuth Client Lifecycle</h1>
+          <h1 className="text-2xl font-bold">{t("backend.clientLifecycle.title")}</h1>
           <p className="text-gray-600">Register, manage, and deactivate OAuth clients (RFC 7591/7592).</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
@@ -113,11 +115,11 @@ export default function ClientLifecyclePage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Register OAuth Client (RFC 7591)</h2>
           <div>
-            <label className="text-sm font-medium">Client Name</label>
+            <label className="text-sm font-medium">{t("backend.clientLifecycle.clientName")}</label>
             <input type="text" placeholder="My Application" value={newClient.name} onChange={e => setNewClient(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div>
-            <label className="text-sm font-medium">Grant Types</label>
+            <label className="text-sm font-medium">{t("backend.clientLifecycle.grantTypes")}</label>
             <div className="flex flex-wrap gap-2 mt-2">
               {allGrantTypes.map(gt => (
                 <label key={gt} className="flex items-center gap-1 text-sm">
@@ -142,7 +144,7 @@ export default function ClientLifecyclePage() {
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{clients.filter(c => c.status === 'active').length}</div>
-          <div className="text-sm text-gray-500">Active</div>
+          <div className="text-sm text-gray-500">{t("backend.clientLifecycle.active")}</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-gray-500">{clients.filter(c => c.status === 'inactive').length}</div>
@@ -154,14 +156,14 @@ export default function ClientLifecyclePage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Client ID</th>
-              <th className="p-3">Name</th>
+              <th className="p-3">{t("backend.clientLifecycle.clientId")}</th>
+              <th className="p-3">{t("backend.clientLifecycle.clientName")}</th>
               <th className="p-3">Status</th>
-              <th className="p-3">Grant Types</th>
+              <th className="p-3">{t("backend.clientLifecycle.grantTypes")}</th>
               <th className="p-3">Redirect URIs</th>
-              <th className="p-3">Created</th>
+              <th className="p-3">{t("backend.clientLifecycle.created")}</th>
               <th className="p-3">Secret Rotated</th>
-              <th className="p-3">Actions</th>
+              <th className="p-3">{t("backend.clientLifecycle.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -178,7 +180,7 @@ export default function ClientLifecyclePage() {
                   <div className="flex gap-2">
                     <button onClick={() => rotateSecret(c.id)} className="text-blue-600 text-xs hover:underline">Rotate Secret</button>
                     <button onClick={() => toggleStatus(c.id)} className="text-amber-600 text-xs hover:underline">{c.status === 'active' ? 'Deactivate' : 'Activate'}</button>
-                    <button onClick={() => setDeleteTarget(c)} className="text-red-600 text-xs hover:underline">Delete</button>
+                    <button onClick={() => setDeleteTarget(c)} className="text-red-600 text-xs hover:underline">{t("backend.clientLifecycle.delete")}</button>
                   </div>
                 </td>
               </tr>
@@ -190,11 +192,11 @@ export default function ClientLifecyclePage() {
       {deleteTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 space-y-4">
-            <h2 className="text-lg font-semibold">Delete OAuth Client</h2>
+            <h2 className="text-lg font-semibold">{t("backend.clientLifecycle.deleteClient")}</h2>
             <p className="text-sm text-gray-600">Permanently delete <strong>{deleteTarget.name}</strong> ({deleteTarget.clientId})? All tokens will be revoked immediately.</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="px-4 py-2 border rounded text-sm">Cancel</button>
-              <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded text-sm">Confirm Delete</button>
+              <button onClick={() => setDeleteTarget(null)} className="px-4 py-2 border rounded text-sm">{t("backend.clientLifecycle.cancel")}</button>
+              <button onClick={confirmDelete} className="px-4 py-2 bg-red-600 text-white rounded text-sm">{t("backend.clientLifecycle.confirmDelete")}</button>
             </div>
           </div>
         </div>

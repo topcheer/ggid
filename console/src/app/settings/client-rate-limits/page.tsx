@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Gauge, Save, RotateCcw } from "lucide-react";
@@ -18,6 +19,7 @@ interface Client {
 }
 
 export default function ClientRateLimitsPage() {
+  const t = useTranslations();
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [config, setConfig] = useState<RateLimitConfig | null>(null);
@@ -55,12 +57,12 @@ export default function ClientRateLimitsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Gauge className="w-6 h-6 text-cyan-500" /> Client Rate Limits</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Gauge className="w-6 h-6 text-cyan-500" /> {t("backend.clientRateLimits.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Configure per-client rate limiting: requests/min, burst, and daily quota.</p>
       </div>
 
       <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-        <option value="">Select Client</option>
+        <option value="">{t("backend.clientRateLimits.selectClient")}</option>
         {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
       </select>
 
@@ -73,8 +75,8 @@ export default function ClientRateLimitsPage() {
 
           <div className="grid grid-cols-3 gap-4">
             <div><label className="text-sm font-medium">Requests / min</label><input type="number" min={0} value={config.requests_per_minute} onChange={(e) => setConfig({ ...config, requests_per_minute: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-            <div><label className="text-sm font-medium">Burst</label><input type="number" min={0} value={config.burst} onChange={(e) => setConfig({ ...config, burst: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-            <div><label className="text-sm font-medium">Daily Quota</label><input type="number" min={0} value={config.daily_quota} onChange={(e) => setConfig({ ...config, daily_quota: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+            <div><label className="text-sm font-medium">{t("backend.clientRateLimits.burst")}</label><input type="number" min={0} value={config.burst} onChange={(e) => setConfig({ ...config, burst: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+            <div><label className="text-sm font-medium">{t("backend.clientRateLimits.dailyQuota")}</label><input type="number" min={0} value={config.daily_quota} onChange={(e) => setConfig({ ...config, daily_quota: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
           </div>
 
           <div className="flex items-center gap-2">

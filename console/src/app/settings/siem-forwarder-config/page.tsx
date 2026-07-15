@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface SiemDestination {
   id: string;
@@ -20,6 +21,7 @@ interface FilterRule {
 }
 
 export default function SiemForwarderConfigPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,17 +41,17 @@ export default function SiemForwarderConfigPage() {
         const json = await res.json();
         setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : t("siemForwarder.failedToLoad"));
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (loading) return <div className="p-8">{t("common.loading")}</div>;
+  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("siemForwarder.noData")}</div>;
   const [destinations, setDestinations] = useState<SiemDestination[]>([
     { id: 'd1', name: 'Splunk Production', type: 'Splunk', url: 'https://splunk.ggid.io:8088/services/collector', authMethod: 'HEC Token', batchSize: 100, status: 'active', eventsForwarded: 15420 },
     { id: 'd2', name: 'ELK Stack', type: 'ELK', url: 'https://elastic.ggid.io:9200/audit/_bulk', authMethod: 'API Key', batchSize: 200, status: 'active', eventsForwarded: 8230 },
@@ -84,9 +86,9 @@ export default function SiemForwarderConfigPage() {
 
   const testConnection = (dest: SiemDestination) => {
     setTestTarget(dest);
-    setTestResult('Testing connection...');
+    setTestResult(t("siemForwarder.testingConnection"));
     setTimeout(() => {
-      setTestResult(`Connection to ${dest.name} (${dest.type}) successful. Endpoint reachable, auth verified, TLS valid.`);
+      setTestResult(t("siemForwarder.connectionSuccess").replace("{name}", dest.name).replace("{type}", dest.type));
     }, 800);
   };
 
@@ -96,59 +98,59 @@ export default function SiemForwarderConfigPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">SIEM Forwarder Configuration</h1>
-          <p className="text-gray-600">Configure audit event forwarding to external SIEM platforms.</p>
+          <h1 className="text-2xl font-bold">{t("siemForwarder.title")}</h1>
+          <p className="text-gray-600">{t("siemForwarder.subtitle")}</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {showForm ? 'Cancel' : 'Add Destination'}
+          {showForm ? t("common.cancel") : t("siemForwarder.addDestination")}
         </button>
       </div>
 
       {showForm && (
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Add SIEM Destination</h2>
+          <h2 className="text-lg font-semibold">{t("siemForwarder.addSiemDestination")}</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium">Name</label>
-              <input type="text" placeholder="Destination name" value={newDest.name} onChange={e => setNewDest(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <label className="text-sm font-medium">{t("common.name")}</label>
+              <input type="text" placeholder={t("siemForwarder.namePlaceholder")} value={newDest.name} onChange={e => setNewDest(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
-              <label className="text-sm font-medium">Type</label>
+              <label className="text-sm font-medium">{t("common.type")}</label>
               <select value={newDest.type} onChange={e => setNewDest(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
-                {types.map(t => <option key={t} value={t}>{t}</option>)}
+                {types.map(type => <option key={type} value={type}>{type}</option>)}
               </select>
             </div>
             <div className="col-span-2">
-              <label className="text-sm font-medium">URL</label>
-              <input type="text" placeholder="https://siem.example.com/ingest" value={newDest.url} onChange={e => setNewDest(prev => ({ ...prev, url: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
+              <label className="text-sm font-medium">{t("siemForwarder.url")}</label>
+              <input type="text" placeholder={t("siemForwarder.urlPlaceholder")} value={newDest.url} onChange={e => setNewDest(prev => ({ ...prev, url: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
             </div>
             <div>
-              <label className="text-sm font-medium">Auth Method</label>
+              <label className="text-sm font-medium">{t("siemForwarder.authMethod")}</label>
               <select value={newDest.authMethod} onChange={e => setNewDest(prev => ({ ...prev, authMethod: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {authMethods.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium">Batch Size</label>
+              <label className="text-sm font-medium">{t("siemForwarder.batchSize")}</label>
               <input type="number" min={1} max={1000} value={newDest.batchSize} onChange={e => setNewDest(prev => ({ ...prev, batchSize: parseInt(e.target.value) || 100 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
-          <button onClick={addDestination} disabled={!newDest.name || !newDest.url} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add Destination</button>
+          <button onClick={addDestination} disabled={!newDest.name || !newDest.url} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("siemForwarder.addDestination")}</button>
         </section>
       )}
 
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold">{destinations.length}</div>
-          <div className="text-sm text-gray-500">Destinations</div>
+          <div className="text-sm text-gray-500">{t("siemForwarder.destinations")}</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{destinations.filter(d => d.status === 'active').length}</div>
-          <div className="text-sm text-gray-500">Active</div>
+          <div className="text-sm text-gray-500">{t("siemForwarder.active")}</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-blue-600">{totalEvents.toLocaleString()}</div>
-          <div className="text-sm text-gray-500">Events Forwarded</div>
+          <div className="text-sm text-gray-500">{t("siemForwarder.eventsForwarded")}</div>
         </div>
       </div>
 
@@ -156,14 +158,14 @@ export default function SiemForwarderConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Name</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">URL</th>
-              <th className="p-3">Auth</th>
-              <th className="p-3">Batch</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Events</th>
-              <th className="p-3">Action</th>
+              <th className="p-3">{t("common.name")}</th>
+              <th className="p-3">{t("common.type")}</th>
+              <th className="p-3">{t("siemForwarder.url")}</th>
+              <th className="p-3">{t("siemForwarder.auth")}</th>
+              <th className="p-3">{t("siemForwarder.batch")}</th>
+              <th className="p-3">{t("common.status")}</th>
+              <th className="p-3">{t("siemForwarder.events")}</th>
+              <th className="p-3">{t("common.action")}</th>
             </tr>
           </thead>
           <tbody>
@@ -176,7 +178,7 @@ export default function SiemForwarderConfigPage() {
                 <td className="p-3 text-gray-500">{d.batchSize}</td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${statusColor(d.status)}`}>{d.status}</span></td>
                 <td className="p-3 text-gray-500">{d.eventsForwarded.toLocaleString()}</td>
-                <td className="p-3"><button onClick={() => testConnection(d)} className="text-blue-600 text-xs hover:underline">Test</button></td>
+                <td className="p-3"><button onClick={() => testConnection(d)} className="text-blue-600 text-xs hover:underline">{t("common.test")}</button></td>
               </tr>
             ))}
           </tbody>
@@ -185,7 +187,7 @@ export default function SiemForwarderConfigPage() {
 
       <div className="grid grid-cols-2 gap-6">
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Event Filter Rules</h2>
+          <h2 className="text-lg font-semibold">{t("siemForwarder.eventFilterRules")}</h2>
           <div className="space-y-2">
             {filters.map(f => (
               <div key={f.id} className="flex items-center gap-2 text-sm border-b pb-2">
@@ -195,26 +197,26 @@ export default function SiemForwarderConfigPage() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400">Only events matching all filter rules are forwarded.</p>
+          <p className="text-xs text-gray-400">{t("siemForwarder.filterDescription")}</p>
         </section>
 
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Retry Policy</h2>
+          <h2 className="text-lg font-semibold">{t("siemForwarder.retryPolicy")}</h2>
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium">Max Retries</label>
+              <label className="text-sm font-medium">{t("siemForwarder.maxRetries")}</label>
               <input type="number" min={0} max={20} value={retry.maxRetries} onChange={e => setRetry(prev => ({ ...prev, maxRetries: parseInt(e.target.value) || 0 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
             </div>
             <div>
-              <label className="text-sm font-medium">Backoff Strategy</label>
+              <label className="text-sm font-medium">{t("siemForwarder.backoffStrategy")}</label>
               <select value={retry.backoff} onChange={e => setRetry(prev => ({ ...prev, backoff: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
-                <option value="exponential">Exponential</option>
-                <option value="linear">Linear</option>
-                <option value="fixed">Fixed interval</option>
+                <option value="exponential">{t("siemForwarder.exponential")}</option>
+                <option value="linear">{t("siemForwarder.linear")}</option>
+                <option value="fixed">{t("siemForwarder.fixedInterval")}</option>
               </select>
             </div>
             <div>
-              <label className="text-sm font-medium">Circuit Breaker Threshold</label>
+              <label className="text-sm font-medium">{t("siemForwarder.circuitBreakerThreshold")}</label>
               <input type="number" min={1} max={100} value={retry.circuitBreakerThreshold} onChange={e => setRetry(prev => ({ ...prev, circuitBreakerThreshold: parseInt(e.target.value) || 10 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
             </div>
           </div>
@@ -222,14 +224,14 @@ export default function SiemForwarderConfigPage() {
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">TLS Configuration</h2>
+        <h2 className="text-lg font-semibold">{t("siemForwarder.tlsConfiguration")}</h2>
         <div className="space-y-3">
           <label className="flex items-center justify-between">
-            <span className="text-sm">Enable TLS for all destinations</span>
+            <span className="text-sm">{t("siemForwarder.enableTls")}</span>
             <input type="checkbox" checked={tlsEnabled} onChange={e => setTlsEnabled(e.target.checked)} className="rounded" />
           </label>
           <label className="flex items-center justify-between">
-            <span className="text-sm">Verify server certificates</span>
+            <span className="text-sm">{t("siemForwarder.verifyCertificates")}</span>
             <input type="checkbox" checked={tlsVerify} onChange={e => setTlsVerify(e.target.checked)} className="rounded" />
           </label>
         </div>
@@ -239,12 +241,12 @@ export default function SiemForwarderConfigPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Test: {testTarget.name}</h2>
-              <button onClick={() => { setTestTarget(null); setTestResult(''); }} className="text-gray-400 hover:text-gray-600">X</button>
+              <h2 className="text-lg font-semibold">{t("siemForwarder.testDialogTitle").replace("{name}", testTarget.name)}</h2>
+              <button onClick={() => { setTestTarget(null); setTestResult(''); }} className="text-gray-400 hover:text-gray-600">{t("common.close")}</button>
             </div>
             <div className={`p-3 rounded text-sm ${testResult.includes('successful') ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>{testResult}</div>
             {testResult.includes('successful') && (
-              <button onClick={() => { setTestTarget(null); setTestResult(''); }} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Close</button>
+              <button onClick={() => { setTestTarget(null); setTestResult(''); }} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{t("common.close")}</button>
             )}
           </div>
         </div>

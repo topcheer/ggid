@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useTranslations } from "@/lib/i18n";
-import { useTranslations } from "@/lib/i18n";
 
 export default function OidcIdpConfigPage() {
   const t = useTranslations();
@@ -21,7 +20,6 @@ export default function OidcIdpConfigPage() {
   const [acrValues, setAcrValues] = useState('');
   const [testResult, setTestResult] = useState('');
   const [testing, setTesting] = useState(false);
-  const t = useTranslations();
 
   useEffect(() => {
     fetch("/api/v1/identity/oidc-idp-config", {

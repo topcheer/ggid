@@ -8,13 +8,13 @@ export default function OidcClaimMappingConfigPage() {
   const { data, loading, error, refresh } = useOidcClaimMappingConfig();
   const t = useTranslations();
   if (loading) return <div className="p-8 text-gray-400">{t("oidcClaimMappingConfig.loading")}</div>;
-  if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
+  if (error) return <div className="p-8 text-red-400">{t("common.error")}: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div><h1 className="text-2xl font-bold">{t("oidcClaimMappingConfig.title")}</h1><p className="text-sm text-gray-400 mt-1">{t("oidcClaimMappingConfig.subtitle")}</p></div>
-        <div className="flex gap-2"><button className="flex items-center gap-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"><Plus className="w-4 h-4" /> Add Claim</button><button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("oidcClaimMappingConfig.save")}</button></div>
+        <div className="flex gap-2"><button className="flex items-center gap-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"><Plus className="w-4 h-4" /> {t("oidcClaimMapping.addClaim")}</button><button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("oidcClaimMappingConfig.save")}</button></div>
       </div>
 
       <div className="bg-gray-900 rounded-xl p-6 mb-6">

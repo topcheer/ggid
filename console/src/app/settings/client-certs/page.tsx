@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
@@ -28,6 +29,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ClientCertsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [certs, setCerts] = useState<ClientCert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export default function ClientCertsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-indigo-600" /> Client Certificates</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-indigo-600" /> {t("backend.clientCerts.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">OAuth client certificate lifecycle: status monitoring, rotation, and auto-rotate.</p>
       </div>
 
@@ -85,14 +87,14 @@ export default function ClientCertsPage() {
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Client</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Serial</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Issuer</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Issued</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Expires</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.client")}</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.serial")}</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.issuer")}</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.issued")}</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.expires")}</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.status")}</th>
               <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Auto-Rotate</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+              <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.actions")}</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {certs.map((c) => {

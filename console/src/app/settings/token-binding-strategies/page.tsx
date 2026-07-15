@@ -171,7 +171,7 @@ export default function TokenBindingStrategiesPage() {
             </div>
           )}
           <div className="space-y-2">
-            {thumbprints.map(t => (
+            {thumbprints.map(th => (
               <div key={t.id} className="flex items-center gap-2 border-b pb-1">
                 <span className="text-sm font-medium flex-1">{t.certName}</span>
                 <span className="font-mono text-xs text-gray-500">{t.thumbprint}</span>

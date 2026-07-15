@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Webhook,
   Plus,
@@ -80,8 +81,19 @@ function statusCodeColor(code: number): string {
   return "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300";
 }
 
+function categoryLabelKey(label: string): string {
+  switch (label) {
+    case "User Events": return "webhooks.userEvents";
+    case "Auth Events": return "webhooks.authEvents";
+    case "Org Events": return "webhooks.orgEvents";
+    case "Policy Events": return "webhooks.policyEvents";
+    default: return "webhooks.events";
+  }
+}
+
 export default function WebhooksPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -133,8 +145,8 @@ export default function WebhooksPage() {
 
   useEffect(() => {
     if (msg) {
-      const t = setTimeout(() => setMsg(null), 4000);
-      return () => clearTimeout(t);
+      const timer = setTimeout(() => setMsg(null), 4000);
+      return () => clearTimeout(timer);
     }
   }, [msg]);
 
@@ -187,15 +199,15 @@ export default function WebhooksPage() {
   const handleCreate = async () => {
     setUrlError(null);
     if (!urlInput.trim()) {
-      setUrlError("URL is required");
+      setUrlError(t("webhooks.urlRequired"));
       return;
     }
     if (!isValidUrl(urlInput.trim())) {
-      setUrlError("Please enter a valid http(s) URL");
+      setUrlError(t("webhooks.urlInvalid"));
       return;
     }
     if (selectedEvents.size === 0) {
-      setUrlError("Select at least one event");
+      setUrlError(t("webhooks.selectEvent"));
       return;
     }
 
@@ -209,27 +221,27 @@ export default function WebhooksPage() {
           enabled: enabledToggle,
         }),
       });
-      setMsg({ type: "success", text: "Webhook created successfully" });
+      setMsg({ type: "success", text: t("webhooks.createdSuccess") });
       setUrlInput("");
       setSelectedEvents(new Set());
       setEnabledToggle(true);
       setShowForm(false);
       fetchWebhooks();
     } catch (err) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : "Failed to create webhook" });
+      setMsg({ type: "error", text: err instanceof Error ? err.message : t("webhooks.createFailed") });
     } finally {
       setCreating(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this webhook endpoint?")) return;
+    if (!confirm(t("webhooks.deleteConfirm"))) return;
     try {
       await apiFetch(`/api/v1/webhooks/${id}`, { method: "DELETE" });
-      setMsg({ type: "success", text: "Webhook deleted" });
+      setMsg({ type: "success", text: t("webhooks.deletedSuccess") });
       fetchWebhooks();
     } catch (err) {
-      setMsg({ type: "error", text: err instanceof Error ? err.message : "Failed to delete" });
+      setMsg({ type: "error", text: err instanceof Error ? err.message : t("webhooks.deleteFailed") });
     }
   };
 
@@ -244,13 +256,13 @@ export default function WebhooksPage() {
         ...prev,
         [id]: { ok: true, status: resp.status || 200 },
       }));
-      setMsg({ type: "success", text: `Test sent (status ${resp.status || 200})` });
+      setMsg({ type: "success", text: t("webhooks.testSent").replace("{status}", String(resp.status || 200)) });
     } catch (err) {
       setTestResults((prev) => ({
         ...prev,
         [id]: { ok: false, status: 0 },
       }));
-      setMsg({ type: "error", text: err instanceof Error ? err.message : "Test failed" });
+      setMsg({ type: "error", text: err instanceof Error ? err.message : t("webhooks.testFailed") });
     } finally {
       setTestingId(null);
     }
@@ -299,15 +311,15 @@ export default function WebhooksPage() {
   const handleSaveEdit = async (id: string) => {
     setEditError(null);
     if (!editUrl.trim()) {
-      setEditError("URL is required");
+      setEditError(t("webhooks.urlRequired"));
       return;
     }
     if (!isValidUrl(editUrl.trim())) {
-      setEditError("Please enter a valid http(s) URL");
+      setEditError(t("webhooks.urlInvalid"));
       return;
     }
     if (editEvents.size === 0) {
-      setEditError("Select at least one event");
+      setEditError(t("webhooks.selectEvent"));
       return;
     }
 
@@ -320,11 +332,11 @@ export default function WebhooksPage() {
           events: [...editEvents],
         }),
       });
-      setMsg({ type: "success", text: "Webhook updated successfully" });
+      setMsg({ type: "success", text: t("webhooks.updatedSuccess") });
       cancelEdit();
       fetchWebhooks();
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : "Failed to update webhook");
+      setEditError(err instanceof Error ? err.message : t("webhooks.updateFailed"));
     } finally {
       setSavingEdit(false);
     }
@@ -367,13 +379,13 @@ export default function WebhooksPage() {
         return (
           <div key={cat.label} className="rounded-lg border border-gray-200 p-3 dark:border-gray-600">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{cat.label}</span>
+              <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t(categoryLabelKey(cat.label))}</span>
               <button
                 type="button"
                 onClick={() => onToggleCat(cat.events, allSelected)}
                 className="text-xs font-medium text-brand-600 hover:underline"
               >
-                {allSelected ? "Clear all" : "Select all"}
+                {allSelected ? t("webhooks.clearAll") : t("webhooks.selectAll")}
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -429,13 +441,13 @@ export default function WebhooksPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-2xl font-bold dark:text-gray-100">
-          <Webhook className="h-6 w-6 text-brand-600" /> Webhooks
+          <Webhook className="h-6 w-6 text-brand-600" /> {t("webhooks.title")}
         </h1>
         <button
           onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
-          <Plus className="h-4 w-4" /> New Webhook
+          <Plus className="h-4 w-4" /> {t("webhooks.newWebhook")}
         </button>
       </div>
 
@@ -455,8 +467,8 @@ export default function WebhooksPage() {
       {showForm && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold dark:text-gray-100">Create Webhook</h2>
-            <button onClick={() => setShowForm(false)} aria-label="Close">
+            <h2 className="text-lg font-semibold dark:text-gray-100">{t("webhooks.createTitle")}</h2>
+            <button onClick={() => setShowForm(false)} aria-label={t("common.close")}>
               <X className="h-4 w-4 text-gray-400" />
             </button>
           </div>
@@ -464,14 +476,14 @@ export default function WebhooksPage() {
           <div className="space-y-4">
             {/* URL input */}
             <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Endpoint URL</label>
+              <label className="mb-1 block text-xs font-medium text-gray-500">{t("webhooks.endpointUrl")}</label>
               <input
                 value={urlInput}
                 onChange={(e) => {
                   setUrlInput(e.target.value);
                   setUrlError(null);
                 }}
-                placeholder="https://api.example.com/webhooks/ggid"
+                placeholder={t("webhooks.urlPlaceholder")}
                 className={`w-full rounded-lg border px-3 py-2 text-sm dark:bg-gray-700 dark:text-gray-200 ${
                   urlError
                     ? "border-red-400 dark:border-red-600"
@@ -484,14 +496,14 @@ export default function WebhooksPage() {
             {/* Categorized event picker */}
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">
-                Event Subscriptions ({selectedEvents.size} selected)
+                {t("webhooks.eventSubscriptions").replace("{count}", String(selectedEvents.size))}
               </label>
               {renderEventCategories(selectedEvents, toggleEvent, toggleCategory)}
             </div>
 
             {/* Enable/disable toggle */}
             <div className="flex items-center gap-3">
-              <label className="text-xs font-medium text-gray-500">Status</label>
+              <label className="text-xs font-medium text-gray-500">{t("common.status")}</label>
               <button
                 type="button"
                 onClick={() => setEnabledToggle(!enabledToggle)}
@@ -506,7 +518,7 @@ export default function WebhooksPage() {
                 />
               </button>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {enabledToggle ? "Enabled" : "Disabled"}
+                {enabledToggle ? t("common.enabled") : t("common.disabled")}
               </span>
             </div>
 
@@ -517,7 +529,7 @@ export default function WebhooksPage() {
               className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              Create Webhook
+              {t("webhooks.createTitle")}
             </button>
           </div>
         </div>
@@ -531,7 +543,7 @@ export default function WebhooksPage() {
       ) : webhooks.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 py-16 text-center dark:border-gray-600">
           <Webhook className="mx-auto mb-3 h-10 w-10 text-gray-300 dark:text-gray-600" />
-          <p className="text-sm text-gray-500">No webhooks configured yet</p>
+          <p className="text-sm text-gray-500">{t("webhooks.empty")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -555,10 +567,10 @@ export default function WebhooksPage() {
                     <div className="w-full space-y-3">
                       <div className="flex items-center gap-2">
                         <Pencil className="h-4 w-4 text-brand-600" />
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Edit Webhook</span>
+                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{t("webhooks.editTitle")}</span>
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-gray-500">Endpoint URL</label>
+                        <label className="mb-1 block text-xs font-medium text-gray-500">{t("webhooks.endpointUrl")}</label>
                         <input
                           value={editUrl}
                           onChange={(e) => {
@@ -574,7 +586,7 @@ export default function WebhooksPage() {
                       </div>
                       <div>
                         <label className="mb-2 block text-xs font-medium text-gray-500">
-                          Events ({editEvents.size} selected)
+                          {t("webhooks.eventsLabel").replace("{count}", String(editEvents.size))}
                         </label>
                         {renderEventCategories(editEvents, toggleEditEvent, toggleEditCategory)}
                       </div>
@@ -586,13 +598,13 @@ export default function WebhooksPage() {
                           className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
                         >
                           {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                          Save
+                          {t("common.save")}
                         </button>
                         <button
                           onClick={cancelEdit}
                           className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300"
-                         aria-label="Close">
-                          <X className="h-4 w-4" /> Cancel
+                         aria-label={t("common.cancel")}>
+                          <X className="h-4 w-4" /> {t("common.cancel")}
                         </button>
                       </div>
                     </div>
@@ -611,16 +623,16 @@ export default function WebhooksPage() {
                               </span>
                             ) : (
                               <span className="flex items-center gap-0.5 text-xs text-red-500">
-                                <XCircle className="h-3.5 w-3.5" /> Failed
+                                <XCircle className="h-3.5 w-3.5" /> {t("webhooks.failed")}
                               </span>
                             )
                           ) : wh.enabled ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-950 dark:text-green-400">
-                              Active
+                              {t("webhooks.active")}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700">
-                              Disabled
+                              {t("common.disabled")}
                             </span>
                           )}
                         </div>
@@ -641,7 +653,7 @@ export default function WebhooksPage() {
                           <button
                             onClick={() => toggleRevealSecret(wh.id)}
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            title={revealed ? "Hide" : "Reveal"}
+                            title={revealed ? t("webhooks.hide") : t("webhooks.reveal")}
                           >
                             {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                           </button>
@@ -649,7 +661,7 @@ export default function WebhooksPage() {
                             <button
                               onClick={() => copySecret(wh.id, wh.secret)}
                               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                              title="Copy"
+                              title={t("webhooks.copy")}
                             >
                               {copiedSecret === wh.id ? (
                                 <Check className="h-3.5 w-3.5 text-green-500" />
@@ -675,13 +687,13 @@ export default function WebhooksPage() {
                           }`}
                         >
                           {showHistory ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                          <History className="h-3 w-3" /> History
+                          <History className="h-3 w-3" /> {t("webhooks.history")}
                         </button>
                         <button
                           onClick={() => startEdit(wh)}
                           className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                         >
-                          <Pencil className="h-3 w-3" /> Edit
+                          <Pencil className="h-3 w-3" /> {t("common.edit")}
                         </button>
                         <button
                           onClick={() => handleTest(wh.id)}
@@ -689,12 +701,12 @@ export default function WebhooksPage() {
                           className="flex items-center gap-1 rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                         >
                           {testingId === wh.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                          Test
+                          {t("common.test")}
                         </button>
                         <button
                           onClick={() => handleDelete(wh.id)}
                           className="text-red-500 hover:text-red-700"
-                          title="Delete"
+                          title={t("common.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -709,23 +721,23 @@ export default function WebhooksPage() {
                     {isLoadingHistory ? (
                       <div className="flex items-center justify-center py-6">
                         <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
-                        <span className="ml-2 text-xs text-gray-500">Loading delivery history...</span>
+                        <span className="ml-2 text-xs text-gray-500">{t("webhooks.loadingHistory")}</span>
                       </div>
                     ) : whDeliveries.length === 0 ? (
                       <div className="py-6 text-center">
                         <Clock className="mx-auto mb-2 h-6 w-6 text-gray-300 dark:text-gray-600" />
-                        <p className="text-xs text-gray-400">No delivery history yet</p>
+                        <p className="text-xs text-gray-400">{t("webhooks.noHistory")}</p>
                       </div>
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="w-full text-left text-xs">
                           <thead>
                             <tr className="border-b border-gray-200 dark:border-gray-700">
-                              <th className="py-2 pr-3 font-medium text-gray-500">Timestamp</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">Event</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">Status</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">Response Time</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">Retries</th>
+                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.timestamp")}</th>
+                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.eventLabel")}</th>
+                              <th className="py-2 pr-3 font-medium text-gray-500">{t("common.status")}</th>
+                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.responseTime")}</th>
+                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.retries")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

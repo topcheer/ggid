@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState } from "react";
 import { useIdentityProofing } from "@ggid/sdk-react";
 import { CheckCircle, Clock, XCircle, Upload, ScanFace, FileQuestion, UserCheck, TrendingUp } from "lucide-react";
 
 export default function IdentityProofingPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useIdentityProofing();
   const [docType, setDocType] = useState("passport");
   const [provider, setProvider] = useState("onfido");
@@ -23,8 +25,8 @@ export default function IdentityProofingPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Identity Proofing</h1>
-          <p className="text-sm text-gray-400 mt-1">Configure and monitor identity verification workflows</p>
+          <h1 className="text-2xl font-bold">{t("backend.identityProofing.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("backend.identityProofing.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -37,19 +39,19 @@ export default function IdentityProofingPage() {
       {/* Completion Rate + Config */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm text-gray-400 mb-2">Completion Rate</h2>
+          <h2 className="text-sm text-gray-400 mb-2">{t("backend.identityProofing.completionRate")}</h2>
           <p className="text-4xl font-bold text-green-400">{data?.completion_rate ?? 0}%</p>
           <div className="mt-3 w-full bg-gray-700 rounded-full h-2">
             <div className="bg-green-500 rounded-full h-2" style={{ width: `${data?.completion_rate ?? 0}%` }} />
           </div>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm text-gray-400 mb-2">Confidence Threshold</h2>
+          <h2 className="text-sm text-gray-400 mb-2">{t("backend.identityProofing.confidenceThreshold")}</h2>
           <p className="text-4xl font-bold text-blue-400">{Math.round((data?.confidence_threshold ?? 0) * 100)}%</p>
           <p className="text-xs text-gray-400 mt-2">Minimum verification confidence to pass</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm text-gray-400 mb-2">In Progress</h2>
+          <h2 className="text-sm text-gray-400 mb-2">{t("backend.identityProofing.inProgress")}</h2>
           <p className="text-4xl font-bold text-yellow-400">{data?.in_progress_count ?? 0}</p>
           <p className="text-xs text-gray-400 mt-2">Users currently being verified</p>
         </div>
@@ -57,17 +59,17 @@ export default function IdentityProofingPage() {
 
       {/* Config Selectors */}
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Configuration</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("backend.identityProofing.configuration")}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-gray-400 mb-1 block">Document Type</label>
+            <label className="text-xs text-gray-400 mb-1 block">{t("backend.identityProofing.documentType")}</label>
             <select
               value={docType}
               onChange={(e) => setDocType(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
             >
               <option value="passport">Passport</option>
-              <option value="license">Driver License</option>
+              <option value="license">{t("backend.identityProofing.driverLicense")}</option>
               <option value="id_card">National ID Card</option>
               <option value="residence_permit">Residence Permit</option>
             </select>
@@ -80,7 +82,7 @@ export default function IdentityProofingPage() {
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
             >
               <option value="onfido">Onfido</option>
-              <option value="jumio">Jumio</option>
+              <option value="jumio">{t("backend.identityProofing.jumio")}</option>
               <option value="persona">Persona</option>
               <option value="veriff">Veriff</option>
               <option value="internal">Internal (Manual)</option>
@@ -119,7 +121,7 @@ export default function IdentityProofingPage() {
               </div>
               {step.confidence !== undefined && (
                 <div className="text-right">
-                  <p className="text-xs text-gray-500">Confidence</p>
+                  <p className="text-xs text-gray-500">{t("backend.identityProofing.confidence")}</p>
                   <p className={"text-sm font-bold " + (step.confidence >= (data?.confidence_threshold ?? 0.8) ? "text-green-400" : "text-yellow-400")}>
                     {Math.round(step.confidence * 100)}%
                   </p>

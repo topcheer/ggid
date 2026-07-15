@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
-import {
 import { useTranslations } from "@/lib/i18n";
+import {
   Lock,
   Shield,
   Smartphone,

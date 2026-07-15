@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface BreachRecord {
   id: string;
@@ -34,6 +35,7 @@ const COMPROMISED_PASSWORDS: CompromisedPassword[] = [
 ];
 
 export default function BreachDetectionConfigPage() {
+  const t = useTranslations();
   const [hibpEnabled, setHibpEnabled] = useState(true);
   const [apiKey, setApiKey] = useState('');
   const [checkOnLogin, setCheckOnLogin] = useState(true);
@@ -85,14 +87,14 @@ export default function BreachDetectionConfigPage() {
     setBreaches(breaches.map(b => b.id === id ? { ...b, resolved: true } : b));
   }, [breaches]);
 
-  if (loading) return <div className="space-y-6"><p className="text-gray-500">Loading...</p></div>;
-  if (error) return <div className="space-y-6 text-red-600">Error: {error}</div>;
+  if (loading) return <div className="space-y-6"><p className="text-gray-500">{t("common.loading")}</p></div>;
+  if (error) return <div className="space-y-6 text-red-600">{t("common.error")}: {error}</div>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Breach Detection Configuration</h1>
-        <p className="mt-1 text-sm text-gray-500">Configure HIBP integration, breach checking policies, and compromised password detection.</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("breachDetect.title")}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t("breachDetect.subtitle")}</p>
       </div>
 
       <div className="flex gap-2 border-b border-gray-200">
@@ -104,7 +106,7 @@ export default function BreachDetectionConfigPage() {
               activeTab === tab ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {tab === 'config' ? 'Configuration' : tab === 'history' ? 'Breach History' : 'Compromised Passwords'}
+            {tab === 'config' ? t("breachDetect.tabConfig") : tab === 'history' ? t("breachDetect.tabHistory") : t("breachDetect.tabPasswords")}
           </button>
         ))}
       </div>
@@ -112,12 +114,12 @@ export default function BreachDetectionConfigPage() {
       {activeTab === 'config' && (
         <div className="space-y-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700">HIBP Integration</h3>
+            <h3 className="text-sm font-medium text-gray-700">{t("breachDetect.hibpIntegration")}</h3>
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-sm font-medium text-gray-700">HIBP API Enabled</span>
-                  <p className="text-xs text-gray-400">Enable breach checking via Have I Been Pwned API</p>
+                  <span className="text-sm font-medium text-gray-700">{t("breachDetect.hibpEnabled")}</span>
+                  <p className="text-xs text-gray-400">{t("breachDetect.hibpEnabledDesc")}</p>
                 </div>
                 <button onClick={() => setHibpEnabled(!hibpEnabled)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${hibpEnabled ? 'bg-blue-600' : 'bg-gray-200'}`}>
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${hibpEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -125,7 +127,7 @@ export default function BreachDetectionConfigPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600">HIBP API Key</label>
+                <label className="block text-xs font-medium text-gray-600">{t("breachDetect.hibpApiKey")}</label>
                 <input
                   type="password"
                   value={apiKey}
@@ -135,22 +137,22 @@ export default function BreachDetectionConfigPage() {
               </div>
 
               <div className="flex items-center gap-4 text-xs text-gray-500">
-                <span>Last Check: {lastCheck.slice(0, 19).replace('T', ' ')}</span>
-                <span>Rate Limit: {rateLimitRemaining}/{rateLimitTotal} requests remaining</span>
+                <span>{t("breachDetect.lastCheck")} {lastCheck.slice(0, 19).replace('T', ' ')}</span>
+                <span>{t("breachDetect.rateLimit")} {rateLimitRemaining}/{rateLimitTotal} {t("breachDetect.requestsRemaining")}</span>
               </div>
             </div>
           </div>
 
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700">Check Triggers</h3>
+            <h3 className="text-sm font-medium text-gray-700">{t("breachDetect.checkTriggers")}</h3>
             <div className="mt-4 space-y-3">
               {[
-                { label: 'Check on Login', desc: 'Check for breaches when user logs in', value: checkOnLogin, setter: setCheckOnLogin },
-                { label: 'Check on Password Change', desc: 'Check when user changes password', value: checkOnPasswordChange, setter: setCheckOnPasswordChange },
-                { label: 'Check on Register', desc: 'Check when new user registers', value: checkOnRegister, setter: setCheckOnRegister },
-                { label: 'Auto Force Password Reset', desc: 'Automatically force password reset for compromised accounts', value: autoForceReset, setter: setAutoForceReset },
-                { label: 'Notify User by Email', desc: 'Send email notification to affected users', value: notifyEmail, setter: setNotifyEmail },
-                { label: 'Notify Admin', desc: 'Send notification to administrators', value: notifyAdmin, setter: setNotifyAdmin },
+                { label: t("breachDetect.checkOnLogin"), desc: t("breachDetect.checkOnLoginDesc"), value: checkOnLogin, setter: setCheckOnLogin },
+                { label: t("breachDetect.checkOnPasswordChange"), desc: t("breachDetect.checkOnPasswordChangeDesc"), value: checkOnPasswordChange, setter: setCheckOnPasswordChange },
+                { label: t("breachDetect.checkOnRegister"), desc: t("breachDetect.checkOnRegisterDesc"), value: checkOnRegister, setter: setCheckOnRegister },
+                { label: t("breachDetect.autoForceReset"), desc: t("breachDetect.autoForceResetDesc"), value: autoForceReset, setter: setAutoForceReset },
+                { label: t("breachDetect.notifyEmail"), desc: t("breachDetect.notifyEmailDesc"), value: notifyEmail, setter: setNotifyEmail },
+                { label: t("breachDetect.notifyAdmin"), desc: t("breachDetect.notifyAdminDesc"), value: notifyAdmin, setter: setNotifyAdmin },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between">
                   <div>
@@ -171,9 +173,9 @@ export default function BreachDetectionConfigPage() {
         <div className="space-y-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-4 mb-4">
-              <label className="text-sm font-medium text-gray-700">Filter by User:</label>
+              <label className="text-sm font-medium text-gray-700">{t("breachDetect.filterByUser")}</label>
               <select value={filterUser} onChange={e => setFilterUser(e.target.value)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm">
-                <option value="all">All Users</option>
+                <option value="all">{t("breachDetect.allUsers")}</option>
                 <option value="alice@corp.com">alice@corp.com</option>
                 <option value="bob@corp.com">bob@corp.com</option>
                 <option value="charlie@corp.com">charlie@corp.com</option>
@@ -183,13 +185,13 @@ export default function BreachDetectionConfigPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                  <th className="pb-2">User</th>
-                  <th className="pb-2">Breach</th>
-                  <th className="pb-2">Date</th>
-                  <th className="pb-2">Data Classes</th>
-                  <th className="pb-2">Password Compromised</th>
-                  <th className="pb-2">Status</th>
-                  <th className="pb-2">Action</th>
+                  <th className="pb-2">{t("common.name")}</th>
+                  <th className="pb-2">{t("breachDetect.breach")}</th>
+                  <th className="pb-2">{t("breachDetect.date")}</th>
+                  <th className="pb-2">{t("breachDetect.dataClasses")}</th>
+                  <th className="pb-2">{t("breachDetect.passwordCompromised")}</th>
+                  <th className="pb-2">{t("common.status")}</th>
+                  <th className="pb-2">{t("common.action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,13 +206,13 @@ export default function BreachDetectionConfigPage() {
                       </div>
                     </td>
                     <td className="py-2">
-                      {b.compromisedPassword ? <span className="text-red-600 text-xs font-medium">Yes</span> : <span className="text-gray-400 text-xs">No</span>}
+                      {b.compromisedPassword ? <span className="text-red-600 text-xs font-medium">{t("breachDetect.yes")}</span> : <span className="text-gray-400 text-xs">{t("breachDetect.no")}</span>}
                     </td>
                     <td className="py-2">
-                      <span className={`inline-flex rounded px-2 py-0.5 text-xs ${b.resolved ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{b.resolved ? 'Resolved' : 'Unresolved'}</span>
+                      <span className={`inline-flex rounded px-2 py-0.5 text-xs ${b.resolved ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{b.resolved ? t("breachDetect.resolved") : t("breachDetect.unresolved")}</span>
                     </td>
                     <td className="py-2">
-                      {!b.resolved && <button onClick={() => resolveBreach(b.id)} className="text-xs text-blue-600 hover:underline">Resolve</button>}
+                      {!b.resolved && <button onClick={() => resolveBreach(b.id)} className="text-xs text-blue-600 hover:underline">{t("breachDetect.resolve")}</button>}
                     </td>
                   </tr>
                 ))}
@@ -222,16 +224,16 @@ export default function BreachDetectionConfigPage() {
 
       {activeTab === 'passwords' && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-medium text-gray-700">Compromised Password List ({compromisedPasswords.length})</h3>
+          <h3 className="text-sm font-medium text-gray-700">{t("breachDetect.compromisedPasswordList").replace("{count}", String(compromisedPasswords.length))}</h3>
           {compromisedPasswords.length === 0 ? (
-            <p className="text-sm text-gray-400">No data available</p>
+            <p className="text-sm text-gray-400">{t("breachDetect.noData")}</p>
           ) : (
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                <th className="pb-2">Hash (SHA1)</th>
-                <th className="pb-2">Occurrence Count</th>
-                <th className="pb-2">Last Seen</th>
+                <th className="pb-2">{t("breachDetect.hash")}</th>
+                <th className="pb-2">{t("breachDetect.occurrenceCount")}</th>
+                <th className="pb-2">{t("breachDetect.lastSeen")}</th>
               </tr>
             </thead>
             <tbody>

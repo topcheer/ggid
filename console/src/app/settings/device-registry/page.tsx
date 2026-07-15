@@ -58,7 +58,7 @@ export default function DeviceRegistryPage() {
     <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><HardDrive className="h-6 w-6 text-blue-600" /> {t("deviceRegistry.title")}</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">All registered devices with fingerprints, sessions, and trust status.</p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("big1.deviceRegistry.allRegisteredDevicesWithFingerprintsSessionsAndTrustStatus")}</p>
       </div>
 
       {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
@@ -67,24 +67,24 @@ export default function DeviceRegistryPage() {
       : (
         <>
           <div className="grid grid-cols-3 gap-4">
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Total Devices</div><p className="mt-2 text-2xl font-bold text-blue-600">{devices.length}</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Trusted</div><p className="mt-2 text-2xl font-bold text-green-600">{devices.filter((d) => d.trusted).length}</p></div>
-            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">Active Sessions</div><p className="mt-2 text-2xl font-bold text-indigo-600">{devices.reduce((s, d) => s + d.session_count, 0)}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.totalDevices")}</div><p className="mt-2 text-2xl font-bold text-blue-600">{devices.length}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.trusted")}</div><p className="mt-2 text-2xl font-bold text-green-600">{devices.filter((d) => d.trusted).length}</p></div>
+            <div className={cardCls}><div className="text-xs font-semibold uppercase text-gray-400">{t("big1.deviceRegistry.activeSessions")}</div><p className="mt-2 text-2xl font-bold text-indigo-600">{devices.reduce((s, d) => s + d.session_count, 0)}</p></div>
           </div>
 
           {devices.length === 0 ? (
-            <div className={cardCls}><div className="py-12 text-center"><HardDrive className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No registered devices.</p></div></div>
+            <div className={cardCls}><div className="py-12 text-center"><HardDrive className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("big1.deviceRegistry.noRegisteredDevices")}</p></div></div>
           ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Fingerprint</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">User</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Platform</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Sessions</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Last Seen</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Trust</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.fingerprint")}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.user")}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.platform")}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.sessions")}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.lastSeen")}</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.trust")}</th>
+                  <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.actions")}</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {devices.map((d) => (

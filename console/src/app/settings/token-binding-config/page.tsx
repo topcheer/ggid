@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface ClientOverride {
@@ -8,6 +9,7 @@ interface ClientOverride {
 }
 
 export default function TokenBindingConfigPage() {
+  const t = useTranslations();
   const [dpopEnabled, setDpopEnabled] = useState(true);
   const [proofExpiry, setProofExpiry] = useState(300);
   const [senderConstrained, setSenderConstrained] = useState(true);
@@ -55,13 +57,13 @@ export default function TokenBindingConfigPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">Token Binding Configuration</h1>
+      <h1 className="text-2xl font-bold">{t("backend.tokenBindingConfig.title")}</h1>
       <p className="text-gray-600">Configure sender-constrained tokens via DPoP, mTLS binding, and replay detection.</p>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Binding Settings</h2>
+        <h2 className="text-lg font-semibold">{t("backend.tokenBindingConfig.bindingSettings")}</h2>
         <label className="flex items-center justify-between">
-          <span className="text-sm">DPoP (Demonstration of Proof of Possession)</span>
+          <span className="text-sm">{t("backend.tokenBindingConfig.dpop")}</span>
           <input type="checkbox" checked={dpopEnabled} onChange={e => setDpopEnabled(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between">
@@ -79,7 +81,7 @@ export default function TokenBindingConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Proof Token Expiry</h2>
+        <h2 className="text-lg font-semibold">{t("backend.tokenBindingConfig.proofTokenExpiry")}</h2>
         <div className="flex items-center gap-3">
           <input
             type="number"
@@ -95,7 +97,7 @@ export default function TokenBindingConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Binding Enforcement Policy</h2>
+        <h2 className="text-lg font-semibold">{t("backend.tokenBindingConfig.title")}</h2>
         <select
           value={enforcementPolicy}
           onChange={e => setEnforcementPolicy(e.target.value)}
@@ -111,7 +113,7 @@ export default function TokenBindingConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Per-Client Overrides</h2>
-          <button onClick={addOverride} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add Override</button>
+          <button onClick={addOverride} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend.tokenBindingConfig.addOverride")}</button>
         </div>
         <div className="space-y-3">
           {overrides.map((o, idx) => (
@@ -128,20 +130,20 @@ export default function TokenBindingConfigPage() {
                 onChange={e => updateOverride(idx, 'bindingType', e.target.value)}
                 className="border rounded px-2 py-1 text-sm"
               >
-                <option value="dpop">DPoP</option>
+                <option value="dpop">{t("backend.tokenBindingConfig.dpop")}</option>
                 <option value="mtls">mTLS</option>
-                <option value="none">None</option>
+                <option value="none">{t("backend.tokenBindingConfig.none")}</option>
               </select>
               <select
                 value={o.enforcement}
                 onChange={e => updateOverride(idx, 'enforcement', e.target.value)}
                 className="border rounded px-2 py-1 text-sm"
               >
-                <option value="required">Required</option>
-                <option value="optional">Optional</option>
-                <option value="disabled">Disabled</option>
+                <option value="required">{t("backend.tokenBindingConfig.required")}</option>
+                <option value="optional">{t("backend.tokenBindingConfig.optional")}</option>
+                <option value="disabled">{t("backend.tokenBindingConfig.disabled")}</option>
               </select>
-              <button onClick={() => removeOverride(idx)} className="text-red-600 text-sm">Remove</button>
+              <button onClick={() => removeOverride(idx)} className="text-red-600 text-sm">{t("backend.tokenBindingConfig.remove")}</button>
             </div>
           ))}
           {overrides.length === 0 && <p className="text-sm text-gray-400">No overrides configured. Global policy applies to all clients.</p>}

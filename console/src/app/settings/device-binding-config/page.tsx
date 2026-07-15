@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface Device {
@@ -12,6 +13,7 @@ interface Device {
 }
 
 export default function DeviceBindingConfigPage() {
+  const t = useTranslations();
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,14 +63,14 @@ export default function DeviceBindingConfigPage() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Device Binding Configuration</h1>
+        <h1 className="text-2xl font-bold">{t("backend.deviceBindingConfig.title2")}</h1>
         <p className="text-gray-600">Manage bound devices, trust scores, and platform-specific policies.</p>
       </div>
 
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold">{devices.length}</div>
-          <div className="text-sm text-gray-500">Bound Devices</div>
+          <div className="text-sm text-gray-500">{t("backend.deviceBindingConfig.boundDevices")}</div>
         </div>
         <div className="bg-white rounded-lg shadow p-4 text-center">
           <div className="text-2xl font-bold text-green-600">{devices.filter(d => d.trustScore >= thresholds.trusted).length}</div>
@@ -110,18 +112,18 @@ export default function DeviceBindingConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Device</th>
+              <th className="p-3">{t("backend.deviceBindingConfig.device")}</th>
               <th className="p-3">Platform</th>
-              <th className="p-3">Fingerprint</th>
-              <th className="p-3">Bound At</th>
-              <th className="p-3">Last Seen</th>
+              <th className="p-3">{t("backend.deviceBindingConfig.fingerprint")}</th>
+              <th className="p-3">{t("backend.deviceBindingConfig.boundAt")}</th>
+              <th className="p-3">{t("backend.deviceBindingConfig.lastSeen")}</th>
               <th className="p-3">Trust Score</th>
-              <th className="p-3">Action</th>
+              <th className="p-3">{t("backend.deviceBindingConfig.action")}</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={7} className="p-3 text-center text-gray-400">No data available</td></tr>
+              <tr><td colSpan={7} className="p-3 text-center text-gray-400">{t("backend.deviceBindingConfig.noData")}</td></tr>
             ) : filtered.map(d => (
               <tr key={d.id} className="border-b hover:bg-gray-50">
                 <td className="p-3 font-medium">{d.deviceName}</td>
@@ -145,8 +147,8 @@ export default function DeviceBindingConfigPage() {
             <h2 className="text-lg font-semibold">Unbind Device</h2>
             <p className="text-sm text-gray-600">Unbind <strong>{unbindTarget.deviceName}</strong> ({unbindTarget.platform})? The user will need to re-bind this device for authentication.</p>
             <div className="flex justify-end gap-3">
-              <button onClick={() => setUnbindTarget(null)} className="px-4 py-2 border rounded text-sm">Cancel</button>
-              <button onClick={confirmUnbind} className="px-4 py-2 bg-red-600 text-white rounded text-sm">Confirm Unbind</button>
+              <button onClick={() => setUnbindTarget(null)} className="px-4 py-2 border rounded text-sm">{t("backend.deviceBindingConfig.cancel")}</button>
+              <button onClick={confirmUnbind} className="px-4 py-2 bg-red-600 text-white rounded text-sm">{t("backend.deviceBindingConfig.confirmUnbind")}</button>
             </div>
           </div>
         </div>

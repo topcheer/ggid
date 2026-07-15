@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
@@ -18,6 +19,7 @@ interface JWKSStatus {
 }
 
 export default function JwksPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [status, setStatus] = useState<JWKSStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ export default function JwksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <KeyRound className="h-6 w-6 text-indigo-600" /> JWKS Management
+            <KeyRound className="h-6 w-6 text-indigo-600" /> {t("backend.jwks.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Signing key lifecycle with automatic rotation and grace periods.</p>
         </div>
@@ -82,7 +84,7 @@ export default function JwksPage() {
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30"><Check className="h-5 w-5 text-green-600" /></div>
               <div className="flex-1">
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">Active Key</h3>
+                <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t("backend.jwks.activeKey")}</h3>
                 <div className="mt-1 flex flex-wrap items-center gap-4 text-sm">
                   <span className="font-mono text-gray-600 dark:text-gray-300">kid: {status.active_kid}</span>
                   <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">{status.algorithm}</span>
@@ -95,11 +97,11 @@ export default function JwksPage() {
           {/* Rotation config */}
           <div className="grid grid-cols-2 gap-4">
             <div className={cardCls}>
-              <p className="text-xs font-semibold uppercase text-gray-400">Rotation Interval</p>
+              <p className="text-xs font-semibold uppercase text-gray-400">{t("backend.jwks.rotationInterval")}</p>
               <p className="mt-1 text-2xl font-bold text-indigo-600">{status.rotation_interval_hours}h</p>
             </div>
             <div className={cardCls}>
-              <p className="text-xs font-semibold uppercase text-gray-400">Grace Period</p>
+              <p className="text-xs font-semibold uppercase text-gray-400">{t("backend.jwks.gracePeriod")}</p>
               <p className="mt-1 text-2xl font-bold text-indigo-600">{status.grace_period_hours}h</p>
             </div>
           </div>
@@ -116,14 +118,14 @@ export default function JwksPage() {
               <div className="hidden overflow-hidden rounded-xl border border-gray-200 shadow-sm md:block dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-800"><tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                    <th className="px-4 py-3">Key ID</th><th className="px-4 py-3">Retired At</th><th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">{t("backend.jwks.keyId")}</th><th className="px-4 py-3">{t("backend.jwks.retiredAt")}</th><th className="px-4 py-3">{t("backend.jwks.status")}</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                     {status.previous_keys.map((k) => (
                       <tr key={k.kid} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                         <td className="px-4 py-3 font-mono text-xs text-gray-500">{k.kid}</td>
                         <td className="px-4 py-3 text-gray-400">{new Date(k.retired_at).toLocaleString()}</td>
-                        <td className="px-4 py-3"><span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700">Retired</span></td>
+                        <td className="px-4 py-3"><span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700">{t("backend.jwks.retired")}</span></td>
                       </tr>
                     ))}
                   </tbody>
@@ -156,7 +158,7 @@ export default function JwksPage() {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmRotate(false)} disabled={rotating} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+              <button onClick={() => setConfirmRotate(false)} disabled={rotating} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("backend.jwks.cancel")}</button>
               <button onClick={handleRotate} disabled={rotating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{rotating ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}Rotate</button>
             </div>
           </div>

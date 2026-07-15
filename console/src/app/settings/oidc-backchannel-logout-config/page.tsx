@@ -17,7 +17,7 @@ export default function OidcBackchannelLogoutConfigPage() {
   const handleTest = async (clientId: string) => { setTesting(true); await testLogout(clientId); setTesting(false); };
 
   if (loading && !form) return <div className="p-8">{t("oidcBackchannelLogout.loading")}</div>;
-  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
+  if (error) return <div className="p-8 text-red-600">{t("common.error")}: {error}</div>;
   if (!form) return <div className="p-8">{t("oidcBackchannelLogout.noData")}</div>;
 
   return (
@@ -41,7 +41,7 @@ export default function OidcBackchannelLogoutConfigPage() {
         <h2 className="text-lg font-semibold mb-4">{t("oidcBackchannelLogout.perClientEndpoints")}</h2>
         <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oidcBackchannelLogout.client")}</th><th>{t("oidcBackchannelLogout.logoutEndpoint")}</th><th>{t("oidcBackchannelLogout.test")}</th></tr></thead><tbody>
           {form.per_client_endpoints.map((c: BackchannelLogoutClient, i: number) => (
-            <tr key={i} className="border-b"><td className="py-2"><span className="font-medium">{c.client_name}</span><div className="text-xs text-gray-400">{c.client_id}</div></td><td className="break-all">{c.logout_endpoint_url}</td><td><button onClick={() => handleTest(c.client_id)} disabled={testing} className="text-blue-600 hover:text-blue-800 text-xs">Test</button></td></tr>
+            <tr key={i} className="border-b"><td className="py-2"><span className="font-medium">{c.client_name}</span><div className="text-xs text-gray-400">{c.client_id}</div></td><td className="break-all">{c.logout_endpoint_url}</td><td><button onClick={() => handleTest(c.client_id)} disabled={testing} className="text-blue-600 hover:text-blue-800 text-xs">{t("oidcBackchannelLogout.test")}</button></td></tr>
           ))}
         </tbody></table>
       </div>
@@ -60,7 +60,7 @@ export default function OidcBackchannelLogoutConfigPage() {
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? t("common.loading") : t("common.save")}</button>
     </div>
   );
 }

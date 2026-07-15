@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { useOidcFederationConfig, OidcFederationConfig } from "@ggid/sdk-react";
-import { useTranslations } from "@/lib/i18n";
 
 interface LocalTrustAnchor {
   issuer: string;
@@ -33,7 +32,6 @@ export default function OidcFederationConfigPage() {
   const { config, loading, error, fetchConfig, updateConfig } = useOidcFederationConfig();
   const [form, setForm] = useState<LocalOidcFederationConfig | null>(null);
   const [saving, setSaving] = useState(false);
-  const t = useTranslations();
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
   useEffect(() => { if (config) setForm(config as unknown as LocalOidcFederationConfig); }, [config]);

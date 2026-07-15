@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface WebhookSubscription {
   id: string;
@@ -19,6 +20,7 @@ interface DeliveryRecord {
 }
 
 export default function WebhookSubscriptionsPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,17 +40,17 @@ export default function WebhookSubscriptionsPage() {
         const json = await res.json();
         setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : t("webhookSubs.failedToLoad"));
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (loading) return <div className="p-8">{t("common.loading")}</div>;
+  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("webhookSubs.noData")}</div>;
   const [subs] = useState<WebhookSubscription[]>([
     { id: "wh-001", url: "https://hooks.example.com/users", events: ["user.created", "user.updated"], enabled: true, last_delivery: "2025-01-15 16:01", status: "delivered" },
     { id: "wh-002", url: "https://api.slack.com/hooks/xyz", events: ["auth.login_failed", "policy.violation"], enabled: true, last_delivery: "2025-01-15 15:45", status: "delivered" },
@@ -65,26 +67,26 @@ export default function WebhookSubscriptionsPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">
-      <h1 className="text-2xl font-bold">Webhook Subscriptions</h1>
-      <p className="text-gray-600">Manage webhook endpoints, event subscriptions, and delivery monitoring.</p>
+      <h1 className="text-2xl font-bold">{t("webhookSubs.title")}</h1>
+      <p className="text-gray-600">{t("webhookSubs.subtitle")}</p>
 
       <div className="bg-white rounded-lg p-6 shadow">
-        <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-semibold">Subscriptions</h2><button onClick={() => setShowAdd(!showAdd)} className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Subscription</button></div>
-        {showAdd && (<div className="mb-4 border rounded p-4 space-y-3 bg-gray-50"><div><label className="block text-sm font-medium mb-1">URL</label><input type="text" placeholder="https://..." className="border rounded px-3 py-2 w-full" /></div><div><label className="block text-sm font-medium mb-1">Event Types</label><div className="flex flex-wrap gap-2">{eventCatalog.map((e) => (<label key={e} className="flex items-center gap-1 text-sm"><input type="checkbox" className="w-4 h-4" />{e}</label>))}</div></div><div><label className="block text-sm font-medium mb-1">Secret (for HMAC)</label><input type="password" placeholder="whsec_..." className="border rounded px-3 py-2 w-full" /></div><button className="px-4 py-2 bg-green-600 text-white rounded text-sm">Create</button></div>)}
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">URL</th><th>Events</th><th>Enabled</th><th>Last Delivery</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-          {subs.map((s: WebhookSubscription, i: number) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="py-2 font-mono text-xs break-all max-w-xs">{s.url}</td><td><div className="flex flex-wrap gap-1">{s.events.map((e) => <span key={e} className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">{e}</span>)}</div></td><td>{s.enabled ? "Yes" : "No"}</td><td className="text-xs text-gray-500">{s.last_delivery}</td><td><span className={`px-2 py-1 rounded text-xs ${s.status === "delivered" ? "bg-green-100 text-green-700" : s.status === "failed" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>{s.status}</span></td><td className="flex gap-2"><button className="text-xs text-blue-600 hover:underline">Test</button><button className="text-xs text-red-600 hover:underline">Delete</button></td></tr>))}
+        <div className="flex items-center justify-between mb-4"><h2 className="text-lg font-semibold">{t("webhookSubs.subscriptions")}</h2><button onClick={() => setShowAdd(!showAdd)} className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t("webhookSubs.addSubscription")}</button></div>
+        {showAdd && (<div className="mb-4 border rounded p-4 space-y-3 bg-gray-50"><div><label className="block text-sm font-medium mb-1">{t("webhookSubs.url")}</label><input type="text" placeholder={t("webhookSubs.urlPlaceholder")} className="border rounded px-3 py-2 w-full" /></div><div><label className="block text-sm font-medium mb-1">{t("webhookSubs.eventTypes")}</label><div className="flex flex-wrap gap-2">{eventCatalog.map((e) => (<label key={e} className="flex items-center gap-1 text-sm"><input type="checkbox" className="w-4 h-4" />{e}</label>))}</div></div><div><label className="block text-sm font-medium mb-1">{t("webhookSubs.secret")}</label><input type="password" placeholder={t("webhookSubs.secretPlaceholder")} className="border rounded px-3 py-2 w-full" /></div><button className="px-4 py-2 bg-green-600 text-white rounded text-sm">{t("webhookSubs.create")}</button></div>)}
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("webhookSubs.url")}</th><th>{t("webhookSubs.eventTypes")}</th><th>{t("common.enabled")}</th><th>{t("webhookSubs.lastDelivery")}</th><th>{t("common.status")}</th><th>{t("webhookSubs.actions")}</th></tr></thead><tbody>
+          {subs.map((s: WebhookSubscription, i: number) => (<tr key={i} className="border-b hover:bg-gray-50"><td className="py-2 font-mono text-xs break-all max-w-xs">{s.url}</td><td><div className="flex flex-wrap gap-1">{s.events.map((e) => <span key={e} className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">{e}</span>)}</div></td><td>{s.enabled ? t("webhookSubs.yes") : t("webhookSubs.no")}</td><td className="text-xs text-gray-500">{s.last_delivery}</td><td><span className={`px-2 py-1 rounded text-xs ${s.status === "delivered" ? "bg-green-100 text-green-700" : s.status === "failed" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>{s.status}</span></td><td className="flex gap-2"><button className="text-xs text-blue-600 hover:underline">{t("common.test")}</button><button className="text-xs text-red-600 hover:underline">{t("common.delete")}</button></td></tr>))}
         </tbody></table>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">
-        <h2 className="text-lg font-semibold mb-4">Delivery History</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Timestamp</th><th>Event</th><th>Status Code</th><th>Latency</th><th>Result</th></tr></thead><tbody>
-          {history.map((h: DeliveryRecord, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-mono text-xs text-gray-500">{h.timestamp}</td><td className="font-mono text-xs">{h.event}</td><td>{h.status_code}</td><td>{h.latency_ms}ms</td><td><span className={`px-2 py-1 rounded text-xs ${h.success ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{h.success ? "OK" : "Failed"}</span></td></tr>))}
+        <h2 className="text-lg font-semibold mb-4">{t("webhookSubs.deliveryHistory")}</h2>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("webhookSubs.timestamp")}</th><th>{t("webhookSubs.event")}</th><th>{t("webhookSubs.statusCode")}</th><th>{t("webhookSubs.latency")}</th><th>{t("webhookSubs.result")}</th></tr></thead><tbody>
+          {history.map((h: DeliveryRecord, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-mono text-xs text-gray-500">{h.timestamp}</td><td className="font-mono text-xs">{h.event}</td><td>{h.status_code}</td><td>{h.latency_ms}ms</td><td><span className={`px-2 py-1 rounded text-xs ${h.success ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{h.success ? t("webhookSubs.ok") : t("webhookSubs.failed")}</span></td></tr>))}
         </tbody></table>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">
-        <h2 className="text-lg font-semibold mb-4">Event Type Catalog</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("webhookSubs.eventTypeCatalog")}</h2>
         <div className="flex flex-wrap gap-2">{eventCatalog.map((e) => <span key={e} className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">{e}</span>)}</div>
       </div>
     </div>

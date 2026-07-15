@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
@@ -20,6 +21,7 @@ interface IGAMetrics {
 }
 
 export default function IdentityGovernancePage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [metrics, setMetrics] = useState<IGAMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,7 @@ export default function IdentityGovernancePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-indigo-600" /> Identity Governance</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><ShieldCheck className="h-6 w-6 text-indigo-600" /> {t("backend.identityGovernance.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Unified dashboard for access reviews, SoD violations, and account lifecycle.</p>
       </div>
 
@@ -51,10 +53,10 @@ export default function IdentityGovernancePage() {
 
       {/* Top metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className={cardCls}><div className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-indigo-500" /><span className="text-xs font-semibold uppercase text-gray-400">Open Campaigns</span></div><p className="mt-2 text-2xl font-bold text-indigo-600">{metrics.open_campaigns}</p></div>
-        <div className={cardCls}><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">Pending Reviews</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{metrics.pending_reviews}</p>{metrics.overdue_reviews > 0 && <p className="mt-1 text-xs text-red-500">{metrics.overdue_reviews} overdue</p>}</div>
-        <div className={cardCls}><div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-500" /><span className="text-xs font-semibold uppercase text-gray-400">SoD Violations</span></div><p className="mt-2 text-2xl font-bold text-red-600">{sodTotal}</p>{metrics.sod_violations.critical > 0 && <p className="mt-1 text-xs text-red-500">{metrics.sod_violations.critical} critical</p>}</div>
-        <div className={cardCls}><div className="flex items-center gap-2"><UserX className="h-4 w-4 text-gray-400" /><span className="text-xs font-semibold uppercase text-gray-400">Orphaned Accounts</span></div><p className="mt-2 text-2xl font-bold text-gray-600">{metrics.orphaned_accounts}</p></div>
+        <div className={cardCls}><div className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-indigo-500" /><span className="text-xs font-semibold uppercase text-gray-400">{t("backend.identityGovernance.openCampaigns")}</span></div><p className="mt-2 text-2xl font-bold text-indigo-600">{metrics.open_campaigns}</p></div>
+        <div className={cardCls}><div className="flex items-center gap-2"><Clock className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">{t("backend.identityGovernance.pendingReviews")}</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{metrics.pending_reviews}</p>{metrics.overdue_reviews > 0 && <p className="mt-1 text-xs text-red-500">{metrics.overdue_reviews} overdue</p>}</div>
+        <div className={cardCls}><div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-red-500" /><span className="text-xs font-semibold uppercase text-gray-400">{t("backend.identityGovernance.sodViolations")}</span></div><p className="mt-2 text-2xl font-bold text-red-600">{sodTotal}</p>{metrics.sod_violations.critical > 0 && <p className="mt-1 text-xs text-red-500">{metrics.sod_violations.critical} critical</p>}</div>
+        <div className={cardCls}><div className="flex items-center gap-2"><UserX className="h-4 w-4 text-gray-400" /><span className="text-xs font-semibold uppercase text-gray-400">{t("backend.identityGovernance.orphanedAccounts")}</span></div><p className="mt-2 text-2xl font-bold text-gray-600">{metrics.orphaned_accounts}</p></div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -62,9 +64,9 @@ export default function IdentityGovernancePage() {
         <div className={cardCls}>
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"><TrendingUp className="h-4 w-4" /> Certification Progress</h3>
           <div className="space-y-3">
-            <div><div className="flex items-center justify-between text-sm"><span className="text-gray-500">Completion Rate</span><span className="font-bold text-green-600">{metrics.cert_completion_rate}%</span></div><div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-green-500" style={{ width: `${metrics.cert_completion_rate}%` }} /></div></div>
-            <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Avg Review Time</span><span className="font-bold text-indigo-600">{metrics.avg_review_time_hours}h</span></div>
-            <div className="flex items-center justify-between text-sm"><span className="text-gray-500">Dormant Accounts</span><span className="font-bold text-gray-600">{metrics.dormant_accounts}</span></div>
+            <div><div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("backend.identityGovernance.completionRate")}</span><span className="font-bold text-green-600">{metrics.cert_completion_rate}%</span></div><div className="mt-1 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"><div className="h-full rounded-full bg-green-500" style={{ width: `${metrics.cert_completion_rate}%` }} /></div></div>
+            <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("backend.identityGovernance.avgReviewTime")}</span><span className="font-bold text-indigo-600">{metrics.avg_review_time_hours}h</span></div>
+            <div className="flex items-center justify-between text-sm"><span className="text-gray-500">{t("backend.identityGovernance.dormantAccounts")}</span><span className="font-bold text-gray-600">{metrics.dormant_accounts}</span></div>
           </div>
         </div>
 
@@ -90,7 +92,7 @@ export default function IdentityGovernancePage() {
       {/* Recent campaigns */}
       {metrics.recent_campaigns.length > 0 && (
         <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Recent Campaigns</h2>
+          <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">{t("backend.identityGovernance.recentCampaigns")}</h2>
           <div className="space-y-2">
             {metrics.recent_campaigns.map((c) => (
               <div key={c.id} className={`${cardCls} flex items-center justify-between py-3`}>

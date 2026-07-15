@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
@@ -35,6 +36,7 @@ function trustColor(score: number): string {
 }
 
 export default function DeviceTrustPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [devices, setDevices] = useState<DeviceTrustEntry[]>([]);
   const [config, setConfig] = useState<PosturePolicy | null>(null);
@@ -69,7 +71,7 @@ export default function DeviceTrustPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Smartphone className="h-6 w-6 text-cyan-600" /> Device Trust</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Smartphone className="h-6 w-6 text-cyan-600" /> {t("backend.deviceTrust.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Device inventory with trust scoring and posture policy enforcement.</p>
       </div>
 
@@ -89,11 +91,11 @@ export default function DeviceTrustPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <button onClick={() => setConfig({ ...config, require_encryption: !config.require_encryption })} className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm ${config.require_encryption ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20" : "border-gray-300 dark:border-gray-600"}`}><span className="flex items-center gap-2">{config.require_encryption ? <Lock className="h-4 w-4 text-green-600" /> : <Unlock className="h-4 w-4 text-gray-400" />}Require Encryption</span><span className={`text-xs font-medium ${config.require_encryption ? "text-green-600" : "text-gray-400"}`}>{config.require_encryption ? "On" : "Off"}</span></button>
-                  <button onClick={() => setConfig({ ...config, block_jailbreak: !config.block_jailbreak })} className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm ${config.block_jailbreak ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}`}><span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Block Jailbroken</span><span className={`text-xs font-medium ${config.block_jailbreak ? "text-red-600" : "text-gray-400"}`}>{config.block_jailbreak ? "On" : "Off"}</span></button>
+                  <button onClick={() => setConfig({ ...config, block_jailbreak: !config.block_jailbreak })} className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm ${config.block_jailbreak ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}`}><span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />{t("backend.deviceTrust.blockJailbroken")}</span><span className={`text-xs font-medium ${config.block_jailbreak ? "text-red-600" : "text-gray-400"}`}>{config.block_jailbreak ? "On" : "Off"}</span></button>
                   <button onClick={() => setConfig({ ...config, require_managed: !config.require_managed })} className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm ${config.require_managed ? "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20" : "border-gray-300 dark:border-gray-600"}`}><span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Require MDM</span><span className={`text-xs font-medium ${config.require_managed ? "text-blue-600" : "text-gray-400"}`}>{config.require_managed ? "On" : "Off"}</span></button>
-                  <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Min Trust Score</label><input type="number" value={config.min_trust_score} onChange={(e) => setConfig({ ...config, min_trust_score: parseInt(e.target.value) || 0 })} min={0} max={100} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
+                  <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("backend.deviceTrust.minTrustScore")}</label><input type="number" value={config.min_trust_score} onChange={(e) => setConfig({ ...config, min_trust_score: parseInt(e.target.value) || 0 })} min={0} max={100} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
                 </div>
-                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Min OS Versions</label><div className="flex flex-wrap gap-2">{Object.entries(config.min_os_version).map(([k, v]) => <span key={k} className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{k}: {v}</span>)}{Object.keys(config.min_os_version).length === 0 && <span className="text-xs text-gray-400">No minimums set</span>}</div></div>
+                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("backend.deviceTrust.minOsVersions")}</label><div className="flex flex-wrap gap-2">{Object.entries(config.min_os_version).map(([k, v]) => <span key={k} className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300">{k}: {v}</span>)}{Object.keys(config.min_os_version).length === 0 && <span className="text-xs text-gray-400">No minimums set</span>}</div></div>
                 <button onClick={handleSaveConfig} disabled={saving} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}Save Policy</button>
               </div>
             </div>
@@ -101,19 +103,19 @@ export default function DeviceTrustPage() {
 
           {/* Device table */}
           <div>
-            <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Device Inventory</h2>
+            <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">{t("backend.deviceTrust.deviceInventory")}</h2>
             {devices.length === 0 ? (
               <div className={cardCls}><div className="py-12 text-center"><Smartphone className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No enrolled devices.</p></div></div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Device</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.deviceTrust.device")}</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">User</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Platform</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Flags</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.deviceTrust.flags")}</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Trust</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Last Seen</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.deviceTrust.lastSeen")}</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {devices.map((d) => (
@@ -122,9 +124,9 @@ export default function DeviceTrustPage() {
                         <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{d.username}</td>
                         <td className="px-4 py-3"><div className="text-gray-700 dark:text-gray-300">{d.platform}</div><div className="text-xs text-gray-400">{d.os_version}</div></td>
                         <td className="px-4 py-3"><div className="flex flex-wrap gap-1">
-                          {d.managed && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-900/30">MDM</span>}
-                          {d.encrypted ? <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-600 dark:bg-green-900/30">Encrypted</span> : <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30">Unencrypted</span>}
-                          {d.jailbroken && <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30">Jailbroken</span>}
+                          {d.managed && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-600 dark:bg-blue-900/30">{t("backend.deviceTrust.mdm")}</span>}
+                          {d.encrypted ? <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-600 dark:bg-green-900/30">{t("backend.deviceTrust.encrypted")}</span> : <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30">Unencrypted</span>}
+                          {d.jailbroken && <span className="rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600 dark:bg-red-900/30">{t("backend.deviceTrust.jailbroken")}</span>}
                         </div></td>
                         <td className="px-4 py-3"><span className={`flex items-center gap-1 text-lg font-bold ${trustColor(d.trust_score)}`}><TrendingUp className="h-3 w-3" />{d.trust_score}</span></td>
                         <td className="px-4 py-3 text-gray-400">{d.last_seen ? new Date(d.last_seen).toLocaleDateString() : "—"}</td>

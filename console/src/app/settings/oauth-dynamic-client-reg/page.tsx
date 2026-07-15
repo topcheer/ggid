@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { useOAuthDynamicClientReg, OAuthDynamicClientRegConfig, RegisteredClient } from "@ggid/sdk-react";
-import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthDynamicClientRegPage() {
 

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
@@ -29,6 +30,7 @@ interface CacheEntry {
 }
 
 export default function IntrospectionPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [stats, setStats] = useState<CacheStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,7 @@ export default function IntrospectionPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <KeyRound className="h-6 w-6 text-indigo-600" /> Token Introspection
+            <KeyRound className="h-6 w-6 text-indigo-600" /> {t("backend.introspection.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Monitor and manage the introspection cache for OAuth token validation.
@@ -119,7 +121,7 @@ export default function IntrospectionPage() {
         <div className={cardCls}>
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-green-500" />
-            <h3 className="text-xs font-semibold uppercase text-gray-500">Hit Ratio</h3>
+            <h3 className="text-xs font-semibold uppercase text-gray-500">{t("backend.introspection.hitRatio")}</h3>
           </div>
           <p className={`mt-2 text-3xl font-bold ${(stats?.hit_ratio ?? 0) >= 0.8 ? "text-green-600" : (stats?.hit_ratio ?? 0) >= 0.5 ? "text-yellow-600" : "text-red-600"}`}>
             {stats ? `${(stats.hit_ratio * 100).toFixed(1)}%` : "—"}
@@ -133,7 +135,7 @@ export default function IntrospectionPage() {
         <div className={cardCls}>
           <div className="flex items-center gap-2">
             <Database className="h-4 w-4 text-indigo-500" />
-            <h3 className="text-xs font-semibold uppercase text-gray-500">Cache Size</h3>
+            <h3 className="text-xs font-semibold uppercase text-gray-500">{t("backend.introspection.cacheSize")}</h3>
           </div>
           <p className="mt-2 text-3xl font-bold text-indigo-600">{stats?.cache_size_mb.toFixed(1) ?? "—"} MB</p>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
@@ -145,7 +147,7 @@ export default function IntrospectionPage() {
         <div className={cardCls}>
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-blue-500" />
-            <h3 className="text-xs font-semibold uppercase text-gray-500">Avg Response</h3>
+            <h3 className="text-xs font-semibold uppercase text-gray-500">{t("backend.introspection.avgResponse")}</h3>
           </div>
           <p className="mt-2 text-3xl font-bold text-blue-600">{stats?.avg_response_time_ms.toFixed(1) ?? "—"} ms</p>
           <p className="mt-1 text-xs text-gray-400">Per introspection call</p>
@@ -154,16 +156,16 @@ export default function IntrospectionPage() {
         <div className={cardCls}>
           <div className="flex items-center gap-2">
             <KeyRound className="h-4 w-4 text-purple-500" />
-            <h3 className="text-xs font-semibold uppercase text-gray-500">Entries</h3>
+            <h3 className="text-xs font-semibold uppercase text-gray-500">{t("backend.introspection.entries")}</h3>
           </div>
           <p className="mt-2 text-3xl font-bold text-purple-600">{stats?.total_entries ?? 0}</p>
-          <p className="mt-1 text-xs text-gray-400">Active cached tokens</p>
+          <p className="mt-1 text-xs text-gray-400">{t("backend.introspection.activeCached")}</p>
         </div>
       </div>
 
       {/* Cache entries table */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">Cached Tokens</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase text-gray-500">{t("backend.introspection.cachedTokens")}</h2>
         {!stats?.entries || stats.entries.length === 0 ? (
           <div className={cardCls}>
             <div className="py-12 text-center">
@@ -179,12 +181,12 @@ export default function IntrospectionPage() {
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr className="text-left text-xs font-semibold uppercase text-gray-500">
                     <th className="px-4 py-3">Token Hash</th>
-                    <th className="px-4 py-3">Client ID</th>
+                    <th className="px-4 py-3">{t("backend.introspection.clientId")}</th>
                     <th className="px-4 py-3">Scope</th>
                     <th className="px-4 py-3">Last Accessed</th>
-                    <th className="px-4 py-3">Expires</th>
+                    <th className="px-4 py-3">{t("backend.introspection.expires")}</th>
                     <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Action</th>
+                    <th className="px-4 py-3 text-right">{t("backend.introspection.action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -250,7 +252,7 @@ export default function IntrospectionPage() {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmInvalidate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+              <button onClick={() => setConfirmInvalidate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("backend.introspection.cancel")}</button>
               <button onClick={handleInvalidate} disabled={invalidating} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">
                 {invalidating ? <Loader2 className="h-4 w-4 animate-spin" /> : <ZapOff className="h-4 w-4" />} Invalidate All
               </button>

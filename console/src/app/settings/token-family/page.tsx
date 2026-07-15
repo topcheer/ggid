@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { GitBranch, Ban, AlertTriangle, ChevronRight } from "lucide-react";
@@ -13,6 +14,7 @@ interface TokenFamily {
 }
 
 export default function TokenFamilyPage() {
+  const t = useTranslations();
   const [families, setFamilies] = useState<TokenFamily[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export default function TokenFamilyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><GitBranch className="w-6 h-6 text-purple-500" /> Token Family</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><GitBranch className="w-6 h-6 text-purple-500" /> {t("backend.tokenFamily.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Analyze token family relationships and detect token reuse.</p>
       </div>
 
@@ -61,7 +63,7 @@ export default function TokenFamilyPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {f.reuse_detected && <span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400">REUSE</span>}
+                {f.reuse_detected && <span className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400">{t("backend.tokenFamily.reuse")}</span>}
                 <span className={"px-2 py-0.5 rounded text-xs " + (f.status === "active" ? "bg-green-100 dark:bg-green-900/30 dark:text-green-400" : "bg-gray-100 dark:bg-gray-800 dark:text-gray-400")}>{f.status}</span>
                 {f.status === "active" && (
                   <button onClick={(e) => { e.stopPropagation(); revokeFamily(f.family_id); }} className="text-xs text-red-600 hover:underline flex items-center gap-1">
@@ -72,7 +74,7 @@ export default function TokenFamilyPage() {
             </div>
             {expanded === f.family_id && (
               <div className="border-t dark:border-gray-800 p-3 bg-gray-50 dark:bg-gray-900/30">
-                <h4 className="text-xs font-semibold text-gray-500 mb-2">Child Tokens</h4>
+                <h4 className="text-xs font-semibold text-gray-500 mb-2">{t("backend.tokenFamily.childTokens")}</h4>
                 <div className="space-y-1">
                   {f.child_tokens.map((c) => (
                     <div key={c.id} className="flex items-center gap-2 text-xs">
