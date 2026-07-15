@@ -1,108 +1,118 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
 
-interface ContentType { type: string; enabled: boolean; }
+import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function CompressionConfigPage() {
   const [enabled, setEnabled] = useState(true);
-  const [algorithms, setAlgorithms] = useState(['gzip', 'brotli']);
   const [minSize, setMinSize] = useState(1024);
   const [level, setLevel] = useState(6);
-  const [prefetch, setPrefetch] = useState(true);
-  const [contentTypes, setContentTypes] = useState<ContentType[]>([
-    { type: 'text/html', enabled: true },
-    { type: 'text/css', enabled: true },
-    { type: 'application/json', enabled: true },
-    { type: 'application/javascript', enabled: true },
-    { type: 'application/xml', enabled: true },
-    { type: 'text/plain', enabled: true },
-    { type: 'image/svg+xml', enabled: true },
+  const [mimeTypes, setMimeTypes] = useState([
+    "application/json",
+    "text/html",
+    "text/css",
+    "application/javascript",
   ]);
-  const [skipTypes, setSkipTypes] = useState(['image/jpeg', 'image/png', 'video/mp4', 'application/zip']);
-  const [newContentType, setNewContentType] = useState('');
-  const [newSkipType, setNewSkipType] = useState('');
-  const [stats, setStats] = useState({ bytesSaved: '4.2 GB', ratio: 68.5, requestsCompressed: 15420 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [newMime, setNewMime] = useState("");
 
-  const loadData = useCallback(async () => {
-    setLoading(true); setError(null);
-    try {
-      const res = await fetch("/api/v1/gateway/compression-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (res.ok) { const d = await res.json(); if (d.enabled !== undefined) setEnabled(d.enabled); if (d.algorithms) setAlgorithms(d.algorithms); if (d.min_size) setMinSize(d.min_size); if (d.level) setLevel(d.level); if (d.stats) setStats(d.stats); }
-    } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }
-    finally { setLoading(false); }
-  }, []);
+  const t = useTranslations();
 
-  useEffect(() => { loadData(); }, [loadData]);
+  const addMimeType = () => {
+    if (newMime && !mimeTypes.includes(newMime)) {
+      setMimeTypes([...mimeTypes, newMime]);
+      setNewMime("");
+    }
+  };
 
-  const allAlgorithms = ['gzip', 'brotli', 'zstd'];
-  const toggleAlg = (a: string) => setAlgorithms(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
-  const toggleContentType = (idx: number) => setContentTypes(prev => prev.map((c, i) => i === idx ? { ...c, enabled: !c.enabled } : c));
-  const addContentType = () => { if (newContentType) { setContentTypes(prev => [...prev, { type: newContentType, enabled: true }]); setNewContentType(''); } };
-  const addSkipType = () => { if (newSkipType) { setSkipTypes(prev => [...prev, newSkipType]); setNewSkipType(''); } };
-  const removeSkipType = (t: string) => setSkipTypes(prev => prev.filter(x => x !== t));
-
-  if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
-  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);
+  const removeMimeType = (type: string) => {
+    setMimeTypes(mimeTypes.filter((t) => t !== type));
+  };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Compression Configuration</h1>
-        <p className="text-gray-600">Configure response compression algorithms, thresholds, and content type rules.</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg shadow p-4 text-center"><div className="text-2xl font-bold text-green-600">{stats.bytesSaved}</div><div className="text-sm text-gray-500">Bytes Saved (24h)</div></div>
-        <div className="bg-white rounded-lg shadow p-4 text-center"><div className="text-2xl font-bold">{stats.ratio}%</div><div className="text-sm text-gray-500">Compression Ratio</div></div>
-        <div className="bg-white rounded-lg shadow p-4 text-center"><div className="text-2xl font-bold">{stats.requestsCompressed.toLocaleString()}</div><div className="text-sm text-gray-500">Requests Compressed</div></div>
-      </div>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">{t("backend2.compression.title")}</h1>
+      <p className="text-gray-600">Configure response compression settings for the gateway.</p>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">General Settings</h2>
-        <label className="flex items-center justify-between"><span className="text-sm font-medium">Enable Compression</span><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" /></label>
-        <div>
-          <label className="text-sm font-medium">Algorithms (in priority order)</label>
-          <div className="flex gap-3 mt-2">
-            {allAlgorithms.map(a => (
-              <label key={a} className="flex items-center gap-1 text-sm"><input type="checkbox" checked={algorithms.includes(a)} onChange={() => toggleAlg(a)} className="rounded" /><span className="font-mono">{a}</span></label>
-            ))}
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <span className="font-medium">{t("backend2.compression.enabled")}</span>
+        </label>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">{t("backend2.compression.minSize")}</label>
+            <input
+              type="number"
+              min={0}
+              value={minSize}
+              onChange={(e) => setMinSize(parseInt(e.target.value, 10) || 0)}
+              className="w-full border rounded px-3 py-2 text-sm"
+              disabled={!enabled}
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">{t("backend2.compression.level")}</label>
+            <input
+              type="range"
+              min={1}
+              max={9}
+              value={level}
+              onChange={(e) => setLevel(parseInt(e.target.value, 10))}
+              className="w-full"
+              disabled={!enabled}
+            />
+            <div className="text-sm font-medium text-center">{level}</div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">Min Size Threshold (bytes)</label><input type="number" min={0} value={minSize} onChange={e => setMinSize(parseInt(e.target.value) || 1024)} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">Compression Level: {level}</label><input type="range" min={1} max={9} value={level} onChange={e => setLevel(parseInt(e.target.value))} className="w-full mt-2" /></div>
-        </div>
-        <label className="flex items-center justify-between"><span className="text-sm">Prefetch compressed variants</span><input type="checkbox" checked={prefetch} onChange={e => setPrefetch(e.target.checked)} className="rounded" /></label>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Content Types</h2>
-        <div className="space-y-2">
-          {contentTypes.map((c, idx) => (
-            <label key={c.type} className="flex items-center justify-between border-b pb-1"><span className="font-mono text-sm">{c.type}</span><input type="checkbox" checked={c.enabled} onChange={() => toggleContentType(idx)} className="rounded" /></label>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <input type="text" placeholder="text/html" value={newContentType} onChange={e => setNewContentType(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
-          <button onClick={addContentType} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
-        </div>
-      </section>
-
-      <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Skip Compression For</h2>
-        <p className="text-sm text-gray-500">Content types that should never be compressed (already compressed binary formats).</p>
+        <h2 className="text-lg font-semibold">{t("backend2.compression.mimeTypes")}</h2>
         <div className="flex flex-wrap gap-2">
-          {skipTypes.map(t => (
-            <div key={t} className="flex items-center gap-1"><span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">{t}</span><button onClick={() => removeSkipType(t)} className="text-red-600 text-xs">x</button></div>
+          {mimeTypes.map((type) => (
+            <span
+              key={type}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm font-mono"
+            >
+              {type}
+              <button
+                onClick={() => removeMimeType(type)}
+                className="text-red-500 hover:text-red-700 text-xs"
+              >
+                {t("backend2.compression.delete")}
+              </button>
+            </span>
           ))}
         </div>
         <div className="flex gap-2">
-          <input type="text" placeholder="image/webp" value={newSkipType} onChange={e => setNewSkipType(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
-          <button onClick={addSkipType} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
+          <input
+            type="text"
+            value={newMime}
+            onChange={(e) => setNewMime(e.target.value)}
+            placeholder="text/plain"
+            className="flex-1 border rounded px-3 py-2 text-sm font-mono"
+          />
+          <button
+            onClick={addMimeType}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
+          >
+            {t("backend2.compression.addMimeType")}
+          </button>
         </div>
       </section>
+
+      <div className="flex justify-end">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+          {t("backend2.compression.save")}
+        </button>
+      </div>
     </div>
   );
 }

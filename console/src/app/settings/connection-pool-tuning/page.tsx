@@ -1,25 +1,117 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useConnectionPoolTuning, ConnectionPoolTuning, PoolConfig } from "@ggid/sdk-react";
+'use client';
+
+import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
+
+interface PoolConfig {
+  service: string;
+  minIdle: number;
+  maxOpen: number;
+  maxLifetime: number;
+  idleTimeout: number;
+}
 
 export default function ConnectionPoolTuningPage() {
-  const { config, loading, error, fetchConfig, updateConfig } = useConnectionPoolTuning();
-  const [form, setForm] = useState<ConnectionPoolTuning | null>(null);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { fetchConfig(); }, [fetchConfig]); useEffect(() => { if (config) setForm(config); }, [config]);
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
-  if (loading && !form) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">No data</div>;
+  const [pools, setPools] = useState<PoolConfig[]>([
+    { service: "identity-db", minIdle: 5, maxOpen: 50, maxLifetime: 60, idleTimeout: 10 },
+    { service: "audit-db", minIdle: 2, maxOpen: 20, maxLifetime: 60, idleTimeout: 10 },
+  ]);
+
+  const t = useTranslations();
+
+  const addService = () => {
+    setPools([
+      ...pools,
+      { service: "new-service", minIdle: 5, maxOpen: 50, maxLifetime: 60, idleTimeout: 10 },
+    ]);
+  };
+
+  const deleteService = (index: number) => {
+    setPools(pools.filter((_, i) => i !== index));
+  };
+
+  const updatePool = (index: number, patch: Partial<PoolConfig>) => {
+    setPools(pools.map((p, i) => (i === index ? { ...p, ...patch } : p)));
+  };
 
   return (
-    <div className="p-8 space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">Connection Pool Tuning</h1>
-      <p className="text-gray-600">Monitor and tune connection pools across services.</p>
-      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Pool Configurations</h2><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Service</th><th>Type</th><th>Max</th><th>Min</th><th>Idle</th><th>Utilization</th><th>Leaks</th></tr></thead><tbody>{form.pool_configs.map((p: PoolConfig, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-medium">{p.service}</td><td><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{p.type}</span></td><td>{p.max}</td><td>{p.min}</td><td>{p.idle}</td><td><div className="flex items-center gap-2"><div className="w-20 bg-gray-200 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{ width: `${Math.min(p.current_utilization, 100)}%` }} /></div><span className="text-xs">{p.current_utilization}%</span></div></td><td>{p.leak_count > 0 ? <span className="text-red-600 font-medium">{p.leak_count}</span> : "0"}</td></tr>))}</tbody></table></div>
-      <div className="bg-white rounded-lg p-6 shadow space-y-4"><h2 className="text-lg font-semibold">Settings</h2><div><label className="block text-sm font-medium mb-1">Sizing Recommendation</label><p className="text-sm text-gray-600">{form.sizing_recommendation}</p></div><div className="flex items-center gap-3"><input type="checkbox" checked={form.leak_detection} onChange={(e) => setForm({ ...form, leak_detection: e.target.checked })} className="w-4 h-4" /><label>Leak Detection</label></div></div>
-      {form.benchmark_results && (<div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Benchmark Results</h2><div className="grid grid-cols-2 gap-4"><div className="text-center"><div className="text-2xl font-bold">{form.benchmark_results.throughput_rps}</div><div className="text-xs text-gray-500">Throughput (rps)</div></div><div className="text-center"><div className="text-2xl font-bold">{form.benchmark_results.avg_latency_ms}ms</div><div className="text-xs text-gray-500">Avg Latency</div></div></div></div>)}
-      <button onClick={handleSave} disabled={saving} aria-label="Save connection pool configuration" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">{t("backend2.connPoolTuning.title")}</h1>
+      <p className="text-gray-600">Tune min/max connections, lifetime, and idle timeout per database or service pool.</p>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Per-Service Pool Settings</h2>
+          <button onClick={addService} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.connPoolTuning.addService")}</button>
+        </div>
+        <div className="space-y-4">
+          {pools.map((pool, index) => (
+            <div key={index} className="border rounded p-4 grid grid-cols-5 gap-3 items-end">
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">Service</label>
+                <input
+                  type="text"
+                  value={pool.service}
+                  onChange={(e) => updatePool(index, { service: e.target.value })}
+                  className="w-full border rounded px-2 py-1 text-sm font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.minIdle")}</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={pool.minIdle}
+                  onChange={(e) => updatePool(index, { minIdle: parseInt(e.target.value, 10) || 0 })}
+                  className="w-full border rounded px-2 py-1 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.maxOpen")}</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={pool.maxOpen}
+                  onChange={(e) => updatePool(index, { maxOpen: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full border rounded px-2 py-1 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.maxLifetime")}</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={pool.maxLifetime}
+                  onChange={(e) => updatePool(index, { maxLifetime: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full border rounded px-2 py-1 text-sm"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">{t("backend2.connPoolTuning.idleTimeout")}</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={pool.idleTimeout}
+                  onChange={(e) => updatePool(index, { idleTimeout: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full border rounded px-2 py-1 text-sm"
+                />
+              </div>
+              <button
+                onClick={() => deleteService(index)}
+                className="text-sm text-red-600 hover:text-red-700"
+              >
+                {t("backend2.connPoolTuning.delete")}
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="flex justify-end">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+          {t("backend2.connPoolTuning.save")}
+        </button>
+      </div>
     </div>
   );
 }

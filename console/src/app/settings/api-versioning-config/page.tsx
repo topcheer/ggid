@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ApiVersion {
   version: string;
@@ -14,6 +15,8 @@ export default function ApiVersioningConfigPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any[]>([]);
+
+  const t = useTranslations();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,7 +42,7 @@ export default function ApiVersioningConfigPage() {
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.apiVersioning.noData")}</div>;
   const [currentVersion, setCurrentVersion] = useState('v2');
   const [sunsetPolicy, setSunsetPolicy] = useState('deprecation');
   const [deprecationPeriod, setDeprecationPeriod] = useState(180);
@@ -69,11 +72,11 @@ export default function ApiVersioningConfigPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">API Versioning Configuration</h1>
+      <h1 className="text-2xl font-bold">{t("backend2.apiVersioning.title")}</h1>
       <p className="text-gray-600">Manage API versions, sunset policies, and breaking change tracking.</p>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Current Version</h2>
+        <h2 className="text-lg font-semibold">{t("backend2.apiVersioning.currentVersion")}</h2>
         <div className="flex items-center gap-4">
           <span className="text-3xl font-mono font-bold text-blue-600">{currentVersion}</span>
           <span className="text-sm text-gray-500">{totalConsumers} total consumers</span>
@@ -123,17 +126,17 @@ export default function ApiVersioningConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Version Registry</h2>
-          <button onClick={addVersion} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add Version</button>
+          <button onClick={addVersion} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.apiVersioning.addVersion")}</button>
         </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left border-b">
               <th className="py-2">Version</th>
               <th className="py-2">Status</th>
-              <th className="py-2">Released</th>
+              <th className="py-2">{t("backend2.apiVersioning.released")}</th>
               <th className="py-2">Sunset</th>
-              <th className="py-2">Consumers</th>
-              <th className="py-2">Action</th>
+              <th className="py-2">{t("backend2.apiVersioning.consumers")}</th>
+              <th className="py-2">{t("backend2.apiVersioning.action")}</th>
             </tr>
           </thead>
           <tbody>
@@ -157,9 +160,9 @@ export default function ApiVersioningConfigPage() {
                     onChange={e => updateVersionStatus(idx, e.target.value)}
                     className="border rounded px-1 py-0.5 text-xs"
                   >
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                    <option value="deprecated">Deprecated</option>
+                    <option value="draft">{t("backend2.apiVersioning.draft")}</option>
+                    <option value="active">{t("backend2.apiVersioning.active")}</option>
+                    <option value="deprecated">{t("backend2.apiVersioning.deprecated")}</option>
                     <option value="sunset">Sunset</option>
                   </select>
                 </td>
@@ -170,7 +173,7 @@ export default function ApiVersioningConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Breaking Change Log</h2>
+        <h2 className="text-lg font-semibold">{t("backend2.apiVersioning.breakingChangeLog")}</h2>
         <div className="space-y-2">
           {breakingChanges.map((bc, idx) => (
             <div key={idx} className="flex items-center gap-3 text-sm border-b pb-2">
@@ -188,7 +191,7 @@ export default function ApiVersioningConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Consumer Impact Analysis</h2>
+        <h2 className="text-lg font-semibold">{t("backend2.apiVersioning.consumerImpact")}</h2>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="border rounded p-4">
             <div className="text-2xl font-bold">{totalConsumers}</div>
@@ -196,17 +199,17 @@ export default function ApiVersioningConfigPage() {
           </div>
           <div className="border rounded p-4">
             <div className="text-2xl font-bold text-amber-600">{versions.filter(v => v.status === 'deprecated').reduce((s, v) => s + v.consumers, 0)}</div>
-            <div className="text-sm text-gray-500">On Deprecated</div>
+            <div className="text-sm text-gray-500">{t("backend2.apiVersioning.onDeprecated")}</div>
           </div>
           <div className="border rounded p-4">
             <div className="text-2xl font-bold text-green-600">{versions.filter(v => v.status === 'active').reduce((s, v) => s + v.consumers, 0)}</div>
-            <div className="text-sm text-gray-500">On Active</div>
+            <div className="text-sm text-gray-500">{t("backend2.apiVersioning.onActive")}</div>
           </div>
         </div>
       </section>
 
       <div className="flex justify-end gap-3">
-        <button className="px-4 py-2 border rounded text-sm">Reset</button>
+        <button className="px-4 py-2 border rounded text-sm">{t("backend2.apiVersioning.reset")}</button>
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Save Configuration</button>
       </div>
     </div>

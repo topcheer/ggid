@@ -1,24 +1,130 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useDistributedTracingConfig, DistributedTracingConfig, PerServiceSpan } from "@ggid/sdk-react";
+'use client';
+
+import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function DistributedTracingConfigPage() {
-  const { config, loading, error, fetchConfig, updateConfig } = useDistributedTracingConfig();
-  const [form, setForm] = useState<DistributedTracingConfig | null>(null);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { fetchConfig(); }, [fetchConfig]); useEffect(() => { if (config) setForm(config); }, [config]);
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
-  if (loading && !form) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">No data</div>;
+  const [enabled, setEnabled] = useState(true);
+  const [sampler, setSampler] = useState("probability");
+  const [sampleRate, setSampleRate] = useState(0.1);
+  const [collectorUrl, setCollectorUrl] = useState("http://jaeger:4318/v1/traces");
+  const [baggageKeys, setBaggageKeys] = useState([
+    "tenant_id",
+    "user_id",
+    "request_id",
+  ]);
+  const [newBaggage, setNewBaggage] = useState("");
+
+  const t = useTranslations();
+
+  const addBaggage = () => {
+    if (newBaggage && !baggageKeys.includes(newBaggage)) {
+      setBaggageKeys([...baggageKeys, newBaggage]);
+      setNewBaggage("");
+    }
+  };
+
+  const removeBaggage = (key: string) => {
+    setBaggageKeys(baggageKeys.filter((k) => k !== key));
+  };
 
   return (
-    <div className="p-8 space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">Distributed Tracing Configuration</h1>
-      <p className="text-gray-600">Configure OpenTelemetry tracing, sampling, and audit correlation.</p>
-      <div className="bg-white rounded-lg p-6 shadow space-y-4"><h2 className="text-lg font-semibold">Core Settings</h2><div><label className="block text-sm font-medium mb-1">OTel Endpoint</label><input type="text" value={form.otel_endpoint} onChange={(e) => setForm({ ...form, otel_endpoint: e.target.value })} className="border rounded px-3 py-2 w-full" /></div><div><label className="block text-sm font-medium mb-1">Sampling Rate ({form.sampling_rate}%)</label><input type="range" min="0" max="100" value={form.sampling_rate} onChange={(e) => setForm({ ...form, sampling_rate: parseInt(e.target.value) })} className="w-full" /></div><div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Propagation Format</label><select value={form.propagation_format} onChange={(e) => setForm({ ...form, propagation_format: e.target.value as DistributedTracingConfig["propagation_format"] })} className="border rounded px-3 py-2"><option value="W3C">W3C</option><option value="Jaeger">Jaeger</option></select></div><div><label className="block text-sm font-medium mb-1">Backend</label><select value={form.backend} onChange={(e) => setForm({ ...form, backend: e.target.value as DistributedTracingConfig["backend"] })} className="border rounded px-3 py-2"><option value="Jaeger">Jaeger</option><option value="Tempo">Tempo</option></select></div></div><div className="flex items-center gap-3"><input type="checkbox" checked={form.trace_correlation_with_audit} onChange={(e) => setForm({ ...form, trace_correlation_with_audit: e.target.checked })} className="w-4 h-4" /><label>Correlate traces with audit events</label></div></div>
-      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Per-Service Span Configuration</h2><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Service</th><th>Sample Rate</th><th>Max Spans</th></tr></thead><tbody>{form.per_service_span_config.map((s: PerServiceSpan, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-medium">{s.service}</td><td>{s.sample_rate}%</td><td>{s.max_spans}</td></tr>))}</tbody></table></div>
-      <button onClick={handleSave} disabled={saving} aria-label="Save distributed tracing configuration" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">{t("backend2.distributedTracing.title")}</h1>
+      <p className="text-gray-600">Configure OpenTelemetry/Jaeger tracing across services.</p>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => setEnabled(e.target.checked)}
+            className="w-4 h-4"
+          />
+          <span className="font-medium">{t("backend2.distributedTracing.enabled")}</span>
+        </label>
+
+        <div className="space-y-1">
+          <label className="text-sm text-gray-600">{t("backend2.distributedTracing.sampler")}</label>
+          <select
+            value={sampler}
+            onChange={(e) => setSampler(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm"
+            disabled={!enabled}
+          >
+            <option value="always_on">Always On</option>
+            <option value="always_off">Always Off</option>
+            <option value="probability">Probability</option>
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm text-gray-600">{t("backend2.distributedTracing.sampleRate")}</label>
+          <input
+            type="range"
+            min={0.01}
+            max={1}
+            step={0.01}
+            value={sampleRate}
+            onChange={(e) => setSampleRate(parseFloat(e.target.value))}
+            className="w-full"
+            disabled={!enabled || sampler !== "probability"}
+          />
+          <div className="text-sm font-medium text-center">{(sampleRate * 100).toFixed(0)}%</div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm text-gray-600">{t("backend2.distributedTracing.collectorUrl")}</label>
+          <input
+            type="text"
+            value={collectorUrl}
+            onChange={(e) => setCollectorUrl(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm font-mono"
+            disabled={!enabled}
+          />
+        </div>
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">{t("backend2.distributedTracing.baggageKeys")}</h2>
+        <div className="flex flex-wrap gap-2">
+          {baggageKeys.map((key) => (
+            <span
+              key={key}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm font-mono"
+            >
+              {key}
+              <button
+                onClick={() => removeBaggage(key)}
+                className="text-red-500 hover:text-red-700 text-xs"
+              >
+                {t("backend2.distributedTracing.delete")}
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newBaggage}
+            onChange={(e) => setNewBaggage(e.target.value)}
+            placeholder="tenant_id"
+            className="flex-1 border rounded px-3 py-2 text-sm font-mono"
+          />
+          <button
+            onClick={addBaggage}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
+          >
+            {t("backend2.distributedTracing.addBaggage")}
+          </button>
+        </div>
+      </section>
+
+      <div className="flex justify-end">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+          {t("backend2.distributedTracing.save")}
+        </button>
+      </div>
     </div>
   );
 }

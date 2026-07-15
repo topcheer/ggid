@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RouteEntry {
   path: string;
@@ -25,6 +26,8 @@ export default function ApiGatewayRoutesPage() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any[]>([]);
 
+  const t = useTranslations();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -49,7 +52,7 @@ export default function ApiGatewayRoutesPage() {
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.gatewayRoutes.noData")}</div>;
   const [routes, setRoutes] = useState<RouteEntry[]>(defaultRoutes);
   const [testPath, setTestPath] = useState("");
   const [testMethod, setTestMethod] = useState("GET");
@@ -66,16 +69,16 @@ export default function ApiGatewayRoutesPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-5xl">
-      <h1 className="text-2xl font-bold">API Gateway Routes</h1>
+      <h1 className="text-2xl font-bold">{t("backend2.gatewayRoutes.title")}</h1>
       <p className="text-gray-600">Manage gateway routes, upstreams, rate limits, and test endpoints.</p>
 
       <div className="bg-white rounded-lg p-6 shadow">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Route Table</h2>
-          <button className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add Route</button>
+          <button className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t("backend2.gatewayRoutes.addRoute")}</button>
         </div>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Path</th><th>Methods</th><th>Upstream</th><th>Strip Prefix</th><th>Rate Limit</th><th>Auth</th><th>Health</th><th>Actions</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">{t("backend2.gatewayRoutes.path")}</th><th>{t("backend2.gatewayRoutes.methods")}</th><th>Upstream</th><th>Strip Prefix</th><th>Rate Limit</th><th>{t("backend2.gatewayRoutes.auth")}</th><th>{t("backend2.gatewayRoutes.health")}</th><th>{t("backend2.gatewayRoutes.actions")}</th></tr></thead>
           <tbody>
             {routes.map((r: RouteEntry, i: number) => (
               <tr key={i} className="border-b hover:bg-gray-50">
@@ -86,7 +89,7 @@ export default function ApiGatewayRoutesPage() {
                 <td>{r.rate_limit}/s</td>
                 <td>{r.auth_required ? "Yes" : "No"}</td>
                 <td><span className={`inline-block w-2.5 h-2.5 rounded-full ${r.upstream_healthy ? "bg-green-500" : "bg-red-500"}`} /></td>
-                <td className="flex gap-2"><button className="text-xs text-blue-600 hover:underline">Edit</button><button className="text-xs text-red-600 hover:underline">Delete</button></td>
+                <td className="flex gap-2"><button className="text-xs text-blue-600 hover:underline">{t("backend2.gatewayRoutes.edit")}</button><button className="text-xs text-red-600 hover:underline">{t("backend2.gatewayRoutes.delete")}</button></td>
               </tr>
             ))}
           </tbody>
@@ -96,8 +99,8 @@ export default function ApiGatewayRoutesPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Route Testing Panel</h2>
         <div className="flex gap-3 items-end">
-          <div><label className="block text-sm font-medium mb-1">Method</label><select value={testMethod} onChange={(e) => setTestMethod(e.target.value)} className="border rounded px-3 py-2"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div>
-          <div className="flex-1"><label className="block text-sm font-medium mb-1">Path</label><input type="text" value={testPath} onChange={(e) => setTestPath(e.target.value)} placeholder="/api/v1/users" className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
+          <div><label className="block text-sm font-medium mb-1">{t("backend2.gatewayRoutes.method")}</label><select value={testMethod} onChange={(e) => setTestMethod(e.target.value)} className="border rounded px-3 py-2"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div>
+          <div className="flex-1"><label className="block text-sm font-medium mb-1">{t("backend2.gatewayRoutes.path")}</label><input type="text" value={testPath} onChange={(e) => setTestPath(e.target.value)} placeholder="/api/v1/users" className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
           <button onClick={handleTest} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{testing ? "Sending..." : "Send"}</button>
         </div>
         {testResult && <pre className="bg-gray-50 rounded p-4 text-xs overflow-x-auto whitespace-pre-wrap font-mono border mt-3">{testResult}</pre>}

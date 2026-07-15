@@ -1,78 +1,112 @@
-"use client";
-import { useEffect, useState } from "react";
+'use client';
+import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
-interface CircuitBreakerState {
+interface BreakerRow {
   service: string;
-  state: "closed" | "open" | "half_open";
-  failure_rate: number;
-  recovery_attempts: number;
+  state: 'closed' | 'open' | 'half-open';
+  failures: number;
+  last1m: number;
+  last5m: number;
+  last1h: number;
+  slow: number;
 }
 
-interface ThresholdConfig {
-  failure_rate_threshold: number;
-  min_calls: number;
-  open_timeout_s: number;
-}
-
-interface TimelineEvent {
-  timestamp: string;
-  event: string;
-  severity: "info" | "warn" | "error";
-}
-
-const defaultData = {
-  services: [
-    { service: "auth-service", state: "closed" as const, failure_rate: 0.2, recovery_attempts: 0 },
-    { service: "identity-service", state: "half_open" as const, failure_rate: 15.5, recovery_attempts: 3 },
-    { service: "policy-service", state: "closed" as const, failure_rate: 1.1, recovery_attempts: 0 },
-    { service: "org-service", state: "open" as const, failure_rate: 52.3, recovery_attempts: 5 },
-  ] as CircuitBreakerState[],
-  threshold_config: { failure_rate_threshold: 50, min_calls: 10, open_timeout_s: 30 } as ThresholdConfig,
-  timeline: [
-    { timestamp: "16:42:01", event: "org-service circuit opened (failure rate 52.3%)", severity: "error" as const },
-    { timestamp: "16:41:30", event: "identity-service entered half-open state", severity: "warn" as const },
-    { timestamp: "16:40:15", event: "auth-service circuit recovered", severity: "info" as const },
-  ] as TimelineEvent[],
-};
+const defaultData: BreakerRow[] = [
+  { service: 'identity-service', state: 'closed', failures: 0, last1m: 12, last5m: 58, last1h: 1200, slow: 3 },
+  { service: 'policy-service', state: 'closed', failures: 1, last1m: 8, last5m: 45, last1h: 900, slow: 1 },
+  { service: 'audit-service', state: 'half-open', failures: 3, last1m: 0, last5m: 2, last1h: 110, slow: 0 },
+  { service: 'notification-service', state: 'open', failures: 14, last1m: 0, last5m: 0, last1h: 45, slow: 5 },
+  { service: 'org-service', state: 'closed', failures: 0, last1m: 5, last5m: 32, last1h: 600, slow: 0 },
+];
 
 export default function CircuitBreakerDashboardPage() {
-  const [data] = useState(defaultData);
-  const [thresholds, setThresholds] = useState(defaultData.threshold_config);
+  const [rows, setRows] = useState<BreakerRow[]>(defaultData);
+  const [loading, setLoading] = useState(true);
 
-  const stateColors: Record<string, string> = { closed: "bg-green-100 text-green-700", open: "bg-red-100 text-red-700", half_open: "bg-yellow-100 text-yellow-700" };
-  const sevColors: Record<string, string> = { info: "text-gray-500", warn: "text-yellow-600", error: "text-red-600" };
+  const t = useTranslations();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const resetService = (service: string) => {
+    setRows(prev => prev.map(r => r.service === service ? { ...r, state: 'closed' as const, failures: 0 } : r));
+  };
+
+  const stateClass = (state: string) => {
+    switch (state) {
+      case 'closed': return 'bg-green-100 text-green-700';
+      case 'open': return 'bg-red-100 text-red-700';
+      case 'half-open': return 'bg-yellow-100 text-yellow-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
 
   return (
-    <div className="p-8 space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">Circuit Breaker Dashboard</h1>
-      <p className="text-gray-600">Monitor per-service circuit states, thresholds, and recovery.</p>
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">{t("backend2.circuitBreakerDash.title")}</h1>
+      <p className="text-gray-600">Real-time view of circuit breaker state across services.</p>
 
-      <div className="bg-white rounded-lg p-6 shadow">
-        <h2 className="text-lg font-semibold mb-4">Service Circuit States</h2>
-        <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Service</th><th>State</th><th>Failure Rate</th><th>Recovery Attempts</th><th>Action</th></tr></thead>
-          <tbody>
-            {data.services.map((s: CircuitBreakerState, i: number) => (
-              <tr key={i} className="border-b"><td className="py-2 font-medium">{s.service}</td><td><span className={`px-2 py-1 rounded text-xs ${stateColors[s.state] || ""}`}>{s.state}</span></td><td><span className={s.failure_rate > thresholds.failure_rate_threshold ? "text-red-600 font-medium" : ""}>{s.failure_rate}%</span></td><td>{s.recovery_attempts}</td><td>{s.state !== "closed" && <button className="text-xs text-blue-600 hover:underline">Reset</button>}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="bg-white rounded-lg p-6 shadow space-y-4">
-        <h2 className="text-lg font-semibold">Threshold Configuration</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Failure Rate Threshold (%)</label><input type="number" value={thresholds.failure_rate_threshold} onChange={(e) => setThresholds({ ...thresholds, failure_rate_threshold: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Min Calls</label><input type="number" value={thresholds.min_calls} onChange={(e) => setThresholds({ ...thresholds, min_calls: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Open Timeout (s)</label><input type="number" value={thresholds.open_timeout_s} onChange={(e) => setThresholds({ ...thresholds, open_timeout_s: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+      {loading ? (
+        <div className="p-8 text-center text-gray-500">Loading...</div>
+      ) : (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr className="text-left border-b">
+                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.service")}</th>
+                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.state")}</th>
+                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.failures")}</th>
+                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.lastMinute")}</th>
+                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.last5Minutes")}</th>
+                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.lastHour")}</th>
+                <th className="px-4 py-3">Slow</th>
+                <th className="px-4 py-3">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {rows.map(row => (
+                <tr key={row.service} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 font-mono">{row.service}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${stateClass(row.state)}`}>{row.state}</span>
+                  </td>
+                  <td className="px-4 py-3">{row.failures}</td>
+                  <td className="px-4 py-3">{row.last1m}</td>
+                  <td className="px-4 py-3">{row.last5m}</td>
+                  <td className="px-4 py-3">{row.last1h}</td>
+                  <td className="px-4 py-3">{row.slow}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => resetService(row.service)}
+                      className="px-2 py-1 text-xs border rounded hover:bg-gray-100"
+                    >
+                      {t("backend2.circuitBreakerDash.resetService")}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
 
-      <div className="bg-white rounded-lg p-6 shadow">
-        <h2 className="text-lg font-semibold mb-4">Real-Time Event Timeline</h2>
-        <div className="space-y-2">
-          {data.timeline.map((ev: TimelineEvent, i: number) => (
-            <div key={i} className="flex items-center gap-3 border-b py-2"><span className="text-xs font-mono text-gray-400">{ev.timestamp}</span><span className={`text-sm ${sevColors[ev.severity] || ""}`}>{ev.event}</span></div>
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-semibold mb-3">{t("backend2.circuitBreakerDash.perService")}</h2>
+        <div className="space-y-3">
+          {rows.map(row => (
+            <div key={row.service} className="flex items-center gap-4">
+              <span className="font-mono text-sm w-40">{row.service}</span>
+              <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
+                <div
+                  className={`h-full ${row.state === 'open' ? 'bg-red-500' : row.state === 'half-open' ? 'bg-yellow-500' : 'bg-green-500'}`}
+                  style={{ width: `${Math.min((row.failures / 20) * 100, 100)}%` }}
+                />
+              </div>
+              <span className="text-xs text-gray-500 w-12 text-right">{row.failures}</span>
+            </div>
           ))}
         </div>
       </div>

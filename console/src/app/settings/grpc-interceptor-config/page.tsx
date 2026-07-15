@@ -1,25 +1,129 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useGrpcInterceptorConfig, GrpcInterceptorConfig, InterceptorEntry } from "@ggid/sdk-react";
+'use client';
+import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
+
+interface Interceptor { id: string; type: string; enabled: boolean; order: number; config: string; }
 
 export default function GrpcInterceptorConfigPage() {
-  const { config, loading, error, fetchConfig, updateConfig, testInterceptor } = useGrpcInterceptorConfig();
-  const [form, setForm] = useState<GrpcInterceptorConfig | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  useEffect(() => { fetchConfig(); }, [fetchConfig]); useEffect(() => { if (config) setForm(config); }, [config]);
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
-  const handleTest = async (name: string) => { setTesting(true); await testInterceptor(name); setTesting(false); };
-  if (loading && !form) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">No data</div>;
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
+
+  const t = useTranslations();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/v1/audit/metrics", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
+          },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setData(Array.isArray(json) ? json : [json]);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("backend2.grpcInterceptor.noData")}</div>;
+  const [serviceName, setServiceName] = useState('identity.v1.IdentityService');
+  const [interceptors, setInterceptors] = useState<Interceptor[]>([
+    { id: 'auth', type: 'AuthInterceptor', enabled: true, order: 1, config: 'validate access token' },
+    { id: 'log', type: 'LoggingInterceptor', enabled: true, order: 2, config: 'log all unary calls' },
+    { id: 'metric', type: 'MetricsInterceptor', enabled: false, order: 3, config: 'emit grpc_server metrics' },
+  ]);
+
+  const toggleInterceptor = (id: string) => {
+    setInterceptors(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
+  };
+
+  const updateOrder = (id: string, order: string) => {
+    setInterceptors(prev => prev.map(i => i.id === id ? { ...i, order: parseInt(order) || 0 } : i));
+  };
+
+  const addInterceptor = () => {
+    const id = `i${interceptors.length + 1}`;
+    setInterceptors(prev => [...prev, { id, type: 'CustomInterceptor', enabled: true, order: prev.length + 1, config: '' }]);
+  };
+
+  const deleteInterceptor = (id: string) => {
+    setInterceptors(prev => prev.filter(i => i.id !== id));
+  };
 
   return (
-    <div className="p-8 space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">gRPC Interceptor Configuration</h1>
-      <p className="text-gray-600">Configure interceptor chain order, toggles, and per-interceptor latency.</p>
-      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Interceptor Chain</h2><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Order</th><th>Name</th><th>Enabled</th><th>Latency (ms)</th><th>Action</th></tr></thead><tbody>{form.interceptor_chain.map((ic: InterceptorEntry, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-mono">{ic.order}</td><td className="font-medium">{ic.name}</td><td><span className={`px-2 py-1 rounded text-xs ${ic.enabled ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>{ic.enabled ? "On" : "Off"}</span></td><td>{ic.latency_ms}ms</td><td><button onClick={() => handleTest(ic.name)} disabled={testing} className="text-xs text-blue-600 hover:underline">Test</button></td></tr>))}</tbody></table></div>
-      <button onClick={handleSave} disabled={saving} aria-label="Save gRPC interceptor configuration" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">{t("backend2.grpcInterceptor.title")}</h1>
+      <p className="text-gray-600">Configure unary and streaming interceptors for gRPC services.</p>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">{t("backend2.grpcInterceptor.serviceName")}</h2>
+        <input
+          type="text"
+          value={serviceName}
+          onChange={e => setServiceName(e.target.value)}
+          className="w-full border rounded px-3 py-2 text-sm font-mono"
+        />
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{t("backend2.grpcInterceptor.interceptors")}</h2>
+          <button onClick={addInterceptor} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.grpcInterceptor.addInterceptor")}</button>
+        </div>
+        <div className="space-y-3">
+          {interceptors.map(i => (
+            <div key={i.id} className="border rounded p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={i.enabled}
+                    onChange={() => toggleInterceptor(i.id)}
+                    className="w-4 h-4"
+                  />
+                  <span className="font-mono font-medium">{i.type}</span>
+                </div>
+                <button onClick={() => deleteInterceptor(i.id)} className="text-xs text-red-600 hover:underline">{t("backend2.grpcInterceptor.delete")}</button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">{t("backend2.grpcInterceptor.type")}</label>
+                  <input
+                    type="text"
+                    value={i.type}
+                    onChange={e => setInterceptors(prev => prev.map(x => x.id === i.id ? { ...x, type: e.target.value } : x))}
+                    className="w-full border rounded px-2 py-1 text-sm font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-gray-500">{t("backend2.grpcInterceptor.order")}</label>
+                  <input
+                    type="number"
+                    value={i.order}
+                    onChange={e => updateOrder(i.id, e.target.value)}
+                    className="w-full border rounded px-2 py-1 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-gray-500">{t("backend2.grpcInterceptor.enabled")}</label>
+                <div className="text-sm">{i.enabled ? 'Yes' : 'No'}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

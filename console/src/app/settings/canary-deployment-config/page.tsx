@@ -1,26 +1,130 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useCanaryDeploymentConfig, CanaryDeploymentConfig, PerTenantCanary, PromotionCriteria } from "@ggid/sdk-react";
+'use client';
+
+import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
+
+interface HeaderMatch { key: string; value: string; }
 
 export default function CanaryDeploymentConfigPage() {
-  const { config, loading, error, fetchConfig, updateConfig } = useCanaryDeploymentConfig();
-  const [form, setForm] = useState<CanaryDeploymentConfig | null>(null);
-  const [saving, setSaving] = useState(false);
-  useEffect(() => { fetchConfig(); }, [fetchConfig]); useEffect(() => { if (config) setForm(config); }, [config]);
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
-  if (loading && !form) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">No data</div>;
+  const [service, setService] = useState("identity-service");
+  const [canaryWeight, setCanaryWeight] = useState(10);
+  const stableWeight = 100 - canaryWeight;
+  const [headerMatches, setHeaderMatches] = useState<HeaderMatch[]>([
+    { key: "x-canary", value: "true" },
+  ]);
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+
+  const t = useTranslations();
+
+  const addMatch = () => {
+    if (newKey && newValue) {
+      setHeaderMatches([...headerMatches, { key: newKey, value: newValue }]);
+      setNewKey("");
+      setNewValue("");
+    }
+  };
+
+  const deleteMatch = (index: number) => {
+    setHeaderMatches(headerMatches.filter((_, i) => i !== index));
+  };
 
   return (
-    <div className="p-8 space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">Canary Deployment Configuration</h1>
-      <p className="text-gray-600">Configure progressive delivery, traffic splitting, and auto-rollback.</p>
-      <div className="bg-white rounded-lg p-6 shadow space-y-4"><h2 className="text-lg font-semibold">Traffic Split</h2><div><label className="block text-sm font-medium mb-1">Canary Percentage ({form.canary_percentage}%)</label><input type="range" min="0" max="100" value={form.canary_percentage} onChange={(e) => setForm({ ...form, canary_percentage: parseInt(e.target.value) })} className="w-full" /></div><div><label className="block text-sm font-medium mb-1">Traffic Split Method</label><select value={form.traffic_split_method} onChange={(e) => setForm({ ...form, traffic_split_method: e.target.value as CanaryDeploymentConfig["traffic_split_method"] })} className="border rounded px-3 py-2"><option value="header">Header</option><option value="weight">Weight</option><option value="sticky">Sticky</option></select></div><div><label className="block text-sm font-medium mb-1">Auto-Rollback on Error Rate Threshold (%)</label><input type="number" value={form.auto_rollback_on_error_rate} onChange={(e) => setForm({ ...form, auto_rollback_on_error_rate: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div></div>
-      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Promotion Criteria</h2><div className="space-y-1">{form.promotion_criteria.map((c: PromotionCriteria, i: number) => (<div key={i} className="flex items-center justify-between border-b py-2"><span className="text-sm">{c.criterion} <span className="text-gray-400">({c.threshold})</span></span><span className={`px-2 py-1 rounded text-xs ${c.met ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>{c.met ? "Met" : "Pending"}</span></div>))}</div></div>
-      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Per-Tenant Canary</h2><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Tenant</th><th>Canary Enabled</th></tr></thead><tbody>{form.per_tenant_canary.map((t: PerTenantCanary, i: number) => (<tr key={i} className="border-b"><td className="py-2">{t.tenant_name}</td><td>{t.canary_enabled ? "Yes" : "No"}</td></tr>))}</tbody></table></div>
-      <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Monitoring Checkpoints</h2><div className="space-y-1">{form.monitoring_checkpoints.map((c: string, i: number) => (<div key={i} className="border-b py-1 text-sm font-mono">{c}</div>))}</div></div>
-      <button onClick={handleSave} disabled={saving} aria-label="Save canary deployment configuration" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">{t("backend2.canaryConfig.title")}</h1>
+      <p className="text-gray-600">Configure canary traffic split and header-based routing for safe deployments.</p>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="space-y-1">
+          <label className="text-sm text-gray-600">{t("backend2.canaryConfig.service")}</label>
+          <select
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            className="w-full border rounded px-3 py-2 text-sm"
+          >
+            <option value="identity-service">identity-service</option>
+            <option value="policy-service">policy-service</option>
+            <option value="audit-service">audit-service</option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">{t("backend2.canaryConfig.canaryWeight")}</label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={canaryWeight}
+              onChange={(e) => setCanaryWeight(parseInt(e.target.value, 10))}
+              className="w-full"
+            />
+            <div className="text-sm font-medium text-center">{canaryWeight}%</div>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">{t("backend2.canaryConfig.stableWeight")}</label>
+            <div className="h-2 bg-gray-200 rounded-full mt-4">
+              <div className="h-2 bg-blue-600 rounded-full" style={{ width: `${stableWeight}%` }} />
+            </div>
+            <div className="text-sm font-medium text-center">{stableWeight}%</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">{t("backend2.canaryConfig.headerMatch")}</h2>
+        <div className="space-y-2">
+          {headerMatches.map((match, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={match.key}
+                readOnly
+                className="w-1/3 border rounded px-2 py-1 text-sm font-mono"
+              />
+              <input
+                type="text"
+                value={match.value}
+                readOnly
+                className="flex-1 border rounded px-2 py-1 text-sm font-mono"
+              />
+              <button
+                onClick={() => deleteMatch(index)}
+                className="text-sm text-red-600 hover:text-red-700"
+              >
+                {t("backend2.canaryConfig.delete")}
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newKey}
+            onChange={(e) => setNewKey(e.target.value)}
+            placeholder="header-key"
+            className="w-1/3 border rounded px-3 py-2 text-sm font-mono"
+          />
+          <input
+            type="text"
+            value={newValue}
+            onChange={(e) => setNewValue(e.target.value)}
+            placeholder="header-value"
+            className="flex-1 border rounded px-3 py-2 text-sm font-mono"
+          />
+          <button
+            onClick={addMatch}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
+          >
+            {t("backend2.canaryConfig.addMatch")}
+          </button>
+        </div>
+      </section>
+
+      <div className="flex justify-end gap-3">
+        <button className="px-4 py-2 border rounded text-sm">{t("backend2.canaryConfig.rollback")}</button>
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{t("backend2.canaryConfig.promote")}</button>
+      </div>
     </div>
   );
 }

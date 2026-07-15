@@ -1,140 +1,173 @@
 'use client';
-import { useState, useEffect } from 'react';
 
-interface ServiceRetry {
-  id: string;
-  name: string;
-  maxRetries: number;
-  backoff: string;
-  enabled: boolean;
+import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
+
+interface RouteRetry {
+  route: string;
+  attempts: number;
+  backoff: number;
+  conditions: string[];
 }
 
 export default function RetryPolicyConfigPage() {
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/healthz", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
-          },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        setData(Array.isArray(json) ? json : [json]);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
-  const [enabled, setEnabled] = useState(true);
-  const [maxRetries, setMaxRetries] = useState(3);
-  const [backoff, setBackoff] = useState('exponential');
-  const [initialDelay, setInitialDelay] = useState(100);
-  const [maxDelay, setMaxDelay] = useState(5000);
-  const [statusCodes, setStatusCodes] = useState(['502', '503', '504']);
-  const [methods, setMethods] = useState(['GET', 'PUT']);
-  const [cbIntegration, setCbIntegration] = useState(true);
-  const [newCode, setNewCode] = useState('');
-
-  const [services, setServices] = useState<ServiceRetry[]>([
-    { id: 'auth', name: 'Auth Service', maxRetries: 3, backoff: 'exponential', enabled: true },
-    { id: 'identity', name: 'Identity Service', maxRetries: 2, backoff: 'fixed', enabled: true },
-    { id: 'oauth', name: 'OAuth Service', maxRetries: 5, backoff: 'jittered', enabled: true },
-    { id: 'policy', name: 'Policy Service', maxRetries: 3, backoff: 'exponential', enabled: false },
+  const [defaultAttempts, setDefaultAttempts] = useState(3);
+  const [defaultBackoff, setDefaultBackoff] = useState(500);
+  const [retryOn, setRetryOn] = useState([
+    "5xx",
+    "connect-failure",
+    "refused-stream",
+  ]);
+  const [newCondition, setNewCondition] = useState("");
+  const [routes, setRoutes] = useState<RouteRetry[]>([
+    { route: "/api/v1/users", attempts: 3, backoff: 250, conditions: ["5xx"] },
+    { route: "/api/v1/roles", attempts: 2, backoff: 100, conditions: ["connect-failure"] },
   ]);
 
-  const allMethods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
-  const toggleCode = (code: string) => setStatusCodes(prev => prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]);
-  const toggleMethod = (m: string) => setMethods(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]);
-  const addCode = () => { if (newCode) { setStatusCodes(prev => [...prev, newCode]); setNewCode(''); } };
-  const updateService = (id: string, field: keyof ServiceRetry, value: string | number | boolean) => {
-    setServices(prev => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  const t = useTranslations();
+
+  const addRetryOn = () => {
+    if (newCondition && !retryOn.includes(newCondition)) {
+      setRetryOn([...retryOn, newCondition]);
+      setNewCondition("");
+    }
+  };
+
+  const removeRetryOn = (condition: string) => {
+    setRetryOn(retryOn.filter((c) => c !== condition));
+  };
+
+  const addRoute = () => {
+    setRoutes([
+      ...routes,
+      { route: "/api/v1/new", attempts: defaultAttempts, backoff: defaultBackoff, conditions: [...retryOn] },
+    ]);
+  };
+
+  const removeRoute = (index: number) => {
+    setRoutes(routes.filter((_, i) => i !== index));
+  };
+
+  const updateRoute = (index: number, patch: Partial<RouteRetry>) => {
+    setRoutes(routes.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Retry Policy Configuration</h1>
-        <p className="text-gray-600">Configure HTTP retry strategies, backoff, and per-service overrides.</p>
-      </div>
+    <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold">{t("backend2.retryPolicy.title")}</h1>
+      <p className="text-gray-600">Configure retry counts, backoff intervals, and retry conditions.</p>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Global Settings</h2>
-        <label className="flex items-center justify-between"><span className="text-sm font-medium">Retry Enabled</span><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" /></label>
-        <div>
-          <label className="text-sm font-medium">Max Retries: {maxRetries}</label>
-          <input type="range" min={1} max={10} value={maxRetries} onChange={e => setMaxRetries(parseInt(e.target.value))} className="w-full mt-2" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">{t("backend2.retryPolicy.defaultAttempts")}</label>
+            <input
+              type="number"
+              min={0}
+              value={defaultAttempts}
+              onChange={(e) => setDefaultAttempts(parseInt(e.target.value, 10) || 0)}
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm text-gray-600">{t("backend2.retryPolicy.defaultBackoff")}</label>
+            <input
+              type="number"
+              min={0}
+              value={defaultBackoff}
+              onChange={(e) => setDefaultBackoff(parseInt(e.target.value, 10) || 0)}
+              className="w-full border rounded px-3 py-2 text-sm"
+            />
+          </div>
         </div>
-        <div>
-          <label className="text-sm font-medium">Backoff Strategy</label>
-          <select value={backoff} onChange={e => setBackoff(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
-            <option value="fixed">Fixed — constant delay between retries</option>
-            <option value="exponential">Exponential — delay doubles each retry</option>
-            <option value="jittered">Jittered — exponential with random jitter</option>
-          </select>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">Initial Delay (ms)</label><input type="number" min={10} value={initialDelay} onChange={e => setInitialDelay(parseInt(e.target.value) || 100)} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">Max Delay (ms)</label><input type="number" min={100} value={maxDelay} onChange={e => setMaxDelay(parseInt(e.target.value) || 5000)} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
-        </div>
-        <label className="flex items-center justify-between"><span className="text-sm">Circuit Breaker Integration</span><input type="checkbox" checked={cbIntegration} onChange={e => setCbIntegration(e.target.checked)} className="rounded" /></label>
       </section>
 
-      <div className="grid grid-cols-2 gap-6">
-        <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Retry on Status Codes</h2>
-          <div className="flex flex-wrap gap-2">
-            {statusCodes.map(c => <span key={c} className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-mono">{c} <button onClick={() => toggleCode(c)} className="ml-1">x</button></span>)}
-          </div>
-          <div className="flex gap-2">
-            <input type="text" placeholder="429" value={newCode} onChange={e => setNewCode(e.target.value)} className="w-24 border rounded px-2 py-1 text-sm" />
-            <button onClick={addCode} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
-          </div>
-        </section>
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <h2 className="text-lg font-semibold">{t("backend2.retryPolicy.retryOn")}</h2>
+        <div className="flex flex-wrap gap-2">
+          {retryOn.map((condition) => (
+            <span
+              key={condition}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 rounded text-sm font-mono"
+            >
+              {condition}
+              <button
+                onClick={() => removeRetryOn(condition)}
+                className="text-red-500 hover:text-red-700 text-xs"
+              >
+                {t("backend2.retryPolicy.delete")}
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newCondition}
+            onChange={(e) => setNewCondition(e.target.value)}
+            placeholder="gateway-timeout"
+            className="flex-1 border rounded px-3 py-2 text-sm font-mono"
+          />
+          <button
+            onClick={addRetryOn}
+            className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
+          >
+            {t("backend2.retryPolicy.addRetryOn")}
+          </button>
+        </div>
+      </section>
 
-        <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Retry on Methods</h2>
-          <div className="flex flex-wrap gap-3">
-            {allMethods.map(m => (
-              <label key={m} className="flex items-center gap-1 text-sm"><input type="checkbox" checked={methods.includes(m)} onChange={() => toggleMethod(m)} className="rounded" /><span className="font-mono">{m}</span></label>
-            ))}
-          </div>
-          <p className="text-xs text-gray-400">Warning: retrying POST may cause duplicate side effects.</p>
-        </section>
+      <section className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">{t("backend2.retryPolicy.perRoute")}</h2>
+          <button
+            onClick={addRoute}
+            className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+          >
+            {t("backend2.retryPolicy.addRoute")}
+          </button>
+        </div>
+        <div className="space-y-3">
+          {routes.map((route, index) => (
+            <div key={index} className="border rounded p-3 grid grid-cols-4 gap-3 items-center">
+              <input
+                type="text"
+                value={route.route}
+                onChange={(e) => updateRoute(index, { route: e.target.value })}
+                className="border rounded px-2 py-1 text-sm font-mono"
+              />
+              <input
+                type="number"
+                min={0}
+                value={route.attempts}
+                onChange={(e) => updateRoute(index, { attempts: parseInt(e.target.value, 10) || 0 })}
+                className="border rounded px-2 py-1 text-sm"
+                placeholder="Attempts"
+              />
+              <input
+                type="number"
+                min={0}
+                value={route.backoff}
+                onChange={(e) => updateRoute(index, { backoff: parseInt(e.target.value, 10) || 0 })}
+                className="border rounded px-2 py-1 text-sm"
+                placeholder="Backoff ms"
+              />
+              <button
+                onClick={() => removeRoute(index)}
+                className="text-sm text-red-600 hover:text-red-700 text-left"
+              >
+                {t("backend2.retryPolicy.delete")}
+              </button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="flex justify-end">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+          {t("backend2.retryPolicy.save")}
+        </button>
       </div>
-
-      <section className="bg-white rounded-lg shadow overflow-hidden">
-        <h2 className="text-lg font-semibold p-6 pb-4">Per-Service Overrides</h2>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr className="text-left"><th className="p-3">Service</th><th className="p-3">Max Retries</th><th className="p-3">Backoff</th><th className="p-3">Enabled</th></tr>
-          </thead>
-          <tbody>
-            {services.map(s => (
-              <tr key={s.id} className="border-b">
-                <td className="p-3 font-medium">{s.name}</td>
-                <td className="p-3"><input type="number" min={0} max={10} value={s.maxRetries} onChange={e => updateService(s.id, 'maxRetries', parseInt(e.target.value) || 0)} className="w-16 border rounded px-1 py-0.5 text-sm" /></td>
-                <td className="p-3"><select value={s.backoff} onChange={e => updateService(s.id, 'backoff', e.target.value)} className="border rounded px-1 py-0.5 text-sm"><option value="fixed">fixed</option><option value="exponential">exponential</option><option value="jittered">jittered</option></select></td>
-                <td className="p-3"><input type="checkbox" checked={s.enabled} onChange={e => updateService(s.id, 'enabled', e.target.checked)} className="rounded" /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
     </div>
   );
 }
