@@ -88,7 +88,7 @@ export default function AlertWebhookConfigPage() {
           <h1 className="text-2xl font-bold">Alert Webhook Configuration</h1>
           <p className="text-gray-600">Configure webhooks for alert, correlation, and escalation event delivery.</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{showForm ? 'Cancel' : 'Add Webhook'}</button>
+        <button onClick={() => setShowForm(!showForm)} aria-label={showForm ? "Cancel adding webhook" : "Add webhook"} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{showForm ? 'Cancel' : 'Add Webhook'}</button>
       </div>
 
       {showForm && (
@@ -113,7 +113,7 @@ export default function AlertWebhookConfigPage() {
               ))}
             </div>
           </div>
-          <button onClick={addWebhook} disabled={!newUrl} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add</button>
+          <button onClick={addWebhook} disabled={!newUrl} aria-label="Add webhook" className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add</button>
         </section>
       )}
 
@@ -145,7 +145,7 @@ export default function AlertWebhookConfigPage() {
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${statusColor(w.status)}`}>{w.status}</span></td>
                 <td className="p-3 text-xs"><span className="text-green-600">{w.deliveries.success}</span>/<span className="text-red-600">{w.deliveries.failure}</span>/<span className="text-amber-600">{w.deliveries.retry}</span></td>
                 <td className="p-3">{w.maxRetries}</td>
-                <td className="p-3"><button onClick={sendTest} className="text-blue-600 text-xs hover:underline">Test</button></td>
+                <td className="p-3"><button onClick={sendTest} aria-label="Test webhook" className="text-blue-600 text-xs hover:underline">Test</button></td>
               </tr>
             ))}
           </tbody>

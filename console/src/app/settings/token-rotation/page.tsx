@@ -48,7 +48,7 @@ export default function TokenRotationPage() {
         <h1 className="text-2xl font-bold flex items-center gap-2"><RefreshCw className="w-6 h-6 text-teal-500" /> Token Rotation</h1>
         <p className="text-sm text-gray-500 mt-1">Configure automatic token rotation policies per OAuth client.</p>
       </div>
-      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => { setError(null); fetchClients(); if (selectedId) fetchConfig(selectedId); }} className="text-xs underline hover:text-red-700">Retry</button></div>}
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => { setError(null); fetchClients(); if (selectedId) fetchConfig(selectedId); }} aria-label="Retry loading token rotation" className="text-xs underline hover:text-red-700">Retry</button></div>}
       <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} aria-label="Select OAuth client" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select Client</option>
         {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}

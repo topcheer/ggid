@@ -18,7 +18,7 @@ export default function SocialProviderStatsPage() {
           <h1 className="text-2xl font-bold">Social Provider Statistics</h1>
           <p className="text-sm text-gray-400 mt-1">Login analytics across social identity providers</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} aria-label="Refresh social provider stats" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
       </div>
 
       {/* Provider Cards */}

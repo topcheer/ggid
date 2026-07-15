@@ -59,7 +59,7 @@ export default function DidResolverPage() {
             onChange={e => setDidInput(e.target.value)}
             className="flex-1 border rounded px-3 py-2 text-sm font-mono"
           />
-          <button onClick={resolve} disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">
+          <button onClick={resolve} disabled={loading} aria-label="Resolve DID" className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">
             {loading ? 'Resolving...' : 'Resolve'}
           </button>
         </div>
