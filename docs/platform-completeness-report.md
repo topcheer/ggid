@@ -18,7 +18,7 @@
 - Partial: 0
 - Acceptable: 1
 - Remaining: 0
-- Last scan: 2026-07-15 round 31 (Focus E — Security Config / Error Handling)
+- Last scan: 2026-07-15 round 32 (E2E regression tests — 11/11 PASS)
 
 ## Findings
 
@@ -113,7 +113,7 @@
 ## Next Actions
 
 - Round 31 (odd, Focus E): Security Config / Error Handling — gRPC TLS fail-secure + HTTP client timeouts fixed
-- Round 32 (even): E2E regression test run (`deploy/e2e-docker-test.sh`)
+- Round 32 (even): E2E regression tests 11/11 PASS (`deploy/e2e-docker-test.sh`)
 - Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
 
 
