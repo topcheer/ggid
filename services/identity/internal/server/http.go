@@ -194,6 +194,9 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/users/reactivation-history", h.handleReactivationHistory)
 	h.mux.HandleFunc("/api/v1/users/deprovision-schedule", h.handleDeprovisionSchedule)
 	h.mux.HandleFunc("/api/v1/users/profile-diff", h.handleProfileDiff)
+
+	// Settings routes (24 endpoints for admin console)
+	h.registerSettingsRoutes()
 }
 
 // ServeHTTP implements http.Handler.

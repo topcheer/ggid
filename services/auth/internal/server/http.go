@@ -388,6 +388,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/certificates/", h.tsHandler.HandleCertificates)
 	h.mux.HandleFunc("/api/v1/auth/mtls/config", h.tsHandler.HandleMTLSConfig)
 
+	// Batch 3C: 14 additional auth endpoints
+	h.registerBatch3CRoutes()
 }
 
 // ServeHTTP implements http.Handler.
