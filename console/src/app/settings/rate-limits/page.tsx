@@ -116,7 +116,7 @@ export default function RateLimitsPage() {
             Configure per-endpoint request throttling with burst capacity.
           </p>
         </div>
-        <button onClick={() => { setDraft({ method: "GET", requests_per_minute: 60, burst: 10, per_tenant: false }); setShowCreate(true); }} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <button onClick={() => { setDraft({ method: "GET", requests_per_minute: 60, burst: 10, per_tenant: false }); setShowCreate(true); }} aria-label="Create new rate limit" className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
           <Plus className="h-4 w-4" /> Add Limit
         </button>
       </div>
@@ -124,7 +124,7 @@ export default function RateLimitsPage() {
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />{error}
-          <button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
         </div>
       )}
 
@@ -168,8 +168,8 @@ export default function RateLimitsPage() {
                       <td className="px-4 py-2"><input type="checkbox" checked={draft.enabled ?? true} onChange={(e) => setDraft((p) => ({ ...p, enabled: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
                       <td className="px-4 py-2">
                         <div className="flex justify-end gap-1">
-                          <button onClick={saveEdit} className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"><Check className="h-3.5 w-3.5" /></button>
-                          <button onClick={() => { setEditing(null); setDraft({}); }} className="rounded-lg px-2 py-1 text-xs text-gray-400"><X className="h-3.5 w-3.5" /></button>
+                          <button onClick={saveEdit} aria-label="Save edit" className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"><Check className="h-3.5 w-3.5" /></button>
+                          <button onClick={() => { setEditing(null); setDraft({}); }} aria-label="Cancel edit" className="rounded-lg px-2 py-1 text-xs text-gray-400"><X className="h-3.5 w-3.5" /></button>
                         </div>
                       </td>
                     </>
@@ -187,8 +187,8 @@ export default function RateLimitsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
-                          <button onClick={() => startEdit(l)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Pencil className="h-4 w-4" /></button>
-                          <button onClick={() => setConfirmDelete(l.id)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-4 w-4" /></button>
+                          <button onClick={() => startEdit(l)} aria-label={"Edit rate limit " + l.id} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={() => setConfirmDelete(l.id)} aria-label={"Delete rate limit " + l.id} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </>
@@ -209,8 +209,8 @@ export default function RateLimitsPage() {
                   <td className="px-4 py-2" />
                   <td className="px-4 py-2">
                     <div className="flex justify-end gap-1">
-                      <button onClick={handleCreate} disabled={!draft.path_pattern} className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50"><Check className="h-3.5 w-3.5" /></button>
-                      <button onClick={() => { setShowCreate(false); setDraft({}); }} className="rounded-lg px-2 py-1 text-xs text-gray-400"><X className="h-3.5 w-3.5" /></button>
+                      <button onClick={handleCreate} disabled={!draft.path_pattern} aria-label="Create rate limit" className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 disabled:opacity-50"><Check className="h-3.5 w-3.5" /></button>
+                      <button onClick={() => { setShowCreate(false); setDraft({}); }} aria-label="Cancel create" className="rounded-lg px-2 py-1 text-xs text-gray-400"><X className="h-3.5 w-3.5" /></button>
                     </div>
                   </td>
                 </tr>
@@ -235,8 +235,8 @@ export default function RateLimitsPage() {
                 <span>{l.burst} burst</span>
               </div>
               <div className="mt-2 flex gap-2">
-                <button onClick={() => startEdit(l)} className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"><Pencil className="h-3 w-3" /> Edit</button>
-                <button onClick={() => setConfirmDelete(l.id)} className="flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs text-red-500"><Trash2 className="h-3 w-3" /> Delete</button>
+                <button onClick={() => startEdit(l)} aria-label={"Edit " + l.path_pattern} className="flex items-center gap-1 rounded-lg border border-gray-300 px-2 py-1 text-xs dark:border-gray-600"><Pencil className="h-3 w-3" /> Edit</button>
+                <button onClick={() => setConfirmDelete(l.id)} aria-label={"Delete " + l.path_pattern} className="flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs text-red-500"><Trash2 className="h-3 w-3" /> Delete</button>
               </div>
             </div>
           ))}
@@ -255,8 +255,8 @@ export default function RateLimitsPage() {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} aria-label="Cancel delete" className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+              <button onClick={() => handleDelete(confirmDelete)} aria-label="Confirm delete" className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button>
             </div>
           </div>
         </div>
