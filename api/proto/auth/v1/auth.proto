@@ -2,81 +2,46 @@ syntax = "proto3";
 
 package api.auth.v1;
 
-option go_package = "github.com/ggid/ggid/api/proto/auth/v1;authv1";
+option go_package = "github.com/ggid/ggid/api/gen/auth/v1;authv1";
 
-import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // AuthService handles authentication operations.
 service AuthService {
   // Password-based login.
   rpc Login(LoginRequest) returns (LoginResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/login"
-      body: "*"
-    };
   }
 
   // Register a new user credential.
   rpc Register(RegisterRequest) returns (RegisterResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/register"
-      body: "*"
-    };
   }
 
   // Logout — revokes session and tokens.
   rpc Logout(LogoutRequest) returns (LogoutResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/logout"
-      body: "*"
-    };
   }
 
   // Refresh an expired access token using a refresh token.
   rpc RefreshToken(RefreshTokenRequest) returns (TokenSet) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/refresh"
-      body: "*"
-    };
   }
 
   // Initiate forgot-password flow (sends reset email).
   rpc ForgotPassword(ForgotPasswordRequest) returns (ForgotPasswordResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/password/forgot"
-      body: "*"
-    };
   }
 
   // Reset password using a reset token.
   rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/password/reset"
-      body: "*"
-    };
   }
 
   // Change password (requires authentication).
   rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/password/change"
-      body: "*"
-    };
   }
 
   // List active sessions for the authenticated user.
   rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/auth/sessions"
-    };
   }
 
   // Revoke a specific session.
   rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse) {
-    option (google.api.http) = {
-      delete: "/api/v1/auth/sessions/{session_id}"
-    };
   }
 }
 

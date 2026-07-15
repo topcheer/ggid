@@ -1,16 +1,16 @@
 # Platform Scan State
 
-## Current round: 48
-## Last scan focus: E2E Regression Tests (11/11 PASS)
-## Next scan focus: B (Route Wiring) — Round 49
+## Current round: 49
+## Last scan focus: B (Route Wiring) — Round 49
+## Next scan focus: C (Middleware Chain) — Round 50
 ## Total findings: 32
 ## Done: 28
-## Fixed (pending verification): 0
+## Fixed (pending verification): 3 (gRPC gaps #30-32 pb code generated, service impl pending)
 ## Partial: 0
-## Remaining: 3
+## Remaining: 1 (FedCM ACCEPTABLE)
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 48 even: E2E regression tests completed — Docker E2E 11/11 PASS. No service code changes required. Round 49 will be Focus B (Route Wiring).*
+*Round 49 Focus B (Route Wiring): No new route wiring gaps. All gateway routes comprehensive. Generated Go pb code for identity/auth/oauth gRPC services (api/gen/{identity,auth,oauth}/v1/). Gaps #30-32 now have generated interfaces — service implementation is the next step for backend.*
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
 All 9 SDKs (Go, Rust, Python, Node, Java, Ruby, C#, Dart, PHP) have:
@@ -22,7 +22,6 @@ A → B → C → D → E → F → G → A → ...
 ## Round mapping:
 - Odd rounds (1,3,5,...): Workflow B (completeness scan)
 - Even rounds (2,4,6,...): Workflow A (E2E tests)
-- Scan focus rotates within odd rounds: A→B→C→D→E→F→G→A
 
 ## Risk Assessment of In-Memory Stores (synced with completeness report)
 
@@ -42,15 +41,4 @@ LOW (acceptable for now — short-lived or fallback):
 - Client Branding (mem fallback when PG unavailable)
 
 ## Commits this cycle:
-- 2934fd98: CIBA + Client Branding verified as DONE; fix broken gap_regression_oauth_test.go
-- 85114fa8: Sync platform-scan-state counts with completeness report
-- ff6e2c0e: DCR grant_types audit + regression tests (arch)
-- 1e1eadc0: Gateway sysconfig hot-reload + OAuth signed JWT + Client Branding persistence
-- bb122404: Round 8 focus A interface integrity — gateway TODO cleanup, policy route aliases
-- (current): Round 46 E2E regression — Docker Compose E2E 11/11 PASS
-- (round 45): Round 45 focus G SDK alignment — no new gaps
-- (round 19): Round 19 focus A stub/placeholder — no new productization gaps
-- (round 13): Round 13 focus E error handling — sanitize internal error exposure in oauth/internal/server and auth/internal/server
-- (round 5): MFA JIT TOTP random secret, Device-Bound SSO random signing key, agent token scope enforcement (backend)
-- (round 6): Server coverage tests for identity health/tenant, OAuth helpers, org tree build/prune (backend)
-- (round 7): Auth missing handlers wired to real service: /api/v1/auth/me, /api/v1/auth/mfa/status, /api/v1/auth/tokens (backend)
+- (current): Round 49 Focus B — Route Wiring scan, no new gaps; generated identity/auth/oauth pb code

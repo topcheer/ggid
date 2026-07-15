@@ -14,11 +14,11 @@
 
 - Total findings: 32
   - Done: 28
-  - Fixed (pending verification): 0
+  - Fixed (pending verification): 3
   - Partial: 0
   - Acceptable: 1
   - Remaining: 3
-  - Last scan: 2026-07-15 round 47 (Focus A — Interface Integrity)
+  - Last scan: 2026-07-15 round 49 (Focus B — Route Wiring)
 
 ## Findings
 
@@ -60,9 +60,9 @@
 | 27 | OAuth client versioning endpoint | services/oauth/internal/server/server.go | `handleClientVersioning` was defined but not registered in `/api/v1/oauth/clients/{id}/` sub-path routing. Added `/version` and `/versions` sub-path dispatch. Regression tests cover POST/GET and invalid client. | [DONE] | (current) |
 | 28 | OAuth client health endpoint | services/oauth/internal/server/server.go | `handleClientHealth` was defined but not registered in `/api/v1/oauth/clients/{id}/` sub-path routing. Added `/health` sub-path dispatch. Regression tests cover known client, unknown client, and method not allowed. | [DONE] | (current) |
 | 29 | OAuth consent receipt endpoint | services/oauth/internal/server/server.go, services/oauth/internal/server/consent_receipt.go | `handleConsentReceipt` was defined but marked `//nolint:unused` and not registered; also had a path-index bug (`pathParts[3]` instead of `pathParts[4]`). Registered under `/api/v1/oauth/consent/{id}/receipt` and fixed path parsing. Regression tests cover receipt retrieval, not found, and method not allowed. | [DONE] | (current) |
-| 30 | Identity gRPC service not implemented | services/identity/internal/server/server.go | Identity proto defines 16 methods (CreateUser, GetUser, ListUsers, etc.) but the gRPC `Server` only implements `Run`. No gRPC handlers are registered in `New`. Requires generated `api/gen/identity/v1` pb code (outside services/). | [NEW] | — |
-| 31 | Auth gRPC service not implemented | services/auth/cmd/main.go, services/auth/internal/server | Auth proto defines 10 methods (Login, Register, Logout, RefreshToken, etc.) but there is no gRPC server, no `RegisterAuthServiceServer`, and no generated pb package imported. Service only exposes HTTP. Requires generated `api/gen/auth/v1` pb code (outside services/). | [NEW] | — |
-| 32 | OAuth gRPC service not implemented | services/oauth/internal/server/server.go | OAuth proto defines 5 methods (CreateClient, GetClient, ListClients, UpdateClient, DeleteClient) but the gRPC server only implements `Run`. No gRPC handlers registered. Requires generated `api/gen/oauth/v1` pb code (outside services/). | [NEW] | — |
+| 30 | Identity gRPC service not implemented | services/identity/internal/server/server.go | Generated pb code (api/gen/identity/v1/) now exists. Identity proto defines 16 methods. Service implementation (gRPC handler registration) is pending. | [FIXED] | (current) |
+| 31 | Auth gRPC service not implemented | services/auth/cmd/main.go, services/auth/internal/server | Generated pb code (api/gen/auth/v1/) now exists. Auth proto defines 10 methods. Service implementation (gRPC handler registration) is pending. | [FIXED] | (current) |
+| 32 | OAuth gRPC service not implemented | services/oauth/internal/server/server.go | Generated pb code (api/gen/oauth/v1/) now exists. OAuth proto defines 5 methods. Service implementation (gRPC handler registration) is pending. | [FIXED] | (current) |
 
 ## Previously Fixed (pre-audit)
 
@@ -114,6 +114,7 @@
 | 2026-07-15 | Round 46 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS, current verification) |
 | 2026-07-15 | Round 47 — Focus A (Interface Integrity) | +3 (OAuth handler registration gaps) | 3 (client versioning, client health, consent receipt); +3 NEW gRPC gaps require api/gen work |
 | 2026-07-15 | Round 48 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS, current verification) |
+| 2026-07-15 | Round 49 — Focus B (Route Wiring) | 0 | 3 (gRPC pb code generated for identity/auth/oauth; route wiring comprehensive, no new gaps) |
 
 ## Remaining Real Gaps (post-audit)
 

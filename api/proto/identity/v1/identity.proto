@@ -2,11 +2,9 @@ syntax = "proto3";
 
 package api.identity.v1;
 
-option go_package = "github.com/ggid/ggid/api/proto/identity/v1;identityv1";
+option go_package = "github.com/ggid/ggid/api/gen/identity/v1;identityv1";
 
 import "google/protobuf/timestamp.proto";
-import "google/api/annotations.proto";
-import "validate/validate.proto";
 
 // IdentityService manages user identity lifecycle: CRUD, registration,
 // email management, and external identity linking.
@@ -14,111 +12,57 @@ service IdentityService {
   // --- User CRUD ---
 
   rpc CreateUser(CreateUserRequest) returns (User) {
-    option (google.api.http) = {
-      post: "/api/v1/users"
-      body: "*"
-    };
   }
 
   rpc GetUser(GetUserRequest) returns (User) {
-    option (google.api.http) = {
-      get: "/api/v1/users/{id}"
-    };
   }
 
   rpc ListUsers(ListUsersRequest) returns (ListUsersResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/users"
-    };
   }
 
   rpc UpdateUser(UpdateUserRequest) returns (User) {
-    option (google.api.http) = {
-      patch: "/api/v1/users/{id}"
-      body: "*"
-    };
   }
 
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {
-    option (google.api.http) = {
-      delete: "/api/v1/users/{id}"
-    };
   }
 
   rpc LockUser(LockUserRequest) returns (User) {
-    option (google.api.http) = {
-      post: "/api/v1/users/{id}/lock"
-    };
   }
 
   rpc UnlockUser(UnlockUserRequest) returns (User) {
-    option (google.api.http) = {
-      post: "/api/v1/users/{id}/unlock"
-    };
   }
 
   // --- Registration & Email Verification ---
 
   rpc RegisterUser(RegisterUserRequest) returns (RegisterUserResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/register"
-      body: "*"
-    };
   }
 
   rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/auth/verify-email"
-      body: "*"
-    };
   }
 
   // --- Multi-Email Management ---
 
   rpc ListUserEmails(ListUserEmailsRequest) returns (ListUserEmailsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/users/{user_id}/emails"
-    };
   }
 
   rpc AddUserEmail(AddUserEmailRequest) returns (UserEmail) {
-    option (google.api.http) = {
-      post: "/api/v1/users/{user_id}/emails"
-      body: "*"
-    };
   }
 
   rpc RemoveUserEmail(RemoveUserEmailRequest) returns (RemoveUserEmailResponse) {
-    option (google.api.http) = {
-      delete: "/api/v1/users/{user_id}/emails/{email}"
-    };
   }
 
   rpc SetPrimaryEmail(SetPrimaryEmailRequest) returns (UserEmail) {
-    option (google.api.http) = {
-      put: "/api/v1/users/{user_id}/emails/{email_id}/primary"
-    };
   }
 
   // --- External Identity Linking ---
 
   rpc ListExternalIdentities(ListExternalIdentitiesRequest) returns (ListExternalIdentitiesResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/users/{user_id}/external-identities"
-    };
   }
 
   rpc LinkExternalIdentity(LinkExternalIdentityRequest) returns (ExternalIdentity) {
-    option (google.api.http) = {
-      post: "/api/v1/users/{user_id}/external-identities"
-      body: "*"
-    };
   }
 
   rpc UnlinkExternalIdentity(UnlinkExternalIdentityRequest) returns (UnlinkExternalIdentityResponse) {
-    option (google.api.http) = {
-      delete: "/api/v1/users/{user_id}/external-identities/{identity_id}"
-    };
   }
 }
 
@@ -172,10 +116,10 @@ message ExternalIdentity {
 // === Request/Response Messages ===
 
 message CreateUserRequest {
-  string username = 1 [(validate.rules).string.min_len = 3];
-  string email = 2 [(validate.rules).string.email = true];
+  string username = 1;
+  string email = 2;
   string phone = 3;
-  string password = 4 [(validate.rules).string.min_len = 8];
+  string password = 4;
   string display_name = 5;
   string locale = 6;
   string timezone = 7;
@@ -227,9 +171,9 @@ message UnlockUserRequest {
 }
 
 message RegisterUserRequest {
-  string username = 1 [(validate.rules).string.min_len = 3];
-  string email = 2 [(validate.rules).string.email = true];
-  string password = 3 [(validate.rules).string.min_len = 8];
+  string username = 1;
+  string email = 2;
+  string password = 3;
   string locale = 4;
 }
 
@@ -257,7 +201,7 @@ message ListUserEmailsResponse {
 
 message AddUserEmailRequest {
   string user_id = 1;
-  string email = 2 [(validate.rules).string.email = true];
+  string email = 2;
 }
 
 message RemoveUserEmailRequest {

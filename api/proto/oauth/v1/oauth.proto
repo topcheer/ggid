@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.oauth.v1;
 
-option go_package = "github.com/ggid/ggid/api/proto/oauth/v1;oauthv1";
+option go_package = "github.com/ggid/ggid/api/gen/oauth/v1;oauthv1";
 
 import "google/protobuf/timestamp.proto";
 
