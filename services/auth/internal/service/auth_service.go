@@ -196,7 +196,7 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	}
 
 	// 6. Issue JWT access token
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID)
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -272,7 +272,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*domain
 	}
 
 	// 2. Issue new access token
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(rt.TenantID, rt.UserID)
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(rt.TenantID, rt.UserID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -488,7 +488,7 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID)
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -679,7 +679,7 @@ func (s *AuthService) VerifyMagicLink(ctx context.Context, token, ip, userAgent 
 	}
 
 	// Issue JWT tokens.
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tenantID, userID)
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
@@ -765,7 +765,7 @@ func (s *AuthService) SocialLogin(ctx context.Context, provider, externalID, ema
 	}
 
 	// 5. Issue JWT tokens.
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID)
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}

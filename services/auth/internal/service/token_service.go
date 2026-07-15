@@ -61,17 +61,19 @@ func NewTokenService(provider ggidcrypto.KeyProvider, issuer, audience string, t
 
 // AccessTokenClaims contains the JWT custom claims.
 type AccessTokenClaims struct {
-	TenantID string `json:"tenant_id"`
+	TenantID string   `json:"tenant_id"`
+	Scopes   []string `json:"scopes,omitempty"`
 	jwt.RegisteredClaims
 }
 
 // IssueAccessToken signs a new JWT for the given user.
-func (ts *TokenService) IssueAccessToken(tenantID, userID uuid.UUID) (string, int, error) {
+func (ts *TokenService) IssueAccessToken(tenantID, userID uuid.UUID, scopes []string) (string, int, error) {
 	now := time.Now()
 	expiresAt := now.Add(ts.jwtTTL)
 
 	claims := AccessTokenClaims{
 		TenantID: tenantID.String(),
+		Scopes:   scopes,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    ts.jwtIssuer,
 			Subject:   userID.String(),

@@ -139,6 +139,18 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 		}
 	}
 
+	// Fallback to in-memory repos when DB is not connected.
+	if clientRepo == nil {
+		log.Println("OAuth: using in-memory client repository (no DB)")
+		clientRepo = repository.NewMemoryClientRepository()
+	}
+	if codeRepo == nil {
+		codeRepo = repository.NewMemoryCodeRepository()
+	}
+	if tokenRepo == nil {
+		tokenRepo = repository.NewMemoryIDTokenRepository()
+	}
+
 	// Create the OAuth service with rotating key provider.
 	oauthSvc := service.NewOAuthService(clientRepo, codeRepo, tokenRepo, kp, cfg.Issuer)
 

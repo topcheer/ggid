@@ -86,7 +86,7 @@ func TestTokenService_IssueAccessToken(t *testing.T) {
 	tenantID := uuid.New()
 	userID := uuid.New()
 
-	token, expiresIn, err := ts.IssueAccessToken(tenantID, userID)
+	token, expiresIn, err := ts.IssueAccessToken(tenantID, userID, []string{"admin"})
 	if err != nil {
 		t.Fatalf("IssueAccessToken: %v", err)
 	}
@@ -136,8 +136,8 @@ func TestTokenService_DifferentUsersDifferentTokens(t *testing.T) {
 	cfg := testJWTConfig(t)
 	ts, _ := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 
-	t1, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New())
-	t2, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New())
+	t1, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New(), []string{"admin"})
+	t2, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New(), []string{"admin"})
 
 	if t1 == t2 {
 		t.Fatal("tokens for different users should differ")
@@ -148,7 +148,7 @@ func TestTokenService_RejectTamperedToken(t *testing.T) {
 	cfg := testJWTConfig(t)
 	ts, _ := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 
-	token, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New())
+	token, _, _ := ts.IssueAccessToken(uuid.New(), uuid.New(), []string{"admin"})
 
 	// Tamper: replace last 4 chars
 	tampered := token[:len(token)-4] + "AAAA"
@@ -167,7 +167,7 @@ func TestTokenService_RejectWrongKey(t *testing.T) {
 	cfg2 := testJWTConfig(t)
 	ts2, _ := NewTokenService(newTestKeyProvider(t), cfg2.Issuer, cfg2.Audience, cfg2.AccessTokenTTL, nil, nil)
 
-	token, _, _ := ts1.IssueAccessToken(uuid.New(), uuid.New())
+	token, _, _ := ts1.IssueAccessToken(uuid.New(), uuid.New(), []string{"admin"})
 
 	_, err := jwt.Parse(token, func(tok *jwt.Token) (any, error) {
 		return ts2.PublicKey(), nil
