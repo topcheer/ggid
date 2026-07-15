@@ -34,7 +34,7 @@ func (h *Handler) handleDeviceReport(w http.ResponseWriter, r *http.Request) {
 	deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/devices/")
 	deviceID = strings.TrimSuffix(deviceID, "/report")
 	var req struct{ Managed, Encrypted, CompliantOS, Jailbreak bool }
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	score := 0
 	if req.Managed { score += 30 }
 	if req.Encrypted { score += 25 }

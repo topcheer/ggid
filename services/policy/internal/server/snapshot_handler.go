@@ -55,7 +55,7 @@ func (s *HTTPServer) handleSnapshots(w http.ResponseWriter, r *http.Request) {
 	// POST create snapshot
 	if r.Method == http.MethodPost {
 		var req struct{ PolicyID string `json:"policy_id"` }
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		sn := &PolicySnapshot{ID: uuid.New().String(), PolicyID: req.PolicyID, Version: len(snaps) + 1, State: "captured", CreatedAt: time.Now().UTC(), CreatedBy: "system"}
 		snapMu.Lock(); snaps[sn.ID] = sn; snapMu.Unlock()
 		writeJSON(w, http.StatusCreated, sn)

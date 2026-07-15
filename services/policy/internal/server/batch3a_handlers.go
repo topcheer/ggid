@@ -18,7 +18,7 @@ func (s *HTTPServer) handleAccessCertificationCampaigns(w http.ResponseWriter, r
 	}
 	if r.Method == http.MethodPost {
 		var req map[string]any
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"id": "cert-new", "status": "created", "campaign": req,
 		})
@@ -42,7 +42,7 @@ func (s *HTTPServer) handleAccessRequestCRUD(w http.ResponseWriter, r *http.Requ
 			DurationDays   int    `json:"duration_days"`
 			Approver       string `json:"approver"`
 		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"id": "ar-001", "target_role": req.TargetRole, "status": "pending",
 		})
@@ -61,7 +61,7 @@ func (s *HTTPServer) handlePolicyAsCodeImport(w http.ResponseWriter, r *http.Req
 		YAML string `json:"yaml"`
 		Name string `json:"name"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, map[string]any{
 		"id": "policy-as-code-1", "name": req.Name, "status": "imported",
 	})
@@ -90,7 +90,7 @@ func (s *HTTPServer) handlePrivilegedAccessBatchRevoke(w http.ResponseWriter, r 
 		AccountIDs []string `json:"account_ids"`
 		Reason     string   `json:"reason"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, map[string]any{
 		"revoked": len(req.AccountIDs), "status": "completed",
 	})
@@ -176,7 +176,7 @@ func (s *HTTPServer) handleRoleMiningApply(w http.ResponseWriter, r *http.Reques
 		AnalysisID string `json:"analysis_id"`
 		RoleName   string `json:"role_name"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status": "applied", "role": req.RoleName, "users_assigned": 8,
 	})
@@ -220,7 +220,7 @@ func (s *HTTPServer) handleSoDMatrixToggle(w http.ResponseWriter, r *http.Reques
 		RuleID string `json:"rule_id"`
 		Enable bool   `json:"enabled"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, map[string]any{
 		"rule_id": req.RuleID, "enabled": req.Enable,
 	})
@@ -253,7 +253,7 @@ func (s *HTTPServer) handleTimeBasedRules(w http.ResponseWriter, r *http.Request
 		})
 	case http.MethodPost:
 		var req map[string]any
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		writeJSON(w, http.StatusCreated, map[string]any{"id": "tb-new", "status": "created"})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")

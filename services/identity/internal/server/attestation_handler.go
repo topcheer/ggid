@@ -38,7 +38,7 @@ func (h *HTTPHandler) handleAttest(ctx context.Context, userID uuid.UUID, w http
 		ExpiryDays int `json:"expiry_days"`
 	}
 	if r.ContentLength > 0 {
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	}
 	if req.ExpiryDays <= 0 {
 		req.ExpiryDays = 30

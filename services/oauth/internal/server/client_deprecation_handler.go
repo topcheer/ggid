@@ -42,7 +42,7 @@ func handleClientDeprecation(w http.ResponseWriter, r *http.Request) {
 			MigrationGuideURL string `json:"migration_guide_url"`
 			DeprecationNotice string `json:"deprecation_notice"`
 		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"}); return }
 		dep := &ClientDeprecation{
 			ClientID: clientID, Deprecated: true, MigrationGuideURL: req.MigrationGuideURL,
 			DeprecationNotice: req.DeprecationNotice, MarkedAt: time.Now().UTC(),

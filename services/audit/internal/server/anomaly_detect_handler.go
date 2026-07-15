@@ -25,7 +25,7 @@ func (s *HTTPServer) handleAnomalyDetect(w http.ResponseWriter, r *http.Request)
 		TimeWindow string `json:"time_window"` // e.g. "24h"
 		TenantID   string `json:"tenant_id"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 
 	// Simulated anomaly detection based on baseline deviations
 	anomalies := []Anomaly{

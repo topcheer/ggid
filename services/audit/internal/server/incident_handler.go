@@ -91,7 +91,7 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 			ResolutionNotes string `json:"resolution_notes"`
 			ResolvedBy      string `json:"resolved_by"`
 		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		incidentMu.Lock()
 		inc, ok := incidents[parts[0]]
 		if !ok {

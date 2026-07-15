@@ -114,7 +114,7 @@ func (s *HTTPServer) handleApprovals(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var req struct{ Comment string `json:"comment"` }
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 
 		step := ApprovalStep{
 			Step: ar.CurrentStep, Approver: ar.ApproverChain[ar.CurrentStep],

@@ -21,7 +21,7 @@ func (s *HTTPServer) handlePolicyConflictsDetect(w http.ResponseWriter, r *http.
 		PolicyIDs []string `json:"policy_ids"`
 	}
 	if r.ContentLength > 0 {
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	}
 
 	// Gather policies

@@ -198,7 +198,7 @@ func (s *HTTPServer) reviewAccessRequest(w http.ResponseWriter, r *http.Request,
 		ApproverID string `json:"approver_id"`
 		Note       string `json:"review_note"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	if req.ApproverID == "" {
 		req.ApproverID = r.URL.Query().Get("approver_id")
 	}

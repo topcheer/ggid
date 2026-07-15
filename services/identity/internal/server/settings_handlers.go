@@ -17,7 +17,7 @@ func (h *HTTPHandler) handleSettingsBranding(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -41,7 +41,7 @@ func (h *HTTPHandler) handleSettingsDataRetention(w http.ResponseWriter, r *http
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -52,7 +52,7 @@ func (h *HTTPHandler) handleSettingsDelegations(w http.ResponseWriter, r *http.R
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -65,7 +65,7 @@ func (h *HTTPHandler) handleSettingsGeoFencing(w http.ResponseWriter, r *http.Re
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -88,7 +88,7 @@ func (h *HTTPHandler) handleSettingsJIT(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -129,7 +129,7 @@ func (h *HTTPHandler) handleSettingsNotifications(w http.ResponseWriter, r *http
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -152,7 +152,7 @@ func (h *HTTPHandler) handleSettingsSIEM(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -172,7 +172,7 @@ func (h *HTTPHandler) handleSettingsSSO(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -182,7 +182,7 @@ func (h *HTTPHandler) handleSettingsSSOMetadataImport(w http.ResponseWriter, r *
 		MetadataXML string `json:"metadata_xml"`
 		MetadataURL string `json:"metadata_url"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status": "imported", "entity_id": "imported-idp", "name": "Imported IDP",
 	})
@@ -207,7 +207,7 @@ func (h *HTTPHandler) handleSettingsSSOSAML(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -220,7 +220,7 @@ func (h *HTTPHandler) handleSettingsSSOIDC(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -234,7 +234,7 @@ func (h *HTTPHandler) handleSettingsSSOSocial(w http.ResponseWriter, r *http.Req
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -247,7 +247,7 @@ func (h *HTTPHandler) handleSettingsWebAuthN(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 
@@ -262,7 +262,7 @@ func (h *HTTPHandler) handleSettingsAlertingRules(w http.ResponseWriter, r *http
 		return
 	}
 	var req map[string]any
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	writeJSON(w, http.StatusOK, req)
 }
 

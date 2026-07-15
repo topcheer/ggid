@@ -44,7 +44,7 @@ func handleClientVersioning(w http.ResponseWriter, r *http.Request) {
 			Config map[string]any `json:"config"`
 			Note   string         `json:"note"`
 		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"}); return }
 		clientVerMu.Lock()
 		ver := ClientVersion{Version: len(clientVersions[clientID]) + 1, Config: req.Config, CreatedAt: time.Now().UTC(), Note: req.Note}
 		clientVersions[clientID] = append(clientVersions[clientID], ver)

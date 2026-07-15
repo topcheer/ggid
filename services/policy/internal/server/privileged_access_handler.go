@@ -29,7 +29,7 @@ var (
 func (s *HTTPServer) handlePrivilegedAccess(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var req struct{ UserIDs []string `json:"user_ids"` }
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		paMu.Lock()
 		if len(req.UserIDs) > 0 { paAccounts = []PrivilegedAccount{} }
 		for _, pa := range paAccounts {

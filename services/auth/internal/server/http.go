@@ -2160,7 +2160,7 @@ func (h *Handler) logoutAll(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		UserID string `json:"user_id"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {

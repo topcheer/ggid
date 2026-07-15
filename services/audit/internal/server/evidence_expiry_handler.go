@@ -12,7 +12,7 @@ import (
 func (s *HTTPServer) handleEvidenceExpiry(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/v1/audit/compliance/evidence-refresh" && r.Method == http.MethodPost {
 		var req struct{ ControlIDs []string `json:"control_ids"` }
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		writeJSON(w, http.StatusOK, map[string]any{"status": "refreshed", "refreshed_count": len(req.ControlIDs), "refreshed_at": time.Now().UTC().Format(time.RFC3339)})
 		return
 	}

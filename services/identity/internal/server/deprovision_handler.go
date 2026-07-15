@@ -24,7 +24,7 @@ func (h *HTTPHandler) handleDeprovision(ctx context.Context, userID uuid.UUID, w
 	}
 	// Body is optional
 	if r.ContentLength > 0 {
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	}
 
 	steps := []map[string]any{}

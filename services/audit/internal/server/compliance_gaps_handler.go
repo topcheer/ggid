@@ -54,7 +54,7 @@ func (s *HTTPServer) handleComplianceGaps(w http.ResponseWriter, r *http.Request
 			gapID = parts[4]
 		}
 		var req struct{ Status string `json:"status"` }
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 		gapMu.Lock()
 		for i := range gaps {
 			if gaps[i].ID == gapID {

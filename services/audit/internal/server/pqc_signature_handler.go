@@ -45,7 +45,7 @@ func (s *HTTPServer) handlePQCSign(w http.ResponseWriter, r *http.Request) {
 		BatchData  string `json:"batch_data"`
 		EventCount int    `json:"event_count"`
 	}
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
 	if req.BatchData == "" {
 		req.BatchData = time.Now().UTC().String()
 	}

@@ -64,7 +64,7 @@ func handleClientLifecycle(w http.ResponseWriter, r *http.Request) {
 			Reason string `json:"reason"`
 			By     string `json:"suspended_by"`
 		}
-		_ = json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"}); return }
 		cl := &ClientLifecycle{
 			ClientID: clientID, Status: "suspended",
 			SuspendedAt: &now, SuspendedBy: req.By, Reason: req.Reason, UpdatedAt: now,
