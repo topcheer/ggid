@@ -128,28 +128,56 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Tag SDK module
+      - name: Tag Go SDK module
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           git tag sdk/go/v${VERSION}
           git push origin sdk/go/v${VERSION}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Install and build
+      - name: Tag Node SDK module
         run: |
-          if [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-          npm run build
-        working-directory: sdk/node
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/node/v${VERSION}
+          git push origin sdk/node/v${VERSION}
 
-      - name: Publish
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Tag Python SDK module
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/python/v${VERSION}
+          git push origin sdk/python/v${VERSION}
+
+      - name: Tag Java SDK module
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/java/v${VERSION}
+          git push origin sdk/java/v${VERSION}
+
+      - name: Tag Rust SDK module
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/rust/v${VERSION}
+          git push origin sdk/rust/v${VERSION}
+
+      - name: Tag C# SDK module
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/csharp/v${VERSION}
+          git push origin sdk/csharp/v${VERSION}
+
+      - name: Tag Dart SDK module
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/dart/v${VERSION}
+          git push origin sdk/dart/v${VERSION}
+
+      - name: Tag PHP SDK module
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/php/v${VERSION}
+          git push origin sdk/php/v${VERSION}
+
+      - name: Tag Ruby SDK module
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          git tag sdk/ruby/v${VERSION}
+          git push origin sdk/ruby/v${VERSION}
