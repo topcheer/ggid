@@ -13,10 +13,10 @@
 ## Summary
 
 - Total findings: 20
-- Done: 19
+- Done: 20
 - Fixed (pending verification): 0
 - Partial: 1
-- Remaining: 1
+- Remaining: 0
 - Last scan: 2026-07-15 round 20 (E2E regression tests — 11/11 PASS)
 
 ## Findings
@@ -45,7 +45,7 @@
 | 17 | Token event streaming status code | oauth/internal/server/token_events.go | SSE unsupported response returned 500; changed to 501 Not Implemented. | [DONE] | 5a40d929 |
 | 18 | E2E Docker regression suite | deploy/e2e-docker-test.sh | Docker E2E tests were failing due to migrate container command typo. Fixed `sh` duplication; 11/11 E2E tests now PASS. | [DONE] | 6f7d68e0 |
 | 19 | Server handler coverage gaps | identity/internal/server, audit/internal/server, org/internal/server | Added focused HTTP handler tests for certification-status, management-chain, reassign, GDPR export, query-metrics, SIEM health, daily-aggregations, access-matrix, teams-export, membership-trends. | [DONE] | d0bdeb50 |
-| 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request endpoints exist in Go SDK and Node SDK, but missing in Python, Java, Rust, Ruby, C#, Dart, PHP SDKs. | [NEW] | arch |
+| 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request methods added to all 7 SDKs (Python, Java, Rust, Ruby, C#, Dart, PHP). | [DONE] | 5cd72023 |
 
 ### LOW Priority
 
