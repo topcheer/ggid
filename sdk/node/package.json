@@ -1,7 +1,7 @@
 {
   "name": "@ggid/sdk",
-  "version": "1.0.1",
-  "description": "GGID IAM Platform Node.js SDK — JWT verification, RBAC, user management, OAuth/OIDC, and tenant-aware middleware.",
+  "version": "1.0.2",
+  "description": "GGID IAM Platform Node.js SDK \u2014 JWT verification, RBAC, user management, OAuth/OIDC, and tenant-aware middleware.",
   "license": "Apache-2.0",
   "author": "GGID Contributors (https://github.com/topcheer/ggid)",
   "homepage": "https://github.com/topcheer/ggid/tree/main/sdk/node",
