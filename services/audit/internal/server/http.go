@@ -123,6 +123,12 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/security-posture", s.handleSecurityPosture)
 	mux.HandleFunc("/api/v1/audit/threat-feed", s.handleThreatFeed)
 	mux.HandleFunc("/api/v1/audit/anomalies/detect", s.handleAnomalyDetect)
+	mux.HandleFunc("/api/v1/audit/anomaly-detection", s.handleAnomalyDetectionCRUD)
+	mux.HandleFunc("/api/v1/audit/anomaly-detection/", s.handleAnomalyDetectionCRUD)
+	mux.HandleFunc("/api/v1/audit/evidence-collection", s.handleEvidenceCollection)
+	mux.HandleFunc("/api/v1/audit/evidence-collection/", s.handleEvidenceCollection)
+	mux.HandleFunc("/api/v1/audit/gdpr-forget", s.handleGDPRForgetV2)
+	mux.HandleFunc("/api/v1/audit/gdpr-forget/", s.handleGDPRForgetV2)
 	mux.HandleFunc("/api/v1/security/dashboard", s.handleSecurityDashboard)
 	mux.HandleFunc("/api/v1/security/threats", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]interface{}{"threats": []interface{}{}, "total": 0, "level": "low"})

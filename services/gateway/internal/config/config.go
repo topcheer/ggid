@@ -101,6 +101,7 @@ func Default() *Config {
 			"/api/v1/siem":            envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/security":        envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/admin":           envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
+			"/api/v1/certificates":    envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/compliance":      envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/settings":        envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/provisioning":   envOrDefault("OPERATOR_SERVICE_URL", "http://localhost:9090"),
