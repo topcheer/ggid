@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRightLeft, Search, AlertTriangle, X, Play, Building2, Shield } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface User {
   user_id: string;
@@ -21,6 +22,8 @@ interface TransferImpact {
 }
 
 export default function OrgTransferPage() {
+  const t = useTranslations();
+
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -79,7 +82,7 @@ export default function OrgTransferPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ArrowRightLeft className="w-6 h-6 text-blue-500" /> Org Transfer</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ArrowRightLeft className="w-6 h-6 text-blue-500" /> {t("orgTransfer.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Transfer users between organizations with impact preview.</p>
       </div>
 

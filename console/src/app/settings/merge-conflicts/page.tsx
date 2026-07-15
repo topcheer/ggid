@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { GitMerge, ArrowRight, Check, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ConflictRule {
   id: string;
@@ -31,6 +32,8 @@ const strategies = [
 ];
 
 export default function MergeConflictsPage() {
+  const t = useTranslations();
+
   const [policies, setPolicies] = useState<Policy[]>([]);
   const [policyA, setPolicyA] = useState("");
   const [policyB, setPolicyB] = useState("");
@@ -61,7 +64,7 @@ export default function MergeConflictsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><GitMerge className="w-6 h-6 text-purple-500" /> Merge Conflicts</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><GitMerge className="w-6 h-6 text-purple-500" /> {t("mergeConflicts.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Detect and resolve overlapping rules between policy versions.</p>
       </div>
 

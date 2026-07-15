@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Calendar, AlertTriangle, CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ResetAnalytics {
   total_resets: number;
@@ -17,6 +18,8 @@ interface ResetAnalytics {
 const pieColors = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function PasswordResetAnalyticsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<ResetAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -57,7 +60,7 @@ export default function PasswordResetAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> Password Reset Analytics</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> {t("passwordResetAnalytics.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track password reset patterns, method usage, and breach-triggered events.</p>
       </div>
 

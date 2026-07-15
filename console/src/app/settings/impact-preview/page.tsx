@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Eye, AlertTriangle, CheckCircle, Users, FileWarning } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface AffectedItem {
   id: string;
@@ -32,6 +33,8 @@ const riskColors: Record<string, string> = {
 };
 
 export default function ImpactPreviewPage() {
+  const t = useTranslations();
+
   const [policies, setPolicies] = useState<Policy[]>([{ id: "p1", name: "Data Access Policy" }, { id: "p2", name: "Admin Access Policy" }, { id: "p3", name: "External Partner Policy" }]);
   const [policyId, setPolicyId] = useState("");
   const [changeDesc, setChangeDesc] = useState("");
@@ -51,7 +54,7 @@ export default function ImpactPreviewPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Eye className="w-6 h-6 text-blue-500" /> Impact Preview</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Eye className="w-6 h-6 text-blue-500" /> {t("impactPreview.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Preview the impact of proposed policy changes before applying them.</p>
       </div>
 

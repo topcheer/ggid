@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthScopeConsentMatrixConfig, OAuthScopeConsentMatrixConfig, ScopeConsentEntry } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthScopeConsentMatrixConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useOAuthScopeConsentMatrixConfig();
   const [form, setForm] = useState<OAuthScopeConsentMatrixConfig | null>(null);
   const [saving, setSaving] = useState(false);

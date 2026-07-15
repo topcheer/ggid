@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   KeyRound, Loader2, AlertCircle, X, Save, Send, RotateCcw, ShieldCheck,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ResetConfig {
   token_expiry_minutes: number;
@@ -17,6 +18,8 @@ interface ResetConfig {
 }
 
 export default function PasswordResetPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [config, setConfig] = useState<ResetConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +59,7 @@ export default function PasswordResetPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-orange-600" /> Password Reset</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-orange-600" /> {t("passwordReset.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Configure password reset flow: token expiry, rate limiting, and history checking.</p>
       </div>
 

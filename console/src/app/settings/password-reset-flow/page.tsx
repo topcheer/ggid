@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Save, Mail, MessageSquare, ShieldQuestion, UserCog } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ResetConfig { methods: { email_link: boolean; sms_code: boolean; security_questions: boolean; admin_reset: boolean }; token_expiry_minutes: number; require_mfa: boolean; reset_after_failed_attempts: number; notify_on_reset: boolean; }
 interface ResetEvent { id: string; user: string; method: string; requested_at: string; completed: boolean; ip: string; }
@@ -8,6 +9,8 @@ interface ResetEvent { id: string; user: string; method: string; requested_at: s
 const methodIcons: Record<string, typeof Mail> = { email_link: Mail, sms_code: MessageSquare, security_questions: ShieldQuestion, admin_reset: UserCog };
 
 export default function PasswordResetFlowPage() {
+  const t = useTranslations();
+
   const [config, setConfig] = useState<ResetConfig | null>(null);
   const [history, setHistory] = useState<ResetEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,7 +40,7 @@ export default function PasswordResetFlowPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-orange-500" /> Password Reset Flow</h1><p className="text-sm text-gray-500 mt-1">Configure password reset methods and security policies.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-orange-500" /> {t("passwordResetFlow.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure password reset methods and security policies.</p></div>
         <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> Save</button>
       </div>
 

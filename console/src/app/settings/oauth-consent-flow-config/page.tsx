@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOauthConsentFlowConfig, OauthConsentFlowConfig, ScopeDescription, PreApprovedApp } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OauthConsentFlowConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useOauthConsentFlowConfig();
   const [form, setForm] = useState<OauthConsentFlowConfig | null>(null);
   const [saving, setSaving] = useState(false);

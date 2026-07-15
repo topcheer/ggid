@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 export default function NotificationPreviewPage() {
+  const t = useTranslations();
+
   const [template, setTemplate] = useState('welcome');
   const [variables, setVariables] = useState({ name: 'Alice', org: 'GGID Corp', code: '123456' });
   const [darkMode, setDarkMode] = useState(false);

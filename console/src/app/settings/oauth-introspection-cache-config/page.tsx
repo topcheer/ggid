@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthIntrospectionCacheConfig, OAuthIntrospectionCacheConfig, PerClientTtl } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthIntrospectionCacheConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useOAuthIntrospectionCacheConfig();
   const [form, setForm] = useState<OAuthIntrospectionCacheConfig | null>(null);
   const [saving, setSaving] = useState(false);

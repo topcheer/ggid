@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Network, Plus, X, ChevronRight, Search } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface OrgUnit {
   id: string;
@@ -13,6 +14,8 @@ interface OrgUnit {
 }
 
 export default function OrgTreePage() {
+  const t = useTranslations();
+
   const [tree, setTree] = useState<OrgUnit[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -44,7 +47,7 @@ export default function OrgTreePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> Org Tree</h1><p className="text-sm text-gray-500 mt-1">Hierarchical organization structure with member counts and budgets.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("orgTree.title")}</h1><p className="text-sm text-gray-500 mt-1">Hierarchical organization structure with member counts and budgets.</p></div>
         <button onClick={() => setShowAdd(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> Add Unit</button>
       </div>
 

@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface OrgNode {
   id: string;
@@ -9,6 +10,8 @@ interface OrgNode {
 }
 
 export default function OrgHierarchyPage() {
+  const t = useTranslations();
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [orgs, setOrgs] = useState<OrgNode[]>([]);

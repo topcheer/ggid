@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useApi } from "@/lib/api";
 import { Mail, Save, Loader2, Send, Smartphone, Eye, Code2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface EmailTemplate {
   subject: string;
@@ -71,6 +72,8 @@ const defaultSmsTemplates: Record<TemplateType, SmsTemplate> = {
 };
 
 export default function NotificationsPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [emailTemplates, setEmailTemplates] = useState<Record<TemplateType, EmailTemplate>>(defaultEmailTemplates);
   const [smsTemplates, setSmsTemplates] = useState<Record<TemplateType, SmsTemplate>>(defaultSmsTemplates);
@@ -183,7 +186,7 @@ export default function NotificationsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="flex items-center gap-2 text-2xl font-bold dark:text-gray-100">
-          <Mail className="h-6 w-6 text-brand-600" /> Notification Templates
+          <Mail className="h-6 w-6 text-brand-600" /> {t("notifications.title")}
         </h1>
         <div className="flex gap-2">
           <button

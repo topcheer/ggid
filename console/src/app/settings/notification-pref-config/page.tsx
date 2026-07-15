@@ -2,8 +2,11 @@
 
 import { useNotificationPrefConfig } from "@ggid/sdk-react";
 import { Bell } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function NotificationPrefConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useNotificationPrefConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

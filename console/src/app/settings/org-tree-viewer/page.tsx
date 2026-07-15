@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface OrgNode {
   id: string;
@@ -13,6 +14,8 @@ interface OrgNode {
 }
 
 export default function OrgTreeViewerPage() {
+  const t = useTranslations();
+
   const [tree, setTree] = useState<OrgNode | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

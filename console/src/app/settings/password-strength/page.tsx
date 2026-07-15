@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Shield, Gauge, AlertTriangle, Users } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PasswordStrengthData {
   total_users: number;
@@ -21,6 +22,8 @@ const strengthColors: Record<string, { bg: string; text: string; hex: string }> 
 };
 
 export default function PasswordStrengthPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<PasswordStrengthData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -53,7 +56,7 @@ export default function PasswordStrengthPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> Password Strength</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> {t("passwordStrength.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Password security distribution and policy compliance overview.</p>
       </div>
 

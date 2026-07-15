@@ -2,8 +2,11 @@
 
 import { useOrgCostAllocation } from "@ggid/sdk-react";
 import { DollarSign, TrendingUp, AlertTriangle, Download, FileText, Building } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OrgCostAllocationPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useOrgCostAllocation();
 
   if (loading) return <div className="p-8 text-gray-400">Loading cost allocation...</div>;

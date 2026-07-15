@@ -2,8 +2,11 @@
 
 import { useOAuthJwksManagement } from "@ggid/sdk-react";
 import { Key, RotateCw, CheckCircle, XCircle, Clock, Plus, Activity } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthJwksManagementPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, rotateKey, testEndpoint } = useOAuthJwksManagement();
 
   if (loading) return <div className="p-8 text-gray-400">Loading JWKS management...</div>;
