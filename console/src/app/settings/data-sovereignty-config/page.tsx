@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useDataSovereigntyConfig, DataSovereigntyConfig, ResidencyRegion, CrossBorderRule } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LocalSovereigntyViolation {
   region: string;
@@ -14,6 +15,7 @@ interface LocalDataSovereigntyConfig extends DataSovereigntyConfig {
 }
 
 export default function DataSovereigntyConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useDataSovereigntyConfig();
   const [form, setForm] = useState<LocalDataSovereigntyConfig | null>(null);
   const [saving, setSaving] = useState(false);

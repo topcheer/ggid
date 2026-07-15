@@ -1,9 +1,11 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface ExportJob { id: string; type: string; status: string; size: string; created: string; download: boolean; }
 
 export default function DataExportCenterPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

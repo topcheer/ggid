@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useComplianceAutomationConfig, ComplianceAutomationConfig, ContinuousMonitoringRule, FrameworkMapping, RemediationTrigger } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ComplianceAutomationConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useComplianceAutomationConfig();
   const [form, setForm] = useState<ComplianceAutomationConfig | null>(null);
   const [saving, setSaving] = useState(false);

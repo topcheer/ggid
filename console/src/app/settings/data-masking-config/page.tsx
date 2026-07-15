@@ -1,4 +1,5 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface PiiField {
@@ -12,6 +13,7 @@ interface PiiField {
 }
 
 export default function DataMaskingConfigPage() {
+  const t = useTranslations();
   const [fields, setFields] = useState<PiiField[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

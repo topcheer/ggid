@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Grid3x3 } from "lucide-react";
@@ -22,6 +23,7 @@ function scoreColor(score: number): string {
 }
 
 export default function ComplianceHeatmapPage() {
+  const t = useTranslations();
   const [framework, setFramework] = useState("SOC 2");
   const [data, setData] = useState<HeatmapData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +42,7 @@ export default function ComplianceHeatmapPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" /> Compliance Heatmap</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" />{t("complianceHeatmap.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Control coverage scores across months per framework.</p>
       </div>
 

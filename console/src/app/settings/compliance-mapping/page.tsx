@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   GitBranch, Loader2, AlertCircle, X, CheckCircle, XCircle, Clock, FileText, Activity,
 } from "lucide-react";
@@ -35,6 +36,7 @@ const statusColors: Record<string, string> = {
 const frameworks = ["SOC2", "GDPR", "HIPAA", "ISO27001", "PCI-DSS"];
 
 export default function ComplianceMappingPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [mappings, setMappings] = useState<ControlMapping[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export default function ComplianceMappingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><GitBranch className="h-6 w-6 text-teal-600" /> Compliance Mapping</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><GitBranch className="h-6 w-6 text-teal-600" />{t("complianceMapping.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Map security controls to compliance framework requirements.</p>
       </div>
 

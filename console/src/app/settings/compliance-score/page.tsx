@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { TrendingUp, TrendingDown, Award, Calendar } from "lucide-react";
@@ -19,6 +20,7 @@ interface FrameworkScore {
 const frameworks = ["SOC 2", "ISO 27001", "GDPR", "HIPAA", "PCI DSS", "NIST CSF"];
 
 export default function ComplianceScorePage() {
+  const t = useTranslations();
   const [selectedFramework, setSelectedFramework] = useState("SOC 2");
   const [data, setData] = useState<FrameworkScore | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export default function ComplianceScorePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Award className="w-6 h-6 text-blue-500" /> Compliance Score History</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Award className="w-6 h-6 text-blue-500" />{t("complianceScore.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track compliance score trends and gap reduction over time.</p>
       </div>
 

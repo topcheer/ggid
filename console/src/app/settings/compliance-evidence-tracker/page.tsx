@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useComplianceEvidenceTracker } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { FileCheck, AlertTriangle, Clock, CheckCircle } from "lucide-react";
 
 export default function ComplianceEvidenceTrackerPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useComplianceEvidenceTracker();
   const [activeTab, setActiveTab] = useState("SOC2");
 

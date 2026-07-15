@@ -1,0 +1,40 @@
+{
+  "en": {
+    "dataClassificationPolicy.title": "Data Classification Policy",
+    "dataMaskingConfig.title": "Data Masking Configuration",
+    "dataLossPrevention.title": "Data Loss Prevention",
+    "dataExportCenter.title": "Data Export Center",
+    "dataSovereigntyConfig.title": "Data Sovereignty Configuration",
+    "piiDiscovery.title": "PII Discovery",
+    "dsrTracker.title": "DSR Tracker",
+    "complianceAutomationConfig.title": "Compliance Automation Configuration",
+    "complianceDrift.title": "Compliance Drift",
+    "complianceEvidence.title": "Compliance Evidence",
+    "complianceEvidenceTracker.title": "Compliance Evidence Tracker",
+    "complianceGapHeatmap.title": "Compliance Gap Heatmap",
+    "complianceGapReport.title": "Compliance Gap Report",
+    "complianceHeatmap.title": "Compliance Heatmap",
+    "complianceMapping.title": "Compliance Mapping",
+    "complianceScore.title": "Compliance Score History",
+    "complianceTimeline.title": "Compliance Timeline"
+  },
+  "zh": {
+    "dataClassificationPolicy.title": "数据分类策略",
+    "dataMaskingConfig.title": "数据脱敏配置",
+    "dataLossPrevention.title": "数据防泄漏",
+    "dataExportCenter.title": "数据导出中心",
+    "dataSovereigntyConfig.title": "数据主权配置",
+    "piiDiscovery.title": "个人身份信息发现",
+    "dsrTracker.title": "数据主体请求跟踪器",
+    "complianceAutomationConfig.title": "合规自动化配置",
+    "complianceDrift.title": "合规偏移",
+    "complianceEvidence.title": "合规证据",
+    "complianceEvidenceTracker.title": "合规证据跟踪器",
+    "complianceGapHeatmap.title": "合规差距热力图",
+    "complianceGapReport.title": "合规差距报告",
+    "complianceHeatmap.title": "合规热力图",
+    "complianceMapping.title": "合规映射",
+    "complianceScore.title": "Compliance Score History",
+    "complianceTimeline.title": "合规时间线"
+  }
+}

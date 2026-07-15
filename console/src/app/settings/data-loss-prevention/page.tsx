@@ -1,9 +1,11 @@
 "use client";
 
 import { useDLP } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { ShieldBan, Play, AlertTriangle } from "lucide-react";
 
 export default function DLPPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testPolicy } = useDLP();
 
   if (loading) return <div className="p-8 text-gray-400">Loading DLP...</div>;

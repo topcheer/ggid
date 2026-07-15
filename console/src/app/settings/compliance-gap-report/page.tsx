@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useComplianceGapReport } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Download, AlertCircle, CheckCircle, Clock, FileText } from "lucide-react";
 
 export default function ComplianceGapReportPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useComplianceGapReport();
   const [selectedFramework, setSelectedFramework] = useState("SOC2");
 

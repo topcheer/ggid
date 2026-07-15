@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useComplianceGapHeatmap } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Grid3x3, Download } from "lucide-react";
 
 export default function ComplianceGapHeatmapPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useComplianceGapHeatmap();
   const [selectedCell, setSelectedCell] = useState<string | null>(null);
 

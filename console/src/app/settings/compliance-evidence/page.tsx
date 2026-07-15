@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   FileCheck, Loader2, AlertCircle, X, Download, Upload, Trash2, CheckCircle, XCircle, Clock,
 } from "lucide-react";
@@ -45,6 +46,7 @@ const artifactStatusColors: Record<string, string> = {
 const frameworks = ["SOC2", "GDPR", "HIPAA", "ISO27001", "PCI-DSS"];
 
 export default function ComplianceEvidencePage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [controls, setControls] = useState<ComplianceControl[]>([]);
   const [artifacts, setArtifacts] = useState<EvidenceArtifact[]>([]);
@@ -106,7 +108,7 @@ export default function ComplianceEvidencePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCheck className="h-6 w-6 text-emerald-600" /> Compliance Evidence</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCheck className="h-6 w-6 text-emerald-600" />{t("complianceEvidence.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Evidence collection and artifact management for compliance frameworks.</p>
         </div>
         <button onClick={handleExport} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"><Download className="h-4 w-4" /> Export</button>

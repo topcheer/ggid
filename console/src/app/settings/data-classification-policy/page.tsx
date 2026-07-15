@@ -1,9 +1,11 @@
 "use client";
 
 import { useDataClassificationPolicy } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Globe, FileText, Lock, ShieldAlert, Database, Sparkles } from "lucide-react";
 
 export default function DataClassificationPolicyPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useDataClassificationPolicy();
 
   if (loading) return <div className="p-8 text-gray-400">Loading data classification policy...</div>;

@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { GitCompare, Gauge, TrendingDown } from "lucide-react";
@@ -27,6 +28,7 @@ const riskColors: Record<string, string> = {
 const frameworks = ["SOC 2", "ISO 27001", "GDPR", "HIPAA", "PCI DSS", "NIST CSF"];
 
 export default function ComplianceDriftPage() {
+  const t = useTranslations();
   const [framework, setFramework] = useState("SOC 2");
   const [data, setData] = useState<DriftData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -47,7 +49,7 @@ export default function ComplianceDriftPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-orange-500" /> Compliance Drift</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-orange-500" />{t("complianceDrift.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track compliance posture changes between assessments.</p>
       </div>
 

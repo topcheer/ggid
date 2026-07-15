@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { FileText, Plus, Play, X, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -31,6 +32,7 @@ const statusColors: Record<string, string> = {
 };
 
 export default function DSRTrackerPage() {
+  const t = useTranslations();
   const [requests, setRequests] = useState<DSRRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -87,7 +89,7 @@ export default function DSRTrackerPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><FileText className="w-6 h-6 text-blue-500" /> DSR Tracker</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><FileText className="w-6 h-6 text-blue-500" />{t("dsrTracker.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">GDPR Data Subject Request tracking with SLA countdown.</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> New Request</button>
