@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 0
 - Remaining: 0
-- Last scan: 2026-07-15 round 24 (E2E regression tests — 11/11 PASS)
+- Last scan: 2026-07-15 round 25 (Focus D — Data Persistence)
 
 ## Findings
 
