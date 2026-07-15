@@ -1,9 +1,11 @@
 'use client';
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 
 interface Token { id: string; type: string; user: string; client: string; issued: string; expires: string; scopes: string[]; dpop: boolean; jti: string; }
 
 export default function TokenManagementPage() {
+  const t = useTranslations();
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export default function TokenManagementPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div><h1 className="text-2xl font-bold">Token Management</h1><p className="text-gray-600">View, revoke, and manage active OAuth tokens with JWT inspection.</p></div>
+      <div><h1 className="text-2xl font-bold">{t("backend.tokenManagement.title")}</h1><p className="text-gray-600">View, revoke, and manage active OAuth tokens with JWT inspection.</p></div>
 
       <div className="flex gap-3">
         <input type="text" placeholder="Search by jti..." value={searchJti} onChange={e => setSearchJti(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm font-mono" />
@@ -44,16 +46,16 @@ export default function TokenManagementPage() {
       </div>
 
       <section className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm"><thead className="bg-gray-50"><tr className="text-left"><th className="p-3"><input type="checkbox" className="rounded" /></th><th className="p-3">Type</th><th className="p-3">User</th><th className="p-3">Client</th><th className="p-3">Issued</th><th className="p-3">Expires</th><th className="p-3">Scopes</th><th className="p-3">DPoP</th><th className="p-3">Action</th></tr></thead>
-          <tbody>{filtered.map(t => (
-            <tr key={t.id} className="border-b hover:bg-gray-50">
-              <td className="p-3"><input type="checkbox" checked={batchRevoke.includes(t.id)} onChange={() => toggleBatch(t.id)} className="rounded" /></td>
-              <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${t.type === 'access' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{t.type}</span></td>
-              <td className="p-3 font-medium">{t.user}</td><td className="p-3 font-mono text-xs">{t.client}</td>
-              <td className="p-3 text-gray-500">{t.issued}</td><td className="p-3 text-gray-500">{t.expires}</td>
-              <td className="p-3"><div className="flex flex-wrap gap-1">{t.scopes.map(s => <span key={s} className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">{s}</span>)}</div></td>
-              <td className="p-3">{t.dpop ? <span className="text-green-600 text-xs">yes</span> : <span className="text-gray-400 text-xs">no</span>}</td>
-              <td className="p-3"><div className="flex gap-2"><button onClick={() => setSelected(t)} className="text-blue-600 text-xs hover:underline">View</button><button onClick={() => revoke(t.id)} className="text-red-600 text-xs hover:underline">Revoke</button></div></td>
+        <table className="w-full text-sm"><thead className="bg-gray-50"><tr className="text-left"><th className="p-3"><input type="checkbox" className="rounded" /></th><th className="p-3">{t("backend.tokenManagement.type")}</th><th className="p-3">{t("backend.tokenManagement.user")}</th><th className="p-3">{t("backend.tokenManagement.client")}</th><th className="p-3">{t("backend.tokenManagement.issued")}</th><th className="p-3">{t("backend.tokenManagement.expires")}</th><th className="p-3">{t("backend.tokenManagement.scopes")}</th><th className="p-3">{t("backend.tokenManagement.dpop")}</th><th className="p-3">{t("backend.tokenManagement.action")}</th></tr></thead>
+          <tbody>{filtered.map(tk => (
+            <tr key={tk.id} className="border-b hover:bg-gray-50">
+              <td className="p-3"><input type="checkbox" checked={batchRevoke.includes(tk.id)} onChange={() => toggleBatch(tk.id)} className="rounded" /></td>
+              <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${tk.type === 'access' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{tk.type}</span></td>
+              <td className="p-3 font-medium">{tk.user}</td><td className="p-3 font-mono text-xs">{tk.client}</td>
+              <td className="p-3 text-gray-500">{tk.issued}</td><td className="p-3 text-gray-500">{tk.expires}</td>
+              <td className="p-3"><div className="flex flex-wrap gap-1">{tk.scopes.map(s => <span key={s} className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">{s}</span>)}</div></td>
+              <td className="p-3">{tk.dpop ? <span className="text-green-600 text-xs">yes</span> : <span className="text-gray-400 text-xs">no</span>}</td>
+              <td className="p-3"><div className="flex gap-2"><button onClick={() => setSelected(tk)} className="text-blue-600 text-xs hover:underline">View</button><button onClick={() => revoke(tk.id)} className="text-red-600 text-xs hover:underline">{t("backend.tokenManagement.revoke")}</button></div></td>
             </tr>))}</tbody></table>
       </section>
 
