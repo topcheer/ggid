@@ -52,7 +52,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - docs/platform-completeness-report.md: finding #21 [DONE]; counts synchronized.
 - docs/platform-scan-state.md: round 22, next focus E2E regression.
 
+## [0.2.3] — CI Release Workflow Fix
+
+### Fixed
+- Release workflow  job now runs npm install/build in  with fallback from  to .
+- Bump Node SDK version to 1.0.2 to avoid npm publish conflict.
+
+### Changed
+- docs/platform-scan-state.md: Round 22 E2E 11/11 PASS; advance to Round 23 Focus C (Middleware).
+
 ## [Unreleased]
+
 
 
 
