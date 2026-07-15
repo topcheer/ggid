@@ -1,16 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useDataSovereigntyConfig, DataSovereigntyConfig, ResidencyRegion, CrossBorderRule, SovereigntyViolation } from "@ggid/sdk-react";
+import { useDataSovereigntyConfig, DataSovereigntyConfig, ResidencyRegion, CrossBorderRule } from "@ggid/sdk-react";
+
+interface LocalSovereigntyViolation {
+  region: string;
+  description: string;
+  timestamp: string;
+  severity: "high" | "medium" | "low";
+}
+
+interface LocalDataSovereigntyConfig extends DataSovereigntyConfig {
+  sovereignty_violations: LocalSovereigntyViolation[];
+}
 
 export default function DataSovereigntyConfigPage() {
   const { config, loading, error, fetchConfig, updateConfig } = useDataSovereigntyConfig();
-  const [form, setForm] = useState<DataSovereigntyConfig | null>(null);
+  const [form, setForm] = useState<LocalDataSovereigntyConfig | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
-  useEffect(() => { if (config) setForm(config); }, [config]);
+  useEffect(() => { if (config) setForm(config as unknown as LocalDataSovereigntyConfig); }, [config]);
 
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
+  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form as unknown as Parameters<typeof updateConfig>[0]); setSaving(false); };
 
   if (loading && !form) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
@@ -49,7 +60,7 @@ export default function DataSovereigntyConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Sovereignty Violations</h2>
         <div className="space-y-2">
-          {form.sovereignty_violations.map((v: SovereigntyViolation, i: number) => (
+          {form.sovereignty_violations.map((v, i) => (
             <div key={i} className="flex items-center justify-between border-b py-2">
               <div><span className="font-medium">{v.region}</span><span className="ml-2 text-sm text-gray-500">{v.description}</span></div>
               <div className="flex items-center gap-3">
@@ -61,7 +72,7 @@ export default function DataSovereigntyConfigPage() {
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button onClick={handleSave} disabled={saving} aria-label="Save data sovereignty config" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

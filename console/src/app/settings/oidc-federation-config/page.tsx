@@ -1,19 +1,42 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useOidcFederationConfig, OidcFederationConfig, TrustAnchor, EntityCategoryRequirement, FederatedProvider } from "@ggid/sdk-react";
+import { useOidcFederationConfig, OidcFederationConfig } from "@ggid/sdk-react";
+
+interface LocalTrustAnchor {
+  issuer: string;
+  jwks_uri: string;
+  trust_mark: string;
+}
+
+interface LocalFederatedProvider {
+  name: string;
+  issuer: string;
+  status: "active" | "inactive";
+}
+
+interface LocalEntityCategoryRequirement {
+  category: string;
+  required_claims: string[];
+}
+
+interface LocalOidcFederationConfig extends OidcFederationConfig {
+  trust_anchors: LocalTrustAnchor[];
+  federated_providers: LocalFederatedProvider[];
+  entity_category_requirements: LocalEntityCategoryRequirement[];
+}
 
 export default function OidcFederationConfigPage() {
   const { config, loading, error, fetchConfig, updateConfig } = useOidcFederationConfig();
-  const [form, setForm] = useState<OidcFederationConfig | null>(null);
+  const [form, setForm] = useState<LocalOidcFederationConfig | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
-  useEffect(() => { if (config) setForm(config); }, [config]);
+  useEffect(() => { if (config) setForm(config as unknown as LocalOidcFederationConfig); }, [config]);
 
   const handleSave = async () => {
     if (!form) return;
     setSaving(true);
-    await updateConfig(form);
+    await updateConfig(form as unknown as Parameters<typeof updateConfig>[0]);
     setSaving(false);
   };
 
@@ -42,7 +65,7 @@ export default function OidcFederationConfigPage() {
         <label className="block text-sm font-medium mb-2">Trust Resolution Policy</label>
         <select
           value={form.trust_resolution_policy}
-          onChange={(e) => setForm({ ...form, trust_resolution_policy: e.target.value as OidcFederationConfig["trust_resolution_policy"] })}
+          onChange={(e) => setForm({ ...form, trust_resolution_policy: e.target.value as LocalOidcFederationConfig["trust_resolution_policy"] })}
           className="border rounded px-3 py-2"
         >
           <option value="tree">Tree</option>
@@ -63,7 +86,7 @@ export default function OidcFederationConfigPage() {
             </tr>
           </thead>
           <tbody>
-            {form.trust_anchors.map((a: TrustAnchor, i: number) => (
+            {form.trust_anchors.map((a, i) => (
               <tr key={i} className="border-b">
                 <td className="py-2">{a.issuer}</td>
                 <td className="break-all">{a.jwks_uri}</td>
@@ -78,7 +101,7 @@ export default function OidcFederationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Federated Providers</h2>
         <div className="space-y-2">
-          {form.federated_providers.map((p: FederatedProvider, i: number) => (
+          {form.federated_providers.map((p, i) => (
             <div key={i} className="flex items-center justify-between border-b py-2">
               <div>
                 <span className="font-medium">{p.name}</span>
@@ -96,7 +119,7 @@ export default function OidcFederationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Entity Category Requirements</h2>
         <div className="space-y-3">
-          {form.entity_category_requirements.map((ecr: EntityCategoryRequirement, i: number) => (
+          {form.entity_category_requirements.map((ecr, i) => (
             <div key={i} className="border-b pb-2">
               <div className="font-medium">{ecr.category}</div>
               <div className="text-sm text-gray-500">Required Claims: {ecr.required_claims.join(", ")}</div>
@@ -105,9 +128,7 @@ export default function OidcFederationConfigPage() {
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-        {saving ? "Saving..." : "Save Changes"}
-      </button>
+      <button onClick={handleSave} disabled={saving} aria-label="Save OIDC federation config" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

@@ -1,16 +1,30 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useAbacConditionConfig, AbacConditionConfig, AttributeSource, ConditionTemplate } from "@ggid/sdk-react";
+import { useAbacConditionConfig, AttributeSource } from "@ggid/sdk-react";
+
+interface LocalConditionTemplate {
+  name: string;
+  description: string;
+  expression: string;
+}
+
+interface LocalAbacConditionConfig {
+  attribute_sources: AttributeSource[];
+  operators_per_type: Record<string, string[]>;
+  condition_templates: LocalConditionTemplate[];
+  evaluation_cache_ttl: number;
+  default_deny: boolean;
+}
 
 export default function AbacConditionConfigPage() {
   const { config, loading, error, fetchConfig, updateConfig } = useAbacConditionConfig();
-  const [form, setForm] = useState<AbacConditionConfig | null>(null);
+  const [form, setForm] = useState<LocalAbacConditionConfig | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
-  useEffect(() => { if (config) setForm(config); }, [config]);
+  useEffect(() => { if (config) setForm(config as unknown as LocalAbacConditionConfig); }, [config]);
 
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
+  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form as unknown as Parameters<typeof updateConfig>[0]); setSaving(false); };
 
   if (loading && !form) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
@@ -53,7 +67,7 @@ export default function AbacConditionConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Condition Templates</h2>
         <div className="space-y-3">
-          {form.condition_templates.map((t: ConditionTemplate, i: number) => (
+          {form.condition_templates.map((t, i) => (
             <div key={i} className="border-b pb-2">
               <div className="font-medium">{t.name}</div>
               <div className="text-sm text-gray-600">{t.description}</div>
@@ -79,7 +93,7 @@ export default function AbacConditionConfigPage() {
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button onClick={handleSave} disabled={saving} aria-label="Save ABAC condition config" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

@@ -1,17 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useOAuthJwksRotationConfig, OAuthJwksRotationConfig, RotationHistoryEntry } from "@ggid/sdk-react";
+import { useOAuthJwksRotationConfig, OAuthJwksRotationConfig } from "@ggid/sdk-react";
+
+interface LocalRotationHistoryEntry {
+  kid: string;
+  rotated_at: string;
+  algorithm: string;
+}
+
+interface LocalOAuthJwksRotationConfig extends OAuthJwksRotationConfig {
+  rotation_history: LocalRotationHistoryEntry[];
+}
 
 export default function OAuthJwksRotationConfigPage() {
   const { config, loading, error, fetchConfig, updateConfig, rotateNow } = useOAuthJwksRotationConfig();
-  const [form, setForm] = useState<OAuthJwksRotationConfig | null>(null);
+  const [form, setForm] = useState<LocalOAuthJwksRotationConfig | null>(null);
   const [saving, setSaving] = useState(false);
   const [rotating, setRotating] = useState(false);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
-  useEffect(() => { if (config) setForm(config); }, [config]);
+  useEffect(() => { if (config) setForm(config as unknown as LocalOAuthJwksRotationConfig); }, [config]);
 
-  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
+  const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form as unknown as Parameters<typeof updateConfig>[0]); setSaving(false); };
   const handleRotate = async () => { if (!confirm("Rotate JWKS keys now?")) return; setRotating(true); await rotateNow(); setRotating(false); };
 
   if (loading && !form) return <div className="p-8">Loading...</div>;
@@ -37,14 +47,14 @@ export default function OAuthJwksRotationConfigPage() {
       </div>
 
       <div className="flex gap-4">
-        <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
-        <button onClick={handleRotate} disabled={rotating} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">{rotating ? "Rotating..." : "Rotate Now"}</button>
+        <button onClick={handleSave} disabled={saving} aria-label="Save JWKS rotation config" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+        <button onClick={handleRotate} disabled={rotating} aria-label="Rotate JWKS keys now" className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50">{rotating ? "Rotating..." : "Rotate Now"}</button>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Rotation History</h2>
         <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">KID</th><th>Rotated At</th><th>Algorithm</th></tr></thead><tbody>
-          {form.rotation_history.map((h: RotationHistoryEntry, i: number) => (
+          {form.rotation_history.map((h, i) => (
             <tr key={i} className="border-b"><td className="py-2 font-mono text-xs">{h.kid}</td><td className="text-xs text-gray-500">{h.rotated_at}</td><td>{h.algorithm}</td></tr>
           ))}
         </tbody></table>
