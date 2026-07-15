@@ -154,6 +154,8 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/user-lifecycle/stages", h.handleUserLifecycleStages)
 	h.mux.HandleFunc("/api/v1/identity/saml/attribute-mapping", h.handleSAMLAttributeMapping)
 	h.mux.HandleFunc("/api/v1/identity/scim/group-mapping", h.handleSCIMGroupMapping)
+	h.mux.HandleFunc("/api/v1/identity/dashboard/stats", h.handleDashboardStats)
+	h.mux.HandleFunc("/api/v1/identity/joiner-dashboard", h.handleJoinerDashboard)
 	h.mux.HandleFunc("/api/v1/identity/scim/config", h.handleSCIMConfig)
 	h.mux.HandleFunc("/api/v1/identity/scim/config/sync", h.handleSCIMConfigSync)
 	h.mux.HandleFunc("/api/v1/identity/ldap/sync-config", h.handleLDAPSyncConfig)
