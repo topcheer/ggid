@@ -27,7 +27,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] — E2E Stability, SDK Alignment, and GeoIP Verification
+
+### Added
+- Agent Identity and Access Request (IGA) methods to Python, Java, Rust, Ruby, C#, Dart, and PHP SDKs.
+- GeoIP middleware regression tests for private IP handling, country block/allow lists, and upstream header passthrough.
+
+### Fixed
+- CI lint failure: removed unused  function in .
+- Docker Compose migrate container command syntax ( duplication) that prevented E2E tests from starting.
+- Duplicate entry for SDK alignment gap (#20) in platform-completeness-report.md.
+
+### Changed
+- : all productization gaps now [DONE].
+- : synchronized counts (Total 20 / Done 21 / Partial 0 / Remaining 0).
+
 ## [Unreleased]
+
 
 ### Added — Phase 9-10 Features
 
