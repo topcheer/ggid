@@ -12,12 +12,12 @@
 
 ## Summary
 
-- Total findings: 20
+- Total findings: 21
 - Done: 21
 - Fixed (pending verification): 0
 - Partial: 0
 - Remaining: 0
-- Last scan: 2026-07-15 round 20 (E2E regression tests — 11/11 PASS)
+- Last scan: 2026-07-15 round 21 (Focus B — Route Wiring)
 
 ## Findings
 
@@ -46,6 +46,7 @@
 | 18 | E2E Docker regression suite | deploy/e2e-docker-test.sh | Docker E2E tests were failing due to migrate container command typo. Fixed `sh` duplication; 11/11 E2E tests now PASS. | [DONE] | 6f7d68e0 |
 | 19 | Server handler coverage gaps | identity/internal/server, audit/internal/server, org/internal/server | Added focused HTTP handler tests for certification-status, management-chain, reassign, GDPR export, query-metrics, SIEM health, daily-aggregations, access-matrix, teams-export, membership-trends. | [DONE] | d0bdeb50 |
 | 20 | SDK alignment for Agent Identity / IGA | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | Agent Identity and Access Request methods added to all 7 SDKs (Python, Java, Rust, Ruby, C#, Dart, PHP). | [DONE] | 5cd72023 |
+| 21 | Gateway missing route prefixes | services/gateway/internal/config/config.go | Service routes `/api/v1/org/*`, `/api/v1/policy/*`, and `/api/v1/webauthn/*` were not registered in the API Gateway, causing 404 for those endpoints. Added prefixes mapping to org, policy, and auth services. | [DONE] | TBD |
 
 ### LOW Priority
 
@@ -93,6 +94,7 @@
 
 | 2026-07-15 | Round 19 — Focus A (Stub/Placeholder/TODO) | 0 | 0 (remaining stubs are intentional) |
 | 2026-07-15 | Round 20 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
+| 2026-07-15 | Round 21 — Focus B (Route Wiring) | +1 | 1 (gateway missing /api/v1/org, /api/v1/policy, /api/v1/webauthn prefixes) |
 ## Remaining Real Gaps (post-audit)
 
 1. **GeoIP MaxMind integration** (LOW, [DONE]) — gateway/middleware/geoip.go
@@ -100,8 +102,9 @@
 
 ## Next Actions
 
-- Round 20 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS, verified
-- Round 21 (odd, Focus B): Route Wiring scan
+- Round 21 (odd, Focus B): Route Wiring scan — /api/v1/org, /api/v1/policy, /api/v1/webauthn prefixes added to gateway config
+- Round 22 (even): E2E regression test run (`deploy/e2e-docker-test.sh`)
 - Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard
+
 
 
