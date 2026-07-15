@@ -209,6 +209,14 @@ func (s *OAuthService) UpdateClientMetadata(ctx context.Context, clientID string
 	if updates.TokenEndpointAuthMethod != nil {
 		client.TokenEndpointAuthMethod = *updates.TokenEndpointAuthMethod
 	}
+	if updates.Metadata != nil {
+		if client.Metadata == nil {
+			client.Metadata = make(map[string]any)
+		}
+		for k, v := range updates.Metadata {
+			client.Metadata[k] = v
+		}
+	}
 
 	return s.clientRepo.UpdateClient(ctx, tc.TenantID, clientID, client)
 }
@@ -216,12 +224,13 @@ func (s *OAuthService) UpdateClientMetadata(ctx context.Context, clientID string
 // ClientMetadataUpdate holds optional metadata fields for RFC 7592 PATCH.
 // Nil fields are not updated; non-nil fields replace the existing value.
 type ClientMetadataUpdate struct {
-	Name                      *string   `json:"client_name,omitempty"`
-	RedirectURIs              []string  `json:"redirect_uris,omitempty"`
-	GrantTypes                []string  `json:"grant_types,omitempty"`
-	ResponseTypes             []string  `json:"response_types,omitempty"`
-	Scopes                    []string  `json:"scope,omitempty"`
-	TokenEndpointAuthMethod   *string   `json:"token_endpoint_auth_method,omitempty"`
+	Name                      *string          `json:"client_name,omitempty"`
+	RedirectURIs              []string         `json:"redirect_uris,omitempty"`
+	GrantTypes                []string         `json:"grant_types,omitempty"`
+	ResponseTypes             []string         `json:"response_types,omitempty"`
+	Scopes                    []string         `json:"scope,omitempty"`
+	TokenEndpointAuthMethod   *string          `json:"token_endpoint_auth_method,omitempty"`
+	Metadata                  map[string]any   `json:"metadata,omitempty"`
 }
 
 // --- Authorization Code Flow ---

@@ -385,6 +385,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			IsolationLevel: tenant.IsolationShared,
 		})
 
+		client, err := oauthSvc.GetClient(ctx, clientID)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_client", "error_description": "client not found"})
+			return
+		}
+		if err := enforceFAPIAuthorize(client, r); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			return
+		}
+
 		scopes := []string{}
 		if scopeParam != "" {
 			scopes = strings.Split(scopeParam, " ")
@@ -473,6 +483,16 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		scopes := []string{}
 		if scopeParam != "" {
 			scopes = strings.Split(scopeParam, " ")
+		}
+
+		client, err := oauthSvc.GetClient(ctx, clientID)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_client", "error_description": "client not found"})
+			return
+		}
+		if err := enforceFAPIToken(client, r); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
+			return
 		}
 
 		var resp *service.TokenResponse
@@ -1420,6 +1440,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/jar/config", handleJARConfig)
 	mux.HandleFunc("/api/v1/oauth/oidc-federation/config", handleOIDCFederationConfig)
 	mux.HandleFunc("/api/v1/oauth/par/config", handlePARConfig)
+	mux.HandleFunc("/api/v1/oauth/fapi-config", handleFAPIConfig(oauthSvc))
 	mux.HandleFunc("/api/v1/oauth/token-rotation/config", handleTokenRotationConfig)
 	mux.HandleFunc("/api/v1/oauth/client-lifecycle/config", handleClientLifecycleConfig)
 	mux.HandleFunc("/api/v1/oauth/consent/config", handleConsentConfig)

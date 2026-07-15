@@ -21,13 +21,24 @@ type testClientRepo struct {
 }
 
 func (m *testClientRepo) CreateClient(_ context.Context, _ *domain.OAuthClient) error { return nil }
-func (m *testClientRepo) GetClientByID(_ context.Context, _ uuid.UUID, _ string) (*domain.OAuthClient, error) {
+func (m *testClientRepo) GetClientByID(_ context.Context, _ uuid.UUID, clientID string) (*domain.OAuthClient, error) {
+	for _, c := range m.clients {
+		if c.ClientID == clientID {
+			return c, nil
+		}
+	}
 	return nil, nil
 }
 func (m *testClientRepo) ListClients(_ context.Context, _ uuid.UUID, _, _ int) ([]*domain.OAuthClient, int, error) {
 	return m.clients, len(m.clients), nil
 }
-func (m *testClientRepo) UpdateClient(_ context.Context, _ uuid.UUID, _ string, _ *domain.OAuthClient) (*domain.OAuthClient, error) {
+func (m *testClientRepo) UpdateClient(_ context.Context, _ uuid.UUID, _ string, client *domain.OAuthClient) (*domain.OAuthClient, error) {
+	for i, c := range m.clients {
+		if c.ClientID == client.ClientID {
+			m.clients[i] = client
+			return client, nil
+		}
+	}
 	return nil, nil
 }
 func (m *testClientRepo) DeleteClient(_ context.Context, _ uuid.UUID, _ string) error { return nil }

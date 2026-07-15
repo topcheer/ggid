@@ -52,6 +52,24 @@ func (c *OAuthClient) IsPublic() bool { return c.Type == ClientTypePublic }
 // RequiresPKCE returns true if PKCE should be enforced (public clients or RequirePKCE flag).
 func (c *OAuthClient) RequiresPKCE() bool { return c.RequirePKCE || c.IsPublic() }
 
+// FAPI2_0 returns true if the client is configured for FAPI 2.0 profile.
+// The value is stored in client Metadata["fapi_2_0"].
+func (c *OAuthClient) FAPI2_0() bool {
+	if c.Metadata == nil {
+		return false
+	}
+	v, ok := c.Metadata["fapi_2_0"].(bool)
+	return ok && v
+}
+
+// SetFAPI2_0 sets the FAPI 2.0 flag in client Metadata.
+func (c *OAuthClient) SetFAPI2_0(enabled bool) {
+	if c.Metadata == nil {
+		c.Metadata = make(map[string]any)
+	}
+	c.Metadata["fapi_2_0"] = enabled
+}
+
 // SupportsGrantType checks if the client allows the given grant type.
 func (c *OAuthClient) SupportsGrantType(gt string) bool {
 	for _, g := range c.GrantTypes {
