@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -31,10 +32,11 @@ func (h *HTTPHandler) handleTenantResolve(w http.ResponseWriter, r *http.Request
 
 	// Query the tenants table directly (shared PG database).
 	row := h.svc.Pool().QueryRow(r.Context(),
-		`SELECT id::text, name, slug FROM tenants WHERE slug = $1 AND status = 'active'`)
+		`SELECT id::text, name, slug FROM tenants WHERE slug = $1 AND status = 'active'`, slug)
 
 	var t TenantInfo
 	if err := row.Scan(&t.ID, &t.Name, &t.Slug); err != nil {
+		log.Printf("tenant resolve: scan error for slug=%q: %v", slug, err)
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "tenant not found"})
 		return
 	}
