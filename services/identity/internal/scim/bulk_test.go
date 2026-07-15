@@ -16,6 +16,7 @@ import (
 	"github.com/ggid/ggid/services/identity/internal/repository"
 	"github.com/ggid/ggid/services/identity/internal/service"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // --- In-memory mock repo for SCIM bulk tests ---
@@ -32,6 +33,8 @@ func newBulkMockRepo() *bulkMockRepo {
 		emails: make(map[uuid.UUID]*domain.UserEmail),
 	}
 }
+
+func (m *bulkMockRepo) Pool() *pgxpool.Pool { return nil }
 
 func (m *bulkMockRepo) CreateUser(_ context.Context, user *domain.User) error {
 	if m.createUserErr != nil {

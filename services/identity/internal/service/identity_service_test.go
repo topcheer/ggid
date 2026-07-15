@@ -11,6 +11,7 @@ import (
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // mockRepo is a configurable in-memory mock for UserRepository.
@@ -281,6 +282,8 @@ func (m *mockRepo) FindExternalIdentity(_ context.Context, _ uuid.UUID, provider
 	}
 	return nil, gerr.NotFound("external identity", provider+":"+externalID)
 }
+
+func (m *mockRepo) Pool() *pgxpool.Pool { return nil }
 
 // --- Test Helpers ---
 
