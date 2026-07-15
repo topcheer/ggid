@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Camera, History, RotateCcw, X, AlertTriangle } from "lucide-react";
@@ -13,6 +14,7 @@ interface Snapshot {
 }
 
 export default function PolicySnapshotsPage() {
+  const t = useTranslations();
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -78,7 +80,7 @@ export default function PolicySnapshotsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Camera className="w-6 h-6 text-blue-500" /> Policy Snapshots</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Camera className="w-6 h-6 text-blue-500" />{t("policySnapshots.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Create versioned snapshots and roll back policies.</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2">

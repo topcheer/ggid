@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { usePolicyVisualEditor } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Boxes, FileJson, Upload, CheckCircle, Layers, Play } from "lucide-react";
 
 export default function PolicyVisualEditorPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, validateFlow } = usePolicyVisualEditor();
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 

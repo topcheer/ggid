@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   GitBranch, RotateCcw, Plus, Trash2, X, AlertCircle, Loader2,
   Check, Clock, ArrowRight, Shield,
@@ -19,6 +20,7 @@ interface PolicyVersion {
 }
 
 export default function PolicyVersionsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [versions, setVersions] = useState<PolicyVersion[]>([]);
   const [loading, setLoading] = useState(true);

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { usePolicyBreakGlass } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { ShieldAlert, Zap, Clock, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
 export default function PolicyBreakGlassPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, activateBreakGlass } = usePolicyBreakGlass();
   const [showModal, setShowModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState("");

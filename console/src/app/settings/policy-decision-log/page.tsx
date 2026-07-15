@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { ScrollText, Download, Filter, ShieldCheck, ShieldX } from "lucide-react";
@@ -16,6 +17,7 @@ interface Decision {
 }
 
 export default function PolicyDecisionLogPage() {
+  const t = useTranslations();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterDecision, setFilterDecision] = useState("");
@@ -38,7 +40,7 @@ export default function PolicyDecisionLogPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ScrollText className="w-6 h-6 text-blue-500" /> Policy Decision Log</h1><p className="text-sm text-gray-500 mt-1">Policy evaluation decisions with matched rules and timing.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><ScrollText className="w-6 h-6 text-blue-500" />{t("policyDecisionLog.title")}</h1><p className="text-sm text-gray-500 mt-1">Policy evaluation decisions with matched rules and timing.</p></div>
         <button onClick={exportCSV} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-1"><Download className="w-3.5 h-3.5" /> Export CSV</button>
       </div>
 

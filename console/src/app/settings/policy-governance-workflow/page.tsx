@@ -1,9 +1,11 @@
 "use client";
 
 import { usePolicyGovernanceWorkflow } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { GitBranch, Users, Clock, ShieldAlert, CheckCircle, FileText, AlertTriangle } from "lucide-react";
 
 export default function PolicyGovernanceWorkflowPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = usePolicyGovernanceWorkflow();
 
   if (loading) return <div className="p-8 text-gray-400">Loading policy governance workflow...</div>;

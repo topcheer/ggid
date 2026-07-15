@@ -1,9 +1,11 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Lightbulb, Check, X, Sparkles, AlertTriangle, RotateCcw } from "lucide-react";
 interface Recommendation { id: string; type: "consolidate" | "split" | "create" | "delete"; affected_policies: string[]; reason: string; risk_reduction_score: number; confidence: number; before_summary: string; after_summary: string; }
 const typeColors: Record<string, string> = { consolidate: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400", split: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400", create: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", delete: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 export default function PolicyRecommendationPage() {
+  const t = useTranslations();
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,7 @@ export default function PolicyRecommendationPage() {
   };
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Lightbulb className="w-6 h-6 text-yellow-500" /> Policy Recommendations</h1><p className="text-sm text-gray-500 mt-1">AI-powered policy optimization recommendations.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Lightbulb className="w-6 h-6 text-yellow-500" />{t("policyRecommendation.title")}</h1><p className="text-sm text-gray-500 mt-1">AI-powered policy optimization recommendations.</p></div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">Retry</button></div>}
       {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">Loading recommendations...</div></div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

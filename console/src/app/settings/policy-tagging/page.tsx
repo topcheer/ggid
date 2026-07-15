@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { usePolicyTagging } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Tag, Tags, Plus, Filter, Layers } from "lucide-react";
 
 export default function PolicyTaggingPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = usePolicyTagging();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");

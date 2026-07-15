@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   FileCode, Loader2, AlertCircle, X, Upload, Download, Play, Trash2, GitCompare,
 } from "lucide-react";
@@ -16,6 +17,7 @@ interface PolicyFile {
 }
 
 export default function PolicyAsCodePage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [policies, setPolicies] = useState<PolicyFile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +69,7 @@ export default function PolicyAsCodePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCode className="h-6 w-6 text-emerald-600" /> Policy as Code</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><FileCode className="h-6 w-6 text-emerald-600" />{t("policyAsCode.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Define, version, and deploy access policies as YAML.</p>
         </div>
         <button onClick={() => setShowImport(true)} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"><Upload className="h-4 w-4" /> Import YAML</button>

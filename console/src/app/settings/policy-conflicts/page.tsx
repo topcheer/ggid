@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { AlertOctagon, ChevronRight } from "lucide-react";
@@ -21,6 +22,7 @@ const sevColors: Record<string, string> = {
 };
 
 export default function PolicyConflictsPage() {
+  const t = useTranslations();
   const [conflicts, setConflicts] = useState<ConflictPair[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export default function PolicyConflictsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><AlertOctagon className="w-6 h-6 text-red-500" /> Policy Conflicts</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><AlertOctagon className="w-6 h-6 text-red-500" />{t("policyConflicts.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Detect overlapping or contradictory rules across active policies.</p>
       </div>
 

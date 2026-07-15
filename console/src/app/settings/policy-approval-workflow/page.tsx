@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle, Clock, ChevronRight } from "lucide-react";
@@ -24,6 +25,7 @@ const riskColors: Record<string, string> = {
 };
 
 export default function PolicyApprovalWorkflowPage() {
+  const t = useTranslations();
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function PolicyApprovalWorkflowPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><CheckCircle className="w-6 h-6 text-green-500" /> Policy Approval Workflow</h1><p className="text-sm text-gray-500 mt-1">Review and approve pending policy changes with approval chains.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><CheckCircle className="w-6 h-6 text-green-500" />{t("policyApprovalWorkflow.title")}</h1><p className="text-sm text-gray-500 mt-1">Review and approve pending policy changes with approval chains.</p></div>
 
       <div className="space-y-3">
         {approvals.map((a) => (

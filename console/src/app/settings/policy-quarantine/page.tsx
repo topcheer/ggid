@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useCallback } from "react";
 import { ShieldOff, AlertTriangle, Undo, Clock } from "lucide-react";
@@ -17,6 +18,7 @@ interface QuarantineResult {
 interface Policy { id: string; name: string; }
 
 export default function PolicyQuarantinePage() {
+  const t = useTranslations();
   const [policies] = useState<Policy[]>([{ id: "p1", name: "Admin Access" }, { id: "p2", name: "Data Access" }, { id: "p3", name: "External Partner" }]);
   const [policyId, setPolicyId] = useState("");
   const [reason, setReason] = useState("");
@@ -37,7 +39,7 @@ export default function PolicyQuarantinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldOff className="w-6 h-6 text-red-500" /> Policy Quarantine</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldOff className="w-6 h-6 text-red-500" />{t("policyQuarantine.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Temporarily isolate a policy with automatic re-enable and rollback plan.</p>
       </div>
 

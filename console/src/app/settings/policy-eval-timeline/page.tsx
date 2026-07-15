@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { usePolicyEvalTimeline } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Clock, Zap, CheckCircle } from "lucide-react";
 
 export default function PolicyEvalTimelinePage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = usePolicyEvalTimeline();
   const [selectedPolicy, setSelectedPolicy] = useState("");
 

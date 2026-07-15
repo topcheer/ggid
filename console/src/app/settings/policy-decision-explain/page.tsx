@@ -1,10 +1,12 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState } from "react";
 import { Brain, Play, CheckCircle, XCircle, ChevronRight } from "lucide-react";
 
 interface ExplainResult { decision: "allow" | "deny" | "no_match"; confidence: number; matched_rules: { rule: string; effect: string; priority: number }[]; contributing_factors: string[]; alternatives: { policy: string; decision: string }[]; eval_path: string[]; }
 
 export default function PolicyDecisionExplainPage() {
+  const t = useTranslations();
   const [subject, setSubject] = useState("");
   const [resource, setResource] = useState("");
   const [action, setAction] = useState("");
@@ -24,7 +26,7 @@ export default function PolicyDecisionExplainPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Brain className="w-6 h-6 text-purple-500" /> Decision Explainer</h1><p className="text-sm text-gray-500 mt-1">Understand why a policy decision was made with full evaluation path.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Brain className="w-6 h-6 text-purple-500" />{t("policyDecisionExplain.title")}</h1><p className="text-sm text-gray-500 mt-1">Understand why a policy decision was made with full evaluation path.</p></div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-3 gap-3">

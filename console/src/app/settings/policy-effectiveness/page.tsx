@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   BarChart3, Loader2, AlertCircle, X, TrendingUp, CheckCircle, XCircle,
 } from "lucide-react";
@@ -19,6 +20,7 @@ interface PolicyStat {
 }
 
 export default function PolicyEffectivenessPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [stats, setStats] = useState<PolicyStat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +43,7 @@ export default function PolicyEffectivenessPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><BarChart3 className="h-6 w-6 text-indigo-600" /> Policy Effectiveness</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><BarChart3 className="h-6 w-6 text-indigo-600" />{t("policyEffectiveness.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Policy trigger counts, allow/deny ratios, and top matching rules.</p>
       </div>
 

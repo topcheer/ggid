@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { usePolicyAbacEvaluator } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Play, CheckCircle, XCircle, Clock, FileSearch, Layers } from "lucide-react";
 
 export default function PolicyAbacEvaluatorPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, evaluate } = usePolicyAbacEvaluator();
   const [userAttrs, setUserAttrs] = useState('{"department": "finance", "role": "analyst"}');
   const [resourceAttrs, setResourceAttrs] = useState('{"type": "document", "classification": "confidential"}');

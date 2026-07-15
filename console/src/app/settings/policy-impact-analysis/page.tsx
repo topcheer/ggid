@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { usePolicyImpactAnalysis } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Users, GitCompare, AlertTriangle, TrendingUp, ShieldCheck } from "lucide-react";
 
 export default function PolicyImpactAnalysisPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = usePolicyImpactAnalysis();
   const [selectedPolicy, setSelectedPolicy] = useState("");
 

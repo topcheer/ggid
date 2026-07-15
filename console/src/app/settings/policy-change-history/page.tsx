@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useCallback } from "react";
 import { History, RotateCcw, GitCompare } from "lucide-react";
@@ -21,6 +22,7 @@ const typeColors: Record<string, string> = {
 };
 
 export default function PolicyChangeHistoryPage() {
+  const t = useTranslations();
   const [policies] = useState<Policy[]>([{ id: "p1", name: "Data Access" }, { id: "p2", name: "Admin Access" }, { id: "p3", name: "External Partner" }]);
   const [policyId, setPolicyId] = useState("");
   const [history, setHistory] = useState<ChangeEntry[]>([]);
@@ -44,7 +46,7 @@ export default function PolicyChangeHistoryPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><History className="w-6 h-6 text-purple-500" /> Policy Change History</h1><p className="text-sm text-gray-500 mt-1">Track policy changes with version diffs, rollback, and comparison.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><History className="w-6 h-6 text-purple-500" />{t("policyChangeHistory.title")}</h1><p className="text-sm text-gray-500 mt-1">Track policy changes with version diffs, rollback, and comparison.</p></div>
 
       <div className="flex items-center gap-3">
         <select value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
