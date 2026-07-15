@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Loader2 } from "lucide-react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -74,6 +75,7 @@ export default function SecuritySettingsPage() {
   const { apiFetch } = useApi();
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // --- Password change ---
   const [pwForm, setPwForm] = useState({ current: "", newPw: "", confirm: "" });
@@ -165,6 +167,10 @@ export default function SecuritySettingsPage() {
   }, [apiFetch]);
 
   // Auto-dismiss messages
+  useEffect(() => {
+    setLoading(false);
+  }, [sessionsLoaded, mfaLoaded]);
+
   useEffect(() => {
     if (msg) {
       const t = setTimeout(() => setMsg(null), 3000);
@@ -368,6 +374,12 @@ export default function SecuritySettingsPage() {
         return Globe;
     }
   };
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-12">
+      <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+    </div>
+  );
 
   return (
     <div className="max-w-3xl">
