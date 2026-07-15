@@ -462,6 +462,8 @@ CREATE TABLE IF NOT EXISTS audit_events (
     user_agent    TEXT DEFAULT '',
     request_id    VARCHAR(64) DEFAULT '',
     metadata      JSONB DEFAULT '{}',
+    prev_hash     TEXT,
+    event_hash    TEXT,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
