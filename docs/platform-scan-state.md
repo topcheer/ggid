@@ -1,10 +1,10 @@
 # Platform Scan State
 
 ## Current round: 60
-## Last scan focus: D (Data Persistence) + E2E chain verification — 4 broken chains fixed
+## Last scan focus: D (Data Persistence) + E2E chain verification — 11 broken chains fixed (4 + 7)
 ## Next scan focus: E (E2E Regression) — Round 61
-## Total findings: 36
-## Done: 35
+## Total findings: 43
+## Done: 42
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
