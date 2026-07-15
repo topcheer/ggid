@@ -63,6 +63,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] — Node SDK 1.0.5 Release
+
+### Fixed
+- Bump Node SDK to 1.0.5 to avoid npm publish conflict.
+
+
 ## [0.3.2] — Retry Release After CI Runner Timeout
 
 ### Fixed
