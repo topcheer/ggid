@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "@/lib/i18n";
 import { ClipboardCheck, Search, Check, X, Edit3, MessageSquare, Users } from "lucide-react";
 
 interface CertificationUser {
@@ -37,6 +38,8 @@ export default function AccessCertificationPage() {
   const [search, setSearch] = useState("");
   const [commentUser, setCommentUser] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
+
+  const t = useTranslations();
 
   const fetchCampaigns = useCallback(async () => {
     try {
@@ -81,24 +84,24 @@ export default function AccessCertificationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ClipboardCheck className="w-6 h-6 text-blue-500" /> Access Review Certification</h1>
-        <p className="text-sm text-gray-500 mt-1">Review and certify user access for compliance campaigns.</p>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ClipboardCheck className="w-6 h-6 text-blue-500" /> {t("accessCertification.title")}</h1>
+        <p className="text-sm text-gray-500 mt-1">{t("accessCertification.subtitle")}</p>
       </div>
 
       {/* Campaign selector + search */}
       <div className="flex items-center gap-3 flex-wrap">
         <select value={selectedCampaign} onChange={(e) => setSelectedCampaign(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-          <option value="">Select a campaign...</option>
+          <option value="">{t("accessCertification.selectCampaign")}</option>
           {campaigns.map((c) => (
             <option key={c.id} value={c.id}>{c.name} ({c.completed}/{c.total_users} done)</option>
           ))}
         </select>
         {selectedCampaignObj && (
-          <span className="text-xs text-gray-500">Deadline: {selectedCampaignObj.deadline} · Framework: {selectedCampaignObj.framework}</span>
+          <span className="text-xs text-gray-500">{t("accessCertification.deadline")} {selectedCampaignObj.deadline} · {t("accessCertification.framework")} {selectedCampaignObj.framework}</span>
         )}
         <div className="relative flex-1 max-w-xs ml-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
+          <input type="text" placeholder={t("accessCertification.searchUsers")} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
       </div>
 
@@ -106,8 +109,8 @@ export default function AccessCertificationPage() {
       {selectedCampaignObj && (
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium flex items-center gap-2"><Users className="w-4 h-4" /> Campaign Progress</span>
-            <span className="text-sm text-gray-500">{selectedCampaignObj.completed}/{selectedCampaignObj.total_users} certified</span>
+            <span className="text-sm font-medium flex items-center gap-2"><Users className="w-4 h-4" /> {t("accessCertification.campaignProgress")}</span>
+            <span className="text-sm text-gray-500">{selectedCampaignObj.completed}/{selectedCampaignObj.total_users} {t("accessCertification.certified")}</span>
           </div>
           <div className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
             <div className="h-full bg-blue-500" style={{ width: `${(selectedCampaignObj.completed / Math.max(1, selectedCampaignObj.total_users)) * 100}%` }} />
@@ -132,9 +135,9 @@ export default function AccessCertificationPage() {
                 </div>
                 {u.status === "pending" && (
                   <div className="flex items-center gap-1">
-                    <button onClick={() => submitDecision(u.user_id, "certified")} className="px-2 py-1 rounded text-xs font-medium text-green-700 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 flex items-center gap-1"><Check className="w-3 h-3" /> Certify</button>
-                    <button onClick={() => submitDecision(u.user_id, "revoked")} className="px-2 py-1 rounded text-xs font-medium text-red-700 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 flex items-center gap-1"><X className="w-3 h-3" /> Revoke</button>
-                    <button onClick={() => submitDecision(u.user_id, "modified")} className="px-2 py-1 rounded text-xs font-medium text-blue-700 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 flex items-center gap-1"><Edit3 className="w-3 h-3" /> Modify</button>
+                    <button onClick={() => submitDecision(u.user_id, "certified")} className="px-2 py-1 rounded text-xs font-medium text-green-700 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 flex items-center gap-1"><Check className="w-3 h-3" /> {t("accessCertification.certify")}</button>
+                    <button onClick={() => submitDecision(u.user_id, "revoked")} className="px-2 py-1 rounded text-xs font-medium text-red-700 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 flex items-center gap-1"><X className="w-3 h-3" /> {t("accessCertification.revoke")}</button>
+                    <button onClick={() => submitDecision(u.user_id, "modified")} className="px-2 py-1 rounded text-xs font-medium text-blue-700 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 flex items-center gap-1"><Edit3 className="w-3 h-3" /> {t("accessCertification.modify")}</button>
                     <button onClick={() => { setCommentUser(u.user_id); setCommentText(u.comment); }} className="p-1 rounded text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><MessageSquare className="w-4 h-4" /></button>
                   </div>
                 )}
@@ -142,15 +145,15 @@ export default function AccessCertificationPage() {
               {/* Inline comment editor */}
               {commentUser === u.user_id && (
                 <div className="mt-2 flex items-center gap-2">
-                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
-                  <button onClick={() => { submitDecision(u.user_id, u.status === "pending" ? "certified" : u.status, commentText); setCommentUser(null); }} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Save Comment</button>
-                  <button onClick={() => setCommentUser(null)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
+                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t("accessCertification.addComment")} className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                  <button onClick={() => { submitDecision(u.user_id, u.status === "pending" ? "certified" : u.status, commentText); setCommentUser(null); }} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">{t("accessCertification.saveComment")}</button>
+                  <button onClick={() => setCommentUser(null)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm">{t("accessCertification.cancel")}</button>
                 </div>
               )}
             </div>
           ))}
           {filteredUsers.length === 0 && !loading && (
-            <p className="px-4 py-8 text-center text-sm text-gray-500">{selectedCampaign ? "No users in this campaign." : "Select a campaign to begin."}</p>
+            <p className="px-4 py-8 text-center text-sm text-gray-500">{selectedCampaign ? t("accessCertification.noUsers") : t("accessCertification.selectToBegin")}</p>
           )}
         </div>
       </div>
