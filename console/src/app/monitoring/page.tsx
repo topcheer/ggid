@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
+import { DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useI18n } from "@/lib/i18n";
 import { Server, Activity, CheckCircle2, XCircle, RefreshCw, TrendingUp } from "lucide-react";
 
@@ -20,13 +21,13 @@ interface GatewayStats {
 }
 
 const SERVICES: Omit<ServiceHealth, "status">[] = [
-  { name: "Gateway", url: "http://localhost:8080/healthz" },
-  { name: "Identity", url: "http://localhost:8081/healthz" },
-  { name: "Auth", url: "http://localhost:9001/healthz" },
-  { name: "OAuth", url: "http://localhost:9005/healthz" },
-  { name: "Policy", url: "http://localhost:8070/healthz" },
-  { name: "Org", url: "http://localhost:8071/healthz" },
-  { name: "Audit", url: "http://localhost:8072/healthz" },
+  { name: "Gateway", url: "/healthz" },
+  { name: "Identity", url: "/api/v1/identity/healthz" },
+  { name: "Auth", url: "/api/v1/auth/healthz" },
+  { name: "OAuth", url: "/api/v1/oauth/healthz" },
+  { name: "Policy", url: "/api/v1/policy/healthz" },
+  { name: "Org", url: "/api/v1/org/healthz" },
+  { name: "Audit", url: "/api/v1/audit/healthz" },
 ];
 
 export default function MonitoringPage() {
@@ -46,7 +47,10 @@ export default function MonitoringPage() {
         SERVICES.map(async (svc) => {
           const start = Date.now();
           try {
-            const resp = await fetch(svc.url, { signal: AbortSignal.timeout(3000) });
+            const resp = await fetch(svc.url, {
+              signal: AbortSignal.timeout(3000),
+              headers: { "X-Tenant-ID": DEFAULT_TENANT_ID },
+            });
             return {
               ...svc,
               status: resp.ok ? "healthy" as const : "unhealthy" as const,
