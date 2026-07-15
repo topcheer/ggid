@@ -47,15 +47,15 @@ export default function WebhookSubscriptionsPage() {
     fetchData();
   }, [t]);
 
-  const [showAdd, setShowAdd] = useState(false);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
-  const [subs] = useState<WebhookSubscription[]>([
+  const [showAdd, setShowAdd] = useState(false);const [subs] = useState<WebhookSubscription[]>([
     { id: "wh-001", url: "https://hooks.example.com/users", events: ["user.created", "user.updated"], enabled: true, last_delivery: "2025-01-15 16:01", status: "delivered" },
     { id: "wh-002", url: "https://api.slack.com/hooks/xyz", events: ["auth.login_failed", "policy.violation"], enabled: true, last_delivery: "2025-01-15 15:45", status: "delivered" },
     { id: "wh-003", url: "https://legacy.internal/api/audit", events: ["audit.*"], enabled: false, last_delivery: "2025-01-14 09:00", status: "failed" },
   ]);
-  const [history] = useState<DeliveryRecord[]>([
+
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
+    const [history] = useState<DeliveryRecord[]>([
     { timestamp: "16:01:23", event: "user.created", status_code: 200, latency_ms: 145, success: true },
     { timestamp: "15:58:01", event: "user.updated", status_code: 200, latency_ms: 89, success: true },
     { timestamp: "15:45:15", event: "auth.login_failed", status_code: 500, latency_ms: 3021, success: false },

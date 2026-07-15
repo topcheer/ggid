@@ -33,15 +33,15 @@ export default function GrpcInterceptorConfigPage() {
     fetchData();
   }, []);
 
-  const [serviceName, setServiceName] = useState('identity.v1.IdentityService');
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [interceptors, setInterceptors] = useState<Interceptor[]>([
+  const [serviceName, setServiceName] = useState('identity.v1.IdentityService');const [interceptors, setInterceptors] = useState<Interceptor[]>([
     { id: 'auth', type: 'AuthInterceptor', enabled: true, order: 1, config: 'validate access token' },
     { id: 'log', type: 'LoggingInterceptor', enabled: true, order: 2, config: 'log all unary calls' },
     { id: 'metric', type: 'MetricsInterceptor', enabled: false, order: 3, config: 'emit grpc_server metrics' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
   const toggleInterceptor = (id: string) => {
     setInterceptors(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
   };

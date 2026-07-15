@@ -42,21 +42,21 @@ export default function ApiVersioningConfigPage() {
   const [currentVersion, setCurrentVersion] = useState('v2');
   const [sunsetPolicy, setSunsetPolicy] = useState('deprecation');
   const [deprecationPeriod, setDeprecationPeriod] = useState(180);
-  const [versioningStyle, setVersioningStyle] = useState('header');
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [versions, setVersions] = useState<ApiVersion[]>([
+  const [versioningStyle, setVersioningStyle] = useState('header');const [versions, setVersions] = useState<ApiVersion[]>([
     { version: 'v2', status: 'active', releaseDate: '2026-06-01', sunsetDate: '-', consumers: 142 },
     { version: 'v1', status: 'deprecated', releaseDate: '2025-01-15', sunsetDate: '2026-12-31', consumers: 23 },
     { version: 'v0', status: 'sunset', releaseDate: '2024-03-01', sunsetDate: '2025-06-01', consumers: 0 },
   ]);
-
-  const [breakingChanges, setBreakingChanges] = useState([
+const [breakingChanges, setBreakingChanges] = useState([
     { version: 'v2', change: 'Removed /users/legacy endpoint', impact: 'high', date: '2026-06-01' },
     { version: 'v2', change: 'Changed role schema to include key field', impact: 'medium', date: '2026-06-01' },
     { version: 'v1', change: 'Added X-Tenant-ID header requirement', impact: 'medium', date: '2025-08-01' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
+  
   const addVersion = () => {
     const next = `v${versions.length}`;
     setVersions(prev => [...prev, { version: next, status: 'draft', releaseDate: '-', sunsetDate: '-', consumers: 0 }]);

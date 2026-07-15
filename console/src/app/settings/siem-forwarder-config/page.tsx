@@ -54,21 +54,21 @@ export default function SiemForwarderConfigPage() {
   const [showForm, setShowForm] = useState(false);
   const [newDest, setNewDest] = useState({ name: '', type: 'HTTP Webhook', url: '', authMethod: 'Bearer Token', batchSize: 100 });
   const [testTarget, setTestTarget] = useState<SiemDestination | null>(null);
-  const [testResult, setTestResult] = useState('');
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
-  const [destinations, setDestinations] = useState<SiemDestination[]>([
+  const [testResult, setTestResult] = useState('');const [destinations, setDestinations] = useState<SiemDestination[]>([
     { id: 'd1', name: 'Splunk Production', type: 'Splunk', url: 'https://splunk.ggid.io:8088/services/collector', authMethod: 'HEC Token', batchSize: 100, status: 'active', eventsForwarded: 15420 },
     { id: 'd2', name: 'ELK Stack', type: 'ELK', url: 'https://elastic.ggid.io:9200/audit/_bulk', authMethod: 'API Key', batchSize: 200, status: 'active', eventsForwarded: 8230 },
     { id: 'd3', name: 'Datadog SIEM', type: 'Datadog', url: 'https://http-intake.logs.datadoghq.com/v1/input', authMethod: 'API Key', batchSize: 50, status: 'inactive', eventsForwarded: 0 },
   ]);
-
-  const [filters, setFilters] = useState<FilterRule[]>([
+const [filters, setFilters] = useState<FilterRule[]>([
     { id: 'f1', field: 'severity', operator: '>=', value: 'WARN' },
     { id: 'f2', field: 'source_type', operator: '==', value: 'auth' },
     { id: 'f3', field: 'tenant', operator: '!=', value: 'test-tenant' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">{t("common.error")}: {error}</div>;
+  
+  
 
   const types = ['Splunk', 'ELK', 'Datadog', 'HTTP Webhook'];
   const authMethods = ['HEC Token', 'API Key', 'Bearer Token', 'Basic Auth', 'None'];

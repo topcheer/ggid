@@ -33,16 +33,16 @@ export default function WebhookDeliveryMonitorPage() {
   }, []);
 
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selected, setSelected] = useState<Delivery | null>(null);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [deliveries] = useState<Delivery[]>([
+  const [selected, setSelected] = useState<Delivery | null>(null);const [deliveries] = useState<Delivery[]>([
     { id: 'd1', webhook: 'Splunk Prod', event: 'user.login', status: 'success', attempts: 1, latency: '45ms', nextRetry: '-' },
     { id: 'd2', webhook: 'ELK Cluster', event: 'policy.update', status: 'success', attempts: 1, latency: '120ms', nextRetry: '-' },
     { id: 'd3', webhook: 'Datadog', event: 'alert.triggered', status: 'failed', attempts: 3, latency: '850ms', nextRetry: '14:35' },
     { id: 'd4', webhook: 'Webhook', event: 'user.created', status: 'dead_letter', attempts: 5, latency: '-', nextRetry: '-' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
   const filtered = deliveries.filter(d => statusFilter === 'all' || d.status === statusFilter);
   const statusColor = (s: string) => s === 'success' ? 'bg-green-100 text-green-700' : s === 'failed' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600';
   const stats = { total: 15420, success: 98.5, failed: 2, deadLetter: 23 };

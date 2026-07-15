@@ -48,10 +48,7 @@ export default function SbomCenterPage() {
   }, []);
 
   const [selectedComponent, setSelectedComponent] = useState<SbomComponent | null>(null);
-  const [showJson, setShowJson] = useState(false);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [components, setComponents] = useState<SbomComponent[]>([
+  const [showJson, setShowJson] = useState(false);const [components, setComponents] = useState<SbomComponent[]>([
     { name: 'gin-gonic/gin', version: 'v1.10.0', license: 'MIT', severity: 'low', description: 'HTTP web framework for Go', cpe: 'cpe:2.3:a:gin-gonic:gin:1.10.0:*:*:*:*:*:*:*', purl: 'pkg:golang/github.com/gin-gonic/gin@v1.10.0', vulnerabilities: 0 },
     { name: 'golang-jwt/jwt', version: 'v5.2.1', license: 'MIT', severity: 'medium', description: 'JWT implementation for Go', cpe: 'cpe:2.3:a:golang-jwt:jwt:5.2.1:*:*:*:*:*:*:*', purl: 'pkg:golang/github.com/golang-jwt/jwt/v5@v5.2.1', vulnerabilities: 2 },
     { name: 'lib/pq', version: 'v1.10.9', license: 'BSD-2-Clause', severity: 'low', description: 'Pure Go Postgres driver', cpe: 'cpe:2.3:a:lib:pq:1.10.9:*:*:*:*:*:*:*', purl: 'pkg:golang/github.com/lib/pq@v1.10.9', vulnerabilities: 0 },
@@ -59,6 +56,9 @@ export default function SbomCenterPage() {
     { name: 'nats-io/nats.go', version: 'v1.36.0', license: 'Apache-2.0', severity: 'low', description: 'NATS client for Go', cpe: 'cpe:2.3:a:nats-io:nats.go:1.36.0:*:*:*:*:*:*:*', purl: 'pkg:golang/github.com/nats-io/nats.go@v1.36.0', vulnerabilities: 1 },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
 
   const severityColor = (s: string): string =>
     s === 'high' ? 'bg-red-100 text-red-700' :

@@ -44,16 +44,16 @@ export default function ClientLifecyclePage() {
 
   const [showForm, setShowForm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Client | null>(null);
-  const [newClient, setNewClient] = useState({ name: '', grantTypes: ['authorization_code'], redirectUris: '' });
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [clients, setClients] = useState<Client[]>([
+  const [newClient, setNewClient] = useState({ name: '', grantTypes: ['authorization_code'], redirectUris: '' });const [clients, setClients] = useState<Client[]>([
     { id: 'c1', clientId: 'web-app-prod', name: 'Web App Production', status: 'active', created: '2026-01-15', lastUsed: '2026-07-12', grantTypes: ['authorization_code', 'refresh_token'], redirectUris: ['https://app.ggid.io/callback'], secretRotatedAt: '2026-06-01' },
     { id: 'c2', clientId: 'mobile-app', name: 'Mobile App', status: 'active', created: '2026-03-01', lastUsed: '2026-07-11', grantTypes: ['authorization_code', 'refresh_token', 'pkce'], redirectUris: ['com.ggid.app://callback'], secretRotatedAt: '2026-05-15' },
     { id: 'c3', clientId: 'batch-service', name: 'Batch Processing Service', status: 'active', created: '2025-11-01', lastUsed: '2026-07-12', grantTypes: ['client_credentials'], redirectUris: [], secretRotatedAt: '2026-04-01' },
     { id: 'c4', clientId: 'legacy-portal', name: 'Legacy Portal', status: 'inactive', created: '2024-06-01', lastUsed: '2026-02-28', grantTypes: ['authorization_code'], redirectUris: ['https://legacy.ggid.io/cb'], secretRotatedAt: '2025-06-01' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
 
   const statusColor = (s: string): string =>
     s === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600';

@@ -49,24 +49,19 @@ export default function ApiVersioningStrategyPage() {
   const [approach, setApproach] = useState('url');
   const [sunsetMonths, setSunsetMonths] = useState(6);
   const [noticeTemplate, setNoticeTemplate] = useState('API version {{old_version}} is deprecated and will be sunset on {{sunset_date}}. Please migrate to {{new_version}}. See migration guide: {{migration_url}}');
-  const [showMigrationBuilder, setShowMigrationBuilder] = useState(false);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [migrationSteps, setMigrationSteps] = useState([
+  const [showMigrationBuilder, setShowMigrationBuilder] = useState(false);const [migrationSteps, setMigrationSteps] = useState([
     { step: 'Update API base URL from /api/v1 to /api/v2', done: false },
     { step: 'Replace /users/legacy with /users endpoint', done: false },
     { step: 'Add key field to role creation requests', done: false },
     { step: 'Update response parsing for new role schema', done: false },
     { step: 'Add X-Tenant-ID header to all requests', done: false },
   ]);
-
-  const [versions, setVersions] = useState<VersionEntry[]>([
+const [versions, setVersions] = useState<VersionEntry[]>([
     { version: 'v2', status: 'active', releaseDate: '2026-06-01', sunsetDate: '-', consumers: 142 },
     { version: 'v1', status: 'deprecated', releaseDate: '2025-01-15', sunsetDate: '2026-12-31', consumers: 23 },
     { version: 'v0', status: 'sunset', releaseDate: '2024-03-01', sunsetDate: '2025-06-01', consumers: 0 },
   ]);
-
-  const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
+const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
     { id: 'br1', rule: 'Removing an endpoint', severity: 'breaking', enabled: true },
     { id: 'br2', rule: 'Changing response field type', severity: 'breaking', enabled: true },
     { id: 'br3', rule: 'Adding required request field', severity: 'breaking', enabled: true },
@@ -75,6 +70,11 @@ export default function ApiVersioningStrategyPage() {
     { id: 'br6', rule: 'Adding response field', severity: 'non-breaking', enabled: true },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
+  
+  
   const approaches = [
     { key: 'url', label: 'URL-based', desc: '/api/v2/resource - version in URL path', pros: 'Explicit, cacheable, easy to debug' },
     { key: 'header', label: 'Header-based', desc: 'Accept-Version: v2 - version in HTTP header', pros: 'Clean URLs, content negotiation' },

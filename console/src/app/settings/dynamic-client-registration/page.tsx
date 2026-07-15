@@ -48,15 +48,15 @@ export default function DynamicClientRegistrationPage() {
   const [validateUri, setValidateUri] = useState(true);
   const [validateLogo, setValidateLogo] = useState(false);
   const [maxRedirectUris, setMaxRedirectUris] = useState(5);
-  const [form, setForm] = useState({ clientName: '', redirectUris: '', grantTypes: '', scopes: '', softwareStatement: false });
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [clients, setClients] = useState<DynamicClient[]>([
+  const [form, setForm] = useState({ clientName: '', redirectUris: '', grantTypes: '', scopes: '', softwareStatement: false });const [clients, setClients] = useState<DynamicClient[]>([
     { id: 'dc1', clientId: 'dyn-client-001', created: '2026-07-01', grantTypes: ['authorization_code'], scopes: ['openid', 'profile'], softwareStatement: true, status: 'active' },
     { id: 'dc2', clientId: 'dyn-client-002', created: '2026-06-15', grantTypes: ['client_credentials'], scopes: ['read:users'], softwareStatement: false, status: 'active' },
     { id: 'dc3', clientId: 'dyn-client-003', created: '2026-05-20', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'email'], softwareStatement: true, status: 'disabled' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
 
 
   const register = () => {

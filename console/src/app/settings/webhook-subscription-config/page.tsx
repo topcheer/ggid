@@ -48,23 +48,23 @@ export default function WebhookSubscriptionConfigPage() {
   }, []);
 
   const [showForm, setShowForm] = useState(false);
-  const [newSub, setNewSub] = useState({ eventType: '', endpointUrl: '', secret: '', maxRetries: 3 });
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([
+  const [newSub, setNewSub] = useState({ eventType: '', endpointUrl: '', secret: '', maxRetries: 3 });const [subscriptions, setSubscriptions] = useState<Subscription[]>([
     { id: 'sub1', eventType: 'user.created', endpointUrl: 'https://app.example.com/hooks/user', enabled: true, retryCount: 0, maxRetries: 3 },
     { id: 'sub2', eventType: 'user.deleted', endpointUrl: 'https://app.example.com/hooks/user', enabled: true, retryCount: 2, maxRetries: 3 },
     { id: 'sub3', eventType: 'role.assigned', endpointUrl: 'https://hr.example.com/webhooks', enabled: true, retryCount: 0, maxRetries: 5 },
     { id: 'sub4', eventType: 'org.created', endpointUrl: 'https://billing.example.com/hooks', enabled: false, retryCount: 5, maxRetries: 3 },
   ]);
-
-  const [deliveries] = useState<Delivery[]>([
+const [deliveries] = useState<Delivery[]>([
     { id: 'd1', subscription: 'user.created', status: 'success', timestamp: '2026-07-12 14:30', statusCode: 200 },
     { id: 'd2', subscription: 'user.deleted', status: 'retry', timestamp: '2026-07-12 14:15', statusCode: 500 },
     { id: 'd3', subscription: 'role.assigned', status: 'success', timestamp: '2026-07-12 13:45', statusCode: 200 },
     { id: 'd4', subscription: 'org.created', status: 'failed', timestamp: '2026-07-12 12:00', statusCode: 0 },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
+  
   const eventCatalog = ['user.created', 'user.updated', 'user.deleted', 'role.assigned', 'role.revoked', 'org.created', 'org.updated', 'audit.high_risk', 'auth.login', 'auth.failed'];
 
   const addSub = () => {

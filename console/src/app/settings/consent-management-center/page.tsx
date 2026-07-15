@@ -42,23 +42,23 @@ export default function ConsentManagementCenterPage() {
 
   const [filterPurpose, setFilterPurpose] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [showReceipt, setShowReceipt] = useState<Consent | null>(null);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [consents, setConsents] = useState<Consent[]>([
+  const [showReceipt, setShowReceipt] = useState<Consent | null>(null);const [consents, setConsents] = useState<Consent[]>([
     { id: 'cn1', user: 'alice@ggid.io', purpose: 'marketing', grantedAt: '2026-06-01', expires: '2027-06-01', status: 'active' },
     { id: 'cn2', user: 'bob@ggid.io', purpose: 'data-sharing', grantedAt: '2026-05-15', expires: '2026-11-15', status: 'active' },
     { id: 'cn3', user: 'carol@ggid.io', purpose: 'marketing', grantedAt: '2026-01-01', expires: '2026-07-01', status: 'expired' },
     { id: 'cn4', user: 'dave@ggid.io', purpose: 'analytics', grantedAt: '2026-07-01', expires: '2027-07-01', status: 'active' },
     { id: 'cn5', user: 'alice@ggid.io', purpose: 'analytics', grantedAt: '2026-04-01', expires: '2026-10-01', status: 'revoked' },
   ]);
-
-  const [purposes] = useState([
+const [purposes] = useState([
     { name: 'marketing', count: 2, description: 'Marketing communications' },
     { name: 'data-sharing', count: 1, description: 'Share data with partners' },
     { name: 'analytics', count: 2, description: 'Usage analytics tracking' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
+  
   const statusColor = (s: string): string =>
     s === 'active' ? 'bg-green-100 text-green-700' : s === 'revoked' ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600';
 

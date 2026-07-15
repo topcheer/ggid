@@ -47,16 +47,16 @@ export default function OauthClientsConfigPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
   const [showSecret, setShowSecret] = useState(false);
-  const [newClient, setNewClient] = useState({ name: '', clientId: '', grantTypes: [] as string[], scopes: [] as string[], redirectUris: '' });
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [clients, setClients] = useState<Client[]>([
+  const [newClient, setNewClient] = useState({ name: '', clientId: '', grantTypes: [] as string[], scopes: [] as string[], redirectUris: '' });const [clients, setClients] = useState<Client[]>([
     { id: 'c1', clientId: 'web-app', name: 'Web Application', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'profile'], redirectUris: ['https://app.ggid.io/callback'], status: 'active', tokenLifetime: 3600, logoUri: 'https://app.ggid.io/logo.png', policyUri: 'https://app.ggid.io/privacy' },
     { id: 'c2', clientId: 'mobile-app', name: 'Mobile App', grantTypes: ['authorization_code', 'refresh_token'], scopes: ['openid', 'profile', 'offline_access'], redirectUris: ['com.ggid.app://callback'], status: 'active', tokenLifetime: 7200, logoUri: '', policyUri: '' },
     { id: 'c3', clientId: 'admin-cli', name: 'Admin CLI', grantTypes: ['client_credentials'], scopes: ['admin:all'], redirectUris: [], status: 'active', tokenLifetime: 1800, logoUri: '', policyUri: '' },
     { id: 'c4', clientId: 'legacy-svc', name: 'Legacy Service', grantTypes: ['password'], scopes: ['read:users'], redirectUris: ['https://legacy.ggid.io/cb'], status: 'disabled', tokenLifetime: 3600, logoUri: '', policyUri: '' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
 
   const allGrants = ['authorization_code', 'refresh_token', 'client_credentials', 'password', 'implicit', 'urn:ietf:params:oauth:grant-type:device_code'];
   const allScopes = ['openid', 'profile', 'email', 'offline_access', 'read:users', 'write:users', 'admin:all'];

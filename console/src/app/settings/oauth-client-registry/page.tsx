@@ -40,16 +40,16 @@ export default function OAuthClientRegistryPage() {
     fetchData();
   }, []);
 
-  const [showRegister, setShowRegister] = useState(false);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [clients] = useState<OAuthClient[]>([
+  const [showRegister, setShowRegister] = useState(false);const [clients] = useState<OAuthClient[]>([
     { client_id: "cli-001", name: "Web Dashboard", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile", "email"], status: "active", pkce_required: true, redirect_uris: ["https://dashboard.example.com/callback"] },
     { client_id: "cli-002", name: "Mobile App", grant_types: ["authorization_code", "refresh_token"], scopes: ["openid", "profile"], status: "active", pkce_required: true, redirect_uris: ["myapp://callback"] },
     { client_id: "cli-003", name: "Legacy Service", grant_types: ["client_credentials"], scopes: ["users:read"], status: "active", pkce_required: false, redirect_uris: [] },
     { client_id: "cli-004", name: "Partner Integration", grant_types: ["authorization_code"], scopes: ["openid", "profile", "audit:read"], status: "disabled", pkce_required: true, redirect_uris: ["https://partner.io/auth/cb"] },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
   return (
     <div className="p-8 space-y-6 max-w-5xl">
       <h1 className="text-2xl font-bold">OAuth Client Registry</h1>

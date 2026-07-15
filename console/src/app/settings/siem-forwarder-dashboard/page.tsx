@@ -43,16 +43,16 @@ export default function SiemForwarderDashboardPage() {
 
   const [stats] = useState({ eventsPerSec: 142, batchSize: 50, successRate: 98.5, retryQueueDepth: 23 });
   const [showFilterPreview, setShowFilterPreview] = useState(false);
-  const [testTarget, setTestTarget] = useState('');
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [destinations] = useState<Destination[]>([
+  const [testTarget, setTestTarget] = useState('');const [destinations] = useState<Destination[]>([
     { id: 'd1', name: 'Splunk Prod', type: 'Splunk', status: 'healthy', lastForward: '2026-07-12 14:32', latency: '45ms', circuitBreaker: 'closed' },
     { id: 'd2', name: 'ELK Cluster', type: 'ELK', status: 'healthy', lastForward: '2026-07-12 14:32', latency: '120ms', circuitBreaker: 'closed' },
     { id: 'd3', name: 'Datadog', type: 'Datadog', status: 'degraded', lastForward: '2026-07-12 14:30', latency: '850ms', circuitBreaker: 'half-open' },
     { id: 'd4', name: 'Webhook', type: 'HTTP', status: 'down', lastForward: '2026-07-12 13:15', latency: '-', circuitBreaker: 'open' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
 
   const statusColor = (s: string): string =>
     s === 'healthy' ? 'bg-green-100 text-green-700' : s === 'degraded' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700';

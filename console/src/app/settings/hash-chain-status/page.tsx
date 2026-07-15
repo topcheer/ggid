@@ -50,20 +50,20 @@ export default function HashChainStatusPage() {
   const [chainValid, setChainValid] = useState(true);
   const [lastVerified, setLastVerified] = useState('2026-07-12 14:30');
   const [verifying, setVerifying] = useState(false);
-  const [selectedBlock, setSelectedBlock] = useState<ChainBlock | null>(null);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [blocks] = useState<ChainBlock[]>([
+  const [selectedBlock, setSelectedBlock] = useState<ChainBlock | null>(null);const [blocks] = useState<ChainBlock[]>([
     { index: 0, hash: 'a1b2c3...', prevHash: '000000...', timestamp: '2026-07-10 00:00', eventCount: 142 },
     { index: 1, hash: 'd4e5f6...', prevHash: 'a1b2c3...', timestamp: '2026-07-11 00:00', eventCount: 98 },
     { index: 2, hash: 'g7h8i9...', prevHash: 'd4e5f6...', timestamp: '2026-07-12 00:00', eventCount: 175 },
     { index: 3, hash: 'j0k1l2...', prevHash: 'g7h8i9...', timestamp: '2026-07-13 00:00', eventCount: 63 },
   ]);
-
-  const [alerts] = useState<TamperAlert[]>([
+const [alerts] = useState<TamperAlert[]>([
     { id: 'a1', blockIndex: 1, expectedHash: 'd4e5f6...', actualHash: 'x9y8z7...', detectedAt: '2026-07-12 03:15' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
+  
 
   const verify = () => {
     setVerifying(true);

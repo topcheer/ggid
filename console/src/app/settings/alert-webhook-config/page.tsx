@@ -45,15 +45,15 @@ export default function AlertWebhookConfigPage() {
   const [newUrl, setNewUrl] = useState('');
   const [newSecret, setNewSecret] = useState('');
   const [newEvents, setNewEvents] = useState<string[]>([]);
-  const [testResult, setTestResult] = useState('');
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [webhooks, setWebhooks] = useState<Webhook[]>([
+  const [testResult, setTestResult] = useState('');const [webhooks, setWebhooks] = useState<Webhook[]>([
     { id: 'w1', url: 'https://hooks.slack.com/services/xxx', eventTypes: ['alert', 'escalation'], enabled: true, maxRetries: 3, status: 'healthy', deliveries: { success: 142, failure: 2, retry: 5 } },
     { id: 'w2', url: 'https://api.pagerduty.com/v2/enqueue', eventTypes: ['alert', 'correlation'], enabled: true, maxRetries: 5, status: 'healthy', deliveries: { success: 89, failure: 0, retry: 1 } },
     { id: 'w3', url: 'https://hooks.example.com/alerts', eventTypes: ['correlation'], enabled: false, maxRetries: 3, status: 'down', deliveries: { success: 12, failure: 8, retry: 15 } },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
 
   const allEvents = ['alert', 'correlation', 'escalation'];
 

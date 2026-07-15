@@ -39,15 +39,15 @@ export default function ParConfigManagementPage() {
   const [requirePar, setRequirePar] = useState(false);
   const [parExpiry, setParExpiry] = useState(120);
   const [cleanupInterval, setCleanupInterval] = useState(300);
-  const [showViewer, setShowViewer] = useState(false);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [clients, setClients] = useState<ClientPar[]>([
+  const [showViewer, setShowViewer] = useState(false);const [clients, setClients] = useState<ClientPar[]>([
     { clientId: 'web-app', requirePar: true },
     { clientId: 'mobile-app', requirePar: false },
     { clientId: 'api-gateway', requirePar: true },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
   const toggleClient = (idx: number) => {
     setClients(prev => prev.map((c, i) => i === idx ? { ...c, requirePar: !c.requirePar } : c));
   };

@@ -35,10 +35,7 @@ export default function AuditLogViewerPage() {
   const [severityFilter, setSeverityFilter] = useState('all');
   const [actionFilter, setActionFilter] = useState('');
   const [selected, setSelected] = useState<AuditEvent | null>(null);
-  const [realtime, setRealtime] = useState(true);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [events] = useState<AuditEvent[]>([
+  const [realtime, setRealtime] = useState(true);const [events] = useState<AuditEvent[]>([
     { id: 'e1', timestamp: '2026-07-12 14:32:15', actor: 'admin@ggid.io', action: 'user.create', resource: 'user/alice', tenant: 'default', severity: 'info', ip: '10.0.0.5' },
     { id: 'e2', timestamp: '2026-07-12 14:30:08', actor: 'system', action: 'auth.login', resource: 'auth/session', tenant: 'default', severity: 'info', ip: '192.168.1.50' },
     { id: 'e3', timestamp: '2026-07-12 14:25:42', actor: 'unknown', action: 'auth.login_failed', resource: 'auth/session', tenant: 'default', severity: 'high', ip: '203.0.113.45' },
@@ -46,6 +43,9 @@ export default function AuditLogViewerPage() {
     { id: 'e5', timestamp: '2026-07-12 14:15:30', actor: 'system', action: 'token.revoke', resource: 'token/abc123', tenant: 'default', severity: 'info', ip: '127.0.0.1' },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
   const sevColor = (s: string): string => s === 'high' ? 'bg-red-100 text-red-700' : s === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
   const filtered = events.filter(e => (severityFilter === 'all' || e.severity === severityFilter) && (!actionFilter || e.action.includes(actionFilter)));
 

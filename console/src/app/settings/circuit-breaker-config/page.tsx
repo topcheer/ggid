@@ -38,15 +38,15 @@ export default function CircuitBreakerConfigPage() {
   const [status, setStatus] = useState('closed');
   const [lastFailure, setLastFailure] = useState('never');
   const [autoRestore, setAutoRestore] = useState(true);
-  const [excludeClientErrors, setExcludeClientErrors] = useState(false);
-  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
-  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  const [rules, setRules] = useState([
+  const [excludeClientErrors, setExcludeClientErrors] = useState(false);const [rules, setRules] = useState([
     { service: 'identity-service', threshold: 5, enabled: true },
     { service: 'policy-service', threshold: 8, enabled: true },
     { service: 'audit-service', threshold: 10, enabled: false },
   ]);
 
+  if (loading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
+  
   const statusColor = {
     closed: 'bg-green-500',
     open: 'bg-red-500',
