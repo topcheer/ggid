@@ -190,7 +190,7 @@ export default function TenantConfigPage() {
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingRate(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ rate_limits: { requests_per_minute: rateLimit.requestsPerMinute, burst_limit: rateLimit.burstLimit } }) }); setMsg(t("tenant.rateSaved")); } catch { setMsg(t("tenant.rateSavedOffline")); } finally { setSavingRate(false); } }} disabled={savingRate} className={saveBtn}>
+            <button onClick={async () => { setSavingRate(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ rate_limits: { requests_per_minute: rateLimit.requestsPerMinute, burst_limit: rateLimit.burstLimit } }) }); setMsg(t("tenant.rateSaved")); } catch { setMsg(t("tenant.rateSavedOffline")); } finally { setSavingRate(false); } }} disabled={savingRate} aria-label={t("tenant.saveRate")} className={saveBtn}>
               <Save className="h-4 w-4" /> {t("tenant.saveRate")}
             </button>
           </div>
@@ -221,7 +221,7 @@ export default function TenantConfigPage() {
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingPw(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ password_policy: { min_length: pwPolicy.minLength, require_uppercase: pwPolicy.requireUpper, require_lowercase: pwPolicy.requireLower, require_digit: pwPolicy.requireDigit, require_special: pwPolicy.requireSpecial, history_count: pwPolicy.historyCount, expiry_days: pwPolicy.expiryDays } }) }); setMsg(t("tenant.pwSaved")); } catch { setMsg(t("tenant.pwSavedOffline")); } finally { setSavingPw(false); } }} disabled={savingPw} className={saveBtn}>
+            <button onClick={async () => { setSavingPw(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ password_policy: { min_length: pwPolicy.minLength, require_uppercase: pwPolicy.requireUpper, require_lowercase: pwPolicy.requireLower, require_digit: pwPolicy.requireDigit, require_special: pwPolicy.requireSpecial, history_count: pwPolicy.historyCount, expiry_days: pwPolicy.expiryDays } }) }); setMsg(t("tenant.pwSaved")); } catch { setMsg(t("tenant.pwSavedOffline")); } finally { setSavingPw(false); } }} disabled={savingPw} aria-label={t("tenant.savePwPolicy")} className={saveBtn}>
               <Save className="h-4 w-4" /> {t("tenant.savePwPolicy")}
             </button>
           </div>
@@ -236,7 +236,7 @@ export default function TenantConfigPage() {
             <div><label className={labelCls}>{t("tenant.concurrentSessions")}</label><input type="number" min={1} max={100} value={sessPolicy.concurrentLimit} onChange={e => setSessPolicy({ ...sessPolicy, concurrentLimit: Number(e.target.value) || 5 })} className={inputCls} /></div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingSess(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ session_policy: { timeout: sessPolicy.timeout, idle_timeout: sessPolicy.idleTimeout, concurrent_limit: sessPolicy.concurrentLimit } }) }); setMsg(t("tenant.sessSaved")); } catch { setMsg(t("tenant.sessSavedOffline")); } finally { setSavingSess(false); } }} disabled={savingSess} className={saveBtn}>
+            <button onClick={async () => { setSavingSess(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ session_policy: { timeout: sessPolicy.timeout, idle_timeout: sessPolicy.idleTimeout, concurrent_limit: sessPolicy.concurrentLimit } }) }); setMsg(t("tenant.sessSaved")); } catch { setMsg(t("tenant.sessSavedOffline")); } finally { setSavingSess(false); } }} disabled={savingSess} aria-label={t("tenant.saveSessPolicy")} className={saveBtn}>
               <Save className="h-4 w-4" /> {t("tenant.saveSessPolicy")}
             </button>
           </div>
@@ -272,7 +272,7 @@ export default function TenantConfigPage() {
             </div>
           </div>
           <div className="mt-4 flex justify-end">
-            <button onClick={async () => { setSavingMfa(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ mfa_config: { require_mfa: mfa.requireMfa, method: mfa.method, grace_period: mfa.gracePeriod } }) }); setMsg(t("tenant.mfaSaved")); } catch { setMsg(t("tenant.mfaSavedOffline")); } finally { setSavingMfa(false); } }} disabled={savingMfa} className={saveBtn}>
+            <button onClick={async () => { setSavingMfa(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ mfa_config: { require_mfa: mfa.requireMfa, method: mfa.method, grace_period: mfa.gracePeriod } }) }); setMsg(t("tenant.mfaSaved")); } catch { setMsg(t("tenant.mfaSavedOffline")); } finally { setSavingMfa(false); } }} disabled={savingMfa} aria-label={t("tenant.saveMfa")} className={saveBtn}>
               <Save className="h-4 w-4" /> {t("tenant.saveMfa")}
             </button>
           </div>

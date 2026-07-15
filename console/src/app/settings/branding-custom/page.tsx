@@ -171,6 +171,7 @@ export default function BrandingCustomPage() {
           <button
             onClick={handleReset}
             disabled={!hasChanges}
+            aria-label="Revert branding changes"
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
           >
             <RotateCcw className="h-4 w-4" /> Reset
@@ -178,6 +179,7 @@ export default function BrandingCustomPage() {
           <button
             onClick={handleSave}
             disabled={saving || !hasChanges || cssOverLimit}
+            aria-label="Save branding customizations"
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save
@@ -221,12 +223,14 @@ export default function BrandingCustomPage() {
                   <div className="mb-2 flex items-center gap-2">
                     <button
                       onClick={() => setLogoPreviewBg("light")}
+                      aria-label="Preview logo on light background"
                       className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs ${logoPreviewBg === "light" ? "bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-400" : "text-gray-400"}`}
                     >
                       <Sun className="h-3 w-3" /> Light
                     </button>
                     <button
                       onClick={() => setLogoPreviewBg("dark")}
+                      aria-label="Preview logo on dark background"
                       className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs ${logoPreviewBg === "dark" ? "bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-400" : "text-gray-400"}`}
                     >
                       <Moon className="h-3 w-3" /> Dark
@@ -247,6 +251,10 @@ export default function BrandingCustomPage() {
             ) : (
               <div
                 onClick={() => fileInputRef.current?.click()}
+                role="button"
+                aria-label="Upload logo file"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click(); }}
                 className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-8 transition hover:border-brand-400 dark:border-gray-600"
               >
                 <Upload className="mb-2 h-6 w-6 text-gray-400" />
@@ -318,6 +326,7 @@ export default function BrandingCustomPage() {
               </h2>
               <button
                 onClick={handleResetCss}
+                aria-label="Reset custom CSS to default"
                 className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500"
               >
                 <RotateCcw className="h-3 w-3" /> Reset to default

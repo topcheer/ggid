@@ -288,6 +288,8 @@ export default function IPAllowlistPage() {
           <button
             type="button"
             onClick={() => setAllowlistEnabled(!allowlistEnabled)}
+            aria-label={allowlistEnabled ? "Disable IP allowlist" : "Enable IP allowlist"}
+            aria-pressed={allowlistEnabled}
             className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
               allowlistEnabled ? "bg-brand-600" : "bg-gray-300 dark:bg-gray-600"
             }`}
@@ -332,6 +334,7 @@ export default function IPAllowlistPage() {
             />
             <button
               onClick={handleAddRule}
+              aria-label="Add CIDR rule"
               className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               <Plus className="h-4 w-4" /> Add
@@ -387,6 +390,8 @@ export default function IPAllowlistPage() {
                   <button
                     type="button"
                     onClick={() => handleToggleRule(rule.id)}
+                    aria-label={rule.enabled ? "Disable rule" : "Enable rule"}
+                    aria-pressed={rule.enabled}
                     className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
                       rule.enabled ? "bg-green-500" : "bg-gray-300 dark:bg-gray-600"
                     }`}
@@ -403,6 +408,7 @@ export default function IPAllowlistPage() {
                     onClick={() => handleDeleteRule(rule.id)}
                     className="text-gray-400 hover:text-red-500"
                     title="Delete rule"
+                    aria-label="Delete CIDR rule"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -415,12 +421,14 @@ export default function IPAllowlistPage() {
           <div className="mt-4 flex gap-2 border-t border-gray-100 pt-4 dark:border-gray-700">
             <button
               onClick={handleExport}
+              aria-label="Export IP allowlist rules"
               className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
             >
               <Download className="h-4 w-4" /> Export
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
+              aria-label="Import IP allowlist rules"
               className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
             >
               <Upload className="h-4 w-4" /> Import
@@ -457,6 +465,7 @@ export default function IPAllowlistPage() {
             />
             <button
               onClick={handleTestIP}
+              aria-label="Test IP address against allowlist"
               className="rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950"
             >
               Test
@@ -488,6 +497,7 @@ export default function IPAllowlistPage() {
           <button
             onClick={handleSave}
             disabled={saving}
+            aria-label="Save IP allowlist"
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

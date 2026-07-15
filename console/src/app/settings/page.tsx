@@ -5,7 +5,7 @@ import { useApi } from "@/lib/api";
 import { useTheme } from "@/lib/theme";
 import {
   Save, Shield, Key, Lock, Globe, Server, Mail, Palette, Moon, Sun, Monitor,
-  User, Clock, Smartphone, LogOut, Fingerprint, Link2, Trash2, Check,
+  User, Clock, Smartphone, LogOut, Fingerprint, Link2, Trash2, Check, Loader2,
 } from "lucide-react";
 
 type Tab = "profile" | "account" | "security" | "ldap" | "oidc" | "saml" | "smtp" | "branding" | "general";
@@ -301,6 +301,9 @@ export default function SettingsPage() {
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
+            role="tab"
+            aria-selected={tab === t.id}
+            aria-label={t.label}
             className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${
               tab === t.id ? "border-b-2 border-brand-600 text-brand-600" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             }`}
@@ -318,7 +321,7 @@ export default function SettingsPage() {
               <h2 className={headingCls}>
                 <User className="mr-2 inline h-5 w-5 text-brand-600" /> Profile Information
               </h2>
-              <button onClick={saveProfile} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700">
+              <button onClick={saveProfile} aria-label="Save profile changes" className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700">
                 <Save className="h-4 w-4" /> Save Changes
               </button>
             </div>
@@ -327,7 +330,7 @@ export default function SettingsPage() {
               <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-700">
                 {profile.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                  <img src={profile.avatar_url} alt="User avatar preview" className="h-full w-full object-cover" />
                 ) : (
                   <User className="h-8 w-8 text-gray-400" />
                 )}
@@ -390,7 +393,9 @@ export default function SettingsPage() {
               </div>
             </div>
             {!profileLoaded && (
-              <p className="mt-3 text-xs text-gray-400">Loading profile data...</p>
+              <div className="mt-3 flex items-center gap-2 text-xs text-gray-400">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading profile data...
+              </div>
             )}
           </div>
         </div>
@@ -437,7 +442,7 @@ export default function SettingsPage() {
                   className={inputCls}
                 />
               </div>
-              <button onClick={changePassword} className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+              <button onClick={changePassword} aria-label="Update password" className="flex items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
                 <Key className="h-4 w-4" /> Update Password
               </button>
             </div>
@@ -459,6 +464,7 @@ export default function SettingsPage() {
                 </div>
                 <button
                   onClick={() => setMsg("MFA enrollment started")}
+                  aria-label="Enroll TOTP authenticator"
                   className="rounded-lg border border-brand-600 px-3 py-1.5 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30"
                 >
                   Enroll
@@ -474,6 +480,7 @@ export default function SettingsPage() {
                 </div>
                 <a
                   href={`${API_BASE}/webauthn/manage`}
+                  aria-label="Manage WebAuthn passkeys"
                   className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Manage
@@ -514,6 +521,7 @@ export default function SettingsPage() {
                         onClick={() => revokeSession(s.id)}
                         className="rounded-lg border border-red-300 p-1.5 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                         title="Revoke session"
+                        aria-label="Revoke session"
                       >
                         <LogOut className="h-4 w-4" />
                       </button>
@@ -550,6 +558,7 @@ export default function SettingsPage() {
                       onClick={() => revokeApp(app.id)}
                       className="rounded-lg border border-red-300 p-1.5 text-red-600 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-950"
                       title="Revoke access"
+                      aria-label="Revoke app access"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

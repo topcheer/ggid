@@ -404,6 +404,7 @@ export default function NotificationTemplatesPage() {
         <p className="text-gray-500">No template selected. Create one to get started.</p>
         <button
           onClick={createTemplate}
+          aria-label="Create new template"
           className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
           <Plus className="h-4 w-4" /> New Template
@@ -422,6 +423,7 @@ export default function NotificationTemplatesPage() {
           <button
             onClick={handleSendTest}
             disabled={sendingTest}
+            aria-label="Send test email"
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 disabled:opacity-50"
           >
             {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send Test
@@ -429,6 +431,7 @@ export default function NotificationTemplatesPage() {
           <button
             onClick={handleSaveDraft}
             disabled={saving}
+            aria-label="Save template as draft"
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-50 px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 disabled:opacity-50"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save Draft
@@ -436,6 +439,7 @@ export default function NotificationTemplatesPage() {
           <button
             onClick={handlePublish}
             disabled={saving}
+            aria-label="Publish template"
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
           >
             <CheckCircle2 className="h-4 w-4" /> Publish
@@ -455,7 +459,7 @@ export default function NotificationTemplatesPage() {
           <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-xs font-semibold uppercase text-gray-500">Templates</h3>
-              <button onClick={createTemplate} className="rounded p-1 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950">
+              <button onClick={createTemplate} aria-label="Create new template" className="rounded p-1 text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-950">
                 <Plus className="h-4 w-4" />
               </button>
             </div>
@@ -477,6 +481,7 @@ export default function NotificationTemplatesPage() {
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteTemplate(tpl.id); }}
                       className="ml-1 text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500"
+                      aria-label="Delete template"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -549,6 +554,8 @@ export default function NotificationTemplatesPage() {
               <div className="relative">
                 <button
                   onClick={() => setShowVersionHistory(!showVersionHistory)}
+                  aria-label="Toggle version history"
+                  aria-expanded={showVersionHistory}
                   className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
                 >
                   <History className="h-3.5 w-3.5" /> Version History ({langTemplate.versions.length})
@@ -628,6 +635,8 @@ export default function NotificationTemplatesPage() {
           <div>
             <button
               onClick={() => setShowPreview(!showPreview)}
+              aria-label={showPreview ? "Hide preview" : "Show preview"}
+              aria-expanded={showPreview}
               className="mb-2 flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
             >
               <Eye className="h-3.5 w-3.5" /> {showPreview ? "Hide" : "Show"} Preview
@@ -661,12 +670,14 @@ export default function NotificationTemplatesPage() {
                   <div className="flex gap-1">
                     <button
                       onClick={() => insertVariable(v.key, "html")}
+                      aria-label={`Insert ${v.label} variable into HTML body`}
                       className="flex-1 rounded border border-gray-200 px-2 py-1 text-left transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-gray-600 dark:hover:border-brand-700 dark:hover:bg-brand-950/30"
                     >
                       <p className="font-mono text-xs text-brand-600 dark:text-brand-400">{v.key}</p>
                     </button>
                     <button
                       onClick={() => insertVariable(v.key, "text")}
+                      aria-label={`Insert ${v.label} variable into text body`}
                       className="rounded border border-gray-200 px-1.5 py-1 text-xs text-gray-400 hover:border-brand-300 hover:text-brand-600 dark:border-gray-600"
                       title="Insert into text body"
                     >
