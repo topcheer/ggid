@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 0
 - Remaining: 0
-- Last scan: 2026-07-15 round 21 (Focus B — Route Wiring)
+- Last scan: 2026-07-15 round 22 (E2E regression tests — 11/11 PASS after auth restart)
 
 ## Findings
 
@@ -95,6 +95,7 @@
 | 2026-07-15 | Round 19 — Focus A (Stub/Placeholder/TODO) | 0 | 0 (remaining stubs are intentional) |
 | 2026-07-15 | Round 20 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS) |
 | 2026-07-15 | Round 21 — Focus B (Route Wiring) | +1 | 1 (gateway missing /api/v1/org, /api/v1/policy, /api/v1/webauthn prefixes) |
+| 2026-07-15 | Round 22 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS after auth container restart) |
 ## Remaining Real Gaps (post-audit)
 
 1. **GeoIP MaxMind integration** (LOW, [DONE]) — gateway/middleware/geoip.go
@@ -102,9 +103,10 @@
 
 ## Next Actions
 
-- Round 21 (odd, Focus B): Route Wiring scan — /api/v1/org, /api/v1/policy, /api/v1/webauthn prefixes added to gateway config
-- Round 22 (even): E2E regression tests 11/11 PASS (`deploy/e2e-docker-test.sh`)
+- Round 22 (even): E2E regression test run (`deploy/e2e-docker-test.sh`) — 11/11 PASS after auth container restart
+- Round 23 (odd, Focus C): Middleware Chain scan
 - Research backlog: OAuth 2.1 enforcement, PQC migration, passkey health dashboard
+
 
 
 
