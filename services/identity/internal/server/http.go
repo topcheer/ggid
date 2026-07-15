@@ -309,6 +309,8 @@ func (h *HTTPHandler) handleUserByID(w http.ResponseWriter, r *http.Request) {
 		h.handleCertificationStatus(ctx, userID, w, r)
 	case action == "delegations":
 		h.handleDelegations(ctx, userID, w, r)
+	case action == "roles":
+		h.handleUserRoles(ctx, userID, w, r)
 	case action == "profile-completeness" && r.Method == http.MethodGet:
 		h.handleProfileCompleteness(ctx, userID, w, r)
 	case action == "management-chain" && r.Method == http.MethodGet:
