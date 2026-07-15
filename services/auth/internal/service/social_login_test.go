@@ -98,6 +98,10 @@ func (m *mockSocialIdentityClient) CreateUserFromSocial(_ context.Context, tenan
 	return user, nil
 }
 
+func (m *mockSocialIdentityClient) ResolveTenantBySlug(_ context.Context, _ string) (uuid.UUID, error) {
+	return uuid.Nil, fmt.Errorf("not implemented in mock")
+}
+
 // --- Tests ---
 
 func newSocialTestAuthService(t *testing.T, idClient IdentityClient) *AuthService {

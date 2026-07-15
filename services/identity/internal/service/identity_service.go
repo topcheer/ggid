@@ -13,6 +13,7 @@ import (
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/ggid/ggid/services/identity/internal/repository"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // IdentityService implements the core identity management operations.
@@ -24,6 +25,9 @@ type IdentityService struct {
 func NewIdentityService(repo repository.UserRepository) *IdentityService {
 	return &IdentityService{repo: repo}
 }
+
+// Pool returns the underlying connection pool for direct queries.
+func (s *IdentityService) Pool() *pgxpool.Pool { return s.repo.Pool() }
 
 // --- User CRUD ---
 

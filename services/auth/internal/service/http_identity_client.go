@@ -172,3 +172,24 @@ func (c *HTTPIdentityClient) CreateUserFromSocial(ctx context.Context, tenantID 
 		Email: u.Email, Status: u.Status, DisplayName: u.DisplayName,
 	}, nil
 }
+
+// ResolveTenantBySlug calls the identity service's public tenant resolve endpoint.
+func (c *HTTPIdentityClient) ResolveTenantBySlug(ctx context.Context, slug string) (uuid.UUID, error) {
+	url := fmt.Sprintf("%s/api/v1/tenants/resolve?slug=%s", c.baseURL, slug)
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("identity service unreachable: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return uuid.Nil, fmt.Errorf("tenant not found for slug %q (status %d)", slug, resp.StatusCode)
+	}
+	var t struct {
+		TenantID string `json:"tenant_id"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&t); err != nil {
+		return uuid.Nil, fmt.Errorf("failed to decode tenant resolve response: %w", err)
+	}
+	return uuid.Parse(t.TenantID)
+}

@@ -54,6 +54,9 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/healthz", h.healthz)
 	h.mux.HandleFunc("/readyz", h.readyz)
 	h.mux.Handle("/metrics", promhttp.Handler())
+	// Public endpoints (no JWT required) for onboarding/login flow
+	h.mux.HandleFunc("/api/v1/tenants/resolve", h.handleTenantResolve)
+	h.mux.HandleFunc("/api/v1/system/initialized", h.handleSystemInitialized)
 	h.mux.HandleFunc("/api/v1/users", h.handleUsers)
 	h.mux.HandleFunc("/api/v1/users/", h.handleUserByID)
 	h.mux.HandleFunc("/api/v1/users/import", h.handleImportCSV)

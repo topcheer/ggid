@@ -40,6 +40,8 @@ type IdentityClient interface {
 	LinkExternalIdentity(ctx context.Context, tenantID, userID uuid.UUID, provider, externalID string, metadata map[string]any) error
 	// CreateUserFromSocial JIT-provisions a new user from social login.
 	CreateUserFromSocial(ctx context.Context, tenantID uuid.UUID, username, email, displayName string, provider, externalID string, metadata map[string]any) (*UserInfo, error)
+	// ResolveTenantBySlug resolves a tenant slug to a tenant ID.
+	ResolveTenantBySlug(ctx context.Context, slug string) (uuid.UUID, error)
 }
 
 // NoopIdentityClient is a fallback implementation used when the Identity Service
@@ -178,4 +180,9 @@ func (n *NoopIdentityClient) CreateUserFromSocial(_ context.Context, tenantID uu
 	}
 
 	return user, nil
+}
+
+// ResolveTenantBySlug returns uuid.Nil for noop client (degraded mode).
+func (n *NoopIdentityClient) ResolveTenantBySlug(_ context.Context, _ string) (uuid.UUID, error) {
+	return uuid.Nil, fmt.Errorf("tenant resolution not available in noop mode")
 }

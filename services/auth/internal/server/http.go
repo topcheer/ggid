@@ -2,6 +2,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	stderrors "errors"
 	"fmt"
@@ -413,9 +414,24 @@ func (h *Handler) readyz(w http.ResponseWriter, r *http.Request) {
 // --- Login ---
 
 type loginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	TenantID string `json:"tenant_id"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	TenantID   string `json:"tenant_id"`
+	TenantSlug string `json:"tenant_slug"`
+}
+
+// resolveTenantBySlug resolves a tenant slug to a UUID via the identity client.
+func (h *Handler) resolveTenantBySlug(ctx context.Context, slug string) uuid.UUID {
+	ic := h.authSvc.IdentityClient()
+	if ic == nil {
+		return uuid.Nil
+	}
+	tid, err := ic.ResolveTenantBySlug(ctx, slug)
+	if err != nil {
+		log.Printf("tenant slug resolution failed for %q: %v", slug, err)
+		return uuid.Nil
+	}
+	return tid
 }
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
@@ -436,6 +452,17 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 	// Fallback: inject tenant context from body for public endpoints (no JWT)
 	if _, err := ggidtenant.FromContext(r.Context()); err != nil && req.TenantID != "" {
 		if tid, perr := uuid.Parse(req.TenantID); perr == nil {
+			tc := &ggidtenant.Context{
+				TenantID:       tid,
+				IsolationLevel: ggidtenant.IsolationShared,
+			}
+			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+		}
+	}
+
+	// Fallback: if no tenant resolved yet and tenant_slug is provided, resolve via identity service.
+	if _, err := ggidtenant.FromContext(r.Context()); err != nil && req.TenantSlug != "" {
+		if tid := h.resolveTenantBySlug(r.Context(), req.TenantSlug); tid != uuid.Nil {
 			tc := &ggidtenant.Context{
 				TenantID:       tid,
 				IsolationLevel: ggidtenant.IsolationShared,

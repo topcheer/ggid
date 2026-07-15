@@ -86,6 +86,10 @@ func (m *tMockIdentityClient) CreateUserFromSocial(_ context.Context, _ uuid.UUI
 	return u, nil
 }
 
+func (m *tMockIdentityClient) ResolveTenantBySlug(_ context.Context, _ string) (uuid.UUID, error) {
+	return uuid.Nil, fmt.Errorf("not implemented in mock")
+}
+
 // ===== Auth Service Builder Helper =====
 
 func tNewAuthSvcFull(t *testing.T) (*AuthService, *tCredRepo, *tSessionRepo, *tRefreshRepo, *mockMFARepo) {

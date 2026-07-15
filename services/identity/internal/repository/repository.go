@@ -8,10 +8,14 @@ import (
 	"github.com/ggid/ggid/pkg/authprovider"
 	"github.com/ggid/ggid/services/identity/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // UserRepository is the data-access interface for users and related entities.
 type UserRepository interface {
+	// Pool returns the underlying connection pool for direct queries.
+	Pool() *pgxpool.Pool
+
 	// --- User CRUD ---
 
 	CreateUser(ctx context.Context, user *domain.User) error

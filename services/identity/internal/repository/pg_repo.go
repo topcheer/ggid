@@ -31,6 +31,9 @@ func NewPGRepository(pool *pgxpool.Pool) UserRepository {
 	return &pgRepo{pool: pool}
 }
 
+// Pool returns the underlying connection pool.
+func (r *pgRepo) Pool() *pgxpool.Pool { return r.pool }
+
 // --- Helpers ---
 
 // setTenantRLS sets the app.tenant_id session variable so that PostgreSQL
