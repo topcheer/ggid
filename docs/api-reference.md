@@ -1405,4 +1405,74 @@ GET /api/v1/webhooks/{webhook_id}/failures
 
 ---
 
-*Last updated: 2025-07-11*
+## System & Multi-Tenant APIs
+
+### Check System Initialization
+
+```
+GET /api/v1/system/initialized
+```
+
+Unauthenticated. Returns whether the system has any users (first-run detection).
+
+**Response:**
+```json
+{"initialized": true}
+```
+
+### Resolve Tenant by Slug
+
+```
+GET /api/v1/tenants/resolve?slug=default
+```
+
+Unauthenticated. Resolves a workspace slug to tenant ID for multi-tenant login.
+
+**Response:**
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000001",
+  "name": "Default",
+  "slug": "default",
+  "plan": "enterprise",
+  "status": "active"
+}
+```
+
+### Bootstrap System (First Run)
+
+```
+POST /api/v1/system/bootstrap
+```
+
+Unauthenticated (bootstrap-only). Creates the initial tenant and admin user. Self-disables after initialization.
+
+**Request:**
+```json
+{
+  "tenant_slug": "acme",
+  "admin_email": "admin@acme.com"
+}
+```
+
+### Multi-Tenant Login
+
+```
+POST /api/v1/auth/login
+```
+
+Login now supports an optional `tenant_slug` field as an alternative to the `X-Tenant-ID` header:
+
+```json
+{
+  "username": "admin",
+  "password": "Password123!",
+  "tenant_slug": "default"
+}
+```
+
+If both `tenant_slug` and `X-Tenant-ID` header are provided, the header takes precedence.
+
+---
+
+*Last updated: 2026-07-15*
