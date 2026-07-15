@@ -13,11 +13,11 @@
 ## Summary
 
 - Total findings: 25
-- Done: 23
+- Done: 24
 - Fixed (pending verification): 0
 - Partial: 0
-- Remaining: 2
-- Last scan: 2026-07-15 round 30 (E2E regression tests — 11/11 PASS) + OAuth 2.1 gap fixed
+- Remaining: 1
+- Last scan: 2026-07-15 round 30 (E2E regression tests — 11/11 PASS) + OAuth 2.1 + FAPI 2.0 fixed
 
 ## Findings
 
@@ -34,7 +34,7 @@
 | # | Feature | Location | Issue | Status | Commit |
 |---|---------|----------|-------|--------|--------|
 | 23 | OAuth 2.1 compliance audit | services/oauth/internal/server/oauth21_audit_handler.go | Dynamic analyzer implemented: reads ListClients, checks grant_types, redirect_uris, PKCE, auth_method. Tests cover compliant/non_compliant/mixed/method-not-allowed. | [DONE] | dfcb8a7f |
-| 24 | FAPI 2.0 profile | services/oauth | PKCE/PAR/DPoP exist but no combined FAPI-2.0-ready client profile or conformance endpoint. | [NEW] | research |
+| 24 | FAPI 2.0 profile | services/oauth | Added  client flag and enforcement: PKCE S256, PAR, DPoP, response_type=code;  GET/PUT; tests added. | [DONE] | ccae234f |
 | 25 | FedCM support | services/oauth | No FedCM config.json/accounts/login endpoints. | [NEW] | research |
 | 5 | SAML SLO | oauth/server/server.go | `/saml/slo` and `/saml/idp/slo` handlers process LogoutRequest/Response. | [DONE] | arch |
 | 6 | Device-Bound SSO | oauth/service/device_bound_sso.go | IssueDeviceBoundToken, VerifyDeviceBoundToken, signClaims, verifyClaims implemented. No remaining TODOs. | [DONE] | backend |
