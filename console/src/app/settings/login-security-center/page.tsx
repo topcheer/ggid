@@ -55,8 +55,8 @@ export default function LoginSecurityCenterPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">IP Blocklist</h2>
-        <div className="flex flex-wrap gap-2">{blocklist.map((ip: string, i: number) => (<span key={i} className="px-2 py-1 bg-red-50 text-red-700 rounded text-sm font-mono flex items-center gap-2">{ip}<button onClick={() => setBlocklist(blocklist.filter((_, j) => j !== i))} className="text-red-500 hover:text-red-700">x</button></span>))}</div>
-        <div className="flex gap-2"><input type="text" value={newIp} onChange={(e) => setNewIp(e.target.value)} placeholder="Add IP or CIDR" className="border rounded px-3 py-2 flex-1 text-sm font-mono" /><button onClick={() => { if (newIp) { setBlocklist([...blocklist, newIp]); setNewIp(""); } }} className="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700">Block</button></div>
+        <div className="flex flex-wrap gap-2">{blocklist.map((ip: string, i: number) => (<span key={i} className="px-2 py-1 bg-red-50 text-red-700 rounded text-sm font-mono flex items-center gap-2">{ip}<button onClick={() => setBlocklist(blocklist.filter((_, j) => j !== i))} aria-label={`Remove blocklisted IP ${ip}`} className="text-red-500 hover:text-red-700">x</button></span>))}</div>
+        <div className="flex gap-2"><input type="text" value={newIp} onChange={(e) => setNewIp(e.target.value)} placeholder="Add IP or CIDR" className="border rounded px-3 py-2 flex-1 text-sm font-mono" /><button onClick={() => { if (newIp) { setBlocklist([...blocklist, newIp]); setNewIp(""); } }} aria-label="Add IP to blocklist" className="px-4 py-2 bg-red-600 text-white rounded text-sm hover:bg-red-700">Block</button></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">

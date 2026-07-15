@@ -185,7 +185,7 @@ export default function PasswordPolicyPage() {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30 p-4">
         <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        <button onClick={() => window.location.reload()} className="mt-2 text-xs text-red-600 underline">Retry</button>
+        <button onClick={() => window.location.reload()} aria-label="Retry loading password policy" className="mt-2 text-xs text-red-600 underline">Retry</button>
       </div>
     );
   }

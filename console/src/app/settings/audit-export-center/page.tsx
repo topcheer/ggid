@@ -280,7 +280,7 @@ export default function AuditExportCenterPage() {
                   <td className="py-2 font-mono text-xs">{s.cron}</td>
                   <td className="py-2">{s.format}</td>
                   <td className="py-2">
-                    <button onClick={() => toggleScheduled(s.id)} className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${s.enabled ? 'bg-green-500' : 'bg-gray-200'}`}>
+                    <button onClick={() => toggleScheduled(s.id)} aria-label={`Toggle schedule ${s.name}`} className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${s.enabled ? 'bg-green-500' : 'bg-gray-200'}`}>
                       <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${s.enabled ? 'translate-x-5' : 'translate-x-1'}`} />
                     </button>
                   </td>

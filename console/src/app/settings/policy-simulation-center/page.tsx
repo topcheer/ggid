@@ -101,7 +101,7 @@ export default function PolicySimulationCenterPage() {
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Action</label><input value={action} onChange={e => setAction(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></div>
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Environment (JSON)</label><textarea value={environment} onChange={e => setEnvironment(e.target.value)} rows={3} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
           </div>
-          <button onClick={simulate} disabled={simulating} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{simulating ? 'Simulating...' : 'Run Simulation'}</button>
+          <button onClick={simulate} disabled={simulating} aria-label="Run policy simulation" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{simulating ? 'Simulating...' : 'Run Simulation'}</button>
           {result && (
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
               <h3 className="text-sm font-medium text-gray-700">Result</h3>
@@ -116,7 +116,7 @@ export default function PolicySimulationCenterPage() {
       {activeTab === 'batch' && (
         <div className="space-y-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Batch CSV Input</label><textarea value={csvInput} onChange={e => setCsvInput(e.target.value)} rows={8} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
-          <button onClick={runBatch} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Batch</button>
+          <button onClick={runBatch} aria-label="Run batch simulation" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Batch</button>
           {batchResults.length > 0 && (
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm overflow-hidden">
               <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">#</th><th>Subject</th><th>Resource</th><th>Action</th><th>Decision</th><th>Rules</th></tr></thead>
@@ -129,7 +129,7 @@ export default function PolicySimulationCenterPage() {
 
       {activeTab === 'impact' && (
         <div className="space-y-4">
-          <button onClick={runImpact} className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Impact Analysis</button>
+          <button onClick={runImpact} aria-label="Run impact analysis" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Impact Analysis</button>
           {impact && (
             <div className="grid grid-cols-4 gap-4">
               <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm text-center"><div className="text-2xl font-bold">{impact.affectedUsers}</div><div className="text-xs text-gray-500">Affected Users</div></div>
