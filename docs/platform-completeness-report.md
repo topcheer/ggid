@@ -17,7 +17,7 @@
 - Fixed (pending verification): 0
 - Partial: 0
 - Remaining: 0
-- Last scan: 2026-07-15 round 25 (Focus D — Data Persistence)
+- Last scan: 2026-07-15 round 25 (Focus D — Data Persistence) + research OAuth 2.1/FAPI/FedCM
 
 ## Findings
 

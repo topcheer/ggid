@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-15 (Round 17 Focus G — SDK Alignment)*
+*Last updated: 2026-07-15 (Round 25 Focus D — Data Persistence; research on OAuth 2.1/FAPI/FedCM)*
 
 ## Current Stats
 
@@ -10,8 +10,8 @@
 - **Go SDK**: 27 files, 154+ test functions
 - **Go services**: 271+ source files, 293+ test files
 - **Build**: `go build ./...` = CLEAN
-- **Tests**: 40/40 packages PASS, 0 FAIL
-- **Real productization gaps**: 2 (GeoIP PARTIAL + SDK alignment NEW)
+- **Tests**: 45/45 packages PASS, 0 FAIL
+- **Real productization gaps**: 3 (OAuth 2.1 audit stub, FAPI 2.0 profile, FedCM)
 
 ## Gap Closure Priority Queue
 
@@ -19,15 +19,17 @@
 
 | # | Feature | Owner | Location | Status | Next Action |
 |---|---------|-------|----------|--------|-------------|
-| 1 | GeoIP MaxMind integration | arch | services/gateway/middleware | [PARTIAL] | Add optional GeoLite2/MMDB lookup with private-IP fallback |
-| 2 | SDK alignment for Agent Identity / IGA | arch | sdk/python, sdk/java, sdk/rust, sdk/ruby, sdk/csharp, sdk/dart, sdk/php | [PARTIAL] | Python + Java DONE; Rust, Ruby, C#, Dart, PHP pending |
+| 1 | OAuth 2.1 compliance audit is a stub | backend | services/oauth/internal/server/oauth21_audit_handler.go | [NEW] | Implement dynamic analyzer reading real client configs |
+| 2 | FAPI 2.0 profile not exposed | backend | services/oauth | [NEW] | Add fapi_2_0 client flag and enforce PAR+PKCE+DPoP+response_type=code |
+| 3 | FedCM not implemented | backend | services/oauth | [NEW] | Add FedCM config/accounts/login endpoints (future, low priority) |
 
 ### P2 — Research-driven competitive/compliance gaps
 
 | # | Feature | Owner | Driver | Notes |
 |---|---------|-------|--------|-------|
-| 3 | OAuth 2.1 enforcement mode | backend | RFC 9700 / OAuth 2.1 | Mandatory PKCE, reject implicit/ROPC, exact redirect URI matching |
-| 4 | FAPI 2.0 profile | backend | OpenID FAPI | JAR/JARM, PAR, sender-constrained tokens, DPoP |
+| 4 | OAuth 2.1 enforcement mode | backend | RFC 9700 / OAuth 2.1 | Mandatory PKCE, reject implicit/ROPC, exact redirect URI matching |
+| 5 | FAPI 2.0 profile | backend | OpenID FAPI | JAR/JARM, PAR, sender-constrained tokens, DPoP |
+| 6 | FedCM support | backend | Chrome/Edge default | FedCM config.json + accounts + login endpoints |
 | 5 | Passkey health dashboard | frontend | passkey adoption | Console page showing passkey enrollment status, recovery risk |
 | 6 | PQC migration (ML-DSA / ML-KEM) | arch | NIST PQC | Hybrid TLS + JWT signing in pkg/crypto |
 | 7 | NIS2 / CRA compliance dashboard | frontend | EU regulation | Security incident reporting, SBOM, vulnerability tracking |
@@ -48,16 +50,17 @@
 1. (standby)
 
 ### Arch
-1. SDK alignment: Agent Identity / Access Request for Rust, Ruby, C#, Dart, PHP SDKs
-2. GeoIP MaxMind design
+1. Research OAuth 2.1 / FAPI 2.0 / FedCM gaps → DONE (docs/research/oauth21-fapi-fedcm-gap.md)
+2. Round 26 E2E regression test
+3. Release v0.2.5 verification
 
 ### Frontend
 1. Console loading/error states for remaining pages
 2. Passkey health dashboard
 
 ### Docs/Research
-1. Console mock-pages audit
-2. OAuth 2.1 / FAPI 2.0 research
+1. OAuth 2.1 / FAPI 2.0 research → DONE
+2. Console mock-pages audit (continuing)
 
 ## Rules
 
