@@ -82,7 +82,7 @@ func (r *pgMFADeviceRepository) GetDeviceByID(ctx context.Context, tenantID, id 
 		return nil, fmt.Errorf("get mfa device: %w", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return device, nil
 }
 
@@ -116,7 +116,7 @@ func (r *pgMFADeviceRepository) ListDevicesByUser(ctx context.Context, tenantID,
 		devices = append(devices, device)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return devices, nil
 }
 
@@ -145,7 +145,7 @@ func (r *pgMFADeviceRepository) GetEnabledDevice(ctx context.Context, tenantID, 
 		return nil, fmt.Errorf("get enabled mfa device: %w", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return device, nil
 }
 

@@ -188,3 +188,25 @@ The arch/PM E2E verification found that `POST /api/v1/users/{id}/roles` returns 
 **Root cause:** Identity/policy/oauth services have NATS publisher available but don't call `publisher.Publish()` or `PublishAsync()` after write operations (create/update/delete/lock/unlock).
 
 **Fix needed:** Wire audit event publishing into all write-path service methods across identity, policy, and oauth services.
+
+## E2E Verification Gap: User DELETE + tx.Rollback Bugs (2026-07-16 Round 65)
+
+### P0: User DELETE returns success but user persists
+
+**Symptom:** `DELETE /api/v1/users/{id}` returns success, but querying the user afterward shows it still exists.
+
+**Root cause:** Handler likely calls `repo.DeleteUser()` which executes the DELETE query but the transaction may be rolled back instead of committed, or the handler short-circuits before reaching the repo call.
+
+### P0: tx.Rollback used where tx.Commit needed (auth + oauth repos)
+
+**Files affected:**
+- `services/auth/internal/repository/mfa_pg_repo.go` — 3 instances of `tx.Rollback(ctx)` in write-path code that should use `tx.Commit(ctx)`
+- `services/oauth/internal/repository/pg_repo.go` — 3 instances of `tx.Rollback(ctx)` in write-path code that should use `tx.Commit(ctx)`
+
+**Impact:** MFA device setup and OAuth client create/update operations may silently discard data. The `defer tx.Rollback(ctx)` pattern (which is correct as cleanup) is fine, but standalone `tx.Rollback(ctx)` calls before `return` in write methods undo all changes.
+
+**Note:** Previous round (Round 64) fixed the same bug pattern in `services/identity/internal/repository/pg_repo.go` (10 instances). The same bug class exists in auth and oauth repos.
+
+### P1: Audit events still 0 (unchanged from Round 64)
+
+Write operations across all services still don't publish NATS audit events. See Round 64 entry above for details.

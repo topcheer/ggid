@@ -138,7 +138,7 @@ func (r *pgClientRepo) GetClientByID(ctx context.Context, tenantID uuid.UUID, cl
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "get client", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return client, nil
 }
 
@@ -178,7 +178,7 @@ func (r *pgClientRepo) ListClients(ctx context.Context, tenantID uuid.UUID, page
 		clients = append(clients, c)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return clients, total, nil
 }
 
@@ -211,7 +211,7 @@ func (r *pgClientRepo) UpdateClient(ctx context.Context, tenantID uuid.UUID, cli
 		return nil, ggiderrors.Wrap(ggiderrors.ErrInternal, "update client", err)
 	}
 
-	tx.Rollback(ctx)
+	tx.Commit(ctx)
 	return updated, nil
 }
 
