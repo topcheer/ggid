@@ -2,19 +2,21 @@
 
 import { useIdentityJitProvisioningConfig } from "@ggid/sdk-react";
 import { Zap, ArrowRight, Users, Activity, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityJitProvisioningConfigPage() {
   const { data, loading, error, refresh } = useIdentityJitProvisioningConfig();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading JIT provisioning...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idJitProvisioning.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">JIT Provisioning</h1>
-          <p className="text-sm text-gray-400 mt-1">Just-in-time user provisioning on authentication</p>
+          <h1 className="text-2xl font-bold">{t("idJitProvisioning.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idJitProvisioning.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -29,28 +31,28 @@ export default function IdentityJitProvisioningConfigPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-green-400">
             <Zap className="w-4 h-4" />
-            <span className="text-xs text-gray-400">JIT Enabled</span>
+            <span className="text-xs text-gray-400">{t("idJitProvisioning.jitEnabled")}</span>
           </div>
           <p className="text-lg font-bold">{data?.per_idp_config?.some((p) => p.enabled) ? "Yes" : "No"}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
             <Users className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Default Role</span>
+            <span className="text-xs text-gray-400">{t("idJitProvisioning.defaultRole")}</span>
           </div>
           <p className="text-sm font-bold">{data?.default_role_on_create ?? "user"}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-purple-400">
             <Activity className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Update on Login</span>
+            <span className="text-xs text-gray-400">{t("idJitProvisioning.updateOnLogin")}</span>
           </div>
           <p className="text-sm font-bold">{data?.update_on_login ? "Yes" : "No"}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-yellow-400">
             <Clock className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Conflict Resolution</span>
+            <span className="text-xs text-gray-400">{t("idJitProvisioning.conflictResolution")}</span>
           </div>
           <p className="text-sm font-bold capitalize">{data?.conflict_resolution ?? "create"}</p>
         </div>
@@ -59,7 +61,7 @@ export default function IdentityJitProvisioningConfigPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Per-IdP Config */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Per-IdP JIT Provisioning</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("idJitProvisioning.perIdp")}</h2>
           <div className="space-y-2">
             {(data?.per_idp_config ?? []).map((p) => (
               <div key={p.idp_name} className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
@@ -77,7 +79,7 @@ export default function IdentityJitProvisioningConfigPage() {
 
         {/* Default Groups */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Default Group Assignments</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("idJitProvisioning.defaultGroups")}</h2>
           <div className="flex flex-wrap gap-2">
             {(data?.default_group_assignments ?? []).map((g) => (
               <span key={g} className="text-xs px-3 py-1.5 bg-gray-800 rounded-lg border border-gray-700">{g}</span>
@@ -88,15 +90,15 @@ export default function IdentityJitProvisioningConfigPage() {
 
       {/* Attribute Mapping Table */}
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
-        <h2 className="text-lg font-semibold mb-4">Attribute Mapping</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("idJitProvisioning.attributeMapping")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">IdP Claim</th>
+                <th className="text-left py-2 pr-3">{t("idJitProvisioning.idpClaim")}</th>
                 <th className="text-left py-2 pr-3"></th>
-                <th className="text-left py-2 pr-3">Local Attribute</th>
-                <th className="text-left py-2 pr-3">Required</th>
+                <th className="text-left py-2 pr-3">{t("idJitProvisioning.localAttribute")}</th>
+                <th className="text-left py-2 pr-3">{t("idJitProvisioning.required")}</th>
               </tr>
             </thead>
             <tbody>

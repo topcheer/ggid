@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useIdentityAccessRevoke } from "@ggid/sdk-react";
 import { Zap, Search, AlertTriangle, CheckCircle, Activity } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityAccessRevokePage() {
   const { data, loading, error, refresh, executeRevoke } = useIdentityAccessRevoke();
@@ -12,8 +13,9 @@ export default function IdentityAccessRevokePage() {
   const [reason, setReason] = useState("");
   const [notifyManager, setNotifyManager] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading access revoke...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idAccessRevoke.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const allOptions = ["sessions", "tokens", "api_keys", "app_access", "ssh_keys"];
@@ -25,8 +27,8 @@ export default function IdentityAccessRevokePage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Emergency Access Revocation</h1>
-          <p className="text-sm text-gray-400 mt-1">Immediately revoke user access across all systems</p>
+          <h1 className="text-2xl font-bold">{t("idAccessRevoke.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idAccessRevoke.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -69,7 +71,7 @@ export default function IdentityAccessRevokePage() {
 
           {/* Revoke Scope */}
           <div className="bg-gray-900 rounded-xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Revoke Scope</h2>
+            <h2 className="text-lg font-semibold mb-4">{t("idAccessRevoke.revokeScope")}</h2>
             <label className="flex items-center gap-2 mb-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -77,7 +79,7 @@ export default function IdentityAccessRevokePage() {
                 onChange={(e) => { setRevokeAll(e.target.checked); setSelected(e.target.checked ? allOptions : []); }}
                 className="w-4 h-4 accent-red-600"
               />
-              <span className="text-sm font-medium">Revoke Everything</span>
+              <span className="text-sm font-medium">{t("idAccessRevoke.revokeEverything")}</span>
             </label>
             <div className="space-y-2">
               {allOptions.map((opt) => (
@@ -97,7 +99,7 @@ export default function IdentityAccessRevokePage() {
 
           {/* Reason & Options */}
           <div className="bg-gray-900 rounded-xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Reason & Options</h2>
+            <h2 className="text-lg font-semibold mb-4">{t("idAccessRevoke.reason")}</h2>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -112,7 +114,7 @@ export default function IdentityAccessRevokePage() {
                 onChange={(e) => setNotifyManager(e.target.checked)}
                 className="w-4 h-4 accent-blue-600"
               />
-              <span className="text-sm text-gray-300">Notify Manager</span>
+              <span className="text-sm text-gray-300">{t("idAccessRevoke.notifyManager")}</span>
             </label>
             <button
               onClick={() => setShowConfirm(true)}
@@ -168,7 +170,7 @@ export default function IdentityAccessRevokePage() {
       {showConfirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full mx-4 border border-red-700">
-            <h2 className="text-lg font-bold text-red-400 mb-2">Confirm Revocation</h2>
+            <h2 className="text-lg font-bold text-red-400 mb-2">{t("idAccessRevoke.confirmRevocation")}</h2>
             <p className="text-sm text-gray-300 mb-4">
               You are about to revoke: <strong>{revokeAll ? "ALL ACCESS" : selected.join(", ")}</strong>
               {reason && <br />}

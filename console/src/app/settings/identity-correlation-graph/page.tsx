@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface GraphNode {
   id: string;
@@ -79,6 +80,8 @@ export default function IdentityCorrelationGraphPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const t = useTranslations();
+
   useEffect(() => {
     fetch('/api/v1/identity/groups/', {
       headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': '00000000-0000-0000-0000-000000000001' },
@@ -138,13 +141,13 @@ export default function IdentityCorrelationGraphPage() {
     URL.revokeObjectURL(url);
   }, [filteredNodes, filteredEdges]);
 
-  if (loading) return <div className="space-y-6"><p>Loading...</p></div>;
+  if (loading) return <div className="space-y-6"><p>{t("idCorrelation.loading")}</p></div>;
   if (error) return <div className="space-y-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Identity Correlation Graph</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("idCorrelation.title")}</h1>
         <p className="mt-1 text-sm text-gray-500">Visualize identity correlations, detect synthetic identities, and explore relationship depth.</p>
       </div>
 
@@ -159,7 +162,7 @@ export default function IdentityCorrelationGraphPage() {
           />
         </div>
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Depth:</label>
+          <label className="text-sm text-gray-600">{t("idCorrelation.depth")}</label>
           <input
             type="range"
             min={1}
@@ -181,7 +184,7 @@ export default function IdentityCorrelationGraphPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-gray-700">Correlation Graph</h3>
+            <h3 className="text-sm font-medium text-gray-700">{t("idCorrelation.subtitle")}</h3>
             <span className="text-xs text-gray-400">{filteredNodes.length} nodes, {filteredEdges.length} edges</span>
           </div>
           <svg viewBox="0 0 800 500" className="w-full h-[500px] border border-gray-100 rounded bg-gray-50">
@@ -237,7 +240,7 @@ export default function IdentityCorrelationGraphPage() {
             ))}
             <div className="flex items-center gap-1">
               <div className="h-3 w-3 rounded-full bg-red-500" />
-              <span className="text-gray-600">Synthetic Identity</span>
+              <span className="text-gray-600">{t("idCorrelation.syntheticIdentity")}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="h-3 w-3 rounded-full bg-yellow-400 border border-gray-300" />
@@ -250,18 +253,18 @@ export default function IdentityCorrelationGraphPage() {
           {selectedNode ? (
             <>
               <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-700">Node Details</h3>
+                <h3 className="text-sm font-medium text-gray-700">{t("idCorrelation.nodeDetails")}</h3>
                 <div className="mt-2 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-gray-500">ID:</span><span className="font-mono text-xs">{selectedNode.id}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Label:</span><span>{selectedNode.label}</span></div>
-                  <div className="flex justify-between"><span className="text-gray-500">Type:</span><span className="capitalize">{selectedNode.type}</span></div>
-                  {selectedNode.email && <div className="flex justify-between"><span className="text-gray-500">Email:</span><span className="text-xs">{selectedNode.email}</span></div>}
-                  {selectedNode.phone && <div className="flex justify-between"><span className="text-gray-500">Phone:</span><span className="text-xs">{selectedNode.phone}</span></div>}
-                  {selectedNode.device && <div className="flex justify-between"><span className="text-gray-500">Device:</span><span className="text-xs">{selectedNode.device}</span></div>}
-                  {selectedNode.ip && <div className="flex justify-between"><span className="text-gray-500">IP:</span><span className="font-mono text-xs">{selectedNode.ip}</span></div>}
-                  <div className="flex justify-between"><span className="text-gray-500">Confidence:</span><span className="font-medium">{(selectedNode.confidence * 100).toFixed(0)}%</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.id")}</span><span className="font-mono text-xs">{selectedNode.id}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.label")}</span><span>{selectedNode.label}</span></div>
+                  <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.type")}</span><span className="capitalize">{selectedNode.type}</span></div>
+                  {selectedNode.email && <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.email")}</span><span className="text-xs">{selectedNode.email}</span></div>}
+                  {selectedNode.phone && <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.phone")}</span><span className="text-xs">{selectedNode.phone}</span></div>}
+                  {selectedNode.device && <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.device")}</span><span className="text-xs">{selectedNode.device}</span></div>}
+                  {selectedNode.ip && <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.ip")}</span><span className="font-mono text-xs">{selectedNode.ip}</span></div>}
+                  <div className="flex justify-between"><span className="text-gray-500">{t("idCorrelation.confidence")}</span><span className="font-medium">{(selectedNode.confidence * 100).toFixed(0)}%</span></div>
                   <div className="flex justify-between">
-                    <span className="text-gray-500">Synthetic:</span>
+                    <span className="text-gray-500">{t("idCorrelation.synthetic")}</span>
                     {selectedNode.isSynthetic ? (
                       <span className="inline-flex rounded bg-red-100 px-2 py-0.5 text-xs text-red-700">ALERT</span>
                     ) : (
@@ -272,7 +275,7 @@ export default function IdentityCorrelationGraphPage() {
               </div>
 
               <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-gray-700">Correlations ({nodeCorrelations(selectedNode.id).length})</h3>
+                <h3 className="text-sm font-medium text-gray-700">{t("idCorrelation.correlations")} ({nodeCorrelations(selectedNode.id).length})</h3>
                 <div className="mt-2 space-y-2">
                   {nodeCorrelations(selectedNode.id).map((corr, i) => (
                     <div key={i} className="flex items-center justify-between border-b border-gray-100 pb-1 text-xs">
@@ -296,16 +299,16 @@ export default function IdentityCorrelationGraphPage() {
             </>
           ) : (
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-400">Click a node to view correlation details.</p>
+              <p className="text-sm text-gray-400">{t("idCorrelation.clickForDetails")}</p>
             </div>
           )}
 
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-700">Confidence Legend</h3>
+            <h3 className="text-sm font-medium text-gray-700">{t("idCorrelation.confidenceLegend")}</h3>
             <div className="mt-2 space-y-1 text-xs">
-              <div className="flex items-center gap-2"><div className="h-2 w-8 bg-green-500 rounded" /><span>High ({'>'}70%)</span></div>
-              <div className="flex items-center gap-2"><div className="h-2 w-8 bg-yellow-500 rounded" /><span>Medium (50-70%)</span></div>
-              <div className="flex items-center gap-2"><div className="h-2 w-8 bg-red-500 rounded" /><span>Low ({'<'}50%)</span></div>
+              <div className="flex items-center gap-2"><div className="h-2 w-8 bg-green-500 rounded" /><span>{t("idCorrelation.high")}</span></div>
+              <div className="flex items-center gap-2"><div className="h-2 w-8 bg-yellow-500 rounded" /><span>{t("idCorrelation.medium")}</span></div>
+              <div className="flex items-center gap-2"><div className="h-2 w-8 bg-red-500 rounded" /><span>{t("idCorrelation.low")}</span></div>
             </div>
           </div>
         </div>

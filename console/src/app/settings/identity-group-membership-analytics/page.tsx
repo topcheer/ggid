@@ -2,11 +2,13 @@
 
 import { useIdentityGroupMembershipAnalytics } from "@ggid/sdk-react";
 import { Users, Layers, UserX, AlertTriangle, Sparkles, TrendingUp, Trash2 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityGroupMembershipAnalyticsPage() {
   const { data, loading, error, refresh } = useIdentityGroupMembershipAnalytics();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading group membership analytics...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idGroupMembershipAnalytics.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const maxGrowth = Math.max(...(data?.membership_growth_30d ?? [1]), 1);
@@ -15,8 +17,8 @@ export default function IdentityGroupMembershipAnalyticsPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Group Membership Analytics</h1>
-          <p className="text-sm text-gray-400 mt-1">Analyze group composition, growth, and detect shadow permissions</p>
+          <h1 className="text-2xl font-bold">{t("idGroupMembershipAnalytics.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idGroupMembershipAnalytics.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -31,28 +33,28 @@ export default function IdentityGroupMembershipAnalyticsPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
             <Users className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Total Groups</span>
+            <span className="text-xs text-gray-400">{t("idGroupMembershipAnalytics.totalGroups")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.group_cards?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-yellow-400">
             <UserX className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Inactive Members</span>
+            <span className="text-xs text-gray-400">{t("idGroupMembershipAnalytics.inactiveMembers")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.inactive_members?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-red-400">
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Orphaned Groups</span>
+            <span className="text-xs text-gray-400">{t("idGroupMembershipAnalytics.orphanedGroups")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.orphaned_groups?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-purple-400">
             <Sparkles className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Shadow Permissions</span>
+            <span className="text-xs text-gray-400">{t("idGroupMembershipAnalytics.shadowPermissions")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.shadow_permissions_detected ?? 0}</p>
         </div>
@@ -109,7 +111,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Group Cards */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Group Overview</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("idGroupMembershipAnalytics.groupOverview")}</h2>
           <div className="space-y-2 max-h-80 overflow-y-auto">
             {(data?.group_cards ?? []).map((g) => (
               <div key={g.name} className="bg-gray-800 rounded-lg p-3">
@@ -125,7 +127,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
                     <Layers className="w-3 h-3" />
                     Depth: {g.nesting_depth}
                   </span>
-                  <span>Sub-groups: {g.sub_groups}</span>
+                  <span>{t("idGroupMembershipAnalytics.subGroups")} {g.sub_groups}</span>
                 </div>
               </div>
             ))}
@@ -137,7 +139,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
               <UserX className="w-5 h-5 text-yellow-400" />
-              Inactive Members
+              {t("idGroupMembershipAnalytics.inactiveMembers")}
             </h2>
             <div className="space-y-2 max-h-40 overflow-y-auto">
               {(data?.inactive_members ?? []).map((m, i) => (
@@ -154,7 +156,7 @@ export default function IdentityGroupMembershipAnalyticsPage() {
                 </div>
               ))}
               {(data?.inactive_members ?? []).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-2">No inactive members.</p>
+                <p className="text-sm text-gray-500 text-center py-2">{t("idGroupMembershipAnalytics.noInactive")}</p>
               )}
             </div>
           </div>
@@ -162,17 +164,17 @@ export default function IdentityGroupMembershipAnalyticsPage() {
           <div className="bg-gray-900 rounded-xl p-6">
             <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
               <Trash2 className="w-5 h-5 text-red-400" />
-              Orphaned Groups
+              {t("idGroupMembershipAnalytics.orphanedGroups")}
             </h2>
             <div className="space-y-1">
               {(data?.orphaned_groups ?? []).map((g, i) => (
                 <div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg p-2">
                   <span className="text-sm text-gray-300">{g.name}</span>
-                  <span className="text-xs text-gray-400">Last used: {g.last_used}</span>
+                  <span className="text-xs text-gray-400">{t("idGroupMembershipAnalytics.lastUsed")} {g.last_used}</span>
                 </div>
               ))}
               {(data?.orphaned_groups ?? []).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-2">No orphaned groups.</p>
+                <p className="text-sm text-gray-500 text-center py-2">{t("idGroupMembershipAnalytics.noOrphaned")}</p>
               )}
             </div>
           </div>

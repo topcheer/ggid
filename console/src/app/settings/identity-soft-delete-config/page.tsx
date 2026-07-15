@@ -10,15 +10,15 @@ export default function IdentitySoftDeleteConfigPage() {
   const { data, loading, error, refresh, restoreItem, purgeAll } = useIdentitySoftDeleteConfig();
   const [showPurgeConfirm, setShowPurgeConfirm] = useState(false);
 
-  if (loading) return <div className="p-8 text-gray-400">Loading soft delete config...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idSoftDeleteConfig.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Soft Delete Configuration</h1>
-          <p className="text-sm text-gray-400 mt-1">Recoverable deletion with configurable retention and auto-purge</p>
+          <h1 className="text-2xl font-bold">{t("idSoftDeleteConfig.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idSoftDeleteConfig.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -42,21 +42,21 @@ export default function IdentitySoftDeleteConfigPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
             <Clock className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Retention</span>
+            <span className="text-xs text-gray-400">{t("idSoftDeleteConfig.retention")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.retention_days ?? 0}d</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-red-400">
             <Trash2 className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Auto-Purge After</span>
+            <span className="text-xs text-gray-400">{t("idSoftDeleteConfig.autoPurgeAfter")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.auto_purge_after_days ?? 0}d</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-green-400">
             <RotateCcw className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Recoverable Window</span>
+            <span className="text-xs text-gray-400">{t("idSoftDeleteConfig.recoverableWindow")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.recoverable_window_days ?? 0}d</p>
         </div>
@@ -64,7 +64,7 @@ export default function IdentitySoftDeleteConfigPage() {
 
       {/* Per-Entity Config */}
       <div className="bg-gray-900 rounded-xl p-4 mb-6">
-        <h2 className="text-sm font-semibold mb-3">Per-Entity Configuration</h2>
+        <h2 className="text-sm font-semibold mb-3">{t("idSoftDeleteConfig.perEntity")}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {(data?.per_entity_config ?? []).map((e) => (
             <div key={e.entity} className="bg-gray-800 rounded-lg p-3">
@@ -83,17 +83,17 @@ export default function IdentitySoftDeleteConfigPage() {
 
       {/* Soft-Deleted Items Table */}
       <div className="bg-gray-900 rounded-xl p-6">
-        <h2 className="text-lg font-semibold mb-4">Soft-Deleted Items</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("idSoftDeleteConfig.softDeletedItems")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Entity</th>
-                <th className="text-left py-2 pr-3">Name</th>
-                <th className="text-left py-2 pr-3">Deleted At</th>
-                <th className="text-left py-2 pr-3">Purge At</th>
-                <th className="text-left py-2 pr-3">Restorable</th>
-                <th className="text-left py-2 pr-3">Action</th>
+                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.entity")}</th>
+                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.name")}</th>
+                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.deletedAt")}</th>
+                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.purgeAt")}</th>
+                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.restorable")}</th>
+                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.action")}</th>
               </tr>
             </thead>
             <tbody>
@@ -130,7 +130,7 @@ export default function IdentitySoftDeleteConfigPage() {
       {showPurgeConfirm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-gray-900 rounded-xl p-6 max-w-md w-full mx-4 border border-red-700">
-            <h2 className="text-lg font-bold text-red-400 mb-2">Confirm Purge All</h2>
+            <h2 className="text-lg font-bold text-red-400 mb-2">{t("idSoftDeleteConfig.confirmPurgeAll")}</h2>
             <p className="text-sm text-gray-300 mb-4">
               This will permanently delete all {data?.soft_deleted_items?.length ?? 0} soft-deleted items. This action cannot be undone.
             </p>

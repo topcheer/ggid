@@ -2,19 +2,21 @@
 
 import { useIdentityAccountLinkingConfig } from "@ggid/sdk-react";
 import { Link2, Unlink, ShieldCheck, GitMerge, Users, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityAccountLinkingConfigPage() {
   const { data, loading, error, refresh } = useIdentityAccountLinkingConfig();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading account linking config...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idAccountLinking.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Identity Account Linking</h1>
-          <p className="text-sm text-gray-400 mt-1">Configure how user accounts from different providers are linked</p>
+          <h1 className="text-2xl font-bold">{t("idAccountLinking.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idAccountLinking.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -29,28 +31,28 @@ export default function IdentityAccountLinkingConfigPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
             <Link2 className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Linked Accounts</span>
+            <span className="text-xs text-gray-400">{t("idAccountLinking.linkedAccounts")}</span>
           </div>
           <p className="text-2xl font-bold">{(data?.linked_accounts_stats?.total_linked ?? 0).toLocaleString()}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-green-400">
             <Users className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Auto-Linked (24h)</span>
+            <span className="text-xs text-gray-400">{t("idAccountLinking.autoLinked24h")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.linked_accounts_stats?.auto_linked_24h ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-yellow-400">
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Conflicts (24h)</span>
+            <span className="text-xs text-gray-400">{t("idAccountLinking.conflicts24h")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.linked_accounts_stats?.conflicts_24h ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-red-400">
             <Unlink className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Unlinked (24h)</span>
+            <span className="text-xs text-gray-400">{t("idAccountLinking.unlinked24h")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.linked_accounts_stats?.unlinked_24h ?? 0}</p>
         </div>
@@ -85,7 +87,7 @@ export default function IdentityAccountLinkingConfigPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-gray-300">Require Verification</span>
+                <span className="text-sm text-gray-300">{t("idAccountLinking.requireVerification")}</span>
               </div>
               <span
                 className={"text-xs px-2 py-0.5 rounded " + (
@@ -99,7 +101,7 @@ export default function IdentityAccountLinkingConfigPage() {
 
           <div className="mt-3">
             <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-              <span className="text-sm text-gray-300">Auto-Link Threshold</span>
+              <span className="text-sm text-gray-300">{t("idAccountLinking.autoLinkThreshold")}</span>
               <span className="text-sm font-bold text-blue-400">{Math.round((data?.auto_link_threshold ?? 0) * 100)}%</span>
             </div>
           </div>
@@ -114,7 +116,7 @@ export default function IdentityAccountLinkingConfigPage() {
             </h2>
             <div className="space-y-2">
               <div className="flex items-center justify-between bg-gray-800 rounded-lg p-3">
-                <span className="text-sm text-gray-300">Strategy</span>
+                <span className="text-sm text-gray-300">{t("idAccountLinking.strategy")}</span>
                 <span className="text-sm font-medium capitalize">{data?.conflict_resolution?.strategy?.replace(/_/g, " ") ?? "manual"}</span>
               </div>
               <p className="text-xs text-gray-400">{data?.conflict_resolution?.description ?? ""}</p>
@@ -130,7 +132,7 @@ export default function IdentityAccountLinkingConfigPage() {
             <div className="space-y-2">
               <div className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-300">Allow Self-Service Unlink</span>
+                  <span className="text-sm text-gray-300">{t("idAccountLinking.allowSelfUnlink")}</span>
                   <span
                     className={"text-xs px-2 py-0.5 rounded " + (
                       data?.unlink_policy?.allow_self_service ? "bg-green-900 text-green-300" : "bg-gray-700 text-gray-400"
@@ -142,13 +144,13 @@ export default function IdentityAccountLinkingConfigPage() {
               </div>
               <div className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-300">Grace Period</span>
+                  <span className="text-sm text-gray-300">{t("idAccountLinking.gracePeriod")}</span>
                   <span className="text-sm font-medium">{data?.unlink_policy?.grace_period_hours ?? 0}h</span>
                 </div>
               </div>
               <div className="bg-gray-800 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-gray-300">Admin Approval Required</span>
+                  <span className="text-sm text-gray-300">{t("idAccountLinking.adminApproval")}</span>
                   <span
                     className={"text-xs px-2 py-0.5 rounded " + (
                       data?.unlink_policy?.require_admin_approval ? "bg-yellow-900 text-yellow-300" : "bg-gray-700 text-gray-400"

@@ -2,11 +2,13 @@
 
 import { useIdentityGroupLifecycle } from "@ggid/sdk-react";
 import { Users, Archive, Activity, GitMerge, Download, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityGroupLifecyclePage() {
   const { data, loading, error, refresh } = useIdentityGroupLifecycle();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading group lifecycle...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idGroupLifecycle.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const statusColors: Record<string, string> = {
@@ -24,21 +26,21 @@ export default function IdentityGroupLifecyclePage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Group Lifecycle</h1>
-          <p className="text-sm text-gray-400 mt-1">Monitor and manage group health and lifecycle states</p>
+          <h1 className="text-2xl font-bold">{t("idGroupLifecycle.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idGroupLifecycle.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium">
             <Download className="w-4 h-4" /> Export
           </button>
-          <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+          <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("idGroupLifecycle.refresh")}</button>
         </div>
       </div>
 
       {/* Summary + Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-sm font-semibold mb-4">Groups by Status</h2>
+          <h2 className="text-sm font-semibold mb-4">{t("idGroupLifecycle.groupsByStatus")}</h2>
           <div className="relative w-32 h-32 mx-auto">
             <svg className="w-32 h-32 -rotate-90" viewBox="0 0 100 100">
               {(() => {
@@ -91,7 +93,7 @@ export default function IdentityGroupLifecyclePage() {
             <GitMerge className="w-4 h-4 text-blue-400" />
             Merge Wizard
           </h2>
-          <p className="text-xs text-gray-400 mb-3">Consolidate duplicate or overlapping groups</p>
+          <p className="text-xs text-gray-400 mb-3">{t("idGroupLifecycle.consolidate")}</p>
           <button className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">
             Start Merge Wizard
           </button>
@@ -108,11 +110,11 @@ export default function IdentityGroupLifecyclePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Group</th>
-                <th className="text-left py-2 pr-3">Members</th>
-                <th className="text-left py-2 pr-3">Activity Score</th>
-                <th className="text-left py-2 pr-3">Permission Freshness</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.group")}</th>
+                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.members")}</th>
+                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.activityScore")}</th>
+                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.permissionFreshness")}</th>
+                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.status")}</th>
               </tr>
             </thead>
             <tbody>

@@ -2,60 +2,62 @@
 
 import { useIdentityCertificateLifecycle } from "@ggid/sdk-react";
 import { Award, RefreshCw, AlertTriangle, FileText, Ban } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityCertificateLifecyclePage() {
   const { data, loading, error, refresh } = useIdentityCertificateLifecycle();
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading certificate lifecycle...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idCertLifecycle.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Certificate Lifecycle</h1>
-          <p className="text-sm text-gray-400 mt-1">Manage TLS, signing, JWT, and mTLS certificates</p>
+          <h1 className="text-2xl font-bold">{t("idCertLifecycle.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idCertLifecycle.subtitle")}</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("idCertLifecycle.refresh")}</button>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-900 rounded-xl p-4">
           <Award className="w-5 h-5 text-blue-400 mb-1" />
-          <p className="text-xs text-gray-400">Total Certs</p>
+          <p className="text-xs text-gray-400">{t("idCertLifecycle.totalCerts")}</p>
           <p className="text-xl font-bold">{data?.certificates?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <RefreshCw className="w-5 h-5 text-yellow-400 mb-1" />
-          <p className="text-xs text-gray-400">Pending Renewal</p>
+          <p className="text-xs text-gray-400">{t("idCertLifecycle.pendingRenewal")}</p>
           <p className="text-xl font-bold text-yellow-400">{data?.renewal_queue?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <AlertTriangle className="w-5 h-5 text-red-400 mb-1" />
-          <p className="text-xs text-gray-400">Expiring (30d)</p>
+          <p className="text-xs text-gray-400">{t("idCertLifecycle.expiring30d")}</p>
           <p className="text-xl font-bold text-red-400">{data?.expiry_calendar?.filter((e) => e.days_until <= 30).length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <Ban className="w-5 h-5 text-gray-400 mb-1" />
-          <p className="text-xs text-gray-400">Revoked</p>
+          <p className="text-xs text-gray-400">{t("idCertLifecycle.revoked")}</p>
           <p className="text-xl font-bold">{data?.revocation_list?.length ?? 0}</p>
         </div>
       </div>
 
       {/* Certificates Table */}
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
-        <h2 className="text-lg font-semibold mb-4">Certificates</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("idCertLifecycle.certificates")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Name</th>
-                <th className="text-left py-2 pr-3">Type</th>
-                <th className="text-left py-2 pr-3">Issuer</th>
-                <th className="text-left py-2 pr-3">Serial</th>
-                <th className="text-left py-2 pr-3">Valid To</th>
-                <th className="text-left py-2 pr-3">Auto-Renew</th>
+                <th className="text-left py-2 pr-3">{t("idCertLifecycle.name")}</th>
+                <th className="text-left py-2 pr-3">{t("idCertLifecycle.type")}</th>
+                <th className="text-left py-2 pr-3">{t("idCertLifecycle.issuer")}</th>
+                <th className="text-left py-2 pr-3">{t("idCertLifecycle.serial")}</th>
+                <th className="text-left py-2 pr-3">{t("idCertLifecycle.validTo")}</th>
+                <th className="text-left py-2 pr-3">{t("idCertLifecycle.autoRenew")}</th>
               </tr>
             </thead>
             <tbody>
@@ -121,7 +123,7 @@ export default function IdentityCertificateLifecyclePage() {
               </div>
             ))}
             {(data?.revocation_list?.length ?? 0) === 0 && (
-              <p className="text-xs text-gray-500">No revoked certificates</p>
+              <p className="text-xs text-gray-500">{t("idCertLifecycle.noRevoked")}</p>
             )}
           </div>
         </div>

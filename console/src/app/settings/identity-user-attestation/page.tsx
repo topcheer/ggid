@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useIdentityUserAttestation } from "@ggid/sdk-react";
 import { CheckCircle, XCircle, Clock, Users, AlertTriangle, ShieldCheck } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityUserAttestationPage() {
   const { data, loading, error, refresh, bulkAttest } = useIdentityUserAttestation();
   const [selectedCampaign, setSelectedCampaign] = useState("");
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading user attestation...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idUserAttestation.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const campaign = selectedCampaign
@@ -19,8 +21,8 @@ export default function IdentityUserAttestationPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">User Attestation</h1>
-          <p className="text-sm text-gray-400 mt-1">Periodic access review and attestation campaigns</p>
+          <h1 className="text-2xl font-bold">{t("idUserAttestation.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idUserAttestation.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
@@ -35,28 +37,28 @@ export default function IdentityUserAttestationPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
             <Clock className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Pending</span>
+            <span className="text-xs text-gray-400">{t("idUserAttestation.pending")}</span>
           </div>
           <p className="text-2xl font-bold text-yellow-400">{campaign?.pending_count ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-green-400">
             <CheckCircle className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Attested</span>
+            <span className="text-xs text-gray-400">{t("idUserAttestation.attested")}</span>
           </div>
           <p className="text-2xl font-bold text-green-400">{campaign?.attested_count ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-red-400">
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Overdue</span>
+            <span className="text-xs text-gray-400">{t("idUserAttestation.overdue")}</span>
           </div>
           <p className="text-2xl font-bold text-red-400">{data?.overdue_attestations ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-purple-400">
             <ShieldCheck className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Auto-Revoke After</span>
+            <span className="text-xs text-gray-400">{t("idUserAttestation.autoRevokeAfter")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.auto_revoke_unattested_days ?? 0}d</p>
         </div>
@@ -65,7 +67,7 @@ export default function IdentityUserAttestationPage() {
       {/* Campaign Selector */}
       <div className="bg-gray-900 rounded-xl p-4 mb-6">
         <div className="flex items-center gap-3">
-          <label className="text-sm text-gray-400">Campaign:</label>
+          <label className="text-sm text-gray-400">{t("idUserAttestation.campaign")}</label>
           <select
             value={selectedCampaign || campaign?.id || ""}
             onChange={(e) => setSelectedCampaign(e.target.value)}
@@ -87,16 +89,16 @@ export default function IdentityUserAttestationPage() {
 
       {/* User List */}
       <div className="bg-gray-900 rounded-xl p-6">
-        <h2 className="text-lg font-semibold mb-4">User Attestation Status</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("idUserAttestation.status")}</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">User</th>
-                <th className="text-left py-2 pr-4">Status</th>
-                <th className="text-left py-2 pr-4">Last Attested</th>
-                <th className="text-left py-2 pr-4">Attested By</th>
-                <th className="text-left py-2 pr-4">Permissions</th>
+                <th className="text-left py-2 pr-4">{t("idUserAttestation.user")}</th>
+                <th className="text-left py-2 pr-4">{t("idUserAttestation.statusLabel")}</th>
+                <th className="text-left py-2 pr-4">{t("idUserAttestation.lastAttested")}</th>
+                <th className="text-left py-2 pr-4">{t("idUserAttestation.attestedBy")}</th>
+                <th className="text-left py-2 pr-4">{t("idUserAttestation.permissions")}</th>
               </tr>
             </thead>
             <tbody>

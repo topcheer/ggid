@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslations } from "@/lib/i18n";
 import { CalendarClock, Plus, X, GitBranch, Bell } from "lucide-react";
 
 interface DeprovisionJob {
@@ -25,6 +26,7 @@ export default function DeprovisionSchedulePage() {
   const [loading, setLoading] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ user_id: "", scheduled_at: "", reason: "", cascade_to_apps: true, notify_before_days: 7 });
+  const t = useTranslations();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -51,8 +53,8 @@ export default function DeprovisionSchedulePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><CalendarClock className="w-6 h-6 text-orange-500" /> Deprovision Schedule</h1><p className="text-sm text-gray-500 mt-1">Schedule user deprovisioning with cascading app access removal.</p></div>
-        <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 flex items-center gap-2"><Plus className="w-4 h-4" /> Schedule</button>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><CalendarClock className="w-6 h-6 text-orange-500" /> {t("deprovisionSchedule.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("deprovisionSchedule.subtitle")}</p></div>
+        <button onClick={() => setShowCreate(true)} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 flex items-center gap-2"><Plus className="w-4 h-4" /> {t("deprovisionSchedule.schedule")}</button>
       </div>
 
       <div className="relative pl-8">
@@ -67,16 +69,16 @@ export default function DeprovisionSchedulePage() {
                   <span className={`px-2 py-0.5 rounded text-xs ${statusColors[job.status]}`}>{job.status}</span>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                  <div className="flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">Scheduled:</span><span className="font-medium">{job.scheduled_at}</span></div>
-                  <div className="flex items-center gap-1"><Bell className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">Notify:</span><span className="font-medium">{job.notify_before_days}d before</span></div>
-                  <div className="flex items-center gap-1 col-span-2"><GitBranch className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">Cascade:</span><span className={`text-xs ${job.cascade_to_apps ? "text-green-600" : "text-gray-400"}`}>{job.cascade_to_apps ? "All apps" : "Identity only"}</span></div>
-                  <div className="col-span-2"><span className="text-gray-500 text-xs">Reason:</span><span className="text-sm ml-1">{job.reason}</span></div>
+                  <div className="flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">{t("deprovisionSchedule.scheduledLabel")}</span><span className="font-medium">{job.scheduled_at}</span></div>
+                  <div className="flex items-center gap-1"><Bell className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">{t("deprovisionSchedule.notify")}</span><span className="font-medium">{job.notify_before_days}d before</span></div>
+                  <div className="flex items-center gap-1 col-span-2"><GitBranch className="w-3.5 h-3.5 text-gray-400" /><span className="text-gray-500">{t("deprovisionSchedule.cascade")}</span><span className={`text-xs ${job.cascade_to_apps ? "text-green-600" : "text-gray-400"}`}>{job.cascade_to_apps ? "All apps" : "Identity only"}</span></div>
+                  <div className="col-span-2"><span className="text-gray-500 text-xs">{t("deprovisionSchedule.reasonLabel")}</span><span className="text-sm ml-1">{job.reason}</span></div>
                 </div>
-                {job.status === "scheduled" && <button onClick={() => cancel(job.id)} className="mt-2 text-xs text-red-600 hover:underline">Cancel</button>}
+                {job.status === "scheduled" && <button onClick={() => cancel(job.id)} className="mt-2 text-xs text-red-600 hover:underline">{t("deprovisionSchedule.cancel")}</button>}
               </div>
             </div>
           ))}
-          {jobs.length === 0 && !loading && <p className="text-sm text-gray-500 py-4 ml-2">No scheduled deprovisioning.</p>}
+          {jobs.length === 0 && !loading && <p className="text-sm text-gray-500 py-4 ml-2">{t("deprovisionSchedule.noScheduled")}</p>}
         </div>
       </div>
 
@@ -85,13 +87,13 @@ export default function DeprovisionSchedulePage() {
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">Schedule Deprovisioning</h3><button onClick={() => setShowCreate(false)}><X className="w-5 h-5 text-gray-400" /></button></div>
             <div className="px-6 py-4 space-y-3">
-              <div><label className="text-sm font-medium">User ID</label><input type="text" value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} placeholder="usr-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
-              <div><label className="text-sm font-medium">Scheduled At</label><input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-              <div><label className="text-sm font-medium">Reason</label><input type="text" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Contract end" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-              <div><label className="text-sm font-medium">Notify Before (days)</label><input type="number" min={0} value={form.notify_before_days} onChange={(e) => setForm({ ...form, notify_before_days: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">{t("deprovisionSchedule.userId")}</label><input type="text" value={form.user_id} onChange={(e) => setForm({ ...form, user_id: e.target.value })} placeholder="usr-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
+              <div><label className="text-sm font-medium">{t("deprovisionSchedule.scheduledAt")}</label><input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">{t("deprovisionSchedule.reason")}</label><input type="text" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Contract end" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">{t("deprovisionSchedule.notifyBefore")}</label><input type="number" min={0} value={form.notify_before_days} onChange={(e) => setForm({ ...form, notify_before_days: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.cascade_to_apps} onChange={(e) => setForm({ ...form, cascade_to_apps: e.target.checked })} className="rounded" /> Cascade to all connected apps</label>
             </div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button><button onClick={create} disabled={!form.user_id || !form.scheduled_at} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50">Schedule</button></div>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">{t("deprovisionSchedule.cancel")}</button><button onClick={create} disabled={!form.user_id || !form.scheduled_at} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50">{t("deprovisionSchedule.schedule")}</button></div>
           </div>
         </div>
       )}

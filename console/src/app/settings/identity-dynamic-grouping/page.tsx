@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useIdentityDynamicGrouping } from "@ggid/sdk-react";
 import { Users, Layers, GitBranch, Play, Eye } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityDynamicGroupingPage() {
   const { data, loading, error, refresh, evaluatePreview } = useIdentityDynamicGrouping();
   const [previewGroup, setPreviewGroup] = useState("");
+  const t = useTranslations();
 
-  if (loading) return <div className="p-8 text-gray-400">Loading dynamic grouping...</div>;
+  if (loading) return <div className="p-8 text-gray-400">{t("idDynamicGrouping.loading")}</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;
 
   const group = previewGroup
@@ -19,14 +21,14 @@ export default function IdentityDynamicGroupingPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Dynamic Grouping</h1>
-          <p className="text-sm text-gray-400 mt-1">Rule-based dynamic group membership</p>
+          <h1 className="text-2xl font-bold">{t("idDynamicGrouping.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("idDynamicGrouping.subtitle")}</p>
         </div>
         <button
           onClick={refresh}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition"
         >
-          Refresh
+          {t("idDynamicGrouping.refresh")}
         </button>
       </div>
 
@@ -35,28 +37,28 @@ export default function IdentityDynamicGroupingPage() {
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-blue-400">
             <Layers className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Total Groups</span>
+            <span className="text-xs text-gray-400">{t("idDynamicGrouping.totalGroups")}</span>
           </div>
           <p className="text-2xl font-bold">{data?.group_rules?.length ?? 0}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-green-400">
             <Users className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Dynamic Members</span>
+            <span className="text-xs text-gray-400">{t("idDynamicGrouping.dynamicMembers")}</span>
           </div>
           <p className="text-2xl font-bold">{(data?.group_rules ?? []).reduce((a, g) => a + g.member_count, 0)}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-purple-400">
             <Play className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Evaluation Freq</span>
+            <span className="text-xs text-gray-400">{t("idDynamicGrouping.evaluationFreq")}</span>
           </div>
           <p className="text-lg font-bold capitalize">{data?.evaluation_frequency ?? "real-time"}</p>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1 text-yellow-400">
             <GitBranch className="w-4 h-4" />
-            <span className="text-xs text-gray-400">Conflict Resolution</span>
+            <span className="text-xs text-gray-400">{t("idDynamicGrouping.conflictResolution")}</span>
           </div>
           <p className="text-lg font-bold capitalize">{data?.conflict_resolution?.replace(/_/g, " ") ?? "priority"}</p>
         </div>
@@ -65,7 +67,7 @@ export default function IdentityDynamicGroupingPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Group Rules Table */}
         <div className="bg-gray-900 rounded-xl p-6">
-          <h2 className="text-lg font-semibold mb-4">Group Rules</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("idDynamicGrouping.groupRules")}</h2>
           <div className="space-y-2">
             {(data?.group_rules ?? []).map((g) => (
               <div
@@ -105,7 +107,7 @@ export default function IdentityDynamicGroupingPage() {
                 <code className="text-xs text-gray-400 font-mono block mb-2">{group.rule_expression}</code>
               </div>
               <div className="bg-gray-800 rounded-lg p-3">
-                <p className="text-xs text-gray-400 mb-2">Matched Members ({group.member_count}):</p>
+                <p className="text-xs text-gray-400 mb-2">{t("idDynamicGrouping.matchedMembers")} ({group.member_count}):</p>
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {(group.preview_members ?? []).map((m, i) => (
                     <div key={i} className="flex items-center gap-2 bg-gray-900 rounded p-2">
@@ -123,7 +125,7 @@ export default function IdentityDynamicGroupingPage() {
 
       {/* Rule Builder */}
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
-        <h2 className="text-lg font-semibold mb-4">Rule Builder</h2>
+        <h2 className="text-lg font-semibold mb-4">{t("idDynamicGrouping.ruleBuilder")}</h2>
         <div className="flex items-center gap-2 flex-wrap">
           <select className="text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5">
             <option>department</option>
