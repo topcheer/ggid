@@ -95,9 +95,21 @@ type CORSConfig struct {
 	AllowCredentials bool     // allow cookies / Authorization header from browser
 }
 
-// DefaultCORSConfig returns a secure-by-default CORS config.
-// In production, set AllowedOrigins to your frontend domain(s).
+// DefaultCORSConfig returns a CORS config.
+// In production, set CORS_ALLOWED_ORIGINS env var (comma-separated origins).
+// Defaults to ["*"] only when no env var is set.
 func DefaultCORSConfig() CORSConfig {
+	envOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
+	if envOrigins != "" {
+		origins := strings.Split(envOrigins, ",")
+		for i, o := range origins {
+			origins[i] = strings.TrimSpace(o)
+		}
+		return CORSConfig{
+			AllowedOrigins:   origins,
+			AllowCredentials: true,
+		}
+	}
 	return CORSConfig{
 		AllowedOrigins:   []string{"*"},
 		AllowCredentials: false,

@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -216,10 +217,21 @@ func (s *Server) startGRPCServer(addr string) (*grpc.Server, net.Listener, error
 }
 
 func newOAuthGRPCServer() *grpc.Server {
-	// Reuse the same TLS pattern as other services.
+	// TLS support: when GRPC_TLS_ENABLED=true, attempt TLS credentials.
 	if os.Getenv("GRPC_TLS_ENABLED") == "true" {
-		// Import would create a cycle with the oauth server package's newGRPCServer,
-		// so we just return plaintext here. TLS for OAuth gRPC is a future enhancement.
+		certFile := os.Getenv("GRPC_TLS_CERT")
+		keyFile := os.Getenv("GRPC_TLS_KEY")
+		if certFile != "" && keyFile != "" {
+			creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
+			if err != nil {
+				if os.Getenv("GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK") != "true" {
+					log.Fatalf("GRPC_TLS_ENABLED but cert/key invalid: %v; refusing to start. Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in dev.", err)
+				}
+				log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext (GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true)", err)
+			} else {
+				return grpc.NewServer(grpc.Creds(creds))
+			}
+		}
 	}
 	return grpc.NewServer()
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc"
 )
 
@@ -216,6 +217,7 @@ func main() {
 	}()
 
 	// 8b. Start gRPC server (optional, if GRPC_ADDR is set)
+	// Uses same TLS-aware pattern as org/policy/audit/identity services.
 	grpcAddr := os.Getenv("AUTH_GRPC_ADDR")
 	if grpcAddr == "" {
 		grpcAddr = ":50052"
@@ -226,7 +228,34 @@ func main() {
 			log.Printf("Auth gRPC: failed to listen on %s: %v (continuing HTTP-only)", grpcAddr, err)
 			return
 		}
+
 		grpcServer := grpc.NewServer()
+
+		// TLS support: when GRPC_TLS_ENABLED=true, attempt TLS credentials.
+		if os.Getenv("GRPC_TLS_ENABLED") == "true" {
+			certFile := os.Getenv("GRPC_TLS_CERT")
+			keyFile := os.Getenv("GRPC_TLS_KEY")
+			if certFile != "" && keyFile != "" {
+				creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
+				if err != nil {
+					if os.Getenv("GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK") != "true" {
+						log.Fatalf("GRPC_TLS_ENABLED but cert/key invalid: %v; refusing to start. Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in dev.", err)
+					}
+					log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext (GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true)", err)
+				} else {
+					// Recreate server with TLS credentials.
+					lis.Close()
+					lis, err = net.Listen("tcp", grpcAddr)
+					if err != nil {
+						log.Printf("Auth gRPC: failed to re-listen on %s: %v", grpcAddr, err)
+						return
+					}
+					grpcServer = grpc.NewServer(grpc.Creds(creds))
+					log.Printf("Auth gRPC: TLS enabled (cert=%s)", certFile)
+				}
+			}
+		}
+
 		authGRPCHandler := server.NewAuthGRPCHandler(authSvc)
 		authGRPCHandler.RegisterGRPC(grpcServer)
 		log.Printf("Auth gRPC server listening on %s", grpcAddr)

@@ -586,7 +586,13 @@ func (s *HTTPServer) handleStream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	// Echo Origin header instead of wildcard for CORS security.
+	if origin := r.Header.Get("Origin"); origin != "" {
+		w.Header().Set("Access-Control-Allow-Origin", origin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	} else {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	}
 
 	// Send initial connection confirmation
 	fmt.Fprintf(w, "event: connected\ndata: {\"status\":\"ok\",\"tenant_id\":\"%s\"}\n\n", tenantID)
