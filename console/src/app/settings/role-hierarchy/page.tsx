@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useApi } from "@/lib/api";
-import { useTranslations } from "@/lib/i18n";
 import {
   GitBranch, ChevronRight, ChevronDown, Users, Shield, Loader2,
   AlertCircle, X,
@@ -18,7 +17,6 @@ interface RoleNode {
 }
 
 function TreeNode({ node, depth }: { node: RoleNode; depth: number }) {
-  const t = useTranslations();
   const [open, setOpen] = useState(true);
   const hasChildren = node.children?.length > 0;
   return (
@@ -30,7 +28,7 @@ function TreeNode({ node, depth }: { node: RoleNode; depth: number }) {
         <Shield className="h-4 w-4 shrink-0 text-indigo-500" />
         <span className="flex-1 font-medium text-gray-800 dark:text-gray-200">{node.name}</span>
         <span className="hidden items-center gap-1 text-xs text-gray-400 sm:flex"><Users className="h-3 w-3" />{node.user_count}</span>
-        <span className="hidden text-xs text-gray-400 sm:block">{node.permissions.length} {t("roleHierarchy.perms")}</span>
+        <span className="hidden text-xs text-gray-400 sm:block">{node.permissions.length} perms</span>
       </div>
       {node.description && <p className="text-xs text-gray-400" style={{ paddingLeft: depth * 24 + 48 }}>{node.description}</p>}
       {open && hasChildren && node.children.map((child) => <TreeNode key={child.id} node={child} depth={depth + 1} />)}
@@ -39,7 +37,6 @@ function TreeNode({ node, depth }: { node: RoleNode; depth: number }) {
 }
 
 export default function RoleHierarchyPage() {
-  const t = useTranslations();
   const { apiFetch } = useApi();
   const [tree, setTree] = useState<RoleNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,9 +61,9 @@ export default function RoleHierarchyPage() {
     <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-          <GitBranch className="h-6 w-6 text-indigo-600" /> {t("roleHierarchy.title")}
+          <GitBranch className="h-6 w-6 text-indigo-600" /> Role Hierarchy
         </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("roleHierarchy.subtitle")}</p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Role inheritance tree showing parent-child permission delegation.</p>
       </div>
 
       {error && (
@@ -78,7 +75,7 @@ export default function RoleHierarchyPage() {
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       ) : tree.length === 0 ? (
-        <div className={cardCls}><div className="py-12 text-center"><GitBranch className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("roleHierarchy.noHierarchy")}</p></div></div>
+        <div className={cardCls}><div className="py-12 text-center"><GitBranch className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No role hierarchy defined.</p></div></div>
       ) : (
         <div className={cardCls}>
           {tree.map((node) => <TreeNode key={node.id} node={node} depth={0} />)}

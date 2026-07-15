@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useTranslations } from '@/lib/i18n';
 
 interface Provider {
   id: string;
@@ -13,7 +12,6 @@ interface Provider {
 }
 
 export default function NotificationProviderConfigPage() {
-  const t = useTranslations();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -59,24 +57,24 @@ export default function NotificationProviderConfigPage() {
   const removeFromChain = (idx: number) => setFallbackChain(prev => prev.filter((_, i) => i !== idx));
 
   if (loading) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">{t("notifProvider.title")}</h1><p>{t("common.loading")}</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Notification Provider Config</h1><p>Loading...</p></div>
   );
   if (error) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">{t("notifProvider.title")}</h1><p className="text-red-600">{t("common.error")}: {error}</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Notification Provider Config</h1><p className="text-red-600">Error: {error}</p></div>
   );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t("notifProvider.title")}</h1>
-          <p className="text-gray-600">{t("notifProvider.subtitle")}</p>
+          <h1 className="text-2xl font-bold">Notification Provider Configuration</h1>
+          <p className="text-gray-600">Configure notification channels, templates, rate limits, and fallback chains.</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{showForm ? t("common.cancel") : t("notifProvider.add")}</button>
+        <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{showForm ? 'Cancel' : 'Add Provider'}</button>
       </div>
 
       {showForm && (
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">{t("notifProvider.add")}</h2>
+          <h2 className="text-lg font-semibold">Add Provider</h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium">Type</label>
@@ -93,7 +91,7 @@ export default function NotificationProviderConfigPage() {
               <input type="number" min={1} max={1000} value={newProvider.rateLimit} onChange={e => setNewProvider(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 100 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
-          <button onClick={addProvider} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{t("common.add")}</button>
+          <button onClick={addProvider} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Add</button>
         </section>
       )}
 
@@ -103,13 +101,13 @@ export default function NotificationProviderConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("common.name")}</th>
-              <th className="p-3">{t("common.type")}</th>
-              <th className="p-3">{t("common.status")}</th>
-              <th className="p-3">{t("notifProvider.template")}</th>
-              <th className="p-3">{t("notifProvider.rateLimit")}</th>
-              <th className="p-3">{t("common.enabled")}</th>
-              <th className="p-3">{t("common.action")}</th>
+              <th className="p-3">Name</th>
+              <th className="p-3">Type</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Template</th>
+              <th className="p-3">Rate Limit</th>
+              <th className="p-3">Enabled</th>
+              <th className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -121,7 +119,7 @@ export default function NotificationProviderConfigPage() {
                 <td className="p-3 font-mono text-xs text-gray-500">{p.template}</td>
                 <td className="p-3">{p.rateLimit}/min</td>
                 <td className="p-3"><label className="flex items-center"><input type="checkbox" checked={p.enabled} onChange={() => toggleProvider(p.id)} className="rounded" /></label></td>
-                <td className="p-3"><button onClick={() => sendTest(p.name)} className="text-blue-600 text-xs hover:underline">{t("common.test")}</button></td>
+                <td className="p-3"><button onClick={() => sendTest(p.name)} className="text-blue-600 text-xs hover:underline">Test</button></td>
               </tr>
             ))}
           </tbody>
@@ -129,7 +127,7 @@ export default function NotificationProviderConfigPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">{t("notifProvider.fallbackChain")}</h2>
+        <h2 className="text-lg font-semibold">Fallback Chain</h2>
         <p className="text-sm text-gray-500">If the primary provider fails, notifications fall through to the next in chain.</p>
         <div className="flex items-center gap-2 flex-wrap">
           {fallbackChain.map((t, idx) => (
@@ -141,7 +139,7 @@ export default function NotificationProviderConfigPage() {
           ))}
           {available.length > 0 && (
             <select onChange={e => { if (e.target.value) addToChain(e.target.value); e.target.selectedIndex = 0; }} className="border rounded px-2 py-1 text-sm">
-              <option value="">{t("common.add")}...</option>
+              <option value="">+ Add...</option>
               {available.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           )}

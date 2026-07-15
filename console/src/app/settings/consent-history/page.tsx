@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { History, Check, X, Search } from "lucide-react";
-import { useTranslations } from "@/lib/i18n";
 
 interface ConsentEntry {
   id: string;
@@ -17,7 +16,6 @@ interface ConsentEntry {
 }
 
 export default function ConsentHistoryPage() {
-  const t = useTranslations();
   const [entries, setEntries] = useState<ConsentEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<string>("");
@@ -50,35 +48,35 @@ export default function ConsentHistoryPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <History className="w-6 h-6 text-blue-500" /> {t("consentHistory.title")}
+          <History className="w-6 h-6 text-blue-500" /> Consent History
         </h1>
-        <p className="text-sm text-gray-500 mt-1">{t("consentHistory.subtitle")}</p>
+        <p className="text-sm text-gray-500 mt-1">Track OAuth consent grants and revocations across all clients.</p>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-lg border p-4 dark:border-gray-800">
-          <span className="text-sm text-gray-500">{t("consentHistory.total")}</span>
+          <span className="text-sm text-gray-500">Total</span>
           <p className="text-xl font-bold mt-1">{entries.length}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
-          <span className="text-sm text-gray-500">{t("consentHistory.granted")}</span>
+          <span className="text-sm text-gray-500">Granted</span>
           <p className="text-xl font-bold text-green-600 mt-1">{granted}</p>
         </div>
         <div className="rounded-lg border p-4 dark:border-gray-800">
-          <span className="text-sm text-gray-500">{t("consentHistory.revoked")}</span>
+          <span className="text-sm text-gray-500">Revoked</span>
           <p className="text-xl font-bold text-red-600 mt-1">{revoked}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1">
-          <button onClick={() => setFilter("")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === "" ? "bg-gray-200 dark:bg-gray-800" : "border dark:border-gray-700"}`}>{t("consentHistory.all")}</button>
-          <button onClick={() => setFilter("granted")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === "granted" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "border dark:border-gray-700"}`}>{t("consentHistory.granted")}</button>
-          <button onClick={() => setFilter("revoked")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === "revoked" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "border dark:border-gray-700"}`}>{t("consentHistory.revoked")}</button>
+          <button onClick={() => setFilter("")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === "" ? "bg-gray-200 dark:bg-gray-800" : "border dark:border-gray-700"}`}>All</button>
+          <button onClick={() => setFilter("granted")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === "granted" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "border dark:border-gray-700"}`}>Granted</button>
+          <button onClick={() => setFilter("revoked")} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === "revoked" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" : "border dark:border-gray-700"}`}>Revoked</button>
         </div>
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("consentHistory.searchUserClient")} className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search user or client..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
       </div>
 
@@ -96,10 +94,10 @@ export default function ConsentHistoryPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className={`text-xs font-medium ${e.action === "granted" ? "text-green-600" : "text-red-600"}`}>
-                        {e.action === "granted" ? t("consentHistory.granted") : t("consentHistory.revoked")}
+                        {e.action === "granted" ? "Granted" : "Revoked"}
                       </span>
                       <span className="text-sm font-medium">{e.username}</span>
-                      <span className="text-xs text-gray-400">{t("consentHistory.to")}</span>
+                      <span className="text-xs text-gray-400">to</span>
                       <span className="text-sm">{e.client_name}</span>
                     </div>
                     <span className="text-xs text-gray-400">{e.timestamp}</span>
@@ -115,7 +113,7 @@ export default function ConsentHistoryPage() {
             );
           })}
           {filtered.length === 0 && !loading && (
-            <p className="text-sm text-gray-500 py-4 ml-2">{t("consentHistory.noEntries")}</p>
+            <p className="text-sm text-gray-500 py-4 ml-2">No consent entries.</p>
           )}
         </div>
       </div>

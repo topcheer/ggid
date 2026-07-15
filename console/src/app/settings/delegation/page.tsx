@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useTranslations } from "@/lib/i18n";
 import { useApi } from "@/lib/api";
 import {
   Users, UserCheck, Clock, Plus, X, AlertCircle, Loader2,
@@ -24,7 +23,6 @@ interface Delegation {
 
 export default function DelegationPage() {
   const { apiFetch } = useApi();
-  const t = useTranslations();
   const [delegations, setDelegations] = useState<Delegation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -101,31 +99,31 @@ export default function DelegationPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <UserCheck className="h-6 w-6 text-indigo-600" /> {t("delegation.title")}
+            <UserCheck className="h-6 w-6 text-indigo-600" /> Role Delegation
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t("delegation.subtitle")}
+            Temporarily delegate roles to other users with automatic expiry.
           </p>
         </div>
         <button onClick={() => setShowDelegate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-          <Plus className="h-4 w-4" /> {t("delegation.delegate")}
+          <Plus className="h-4 w-4" /> Delegate
         </button>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-4">
         <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">{t("delegation.active")}</p>
+          <p className="text-xs font-medium text-gray-400">Active</p>
           <p className="mt-1 text-2xl font-bold text-green-600">{active.length}</p>
         </div>
         <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">{t("delegation.expiring24h")}</p>
+          <p className="text-xs font-medium text-gray-400">Expiring (24h)</p>
           <p className="mt-1 text-2xl font-bold text-orange-600">
             {active.filter((d) => { const h = (new Date(d.expires_at).getTime() - Date.now()) / 3600000; return h > 0 && h < 24; }).length}
           </p>
         </div>
         <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">{t("delegation.past")}</p>
+          <p className="text-xs font-medium text-gray-400">Past</p>
           <p className="mt-1 text-2xl font-bold text-gray-500">{past.length}</p>
         </div>
       </div>
@@ -140,10 +138,10 @@ export default function DelegationPage() {
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
         <button onClick={() => setTab("active")} className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "active" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
-          <CheckCircle2 className="h-4 w-4" /> {t("delegation.active")} ({active.length})
+          <CheckCircle2 className="h-4 w-4" /> Active ({active.length})
         </button>
         <button onClick={() => setTab("expired")} className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "expired" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
-          <Clock className="h-4 w-4" /> {t("delegation.history")} ({past.length})
+          <Clock className="h-4 w-4" /> History ({past.length})
         </button>
       </div>
 
@@ -153,7 +151,7 @@ export default function DelegationPage() {
         <div className={cardCls}>
           <div className="py-12 text-center">
             <UserCheck className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-4 text-sm text-gray-400">{tab === "active" ? t("delegation.noActive") : t("delegation.noHistory")}</p>
+            <p className="mt-4 text-sm text-gray-400">{tab === "active" ? "No active delegations." : "No delegation history."}</p>
           </div>
         </div>
       ) : (
@@ -173,7 +171,7 @@ export default function DelegationPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.delegator_name}</p>
-                          <p className="text-xs text-gray-400">{t("delegation.delegator")}</p>
+                          <p className="text-xs text-gray-400">Delegator</p>
                         </div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-gray-300" />
@@ -183,7 +181,7 @@ export default function DelegationPage() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.delegate_name}</p>
-                          <p className="text-xs text-gray-400">{t("delegation.delegateLabel")}</p>
+                          <p className="text-xs text-gray-400">Delegate</p>
                         </div>
                       </div>
                     </div>
@@ -191,7 +189,7 @@ export default function DelegationPage() {
                   <div className="flex items-center gap-2">
                     {d.status === "active" ? (
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${expiringSoon ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"}`}>
-                        {expiringSoon ? t("delegation.expiring") : t("delegation.active")}
+                        {expiringSoon ? "Expiring" : "Active"}
                       </span>
                     ) : (
                       <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700">{d.status}</span>
@@ -273,13 +271,13 @@ export default function DelegationPage() {
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><XCircle className="h-5 w-5 text-red-600" /></div>
               <div>
-                <h2 className="font-semibold text-gray-900 dark:text-white">{t("delegation.confirmRevoke")}</h2>
+                <h2 className="font-semibold text-gray-900 dark:text-white">Revoke Delegation?</h2>
                 <p className="text-sm text-gray-500">Delegate <strong>{confirmRevoke.delegate_name}</strong> will lose roles: {confirmRevoke.roles.join(", ")} immediately.</p>
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmRevoke(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("delegation.cancel")}</button>
-              <button onClick={() => handleRevoke(confirmRevoke.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{t("delegation.revoke")}</button>
+              <button onClick={() => setConfirmRevoke(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
+              <button onClick={() => handleRevoke(confirmRevoke.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Revoke</button>
             </div>
           </div>
         </div>
