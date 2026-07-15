@@ -102,7 +102,7 @@ export default function IdentityFederationPage() {
       {testTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 space-y-4">
-            <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Federation Test: {testTarget.idpName}</h2><button onClick={() => { setTestTarget(null); setTestResult(''); }} className="text-gray-400 hover:text-gray-600">X</button></div>
+            <div className="flex items-center justify-between"><h2 className="text-lg font-semibold">Federation Test: {testTarget.idpName}</h2><button onClick={() => { setTestTarget(null); setTestResult(''); }} aria-label="Close" className="text-gray-400 hover:text-gray-600">X</button></div>
             <div className="space-y-2 text-sm"><div><span className="text-gray-500">Protocol:</span> {testTarget.protocol}</div><div><span className="text-gray-500">Metadata URL:</span> <span className="font-mono text-xs">{testTarget.metadataUrl}</span></div><div><span className="text-gray-500">Entity ID:</span> <span className="font-mono text-xs">{testTarget.entityId}</span></div></div>
             <div className={`p-3 rounded text-sm ${testResult.includes('successful') || testResult.includes('Error') ? testResult.includes('Error') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>{testResult}</div>
           </div>

@@ -193,7 +193,7 @@ export default function SbomCenterPage() {
           <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">{selectedComponent.name}</h2>
-              <button onClick={() => setSelectedComponent(null)} className="text-gray-400 hover:text-gray-600">X</button>
+              <button onClick={() => setSelectedComponent(null)} aria-label="Close" className="text-gray-400 hover:text-gray-600">X</button>
             </div>
             <div className="space-y-2 text-sm">
               <div><span className="text-gray-500">Version:</span> {selectedComponent.version}</div>
