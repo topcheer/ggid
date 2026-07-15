@@ -21,7 +21,7 @@ export default function AgentLifecyclePage() {
             <Plus className="w-4 h-4" />
             Provision Agent
           </button>
-          <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+          <button onClick={refresh} aria-label="Refresh agent lifecycle data" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
         </div>
       </div>
 

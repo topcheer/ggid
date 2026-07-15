@@ -16,7 +16,7 @@ export default function ThreatHuntingWorkbenchPage() {
           <h1 className="text-2xl font-bold">Threat Hunting Workbench</h1>
           <p className="text-sm text-gray-400 mt-1">Proactive threat hunting with IOC queries and hypotheses</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} aria-label="Refresh threat hunting data" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
       </div>
 
       {/* Query Builder */}

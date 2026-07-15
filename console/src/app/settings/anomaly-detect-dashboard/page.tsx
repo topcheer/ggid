@@ -15,7 +15,7 @@ export default function AnomalyDetectDashboardPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div><h1 className="text-2xl font-bold">Anomaly Detection Dashboard</h1><p className="text-sm text-gray-400 mt-1">Real-time behavioral anomaly detection</p></div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
+        <button onClick={refresh} aria-label="Refresh anomaly data" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
       </div>
 
       {/* Summary */}

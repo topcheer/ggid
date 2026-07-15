@@ -154,7 +154,7 @@ export default function SecurityCenterDashboardPage() {
       <div className="p-8">
         <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
           <p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p>
-          <button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
+          <button onClick={loadData} aria-label="Load security data" className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button>
         </div>
       </div>
     );
