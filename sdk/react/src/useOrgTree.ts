@@ -29,7 +29,7 @@ export interface UseOrgTreeResult {
   fetchChildren: (parentId: string) => Promise<OrgTreeNode[]>;
   searchNodes: (query: string) => Promise<OrgTreeNode[]>;
   getPath: (nodeId: string) => Promise<OrgTreeNode[]>;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<OrgTreeNode[]>;
 }
 
 export function useOrgTree(): UseOrgTreeResult {

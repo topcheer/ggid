@@ -52,6 +52,8 @@ export interface UseIdPConfigResult {
   updateConfig: (id: string, input: Partial<IdPConfig>) => Promise<boolean>;
   deleteConfig: (id: string) => Promise<boolean>;
   testConnection: (id: string) => Promise<{ success: boolean; message: string }>;
+  uploadSAMLMetadata: (id: string, xml: string) => Promise<boolean>;
+  downloadSPMetadata: (id: string) => Promise<string | null>;
   refetch: () => Promise<void>;
 }
 
