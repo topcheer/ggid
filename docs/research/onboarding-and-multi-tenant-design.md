@@ -1,6 +1,6 @@
 # Onboarding & Multi-Tenant Login Design
 
-> Status: **Draft** | Owner: docs team | Last updated: 2026-07-15
+> Status: **In Progress** | Owner: docs team | Last updated: 2026-07-15
 
 ## 1. Current State Analysis
 
@@ -512,7 +512,41 @@ ON CONFLICT (key) DO NOTHING;
 
 ---
 
-## 8. References
+## 8. Implementation Status (2026-07-15)
+
+### Gap Tracking
+
+| Gap # | Feature | Status | Commit | Notes |
+|-------|---------|--------|--------|-------|
+| #13 | System initialization detection (`GET /api/v1/system/initialized`) | **DONE** | `6f23b400` | Unauthenticated endpoint, returns `{initialized: bool}` |
+| #14 | Onboarding wizard (server-backed bootstrap flow) | **PARTIAL** | — | Login page shows warning when system not initialized; full 4-step bootstrap wizard (tenant creation, admin setup, security config) still **pending** |
+| #15 | Tenant resolution (`GET /api/v1/tenants/resolve?slug=...`) | **DONE** | `6f23b400` | Unauthenticated slug → tenant_id lookup for multi-tenant login |
+| #16 | Multi-tenant login (`tenant_slug` in `POST /api/v1/auth/login`) | **DONE** | `6f23b400` | Login accepts `tenant_slug` field as alternative to `X-Tenant-ID` header |
+| #17 | All-in-one Docker IPv6 fix + run.sh launcher | **DONE** | `6f23b400` | Service URLs use `127.0.0.1` instead of `localhost`; `run.sh` one-command launcher |
+
+### What Remains
+
+**Gap #14 — Full Onboarding Wizard (pending):**
+- The login page detects uninitialized systems and displays a warning, but the actual 4-step bootstrap flow (Steps 1-4 described in Section 2) is not yet implemented.
+- Bootstrap endpoints (`POST /api/v1/system/bootstrap/*`) with setup_token authentication need to be built.
+- The existing `/onboarding` page still uses localStorage for completion tracking — needs to be rewritten to use server-backed bootstrap APIs.
+- The `system_settings` table migration is not yet created.
+
+**Phase 2 — Multi-Tenant Login UI (partially done):**
+- The backend supports `tenant_slug` in login requests (Gap #16).
+- The `/tenants/resolve` API is available (Gap #15).
+- The console login page has not yet been updated to include a workspace slug input field.
+
+**Phase 3-4 — Subdomain resolution and polish:** Not started.
+
+### Commits
+
+- `3f49c3a5` — Initial design document (this file)
+- `6f23b400` — Multi-tenant login + onboarding flow implementation (gaps #13, #15, #16, #17)
+
+---
+
+## 9. References
 
 - Current seed script: `deploy/seed.sh`
 - Current login page: `console/src/app/login/page.tsx`

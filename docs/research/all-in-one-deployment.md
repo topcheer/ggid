@@ -1,6 +1,6 @@
 # All-in-One Docker Deployment Guide
 
-*Research document — 2026-07-15*
+*Updated: 2026-07-15 — IPv6 fix, multi-tenant login, onboarding APIs*
 
 ## Summary
 
@@ -8,27 +8,174 @@ GGID provides an all-in-one Docker image that bundles the entire IAM stack into 
 
 ## One-Command Quick Start
 
-Build the image from the repository root (this may take several minutes):
+The easiest way to start is with the included launcher script:
 
 ```bash
-docker build -f deploy/all-in-one/Dockerfile -t ggid/ggid-all-in-one:latest .
+bash deploy/all-in-one/run.sh
 ```
 
-Run the container:
+This script will:
+1. Build the Docker image if it doesn't exist yet
+2. Remove any stale container
+3. Start the container with all ports bound to `127.0.0.1` (IPv4 only)
+4. Wait for services to initialize (~20 seconds)
+5. Run a health check and print the access URLs
+
+Alternatively, you can build and run manually:
 
 ```bash
+# Build the image from repository root
+docker build -f deploy/all-in-one/Dockerfile -t ggid/ggid-all-in-one:latest .
+
+# Run with all service ports
 docker run -d \
-  -p 8080:8080 \
-  -p 3000:3000 \
+  -p 127.0.0.1:8080:8080 \
+  -p 127.0.0.1:3000:3000 \
+  -p 127.0.0.1:8081:8081 \
+  -p 127.0.0.1:9001:9001 \
+  -p 127.0.0.1:9005:9005 \
+  -p 127.0.0.1:8070:8070 \
+  -p 127.0.0.1:8071:8071 \
+  -p 127.0.0.1:8072:8072 \
   --name ggid-all-in-one \
   ggid/ggid-all-in-one:latest
 ```
 
-Wait approximately 15 seconds for PostgreSQL, Redis, NATS, migrations, and all services to start. Then open the console:
+After ~20 seconds, access the platform:
 
-- **Admin Console:** http://localhost:3000
-- **API Gateway:** http://localhost:8080
-- **Default Tenant ID:** `00000000-0000-0000-0000-000000000001`
+- **Admin Console:** http://127.0.0.1:3000
+- **API Gateway:** http://127.0.0.1:8080
+- **Default credentials:** `admin` / `Password123!`
+- **Tenant slug:** `default`
+
+> **Important — use `127.0.0.1`, not `localhost`:** On macOS, Docker port forwarding may resolve `localhost` to an IPv6 address (`::1`) that the container doesn't bind to. Always use `127.0.0.1` in browser URLs and API calls to avoid connection refused errors.
+
+## Default Credentials
+
+The all-in-one image seeds the following default data during initialization:
+
+| Item | Value |
+|------|-------|
+| Admin username | `admin` |
+| Admin password | `Password123!` |
+| Admin email | `admin@ggid.dev` |
+| Tenant name | `Default` |
+| Tenant slug | `default` |
+| Tenant ID | `00000000-0000-0000-0000-000000000001` |
+| System roles | `admin`, `manager`, `user` |
+
+**Change the admin password immediately after first login in any non-demo environment.**
+
+## IPv6 Fix (2026-07-15)
+
+### Problem
+
+On macOS, Docker's port forwarding may resolve `localhost` to `::1` (IPv6 loopback) while the container's services listen on `0.0.0.0` or `127.0.0.1` (IPv4 only). This caused connection refused errors when services tried to communicate internally via HTTP using `localhost` URLs.
+
+### Fix
+
+All service-to-service HTTP URLs in the Dockerfile have been changed from `localhost` to `127.0.0.1`:
+
+```dockerfile
+# Before (IPv6 issue on macOS)
+ENV GATEWAY_URL=http://localhost:8080
+ENV IDENTITY_SERVICE_URL=http://localhost:8081
+ENV AUTH_SERVICE_URL=http://localhost:9001
+
+# After (IPv4 only, macOS compatible)
+ENV GATEWAY_URL=http://127.0.0.1:8080
+ENV IDENTITY_SERVICE_URL=http://127.0.0.1:8081
+ENV AUTH_SERVICE_URL=http://127.0.0.1:9001
+```
+
+The `run.sh` script also binds all published ports to `127.0.0.1` explicitly:
+
+```bash
+docker run -d \
+    -p 127.0.0.1:8080:8080 \
+    -p 127.0.0.1:3000:3000 \
+    ...
+```
+
+Database (`DB_HOST`), Redis, and NATS still use `localhost` internally — these use raw TCP sockets (not HTTP) and are unaffected by the IPv6 issue.
+
+## Exposed Ports
+
+All ports are bound to `127.0.0.1` (loopback only):
+
+| Port | Service | Protocol | Purpose |
+|------|---------|----------|---------|
+| **8080** | Gateway | HTTP | REST API gateway, reverse proxy to all services |
+| **3000** | Console | HTTP | Next.js admin UI |
+| **8081** | Identity | HTTP | User CRUD, SCIM 2.0, tenant management |
+| **9001** | Auth | HTTP | Login, register, MFA, password policy, sessions |
+| **9005** | OAuth | HTTP | OAuth2/OIDC, JWKS, SAML, discovery |
+| **8070** | Policy | HTTP | RBAC + ABAC engine, roles, permissions |
+| **8071** | Org | HTTP | Organizations, departments, teams, memberships |
+| **8072** | Audit | HTTP | Audit event query, compliance reports |
+
+For most use cases, only `8080` (API) and `3000` (Console) are needed — all API calls go through the gateway.
+
+## New API Endpoints
+
+### System Initialization Check
+
+```bash
+# Check if the system has been initialized (any users exist)
+curl http://127.0.0.1:8080/api/v1/system/initialized
+
+# Response when not initialized:
+# { "initialized": false }
+
+# Response after seeding:
+# { "initialized": true }
+```
+
+This endpoint is **unauthenticated** — the console uses it on load to decide whether to redirect to the onboarding wizard or the login page.
+
+### Tenant Resolution
+
+```bash
+# Resolve a tenant slug to its ID and metadata
+curl http://127.0.0.1:8080/api/v1/tenants/resolve?slug=default
+
+# Response:
+# {
+#   "id": "00000000-0000-0000-0000-000000000001",
+#   "name": "Default",
+#   "slug": "default",
+#   "plan": "enterprise",
+#   "status": "active"
+# }
+```
+
+This enables the multi-tenant login flow: users enter their workspace slug, the console resolves it to a tenant ID, then includes it in the `X-Tenant-ID` header for authentication.
+
+### Multi-Tenant Login
+
+Login now supports an optional `tenant_slug` field for tenant resolution:
+
+```bash
+# Login with tenant_slug (recommended for multi-tenant)
+curl -X POST http://127.0.0.1:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "Password123!",
+    "tenant_slug": "default"
+  }'
+
+# Login with X-Tenant-ID header (traditional)
+curl -X POST http://127.0.0.1:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
+  -d '{
+    "username": "admin",
+    "password": "Password123!"
+  }'
+```
+
+If both `tenant_slug` and `X-Tenant-ID` are provided, the header takes precedence.
 
 ## What Is Included
 
@@ -48,56 +195,17 @@ The all-in-one image runs the following processes under `supervisord`:
 | gateway-server | API Gateway | 8080 |
 | console | Next.js admin UI | 3000 |
 
-## Exposed Ports
-
-Only the following ports are exposed by default:
-
-- `8080` — API Gateway (REST / proxy)
-- `3000` — Admin Console
-- `8070` / `8071` / `8072` — Internal service HTTP (optional)
-- `9001` / `9005` — Auth / OAuth HTTP (optional)
-- `8081` — Identity HTTP (optional)
-
-For local development, `8080` and `3000` are usually sufficient.
-
 ## Persistent Data
 
 By default, data is stored inside the container and is lost when the container is removed. To persist PostgreSQL data across restarts, mount a named volume:
 
 ```bash
 docker run -d \
-  -p 8080:8080 \
-  -p 3000:3000 \
+  -p 127.0.0.1:8080:8080 \
+  -p 127.0.0.1:3000:3000 \
   -v ggid-data:/var/lib/postgresql/data \
   --name ggid-all-in-one \
   ggid/ggid-all-in-one:latest
-```
-
-## First API Call
-
-Register an admin user through the gateway using the default tenant:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -d '{
-    "username": "admin",
-    "email": "admin@example.com",
-    "password": "Password123!"
-  }'
-```
-
-Then log in:
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001" \
-  -d '{
-    "username": "admin",
-    "password": "Password123!"
-  }'
 ```
 
 ## Environment Variables
@@ -112,7 +220,13 @@ You can override the following variables at runtime with `-e KEY=VALUE`:
 | `DATABASE_URL` | `postgres://ggid:ggid@localhost:5432/ggid?sslmode=disable` | Full DB connection string |
 | `REDIS_URL` | `redis://localhost:6379` | Redis connection string |
 | `NATS_URL` | `nats://localhost:4222` | NATS connection string |
-| `GATEWAY_ADDR` | `:8080` | Gateway bind address |
+| `GATEWAY_URL` | `http://127.0.0.1:8080` | Gateway URL (IPv4) |
+| `IDENTITY_SERVICE_URL` | `http://127.0.0.1:8081` | Identity service URL (IPv4) |
+| `AUTH_SERVICE_URL` | `http://127.0.0.1:9001` | Auth service URL (IPv4) |
+| `OAUTH_SERVICE_URL` | `http://127.0.0.1:9005` | OAuth service URL (IPv4) |
+| `POLICY_SERVICE_URL` | `http://127.0.0.1:8070` | Policy service URL (IPv4) |
+| `ORG_SERVICE_URL` | `http://127.0.0.1:8071` | Org service URL (IPv4) |
+| `AUDIT_SERVICE_URL` | `http://127.0.0.1:8072` | Audit service URL (IPv4) |
 | `NEXT_PUBLIC_TENANT_ID` | `00000000-0000-0000-0000-000000000001` | Default tenant shown in console |
 | `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK` | `true` | Allow plaintext gRPC fallback (dev only) |
 | `JWT_PUBLIC_KEY_PATH` | `/app/configs/rsa_public.pem` | JWT public key for verification |
@@ -148,8 +262,7 @@ docker exec ggid-all-in-one supervisorctl status
 ## Stopping and Removing
 
 ```bash
-docker stop ggid-all-in-one
-docker rm ggid-all-in-one
+docker rm -f ggid-all-in-one
 ```
 
 To remove the persisted volume as well:
@@ -161,18 +274,52 @@ docker volume rm ggid-data
 ## Architecture
 
 ```text
-┌──────────────────────────────────────────────────────────┐
-│                    ggid-all-in-one                       │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  supervisord                                        │  │
-│  │  ├─ postgresql  ├─ redis  ├─ nats-server          │  │
-│  │  ├─ identity-server  ├─ auth-server               │  │
-│  │  ├─ oauth-server   ├─ policy-server              │  │
-│  │  ├─ org-server     ├─ audit-server               │  │
-│  │  ├─ gateway-server  ├─ console                   │  │
-│  └─────────────────────────────────────────────────────┘  │
-│         Host: 8080 (gateway), 3000 (console)               │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                    ggid-all-in-one                            │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │  supervisord                                           │  │
+│  │  ├─ postgresql  ├─ redis  ├─ nats-server             │  │
+│  │  ├─ identity-server  ├─ auth-server                   │  │
+│  │  ├─ oauth-server   ├─ policy-server                   │  │
+│  │  ├─ org-server     ├─ audit-server                    │  │
+│  │  ├─ gateway-server  ├─ console                        │  │
+│  └────────────────────────────────────────────────────────┘  │
+│   Host: 127.0.0.1:8080 (gateway), 127.0.0.1:3000 (console)   │
+│         + 8081, 9001, 9005, 8070, 8071, 8072                  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Troubleshooting
+
+### Connection Refused on macOS
+
+If you get "connection refused" when accessing `http://localhost:3000` or `http://localhost:8080`:
+
+1. Use `http://127.0.0.1:3000` instead — macOS may resolve `localhost` to IPv6 (`::1`)
+2. Verify the container is running: `docker ps | grep ggid-all-in-one`
+3. Check service health: `curl http://127.0.0.1:8080/healthz`
+
+### Services Not Ready
+
+The first startup takes ~20 seconds for PostgreSQL, migrations, and all services to initialize. If health check fails:
+
+```bash
+# Check supervisor status
+docker exec ggid-all-in-one supervisorctl status
+
+# Check specific service logs
+docker exec ggid-all-in-one tail -50 /var/log/supervisor/identity-server.log
+```
+
+### Port Already in Use
+
+If a port is already allocated:
+
+```bash
+# Find what's using the port (e.g., 8080)
+lsof -i :8080
+
+# Stop the conflicting process or change the port mapping
 ```
 
 ## When to Use
@@ -191,19 +338,21 @@ For production, prefer one of the following:
 - **Kubernetes / Helm** — horizontal scaling, rolling updates, and pod isolation.
 - **Managed PostgreSQL / Redis / NATS** — reduces operational burden.
 
-The all-in-one image is intentionally **not** designed for production: it runs all processes as `root` inside a single container, bundles a database, and does not provide high availability or horizontal scaling.
+The all-in-one image is intentionally **not** designed for production: it runs all processes in a single container, bundles a database, and does not provide high availability or horizontal scaling.
 
 ## File References
 
-- `deploy/all-in-one/Dockerfile`
-- `deploy/all-in-one/supervisord.conf`
-- `deploy/all-in-one/entrypoint.sh`
-- `deploy/all-in-one/postgres-start.sh`
-- `deploy/all-in-one/wait-for-db.sh`
-- `deploy/all-in-one/README.md`
+- `deploy/all-in-one/Dockerfile` — multi-stage build with IPv4-only service URLs
+- `deploy/all-in-one/run.sh` — one-command launcher script
+- `deploy/all-in-one/supervisord.conf` — process manager configuration
+- `deploy/all-in-one/entrypoint.sh` — container startup sequence
+- `deploy/all-in-one/postgres-start.sh` — PostgreSQL initialization
+- `deploy/all-in-one/wait-for-db.sh` — DB readiness probe
+- `deploy/all-in-one/README.md` — quick reference
 
 ## Related Docs
 
-- `docs/deployment-guide.md` — Full deployment options (Compose, Kubernetes, Helm).
-- `docs/docker-deployment-state.md` — Docker Compose multi-service deployment status.
-- `docs/research/docker-e2e-infra-gap.md` — Historical Docker E2E infrastructure fixes.
+- `docs/research/onboarding-and-multi-tenant-design.md` — Onboarding wizard and multi-tenant login design
+- `docs/deployment-guide.md` — Full deployment options (Compose, Kubernetes, Helm)
+- `docs/docker-deployment-state.md` — Docker Compose multi-service deployment status
+- `docs/research/docker-e2e-infra-gap.md` — Historical Docker E2E infrastructure fixes
