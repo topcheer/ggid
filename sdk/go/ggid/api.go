@@ -13,7 +13,19 @@ import (
 
 // Login authenticates with username/password and returns tokens.
 func (c *Client) Login(ctx context.Context, username, password string) (*TokenSet, error) {
+	return c.LoginWithTenant(ctx, username, password, "", "")
+}
+
+// LoginWithTenant authenticates with optional tenant_id or tenant_slug.
+// If both are empty, the server uses the X-Tenant-ID header or default tenant.
+func (c *Client) LoginWithTenant(ctx context.Context, username, password, tenantID, tenantSlug string) (*TokenSet, error) {
 	body := map[string]string{"username": username, "password": password}
+	if tenantID != "" {
+		body["tenant_id"] = tenantID
+	}
+	if tenantSlug != "" {
+		body["tenant_slug"] = tenantSlug
+	}
 	resp, err := c.do(ctx, http.MethodPost, "/api/v1/auth/login", body, "")
 	if err != nil {
 		return nil, err

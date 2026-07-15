@@ -173,8 +173,10 @@ type TokenSet struct {
 
 // LoginRequest holds credentials for password login.
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	TenantID   string `json:"tenant_id,omitempty"`
+	TenantSlug string `json:"tenant_slug,omitempty"`
 }
 
 // APIError represents a structured error returned by the GGID API.
