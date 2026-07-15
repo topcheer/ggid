@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface RiskWeight {
   factor: string;
@@ -14,6 +15,8 @@ interface RiskAction {
 }
 
 export default function RiskEngineConfigPage() {
+  const t = useTranslations();
+
   const [weights, setWeights] = useState<RiskWeight[]>([]);
   const [actions, setActions] = useState<RiskAction[]>([]);
 

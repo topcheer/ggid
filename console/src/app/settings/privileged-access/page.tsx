@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Crown, Trash2, AlertTriangle, Clock, Shield, CheckCircle2, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PrivilegedAccount {
   id: string;
@@ -16,6 +17,8 @@ interface PrivilegedAccount {
 }
 
 export default function PrivilegedAccessPage() {
+  const t = useTranslations();
+
   const [accounts, setAccounts] = useState<PrivilegedAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -66,7 +69,7 @@ export default function PrivilegedAccessPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Crown className="w-6 h-6 text-yellow-500" /> Privileged Access Management</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Crown className="w-6 h-6 text-yellow-500" /> {t("privilegedAccess.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Monitor and revoke privileged account access.</p>
         </div>
         {selectedIds.size > 0 && (

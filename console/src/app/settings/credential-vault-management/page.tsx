@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Credential {
   id: string;
@@ -14,6 +15,8 @@ interface Credential {
 }
 
 export default function CredentialVaultManagementPage() {
+  const t = useTranslations();
+
   const [credentials, setCredentials] = useState<Credential[]>([]);
 
   const [showForm, setShowForm] = useState(false);

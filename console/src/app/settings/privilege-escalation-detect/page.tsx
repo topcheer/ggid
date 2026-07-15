@@ -2,8 +2,11 @@
 
 import { usePrivilegeEscalationDetect } from "@ggid/sdk-react";
 import { ShieldAlert, TrendingUp, Zap, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function PrivilegeEscalationDetectPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = usePrivilegeEscalationDetect();
 
   if (loading) return <div className="p-8 text-gray-400">Loading privilege escalation detection...</div>;

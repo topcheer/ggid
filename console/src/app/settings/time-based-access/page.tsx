@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Clock, Loader2, AlertCircle, X, Plus, Trash2, Save, Calendar,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ScheduleRule {
   id: string;
@@ -23,6 +24,8 @@ const weekdays = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const hours = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`);
 
 export default function TimeBasedAccessPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<ScheduleRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +77,7 @@ export default function TimeBasedAccessPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Clock className="h-6 w-6 text-cyan-600" /> Time-Based Access</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Clock className="h-6 w-6 text-cyan-600" /> {t("timeBasedAccess.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Schedule-based access rules with cron expressions and role restrictions.</p>
         </div>
         <button onClick={() => setEditing({ id: "", name: "", cron: "", start_time: "09:00", end_time: "17:00", timezone: "UTC", allowed_roles: [], effect: "allow", enabled: true, description: "" })} className="flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700"><Plus className="h-4 w-4" /> New Rule</button>

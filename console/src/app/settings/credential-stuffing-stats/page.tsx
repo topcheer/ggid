@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldX, Ban, Bot } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface Stats {
   total_attempts: number;
@@ -20,6 +21,8 @@ const patternColors: Record<string, string> = {
 };
 
 export default function CredentialStuffingStatsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +40,7 @@ export default function CredentialStuffingStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldX className="w-6 h-6 text-red-500" /> Credential Stuffing Stats</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldX className="w-6 h-6 text-red-500" /> {t("credentialStuffingStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Monitor credential stuffing attack patterns and mitigation effectiveness.</p>
       </div>
 

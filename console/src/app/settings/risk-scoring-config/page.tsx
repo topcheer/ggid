@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Sliders, Save, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RiskConfig {
   weights: { geo_velocity: number; ip_reputation: number; device_familiarity: number; time_anomaly: number; failed_attempts: number };
@@ -21,6 +22,8 @@ const weightLabels: { key: keyof RiskConfig["weights"]; label: string }[] = [
 const actionOptions = ["allow", "log", "challenge", "step_up_mfa", "block"];
 
 export default function RiskScoringConfigPage() {
+  const t = useTranslations();
+
   const [config, setConfig] = useState<RiskConfig>({
     weights: { geo_velocity: 25, ip_reputation: 25, device_familiarity: 20, time_anomaly: 15, failed_attempts: 15 },
     thresholds: { low: 20, medium: 40, high: 70, critical: 90 },
@@ -58,7 +61,7 @@ export default function RiskScoringConfigPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Sliders className="w-6 h-6 text-orange-500" /> Risk Scoring Config</h1><p className="text-sm text-gray-500 mt-1">Configure risk scoring weights, thresholds, and automated actions.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Sliders className="w-6 h-6 text-orange-500" /> {t("riskScoringConfig.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure risk scoring weights, thresholds, and automated actions.</p></div>
         <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
       </div>
 

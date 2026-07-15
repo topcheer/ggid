@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Zap, Clock, Check, X, AlertTriangle, User } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ElevationRequest {
   id: string;
@@ -25,6 +26,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function JITElevationPage() {
+  const t = useTranslations();
+
   const [requests, setRequests] = useState<ElevationRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ role: "", duration_minutes: 60, justification: "" });
@@ -84,7 +87,7 @@ export default function JITElevationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-yellow-500" /> JIT Elevation</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Zap className="w-6 h-6 text-yellow-500" /> {t("jitElevation.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Request time-bound privileged access with approval workflow.</p>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Clock, Zap, TrendingDown, CheckCircle2, ArrowRight } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface StandingAccess {
   id: string;
@@ -17,6 +18,8 @@ interface StandingAccess {
 }
 
 export default function StandingAccessPage() {
+  const t = useTranslations();
+
   const [entries, setEntries] = useState<StandingAccess[]>([]);
   const [loading, setLoading] = useState(false);
   const [applyingId, setApplyingId] = useState<string | null>(null);
@@ -54,7 +57,7 @@ export default function StandingAccessPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="w-6 h-6 text-blue-500" /> Standing Access</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Clock className="w-6 h-6 text-blue-500" /> {t("standingAccess.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Identify standing access and convert to just-in-time provisioning.</p>
       </div>
 

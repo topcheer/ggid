@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Shield, TrendingDown, TrendingUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface CategoryScore { category: string; score: number; max: number; }
 interface Finding { id: string; finding: string; severity: "low" | "medium" | "high" | "critical"; age_days: number; owner: string; status: "open" | "remediated"; }
 interface RiskData { overall_score: number; categories: CategoryScore[]; trending_risks: { name: string; trend: "up" | "down" }[]; mitigated_count: number; open_findings: Finding[]; trend_30d: { date: string; score: number }[]; }
 const sevColors: Record<string, string> = { low: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", high: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400", critical: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 export default function RiskPostureDashboardPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<RiskData | null>(null);
   const [loading, setLoading] = useState(false);
   const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/risk-posture", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
@@ -14,7 +17,7 @@ export default function RiskPostureDashboardPage() {
   const maxTrend = Math.max(...(data?.trend_30d.map((d) => d.score) || [100]), 1);
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-red-500" /> Risk Posture</h1><p className="text-sm text-gray-500 mt-1">Overall security risk posture and findings.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-red-500" /> {t("riskPostureDashboard.title")}</h1><p className="text-sm text-gray-500 mt-1">Overall security risk posture and findings.</p></div>
       {data && (<>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="rounded-lg border dark:border-gray-800 p-4 flex items-center gap-4"><div className="relative w-24 h-24"><svg viewBox="0 0 64 64" className="w-full h-full"><circle cx={32} cy={32} r={28} fill="none" stroke="currentColor" strokeWidth={6} className="text-gray-200 dark:text-gray-800" /><circle cx={32} cy={32} r={28} fill="none" stroke={scoreColor} strokeWidth={6} strokeDasharray={(data.overall_score / 100) * 176 + " 176"} strokeLinecap="round" transform="rotate(-90 32 32)" /></svg><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-2xl font-bold" style={{ color: scoreColor }}>{data.overall_score}</span><span className="text-[10px] text-gray-400">score</span></div></div><div><span className="text-sm text-gray-500">Overall Risk Score</span><p className="text-xs text-gray-400 mt-1">{data.mitigated_count} mitigated</p></div></div>

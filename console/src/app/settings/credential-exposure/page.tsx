@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, ShieldAlert, Key, Smartphone, Monitor, Link2, Lightbulb, Gauge } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface ExposureData {
   user_id: string;
@@ -23,6 +24,8 @@ const providerIcons: Record<string, typeof Key> = {
 };
 
 export default function CredentialExposurePage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<ExposureData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +51,7 @@ export default function CredentialExposurePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldAlert className="w-6 h-6 text-orange-500" /> Credential Exposure</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldAlert className="w-6 h-6 text-orange-500" /> {t("credentialExposure.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Assess user credential exposure across tokens, sessions, and linked providers.</p>
       </div>
 

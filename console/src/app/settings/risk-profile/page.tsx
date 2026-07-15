@@ -1,8 +1,11 @@
 "use client";
 import { useState, useCallback } from "react";
 import { Search, Shield, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface RiskData { user_id: string; username: string; risk_score: number; trend: number; factors: { key: string; label: string; score: number; max: number }[]; }
 export default function RiskProfilePage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<RiskData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,7 +24,7 @@ export default function RiskProfilePage() {
   const scoreColor = data ? (data.risk_score >= 70 ? "#ef4444" : data.risk_score >= 40 ? "#f59e0b" : "#10b981") : "#3b82f6";
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> Risk Profile</h1><p className="text-sm text-gray-500 mt-1">User risk assessment across 5 security factors.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Shield className="w-6 h-6 text-blue-500" /> {t("riskProfile.title")}</h1><p className="text-sm text-gray-500 mt-1">User risk assessment across 5 security factors.</p></div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => { setError(null); fetchData(search); }} aria-label="Retry loading risk profile" className="text-xs underline hover:text-red-700">Retry</button></div>}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

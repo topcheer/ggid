@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   KeyRound, Loader2, AlertCircle, X, Plus, Eye, EyeOff, Trash2, Save, Lock, Activity,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface StoredCredential {
   id: string;
@@ -17,6 +18,8 @@ interface StoredCredential {
 }
 
 export default function CredentialVaultPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [creds, setCreds] = useState<StoredCredential[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +66,7 @@ export default function CredentialVaultPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-amber-600" /> Credential Vault</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><KeyRound className="h-6 w-6 text-amber-600" /> {t("credentialVault.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Secure encrypted storage for API keys, secrets, and service credentials.</p>
         </div>
         <button onClick={() => setShowStore(true)} className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"><Plus className="h-4 w-4" /> Store</button>

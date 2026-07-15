@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   AlertTriangle, Loader2, AlertCircle, X, Plus, CheckCircle, Clock, Bell, Lock,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface BreakGlassRequest {
   id: string;
@@ -32,6 +33,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function BreakGlassPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [requests, setRequests] = useState<BreakGlassRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +68,7 @@ export default function BreakGlassPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><AlertTriangle className="h-6 w-6 text-red-600" /> Break-Glass Access</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><AlertTriangle className="h-6 w-6 text-red-600" /> {t("breakGlass.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Emergency privileged access with full audit trail and admin notification.</p>
         </div>
         <button onClick={() => setShowRequest(true)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><Plus className="h-4 w-4" /> Request Access</button>

@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Gauge, Download, TrendingUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface RiskFactor { factor: string; weight: number; current_value: number; contribution: number; }
 interface RiskData { composite_score: number; factors: RiskFactor[]; monte_carlo: { p50: number; p90: number; p99: number }; trend_30d: { date: string; score: number }[]; }
 
 export default function RiskQuantificationPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<RiskData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +29,7 @@ export default function RiskQuantificationPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Gauge className="w-6 h-6 text-purple-500" /> Risk Quantification</h1><p className="text-sm text-gray-500 mt-1">Quantify risk with weighted factors and Monte Carlo simulation.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Gauge className="w-6 h-6 text-purple-500" /> {t("riskQuantification.title")}</h1><p className="text-sm text-gray-500 mt-1">Quantify risk with weighted factors and Monte Carlo simulation.</p></div>
         <button className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-2"><Download className="w-4 h-4" /> Export</button>
       </div>
 

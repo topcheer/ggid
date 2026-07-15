@@ -2,8 +2,11 @@
 
 import { useThreatHunting } from "@ggid/sdk-react";
 import { Search, Crosshair, Bookmark, FileText, Users } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ThreatHuntingWorkbenchPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useThreatHunting();
 
   if (loading) return <div className="p-8 text-gray-400">Loading threat hunting...</div>;
