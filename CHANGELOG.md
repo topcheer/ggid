@@ -63,6 +63,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] — Retry Release After CI Runner Timeout
+
+### Fixed
+- Retry v0.3.1 release after GitHub Actions oauth Docker build timed out.
+- No code changes; Node SDK already at 1.0.4.
+
+
 ## [0.3.1] — Node SDK Version Bump
 
 ### Fixed
