@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
 import { useGDPRDataPortability } from "@ggid/sdk-react";
 import { Download, FileJson, Clock, RefreshCw } from "lucide-react";
 
 export default function GDPRDataPortabilityPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, generateExport } = useGDPRDataPortability();
   const [selectedScopes, setSelectedScopes] = useState<string[]>(["profile", "activity"]);
 
@@ -23,8 +25,8 @@ export default function GDPRDataPortabilityPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold">GDPR Data Portability</h1>
-          <p className="text-sm text-gray-400 mt-1">Generate and manage data export requests (Article 20)</p>
+          <h1 className="text-2xl font-bold">{t("gdpr.title")}</h1>
+          <p className="text-sm text-gray-400 mt-1">{t("gdpr.subtitle")}</p>
         </div>
         <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Refresh</button>
       </div>

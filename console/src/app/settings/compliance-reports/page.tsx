@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface Section { name: string; score: number; status: string; gaps: number; }
 
 export default function ComplianceReportsPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,9 +33,9 @@ export default function ComplianceReportsPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-8">{t("common.loading")}</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("secDashboard.noData")}</div>;
   const [framework, setFramework] = useState('SOC2');
   const [dateRange, setDateRange] = useState({ start: '2026-06-01', end: '2026-07-12' });
   const [generating, setGenerating] = useState(false);
@@ -62,7 +64,7 @@ export default function ComplianceReportsPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div><h1 className="text-2xl font-bold">Compliance Reports</h1><p className="text-gray-600">Generate compliance reports, track gaps, and manage remediation.</p></div>
+      <div><h1 className="text-2xl font-bold">{t("complianceReports.title")}</h1><p className="text-gray-600">Generate compliance reports, track gaps, and manage remediation.</p></div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Report Configuration</h2>

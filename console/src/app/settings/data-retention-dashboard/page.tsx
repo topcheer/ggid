@@ -1,9 +1,11 @@
 "use client";
 
 import { useDataRetentionDashboard } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Clock, Calendar, Archive, Download } from "lucide-react";
 
 export default function DataRetentionDashboardPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useDataRetentionDashboard();
 
   if (loading) return <div className="p-8 text-gray-400">Loading retention dashboard...</div>;

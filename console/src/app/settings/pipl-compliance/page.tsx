@@ -1,9 +1,11 @@
 "use client";
 
 import { usePiplCompliance } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Globe, Shield, FileCheck, AlertTriangle, UserCheck, Clock } from "lucide-react";
 
 export default function PiplCompliancePage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = usePiplCompliance();
 
   if (loading) return <div className="p-8 text-gray-400">Loading PIPL compliance...</div>;

@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 export default function SecurityDashboardPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export default function SecurityDashboardPage() {
         const json = await res.json();
         setData(Array.isArray(json) ? json : [json]);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load");
+        setError(e instanceof Error ? e.message : t("complianceDashboard.failedLoad"));
       } finally {
         setLoading(false);
       }
@@ -29,9 +31,9 @@ export default function SecurityDashboardPage() {
     fetchData();
   }, []);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-8">{t("common.loading")}</div>;
   if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
-  if (!data || data.length === 0) return <div className="p-8 text-gray-500">No data available</div>;
+  if (!data || data.length === 0) return <div className="p-8 text-gray-500">{t("secDashboard.noData")}</div>;
   const [score] = useState(7.8);
   const [incidents] = useState([
     { id: 'i1', severity: 'high', title: 'Brute force attempt blocked', time: '14:30' },
@@ -77,40 +79,40 @@ export default function SecurityDashboardPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
-      <div><h1 className="text-2xl font-bold">Security Dashboard</h1><p className="text-gray-600">Overall security posture, threats, compliance, and recommendations.</p></div>
+      <div><h1 className="text-2xl font-bold">{t("secDashboard.title")}</h1><p className="text-gray-600">{t("secDashboard.subtitle")}</p></div>
 
       <div className="grid grid-cols-3 gap-4">
         <section className="bg-white rounded-lg shadow p-6 text-center">
-          <h2 className="text-sm font-medium text-gray-500">Security Score</h2>
+          <h2 className="text-sm font-medium text-gray-500">{t("secDashboard.securityScore")}</h2>
           <div className={`text-5xl font-bold ${scoreColor} mt-2`}>{score}<span className="text-2xl text-gray-400">/10</span></div>
           <div className="mt-3 h-3 bg-gray-200 rounded-full overflow-hidden"><div className={`h-3 rounded-full ${score >= 8 ? 'bg-green-500' : 'bg-amber-500'}`} style={{ width: `${score * 10}%` }} /></div>
         </section>
         <section className="bg-white rounded-lg shadow p-6 space-y-3">
-          <h2 className="text-sm font-semibold">Active Incidents</h2>
+          <h2 className="text-sm font-semibold">{t("secDashboard.activeIncidents")}</h2>
           {incidents.map(i => <div key={i.id} className="flex items-center gap-2 text-sm"><span className={`px-2 py-0.5 rounded text-xs ${sevColor(i.severity)}`}>{i.severity}</span><span className="flex-1">{i.title}</span><span className="text-xs text-gray-400">{i.time}</span></div>)}
         </section>
         <section className="bg-white rounded-lg shadow p-6 space-y-2">
-          <h2 className="text-sm font-semibold">Recommendations</h2>
+          <h2 className="text-sm font-semibold">{t("secDashboard.recommendations")}</h2>
           {recommendations.map((r, i) => <div key={i} className="text-xs text-gray-600 flex items-start gap-2"><span className="text-blue-600">-</span>{r}</div>)}
         </section>
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Threat Indicators</h2>
+        <h2 className="text-lg font-semibold">{t("secDashboard.threatIndicators")}</h2>
         <div className="grid grid-cols-4 gap-4">{threats.map(t => (
           <div key={t.name} className="border rounded p-3 text-center"><div className={`text-xs ${threatColor(t.level)} px-2 py-0.5 rounded inline-block capitalize`}>{t.level}</div><div className="text-sm font-medium mt-2">{t.name}</div><div className="text-2xl font-bold mt-1">{t.count}</div></div>
         ))}</div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">OWASP Top 10 Checklist</h2>
+        <h2 className="text-lg font-semibold">{t("secDashboard.owaspChecklist")}</h2>
         <div className="grid grid-cols-2 gap-2">{owasp.map(o => (
           <div key={o.id} className="flex items-center gap-2 text-sm"><span className="font-mono text-xs text-gray-400">{o.id}</span><span className="flex-1">{o.name}</span><span className={`text-xs font-bold ${statusColor(o.status)}`}>{o.status === 'pass' ? 'PASS' : o.status === 'warn' ? 'WARN' : 'FAIL'}</span></div>
         ))}</div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Compliance Badges</h2>
+        <h2 className="text-lg font-semibold">{t("secDashboard.complianceBadges")}</h2>
         <div className="flex flex-wrap gap-3">{compliance.map(c => (
           <div key={c.name} className={`px-4 py-2 rounded-lg text-sm ${compColor(c.status)}`}><span className="font-bold">{c.name}</span> - {c.status}</div>
         ))}</div>

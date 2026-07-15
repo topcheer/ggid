@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface RiskFactor {
   name: string;
@@ -18,6 +19,7 @@ interface RiskEvent {
 }
 
 export default function RiskEngineDashboardPage() {
+  const t = useTranslations();
   const [factors, setFactors] = useState<RiskFactor[]>([]);
   const [events, setEvents] = useState<RiskEvent[]>([]);
   const [thresholds, setThresholds] = useState([] as { level: string; minScore: number; maxScore: number; action: string }[]);
@@ -54,28 +56,28 @@ export default function RiskEngineDashboardPage() {
   const actionColor = (a: string): string =>
     a === 'block' ? 'bg-red-100 text-red-700' : a === 'challenge-mfa' ? 'bg-amber-100 text-amber-700' : a === 'step-up' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
 
-  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (loading) return <div className="p-6"><p>{t("common.loading")}</p></div>;
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Risk Engine Dashboard</h1>
-        <p className="text-gray-600">Real-time risk scoring, factor breakdown, and high-risk event monitoring.</p>
+        <h1 className="text-2xl font-bold">{t("riskEngine.title")}</h1>
+        <p className="text-gray-600">{t("riskEngine.subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
         <section className="bg-white rounded-lg shadow p-6 text-center">
-          <h2 className="text-lg font-semibold mb-4">Current Risk Score</h2>
+          <h2 className="text-lg font-semibold mb-4">{t("riskEngine.currentScore")}</h2>
           <div className={`text-6xl font-bold ${gaugeColor}`}>{currentScore}</div>
-          <div className="text-sm text-gray-500 mt-2">out of 100</div>
+          <div className="text-sm text-gray-500 mt-2">{t("riskEngine.outOf")}</div>
           <div className="mt-4 h-3 bg-gray-200 rounded-full overflow-hidden">
             <div className={`h-3 rounded-full ${currentScore >= 85 ? 'bg-red-500' : currentScore >= 60 ? 'bg-amber-500' : currentScore >= 30 ? 'bg-yellow-500' : 'bg-green-500'}`} style={{ width: `${currentScore}%` }} />
           </div>
         </section>
 
         <section className="col-span-2 bg-white rounded-lg shadow p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Factor Breakdown</h2>
+          <h2 className="text-lg font-semibold">{t("riskEngine.factorBreakdown")}</h2>
           <div className="space-y-3">
             {factors.map((f, idx) => (
               <div key={f.name} className="flex items-center gap-4">
@@ -95,7 +97,7 @@ export default function RiskEngineDashboardPage() {
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Threshold Configuration</h2>
+        <h2 className="text-lg font-semibold">{t("riskEngine.thresholdConfig")}</h2>
         <div className="space-y-2">
           {thresholds.map((t, idx) => (
             <div key={t.level} className="flex items-center gap-4">
@@ -114,7 +116,7 @@ export default function RiskEngineDashboardPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Risk Distribution</h2>
+        <h2 className="text-lg font-semibold">{t("riskEngine.riskDistribution")}</h2>
         <div className="flex items-end gap-2 h-32">
           {[
             { range: '0-20', count: 45 },
@@ -133,7 +135,7 @@ export default function RiskEngineDashboardPage() {
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Recent High-Risk Events</h2>
+        <h2 className="text-lg font-semibold">{t("riskEngine.recentEvents")}</h2>
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
