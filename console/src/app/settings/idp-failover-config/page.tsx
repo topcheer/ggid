@@ -2,8 +2,11 @@
 
 import { useIdpFailoverConfig } from "@ggid/sdk-react";
 import { Server, ArrowRight, Zap, Activity } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdpFailoverConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, manualSwitch } = useIdpFailoverConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading IdP failover config...</div>;

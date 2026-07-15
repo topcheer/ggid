@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface BreachRecord {
   id: string;
@@ -10,6 +11,8 @@ interface BreachRecord {
 }
 
 export default function HibpBreachCheckPage() {
+  const t = useTranslations();
+
   const [enabled, setEnabled] = useState(true);
   const [apiKey, setApiKey] = useState('');
   const [checkOnLogin, setCheckOnLogin] = useState(true);

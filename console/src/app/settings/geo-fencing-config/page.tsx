@@ -2,8 +2,11 @@
 
 import { useGeoFencingConfig } from "@ggid/sdk-react";
 import { Globe, Plus } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function GeoFencingConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useGeoFencingConfig();
   if (loading) return <div className="p-8 text-gray-400">Loading geo-fencing...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

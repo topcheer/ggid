@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 interface VelocityRule {
   name: string;
@@ -16,6 +17,8 @@ const samplePairs = [
 ];
 
 export default function GeoVelocityRulesPage() {
+  const t = useTranslations();
+
   const [rules, setRules] = useState<VelocityRule[]>([]);
   const [exemptions, setExemptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);

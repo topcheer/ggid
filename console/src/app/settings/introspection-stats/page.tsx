@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Activity, Gauge, Zap, TrendingUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface IntrospectionStats {
   total_requests: number;
@@ -13,6 +14,8 @@ interface IntrospectionStats {
 }
 
 export default function IntrospectionStatsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<IntrospectionStats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,7 +35,7 @@ export default function IntrospectionStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-purple-500" /> Introspection Stats</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-purple-500" /> {t("introspectionStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Token introspection endpoint usage and performance metrics.</p>
       </div>
 

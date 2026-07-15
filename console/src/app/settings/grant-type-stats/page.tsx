@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { BarChart3, PieChart as PieIcon, TrendingUp, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface GrantTypeData {
   counts: { grant_type: string; count: number }[];
@@ -16,6 +17,8 @@ const typeColors: Record<string, string> = {
 };
 
 export default function GrantTypeStatsPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<GrantTypeData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export default function GrantTypeStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-purple-500" /> Grant Type Statistics</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><BarChart3 className="w-6 h-6 text-purple-500" /> {t("grantTypeStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">OAuth grant type distribution and 30-day trends.</p>
       </div>
 

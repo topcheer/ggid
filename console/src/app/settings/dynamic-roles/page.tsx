@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useApi } from "@/lib/api";
+import { useTranslations } from "@/lib/i18n";
 import {
   Users2, Loader2, AlertCircle, X, Plus, Trash2, Play, CheckCircle, XCircle,
 } from "lucide-react";
@@ -18,6 +19,7 @@ interface DynamicRole {
 }
 
 export default function DynamicRolesPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [roles, setRoles] = useState<DynamicRole[]>([]);
   const [loading, setLoading] = useState(true);

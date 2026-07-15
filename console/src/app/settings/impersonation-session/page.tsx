@@ -1,9 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ImpSession { id: string; impersonator: string; target: string; startedAt: string; expires: string; reason: string; }
 
 export default function ImpersonationSessionPage() {
+  const t = useTranslations();
+
   const [sessions, setSessions] = useState<ImpSession[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newSession, setNewSession] = useState({ target: '', reason: '', duration: 30 });

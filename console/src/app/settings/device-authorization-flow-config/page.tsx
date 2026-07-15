@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useDeviceAuthorizationFlowConfig, DeviceAuthorizationFlowConfig, DeviceClientEntry } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function DeviceAuthorizationFlowConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useDeviceAuthorizationFlowConfig();
   const [form, setForm] = useState<DeviceAuthorizationFlowConfig | null>(null);
   const [saving, setSaving] = useState(false);

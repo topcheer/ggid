@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useFeatureFlagArchitectureConfig, FeatureFlagArchitectureConfig, KillSwitch, PerTenantFlag } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function FeatureFlagArchitectureConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useFeatureFlagArchitectureConfig();
   const [form, setForm] = useState<FeatureFlagArchitectureConfig | null>(null);
   const [saving, setSaving] = useState(false);

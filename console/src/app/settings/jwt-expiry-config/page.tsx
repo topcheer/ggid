@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ClientOverride {
   clientId: string;
@@ -8,6 +9,8 @@ interface ClientOverride {
 }
 
 export default function JwtExpiryConfigPage() {
+  const t = useTranslations();
+
   const [accessExpiry, setAccessExpiry] = useState(15);
   const [refreshExpiry, setRefreshExpiry] = useState(43200);
   const [idTokenExpiry, setIdTokenExpiry] = useState(60);

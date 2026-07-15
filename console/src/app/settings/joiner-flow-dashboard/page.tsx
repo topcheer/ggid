@@ -1,9 +1,12 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { UserPlus, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface OnboardingItem { id: string; employee: string; start_date: string; steps_completed: number; total_steps: number; blocked_items: string[]; provisioning: { app: string; status: "pending" | "done" | "failed" }[]; }
 interface DashboardData { pending: OnboardingItem[]; completion_rate: number; avg_days_to_complete: number; upcoming_starts: { employee: string; start_date: string }[]; }
 export default function JoinerFlowDashboardPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/identity/joiner-dashboard", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
@@ -11,7 +14,7 @@ export default function JoinerFlowDashboardPage() {
   const gaugeColor = data ? (data.completion_rate >= 80 ? "#10b981" : data.completion_rate >= 50 ? "#f59e0b" : "#ef4444") : "#3b82f6";
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> Joiner Flow Dashboard</h1><p className="text-sm text-gray-500 mt-1">Track employee onboarding progress and provisioning status.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> {t("joinerFlowDashboard.title")}</h1><p className="text-sm text-gray-500 mt-1">Track employee onboarding progress and provisioning status.</p></div>
       {data && (<>
         <div className="grid grid-cols-3 gap-4">
           <div className="rounded-lg border p-4 dark:border-gray-800 flex items-center gap-4"><div className="relative w-20 h-20"><svg viewBox="0 0 64 64" className="w-full h-full"><circle cx={32} cy={32} r={28} fill="none" stroke="currentColor" strokeWidth={6} className="text-gray-200 dark:text-gray-800" /><circle cx={32} cy={32} r={28} fill="none" stroke={gaugeColor} strokeWidth={6} strokeDasharray={(data.completion_rate / 100) * 176 + " 176"} strokeLinecap="round" transform="rotate(-90 32 32)" /></svg><div className="absolute inset-0 flex items-center justify-center"><span className="text-lg font-bold" style={{ color: gaugeColor }}>{data.completion_rate}%</span></div></div><div><span className="text-sm text-gray-500">Completion Rate</span></div></div>

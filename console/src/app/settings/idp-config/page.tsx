@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Copy,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface IdPConfig {
   id: string;
@@ -48,6 +49,8 @@ interface IdPConfig {
 const STORAGE_KEY = "ggid_idp_configs";
 
 export default function IdPConfigPage() {
+  const t = useTranslations();
+
   const { apiFetch } = useApi();
   const [configs, setConfigs] = useState<IdPConfig[]>([]);
   const [loading, setLoading] = useState(true);

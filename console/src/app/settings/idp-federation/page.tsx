@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Network, Plus, X, Plug, CheckCircle, XCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface FederatedIdP {
   id: string;
@@ -23,6 +24,8 @@ const trustColors: Record<string, string> = {
 };
 
 export default function IdpFederationPage() {
+  const t = useTranslations();
+
   const [idps, setIdps] = useState<FederatedIdP[]>([]);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("saml");
@@ -59,7 +62,7 @@ export default function IdpFederationPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> IdP Federation</h1><p className="text-sm text-gray-500 mt-1">Manage federated identity providers with trust levels and connection testing.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("idpFederation.title")}</h1><p className="text-sm text-gray-500 mt-1">Manage federated identity providers with trust levels and connection testing.</p></div>
         <button onClick={() => setShowAdd(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> Add Federation</button>
       </div>
 

@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useIdentityRecoveryConfig, IdentityRecoveryConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityRecoveryConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useIdentityRecoveryConfig();
   const [form, setForm] = useState<IdentityRecoveryConfig | null>(null);
   const [saving, setSaving] = useState(false);

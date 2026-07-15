@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ServiceEndpoint {
   id: string;
@@ -17,6 +18,8 @@ interface DidDocument {
 }
 
 export default function DidResolverPage() {
+  const t = useTranslations();
+
   const [didInput, setDidInput] = useState('');
   const [method, setMethod] = useState('did:web');
   const [result, setResult] = useState<DidDocument | null>(null);

@@ -1,10 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Link2, ShieldCheck, AlertTriangle, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface TamperAlert { block_num: number; expected_hash: string; actual_hash: string; detected_at: string; }
 interface VerifyEntry { timestamp: string; status: "ok" | "failed"; blocks_checked: number; }
 interface HashChainData { chain_status: "intact" | "broken"; last_verified_at: string; total_blocks: number; integrity_score: number; tamper_alerts: TamperAlert[]; verify_log: VerifyEntry[]; }
 export default function HashChainPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<HashChainData | null>(null);
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -14,7 +17,7 @@ export default function HashChainPage() {
   const scoreColor = data ? (data.integrity_score >= 99 ? "#10b981" : data.integrity_score >= 90 ? "#f59e0b" : "#ef4444") : "#3b82f6";
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Link2 className="w-6 h-6 text-blue-500" /> Hash Chain</h1><p className="text-sm text-gray-500 mt-1">Audit log integrity verification via hash chain.</p></div><button onClick={verify} disabled={verifying} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2"><RefreshCw className={"w-4 h-4 " + (verifying ? "animate-spin" : "")} /> {verifying ? "Verifying..." : "Re-verify"}</button></div>
+      <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Link2 className="w-6 h-6 text-blue-500" /> {t("hashChain.title")}</h1><p className="text-sm text-gray-500 mt-1">Audit log integrity verification via hash chain.</p></div><button onClick={verify} disabled={verifying} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2"><RefreshCw className={"w-4 h-4 " + (verifying ? "animate-spin" : "")} /> {verifying ? "Verifying..." : "Re-verify"}</button></div>
       {data && (<>
         <div className={"rounded-lg border-2 p-4 flex items-center gap-3 " + (data.chain_status === "intact" ? "border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-900/20" : "border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20")}>{data.chain_status === "intact" ? <ShieldCheck className="w-8 h-8 text-green-500" /> : <AlertTriangle className="w-8 h-8 text-red-500" />}<div><span className="text-sm text-gray-500">Chain Status</span><p className={"text-lg font-bold " + (data.chain_status === "intact" ? "text-green-600" : "text-red-600")}>{data.chain_status === "intact" ? "Intact" : "BROKEN"}</p></div><div className="ml-auto text-right"><span className="text-xs text-gray-500">Last Verified</span><p className="text-xs text-gray-400">{data.last_verified_at}</p></div></div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

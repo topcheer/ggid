@@ -1,8 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { UserCog, Ban, AlertTriangle, Search } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface ImpersonationEvent { id: string; impersonator: string; target_user: string; start_at: string; end_at: string | null; duration_minutes: number; reason: string; ip_address: string; is_active: boolean; }
 export default function ImpersonationLogPage() {
+  const t = useTranslations();
+
   const [events, setEvents] = useState<ImpersonationEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +33,7 @@ export default function ImpersonationLogPage() {
   const active = events.filter((e) => e.is_active).length;
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-orange-500" /> Impersonation Log</h1><p className="text-sm text-gray-500 mt-1">Track admin impersonation sessions.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-orange-500" /> {t("impersonationLog.title")}</h1><p className="text-sm text-gray-500 mt-1">Track admin impersonation sessions.</p></div>
       {active > 0 && <div className="rounded-lg border border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 p-3 flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-orange-500" /><span className="font-semibold text-orange-700 dark:text-orange-400">{active} active impersonation session(s)</span></div>}
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">Retry</button></div>}
       <div className="relative max-w-xs">

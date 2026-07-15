@@ -2,8 +2,11 @@
 
 import { useDeviceFingerprintAnalytics } from "@ggid/sdk-react";
 import { Fingerprint, Smartphone, Globe, AlertTriangle, CheckCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function DeviceFingerprintAnalyticsPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useDeviceFingerprintAnalytics();
 
   if (loading) return <div className="p-8 text-gray-400">Loading fingerprint analytics...</div>;

@@ -1,10 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Globe, Plus, X, Ban, Save, Loader2, AlertCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface GeoRule { id: string; countries: string[]; cidrs: string[]; action: "allow" | "deny" | "challenge"; }
 interface GeoData { enabled: boolean; rules: GeoRule[]; whitelist_ips: string[]; }
 const actionColors: Record<string, string> = { allow: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", deny: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", challenge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" };
 export default function GeoFencingPage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<GeoData>({ enabled: true, rules: [{ id: "r1", countries: ["CN", "RU"], cidrs: [], action: "deny" }], whitelist_ips: ["10.0.0.0/8"] });
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ countries: "", cidrs: "", action: "deny" });
@@ -36,7 +39,7 @@ export default function GeoFencingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Globe className="w-6 h-6 text-blue-500" /> Geo Fencing</h1><p className="text-sm text-gray-500 mt-1">Control access by geographic location and IP ranges.</p></div><div className="flex items-center gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={data.enabled} onChange={(e) => setData({ ...data, enabled: e.target.checked })} className="rounded" aria-label="Toggle geo-fencing" /> Enabled</label><button onClick={() => setShowAdd(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2" aria-label="Add geo rule"><Plus className="w-4 h-4" /> Add Rule</button><button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium flex items-center gap-2 disabled:opacity-50" aria-label="Save geo-fencing rules">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save</button></div></div>
+      <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Globe className="w-6 h-6 text-blue-500" /> {t("geoFencing.title")}</h1><p className="text-sm text-gray-500 mt-1">Control access by geographic location and IP ranges.</p></div><div className="flex items-center gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={data.enabled} onChange={(e) => setData({ ...data, enabled: e.target.checked })} className="rounded" aria-label="Toggle geo-fencing" /> Enabled</label><button onClick={() => setShowAdd(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium flex items-center gap-2" aria-label="Add geo rule"><Plus className="w-4 h-4" /> Add Rule</button><button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium flex items-center gap-2 disabled:opacity-50" aria-label="Save geo-fencing rules">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save</button></div></div>
       {loading && <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Loading geo-fencing rules...</div>}
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center gap-2"><AlertCircle className="w-4 h-4" /> {error}</div>}
       {saved && <div className="text-sm text-green-600">Rules saved successfully!</div>}

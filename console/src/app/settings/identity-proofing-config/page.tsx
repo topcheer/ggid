@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useIdentityProofingConfig, IdentityProofingConfig, VerificationMethod, RiskLevelConfig } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdentityProofingConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useIdentityProofingConfig();
   const [form, setForm] = useState<IdentityProofingConfig | null>(null);
   const [saving, setSaving] = useState(false);

@@ -1,8 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Search, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface GrantEvent { id: string; client_name: string; user_id: string; username: string; scopes: string[]; granted_at: string; expires_at: string; revoked_at: string | null; grant_type: string; }
 export default function GrantHistoryPage() {
+  const t = useTranslations();
+
   const [events, setEvents] = useState<GrantEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +27,7 @@ export default function GrantHistoryPage() {
   const filtered = events.filter((e) => { if (filterType && e.grant_type !== filterType) return false; if (search) { const q = search.toLowerCase(); return e.username.toLowerCase().includes(q) || e.client_name.toLowerCase().includes(q); } return true; });
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> Grant History</h1><p className="text-sm text-gray-500 mt-1">Track OAuth grant events over time.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><KeyRound className="w-6 h-6 text-blue-500" /> {t("grantHistory.title")}</h1><p className="text-sm text-gray-500 mt-1">Track OAuth grant events over time.</p></div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} aria-label="Retry loading grant history" className="text-xs underline hover:text-red-700">Retry</button></div>}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-xs">

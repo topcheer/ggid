@@ -5,6 +5,7 @@ import { useApi } from "@/lib/api";
 import {
   Smartphone, Loader2, AlertCircle, X, Trash2, Monitor, Tablet, HardDrive,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface DeviceEntry {
   id: string;
@@ -27,6 +28,7 @@ function PlatformIcon({ platform }: { platform: string }) {
 }
 
 export default function DeviceRegistryPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [devices, setDevices] = useState<DeviceEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function DeviceRegistryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><HardDrive className="h-6 w-6 text-blue-600" /> Device Registry</h1>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><HardDrive className="h-6 w-6 text-blue-600" /> {t("deviceRegistry.title")}</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">All registered devices with fingerprints, sessions, and trust status.</p>
       </div>
 

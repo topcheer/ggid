@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 interface ImpersonationRecord {
   id: string;
@@ -12,6 +13,8 @@ interface ImpersonationRecord {
 }
 
 export default function ImpersonationConfigPage() {
+  const t = useTranslations();
+
   const [allowedImpersonators, setAllowedImpersonators] = useState<string[]>([]);
   const [requireReason, setRequireReason] = useState(true);
   const [maxDuration, setMaxDuration] = useState(60);

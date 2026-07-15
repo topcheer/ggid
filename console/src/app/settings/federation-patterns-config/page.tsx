@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useFederationPatternsConfig, FederationPatternsConfig, TrustLifecycleRule, MemberProvider } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function FederationPatternsConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useFederationPatternsConfig();
   const [form, setForm] = useState<FederationPatternsConfig | null>(null);
   const [saving, setSaving] = useState(false);

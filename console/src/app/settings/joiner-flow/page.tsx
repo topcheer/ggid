@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { UserPlus, CheckSquare, Square, Rocket, X } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface PreboardingTask {
   id: string;
@@ -36,6 +37,8 @@ const availableTemplates = ["engineer_standard", "admin_standard", "contractor_l
 const availableApps = ["slack", "github", "jira", "gcp", "vault"];
 
 export default function JoinerFlowPage() {
+  const t = useTranslations();
+
   const [form, setForm] = useState<JoinerData>({ employee_id: "", start_date: "", department: "", role_templates: [], provision_apps: availableApps.map((a) => ({ id: a, name: a, auto: true })), preboarding: [{ id: "t1", label: "Create AD account", done: false }, { id: "t2", label: "Assign laptop", done: false }, { id: "t3", label: "Provision email", done: false }, { id: "t4", label: "Schedule orientation", done: false }], status: "draft" });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -69,7 +72,7 @@ export default function JoinerFlowPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> Joiner Flow</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><UserPlus className="w-6 h-6 text-green-500" /> {t("joinerFlow.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Automate employee onboarding with role templates and app provisioning.</p>
       </div>
 

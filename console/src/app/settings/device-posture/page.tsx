@@ -1,10 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Smartphone, ShieldCheck, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface PostureRule { disk_encrypted: boolean; os_version_min: string; antivirus_required: boolean; firewall_enabled: boolean; jailbreak_detected_action: string; }
 interface NonCompliant { device_id: string; username: string; platform: string; failed_checks: string[]; last_check: string; }
 interface PostureData { rules: PostureRule; compliance_threshold: number; by_platform: { platform: string; total: number; compliant: number }[]; non_compliant: NonCompliant[]; }
 export default function DevicePosturePage() {
+  const t = useTranslations();
+
   const [data, setData] = useState<PostureData | null>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("all");
@@ -13,7 +16,7 @@ export default function DevicePosturePage() {
   const filtered = data ? (tab === "all" ? data.non_compliant : data.non_compliant.filter((d) => d.platform === tab)) : [];
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="w-6 h-6 text-blue-500" /> Device Posture</h1><p className="text-sm text-gray-500 mt-1">Enforce device security posture requirements.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Smartphone className="w-6 h-6 text-blue-500" /> {t("devicePosture.title")}</h1><p className="text-sm text-gray-500 mt-1">Enforce device security posture requirements.</p></div>
       {data && (<>
         <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3"><div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Posture Rules</h3><div className="flex items-center gap-2"><span className="text-xs text-gray-500">Compliance Threshold</span><input type="number" min={0} max={100} defaultValue={data.compliance_threshold} className="w-16 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs" /><span className="text-xs">%</span></div></div><div className="grid grid-cols-2 md:grid-cols-3 gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data.rules.disk_encrypted} className="rounded" /> Disk Encrypted</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data.rules.antivirus_required} className="rounded" /> Antivirus Required</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data.rules.firewall_enabled} className="rounded" /> Firewall Enabled</label><div><label className="text-xs text-gray-500">Min OS Version</label><input type="text" defaultValue={data.rules.os_version_min} className="w-full px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs" /></div><div><label className="text-xs text-gray-500">Jailbreak Action</label><select defaultValue={data.rules.jailbreak_detected_action} className="w-full px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-xs"><option value="block">Block</option><option value="warn">Warn</option></select></div></div></div>
         <div className="grid grid-cols-3 gap-4">{data.by_platform.map((p) => { const pct = p.total > 0 ? Math.round((p.compliant / p.total) * 100) : 100; return (<div key={p.platform} className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500 capitalize">{p.platform}</span><p className={"text-xl font-bold mt-1 " + (pct >= 90 ? "text-green-600" : pct >= 70 ? "text-yellow-600" : "text-red-600")}>{pct}%</p><p className="text-xs text-gray-400">{p.compliant}/{p.total} compliant</p></div>); })}</div>

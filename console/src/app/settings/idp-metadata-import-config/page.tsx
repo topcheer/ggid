@@ -3,8 +3,11 @@
 import { useIdpMetadataImportConfig } from "@ggid/sdk-react";
 import { Upload, FileText, CheckCircle, AlertCircle } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdpMetadataImportConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, importMetadata } = useIdpMetadataImportConfig();
   const [tab, setTab] = useState("url");
   const [urlInput, setUrlInput] = useState("");

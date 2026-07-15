@@ -2,8 +2,11 @@
 
 import { useIdpDiscoveryConfig } from "@ggid/sdk-react";
 import { Globe, Search, RefreshCw } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function IdpDiscoveryConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh, testDiscovery } = useIdpDiscoveryConfig();
 
   if (loading) return <div className="p-8 text-gray-400">Loading IdP discovery config...</div>;

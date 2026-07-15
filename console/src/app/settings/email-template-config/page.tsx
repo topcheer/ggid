@@ -3,8 +3,11 @@
 import { useEmailTemplateConfig } from "@ggid/sdk-react";
 import { Mail, Eye } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function EmailTemplateConfigPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useEmailTemplateConfig();
   const [selected, setSelected] = useState("welcome");
   const [lang, setLang] = useState("en");

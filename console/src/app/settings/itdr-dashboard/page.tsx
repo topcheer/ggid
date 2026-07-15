@@ -2,8 +2,11 @@
 
 import { useITDRDashboard } from "@ggid/sdk-react";
 import { Shield, ShieldAlert, Activity, Zap, BookOpen, Plus } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function ITDRDashboardPage() {
+  const t = useTranslations();
+
   const { data, loading, error, refresh } = useITDRDashboard();
 
   if (loading) return <div className="p-8 text-gray-400">Loading ITDR dashboard...</div>;

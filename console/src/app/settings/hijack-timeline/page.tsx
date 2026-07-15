@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { AlertTriangle, Search, ShieldAlert, CheckCircle, Clock } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface HijackEvent {
   id: string;
@@ -27,6 +28,8 @@ const eventIcons: Record<string, typeof AlertTriangle> = {
 };
 
 export default function HijackTimelinePage() {
+  const t = useTranslations();
+
   const [search, setSearch] = useState("");
   const [data, setData] = useState<HijackData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,7 +49,7 @@ export default function HijackTimelinePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-red-500" /> Hijack Timeline</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><AlertTriangle className="w-6 h-6 text-red-500" /> {t("hijackTimeline.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Account takeover detection with confidence scoring and recommended actions.</p>
       </div>
 

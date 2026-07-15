@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 export default function IpReputationConfigPage() {
+  const t = useTranslations();
+
   const [enabled, setEnabled] = useState(true);
   const [provider, setProvider] = useState('internal');
   const [checkInterval, setCheckInterval] = useState(300);

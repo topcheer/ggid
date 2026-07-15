@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { UserX, Calendar, Trash2, Archive, Ban, Play, X, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface InactiveUser {
   user_id: string;
@@ -26,6 +27,8 @@ const actionConfig: Record<string, { icon: typeof Ban; label: string; color: str
 };
 
 export default function InactiveCleanupPage() {
+  const t = useTranslations();
+
   const [users, setUsers] = useState<InactiveUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [threshold, setThreshold] = useState(90);
@@ -79,7 +82,7 @@ export default function InactiveCleanupPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><UserX className="w-6 h-6 text-gray-500" /> Inactive User Cleanup</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><UserX className="w-6 h-6 text-gray-500" /> {t("inactiveCleanup.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Identify inactive users and schedule cleanup actions.</p>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Workflow, CheckCircle2, Clock, TrendingUp } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface FlowStat {
   flow: string;
@@ -29,6 +30,8 @@ const flowLabels: Record<string, string> = {
 };
 
 export default function GrantFlowsPage() {
+  const t = useTranslations();
+
   const [stats, setStats] = useState<FlowStat[]>([]);
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState("7d");
@@ -57,7 +60,7 @@ export default function GrantFlowsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Workflow className="w-6 h-6 text-blue-500" /> Grant Flows</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Workflow className="w-6 h-6 text-blue-500" /> {t("grantFlows.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">OAuth grant flow statistics and performance metrics.</p>
         </div>
         <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">

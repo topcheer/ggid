@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Plane, Calendar, AlertTriangle, MapPin, Zap, Filter } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TravelAlert {
   id: string;
@@ -27,6 +28,8 @@ const riskColors: Record<string, string> = {
 };
 
 export default function ImpossibleTravelPage() {
+  const t = useTranslations();
+
   const [alerts, setAlerts] = useState<TravelAlert[]>([]);
   const [loading, setLoading] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -52,7 +55,7 @@ export default function ImpossibleTravelPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Plane className="w-6 h-6 text-orange-500" /> Impossible Travel</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Plane className="w-6 h-6 text-orange-500" /> {t("impossibleTravel.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Detect logins from geographically impossible distances within a time window.</p>
       </div>
 

@@ -1,10 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Network, ChevronRight, Search } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface TreeNode { id: string; name: string; type: "group" | "role" | "permission"; children?: TreeNode[]; permissions: string[]; }
 
 export default function GroupPermissionTreePage() {
+  const t = useTranslations();
+
   const [tree, setTree] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -37,7 +40,7 @@ export default function GroupPermissionTreePage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> Group Permission Tree</h1><p className="text-sm text-gray-500 mt-1">Hierarchical view of groups, roles, and inherited permissions.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("groupPermissionTree.title")}</h1><p className="text-sm text-gray-500 mt-1">Hierarchical view of groups, roles, and inherited permissions.</p></div>
 
       <div className="flex items-center gap-4"><div className="relative flex-1 max-w-xs"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div><span className="text-sm text-gray-500">{totalPerms(tree)} total permissions</span></div>
 

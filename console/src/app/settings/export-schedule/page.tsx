@@ -1,10 +1,13 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Download, Plus, Trash2, Cloud, Mail, Link as LinkIcon, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 interface ExportJob { id: string; format: string; schedule_cron: string; filters: string; retention_days: number; destination_type: string; destination_config: string; last_export_at: string | null; status: "active" | "paused" | "failed"; }
 const statusColors: Record<string, string> = { active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", paused: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 const destIcons: Record<string, typeof Cloud> = { s3: Cloud, https: LinkIcon, email: Mail };
 export default function ExportSchedulePage() {
+  const t = useTranslations();
+
   const [jobs, setJobs] = useState<ExportJob[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +43,7 @@ export default function ExportSchedulePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Download className="w-6 h-6 text-blue-500" /> Export Schedule</h1><p className="text-sm text-gray-500 mt-1">Schedule recurring audit data exports to external destinations.</p></div>
+        <div><h1 className="text-2xl font-bold flex items-center gap-2"><Download className="w-6 h-6 text-blue-500" /> {t("exportSchedule.title")}</h1><p className="text-sm text-gray-500 mt-1">Schedule recurring audit data exports to external destinations.</p></div>
         <button onClick={() => { setShowCreate(true); setError(null); }} aria-label="Create new export schedule" className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> New Export</button>
       </div>
       {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={() => { setError(null); fetchData(); }} className="text-xs underline hover:text-red-700">Retry</button></div>}

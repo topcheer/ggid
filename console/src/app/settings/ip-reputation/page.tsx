@@ -1,10 +1,13 @@
 "use client";
 import { useState, useCallback } from "react";
 import { Globe, Search, ShieldAlert, CheckCircle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface IpInfo { ip: string; reputation_score: number; threat_tags: string[]; first_seen: string; last_seen: string; country: string; city: string; isp: string; associated_events: number; blacklisted: boolean; }
 
 export default function IpReputationPage() {
+  const t = useTranslations();
+
   const [query, setQuery] = useState("");
   const [info, setInfo] = useState<IpInfo | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,7 +26,7 @@ export default function IpReputationPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Globe className="w-6 h-6 text-blue-500" /> IP Reputation</h1><p className="text-sm text-gray-500 mt-1">Look up reputation scores and threat intelligence for IP addresses.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Globe className="w-6 h-6 text-blue-500" /> {t("ipReputation.title")}</h1><p className="text-sm text-gray-500 mt-1">Look up reputation scores and threat intelligence for IP addresses.</p></div>
 
       <div className="flex gap-2"><div className="relative flex-1 max-w-md"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input type="text" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} placeholder="192.168.1.1" className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div><button onClick={search} disabled={loading || !query} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium disabled:opacity-50">Search</button></div>
 

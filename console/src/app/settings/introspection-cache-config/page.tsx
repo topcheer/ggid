@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useTranslations } from "@/lib/i18n";
 
 export default function IntrospectionCacheConfigPage() {
+  const t = useTranslations();
+
   const [enabled, setEnabled] = useState(true);
   const [activeTtl, setActiveTtl] = useState(120);
   const [inactiveTtl, setInactiveTtl] = useState(1800);

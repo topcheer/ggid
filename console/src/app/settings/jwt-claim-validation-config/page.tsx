@@ -1,8 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useJwtClaimValidationConfig, JwtClaimValidationConfig, CustomClaim, RequiredClaim } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function JwtClaimValidationConfigPage() {
+  const t = useTranslations();
+
   const { config, loading, error, fetchConfig, updateConfig } = useJwtClaimValidationConfig();
   const [form, setForm] = useState<JwtClaimValidationConfig | null>(null);
   const [saving, setSaving] = useState(false);
