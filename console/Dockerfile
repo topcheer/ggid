@@ -2,7 +2,7 @@ FROM node:22-alpine AS sdk-builder
 WORKDIR /sdk
 COPY sdk/react/package.json sdk/react/tsconfig.json ./
 COPY sdk/react/src ./src
-RUN npm install --production=false && npx tsc || true
+RUN npm install --production=false && npm run build
 
 FROM node:22-alpine AS builder
 WORKDIR /app
