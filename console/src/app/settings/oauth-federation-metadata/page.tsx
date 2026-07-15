@@ -1,9 +1,11 @@
 "use client";
 
 import { useOAuthFederationMetadata } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Download, RefreshCw, FileCode } from "lucide-react";
 
 export default function OAuthFederationMetadataPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuthFederationMetadata();
 
   if (loading) return <div className="p-8 text-gray-400">Loading federation metadata...</div>;

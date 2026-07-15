@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useOAuthResourceIndicators } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Globe, Shield, AlertTriangle, TestTube } from "lucide-react";
 
 export default function OAuthResourceIndicatorsPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testResource } = useOAuthResourceIndicators();
   const [testInput, setTestInput] = useState("");
   const [testResult, setTestResult] = useState<string | null>(null);

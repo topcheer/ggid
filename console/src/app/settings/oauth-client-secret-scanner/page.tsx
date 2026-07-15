@@ -1,9 +1,11 @@
 "use client";
 
 import { useOAuthClientSecretScanner } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Search, ShieldAlert, RefreshCw, AlertTriangle, CheckCircle, RotateCw, Code, GitBranch } from "lucide-react";
 
 export default function OAuthClientSecretScannerPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, autoRotateExposed } = useOAuthClientSecretScanner();
 
   if (loading) return <div className="p-8 text-gray-400">Loading secret scanner...</div>;

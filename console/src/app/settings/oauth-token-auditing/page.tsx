@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useOAuthTokenAuditing } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { ScrollText, Filter, Download, AlertTriangle, Search } from "lucide-react";
 
 export default function OAuthTokenAuditingPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuthTokenAuditing();
   const [filterClient, setFilterClient] = useState("all");
   const [filterUser, setFilterUser] = useState("");

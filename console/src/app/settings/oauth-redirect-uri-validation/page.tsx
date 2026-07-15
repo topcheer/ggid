@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useOAuthRedirectURIValidation } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Link2, ShieldCheck, AlertTriangle, Globe, Play, Plus } from "lucide-react";
 
 export default function OAuthRedirectURIValidationPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh, testUri } = useOAuthRedirectURIValidation();
   const [testInput, setTestInput] = useState("");
   const [testResult, setTestResult] = useState<string | null>(null);

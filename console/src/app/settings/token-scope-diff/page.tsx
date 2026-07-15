@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useCallback } from "react";
 import { GitCompare, ArrowRight } from "lucide-react";
@@ -15,6 +16,7 @@ interface Token {
 }
 
 export default function TokenScopeDiffPage() {
+  const t = useTranslations();
   const [tokens] = useState<Token[]>([{ id: "t1", label: "Access Token (Client A)" }, { id: "t2", label: "Access Token (Client B)" }, { id: "t3", label: "Refresh Token (Client A)" }]);
   const [tokenA, setTokenA] = useState("");
   const [tokenB, setTokenB] = useState("");
@@ -34,7 +36,7 @@ export default function TokenScopeDiffPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-blue-500" /> Token Scope Diff</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><GitCompare className="w-6 h-6 text-blue-500" />{t("tokenScopeDiff.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Compare OAuth token scopes side by side to identify common and unique permissions.</p>
       </div>
 

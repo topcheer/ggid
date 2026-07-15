@@ -1,7 +1,9 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from "react";
 
 export default function TokenIntrospectionCenterPage() {
+  const t = useTranslations();
   const [token, setToken] = useState("");
   const [decoded, setDecoded] = useState<{ header: string; payload: string; signature: string } | null>(null);
   const [validation, setValidation] = useState<{ issuer: string; expiry: string; audience: string; scopes: string[]; active: boolean; revoked: boolean; binding: string; client: string } | null>(null);

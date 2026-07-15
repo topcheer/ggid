@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthStateManagementConfig, OAuthStateManagementConfig, PerFlowEncoding } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthStateManagementConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useOAuthStateManagementConfig();
   const [form, setForm] = useState<OAuthStateManagementConfig | null>(null);
   const [saving, setSaving] = useState(false);

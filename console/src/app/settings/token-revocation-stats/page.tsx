@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Ban, TrendingUp } from "lucide-react";
@@ -16,6 +17,7 @@ const reasonColors: Record<string, string> = {
 };
 
 export default function TokenRevocationStatsPage() {
+  const t = useTranslations();
   const [data, setData] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,7 +37,7 @@ export default function TokenRevocationStatsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><Ban className="w-6 h-6 text-red-500" /> Token Revocation Stats</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><Ban className="w-6 h-6 text-red-500" />{t("tokenRevocationStats.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Track token revocation events across the platform.</p>
       </div>
 

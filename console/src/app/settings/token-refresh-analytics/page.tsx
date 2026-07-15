@@ -1,9 +1,11 @@
 "use client";
 
 import { useTokenRefreshAnalytics } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { Activity, Clock, XCircle, TrendingUp } from "lucide-react";
 
 export default function TokenRefreshAnalyticsPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useTokenRefreshAnalytics();
 
   if (loading) return <div className="p-8 text-gray-400">Loading token refresh analytics...</div>;

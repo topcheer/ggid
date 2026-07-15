@@ -1,9 +1,11 @@
 "use client";
 
 import { useTokenFamilyAnalysis } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { GitBranch, AlertTriangle, Layers } from "lucide-react";
 
 export default function TokenFamilyAnalysisPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useTokenFamilyAnalysis();
   if (loading) return <div className="p-8 text-gray-400">Loading token families...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {error}</div>;

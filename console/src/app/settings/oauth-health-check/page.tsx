@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Activity, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
@@ -25,6 +26,7 @@ const statusConfig: Record<string, { color: string; icon: typeof CheckCircle }> 
 };
 
 export default function OAuthHealthCheckPage() {
+  const t = useTranslations();
   const [data, setData] = useState<HealthData | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +41,7 @@ export default function OAuthHealthCheckPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-green-500" /> OAuth Health Check</h1><p className="text-sm text-gray-500 mt-1">Monitor all OAuth endpoint health with response times and cert status.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Activity className="w-6 h-6 text-green-500" />{t("oauthHealthCheck.title")}</h1><p className="text-sm text-gray-500 mt-1">Monitor all OAuth endpoint health with response times and cert status.</p></div>
 
       {data && (
         <>

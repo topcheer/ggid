@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from "react";
 
 interface OAuthClient {
@@ -12,6 +13,7 @@ interface OAuthClient {
 }
 
 export default function OAuthClientRegistryPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

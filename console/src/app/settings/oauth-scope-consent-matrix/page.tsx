@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Grid3x3, Shield } from "lucide-react";
 
@@ -8,6 +9,7 @@ const levelColors: Record<string, string> = { none: "bg-gray-300 dark:bg-gray-70
 const riskColors: Record<string, string> = { low: "text-green-600", medium: "text-yellow-600", high: "text-orange-600", critical: "text-red-600" };
 
 export default function OAuthScopeConsentMatrixPage() {
+  const t = useTranslations();
   const [data, setData] = useState<ScopeMatrix | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -36,7 +38,7 @@ export default function OAuthScopeConsentMatrixPage() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" /> Scope Consent Matrix</h1><p className="text-sm text-gray-500 mt-1">Configure required consent levels per OAuth scope.</p></div>
+      <div><h1 className="text-2xl font-bold flex items-center gap-2"><Grid3x3 className="w-6 h-6 text-blue-500" />{t("oauthScopeConsentMatrix.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure required consent levels per OAuth scope.</p></div>
 
       <div className="grid grid-cols-4 gap-4">{Object.entries(summary).map(([level, count]) => (<div key={level} className="rounded-lg border p-4 dark:border-gray-800"><div className="flex items-center gap-2"><span className={"w-3 h-3 rounded " + levelColors[level]} /><span className="text-sm capitalize text-gray-500">{level}</span></div><p className="text-xl font-bold mt-1">{count}</p></div>))}</div>
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useOAuthCrossTenant } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { ArrowLeftRight, Plus, Shield, Clock, AlertTriangle } from "lucide-react";
 
 export default function OAuthCrossTenantPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuthCrossTenant();
 
   if (loading) return <div className="p-8 text-gray-400">Loading cross-tenant config...</div>;

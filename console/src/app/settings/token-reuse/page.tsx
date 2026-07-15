@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldAlert, KeyRound, Globe, Monitor, AlertTriangle, Filter } from "lucide-react";
@@ -25,6 +26,7 @@ const riskColors: Record<string, string> = {
 };
 
 export default function TokenReusePage() {
+  const t = useTranslations();
   const [reuses, setReuses] = useState<TokenReuse[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterRisk, setFilterRisk] = useState("all");
@@ -50,7 +52,7 @@ export default function TokenReusePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldAlert className="w-6 h-6 text-red-500" /> Token Reuse Detection</h1>
+        <h1 className="text-2xl font-bold flex items-center gap-2"><ShieldAlert className="w-6 h-6 text-red-500" />{t("tokenReuse.title")}</h1>
         <p className="text-sm text-gray-500 mt-1">Detect suspicious token reuse across different IPs and user agents.</p>
       </div>
 

@@ -1,9 +1,11 @@
 "use client";
 
 import { useOAuth21Audit } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 import { CheckCircle, XCircle, AlertTriangle, FileCheck, Zap } from "lucide-react";
 
 export default function OAuth21AuditPage() {
+  const t = useTranslations();
   const { data, loading, error, refresh } = useOAuth21Audit();
   const pct = data?.overall_compliance_pct ?? 0;
 

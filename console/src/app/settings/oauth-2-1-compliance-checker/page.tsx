@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuth21ComplianceChecker, ComplianceCheckItem } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 interface LocalNonCompliantClient {
   client_id: string;
@@ -22,6 +23,7 @@ interface LocalComplianceChecker {
 }
 
 export default function OAuth21ComplianceCheckerPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig } = useOAuth21ComplianceChecker();
   const [form, setForm] = useState<LocalComplianceChecker | null>(null);
   useEffect(() => { fetchConfig(); }, [fetchConfig]);

@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useOAuthErrorCatalogConfig, OAuthErrorCatalogConfig, ErrorCodeEntry, CustomLocaleMessage } from "@ggid/sdk-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function OAuthErrorCatalogConfigPage() {
+  const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig } = useOAuthErrorCatalogConfig();
   const [form, setForm] = useState<OAuthErrorCatalogConfig | null>(null);
   const [saving, setSaving] = useState(false);
