@@ -154,3 +154,19 @@ These endpoints are registered in production code but have no documentation in `
 2. Add OAuth token/consent/security endpoints to api-reference.md (P1)
 3. Document SAML IdP endpoints (P2)
 4. Consider if some endpoints are internal-only and should be marked as such
+
+## E2E Verification Gap: User Role Assignment (2026-07-15 Round 63)
+
+**P0 GAP — No REST endpoint for user role assignment**
+
+The arch/PM E2E verification found that `POST /api/v1/users/{id}/roles` returns "method not allowed".
+
+**Root cause:** The `AssignRole` method exists in `services/policy/internal/service/role_service.go` and is exposed via gRPC (`services/policy/internal/handler/role_handler.go:109`), but there is **no HTTP/REST route** registered for user role assignment in either the policy or identity service.
+
+- Policy service routes: `/api/v1/roles`, `/api/v1/roles/{id}` — manage role CRUD, but not user-role assignment
+- Identity service routes: no `/users/{id}/roles` handler registered
+- Frontend pages (`/roles`, `/settings`) call this endpoint but get 405
+
+**Fix needed:** Register `POST /api/v1/users/{id}/roles` (or `/api/v1/identity/users/{id}/roles`) in identity or policy service HTTP server, wiring to `RoleService.AssignRole`.
+
+**Also missing from docs:** `POST /users/{id}/roles` is not documented in `docs/api-reference.md`.
