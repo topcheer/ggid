@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 34
-## Last scan focus: E2E Regression Tests (11/11 PASS)
-## Next scan focus: B (Route Wiring)
+## Current round: 35
+## Last scan focus: B (Route Wiring)
+## Next scan focus: C (Middleware Chain)
 ## Total findings: 26
 ## Done: 25
 ## Fixed (pending verification): 0
@@ -10,7 +10,7 @@
 ## Remaining: 0
 ## Source of truth: docs/platform-completeness-report.md
 
-*Round 34 even: E2E regression tests 11/11 PASS. Round 35 will be focus B (Route Wiring).*
+*Round 35 odd: Route Wiring scan completed — gateway config covers all major service prefixes; no new gaps. Round 36 will be E2E regression tests.*
 1. GeoIP — LOW — [DONE] MaxMind GeoLite2 DB integration via GEOIP_DB_PATH; private IP detection; country block/allow lists; X-Geo-Country header; verified by geoip_test.go
 
 ## SDK Feature Matrix: 9/9 × 10/10 = 100% COMPLETE
