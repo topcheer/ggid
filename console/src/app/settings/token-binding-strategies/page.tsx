@@ -73,7 +73,7 @@ export default function TokenBindingStrategiesPage() {
     'bg-gray-100 text-gray-500';
 
   if (loading) return <div className="p-6"><p>{t("tokenBindingStrategies.loading")}</p></div>;
-  if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
+  if (error) return <div className="p-6 text-red-600">{t("common.error")}: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -109,7 +109,7 @@ export default function TokenBindingStrategiesPage() {
             <tr className="text-left">
               <th className="p-3">{t("tokenBindingStrategies.client")}</th>
               <th className="p-3">{t("tokenBindingStrategies.dpop")}</th>
-              <th className="p-3">mTLS</th>
+              <th className="p-3">{t("tokenBindingStrategies.mtls")}</th>
               <th className="p-3">{t("tokenBindingStrategies.senderConstrained")}</th>
             </tr>
           </thead>
@@ -160,7 +160,7 @@ export default function TokenBindingStrategiesPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">{t("tokenBindingStrategies.certThumbprint")}</h2>
             <button onClick={() => setShowAddThumb(!showAddThumb)} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">
-              {showAddThumb ? 'Cancel' : 'Add'}
+              {showAddThumb ? t("common.cancel") : t("oidcClaimMapping.add")}
             </button>
           </div>
           {showAddThumb && (
@@ -172,10 +172,10 @@ export default function TokenBindingStrategiesPage() {
           )}
           <div className="space-y-2">
             {thumbprints.map(th => (
-              <div key={t.id} className="flex items-center gap-2 border-b pb-1">
-                <span className="text-sm font-medium flex-1">{t.certName}</span>
-                <span className="font-mono text-xs text-gray-500">{t.thumbprint}</span>
-                <button onClick={() => removeThumbprint(t.id)} className="text-red-600 text-xs">{t("tokenBindingStrategies.remove")}</button>
+              <div key={th.id} className="flex items-center gap-2 border-b pb-1">
+                <span className="text-sm font-medium flex-1">{th.certName}</span>
+                <span className="font-mono text-xs text-gray-500">{th.thumbprint}</span>
+                <button onClick={() => removeThumbprint(th.id)} className="text-red-600 text-xs">{t("tokenBindingStrategies.remove")}</button>
               </div>
             ))}
           </div>

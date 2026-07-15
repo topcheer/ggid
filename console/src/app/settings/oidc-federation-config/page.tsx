@@ -44,7 +44,7 @@ export default function OidcFederationConfigPage() {
   };
 
   if (loading && !form) return <div className="p-8">{t("oidcFederation.loading")}</div>;
-  if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
+  if (error) return <div className="p-8 text-red-600">{t("common.error")}: {error}</div>;
   if (!form) return <div className="p-8">{t("oidcFederation.noData")}</div>;
 
   return (
@@ -131,7 +131,7 @@ export default function OidcFederationConfigPage() {
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} aria-label="Save OIDC federation config" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button onClick={handleSave} disabled={saving} aria-label={t("common.save")} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? t("common.loading") : t("common.save")}</button>
     </div>
   );
 }

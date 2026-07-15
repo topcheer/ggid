@@ -437,7 +437,9 @@
     "big1.jwtExpiryConfig.refreshToken": "Refresh Token",
     "big1.jwtExpiryConfig.remove": "Remove",
     "big1.jwtExpiryConfig.slidingWindow": "Sliding Window",
-    "big1.jwtExpiryConfig.tokenLifetimes": "Token Lifetimes"
+    "big1.jwtExpiryConfig.tokenLifetimes": "Token Lifetimes",
+    "big1.deviceRegistry.allRegisteredDevicesWithFingerprintsSessionsAndTrustStatus": "All registered devices with fingerprints, sessions, and trust status.",
+    "big1.deviceRegistry.noRegisteredDevices": "No registered devices."
   },
   "zh": {
     "big1.deviceAttestation.allTrustLevels": "所有信任级别",
@@ -877,6 +879,8 @@
     "big1.jwtExpiryConfig.refreshToken": "Refresh Token",
     "big1.jwtExpiryConfig.remove": "移除",
     "big1.jwtExpiryConfig.slidingWindow": "Sliding Window",
-    "big1.jwtExpiryConfig.tokenLifetimes": "Token Lifetimes"
+    "big1.jwtExpiryConfig.tokenLifetimes": "Token Lifetimes",
+    "big1.deviceRegistry.allRegisteredDevicesWithFingerprintsSessionsAndTrustStatus": "All registered devices with fingerprints, sessions, and trust status.",
+    "big1.deviceRegistry.noRegisteredDevices": "No registered devices."
   }
 }

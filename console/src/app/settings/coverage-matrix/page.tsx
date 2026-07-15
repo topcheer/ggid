@@ -23,6 +23,7 @@ function cellColor(pct: number) {
 }
 
 export default function CoverageMatrixPage() {
+  const t = useTranslations();
   const [data, setData] = useState<MatrixData | null>(null);
   const [loading, setLoading] = useState(false);
 

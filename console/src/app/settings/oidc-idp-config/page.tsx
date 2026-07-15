@@ -65,7 +65,7 @@ export default function OidcIdpConfigPage() {
   };
 
   if (loading) return <div className="p-6"><h1 className="text-2xl font-bold">{t("oidcIdpConfig.title")}</h1><p className="text-gray-600 mt-2">{t("oidcIdpConfig.loading")}</p></div>;
-  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">{t("oidcIdpConfig.title")}</h1><p className="text-red-600 mt-2">Error: {error}</p></div>;
+  if (error) return <div className="p-6"><h1 className="text-2xl font-bold">{t("oidcIdpConfig.title")}</h1><p className="text-red-600 mt-2">{t("common.error")}: {error}</p></div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -79,7 +79,7 @@ export default function OidcIdpConfigPage() {
           <div><label className="text-sm font-medium">{t("oidcIdpConfig.clientSecret")}</label><input type="password" value={clientSecret} onChange={e => setClientSecret(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div><label className="text-sm font-medium">{t("oidcIdpConfig.redirectUri")}</label><input type="text" readOnly value={redirectUri} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono bg-gray-50" /></div>
-        <button onClick={testDiscovery} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? 'Testing...' : 'Test Discovery'}</button>
+        <button onClick={testDiscovery} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? t("common.loading") : t("common.test")}</button>
         {testResult && <div className={`text-sm p-3 rounded ${testResult.includes('Error') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{testResult}</div>}
       </section>
 
