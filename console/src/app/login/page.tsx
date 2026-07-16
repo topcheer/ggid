@@ -385,6 +385,29 @@ export default function LoginPage() {
               {t("login.demo")}
             </div>
 
+            {/* OAuth SSO Entry */}
+            <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+              <p className="mb-2 text-center text-xs text-gray-400">or sign in with</p>
+              <button
+                type="button"
+                onClick={async () => {
+                  const { initOAuthFlow } = await import("@/lib/oauth-pkce");
+                  const redirectUri = `${window.location.origin}/auth/callback`;
+                  const authUrl = await initOAuthFlow(
+                    `${API_BASE}/oauth/authorize`,
+                    "ggid-console",
+                    redirectUri,
+                  );
+                  window.location.href = authUrl;
+                }}
+                aria-label="Sign in with OAuth SSO"
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-950"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" /></svg>
+                Sign in with GGID SSO
+              </button>
+            </div>
+
             <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
               {t("login.noAccount")}{" "}
               <a href="/register" className="font-medium text-brand-600 hover:underline">{t("login.signUp")}</a>
