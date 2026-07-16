@@ -49,7 +49,7 @@ export default function IdentityGovernancePage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Unified dashboard for access reviews, SoD violations, and account lifecycle.</p>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {/* Top metrics */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

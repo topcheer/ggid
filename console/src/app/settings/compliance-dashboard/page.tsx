@@ -55,7 +55,7 @@ export default function ComplianceDashboardPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("complianceDashboard.subtitle")}</p>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {totalGaps > 0 && <div className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 dark:border-orange-800 dark:bg-orange-900/20"><AlertCircle className="h-5 w-5 text-orange-600 shrink-0" /><span className="text-sm text-orange-700 dark:text-orange-400">{totalGaps} compliance gap{totalGaps > 1 ? "s" : ""} across all frameworks.</span></div>}
 
