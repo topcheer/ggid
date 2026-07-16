@@ -42,7 +42,7 @@ export default function OAuthClientMigrationConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("oauthMigration.fieldMapping")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oauthMigration.sourceField")}</th><th>{t("oauthMigration.targetField")}</th><th>{t("oauthMigration.transform")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oauthMigration.sourceField")}</th><th scope="col">{t("oauthMigration.targetField")}</th><th>{t("oauthMigration.transform")}</th></tr></thead><tbody>
           {form.mapping_preview.map((m: MappingPreview, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-mono">{m.source_field}</td><td className="font-mono">{m.target_field}</td><td className="text-xs">{m.transform}</td></tr>
           ))}

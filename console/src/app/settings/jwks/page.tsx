@@ -118,7 +118,7 @@ export default function JwksPage() {
               <div className="hidden overflow-hidden rounded-xl border border-gray-200 shadow-sm md:block dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-800"><tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                    <th className="px-4 py-3">{t("backend.jwks.keyId")}</th><th className="px-4 py-3">{t("backend.jwks.retiredAt")}</th><th className="px-4 py-3">{t("backend.jwks.status")}</th>
+                    <th scope="col" className="px-4 py-3">{t("backend.jwks.keyId")}</th><th className="px-4 py-3">{t("backend.jwks.retiredAt")}</th><th className="px-4 py-3">{t("backend.jwks.status")}</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                     {status.previous_keys.map((k) => (

@@ -159,13 +159,13 @@ export default function AgentAccessReviewPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3"></th>
-              <th className="p-3">Agent</th>
-              <th className="p-3">Reviewer</th>
-              <th className="p-3">Decision</th>
-              <th className="p-3">Scopes</th>
-              <th className="p-3">Timestamp</th>
-              <th className="p-3">Drift</th>
+              <th scope="col" className="p-3"></th>
+              <th scope="col" className="p-3">Agent</th>
+              <th scope="col" className="p-3">Reviewer</th>
+              <th scope="col" className="p-3">Decision</th>
+              <th scope="col" className="p-3">Scopes</th>
+              <th scope="col" className="p-3">Timestamp</th>
+              <th scope="col" className="p-3">Drift</th>
             </tr>
           </thead>
           <tbody>

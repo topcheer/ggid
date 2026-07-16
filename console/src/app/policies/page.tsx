@@ -658,13 +658,13 @@ export default function PoliciesPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-200 dark:border-gray-700">
-                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Role</th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">Role</th>
                         {PERMISSION_COLUMNS.map((col) => (
-                          <th key={col} className="px-3 py-2 text-center text-xs font-medium uppercase text-gray-500">
+                          <th scope="col" key={col} className="px-3 py-2 text-center text-xs font-medium uppercase text-gray-500">
                             {col}
                           </th>
                         ))}
-                        <th className="px-3 py-2"></th>
+                        <th scope="col" className="px-3 py-2"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

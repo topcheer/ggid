@@ -85,10 +85,10 @@ export default function PolicyMigrationWizardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-3">Source Rule</th>
-                  <th className="text-left py-2 pr-3"></th>
-                  <th className="text-left py-2 pr-3">GGID Policy</th>
-                  <th className="text-left py-2 pr-3">Confidence</th>
+                  <th scope="col" className="text-left py-2 pr-3">Source Rule</th>
+                  <th scope="col" className="text-left py-2 pr-3"></th>
+                  <th scope="col" className="text-left py-2 pr-3">GGID Policy</th>
+                  <th scope="col" className="text-left py-2 pr-3">Confidence</th>
                 </tr>
               </thead>
               <tbody>

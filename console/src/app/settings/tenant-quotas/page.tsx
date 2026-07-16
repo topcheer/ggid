@@ -91,9 +91,9 @@ export default function TenantQuotasPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-4">{t("tenantQuotas.resource")}</th>
+                  <th scope="col" className="text-left py-2 pr-4">{t("tenantQuotas.resource")}</th>
                   {(data?.per_plan_limits ?? []).map((p) => (
-                    <th key={p.plan} className="text-right py-2 px-2 capitalize">{p.plan}</th>
+                    <th scope="col" key={p.plan} className="text-right py-2 px-2 capitalize">{p.plan}</th>
                   ))}
                 </tr>
               </thead>

@@ -142,10 +142,10 @@ export default function MonitoringPage() {
         <table className="w-full">
           <thead className="border-b border-gray-100 bg-gray-50 dark:border-gray-800 dark:bg-gray-800">
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Service</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Latency</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">URL</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Service</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Latency</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">URL</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -186,9 +186,9 @@ export default function MonitoringPage() {
           <table className="w-full">
             <thead className="border-b border-gray-100 bg-gray-50">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Route</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Requests</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Errors</th>
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Route</th>
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Requests</th>
+                <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Errors</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

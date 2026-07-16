@@ -67,12 +67,12 @@ export default function ComplianceEvidenceTrackerPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Control</th>
-                <th className="text-left py-2 pr-3">Evidence Type</th>
-                <th className="text-left py-2 pr-3">Last Collected</th>
-                <th className="text-left py-2 pr-3">Next Due</th>
-                <th className="text-left py-2 pr-3">Owner</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Control</th>
+                <th scope="col" className="text-left py-2 pr-3">Evidence Type</th>
+                <th scope="col" className="text-left py-2 pr-3">Last Collected</th>
+                <th scope="col" className="text-left py-2 pr-3">Next Due</th>
+                <th scope="col" className="text-left py-2 pr-3">Owner</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

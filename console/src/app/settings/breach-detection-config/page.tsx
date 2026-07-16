@@ -185,13 +185,13 @@ export default function BreachDetectionConfigPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                  <th className="pb-2">{t("common.name")}</th>
-                  <th className="pb-2">{t("breachDetect.breach")}</th>
-                  <th className="pb-2">{t("breachDetect.date")}</th>
-                  <th className="pb-2">{t("breachDetect.dataClasses")}</th>
-                  <th className="pb-2">{t("breachDetect.passwordCompromised")}</th>
-                  <th className="pb-2">{t("common.status")}</th>
-                  <th className="pb-2">{t("common.action")}</th>
+                  <th scope="col" className="pb-2">{t("common.name")}</th>
+                  <th scope="col" className="pb-2">{t("breachDetect.breach")}</th>
+                  <th scope="col" className="pb-2">{t("breachDetect.date")}</th>
+                  <th scope="col" className="pb-2">{t("breachDetect.dataClasses")}</th>
+                  <th scope="col" className="pb-2">{t("breachDetect.passwordCompromised")}</th>
+                  <th scope="col" className="pb-2">{t("common.status")}</th>
+                  <th scope="col" className="pb-2">{t("common.action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -231,9 +231,9 @@ export default function BreachDetectionConfigPage() {
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                <th className="pb-2">{t("breachDetect.hash")}</th>
-                <th className="pb-2">{t("breachDetect.occurrenceCount")}</th>
-                <th className="pb-2">{t("breachDetect.lastSeen")}</th>
+                <th scope="col" className="pb-2">{t("breachDetect.hash")}</th>
+                <th scope="col" className="pb-2">{t("breachDetect.occurrenceCount")}</th>
+                <th scope="col" className="pb-2">{t("breachDetect.lastSeen")}</th>
               </tr>
             </thead>
             <tbody>

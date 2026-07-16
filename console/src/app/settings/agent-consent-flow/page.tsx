@@ -105,11 +105,11 @@ export default function AgentConsentFlowPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Agent</th>
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">Scopes</th>
-                <th className="text-left py-2 pr-3">Granted</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Agent</th>
+                <th scope="col" className="text-left py-2 pr-3">User</th>
+                <th scope="col" className="text-left py-2 pr-3">Scopes</th>
+                <th scope="col" className="text-left py-2 pr-3">Granted</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

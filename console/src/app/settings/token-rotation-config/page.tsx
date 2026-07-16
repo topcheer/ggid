@@ -55,7 +55,7 @@ export default function TokenRotationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per-Client Rotation</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Client</th><th>Interval (days)</th><th>Max Age (days)</th><th>Notify Before</th><th>Auto</th><th>Last Rotated</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Client</th><th scope="col">Interval (days)</th><th>Max Age (days)</th><th>Notify Before</th><th>Auto</th><th>Last Rotated</th></tr></thead>
           <tbody>
             {form.per_client.map((c: TokenRotationEntry, i: number) => (
               <tr key={i} className="border-b">

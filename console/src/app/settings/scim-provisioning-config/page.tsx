@@ -42,7 +42,7 @@ export default function ScimProvisioningConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Mapping Rules</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Source Field</th><th>Target Field</th><th>Required</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Source Field</th><th scope="col">Target Field</th><th>Required</th></tr></thead>
           <tbody>
             {form.mapping_rules.map((r: ScimMappingRule, i: number) => (
               <tr key={i} className="border-b"><td className="py-2">{r.source_field}</td><td>{r.target_field}</td><td>{r.required ? "Yes" : "No"}</td></tr>

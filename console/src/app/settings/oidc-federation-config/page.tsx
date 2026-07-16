@@ -83,9 +83,9 @@ export default function OidcFederationConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">{t("oidcFederation.issuer")}</th>
-              <th>{t("oidcFederation.jwksUri")}</th>
-              <th>{t("oidcFederation.trustMark")}</th>
+              <th scope="col" className="py-2">{t("oidcFederation.issuer")}</th>
+              <th scope="col">{t("oidcFederation.jwksUri")}</th>
+              <th scope="col">{t("oidcFederation.trustMark")}</th>
             </tr>
           </thead>
           <tbody>

@@ -89,14 +89,14 @@ export default function TokenReusePage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">Token</th>
-              <th className="px-4 py-3 text-left font-medium">User</th>
-              <th className="px-4 py-3 text-left font-medium">IP Address</th>
-              <th className="px-4 py-3 text-left font-medium">Country</th>
-              <th className="px-4 py-3 text-left font-medium">User Agent</th>
-              <th className="px-4 py-3 text-left font-medium">Reuse Count</th>
-              <th className="px-4 py-3 text-left font-medium">Last Seen</th>
-              <th className="px-4 py-3 text-left font-medium">Risk</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Token</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">IP Address</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Country</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">User Agent</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Reuse Count</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Last Seen</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Risk</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

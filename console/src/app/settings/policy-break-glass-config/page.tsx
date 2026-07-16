@@ -26,7 +26,7 @@ export default function PolicyBreakGlassConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Break-Glass Roles</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Role</th><th>Justification Required</th><th>Auto-Expire (min)</th><th>Notify on Use</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Role</th><th scope="col">Justification Required</th><th>Auto-Expire (min)</th><th>Notify on Use</th></tr></thead><tbody>
           {form.break_glass_roles.map((r: BreakGlassRole, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{r.role}</td><td>{r.justification_required ? "Yes" : "No"}</td><td>{r.auto_expire_minutes}</td><td>{r.notify_on_use ? "Yes" : "No"}</td></tr>
           ))}

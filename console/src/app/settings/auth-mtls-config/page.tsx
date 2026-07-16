@@ -31,7 +31,7 @@ export default function AuthMtlsConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Trusted CA Certificates</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Name</th><th>Fingerprint</th><th>Expiry</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Name</th><th scope="col">Fingerprint</th><th>Expiry</th></tr></thead><tbody>
           {form.trusted_ca_certs.map((c: TrustedCaCert, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{c.name}</td><td className="font-mono text-xs">{c.fingerprint}</td><td className="text-xs text-gray-500">{c.expiry}</td></tr>
           ))}

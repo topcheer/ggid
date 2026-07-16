@@ -129,13 +129,13 @@ export default function FeatureFlagsConfigPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                  <th className="pb-2">{t("featureFlagsConfig.name")}</th>
-                  <th className="pb-2">{t("featureFlagsConfig.description")}</th>
-                  <th className="pb-2">{t("featureFlagsConfig.enabled")}</th>
-                  <th className="pb-2">{t("featureFlagsConfig.environment")}</th>
-                  <th className="pb-2">{t("featureFlagsConfig.rollout")}</th>
-                  <th className="pb-2">{t("featureFlagsConfig.created")}</th>
-                  <th className="pb-2">{t("featureFlagsConfig.actions")}</th>
+                  <th scope="col" className="pb-2">{t("featureFlagsConfig.name")}</th>
+                  <th scope="col" className="pb-2">{t("featureFlagsConfig.description")}</th>
+                  <th scope="col" className="pb-2">{t("featureFlagsConfig.enabled")}</th>
+                  <th scope="col" className="pb-2">{t("featureFlagsConfig.environment")}</th>
+                  <th scope="col" className="pb-2">{t("featureFlagsConfig.rollout")}</th>
+                  <th scope="col" className="pb-2">{t("featureFlagsConfig.created")}</th>
+                  <th scope="col" className="pb-2">{t("featureFlagsConfig.actions")}</th>
                 </tr>
               </thead>
               <tbody>

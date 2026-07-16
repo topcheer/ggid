@@ -98,9 +98,9 @@ export default function OAuthMtlsConfigPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-3">Client</th>
-                  <th className="text-left py-2 pr-3">Required</th>
-                  <th className="text-left py-2 pr-3">Thumbprint Binding</th>
+                  <th scope="col" className="text-left py-2 pr-3">Client</th>
+                  <th scope="col" className="text-left py-2 pr-3">Required</th>
+                  <th scope="col" className="text-left py-2 pr-3">Thumbprint Binding</th>
                 </tr>
               </thead>
               <tbody>

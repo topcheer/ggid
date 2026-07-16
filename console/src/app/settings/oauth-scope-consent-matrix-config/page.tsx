@@ -32,7 +32,7 @@ export default function OAuthScopeConsentMatrixConfigPage() {
           <h2 className="text-lg font-semibold">Scope Matrix</h2>
           <div className="text-sm">Compliance: <span className="font-bold text-blue-600">{form.compliance_summary_pct}%</span></div>
         </div>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Scope</th><th>Consent Level</th><th>Risk Level</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Scope</th><th scope="col">Consent Level</th><th>Risk Level</th></tr></thead><tbody>
           {form.matrix.map((e: ScopeConsentEntry, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-mono">{e.scope}</td><td><span className={`px-2 py-1 rounded text-xs ${levelColors[e.consent_level] || ""}`}>{e.consent_level}</span></td><td><span className={`px-2 py-1 rounded text-xs ${riskColors[e.risk_level] || ""}`}>{e.risk_level}</span></td></tr>
           ))}

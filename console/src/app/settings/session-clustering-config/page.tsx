@@ -32,7 +32,7 @@ export default function SessionClusteringConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Redis Nodes</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Host</th><th>Port</th><th>Role</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Host</th><th scope="col">Port</th><th>Role</th></tr></thead><tbody>
           {form.redis_nodes.map((n: RedisNode, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-mono">{n.host}</td><td>{n.port}</td><td><span className={`px-2 py-1 rounded text-xs ${n.role === "master" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"}`}>{n.role}</span></td></tr>
           ))}

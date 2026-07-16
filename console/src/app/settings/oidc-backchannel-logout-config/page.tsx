@@ -39,7 +39,7 @@ export default function OidcBackchannelLogoutConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("oidcBackchannelLogout.perClientEndpoints")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oidcBackchannelLogout.client")}</th><th>{t("oidcBackchannelLogout.logoutEndpoint")}</th><th>{t("oidcBackchannelLogout.test")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oidcBackchannelLogout.client")}</th><th scope="col">{t("oidcBackchannelLogout.logoutEndpoint")}</th><th>{t("oidcBackchannelLogout.test")}</th></tr></thead><tbody>
           {form.per_client_endpoints.map((c: BackchannelLogoutClient, i: number) => (
             <tr key={i} className="border-b"><td className="py-2"><span className="font-medium">{c.client_name}</span><div className="text-xs text-gray-400">{c.client_id}</div></td><td className="break-all">{c.logout_endpoint_url}</td><td><button onClick={() => handleTest(c.client_id)} disabled={testing} className="text-blue-600 hover:text-blue-800 text-xs">{t("oidcBackchannelLogout.test")}</button></td></tr>
           ))}

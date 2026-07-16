@@ -139,11 +139,11 @@ export default function RiskEngineDashboardPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">User</th>
-              <th className="p-3">Score</th>
-              <th className="p-3">Factors</th>
-              <th className="p-3">Action</th>
-              <th className="p-3">Time</th>
+              <th scope="col" className="p-3">User</th>
+              <th scope="col" className="p-3">Score</th>
+              <th scope="col" className="p-3">Factors</th>
+              <th scope="col" className="p-3">Action</th>
+              <th scope="col" className="p-3">Time</th>
             </tr>
           </thead>
           <tbody>

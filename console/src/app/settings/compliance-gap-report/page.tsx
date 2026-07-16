@@ -97,12 +97,12 @@ export default function ComplianceGapReportPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-800 text-gray-400">
-              <th className="text-left py-3 px-4">Control ID</th>
-              <th className="text-left py-3 px-4">Requirement</th>
-              <th className="text-left py-3 px-4">Current State</th>
-              <th className="text-left py-3 px-4">Severity</th>
-              <th className="text-left py-3 px-4">Owner</th>
-              <th className="text-left py-3 px-4">Deadline</th>
+              <th scope="col" className="text-left py-3 px-4">Control ID</th>
+              <th scope="col" className="text-left py-3 px-4">Requirement</th>
+              <th scope="col" className="text-left py-3 px-4">Current State</th>
+              <th scope="col" className="text-left py-3 px-4">Severity</th>
+              <th scope="col" className="text-left py-3 px-4">Owner</th>
+              <th scope="col" className="text-left py-3 px-4">Deadline</th>
             </tr>
           </thead>
           <tbody>

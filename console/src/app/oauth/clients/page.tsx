@@ -199,13 +199,13 @@ export default function OAuthClientsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wider text-gray-500 dark:border-gray-700">
-                  <th className="pb-3 pr-4">Client Name</th>
-                  <th className="pb-3 pr-4">Client ID</th>
-                  <th className="pb-3 pr-4">Grant Types</th>
-                  <th className="pb-3 pr-4">Scopes</th>
-                  <th className="pb-3 pr-4">Status</th>
-                  <th className="pb-3 pr-4">Created</th>
-                  <th className="pb-3"></th>
+                  <th scope="col" className="pb-3 pr-4">Client Name</th>
+                  <th scope="col" className="pb-3 pr-4">Client ID</th>
+                  <th scope="col" className="pb-3 pr-4">Grant Types</th>
+                  <th scope="col" className="pb-3 pr-4">Scopes</th>
+                  <th scope="col" className="pb-3 pr-4">Status</th>
+                  <th scope="col" className="pb-3 pr-4">Created</th>
+                  <th scope="col" className="pb-3"></th>
                 </tr>
               </thead>
               <tbody>

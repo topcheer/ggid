@@ -65,10 +65,10 @@ export default function AuditSamplingConfigPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Strategy</th>
-                <th className="text-left py-2 pr-3">Sample Size %</th>
-                <th className="text-left py-2 pr-3">Target Population</th>
-                <th className="text-left py-2 pr-3">Last Review</th>
+                <th scope="col" className="text-left py-2 pr-3">Strategy</th>
+                <th scope="col" className="text-left py-2 pr-3">Sample Size %</th>
+                <th scope="col" className="text-left py-2 pr-3">Target Population</th>
+                <th scope="col" className="text-left py-2 pr-3">Last Review</th>
               </tr>
             </thead>
             <tbody>

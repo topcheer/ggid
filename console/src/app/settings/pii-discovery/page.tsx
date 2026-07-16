@@ -54,11 +54,11 @@ export default function PIIDiscoveryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Table.Column</th>
-                <th className="text-left py-2 pr-3">PII Type</th>
-                <th className="text-left py-2 pr-3">Sample (Masked)</th>
-                <th className="text-left py-2 pr-3">Confidence</th>
-                <th className="text-left py-2 pr-3">Encrypted</th>
+                <th scope="col" className="text-left py-2 pr-3">Table.Column</th>
+                <th scope="col" className="text-left py-2 pr-3">PII Type</th>
+                <th scope="col" className="text-left py-2 pr-3">Sample (Masked)</th>
+                <th scope="col" className="text-left py-2 pr-3">Confidence</th>
+                <th scope="col" className="text-left py-2 pr-3">Encrypted</th>
               </tr>
             </thead>
             <tbody>

@@ -146,7 +146,7 @@ export default function TokensPage() {
           <div className="hidden overflow-hidden rounded-xl border border-gray-200 shadow-sm md:block dark:border-gray-700">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800"><tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                <th className="px-4 py-3">User</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">Scopes</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Issued</th><th className="px-4 py-3">Expires</th><th className="px-4 py-3">Last Used</th><th className="px-4 py-3 text-right">Action</th>
+                <th scope="col" className="px-4 py-3">User</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">Scopes</th><th className="px-4 py-3">Type</th><th className="px-4 py-3">Issued</th><th className="px-4 py-3">Expires</th><th className="px-4 py-3">Last Used</th><th className="px-4 py-3 text-right">Action</th>
               </tr></thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {tokens.map((t) => (

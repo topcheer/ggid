@@ -72,11 +72,11 @@ export default function AgentCredentialRotationPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Agent</th>
-                <th className="text-left py-2 pr-3">Key Age (days)</th>
-                <th className="text-left py-2 pr-3">Rotation Due (days)</th>
-                <th className="text-left py-2 pr-3">Auto-Rotate</th>
-                <th className="text-left py-2 pr-3">Actions</th>
+                <th scope="col" className="text-left py-2 pr-3">Agent</th>
+                <th scope="col" className="text-left py-2 pr-3">Key Age (days)</th>
+                <th scope="col" className="text-left py-2 pr-3">Rotation Due (days)</th>
+                <th scope="col" className="text-left py-2 pr-3">Auto-Rotate</th>
+                <th scope="col" className="text-left py-2 pr-3">Actions</th>
               </tr>
             </thead>
             <tbody>

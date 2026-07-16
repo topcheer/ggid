@@ -72,13 +72,13 @@ export default function K8sDeploymentPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
-              <th className="px-4 py-3">{"Service Name"}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeployment.image")}</th>
-              <th className="px-4 py-3">{"Replicas"}</th>
-              <th className="px-4 py-3">{"Cpu"}</th>
-              <th className="px-4 py-3">{"Memory"}</th>
-              <th className="px-4 py-3">{"Status"}</th>
-              <th className="px-4 py-3">{"Actions"}</th>
+              <th scope="col" className="px-4 py-3">{"Service Name"}</th>
+              <th scope="col" className="px-4 py-3">{t("backend2.k8sDeployment.image")}</th>
+              <th scope="col" className="px-4 py-3">{"Replicas"}</th>
+              <th scope="col" className="px-4 py-3">{"Cpu"}</th>
+              <th scope="col" className="px-4 py-3">{"Memory"}</th>
+              <th scope="col" className="px-4 py-3">{"Status"}</th>
+              <th scope="col" className="px-4 py-3">{"Actions"}</th>
             </tr>
           </thead>
           <tbody className="divide-y">

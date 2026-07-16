@@ -116,13 +116,13 @@ export default function DSRTrackerPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">Type</th>
-              <th className="px-4 py-3 text-left font-medium">User</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-left font-medium">Created</th>
-              <th className="px-4 py-3 text-left font-medium">Due Date</th>
-              <th className="px-4 py-3 text-left font-medium">SLA</th>
-              <th className="px-4 py-3 text-left font-medium">Action</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Type</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Status</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Created</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Due Date</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">SLA</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

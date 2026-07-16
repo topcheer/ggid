@@ -53,9 +53,9 @@ export default function ComplianceGapHeatmapPage() {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="text-left text-xs text-gray-400 p-2 sticky left-0 bg-gray-900">Framework</th>
+                <th scope="col" className="text-left text-xs text-gray-400 p-2 sticky left-0 bg-gray-900">Framework</th>
                 {(data?.control_categories ?? []).map((cat) => (
-                  <th key={cat} className="text-center text-xs text-gray-400 p-2 min-w-24">{cat}</th>
+                  <th scope="col" key={cat} className="text-center text-xs text-gray-400 p-2 min-w-24">{cat}</th>
                 ))}
               </tr>
             </thead>

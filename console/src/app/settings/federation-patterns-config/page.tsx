@@ -34,7 +34,7 @@ export default function FederationPatternsConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("big1.federationPatternsConfig.trustLifecycleRules")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("big1.federationPatternsConfig.name")}</th><th>{t("big1.federationPatternsConfig.description")}</th><th>{t("big1.federationPatternsConfig.autoRevokeDays")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("big1.federationPatternsConfig.name")}</th><th scope="col">{t("big1.federationPatternsConfig.description")}</th><th>{t("big1.federationPatternsConfig.autoRevokeDays")}</th></tr></thead><tbody>
           {form.trust_lifecycle_rules.map((r: TrustLifecycleRule, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{r.name}</td><td className="text-xs">{r.description}</td><td>{r.auto_revoke_after_days}</td></tr>
           ))}

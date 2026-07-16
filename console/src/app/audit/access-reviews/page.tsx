@@ -287,12 +287,12 @@ export default function AccessReviewsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                  <th className="px-4 py-3">User</th>
-                  <th className="px-4 py-3">Roles</th>
-                  <th className="px-4 py-3">Decision</th>
-                  <th className="px-4 py-3">Reviewer</th>
-                  <th className="px-4 py-3">Reviewed</th>
-                  <th className="px-4 py-3">Comment</th>
+                  <th scope="col" className="px-4 py-3">User</th>
+                  <th scope="col" className="px-4 py-3">Roles</th>
+                  <th scope="col" className="px-4 py-3">Decision</th>
+                  <th scope="col" className="px-4 py-3">Reviewer</th>
+                  <th scope="col" className="px-4 py-3">Reviewed</th>
+                  <th scope="col" className="px-4 py-3">Comment</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

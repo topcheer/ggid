@@ -165,12 +165,12 @@ export default function JITElevationPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">User</th>
-              <th className="px-4 py-3 text-left font-medium">Role</th>
-              <th className="px-4 py-3 text-left font-medium">Duration</th>
-              <th className="px-4 py-3 text-left font-medium">Justification</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-left font-medium">Requested</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Role</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Duration</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Justification</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Status</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Requested</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

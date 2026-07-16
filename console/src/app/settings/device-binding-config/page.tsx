@@ -112,13 +112,13 @@ export default function DeviceBindingConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("backend.deviceBindingConfig.device")}</th>
-              <th className="p-3">Platform</th>
-              <th className="p-3">{t("backend.deviceBindingConfig.fingerprint")}</th>
-              <th className="p-3">{t("backend.deviceBindingConfig.boundAt")}</th>
-              <th className="p-3">{t("backend.deviceBindingConfig.lastSeen")}</th>
-              <th className="p-3">Trust Score</th>
-              <th className="p-3">{t("backend.deviceBindingConfig.action")}</th>
+              <th scope="col" className="p-3">{t("backend.deviceBindingConfig.device")}</th>
+              <th scope="col" className="p-3">Platform</th>
+              <th scope="col" className="p-3">{t("backend.deviceBindingConfig.fingerprint")}</th>
+              <th scope="col" className="p-3">{t("backend.deviceBindingConfig.boundAt")}</th>
+              <th scope="col" className="p-3">{t("backend.deviceBindingConfig.lastSeen")}</th>
+              <th scope="col" className="p-3">Trust Score</th>
+              <th scope="col" className="p-3">{t("backend.deviceBindingConfig.action")}</th>
             </tr>
           </thead>
           <tbody>

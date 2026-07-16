@@ -403,12 +403,12 @@ export default function SecurityCenterDashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500 dark:border-gray-700">
-                  <th className="pb-2 font-medium">{t("security.ipAddress")}</th>
-                  <th className="pb-2 font-medium">{t("security.location")}</th>
-                  <th className="pb-2 text-right font-medium">{t("security.attempts")}</th>
-                  <th className="pb-2 font-medium">{t("security.last")}</th>
-                  <th className="pb-2 font-medium">{t("security.risk")}</th>
-                  <th className="pb-2"></th>
+                  <th scope="col" className="pb-2 font-medium">{t("security.ipAddress")}</th>
+                  <th scope="col" className="pb-2 font-medium">{t("security.location")}</th>
+                  <th scope="col" className="pb-2 text-right font-medium">{t("security.attempts")}</th>
+                  <th scope="col" className="pb-2 font-medium">{t("security.last")}</th>
+                  <th scope="col" className="pb-2 font-medium">{t("security.risk")}</th>
+                  <th scope="col" className="pb-2"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

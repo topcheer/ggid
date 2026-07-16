@@ -43,8 +43,8 @@ export default function OAuthScopeTieringConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">{t("oauthScopeTiering.tier")}</th>
-              <th>{t("oauthScopeTiering.consentPolicy")}</th>
+              <th scope="col" className="py-2">{t("oauthScopeTiering.tier")}</th>
+              <th scope="col">{t("oauthScopeTiering.consentPolicy")}</th>
             </tr>
           </thead>
           <tbody>
@@ -73,8 +73,8 @@ export default function OAuthScopeTieringConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">{t("oauthScopeTiering.parentScope")}</th>
-              <th>{t("oauthScopeTiering.childScopes")}</th>
+              <th scope="col" className="py-2">{t("oauthScopeTiering.parentScope")}</th>
+              <th scope="col">{t("oauthScopeTiering.childScopes")}</th>
             </tr>
           </thead>
           <tbody>

@@ -144,13 +144,13 @@ export default function RateLimitsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                <th className="px-4 py-3">{t("rateLimits.pathPattern")}</th>
-                <th className="px-4 py-3">{t("rateLimits.method")}</th>
-                <th className="px-4 py-3">{t("rateLimits.reqMin")}</th>
-                <th className="px-4 py-3">{t("rateLimits.burst")}</th>
-                <th className="px-4 py-3">{t("rateLimits.perTenant")}</th>
-                <th className="px-4 py-3">{t("settings.enabled")}</th>
-                <th className="px-4 py-3 text-right">{t("common.actions")}</th>
+                <th scope="col" className="px-4 py-3">{t("rateLimits.pathPattern")}</th>
+                <th scope="col" className="px-4 py-3">{t("rateLimits.method")}</th>
+                <th scope="col" className="px-4 py-3">{t("rateLimits.reqMin")}</th>
+                <th scope="col" className="px-4 py-3">{t("rateLimits.burst")}</th>
+                <th scope="col" className="px-4 py-3">{t("rateLimits.perTenant")}</th>
+                <th scope="col" className="px-4 py-3">{t("settings.enabled")}</th>
+                <th scope="col" className="px-4 py-3 text-right">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

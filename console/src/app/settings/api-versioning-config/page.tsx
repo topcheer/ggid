@@ -129,12 +129,12 @@ const [breakingChanges, setBreakingChanges] = useState([
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left border-b">
-              <th className="py-2">Version</th>
-              <th className="py-2">Status</th>
-              <th className="py-2">{t("backend2.apiVersioning.released")}</th>
-              <th className="py-2">Sunset</th>
-              <th className="py-2">{t("backend2.apiVersioning.consumers")}</th>
-              <th className="py-2">{t("backend2.apiVersioning.action")}</th>
+              <th scope="col" className="py-2">Version</th>
+              <th scope="col" className="py-2">Status</th>
+              <th scope="col" className="py-2">{t("backend2.apiVersioning.released")}</th>
+              <th scope="col" className="py-2">Sunset</th>
+              <th scope="col" className="py-2">{t("backend2.apiVersioning.consumers")}</th>
+              <th scope="col" className="py-2">{t("backend2.apiVersioning.action")}</th>
             </tr>
           </thead>
           <tbody>

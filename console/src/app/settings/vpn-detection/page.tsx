@@ -72,12 +72,12 @@ export default function VPNDetectionPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">IP Address</th>
-                <th className="px-4 py-3 text-left font-medium">Type</th>
-                <th className="px-4 py-3 text-left font-medium">Provider</th>
-                <th className="px-4 py-3 text-left font-medium">Country</th>
-                <th className="px-4 py-3 text-left font-medium">Risk</th>
-                <th className="px-4 py-3 text-left font-medium">Recommendation</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">IP Address</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">Type</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">Provider</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">Country</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">Risk</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">Recommendation</th>
               </tr>
             </thead>
             <tbody className="divide-y dark:divide-gray-800">

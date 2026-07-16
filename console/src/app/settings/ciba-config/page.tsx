@@ -103,10 +103,10 @@ export default function CibaConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">Client ID</th>
-              <th>Client Name</th>
-              <th>Delivery Mode</th>
-              <th>Max Polling Interval</th>
+              <th scope="col" className="py-2">Client ID</th>
+              <th scope="col">Client Name</th>
+              <th scope="col">Delivery Mode</th>
+              <th scope="col">Max Polling Interval</th>
             </tr>
           </thead>
           <tbody>

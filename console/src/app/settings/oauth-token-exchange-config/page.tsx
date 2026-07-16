@@ -56,7 +56,7 @@ export default function OAuthTokenExchangeConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("oauthTokenExchange.perClientScopes")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oauthTokenExchange.client")}</th><th>{t("oauthTokenExchange.allowedScopes")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oauthTokenExchange.client")}</th><th scope="col">{t("oauthTokenExchange.allowedScopes")}</th></tr></thead><tbody>
           {form.per_client_allowed_scopes.map((c: PerClientScopes, i: number) => (
             <tr key={i} className="border-b"><td className="py-2"><span className="font-medium">{c.client_name}</span><div className="text-xs text-gray-400">{c.client_id}</div></td><td>{c.allowed_scopes.join(", ")}</td></tr>
           ))}

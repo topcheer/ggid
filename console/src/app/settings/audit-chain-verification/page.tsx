@@ -87,11 +87,11 @@ export default function AuditChainVerificationPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Run ID</th>
-                <th className="text-left py-2 pr-3">Timestamp</th>
-                <th className="text-left py-2 pr-3">Result</th>
-                <th className="text-left py-2 pr-3">Duration</th>
-                <th className="text-left py-2 pr-3">Anomalies</th>
+                <th scope="col" className="text-left py-2 pr-3">Run ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Timestamp</th>
+                <th scope="col" className="text-left py-2 pr-3">Result</th>
+                <th scope="col" className="text-left py-2 pr-3">Duration</th>
+                <th scope="col" className="text-left py-2 pr-3">Anomalies</th>
               </tr>
             </thead>
             <tbody>

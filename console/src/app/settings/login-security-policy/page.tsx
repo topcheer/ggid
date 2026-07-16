@@ -135,11 +135,11 @@ export default function LoginSecurityPolicyPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">User</th>
-              <th className="p-3">Attempts</th>
-              <th className="p-3">Locked At</th>
-              <th className="p-3">Reason</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">User</th>
+              <th scope="col" className="p-3">Attempts</th>
+              <th scope="col" className="p-3">Locked At</th>
+              <th scope="col" className="p-3">Reason</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>

@@ -733,11 +733,11 @@ export default function WebhooksPage() {
                         <table className="w-full text-left text-xs">
                           <thead>
                             <tr className="border-b border-gray-200 dark:border-gray-700">
-                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.timestamp")}</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.eventLabel")}</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">{t("common.status")}</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.responseTime")}</th>
-                              <th className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.retries")}</th>
+                              <th scope="col" className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.timestamp")}</th>
+                              <th scope="col" className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.eventLabel")}</th>
+                              <th scope="col" className="py-2 pr-3 font-medium text-gray-500">{t("common.status")}</th>
+                              <th scope="col" className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.responseTime")}</th>
+                              <th scope="col" className="py-2 pr-3 font-medium text-gray-500">{t("webhooks.retries")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

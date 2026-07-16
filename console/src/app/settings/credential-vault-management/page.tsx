@@ -157,15 +157,15 @@ export default function CredentialVaultManagementPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3"></th>
-              <th className="p-3">Name</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Created</th>
-              <th className="p-3">Last Used</th>
-              <th className="p-3">Last Rotated</th>
-              <th className="p-3">Rotation</th>
-              <th className="p-3">Encrypted</th>
-              <th className="p-3">Status</th>
+              <th scope="col" className="p-3"></th>
+              <th scope="col" className="p-3">Name</th>
+              <th scope="col" className="p-3">Type</th>
+              <th scope="col" className="p-3">Created</th>
+              <th scope="col" className="p-3">Last Used</th>
+              <th scope="col" className="p-3">Last Rotated</th>
+              <th scope="col" className="p-3">Rotation</th>
+              <th scope="col" className="p-3">Encrypted</th>
+              <th scope="col" className="p-3">Status</th>
             </tr>
           </thead>
           <tbody>

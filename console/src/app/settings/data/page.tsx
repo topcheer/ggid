@@ -403,11 +403,11 @@ export default function DataPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="px-2 py-1.5 text-left text-xs font-medium uppercase text-gray-500">
+                      <th scope="col" className="px-2 py-1.5 text-left text-xs font-medium uppercase text-gray-500">
                         CSV Column
                       </th>
-                      <th className="px-2 py-1.5"></th>
-                      <th className="px-2 py-1.5 text-left text-xs font-medium uppercase text-gray-500">
+                      <th scope="col" className="px-2 py-1.5"></th>
+                      <th scope="col" className="px-2 py-1.5 text-left text-xs font-medium uppercase text-gray-500">
                         GGID Field
                       </th>
                     </tr>

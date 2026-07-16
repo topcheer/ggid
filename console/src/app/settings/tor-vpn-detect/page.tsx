@@ -52,12 +52,12 @@ export default function TorVpnDetectPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">IP Address</th>
-                <th className="text-left py-2 pr-3">Type</th>
-                <th className="text-left py-2 pr-3">Confidence</th>
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">First Seen</th>
-                <th className="text-left py-2 pr-3">Action</th>
+                <th scope="col" className="text-left py-2 pr-3">IP Address</th>
+                <th scope="col" className="text-left py-2 pr-3">Type</th>
+                <th scope="col" className="text-left py-2 pr-3">Confidence</th>
+                <th scope="col" className="text-left py-2 pr-3">User</th>
+                <th scope="col" className="text-left py-2 pr-3">First Seen</th>
+                <th scope="col" className="text-left py-2 pr-3">Action</th>
               </tr>
             </thead>
             <tbody>

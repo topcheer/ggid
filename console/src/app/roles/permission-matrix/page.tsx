@@ -360,7 +360,7 @@ export default function PermissionMatrixPage() {
           {/* Sticky header row */}
           <thead className="sticky top-0 z-20">
             <tr>
-              <th className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-100 px-4 py-3 text-left font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <th scope="col" className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-100 px-4 py-3 text-left font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
                 Permission
               </th>
               {visibleRoles.map((role) => (

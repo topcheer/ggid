@@ -47,7 +47,7 @@ export default function AccessRequestLifecycleConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Auto-Approval Rules</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("backend3.accessRequestLifecycle.condition")}</th><th>{t("backend3.accessRequestLifecycle.targetRole")}</th><th>{t("backend3.accessRequestLifecycle.maxDuration")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("backend3.accessRequestLifecycle.condition")}</th><th scope="col">{t("backend3.accessRequestLifecycle.targetRole")}</th><th>{t("backend3.accessRequestLifecycle.maxDuration")}</th></tr></thead><tbody>
           {form.auto_approval_rules.map((r: AutoApprovalRule, i: number) => (
             <tr key={i} className="border-b"><td className="py-2">{r.condition}</td><td className="font-medium">{r.target_role}</td><td>{r.max_duration_days} days</td></tr>
           ))}

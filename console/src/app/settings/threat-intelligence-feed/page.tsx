@@ -87,13 +87,13 @@ export default function ThreatIntelligenceFeedPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">{t("threatIntel.indicator")}</th>
-                <th className="text-left py-2 pr-3">{t("threatIntel.type")}</th>
-                <th className="text-left py-2 pr-3">{t("threatIntel.confidence")}</th>
-                <th className="text-left py-2 pr-3">{t("threatIntel.firstSeen")}</th>
-                <th className="text-left py-2 pr-3">{t("threatIntel.lastSeen")}</th>
-                <th className="text-left py-2 pr-3">{t("threatIntel.source")}</th>
-                <th className="text-left py-2 pr-3">{t("threatIntel.tags")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("threatIntel.indicator")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("threatIntel.type")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("threatIntel.confidence")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("threatIntel.firstSeen")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("threatIntel.lastSeen")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("threatIntel.source")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("threatIntel.tags")}</th>
               </tr>
             </thead>
             <tbody>

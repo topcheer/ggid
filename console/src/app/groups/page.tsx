@@ -508,7 +508,7 @@ export default function GroupsPage() {
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50">
                 <tr>
-                  <th className="px-4 py-3 text-left">
+                  <th scope="col" className="px-4 py-3 text-left">
                     <button onClick={toggleSelectAll} className="text-gray-400 hover:text-brand-600">
                       {selectedIds.size === groups.length && groups.length > 0 ? (
                         <CheckSquare className="h-4 w-4 text-brand-600" />
@@ -517,12 +517,12 @@ export default function GroupsPage() {
                       )}
                     </button>
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.name")}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.members")}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.parent")}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.roles")}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.created")}</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("groups.actions")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.name")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.members")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.parent")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.roles")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("groups.created")}</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("groups.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

@@ -124,10 +124,10 @@ export default function SodRulesConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("backend3.sodRulesConfig.roleA")}</th>
-              <th className="p-3">{t("backend3.sodRulesConfig.roleB")}</th>
-              <th className="p-3">{t("backend3.sodRulesConfig.conflictLevel")}</th>
-              <th className="p-3">{t("backend3.sodRulesConfig.enabled")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.roleA")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.roleB")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.conflictLevel")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.enabled")}</th>
             </tr>
           </thead>
           <tbody>
@@ -148,8 +148,8 @@ export default function SodRulesConfigPage() {
         <table className="text-xs">
           <thead>
             <tr>
-              <th className="p-2"></th>
-              {roles.map(r => <th key={r} className="p-2 text-left">{r}</th>)}
+              <th scope="col" className="p-2"></th>
+              {roles.map(r => <th scope="col" key={r} className="p-2 text-left">{r}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -170,10 +170,10 @@ export default function SodRulesConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("backend3.sodRulesConfig.user")}</th>
-              <th className="p-3">{t("backend3.sodRulesConfig.rule")}</th>
-              <th className="p-3">{t("backend3.sodRulesConfig.date")}</th>
-              <th className="p-3">{t("backend3.sodRulesConfig.status")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.user")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.rule")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.date")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodRulesConfig.status")}</th>
             </tr>
           </thead>
           <tbody>

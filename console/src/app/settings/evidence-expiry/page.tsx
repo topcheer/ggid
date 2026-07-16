@@ -115,7 +115,7 @@ export default function EvidenceExpiryPage() {
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
-            <tr><th className="px-4 py-3 text-left font-medium">Control</th><th className="px-4 py-3 text-left font-medium">Framework</th><th className="px-4 py-3 text-left font-medium">Type</th><th className="px-4 py-3 text-left font-medium">Collected</th><th className="px-4 py-3 text-left font-medium">Expires</th><th className="px-4 py-3 text-left font-medium">Days</th><th className="px-4 py-3 text-left font-medium">Status</th><th className="px-4 py-3 text-left font-medium">Action</th></tr>
+            <tr><th scope="col" className="px-4 py-3 text-left font-medium">Control</th><th className="px-4 py-3 text-left font-medium">Framework</th><th className="px-4 py-3 text-left font-medium">Type</th><th className="px-4 py-3 text-left font-medium">Collected</th><th className="px-4 py-3 text-left font-medium">Expires</th><th className="px-4 py-3 text-left font-medium">Days</th><th className="px-4 py-3 text-left font-medium">Status</th><th className="px-4 py-3 text-left font-medium">Action</th></tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
             {filtered.map((e) => (

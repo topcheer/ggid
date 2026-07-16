@@ -122,13 +122,13 @@ export default function EventCorrelationRulesPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Pattern</th>
-                <th className="pb-2">Window</th>
-                <th className="pb-2">Action</th>
-                <th className="pb-2">Matches</th>
-                <th className="pb-2">FP Rate</th>
-                <th className="pb-2">Enabled</th>
+                <th scope="col" className="pb-2">Name</th>
+                <th scope="col" className="pb-2">Pattern</th>
+                <th scope="col" className="pb-2">Window</th>
+                <th scope="col" className="pb-2">Action</th>
+                <th scope="col" className="pb-2">Matches</th>
+                <th scope="col" className="pb-2">FP Rate</th>
+                <th scope="col" className="pb-2">Enabled</th>
               </tr>
             </thead>
             <tbody>
@@ -202,11 +202,11 @@ export default function EventCorrelationRulesPage() {
             <table className="mt-3 w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                  <th className="pb-2">ID</th>
-                  <th className="pb-2">Type</th>
-                  <th className="pb-2">User</th>
-                  <th className="pb-2">Timestamp</th>
-                  <th className="pb-2">IP</th>
+                  <th scope="col" className="pb-2">ID</th>
+                  <th scope="col" className="pb-2">Type</th>
+                  <th scope="col" className="pb-2">User</th>
+                  <th scope="col" className="pb-2">Timestamp</th>
+                  <th scope="col" className="pb-2">IP</th>
                 </tr>
               </thead>
               <tbody>

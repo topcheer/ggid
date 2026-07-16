@@ -49,13 +49,13 @@ export default function CacheHealthPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
-              <th className="px-4 py-3">{"Cache Type"}</th>
-              <th className="px-4 py-3">{t("backend2.cacheHealth.hitRate")}</th>
-              <th className="px-4 py-3">{"Misses"}</th>
-              <th className="px-4 py-3">{"Size"}</th>
-              <th className="px-4 py-3">{t("backend2.cacheHealth.memory")}</th>
-              <th className="px-4 py-3">Healthy</th>
-              <th className="px-4 py-3">{"Actions"}</th>
+              <th scope="col" className="px-4 py-3">{"Cache Type"}</th>
+              <th scope="col" className="px-4 py-3">{t("backend2.cacheHealth.hitRate")}</th>
+              <th scope="col" className="px-4 py-3">{"Misses"}</th>
+              <th scope="col" className="px-4 py-3">{"Size"}</th>
+              <th scope="col" className="px-4 py-3">{t("backend2.cacheHealth.memory")}</th>
+              <th scope="col" className="px-4 py-3">Healthy</th>
+              <th scope="col" className="px-4 py-3">{"Actions"}</th>
             </tr>
           </thead>
           <tbody className="divide-y">

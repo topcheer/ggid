@@ -68,11 +68,11 @@ export default function PolicyTimeBasedAccessPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Policy</th>
-                <th className="text-left py-2 pr-3">Allowed Days</th>
-                <th className="text-left py-2 pr-3">Start</th>
-                <th className="text-left py-2 pr-3">End</th>
-                <th className="text-left py-2 pr-3">Timezone</th>
+                <th scope="col" className="text-left py-2 pr-3">Policy</th>
+                <th scope="col" className="text-left py-2 pr-3">Allowed Days</th>
+                <th scope="col" className="text-left py-2 pr-3">Start</th>
+                <th scope="col" className="text-left py-2 pr-3">End</th>
+                <th scope="col" className="text-left py-2 pr-3">Timezone</th>
               </tr>
             </thead>
             <tbody>

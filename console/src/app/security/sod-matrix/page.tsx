@@ -70,8 +70,8 @@ export default function SoDMatrixPage() {
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm">
             <thead><tr>
-              <th className="sticky left-0 z-10 border-b border-r border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800">Role</th>
-              {roles.map((r) => <th key={r} className="border-b border-r border-gray-200 bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800"><div className="max-w-[80px] truncate" title={r}>{r}</div></th>)}
+              <th scope="col" className="sticky left-0 z-10 border-b border-r border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800">Role</th>
+              {roles.map((r) => <th scope="col" key={r} className="border-b border-r border-gray-200 bg-gray-50 px-2 py-2 text-xs font-semibold text-gray-500 dark:border-gray-700 dark:bg-gray-800"><div className="max-w-[80px] truncate" title={r}>{r}</div></th>)}
             </tr></thead>
             <tbody>
               {roles.map((roleA, i) => (

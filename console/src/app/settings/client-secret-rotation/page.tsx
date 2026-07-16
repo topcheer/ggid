@@ -114,14 +114,14 @@ const [history] = useState([
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Client</th>
-              <th className="p-3">Last Rotated</th>
-              <th className="p-3">Next Rotation</th>
-              <th className="p-3">Age</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Auto</th>
-              <th className="p-3">Dual Secret</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">Client</th>
+              <th scope="col" className="p-3">Last Rotated</th>
+              <th scope="col" className="p-3">Next Rotation</th>
+              <th scope="col" className="p-3">Age</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Auto</th>
+              <th scope="col" className="p-3">Dual Secret</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -172,9 +172,9 @@ const [history] = useState([
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Client ID</th>
-              <th className="p-3">Rotated At</th>
-              <th className="p-3">Rotated By</th>
+              <th scope="col" className="p-3">Client ID</th>
+              <th scope="col" className="p-3">Rotated At</th>
+              <th scope="col" className="p-3">Rotated By</th>
             </tr>
           </thead>
           <tbody>

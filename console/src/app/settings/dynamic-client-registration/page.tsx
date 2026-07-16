@@ -146,12 +146,12 @@ export default function DynamicClientRegistrationPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Client ID</th>
-              <th className="p-3">Created</th>
-              <th className="p-3">Grant Types</th>
-              <th className="p-3">Scopes</th>
-              <th className="p-3">Software Statement</th>
-              <th className="p-3">Status</th>
+              <th scope="col" className="p-3">Client ID</th>
+              <th scope="col" className="p-3">Created</th>
+              <th scope="col" className="p-3">Grant Types</th>
+              <th scope="col" className="p-3">Scopes</th>
+              <th scope="col" className="p-3">Software Statement</th>
+              <th scope="col" className="p-3">Status</th>
             </tr>
           </thead>
           <tbody>

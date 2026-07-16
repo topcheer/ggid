@@ -36,7 +36,7 @@ export default function DeviceAuthorizationFlowConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("big1.deviceAuthorizationFlowConfig.perClientEnabled")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("big1.deviceAuthorizationFlowConfig.client")}</th><th>{t("big1.deviceAuthorizationFlowConfig.enabled")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("big1.deviceAuthorizationFlowConfig.client")}</th><th scope="col">{t("big1.deviceAuthorizationFlowConfig.enabled")}</th></tr></thead><tbody>
           {form.per_client_enabled.map((c: DeviceClientEntry, i: number) => (
             <tr key={i} className="border-b"><td className="py-2"><span className="font-medium">{c.client_name}</span><div className="text-xs text-gray-400">{c.client_id}</div></td><td>{c.enabled ? "Yes" : "No"}</td></tr>
           ))}

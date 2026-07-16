@@ -354,14 +354,14 @@ function InstanceTable({ instances, onDelete }: { instances: InstanceInfo[]; onD
       <table className="w-full">
         <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Organization</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Namespace</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Database</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Replicas</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Phase</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Tenant ID</th>
-            <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Organization</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Namespace</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Database</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Replicas</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Phase</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Tenant ID</th>
+            <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -422,14 +422,14 @@ function TenantTable({ tenants, onDelete }: { tenants: TenantInfo[]; onDelete: (
       <table className="w-full">
         <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Slug</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Plan</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Max Users</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Admin Email</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Phase</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Gateway URL</th>
-            <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Name</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Slug</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Plan</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Max Users</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Admin Email</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Phase</th>
+            <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Gateway URL</th>
+            <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

@@ -348,10 +348,10 @@ export default function OAuthFlowsPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-700">
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Started</th>
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Client</th>
-                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Status</th>
-                        <th className="px-2 py-2 text-right text-xs font-medium text-gray-500">Duration</th>
+                        <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">Started</th>
+                        <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">Client</th>
+                        <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                        <th scope="col" className="px-2 py-2 text-right text-xs font-medium text-gray-500">Duration</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">

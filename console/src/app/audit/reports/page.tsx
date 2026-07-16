@@ -485,9 +485,9 @@ export default function AuditReportsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      <th className="pb-2 pr-4">Group</th>
-                      <th className="pb-2 pr-4">Count</th>
-                      <th className="pb-2">Percentage</th>
+                      <th scope="col" className="pb-2 pr-4">Group</th>
+                      <th scope="col" className="pb-2 pr-4">Count</th>
+                      <th scope="col" className="pb-2">Percentage</th>
                     </tr>
                   </thead>
                   <tbody>

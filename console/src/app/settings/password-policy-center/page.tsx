@@ -100,7 +100,7 @@ export default function PasswordPolicyCenterPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per-Role Overrides</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Role</th><th>Min Length</th><th>History</th><th>Expiry (days)</th></tr></thead><tbody>{overrides.map((o: PerRoleOverride, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-medium">{o.role}</td><td>{o.min_length}</td><td>{o.history_count > 0 ? o.history_count : "none"}</td><td>{o.expiry_days > 0 ? `${o.expiry_days}d` : "never"}</td></tr>))}</tbody></table>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Role</th><th scope="col">Min Length</th><th>History</th><th>Expiry (days)</th></tr></thead><tbody>{overrides.map((o: PerRoleOverride, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-medium">{o.role}</td><td>{o.min_length}</td><td>{o.history_count > 0 ? o.history_count : "none"}</td><td>{o.expiry_days > 0 ? `${o.expiry_days}d` : "never"}</td></tr>))}</tbody></table>
       </div>
     </div>
   );

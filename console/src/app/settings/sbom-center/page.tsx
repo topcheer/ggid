@@ -152,12 +152,12 @@ export default function SbomCenterPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Name</th>
-              <th className="p-3">Version</th>
-              <th className="p-3">License</th>
-              <th className="p-3">Severity</th>
-              <th className="p-3">Vulns</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">Name</th>
+              <th scope="col" className="p-3">Version</th>
+              <th scope="col" className="p-3">License</th>
+              <th scope="col" className="p-3">Severity</th>
+              <th scope="col" className="p-3">Vulns</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>

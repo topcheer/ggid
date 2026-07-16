@@ -154,14 +154,14 @@ export default function ClientLifecyclePage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("backend.clientLifecycle.clientId")}</th>
-              <th className="p-3">{t("backend.clientLifecycle.clientName")}</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">{t("backend.clientLifecycle.grantTypes")}</th>
-              <th className="p-3">Redirect URIs</th>
-              <th className="p-3">{t("backend.clientLifecycle.created")}</th>
-              <th className="p-3">Secret Rotated</th>
-              <th className="p-3">{t("backend.clientLifecycle.actions")}</th>
+              <th scope="col" className="p-3">{t("backend.clientLifecycle.clientId")}</th>
+              <th scope="col" className="p-3">{t("backend.clientLifecycle.clientName")}</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">{t("backend.clientLifecycle.grantTypes")}</th>
+              <th scope="col" className="p-3">Redirect URIs</th>
+              <th scope="col" className="p-3">{t("backend.clientLifecycle.created")}</th>
+              <th scope="col" className="p-3">Secret Rotated</th>
+              <th scope="col" className="p-3">{t("backend.clientLifecycle.actions")}</th>
             </tr>
           </thead>
           <tbody>

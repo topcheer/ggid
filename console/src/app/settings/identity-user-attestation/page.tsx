@@ -94,11 +94,11 @@ export default function IdentityUserAttestationPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">{t("idUserAttestation.user")}</th>
-                <th className="text-left py-2 pr-4">{t("idUserAttestation.statusLabel")}</th>
-                <th className="text-left py-2 pr-4">{t("idUserAttestation.lastAttested")}</th>
-                <th className="text-left py-2 pr-4">{t("idUserAttestation.attestedBy")}</th>
-                <th className="text-left py-2 pr-4">{t("idUserAttestation.permissions")}</th>
+                <th scope="col" className="text-left py-2 pr-4">{t("idUserAttestation.user")}</th>
+                <th scope="col" className="text-left py-2 pr-4">{t("idUserAttestation.statusLabel")}</th>
+                <th scope="col" className="text-left py-2 pr-4">{t("idUserAttestation.lastAttested")}</th>
+                <th scope="col" className="text-left py-2 pr-4">{t("idUserAttestation.attestedBy")}</th>
+                <th scope="col" className="text-left py-2 pr-4">{t("idUserAttestation.permissions")}</th>
               </tr>
             </thead>
             <tbody>

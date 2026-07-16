@@ -49,10 +49,10 @@ export default function OrgCostAllocationPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">Department</th>
-                <th className="text-left py-2 pr-4">Cost Center</th>
-                <th className="text-left py-2 pr-4">Allocation %</th>
-                <th className="text-left py-2 pr-4">Chargeback Model</th>
+                <th scope="col" className="text-left py-2 pr-4">Department</th>
+                <th scope="col" className="text-left py-2 pr-4">Cost Center</th>
+                <th scope="col" className="text-left py-2 pr-4">Allocation %</th>
+                <th scope="col" className="text-left py-2 pr-4">Chargeback Model</th>
               </tr>
             </thead>
             <tbody>

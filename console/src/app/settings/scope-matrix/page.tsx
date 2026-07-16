@@ -71,9 +71,9 @@ export default function ScopeMatrixPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
             <tr>
-              <th className="px-4 py-3 text-left font-medium sticky left-0 bg-gray-50 dark:bg-gray-900/50">Client</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium sticky left-0 bg-gray-50 dark:bg-gray-900/50">Client</th>
               {data.scopes.map((s) => (
-                <th key={s} className="px-3 py-3 text-center font-medium font-mono text-xs whitespace-nowrap">{s}</th>
+                <th scope="col" key={s} className="px-3 py-3 text-center font-medium font-mono text-xs whitespace-nowrap">{s}</th>
               ))}
             </tr>
           </thead>

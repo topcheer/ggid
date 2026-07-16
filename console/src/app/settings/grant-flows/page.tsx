@@ -132,12 +132,12 @@ export default function GrantFlowsPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.flow")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.total")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.success")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.failure")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.successRate")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.avgDuration")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.flow")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.total")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.success")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.failure")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.successRate")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.grantFlows.avgDuration")}</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

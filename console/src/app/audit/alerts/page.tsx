@@ -192,13 +192,13 @@ export default function AuditAlertsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-400 dark:border-gray-700">
-                      <th className="px-4 py-3">Rule</th>
-                      <th className="px-4 py-3">Metric</th>
-                      <th className="px-4 py-3">Value</th>
-                      <th className="px-4 py-3">Threshold</th>
-                      <th className="px-4 py-3">Action</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Time</th>
+                      <th scope="col" className="px-4 py-3">Rule</th>
+                      <th scope="col" className="px-4 py-3">Metric</th>
+                      <th scope="col" className="px-4 py-3">Value</th>
+                      <th scope="col" className="px-4 py-3">Threshold</th>
+                      <th scope="col" className="px-4 py-3">Action</th>
+                      <th scope="col" className="px-4 py-3">Status</th>
+                      <th scope="col" className="px-4 py-3">Time</th>
                     </tr>
                   </thead>
                   <tbody>

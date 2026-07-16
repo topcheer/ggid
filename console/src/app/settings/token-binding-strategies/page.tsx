@@ -107,10 +107,10 @@ export default function TokenBindingStrategiesPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("tokenBindingStrategies.client")}</th>
-              <th className="p-3">{t("tokenBindingStrategies.dpop")}</th>
-              <th className="p-3">{t("tokenBindingStrategies.mtls")}</th>
-              <th className="p-3">{t("tokenBindingStrategies.senderConstrained")}</th>
+              <th scope="col" className="p-3">{t("tokenBindingStrategies.client")}</th>
+              <th scope="col" className="p-3">{t("tokenBindingStrategies.dpop")}</th>
+              <th scope="col" className="p-3">{t("tokenBindingStrategies.mtls")}</th>
+              <th scope="col" className="p-3">{t("tokenBindingStrategies.senderConstrained")}</th>
             </tr>
           </thead>
           <tbody>

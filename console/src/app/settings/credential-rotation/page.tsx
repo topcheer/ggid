@@ -134,13 +134,13 @@ export default function CredentialRotationPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Credential</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Interval</th>
-              <th className="p-3">Next Rotation</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Auto</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">Credential</th>
+              <th scope="col" className="p-3">Type</th>
+              <th scope="col" className="p-3">Interval</th>
+              <th scope="col" className="p-3">Next Rotation</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Auto</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>

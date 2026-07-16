@@ -431,13 +431,13 @@ export default function ExportsPage() {
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Job ID</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Data Type</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Format</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Created</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">File Size</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Job ID</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Data Type</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Format</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Created</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">File Size</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

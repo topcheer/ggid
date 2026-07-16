@@ -42,7 +42,7 @@ export default function TokenIntrospectionDesignPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per Resource Server Auth</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Resource Server</th><th>Auth Required</th><th>Scope</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Resource Server</th><th scope="col">Auth Required</th><th>Scope</th></tr></thead><tbody>
           {form.per_resource_server_auth.map((r: ResourceServerAuth, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{r.resource_server}</td><td>{r.auth_required ? "Yes" : "No"}</td><td className="font-mono text-xs">{r.scope}</td></tr>
           ))}

@@ -102,10 +102,10 @@ export default function AuthWebauthnConfigPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">Platform</th>
-                <th className="text-left py-2 pr-4">Authenticator Type</th>
-                <th className="text-left py-2 pr-4">Attachment</th>
-                <th className="text-left py-2 pr-4">Discoverable</th>
+                <th scope="col" className="text-left py-2 pr-4">Platform</th>
+                <th scope="col" className="text-left py-2 pr-4">Authenticator Type</th>
+                <th scope="col" className="text-left py-2 pr-4">Attachment</th>
+                <th scope="col" className="text-left py-2 pr-4">Discoverable</th>
               </tr>
             </thead>
             <tbody>

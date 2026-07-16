@@ -34,7 +34,7 @@ export default function UserLifecycleConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Dormant Detection Rules</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Metric</th><th>Threshold (days)</th><th>Enabled</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Metric</th><th scope="col">Threshold (days)</th><th>Enabled</th></tr></thead>
           <tbody>
             {form.dormant_detection_rules.map((r: DormantDetectionRule, i: number) => (
               <tr key={i} className="border-b">
@@ -49,7 +49,7 @@ export default function UserLifecycleConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Stage Transition Rules</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">From</th><th>To</th><th>Condition</th><th>Auto</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">From</th><th scope="col">To</th><th>Condition</th><th>Auto</th></tr></thead>
           <tbody>
             {form.stage_transition_rules.map((r: StageTransitionRule, i: number) => (
               <tr key={i} className="border-b"><td className="py-2">{r.from_stage}</td><td>{r.to_stage}</td><td>{r.condition}</td><td>{r.auto ? "Yes" : "No"}</td></tr>
@@ -78,7 +78,7 @@ export default function UserLifecycleConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per-Role Overrides</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Role</th><th>Deactivate After</th><th>Notify Before</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Role</th><th scope="col">Deactivate After</th><th>Notify Before</th></tr></thead>
           <tbody>
             {form.per_role_override.map((o: PerRoleOverride, i: number) => (
               <tr key={i} className="border-b"><td className="py-2">{o.role}</td><td>{o.deactivate_after_days} days</td><td>{o.notify_before_days} days</td></tr>

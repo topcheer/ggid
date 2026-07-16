@@ -118,14 +118,14 @@ export default function ComplianceGapsPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">Control ID</th>
-              <th className="px-4 py-3 text-left font-medium">Framework</th>
-              <th className="px-4 py-3 text-left font-medium">Description</th>
-              <th className="px-4 py-3 text-left font-medium">Severity</th>
-              <th className="px-4 py-3 text-left font-medium">Owner</th>
-              <th className="px-4 py-3 text-left font-medium">Due Date</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-left font-medium">Action</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Control ID</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Framework</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Description</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Severity</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Owner</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Due Date</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Status</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

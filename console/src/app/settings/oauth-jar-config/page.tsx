@@ -68,10 +68,10 @@ export default function OAuthJarConfigPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.clientId")}</th>
-                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.jarRequired")}</th>
-                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.signingAlg")}</th>
-                  <th className="text-left py-2 pr-3">{t("oauthJarConfig.lifetime")}</th>
+                  <th scope="col" className="text-left py-2 pr-3">{t("oauthJarConfig.clientId")}</th>
+                  <th scope="col" className="text-left py-2 pr-3">{t("oauthJarConfig.jarRequired")}</th>
+                  <th scope="col" className="text-left py-2 pr-3">{t("oauthJarConfig.signingAlg")}</th>
+                  <th scope="col" className="text-left py-2 pr-3">{t("oauthJarConfig.lifetime")}</th>
                 </tr>
               </thead>
               <tbody>

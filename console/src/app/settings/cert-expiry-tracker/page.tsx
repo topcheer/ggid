@@ -52,12 +52,12 @@ export default function CertExpiryTrackerPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Name</th>
-                <th className="text-left py-2 pr-3">Type</th>
-                <th className="text-left py-2 pr-3">{t("backend.certExpiry.issuer")}</th>
-                <th className="text-left py-2 pr-3">{t("backend.certExpiry.expiry")}</th>
-                <th className="text-left py-2 pr-3">{t("backend.certExpiry.daysLeft")}</th>
-                <th className="text-left py-2 pr-3">Auto-Renew</th>
+                <th scope="col" className="text-left py-2 pr-3">Name</th>
+                <th scope="col" className="text-left py-2 pr-3">Type</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("backend.certExpiry.issuer")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("backend.certExpiry.expiry")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("backend.certExpiry.daysLeft")}</th>
+                <th scope="col" className="text-left py-2 pr-3">Auto-Renew</th>
               </tr>
             </thead>
             <tbody>

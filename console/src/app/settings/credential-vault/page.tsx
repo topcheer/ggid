@@ -81,12 +81,12 @@ export default function CredentialVaultPage() {
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Key</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Description</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Created</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Last Accessed</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Access Count</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Key</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Description</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Created</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Last Accessed</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Access Count</th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {creds.map((c) => (

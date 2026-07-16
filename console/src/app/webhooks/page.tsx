@@ -475,12 +475,12 @@ export default function WebhooksPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead><tr className="border-b border-gray-100 dark:border-gray-700">
-                          <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Timestamp</th>
-                          <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Event</th>
-                          <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">URL</th>
-                          <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Status</th>
-                          <th className="px-2 py-2 text-left text-xs font-medium text-gray-500">Duration</th>
-                          <th className="px-2 py-2 text-right text-xs font-medium text-gray-500">Actions</th>
+                          <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">Timestamp</th>
+                          <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">Event</th>
+                          <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">URL</th>
+                          <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                          <th scope="col" className="px-2 py-2 text-left text-xs font-medium text-gray-500">Duration</th>
+                          <th scope="col" className="px-2 py-2 text-right text-xs font-medium text-gray-500">Actions</th>
                         </tr></thead>
                         <tbody className="divide-y divide-gray-50 dark:divide-gray-700">
                           {(deliveries[wh.id] || []).map((d) => (

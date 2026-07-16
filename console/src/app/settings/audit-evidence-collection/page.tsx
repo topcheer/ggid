@@ -78,11 +78,11 @@ export default function AuditEvidenceCollectionPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Framework</th>
-                <th className="text-left py-2 pr-3">Control ID</th>
-                <th className="text-left py-2 pr-3">Requested By</th>
-                <th className="text-left py-2 pr-3">Deadline</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Framework</th>
+                <th scope="col" className="text-left py-2 pr-3">Control ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Requested By</th>
+                <th scope="col" className="text-left py-2 pr-3">Deadline</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

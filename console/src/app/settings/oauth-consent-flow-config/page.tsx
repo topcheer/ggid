@@ -43,7 +43,7 @@ export default function OauthConsentFlowConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per-Scope Descriptions</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Scope</th><th>Description</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Scope</th><th scope="col">Description</th></tr></thead>
           <tbody>
             {form.per_scope_description.map((s: ScopeDescription, i: number) => (
               <tr key={i} className="border-b"><td className="py-2 font-mono">{s.scope}</td><td>{s.description}</td></tr>

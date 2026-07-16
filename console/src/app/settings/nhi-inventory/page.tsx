@@ -107,14 +107,14 @@ export default function NHIInventoryPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Name</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Created</th>
-              <th className="p-3">Last Used</th>
-              <th className="p-3">Owner</th>
-              <th className="p-3">Risk</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">Name</th>
+              <th scope="col" className="p-3">Type</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Created</th>
+              <th scope="col" className="p-3">Last Used</th>
+              <th scope="col" className="p-3">Owner</th>
+              <th scope="col" className="p-3">Risk</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>

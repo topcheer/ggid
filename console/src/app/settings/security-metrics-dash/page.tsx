@@ -80,11 +80,11 @@ export default function SecurityMetricsDashPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">#</th>
-                <th className="text-left py-2 pr-3">Risk</th>
-                <th className="text-left py-2 pr-3">Category</th>
-                <th className="text-left py-2 pr-3">Score</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">#</th>
+                <th scope="col" className="text-left py-2 pr-3">Risk</th>
+                <th scope="col" className="text-left py-2 pr-3">Category</th>
+                <th scope="col" className="text-left py-2 pr-3">Score</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

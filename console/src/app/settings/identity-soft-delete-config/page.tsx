@@ -88,12 +88,12 @@ export default function IdentitySoftDeleteConfigPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.entity")}</th>
-                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.name")}</th>
-                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.deletedAt")}</th>
-                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.purgeAt")}</th>
-                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.restorable")}</th>
-                <th className="text-left py-2 pr-3">{t("idSoftDeleteConfig.action")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idSoftDeleteConfig.entity")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idSoftDeleteConfig.name")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idSoftDeleteConfig.deletedAt")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idSoftDeleteConfig.purgeAt")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idSoftDeleteConfig.restorable")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idSoftDeleteConfig.action")}</th>
               </tr>
             </thead>
             <tbody>

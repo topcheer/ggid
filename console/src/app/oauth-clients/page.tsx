@@ -191,12 +191,12 @@ export default function OAuthClientsPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                  <th className="px-4 py-3">Client Name</th>
-                  <th className="px-4 py-3">Client ID</th>
-                  <th className="px-4 py-3">Redirect URIs</th>
-                  <th className="px-4 py-3">Grants</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th scope="col" className="px-4 py-3">Client Name</th>
+                  <th scope="col" className="px-4 py-3">Client ID</th>
+                  <th scope="col" className="px-4 py-3">Redirect URIs</th>
+                  <th scope="col" className="px-4 py-3">Grants</th>
+                  <th scope="col" className="px-4 py-3">Created</th>
+                  <th scope="col" className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

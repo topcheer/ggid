@@ -123,7 +123,7 @@ export default function SoDViolationsPage() {
         <div className="hidden overflow-hidden rounded-xl border border-gray-200 shadow-sm md:block dark:border-gray-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800"><tr className="text-left text-xs font-semibold uppercase text-gray-500">
-              <th className="px-4 py-3">User</th><th className="px-4 py-3">Conflicting Roles</th><th className="px-4 py-3">Rule</th><th className="px-4 py-3">Severity</th><th className="px-4 py-3">Detected</th>
+              <th scope="col" className="px-4 py-3">User</th><th className="px-4 py-3">Conflicting Roles</th><th className="px-4 py-3">Rule</th><th className="px-4 py-3">Severity</th><th className="px-4 py-3">Detected</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {filtered.map((v) => {

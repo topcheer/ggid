@@ -140,13 +140,13 @@ export default function ImpersonationLogPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-400 dark:border-gray-700">
-                  <th className="px-4 py-3">Impersonator</th>
-                  <th className="px-4 py-3">Impersonated</th>
-                  <th className="px-4 py-3">Reason</th>
-                  <th className="px-4 py-3">Started</th>
-                  <th className="px-4 py-3">Duration</th>
-                  <th className="px-4 py-3">IP</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th scope="col" className="px-4 py-3">Impersonator</th>
+                  <th scope="col" className="px-4 py-3">Impersonated</th>
+                  <th scope="col" className="px-4 py-3">Reason</th>
+                  <th scope="col" className="px-4 py-3">Started</th>
+                  <th scope="col" className="px-4 py-3">Duration</th>
+                  <th scope="col" className="px-4 py-3">IP</th>
+                  <th scope="col" className="px-4 py-3">Status</th>
                 </tr>
               </thead>
               <tbody>

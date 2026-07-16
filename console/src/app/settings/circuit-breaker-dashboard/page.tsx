@@ -56,14 +56,14 @@ export default function CircuitBreakerDashboardPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr className="text-left border-b">
-                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.service")}</th>
-                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.state")}</th>
-                <th className="px-4 py-3">{"Failures"}</th>
-                <th className="px-4 py-3">{"Last Minute"}</th>
-                <th className="px-4 py-3">{"Last 5 Minutes"}</th>
-                <th className="px-4 py-3">{"Last Hour"}</th>
-                <th className="px-4 py-3">Slow</th>
-                <th className="px-4 py-3">{t("backend2.circuitBreakerDash.action")}</th>
+                <th scope="col" className="px-4 py-3">{t("backend2.circuitBreakerDash.service")}</th>
+                <th scope="col" className="px-4 py-3">{t("backend2.circuitBreakerDash.state")}</th>
+                <th scope="col" className="px-4 py-3">{"Failures"}</th>
+                <th scope="col" className="px-4 py-3">{"Last Minute"}</th>
+                <th scope="col" className="px-4 py-3">{"Last 5 Minutes"}</th>
+                <th scope="col" className="px-4 py-3">{"Last Hour"}</th>
+                <th scope="col" className="px-4 py-3">Slow</th>
+                <th scope="col" className="px-4 py-3">{t("backend2.circuitBreakerDash.action")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">

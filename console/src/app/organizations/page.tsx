@@ -555,9 +555,9 @@ export default function OrganizationsPage() {
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.department")}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.path")}</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.department")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("orgs.path")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -707,10 +707,10 @@ function MembersDetail({
         <table className="w-full">
           <thead className="border-b border-gray-100 dark:border-gray-700 bg-gray-50">
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">User ID</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Title</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Department</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">User ID</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Title</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+              <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Department</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

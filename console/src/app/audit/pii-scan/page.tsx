@@ -112,12 +112,12 @@ export default function PIIScanPage() {
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Field</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Entity</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">PII Type</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Severity</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Count</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Sample</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Field</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Entity</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">PII Type</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Severity</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Count</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Sample</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {result.findings.map((f) => (

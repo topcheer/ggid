@@ -35,7 +35,7 @@ export default function JwtClaimValidationConfigPage() {
           </div>
         </div>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">{t("big1.jwtClaimValidationConfig.claim")}</th><th>{t("big1.jwtClaimValidationConfig.enabled")}</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">{t("big1.jwtClaimValidationConfig.claim")}</th><th scope="col">{t("big1.jwtClaimValidationConfig.enabled")}</th></tr></thead>
           <tbody>
             {form.required_claims.map((rc: RequiredClaim, i: number) => (
               <tr key={i} className="border-b">
@@ -64,7 +64,7 @@ export default function JwtClaimValidationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("big1.jwtClaimValidationConfig.customClaims")}</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">{t("big1.jwtClaimValidationConfig.name")}</th><th>{t("big1.jwtClaimValidationConfig.type")}</th><th>{t("big1.jwtClaimValidationConfig.required")}</th><th>{t("big1.jwtClaimValidationConfig.validator")}</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">{t("big1.jwtClaimValidationConfig.name")}</th><th scope="col">{t("big1.jwtClaimValidationConfig.type")}</th><th>{t("big1.jwtClaimValidationConfig.required")}</th><th>{t("big1.jwtClaimValidationConfig.validator")}</th></tr></thead>
           <tbody>
             {form.custom_claims.map((c: CustomClaim, i: number) => (
               <tr key={i} className="border-b"><td className="py-2 font-mono">{c.name}</td><td>{c.type}</td><td>{c.required ? "Yes" : "No"}</td><td className="text-xs">{c.validator}</td></tr>

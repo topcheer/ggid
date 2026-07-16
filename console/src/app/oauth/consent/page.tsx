@@ -437,12 +437,12 @@ export default function ConsentPage() {
                 <table className="w-full">
                   <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Client</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Scopes</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Granted</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Last Used</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Client</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Scopes</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Granted</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Last Used</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Status</th>
+                      <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

@@ -72,7 +72,7 @@ export default function DeprovisioningWorkflowPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Deprovisioning Queue</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Username</th><th>Department</th><th>Stage</th><th>Progress</th><th>Linked Accounts</th><th>Grace Remaining</th><th>Cascade</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Username</th><th scope="col">Department</th><th>Stage</th><th>Progress</th><th>Linked Accounts</th><th>Grace Remaining</th><th>Cascade</th></tr></thead>
           <tbody>
             {queue.map((u: DeprovisionUser, i: number) => (
               <tr key={i} className="border-b hover:bg-gray-50">

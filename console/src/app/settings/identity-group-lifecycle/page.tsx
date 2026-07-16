@@ -110,11 +110,11 @@ export default function IdentityGroupLifecyclePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.group")}</th>
-                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.members")}</th>
-                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.activityScore")}</th>
-                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.permissionFreshness")}</th>
-                <th className="text-left py-2 pr-3">{t("idGroupLifecycle.status")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idGroupLifecycle.group")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idGroupLifecycle.members")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idGroupLifecycle.activityScore")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idGroupLifecycle.permissionFreshness")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idGroupLifecycle.status")}</th>
               </tr>
             </thead>
             <tbody>

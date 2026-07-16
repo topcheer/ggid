@@ -110,12 +110,12 @@ export default function DelegationsPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">Delegated To</th>
-              <th className="px-4 py-3 text-left font-medium">Scope</th>
-              <th className="px-4 py-3 text-left font-medium">Start</th>
-              <th className="px-4 py-3 text-left font-medium">End</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-left font-medium">Actions</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Delegated To</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Scope</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Start</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">End</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Status</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

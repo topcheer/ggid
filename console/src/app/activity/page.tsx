@@ -264,11 +264,11 @@ export default function ActivityLogPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-              <th className="px-4 py-3">Timestamp</th>
-              <th className="px-4 py-3">Event Type</th>
-              <th className="px-4 py-3">IP Address</th>
-              <th className="hidden px-4 py-3 lg:table-cell">Device / User Agent</th>
-              <th className="px-4 py-3">Result</th>
+              <th scope="col" className="px-4 py-3">Timestamp</th>
+              <th scope="col" className="px-4 py-3">Event Type</th>
+              <th scope="col" className="px-4 py-3">IP Address</th>
+              <th scope="col" className="hidden px-4 py-3 lg:table-cell">Device / User Agent</th>
+              <th scope="col" className="px-4 py-3">Result</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

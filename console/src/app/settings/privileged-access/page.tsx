@@ -123,15 +123,15 @@ export default function PrivilegedAccessPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium w-8">
+              <th scope="col" className="px-4 py-3 text-left font-medium w-8">
                 <input type="checkbox" checked={selectedIds.size === accounts.length && accounts.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(accounts.map((a) => a.id)) : new Set())} className="rounded" />
               </th>
-              <th className="px-4 py-3 text-left font-medium">User</th>
-              <th className="px-4 py-3 text-left font-medium">Roles</th>
-              <th className="px-4 py-3 text-left font-medium">Granted</th>
-              <th className="px-4 py-3 text-left font-medium">Justification</th>
-              <th className="px-4 py-3 text-left font-medium">Expires</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Roles</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Granted</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Justification</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Expires</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

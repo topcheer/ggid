@@ -63,7 +63,7 @@ export default function DeviceManagementPage() {
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
-            <tr><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.device")}</th><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.platform")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.lastSeen")}</th><th className="px-4 py-3 text-left font-medium">Trust</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.fingerprint")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.action")}</th></tr>
+            <tr><th scope="col" className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.device")}</th><th className="px-4 py-3 text-left font-medium">User</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.platform")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.lastSeen")}</th><th className="px-4 py-3 text-left font-medium">Trust</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.fingerprint")}</th><th className="px-4 py-3 text-left font-medium">{t("backend.deviceManagement.action")}</th></tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
             {filtered.map((d) => (

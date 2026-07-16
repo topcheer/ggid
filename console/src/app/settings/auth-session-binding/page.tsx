@@ -60,10 +60,10 @@ export default function AuthSessionBindingPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">Application</th>
-                <th className="text-left py-2 pr-4">Method</th>
-                <th className="text-left py-2 pr-4">Enforced</th>
-                <th className="text-left py-2 pr-4">Rotation Policy</th>
+                <th scope="col" className="text-left py-2 pr-4">Application</th>
+                <th scope="col" className="text-left py-2 pr-4">Method</th>
+                <th scope="col" className="text-left py-2 pr-4">Enforced</th>
+                <th scope="col" className="text-left py-2 pr-4">Rotation Policy</th>
               </tr>
             </thead>
             <tbody>

@@ -86,14 +86,14 @@ export default function StandingAccessPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">User</th>
-              <th className="px-4 py-3 text-left font-medium">Resource</th>
-              <th className="px-4 py-3 text-left font-medium">Access Type</th>
-              <th className="px-4 py-3 text-left font-medium">Granted</th>
-              <th className="px-4 py-3 text-left font-medium">Last Used</th>
-              <th className="px-4 py-3 text-left font-medium">Days Since Use</th>
-              <th className="px-4 py-3 text-left font-medium">JIT Recommendation</th>
-              <th className="px-4 py-3 text-left font-medium">Action</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Resource</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Access Type</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Granted</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Last Used</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Days Since Use</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">JIT Recommendation</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

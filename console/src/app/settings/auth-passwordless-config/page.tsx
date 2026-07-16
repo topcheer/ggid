@@ -100,10 +100,10 @@ export default function AuthPasswordlessConfigPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">Role</th>
-                <th className="text-left py-2 pr-4">Required Method</th>
-                <th className="text-left py-2 pr-4">Enforcement</th>
-                <th className="text-left py-2 pr-4">Grace Period</th>
+                <th scope="col" className="text-left py-2 pr-4">Role</th>
+                <th scope="col" className="text-left py-2 pr-4">Required Method</th>
+                <th scope="col" className="text-left py-2 pr-4">Enforcement</th>
+                <th scope="col" className="text-left py-2 pr-4">Grace Period</th>
               </tr>
             </thead>
             <tbody>

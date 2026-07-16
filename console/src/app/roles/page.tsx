@@ -920,9 +920,9 @@ function RolePermissionMatrix({
       <table className="w-full text-sm">
         <thead className="sticky top-0 border-b border-gray-200 bg-gray-50">
           <tr>
-            <th className="px-3 py-2 text-left font-medium text-gray-500">Role</th>
+            <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500">Role</th>
             {Object.entries(grouped).map(([resource, perms]) => (
-              <th key={resource} className="px-3 py-2 text-center font-medium text-gray-500">
+              <th scope="col" key={resource} className="px-3 py-2 text-center font-medium text-gray-500">
                 {resource}
                 <span className="ml-1 text-xs text-gray-400">({perms.length})</span>
               </th>

@@ -604,10 +604,10 @@ export default function ImpersonatePage() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Admin</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Target</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Duration</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Reason</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Admin</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Target</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Duration</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Reason</th>
                     </tr>
                   </thead>
                   <tbody>

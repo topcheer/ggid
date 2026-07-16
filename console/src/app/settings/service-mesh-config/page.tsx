@@ -42,7 +42,7 @@ export default function ServiceMeshConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Traffic Policies</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Source</th><th>Destination</th><th>Policy</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Source</th><th scope="col">Destination</th><th>Policy</th></tr></thead><tbody>
           {form.traffic_policies.map((p: TrafficPolicy, i: number) => (
             <tr key={i} className="border-b"><td className="py-2">{p.source}</td><td>{p.destination}</td><td><span className={`px-2 py-1 rounded text-xs ${p.policy === "allow" ? "bg-green-100 text-green-700" : p.policy === "deny" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>{p.policy}</span></td></tr>
           ))}

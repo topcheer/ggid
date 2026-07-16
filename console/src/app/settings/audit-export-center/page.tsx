@@ -219,14 +219,14 @@ export default function AuditExportCenterPage() {
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                <th className="pb-2">Job ID</th>
-                <th className="pb-2">Status</th>
-                <th className="pb-2">Format</th>
-                <th className="pb-2">Records</th>
-                <th className="pb-2">Size</th>
-                <th className="pb-2">Created</th>
-                <th className="pb-2">Expires</th>
-                <th className="pb-2">Actions</th>
+                <th scope="col" className="pb-2">Job ID</th>
+                <th scope="col" className="pb-2">Status</th>
+                <th scope="col" className="pb-2">Format</th>
+                <th scope="col" className="pb-2">Records</th>
+                <th scope="col" className="pb-2">Size</th>
+                <th scope="col" className="pb-2">Created</th>
+                <th scope="col" className="pb-2">Expires</th>
+                <th scope="col" className="pb-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -261,14 +261,14 @@ export default function AuditExportCenterPage() {
           <table className="mt-2 w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                <th className="pb-2">ID</th>
-                <th className="pb-2">Name</th>
-                <th className="pb-2">Cron</th>
-                <th className="pb-2">Format</th>
-                <th className="pb-2">Enabled</th>
-                <th className="pb-2">Last Run</th>
-                <th className="pb-2">Next Run</th>
-                <th className="pb-2">Actions</th>
+                <th scope="col" className="pb-2">ID</th>
+                <th scope="col" className="pb-2">Name</th>
+                <th scope="col" className="pb-2">Cron</th>
+                <th scope="col" className="pb-2">Format</th>
+                <th scope="col" className="pb-2">Enabled</th>
+                <th scope="col" className="pb-2">Last Run</th>
+                <th scope="col" className="pb-2">Next Run</th>
+                <th scope="col" className="pb-2">Actions</th>
               </tr>
             </thead>
             <tbody>

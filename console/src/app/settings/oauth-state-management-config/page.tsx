@@ -35,7 +35,7 @@ export default function OAuthStateManagementConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per-Flow Encoding</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Flow</th><th>Encoding</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Flow</th><th scope="col">Encoding</th></tr></thead><tbody>
           {form.per_flow_encoding.map((f: PerFlowEncoding, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{f.flow}</td><td className="font-mono text-xs">{f.encoding}</td></tr>
           ))}

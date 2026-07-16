@@ -664,9 +664,9 @@ export default function SAMLPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                <th className="pb-2 pr-4">{t("saml.samlAttribute")}</th>
-                <th className="pb-2 pr-4">{t("saml.ggidField")}</th>
-                <th className="pb-2 w-20">{t("common.actions")}</th>
+                <th scope="col" className="pb-2 pr-4">{t("saml.samlAttribute")}</th>
+                <th scope="col" className="pb-2 pr-4">{t("saml.ggidField")}</th>
+                <th scope="col" className="pb-2 w-20">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody>

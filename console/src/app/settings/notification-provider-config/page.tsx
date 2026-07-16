@@ -104,13 +104,13 @@ export default function NotificationProviderConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Name</th>
-              <th className="p-3">Type</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Template</th>
-              <th className="p-3">Rate Limit</th>
-              <th className="p-3">Enabled</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">Name</th>
+              <th scope="col" className="p-3">Type</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Template</th>
+              <th scope="col" className="p-3">Rate Limit</th>
+              <th scope="col" className="p-3">Enabled</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>

@@ -22,7 +22,7 @@ export default function TokenBindingComparisonPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("tokenBindingCompare.comparisonMatrix")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("tokenBindingCompare.method")}</th><th>{t("tokenBindingCompare.security")}</th><th>{t("tokenBindingCompare.deployment")}</th><th>{t("tokenBindingCompare.performance")}</th><th>{t("tokenBindingCompare.fallback")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("tokenBindingCompare.method")}</th><th scope="col">{t("tokenBindingCompare.security")}</th><th>{t("tokenBindingCompare.deployment")}</th><th>{t("tokenBindingCompare.performance")}</th><th>{t("tokenBindingCompare.fallback")}</th></tr></thead><tbody>
           {form.comparison_table.map((r: ComparisonRow, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{r.method}</td><td>{"*".repeat(r.security)}</td><td>{"*".repeat(r.deployment)}</td><td>{"*".repeat(r.performance)}</td><td>{"*".repeat(r.fallback)}</td></tr>
           ))}
@@ -31,7 +31,7 @@ export default function TokenBindingComparisonPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("tokenBindingCompare.recommendation")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("tokenBindingCompare.useCase")}</th><th>{t("tokenBindingCompare.recommended")}</th><th>{t("tokenBindingCompare.rationale")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("tokenBindingCompare.useCase")}</th><th scope="col">{t("tokenBindingCompare.recommended")}</th><th>{t("tokenBindingCompare.rationale")}</th></tr></thead><tbody>
           {form.recommendation_matrix.map((r: RecommendationEntry, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{r.use_case}</td><td><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{r.recommended_method}</span></td><td className="text-xs">{r.rationale}</td></tr>
           ))}
@@ -40,7 +40,7 @@ export default function TokenBindingComparisonPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("tokenBindingCompare.benchmark")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("tokenBindingCompare.method")}</th><th>{t("tokenBindingCompare.latency")}</th><th>{t("tokenBindingCompare.cpuOverhead")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("tokenBindingCompare.method")}</th><th scope="col">{t("tokenBindingCompare.latency")}</th><th>{t("tokenBindingCompare.cpuOverhead")}</th></tr></thead><tbody>
           {form.benchmark_results.map((b: BenchmarkResult, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{b.method}</td><td>{b.latency_ms}</td><td>{b.cpu_overhead_pct}</td></tr>
           ))}

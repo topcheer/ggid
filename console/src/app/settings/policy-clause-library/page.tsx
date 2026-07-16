@@ -91,11 +91,11 @@ export default function PolicyClauseLibraryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Clause ID</th>
-                <th className="text-left py-2 pr-3">Category</th>
-                <th className="text-left py-2 pr-3">Text</th>
-                <th className="text-left py-2 pr-3">Version</th>
-                <th className="text-left py-2 pr-3">Used In</th>
+                <th scope="col" className="text-left py-2 pr-3">Clause ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Category</th>
+                <th scope="col" className="text-left py-2 pr-3">Text</th>
+                <th scope="col" className="text-left py-2 pr-3">Version</th>
+                <th scope="col" className="text-left py-2 pr-3">Used In</th>
               </tr>
             </thead>
             <tbody>

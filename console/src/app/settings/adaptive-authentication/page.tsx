@@ -208,10 +208,10 @@ export default function AdaptiveAuthenticationPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Device</th>
-              <th className="p-3">Device ID</th>
-              <th className="p-3">Trust Level</th>
-              <th className="p-3">Last Seen</th>
+              <th scope="col" className="p-3">Device</th>
+              <th scope="col" className="p-3">Device ID</th>
+              <th scope="col" className="p-3">Trust Level</th>
+              <th scope="col" className="p-3">Last Seen</th>
             </tr>
           </thead>
           <tbody>

@@ -60,13 +60,13 @@ export default function VelocityRulesConfigPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Rule Name</th>
-                <th className="text-left py-2 pr-3">Metric</th>
-                <th className="text-left py-2 pr-3">Window</th>
-                <th className="text-left py-2 pr-3">Threshold</th>
-                <th className="text-left py-2 pr-3">Current Rate</th>
-                <th className="text-left py-2 pr-3">Action</th>
-                <th className="text-right py-2 pr-3">Triggered (24h)</th>
+                <th scope="col" className="text-left py-2 pr-3">Rule Name</th>
+                <th scope="col" className="text-left py-2 pr-3">Metric</th>
+                <th scope="col" className="text-left py-2 pr-3">Window</th>
+                <th scope="col" className="text-left py-2 pr-3">Threshold</th>
+                <th scope="col" className="text-left py-2 pr-3">Current Rate</th>
+                <th scope="col" className="text-left py-2 pr-3">Action</th>
+                <th scope="col" className="text-right py-2 pr-3">Triggered (24h)</th>
               </tr>
             </thead>
             <tbody>

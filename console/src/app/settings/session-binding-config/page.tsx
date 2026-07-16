@@ -117,10 +117,10 @@ export default function SessionBindingConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">Application ID</th>
-              <th>Name</th>
-              <th>Binding Method</th>
-              <th>Rotation Interval</th>
+              <th scope="col" className="py-2">Application ID</th>
+              <th scope="col">Name</th>
+              <th scope="col">Binding Method</th>
+              <th scope="col">Rotation Interval</th>
             </tr>
           </thead>
           <tbody>

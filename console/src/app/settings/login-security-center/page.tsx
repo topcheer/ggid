@@ -49,7 +49,7 @@ export default function LoginSecurityCenterPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Recent Login Attempts</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">User</th><th>IP</th><th>Status</th><th>Time</th><th>Device</th><th>Location</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">User</th><th scope="col">IP</th><th>Status</th><th>Time</th><th>Device</th><th>Location</th></tr></thead><tbody>
           {attempts.map((a: LoginAttempt, i: number) => (
             <tr key={i} className={`border-b ${a.status === "blocked" || (a.location.includes("TOR")) ? "bg-red-50" : ""}`}><td className="py-2 font-medium">{a.user}</td><td className="font-mono text-xs">{a.ip}</td><td><span className={`px-2 py-1 rounded text-xs ${statusColors[a.status] || ""}`}>{a.status}</span></td><td className="text-xs text-gray-500">{a.timestamp}</td><td className="text-xs">{a.device}</td><td className="text-xs">{a.location}</td></tr>
           ))}

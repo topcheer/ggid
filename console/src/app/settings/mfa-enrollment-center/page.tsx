@@ -66,7 +66,7 @@ export default function MfaEnrollmentCenterPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Factor Inventory</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Factor</th><th>Name</th><th>Enrolled</th><th>Last Used</th><th>Status</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Factor</th><th scope="col">Name</th><th>Enrolled</th><th>Last Used</th><th>Status</th></tr></thead><tbody>
           {factors.map((f: MfaFactor, i: number) => (<tr key={i} className="border-b"><td className="py-2"><span className={`px-2 py-1 rounded text-xs ${factorColors[f.type] || ""}`}>{f.type}</span></td><td className="font-medium">{f.name}</td><td className="text-xs text-gray-500">{f.enrolled_at}</td><td className="text-xs text-gray-500">{f.last_used}</td><td><span className={`px-2 py-1 rounded text-xs ${f.status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>{f.status}</span></td></tr>))}
         </tbody></table>
       </div>

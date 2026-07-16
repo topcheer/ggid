@@ -58,7 +58,7 @@ export default function IdentityProofingConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("big1.identityProofingConfig.perRiskLevelMatrix")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("big1.identityProofingConfig.riskLevel")}</th><th>{t("big1.identityProofingConfig.requiredFactors")}</th><th>{t("big1.identityProofingConfig.methods")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("big1.identityProofingConfig.riskLevel")}</th><th scope="col">{t("big1.identityProofingConfig.requiredFactors")}</th><th>{t("big1.identityProofingConfig.methods")}</th></tr></thead><tbody>
           {form.per_risk_level.map((r: RiskLevelConfig, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{r.level}</td><td>{r.required_factors}</td><td>{r.methods.join(", ")}</td></tr>
           ))}

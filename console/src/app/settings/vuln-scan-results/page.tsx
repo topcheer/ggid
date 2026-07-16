@@ -59,11 +59,11 @@ export default function VulnScanResultsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Date</th>
-                <th className="text-left py-2 pr-3">Scanner</th>
-                <th className="text-left py-2 pr-3">Scope</th>
-                <th className="text-left py-2 pr-3">Total</th>
-                <th className="text-left py-2 pr-3">Crit/High</th>
+                <th scope="col" className="text-left py-2 pr-3">Date</th>
+                <th scope="col" className="text-left py-2 pr-3">Scanner</th>
+                <th scope="col" className="text-left py-2 pr-3">Scope</th>
+                <th scope="col" className="text-left py-2 pr-3">Total</th>
+                <th scope="col" className="text-left py-2 pr-3">Crit/High</th>
               </tr>
             </thead>
             <tbody>

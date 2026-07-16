@@ -128,7 +128,7 @@ export default function ImpersonationConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("big1.impersonationConfig.impersonator")}</th><th className="p-3">{t("big1.impersonationConfig.target")}</th><th className="p-3">{t("big1.impersonationConfig.reason")}</th><th className="p-3">{t("big1.impersonationConfig.started")}</th><th className="p-3">{t("big1.impersonationConfig.duration")}</th><th className="p-3">{t("big1.impersonationConfig.status")}</th>
+              <th scope="col" className="p-3">{t("big1.impersonationConfig.impersonator")}</th><th className="p-3">{t("big1.impersonationConfig.target")}</th><th className="p-3">{t("big1.impersonationConfig.reason")}</th><th className="p-3">{t("big1.impersonationConfig.started")}</th><th className="p-3">{t("big1.impersonationConfig.duration")}</th><th className="p-3">{t("big1.impersonationConfig.status")}</th>
             </tr>
           </thead>
           <tbody>

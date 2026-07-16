@@ -124,12 +124,12 @@ export default function AlertWebhookConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">URL</th>
-              <th className="p-3">Events</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Deliveries (S/F/R)</th>
-              <th className="p-3">Retries</th>
-              <th className="p-3">Actions</th>
+              <th scope="col" className="p-3">URL</th>
+              <th scope="col" className="p-3">Events</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Deliveries (S/F/R)</th>
+              <th scope="col" className="p-3">Retries</th>
+              <th scope="col" className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>

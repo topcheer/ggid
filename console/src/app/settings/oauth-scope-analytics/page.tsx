@@ -54,12 +54,12 @@ export default function OAuthScopeAnalyticsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Scope</th>
-                <th className="text-right py-2 pr-3">Requested</th>
-                <th className="text-right py-2 pr-3">Granted</th>
-                <th className="text-right py-2 pr-3">Denied</th>
-                <th className="text-left py-2 pr-3">Deny Reasons</th>
-                <th className="text-right py-2 pr-3">Avg/Token</th>
+                <th scope="col" className="text-left py-2 pr-3">Scope</th>
+                <th scope="col" className="text-right py-2 pr-3">Requested</th>
+                <th scope="col" className="text-right py-2 pr-3">Granted</th>
+                <th scope="col" className="text-right py-2 pr-3">Denied</th>
+                <th scope="col" className="text-left py-2 pr-3">Deny Reasons</th>
+                <th scope="col" className="text-right py-2 pr-3">Avg/Token</th>
               </tr>
             </thead>
             <tbody>

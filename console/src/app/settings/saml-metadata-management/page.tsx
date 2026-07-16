@@ -30,7 +30,7 @@ export default function SamlMetadataManagementPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">IdP Metadata</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Entity ID</th><th>URL</th><th>Last Refresh</th><th>Sig Valid</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Entity ID</th><th scope="col">URL</th><th>Last Refresh</th><th>Sig Valid</th></tr></thead><tbody>
           {form.idp_metadata_list.map((m: IdpMetadata, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-mono text-xs">{m.entity_id}</td><td className="break-all text-xs">{m.url}</td><td className="text-xs text-gray-500">{m.last_refresh}</td><td><span className={`px-2 py-1 rounded text-xs ${m.signature_valid ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{m.signature_valid ? "Yes" : "No"}</span></td></tr>
           ))}

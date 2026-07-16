@@ -100,10 +100,10 @@ export default function HibpBreachCheckPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("big1.hibpBreachCheck.user")}</th>
-              <th className="p-3">{t("big1.hibpBreachCheck.breach")}</th>
-              <th className="p-3">{t("big1.hibpBreachCheck.date")}</th>
-              <th className="p-3">{t("big1.hibpBreachCheck.dataClasses")}</th>
+              <th scope="col" className="p-3">{t("big1.hibpBreachCheck.user")}</th>
+              <th scope="col" className="p-3">{t("big1.hibpBreachCheck.breach")}</th>
+              <th scope="col" className="p-3">{t("big1.hibpBreachCheck.date")}</th>
+              <th scope="col" className="p-3">{t("big1.hibpBreachCheck.dataClasses")}</th>
             </tr>
           </thead>
           <tbody>

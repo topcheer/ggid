@@ -120,13 +120,13 @@ export default function BreakGlassPage() {
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Requester</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Reason</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Scope</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Duration</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Requested</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Notified</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Requester</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Reason</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Scope</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Duration</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Requested</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Notified</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {history.map((r) => (

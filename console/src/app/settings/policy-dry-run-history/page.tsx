@@ -68,14 +68,14 @@ export default function PolicyDryRunHistoryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Compare</th>
-                <th className="text-left py-2 pr-3">Run ID</th>
-                <th className="text-left py-2 pr-3">Policy</th>
-                <th className="text-left py-2 pr-3">Subject</th>
-                <th className="text-left py-2 pr-3">Decision</th>
-                <th className="text-left py-2 pr-3">By</th>
-                <th className="text-left py-2 pr-3">Duration</th>
-                <th className="text-left py-2 pr-3">Actions</th>
+                <th scope="col" className="text-left py-2 pr-3">Compare</th>
+                <th scope="col" className="text-left py-2 pr-3">Run ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Policy</th>
+                <th scope="col" className="text-left py-2 pr-3">Subject</th>
+                <th scope="col" className="text-left py-2 pr-3">Decision</th>
+                <th scope="col" className="text-left py-2 pr-3">By</th>
+                <th scope="col" className="text-left py-2 pr-3">Duration</th>
+                <th scope="col" className="text-left py-2 pr-3">Actions</th>
               </tr>
             </thead>
             <tbody>

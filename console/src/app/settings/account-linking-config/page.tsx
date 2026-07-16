@@ -140,13 +140,13 @@ export default function AccountLinkingConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">User</th>
-              <th className="p-3">Provider</th>
-              <th className="p-3">External ID</th>
-              <th className="p-3">Linked At</th>
-              <th className="p-3">Last Sync</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Actions</th>
+              <th scope="col" className="p-3">User</th>
+              <th scope="col" className="p-3">Provider</th>
+              <th scope="col" className="p-3">External ID</th>
+              <th scope="col" className="p-3">Linked At</th>
+              <th scope="col" className="p-3">Last Sync</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>

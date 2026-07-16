@@ -27,7 +27,7 @@ export default function CorsConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">{t("corsSettings.allowedOrigins")}</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("corsSettings.origin")}</th><th>{t("corsSettings.tenantId")}</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("corsSettings.origin")}</th><th scope="col">{t("corsSettings.tenantId")}</th></tr></thead><tbody>
           {form.allowed_origins.map((o: AllowedOrigin, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 break-all">{o.origin}</td><td className="font-mono text-xs">{o.tenant_id}</td></tr>
           ))}

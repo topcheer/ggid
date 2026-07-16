@@ -63,12 +63,12 @@ export default function OAuthRateLimitPerClientPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Client ID</th>
-                <th className="text-left py-2 pr-3">Req/min</th>
-                <th className="text-left py-2 pr-3">Burst</th>
-                <th className="text-left py-2 pr-3">Concurrent Tokens</th>
-                <th className="text-left py-2 pr-3">Daily Quota</th>
-                <th className="text-left py-2 pr-3">Current Usage</th>
+                <th scope="col" className="text-left py-2 pr-3">Client ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Req/min</th>
+                <th scope="col" className="text-left py-2 pr-3">Burst</th>
+                <th scope="col" className="text-left py-2 pr-3">Concurrent Tokens</th>
+                <th scope="col" className="text-left py-2 pr-3">Daily Quota</th>
+                <th scope="col" className="text-left py-2 pr-3">Current Usage</th>
               </tr>
             </thead>
             <tbody>
@@ -110,10 +110,10 @@ export default function OAuthRateLimitPerClientPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Client</th>
-                <th className="text-left py-2 pr-3">Endpoint</th>
-                <th className="text-left py-2 pr-3">Override Req/min</th>
-                <th className="text-left py-2 pr-3">Override Burst</th>
+                <th scope="col" className="text-left py-2 pr-3">Client</th>
+                <th scope="col" className="text-left py-2 pr-3">Endpoint</th>
+                <th scope="col" className="text-left py-2 pr-3">Override Req/min</th>
+                <th scope="col" className="text-left py-2 pr-3">Override Burst</th>
               </tr>
             </thead>
             <tbody>

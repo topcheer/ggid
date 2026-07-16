@@ -129,9 +129,9 @@ export default function AuthAdaptiveAuthFlowPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">Role</th>
-                <th className="text-left py-2 pr-4">Min Auth Level</th>
-                <th className="text-left py-2 pr-4">Max Session (min)</th>
+                <th scope="col" className="text-left py-2 pr-4">Role</th>
+                <th scope="col" className="text-left py-2 pr-4">Min Auth Level</th>
+                <th scope="col" className="text-left py-2 pr-4">Max Session (min)</th>
               </tr>
             </thead>
             <tbody>

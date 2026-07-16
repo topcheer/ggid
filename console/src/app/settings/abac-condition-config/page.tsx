@@ -55,7 +55,7 @@ export default function AbacConditionConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Operators Per Type</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Type</th><th>Operators</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Type</th><th scope="col">Operators</th></tr></thead>
           <tbody>
             {operatorEntries.map(([type, ops], i) => {
               const typedOps: string[] = Array.isArray(ops) ? ops : [];

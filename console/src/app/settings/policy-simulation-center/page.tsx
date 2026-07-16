@@ -122,7 +122,7 @@ export default function PolicySimulationCenterPage() {
           <button onClick={runBatch} aria-label="Run batch simulation" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Batch</button>
           {batchResults.length > 0 && (
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm overflow-hidden">
-              <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">#</th><th>Subject</th><th>Resource</th><th>Action</th><th>Decision</th><th>Rules</th></tr></thead>
+              <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">#</th><th scope="col">Subject</th><th>Resource</th><th>Action</th><th>Decision</th><th>Rules</th></tr></thead>
                 <tbody>{batchResults.map(r => <tr key={r.rowIndex} className="border-b"><td className="py-2">{r.rowIndex}</td><td className="font-mono text-xs">{r.subject}</td><td className="font-mono text-xs">{r.resource}</td><td className="text-xs">{r.action}</td><td><span className={`font-bold ${decisionColor(r.decision)}`}>{r.decision}</span></td><td className="text-xs">{r.matchedRules}</td></tr>)}</tbody>
               </table>
             </div>

@@ -51,7 +51,7 @@ export default function RefreshTokenRotationConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per-Client Overrides</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Client</th><th>Rotation Mode</th><th>Grace Period (s)</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Client</th><th scope="col">Rotation Mode</th><th>Grace Period (s)</th></tr></thead><tbody>
           {form.per_client_override.map((c: RefreshTokenClientOverride, i: number) => (
             <tr key={i} className="border-b"><td className="py-2"><span className="font-medium">{c.client_name}</span><div className="text-xs text-gray-400">{c.client_id}</div></td><td>{c.rotation_mode}</td><td>{c.grace_period_seconds}</td></tr>
           ))}

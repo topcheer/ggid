@@ -62,10 +62,10 @@ export default function AuthTokenBindingEnforcementPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Client ID</th>
-                <th className="text-left py-2 pr-3">Min Binding Strength</th>
-                <th className="text-left py-2 pr-3">Allowed Methods</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Client ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Min Binding Strength</th>
+                <th scope="col" className="text-left py-2 pr-3">Allowed Methods</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

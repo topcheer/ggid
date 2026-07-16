@@ -112,11 +112,11 @@ export default function InactiveCleanupPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium w-8"><input type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(users.map((u) => u.user_id)) : new Set())} className="rounded" /></th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.user")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.lastLogin")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.daysInactive")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.status")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium w-8"><input type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(users.map((u) => u.user_id)) : new Set())} className="rounded" /></th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.user")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.lastLogin")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.daysInactive")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.status")}</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

@@ -102,13 +102,13 @@ export default function PolicySnapshotsPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">Snapshot ID</th>
-              <th className="px-4 py-3 text-left font-medium">Policy ID</th>
-              <th className="px-4 py-3 text-left font-medium">Version</th>
-              <th className="px-4 py-3 text-left font-medium">Description</th>
-              <th className="px-4 py-3 text-left font-medium">Created By</th>
-              <th className="px-4 py-3 text-left font-medium">Created At</th>
-              <th className="px-4 py-3 text-left font-medium">Action</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Snapshot ID</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Policy ID</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Version</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Description</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Created By</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Created At</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

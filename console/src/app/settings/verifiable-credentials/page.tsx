@@ -178,13 +178,13 @@ export default function VerifiableCredentialsPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Type</th>
-              <th className="p-3">Issuer</th>
-              <th className="p-3">Subject</th>
-              <th className="p-3">Issued</th>
-              <th className="p-3">Expires</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Actions</th>
+              <th scope="col" className="p-3">Type</th>
+              <th scope="col" className="p-3">Issuer</th>
+              <th scope="col" className="p-3">Subject</th>
+              <th scope="col" className="p-3">Issued</th>
+              <th scope="col" className="p-3">Expires</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>

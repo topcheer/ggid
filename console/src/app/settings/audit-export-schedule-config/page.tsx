@@ -30,7 +30,7 @@ export default function AuditExportScheduleConfigPage() {
           <button className="px-4 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700">+ Add Job</button>
         </div>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">Name</th><th>Cron</th><th>Format</th><th>Retention</th><th>Destination</th><th>Last Run</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">Name</th><th scope="col">Cron</th><th>Format</th><th>Retention</th><th>Destination</th><th>Last Run</th></tr></thead>
           <tbody>
             {form.scheduled_jobs.map((j: ScheduledExportJob, i: number) => (
               <tr key={i} className="border-b">

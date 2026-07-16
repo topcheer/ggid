@@ -346,10 +346,10 @@ export default function ComplianceReportPage() {
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-gray-200 text-left text-xs uppercase text-gray-400 dark:border-gray-700">
-                          <th className="pb-2 pr-4">ID</th>
-                          <th className="pb-2 pr-4">Control</th>
-                          <th className="pb-2 pr-4">Status</th>
-                          <th className="pb-2 pr-4">Evidence</th>
+                          <th scope="col" className="pb-2 pr-4">ID</th>
+                          <th scope="col" className="pb-2 pr-4">Control</th>
+                          <th scope="col" className="pb-2 pr-4">Status</th>
+                          <th scope="col" className="pb-2 pr-4">Evidence</th>
                         </tr>
                       </thead>
                       <tbody>

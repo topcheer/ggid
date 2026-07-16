@@ -37,10 +37,10 @@ export default function DataRetentionDashboardPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Data Type</th>
-                <th className="text-left py-2 pr-3">Retention</th>
-                <th className="text-left py-2 pr-3">Action</th>
-                <th className="text-left py-2 pr-3">Legal Basis</th>
+                <th scope="col" className="text-left py-2 pr-3">Data Type</th>
+                <th scope="col" className="text-left py-2 pr-3">Retention</th>
+                <th scope="col" className="text-left py-2 pr-3">Action</th>
+                <th scope="col" className="text-left py-2 pr-3">Legal Basis</th>
               </tr>
             </thead>
             <tbody>

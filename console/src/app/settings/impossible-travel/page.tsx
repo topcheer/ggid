@@ -79,13 +79,13 @@ export default function ImpossibleTravelPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.user")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.fromTo")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.distance")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.timeGap")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.speed")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.detected")}</th>
-              <th className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.risk")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.user")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.fromTo")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.distance")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.timeGap")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.speed")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.detected")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.impossibleTravel.risk")}</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

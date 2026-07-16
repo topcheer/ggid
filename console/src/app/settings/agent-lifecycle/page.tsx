@@ -59,13 +59,13 @@ export default function AgentLifecyclePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Agent</th>
-                <th className="text-left py-2 pr-3">Owner</th>
-                <th className="text-left py-2 pr-3">Status</th>
-                <th className="text-left py-2 pr-3">Last Active</th>
-                <th className="text-left py-2 pr-3">Req/min</th>
-                <th className="text-left py-2 pr-3">Permissions</th>
-                <th className="text-left py-2 pr-3">Actions</th>
+                <th scope="col" className="text-left py-2 pr-3">Agent</th>
+                <th scope="col" className="text-left py-2 pr-3">Owner</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Last Active</th>
+                <th scope="col" className="text-left py-2 pr-3">Req/min</th>
+                <th scope="col" className="text-left py-2 pr-3">Permissions</th>
+                <th scope="col" className="text-left py-2 pr-3">Actions</th>
               </tr>
             </thead>
             <tbody>

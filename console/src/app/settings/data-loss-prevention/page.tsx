@@ -68,11 +68,11 @@ export default function DLPPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">Resource</th>
-                <th className="text-left py-2 pr-3">Pattern</th>
-                <th className="text-left py-2 pr-3">Action</th>
-                <th className="text-left py-2 pr-3">Timestamp</th>
+                <th scope="col" className="text-left py-2 pr-3">User</th>
+                <th scope="col" className="text-left py-2 pr-3">Resource</th>
+                <th scope="col" className="text-left py-2 pr-3">Pattern</th>
+                <th scope="col" className="text-left py-2 pr-3">Action</th>
+                <th scope="col" className="text-left py-2 pr-3">Timestamp</th>
               </tr>
             </thead>
             <tbody>

@@ -191,13 +191,13 @@ export default function ApiKeysPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Key</th>
-                  <th className="px-4 py-3">Scopes</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3">Expires</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th scope="col" className="px-4 py-3">Name</th>
+                  <th scope="col" className="px-4 py-3">Key</th>
+                  <th scope="col" className="px-4 py-3">Scopes</th>
+                  <th scope="col" className="px-4 py-3">Created</th>
+                  <th scope="col" className="px-4 py-3">Expires</th>
+                  <th scope="col" className="px-4 py-3">Status</th>
+                  <th scope="col" className="px-4 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

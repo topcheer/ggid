@@ -76,11 +76,11 @@ export default function AuditComplianceSchedulerPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Framework</th>
-                <th className="text-left py-2 pr-3">Frequency</th>
-                <th className="text-left py-2 pr-3">Next Run</th>
-                <th className="text-left py-2 pr-3">Scope</th>
-                <th className="text-left py-2 pr-3">Owner</th>
+                <th scope="col" className="text-left py-2 pr-3">Framework</th>
+                <th scope="col" className="text-left py-2 pr-3">Frequency</th>
+                <th scope="col" className="text-left py-2 pr-3">Next Run</th>
+                <th scope="col" className="text-left py-2 pr-3">Scope</th>
+                <th scope="col" className="text-left py-2 pr-3">Owner</th>
               </tr>
             </thead>
             <tbody>

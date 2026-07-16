@@ -81,10 +81,10 @@ export default function TokenLifetimePage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">Client</th>
-                  <th className="px-4 py-3 text-left font-medium">Avg Lifetime</th>
-                  <th className="px-4 py-3 text-left font-medium">Token Count</th>
-                  <th className="px-4 py-3 text-left font-medium">Short-Lived %</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Client</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Avg Lifetime</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Token Count</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Short-Lived %</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">

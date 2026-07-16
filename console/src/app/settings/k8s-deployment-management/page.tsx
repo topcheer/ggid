@@ -78,12 +78,12 @@ export default function K8sDeploymentManagementPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
-              <th className="px-4 py-3">{"Deployment"}</th>
-              <th className="px-4 py-3">{"Namespace"}</th>
-              <th className="px-4 py-3">{"Replicas"}</th>
-              <th className="px-4 py-3">{"Strategy"}</th>
-              <th className="px-4 py-3">{"Status"}</th>
-              <th className="px-4 py-3">{t("backend2.k8sDeploymentManagement.actions")}</th>
+              <th scope="col" className="px-4 py-3">{"Deployment"}</th>
+              <th scope="col" className="px-4 py-3">{"Namespace"}</th>
+              <th scope="col" className="px-4 py-3">{"Replicas"}</th>
+              <th scope="col" className="px-4 py-3">{"Strategy"}</th>
+              <th scope="col" className="px-4 py-3">{"Status"}</th>
+              <th scope="col" className="px-4 py-3">{t("backend2.k8sDeploymentManagement.actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">

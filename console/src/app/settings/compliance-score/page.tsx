@@ -120,10 +120,10 @@ export default function ComplianceScorePage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium">Month</th>
-                  <th className="px-4 py-3 text-left font-medium">Score</th>
-                  <th className="px-4 py-3 text-left font-medium">Gap Count</th>
-                  <th className="px-4 py-3 text-left font-medium">Delta</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Month</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Score</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Gap Count</th>
+                  <th scope="col" className="px-4 py-3 text-left font-medium">Delta</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">

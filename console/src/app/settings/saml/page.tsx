@@ -305,10 +305,10 @@ export default function SamlSettingsPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-2 font-semibold text-gray-600 dark:text-gray-300">
+                  <th scope="col" className="px-4 py-2 font-semibold text-gray-600 dark:text-gray-300">
                     SAML Attribute
                   </th>
-                  <th className="px-4 py-2 font-semibold text-gray-600 dark:text-gray-300">
+                  <th scope="col" className="px-4 py-2 font-semibold text-gray-600 dark:text-gray-300">
                     GGID Field
                   </th>
                 </tr>

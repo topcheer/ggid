@@ -570,13 +570,13 @@ export default function ScimPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-xs text-gray-400 dark:border-gray-700">
-                    <th className="px-4 py-2 text-left font-medium">{t("scim.timestamp")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("scim.app")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("scim.type")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("scim.users")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("scim.status")}</th>
-                    <th className="px-4 py-2 text-left font-medium">{t("scim.duration")}</th>
-                    <th className="px-4 py-2 text-left font-medium"></th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium">{t("scim.timestamp")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium">{t("scim.app")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium">{t("scim.type")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium">{t("scim.users")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium">{t("scim.status")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium">{t("scim.duration")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium"></th>
                   </tr>
                 </thead>
                 <tbody>

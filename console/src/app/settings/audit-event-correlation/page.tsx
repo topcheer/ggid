@@ -60,7 +60,7 @@ export default function AuditEventCorrelationPage() {
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-yellow-400" /> Correlation Rules</h2>
         <table className="w-full text-sm">
           <thead><tr className="border-b border-gray-800 text-gray-400">
-            <th className="text-left py-2 pr-3">Rule</th><th className="text-left py-2 pr-3">Window</th><th className="text-left py-2 pr-3">Min Events</th><th className="text-left py-2 pr-3">Action</th>
+            <th scope="col" className="text-left py-2 pr-3">Rule</th><th className="text-left py-2 pr-3">Window</th><th className="text-left py-2 pr-3">Min Events</th><th className="text-left py-2 pr-3">Action</th>
           </tr></thead>
           <tbody>
             {(data?.correlation_rules ?? []).map((r) => (

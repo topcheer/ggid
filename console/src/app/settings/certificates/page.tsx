@@ -208,11 +208,11 @@ export default function CertificatesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700">
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.issuer")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.subject")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.expiryDate")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.fingerprint")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.status")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.issuer")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.subject")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.expiryDate")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.fingerprint")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.status")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">
@@ -335,10 +335,10 @@ export default function CertificatesPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 dark:border-gray-700">
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.keyId")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.algorithm")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.status")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.created")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.keyId")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("certs.algorithm")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.status")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500">{t("common.created")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-700/50">

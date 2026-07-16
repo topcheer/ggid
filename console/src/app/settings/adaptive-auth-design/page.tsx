@@ -37,7 +37,7 @@ export default function AdaptiveAuthDesignPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Signal Collection</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Signal</th><th>Source</th><th>Latency (ms)</th><th>Weight</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Signal</th><th scope="col">Source</th><th>Latency (ms)</th><th>Weight</th></tr></thead><tbody>
           {form.signal_collection.map((s: SignalConfig, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{s.signal}</td><td>{s.source}</td><td>{s.latency_ms}</td><td>{s.weight}</td></tr>
           ))}

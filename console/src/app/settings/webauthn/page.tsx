@@ -402,9 +402,9 @@ export default function WebAuthnSettingsPage() {
               <table className="w-full">
                 <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Name</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Type</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Created</th>
+                    <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Name</th>
+                    <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Type</th>
+                    <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase text-gray-500">Created</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

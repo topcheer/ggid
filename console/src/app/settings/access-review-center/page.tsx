@@ -170,13 +170,13 @@ export default function AccessReviewCenterPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3"></th>
-              <th className="p-3">User</th>
-              <th className="p-3">Reviewer</th>
-              <th className="p-3">Scopes</th>
-              <th className="p-3">{t("backend3.accessReviewCenter.decision")}</th>
-              <th className="p-3">{t("backend3.accessReviewCenter.date")}</th>
-              <th className="p-3">{t("backend3.accessReviewCenter.actions")}</th>
+              <th scope="col" className="p-3"></th>
+              <th scope="col" className="p-3">User</th>
+              <th scope="col" className="p-3">Reviewer</th>
+              <th scope="col" className="p-3">Scopes</th>
+              <th scope="col" className="p-3">{t("backend3.accessReviewCenter.decision")}</th>
+              <th scope="col" className="p-3">{t("backend3.accessReviewCenter.date")}</th>
+              <th scope="col" className="p-3">{t("backend3.accessReviewCenter.actions")}</th>
             </tr>
           </thead>
           <tbody>

@@ -95,10 +95,10 @@ export default function IdentityJitProvisioningConfigPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">{t("idJitProvisioning.idpClaim")}</th>
-                <th className="text-left py-2 pr-3"></th>
-                <th className="text-left py-2 pr-3">{t("idJitProvisioning.localAttribute")}</th>
-                <th className="text-left py-2 pr-3">{t("idJitProvisioning.required")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idJitProvisioning.idpClaim")}</th>
+                <th scope="col" className="text-left py-2 pr-3"></th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idJitProvisioning.localAttribute")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idJitProvisioning.required")}</th>
               </tr>
             </thead>
             <tbody>

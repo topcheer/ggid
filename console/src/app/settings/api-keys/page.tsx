@@ -303,13 +303,13 @@ export default function ApiKeysPage() {
           <table className="w-full">
             <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.name")}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.key")}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.scopes")}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.created")}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.expires")}</th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.status")}</th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.name")}</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.key")}</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.scopes")}</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.created")}</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.expires")}</th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.status")}</th>
+                <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

@@ -104,9 +104,9 @@ export default function RbacDesignConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">Role A</th>
-              <th>Role B</th>
-              <th>Description</th>
+              <th scope="col" className="py-2">Role A</th>
+              <th scope="col">Role B</th>
+              <th scope="col">Description</th>
             </tr>
           </thead>
           <tbody>

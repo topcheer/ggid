@@ -71,11 +71,11 @@ export default function AccountRecoveryPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">User</th>
-              <th className="px-4 py-3 text-left font-medium">Total</th>
-              <th className="px-4 py-3 text-left font-medium">Used</th>
-              <th className="px-4 py-3 text-left font-medium">Remaining</th>
-              <th className="px-4 py-3 text-left font-medium">Generated</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Total</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Used</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Remaining</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium">Generated</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">

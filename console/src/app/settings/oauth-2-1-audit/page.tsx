@@ -90,10 +90,10 @@ export default function OAuth21AuditPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Client</th>
-                <th className="text-left py-2 pr-3">Issue</th>
-                <th className="text-left py-2 pr-3">Severity</th>
-                <th className="text-left py-2 pr-3">Remediation</th>
+                <th scope="col" className="text-left py-2 pr-3">Client</th>
+                <th scope="col" className="text-left py-2 pr-3">Issue</th>
+                <th scope="col" className="text-left py-2 pr-3">Severity</th>
+                <th scope="col" className="text-left py-2 pr-3">Remediation</th>
               </tr>
             </thead>
             <tbody>

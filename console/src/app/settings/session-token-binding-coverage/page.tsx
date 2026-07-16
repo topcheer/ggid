@@ -54,7 +54,7 @@ export default function SessionTokenBindingCoveragePage() {
         <h2 className="text-sm font-semibold mb-4">Per-Client Coverage</h2>
         <table className="w-full text-sm">
           <thead><tr className="border-b border-gray-800 text-gray-400">
-            <th className="text-left py-2 pr-3">Client</th><th className="text-left py-2 pr-3">Bound %</th><th className="text-left py-2 pr-3">Method</th><th className="text-left py-2 pr-3">Last Checked</th>
+            <th scope="col" className="text-left py-2 pr-3">Client</th><th className="text-left py-2 pr-3">Bound %</th><th className="text-left py-2 pr-3">Method</th><th className="text-left py-2 pr-3">Last Checked</th>
           </tr></thead>
           <tbody>
             {(data?.per_client ?? []).map((c) => (

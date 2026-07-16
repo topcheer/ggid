@@ -76,7 +76,7 @@ export default function ApiGatewayRoutesPage() {
           <button className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t("backend2.gatewayRoutes.addRoute")}</button>
         </div>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">{t("backend2.gatewayRoutes.path")}</th><th>{t("backend2.gatewayRoutes.methods")}</th><th>Upstream</th><th>Strip Prefix</th><th>Rate Limit</th><th>{t("backend2.gatewayRoutes.auth")}</th><th>{t("backend2.gatewayRoutes.health")}</th><th>{t("backend2.gatewayRoutes.actions")}</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">{t("backend2.gatewayRoutes.path")}</th><th scope="col">{t("backend2.gatewayRoutes.methods")}</th><th>Upstream</th><th>Strip Prefix</th><th>Rate Limit</th><th>{t("backend2.gatewayRoutes.auth")}</th><th>{t("backend2.gatewayRoutes.health")}</th><th>{t("backend2.gatewayRoutes.actions")}</th></tr></thead>
           <tbody>
             {routes.map((r: RouteEntry, i: number) => (
               <tr key={i} className="border-b hover:bg-gray-50">

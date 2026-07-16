@@ -152,10 +152,10 @@ export default function SodConflictDetectionPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("backend3.sodConflictDetection.rule")}</th>
-              <th className="p-3">{t("backend3.sodConflictDetection.roleA")}</th>
-              <th className="p-3">{t("backend3.sodConflictDetection.roleB")}</th>
-              <th className="p-3">{t("backend3.sodConflictDetection.conflictLevel")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodConflictDetection.rule")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodConflictDetection.roleA")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodConflictDetection.roleB")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodConflictDetection.conflictLevel")}</th>
             </tr>
           </thead>
           <tbody>
@@ -176,8 +176,8 @@ export default function SodConflictDetectionPage() {
         <table className="text-xs">
           <thead>
             <tr>
-              <th className="p-2"></th>
-              {roles.map(r => <th key={r} className="p-2 text-gray-500 capitalize">{r}</th>)}
+              <th scope="col" className="p-2"></th>
+              {roles.map(r => <th scope="col" key={r} className="p-2 text-gray-500 capitalize">{r}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -206,10 +206,10 @@ export default function SodConflictDetectionPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">User</th>
-              <th className="p-3">{t("backend3.sodConflictDetection.rule")}</th>
-              <th className="p-3">{t("backend3.sodConflictDetection.date")}</th>
-              <th className="p-3">Status</th>
+              <th scope="col" className="p-3">User</th>
+              <th scope="col" className="p-3">{t("backend3.sodConflictDetection.rule")}</th>
+              <th scope="col" className="p-3">{t("backend3.sodConflictDetection.date")}</th>
+              <th scope="col" className="p-3">Status</th>
             </tr>
           </thead>
           <tbody>

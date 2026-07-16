@@ -81,10 +81,10 @@ export default function MitreAttackMappingPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">T-ID</th>
-                <th className="text-left py-2 pr-3">Name</th>
-                <th className="text-left py-2 pr-3">Tactic</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">T-ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Name</th>
+                <th scope="col" className="text-left py-2 pr-3">Tactic</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

@@ -102,12 +102,12 @@ export default function DelegatedAdminPage() {
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Delegate</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Scope</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Permissions</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Granted By</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Expires</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Delegate</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Scope</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Permissions</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Granted By</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Expires</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {delegations.map((d) => (

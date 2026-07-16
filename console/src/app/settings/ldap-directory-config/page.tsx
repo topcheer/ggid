@@ -53,7 +53,7 @@ export default function LdapDirectoryConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Multi-Directory Federation</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Name</th><th>Base DN</th><th>Bind DN</th><th>Priority</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Name</th><th scope="col">Base DN</th><th>Bind DN</th><th>Priority</th></tr></thead><tbody>
           {form.multi_directory_federation.map((d: DirectoryFederation, i: number) => (
             <tr key={i} className="border-b"><td className="py-2">{d.name}</td><td className="font-mono text-xs">{d.base_dn}</td><td className="font-mono text-xs">{d.bind_dn}</td><td>{d.priority}</td></tr>
           ))}

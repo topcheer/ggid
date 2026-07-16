@@ -418,10 +418,10 @@ export default function AuditPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-700">
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">#</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">User</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Events</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Activity</th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">#</th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">User</th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Events</th>
+                        <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Activity</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -600,11 +600,11 @@ export default function AuditPage() {
               <table className="w-full">
                 <thead className="border-b border-gray-200 bg-gray-50">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Time</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Action</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Actor</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Resource</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Result</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Time</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Action</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Actor</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Resource</th>
+                    <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Result</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

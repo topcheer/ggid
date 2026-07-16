@@ -118,12 +118,12 @@ const [deliveries] = useState<Delivery[]>([
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Event Type</th>
-              <th className="p-3">Endpoint</th>
-              <th className="p-3">Enabled</th>
-              <th className="p-3">Retries</th>
-              <th className="p-3">Max</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">Event Type</th>
+              <th scope="col" className="p-3">Endpoint</th>
+              <th scope="col" className="p-3">Enabled</th>
+              <th scope="col" className="p-3">Retries</th>
+              <th scope="col" className="p-3">Max</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -145,7 +145,7 @@ const [deliveries] = useState<Delivery[]>([
         <h2 className="text-lg font-semibold">Delivery History</h2>
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
-            <tr className="text-left"><th className="p-3">Subscription</th><th className="p-3">Status</th><th className="p-3">Code</th><th className="p-3">Timestamp</th></tr>
+            <tr className="text-left"><th scope="col" className="p-3">Subscription</th><th className="p-3">Status</th><th className="p-3">Code</th><th className="p-3">Timestamp</th></tr>
           </thead>
           <tbody>
             {deliveries.map(d => (

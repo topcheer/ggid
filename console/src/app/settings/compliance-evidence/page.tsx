@@ -174,13 +174,13 @@ export default function ComplianceEvidencePage() {
               <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Name</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Control</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Type</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Collected</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Expires</th>
-                    <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Name</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Control</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Type</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Collected</th>
+                    <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Expires</th>
+                    <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Actions</th>
                   </tr></thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                     {fwArtifacts.map((a) => (

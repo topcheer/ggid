@@ -72,12 +72,12 @@ export default function DatabaseMigrationConfigPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left border-b">
-              <th className="px-4 py-3">ID</th>
-              <th className="px-4 py-3">{"Migration"}</th>
-              <th className="px-4 py-3">{"Status"}</th>
-              <th className="px-4 py-3">{"Applied At"}</th>
-              <th className="px-4 py-3">{"Duration"}</th>
-              <th className="px-4 py-3">{"Actions"}</th>
+              <th scope="col" className="px-4 py-3">ID</th>
+              <th scope="col" className="px-4 py-3">{"Migration"}</th>
+              <th scope="col" className="px-4 py-3">{"Status"}</th>
+              <th scope="col" className="px-4 py-3">{"Applied At"}</th>
+              <th scope="col" className="px-4 py-3">{"Duration"}</th>
+              <th scope="col" className="px-4 py-3">{"Actions"}</th>
             </tr>
           </thead>
           <tbody className="divide-y">

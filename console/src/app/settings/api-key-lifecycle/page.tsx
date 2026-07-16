@@ -57,7 +57,7 @@ export default function APIKeyLifecyclePage() {
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
-            <tr><th className="px-4 py-3 text-left font-medium">Name</th><th className="px-4 py-3 text-left font-medium">Scopes</th><th className="px-4 py-3 text-left font-medium">Created</th><th className="px-4 py-3 text-left font-medium">Expires</th><th className="px-4 py-3 text-left font-medium">Last Used</th><th className="px-4 py-3 text-left font-medium">Usage</th><th className="px-4 py-3 text-left font-medium">Status</th><th className="px-4 py-3 text-left font-medium">Actions</th></tr>
+            <tr><th scope="col" className="px-4 py-3 text-left font-medium">Name</th><th className="px-4 py-3 text-left font-medium">Scopes</th><th className="px-4 py-3 text-left font-medium">Created</th><th className="px-4 py-3 text-left font-medium">Expires</th><th className="px-4 py-3 text-left font-medium">Last Used</th><th className="px-4 py-3 text-left font-medium">Usage</th><th className="px-4 py-3 text-left font-medium">Status</th><th className="px-4 py-3 text-left font-medium">Actions</th></tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
             {keys.map((k) => (

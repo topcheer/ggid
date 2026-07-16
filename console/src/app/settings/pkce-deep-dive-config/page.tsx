@@ -47,7 +47,7 @@ export default function PkceDeepDiveConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Per-Client Enforcement</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Client</th><th>Required</th><th>Method</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Client</th><th scope="col">Required</th><th>Method</th></tr></thead><tbody>
           {form.per_client_enforcement.map((c: PkceClientEntry, i: number) => (
             <tr key={i} className="border-b"><td className="py-2"><span className="font-medium">{c.client_name}</span><div className="text-xs text-gray-400">{c.client_id}</div></td><td>{c.required ? "Yes" : "No"}</td><td>{c.method}</td></tr>
           ))}

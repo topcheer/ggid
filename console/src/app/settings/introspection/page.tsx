@@ -180,13 +180,13 @@ export default function IntrospectionPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800">
                   <tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                    <th className="px-4 py-3">Token Hash</th>
-                    <th className="px-4 py-3">{t("backend.introspection.clientId")}</th>
-                    <th className="px-4 py-3">Scope</th>
-                    <th className="px-4 py-3">Last Accessed</th>
-                    <th className="px-4 py-3">{t("backend.introspection.expires")}</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">{t("backend.introspection.action")}</th>
+                    <th scope="col" className="px-4 py-3">Token Hash</th>
+                    <th scope="col" className="px-4 py-3">{t("backend.introspection.clientId")}</th>
+                    <th scope="col" className="px-4 py-3">Scope</th>
+                    <th scope="col" className="px-4 py-3">Last Accessed</th>
+                    <th scope="col" className="px-4 py-3">{t("backend.introspection.expires")}</th>
+                    <th scope="col" className="px-4 py-3">Status</th>
+                    <th scope="col" className="px-4 py-3 text-right">{t("backend.introspection.action")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

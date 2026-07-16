@@ -389,7 +389,7 @@ export default function RolePermissionsMatrixPage() {
             {/* Group header row */}
             <thead className="sticky top-0 z-20">
               <tr>
-                <th className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-50 px-4 py-2 text-left dark:border-gray-700 dark:bg-gray-900">
+                <th scope="col" className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-50 px-4 py-2 text-left dark:border-gray-700 dark:bg-gray-900">
                   <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Role</span>
                 </th>
                 {PERMISSION_GROUPS.map((group) => (
@@ -406,7 +406,7 @@ export default function RolePermissionsMatrixPage() {
               </tr>
               {/* Permission key header row */}
               <tr>
-                <th className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-50 px-4 py-2 text-left dark:border-gray-700 dark:bg-gray-900">
+                <th scope="col" className="sticky left-0 z-30 border-b border-r border-gray-200 bg-gray-50 px-4 py-2 text-left dark:border-gray-700 dark:bg-gray-900">
                   &nbsp;
                 </th>
                 {PERMISSION_GROUPS.map((group) =>

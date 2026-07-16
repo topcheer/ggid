@@ -108,13 +108,13 @@ export default function SessionRevocationCenterPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("sessionRevocation.user")}</th>
-              <th className="p-3">{t("sessionRevocation.device")}</th>
-              <th className="p-3">{t("sessionRevocation.ip")}</th>
-              <th className="p-3">{t("sessionRevocation.created")}</th>
-              <th className="p-3">{t("sessionRevocation.lastActive")}</th>
-              <th className="p-3">{t("sessionRevocation.tenant")}</th>
-              <th className="p-3">{t("sessionRevocation.actions")}</th>
+              <th scope="col" className="p-3">{t("sessionRevocation.user")}</th>
+              <th scope="col" className="p-3">{t("sessionRevocation.device")}</th>
+              <th scope="col" className="p-3">{t("sessionRevocation.ip")}</th>
+              <th scope="col" className="p-3">{t("sessionRevocation.created")}</th>
+              <th scope="col" className="p-3">{t("sessionRevocation.lastActive")}</th>
+              <th scope="col" className="p-3">{t("sessionRevocation.tenant")}</th>
+              <th scope="col" className="p-3">{t("sessionRevocation.actions")}</th>
             </tr>
           </thead>
           <tbody>

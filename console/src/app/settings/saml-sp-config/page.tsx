@@ -93,9 +93,9 @@ export default function SamlSpConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">Index</th>
-              <th>Service Name</th>
-              <th>Requested Attributes</th>
+              <th scope="col" className="py-2">Index</th>
+              <th scope="col">Service Name</th>
+              <th scope="col">Requested Attributes</th>
             </tr>
           </thead>
           <tbody>

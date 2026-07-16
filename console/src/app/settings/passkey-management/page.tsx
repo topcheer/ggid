@@ -130,14 +130,14 @@ export default function PasskeyManagementPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Device</th>
-              <th className="p-3">Platform</th>
-              <th className="p-3">Created</th>
-              <th className="p-3">Last Used</th>
-              <th className="p-3">Transports</th>
-              <th className="p-3">Sync</th>
-              <th className="p-3">Backup</th>
-              <th className="p-3">Action</th>
+              <th scope="col" className="p-3">Device</th>
+              <th scope="col" className="p-3">Platform</th>
+              <th scope="col" className="p-3">Created</th>
+              <th scope="col" className="p-3">Last Used</th>
+              <th scope="col" className="p-3">Transports</th>
+              <th scope="col" className="p-3">Sync</th>
+              <th scope="col" className="p-3">Backup</th>
+              <th scope="col" className="p-3">Action</th>
             </tr>
           </thead>
           <tbody>

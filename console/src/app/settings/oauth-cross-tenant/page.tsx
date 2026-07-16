@@ -59,11 +59,11 @@ export default function OAuthCrossTenantPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Tenant ID</th>
-                <th className="text-left py-2 pr-3">Direction</th>
-                <th className="text-left py-2 pr-3">Scopes Allowed</th>
-                <th className="text-left py-2 pr-3">Expires</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Tenant ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Direction</th>
+                <th scope="col" className="text-left py-2 pr-3">Scopes Allowed</th>
+                <th scope="col" className="text-left py-2 pr-3">Expires</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

@@ -69,13 +69,13 @@ export default function RemediationTrackerPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Source</th>
-                <th className="text-left py-2 pr-3">Finding</th>
-                <th className="text-left py-2 pr-3">Severity</th>
-                <th className="text-left py-2 pr-3">Assignee</th>
-                <th className="text-left py-2 pr-3">Due Date</th>
-                <th className="text-left py-2 pr-3">Progress</th>
-                <th className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Source</th>
+                <th scope="col" className="text-left py-2 pr-3">Finding</th>
+                <th scope="col" className="text-left py-2 pr-3">Severity</th>
+                <th scope="col" className="text-left py-2 pr-3">Assignee</th>
+                <th scope="col" className="text-left py-2 pr-3">Due Date</th>
+                <th scope="col" className="text-left py-2 pr-3">Progress</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
               </tr>
             </thead>
             <tbody>

@@ -124,12 +124,12 @@ const [purposes] = useState([
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">User</th>
-              <th className="p-3">Purpose</th>
-              <th className="p-3">Granted</th>
-              <th className="p-3">Expires</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Actions</th>
+              <th scope="col" className="p-3">User</th>
+              <th scope="col" className="p-3">Purpose</th>
+              <th scope="col" className="p-3">Granted</th>
+              <th scope="col" className="p-3">Expires</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>

@@ -51,11 +51,11 @@ export default function AuditPipelineHealthPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Stage</th>
-                <th className="text-right py-2 pr-3">Throughput</th>
-                <th className="text-right py-2 pr-3">Latency</th>
-                <th className="text-right py-2 pr-3">Error Rate</th>
-                <th className="text-right py-2 pr-3">Queue Depth</th>
+                <th scope="col" className="text-left py-2 pr-3">Stage</th>
+                <th scope="col" className="text-right py-2 pr-3">Throughput</th>
+                <th scope="col" className="text-right py-2 pr-3">Latency</th>
+                <th scope="col" className="text-right py-2 pr-3">Error Rate</th>
+                <th scope="col" className="text-right py-2 pr-3">Queue Depth</th>
               </tr>
             </thead>
             <tbody>

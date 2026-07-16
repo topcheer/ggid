@@ -55,7 +55,7 @@ export default function OAuthJwksRotationConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Rotation History</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">KID</th><th>Rotated At</th><th>Algorithm</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">KID</th><th scope="col">Rotated At</th><th>Algorithm</th></tr></thead><tbody>
           {form.rotation_history.map((h, i) => (
             <tr key={i} className="border-b"><td className="py-2 font-mono text-xs">{h.kid}</td><td className="text-xs text-gray-500">{h.rotated_at}</td><td>{h.algorithm}</td></tr>
           ))}

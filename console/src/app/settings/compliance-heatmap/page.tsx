@@ -57,8 +57,8 @@ export default function ComplianceHeatmapPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-900/50 sticky top-0">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium sticky left-0 bg-gray-50 dark:bg-gray-900/50">Control</th>
-                  {data.months.map((m) => <th key={m} className="px-3 py-3 text-center font-medium text-xs whitespace-nowrap">{m}</th>)}
+                  <th scope="col" className="px-4 py-3 text-left font-medium sticky left-0 bg-gray-50 dark:bg-gray-900/50">Control</th>
+                  {data.months.map((m) => <th scope="col" key={m} className="px-3 py-3 text-center font-medium text-xs whitespace-nowrap">{m}</th>)}
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-800">

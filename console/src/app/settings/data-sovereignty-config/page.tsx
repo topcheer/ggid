@@ -36,7 +36,7 @@ export default function DataSovereigntyConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Residency Regions</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Region</th><th>Allowed</th><th>Encryption Required</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Region</th><th scope="col">Allowed</th><th>Encryption Required</th></tr></thead><tbody>
           {form.residency_regions.map((r: ResidencyRegion, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-medium">{r.region}</td><td>{r.allowed ? "Yes" : "No"}</td><td>{r.encryption_required ? "Yes" : "No"}</td></tr>
           ))}
@@ -45,7 +45,7 @@ export default function DataSovereigntyConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Cross-Border Transfer Rules</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">From</th><th>To</th><th>Allowed</th><th>Condition</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">From</th><th scope="col">To</th><th>Allowed</th><th>Condition</th></tr></thead><tbody>
           {form.cross_border_transfer_rules.map((r: CrossBorderRule, i: number) => (
             <tr key={i} className="border-b"><td className="py-2">{r.from_region}</td><td>{r.to_region}</td><td><span className={`px-2 py-1 rounded text-xs ${r.allowed ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{r.allowed ? "Yes" : "No"}</span></td><td className="text-xs">{r.condition}</td></tr>
           ))}

@@ -686,13 +686,13 @@ export default function AuditAdvancedPage() {
                 <table className="w-full">
                   <thead className="border-b border-gray-100 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Timestamp</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">User</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Action</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">IP</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Service</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Severity</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Result</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Timestamp</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">User</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Action</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">IP</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Service</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Severity</th>
+                      <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">Result</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

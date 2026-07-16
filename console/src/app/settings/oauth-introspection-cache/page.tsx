@@ -96,10 +96,10 @@ export default function OAuthIntrospectionCachePage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-3">Token Hash</th>
-                  <th className="text-left py-2 pr-3">Client</th>
-                  <th className="text-left py-2 pr-3">Cached</th>
-                  <th className="text-left py-2 pr-3">Expires</th>
+                  <th scope="col" className="text-left py-2 pr-3">Token Hash</th>
+                  <th scope="col" className="text-left py-2 pr-3">Client</th>
+                  <th scope="col" className="text-left py-2 pr-3">Cached</th>
+                  <th scope="col" className="text-left py-2 pr-3">Expires</th>
                 </tr>
               </thead>
               <tbody>

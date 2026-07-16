@@ -78,13 +78,13 @@ export default function DeviceRegistryPage() {
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.fingerprint")}</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.user")}</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.platform")}</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.sessions")}</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.lastSeen")}</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.trust")}</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.actions")}</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.fingerprint")}</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.user")}</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.platform")}</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.sessions")}</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.lastSeen")}</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.trust")}</th>
+                  <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("big1.deviceRegistry.actions")}</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {devices.map((d) => (

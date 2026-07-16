@@ -488,8 +488,8 @@ export default function UsersPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t("users.csvColumn")}</th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t("users.ggidField")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t("users.csvColumn")}</th>
+                  <th scope="col" className="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{t("users.ggidField")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -527,7 +527,7 @@ export default function UsersPage() {
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
                     {csvHeaders.map((header) => (
-                      <th key={header} className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                      <th scope="col" key={header} className="px-3 py-2 text-left text-xs font-medium text-gray-500">
                         {header}
                         {columnMapping[header] && (
                           <span className="ml-1 text-brand-600">→ {columnMapping[header]}</span>
@@ -677,7 +677,7 @@ export default function UsersPage() {
         <table className="w-full">
           <thead className="border-b border-gray-200 bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left">
+              <th scope="col" className="px-4 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={selected.size === paginated.length && paginated.length > 0}
@@ -685,11 +685,11 @@ export default function UsersPage() {
                   className="rounded"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.userCol")}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.status")}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.sync")}</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.created")}</th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.userCol")}</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.status")}</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("users.sync")}</th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">{t("common.created")}</th>
+              <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase text-gray-500">{t("common.actions")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

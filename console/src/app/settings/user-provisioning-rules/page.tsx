@@ -160,9 +160,9 @@ export default function UserProvisioningRulesPage() {
               <table className="w-full text-xs mt-3">
                 <thead className="text-left text-gray-500">
                   <tr>
-                    <th className="py-1">Source Field</th>
-                    <th className="py-1">Target Field</th>
-                    <th className="py-1">Default</th>
+                    <th scope="col" className="py-1">Source Field</th>
+                    <th scope="col" className="py-1">Target Field</th>
+                    <th scope="col" className="py-1">Default</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,11 +192,11 @@ export default function UserProvisioningRulesPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">Rule</th>
-              <th className="p-3">Source</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Timestamp</th>
-              <th className="p-3">Details</th>
+              <th scope="col" className="p-3">Rule</th>
+              <th scope="col" className="p-3">Source</th>
+              <th scope="col" className="p-3">Status</th>
+              <th scope="col" className="p-3">Timestamp</th>
+              <th scope="col" className="p-3">Details</th>
             </tr>
           </thead>
           <tbody>

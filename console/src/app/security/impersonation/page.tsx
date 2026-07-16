@@ -80,7 +80,7 @@ export default function ImpersonationLogPage() {
         <div className="hidden overflow-hidden rounded-xl border border-gray-200 shadow-sm md:block dark:border-gray-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800"><tr className="text-left text-xs font-semibold uppercase text-gray-500">
-              <th className="px-4 py-3">Impersonator</th><th className="px-4 py-3"></th><th className="px-4 py-3">Target</th><th className="px-4 py-3">Started</th><th className="px-4 py-3">Duration</th><th className="px-4 py-3">Actions</th><th className="px-4 py-3">IP</th>
+              <th scope="col" className="px-4 py-3">Impersonator</th><th className="px-4 py-3"></th><th className="px-4 py-3">Target</th><th className="px-4 py-3">Started</th><th className="px-4 py-3">Duration</th><th className="px-4 py-3">Actions</th><th className="px-4 py-3">IP</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
               {entries.map((e) => (

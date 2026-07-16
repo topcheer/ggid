@@ -76,12 +76,12 @@ export default function GDPRDataPortabilityPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">Requested</th>
-                <th className="text-left py-2 pr-3">Format</th>
-                <th className="text-left py-2 pr-3">Scope</th>
-                <th className="text-left py-2 pr-3">Status</th>
-                <th className="text-left py-2 pr-3">Action</th>
+                <th scope="col" className="text-left py-2 pr-3">User</th>
+                <th scope="col" className="text-left py-2 pr-3">Requested</th>
+                <th scope="col" className="text-left py-2 pr-3">Format</th>
+                <th scope="col" className="text-left py-2 pr-3">Scope</th>
+                <th scope="col" className="text-left py-2 pr-3">Status</th>
+                <th scope="col" className="text-left py-2 pr-3">Action</th>
               </tr>
             </thead>
             <tbody>

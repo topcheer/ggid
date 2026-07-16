@@ -26,7 +26,7 @@ export default function PolicyDryRunConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Default Context Values</h2>
-        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Key</th><th>Value</th></tr></thead><tbody>
+        <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">Key</th><th scope="col">Value</th></tr></thead><tbody>
           {form.default_context_values.map((cv: ContextValue, i: number) => (
             <tr key={i} className="border-b"><td className="py-2 font-mono">{cv.key}</td><td className="font-mono">{cv.value}</td></tr>
           ))}

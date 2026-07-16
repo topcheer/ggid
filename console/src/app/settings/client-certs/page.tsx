@@ -87,14 +87,14 @@ export default function ClientCertsPage() {
         <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
           <table className="w-full text-sm">
             <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.client")}</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.serial")}</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.issuer")}</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.issued")}</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.expires")}</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.status")}</th>
-              <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Auto-Rotate</th>
-              <th className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.actions")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.client")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.serial")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.issuer")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.issued")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.expires")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.status")}</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Auto-Rotate</th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">{t("backend.clientCerts.actions")}</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {certs.map((c) => {

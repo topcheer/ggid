@@ -77,10 +77,10 @@ export default function OAuthClientSecretScannerPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-4">Client ID</th>
-                <th className="text-left py-2 pr-4">Secret in Source</th>
-                <th className="text-left py-2 pr-4">Last Rotated</th>
-                <th className="text-left py-2 pr-4">Exposure Risk</th>
+                <th scope="col" className="text-left py-2 pr-4">Client ID</th>
+                <th scope="col" className="text-left py-2 pr-4">Secret in Source</th>
+                <th scope="col" className="text-left py-2 pr-4">Last Rotated</th>
+                <th scope="col" className="text-left py-2 pr-4">Exposure Risk</th>
               </tr>
             </thead>
             <tbody>

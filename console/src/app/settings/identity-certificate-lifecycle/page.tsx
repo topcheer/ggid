@@ -52,12 +52,12 @@ export default function IdentityCertificateLifecyclePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">{t("idCertLifecycle.name")}</th>
-                <th className="text-left py-2 pr-3">{t("idCertLifecycle.type")}</th>
-                <th className="text-left py-2 pr-3">{t("idCertLifecycle.issuer")}</th>
-                <th className="text-left py-2 pr-3">{t("idCertLifecycle.serial")}</th>
-                <th className="text-left py-2 pr-3">{t("idCertLifecycle.validTo")}</th>
-                <th className="text-left py-2 pr-3">{t("idCertLifecycle.autoRenew")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idCertLifecycle.name")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idCertLifecycle.type")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idCertLifecycle.issuer")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idCertLifecycle.serial")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idCertLifecycle.validTo")}</th>
+                <th scope="col" className="text-left py-2 pr-3">{t("idCertLifecycle.autoRenew")}</th>
               </tr>
             </thead>
             <tbody>

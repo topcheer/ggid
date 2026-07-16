@@ -114,7 +114,7 @@ export default function ServiceDependencyGraphPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Edge Details</h2>
         <table className="w-full text-sm">
-          <thead><tr className="border-b text-left"><th className="py-2">From</th><th>To</th><th>Protocol</th><th>Calls/s</th><th>Avg Latency</th></tr></thead>
+          <thead><tr className="border-b text-left"><th className="py-2">From</th><th scope="col">To</th><th>Protocol</th><th>Calls/s</th><th>Avg Latency</th></tr></thead>
           <tbody>
             {edges.map((e, i) => (
               <tr key={i} className="border-b"><td className="py-2 font-medium">{e.from}</td><td>{e.to}</td><td><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{e.protocol}</span></td><td>{e.calls_per_sec}</td><td>{e.avg_latency_ms}ms</td></tr>

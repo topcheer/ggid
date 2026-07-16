@@ -90,9 +90,9 @@ export default function OAuthResourceIndicatorsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-800 text-gray-400">
-                  <th className="text-left py-2 pr-3">Scope</th>
-                  <th className="text-left py-2 pr-3">Allowed Resources</th>
-                  <th className="text-left py-2 pr-3">Restricted</th>
+                  <th scope="col" className="text-left py-2 pr-3">Scope</th>
+                  <th scope="col" className="text-left py-2 pr-3">Allowed Resources</th>
+                  <th scope="col" className="text-left py-2 pr-3">Restricted</th>
                 </tr>
               </thead>
               <tbody>

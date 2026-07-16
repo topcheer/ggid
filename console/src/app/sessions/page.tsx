@@ -629,8 +629,8 @@ export default function SessionsPage() {
                   <SortHeader field="location" label="Location" />
                   <SortHeader field="last_active_at" label="Last Active" />
                   <SortHeader field="expires_at" label="Expires In" />
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t("sessions.status")}</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t("sessions.actions")}</th>
+                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">{t("sessions.status")}</th>
+                  <th scope="col" className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">{t("sessions.actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

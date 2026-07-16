@@ -92,10 +92,10 @@ export default function PolicyImpactAnalysisPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-800 text-gray-400">
-                      <th className="text-left py-2 pr-4">User</th>
-                      <th className="text-right py-2 px-2 text-green-400">Added</th>
-                      <th className="text-right py-2 px-2 text-red-400">Removed</th>
-                      <th className="text-right py-2 px-2">Risk</th>
+                      <th scope="col" className="text-left py-2 pr-4">User</th>
+                      <th scope="col" className="text-right py-2 px-2 text-green-400">Added</th>
+                      <th scope="col" className="text-right py-2 px-2 text-red-400">Removed</th>
+                      <th scope="col" className="text-right py-2 px-2">Risk</th>
                     </tr>
                   </thead>
                   <tbody>

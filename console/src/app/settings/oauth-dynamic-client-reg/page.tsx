@@ -55,12 +55,12 @@ export default function OAuthDynamicClientRegPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">{t("oauthDCR.clientId")}</th>
-              <th>{t("oauthDCR.name")}</th>
-              <th>{t("oauthDCR.grantTypes")}</th>
-              <th>{t("oauthDCR.redirectUris")}</th>
-              <th>{t("oauthDCR.created")}</th>
-              <th>{t("oauthDCR.actions")}</th>
+              <th scope="col" className="py-2">{t("oauthDCR.clientId")}</th>
+              <th scope="col">{t("oauthDCR.name")}</th>
+              <th scope="col">{t("oauthDCR.grantTypes")}</th>
+              <th scope="col">{t("oauthDCR.redirectUris")}</th>
+              <th scope="col">{t("oauthDCR.created")}</th>
+              <th scope="col">{t("oauthDCR.actions")}</th>
             </tr>
           </thead>
           <tbody>

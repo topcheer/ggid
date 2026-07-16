@@ -570,9 +570,9 @@ export default function UserImportPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium text-gray-500">CSV Column</th>
-                    <th className="px-4 py-2 text-left font-medium text-gray-500">{t("userImport.sampleValue")}</th>
-                    <th className="px-4 py-2 text-left font-medium text-gray-500">{t("userImport.mapTo")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium text-gray-500">CSV Column</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium text-gray-500">{t("userImport.sampleValue")}</th>
+                    <th scope="col" className="px-4 py-2 text-left font-medium text-gray-500">{t("userImport.mapTo")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -630,9 +630,9 @@ export default function UserImportPage() {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">#</th>
+                    <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">#</th>
                     {headers.filter((h) => mapping[h]).map((h) => (
-                      <th key={h} className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
+                      <th scope="col" key={h} className="px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">
                         {GGID_FIELDS.find((f) => f.key === mapping[h])?.label || h}
                       </th>
                     ))}
@@ -730,9 +730,9 @@ export default function UserImportPage() {
                       <table className="w-full text-sm">
                         <thead className="sticky top-0 bg-gray-50 dark:bg-gray-900">
                           <tr>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("userImport.row")}</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("userImport.field")}</th>
-                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("common.error")}</th>
+                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("userImport.row")}</th>
+                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("userImport.field")}</th>
+                            <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-400">{t("common.error")}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

@@ -108,14 +108,14 @@ export default function OAuthTokenAuditingPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Token ID</th>
-                <th className="text-left py-2 pr-3">Client</th>
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">Issued</th>
-                <th className="text-left py-2 pr-3">Scopes</th>
-                <th className="text-left py-2 pr-3">Revoked</th>
-                <th className="text-left py-2 pr-3">By</th>
-                <th className="text-left py-2 pr-3">Reason</th>
+                <th scope="col" className="text-left py-2 pr-3">Token ID</th>
+                <th scope="col" className="text-left py-2 pr-3">Client</th>
+                <th scope="col" className="text-left py-2 pr-3">User</th>
+                <th scope="col" className="text-left py-2 pr-3">Issued</th>
+                <th scope="col" className="text-left py-2 pr-3">Scopes</th>
+                <th scope="col" className="text-left py-2 pr-3">Revoked</th>
+                <th scope="col" className="text-left py-2 pr-3">By</th>
+                <th scope="col" className="text-left py-2 pr-3">Reason</th>
               </tr>
             </thead>
             <tbody>

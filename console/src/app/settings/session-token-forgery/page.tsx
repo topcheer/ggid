@@ -59,11 +59,11 @@ export default function SessionTokenForgeryPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Token (partial)</th>
-                <th className="text-left py-2 pr-3">Detection Method</th>
-                <th className="text-left py-2 pr-3">User Claimed</th>
-                <th className="text-left py-2 pr-3">Actual Source</th>
-                <th className="text-left py-2 pr-3">Timestamp</th>
+                <th scope="col" className="text-left py-2 pr-3">Token (partial)</th>
+                <th scope="col" className="text-left py-2 pr-3">Detection Method</th>
+                <th scope="col" className="text-left py-2 pr-3">User Claimed</th>
+                <th scope="col" className="text-left py-2 pr-3">Actual Source</th>
+                <th scope="col" className="text-left py-2 pr-3">Timestamp</th>
               </tr>
             </thead>
             <tbody>

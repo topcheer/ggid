@@ -722,12 +722,12 @@ export default function NotificationPreviewPage() {
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Timestamp</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Template</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Recipient</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Channel</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Status</th>
-                      <th className="px-3 py-2 text-xs font-semibold text-gray-500">Time</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Timestamp</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Template</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Recipient</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Channel</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Status</th>
+                      <th scope="col" className="px-3 py-2 text-xs font-semibold text-gray-500">Time</th>
                     </tr>
                   </thead>
                   <tbody>

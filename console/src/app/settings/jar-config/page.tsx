@@ -87,10 +87,10 @@ export default function JarConfigPage() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left">
-              <th className="py-2">Client ID</th>
-              <th>Client Name</th>
-              <th>Signing Alg</th>
-              <th>Require JAR</th>
+              <th scope="col" className="py-2">Client ID</th>
+              <th scope="col">Client Name</th>
+              <th scope="col">Signing Alg</th>
+              <th scope="col">Require JAR</th>
             </tr>
           </thead>
           <tbody>

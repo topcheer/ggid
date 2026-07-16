@@ -196,12 +196,12 @@ export default function HashChainPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr className="text-left text-xs font-semibold uppercase text-gray-500">
-                  <th className="px-4 py-3">#</th>
-                  <th className="px-4 py-3">Hash</th>
-                  <th className="px-4 py-3">Prev Hash</th>
-                  <th className="px-4 py-3">Events</th>
-                  <th className="px-4 py-3">Timestamp</th>
-                  <th className="px-4 py-3">Status</th>
+                  <th scope="col" className="px-4 py-3">#</th>
+                  <th scope="col" className="px-4 py-3">Hash</th>
+                  <th scope="col" className="px-4 py-3">Prev Hash</th>
+                  <th scope="col" className="px-4 py-3">Events</th>
+                  <th scope="col" className="px-4 py-3">Timestamp</th>
+                  <th scope="col" className="px-4 py-3">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">

@@ -79,11 +79,11 @@ export default function GoldenTicketDetectPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Token Hash</th>
-                <th className="text-left py-2 pr-3">Anomaly Type</th>
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">Source IP</th>
-                <th className="text-left py-2 pr-3">Timestamp</th>
+                <th scope="col" className="text-left py-2 pr-3">Token Hash</th>
+                <th scope="col" className="text-left py-2 pr-3">Anomaly Type</th>
+                <th scope="col" className="text-left py-2 pr-3">User</th>
+                <th scope="col" className="text-left py-2 pr-3">Source IP</th>
+                <th scope="col" className="text-left py-2 pr-3">Timestamp</th>
               </tr>
             </thead>
             <tbody>

@@ -114,9 +114,9 @@ export default function PolicyTaggingPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-800 text-gray-400">
-                    <th className="text-left py-2 pr-4">Policy</th>
-                    <th className="text-left py-2 pr-4">Status</th>
-                    <th className="text-left py-2 pr-4">Tags</th>
+                    <th scope="col" className="text-left py-2 pr-4">Policy</th>
+                    <th scope="col" className="text-left py-2 pr-4">Status</th>
+                    <th scope="col" className="text-left py-2 pr-4">Tags</th>
                   </tr>
                 </thead>
                 <tbody>

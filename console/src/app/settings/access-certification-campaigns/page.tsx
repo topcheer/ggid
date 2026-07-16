@@ -61,10 +61,10 @@ export default function AccessCertificationCampaignsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">Reviewer</th>
-                <th className="text-left py-2 pr-3">Assigned</th>
-                <th className="text-left py-2 pr-3">Completed</th>
-                <th className="text-left py-2 pr-3">Pending</th>
+                <th scope="col" className="text-left py-2 pr-3">Reviewer</th>
+                <th scope="col" className="text-left py-2 pr-3">Assigned</th>
+                <th scope="col" className="text-left py-2 pr-3">Completed</th>
+                <th scope="col" className="text-left py-2 pr-3">Pending</th>
               </tr>
             </thead>
             <tbody>

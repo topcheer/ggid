@@ -137,12 +137,12 @@ export default function PasskeyHealthPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-800 text-gray-400">
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">Device</th>
-                <th className="text-left py-2 pr-3">Platform</th>
-                <th className="text-left py-2 pr-3">Created</th>
-                <th className="text-left py-2 pr-3">Last Used</th>
-                <th className="text-left py-2 pr-3">Backup</th>
+                <th scope="col" className="text-left py-2 pr-3">User</th>
+                <th scope="col" className="text-left py-2 pr-3">Device</th>
+                <th scope="col" className="text-left py-2 pr-3">Platform</th>
+                <th scope="col" className="text-left py-2 pr-3">Created</th>
+                <th scope="col" className="text-left py-2 pr-3">Last Used</th>
+                <th scope="col" className="text-left py-2 pr-3">Backup</th>
               </tr>
             </thead>
             <tbody>

@@ -156,14 +156,14 @@ const [filters, setFilters] = useState<FilterRule[]>([
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr className="text-left">
-              <th className="p-3">{t("common.name")}</th>
-              <th className="p-3">{t("common.type")}</th>
-              <th className="p-3">{t("siemForwarder.url")}</th>
-              <th className="p-3">{t("siemForwarder.auth")}</th>
-              <th className="p-3">{t("siemForwarder.batch")}</th>
-              <th className="p-3">{t("common.status")}</th>
-              <th className="p-3">{t("siemForwarder.events")}</th>
-              <th className="p-3">{t("common.action")}</th>
+              <th scope="col" className="p-3">{t("common.name")}</th>
+              <th scope="col" className="p-3">{t("common.type")}</th>
+              <th scope="col" className="p-3">{t("siemForwarder.url")}</th>
+              <th scope="col" className="p-3">{t("siemForwarder.auth")}</th>
+              <th scope="col" className="p-3">{t("siemForwarder.batch")}</th>
+              <th scope="col" className="p-3">{t("common.status")}</th>
+              <th scope="col" className="p-3">{t("siemForwarder.events")}</th>
+              <th scope="col" className="p-3">{t("common.action")}</th>
             </tr>
           </thead>
           <tbody>
