@@ -29,7 +29,7 @@ export default function ScopeDescriptionsPage() {
   const fetchScopes = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/scope-descriptions", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/scope-descriptions", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setScopes(data.scopes || data || []);
@@ -53,7 +53,7 @@ export default function ScopeDescriptionsPage() {
     try {
       await fetch(`/api/v1/oauth/scope-descriptions/${encodeURIComponent(editScope)}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ descriptions: editValues }),
       });
       setScopes((prev) => prev.map((s) => s.scope === editScope ? { ...s, descriptions: { ...editValues } } : s));

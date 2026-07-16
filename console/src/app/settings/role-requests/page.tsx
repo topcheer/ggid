@@ -37,7 +37,7 @@ export default function RoleRequestsPage() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/role-requests", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/role-requests", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setRequests(data.requests || data || []);
@@ -51,7 +51,7 @@ export default function RoleRequestsPage() {
   const approve = async (id: string) => {
     setActionId(id);
     try {
-      await fetch(`/api/v1/policy/role-requests/${id}/approve`, { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      await fetch(`/api/v1/policy/role-requests/${id}/approve`, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: r.approval_step.step >= r.approval_step.total ? "completed" : "approved" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }
@@ -60,7 +60,7 @@ export default function RoleRequestsPage() {
   const reject = async (id: string) => {
     setActionId(id);
     try {
-      await fetch(`/api/v1/policy/role-requests/${id}/reject`, { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      await fetch(`/api/v1/policy/role-requests/${id}/reject`, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }
@@ -71,7 +71,7 @@ export default function RoleRequestsPage() {
     try {
       await fetch("/api/v1/policy/role-requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify(createForm),
       });
       setShowCreate(false);

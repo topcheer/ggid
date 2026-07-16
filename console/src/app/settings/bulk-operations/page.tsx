@@ -27,7 +27,7 @@ export default function BulkOperationsPage() {
     setRunning(true); setProgress(0); setResult(null);
     fetch("/api/v1/policies/bundles", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ opType, csvPreview }),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
@@ -43,7 +43,7 @@ export default function BulkOperationsPage() {
 
   useEffect(() => {
     fetch("/api/v1/policies/bundles", {
-      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setBundles(data.bundles || data.items || []); setLoading(false); })

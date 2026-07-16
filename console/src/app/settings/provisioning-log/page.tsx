@@ -33,7 +33,7 @@ export default function ProvisioningLogPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await fetch("/api/v1/identity/provisioning-log", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setEvents(d.events || d || []); } }
+    try { const res = await fetch("/api/v1/identity/provisioning-log", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setEvents(d.events || d || []); } }
     catch { /* noop */ }
     finally { setLoading(false); }
   }, []);
@@ -42,7 +42,7 @@ export default function ProvisioningLogPage() {
 
   const retry = async (id: string) => {
     setRetrying(id);
-    try { await fetch("/api/v1/identity/provisioning-log/" + id + "/retry", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
+    try { await fetch("/api/v1/identity/provisioning-log/" + id + "/retry", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
     catch { /* noop */ }
     finally { setRetrying(null); }
   };

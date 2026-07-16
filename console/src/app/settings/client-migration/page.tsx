@@ -34,7 +34,7 @@ export default function ClientMigrationPage() {
 
   const fetchClients = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/oauth/clients", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/clients", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setClients(data.clients || data || []);
@@ -59,7 +59,7 @@ export default function ClientMigrationPage() {
     try {
       const res = await fetch("/api/v1/oauth/client-migration/preview", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ client_id: original.client_id, original, proposed: draft }),
       });
       if (res.ok) {
@@ -105,7 +105,7 @@ export default function ClientMigrationPage() {
     try {
       await fetch("/api/v1/oauth/client-migration/execute", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ client_id: draft.client_id, config: draft, grace_period_days: gracePeriod }),
       });
       setShowConfirm(false);

@@ -32,7 +32,7 @@ export default function PasskeysPage() {
   const fetchPasskeys = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/passkeys", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/passkeys", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setPasskeys(data.passkeys || data || []);
@@ -53,7 +53,7 @@ export default function PasskeysPage() {
     try {
       await fetch(`/api/v1/auth/passkeys/${id}`, {
         method: "DELETE",
-        headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setPasskeys((prev) => prev.filter((p) => p.id !== id));
     } catch {

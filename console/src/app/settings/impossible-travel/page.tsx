@@ -39,7 +39,7 @@ export default function ImpossibleTravelPage() {
     setLoading(true);
     const params = startDate && endDate ? `?start=${startDate}&end=${endDate}` : "";
     try {
-      const res = await fetch(`/api/v1/auth/impossible-travel${params}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/auth/impossible-travel${params}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setAlerts(data.alerts || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

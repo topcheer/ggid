@@ -14,7 +14,7 @@ export default function ImpersonationLogPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/auth/impersonation-log", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/impersonation-log", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setEvents(d.events || d || []);
@@ -24,7 +24,7 @@ export default function ImpersonationLogPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const revoke = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/auth/impersonation-log/" + id + "/revoke", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/impersonation-log/" + id + "/revoke", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to revoke session"); }

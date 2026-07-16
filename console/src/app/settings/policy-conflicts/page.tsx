@@ -30,7 +30,7 @@ export default function PolicyConflictsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/conflicts", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/conflicts", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setConflicts(data.conflicts || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

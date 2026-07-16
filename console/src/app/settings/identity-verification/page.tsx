@@ -14,7 +14,7 @@ export default function IdentityVerificationPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/identity-verification", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/identity-verification", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setConfig(d.config || d); setHistory(d.history || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

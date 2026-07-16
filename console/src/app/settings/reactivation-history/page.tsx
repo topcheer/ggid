@@ -28,7 +28,7 @@ export default function ReactivationHistoryPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/identity/users", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/users", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setUsers(data.users || data || []); }
     } catch { /* noop */ }
   }, []);
@@ -36,7 +36,7 @@ export default function ReactivationHistoryPage() {
   const fetchTimeline = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/identity/reactivation-history?user_id=${encodeURIComponent(id)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/identity/reactivation-history?user_id=${encodeURIComponent(id)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setTimeline(data.events || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

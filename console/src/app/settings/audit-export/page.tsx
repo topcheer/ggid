@@ -22,14 +22,14 @@ export default function AuditExportPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
-    try { const res = await fetch("/api/v1/audit/export/history", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setHistory(d.exports || d.history || []); } }
+    try { const res = await fetch("/api/v1/audit/export/history", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setHistory(d.exports || d.history || []); } }
     catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); } finally { setLoading(false); }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
   const doExport = async () => {
     setExporting(true);
-    try { await fetch("/api/v1/audit/export", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ format, start_date: startDate, end_date: endDate, user: filterUser, action: filterAction, severity: filterSeverity, destination, scheduled }) }); loadData(); }
+    try { await fetch("/api/v1/audit/export", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ format, start_date: startDate, end_date: endDate, user: filterUser, action: filterAction, severity: filterSeverity, destination, scheduled }) }); loadData(); }
     catch { /* noop */ }
     finally { setExporting(false); }
   };

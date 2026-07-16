@@ -24,7 +24,7 @@ export default function PolicyDryRunPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/policy/dry-run", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ policy_id: policyId, subject, resource, action: action || "access" }) });
+      const res = await fetch("/api/v1/policy/dry-run", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ policy_id: policyId, subject, resource, action: action || "access" }) });
       if (!res.ok) return null;
       setResult(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to evaluate policy"); }

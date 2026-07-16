@@ -36,7 +36,7 @@ export default function AuditRealtimePage() {
   const fetchData = useCallback(async () => {
     if (paused) return;
     try {
-      const res = await fetch("/api/v1/audit/realtime?limit=50", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/realtime?limit=50", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setEvents((d.events || d || []).slice(0, 50)); setError(null); }
       else { setError(`HTTP ${res.status}`); }
     } catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); }

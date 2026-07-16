@@ -12,11 +12,11 @@ export default function AuditRetentionPolicyPage() {
   const [loading, setLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState<{ event_type: string; retention_days: number; action: "archive" | "delete" | "anonymize"; compliance_basis: string }>({ event_type: "", retention_days: 365, action: "archive", compliance_basis: "" });
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/retention-policy", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/retention-policy", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
   const addRule = () => { if (!form.event_type || !data) return; setData({ ...data, rules: [...data.rules, { ...form }] }); setShowAdd(false); setForm({ event_type: "", retention_days: 365, action: "archive", compliance_basis: "" }); };
   const removeRule = (i: number) => { if (!data) return; setData({ ...data, rules: data.rules.filter((_, idx) => idx !== i) }); };
-  const save = async () => { if (!data) return; try { await fetch("/api/v1/audit/retention-policy", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) }); } catch { /* noop */ } };
+  const save = async () => { if (!data) return; try { await fetch("/api/v1/audit/retention-policy", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) }); } catch { /* noop */ } };
   const storagePct = data ? Math.round((data.storage_used_gb / data.storage_limit_gb) * 100) : 0;
   const storageColor = storagePct > 80 ? "#ef4444" : storagePct > 60 ? "#f59e0b" : "#10b981";
   return (

@@ -16,7 +16,7 @@ export default function GrantHistoryPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/grant-history", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/grant-history", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setEvents(d.events || d || []);

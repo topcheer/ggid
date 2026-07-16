@@ -15,9 +15,9 @@ export default function EventCorrelationPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ rule_name: "", source_event: "", target_event: "", time_window: "5m", correlation_type: "temporal", action: "alert" });
   const [selectedIncident, setSelectedIncident] = useState<string | null>(null);
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/event-correlation", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setRules(d.rules || []); setIncidents(d.incidents || []); } } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/event-correlation", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setRules(d.rules || []); setIncidents(d.incidents || []); } } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const createRule = async () => { if (!form.rule_name) return; try { await fetch("/api/v1/audit/event-correlation/rules", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ rule_name: "", source_event: "", target_event: "", time_window: "5m", correlation_type: "temporal", action: "alert" }); fetchData(); } catch { /* noop */ } };
+  const createRule = async () => { if (!form.rule_name) return; try { await fetch("/api/v1/audit/event-correlation/rules", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ rule_name: "", source_event: "", target_event: "", time_window: "5m", correlation_type: "temporal", action: "alert" }); fetchData(); } catch { /* noop */ } };
   const openIncidents = incidents.filter((i) => i.status === "open").length;
   return (
     <div className="space-y-6">

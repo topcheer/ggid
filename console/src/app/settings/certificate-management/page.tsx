@@ -17,7 +17,7 @@ export default function CertificateManagementPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/certificates", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/certificates", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setCerts(d.certificates || d || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -26,12 +26,12 @@ export default function CertificateManagementPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const renewCert = async (id: string) => {
-    try { await fetch("/api/v1/auth/certificates/" + id + "/renew", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
+    try { await fetch("/api/v1/auth/certificates/" + id + "/renew", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
     catch { /* noop */ }
   };
 
   const revokeCert = async (id: string) => {
-    try { await fetch("/api/v1/auth/certificates/" + id, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
+    try { await fetch("/api/v1/auth/certificates/" + id, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
     catch { /* noop */ }
   };
 

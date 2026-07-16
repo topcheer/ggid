@@ -41,7 +41,7 @@ export default function InactiveCleanupPage() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/identity/inactive-users?threshold=${threshold}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/identity/inactive-users?threshold=${threshold}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || data || []);
@@ -66,7 +66,7 @@ export default function InactiveCleanupPage() {
     try {
       await fetch("/api/v1/identity/inactive-cleanup/schedule", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({
           user_ids: [...selectedIds],
           action,

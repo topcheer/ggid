@@ -26,7 +26,7 @@ export default function PolicySnapshotsPage() {
   const fetchSnapshots = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/snapshots", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/snapshots", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setSnapshots(data.snapshots || data || []);
@@ -47,7 +47,7 @@ export default function PolicySnapshotsPage() {
     try {
       await fetch("/api/v1/policy/snapshots", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ policy_id: policyId, description }),
       });
       setShowCreate(false);
@@ -64,7 +64,7 @@ export default function PolicySnapshotsPage() {
     try {
       await fetch(`/api/v1/policy/snapshots/${rollbackTarget.id}/rollback`, {
         method: "POST",
-        headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setRollbackTarget(null);
       fetchSnapshots();

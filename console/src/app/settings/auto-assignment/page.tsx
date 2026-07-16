@@ -36,7 +36,7 @@ export default function AutoAssignmentPage() {
 
   const fetchCampaigns = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/policy/auto-assignment/campaigns", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/auto-assignment/campaigns", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setCampaigns(data.campaigns || data || []); if (data.campaigns?.[0]) setCampaign(data.campaigns[0]); }
     } catch { /* noop */ }
   }, []);
@@ -45,7 +45,7 @@ export default function AutoAssignmentPage() {
     if (!campaign) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/policy/auto-assignment?campaign=${encodeURIComponent(campaign)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/policy/auto-assignment?campaign=${encodeURIComponent(campaign)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setAssignments(data.assignments || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -56,7 +56,7 @@ export default function AutoAssignmentPage() {
 
   const reassign = async (id: string) => {
     setReassigningId(id);
-    try { await fetch(`/api/v1/policy/auto-assignment/${id}/reassign`, { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchAssignments(); }
+    try { await fetch(`/api/v1/policy/auto-assignment/${id}/reassign`, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchAssignments(); }
     catch { /* noop */ }
     finally { setReassigningId(null); }
   };

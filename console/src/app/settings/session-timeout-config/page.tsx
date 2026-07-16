@@ -29,7 +29,7 @@ export default function SessionTimeoutConfigPage() {
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch("/api/v1/auth/session-timeout-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch("/api/v1/auth/session-timeout-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
       .then(async (res) => { if (res.ok) { const data = await res.json(); if (data) setConfig(data); } })
       .catch(() => { /* use defaults */ })
       .finally(() => setLoading(false));
@@ -38,7 +38,7 @@ export default function SessionTimeoutConfigPage() {
   const save = useCallback(async () => {
     setSaving(true); setError("");
     try {
-      const res = await fetch("/api/v1/auth/session-timeout-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
+      const res = await fetch("/api/v1/auth/session-timeout-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
       if (!res.ok) return null;
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) {

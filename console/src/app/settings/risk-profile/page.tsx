@@ -15,7 +15,7 @@ export default function RiskProfilePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/auth/risk-profile?user=${encodeURIComponent(user)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/auth/risk-profile?user=${encodeURIComponent(user)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setData(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load risk profile"); }

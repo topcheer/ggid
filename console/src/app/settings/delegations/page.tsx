@@ -35,7 +35,7 @@ export default function DelegationsPage() {
   const fetchDelegations = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/delegations", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/delegations", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setDelegations(data.delegations || data || []);
@@ -80,7 +80,7 @@ export default function DelegationsPage() {
     try {
       await fetch(`/api/v1/identity/delegations/${revokeId}/revoke`, {
         method: "POST",
-        headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setDelegations((prev) => prev.map((d) => d.id === revokeId ? { ...d, status: "revoked" } : d));
       setRevokeId(null);

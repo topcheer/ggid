@@ -36,7 +36,7 @@ export default function SecretStrengthPage() {
 
   const fetchClients = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/oauth/clients", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/clients", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setClients(data.clients || data || []);
@@ -50,7 +50,7 @@ export default function SecretStrengthPage() {
     if (!selectedId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/oauth/clients/${selectedId}/secret-strength`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/oauth/clients/${selectedId}/secret-strength`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setReports(Array.isArray(data) ? data : [data]);

@@ -25,7 +25,7 @@ export default function UsagePolicyPage() {
   const fetchPolicies = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/usage-policy", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/usage-policy", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setPolicies(data.policies || data || []);
@@ -53,7 +53,7 @@ export default function UsagePolicyPage() {
     try {
       await fetch(`/api/v1/oauth/usage-policy/${editForm.client_id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify(editForm),
       });
       setPolicies((prev) => prev.map((p) => p.client_id === editForm.client_id ? editForm : p));

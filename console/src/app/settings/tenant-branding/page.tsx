@@ -15,7 +15,7 @@ export default function TenantBrandingPage() {
   const loadBranding = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await fetch("/api/v1/admin/branding", { headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/admin/branding", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const data = await res.json();
       if (data) setBranding(prev => ({ ...prev, ...data }));
@@ -29,7 +29,7 @@ export default function TenantBrandingPage() {
     setSaving(true);
     setSaveMsg(null);
     try {
-      const res = await fetch("/api/v1/admin/branding", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(branding) });
+      const res = await fetch("/api/v1/admin/branding", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(branding) });
       if (!res.ok) return null;
       setSaveMsg({ type: "success", text: t("tenantBranding.saved") });
     } catch (e) {

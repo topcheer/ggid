@@ -26,7 +26,7 @@ export default function EmailTemplateEditorPage() {
   const selectLang = (l: string) => { setLang(l); const key = template + "_" + l; setContent(contentByLang[key] || defaultHtml[template as keyof typeof defaultHtml] || ""); };
   const updateContent = (c: string) => { setContent(c); setContentByLang({ ...contentByLang, [template + "_" + lang]: c }); };
   const insertVar = (v: string) => updateContent(content + v);
-  const sendTest = async () => { setSending(true); try { await fetch("/api/v1/notification/email-test", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ template, lang, content }) }); } catch { /* noop */ } finally { setSending(false); } };
+  const sendTest = async () => { setSending(true); try { await fetch("/api/v1/notification/email-test", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ template, lang, content }) }); } catch { /* noop */ } finally { setSending(false); } };
   if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
   if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">{t("common.error")}: {error}</p><button aria-label="action" onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("common.retry")}</button></div></div>);
   return (

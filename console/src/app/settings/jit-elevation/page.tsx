@@ -37,7 +37,7 @@ export default function JITElevationPage() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/jit-elevation", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/jit-elevation", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setRequests(data.requests || data || []);
@@ -54,7 +54,7 @@ export default function JITElevationPage() {
     try {
       await fetch("/api/v1/policy/jit-elevation", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify(form),
       });
       setForm({ role: "", duration_minutes: 60, justification: "" });
@@ -66,7 +66,7 @@ export default function JITElevationPage() {
   const approve = async (id: string) => {
     setActionId(id);
     try {
-      await fetch(`/api/v1/policy/jit-elevation/${id}/approve`, { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      await fetch(`/api/v1/policy/jit-elevation/${id}/approve`, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "active" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }
@@ -75,7 +75,7 @@ export default function JITElevationPage() {
   const reject = async (id: string) => {
     setActionId(id);
     try {
-      await fetch(`/api/v1/policy/jit-elevation/${id}/reject`, { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      await fetch(`/api/v1/policy/jit-elevation/${id}/reject`, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r));
     } catch { /* noop */ }
     finally { setActionId(null); }

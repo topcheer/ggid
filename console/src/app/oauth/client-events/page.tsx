@@ -37,7 +37,7 @@ export default function ClientEventsPage() {
 
   const fetchClients = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/oauth/clients", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/clients", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setClients(data.clients || data || []);
@@ -49,7 +49,7 @@ export default function ClientEventsPage() {
     if (!selectedId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/oauth/clients/${selectedId}/events`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/oauth/clients/${selectedId}/events`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events || data || []);

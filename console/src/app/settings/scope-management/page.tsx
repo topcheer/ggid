@@ -22,7 +22,7 @@ export default function ScopeManagementPage() {
 
   useEffect(() => {
     fetch("/api/v1/oauth/scopes", {
-      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
@@ -36,7 +36,7 @@ export default function ScopeManagementPage() {
   const addScope = () => {
     fetch("/api/v1/oauth/scopes", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify(newScope),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
@@ -45,7 +45,7 @@ export default function ScopeManagementPage() {
   };
 
   const deleteScope = (id: string) => {
-    fetch(`/api/v1/oauth/scopes/${id}`, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch(`/api/v1/oauth/scopes/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
       .then(res => { if (!res.ok) return null; setScopes(prev => prev.filter(s => s.id !== id)); })
       .catch(err => setError(err.message));
   };

@@ -19,7 +19,7 @@ export default function PasswordResetFlowPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/password-reset-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/password-reset-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setConfig(d.config || d); setHistory(d.history || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -30,7 +30,7 @@ export default function PasswordResetFlowPage() {
   const save = async () => {
     if (!config) return;
     setSaving(true);
-    try { await fetch("/api/v1/auth/password-reset-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
+    try { await fetch("/api/v1/auth/password-reset-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
     catch { /* noop */ }
     finally { setSaving(false); }
   };

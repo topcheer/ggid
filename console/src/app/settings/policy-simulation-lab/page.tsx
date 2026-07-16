@@ -17,7 +17,7 @@ export default function PolicySimulationLabPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/policy/simulation-lab", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subject, resource, action: action || "access" }) });
+      const res = await fetch("/api/v1/policy/simulation-lab", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subject, resource, action: action || "access" }) });
       if (!res.ok) return null;
       const d = await res.json();
       setResults(d.results || []);

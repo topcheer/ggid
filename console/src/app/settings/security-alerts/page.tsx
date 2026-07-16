@@ -30,7 +30,7 @@ export default function SecurityAlertsPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await fetch("/api/v1/audit/security-alerts", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setAlerts(d.alerts || d || []); } }
+    try { const res = await fetch("/api/v1/audit/security-alerts", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setAlerts(d.alerts || d || []); } }
     catch { /* noop */ }
     finally { setLoading(false); }
   }, []);
@@ -39,7 +39,7 @@ export default function SecurityAlertsPage() {
 
   const updateStatus = async (id: string, status: "acknowledged" | "resolved") => {
     setAlerts(alerts.map((a) => a.id === id ? { ...a, status } : a));
-    try { await fetch("/api/v1/audit/security-alerts/" + id, { method: "PATCH", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ status }) }); } catch { /* noop */ }
+    try { await fetch("/api/v1/audit/security-alerts/" + id, { method: "PATCH", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ status }) }); } catch { /* noop */ }
   };
 
   const filtered = filterStatus ? alerts.filter((a) => a.status === filterStatus) : alerts;

@@ -55,7 +55,7 @@ export default function OrgChartPage() {
   const [search, setSearch] = useState("");
   useEffect(() => {
     setError(null);
-    fetch("/api/v1/org/orgs", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
+    fetch("/api/v1/org/orgs", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
       if (!res.ok) { setError(`Failed to load orgs: HTTP ${res.status}`); return; }
       const data = await res.json();
       setOrgs(data.orgs || data || []);
@@ -66,7 +66,7 @@ export default function OrgChartPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/org/orgs/${orgId}/chart`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/org/orgs/${orgId}/chart`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setTree(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load org chart"); }

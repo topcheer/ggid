@@ -72,7 +72,7 @@ export default function DataLineagePage() {
     if (!resource) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/audit/data-lineage?resource=${encodeURIComponent(resource)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/audit/data-lineage?resource=${encodeURIComponent(resource)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const json = await res.json();
         setData(json);

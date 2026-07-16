@@ -18,7 +18,7 @@ export default function AuditChallengeResponsePage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/audit/challenge-response", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/challenge-response", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setOpen(d.open || []); setResolved(d.resolved || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -27,7 +27,7 @@ export default function AuditChallengeResponsePage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const respond = async (id: string) => {
-    try { await fetch("/api/v1/audit/challenge-response/" + id + "/respond", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ comment }) }); setRespondId(null); setComment(""); fetchData(); }
+    try { await fetch("/api/v1/audit/challenge-response/" + id + "/respond", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ comment }) }); setRespondId(null); setComment(""); fetchData(); }
     catch { /* noop */ }
   };
 

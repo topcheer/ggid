@@ -11,7 +11,7 @@ export default function RiskPostureDashboardPage() {
 
   const [data, setData] = useState<RiskData | null>(null);
   const [loading, setLoading] = useState(false);
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/risk-posture", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/risk-posture", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
   const scoreColor = data ? (data.overall_score >= 75 ? "#10b981" : data.overall_score >= 50 ? "#f59e0b" : "#ef4444") : "#3b82f6";
   const maxTrend = Math.max(...(data?.trend_30d.map((d) => d.score) || [100]), 1);

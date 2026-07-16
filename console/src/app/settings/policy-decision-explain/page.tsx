@@ -18,7 +18,7 @@ export default function PolicyDecisionExplainPage() {
     if (!subject || !resource) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/decision-explain", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subject, resource, action: action || "access" }) });
+      const res = await fetch("/api/v1/policy/decision-explain", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subject, resource, action: action || "access" }) });
       if (res.ok) setResult(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

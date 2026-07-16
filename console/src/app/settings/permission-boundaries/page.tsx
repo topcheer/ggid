@@ -38,7 +38,7 @@ export default function PermissionBoundariesPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/policy/permission-boundaries", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/permission-boundaries", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setBoundaries(data.boundaries || data || []);
@@ -66,7 +66,7 @@ export default function PermissionBoundariesPage() {
     try {
       const res = await fetch(`/api/v1/policy/permission-boundaries/${editForm.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify(editForm),
       });
       if (!res.ok) {
@@ -83,7 +83,7 @@ export default function PermissionBoundariesPage() {
 
   const fetchViolations = async (roleId: string) => {
     try {
-      const res = await fetch(`/api/v1/policy/permission-boundaries/${roleId}/violations`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/policy/permission-boundaries/${roleId}/violations`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setViolations(data.violations || data || []);

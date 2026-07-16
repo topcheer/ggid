@@ -14,7 +14,7 @@ export default function SecurityDashboardPage() {
       try {
         const res = await fetch("/api/v1/audit/security-posture", {
           method: "GET",
-          headers: {
+          headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`,
             "Content-Type": "application/json",
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },

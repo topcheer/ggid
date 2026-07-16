@@ -31,7 +31,7 @@ export default function EventDedupPage() {
     if (!startDate || !endDate) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/audit/event-dedup", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ start_date: startDate, end_date: endDate, method }) });
+      const res = await fetch("/api/v1/audit/event-dedup", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ start_date: startDate, end_date: endDate, method }) });
       if (res.ok) setStats(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

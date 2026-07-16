@@ -26,7 +26,7 @@ export default function PkceEnforcementPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await fetch("/api/v1/oauth/pkce-enforcement", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setConfig(await res.json()); }
+    try { const res = await fetch("/api/v1/oauth/pkce-enforcement", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setConfig(await res.json()); }
     catch { /* noop */ }
     finally { setLoading(false); }
   }, []);
@@ -36,7 +36,7 @@ export default function PkceEnforcementPage() {
   const save = async () => {
     if (!config) return;
     setSaving(true);
-    try { await fetch("/api/v1/oauth/pkce-enforcement", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
+    try { await fetch("/api/v1/oauth/pkce-enforcement", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
     catch { /* noop */ }
     finally { setSaving(false); }
   };

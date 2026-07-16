@@ -38,7 +38,7 @@ export default function PolicyChangeHistoryPage() {
   }, [policyId]);
 
   const rollback = async (version: string) => {
-    try { await fetch("/api/v1/policy/" + policyId + "/rollback", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ version }) }); fetchHistory(); }
+    try { await fetch("/api/v1/policy/" + policyId + "/rollback", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ version }) }); fetchHistory(); }
     catch { /* noop */ }
   };
 

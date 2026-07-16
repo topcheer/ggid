@@ -47,7 +47,7 @@ export default function DataRetentionPage() {
     if (stored) {
       try { const parsed = JSON.parse(stored); if (Array.isArray(parsed)) setPolicies(parsed); } catch { /* ignore */ }
     }
-    fetch("/api/v1/settings/data-retention", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch("/api/v1/settings/data-retention", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
       .then(async (res) => { if (res.ok) { const data = await res.json(); if (Array.isArray(data.policies)) setPolicies(data.policies); } })
       .catch(() => { /* use stored defaults */ })
       .finally(() => setLoading(false));

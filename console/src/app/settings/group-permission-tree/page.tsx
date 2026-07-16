@@ -16,7 +16,7 @@ export default function GroupPermissionTreePage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/group-permission-tree", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/group-permission-tree", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setTree(d.tree || d || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

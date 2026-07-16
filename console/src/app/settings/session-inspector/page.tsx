@@ -25,7 +25,7 @@ export default function SessionInspectorPage() {
   }, [search]);
   const revoke = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/auth/session-inspector/" + id, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/session-inspector/" + id, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setSessions(sessions.filter((s) => s.id !== id));
       if (selected?.id === id) setSelected(null);

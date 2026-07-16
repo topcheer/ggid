@@ -39,7 +39,7 @@ export default function DelegationValidatorPage() {
 
   useEffect(() => {
     fetch("/api/v1/policies/delegations", {
-      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setRules(data.rules || []); setLoading(false); })
@@ -54,7 +54,7 @@ export default function DelegationValidatorPage() {
     setValidating(true);
     fetch("/api/v1/policy/delegation/validate", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ delegator, delegatee, scopes: scopes.split(',').map(s => s.trim()).filter(Boolean), maxDepth }),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })

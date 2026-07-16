@@ -13,7 +13,7 @@ export default function PolicyRecommendationPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/policy/recommendations", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/recommendations", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setRecs(d.recommendations || d || []);
@@ -23,14 +23,14 @@ export default function PolicyRecommendationPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const apply = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/policy/recommendations/" + id + "/apply", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/recommendations/" + id + "/apply", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setRecs(recs.filter((r) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to apply recommendation"); }
   };
   const dismiss = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/policy/recommendations/" + id + "/dismiss", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/recommendations/" + id + "/dismiss", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setRecs(recs.filter((r) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to dismiss recommendation"); }

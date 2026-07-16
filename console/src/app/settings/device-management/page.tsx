@@ -14,7 +14,7 @@ export default function DeviceManagementPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/identity/devices", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/devices", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setDevices(d.devices || d || []);
@@ -25,7 +25,7 @@ export default function DeviceManagementPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const revoke = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/identity/devices/" + id, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/devices/" + id, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setDevices(devices.filter((d) => d.device_id !== id));
     } catch (e) {
@@ -34,7 +34,7 @@ export default function DeviceManagementPage() {
   };
   const revokeStale = async () => {
     try {
-      const res = await fetch("/api/v1/identity/devices/stale/revoke", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/devices/stale/revoke", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       fetchData();
     } catch (e) {

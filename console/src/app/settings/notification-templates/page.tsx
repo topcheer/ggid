@@ -23,7 +23,7 @@ export default function NotificationTemplatesPage() {
 
   useEffect(() => {
     fetch("/api/v1/auth/email-template/config", {
-      headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setTemplates(Array.isArray(data) ? data : (data.templates || data.items || [])); setLoading(false); })

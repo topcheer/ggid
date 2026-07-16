@@ -20,7 +20,7 @@ export default function GeoFencingPage() {
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch("/api/v1/settings/geo-fencing", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch("/api/v1/settings/geo-fencing", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
       .then(async (res) => { if (res.ok) { const d = await res.json(); if (d) setData(d); } })
       .catch(() => { /* use defaults */ })
       .finally(() => setLoading(false));
@@ -29,7 +29,7 @@ export default function GeoFencingPage() {
   const save = async () => {
     setSaving(true); setError("");
     try {
-      const res = await fetch("/api/v1/settings/geo-fencing", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) });
+      const res = await fetch("/api/v1/settings/geo-fencing", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) });
       if (!res.ok) return null;
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) {

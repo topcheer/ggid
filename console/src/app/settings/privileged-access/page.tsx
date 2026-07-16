@@ -28,7 +28,7 @@ export default function PrivilegedAccessPage() {
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/privileged-access", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/privileged-access", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setAccounts(data.accounts || data || []);
@@ -53,7 +53,7 @@ export default function PrivilegedAccessPage() {
     try {
       await fetch("/api/v1/policy/privileged-access/batch-revoke", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ ids: [...selectedIds] }),
       });
       setAccounts((prev) => prev.filter((a) => !selectedIds.has(a.id)));

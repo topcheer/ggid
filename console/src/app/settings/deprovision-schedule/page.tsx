@@ -31,7 +31,7 @@ export default function DeprovisionSchedulePage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/deprovision-schedule", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/deprovision-schedule", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setJobs(d.jobs || d || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -41,12 +41,12 @@ export default function DeprovisionSchedulePage() {
 
   const create = async () => {
     if (!form.user_id || !form.scheduled_at) return;
-    try { await fetch("/api/v1/identity/deprovision-schedule", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ user_id: "", scheduled_at: "", reason: "", cascade_to_apps: true, notify_before_days: 7 }); fetchData(); }
+    try { await fetch("/api/v1/identity/deprovision-schedule", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ user_id: "", scheduled_at: "", reason: "", cascade_to_apps: true, notify_before_days: 7 }); fetchData(); }
     catch { /* noop */ }
   };
 
   const cancel = async (id: string) => {
-    try { await fetch(`/api/v1/identity/deprovision-schedule/${id}`, { method: "DELETE", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
+    try { await fetch(`/api/v1/identity/deprovision-schedule/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
     catch { /* noop */ }
   };
 

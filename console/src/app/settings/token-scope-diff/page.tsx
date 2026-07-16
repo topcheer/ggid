@@ -27,7 +27,7 @@ export default function TokenScopeDiffPage() {
     if (!tokenA || !tokenB) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/oauth/token-scope-diff?a=${encodeURIComponent(tokenA)}&b=${encodeURIComponent(tokenB)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/oauth/token-scope-diff?a=${encodeURIComponent(tokenA)}&b=${encodeURIComponent(tokenB)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setComparison(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

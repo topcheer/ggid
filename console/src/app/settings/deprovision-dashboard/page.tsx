@@ -9,9 +9,9 @@ export default function DeprovisionDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const t = useTranslations();
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/identity/deprovision-dashboard", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/identity/deprovision-dashboard", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const retry = async (id: string) => { try { await fetch("/api/v1/identity/deprovision/" + id + "/retry", { method: "POST", headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
+  const retry = async (id: string) => { try { await fetch("/api/v1/identity/deprovision/" + id + "/retry", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserMinus className="w-6 h-6 text-red-500" /> {t("deprovisionDashboard.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("deprovisionDashboard.subtitle")}</p></div>

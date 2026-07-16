@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
     try {
       const resp = await fetch(`${API_BASE_URL}/api/v1/auth/password/reset`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": DEFAULT_TENANT_ID },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": DEFAULT_TENANT_ID },
         body: JSON.stringify({ email }),
       });
       if (resp.ok) {

@@ -32,7 +32,7 @@ export default function BrandingPage() {
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/branding`, { headers: { "X-Tenant-ID": TENANT_ID } })
+    fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/branding`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": TENANT_ID } })
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
@@ -67,7 +67,7 @@ export default function BrandingPage() {
     try {
       await fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/branding`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
+        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
         body: JSON.stringify({ logo, primaryColor, secondaryColor, accentColor, customCss }),
       });
       setSaved(true);

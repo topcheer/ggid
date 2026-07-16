@@ -36,7 +36,7 @@ export default function BatchSimulatePage() {
     if (subjects.length === 0 || resources.length === 0 || actions.length === 0) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/batch-simulate", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subjects, resources, actions }) });
+      const res = await fetch("/api/v1/policy/batch-simulate", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subjects, resources, actions }) });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

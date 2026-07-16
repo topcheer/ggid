@@ -16,7 +16,7 @@ export default function OauthConsentFlowPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/consent-flow-config", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/consent-flow-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setConfig(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedLoad")); }
@@ -30,7 +30,7 @@ export default function OauthConsentFlowPage() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/consent-flow-config", { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
+      const res = await fetch("/api/v1/oauth/consent-flow-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
       if (!res.ok) return null;
     } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedSave")); }
     finally { setSaving(false); }

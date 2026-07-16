@@ -21,7 +21,7 @@ export default function OAuthTokenExchangePage() {
     if (!subjectToken) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/token-exchange", { method: "POST", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ grant_type: "urn:ietf:params:oauth:grant-type:token-exchange", subject_token: subjectToken, actor_token: actorToken || undefined, audience, scope, resource }) });
+      const res = await fetch("/api/v1/oauth/token-exchange", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ grant_type: "urn:ietf:params:oauth:grant-type:token-exchange", subject_token: subjectToken, actor_token: actorToken || undefined, audience, scope, resource }) });
       if (res.ok) setResult(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

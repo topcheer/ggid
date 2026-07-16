@@ -32,7 +32,7 @@ export default function ConsentRegistryPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/identity/consent?user=${encodeURIComponent(user)}`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/identity/consent?user=${encodeURIComponent(user)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const json = await res.json(); setData(json); setConsents(json.consents || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -45,7 +45,7 @@ export default function ConsentRegistryPage() {
   const save = async () => {
     if (!data) return;
     setSaving(true);
-    try { await fetch(`/api/v1/identity/consent/${data.user_id}`, { method: "PUT", headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ consents }) }); } catch { /* noop */ } finally { setSaving(false); }
+    try { await fetch(`/api/v1/identity/consent/${data.user_id}`, { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ consents }) }); } catch { /* noop */ } finally { setSaving(false); }
   };
 
   return (
