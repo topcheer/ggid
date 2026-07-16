@@ -26,6 +26,13 @@ func ContentTypeValidator(next http.Handler) http.Handler {
 							"Content-Type must be application/x-www-form-urlencoded or application/json, got: "+ct)
 						return
 					}
+				} else if strings.HasPrefix(r.URL.Path, "/scim/") {
+					// SCIM endpoints accept application/scim+json (RFC 7644 Section 3.1)
+					if !strings.HasPrefix(ct, "application/scim+json") && !strings.HasPrefix(ct, "application/json") {
+						WriteErrorNoRequest(w, http.StatusUnsupportedMediaType, "unsupported_media_type",
+							"Content-Type must be application/scim+json or application/json, got: "+ct)
+						return
+					}
 				} else {
 					// Accept application/json and variants like application/json; charset=utf-8
 					if !strings.HasPrefix(ct, "application/json") {

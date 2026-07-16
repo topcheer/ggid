@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 85
-## Last scan focus: F (Test Coverage) — org/handler 0%→13.9%, mcp/tools 26.8%→35.1%
-## Next scan focus: G (SDK Alignment) — Round 86
+## Current round: 86
+## Last scan focus: F (Functional Deep Verification) — SAML/PAR/CIBA/MFA/SCIM Bulk verified working; backup codes API wired (2b238d1b, generate timeout fix pending); gateway SCIM scim+json fix
+## Next scan focus: E2E tests (Round 86 = even round, Workflow A)
 ## Total findings: 72
 ## Done: 71
 ## Fixed (pending verification): 0

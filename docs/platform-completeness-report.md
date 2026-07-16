@@ -118,6 +118,24 @@
 | 2026-07-15 | Round 50 — gRPC Service Implementation | 0 | 3 (identity/auth/oauth gRPC handlers implemented, commit 6627c064) |
 | 2026-07-15 | Round 51 — Focus C (Middleware Chain) | 0 | 0 (gateway middleware chain complete; service-level shared middleware requires pkg/ extraction by arch) |
 | 2026-07-15 | Round 52 — E2E Regression Tests | 0 | 1 (Docker E2E 11/11 PASS, current verification) |
+| 2026-07-16 | Round 85 — Focus F (Functional Deep Verification) | +2 (backup codes API unwired; SCIM scim+json rejected) | 2 (backup codes wired commit 2b238d1b + generate timeout fix pending; gateway SCIM Content-Type fix deployed) |
+
+### Round 85 Focus F — Functional Deep Verification Results
+
+Verified working (curl-tested, not just code review):
+- SAML SSO: 302 redirect to IdP login ✓
+- SAML metadata: 200 with valid XML ✓
+- PAR: returns `request_uri` with 60s expiry (requires Bearer + JSON body) ✓
+- CIBA: returns `auth_req_id` with 300s expiry (requires form-encoded client_id/secret + CIBA grant) ✓
+- MFA TOTP setup: dynamic secret + otpauth URI ✓
+- SCIM Bulk: POST creates user, returns 201 with location ✓
+- Device-bound SSO: implemented (prior rounds) ✓
+
+[FIXED] Backup Codes HTTP API — service+PG repo existed but `_ = backupCodeService` discarded in main.go; no endpoints. Wired by backend team (commit 2b238d1b): POST /generate, POST /verify, GET /remaining, MFA login fallback. Follow-up: generate endpoint argon2id×10 serial hashing exceeds gateway timeout (context canceled); parallel-hash fix assigned to docs member. Table `backup_codes` manually created; EnsureSchema startup call pending.
+
+[FIXED] Gateway Content-Type validator rejected `application/scim+json` (RFC 7644 Section 3.1 violation) — SCIM clients sending the standard media type got 415. Added /scim/ path branch accepting application/scim+json (application/json still accepted). Deployed.
+
+Note: CIBA endpoint only accepts form-encoded client credentials (client_id/client_secret as form values), NOT HTTP Basic auth per RFC 6749 Section 2.3.1. Recorded as LOW priority standards gap.
 
 ## Remaining Real Gaps (post-audit)
 
