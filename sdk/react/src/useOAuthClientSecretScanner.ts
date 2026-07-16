@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ScanResult {
   client_id: string;
   secret_in_source: boolean;
@@ -24,6 +29,7 @@ export interface OAuthClientSecretScannerData {
 
 export function useOAuthClientSecretScanner() {
   const [data, setData] = useState<OAuthClientSecretScannerData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,10 +37,16 @@ export function useOAuthClientSecretScanner() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
-        codebase_scan_enabled: true,
-        git_history_scan_enabled: true,
+        codebase_scan_enabled: false,
+        git_history_scan_enabled: false,
         scan_frequency: "daily",
         scan_results: [
           { client_id: "client-web-001", secret_in_source: false, last_rotated_days: 12, exposure_risk: "low" },

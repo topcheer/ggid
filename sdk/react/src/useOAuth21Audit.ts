@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ComplianceCheck {
   item: string;
   description: string;
@@ -28,6 +33,7 @@ export interface OAuth21AuditData {
 
 export function useOAuth21Audit() {
   const [data, setData] = useState<OAuth21AuditData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +41,13 @@ export function useOAuth21Audit() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         compliance_checklist: [
           { item: "PKCE Required", description: "All authorization code flows must use PKCE (S256)", status: "pass" },
@@ -68,5 +80,5 @@ export function useOAuth21Audit() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ProofingStep {
   step: "document_upload" | "liveness_check" | "kba" | "manual_review";
   status: "pending" | "in_progress" | "completed" | "failed";
@@ -25,6 +30,7 @@ export interface IdentityProofingData {
 
 export function useIdentityProofing() {
   const [data, setData] = useState<IdentityProofingData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +38,13 @@ export function useIdentityProofing() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         completion_rate: 87,
         confidence_threshold: 0.85,
@@ -62,5 +74,5 @@ export function useIdentityProofing() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

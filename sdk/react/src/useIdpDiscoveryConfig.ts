@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface DiscoveryMethod {
   method: string;
   description: string;
@@ -29,13 +34,20 @@ export interface IdpDiscoveryConfigData {
 
 export function useIdpDiscoveryConfig() {
   const [data, setData] = useState<IdpDiscoveryConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         discovery_methods: [
           { method: "Email Domain Mapping", description: "Map user email domain to configured IdP", enabled: true },

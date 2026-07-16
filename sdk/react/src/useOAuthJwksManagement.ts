@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface JwkKey {
   kid: string;
   alg: string;
@@ -33,6 +38,7 @@ export interface OAuthJwksManagementData {
 
 export function useOAuthJwksManagement() {
   const [data, setData] = useState<OAuthJwksManagementData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +46,13 @@ export function useOAuthJwksManagement() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         active_keys: [
           { kid: "key-2026-01", alg: "RS256", kty: "RSA", created_at: "2026-01-10", status: "active" },

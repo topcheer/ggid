@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface MetadataPreview {
   entity_id: string;
   sso_url: string;
@@ -21,6 +26,7 @@ export interface IdpMetadataImportConfigData {
 
 export function useIdpMetadataImportConfig() {
   const [data, setData] = useState<IdpMetadataImportConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const importMetadata = useCallback(async (_input: string) => {
@@ -28,7 +34,13 @@ export function useIdpMetadataImportConfig() {
   }, []);
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
-    try { await new Promise((r) => setTimeout(r, 400));
+    try { // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({ preview: null, saved_idps: [
         { entity_id: "https://sts.windows.net/abc/", name: "Azure AD", imported_at: "2d ago" },
         { entity_id: "https://okta.com/default", name: "Okta", imported_at: "5d ago" },

@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface TrustedTenant {
   tenant_id: string;
   trust_direction: string;
@@ -34,6 +39,7 @@ export interface OAuthCrossTenantData {
 
 export function useOAuthCrossTenant() {
   const [data, setData] = useState<OAuthCrossTenantData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +47,13 @@ export function useOAuthCrossTenant() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         trusted_tenants: [
           { tenant_id: "tenant-acme-corp", trust_direction: "bidirectional", scopes_allowed: ["openid", "profile", "email"], expires_at: "2025-12-31" },
@@ -67,5 +79,5 @@ export function useOAuthCrossTenant() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

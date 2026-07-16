@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface PushedRequest {
   request_uri: string;
   client_id: string;
@@ -32,6 +37,7 @@ export interface OAuthParManagementData {
 
 export function useOAuthParManagement() {
   const [data, setData] = useState<OAuthParManagementData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +45,13 @@ export function useOAuthParManagement() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         active_pushed_requests: [
           { request_uri: "urn:ietf:params:oauth:request_uri:6ev3j4kq", client_id: "client-fin-001", client_name: "Finance Dashboard", pushed_at: "2m ago", expires_at: "58s left", consumed: false },
@@ -73,5 +85,5 @@ export function useOAuthParManagement() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

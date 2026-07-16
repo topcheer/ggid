@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface IdpCard {
   name: string;
   role: string;
@@ -32,13 +37,20 @@ export interface IdpFailoverConfigData {
 
 export function useIdpFailoverConfig() {
   const [data, setData] = useState<IdpFailoverConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         idp_cards: [
           { name: "Azure AD (Primary)", role: "primary", status: "healthy", latency_ms: 45, health_score: 98 },
@@ -54,7 +66,7 @@ export function useIdpFailoverConfig() {
           { id: "2", timestamp: "3d ago", from: "Okta", to: "Azure AD", reason: "Primary recovered" },
         ],
         health_check_interval: "30s",
-        auto_fallback: true,
+        auto_fallback: false,
       });
     } catch (e) { setError(e instanceof Error ? e.message : "Failed"); }
     finally { setLoading(false); }

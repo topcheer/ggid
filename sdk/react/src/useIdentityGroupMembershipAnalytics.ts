@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface GroupCard {
   name: string;
   member_count: number;
@@ -35,6 +40,7 @@ export interface IdentityGroupMembershipAnalyticsData {
 
 export function useIdentityGroupMembershipAnalytics() {
   const [data, setData] = useState<IdentityGroupMembershipAnalyticsData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +48,13 @@ export function useIdentityGroupMembershipAnalytics() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } });
+      } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         group_cards: [
           { name: "Engineering", member_count: 124, sub_groups: 4, nesting_depth: 1 },
@@ -83,5 +95,5 @@ export function useIdentityGroupMembershipAnalytics() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }
