@@ -257,3 +257,46 @@ See docs/research/ for full research docs.
 - 注意：ML-DSA-65 签名 3.3KB，JWT 体积 ~4-5KB（HTTP header 8KB 内可行，cookie 场景需评估）
 
 **兼容性**: 增量；spike 未通过前不启动实现；研究文档 docs/research/mldsa-jose-pqc-jwt.md
+
+---
+
+## IGA 闭环：审查决策 → 实际权限回收 (2026-07-17 第4小时研究) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**描述**: 审计发现 GGID IGA 工作流"开环"：access review campaign 的 submit 仅把 revoke 决策字符串存入**内存** campaignStore（重启丢失），且不触发任何实际权限回收。IGA 的核心价值闭环是 review→revoke→deprovision 自动化。
+
+**现状审计**: 18 个 IGA console 页面（certification/campaigns/attestation/entitlement/recertification），policy 服务有完整 campaign CRUD 但 (1) 内存存储不持久 (2) revoke 决策无执行器。
+
+**业务价值**: HIGH
+- 合规刚需（SOX/等保：定期审查 + 证据 + 及时回收）
+- 客户 POC 必演场景："审查员点 revoke → 用户权限立即消失"
+
+**实现难度**: Medium
+- 实现路径：
+  1. campaigns 迁移 Postgres（新表 access_review_campaigns + items，RLS）
+  2. revoke 执行器：submit 时 decision=revoke → policy 服务删除 role assignment（已有 DeleteRoleAssignment）→ audit 事件记录回收证据链
+  3. campaign 完成率统计 + 逾期提醒（通知 webhook）
+
+**兼容性**: 复用现有 role assignment 删除 API + audit publisher
+
+---
+
+## GenAI 辅助审查决策 (2026-07-17 第4小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + frontend
+
+**描述**: 2025 IGA 最大趋势（Omada/Saviynt 主推）：LLM 生成审查建议 — "该用户 90 天未使用此权限，建议回收"、"该角色与岗位职责不符"。GGID 已有 MCP server（13 个 LLM 管理 tools）+ audit 使用数据，天然具备数据基础。
+
+**业务价值**: MEDIUM-HIGH（差异化卖点，审查员疲劳是 IGA 落地最大障碍）
+**实现难度**: Medium
+- 实现路径：
+  1. 审查列表 API 增加 recommend 字段：规则先行（last_used>90d → recommend_revoke），LLM 增强（可选，接 MCP）
+  2. 前端审查页显示建议标签 + 一键接受
+  3. 纯规则版先行（无 LLM 依赖），LLM 版作 v2
+
+**兼容性**: audit 事件有 last_used 数据；MCP 已通 LLM
+
+---
+
+## NHI 纳入访问审查范围 (2026-07-17 第4小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: 现有 campaign scope 仅覆盖人类用户。2025 趋势要求 agent/service account/API key 同样定期审查（与 AAM backlog 项协同）。campaign scope 增加 "agents"、"service_accounts" 类型。
+
+**业务价值**: MEDIUM-HIGH | **实现难度**: Low-Medium（scope 扩展 + agent 数据源接入）
