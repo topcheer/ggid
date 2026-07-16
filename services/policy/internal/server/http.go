@@ -262,7 +262,8 @@ func (s *HTTPServer) handleRoleByID(w http.ResponseWriter, r *http.Request) {
 		descPtr := &req.Description
 		updated, err := s.roleSvc.UpdateRole(r.Context(), id, namePtr, descPtr, nil)
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, err.Error())
+			log.Printf("role update error: %v", err)
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		writeJSON(w, http.StatusOK, roleToJSON(updated))

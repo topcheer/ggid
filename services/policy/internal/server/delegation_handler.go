@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -51,7 +52,8 @@ func (s *HTTPServer) handleListDelegations(w http.ResponseWriter, r *http.Reques
 	userID := parseUUIDSafe(r.URL.Query().Get("user_id"))
 	delegations, err := s.policySvc.ListDelegations(context.Background(), userID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			log.Printf("delegation list error: %v", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"delegations": delegations})

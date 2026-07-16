@@ -599,7 +599,8 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 			h.writeErrorT(w, r, http.StatusConflict, "error.credential_already_exists")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, "failed to create user: "+err.Error())
+		log.Printf("register create user error: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to create user")
 		return
 	}
 	if user != nil {

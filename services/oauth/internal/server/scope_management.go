@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -88,7 +89,8 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 			UpdatedAt:   now,
 		}
 		if err := store.Create(scope); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error()})
+			log.Printf("scope create error: %v", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 			return
 		}
 		writeJSON(w, http.StatusCreated, scope)
@@ -118,7 +120,8 @@ func handleScopes(w http.ResponseWriter, r *http.Request) {
 		scope.Required = req.Required
 		scope.UpdatedAt = time.Now().UTC()
 		if err := store.Update(scope); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": err.Error()})
+			log.Printf("scope update error: %v", err)
+			writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 			return
 		}
 		writeJSON(w, http.StatusOK, scope)

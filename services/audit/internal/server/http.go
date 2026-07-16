@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -1453,7 +1454,8 @@ func (s *HTTPServer) handleComplianceReportV2(w http.ResponseWriter, r *http.Req
 	gen := compliance.NewGenerator(adapter)
 	report, err := gen.Generate(r.Context(), reportType, from, to)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to generate report: "+err.Error())
+		log.Printf("report generation error: %v", err)
+		writeJSONError(w, http.StatusInternalServerError, "failed to generate report")
 		return
 	}
 	writeJSON(w, http.StatusOK, report)

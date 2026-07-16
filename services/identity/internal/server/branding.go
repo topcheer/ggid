@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -30,7 +31,8 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		branding, err := h.brandingStore.GetBranding(r.Context(), tenantID)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			log.Printf("branding get error: %v", err)
+			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -44,7 +46,8 @@ func (h *HTTPHandler) handleBranding(w http.ResponseWriter, r *http.Request) {
 		}
 		branding, err := h.brandingStore.UpdateBranding(r.Context(), tenantID, &req)
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			log.Printf("branding update error: %v", err)
+			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
