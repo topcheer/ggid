@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -128,15 +129,62 @@ func (s *HTTPServer) createReviewCampaign(w http.ResponseWriter, r *http.Request
 		CreatedAt:  now,
 	}
 
-	reviewCampaigns.mu.Lock()
-	reviewCampaigns.campaigns[c.ID] = c
-	reviewCampaigns.mu.Unlock()
+	if s.campaignRepo != nil {
+		if err := s.campaignRepo.Create(r.Context(), c); err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
+			return
+		}
+	} else {
+		reviewCampaigns.mu.Lock()
+		reviewCampaigns.campaigns[c.ID] = c
+		reviewCampaigns.mu.Unlock()
+	}
 
 	writeJSON(w, http.StatusCreated, c)
 }
 
+// SetCampaignRepo injects a DB-backed campaign store.
+func (s *HTTPServer) SetCampaignRepo(repo *CampaignRepo) {
+	s.campaignRepo = repo
+}
+
+// executeCampaignRevoke executes the revoke decision by removing the role assignment.
+func (s *HTTPServer) executeCampaignRevoke(ctx context.Context, c *ReviewCampaign) {
+	if s.roleSvc == nil || c == nil {
+		return
+	}
+	// Parse scope_id as role ID and reviewer_id as the user to revoke from.
+	roleID, err := uuid.Parse(c.ScopeID)
+	if err != nil {
+		return
+	}
+	userID, err := uuid.Parse(c.ReviewerID)
+	if err != nil {
+		return
+	}
+	// RevokeRole(ctx, userID, roleID, scopeType, scopeID)
+	_ = s.roleSvc.RevokeRole(ctx, userID, roleID, "tenant", uuid.Nil)
+}
+
 func (s *HTTPServer) listReviewCampaigns(w http.ResponseWriter, r *http.Request) {
 	status := r.URL.Query().Get("status")
+
+	if s.campaignRepo != nil {
+		active, err := s.campaignRepo.ListActive(r.Context(), "")
+		if err == nil {
+			if status != "" {
+				var filtered []*ReviewCampaign
+				for _, c := range active {
+					if c.Status == status {
+						filtered = append(filtered, c)
+					}
+				}
+				active = filtered
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"campaigns": active, "count": len(active)})
+			return
+		}
+	}
 
 	reviewCampaigns.mu.RLock()
 	defer reviewCampaigns.mu.RUnlock()
@@ -173,24 +221,51 @@ func (s *HTTPServer) submitReviewCampaign(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	reviewCampaigns.mu.Lock()
-	defer reviewCampaigns.mu.Unlock()
-
-	c, ok := reviewCampaigns.campaigns[campaignID]
-	if !ok {
-		writeJSONError(w, http.StatusNotFound, "campaign not found")
-		return
+	var c *ReviewCampaign
+	if s.campaignRepo != nil {
+		var err error
+		c, err = s.campaignRepo.GetByID(r.Context(), campaignID)
+		if err != nil || c == nil {
+			writeJSONError(w, http.StatusNotFound, "campaign not found")
+			return
+		}
+		if c.Status != "active" {
+			writeJSONError(w, http.StatusConflict, "campaign already completed")
+			return
+		}
+		if err := s.campaignRepo.Submit(r.Context(), campaignID, req.Decision, req.Notes); err != nil {
+			writeJSONError(w, http.StatusInternalServerError, "internal server error")
+			return
+		}
+		c.Status = "completed"
+		c.Decision = req.Decision
+		c.Notes = req.Notes
+		now := time.Now().UTC()
+		c.SubmittedAt = &now
+	} else {
+		reviewCampaigns.mu.Lock()
+		defer reviewCampaigns.mu.Unlock()
+		var ok bool
+		c, ok = reviewCampaigns.campaigns[campaignID]
+		if !ok {
+			writeJSONError(w, http.StatusNotFound, "campaign not found")
+			return
+		}
+		if c.Status != "active" {
+			writeJSONError(w, http.StatusConflict, "campaign already completed")
+			return
+		}
+		now := time.Now().UTC()
+		c.Status = "completed"
+		c.Decision = req.Decision
+		c.Notes = req.Notes
+		c.SubmittedAt = &now
 	}
-	if c.Status != "active" {
-		writeJSONError(w, http.StatusConflict, "campaign already completed")
-		return
-	}
 
-	now := time.Now().UTC()
-	c.Status = "completed"
-	c.Decision = req.Decision
-	c.Notes = req.Notes
-	c.SubmittedAt = &now
+	// Execute revoke: if decision is "revoke", call roleSvc.RevokeRole.
+	if req.Decision == "revoke" && s.roleSvc != nil {
+		s.executeCampaignRevoke(r.Context(), c)
+	}
 
 	writeJSON(w, http.StatusOK, c)
 }

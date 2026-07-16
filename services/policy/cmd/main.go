@@ -125,6 +125,8 @@ func main() {
 	})
 	// REST API endpoints
 	httpAPI := httpserver.NewHTTPServer(roleSvc, policySvc, evaluator)
+	// Wire DB-backed campaign store for SOX-compliant access review persistence.
+	httpAPI.SetCampaignRepo(httpserver.NewCampaignRepo(db))
 	httpAPI.RegisterRoutes(mux)
 
 	httpServer := &http.Server{

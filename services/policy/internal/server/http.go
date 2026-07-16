@@ -28,6 +28,7 @@ type HTTPServer struct {
 	policySvc     *service.PolicyService
 	evaluator     *service.Evaluator
 	auditPublisher *audit.Publisher
+	campaignRepo  *CampaignRepo
 }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.
