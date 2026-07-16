@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -124,3 +125,69 @@ func scanCampaignRow(row interface {
 
 // Ensure json import is used.
 var _ = json.Marshal
+
+// CampaignItem represents a single user's review within a campaign.
+type CampaignItem struct {
+	ID         string     `json:"id"`
+	CampaignID string     `json:"campaign_id"`
+	UserID     string     `json:"user_id"`
+	RoleID     string     `json:"role_id"`
+	Decision   string     `json:"decision"`
+	DecidedAt  *time.Time `json:"decided_at,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
+}
+
+// ListRevokeItems returns campaign items with decision=revoke for a campaign.
+func (r *CampaignRepo) ListRevokeItems(ctx context.Context, campaignID string) ([]*CampaignItem, error) {
+	if r.pool == nil {
+		return []*CampaignItem{}, nil
+	}
+	cid, err := uuid.Parse(campaignID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid campaign_id: %w", err)
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, campaign_id::text, user_id::text, role_id::text, decision, decided_at, created_at
+		FROM iga_campaign_items WHERE campaign_id = $1 AND decision = 'revoke'
+	`, cid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*CampaignItem
+	for rows.Next() {
+		var item CampaignItem
+		var decidedAt *time.Time
+		if err := rows.Scan(&item.ID, &item.CampaignID, &item.UserID, &item.RoleID, &item.Decision, &decidedAt, &item.CreatedAt); err != nil {
+			continue
+		}
+		item.DecidedAt = decidedAt
+		items = append(items, &item)
+	}
+	return items, nil
+}
+
+// AddItem adds a review item to a campaign.
+func (r *CampaignRepo) AddItem(ctx context.Context, item *CampaignItem) error {
+	if r.pool == nil {
+		return nil
+	}
+	cid, err := uuid.Parse(item.CampaignID)
+	if err != nil {
+		return fmt.Errorf("invalid campaign_id: %w", err)
+	}
+	uid, err := uuid.Parse(item.UserID)
+	if err != nil {
+		return fmt.Errorf("invalid user_id: %w", err)
+	}
+	rid, err := uuid.Parse(item.RoleID)
+	if err != nil {
+		return fmt.Errorf("invalid role_id: %w", err)
+	}
+	return r.pool.QueryRow(ctx, `
+		INSERT INTO iga_campaign_items (campaign_id, user_id, role_id, decision)
+		VALUES ($1, $2, $3, COALESCE($4, 'pending'))
+		RETURNING id, created_at
+	`, cid, uid, rid, item.Decision).Scan(&item.ID, &item.CreatedAt)
+}

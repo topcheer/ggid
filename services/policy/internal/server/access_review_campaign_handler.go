@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -148,22 +149,56 @@ func (s *HTTPServer) SetCampaignRepo(repo *CampaignRepo) {
 	s.campaignRepo = repo
 }
 
-// executeCampaignRevoke executes the revoke decision by removing the role assignment.
+// executeCampaignRevoke executes revoke decisions for each campaign item.
+// Iterates items with decision=revoke and calls roleSvc.RevokeRole for each
+// (user_id, role_id) pair. The reviewer's own permissions are never touched.
 func (s *HTTPServer) executeCampaignRevoke(ctx context.Context, c *ReviewCampaign) {
 	if s.roleSvc == nil || c == nil {
 		return
 	}
-	// Parse scope_id as role ID and reviewer_id as the user to revoke from.
-	roleID, err := uuid.Parse(c.ScopeID)
-	if err != nil {
+
+	// Get items with decision=revoke from DB.
+	var items []*CampaignItem
+	if s.campaignRepo != nil {
+		var err error
+		items, err = s.campaignRepo.ListRevokeItems(ctx, c.ID)
+		if err != nil {
+			log.Printf("campaign revoke: failed to list items for campaign %s: %v", c.ID, err)
+			return
+		}
+	}
+
+	// If no DB items, fall back to single-user revoke using scope_id as role
+	// and reviewer_id as the reviewed user (legacy behavior, will be removed).
+	if len(items) == 0 {
+		roleID, err := uuid.Parse(c.ScopeID)
+		if err != nil {
+			return // silently skip — no valid target
+		}
+		// BUGFIX: The reviewed user should NOT be the reviewer.
+		// Without items, we cannot determine the target user, so skip.
+		_ = roleID
 		return
 	}
-	userID, err := uuid.Parse(c.ReviewerID)
-	if err != nil {
-		return
+
+	// Execute revoke for each item.
+	for _, item := range items {
+		userID, err := uuid.Parse(item.UserID)
+		if err != nil {
+			log.Printf("campaign revoke: invalid user_id %s: %v", item.UserID, err)
+			continue
+		}
+		roleID, err := uuid.Parse(item.RoleID)
+		if err != nil {
+			log.Printf("campaign revoke: invalid role_id %s: %v", item.RoleID, err)
+			continue
+		}
+
+		if err := s.roleSvc.RevokeRole(ctx, userID, roleID, "tenant", uuid.Nil); err != nil {
+			log.Printf("campaign revoke: failed to revoke role %s for user %s: %v",
+				item.RoleID, item.UserID, err)
+		}
 	}
-	// RevokeRole(ctx, userID, roleID, scopeType, scopeID)
-	_ = s.roleSvc.RevokeRole(ctx, userID, roleID, "tenant", uuid.Nil)
 }
 
 func (s *HTTPServer) listReviewCampaigns(w http.ResponseWriter, r *http.Request) {
