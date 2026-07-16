@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Key, Plus, X, RotateCcw, Ban, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface ApiKey { id: string; name: string; scopes: string[]; created_at: string; expires_at: string; last_used: string | null; status: "active" | "expired" | "revoked"; usage_count: number; }
 const statusColors: Record<string, string> = { active: "bg-green-100 dark:bg-green-900/30 dark:text-green-400", expired: "bg-gray-100 dark:bg-gray-800 dark:text-gray-400", revoked: "bg-red-100 dark:bg-red-900/30 dark:text-red-400" };
 export default function APIKeyLifecyclePage() {
@@ -16,7 +17,7 @@ export default function APIKeyLifecyclePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/auth/api-keys", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/api-keys", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) { setKeys([]); return; }
       const d = await res.json();
       setKeys(d.keys || d || []);
@@ -27,21 +28,21 @@ export default function APIKeyLifecyclePage() {
   const create = async () => {
     if (!form.name) return;
     try {
-      const res = await fetch("/api/v1/auth/api-keys", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ name: form.name, scopes: form.scopes.split(",").map((s) => s.trim()).filter(Boolean), expires_at: form.expires_at }) });
+      const res = await fetch("/api/v1/auth/api-keys", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ name: form.name, scopes: form.scopes.split(",").map((s) => s.trim()).filter(Boolean), expires_at: form.expires_at }) });
       if (!res.ok) { setError("API key creation not available yet"); return; }
       setShowCreate(false); setForm({ name: "", scopes: "", expires_at: "" }); fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to create API key"); }
   };
   const rotate = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/auth/api-keys/" + id + "/rotate", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/api-keys/" + id + "/rotate", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to rotate key"); }
   };
   const revoke = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/auth/api-keys/" + id, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/api-keys/" + id, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to revoke key"); }

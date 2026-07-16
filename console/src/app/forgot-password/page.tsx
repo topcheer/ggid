@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowLeft, Mail } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations();
@@ -19,7 +20,7 @@ export default function ForgotPasswordPage() {
     try {
       const resp = await fetch(`${API_BASE_URL}/api/v1/auth/password/reset`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": DEFAULT_TENANT_ID },
         body: JSON.stringify({ email }),
       });
       if (resp.ok) {

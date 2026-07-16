@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Smartphone, Ban, Trash2, AlertTriangle, RotateCcw } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Device { device_id: string; user_id: string; username: string; device_name: string; platform: string; last_seen: string; trust_level: "managed" | "byod" | "untrusted"; enrolled_at: string; fingerprint: string; }
 const trustColors: Record<string, string> = { managed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", byod: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", untrusted: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 export default function DeviceManagementPage() {
@@ -14,7 +15,7 @@ export default function DeviceManagementPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/identity/devices", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/devices", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setDevices(d.devices || d || []);
@@ -25,7 +26,7 @@ export default function DeviceManagementPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const revoke = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/identity/devices/" + id, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/devices/" + id, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setDevices(devices.filter((d) => d.device_id !== id));
     } catch (e) {
@@ -34,7 +35,7 @@ export default function DeviceManagementPage() {
   };
   const revokeStale = async () => {
     try {
-      const res = await fetch("/api/v1/identity/devices/stale/revoke", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/devices/stale/revoke", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       fetchData();
     } catch (e) {

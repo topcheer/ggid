@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Bomb, Eye, Users, Shield, FileText, ChevronRight } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface BlastRadiusData {
   affected_users_count: number;
@@ -26,7 +27,7 @@ export default function BlastRadiusPage() {
     if (!policyId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/policy/blast-radius?id=${encodeURIComponent(policyId)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/policy/blast-radius?id=${encodeURIComponent(policyId)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

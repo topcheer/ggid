@@ -6,6 +6,7 @@ import {
   History, Cpu, Globe,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -173,7 +174,7 @@ export default function KmsConfigPage() {
     setError(null);
     try {
       const res = await fetch("/api/v1/settings/kms-config", {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": TENANT_ID },
+        headers: { ...authHeader(), "X-Tenant-ID": TENANT_ID },
       }).catch(() => null);
       if (res?.ok) {
         const data: KmsConfig = await res.json();
@@ -182,7 +183,7 @@ export default function KmsConfigPage() {
       }
       // Load key status
       const statusRes = await fetch("/api/v1/settings/kms-config/status", {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": TENANT_ID },
+        headers: { ...authHeader(), "X-Tenant-ID": TENANT_ID },
       }).catch(() => null);
       if (statusRes?.ok) {
         setStatus(await statusRes.json());
@@ -203,7 +204,7 @@ export default function KmsConfigPage() {
     try {
       const res = await fetch("/api/v1/settings/kms-config", {
         method: "PUT",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
         body: JSON.stringify({ provider, config: configValues }),
       });
       if (!res.ok) {
@@ -225,7 +226,7 @@ export default function KmsConfigPage() {
     try {
       const res = await fetch("/api/v1/settings/kms-config/test", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
         body: JSON.stringify({ provider, config: configValues }),
       });
       const data: TestResult = await res.json().catch(() => ({ status: "failed" as const, error: "No response" }));
@@ -241,7 +242,7 @@ export default function KmsConfigPage() {
     try {
       const res = await fetch("/api/v1/settings/kms-config/rotate", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": TENANT_ID },
+        headers: { ...authHeader(), "X-Tenant-ID": TENANT_ID },
       });
       if (res.ok) { loadData(); }
     } catch {

@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import { Search, Monitor, Ban, ShieldCheck, Info, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Session { id: string; device: string; ip_address: string; location: string; created_at: string; last_active: string; mfa_verified: boolean; scopes: string[]; expires_at: string; }
 export default function SessionInspectorPage() {
   const t = useTranslations();
@@ -25,7 +26,7 @@ export default function SessionInspectorPage() {
   }, [search]);
   const revoke = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/auth/session-inspector/" + id, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/session-inspector/" + id, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setSessions(sessions.filter((s) => s.id !== id));
       if (selected?.id === id) setSelected(null);

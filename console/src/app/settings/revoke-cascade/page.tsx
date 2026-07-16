@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { GitBranch, Search, Trash2, AlertTriangle, X, KeyRound } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface CascadeNode {
   token_id: string;
@@ -27,7 +28,7 @@ export default function RevokeCascadePage() {
     if (!tokenInput) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/oauth/revoke-cascade?token=${encodeURIComponent(tokenInput)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/oauth/revoke-cascade?token=${encodeURIComponent(tokenInput)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { setTree(await res.json()); setRevokedCount(null); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -38,7 +39,7 @@ export default function RevokeCascadePage() {
     setRevoking(true);
     try {
       const count = (node: CascadeNode): number => 1 + (node.children || []).reduce((s, c) => s + count(c), 0);
-      await fetch("/api/v1/oauth/revoke-cascade/execute", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ token_id: tree.token_id }) });
+      await fetch("/api/v1/oauth/revoke-cascade/execute", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ token_id: tree.token_id }) });
       setRevokedCount(count(tree)); setShowConfirm(false); setTree(null);
     } catch { /* noop */ }
     finally { setRevoking(false); }

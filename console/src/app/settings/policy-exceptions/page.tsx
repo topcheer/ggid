@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldOff, Plus, X, ChevronRight, Clock } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Exception {
   id: string;
@@ -36,7 +37,7 @@ export default function PolicyExceptionsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/exceptions", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/exceptions", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setExceptions(d.exceptions || d || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -46,7 +47,7 @@ export default function PolicyExceptionsPage() {
 
   const create = async () => {
     if (!form.policy_id || !form.granted_to) return;
-    try { await fetch("/api/v1/policy/exceptions", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ policy_id: "", reason: "", granted_to: "", risk_override_level: "low", expires_at: "" }); fetchData(); }
+    try { await fetch("/api/v1/policy/exceptions", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ policy_id: "", reason: "", granted_to: "", risk_override_level: "low", expires_at: "" }); fetchData(); }
     catch { /* noop */ }
   };
 

@@ -3,6 +3,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState } from "react";
 import { Play, Plus, Trash2, Check, X, Minus, GitCompare } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface SimRule {
   id: string;
@@ -37,7 +38,7 @@ export default function PolicySimulationPage() {
   const runSim = async () => {
     setRunning(true); setError("");
     try {
-      const res = await fetch("/api/v1/policy/simulate", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ rules }) });
+      const res = await fetch("/api/v1/policy/simulate", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ rules }) });
       if (!res.ok) return null;
       const data = await res.json(); setResults(data.results || data || []);
     } catch (e) {

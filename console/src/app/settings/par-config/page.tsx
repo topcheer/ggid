@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { FilePlus, Save } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface ParOverride { client_id: string; client_name: string; required: boolean; }
 interface ParStats { total: number; success_rate: number; avg_latency_ms: number; }
 interface Config { require_par: boolean; par_lifetime_seconds: number; max_request_size_kb: number; per_client: ParOverride[]; exempted_clients: string[]; stats: ParStats; }
@@ -13,11 +14,11 @@ export default function ParConfigPage() {
   const [error, setError] = useState<string | null>(null);
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
-    try { const res = await fetch("/api/v1/oauth/par-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d) setConfig(prev => ({ ...prev, ...d })); } }
+    try { const res = await fetch("/api/v1/oauth/par-config", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d) setConfig(prev => ({ ...prev, ...d })); } }
     catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); } finally { setLoading(false); }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
-  const save = useCallback(async () => { setSaving(true); try { await fetch("/api/v1/oauth/par-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); } catch { /* noop */ } finally { setSaving(false); } }, [config]);
+  const save = useCallback(async () => { setSaving(true); try { await fetch("/api/v1/oauth/par-config", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); } catch { /* noop */ } finally { setSaving(false); } }, [config]);
   const gaugeColor = config.stats.success_rate >= 95 ? "#10b981" : config.stats.success_rate >= 80 ? "#f59e0b" : "#ef4444";
   if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
   if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Retry</button></div></div>);

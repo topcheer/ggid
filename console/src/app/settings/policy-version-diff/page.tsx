@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { GitCompare, Plus, Minus, Edit3, AlertTriangle, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface FieldChange {
   field: string;
@@ -45,7 +46,7 @@ export default function PolicyVersionDiffPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/policy/version-diff?id=${encodeURIComponent(policyId)}&a=${encodeURIComponent(versionA)}&b=${encodeURIComponent(versionB)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/policy/version-diff?id=${encodeURIComponent(policyId)}&a=${encodeURIComponent(versionA)}&b=${encodeURIComponent(versionB)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) {
         setError(`Failed to compare versions: ${res.status} ${res.statusText}`);
       } else {

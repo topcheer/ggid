@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Activity, Search, AlertTriangle, TrendingUp, Users, Clock } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface HourlyBucket {
   hour: string;
@@ -33,7 +34,7 @@ export default function AccessFrequencyPage() {
     if (!resource) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/policy/access-frequency?resource=${encodeURIComponent(resource)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/policy/access-frequency?resource=${encodeURIComponent(resource)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

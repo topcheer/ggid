@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, ShieldAlert, Key, Smartphone, Monitor, Link2, Lightbulb, Gauge } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ExposureData {
   user_id: string;
@@ -34,7 +35,7 @@ export default function CredentialExposurePage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/auth/credential-exposure?user=${encodeURIComponent(user)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/auth/credential-exposure?user=${encodeURIComponent(user)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

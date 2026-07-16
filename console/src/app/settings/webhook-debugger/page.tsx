@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Bug, Play, RotateCcw } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface DeliveryLog { id: string; timestamp: string; status: number; latency_ms: number; success: boolean; }
 interface TestResult { status: number; status_text: string; headers: Record<string, string>; body: string; latency_ms: number; success?: boolean; }
 export default function WebhookDebuggerPage() {
@@ -12,12 +13,12 @@ export default function WebhookDebuggerPage() {
   const [result, setResult] = useState<TestResult | null>(null);
   const [logs, setLogs] = useState<DeliveryLog[]>([]);
   const [loading, setLoading] = useState(false);
-  const fetchEndpoints = useCallback(async () => { try { const res = await fetch("/api/v1/webhooks/endpoints", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setEndpoints(d.endpoints || d || []); } } catch { /* noop */ } }, []);
-  const fetchLogs = useCallback(async () => { if (!selected) return; try { const res = await fetch("/api/v1/webhooks/endpoints/" + selected + "/deliveries", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setLogs(d.deliveries || d || []); } } catch { /* noop */ } }, [selected]);
+  const fetchEndpoints = useCallback(async () => { try { const res = await fetch("/api/v1/webhooks/endpoints", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setEndpoints(d.endpoints || d || []); } } catch { /* noop */ } }, []);
+  const fetchLogs = useCallback(async () => { if (!selected) return; try { const res = await fetch("/api/v1/webhooks/endpoints/" + selected + "/deliveries", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setLogs(d.deliveries || d || []); } } catch { /* noop */ } }, [selected]);
   useEffect(() => { fetchEndpoints(); }, [fetchEndpoints]);
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
-  const send = async () => { if (!selected) return; setLoading(true); try { const res = await fetch("/api/v1/webhooks/endpoints/" + selected + "/test", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: payload }); if (res.ok) setResult(await res.json()); } catch { /* noop */ } finally { setLoading(false); } };
-  const replay = async (id: string) => { try { await fetch("/api/v1/webhooks/deliveries/" + id + "/replay", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchLogs(); } catch { /* noop */ } };
+  const send = async () => { if (!selected) return; setLoading(true); try { const res = await fetch("/api/v1/webhooks/endpoints/" + selected + "/test", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: payload }); if (res.ok) setResult(await res.json()); } catch { /* noop */ } finally { setLoading(false); } };
+  const replay = async (id: string) => { try { await fetch("/api/v1/webhooks/deliveries/" + id + "/replay", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchLogs(); } catch { /* noop */ } };
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><Bug className="w-6 h-6 text-purple-500" /> Webhook Debugger</h1><p className="text-sm text-gray-500 mt-1">Test webhook endpoints and inspect delivery results.</p></div>

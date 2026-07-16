@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { BarChart3, PieChart as PieIcon, TrendingUp, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface GrantTypeData {
   counts: { grant_type: string; count: number }[];
@@ -27,7 +28,7 @@ export default function GrantTypeStatsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/grant-type-stats", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/grant-type-stats", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setData(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load grant type stats"); }

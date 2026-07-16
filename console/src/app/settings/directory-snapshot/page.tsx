@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { Camera, Users, TrendingUp, TrendingDown } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Snapshot {
   total_users: number;
@@ -25,7 +26,7 @@ export default function DirectorySnapshotPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/directory-snapshot", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/directory-snapshot", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setSnapshot(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

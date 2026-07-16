@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Users, GitBranch, Clock, ShieldCheck } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface GroupInfo {
   id: string;
@@ -31,7 +32,7 @@ export default function GroupAnalyticsPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await fetch("/api/v1/org/group-analytics", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setGroups(d.groups || d || []); } }
+    try { const res = await fetch("/api/v1/org/group-analytics", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setGroups(d.groups || d || []); } }
     catch { /* noop */ }
     finally { setLoading(false); }
   }, []);

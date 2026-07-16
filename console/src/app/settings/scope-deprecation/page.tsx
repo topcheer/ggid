@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Ban, Plus, X, Save, AlertTriangle } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface DeprecatedScope {
   id: string;
@@ -35,7 +36,7 @@ export default function ScopeDeprecationPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/scope-deprecation", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/scope-deprecation", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setScopes(data.scopes || data || []); setAvailable(data.available_scopes || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -45,7 +46,7 @@ export default function ScopeDeprecationPage() {
 
   const deprecate = async () => {
     if (!form.name) return;
-    try { await fetch("/api/v1/oauth/scope-deprecation", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowDeprecate(false); setForm({ name: "", replacement: "", sunset_date: "" }); fetchData(); }
+    try { await fetch("/api/v1/oauth/scope-deprecation", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowDeprecate(false); setForm({ name: "", replacement: "", sunset_date: "" }); fetchData(); }
     catch { /* noop */ }
   };
 

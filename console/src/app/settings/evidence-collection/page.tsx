@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { FolderCheck, Upload, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Control { control_id: string; description: string; evidence_required: boolean; evidence_type: "doc" | "screenshot" | "log" | "config"; collection_status: "collected" | "pending" | "overdue"; last_collected: string | null; reviewer: string | null; }
 interface FrameworkData { framework: string; controls: Control[]; }
 const statusConfig: Record<string, { color: string; icon: typeof CheckCircle }> = { collected: { color: "text-green-600", icon: CheckCircle }, pending: { color: "text-yellow-600", icon: Clock }, overdue: { color: "text-red-600", icon: AlertTriangle } };
@@ -14,7 +15,7 @@ export default function EvidenceCollectionPage() {
   const [loading, setLoading] = useState(false);
   const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/evidence-collection?framework=" + encodeURIComponent(framework), { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, [framework]);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const upload = async (controlId: string) => { try { await fetch("/api/v1/audit/evidence-collection/" + controlId + "/upload", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
+  const upload = async (controlId: string) => { try { await fetch("/api/v1/audit/evidence-collection/" + controlId + "/upload", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
   const collected = data?.controls.filter((c) => c.collection_status === "collected").length || 0;
   const pending = data?.controls.filter((c) => c.collection_status === "pending").length || 0;
   const overdue = data?.controls.filter((c) => c.collection_status === "overdue").length || 0;

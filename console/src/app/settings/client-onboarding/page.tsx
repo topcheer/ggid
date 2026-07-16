@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Rocket, Check, ChevronRight, Copy } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 const grantTypes = ["authorization_code", "client_credentials", "refresh_token", "password", "device_code", "implicit"];
 const allScopes = ["openid", "profile", "email", "read:users", "write:users", "read:roles", "write:roles", "audit:read"];
 const steps = ["App Info", "Grant Types", "Redirect URIs", "Scopes", "Review"];
@@ -17,7 +18,7 @@ export default function ClientOnboardingPage() {
       try {
         const res = await fetch("/api/v1/oauth/clients", {
           method: "GET",
-          headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`,
+          headers: { ...authHeader(),
             "Content-Type": "application/json",
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },

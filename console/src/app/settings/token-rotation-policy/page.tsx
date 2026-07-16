@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Save, Clock } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface RotationEntry { client_id: string; client_name: string; interval_days: number; max_age_hours: number; notify_before_hours: number; auto_rotate: boolean; last_rotated: string; }
 interface PolicyData { clients: RotationEntry[]; upcoming: { client_name: string; scheduled_at: string; overdue: boolean }[]; compliance_pct: number; }
 export default function TokenRotationPolicyPage() {
@@ -10,10 +11,10 @@ export default function TokenRotationPolicyPage() {
   const [data, setData] = useState<PolicyData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/oauth/token-rotation-policy", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/oauth/token-rotation-policy", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
   const updateClient = (id: string, field: string, value: string | number | boolean) => { if (!data) return; setData({ ...data, clients: data.clients.map((c) => c.client_id === id ? { ...c, [field]: value } : c) }); };
-  const save = async () => { if (!data) return; setSaving(true); try { await fetch("/api/v1/oauth/token-rotation-policy", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data.clients) }); } catch { /* noop */ } finally { setSaving(false); } };
+  const save = async () => { if (!data) return; setSaving(true); try { await fetch("/api/v1/oauth/token-rotation-policy", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data.clients) }); } catch { /* noop */ } finally { setSaving(false); } };
   const gaugeColor = data ? (data.compliance_pct >= 90 ? "#10b981" : data.compliance_pct >= 70 ? "#f59e0b" : "#ef4444") : "#3b82f6";
   return (
     <div className="space-y-6">

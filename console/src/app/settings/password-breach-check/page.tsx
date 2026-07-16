@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { ShieldAlert, ScanLine, AlertTriangle, RotateCcw } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface BreachResult {
   id: string;
@@ -30,7 +31,7 @@ export default function PasswordBreachCheckPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await fetch("/api/v1/auth/password-breach-check", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setResults(d.results || d || []); } }
+    try { const res = await fetch("/api/v1/auth/password-breach-check", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setResults(d.results || d || []); } }
     catch { /* noop */ }
     finally { setLoading(false); }
   }, []);
@@ -39,13 +40,13 @@ export default function PasswordBreachCheckPage() {
 
   const scanNow = async () => {
     setScanning(true);
-    try { await fetch("/api/v1/auth/password-breach-check/scan", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
+    try { await fetch("/api/v1/auth/password-breach-check/scan", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
     catch { /* noop */ }
     finally { setScanning(false); }
   };
 
   const forceReset = async (id: string) => {
-    try { await fetch("/api/v1/auth/password-breach-check/" + id + "/force-reset", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
+    try { await fetch("/api/v1/auth/password-breach-check/" + id + "/force-reset", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
     catch { /* noop */ }
   };
 

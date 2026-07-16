@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Search, Trash2, Smartphone, Monitor, MessageSquare, ShieldCheck, Clock } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface MFAFactor {
   id: string;
@@ -39,7 +40,7 @@ export default function MFAFactorsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/auth/mfa-factors?user=${encodeURIComponent(user)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/auth/mfa-factors?user=${encodeURIComponent(user)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setFactors(data.factors || data || []);
@@ -61,7 +62,7 @@ export default function MFAFactorsPage() {
     try {
       await fetch(`/api/v1/auth/mfa-factors/${id}`, {
         method: "DELETE",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setFactors((prev) => prev.filter((f) => f.id !== id));
     } catch {

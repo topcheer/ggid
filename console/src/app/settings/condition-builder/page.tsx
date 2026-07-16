@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { GitBranch, Plus, X, Check, Code } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Condition { id: string; attribute: string; operator: string; value: string; }
 interface Group { id: string; logic: "AND" | "OR"; conditions: Condition[]; }
 const operators = ["eq", "ne", "in", "contains", "gt", "lt", "gte", "lte"];
@@ -17,7 +18,7 @@ export default function ConditionBuilderPage() {
 
   useEffect(() => {
     fetch("/api/v1/policy/abac/condition-config", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setGroups(data.groups || []); setLoading(false); })

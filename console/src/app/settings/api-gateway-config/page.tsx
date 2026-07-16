@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Network, Save, Plus, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface RouteLimit { route: string; requests_per_min: number; burst: number; }
 interface GatewayConfig { timeout_seconds: number; max_body_size_kb: number; circuit_breaker_enabled: boolean; retry_max_attempts: number; retry_backoff_ms: number; health_check_interval_seconds: number; cors_origins: string[]; route_limits: RouteLimit[]; }
@@ -18,7 +19,7 @@ export default function ApiGatewayConfigPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/admin/gateway-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/admin/gateway-config", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setConfig(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -29,7 +30,7 @@ export default function ApiGatewayConfigPage() {
   const save = async () => {
     if (!config) return;
     setSaving(true);
-    try { await fetch("/api/v1/admin/gateway-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); setSaved(true); setTimeout(() => setSaved(false), 2000); }
+    try { await fetch("/api/v1/admin/gateway-config", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); setSaved(true); setTimeout(() => setSaved(false), 2000); }
     catch { /* noop */ }
     finally { setSaving(false); }
   };

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Network, Search, ChevronDown, ChevronRight, Building2, User as UserIcon, Briefcase, AlertTriangle, RotateCcw } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface OrgNode { id: string; name: string; title: string; email: string; manager_id: string | null; department: string; children?: OrgNode[]; }
 interface TreeNodeProps { node: OrgNode; depth: number; collapsedIds: Set<string | null>; toggleNode: (id: string) => void; highlight: string; }
 function TreeNode({ node, depth, collapsedIds, toggleNode, highlight }: TreeNodeProps) {
@@ -55,7 +56,7 @@ export default function OrgChartPage() {
   const [search, setSearch] = useState("");
   useEffect(() => {
     setError(null);
-    fetch("/api/v1/org/orgs", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
+    fetch("/api/v1/org/orgs", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
       if (!res.ok) { setError(`Failed to load orgs: HTTP ${res.status}`); return; }
       const data = await res.json();
       setOrgs(data.orgs || data || []);
@@ -66,7 +67,7 @@ export default function OrgChartPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/org/orgs/${orgId}/chart`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/org/orgs/${orgId}/chart`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setTree(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load org chart"); }

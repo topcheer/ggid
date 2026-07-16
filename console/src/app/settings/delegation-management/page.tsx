@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Delegation { id: string; delegator: string; delegatee: string; scopes: string[]; created: string; expires: string; maxDepth: number; }
 
@@ -17,7 +18,7 @@ export default function DelegationManagementPage() {
 
   useEffect(() => {
     fetch("/api/v1/policies/delegations", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setDelegations(Array.isArray(data) ? data : (data.delegations || data.items || [])); setLoading(false); })

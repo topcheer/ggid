@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { UserCog, Ban, AlertTriangle, Search } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface ImpersonationEvent { id: string; impersonator: string; target_user: string; start_at: string; end_at: string | null; duration_minutes: number; reason: string; ip_address: string; is_active: boolean; }
 export default function ImpersonationLogPage() {
   const t = useTranslations();
@@ -14,7 +15,7 @@ export default function ImpersonationLogPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/auth/impersonation-log", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/impersonation-log", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setEvents(d.events || d || []);
@@ -24,7 +25,7 @@ export default function ImpersonationLogPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const revoke = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/auth/impersonation-log/" + id + "/revoke", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/impersonation-log/" + id + "/revoke", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to revoke session"); }

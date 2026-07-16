@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { BarChart3, Calendar, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface AnalyticsData {
   total_attempts: number;
@@ -29,7 +30,7 @@ export default function LoginAnalyticsPage() {
     if (!startDate || !endDate) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/auth/login-analytics?start=${startDate}&end=${endDate}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/auth/login-analytics?start=${startDate}&end=${endDate}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setData(await res.json());
     } catch {
       /* noop */

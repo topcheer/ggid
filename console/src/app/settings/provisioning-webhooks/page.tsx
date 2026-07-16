@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Webhook, Plus, Trash2, X, Save, Send, Settings, Zap } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ProvisioningWebhook {
   id: string;
@@ -33,7 +34,7 @@ export default function ProvisioningWebhooksPage() {
   const fetchWebhooks = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/provisioning-webhooks", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/provisioning-webhooks", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setWebhooks(data.webhooks || data || []);
@@ -79,7 +80,7 @@ export default function ProvisioningWebhooksPage() {
   const testWebhook = async (id: string) => {
     setTestingId(id);
     try {
-      await fetch(`/api/v1/identity/provisioning-webhooks/${id}/test`, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      await fetch(`/api/v1/identity/provisioning-webhooks/${id}/test`, { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
     } catch { /* noop */ }
     finally { setTestingId(null); }
   };
@@ -87,7 +88,7 @@ export default function ProvisioningWebhooksPage() {
   const doDelete = async () => {
     if (!deleteId) return;
     try {
-      await fetch(`/api/v1/identity/provisioning-webhooks/${deleteId}`, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      await fetch(`/api/v1/identity/provisioning-webhooks/${deleteId}`, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       setWebhooks((prev) => prev.filter((w) => w.id !== deleteId));
       setDeleteId(null);
     } catch { /* noop */ }

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Database, Clock, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface DbHealth { pool_size: number; pool_active: number; pool_idle: number; pool_max: number; query_rate_per_sec: number; avg_latency_ms: number; slow_queries: { query: string; duration_ms: number; timestamp: string }[]; table_sizes: { table: string; size_mb: number }[]; index_efficiency_pct: number; replication_lag_seconds: number; }
 
@@ -12,7 +13,7 @@ export default function DatabaseHealthPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/admin/database-health", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/admin/database-health", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

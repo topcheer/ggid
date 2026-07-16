@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Cloud, AlertTriangle, RefreshCw } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Mapping { scim_attr: string; local_attr: string; }
 interface ErrorItem { id: string; user: string; error: string; timestamp: string; }
 interface Config { endpoint_url: string; mappings: Mapping[]; rules: { create: boolean; update: boolean; deactivate: boolean; }; sync_direction: "inbound" | "outbound" | "bidirectional"; last_sync: string; last_status: "success" | "partial" | "failed"; error_queue: ErrorItem[]; }
@@ -11,7 +12,7 @@ export default function ScimProvisioningPage() {
   const [loading, setLoading] = useState(false);
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await fetch("/api/v1/identity/scim-provisioning", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); }
+    try { const res = await fetch("/api/v1/identity/scim-provisioning", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); }
     catch { /* noop */ } finally { setLoading(false); }
   }, []);
   useEffect(() => { fetchData(); }, [fetchData]);

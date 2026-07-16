@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState } from "react";
 import { ArrowLeftRight, Play, Clock } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ExchangeResult { access_token: string; token_type: string; expires_in: number; scope: string; issued_token_type: string; }
 interface HistoryItem { id: string; subject: string; audience: string; scope: string; timestamp: string; success: boolean; }
@@ -21,7 +22,7 @@ export default function OAuthTokenExchangePage() {
     if (!subjectToken) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/token-exchange", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ grant_type: "urn:ietf:params:oauth:grant-type:token-exchange", subject_token: subjectToken, actor_token: actorToken || undefined, audience, scope, resource }) });
+      const res = await fetch("/api/v1/oauth/token-exchange", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ grant_type: "urn:ietf:params:oauth:grant-type:token-exchange", subject_token: subjectToken, actor_token: actorToken || undefined, audience, scope, resource }) });
       if (res.ok) setResult(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import { Activity, Save, Loader2, Radio, Server, AlertCircle } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface SIEMConfig {
   provider: string;
@@ -46,7 +47,7 @@ export default function SIEMPage() {
     if (stored) {
       try { const parsed = JSON.parse(stored); if (parsed) setConfig(prev => ({ ...prev, ...parsed })); } catch { /* ignore */ }
     }
-    fetch("/api/v1/settings/siem", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch("/api/v1/settings/siem", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
       .then(async (res) => { if (res.ok) { const data = await res.json(); if (data) setConfig(data); } })
       .catch(() => { /* use stored/local defaults */ })
       .finally(() => setLoading(false));

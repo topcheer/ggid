@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Search, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface GrantEvent { id: string; client_name: string; user_id: string; username: string; scopes: string[]; granted_at: string; expires_at: string; revoked_at: string | null; grant_type: string; }
 export default function GrantHistoryPage() {
   const t = useTranslations();
@@ -16,7 +17,7 @@ export default function GrantHistoryPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/grant-history", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/grant-history", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setEvents(d.events || d || []);

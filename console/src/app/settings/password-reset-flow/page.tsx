@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Save, Mail, MessageSquare, ShieldQuestion, UserCog } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ResetConfig { methods: { email_link: boolean; sms_code: boolean; security_questions: boolean; admin_reset: boolean }; token_expiry_minutes: number; require_mfa: boolean; reset_after_failed_attempts: number; notify_on_reset: boolean; }
 interface ResetEvent { id: string; user: string; method: string; requested_at: string; completed: boolean; ip: string; }
@@ -19,7 +20,7 @@ export default function PasswordResetFlowPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/password-reset-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/password-reset-config", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setConfig(d.config || d); setHistory(d.history || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -30,7 +31,7 @@ export default function PasswordResetFlowPage() {
   const save = async () => {
     if (!config) return;
     setSaving(true);
-    try { await fetch("/api/v1/auth/password-reset-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
+    try { await fetch("/api/v1/auth/password-reset-config", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
     catch { /* noop */ }
     finally { setSaving(false); }
   };

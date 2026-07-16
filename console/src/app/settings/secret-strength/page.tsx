@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { KeyRound, Search, Gauge, Lightbulb, CheckCircle2, XCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface SecretReport {
   client_id: string;
@@ -36,7 +37,7 @@ export default function SecretStrengthPage() {
 
   const fetchClients = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/oauth/clients", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/clients", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setClients(data.clients || data || []);
@@ -50,7 +51,7 @@ export default function SecretStrengthPage() {
     if (!selectedId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/oauth/clients/${selectedId}/secret-strength`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/oauth/clients/${selectedId}/secret-strength`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setReports(Array.isArray(data) ? data : [data]);

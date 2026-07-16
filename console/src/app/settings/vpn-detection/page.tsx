@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ShieldAlert, Search, Globe, Zap, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface VPNResult {
   ip: string;
@@ -35,7 +36,7 @@ export default function VPNDetectionPage() {
     if (ips.length === 0) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/vpn-check", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ ips }) });
+      const res = await fetch("/api/v1/auth/vpn-check", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ ips }) });
       if (res.ok) { const data = await res.json(); setResults(data.results || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

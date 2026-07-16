@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Grid3x3, Check, Save } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface MatrixData {
   clients: { client_id: string; client_name: string }[];
@@ -21,7 +22,7 @@ export default function ScopeMatrixPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/scope-matrix", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/scope-matrix", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const json = await res.json();
         setData(json);
@@ -45,7 +46,7 @@ export default function ScopeMatrixPage() {
     try {
       await fetch("/api/v1/oauth/scope-matrix", {
         method: "PUT",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ grants }),
       });
     } catch { /* noop */ }

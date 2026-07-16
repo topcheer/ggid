@@ -1,6 +1,7 @@
 'use client';
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface LinkedAccount {
   id: string;
@@ -24,7 +25,7 @@ export default function AccountLinkingConfigPage() {
 
   useEffect(() => {
     fetch("/api/v1/identity/account-linking/config", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {

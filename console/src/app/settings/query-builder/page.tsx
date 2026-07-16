@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Search, Play, Save, Download, Plus, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface WhereClause { id: string; field: string; operator: string; value: string; }
 interface QueryResult { timestamp: string; user: string; action: string; resource: string; result: string; }
 const fields = ["timestamp", "user_id", "action", "resource", "result", "ip_address", "tenant_id"];
@@ -20,7 +21,7 @@ export default function QueryBuilderPage() {
   const addWhere = () => { setWhereClauses([...whereClauses, { id: "w" + Date.now(), field: "action", operator: "=", value: "" }]); };
   const removeWhere = (id: string) => { setWhereClauses(whereClauses.filter((w) => w.id !== id)); };
   const updateWhere = (id: string, field: string, value: string) => { setWhereClauses(whereClauses.map((w) => w.id === id ? { ...w, [field]: value } : w)); };
-  const execute = async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/query", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ select: selectFields, where: whereClauses, group_by: groupBy, order_by: orderBy, limit }) }); if (res.ok) { const d = await res.json(); setResults(d.results || d || []); } setHistory([JSON.stringify({ select: selectFields, where: whereClauses, limit }), ...history].slice(0, 5)); } catch { /* noop */ } finally { setLoading(false); } };
+  const execute = async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/query", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ select: selectFields, where: whereClauses, group_by: groupBy, order_by: orderBy, limit }) }); if (res.ok) { const d = await res.json(); setResults(d.results || d || []); } setHistory([JSON.stringify({ select: selectFields, where: whereClauses, limit }), ...history].slice(0, 5)); } catch { /* noop */ } finally { setLoading(false); } };
   const exportData = (format: string) => { window.open("/api/v1/audit/query/export?format=" + format, "_blank"); };
   return (
     <div className="space-y-6">

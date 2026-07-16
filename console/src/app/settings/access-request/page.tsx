@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileText, Clock, Check, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Request { id: string; target_role: string; justification: string; duration_days: number; approver: string; status: "pending" | "approved" | "rejected" | "expired"; submitted_at: string; expires_at: string; days_remaining: number; comments: { author: string; text: string; timestamp: string }[]; }
 export default function AccessRequestPage() {
   const [showForm, setShowForm] = useState(false);
@@ -18,8 +19,8 @@ export default function AccessRequestPage() {
     setLoading(true); setError(null);
     try {
       const [mine, queue] = await Promise.all([
-        fetch("/api/v1/policy/access-request?scope=mine", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))),
-        fetch("/api/v1/policy/access-request?scope=queue", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))),
+        fetch("/api/v1/policy/access-request?scope=mine", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))),
+        fetch("/api/v1/policy/access-request?scope=queue", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))),
       ]);
       setMyRequests(mine.requests || mine || []);
       setApprovalQueue(queue.requests || queue || []);
@@ -31,10 +32,10 @@ export default function AccessRequestPage() {
 
   const submitRequest = async () => {
     if (!form.target_role) return;
-    try { await fetch("/api/v1/policy/access-request", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowForm(false); setForm({ target_role: "", justification: "", duration_days: 7, approver: "" }); loadData(); }
+    try { await fetch("/api/v1/policy/access-request", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowForm(false); setForm({ target_role: "", justification: "", duration_days: 7, approver: "" }); loadData(); }
     catch { /* noop */ }
   };
-  const decide = async (id: string, decision: string) => { try { await fetch("/api/v1/policy/access-request/" + id, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ decision }) }); loadData(); } catch { /* noop */ } };
+  const decide = async (id: string, decision: string) => { try { await fetch("/api/v1/policy/access-request/" + id, { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ decision }) }); loadData(); } catch { /* noop */ } };
 
   if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
   if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">{t("accessRequest.error")}: {error}</p><button aria-label="action" onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("accessRequest.retry")}</button></div></div>);

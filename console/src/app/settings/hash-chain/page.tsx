@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link2, ShieldCheck, AlertTriangle, RefreshCw } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface TamperAlert { block_num: number; expected_hash: string; actual_hash: string; detected_at: string; }
 interface VerifyEntry { timestamp: string; status: "ok" | "failed"; blocks_checked: number; }
 interface HashChainData { chain_status: "intact" | "broken"; last_verified_at: string; total_blocks: number; integrity_score: number; tamper_alerts: TamperAlert[]; verify_log: VerifyEntry[]; }
@@ -11,9 +12,9 @@ export default function HashChainPage() {
   const [data, setData] = useState<HashChainData | null>(null);
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/hash-chain", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/hash-chain", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const verify = async () => { setVerifying(true); try { await fetch("/api/v1/audit/hash-chain/verify", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } finally { setVerifying(false); } };
+  const verify = async () => { setVerifying(true); try { await fetch("/api/v1/audit/hash-chain/verify", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } finally { setVerifying(false); } };
   const scoreColor = data ? (data.integrity_score >= 99 ? "#10b981" : data.integrity_score >= 90 ? "#f59e0b" : "#ef4444") : "#3b82f6";
   return (
     <div className="space-y-6">

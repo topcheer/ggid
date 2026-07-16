@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Gauge, Download, TrendingUp } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface RiskFactor { factor: string; weight: number; current_value: number; contribution: number; }
 interface RiskData { composite_score: number; factors: RiskFactor[]; monte_carlo: { p50: number; p90: number; p99: number }; trend_30d: { date: string; score: number }[]; }
@@ -15,7 +16,7 @@ export default function RiskQuantificationPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/audit/risk-quantification", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/risk-quantification", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

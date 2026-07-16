@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Users, Plus, Trash2, X, Save, Calendar, Shield } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Delegation {
   id: string;
@@ -35,7 +36,7 @@ export default function DelegationsPage() {
   const fetchDelegations = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/delegations", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/delegations", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setDelegations(data.delegations || data || []);
@@ -80,7 +81,7 @@ export default function DelegationsPage() {
     try {
       await fetch(`/api/v1/identity/delegations/${revokeId}/revoke`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setDelegations((prev) => prev.map((d) => d.id === revokeId ? { ...d, status: "revoked" } : d));
       setRevokeId(null);

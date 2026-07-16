@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Copy, Save, Play, Search, Shield, Users as UsersIcon, Key, X, Check } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface UserSummary {
   user_id: string;
@@ -47,7 +48,7 @@ export default function CloneTemplatePage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/identity/users", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/users", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || data || []);
@@ -57,7 +58,7 @@ export default function CloneTemplatePage() {
 
   const fetchTemplates = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/identity/clone-templates", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/clone-templates", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setTemplates(data.templates || data || []);
@@ -71,7 +72,7 @@ export default function CloneTemplatePage() {
     if (!selectedUserId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/identity/users/${selectedUserId}/template`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/identity/users/${selectedUserId}/template`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         setTemplate(await res.json());
       }
@@ -84,7 +85,7 @@ export default function CloneTemplatePage() {
     try {
       await fetch("/api/v1/identity/clone-templates", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ name: templateName, description: templateDesc, source_user: selectedUserId, data: template }),
       });
       setShowSave(false);
@@ -100,7 +101,7 @@ export default function CloneTemplatePage() {
     try {
       await fetch("/api/v1/identity/clone-templates/apply", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ template_id: selectedTemplateId, username: targetUsername, email: targetEmail }),
       });
       setShowCreate(false);

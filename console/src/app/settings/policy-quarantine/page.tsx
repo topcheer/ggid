@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useCallback } from "react";
 import { ShieldOff, AlertTriangle, Undo, Clock } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface QuarantineResult {
   policy_id: string;
@@ -30,7 +31,7 @@ export default function PolicyQuarantinePage() {
     if (!policyId) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/quarantine", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ policy_id: policyId, reason, duration_hours: duration }) });
+      const res = await fetch("/api/v1/policy/quarantine", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ policy_id: policyId, reason, duration_hours: duration }) });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

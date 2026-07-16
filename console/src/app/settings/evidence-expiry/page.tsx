@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { FileWarning, RefreshCw, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface EvidenceItem {
   id: string;
@@ -28,7 +29,7 @@ export default function EvidenceExpiryPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/audit/evidence-expiry", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/evidence-expiry", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const data = await res.json();
       setItems(data.evidence || data || []);
@@ -43,7 +44,7 @@ export default function EvidenceExpiryPage() {
     try {
       const res = await fetch(`/api/v1/audit/evidence-expiry/${id}/refresh`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       if (!res.ok) return null;
       setItems((prev) => prev.map((e) => e.id === id ? { ...e, status: "valid", days_remaining: 90, expires_at: new Date(Date.now() + 90 * 86400000).toISOString().split("T")[0] } : e));

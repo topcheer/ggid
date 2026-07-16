@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import { Search, Shield, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface RiskData { user_id: string; username: string; risk_score: number; trend: number; factors: { key: string; label: string; score: number; max: number }[]; }
 export default function RiskProfilePage() {
   const t = useTranslations();
@@ -15,7 +16,7 @@ export default function RiskProfilePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/auth/risk-profile?user=${encodeURIComponent(user)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/auth/risk-profile?user=${encodeURIComponent(user)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setData(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load risk profile"); }

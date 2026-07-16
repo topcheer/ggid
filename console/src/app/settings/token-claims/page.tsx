@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Code2, ChevronRight, ChevronDown, Copy, AlertCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface DecodedToken {
   header: Record<string, unknown>;
@@ -60,7 +61,7 @@ export default function TokenClaimsPage() {
 
   useEffect(() => {
     fetch("/api/v1/auth/sessions/anomaly-score", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(() => setLoading(false))

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Globe, Save, Search, Shield, Zap } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface GeofenceRule {
   allowed_countries: string[];
@@ -26,7 +27,7 @@ export default function GeofencingPage() {
   const fetchRule = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/geofencing", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/geofencing", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); if (data) setRule(data); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -36,12 +37,12 @@ export default function GeofencingPage() {
 
   const save = async () => {
     setSaving(true);
-    try { await fetch("/api/v1/auth/geofencing", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(rule) }); } catch { /* noop */ } finally { setSaving(false); }
+    try { await fetch("/api/v1/auth/geofencing", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(rule) }); } catch { /* noop */ } finally { setSaving(false); }
   };
 
   const testIpCheck = async () => {
     if (!testIp) return;
-    try { const res = await fetch(`/api/v1/auth/geofencing/test?ip=${encodeURIComponent(testIp)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setTestResult(await res.json()); } catch { /* noop */ }
+    try { const res = await fetch(`/api/v1/auth/geofencing/test?ip=${encodeURIComponent(testIp)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setTestResult(await res.json()); } catch { /* noop */ }
   };
 
   const toggleCountry = (code: string) => {

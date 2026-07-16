@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Clock, Send, AlertTriangle, KeyRound, Shield } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface RotationItem {
   id: string;
@@ -32,7 +33,7 @@ export default function RotationRemindersPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/rotation-reminders", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/rotation-reminders", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setItems(data.items || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -42,7 +43,7 @@ export default function RotationRemindersPage() {
 
   const sendReminder = async (id: string) => {
     setSendingId(id);
-    try { await fetch(`/api/v1/auth/rotation-reminders/${id}/send`, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
+    try { await fetch(`/api/v1/auth/rotation-reminders/${id}/send`, { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
     catch { /* noop */ }
     finally { setSendingId(null); }
   };

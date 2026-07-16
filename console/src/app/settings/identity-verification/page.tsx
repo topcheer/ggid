@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ShieldCheck, Clock } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface VerifConfig { methods: { document: boolean; face: boolean; kba: boolean; phone: boolean; email: boolean }; required_factors: number; confidence_threshold: number; risk_matrix: { level: string; factors: number }[]; }
 interface VerifEvent { id: string; user: string; method: string; status: string; confidence: number; timestamp: string; }
@@ -14,7 +15,7 @@ export default function IdentityVerificationPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/identity-verification", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/identity-verification", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setConfig(d.config || d); setHistory(d.history || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

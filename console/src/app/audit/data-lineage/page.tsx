@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, GitBranch, User, Download, FileText, Database } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface LineageNode {
   id: string;
@@ -72,7 +73,7 @@ export default function DataLineagePage() {
     if (!resource) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/audit/data-lineage?resource=${encodeURIComponent(resource)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/audit/data-lineage?resource=${encodeURIComponent(resource)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const json = await res.json();
         setData(json);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Lock, Save, Shield } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface EndpointOverride {
   endpoint: string;
@@ -38,7 +39,7 @@ export default function BruteForceConfigPage() {
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await fetch("/api/v1/auth/brute-force-config/lockouts", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/brute-force-config/lockouts", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json(); setLockouts(d.lockouts || []);
     } catch (err) { setError(err instanceof Error ? err.message : t("bruteForce.anError")); }
@@ -49,7 +50,7 @@ export default function BruteForceConfigPage() {
 
   const save = useCallback(async () => {
     setSaving(true);
-    try { await fetch("/api/v1/auth/brute-force-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
+    try { await fetch("/api/v1/auth/brute-force-config", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) }); }
     catch { /* noop */ }
     finally { setSaving(false); }
   }, [config]);

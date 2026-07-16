@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Clock, Zap, TrendingDown, CheckCircle2, ArrowRight } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface StandingAccess {
   id: string;
@@ -27,7 +28,7 @@ export default function StandingAccessPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/standing-access", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/standing-access", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setEntries(data.entries || data || []);
@@ -43,7 +44,7 @@ export default function StandingAccessPage() {
     try {
       await fetch(`/api/v1/policy/standing-access/${id}/convert-jit`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setEntries((prev) => prev.filter((e) => e.id !== id));
     } catch { /* noop */ }

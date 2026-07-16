@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { UserCog, Plus, X, Clock, CheckCircle, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Delegation {
   id: string;
@@ -31,7 +32,7 @@ export default function DelegatedReviewPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/delegated-review", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/delegated-review", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setDelegations(data.delegations || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -41,12 +42,12 @@ export default function DelegatedReviewPage() {
 
   const create = async () => {
     if (!form.original_reviewer || !form.delegated_to) return;
-    try { await fetch("/api/v1/policy/delegated-review", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ original_reviewer: "", delegated_to: "", scope: "", expires_at: "" }); fetchData(); }
+    try { await fetch("/api/v1/policy/delegated-review", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ original_reviewer: "", delegated_to: "", scope: "", expires_at: "" }); fetchData(); }
     catch { /* noop */ }
   };
 
   const revoke = async (id: string) => {
-    try { await fetch(`/api/v1/policy/delegated-review/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
+    try { await fetch(`/api/v1/policy/delegated-review/${id}`, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
     catch { /* noop */ }
   };
 

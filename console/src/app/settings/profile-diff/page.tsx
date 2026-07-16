@@ -2,6 +2,7 @@
 import { useState, useCallback } from "react";
 import { GitCompare, ArrowRight, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface DiffEntry { field: string; old_value: string; new_value: string; changed_by: string; changed_at: string; }
 interface DiffResult { user_id: string; username: string; version_a: string; version_b: string; diffs: DiffEntry[]; }
 export default function ProfileDiffPage() {
@@ -18,7 +19,7 @@ export default function ProfileDiffPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/identity/profile-diff?user_id=${encodeURIComponent(userId)}&a=${encodeURIComponent(versionA)}&b=${encodeURIComponent(versionB)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/identity/profile-diff?user_id=${encodeURIComponent(userId)}&a=${encodeURIComponent(versionA)}&b=${encodeURIComponent(versionB)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setResult(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to compare profiles"); }

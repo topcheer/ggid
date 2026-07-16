@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useCallback } from "react";
 import { Download, Upload, FileJson, GitCompare, Check, X } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 export default function PolicyExportPage() {
   const t = useTranslations();
@@ -18,7 +19,7 @@ export default function PolicyExportPage() {
   const doExport = useCallback(async () => {
     setExporting(true); setError("");
     try {
-      const res = await fetch("/api/v1/policy/export", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/export", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -35,7 +36,7 @@ export default function PolicyExportPage() {
     if (!importJson) return;
     setImporting(true); setError("");
     try {
-      const res = await fetch("/api/v1/policy/import-preview", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
+      const res = await fetch("/api/v1/policy/import-preview", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
       if (!res.ok) return null;
       setDiff(await res.json());
     } catch (e) {
@@ -46,7 +47,7 @@ export default function PolicyExportPage() {
   const doImport = async () => {
     setImporting(true); setError("");
     try {
-      const res = await fetch("/api/v1/policy/import", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
+      const res = await fetch("/api/v1/policy/import", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: importJson });
       if (!res.ok) return null;
       setMessage("Import completed successfully."); setDiff(null); setImportJson("");
     } catch (e) {

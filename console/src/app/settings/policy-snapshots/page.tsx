@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { Camera, History, RotateCcw, X, AlertTriangle } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Snapshot {
   id: string;
@@ -26,7 +27,7 @@ export default function PolicySnapshotsPage() {
   const fetchSnapshots = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/snapshots", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/snapshots", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setSnapshots(data.snapshots || data || []);
@@ -47,7 +48,7 @@ export default function PolicySnapshotsPage() {
     try {
       await fetch("/api/v1/policy/snapshots", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ policy_id: policyId, description }),
       });
       setShowCreate(false);
@@ -64,7 +65,7 @@ export default function PolicySnapshotsPage() {
     try {
       await fetch(`/api/v1/policy/snapshots/${rollbackTarget.id}/rollback`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setRollbackTarget(null);
       fetchSnapshots();

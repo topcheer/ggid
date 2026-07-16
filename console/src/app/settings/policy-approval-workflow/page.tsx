@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle, Clock, ChevronRight } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Approval {
   id: string;
@@ -33,7 +34,7 @@ export default function PolicyApprovalWorkflowPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try { const res = await fetch("/api/v1/policy/approval-workflow", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setApprovals(d.approvals || d || []); } }
+    try { const res = await fetch("/api/v1/policy/approval-workflow", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setApprovals(d.approvals || d || []); } }
     catch { /* noop */ }
     finally { setLoading(false); }
   }, []);
@@ -41,7 +42,7 @@ export default function PolicyApprovalWorkflowPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const decide = async (id: string, decision: "approved" | "rejected") => {
-    try { await fetch("/api/v1/policy/approval-workflow/" + id, { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ decision, comment }) }); setComment(""); fetchData(); }
+    try { await fetch("/api/v1/policy/approval-workflow/" + id, { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ decision, comment }) }); setComment(""); fetchData(); }
     catch { /* noop */ }
   };
 

@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { LifeBuoy, ShieldCheck, Ban, AlertTriangle, RotateCcw } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface RecoveryCode { user_id: string; username: string; total: number; used: number; remaining: number; generated_at: string; }
 interface RecoveryConfig { methods: string[]; verification_steps: string[]; enabled: boolean; }
 interface AuditEntry { id: string; user: string; action: string; timestamp: string; ip: string; }
@@ -16,7 +17,7 @@ export default function AccountRecoveryPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/auth/account-recovery", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/account-recovery", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setConfig(d.config);

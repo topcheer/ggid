@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Eye, Save, Play, AlertTriangle, RotateCcw } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ConsentConfig { logo_url: string; privacy_policy_url: string; tos_url: string; show_skip_consent: boolean; remember_consent_duration_days: number; scope_descriptions: Record<string, string>; pre_approved_apps: { client_id: string; client_name: string }[]; }
 
@@ -16,7 +17,7 @@ export default function OauthConsentFlowPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/consent-flow-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/consent-flow-config", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setConfig(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedLoad")); }
@@ -30,7 +31,7 @@ export default function OauthConsentFlowPage() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/consent-flow-config", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
+      const res = await fetch("/api/v1/oauth/consent-flow-config", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
       if (!res.ok) return null;
     } catch (e) { setError(e instanceof Error ? e.message : t("oauthConsentFlow.failedSave")); }
     finally { setSaving(false); }

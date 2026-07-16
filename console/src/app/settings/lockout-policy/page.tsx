@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Lock, Save, Shield } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface LockoutConfig { max_failed_attempts: number; lockout_duration_minutes: number; progressive_backoff: boolean; captcha_trigger_attempts: number; auto_unlock_minutes: number; per_endpoint: { endpoint: string; max_attempts: number; duration_minutes: number }[]; ip_allowlist: string[]; }
 interface ActiveLockout { username: string; ip: string; locked_at: string; unlock_at: string; }
 interface LockoutData { config: LockoutConfig; active_lockouts: ActiveLockout[]; }
@@ -10,9 +11,9 @@ export default function LockoutPolicyPage() {
   const [data, setData] = useState<LockoutData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/auth/lockout-policy", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/auth/lockout-policy", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const save = async () => { if (!data) return; setSaving(true); try { await fetch("/api/v1/auth/lockout-policy", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data.config) }); } catch { /* noop */ } finally { setSaving(false); } };
+  const save = async () => { if (!data) return; setSaving(true); try { await fetch("/api/v1/auth/lockout-policy", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data.config) }); } catch { /* noop */ } finally { setSaving(false); } };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between"><div><h1 className="text-2xl font-bold flex items-center gap-2"><Lock className="w-6 h-6 text-red-500" /> {t("lockoutPolicy.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("lockoutPolicy.subtitle")}</p></div><button onClick={save} disabled={saving || !data} aria-label="Save lockout policy" className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? t("corsSettings.saving") : t("common.save")}</button></div>

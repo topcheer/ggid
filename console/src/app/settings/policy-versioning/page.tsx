@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { GitBranch, RotateCcw, Clock, ArrowRight } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Version { version_num: number; author: string; timestamp: string; change_summary: string; is_current: boolean; }
 interface PolicyVersionData { policy_id: string; policy_name: string; versions: Version[]; }
 export default function PolicyVersioningPage() {
@@ -15,8 +16,8 @@ export default function PolicyVersioningPage() {
   const t = useTranslations();
   const fetchData = useCallback(async () => { if (!policyId) return; setLoading(true); try { const res = await fetch("/api/v1/policy/" + policyId + "/versions", { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, [policyId]);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const activate = async (versionNum: number) => { try { await fetch("/api/v1/policy/" + policyId + "/versions/" + versionNum + "/activate", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
-  const rollback = async (versionNum: number) => { try { await fetch("/api/v1/policy/" + policyId + "/versions/" + versionNum + "/rollback", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); setShowRollback(null); fetchData(); } catch { /* noop */ } };
+  const activate = async (versionNum: number) => { try { await fetch("/api/v1/policy/" + policyId + "/versions/" + versionNum + "/activate", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
+  const rollback = async (versionNum: number) => { try { await fetch("/api/v1/policy/" + policyId + "/versions/" + versionNum + "/rollback", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); setShowRollback(null); fetchData(); } catch { /* noop */ } };
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><GitBranch className="w-6 h-6 text-purple-500" /> {t("policyVersioning.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("policyVersioning.subtitle")}</p></div>

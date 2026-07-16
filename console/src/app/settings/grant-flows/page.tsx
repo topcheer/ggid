@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Workflow, CheckCircle2, Clock, TrendingUp } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface FlowStat {
   flow: string;
@@ -39,7 +40,7 @@ export default function GrantFlowsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/oauth/grant-flows/stats?range=${timeRange}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/oauth/grant-flows/stats?range=${timeRange}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setStats(data.flows || data || []);

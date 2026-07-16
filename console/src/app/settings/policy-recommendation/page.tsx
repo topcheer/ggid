@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Lightbulb, Check, X, Sparkles, AlertTriangle, RotateCcw } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Recommendation { id: string; type: "consolidate" | "split" | "create" | "delete"; affected_policies: string[]; reason: string; risk_reduction_score: number; confidence: number; before_summary: string; after_summary: string; }
 const typeColors: Record<string, string> = { consolidate: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400", split: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400", create: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", delete: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 export default function PolicyRecommendationPage() {
@@ -13,7 +14,7 @@ export default function PolicyRecommendationPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/policy/recommendations", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/recommendations", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setRecs(d.recommendations || d || []);
@@ -23,14 +24,14 @@ export default function PolicyRecommendationPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const apply = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/policy/recommendations/" + id + "/apply", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/recommendations/" + id + "/apply", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setRecs(recs.filter((r) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to apply recommendation"); }
   };
   const dismiss = async (id: string) => {
     try {
-      const res = await fetch("/api/v1/policy/recommendations/" + id + "/dismiss", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/recommendations/" + id + "/dismiss", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setRecs(recs.filter((r) => r.id !== id));
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to dismiss recommendation"); }

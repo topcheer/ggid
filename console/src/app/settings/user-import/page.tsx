@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Upload, FileText, CheckCircle, AlertTriangle, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Mapping { csv_column: string; user_attribute: string; }
 interface ImportResults { created: number; updated: number; skipped: number; failed: number; errors: string[]; }
 const userAttributes = ["username", "email", "first_name", "last_name", "department", "role", "phone"];
@@ -24,7 +25,7 @@ export default function UserImportPage() {
     setImporting(true);
     setImportError("");
     try {
-      const res = await fetch("/api/v1/identity/users/import", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ file: fileName, mappings, dry_run: dryRun }) });
+      const res = await fetch("/api/v1/identity/users/import", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ file: fileName, mappings, dry_run: dryRun }) });
       if (!res.ok) return null;
       const data = await res.json();
       setResults({ created: data.created ?? 0, updated: data.updated ?? 0, skipped: data.skipped ?? 0, failed: data.failed ?? 0, errors: data.errors || [] });

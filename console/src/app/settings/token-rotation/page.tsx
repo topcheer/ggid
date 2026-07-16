@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, Save, ToggleLeft, ToggleRight, AlertTriangle, RotateCcw } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface RotationConfig { client_id: string; client_name: string; enabled: boolean; interval_days: number; max_age_hours: number; notify_before_hours: number; }
 interface Client { client_id: string; client_name: string; }
 export default function TokenRotationPage() {
@@ -15,7 +16,7 @@ export default function TokenRotationPage() {
   const [error, setError] = useState<string | null>(null);
   const fetchClients = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/oauth/clients", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/clients", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setClients(d.clients || d || []);
@@ -25,7 +26,7 @@ export default function TokenRotationPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/v1/oauth/token-rotation?client_id=${encodeURIComponent(id)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/oauth/token-rotation?client_id=${encodeURIComponent(id)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       setConfig(await res.json());
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to load rotation config"); }
@@ -38,7 +39,7 @@ export default function TokenRotationPage() {
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/oauth/token-rotation", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
+      const res = await fetch("/api/v1/oauth/token-rotation", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(config) });
       if (!res.ok) return null;
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to save rotation config"); }

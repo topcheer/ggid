@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRightLeft, Search, AlertTriangle, X, Play, Building2, Shield } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface User {
   user_id: string;
@@ -36,7 +37,7 @@ export default function OrgTransferPage() {
   const [error, setError] = useState("");
   const [transferError, setTransferError] = useState("");
 
-  const retryLoadUsers = () => { setError(""); setLoading(true); fetch("/api/v1/identity/users", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
+  const retryLoadUsers = () => { setError(""); setLoading(true); fetch("/api/v1/identity/users", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
     if (!res.ok) return null;
     const data = await res.json(); setUsers(data.users || data || []);
   }).catch((e) => {
@@ -45,7 +46,7 @@ export default function OrgTransferPage() {
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch("/api/v1/identity/users", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
+    fetch("/api/v1/identity/users", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).then(async (res) => {
       if (!res.ok) return null;
       const data = await res.json(); setUsers(data.users || data || []);
     }).catch((e) => {
@@ -57,7 +58,7 @@ export default function OrgTransferPage() {
     if (!selectedUser || !newOrgId) return;
     setPreviewing(true); setTransferError("");
     try {
-      const res = await fetch("/api/v1/identity/org-transfer/preview", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
+      const res = await fetch("/api/v1/identity/org-transfer/preview", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
       if (!res.ok) return null;
       setImpact(await res.json());
     } catch (e) {
@@ -69,7 +70,7 @@ export default function OrgTransferPage() {
     if (!selectedUser) return;
     setExecuting(true); setTransferError("");
     try {
-      const res = await fetch("/api/v1/identity/org-transfer/execute", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
+      const res = await fetch("/api/v1/identity/org-transfer/execute", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ user_id: selectedUser.user_id, new_org_id: newOrgId }) });
       if (!res.ok) return null;
       setShowConfirm(false); setSelectedUser(null); setImpact(null); setNewOrgId("");
     } catch (e) {

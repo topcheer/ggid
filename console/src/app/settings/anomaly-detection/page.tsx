@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { AlertTriangle, Activity, Check, X, Filter } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface AnomalyEvent {
   id: string;
@@ -33,7 +34,7 @@ export default function AnomalyDetectionPage() {
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await fetch("/api/v1/audit/anomaly-detection", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/anomaly-detection", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json(); setEvents(d.events || d || []);
     } catch (err) { setError(err instanceof Error ? err.message : t("anomalyDetect.error")); }
@@ -44,7 +45,7 @@ export default function AnomalyDetectionPage() {
 
   const updateStatus = async (id: string, status: "acknowledged" | "dismissed") => {
     setEvents(events.map((e) => e.id === id ? { ...e, status } : e));
-    try { await fetch("/api/v1/audit/anomaly-detection/" + id, { method: "PATCH", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ status }) }); } catch { /* noop */ }
+    try { await fetch("/api/v1/audit/anomaly-detection/" + id, { method: "PATCH", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ status }) }); } catch { /* noop */ }
   };
 
   const filtered = events.filter((e) => {

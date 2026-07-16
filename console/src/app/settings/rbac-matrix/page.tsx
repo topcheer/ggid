@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Role { id: string; name: string; description: string; }
 
@@ -17,7 +18,7 @@ export default function RbacMatrixPage() {
 
   useEffect(() => {
     fetch("/api/v1/policy/rbac-matrix", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
@@ -37,7 +38,7 @@ export default function RbacMatrixPage() {
   const addRole = () => {
     fetch("/api/v1/policy/roles", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify(newRole),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })

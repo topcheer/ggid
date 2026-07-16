@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { Grid3x3, Shield } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ScopeMatrix { scopes: string[]; consent_levels: ("none" | "implicit" | "explicit" | "admin")[]; assignments: Record<string, "none" | "implicit" | "explicit" | "admin">; risk_levels: Record<string, string>; }
 
@@ -16,7 +17,7 @@ export default function OAuthScopeConsentMatrixPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/scope-consent-matrix", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/scope-consent-matrix", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) setData(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

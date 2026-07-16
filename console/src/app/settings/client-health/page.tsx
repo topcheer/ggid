@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Heart, Activity, AlertTriangle, KeyRound, ShieldCheck } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ClientHealth {
   client_id: string;
@@ -30,7 +31,7 @@ export default function ClientHealthPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/client-health", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/client-health", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const data = await res.json(); setClients(data.clients || data || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

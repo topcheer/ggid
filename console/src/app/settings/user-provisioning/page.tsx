@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { UserPlus, Play, AlertCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ProvRule { id: string; source: string; trigger: string; action: string; target_app: string; enabled: boolean; }
 interface QueueItem { id: string; user: string; app: string; status: "pending" | "processing" | "completed" | "failed"; error: string | null; }
@@ -17,7 +18,7 @@ export default function UserProvisioningPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/provisioning", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/provisioning", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setRules(d.rules || []); setQueue(d.queue || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -26,7 +27,7 @@ export default function UserProvisioningPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const retryItem = async (id: string) => {
-    try { await fetch("/api/v1/identity/provisioning/queue/" + id + "/retry", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
+    try { await fetch("/api/v1/identity/provisioning/queue/" + id + "/retry", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); }
     catch { /* noop */ }
   };
 

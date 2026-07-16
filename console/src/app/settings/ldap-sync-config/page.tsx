@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Server, Plug, RefreshCw, CheckCircle, XCircle, Play, Loader2, History, Activity, ChevronDown } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 import { LDAP_VENDOR_PRESETS } from "@/lib/ldap-vendor-presets";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface LdapConfig {
   server_url: string; bind_dn: string; base_dn: string;
@@ -71,9 +72,9 @@ export default function LdapSyncConfigPage() {
     setLoading(true); setError(null);
     try {
       const [configRes, statusRes, historyRes] = await Promise.all([
-        fetch("/api/v1/identity/ldap/sync-config", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
-        fetch("/api/v1/identity/ldap/sync-status", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
-        fetch("/api/v1/identity/ldap/sync-history", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
+        fetch("/api/v1/identity/ldap/sync-config", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
+        fetch("/api/v1/identity/ldap/sync-status", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
+        fetch("/api/v1/identity/ldap/sync-history", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }).catch(() => null),
       ]);
       if (configRes?.ok) { const d = await configRes.json(); const c = d.config || d; if (c) setConfig(prev => ({ ...prev, ...c })); }
       if (statusRes?.ok) { const d = await statusRes.json(); setSyncStatus(d); }
@@ -88,7 +89,7 @@ export default function LdapSyncConfigPage() {
     setSaving(true); setSaved(false);
     try {
       const res = await fetch("/api/v1/identity/ldap/sync-config", {
-        method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ config }),
       });
       if (res.ok) setSaved(true);
@@ -99,7 +100,7 @@ export default function LdapSyncConfigPage() {
     setTesting(true); setTestResult(null);
     try {
       const res = await fetch("/api/v1/identity/ldap/sync-config/test", {
-        method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ config }),
       });
       if (res.ok) { const d = await res.json(); setTestResult(d); }
@@ -112,7 +113,7 @@ export default function LdapSyncConfigPage() {
     setSyncing(true);
     try {
       const res = await fetch("/api/v1/identity/ldap/sync", {
-        method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       if (res.ok) { setSyncStatus({ status: "syncing", last_sync: null }); setTimeout(() => loadData(), 3000); }
     } catch { /* noop */ } finally { setSyncing(false); }

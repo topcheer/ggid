@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ClipboardCheck, Users, Check, X, Edit3, MessageSquare, Send } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface RecertUser {
   user_id: string;
@@ -32,7 +33,7 @@ export default function RecertificationPage() {
 
   const fetchTeams = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/org/teams", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/org/teams", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setTeams(data.teams || data || []);
@@ -44,7 +45,7 @@ export default function RecertificationPage() {
     if (!selectedTeam) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/policy/recertification/teams/${selectedTeam}/users`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/policy/recertification/teams/${selectedTeam}/users`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || data || []);
@@ -71,7 +72,7 @@ export default function RecertificationPage() {
     try {
       await fetch(`/api/v1/policy/recertification/teams/${selectedTeam}/submit`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ decisions: decided.map((u) => ({ user_id: u.user_id, decision: u.decision, comment: u.comment })) }),
       });
       setUsers((prev) => prev.map((u) => u.decision !== "pending" ? { ...u, decision: "pending", comment: "" } : u));

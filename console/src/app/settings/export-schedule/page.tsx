@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Download, Plus, Trash2, Cloud, Mail, Link as LinkIcon, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface ExportJob { id: string; format: string; schedule_cron: string; filters: string; retention_days: number; destination_type: string; destination_config: string; last_export_at: string | null; status: "active" | "paused" | "failed"; }
 const statusColors: Record<string, string> = { active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", paused: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
 const destIcons: Record<string, typeof Cloud> = { s3: Cloud, https: LinkIcon, email: Mail };
@@ -17,7 +18,7 @@ export default function ExportSchedulePage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/audit/export-schedule", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/export-schedule", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const d = await res.json();
       setJobs(d.jobs || d || []);
@@ -28,14 +29,14 @@ export default function ExportSchedulePage() {
   const create = async () => {
     setError(null);
     try {
-      const res = await fetch("/api/v1/audit/export-schedule", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) });
+      const res = await fetch("/api/v1/audit/export-schedule", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) });
       if (!res.ok) return null;
       setShowCreate(false); fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to create schedule"); }
   };
   const remove = async (id: string) => {
     try {
-      const res = await fetch(`/api/v1/audit/export-schedule/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/audit/export-schedule/${id}`, { method: "DELETE", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       fetchData();
     } catch (e) { setError(e instanceof Error ? e.message : "Failed to delete schedule"); }

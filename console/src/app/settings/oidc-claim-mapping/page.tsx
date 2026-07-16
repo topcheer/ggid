@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Settings2, Save, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ClaimMap { id: string; claim_name: string; source: "user_attr" | "group" | "static"; source_value: string; transform: string; }
 interface ClientOverride { client_id: string; client_name: string; extra_claims: number; }
@@ -20,7 +21,7 @@ export default function OidcClaimMappingPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/oauth/claim-mapping", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/oauth/claim-mapping", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setMappings(d.mappings || []); setOverrides(d.client_overrides || []); setScopeMatrix(d.scope_claims || {}); setTokenType(d.token_type || "id_token"); }
     } catch { /* noop */ }
     finally { setLoading(false); }

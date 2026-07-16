@@ -1,6 +1,7 @@
 'use client';
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface FederationTrust {
   id: string;
@@ -24,7 +25,7 @@ export default function IdentityFederationPage() {
 
   useEffect(() => {
     fetch("/api/v1/identity/federation/trusts", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => { setTrusts(data.trusts || data.items || []); setLoading(false); })
@@ -46,7 +47,7 @@ export default function IdentityFederationPage() {
     setTestResult('Testing...');
     fetch("/api/v1/identity/federation/test", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ metadataUrl: trust.metadataUrl, protocol: trust.protocol }),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })

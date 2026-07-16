@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, Sparkles, AlertTriangle, Check, User, Shield, TrendingDown } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface PermissionGrant {
   permission: string;
@@ -41,7 +42,7 @@ export default function RoleMiningPage() {
   const fetchAnalysis = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/role-mining/analysis", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/role-mining/analysis", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users || data || []);
@@ -62,7 +63,7 @@ export default function RoleMiningPage() {
     try {
       await fetch("/api/v1/policy/role-mining/apply", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ user_id: userId, current_role: rec.current_role, recommended_role: rec.recommended_role }),
       });
       setUsers((prev) => prev.map((u) => u.user_id === userId ? { ...u, recommendations: u.recommendations.filter((r) => r !== rec) } : u));

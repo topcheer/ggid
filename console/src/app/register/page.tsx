@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function RegisterPage() {
     try {
       const resp = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": DEFAULT_TENANT_ID },
         body: JSON.stringify({ username, email, password }),
       });
       const data = await resp.json();

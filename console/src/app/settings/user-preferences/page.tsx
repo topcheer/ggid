@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search, Save, Sliders, Bell, Palette, Code } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface UserPreferences {
   user_id: string;
@@ -34,7 +35,7 @@ export default function UserPreferencesPage() {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/v1/identity/preferences?user=${encodeURIComponent(user)}`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch(`/api/v1/identity/preferences?user=${encodeURIComponent(user)}`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setPrefs({
@@ -64,7 +65,7 @@ export default function UserPreferencesPage() {
     try {
       await fetch(`/api/v1/identity/preferences/${prefs.user_id}`, {
         method: "PUT",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify(prefs),
       });
     } catch {

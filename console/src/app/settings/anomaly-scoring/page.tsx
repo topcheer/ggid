@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Activity, Sliders } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Signal { name: string; weight: number; }
 interface ScoreEntry { username: string; score: number; top_signal: string; last_event: string; }
 interface ModelStats { accuracy: number; precision: number; recall: number; false_positive_rate: number; }
@@ -11,7 +12,7 @@ export default function AnomalyScoringPage() {
 
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(false);
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/auth/anomaly-scoring", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/auth/anomaly-scoring", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
   const maxBucket = Math.max(...(data?.distribution.map((d) => d.count) || [1]), 1);
   return (

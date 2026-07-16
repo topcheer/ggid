@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { Palette, Upload, Eye, Save } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface Branding { logo_url: string; primary_color: string; secondary_color: string; accent_color: string; custom_css: string; theme: "light" | "dark" | "auto"; custom_domain: string; }
 export default function TenantBrandingPage() {
   const [branding, setBranding] = useState<Branding>({ logo_url: "", primary_color: "#3b82f6", secondary_color: "#1e40af", accent_color: "#f59e0b", custom_css: "", theme: "auto", custom_domain: "" });
@@ -15,7 +16,7 @@ export default function TenantBrandingPage() {
   const loadBranding = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const res = await fetch("/api/v1/admin/branding", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/admin/branding", { headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (!res.ok) return null;
       const data = await res.json();
       if (data) setBranding(prev => ({ ...prev, ...data }));
@@ -29,7 +30,7 @@ export default function TenantBrandingPage() {
     setSaving(true);
     setSaveMsg(null);
     try {
-      const res = await fetch("/api/v1/admin/branding", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(branding) });
+      const res = await fetch("/api/v1/admin/branding", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(branding) });
       if (!res.ok) return null;
       setSaveMsg({ type: "success", text: t("tenantBranding.saved") });
     } catch (e) {

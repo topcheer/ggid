@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { FlaskConical, Play, Save, Check, X, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface SimResult { subject: string; resource: string; action: string; current_decision: string; proposed_decision: string; changed: boolean; }
 export default function PolicySimulationLabPage() {
   const t = useTranslations();
@@ -17,7 +18,7 @@ export default function PolicySimulationLabPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/policy/simulation-lab", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subject, resource, action: action || "access" }) });
+      const res = await fetch("/api/v1/policy/simulation-lab", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ subject, resource, action: action || "access" }) });
       if (!res.ok) return null;
       const d = await res.json();
       setResults(d.results || []);

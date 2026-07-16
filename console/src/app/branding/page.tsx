@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import { Upload, Save, RotateCcw, Palette, Code, Mail, Eye, Check, Loader2, AlertCircle } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 const PRESET_COLORS = [
   { name: "Ocean", primary: "#0066CC", secondary: "#003D7A", accent: "#00C2FF" },
@@ -32,7 +33,7 @@ export default function BrandingPage() {
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/branding`, { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": TENANT_ID } })
+    fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/branding`, { headers: { ...authHeader(), "X-Tenant-ID": TENANT_ID } })
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
@@ -67,7 +68,7 @@ export default function BrandingPage() {
     try {
       await fetch(`${API_BASE}/api/v1/tenants/${TENANT_ID}/branding`, {
         method: "PUT",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID },
         body: JSON.stringify({ logo, primaryColor, secondaryColor, accentColor, customCss }),
       });
       setSaved(true);

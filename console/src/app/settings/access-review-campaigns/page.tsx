@@ -3,6 +3,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect, useCallback } from "react";
 import { ClipboardCheck, Plus, X, Bell } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Campaign {
   id: string;
@@ -36,7 +37,7 @@ export default function AccessReviewCampaignsPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/access-review-campaigns", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/policy/access-review-campaigns", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setCampaigns(d.campaigns || d || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -46,7 +47,7 @@ export default function AccessReviewCampaignsPage() {
 
   const create = async () => {
     if (!form.name) return;
-    try { await fetch("/api/v1/policy/access-review-campaigns", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ name: "", scope: "All Users", reviewers: [], deadline: "", auto_revoke: false }); fetchData(); }
+    try { await fetch("/api/v1/policy/access-review-campaigns", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ name: "", scope: "All Users", reviewers: [], deadline: "", auto_revoke: false }); fetchData(); }
     catch { /* noop */ }
   };
 

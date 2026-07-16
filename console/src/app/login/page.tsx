@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2 } from "lucide-react";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 const API_BASE = API_BASE_URL;
 
@@ -61,7 +62,7 @@ export default function LoginPage() {
   // Load social connectors from API
   useEffect(() => {
     fetch(`${API_BASE}/api/v1/auth/social/connectors`, {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+      headers: { ...authHeader(), "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
@@ -100,7 +101,7 @@ export default function LoginPage() {
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
         body: JSON.stringify({ username, password, tenant_slug: tenantSlug || "default" }),
       });
       const data = await resp.json();
@@ -173,7 +174,7 @@ export default function LoginPage() {
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
         body: JSON.stringify({ mfa_token: mfaToken, code: totpCode }),
       });
       const data = await resp.json();
@@ -229,7 +230,7 @@ export default function LoginPage() {
     setError("");
     try {
       const resp = await fetch(`${API_BASE}/api/v1/auth/social/${provider}?redirect_uri=/`, {
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+        headers: { ...authHeader(), "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
       });
       const data = await resp.json();
       if (data.auth_url) {

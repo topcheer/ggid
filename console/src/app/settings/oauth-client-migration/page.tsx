@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { ArrowRight, Play, RotateCcw } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface MigrationPreview { scopes_to_migrate: number; grants_to_migrate: number; tokens_to_migrate: number; conflicts: string[]; }
 
@@ -25,7 +26,7 @@ export default function OAuthClientMigrationPage() {
   const doPreview = async () => {
     setPreviewing(true); setError(""); setPreview(null);
     try {
-      const res = await fetch("/api/v1/oauth/client-migration/preview", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ source, target }) });
+      const res = await fetch("/api/v1/oauth/client-migration/preview", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ source, target }) });
       if (!res.ok) return null;
       setPreview(await res.json());
     } catch (e) {
@@ -36,7 +37,7 @@ export default function OAuthClientMigrationPage() {
   const execute = async () => {
     setExecuting(true); setError(""); setSuccess("");
     try {
-      const res = await fetch("/api/v1/oauth/client-migration/execute", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ source, target, migrate_scopes: migrateScopes, migrate_grants: migrateGrants, migrate_tokens: migrateTokens, notify_users: notifyUsers }) });
+      const res = await fetch("/api/v1/oauth/client-migration/execute", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ source, target, migrate_scopes: migrateScopes, migrate_grants: migrateGrants, migrate_tokens: migrateTokens, notify_users: notifyUsers }) });
       if (!res.ok) return null;
       setSuccess("Migration completed successfully."); setPreview(null);
     } catch (e) {

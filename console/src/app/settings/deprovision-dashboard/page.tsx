@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { UserMinus, Clock, CheckCircle, AlertTriangle, RotateCcw } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface DeprovisionItem { id: string; username: string; scheduled_date: string; reason: string; status: "scheduled" | "in_progress" | "completed" | "failed"; steps: { name: string; status: "pending" | "done" | "failed" }[]; }
 interface DashboardData { scheduled: DeprovisionItem[]; in_progress: DeprovisionItem[]; completed_today: number; failed: DeprovisionItem[]; }
 const statusColors: Record<string, string> = { scheduled: "bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400", in_progress: "bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400", completed: "bg-green-100 dark:bg-green-900/30 dark:text-green-400", failed: "bg-red-100 dark:bg-red-900/30 dark:text-red-400" };
@@ -9,9 +10,9 @@ export default function DeprovisionDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(false);
   const t = useTranslations();
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/identity/deprovision-dashboard", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/identity/deprovision-dashboard", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const retry = async (id: string) => { try { await fetch("/api/v1/identity/deprovision/" + id + "/retry", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
+  const retry = async (id: string) => { try { await fetch("/api/v1/identity/deprovision/" + id + "/retry", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); fetchData(); } catch { /* noop */ } };
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserMinus className="w-6 h-6 text-red-500" /> {t("deprovisionDashboard.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("deprovisionDashboard.subtitle")}</p></div>

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { GitMerge, Plus, X, Clock, Activity } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface CorrelationRule { id: string; rule_name: string; source_event: string; target_event: string; time_window: string; correlation_type: string; action: string; }
 interface Incident { id: string; rule_name: string; events_count: number; first_seen: string; last_seen: string; severity: "low" | "medium" | "high" | "critical"; status: "open" | "investigating" | "resolved"; }
 const sevColors: Record<string, string> = { low: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400", medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400", high: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400", critical: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" };
@@ -15,9 +16,9 @@ export default function EventCorrelationPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ rule_name: "", source_event: "", target_event: "", time_window: "5m", correlation_type: "temporal", action: "alert" });
   const [selectedIncident, setSelectedIncident] = useState<string | null>(null);
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/event-correlation", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setRules(d.rules || []); setIncidents(d.incidents || []); } } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/audit/event-correlation", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setRules(d.rules || []); setIncidents(d.incidents || []); } } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  const createRule = async () => { if (!form.rule_name) return; try { await fetch("/api/v1/audit/event-correlation/rules", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ rule_name: "", source_event: "", target_event: "", time_window: "5m", correlation_type: "temporal", action: "alert" }); fetchData(); } catch { /* noop */ } };
+  const createRule = async () => { if (!form.rule_name) return; try { await fetch("/api/v1/audit/event-correlation/rules", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowCreate(false); setForm({ rule_name: "", source_event: "", target_event: "", time_window: "5m", correlation_type: "temporal", action: "alert" }); fetchData(); } catch { /* noop */ } };
   const openIncidents = incidents.filter((i) => i.status === "open").length;
   return (
     <div className="space-y-6">

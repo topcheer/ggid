@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Globe, Plus, X, Ban, Save, Loader2, AlertCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface GeoRule { id: string; countries: string[]; cidrs: string[]; action: "allow" | "deny" | "challenge"; }
 interface GeoData { enabled: boolean; rules: GeoRule[]; whitelist_ips: string[]; }
 const actionColors: Record<string, string> = { allow: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", deny: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", challenge: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" };
@@ -20,7 +21,7 @@ export default function GeoFencingPage() {
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch("/api/v1/settings/geo-fencing", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch("/api/v1/settings/geo-fencing", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
       .then(async (res) => { if (res.ok) { const d = await res.json(); if (d) setData(d); } })
       .catch(() => { /* use defaults */ })
       .finally(() => setLoading(false));
@@ -29,7 +30,7 @@ export default function GeoFencingPage() {
   const save = async () => {
     setSaving(true); setError("");
     try {
-      const res = await fetch("/api/v1/settings/geo-fencing", { method: "PUT", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) });
+      const res = await fetch("/api/v1/settings/geo-fencing", { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(data) });
       if (!res.ok) return null;
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (e) {

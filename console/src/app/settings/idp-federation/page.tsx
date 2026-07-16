@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Network, Plus, X, Plug, CheckCircle, XCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface FederatedIdP {
   id: string;
@@ -36,7 +37,7 @@ export default function IdpFederationPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/idp-federation", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/idp-federation", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setIdps(d.idps || d || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -46,13 +47,13 @@ export default function IdpFederationPage() {
 
   const add = async () => {
     if (!form.entity_id) return;
-    try { await fetch("/api/v1/identity/idp-federation", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowAdd(false); setForm({ provider_type: "saml", entity_id: "", name: "", trust_level: "limited" }); fetchData(); }
+    try { await fetch("/api/v1/identity/idp-federation", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowAdd(false); setForm({ provider_type: "saml", entity_id: "", name: "", trust_level: "limited" }); fetchData(); }
     catch { /* noop */ }
   };
 
   const testConnection = async (id: string) => {
     setTestingId(id);
-    try { await fetch("/api/v1/identity/idp-federation/" + id + "/test", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
+    try { await fetch("/api/v1/identity/idp-federation/" + id + "/test", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); }
     catch { /* noop */ }
     finally { setTestingId(null); }
   };

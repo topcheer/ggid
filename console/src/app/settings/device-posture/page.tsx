@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Smartphone, ShieldCheck, AlertTriangle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 interface PostureRule { disk_encrypted: boolean; os_version_min: string; antivirus_required: boolean; firewall_enabled: boolean; jailbreak_detected_action: string; }
 interface NonCompliant { device_id: string; username: string; platform: string; failed_checks: string[]; last_check: string; }
 interface PostureData { rules: PostureRule; compliance_threshold: number; by_platform: { platform: string; total: number; compliant: number }[]; non_compliant: NonCompliant[]; }
@@ -11,7 +12,7 @@ export default function DevicePosturePage() {
   const [data, setData] = useState<PostureData | null>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState("all");
-  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/identity/device-posture", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
+  const fetchData = useCallback(async () => { setLoading(true); try { const res = await fetch("/api/v1/identity/device-posture", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); } catch { /* noop */ } finally { setLoading(false); } }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
   const filtered = data ? (tab === "all" ? data.non_compliant : data.non_compliant.filter((d) => d.platform === tab)) : [];
   return (

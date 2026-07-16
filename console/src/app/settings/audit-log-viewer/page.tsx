@@ -2,6 +2,7 @@
 import { useTranslations } from "@/lib/i18n";
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface AuditEvent { id: string; timestamp: string; actor: string; action: string; resource: string; tenant: string; severity: string; ip: string; }
 
@@ -16,7 +17,7 @@ export default function AuditLogViewerPage() {
       try {
         const res = await fetch("/api/v1/audit/events", {
           method: "GET",
-          headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`,
+          headers: { ...authHeader(),
             "Content-Type": "application/json",
             "X-Tenant-ID": "00000000-0000-0000-0000-000000000001",
           },

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Users, RefreshCw, Plus, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface GroupMap { id: string; external_group: string; local_role: string; auto_provision: boolean; sync_direction: "inbound" | "outbound" | "bidirectional"; last_sync: string; last_status: "success" | "failed" | "pending"; }
 
@@ -15,7 +16,7 @@ export default function ScimGroupMappingPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/scim-group-mapping", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/identity/scim-group-mapping", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setMappings(d.mappings || d || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }

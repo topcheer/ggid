@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRight, Save, Play } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Mapping { id: string; source_attribute: string; target_field: string; transform: "direct" | "regex" | "constant"; transform_value: string; }
 interface IdpOverride { idp_id: string; idp_name: string; overrides: number; }
@@ -18,7 +19,7 @@ export default function SamlAttributeMappingPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/saml-attribute-mapping", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/auth/saml-attribute-mapping", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) { const d = await res.json(); setMappings(d.mappings || []); setOverrides(d.idp_overrides || []); }
     } catch { /* noop */ }
     finally { setLoading(false); }
@@ -28,12 +29,12 @@ export default function SamlAttributeMappingPage() {
 
   const addMapping = async () => {
     if (!form.source_attribute || !form.target_field) return;
-    try { await fetch("/api/v1/auth/saml-attribute-mapping", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowAdd(false); setForm({ source_attribute: "", target_field: "", transform: "direct", transform_value: "" }); fetchData(); }
+    try { await fetch("/api/v1/auth/saml-attribute-mapping", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setShowAdd(false); setForm({ source_attribute: "", target_field: "", transform: "direct", transform_value: "" }); fetchData(); }
     catch { /* noop */ }
   };
 
   const testMapping = async (id: string) => {
-    try { const res = await fetch("/api/v1/auth/saml-attribute-mapping/" + id + "/test", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setPreview(await res.json()); }
+    try { const res = await fetch("/api/v1/auth/saml-attribute-mapping/" + id + "/test", { method: "POST", headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setPreview(await res.json()); }
     catch { /* noop */ }
   };
 

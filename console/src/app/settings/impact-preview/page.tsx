@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, AlertTriangle, CheckCircle, Users, FileWarning } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface AffectedItem {
   id: string;
@@ -45,7 +46,7 @@ export default function ImpactPreviewPage() {
     if (!policyId) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/policy/impact-preview", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ policy_id: policyId, changes: changeDesc }) });
+      const res = await fetch("/api/v1/policy/impact-preview", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify({ policy_id: policyId, changes: changeDesc }) });
       if (res.ok) setResult(await res.json());
     } catch { /* noop */ }
     finally { setLoading(false); }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { History, Plus, RotateCcw, X, FileText, GitCompare } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface EvidenceVersion {
   version: number;
@@ -36,7 +37,7 @@ export default function EvidenceVersioningPage() {
 
   const fetchItems = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/audit/evidence-versioning", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/evidence-versioning", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || data || []);
@@ -54,7 +55,7 @@ export default function EvidenceVersioningPage() {
     try {
       await fetch(`/api/v1/audit/evidence-versioning/${selectedId}/versions`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ change_description: newDescription }),
       });
       setShowCreate(false);
@@ -69,7 +70,7 @@ export default function EvidenceVersioningPage() {
     try {
       await fetch(`/api/v1/audit/evidence-versioning/${rollbackVersion.item.id}/rollback`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ version: rollbackVersion.version.version }),
       });
       setRollbackVersion(null);

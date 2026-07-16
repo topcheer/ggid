@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface PolicyRule { id: string; name: string; effect: 'allow' | 'deny'; matched: boolean; priority: number; }
 interface SimulationResult { decision: 'allow' | 'deny' | 'indeterminate'; matchedRules: PolicyRule[]; trace: string[]; evaluatedAt: string; durationMs: number; }
@@ -27,7 +28,7 @@ export default function PolicySimulationCenterPage() {
 
   useEffect(() => {
     fetch("/api/v1/policy/policies", {
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
       .then(data => {
@@ -43,7 +44,7 @@ export default function PolicySimulationCenterPage() {
     setSimulating(true);
     fetch("/api/v1/policy/simulate", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ policyId: selectedPolicy, subject: subjectAttrs, resource: resourceAttrs, action, environment }),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
@@ -54,7 +55,7 @@ export default function PolicySimulationCenterPage() {
   const runBatch = useCallback(() => {
     fetch("/api/v1/policy/simulate/batch", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ csv: csvInput }),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })
@@ -65,7 +66,7 @@ export default function PolicySimulationCenterPage() {
   const runImpact = useCallback(() => {
     fetch("/api/v1/policy/simulate/impact", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       body: JSON.stringify({ policyId: selectedPolicy }),
     })
       .then(res => { if (!res.ok) return null; return res.json(); })

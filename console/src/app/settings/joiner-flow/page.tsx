@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { UserPlus, CheckSquare, Square, Rocket, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface PreboardingTask {
   id: string;
@@ -45,7 +46,7 @@ export default function JoinerFlowPage() {
   const [error, setError] = useState<string | null>(null);
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
-    try { const res = await fetch("/api/v1/identity/joiner-flow/templates", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d.templates) { /* could populate availableTemplates */ } } }
+    try { const res = await fetch("/api/v1/identity/joiner-flow/templates", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); if (d.templates) { /* could populate availableTemplates */ } } }
     catch (err) { setError(err instanceof Error ? err.message : "An error occurred"); } finally { setLoading(false); }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
@@ -60,7 +61,7 @@ export default function JoinerFlowPage() {
 
   const submit = useCallback(async () => {
     if (!form.employee_id || !form.start_date) return;
-    try { await fetch("/api/v1/identity/joiner-flow", { method: "POST", headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setSubmitted(true); }
+    try { await fetch("/api/v1/identity/joiner-flow", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body: JSON.stringify(form) }); setSubmitted(true); }
     catch { /* noop */ }
   }, [form]);
 

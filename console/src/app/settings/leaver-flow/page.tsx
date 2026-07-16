@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { UserMinus, Check, Clock, AlertCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface Task {
   id: string;
@@ -34,13 +35,13 @@ export default function LeaverFlowPage() {
   const [users, setUsers] = useState<{ user_id: string; username: string }[]>([]);
 
   const fetchUsers = useCallback(async () => {
-    try { const res = await fetch("/api/v1/identity/users", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setUsers(d.users || d || []); } } catch { /* noop */ }
+    try { const res = await fetch("/api/v1/identity/users", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setUsers(d.users || d || []); } } catch { /* noop */ }
   }, []);
 
   const fetchLeaver = useCallback(async () => {
     if (!employeeId) return;
     setLoading(true);
-    try { const res = await fetch("/api/v1/identity/leaver-flow?user_id=" + encodeURIComponent(employeeId), { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); }
+    try { const res = await fetch("/api/v1/identity/leaver-flow?user_id=" + encodeURIComponent(employeeId), { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) setData(await res.json()); }
     catch { /* noop */ }
     finally { setLoading(false); }
   }, [employeeId]);

@@ -3,6 +3,7 @@ import { useTranslations } from "@/lib/i18n";
 
 import { useState, useEffect, useCallback } from "react";
 import { FileText, Plus, Play, X, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface DSRRequest {
   id: string;
@@ -44,7 +45,7 @@ export default function DSRTrackerPage() {
   const fetchRequests = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/audit/dsr", { headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
+      const res = await fetch("/api/v1/audit/dsr", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
       if (res.ok) {
         const data = await res.json();
         setRequests(data.requests || data || []);
@@ -60,7 +61,7 @@ export default function DSRTrackerPage() {
     try {
       await fetch("/api/v1/audit/dsr", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ type: newType, user_id: newUserId, notes: newNotes }),
       });
       setShowCreate(false);
@@ -75,7 +76,7 @@ export default function DSRTrackerPage() {
     try {
       await fetch(`/api/v1/audit/dsr/${id}`, {
         method: "PATCH",
-        headers: { "Authorization": `Bearer ${localStorage.getItem("ggid_access_token") || ""}`, "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+        headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
         body: JSON.stringify({ status }),
       });
       setRequests((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
