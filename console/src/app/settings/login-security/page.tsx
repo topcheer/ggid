@@ -134,7 +134,7 @@ export default function LoginSecurityPage() {
         <div className={cardCls}>
           <h3 className="text-xs font-semibold uppercase text-gray-500">Max Attempts</h3>
           {editPolicy ? (
-            <input type="number" value={draftPolicy.max_attempts} onChange={(e) => setDraftPolicy((p) => ({ ...p, max_attempts: Number(e.target.value) }))} className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-lg font-bold text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            <input aria-label="Input field" type="number" value={draftPolicy.max_attempts} onChange={(e) => setDraftPolicy((p) => ({ ...p, max_attempts: Number(e.target.value) }))} className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-lg font-bold text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
           ) : (
             <p className="mt-2 text-2xl font-bold text-indigo-600">{policy.max_attempts}</p>
           )}
@@ -142,7 +142,7 @@ export default function LoginSecurityPage() {
         <div className={cardCls}>
           <h3 className="text-xs font-semibold uppercase text-gray-500">Lockout Duration</h3>
           {editPolicy ? (
-            <input type="number" value={draftPolicy.lockout_duration_minutes} onChange={(e) => setDraftPolicy((p) => ({ ...p, lockout_duration_minutes: Number(e.target.value) }))} className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-lg font-bold text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            <input aria-label="Input field" type="number" value={draftPolicy.lockout_duration_minutes} onChange={(e) => setDraftPolicy((p) => ({ ...p, lockout_duration_minutes: Number(e.target.value) }))} className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-lg font-bold text-gray-800 dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
           ) : (
             <p className="mt-2 text-2xl font-bold text-indigo-600">{policy.lockout_duration_minutes} <span className="text-sm text-gray-400">min</span></p>
           )}
@@ -223,8 +223,8 @@ export default function LoginSecurityPage() {
               <button onClick={() => setShowIpAdd(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-3">
-              <input value={ipForm.cidr} onChange={(e) => setIpForm((p) => ({ ...p, cidr: e.target.value }))} placeholder="10.0.0.0/8 or 192.168.1.100" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-              <input value={ipForm.description} onChange={(e) => setIpForm((p) => ({ ...p, description: e.target.value }))} placeholder="Office network (optional)" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+              <input aria-label="10.0.0.0/8 or 192.168.1.100" value={ipForm.cidr} onChange={(e) => setIpForm((p) => ({ ...p, cidr: e.target.value }))} placeholder="10.0.0.0/8 or 192.168.1.100" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+              <input aria-label="Office network (optional)" value={ipForm.description} onChange={(e) => setIpForm((p) => ({ ...p, description: e.target.value }))} placeholder="Office network (optional)" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowIpAdd(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>

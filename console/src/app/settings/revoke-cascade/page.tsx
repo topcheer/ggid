@@ -65,7 +65,7 @@ export default function RevokeCascadePage() {
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><GitBranch className="w-6 h-6 text-red-500" /> Revoke Cascade</h1><p className="text-sm text-gray-500 mt-1">Trace token derivation chains and revoke all related tokens.</p></div>
 
       <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input type="text" value={tokenInput} onChange={(e) => setTokenInput(e.target.value)} placeholder="Enter token or token ID..." className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+        <div className="relative flex-1 max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input aria-label="Enter token or token ID..." type="text" value={tokenInput} onChange={(e) => setTokenInput(e.target.value)} placeholder="Enter token or token ID..." className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
         <button onClick={lookup} disabled={loading || !tokenInput} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? "Looking up..." : "Lookup"}</button>
       </div>
 

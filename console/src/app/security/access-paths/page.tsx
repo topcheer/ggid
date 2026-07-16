@@ -71,7 +71,7 @@ export default function AccessPathsPage() {
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input value={userId} onChange={(e) => setUserId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAnalyze()} placeholder="Enter user ID or username" className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+          <input aria-label="Enter user ID or username" value={userId} onChange={(e) => setUserId(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAnalyze()} placeholder="Enter user ID or username" className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
         </div>
         <button onClick={handleAnalyze} disabled={!userId.trim() || loading} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Route className="h-4 w-4" />} Analyze</button>
       </div>

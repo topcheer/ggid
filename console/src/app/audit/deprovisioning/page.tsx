@@ -155,7 +155,7 @@ export default function DeprovisioningPage() {
       {step === "search" && (
         <div className={cardCls}>
           <div className="flex gap-2">
-            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} placeholder="Search by name or email..." className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            <input aria-label="Search by name or email..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSearch()} placeholder="Search by name or email..." className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <button onClick={handleSearch} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Search className="h-4 w-4" />Search</button>
           </div>
           {searchResults.length > 0 && (
@@ -191,7 +191,7 @@ export default function DeprovisioningPage() {
                 <input type="checkbox" checked={checklist[c.key]} onChange={(e) => setChecklist((p) => ({ ...p, [c.key]: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-indigo-600" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{c.label}</span>
                 {c.key === "transfer_data" && checklist.transfer_data && (
-                  <input value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)} placeholder="Transfer to user ID" className="ml-auto w-48 rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                  <input aria-label="Transfer to user ID" value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)} placeholder="Transfer to user ID" className="ml-auto w-48 rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 )}
               </label>
             ))}

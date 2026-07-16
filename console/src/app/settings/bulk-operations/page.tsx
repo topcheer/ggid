@@ -65,7 +65,7 @@ export default function BulkOperationsPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">CSV Upload + Preview</h2>
-        <input type="file" accept=".csv" className="text-sm" />
+        <input aria-label="Input field" type="file" accept=".csv" className="text-sm" />
         <textarea value={csvPreview} onChange={e => setCsvPreview(e.target.value)} rows={5} placeholder="username,email,role&#10;alice,alice@ggid.io,developer&#10;bob,bob@ggid.io,auditor" className="w-full border rounded px-3 py-2 text-sm font-mono" />
         <div className="flex gap-3">
           <button onClick={runOp} disabled={running} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{running ? 'Running...' : 'Run Operation'}</button>

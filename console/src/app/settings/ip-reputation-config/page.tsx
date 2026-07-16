@@ -95,12 +95,12 @@ export default function IpReputationConfigPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">{t("big1.ipReputationConfig.allowlist")}</h2>
           <div className="space-y-2">{allowlist.map(ip => <div key={ip} className="flex items-center gap-2"><span className="font-mono text-xs flex-1">{ip}</span><button onClick={() => removeIp(ip, 'allow')} className="text-red-600 text-xs">{t("big1.ipReputationConfig.remove")}</button></div>)}</div>
-          <div className="flex gap-2"><input type="text" placeholder="CIDR" value={listMode === 'allow' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setListMode('allow'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={() => { setListMode('allow'); addIp(); }} className="px-3 py-1 bg-green-600 text-white rounded text-sm">{t("big1.ipReputationConfig.add")}</button></div>
+          <div className="flex gap-2"><input aria-label="CIDR" type="text" placeholder="CIDR" value={listMode === 'allow' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setListMode('allow'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={() => { setListMode('allow'); addIp(); }} className="px-3 py-1 bg-green-600 text-white rounded text-sm">{t("big1.ipReputationConfig.add")}</button></div>
         </section>
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">{t("big1.ipReputationConfig.blocklist")}</h2>
           <div className="space-y-2">{blocklist.map(ip => <div key={ip} className="flex items-center gap-2"><span className="font-mono text-xs flex-1">{ip}</span><button onClick={() => removeIp(ip, 'block')} className="text-red-600 text-xs">{t("big1.ipReputationConfig.remove")}</button></div>)}</div>
-          <div className="flex gap-2"><input type="text" placeholder="CIDR" value={listMode === 'block' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setListMode('block'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={() => { setListMode('block'); addIp(); }} className="px-3 py-1 bg-red-600 text-white rounded text-sm">{t("big1.ipReputationConfig.add")}</button></div>
+          <div className="flex gap-2"><input aria-label="CIDR" type="text" placeholder="CIDR" value={listMode === 'block' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setListMode('block'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={() => { setListMode('block'); addIp(); }} className="px-3 py-1 bg-red-600 text-white rounded text-sm">{t("big1.ipReputationConfig.add")}</button></div>
         </section>
       </div>
 
@@ -120,7 +120,7 @@ export default function IpReputationConfigPage() {
         <div className="flex flex-wrap gap-2">
           {asnBlocklist.map(a => <div key={a} className="flex items-center gap-1"><span className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-mono">{a}</span><button onClick={() => removeAsn(a)} className="text-red-600 text-xs">{t("big1.ipReputationConfig.x")}</button></div>)}
         </div>
-        <div className="flex gap-2"><input type="text" placeholder="AS12345" value={newAsn} onChange={e => setNewAsn(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={addAsn} className="px-3 py-1 bg-red-600 text-white rounded text-sm">{t("big1.ipReputationConfig.add")}</button></div>
+        <div className="flex gap-2"><input aria-label="AS12345" type="text" placeholder="AS12345" value={newAsn} onChange={e => setNewAsn(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={addAsn} className="px-3 py-1 bg-red-600 text-white rounded text-sm">{t("big1.ipReputationConfig.add")}</button></div>
       </section>
     </div>
   );

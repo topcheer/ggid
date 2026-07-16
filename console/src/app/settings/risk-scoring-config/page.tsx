@@ -73,7 +73,7 @@ export default function RiskScoringConfigPage() {
         <div className="space-y-4">{weightLabels.map((w) => (
           <div key={w.key} className="flex items-center gap-4">
             <span className="text-sm w-32">{w.label}</span>
-            <input type="range" min={0} max={50} value={config.weights[w.key]} onChange={(e) => setConfig({ ...config, weights: { ...config.weights, [w.key]: parseInt(e.target.value) } })} className="flex-1" />
+            <input aria-label="Input field" type="range" min={0} max={50} value={config.weights[w.key]} onChange={(e) => setConfig({ ...config, weights: { ...config.weights, [w.key]: parseInt(e.target.value) } })} className="flex-1" />
             <span className="text-sm font-bold w-10 text-right">{config.weights[w.key]}</span>
           </div>
         ))}</div>

@@ -125,7 +125,7 @@ export default function RecertificationPage() {
                   {u.comment && <p className="text-xs text-gray-400 mt-1 italic">"{u.comment}"</p>}
                   {commentUser === u.user_id && (
                     <div className="flex items-center gap-2 mt-2">
-                      <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                      <input aria-label="Add a comment..." type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
                       <button onClick={() => { setCommentForUser(u.user_id, commentText); setCommentUser(null); }} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm">Save</button>
                       <button onClick={() => setCommentUser(null)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
                     </div>

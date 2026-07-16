@@ -122,7 +122,7 @@ export default function AdaptiveAuthenticationPage() {
 
         {showAddRule && (
           <div className="flex gap-3 border rounded p-3">
-            <input type="text" placeholder="Condition (e.g. Login from TOR exit node)" value={newRule.condition} onChange={e => setNewRule(prev => ({ ...prev, condition: e.target.value }))} className="flex-1 border rounded px-3 py-1.5 text-sm" />
+            <input aria-label="Condition (e.g. Login from TOR exit node)" type="text" placeholder="Condition (e.g. Login from TOR exit node)" value={newRule.condition} onChange={e => setNewRule(prev => ({ ...prev, condition: e.target.value }))} className="flex-1 border rounded px-3 py-1.5 text-sm" />
             <select aria-label="Select option" value={newRule.action} onChange={e => setNewRule(prev => ({ ...prev, action: e.target.value }))} className="border rounded px-3 py-1.5 text-sm">
               <option value="allow">Allow</option>
               <option value="step_up_mfa">Step-up MFA</option>
@@ -181,7 +181,7 @@ export default function AdaptiveAuthenticationPage() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input type="text" placeholder="CIDR (e.g. 10.0.0.0/8)" value={ipMode === 'allow' ? newIp : ''} onChange={e => setNewIp(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
+            <input aria-label="CIDR (e.g. 10.0.0.0/8)" type="text" placeholder="CIDR (e.g. 10.0.0.0/8)" value={ipMode === 'allow' ? newIp : ''} onChange={e => setNewIp(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
             <button onClick={addIp} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
           </div>
         </section>
@@ -197,7 +197,7 @@ export default function AdaptiveAuthenticationPage() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input type="text" placeholder="IP or CIDR" value={ipMode === 'block' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setIpMode('block'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
+            <input aria-label="IP or CIDR" type="text" placeholder="IP or CIDR" value={ipMode === 'block' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setIpMode('block'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
             <button onClick={() => { setIpMode('block'); addIp(); }} className="px-3 py-1 bg-red-600 text-white rounded text-sm">Add</button>
           </div>
         </section>

@@ -155,7 +155,7 @@ export default function TenantConfigPage() {
               ) : <Building2 className="h-8 w-8 text-gray-400" />}
             </div>
             <div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+              <input aria-label="Input field" ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
               <button onClick={() => fileInputRef.current?.click()} aria-label={t("branding.uploadLogo")} className="flex items-center gap-2 rounded-lg border border-brand-600 px-4 py-2 text-sm font-medium text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30">
                 <Upload className="h-4 w-4" /> {t("branding.uploadLogo")}
               </button>

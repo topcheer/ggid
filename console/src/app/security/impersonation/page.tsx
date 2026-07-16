@@ -67,8 +67,8 @@ export default function ImpersonationLogPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
-        <input value={filterImp} onChange={(e) => setFilterImp(e.target.value)} placeholder="Filter impersonator..." className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-        <input value={filterTarget} onChange={(e) => setFilterTarget(e.target.value)} placeholder="Filter target..." className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+        <input aria-label="Filter impersonator..." value={filterImp} onChange={(e) => setFilterImp(e.target.value)} placeholder="Filter impersonator..." className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+        <input aria-label="Filter target..." value={filterTarget} onChange={(e) => setFilterTarget(e.target.value)} placeholder="Filter target..." className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
         <button onClick={load} className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"><Filter className="h-4 w-4" />Apply</button>
       </div>
 

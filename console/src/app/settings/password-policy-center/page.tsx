@@ -89,7 +89,7 @@ export default function PasswordPolicyCenterPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Common Password Blocklist</h2>
         <div className="flex flex-wrap gap-2">{blocklist.map((p: string, i: number) => (<span key={i} className="px-2 py-1 bg-gray-100 rounded text-sm flex items-center gap-2">{p}<button onClick={() => setBlocklist(blocklist.filter((_, j) => j !== i))} className="text-red-500 hover:text-red-700">x</button></span>))}</div>
-        <div className="flex gap-2"><input type="text" value={newBlockEntry} onChange={(e) => setNewBlockEntry(e.target.value)} placeholder="Add password to blocklist" className="border rounded px-3 py-2 flex-1 text-sm" /><button onClick={() => { if (newBlockEntry) { setBlocklist([...blocklist, newBlockEntry]); setNewBlockEntry(""); } }} className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add</button></div>
+        <div className="flex gap-2"><input aria-label="Add password to blocklist" type="text" value={newBlockEntry} onChange={(e) => setNewBlockEntry(e.target.value)} placeholder="Add password to blocklist" className="border rounded px-3 py-2 flex-1 text-sm" /><button onClick={() => { if (newBlockEntry) { setBlocklist([...blocklist, newBlockEntry]); setNewBlockEntry(""); } }} className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">Add</button></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow flex items-center gap-4">

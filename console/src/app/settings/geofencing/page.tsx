@@ -93,7 +93,7 @@ export default function GeofencingPage() {
       {/* Test IP */}
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <h3 className="font-semibold flex items-center gap-2"><Search className="w-4 h-4" /> Test IP Address</h3>
-        <div className="flex items-center gap-2"><input type="text" value={testIp} onChange={(e) => setTestIp(e.target.value)} placeholder="8.8.8.8" className="flex-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /><button onClick={testIpCheck} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Test</button></div>
+        <div className="flex items-center gap-2"><input aria-label="8.8.8.8" type="text" value={testIp} onChange={(e) => setTestIp(e.target.value)} placeholder="8.8.8.8" className="flex-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /><button onClick={testIpCheck} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Test</button></div>
         {testResult && <div className="flex items-center gap-3 text-sm"><Zap className="w-4 h-4 text-blue-500" /><span>IP: <span className="font-mono">{testResult.ip}</span> · Country: {testResult.country} · Action: <span className={`px-2 py-0.5 rounded text-xs font-medium ${testResult.action === "deny" ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" : testResult.action === "mfa" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400" : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"}`}>{testResult.action}</span></span></div>}
       </div>
     </div>

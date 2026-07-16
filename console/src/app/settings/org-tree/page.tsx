@@ -51,14 +51,14 @@ export default function OrgTreePage() {
         <button onClick={() => setShowAdd(true)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> Add Unit</button>
       </div>
 
-      <div className="relative max-w-xs"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search units..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+      <div className="relative max-w-xs"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input aria-label="Search units..." type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search units..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4">{tree.map((n) => renderNode(n))}{tree.length === 0 && !loading && <p className="text-sm text-gray-500 text-center py-8">No data.</p>}</div>
 
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAdd(false)}><div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">Add Org Unit</h3><button onClick={() => setShowAdd(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button></div>
-          <div className="px-6 py-4 space-y-3"><input type="text" placeholder="Unit name" className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /><input type="text" placeholder="Manager" className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /><input type="number" placeholder="Budget ($)" className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+          <div className="px-6 py-4 space-y-3"><input aria-label="Unit name" type="text" placeholder="Unit name" className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /><input type="text" placeholder="Manager" className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /><input type="number" placeholder="Budget ($)" className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
           <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button><button onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium">Add</button></div>
         </div></div>
       )}

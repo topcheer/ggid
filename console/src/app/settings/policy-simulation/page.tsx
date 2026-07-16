@@ -71,12 +71,12 @@ export default function PolicySimulationPage() {
                     <option value="allow">ALLOW</option>
                     <option value="deny">DENY</option>
                   </select>
-                  <input type="text" value={r.resource} onChange={(e) => updateRule(r.id, "resource", e.target.value)} placeholder="resource" className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono" />
+                  <input aria-label="resource" type="text" value={r.resource} onChange={(e) => updateRule(r.id, "resource", e.target.value)} placeholder="resource" className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono" />
                   <button onClick={() => removeRule(r.id)} className="p-1 text-red-400"><Trash2 className="w-3 h-3" /></button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="text" value={r.action} onChange={(e) => updateRule(r.id, "action", e.target.value)} placeholder="action" className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono" />
-                  <input type="text" value={r.condition} onChange={(e) => updateRule(r.id, "condition", e.target.value)} placeholder="condition" className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono" />
+                  <input aria-label="action" type="text" value={r.action} onChange={(e) => updateRule(r.id, "action", e.target.value)} placeholder="action" className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono" />
+                  <input aria-label="condition" type="text" value={r.condition} onChange={(e) => updateRule(r.id, "condition", e.target.value)} placeholder="condition" className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono" />
                 </div>
               </div>
             ))}

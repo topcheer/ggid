@@ -158,14 +158,14 @@ export default function RateLimitsPage() {
                 <tr key={l.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   {editing === l.id ? (
                     <>
-                      <td className="px-4 py-2"><input value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} className={inputCls} /></td>
+                      <td className="px-4 py-2"><input aria-label="Input field" value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} className={inputCls} /></td>
                       <td className="px-4 py-2">
                         <select aria-label="Select option" value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
                           {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m) => <option key={m} value={m}>{m}</option>)}
                         </select>
                       </td>
-                      <td className="px-4 py-2"><input type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
-                      <td className="px-4 py-2"><input type="number" value={draft.burst ?? 10} onChange={(e) => setDraft((p) => ({ ...p, burst: Number(e.target.value) }))} className={inputCls} /></td>
+                      <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
+                      <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.burst ?? 10} onChange={(e) => setDraft((p) => ({ ...p, burst: Number(e.target.value) }))} className={inputCls} /></td>
                       <td className="px-4 py-2"><input type="checkbox" checked={draft.per_tenant ?? false} onChange={(e) => setDraft((p) => ({ ...p, per_tenant: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
                       <td className="px-4 py-2"><input type="checkbox" checked={draft.enabled ?? true} onChange={(e) => setDraft((p) => ({ ...p, enabled: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
                       <td className="px-4 py-2">
@@ -199,14 +199,14 @@ export default function RateLimitsPage() {
               ))}
               {showCreate && (
                 <tr className="bg-indigo-50/50 dark:bg-indigo-900/10">
-                  <td className="px-4 py-2"><input value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} placeholder="/api/v1/*" className={inputCls} /></td>
+                  <td className="px-4 py-2"><input aria-label="/api/v1/*" value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} placeholder="/api/v1/*" className={inputCls} /></td>
                   <td className="px-4 py-2">
                     <select aria-label="Select option" value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
                       {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m) => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </td>
-                  <td className="px-4 py-2"><input type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
-                  <td className="px-4 py-2"><input type="number" value={draft.burst ?? 10} onChange={(e) => setDraft((p) => ({ ...p, burst: Number(e.target.value) }))} className={inputCls} /></td>
+                  <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
+                  <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.burst ?? 10} onChange={(e) => setDraft((p) => ({ ...p, burst: Number(e.target.value) }))} className={inputCls} /></td>
                   <td className="px-4 py-2"><input type="checkbox" checked={draft.per_tenant ?? false} onChange={(e) => setDraft((p) => ({ ...p, per_tenant: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
                   <td className="px-4 py-2" />
                   <td className="px-4 py-2">

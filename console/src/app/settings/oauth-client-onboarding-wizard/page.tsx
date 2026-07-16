@@ -41,8 +41,8 @@ export default function OAuthClientOnboardingWizardPage() {
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-sm font-semibold">{t("oauthOnboarding.appInfo")}</h2>
-            <input type="text" placeholder="App name" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" defaultValue={data?.app_info?.name ?? ""} />
-            <input type="text" placeholder="Description" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" defaultValue={data?.app_info?.description ?? ""} />
+            <input aria-label="App name" type="text" placeholder="App name" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" defaultValue={data?.app_info?.name ?? ""} />
+            <input aria-label="Description" type="text" placeholder="Description" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" defaultValue={data?.app_info?.description ?? ""} />
             <select aria-label="Select option" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>{t("oauthOnboarding.webApp")}</option><option>{t("oauthOnboarding.mobileApp")}</option><option>{t("oauthOnboarding.serviceM2M")}</option>
             </select>
@@ -68,7 +68,7 @@ export default function OAuthClientOnboardingWizardPage() {
                 <span className="text-xs text-gray-500">{t("oauthOnboarding.httpsVerified")}</span>
               </div>
             ))}
-            <input type="text" placeholder="https://your-app.com/callback" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" />
+            <input aria-label="https://your-app.com/callback" type="text" placeholder="https://your-app.com/callback" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" />
           </div>
         )}
         {step === 4 && (

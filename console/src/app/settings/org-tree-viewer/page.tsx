@@ -111,7 +111,7 @@ export default function OrgTreeViewerPage() {
 
       <div className="grid grid-cols-3 gap-6">
         <section className="col-span-2 bg-white rounded-lg shadow p-6 space-y-4">
-          <input type="text" placeholder="Search organizations..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+          <input aria-label="Search organizations..." type="text" placeholder="Search organizations..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
           <ul className="space-y-1">{renderNode(tree)}</ul>
         </section>
 

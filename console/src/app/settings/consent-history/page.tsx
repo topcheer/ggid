@@ -79,7 +79,7 @@ export default function ConsentHistoryPage() {
         </div>
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search user or client..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
+          <input aria-label="Search user or client..." type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search user or client..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
       </div>
 

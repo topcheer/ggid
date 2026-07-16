@@ -304,7 +304,7 @@ export default function OAuthClientsPage() {
                   ))}
                 </div>
                 <div className="mt-2 flex gap-2">
-                  <input value={form.customScope} onChange={e => setForm({ ...form, customScope: e.target.value })} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomScope(); } }} className={`${inputCls} flex-1`} placeholder="custom:scope" />
+                  <input aria-label="custom:scope" value={form.customScope} onChange={e => setForm({ ...form, customScope: e.target.value })} onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustomScope(); } }} className={`${inputCls} flex-1`} placeholder="custom:scope" />
                   <button onClick={addCustomScope} className="rounded-lg border border-brand-600 px-3 py-2 text-sm text-brand-600 hover:bg-brand-50 dark:hover:bg-brand-900/30">Add</button>
                 </div>
                 {form.scopes.filter(s => !STANDARD_SCOPES.includes(s)).length > 0 && (

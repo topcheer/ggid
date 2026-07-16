@@ -101,7 +101,7 @@ export default function AccessCertificationPage() {
         )}
         <div className="relative flex-1 max-w-xs ml-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder={t("accessCertification.searchUsers")} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
+          <input aria-label="Search" type="text" placeholder={t("accessCertification.searchUsers")} value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default function AccessCertificationPage() {
               {/* Inline comment editor */}
               {commentUser === u.user_id && (
                 <div className="mt-2 flex items-center gap-2">
-                  <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t("accessCertification.addComment")} className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                  <input aria-label="Comment text" type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t("accessCertification.addComment")} className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
                   <button onClick={() => { submitDecision(u.user_id, u.status === "pending" ? "certified" : u.status, commentText); setCommentUser(null); }} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">{t("accessCertification.saveComment")}</button>
                   <button onClick={() => setCommentUser(null)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm">{t("accessCertification.cancel")}</button>
                 </div>

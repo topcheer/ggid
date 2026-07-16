@@ -19,7 +19,7 @@ export default function OAuthIssuerMetadataConfigPage() {
 
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Globe className="w-4 h-4 text-blue-400" /> Issuer</h2>
-        <input type="text" defaultValue={data?.issuer_url} className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm font-mono" />
+        <input aria-label="Input field" type="text" defaultValue={data?.issuer_url} className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm font-mono" />
         <p className="text-xs text-blue-400 mt-1">Discovery: {data?.issuer_url}/.well-known/openid-configuration</p>
       </div>
 

@@ -41,7 +41,7 @@ export default function UserImportPage() {
           <Upload className="w-12 h-12 text-gray-400 mx-auto mb-2" />
           <p className="text-sm font-medium">Drop CSV/JSON here</p>
           <p className="text-xs text-gray-400 mt-1">or click to browse</p>
-          <input type="file" accept=".csv,.json" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFileName(f.name); setImportError(""); } }} className="hidden" id="user-import-file" />
+          <input aria-label="Input field" type="file" accept=".csv,.json" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFileName(f.name); setImportError(""); } }} className="hidden" id="user-import-file" />
         </div>
       ) : (
         <div className="rounded-lg border dark:border-gray-800 p-4 flex items-center gap-2">

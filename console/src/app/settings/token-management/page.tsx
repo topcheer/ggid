@@ -41,7 +41,7 @@ export default function TokenManagementPage() {
       <div><h1 className="text-2xl font-bold">{t("backend.tokenManagement.title")}</h1><p className="text-gray-600">View, revoke, and manage active OAuth tokens with JWT inspection.</p></div>
 
       <div className="flex gap-3">
-        <input type="text" placeholder="Search by jti..." value={searchJti} onChange={e => setSearchJti(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm font-mono" />
+        <input aria-label="Search by jti..." type="text" placeholder="Search by jti..." value={searchJti} onChange={e => setSearchJti(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm font-mono" />
         {batchRevoke.length > 0 && <button onClick={revokeBatch} className="px-4 py-2 bg-red-600 text-white rounded text-sm">Revoke Selected ({batchRevoke.length})</button>}
       </div>
 

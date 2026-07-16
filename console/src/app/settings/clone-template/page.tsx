@@ -131,7 +131,7 @@ export default function CloneTemplatePage() {
         <div className="space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" placeholder="Search source user..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
+            <input aria-label="Search source user..." type="text" placeholder="Search source user..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
           </div>
           <div className="rounded-lg border dark:border-gray-800 max-h-80 overflow-y-auto">
             <div className="divide-y dark:divide-gray-800">

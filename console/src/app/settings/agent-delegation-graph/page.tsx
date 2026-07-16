@@ -112,7 +112,7 @@ export default function AgentDelegationGraphPage() {
       <div className="flex items-center gap-6 text-sm">
         <div className="flex items-center gap-2">
           <span className="text-gray-500">Max Depth:</span>
-          <input type="number" min={1} max={10} value={maxDepth} onChange={e => setMaxDepth(parseInt(e.target.value) || 5)} className="w-16 border rounded px-2 py-1 text-sm" />
+          <input aria-label="Max depth" type="number" min={1} max={10} value={maxDepth} onChange={e => setMaxDepth(parseInt(e.target.value) || 5)} className="w-16 border rounded px-2 py-1 text-sm" />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-gray-500">Current Depth:</span>

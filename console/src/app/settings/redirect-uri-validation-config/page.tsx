@@ -34,7 +34,7 @@ export default function RedirectURIValidationConfigPage() {
 
       <div className="bg-gray-900 rounded-xl p-6">
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><Link2 className="w-4 h-4 text-blue-400" /> URI Tester</h2>
-        <div className="flex gap-2"><input type="text" placeholder="https://example.com/callback" className="flex-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" id="uri-test-input" /><button onClick={() => testUri((document.getElementById("uri-test-input") as HTMLInputElement)?.value || "")} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Test</button></div>
+        <div className="flex gap-2"><input aria-label="https://example.com/callback" type="text" placeholder="https://example.com/callback" className="flex-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" id="uri-test-input" /><button onClick={() => testUri((document.getElementById("uri-test-input") as HTMLInputElement)?.value || "")} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">Test</button></div>
       </div>
     </div>
   );

@@ -114,7 +114,7 @@ export default function SmtpConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("smtp.testEmail")}</h2>
         <div className="flex gap-3">
-          <input type="email" placeholder={t("smtp.recipientPlaceholder")} value={testEmail} onChange={e => setTestEmail(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
+          <input aria-label="Test email" type="email" placeholder={t("smtp.recipientPlaceholder")} value={testEmail} onChange={e => setTestEmail(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
           <button onClick={sendTest} disabled={testing || !testEmail} aria-label={t("smtp.sendTest")} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? t("smtp.sending") : t("smtp.sendTest")}</button>
         </div>
         {testResult && <div className="text-sm p-3 rounded bg-green-50 text-green-700">{testResult}</div>}

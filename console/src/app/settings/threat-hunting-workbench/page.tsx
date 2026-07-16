@@ -36,7 +36,7 @@ export default function ThreatHuntingWorkbenchPage() {
             <select aria-label="Select option" className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>Operator</option><option>equals</option><option>contains</option><option>matches regex</option>
             </select>
-            <input className="flex-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" placeholder="Enter value..." />
+            <input aria-label="Enter value..." className="flex-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" placeholder="Enter value..." />
             <select aria-label="Select option" className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>Last 24h</option><option>Last 7d</option><option>Last 30d</option>
             </select>

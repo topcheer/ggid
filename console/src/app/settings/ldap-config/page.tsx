@@ -123,8 +123,8 @@ export default function LdapConfigPage() {
           </tbody>
         </table>
         <div className="flex gap-2">
-          <input type="text" placeholder="LDAP attr" value={newLdapAttr} onChange={e => setNewLdapAttr(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
-          <input type="text" placeholder="local attr" value={newLocalAttr} onChange={e => setNewLocalAttr(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
+          <input aria-label="LDAP attr" type="text" placeholder="LDAP attr" value={newLdapAttr} onChange={e => setNewLdapAttr(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
+          <input aria-label="local attr" type="text" placeholder="local attr" value={newLocalAttr} onChange={e => setNewLocalAttr(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
           <button onClick={addMapping} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
         </div>
       </section>

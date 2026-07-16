@@ -44,7 +44,7 @@ export default function RolePermissionMatrixPage() {
         <button className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-2"><Download className="w-4 h-4" /> Export</button>
       </div>
 
-      <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search permissions..." className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm w-64" />
+      <input aria-label="Search permissions..." type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search permissions..." className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm w-64" />
 
       <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
         <table className="w-full text-sm"><thead><tr><th className="px-3 py-2 text-left text-xs font-medium text-gray-500 sticky left-0 bg-gray-50 dark:bg-gray-900">Permission</th>{data.roles.map((r) => (<th key={r} className="px-3 py-2 text-center text-xs font-medium"><div className="flex flex-col items-center gap-1"><span>{r}</span><span className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 text-[10px]">{getPermCount(r)}</span></div></th>))}</tr></thead>

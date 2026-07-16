@@ -175,9 +175,9 @@ export default function ABACPage() {
                 <div className="space-y-2">
                   {editing.conditions.map((c, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <input value={c.attribute} onChange={(e) => updateCondition(idx, "attribute", e.target.value)} placeholder="attribute" className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+                      <input aria-label="attribute" value={c.attribute} onChange={(e) => updateCondition(idx, "attribute", e.target.value)} placeholder="attribute" className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
                       <select aria-label="Select option" value={c.operator} onChange={(e) => updateCondition(idx, "operator", e.target.value)} className="rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="eq">==</option><option value="ne">!=</option><option value="in">in</option><option value="lt">&lt;</option><option value="gt">&gt;</option><option value="contains">contains</option></select>
-                      <input value={c.value} onChange={(e) => updateCondition(idx, "value", e.target.value)} placeholder="value" className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+                      <input aria-label="value" value={c.value} onChange={(e) => updateCondition(idx, "value", e.target.value)} placeholder="value" className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-xs dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
                       <button onClick={() => removeCondition(idx)} className="rounded p-1 text-red-400 hover:bg-red-50"><Trash2 className="h-3 w-3" /></button>
                     </div>
                   ))}

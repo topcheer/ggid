@@ -442,7 +442,7 @@ export default function CertificatesPage() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name or domain..." className={`${inputCls} pl-9`} />
+          <input aria-label="Search by name or domain..." type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name or domain..." className={`${inputCls} pl-9`} />
         </div>
         <select aria-label="Filter" value={filterType} onChange={(e) => setFilterType(e.target.value)} className={inputCls + " w-auto"}>
           <option value="all">All Types</option>

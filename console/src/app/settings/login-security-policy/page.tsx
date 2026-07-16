@@ -108,7 +108,7 @@ export default function LoginSecurityPolicyPage() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input type="text" placeholder="CIDR" value={ipMode === 'allow' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setIpMode('allow'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
+            <input aria-label="CIDR" type="text" placeholder="CIDR" value={ipMode === 'allow' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setIpMode('allow'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
             <button onClick={() => { setIpMode('allow'); addIp(); }} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">Add</button>
           </div>
         </section>
@@ -124,7 +124,7 @@ export default function LoginSecurityPolicyPage() {
             ))}
           </div>
           <div className="flex gap-2">
-            <input type="text" placeholder="CIDR" value={ipMode === 'block' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setIpMode('block'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
+            <input aria-label="CIDR" type="text" placeholder="CIDR" value={ipMode === 'block' ? newIp : ''} onChange={e => { setNewIp(e.target.value); setIpMode('block'); }} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
             <button onClick={() => { setIpMode('block'); addIp(); }} className="px-3 py-1 bg-red-600 text-white rounded text-sm">Add</button>
           </div>
         </section>

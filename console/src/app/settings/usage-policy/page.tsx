@@ -117,7 +117,7 @@ export default function UsagePolicyPage() {
                       </div>
                     ))}
                     <div className="flex items-center gap-2">
-                      <input type="text" value={newIpRange} onChange={(e) => setNewIpRange(e.target.value)} placeholder="10.0.0.0/8" className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
+                      <input aria-label="10.0.0.0/8" type="text" value={newIpRange} onChange={(e) => setNewIpRange(e.target.value)} placeholder="10.0.0.0/8" className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
                       <button onClick={addIpRange} className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"><Plus className="w-4 h-4" /></button>
                     </div>
                   </div>

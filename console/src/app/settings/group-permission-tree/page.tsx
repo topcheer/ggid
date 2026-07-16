@@ -42,7 +42,7 @@ export default function GroupPermissionTreePage() {
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("big1.groupPermissionTree.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("big1.groupPermissionTree.hierarchicalViewOfGroupsRolesAndInheritedPermissions")}</p></div>
 
-      <div className="flex items-center gap-4"><div className="relative flex-1 max-w-xs"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div><span className="text-sm text-gray-500">{totalPerms(tree)}{t("big1.groupPermissionTree.totalPermissions")}</span></div>
+      <div className="flex items-center gap-4"><div className="relative flex-1 max-w-xs"><Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" /><input aria-label="Search..." type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search..." className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div><span className="text-sm text-gray-500">{totalPerms(tree)}{t("big1.groupPermissionTree.totalPermissions")}</span></div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4"><div className="space-y-0.5">{tree.map((n) => renderNode(n, 0))}{tree.length === 0 && !loading && <p className="text-sm text-gray-500 text-center py-4">{t("big1.groupPermissionTree.noData")}</p>}</div></div>
     </div>

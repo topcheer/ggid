@@ -160,7 +160,7 @@ export default function ComplianceEvidencePage() {
           {/* Upload section */}
           {selectedControl && (
             <div className="flex items-center gap-2">
-              <input value={uploadName} onChange={(e) => setUploadName(e.target.value)} placeholder="Artifact name" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+              <input aria-label="Artifact name" value={uploadName} onChange={(e) => setUploadName(e.target.value)} placeholder="Artifact name" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
               <button onClick={handleUpload} disabled={!uploadName || uploading} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Upload</button>
             </div>
           )}

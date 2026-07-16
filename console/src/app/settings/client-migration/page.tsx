@@ -169,7 +169,7 @@ export default function ClientMigrationPage() {
                     </div>
                   ))}
                   <div className="flex items-center gap-2">
-                    <input type="text" value={newItem[field]} onChange={(e) => setNewItem({ ...newItem, [field]: e.target.value })} placeholder={`Add ${field.replace("_", " ")}...`} className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono"
+                    <input aria-label="Input field" type="text" value={newItem[field]} onChange={(e) => setNewItem({ ...newItem, [field]: e.target.value })} placeholder={`Add ${field.replace("_", " ")}...`} className="flex-1 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs font-mono"
                       onKeyDown={(e) => { if (e.key === "Enter") { addField(field, newItem[field]); setNewItem({ ...newItem, [field]: "" }); } }}
                     />
                     <button onClick={() => { addField(field, newItem[field]); setNewItem({ ...newItem, [field]: "" }); }} className="p-1 rounded bg-blue-600 text-white"><Plus className="w-3 h-3" /></button>

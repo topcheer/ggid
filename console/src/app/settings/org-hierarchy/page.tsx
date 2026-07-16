@@ -134,7 +134,7 @@ export default function OrgHierarchyPage() {
       )}
 
       <div className="flex items-center gap-3">
-        <input type="text" placeholder="Search organizations..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
+        <input aria-label="Search organizations..." type="text" placeholder="Search organizations..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
         <span className="text-sm text-gray-500">{filteredOrgs.length} of {orgs.length}</span>
       </div>
 

@@ -91,7 +91,7 @@ export default function SessionRevocationCenterPage() {
       </div>
 
       <section className="bg-white rounded-lg shadow p-4">
-        <input type="text" placeholder={t("sessionRevocation.revocationReason")} value={reason} onChange={e => setReason(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+        <input aria-label="Reason" type="text" placeholder={t("sessionRevocation.revocationReason")} value={reason} onChange={e => setReason(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
       </section>
 
       {bulkConfirm ? (

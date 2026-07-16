@@ -586,7 +586,7 @@ export default function SSOConnectionsPage() {
                         <Upload className="h-5 w-5" />
                         {samlForm.metadataXml ? t("sso.xmlLoaded") : t("sso.uploadMetadataXml")}
                       </button>
-                      <input ref={samlMetadataRef} type="file" accept=".xml" className="hidden" onChange={handleMetadataUpload} />
+                      <input aria-label="Input field" ref={samlMetadataRef} type="file" accept=".xml" className="hidden" onChange={handleMetadataUpload} />
                     </div>
                     <div>
                       <label className={labelCls}>Or paste metadata URL</label>
@@ -683,7 +683,7 @@ export default function SSOConnectionsPage() {
                     <Upload className="h-6 w-6" />
                     {samlForm.x509Cert ? t("sso.certLoaded") : t("sso.uploadCertHint")}
                   </button>
-                  <input ref={samlCertRef} type="file" accept=".pem,.crt,.cer" className="hidden" onChange={handleCertUpload} />
+                  <input aria-label="Input field" ref={samlCertRef} type="file" accept=".pem,.crt,.cer" className="hidden" onChange={handleCertUpload} />
                 </div>
                 <div>
                   <label className={labelCls}>Or paste certificate (PEM)</label>

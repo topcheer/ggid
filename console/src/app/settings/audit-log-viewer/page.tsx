@@ -67,7 +67,7 @@ export default function AuditLogViewerPage() {
       </div>
       <div className="flex gap-3">
         <select aria-label="Filter" value={severityFilter} onChange={e => setSeverityFilter(e.target.value)} className="border rounded px-3 py-2 text-sm"><option value="all">All Severities</option><option value="high">High</option><option value="medium">Medium</option><option value="info">Info</option></select>
-        <input type="text" placeholder="Filter by action..." value={actionFilter} onChange={e => setActionFilter(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
+        <input aria-label="Filter by action..." type="text" placeholder="Filter by action..." value={actionFilter} onChange={e => setActionFilter(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
       </div>
       <div className="flex gap-6">
         <div className="flex-1 bg-white rounded-lg shadow overflow-hidden">

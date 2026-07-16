@@ -142,7 +142,7 @@ export default function WebhookTesterPage() {
             <div className="space-y-2">
               <div>
                 <span className="text-xs text-gray-400">Secret</span>
-                <input type="text" value={hmacSecret} onChange={(e) => setHmacSecret(e.target.value)} readOnly
+                <input aria-label="Hmac secret" type="text" value={hmacSecret} onChange={(e) => setHmacSecret(e.target.value)} readOnly
                   className="w-full mt-1 px-3 py-1.5 text-xs font-mono border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500" />
               </div>
               {hmacSignature && (

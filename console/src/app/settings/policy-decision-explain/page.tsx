@@ -30,9 +30,9 @@ export default function PolicyDecisionExplainPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-3 gap-3">
-          <input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="user:alice" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
-          <input type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
-          <input type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
+          <input aria-label="user:alice" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="user:alice" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
+          <input aria-label="doc:project" type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
+          <input aria-label="access" type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
         </div>
         <button onClick={explain} disabled={loading || !subject || !resource} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Analyzing..." : "Explain"}</button>
       </div>

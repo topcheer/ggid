@@ -113,7 +113,7 @@ export default function EmailOTPPage() {
           <div className={cardCls}>
             <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Test OTP Send</h3>
             <div className="flex items-center gap-2">
-              <input value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="test@example.com" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+              <input aria-label="test@example.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="test@example.com" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
               <button onClick={handleTestSend} disabled={!testEmail || sending} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Send Test</button>
             </div>
             {testResult && <p className={`mt-2 text-sm ${testResult.includes("success") ? "text-green-600" : "text-red-600"}`}>{testResult}</p>}

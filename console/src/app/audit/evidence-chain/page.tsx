@@ -98,7 +98,7 @@ export default function EvidenceChainPage() {
       {/* Control ID search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input type="text" placeholder="Search by Control ID (e.g. SOC2-CC1.1)..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
+        <input aria-label="Search by Control ID (e.g. SOC2-CC1.1)..." type="text" placeholder="Search by Control ID (e.g. SOC2-CC1.1)..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
       </div>
 
       {loading && <p className="text-sm text-gray-500">Loading chain...</p>}

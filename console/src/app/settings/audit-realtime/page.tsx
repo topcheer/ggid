@@ -63,7 +63,7 @@ export default function AuditRealtimePage() {
 
       <div className="flex items-center gap-2">
         <select aria-label="Filter" value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Severities</option><option value="info">Info</option><option value="warning">Warning</option><option value="error">Error</option><option value="critical">Critical</option></select>
-        <input type="text" placeholder="Filter by action..." value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm w-48" />
+        <input aria-label="Filter by action..." type="text" placeholder="Filter by action..." value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm w-48" />
         <span className="text-sm text-gray-500">{filtered.length} events {paused && "(paused)"}</span>
       </div>
 

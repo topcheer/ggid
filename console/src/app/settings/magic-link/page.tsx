@@ -140,13 +140,13 @@ export default function MagicLinkPage() {
             {/* Expiry */}
             <div className="flex items-center justify-between border-b border-gray-100 py-3 dark:border-gray-700">
               <span className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300"><Clock className="h-4 w-4 text-gray-400" />Link Expiry (minutes)</span>
-              {editing ? <input type="number" value={cfg.expiry_minutes} onChange={(e) => setDraft((p) => ({ ...p, expiry_minutes: Number(e.target.value) }))} className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <span className="font-medium text-indigo-600">{cfg.expiry_minutes} min</span>}
+              {editing ? <input aria-label="Input field" type="number" value={cfg.expiry_minutes} onChange={(e) => setDraft((p) => ({ ...p, expiry_minutes: Number(e.target.value) }))} className="w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <span className="font-medium text-indigo-600">{cfg.expiry_minutes} min</span>}
             </div>
 
             {/* Redirect URL */}
             <div className="flex items-center justify-between border-b border-gray-100 py-3 dark:border-gray-700">
               <span className="text-sm text-gray-700 dark:text-gray-300">Redirect URL</span>
-              {editing ? <input value={cfg.redirect_url} onChange={(e) => setDraft((p) => ({ ...p, redirect_url: e.target.value }))} placeholder="/dashboard" className="w-48 rounded-lg border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <span className="font-mono text-xs text-gray-500">{cfg.redirect_url || "/dashboard"}</span>}
+              {editing ? <input aria-label="/dashboard" value={cfg.redirect_url} onChange={(e) => setDraft((p) => ({ ...p, redirect_url: e.target.value }))} placeholder="/dashboard" className="w-48 rounded-lg border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <span className="font-mono text-xs text-gray-500">{cfg.redirect_url || "/dashboard"}</span>}
             </div>
 
             {/* Allowed domains */}
@@ -161,7 +161,7 @@ export default function MagicLinkPage() {
                 ))}
                 {editing && (
                   <div className="flex items-center gap-1">
-                    <input value={newDomain} onChange={(e) => setNewDomain(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addDomain()} placeholder="company.com" className="w-32 rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="company.com" value={newDomain} onChange={(e) => setNewDomain(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addDomain()} placeholder="company.com" className="w-32 rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                     <button onClick={addDomain} aria-label="Add domain" className="rounded p-1 text-indigo-600 hover:bg-indigo-50"><Plus className="h-3.5 w-3.5" /></button>
                   </div>
                 )}
@@ -175,7 +175,7 @@ export default function MagicLinkPage() {
         <div>
           <div className={cardCls}>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300"><Send className="h-4 w-4" /> Test Send</h3>
-            <input value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="user@company.com" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            <input aria-label="user@company.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} placeholder="user@company.com" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <button onClick={handleTestSend} disabled={!testEmail.trim() || sending} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}Send Magic Link
             </button>

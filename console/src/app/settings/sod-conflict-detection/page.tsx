@@ -133,7 +133,7 @@ export default function SodConflictDetectionPage() {
 
         {showForm && (
           <div className="grid grid-cols-4 gap-3 border rounded p-3">
-            <input type="text" placeholder="Rule name" value={newRule.ruleName} onChange={e => setNewRule(prev => ({ ...prev, ruleName: e.target.value }))} className="border rounded px-2 py-1.5 text-sm" />
+            <input aria-label="Rule name" type="text" placeholder="Rule name" value={newRule.ruleName} onChange={e => setNewRule(prev => ({ ...prev, ruleName: e.target.value }))} className="border rounded px-2 py-1.5 text-sm" />
             <select aria-label="Select option" value={newRule.roleA} onChange={e => setNewRule(prev => ({ ...prev, roleA: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
               {roles.map(r => <option key={r} value={r}>{r}</option>)}
             </select>

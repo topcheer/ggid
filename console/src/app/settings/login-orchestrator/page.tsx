@@ -137,7 +137,7 @@ export default function LoginOrchestratorPage() {
           <div className={cardCls}>
             <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Test Identifier Resolver</h3>
             <div className="flex items-center gap-2">
-              <input value={testIdentifier} onChange={(e) => setTestIdentifier(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleTest()} placeholder="user@example.com or username" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+              <input aria-label="user@example.com or username" value={testIdentifier} onChange={(e) => setTestIdentifier(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleTest()} placeholder="user@example.com or username" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
               <button onClick={handleTest} disabled={!testIdentifier.trim() || testing} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">{testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />} Resolve</button>
             </div>
             {testResult && (

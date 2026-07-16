@@ -91,10 +91,10 @@ export default function OidcIdpConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("oidcIdpConfig.endpoints")}</h2>
         <div className="space-y-3 text-sm">
-          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.issuerUrl")}</div><input type="url" value={issuerUrl} onChange={e => setIssuerUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
-          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.jwksUrl")}</div><input type="url" value={jwksUrl} onChange={e => setJwksUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
-          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.userInfoEndpoint")}</div><input type="url" value={userinfoUrl} onChange={e => setUserinfoUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
-          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.logoutUrl")}</div><input type="url" value={logoutUrl} onChange={e => setLogoutUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
+          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.issuerUrl")}</div><input aria-label="Issuer url" type="url" value={issuerUrl} onChange={e => setIssuerUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
+          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.jwksUrl")}</div><input aria-label="Jwks url" type="url" value={jwksUrl} onChange={e => setJwksUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
+          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.userInfoEndpoint")}</div><input aria-label="Userinfo url" type="url" value={userinfoUrl} onChange={e => setUserinfoUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
+          <div><div className="text-xs text-gray-500">{t("oidcIdpConfig.logoutUrl")}</div><input aria-label="Logout url" type="url" value={logoutUrl} onChange={e => setLogoutUrl(e.target.value)} className="w-full border rounded px-2 py-1 text-sm font-mono mt-1" /></div>
         </div>
       </section>
 

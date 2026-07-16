@@ -92,7 +92,7 @@ export default function ImpersonationConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("big1.impersonationConfig.maxDuration")}{maxDuration}{t("big1.impersonationConfig.minutes")}</h2>
-        <input type="range" min={5} max={480} step={5} value={maxDuration} onChange={e => setMaxDuration(parseInt(e.target.value))} className="w-full" />
+        <input aria-label="Max duration" type="range" min={5} max={480} step={5} value={maxDuration} onChange={e => setMaxDuration(parseInt(e.target.value))} className="w-full" />
         <div className="flex justify-between text-xs text-gray-400"><span>{t("big1.impersonationConfig.5min")}</span><span>{t("big1.impersonationConfig.8h")}</span></div>
       </section>
 
@@ -104,7 +104,7 @@ export default function ImpersonationConfigPage() {
           ))}
         </div>
         <div className="flex gap-2">
-          <input type="text" placeholder="user@ggid.io" value={newImpersonator} onChange={e => setNewImpersonator(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
+          <input aria-label="user@ggid.io" type="text" placeholder="user@ggid.io" value={newImpersonator} onChange={e => setNewImpersonator(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
           <button onClick={addImpersonator} aria-label="Add impersonator" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("big1.impersonationConfig.add")}</button>
         </div>
       </section>
@@ -118,7 +118,7 @@ export default function ImpersonationConfigPage() {
           ))}
         </div>
         <div className="flex gap-2">
-          <input type="text" placeholder="role-name" value={newRole} onChange={e => setNewRole(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
+          <input aria-label="role-name" type="text" placeholder="role-name" value={newRole} onChange={e => setNewRole(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm" />
           <button onClick={addRole} aria-label="Add restricted role" className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("big1.impersonationConfig.add")}</button>
         </div>
       </section>
