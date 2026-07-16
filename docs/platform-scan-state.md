@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 84
-## Last scan focus: E (Error Handling) + proactive — Fixed SCIM Groups hardcoded mock data → DB-backed; 6 API endpoints curl-tested
-## Next scan focus: F (Test Coverage) — Round 85
-## Total findings: 70
-## Done: 69
+## Current round: 85
+## Last scan focus: F (Test Coverage) — org/handler 0%→13.9%, mcp/tools 26.8%→35.1%
+## Next scan focus: G (SDK Alignment) — Round 86
+## Total findings: 72
+## Done: 71
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
@@ -49,8 +49,8 @@ LOW (acceptable for now — short-lived or fallback):
 - Agent consent (session-scoped)
 
 ## Commits this cycle:
-- 283e835a: Round 84 SCIM Groups hardcoded data → DB-backed query + 6 endpoint curl tests
-- df9cfb01: Round 80 Fix Identity + OAuth gRPC service registration
+- 22c1bd07: Round 85 org/handler 0%→13.9%, mcp/tools 26.8%→35.1%
+- 283e835a: Round 84 SCIM Groups hardcoded data → DB-backed query
 - dc7ff6db: Round 76 OAuth memory repo CRUD fix + 13 tests (0%→34.1%)
 - 6eaba42e: Round 75 PanicRecovery middleware for all 6 backend services
 - ad51128d: Fix loadEncryptionKey dev fallback (BIOMETRIC_AES_KEY panic fix)
