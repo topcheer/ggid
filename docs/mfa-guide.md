@@ -361,22 +361,80 @@ During the grace period:
 
 ## Backup Codes
 
-During MFA enrollment, GGID generates one-time backup codes:
+During MFA enrollment, GGID generates one-time backup codes that serve as
+a fallback when the primary MFA factor is unavailable.
+
+### Generate Backup Codes
 
 ```bash
-curl -X POST .../users/{user_id}/mfa/backup-codes \
-  -d '{ "count": 10 }'
+curl -X POST http://localhost:8080/api/v1/auth/mfa/backup-codes/generate \
+  -H "Authorization: Bearer <access_token>" \
+  -H "X-Tenant-ID: <tenant-id>" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "<user-uuid>"}'
 ```
+
+Response (200 OK):
 
 ```json
 {
-  "codes": ["ABCDE-FGHIJ", "KLMNO-PQRST", "UVWXY-Z0123"]
+  "codes": ["BCDFG-HJKLM", "NPQRS-TVWXY", "BCDFG-HJKLM", "..."],
+  "count": 10,
+  "warning": "Store these codes securely. They will not be shown again.",
+  "expires_in": "until regenerated"
 }
 ```
 
-- Codes are hashed at rest (never stored in plaintext)
-- Displayed once during generation
-- Each code used exactly once
-- Regenerating codes invalidates all previous codes
+### Verify (Login with Backup Code)
 
-3. Audit event published: `mfa.disable` (actor: admin)
+Backup codes can be used as an alternative MFA factor during login:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/mfa/backup-codes/verify \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: <tenant-id>" \
+  -d '{
+    "username": "alice",
+    "password": "secret",
+    "backup_code": "BCDFG-HJKLM"
+  }'
+```
+
+Alternatively, the standard MFA login endpoint accepts a `backup_code` field:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/mfa/login \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: <tenant-id>" \
+  -d '{
+    "username": "alice",
+    "password": "secret",
+    "backup_code": "BCDFG-HJKLM"
+  }'
+```
+
+### Check Remaining Codes
+
+```bash
+curl http://localhost:8080/api/v1/auth/mfa/backup-codes/remaining?user_id=<uuid> \
+  -H "Authorization: Bearer <access_token>" \
+  -H "X-Tenant-ID: <tenant-id>"
+```
+
+Response:
+
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "remaining": 8,
+  "total": 10
+}
+```
+
+### Security Notes
+
+- Codes are hashed at rest with Argon2id (never stored in plaintext)
+- Displayed once during generation
+- Each code is single-use (consumed upon successful verification)
+- Regenerating codes invalidates all previous codes
+- Audit events: `user.mfa.backup_codes.generated`, `user.mfa.backup_codes.used`

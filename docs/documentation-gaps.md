@@ -224,3 +224,21 @@ Write operations across all services still don't publish NATS audit events. See 
 - `pkg/authprovider/ldap.go` — Real LDAP authentication with connection pool, TLS, group-to-role mapping
 
 **Design document:** `docs/architecture/ldap-sync-design.md` — full architecture for config storage, sync flow, group sync, scheduler, and API endpoints.
+
+## Hourly Quality Optimization (2026-07-17 Round 94)
+
+Files scanned (newer than docs/.last-scan): 3
+- docs/team-backlog.md
+- docs/platform-scan-state.md
+- docs/platform-completeness-report.md
+
+Fixes applied:
+- docs/mfa-guide.md: Updated Backup Codes section with correct API endpoints
+  (`/api/v1/auth/mfa/backup-codes/generate`, `/verify`, `/remaining`).
+  Previous section used placeholder path `.../users/{user_id}/mfa/backup-codes`
+  that did not match actual implementation. Removed stray line 382
+  ("3. Audit event published: mfa.disable"). Added curl examples, response
+  schemas, and security notes.
+
+New/verified gaps:
+- None. Backup codes endpoints now fully documented in MFA guide.

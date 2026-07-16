@@ -93,3 +93,57 @@ Active research topics:
 - Console mock data audit
 
 See docs/research/ for full research docs.
+---
+
+# IAM 趋势研究 Backlog (2026-07-16 23:25 cron-2 第1小时: 国密+NHI)
+
+## 国密算法 SM2/SM3/SM4 KeyProvider 实现 (2026-07-16) - Priority: P1 - Status: Proposed
+
+**描述**: 为中国市场合规（商用密码应用安全性评估/密评）实现国密算法支持。GGID 已有 KeyProvider 接口（local/AWS KMS/PKCS11/Vault），设计文档 docs/research/kms-hsm-comprehensive-design.md 中 9 处提及 SM2/SM3/SM4，但代码中零实现。
+
+**业务价值**: HIGH
+- 密评是政府/国企/关键基础设施的强制合规要求（2025年全面铺开）
+- 中国市场 IAM 产品的准入门槛
+- 支持 SM2 签名 JWT、SM3 密码杂凑、SM4 数据加密
+
+**实现难度**: Medium
+- 成熟 Go 库可用：github.com/emmansun/gmsm（活跃维护，推荐）或 tjfoc/gmsm
+- 实现路径：
+  1. 新增 `pkg/crypto/key_provider_sm.go` 实现 KeyProvider 接口
+  2. JWT 签名算法增加 SM2-with-SM3 (alg: "SM2") 支持（oauth 服务 JWKS）
+  3. 密码哈希可选 SM3（替代 Argon2id，用于密评场景）
+  4. 数据加密层增加 SM4-GCM 选项（替代 AES-256-GCM）
+  5. 密评场景配置开关：tenant 级别选择 crypto suite (international/GM)
+
+**兼容性**: 现有 KeyProvider 接口无需改动，纯增量实现
+
+---
+
+## Agentic Access Management (AAM) / 非人身份治理深化 (2026-07-16) - Priority: P1 - Status: Proposed
+
+**描述**: 2025 年 IAM 最大趋势：AI Agent 自主行动，非人身份（NHI）数量超过人类身份。行业从"管理访问"转向"治理行动"（intent-aware access）。Oasis 等公司推出 AAM 治理框架。GGID console 已有 7 个 agent-* 页面（UI 领先），oauth 服务有 agent_lifecycle_handler.go 和 agent_review_handler.go，但 identity 服务缺乏完整的 NHI 生命周期（service account provisioning/deprovisioning/rotation）。
+
+**业务价值**: HIGH
+- 身份将成为 AI 的控制平面（2026 预测）
+- GGID 已有先发优势（agent UI 全套页面）
+- 差异化竞争点：国内 IAM 产品几乎没有 agent 身份治理
+
+**实现难度**: Medium-High
+- 实现路径：
+  1. 审查现有 agent-* 后端实现的完整度（oauth 服务已有部分）
+  2. identity 服务增加 NHI 类型（agent/service_account/api_key/workload）
+  3. 实现 NHI Provisioning：创建即治理（默认最小权限、自动轮换）
+  4. intent-aware policy：policy 服务增加"意图"维度评估
+  5. 对标 AAM Governance Framework 做成熟度自评
+
+**兼容性**: 基于现有 agent 相关代码扩展
+
+---
+
+## 密评合规套件 (2026-07-16) - Priority: P2 - Status: Proposed
+
+**描述**: 基于国密算法实现的完整密评合规方案：SM2 身份鉴别（USBKey/协同签名）、SM4 传输加密、SM3-MAC 完整性保护、密钥管理合规。依赖国密 KeyProvider 实现完成后进行。
+
+**业务价值**: MEDIUM-HIGH（与国密 KeyProvider 绑定）
+**实现难度**: High（涉及硬件对接、密评流程）
+**实现路径**: 国密 KeyProvider → 国密 SSL/TLS → 密评文档与工具 → 认证
