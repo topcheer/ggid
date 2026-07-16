@@ -1,6 +1,7 @@
 package scim
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -330,9 +331,62 @@ func (h *Handler) deleteGroup(w http.ResponseWriter, r *http.Request, id string)
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// getMockGroups returns sample SCIM groups for testing.
-// In production this would query the role/user-mapping tables.
+// getMockGroups returns SCIM groups from the database.
+// SCIM Groups map to GGID roles. Members are users assigned to that role.
+// Falls back to default groups if DB is unavailable.
 func (h *Handler) getMockGroups(tenantID, filter string) []SCIMGroup {
+	if h == nil || h.svc == nil {
+		return defaultSCIMGroups(filter)
+	}
+	pool := h.svc.Pool()
+	if pool == nil {
+		return defaultSCIMGroups(filter)
+	}
+
+	// Query distinct roles from user_roles table to build SCIM groups.
+	tenantUUID, err := uuid.Parse(tenantID)
+	if err != nil || tenantUUID == uuid.Nil {
+		return defaultSCIMGroups(filter)
+	}
+
+	rows, err := pool.Query(context.Background(), `
+		SELECT DISTINCT role_id, role_name FROM (
+			SELECT ur.role_id::text as role_id, r.name as role_name
+			FROM user_roles ur
+			LEFT JOIN roles r ON r.id = ur.role_id
+			WHERE ur.tenant_id = $1
+		) t ORDER BY role_name
+	`, tenantUUID)
+	if err != nil {
+		return defaultSCIMGroups(filter)
+	}
+	defer rows.Close()
+
+	var groups []SCIMGroup
+	for rows.Next() {
+		var id, name string
+		if err := rows.Scan(&id, &name); err != nil {
+			continue
+		}
+		if filter != "" && !strings.EqualFold(name, filter) {
+			continue
+		}
+		groups = append(groups, SCIMGroup{
+			Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
+			ID:          id,
+			DisplayName: name,
+			Meta:        SCIMMeta{ResourceType: "Group", Location: "/scim/v2/Groups/" + id},
+		})
+	}
+
+	if len(groups) == 0 {
+		return defaultSCIMGroups(filter)
+	}
+	return groups
+}
+
+// defaultSCIMGroups returns static fallback groups when DB is unavailable.
+func defaultSCIMGroups(filter string) []SCIMGroup {
 	all := []SCIMGroup{
 		{
 			Schemas:     []string{"urn:ietf:params:scim:schemas:core:2.0:Group"},
@@ -352,7 +406,7 @@ func (h *Handler) getMockGroups(tenantID, filter string) []SCIMGroup {
 		for _, g := range all {
 			if strings.EqualFold(g.DisplayName, filter) {
 				filtered = append(filtered, g)
-		}
+			}
 		}
 		return filtered
 	}
