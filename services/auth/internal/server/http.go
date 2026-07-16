@@ -116,6 +116,11 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/disable", h.mfaDisable)
 	h.mux.HandleFunc("/api/v1/auth/mfa/login", h.mfaLogin)
 
+	// Backup codes (MFA recovery codes)
+	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/generate", h.backupCodesGenerate)
+	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/verify", h.backupCodesVerify)
+	h.mux.HandleFunc("/api/v1/auth/mfa/backup-codes/remaining", h.backupCodesRemaining)
+
 	// Password policy config endpoint
 	h.mux.HandleFunc("/api/v1/auth/password/policy", h.passwordPolicy)
 	h.mux.HandleFunc("/api/v1/auth/password-policy", h.passwordPolicy)
@@ -991,9 +996,10 @@ func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 }
 
 type mfaLoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	MFACode  string `json:"mfa_code"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	MFACode    string `json:"mfa_code"`
+	BackupCode string `json:"backup_code"`
 }
 
 func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
@@ -1010,6 +1016,18 @@ func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
 
 	ip := clientIP(r)
 	userAgent := r.Header.Get("User-Agent")
+
+	// Route: if backup_code is provided, use backup code login path.
+	if req.BackupCode != "" {
+		tokens, err := h.authSvc.LoginWithBackupCode(r.Context(), req.Username, req.Password, req.BackupCode, ip, userAgent)
+		if err != nil {
+			log.Printf("backup code login error for user %s: %v", req.Username, err)
+			writeAuthError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, tokens)
+		return
+	}
 
 	tokens, err := h.authSvc.LoginMFA(r.Context(), req.Username, req.Password, req.MFACode, ip, userAgent)
 	if err != nil {

@@ -148,7 +148,6 @@ func main() {
 	// 5b. Backup code service (PostgreSQL-backed for persistence)
 	backupCodeRepo := service.NewPgBackupCodeRepo(pool)
 	backupCodeService := service.NewBackupCodeService(backupCodeRepo)
-	_ = backupCodeService // used by MFA handlers
 
 	// 6. Build identity client (HTTP-based, connects to Identity Service)
 	var identityClient service.IdentityClient
@@ -200,6 +199,8 @@ func main() {
 	log.Printf("System config store initialized (hot-reload via Redis Pub/Sub)")
 
 	// 8. Start HTTP server
+	authSvc.SetBackupCodeService(backupCodeService)
+
 	handler := server.New(authSvc)
 	handler.SetSysconfigStore(sysconfigStore)
 	httpServer := &http.Server{

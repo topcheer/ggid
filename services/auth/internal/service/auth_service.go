@@ -34,6 +34,7 @@ type AuthService struct {
 	rateLimiter    *RateLimiter
 	identityClient IdentityClient
 	mfaService     *MFAService
+	backupCodeSvc  *BackupCodeService
 	emailService   *EmailService
 	emailSender    PasswordResetEmailSender
 }
@@ -67,6 +68,16 @@ func NewAuthService(
 		mfaService:      mfaSvc,
 		emailService:    NewEmailService(rateLimiter.rdb),
 	}
+}
+
+// SetBackupCodeService injects the backup code service for MFA backup code generation/verification.
+func (s *AuthService) SetBackupCodeService(bcs *BackupCodeService) {
+	s.backupCodeSvc = bcs
+}
+
+// BackupCodeService returns the backup code service (may be nil if not configured).
+func (s *AuthService) BackupCodeService() *BackupCodeService {
+	return s.backupCodeSvc
 }
 
 // GetPasswordPolicy returns the current password policy configuration.
@@ -509,6 +520,85 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 
 // MFAService returns the MFA service for direct access (setup, verify, disable).
 func (s *AuthService) MFAService() *MFAService { return s.mfaService }
+
+// LoginWithBackupCode authenticates a user with password + backup code (alternative MFA factor).
+// The backup code is consumed (single-use) upon successful verification.
+func (s *AuthService) LoginWithBackupCode(ctx context.Context, username, password, backupCode, ip, userAgent string) (*domain.TokenSet, error) {
+	// 1. Re-authenticate via provider chain.
+	result, err := s.chain.Authenticate(ctx, authprovider.Credentials{
+		Username: username,
+		Password: password,
+	})
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	if result.LinkedUser == nil {
+		// Auto-provision: create local user from external attributes
+		tc, err := tenant.FromContext(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("tenant context required: %w", err)
+		}
+		email, _ := result.Attributes["email"].(string)
+		if email == "" {
+			email = username + "@ldap.local"
+		}
+		name, _ := result.Attributes["displayName"].(string)
+		if name == "" {
+			name = username
+		}
+		newUser, err := s.identityClient.CreateUserFromSocial(ctx, tc.TenantID, username, email, name, string(result.Provider), result.ExternalID, result.Attributes)
+		if err != nil {
+			return nil, fmt.Errorf("auto-provision failed: %w", err)
+		}
+		uid := newUser.ID
+		result.LinkedUser = &uid
+	}
+	userID := *result.LinkedUser
+
+	tc, err := tenant.FromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("tenant context required: %w", err)
+	}
+
+	// 2. Verify backup code.
+	if s.backupCodeSvc == nil {
+		return nil, fmt.Errorf("backup code service not configured")
+	}
+	if err := s.backupCodeSvc.VerifyBackupCode(ctx, tc.TenantID, userID, backupCode); err != nil {
+		return nil, ErrInvalidBackupCode
+	}
+
+	// 3. Create session and issue tokens.
+	_, session, err := s.sessionService.Create(ctx, CreateSessionParams{
+		TenantID:  tc.TenantID,
+		UserID:    userID,
+		IPAddress: ip,
+		UserAgent: userAgent,
+		TTL:       24 * time.Hour,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create session: %w", err)
+	}
+
+	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
+	if err != nil {
+		return nil, fmt.Errorf("issue access token: %w", err)
+	}
+
+	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tc.TenantID, userID, session.ID)
+	if err != nil {
+		return nil, fmt.Errorf("issue refresh token: %w", err)
+	}
+
+	return &domain.TokenSet{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    expiresIn,
+		SessionID:    session.ID.String(),
+	}, nil
+}
 
 // LookupUser looks up a user by identifier (email or username) via the identity client.
 func (s *AuthService) LookupUser(ctx context.Context, tenantID uuid.UUID, identifier string) (*UserInfo, error) {
