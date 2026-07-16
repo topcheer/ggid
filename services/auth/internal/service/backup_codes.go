@@ -121,15 +121,21 @@ func (s *BackupCodeService) GenerateBackupCodes(ctx context.Context, userID uuid
 		pairs[i].plain = generateBackupCode()
 	}
 
-	// Hash all codes in parallel — argon2id is CPU-intensive (~0.5-1s each
-	// with 64MB memory params). Running concurrently reduces wall-clock
-	// from ~5-10s to ~1s, preventing gateway proxy timeouts.
+	// Hash codes with bounded parallelism — argon2id uses ~64MB per call.
+	// 10 concurrent goroutines would peak at 640MB and OOM the container
+	// (512Mi limit). A semaphore of 4 caps peak memory at ~256MB while
+	// still completing in ~2.5s (3 batches × ~0.8s), well within the
+	// gateway proxy timeout.
+	const hashConcurrency = 4
+	sem := make(chan struct{}, hashConcurrency)
 	var wg sync.WaitGroup
 	errCh := make(chan error, backupCodeCount)
 	for i := 0; i < backupCodeCount; i++ {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
+			sem <- struct{}{}        // acquire
+			defer func() { <-sem }() // release
 			h, err := crypto.HashPassword(pairs[idx].plain)
 			if err != nil {
 				errCh <- err
