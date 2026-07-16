@@ -386,3 +386,44 @@ See docs/research/ for full research docs.
 **描述**: operator 现有 instance/tenant CRD。扩展 GGIDClient CRD 实现 OAuth client 的 K8s 声明式管理（GitOps 场景：应用部署清单中直接声明 redirect_uris/scopes，operator 自动注册 client 并写回 secret）。ArgoCD/Flux 用户的标准期望。
 
 **业务价值**: MEDIUM | **实现难度**: Low-Medium（controller 模式已就绪，新增一种 CRD + reconcile 调 identity admin API）
+
+---
+
+## Per-User 行为基线学习（轻量 UEBA） (2026-07-17 第7小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + IAMExpert
+
+**描述**: 行业标准 UEBA（Microsoft Sentinel 为参考）核心是"持续学习每个用户的正常模式"。GGID 现状：risk_engine 是全局阈值启发式（velocity>20→+0.4），对异常但合法的用户误报高，对低慢攻击漏报。
+
+**GGID 独特优势**：audit 事件流是完美的 UEBA 训练数据；刚建成的 ITDR 检测引擎是完美投递机制（新增 baseline_deviation 规则类型即可）。
+
+**业务价值**: MEDIUM-HIGH
+- 从"阈值告警"升级到"个性化异常检测"，检测精度质变
+- 低慢攻击（low-and-slow）检测能力，阈值法盲区
+- 无 ML 框架依赖：纯 Go 统计（z-score / modified z-score / 直方图）
+
+**实现难度**: Medium
+- 实现路径：
+  1. audit 新增 profile builder（每日 job，30 天滑窗）：per-user 登录时段直方图、常用 IP/ASN 集合、资源访问频率分布、典型 UA
+  2. 存储：user_behavior_profiles 表（tenant+user+profile JSONB + updated_at）
+  3. ITDR 新规则 baseline_deviation：事件与 profile 偏差超 3σ → detection（证据含"通常 9-18 点北京登录，本次 3:15 未知 IP"）
+  4. 冷启动：新用户前 50 事件只学习不评估
+  5. agent_behavior_handler 的 BehaviorBaseline 已有雏形，可统一到此模型
+
+**兼容性**: ITDR 引擎规则接口直接扩展；复用 NATS 事件流
+
+---
+
+## Peer-Group 对比分析（内部威胁检测） (2026-07-17 第7小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: UEBA 第二支柱：用户与同部门/同角色群体规范对比。检测内部威胁经典场景：财务用户突然访问工程代码库、普通员工访问高管报表。GGID 有完整 org 树（LTREE）+ role 数据。
+
+**业务价值**: MEDIUM | **实现难度**: Medium
+- 实现路径：
+  1. profile builder 扩展 peer group 聚合（department/role 级资源访问分布）
+  2. 新规则 peer_deviation：用户访问资源类型在 peer group 中占比 <1% 且个人历史首次 → medium detection
+  3. 与 baseline_deviation 组合加权
+
+---
+
+## LLM 检测解释（Detection Narrative） (2026-07-17 第7小时研究) - Priority: P3 - Status: Watch - Suggested: IAMExpert
+
+**描述**: 2025 趋势：SOC 告警的 LLM 自然语言解释。ITDR detection 产生时调用 LLM 生成分析师友好的叙述（证据摘要+影响评估+建议处置）。GGID MCP 已有 LLM 通道。等 ITDR 引擎上线积累真实 detection 后评估。
