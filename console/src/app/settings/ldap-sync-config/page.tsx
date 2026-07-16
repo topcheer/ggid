@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Server, Plug, RefreshCw, CheckCircle, XCircle, Play, Loader2, History, Activity } from "lucide-react";
+import { Server, Plug, RefreshCw, CheckCircle, XCircle, Play, Loader2, History, Activity, ChevronDown } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { LDAP_VENDOR_PRESETS } from "@/lib/ldap-vendor-presets";
 
 interface LdapConfig {
   server_url: string; bind_dn: string; base_dn: string;
@@ -48,6 +49,23 @@ export default function LdapSyncConfigPage() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({ status: "idle", last_sync: null });
   const [syncing, setSyncing] = useState(false);
   const [history, setHistory] = useState<SyncHistoryEntry[]>([]);
+  const [selectedVendor, setSelectedVendor] = useState("custom");
+
+  const applyVendorPreset = (vendorId: string) => {
+    setSelectedVendor(vendorId);
+    const preset = LDAP_VENDOR_PRESETS.find(v => v.id === vendorId);
+    if (!preset) return;
+    const am = preset.config.attribute_mapping || {};
+    const mapping = Object.entries(am).map(([ldap_attr, local_attr]) => ({ ldap_attr, local_attr }));
+    setConfig(prev => ({
+      ...prev,
+      server_url: prev.server_url || preset.config.server_url,
+      user_filter: preset.config.user_filter,
+      group_filter: preset.config.group_filter,
+      start_tls: preset.config.start_tls,
+      attribute_mapping: mapping.length > 0 ? mapping : prev.attribute_mapping,
+    }));
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true); setError(null);
@@ -149,6 +167,21 @@ export default function LdapSyncConfigPage() {
         {syncStatus.last_sync?.errors && syncStatus.last_sync.errors.length > 0 && (
           <div className="mt-2 text-xs text-red-600">{syncStatus.last_sync.errors.length} errors during last sync</div>
         )}
+      </div>
+
+      {/* Vendor Preset Selector */}
+      <div className="rounded-lg border dark:border-gray-800 p-4">
+        <label className="text-sm font-medium">Directory Server Type</label>
+        <select
+          value={selectedVendor}
+          onChange={(e) => applyVendorPreset(e.target.value)}
+          className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"
+        >
+          {LDAP_VENDOR_PRESETS.map(v => (
+            <option key={v.id} value={v.id}>{v.label}</option>
+          ))}
+        </select>
+        {(() => { const p = LDAP_VENDOR_PRESETS.find(v => v.id === selectedVendor); return p ? <p className="mt-1.5 text-xs text-gray-500">{p.description}</p> : null; })()}
       </div>
 
       {/* Config form */}
