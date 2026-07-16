@@ -21,6 +21,7 @@ import (
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/audit/internal/compliance"
 	"github.com/ggid/ggid/services/audit/internal/domain"
+	"github.com/ggid/ggid/services/audit/internal/repository"
 	"github.com/ggid/ggid/services/audit/internal/service"
 	"github.com/google/uuid"
 )
@@ -39,6 +40,7 @@ type HTTPServer struct {
 	svc       *service.AuditService
 	retention retentionConfig
 	hub       *StreamHub
+	itdrRepo  *repository.ITDRRepository
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.
@@ -97,6 +99,11 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/rules", s.handleAnomalyRules)
 	mux.HandleFunc("/api/v1/audit/correlate", s.handleCorrelate)
 	mux.HandleFunc("/api/v1/audit/webhooks", s.handleAuditWebhooks)
+	mux.HandleFunc("/api/v1/audit/itdr/detections", s.handleITDR)
+	mux.HandleFunc("/api/v1/audit/itdr/detections/", s.handleITDR)
+	mux.HandleFunc("/api/v1/audit/itdr/stats", s.handleITDR)
+	mux.HandleFunc("/api/v1/audit/itdr/rules", s.handleITDR)
+	mux.HandleFunc("/api/v1/audit/itdr/rules/", s.handleITDR)
 	mux.HandleFunc("/api/v1/audit/verify-integrity", s.handleVerifyIntegrity)
 	mux.HandleFunc("/api/v1/audit/integrity/verify", s.handleVerifyIntegrity) // alias
 	mux.HandleFunc("/api/v1/audit/search", s.handleSearch)

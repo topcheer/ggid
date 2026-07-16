@@ -355,7 +355,6 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/passwordless/stats", h.handlePasswordlessStats)
 	h.mux.HandleFunc("/api/v1/auth/risk-scoring/config", h.handleRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/auth/stats/credential-stuffing", h.handleCredentialStuffingStats)
-	h.mux.HandleFunc("/api/v1/auth/itdr/detections", h.handleITDRDetections)
 	h.mux.HandleFunc("/api/v1/auth/fraud/score", h.handleFraudScore)
 	h.mux.HandleFunc("/api/v1/auth/velocity-rules", h.handleVelocityRules)
 	h.mux.HandleFunc("/api/v1/auth/threat-intel/feed", h.handleThreatIntelFeed)
