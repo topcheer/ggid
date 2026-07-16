@@ -354,7 +354,7 @@ export default function OrgChartPage() {
 
       {/* Messages */}
       {msg && (
-        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+        <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
           {msg}
         </div>
       )}

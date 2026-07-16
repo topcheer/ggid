@@ -81,7 +81,7 @@ export default function AuditExportPage() {
       )}
 
       {success && (
-        <div className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+        <div role="status" className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
           <Check className="h-4 w-4 shrink-0" />Export downloaded successfully.
         </div>
       )}

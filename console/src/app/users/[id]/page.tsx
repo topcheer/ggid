@@ -502,7 +502,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
 
         {/* Messages */}
         {msg && (
-          <div className="mx-6 mt-3 rounded-lg border border-green-200 bg-green-50 p-2.5 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+          <div role="status" className="mx-6 mt-3 rounded-lg border border-green-200 bg-green-50 p-2.5 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
             {msg}
           </div>
         )}

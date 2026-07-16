@@ -281,7 +281,7 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 capitalize">{view}</h1>
       </div>
 
-      {msg && <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">{msg}</div>}
+      {msg && <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950">{msg}</div>}
 
       {/* PROFILE */}
       {view === "profile" && (

@@ -111,7 +111,7 @@ export default function IntrospectionPage() {
         </div>
       )}
       {invalidated && (
-        <div className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+        <div role="status" className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
           <RefreshCw className="h-4 w-4" /> Cache invalidated successfully. All tokens will be re-validated on next request.
         </div>
       )}
