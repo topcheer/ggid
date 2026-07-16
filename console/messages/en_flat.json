@@ -1874,7 +1874,7 @@
   "lockoutPolicyConfig.title": "Lockout Policy",
   "login.backToLogin": "Back to login",
   "login.consoleTitle": "GGID Console",
-  "login.demo": "Demo: admin / Admin@123456",
+  "login.demo": "Demo: admin / Password123!",
   "login.enterCode": "Enter the 6-digit code from your authenticator app",
   "login.footer": "GGID IAM Suite · Apache 2.0",
   "login.forgotPassword": "Forgot password?",

@@ -1874,7 +1874,7 @@
   "lockoutPolicyConfig.title": "锁定策略",
   "login.backToLogin": "返回登录",
   "login.consoleTitle": "GGID 控制台",
-  "login.demo": "演示：admin / Admin@123456",
+  "login.demo": "演示：admin / Password123!",
   "login.enterCode": "请输入认证器应用中的 6 位验证码",
   "login.footer": "GGID IAM 套件 · Apache 2.0",
   "login.forgotPassword": "忘记密码？",
