@@ -33,7 +33,7 @@ const STORAGE_KEY = "ggid_webauthn_config";
 const defaultConfig: WebAuthnConfig = {
   rp_id: "localhost",
   rp_name: "GGID",
-  origins: "http://localhost:3000",
+  origins: "window.location.origin",
   timeout: 60000,
   attestation: "none",
   user_verification: "preferred",

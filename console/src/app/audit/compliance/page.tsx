@@ -122,7 +122,7 @@ export default function ComplianceReportPage() {
     setDownloading(`${reportId}-${format}`);
     try {
       // Use native fetch for blob download (apiFetch returns parsed JSON)
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/v1/audit/compliance/reports/${reportId}/download?format=${format}`;
+      const apiUrl = `/api/v1/audit/compliance/reports/${reportId}/download?format=${format}`;
       const dlRes = await fetch(apiUrl, {
         headers: {
           "Content-Type": "application/json",
