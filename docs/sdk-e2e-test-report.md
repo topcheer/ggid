@@ -91,3 +91,46 @@ tests         174   20   16   0*   16*   28   25   30   32
 - Node SDK tests (frontend assigned, in progress)
 - Java SDK webhook+introspect (frontend assigned, in progress)
 - M2M demo: client_credentials grant not supported by current OAuth client
+
+## Round 86 E2E (2026-07-17 00:40)
+
+### OAuth/OIDC
+| Endpoint | Result |
+|----------|--------|
+| Discovery | 200 PASS |
+| JWKS | 2 keys PASS |
+| UserInfo | sub present PASS |
+| Device Code | device_code issued PASS |
+| DCR | client_id issued PASS |
+| Refresh Token | new access_token PASS |
+| Introspect (client auth) | active=true PASS |
+| Revoke | 200 PASS |
+
+### ERP Matrix (4/4 PASS)
+| Service | health | products+auth | noauth | dashboard |
+|---------|--------|---------------|--------|-----------|
+| erp-api | 200 | 200 | 401 | 200 |
+| erp-go | 200 | 200 | 401 | 200 |
+| erp-java | 200 | 200 | 401 | 200 |
+| erp-python | 200 | 200 | 401 | 200 |
+
+### SDK Tests (8/8 PASS)
+| SDK | Result |
+|-----|--------|
+| Go | ok |
+| Rust | 2 passed |
+| Python | 16 passed |
+| Ruby | 28 examples, 0 failures |
+| Java | 16 tests, BUILD SUCCESS |
+| Node | 36 passed |
+| C# | 25 passed |
+| Dart | 30 passed |
+
+### Bugs Fixed This Round
+| # | Bug | Owner | Commit |
+|---|-----|-------|--------|
+| 1 | JWT kid mismatch: auth signed kid=local-signing-key, oauth JWKS advertised 4fb5e55507c0c313 (same key pair!) → erp-api 401 on all auth'd endpoints. Fixed by deriving kid from pubkey thumbprint in pkg/crypto (same algo as oauth computeKID) | techwriter | a3e29625 |
+| 2 | Ruby SDK bundler 1.17.2 vendored copy incompatible with Ruby 4.0 (String#untaint removed) → BUNDLED WITH 4.0.16 | techwriter | a3e29625 |
+| 3 | Ruby SDK httparty LoadError on Ruby 4.0 (csv removed from default gems) → added csv dependency to gemspec | techwriter | a3e29625 |
+
+Note: erp-go middleware.go:32 has `TODO: Verify JWT using GGID Go SDK` — it decodes but does not verify signatures. Recorded as security gap for future round (was already passing "by accident").

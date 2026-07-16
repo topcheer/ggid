@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 86
-## Last scan focus: F (Functional Deep Verification) — SAML/PAR/CIBA/MFA/SCIM Bulk verified; backup codes API wired+E2E verified (2b238d1b/37738d7a/a30c0d8d + auth CPU 200m→1000m, mem 512Mi→1Gi); gateway SCIM scim+json fix (3443123a)
-## Next scan focus: E2E tests (Round 86 = even round, Workflow A)
+## Current round: 87
+## Last scan focus: E2E (Round 86) — OAuth 8/8 PASS, ERP 4/4 PASS, SDK 8/8 PASS; fixed JWT kid mismatch (a3e29625, erp-api 401→200); Ruby SDK Ruby-4.0 compat fixes
+## Next scan focus: A (Stub/Placeholder scan, Round 87 = odd round, Workflow B)
 ## Total findings: 72
 ## Done: 72
 ## Fixed (pending verification): 0
