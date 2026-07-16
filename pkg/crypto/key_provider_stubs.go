@@ -8,13 +8,10 @@ import (
 )
 
 // Stubs for external providers when PKCS#11 support is not compiled in.
+// Vault and AWS KMS providers are always available (pure Go, no cgo).
 
 func newPKCS11KeyProvider(_ context.Context, _ PKCS11KeyProviderConfig) (KeyProvider, error) {
 	return nil, fmt.Errorf("pkcs11 provider: %w", ErrKeyProviderNotSupported)
-}
-
-func newAWSKMSKeyProvider(_ context.Context, _ AWSKMSConfig) (KeyProvider, error) {
-	return nil, fmt.Errorf("aws kms provider: %w", ErrKeyProviderNotSupported)
 }
 
 func newGCPKMSKeyProvider(_ context.Context, _ GCPKMSConfig) (KeyProvider, error) {
@@ -25,6 +22,5 @@ func newAzureKMSKeyProvider(_ context.Context, _ AzureKMSConfig) (KeyProvider, e
 	return nil, fmt.Errorf("azure key vault provider: %w", ErrKeyProviderNotSupported)
 }
 
-func newVaultTransitKeyProvider(_ context.Context, _ VaultTransitConfig) (KeyProvider, error) {
-	return nil, fmt.Errorf("vault transit provider: %w", ErrKeyProviderNotSupported)
-}
+// Vault Transit and AWS KMS are implemented in key_provider_vault.go and
+// key_provider_aws.go (pure Go, no cgo dependency).

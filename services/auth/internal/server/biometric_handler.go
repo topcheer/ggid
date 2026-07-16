@@ -28,7 +28,7 @@ type BiometricTemplate struct {
 var (
 	biometricMu  sync.RWMutex
 	biometrics   = make(map[string]*BiometricTemplate)
-	bioKey       = []byte("32-byte-key-for-aes-256-enc!!") // production: from KMS
+	bioKey       = loadEncryptionKey("BIOMETRIC_AES_KEY")
 )
 
 // POST /api/v1/auth/biometric/enroll — store encrypted biometric template.

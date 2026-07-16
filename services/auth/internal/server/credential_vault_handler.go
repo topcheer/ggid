@@ -23,7 +23,7 @@ type StoredCredential struct {
 var (
 	credVaultMu  sync.RWMutex
 	credVault    = make(map[string]map[string]*StoredCredential) // userID -> key -> cred
-	vaultAESKey  = []byte("0123456789abcdef0123456789abcdef")   // 32-byte AES-256 key
+	vaultAESKey  = loadEncryptionKey("CRED_VAULT_AES_KEY")
 )
 
 func encryptCredential(plaintext string) (string, error) {
