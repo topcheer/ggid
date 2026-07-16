@@ -107,7 +107,7 @@ export default function JITProvisioningPage() {
       {/* Edit provider modal */}
       {editProvider && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !saving && setEditProvider(null)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">Edit {editProvider.name}</h2><button onClick={() => setEditProvider(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="mt-4 space-y-4">
               <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={editProvider.enabled} onChange={(e) => setEditProvider((p) => p ? { ...p, enabled: e.target.checked } : null)} className="rounded border-gray-300 text-indigo-600" />Enable provider</label>

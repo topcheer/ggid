@@ -137,7 +137,7 @@ export default function PolicyVersionsPage() {
       {/* Rollback confirmation */}
       {confirmRollback && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !rolling && setConfirmRollback(null)}>
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30"><RotateCcw className="h-5 w-5 text-orange-600" /></div>
               <div>

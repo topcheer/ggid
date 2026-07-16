@@ -110,7 +110,7 @@ export default function CredentialVaultPage() {
       {/* Store modal */}
       {showStore && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStore(false)}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white"><Lock className="h-5 w-5 text-amber-600" /> Store Credential</h3><button onClick={() => setShowStore(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="space-y-4">
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Key Name</label><input value={form.key} onChange={(e) => setForm({ ...form, key: e.target.value })} placeholder="AWS_SECRET_KEY" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>

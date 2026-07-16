@@ -153,7 +153,7 @@ export default function ComplianceGapsPage() {
       {/* Update modal */}
       {updateGap && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setUpdateGap(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-lg w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-lg w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800">
               <h3 className="font-semibold flex items-center gap-2"><AlertCircle className="w-5 h-5 text-blue-500" /> Update Gap Status</h3>
               <button onClick={() => setUpdateGap(null)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>

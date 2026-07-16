@@ -278,7 +278,7 @@ export default function NotificationPage() {
       {/* Create/Edit template modal */}
       {(showTemplate || editTemplate) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setShowTemplate(false); setEditTemplate(null); }}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{editTemplate ? "Edit Template" : "New Template"}</h2>
               <button onClick={() => { setShowTemplate(false); setEditTemplate(null); }}><X className="h-5 w-5 text-gray-400" /></button>

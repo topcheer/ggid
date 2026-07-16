@@ -99,7 +99,7 @@ export default function GDPRForgetPage() {
       {/* Confirm modal */}
       {confirmUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmUser(null)}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-400"><AlertOctagon className="h-5 w-5" /> Confirm Deletion</h3><button onClick={() => setConfirmUser(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">You are about to permanently delete ALL data for <span className="font-bold text-red-600">{confirmUser.username}</span> ({confirmUser.email}). This includes {confirmUser.record_count} records and all associated audit logs.</p>
             <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400">Type the username to confirm: {confirmUser.username}</div>

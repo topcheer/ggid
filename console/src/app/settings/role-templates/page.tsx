@@ -164,7 +164,7 @@ export default function RoleTemplatesPage() {
       {/* Apply confirmation */}
       {applyConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !applying && setApplyConfirm(null)}>
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-indigo-100 p-2 dark:bg-indigo-900/30"><LayoutTemplate className="h-5 w-5 text-indigo-600" /></div>
               <div>

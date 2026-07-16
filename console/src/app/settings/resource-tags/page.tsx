@@ -51,7 +51,7 @@ export default function ResourceTagsPage() {
       )}
       {showAssign && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAssign(false)}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Assign Tag</h3><button onClick={() => setShowAssign(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="space-y-4">
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Resource Path</label><input value={assignPath} onChange={(e) => setAssignPath(e.target.value)} placeholder="/api/v1/users/*" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>

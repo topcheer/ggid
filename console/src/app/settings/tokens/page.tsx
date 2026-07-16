@@ -187,7 +187,7 @@ export default function TokensPage() {
       {/* Revoke confirm */}
       {confirmRevoke && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmRevoke(null)}>
-          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3"><div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><Trash2 className="h-5 w-5 text-red-600" /></div><div><h2 className="font-semibold text-gray-900 dark:text-white">Revoke Token?</h2><p className="text-sm text-gray-500">Token for <strong>{confirmRevoke.user_name}</strong> ({confirmRevoke.client_name}) will be invalidated immediately.</p></div></div>
             <div className="mt-5 flex justify-end gap-2"><button onClick={() => setConfirmRevoke(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button><button onClick={() => handleRevoke(confirmRevoke.id)} disabled={revoking === confirmRevoke.id} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">{revoking === confirmRevoke.id ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Revoke</button></div>
           </div>

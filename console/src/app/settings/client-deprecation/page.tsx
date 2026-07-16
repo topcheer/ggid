@@ -59,7 +59,7 @@ export default function ClientDeprecationPage() {
       {/* Warning preview modal */}
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setPreview(null)}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white"><AlertTriangle className="h-5 w-5 text-yellow-600" /> Deprecation Warning Preview</h3><button onClick={() => setPreview(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="rounded-lg border-2 border-dashed border-yellow-300 bg-yellow-50 p-4 dark:border-yellow-700 dark:bg-yellow-900/20">
               <div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-yellow-600" /><span className="font-semibold text-yellow-700 dark:text-yellow-400">Deprecation Notice</span></div>

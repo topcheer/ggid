@@ -135,7 +135,7 @@ export default function PasswordPepperPage() {
       {/* Rotate confirmation */}
       {confirmRotate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !rotating && setConfirmRotate(false)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-amber-100 p-2 dark:bg-amber-900/30"><AlertTriangle className="h-5 w-5 text-amber-600" /></div>
               <div>

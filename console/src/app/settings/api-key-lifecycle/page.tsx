@@ -80,7 +80,7 @@ export default function APIKeyLifecyclePage() {
       </div>
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreate(false)}>
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">Create API Key</h3><button onClick={() => setShowCreate(false)} aria-label="Close dialog" className="text-gray-400"><X className="w-5 h-5" /></button></div>
             <div className="px-6 py-4 space-y-3">
               <div><label className="text-sm font-medium">Name</label><input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-label="API key name" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>

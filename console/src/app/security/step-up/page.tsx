@@ -101,7 +101,7 @@ export default function StepUpAuthPage() {
       {/* Trigger modal */}
       {showTrigger && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !triggering && setShowTrigger(false)}>
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">Trigger Step-Up Challenge</h2><button onClick={() => setShowTrigger(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="mt-4 space-y-3">
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">User ID</label><input value={form.user_id} onChange={(e) => setForm((p) => ({ ...p, user_id: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>

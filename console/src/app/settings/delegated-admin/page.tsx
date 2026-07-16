@@ -130,7 +130,7 @@ export default function DelegatedAdminPage() {
       {/* Grant modal */}
       {showGrant && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowGrant(false)}>
-          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Grant Delegation</h3><button onClick={() => setShowGrant(false)} aria-label="Close grant dialog"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="space-y-4">
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Delegate (User ID)</label><input value={form.delegate} onChange={(e) => setForm({ ...form, delegate: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>

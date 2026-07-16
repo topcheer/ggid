@@ -183,7 +183,7 @@ export default function RiskScorePage() {
           {/* User detail modal */}
           {selectedUser && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedUser(null)}>
-              <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+              <div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">{selectedUser.username}</h3>
                   <button onClick={() => setSelectedUser(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
