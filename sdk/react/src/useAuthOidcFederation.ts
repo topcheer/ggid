@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface TrustAnchor {
   issuer: string;
   jwks_uri: string;
@@ -30,6 +35,7 @@ export interface AuthOidcFederationData {
 
 export function useAuthOidcFederation() {
   const [data, setData] = useState<AuthOidcFederationData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +43,23 @@ export function useAuthOidcFederation() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         trust_anchors: [
           { issuer: "https://fed.example.org", jwks_uri: "https://fed.example.org/.well-known/jwks.json", trust_mark_valid: true },
@@ -85,5 +107,5 @@ export function useAuthOidcFederation() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

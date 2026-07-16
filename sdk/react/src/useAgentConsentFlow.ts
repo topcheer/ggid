@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface PendingConsent {
   id: string;
   agent_name: string;
@@ -30,6 +35,7 @@ export interface AgentConsentFlowData {
 
 export function useAgentConsentFlow() {
   const [data, setData] = useState<AgentConsentFlowData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,7 +43,23 @@ export function useAgentConsentFlow() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         pending_consent_requests: [
           { id: "cr-001", agent_name: "CI/CD Bot", requested_scopes: ["deploy:staging", "read:config"], resource: "staging-cluster", user: "devops@ggid.dev", requested_at: "5m ago", expires_in: "55m", scope_justification: "Deploy v2.3.1 to staging environment" },

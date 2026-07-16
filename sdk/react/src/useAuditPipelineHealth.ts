@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface PipelineStage {
   name: string;
   throughput: number;
@@ -36,6 +41,7 @@ export interface AuditPipelineHealthData {
 
 export function useAuditPipelineHealth() {
   const [data, setData] = useState<AuditPipelineHealthData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +49,23 @@ export function useAuditPipelineHealth() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         pipeline_stages: [
           { name: "Ingest", throughput: 5000, latency_ms: 2.1, error_rate: 0.05, queue_depth: 120 },
@@ -68,5 +90,5 @@ export function useAuditPipelineHealth() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

@@ -36,6 +36,7 @@ export interface UseAuditStreamResult {
 
 export function useAuditStream(maxEvents = 100): UseAuditStreamResult {
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
+  const [isDemoData, setIsDemoData] = useState(true);
   const reconnectAttempts = useRef(0);
   const maxReconnectDelay = 30000;
   const { getAccessToken, isAuthenticated } = useGGIDAuth();

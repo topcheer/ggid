@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface GroupRule {
   group_name: string;
   rule_expression: string;
@@ -21,6 +26,7 @@ export interface IdentityDynamicGroupingData {
 
 export function useIdentityDynamicGrouping() {
   const [data, setData] = useState<IdentityDynamicGroupingData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +34,23 @@ export function useIdentityDynamicGrouping() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         group_rules: [
           { group_name: "Engineering Team", rule_expression: "department = 'Engineering'", membership_type: "dynamic", member_count: 24, preview_members: [

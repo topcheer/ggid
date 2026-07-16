@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ScoringSignal {
   signal_name: string;
   weight: number;
@@ -31,6 +36,7 @@ export interface AuditAnomalyScoringConfigData {
 
 export function useAuditAnomalyScoringConfig() {
   const [data, setData] = useState<AuditAnomalyScoringConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +44,23 @@ export function useAuditAnomalyScoringConfig() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         scoring_signals: [
           { signal_name: "volume_spike", weight: 2.0, threshold: 0.85 },

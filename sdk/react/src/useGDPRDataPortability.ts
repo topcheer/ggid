@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ExportRequest {
   user: string;
   requested_at: string;
@@ -16,13 +21,30 @@ export interface GDPRDataPortabilityData {
 
 export function useGDPRDataPortability() {
   const [data, setData] = useState<GDPRDataPortabilityData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         export_requests: [
           { user: "alice@corp.com", requested_at: "2024-03-10 10:30", status: "ready", format: "JSON", scope: ["profile", "activity", "consents"], download_link: "/exports/alice_20240310.json" },

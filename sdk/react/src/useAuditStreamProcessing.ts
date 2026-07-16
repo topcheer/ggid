@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface StreamHealth {
   input_rate: number;
   processing_rate: number;
@@ -37,6 +42,7 @@ export interface AuditStreamProcessingData {
 
 export function useAuditStreamProcessing() {
   const [data, setData] = useState<AuditStreamProcessingData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +50,23 @@ export function useAuditStreamProcessing() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       const lagHistory: LagPoint[] = Array.from({ length: 30 }, (_, i) => ({
         timestamp: `-${(30 - i) * 2}s`,
         lag_seconds: Math.max(1, Math.round(3 + Math.sin(i / 3) * 4 + Math.random() * 2)),
@@ -68,5 +90,5 @@ export function useAuditStreamProcessing() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

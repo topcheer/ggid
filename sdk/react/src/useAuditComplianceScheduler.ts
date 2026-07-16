@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ScheduledAudit {
   id: string;
   framework: string;
@@ -35,6 +40,7 @@ export interface AuditComplianceSchedulerData {
 
 export function useAuditComplianceScheduler() {
   const [data, setData] = useState<AuditComplianceSchedulerData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +48,23 @@ export function useAuditComplianceScheduler() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         scheduled_audits: [
           { id: "sched-1", framework: "SOC2 Type II", frequency_cron: "0 0 1 */3 *", next_run: "2026-04-01", scope: "All production systems", owner: "Sarah Kim" },
@@ -77,5 +99,5 @@ export function useAuditComplianceScheduler() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

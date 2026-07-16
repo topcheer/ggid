@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface Certificate {
   name: string;
   type: string;
@@ -37,6 +42,7 @@ export interface IdentityCertificateLifecycleData {
 
 export function useIdentityCertificateLifecycle() {
   const [data, setData] = useState<IdentityCertificateLifecycleData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,7 +50,23 @@ export function useIdentityCertificateLifecycle() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         certificates: [
           { name: "auth.ggid.dev TLS", type: "TLS", issuer: "Let's Encrypt", serial: "3B:8F:2A:1C:9D:4E:7B:0F:5A:2C:8E:1D:3F:4B:5C:6D", valid_from: "2025-06-01", valid_to: "2025-09-01", days_to_expiry: 45, auto_renew_days_before: 30 },
@@ -74,5 +96,5 @@ export function useIdentityCertificateLifecycle() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }
