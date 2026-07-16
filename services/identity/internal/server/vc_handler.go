@@ -27,7 +27,7 @@ func (h *HTTPHandler) handleVCIssue(w http.ResponseWriter, r *http.Request) {
 	}
 	vc, err := vcIssuer.IssueVC(req.IssuerDID, req.SubjectDID, req.CredentialType, req.Claims)
 	if err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusInternalServerError)
+		writeError(w, http.StatusInternalServerError, "failed to issue credential")
 		return
 	}
 	if err := vcIssuer.SignVC(vc, req.IssuerDID); err != nil {

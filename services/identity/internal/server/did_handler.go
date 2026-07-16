@@ -42,7 +42,7 @@ func (h *HTTPHandler) handleDIDResolve(w http.ResponseWriter, r *http.Request) {
 	did := parts[len(parts)-1]
 	doc, err := didResolver.ResolveDID(did)
 	if err != nil {
-		http.Error(w, `{"error":"`+err.Error()+`"}`, http.StatusNotFound)
+		writeError(w, http.StatusNotFound, "DID not found")
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")

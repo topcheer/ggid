@@ -657,7 +657,7 @@ func (s *HTTPServer) handlePolicyByID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// Delete existing, then create updated
-		_ = s.policySvc.DeletePolicy(r.Context(), id)
+		_ = s.policySvc.DeletePolicy(r.Context(), id) // best-effort delete on update path
 		policy, err := s.policySvc.CreatePolicy(r.Context(), &domain.Policy{
 			ID:          id,
 			TenantID:    tenantID,
