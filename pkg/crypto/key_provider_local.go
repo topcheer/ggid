@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -56,7 +57,13 @@ func newLocalKeyProvider(cfg LocalKeyProviderConfig) (*localKeyProvider, error) 
 		Use:       "sig",
 	}
 	if meta.KeyID == "" {
-		meta.KeyID = "local-signing-key"
+		// Derive a deterministic kid from the public key (SHA-256 of PKIX
+		// encoding, first 8 bytes hex) — same algorithm as the OAuth service's
+		// computeKID, so services sharing a key pair advertise the same kid.
+		// This lets JWKS clients verify tokens regardless of which service
+		// signed them. Falls back to a static label only for non-RSA keys
+		// that cannot be marshaled.
+		meta.KeyID = deriveKeyID(signer.Public())
 	}
 
 	return &localKeyProvider{
@@ -64,6 +71,18 @@ func newLocalKeyProvider(cfg LocalKeyProviderConfig) (*localKeyProvider, error) 
 		pubKey:   signer.Public(),
 		signer:   signer,
 	}, nil
+}
+
+// deriveKeyID computes a deterministic key ID from the public key:
+// hex(SHA-256(PKIX public key encoding)[:8]). Matches OAuth's computeKID so
+// the same key pair yields the same kid across all services.
+func deriveKeyID(pub crypto.PublicKey) string {
+	data, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return "local-signing-key"
+	}
+	h := sha256.Sum256(data)
+	return fmt.Sprintf("%x", h[:8])
 }
 
 func (p *localKeyProvider) Metadata() KeyMetadata      { return p.metadata }

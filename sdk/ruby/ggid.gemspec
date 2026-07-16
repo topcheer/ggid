@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   # Dependencies
   spec.add_dependency "httparty", ">= 0.20", "< 0.22"
   spec.add_dependency "jwt", "~> 2.8"
+  spec.add_dependency "csv", ">= 3.0" # Ruby 3.4+/4.0 removed csv from default gems; httparty needs it
 
   # Development dependencies
   spec.add_development_dependency "rspec", "~> 3.13"
