@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 88
-## Last scan focus: A (Stub/Placeholder, Round 87) — services/ 零 TODO; found provisioning gateway stub masking undeployed operator; deployed operator + wired gateway (eae696b5)
-## Next scan focus: E2E tests (Round 88 = even round, Workflow A)
+## Current round: 89
+## Last scan focus: E2E (Round 88) — OAuth 8/8 PASS, ERP 4/4 PASS, SDK 8/8 PASS; no new bugs; JWT kid unification stable
+## Next scan focus: B (Route/Wiring scan, Round 89 = odd round, Workflow B)
 ## Total findings: 73
 ## Done: 73
 ## Fixed (pending verification): 0

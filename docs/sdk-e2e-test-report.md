@@ -134,3 +134,30 @@ tests         174   20   16   0*   16*   28   25   30   32
 | 3 | Ruby SDK httparty LoadError on Ruby 4.0 (csv removed from default gems) → added csv dependency to gemspec | techwriter | a3e29625 |
 
 Note: erp-go middleware.go:32 has `TODO: Verify JWT using GGID Go SDK` — it decodes but does not verify signatures. Recorded as security gap for future round (was already passing "by accident").
+
+## Round 88 E2E (2026-07-17 02:30)
+
+### OAuth/OIDC (8/8 PASS)
+Discovery 200 | JWKS 2 keys | UserInfo sub | Introspect active=true | DeviceCode OK | Refresh OK | DCR OK | (Revoke verified R86)
+
+### ERP Matrix (4/4 PASS)
+| Service | health | products+auth | noauth | dashboard |
+|---------|--------|---------------|--------|-----------|
+| erp-api | 200 | 200 | 401 | 200 |
+| erp-go | 200 | 200 | 401 | 200 |
+| erp-java | 200 | 200 | 401 | 200 |
+| erp-python | 200 | 200 | 401 | 200 |
+
+### SDK Tests (8/8 PASS)
+| SDK | Result |
+|-----|--------|
+| Go | ok 0.83s |
+| Rust | 2 passed |
+| Python | 16 passed |
+| Ruby | 28 examples, 0 failures |
+| Java | 16 tests, BUILD SUCCESS |
+| Node | 36 passed |
+| C# | 25 passed |
+| Dart | 30 passed |
+
+No new bugs. JWT kid unification (a3e29625) holding steady across all verifiers.
