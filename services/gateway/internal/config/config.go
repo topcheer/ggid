@@ -104,6 +104,7 @@ func Default() *Config {
 			"/api/v1/certificates":    envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/compliance":      envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/settings":        envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/mcp":             envOrDefault("MCP_SERVICE_URL", "http://localhost:9060"),
 			// Frontend calls without service prefix — need rewrite rules in router
 			"/api/v1/api-keys":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/access-keys":     envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
