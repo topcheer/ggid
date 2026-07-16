@@ -22,12 +22,12 @@ interface GatewayStats {
 
 const SERVICES: Omit<ServiceHealth, "status">[] = [
   { name: "Gateway", url: "/healthz" },
-  { name: "Identity", url: "http://127.0.0.1:8081/healthz" },
-  { name: "Auth", url: "http://127.0.0.1:9001/healthz" },
-  { name: "OAuth", url: "http://127.0.0.1:9005/healthz" },
-  { name: "Policy", url: "http://127.0.0.1:8070/healthz" },
-  { name: "Org", url: "http://127.0.0.1:8071/healthz" },
-  { name: "Audit", url: "http://127.0.0.1:8072/healthz" },
+  { name: "Identity", url: "/healthz/deep" },
+  { name: "Auth", url: "/healthz/deep" },
+  { name: "OAuth", url: "/healthz/deep" },
+  { name: "Policy", url: "/healthz/deep" },
+  { name: "Org", url: "/healthz/deep" },
+  { name: "Audit", url: "/healthz/deep" },
 ];
 
 export default function MonitoringPage() {
@@ -42,26 +42,26 @@ export default function MonitoringPage() {
     setLoading(true);
     setError(null);
     try {
-      // Check each service healthz
-      const healthChecks = await Promise.all(
-        SERVICES.map(async (svc) => {
-          const start = Date.now();
-          try {
-            const resp = await fetch(svc.url, {
-              signal: AbortSignal.timeout(3000),
-              headers: { "X-Tenant-ID": DEFAULT_TENANT_ID },
-            });
-            return {
-              ...svc,
-              status: resp.ok ? "healthy" as const : "unhealthy" as const,
-              latency: Date.now() - start,
-            };
-          } catch {
-            return { ...svc, status: "unhealthy" as const, latency: Date.now() - start };
-          }
-        })
-      );
-      setServices(healthChecks);
+      // Use gateway /healthz/deep for all service checks (works in all deployments)
+      const start = Date.now();
+      try {
+        const resp = await fetch("/healthz/deep", {
+          signal: AbortSignal.timeout(5000),
+          headers: { "X-Tenant-ID": DEFAULT_TENANT_ID },
+        });
+        const deepData = await resp.json();
+        const allServices = deepData.services || {};
+        const healthChecks = Object.entries(allServices).map(([key, svc]: [string, any]) => ({
+          name: key.charAt(0).toUpperCase() + key.slice(1),
+          status: svc.status === "healthy" ? "healthy" as const : "unhealthy" as const,
+          latency: svc.latency_ms || (Date.now() - start),
+        }));
+        setServices(healthChecks);
+      } catch {
+        // Fallback to simple gateway check
+        const healthChecks = SERVICES.map(svc => ({ ...svc, status: "unhealthy" as const, latency: 0 }));
+        setServices(healthChecks);
+      }
 
       // Load gateway stats
       try {
