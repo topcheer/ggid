@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 77
-## Last scan focus: E (Error Handling) — 11 raw error exposures sanitized across 5 services (identity, auth, oauth, policy, audit)
-## Next scan focus: F (Test Coverage) — Round 78
-## Total findings: 64
-## Done: 63
+## Current round: 78
+## Last scan focus: F (Test Coverage) — oauth/domain 0%→100%, policy/handler 1.7%→9.6%
+## Next scan focus: G (SDK Alignment) — Round 79
+## Total findings: 66
+## Done: 65
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
@@ -49,6 +49,7 @@ LOW (acceptable for now — short-lived or fallback):
 - Agent consent (session-scoped)
 
 ## Commits this cycle:
+- 361f66da: Round 78 oauth/domain 0%→100%, policy/handler 1.7%→9.6%
 - 588d5873: Round 77 sanitize 11 raw error exposures in 500 responses
 - dc7ff6db: Round 76 OAuth memory repo CRUD fix + 13 tests (0%→34.1%)
 - 6eaba42e: Round 75 PanicRecovery middleware for all 6 backend services
