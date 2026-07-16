@@ -22,6 +22,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/config"
 	"github.com/ggid/ggid/services/audit/internal/consumer"
 	"github.com/ggid/ggid/services/audit/internal/data"
+	"github.com/ggid/ggid/services/audit/internal/detection"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/handler"
 	"github.com/ggid/ggid/services/audit/internal/repository"
@@ -96,6 +97,15 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to create NATS consumer: %v", err)
 		}
+
+		// Wire ITDR detection engine into the consumer loop.
+		if db != nil {
+			itdrRepo := repository.NewITDRRepository(db)
+			engine := detection.NewEngine(itdrRepo, detection.NewMemStateStore())
+			nc.SetEngine(engine)
+			log.Println("Audit Service: ITDR detection engine enabled")
+		}
+
 		if err := nc.Start(); err != nil {
 			log.Fatalf("failed to start NATS consumer: %v", err)
 		}

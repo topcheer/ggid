@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+"github.com/ggid/ggid/services/audit/internal/detection"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/repository"
 	"github.com/nats-io/nats.go"
@@ -29,6 +30,8 @@ type EventConsumer struct {
 	nc    *nats.Conn
 	js    jetstream.JetStream
 	repo  *repository.AuditRepository
+	itdrRepo *repository.ITDRRepository
+	engine *detection.Engine
 	cfg   Config
 	ctx   context.Context
 	cancel context.CancelFunc
@@ -158,7 +161,17 @@ func (c *EventConsumer) processMessage(ctx context.Context, msg jetstream.Msg) e
 		return fmt.Errorf("persist event: %w", err)
 	}
 
+	// Run ITDR detection engine on the persisted event.
+	if c.engine != nil {
+		c.engine.Evaluate(ctx, &event)
+	}
+
 	return nil
+}
+
+// SetEngine injects the ITDR detection engine for real-time threat evaluation.
+func (c *EventConsumer) SetEngine(engine *detection.Engine) {
+	c.engine = engine
 }
 
 // Close shuts down the consumer.
