@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 71
-## Last scan focus: F (Test Coverage) — MCP server (10 tools), LDAP tests (10), auth handler tests (8)
-## Next scan focus: G (SDK Alignment) — Round 72
+## Current round: 74
+## Last scan focus: B (Route Wiring) — All handlers registered, 0 route GAPs; MCP coverage 0%→68.8%/89.7%
+## Next scan focus: C (Middleware Chain) — Round 75
 ## Total findings: 61
 ## Done: 60
 ## Fixed (pending verification): 0
@@ -49,6 +49,8 @@ LOW (acceptable for now — short-lived or fallback):
 - Agent consent (session-scoped)
 
 ## Commits this cycle:
+- ad51128d: Fix loadEncryptionKey dev fallback (BIOMETRIC_AES_KEY panic fix)
+- f5fdb711: Round 74 MCP server/client test coverage (0%→68.8%/89.7%)
 - c5482496: Frontend i18n Batch 1 (dashboard, profile, sessions, groups)
 - 8f2cf868: All-in-one run.sh + port mapping
 - 4ca0d0ec: gzip Content-Encoding fix
