@@ -91,7 +91,7 @@ export default function RecertificationPage() {
 
       {/* Team selector + progress */}
       <div className="flex items-center gap-3 flex-wrap">
-        <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Selected team" value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">Select a team...</option>
           {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>

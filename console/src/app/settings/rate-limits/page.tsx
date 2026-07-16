@@ -160,7 +160,7 @@ export default function RateLimitsPage() {
                     <>
                       <td className="px-4 py-2"><input value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} className={inputCls} /></td>
                       <td className="px-4 py-2">
-                        <select value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
+                        <select aria-label="Select option" value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
                           {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m) => <option key={m} value={m}>{m}</option>)}
                         </select>
                       </td>
@@ -201,7 +201,7 @@ export default function RateLimitsPage() {
                 <tr className="bg-indigo-50/50 dark:bg-indigo-900/10">
                   <td className="px-4 py-2"><input value={draft.path_pattern ?? ""} onChange={(e) => setDraft((p) => ({ ...p, path_pattern: e.target.value }))} placeholder="/api/v1/*" className={inputCls} /></td>
                   <td className="px-4 py-2">
-                    <select value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
+                    <select aria-label="Select option" value={draft.method ?? "GET"} onChange={(e) => setDraft((p) => ({ ...p, method: e.target.value }))} className={inputCls}>
                       {["GET", "POST", "PUT", "PATCH", "DELETE", "*"].map((m) => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </td>

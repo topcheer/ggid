@@ -77,7 +77,7 @@ export default function SiemIntegrationPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">{t("siem.destinationConfiguration")}</h2>
         <div className="grid grid-cols-3 gap-4">
-          <div><label className="block text-sm font-medium mb-1">{t("siem.siemPlatform")}</label><select value={destination} onChange={(e) => setDestination(e.target.value)} className="border rounded px-3 py-2 w-full"><option>Splunk</option><option>Elastic</option><option>Datadog</option><option>HTTP</option></select></div>
+          <div><label className="block text-sm font-medium mb-1">{t("siem.siemPlatform")}</label><select aria-label="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} className="border rounded px-3 py-2 w-full"><option>Splunk</option><option>Elastic</option><option>Datadog</option><option>HTTP</option></select></div>
           <div><label className="block text-sm font-medium mb-1">{t("siem.endpoint")}</label><input type="text" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
           <div><label className="block text-sm font-medium mb-1">{t("siem.logFormat")}</label><select value={logFormat} onChange={(e) => setLogFormat(e.target.value)} className="border rounded px-3 py-2 w-full"><option>CEF</option><option>JSON</option><option>LEEF</option></select></div>
         </div>

@@ -63,7 +63,7 @@ export default function DeviceAttestationPage() {
       </div>
 
       {/* Filter */}
-      <select value={filterTrust} onChange={(e) => setFilterTrust(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Filter" value={filterTrust} onChange={(e) => setFilterTrust(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="all">{t("big1.deviceAttestation.allTrustLevels")}</option>
         <option value="trusted">{t("big1.deviceAttestation.trusted")}</option>
         <option value="managed">{t("big1.deviceAttestation.managed")}</option>

@@ -88,7 +88,7 @@ export default function EvidenceVersioningPage() {
       </div>
 
       {/* Evidence selector */}
-      <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select evidence...</option>
         {items.map((i) => <option key={i.id} value={i.id}>{i.control_id} ({i.framework}) - v{i.current_version}</option>)}
       </select>

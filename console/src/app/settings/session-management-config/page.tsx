@@ -73,7 +73,7 @@ export default function SessionManagementConfigPage() {
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">{t("sessionMgmtConfig.sessionStorage")}</h2>
-          <select value={storage} onChange={e => setStorage(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+          <select aria-label="Storage" value={storage} onChange={e => setStorage(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             <option value="redis">{t("sessionMgmtConfig.storageRedis")}</option>
             <option value="jwt">{t("sessionMgmtConfig.storageJwt")}</option>
             <option value="hybrid">{t("sessionMgmtConfig.storageHybrid")}</option>
@@ -82,7 +82,7 @@ export default function SessionManagementConfigPage() {
         </div>
         <div className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Logout Behavior</h2>
-          <select value={logoutBehavior} onChange={e => setLogoutBehavior(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+          <select aria-label="Logout behavior" value={logoutBehavior} onChange={e => setLogoutBehavior(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             <option value="current">Current session only</option>
             <option value="all_sessions">All sessions for user</option>
             <option value="all_devices">All sessions across all devices</option>

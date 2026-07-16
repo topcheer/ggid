@@ -444,14 +444,14 @@ export default function CertificatesPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search by name or domain..." className={`${inputCls} pl-9`} />
         </div>
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className={inputCls + " w-auto"}>
+        <select aria-label="Filter" value={filterType} onChange={(e) => setFilterType(e.target.value)} className={inputCls + " w-auto"}>
           <option value="all">All Types</option>
           <option value="SAML">SAML</option>
           <option value="OAuth">OAuth</option>
           <option value="JWT">JWT</option>
           <option value="TLS">TLS</option>
         </select>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={inputCls + " w-auto"}>
+        <select aria-label="Filter" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className={inputCls + " w-auto"}>
           <option value="all">All Status</option>
           <option value="valid">Valid</option>
           <option value="expiring">Expiring Soon</option>

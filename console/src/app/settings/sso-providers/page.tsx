@@ -150,7 +150,7 @@ export default function SSOProvidersPage() {
                   <div>
                     <input className="border-none bg-transparent text-base font-semibold text-gray-900 outline-none dark:text-white" value={p.name} onChange={(e) => handleUpdate(p.id, "name", e.target.value)} />
                     <div className="mt-0.5 flex items-center gap-2">
-                      <select className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700" value={p.type} onChange={(e) => handleUpdate(p.id, "type", e.target.value)}>
+                      <select aria-label="Select option" className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-gray-700" value={p.type} onChange={(e) => handleUpdate(p.id, "type", e.target.value)}>
                         <option value="saml">SAML</option><option value="oidc">OIDC</option><option value="ldap">LDAP</option>
                       </select>
                       <input className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700" placeholder="domain.com" value={p.domain} onChange={(e) => handleUpdate(p.id, "domain", e.target.value)} />

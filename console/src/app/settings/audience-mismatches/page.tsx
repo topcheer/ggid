@@ -49,7 +49,7 @@ export default function AudienceMismatchesPage() {
       </div>
 
       <div className="flex items-center gap-2">
-        <select value={filterBlocked} onChange={(e) => setFilterBlocked(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("backend3.audienceMismatches.all")}</option><option value="blocked">{t("backend3.audienceMismatches.blockedOnly")}</option><option value="allowed">{t("backend3.audienceMismatches.allowedOnly")}</option></select>
+        <select aria-label="Filter" value={filterBlocked} onChange={(e) => setFilterBlocked(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("backend3.audienceMismatches.all")}</option><option value="blocked">{t("backend3.audienceMismatches.blockedOnly")}</option><option value="allowed">{t("backend3.audienceMismatches.allowedOnly")}</option></select>
         <span className="text-sm text-gray-500">{filtered.length} entries</span>
       </div>
 

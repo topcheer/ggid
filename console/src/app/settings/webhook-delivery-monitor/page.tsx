@@ -58,7 +58,7 @@ export default function WebhookDeliveryMonitorPage() {
         <div className="bg-white rounded-lg shadow p-4 text-center"><div className="text-2xl font-bold text-amber-600">{stats.deadLetter}</div><div className="text-sm text-gray-500">Dead Letter</div></div>
       </div>
 
-      <div className="flex gap-3"><select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border rounded px-3 py-2 text-sm"><option value="all">All Statuses</option><option value="success">Success</option><option value="failed">Failed</option><option value="dead_letter">Dead Letter</option></select></div>
+      <div className="flex gap-3"><select aria-label="Filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border rounded px-3 py-2 text-sm"><option value="all">All Statuses</option><option value="success">Success</option><option value="failed">Failed</option><option value="dead_letter">Dead Letter</option></select></div>
 
       <section className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full text-sm"><thead className="bg-gray-50"><tr className="text-left"><th className="p-3">Webhook</th><th className="p-3">Event</th><th className="p-3">Status</th><th className="p-3">Attempts</th><th className="p-3">Latency</th><th className="p-3">Next Retry</th><th className="p-3">Action</th></tr></thead>

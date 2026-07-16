@@ -93,7 +93,7 @@ export default function ClientVersioningPage() {
         <p className="text-sm text-gray-500 mt-1">View client config version history, diff versions, and rollback.</p>
       </div>
 
-      <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select a client...</option>
         {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name} (v{c.current_version})</option>)}
       </select>

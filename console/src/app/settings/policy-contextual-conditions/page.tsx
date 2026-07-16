@@ -98,7 +98,7 @@ export default function PolicyContextualConditionsPage() {
                   <div key={cat.name + attr} className="flex items-center gap-2 bg-gray-900 rounded p-2">
                     <span className={"text-xs px-1.5 py-0.5 rounded " + (categoryIcons[cat.name] || "")}>{cat.name}</span>
                     <span className="text-xs font-mono text-gray-300">{attr}</span>
-                    <select className="text-xs bg-gray-700 border border-gray-600 rounded px-1 py-0.5">
+                    <select aria-label="Select option" className="text-xs bg-gray-700 border border-gray-600 rounded px-1 py-0.5">
                       <option>equals</option>
                       <option>contains</option>
                       <option>in_range</option>

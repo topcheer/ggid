@@ -23,7 +23,7 @@ export default function ScopeDriftPage() {
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><TrendingDown className="w-6 h-6 text-orange-500" />{t("scopeDrift.title")}</h1><p className="text-sm text-gray-500 mt-1">Detect unused and unregistered OAuth scopes per client.</p></div>
-      <div className="flex items-center gap-3"><select value={clientId} onChange={(e) => setClientId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Client</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+      <div className="flex items-center gap-3"><select aria-label="Client id" value={clientId} onChange={(e) => setClientId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Client</option>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
       {data && (<>
         {data.unregistered_scopes.length > 0 && <div className="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3"><div className="flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-red-500" /><span className="font-semibold text-red-700 dark:text-red-400">Unregistered scopes detected</span></div><div className="mt-1 flex flex-wrap gap-1">{data.unregistered_scopes.map((s) => <span key={s} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/30 dark:text-red-400 font-mono">{s}</span>)}</div></div>}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -90,7 +90,7 @@ export default function PolicySnapshotsPage() {
 
       {/* Filter */}
       <div className="flex items-center gap-3">
-        <select value={filterPolicy} onChange={(e) => setFilterPolicy(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Filter" value={filterPolicy} onChange={(e) => setFilterPolicy(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">All Policies</option>
           {uniquePolicies.map((p) => (<option key={p} value={p}>{p}</option>))}
         </select>

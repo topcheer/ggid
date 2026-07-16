@@ -73,8 +73,8 @@ export default function AnomalyDetectionPage() {
 
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-gray-400" />
-        <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("anomalyDetect.allTypes")}</option>{types.map((type) => <option key={type} value={type}>{type}</option>)}</select>
-        <select value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("anomalyDetect.allSeverities")}</option><option value="low">{t("anomalyDetect.low")}</option><option value="medium">{t("anomalyDetect.medium")}</option><option value="high">{t("anomalyDetect.high")}</option><option value="critical">{t("anomalyDetect.critical")}</option></select>
+        <select aria-label="Filter" value={filterType} onChange={(e) => setFilterType(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("anomalyDetect.allTypes")}</option>{types.map((type) => <option key={type} value={type}>{type}</option>)}</select>
+        <select aria-label="Filter" value={filterSeverity} onChange={(e) => setFilterSeverity(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">{t("anomalyDetect.allSeverities")}</option><option value="low">{t("anomalyDetect.low")}</option><option value="medium">{t("anomalyDetect.medium")}</option><option value="high">{t("anomalyDetect.high")}</option><option value="critical">{t("anomalyDetect.critical")}</option></select>
         <span className="text-sm text-gray-500">{t("anomalyDetect.eventsCount").replace("{count}", String(filtered.length))}</span>
       </div>
 

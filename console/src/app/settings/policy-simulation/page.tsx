@@ -67,7 +67,7 @@ export default function PolicySimulationPage() {
             {rules.map((r) => (
               <div key={r.id} className="rounded-lg border dark:border-gray-700 p-3 space-y-2">
                 <div className="flex items-center gap-2">
-                  <select value={r.effect} onChange={(e) => updateRule(r.id, "effect", e.target.value)} className="px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs">
+                  <select aria-label="Select option" value={r.effect} onChange={(e) => updateRule(r.id, "effect", e.target.value)} className="px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-xs">
                     <option value="allow">ALLOW</option>
                     <option value="deny">DENY</option>
                   </select>

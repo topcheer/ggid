@@ -104,7 +104,7 @@ export default function ComplianceGapsPage() {
 
       {/* Filter */}
       <div className="flex items-center gap-3">
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Filter" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="all">All Statuses</option>
           <option value="open">Open</option>
           <option value="in_progress">In Progress</option>

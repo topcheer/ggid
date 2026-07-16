@@ -52,7 +52,7 @@ export default function DidResolverPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex gap-3">
-          <select value={method} onChange={e => setMethod(e.target.value)} className="border rounded px-3 py-2 text-sm">
+          <select aria-label="Method" value={method} onChange={e => setMethod(e.target.value)} className="border rounded px-3 py-2 text-sm">
             {methods.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
           <input

@@ -54,7 +54,7 @@ export default function SecurityAlertsPage() {
 
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-gray-400" />
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Filter" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">{t("securityAlerts.allStatus")}</option>
           <option value="active">{t("securityAlerts.active")}</option>
           <option value="acknowledged">{t("securityAlerts.acknowledged")}</option>

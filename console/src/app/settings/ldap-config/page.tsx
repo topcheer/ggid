@@ -98,14 +98,14 @@ export default function LdapConfigPage() {
       <div className="grid grid-cols-2 gap-6">
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">User Filter</h2>
-          <select value={userFilter} onChange={e => setUserFilter(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+          <select aria-label="Filter" value={userFilter} onChange={e => setUserFilter(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             {filterAttrs.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
           <p className="text-xs text-gray-400">LDAP attribute used to match username during login.</p>
         </section>
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Group Filter</h2>
-          <select value={groupFilter} onChange={e => setGroupFilter(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+          <select aria-label="Filter" value={groupFilter} onChange={e => setGroupFilter(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             {groupAttrs.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
           <p className="text-xs text-gray-400">LDAP attribute used to identify groups.</p>

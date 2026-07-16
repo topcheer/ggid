@@ -106,7 +106,7 @@ export default function SodConflictDetectionPage() {
       <div className="grid grid-cols-2 gap-4">
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">{t("backend3.sodConflictDetection.sensitivityLevel")}</h2>
-          <select value={sensitivity} onChange={e => setSensitivity(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+          <select aria-label="Sensitivity" value={sensitivity} onChange={e => setSensitivity(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             <option value="strict">Strict - All conflict levels trigger violation</option>
             <option value="moderate">Moderate - High and critical trigger violation</option>
             <option value="relaxed">Relaxed - Only critical triggers violation</option>
@@ -134,13 +134,13 @@ export default function SodConflictDetectionPage() {
         {showForm && (
           <div className="grid grid-cols-4 gap-3 border rounded p-3">
             <input type="text" placeholder="Rule name" value={newRule.ruleName} onChange={e => setNewRule(prev => ({ ...prev, ruleName: e.target.value }))} className="border rounded px-2 py-1.5 text-sm" />
-            <select value={newRule.roleA} onChange={e => setNewRule(prev => ({ ...prev, roleA: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
+            <select aria-label="Select option" value={newRule.roleA} onChange={e => setNewRule(prev => ({ ...prev, roleA: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
               {roles.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
-            <select value={newRule.roleB} onChange={e => setNewRule(prev => ({ ...prev, roleB: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
+            <select aria-label="Select option" value={newRule.roleB} onChange={e => setNewRule(prev => ({ ...prev, roleB: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
               {roles.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
-            <select value={newRule.conflictLevel} onChange={e => setNewRule(prev => ({ ...prev, conflictLevel: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
+            <select aria-label="Select option" value={newRule.conflictLevel} onChange={e => setNewRule(prev => ({ ...prev, conflictLevel: e.target.value }))} className="border rounded px-2 py-1.5 text-sm">
               <option value="critical">{t("backend3.sodConflictDetection.critical")}</option>
               <option value="high">{t("backend3.sodConflictDetection.high")}</option>
               <option value="medium">{t("backend3.sodConflictDetection.medium")}</option>

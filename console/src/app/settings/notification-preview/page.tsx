@@ -55,7 +55,7 @@ export default function NotificationPreviewPage() {
       <div><h1 className="text-2xl font-bold">Notification Preview</h1><p className="text-gray-600">Preview email templates with live variable substitution.</p></div>
 
       <div className="flex gap-4">
-        <select value={template} onChange={e => setTemplate(e.target.value)} className="border rounded px-3 py-2 text-sm">
+        <select aria-label="Template" value={template} onChange={e => setTemplate(e.target.value)} className="border rounded px-3 py-2 text-sm">
           {Object.keys(templates).map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={darkMode} onChange={e => setDarkMode(e.target.checked)} className="rounded" />Dark mode</label>

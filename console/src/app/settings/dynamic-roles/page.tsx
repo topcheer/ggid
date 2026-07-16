@@ -102,7 +102,7 @@ export default function DynamicRolesPage() {
         <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">{t("big1.dynamicRoles.testAssignment")}</h3>
         <div className="flex items-center gap-2">
           <input value={testUser} onChange={(e) => setTestUser(e.target.value)} placeholder="User ID or email" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
-          {roles.length > 0 && <select onChange={(e) => { if (e.target.value) handleTest(e.target.value); }} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="">{t("big1.dynamicRoles.testRole")}</option>{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>}
+          {roles.length > 0 && <select aria-label="Select option" onChange={(e) => { if (e.target.value) handleTest(e.target.value); }} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"><option value="">{t("big1.dynamicRoles.testRole")}</option>{roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>}
         </div>
         {testResult && <div className={`mt-2 flex items-center gap-2 text-sm ${testResult.matched ? "text-green-600" : "text-red-600"}`}>{testResult.matched ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}{testResult.reason}</div>}
       </div>

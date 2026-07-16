@@ -55,7 +55,7 @@ export default function GDPRDataPortabilityPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <select className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
+            <select aria-label="Select option" className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>JSON</option><option>CSV</option><option>XML</option>
             </select>
             <button

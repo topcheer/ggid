@@ -123,7 +123,7 @@ export default function AdaptiveAuthenticationPage() {
         {showAddRule && (
           <div className="flex gap-3 border rounded p-3">
             <input type="text" placeholder="Condition (e.g. Login from TOR exit node)" value={newRule.condition} onChange={e => setNewRule(prev => ({ ...prev, condition: e.target.value }))} className="flex-1 border rounded px-3 py-1.5 text-sm" />
-            <select value={newRule.action} onChange={e => setNewRule(prev => ({ ...prev, action: e.target.value }))} className="border rounded px-3 py-1.5 text-sm">
+            <select aria-label="Select option" value={newRule.action} onChange={e => setNewRule(prev => ({ ...prev, action: e.target.value }))} className="border rounded px-3 py-1.5 text-sm">
               <option value="allow">Allow</option>
               <option value="step_up_mfa">Step-up MFA</option>
               <option value="challenge_mfa">Challenge MFA</option>

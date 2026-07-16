@@ -70,7 +70,7 @@ export default function ComplianceReportsPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Report Configuration</h2>
         <div className="grid grid-cols-3 gap-4">
-          <div><label className="text-sm font-medium">Framework</label><select value={framework} onChange={e => setFramework(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">{frameworks.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Framework</label><select aria-label="Framework" value={framework} onChange={e => setFramework(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">{frameworks.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
           <div><label className="text-sm font-medium">Start Date</label><input type="date" value={dateRange.start} onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">End Date</label><input type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>

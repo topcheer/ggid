@@ -26,7 +26,7 @@ export default function WebauthnConfigPage() {
         </div>
         <div className="bg-gray-900 rounded-xl p-6 space-y-4">
           <h2 className="text-sm font-semibold flex items-center gap-2"><Shield className="w-4 h-4 text-green-400" /> {t("webauthnConfig.securityPolicy")}</h2>
-          <div><label className="text-xs text-gray-400">{t("webauthnConfig.attestationReq")}</label><select defaultValue={data?.attestation_requirement} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm"><option>none</option><option>indirect</option><option>direct</option></select></div>
+          <div><label className="text-xs text-gray-400">{t("webauthnConfig.attestationReq")}</label><select aria-label="Select option" defaultValue={data?.attestation_requirement} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm"><option>none</option><option>indirect</option><option>direct</option></select></div>
           <div><label className="text-xs text-gray-400">{t("webauthnConfig.userVerification")}</label><select defaultValue={data?.user_verification} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm"><option>required</option><option>preferred</option><option>discouraged</option></select></div>
           <div><label className="text-xs text-gray-400">{t("webauthnConfig.timeout")}: {data?.timeout_seconds}s</label><input type="range" min="30" max="600" defaultValue={data?.timeout_seconds} className="w-full mt-1" /></div>
         </div>

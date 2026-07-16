@@ -104,7 +104,7 @@ export default function RiskEngineDashboardPage() {
               <span className={`px-2 py-0.5 rounded text-xs capitalize ${t.level === 'critical' ? 'bg-red-100 text-red-700' : t.level === 'high' ? 'bg-amber-100 text-amber-700' : t.level === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{t.level}</span>
               <span className="text-sm text-gray-500 w-20">{t.minScore}-{t.maxScore}</span>
               <span className="text-gray-300">{'->'}</span>
-              <select value={t.action} onChange={e => updateAction(idx, e.target.value)} className="border rounded px-2 py-1 text-sm">
+              <select aria-label="Select option" value={t.action} onChange={e => updateAction(idx, e.target.value)} className="border rounded px-2 py-1 text-sm">
                 <option value="allow">Allow</option>
                 <option value="step-up">Step-up Auth</option>
                 <option value="challenge-mfa">Challenge MFA</option>

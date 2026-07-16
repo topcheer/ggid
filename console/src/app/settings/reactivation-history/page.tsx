@@ -55,7 +55,7 @@ export default function ReactivationHistoryPage() {
         <p className="text-sm text-gray-500 mt-1">Track user deactivation/reactivation events with reasons and actors.</p>
       </div>
 
-      <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select User</option>
         {users.map((u) => <option key={u.user_id} value={u.user_id}>{u.username}</option>)}
       </select>

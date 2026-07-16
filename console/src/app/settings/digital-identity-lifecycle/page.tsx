@@ -123,7 +123,7 @@ export default function DigitalIdentityLifecyclePage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">{t("digitalIdLifecycle.userJourney")}</h2>
-          <select value={selectedStage} onChange={e => setSelectedStage(e.target.value)} className="border rounded px-2 py-1 text-sm">
+          <select aria-label="Selected stage" value={selectedStage} onChange={e => setSelectedStage(e.target.value)} className="border rounded px-2 py-1 text-sm">
             <option value="all">{t("digitalIdLifecycle.allStages")}</option>
             {stages.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
           </select>
@@ -180,7 +180,7 @@ export default function DigitalIdentityLifecyclePage() {
           <h2 className="text-lg font-semibold">{t("digitalIdLifecycle.bulkActions")}</h2>
           <p className="text-sm text-gray-500">{t("digitalIdLifecycle.applyDesc")}</p>
           <div className="space-y-3">
-            <select value={bulkTarget} onChange={e => setBulkTarget(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+            <select aria-label="Bulk target" value={bulkTarget} onChange={e => setBulkTarget(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
               <option value="suspend">{t("digitalIdLifecycle.suspend")}</option>
               <option value="activate">{t("digitalIdLifecycle.activate")}</option>
               <option value="deprovision">{t("digitalIdLifecycle.deprovision")}</option>

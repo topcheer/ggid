@@ -27,7 +27,7 @@ export default function PolicyEvalTimelinePage() {
 
       {/* Policy Selector */}
       <div className="mb-6">
-        <select value={selectedPolicy} onChange={(e) => setSelectedPolicy(e.target.value)} className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
+        <select aria-label="Selected policy" value={selectedPolicy} onChange={(e) => setSelectedPolicy(e.target.value)} className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
           {(data?.evaluations ?? []).map((e) => <option key={e.policy} value={e.policy}>{e.policy}</option>)}
         </select>
       </div>

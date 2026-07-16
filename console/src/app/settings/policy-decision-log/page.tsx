@@ -46,8 +46,8 @@ export default function PolicyDecisionLogPage() {
 
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-gray-400" />
-        <select value={filterDecision} onChange={(e) => setFilterDecision(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Decisions</option><option value="allow">Allow</option><option value="deny">Deny</option></select>
-        <select value={filterPolicy} onChange={(e) => setFilterPolicy(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Policies</option>{policies.map((p) => <option key={p} value={p}>{p}</option>)}</select>
+        <select aria-label="Filter" value={filterDecision} onChange={(e) => setFilterDecision(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Decisions</option><option value="allow">Allow</option><option value="deny">Deny</option></select>
+        <select aria-label="Filter" value={filterPolicy} onChange={(e) => setFilterPolicy(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Policies</option>{policies.map((p) => <option key={p} value={p}>{p}</option>)}</select>
         <span className="text-sm text-gray-500">{filtered.length} entries</span>
       </div>
 

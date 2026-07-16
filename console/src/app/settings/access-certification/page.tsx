@@ -90,7 +90,7 @@ export default function AccessCertificationPage() {
 
       {/* Campaign selector + search */}
       <div className="flex items-center gap-3 flex-wrap">
-        <select value={selectedCampaign} onChange={(e) => setSelectedCampaign(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Selected campaign" value={selectedCampaign} onChange={(e) => setSelectedCampaign(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">{t("accessCertification.selectCampaign")}</option>
           {campaigns.map((c) => (
             <option key={c.id} value={c.id}>{c.name} ({c.completed}/{c.total_users} done)</option>

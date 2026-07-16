@@ -58,7 +58,7 @@ export default function BulkOperationsPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Select Operation</h2>
-        <select value={opType} onChange={e => setOpType(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+        <select aria-label="Op type" value={opType} onChange={e => setOpType(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
           {opTypes.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
         </select>
       </section>

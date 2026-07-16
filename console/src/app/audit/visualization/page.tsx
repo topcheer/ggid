@@ -371,7 +371,7 @@ export default function AuditVisualizationPage() {
               className={`${inputCls} pl-9`}
             />
           </div>
-          <select value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className={inputCls}>
+          <select aria-label="Filter" value={actionFilter} onChange={(e) => setActionFilter(e.target.value)} className={inputCls}>
             <option value="all">All Actions</option>
             {ACTION_TYPES.map((a) => (
               <option key={a} value={a}>
@@ -403,7 +403,7 @@ export default function AuditVisualizationPage() {
             onChange={(e) => setDateTo(e.target.value)}
             className={inputCls}
           />
-          <select value={resultFilter} onChange={(e) => setResultFilter(e.target.value)} className={inputCls}>
+          <select aria-label="Filter" value={resultFilter} onChange={(e) => setResultFilter(e.target.value)} className={inputCls}>
             <option value="all">All Results</option>
             <option value="success">Success</option>
             <option value="failure">Failure</option>

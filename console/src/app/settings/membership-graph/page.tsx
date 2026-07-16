@@ -42,7 +42,7 @@ export default function MembershipGraphPage() {
         <p className="text-sm text-gray-500 mt-1">Visualize group membership hierarchies and detect circular dependencies.</p>
       </div>
 
-      <select value={groupId} onChange={(e) => setGroupId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Group id" value={groupId} onChange={(e) => setGroupId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select Group</option>
         {groups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
       </select>

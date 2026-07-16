@@ -74,7 +74,7 @@ export default function TokenReusePage() {
       {/* Filter */}
       <div className="flex items-center gap-3">
         <Filter className="w-4 h-4 text-gray-400" />
-        <select value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Filter" value={filterRisk} onChange={(e) => setFilterRisk(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="all">All Risk Levels</option>
           <option value="low">Low</option>
           <option value="medium">Medium</option>

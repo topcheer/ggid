@@ -61,7 +61,7 @@ export default function ClientRateLimitsPage() {
         <p className="text-sm text-gray-500 mt-1">Configure per-client rate limiting: requests/min, burst, and daily quota.</p>
       </div>
 
-      <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Selected id" value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">{t("backend.clientRateLimits.selectClient")}</option>
         {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
       </select>

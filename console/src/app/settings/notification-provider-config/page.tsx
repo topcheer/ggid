@@ -141,7 +141,7 @@ export default function NotificationProviderConfigPage() {
             </div>
           ))}
           {available.length > 0 && (
-            <select onChange={e => { if (e.target.value) addToChain(e.target.value); e.target.selectedIndex = 0; }} className="border rounded px-2 py-1 text-sm">
+            <select aria-label="Select option" onChange={e => { if (e.target.value) addToChain(e.target.value); e.target.selectedIndex = 0; }} className="border rounded px-2 py-1 text-sm">
               <option value="">+ Add...</option>
               {available.map(t => <option key={t} value={t}>{t}</option>)}
             </select>

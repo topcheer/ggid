@@ -97,7 +97,7 @@ export default function ApiGatewayRoutesPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Route Testing Panel</h2>
         <div className="flex gap-3 items-end">
-          <div><label className="block text-sm font-medium mb-1">{t("backend2.gatewayRoutes.method")}</label><select value={testMethod} onChange={(e) => setTestMethod(e.target.value)} className="border rounded px-3 py-2"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div>
+          <div><label className="block text-sm font-medium mb-1">{t("backend2.gatewayRoutes.method")}</label><select aria-label="Test method" value={testMethod} onChange={(e) => setTestMethod(e.target.value)} className="border rounded px-3 py-2"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div>
           <div className="flex-1"><label className="block text-sm font-medium mb-1">{t("backend2.gatewayRoutes.path")}</label><input type="text" value={testPath} onChange={(e) => setTestPath(e.target.value)} placeholder="/api/v1/users" className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
           <button onClick={handleTest} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{testing ? "Sending..." : "Send"}</button>
         </div>

@@ -108,11 +108,11 @@ const [purposes] = useState([
       </div>
 
       <div className="flex gap-4">
-        <select value={filterPurpose} onChange={e => setFilterPurpose(e.target.value)} className="border rounded px-3 py-2 text-sm">
+        <select aria-label="Filter" value={filterPurpose} onChange={e => setFilterPurpose(e.target.value)} className="border rounded px-3 py-2 text-sm">
           <option value="all">All Purposes</option>
           {purposes.map(p => <option key={p.name} value={p.name}>{p.name} ({p.count})</option>)}
         </select>
-        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border rounded px-3 py-2 text-sm">
+        <select aria-label="Filter" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border rounded px-3 py-2 text-sm">
           <option value="all">All Statuses</option>
           <option value="active">Active</option>
           <option value="revoked">Revoked</option>

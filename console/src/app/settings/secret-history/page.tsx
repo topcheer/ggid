@@ -47,7 +47,7 @@ export default function SecretHistoryPage() {
         <p className="text-sm text-gray-500 mt-1">Track client secret rotation history with thumbprint verification.</p>
       </div>
 
-      <select value={clientId} onChange={(e) => setClientId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Client id" value={clientId} onChange={(e) => setClientId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         <option value="">Select Client</option>
         {clients.map((c) => <option key={c.client_id} value={c.client_id}>{c.client_name}</option>)}
       </select>

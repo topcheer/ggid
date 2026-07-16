@@ -60,7 +60,7 @@ export default function ImpactPreviewPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div><label className="text-sm font-medium">Policy</label><select value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Policy</label><select aria-label="Policy id" value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
           <div><label className="text-sm font-medium">Proposed Change</label><input type="text" value={changeDesc} onChange={(e) => setChangeDesc(e.target.value)} placeholder="e.g. add resource:finance:* to role:analyst" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
         </div>
         <button onClick={preview} disabled={loading || !policyId} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {loading ? "Analyzing..." : "Preview Impact"}</button>

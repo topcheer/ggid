@@ -53,7 +53,7 @@ export default function ComplianceDriftPage() {
         <p className="text-sm text-gray-500 mt-1">Track compliance posture changes between assessments.</p>
       </div>
 
-      <select value={framework} onChange={(e) => setFramework(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+      <select aria-label="Framework" value={framework} onChange={(e) => setFramework(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
         {frameworks.map((f) => <option key={f} value={f}>{f}</option>)}
       </select>
 

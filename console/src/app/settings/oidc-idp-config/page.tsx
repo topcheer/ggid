@@ -101,7 +101,7 @@ export default function OidcIdpConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("oidcIdpConfig.authParams")}</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("oidcIdpConfig.prompt")}</label><select value={prompt} onChange={e => setPrompt(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="none">none (no UI)</option><option value="login">login (force re-auth)</option><option value="consent">consent (show consent)</option><option value="select_account">select_account (account picker)</option></select></div>
+          <div><label className="text-sm font-medium">{t("oidcIdpConfig.prompt")}</label><select aria-label="Prompt" value={prompt} onChange={e => setPrompt(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="none">none (no UI)</option><option value="login">login (force re-auth)</option><option value="consent">consent (show consent)</option><option value="select_account">select_account (account picker)</option></select></div>
           <div><label className="text-sm font-medium">{t("oidcIdpConfig.acrValues")}</label><input type="text" value={acrValues} onChange={e => setAcrValues(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
         </div>
       </section>

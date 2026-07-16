@@ -30,14 +30,14 @@ export default function ThreatHuntingWorkbenchPage() {
         </h2>
         <div className="space-y-3">
           <div className="flex gap-2">
-            <select className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
+            <select aria-label="Select option" className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>IOC Type</option><option>IP Address</option><option>User</option><option>Hash</option><option>Domain</option>
             </select>
-            <select className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
+            <select aria-label="Select option" className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>Operator</option><option>equals</option><option>contains</option><option>matches regex</option>
             </select>
             <input className="flex-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" placeholder="Enter value..." />
-            <select className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
+            <select aria-label="Select option" className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>Last 24h</option><option>Last 7d</option><option>Last 30d</option>
             </select>
             <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium">Run Hunt</button>

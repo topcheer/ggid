@@ -54,7 +54,7 @@ export default function EncryptionConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Data Encryption</h2>
-        <div><label className="text-sm font-medium">Algorithm</label><select value={algorithm} onChange={e => setAlgorithm(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="AES-256-GCM">AES-256-GCM</option><option value="ChaCha20-Poly1305">ChaCha20-Poly1305</option></select></div>
+        <div><label className="text-sm font-medium">Algorithm</label><select aria-label="Algorithm" value={algorithm} onChange={e => setAlgorithm(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="AES-256-GCM">AES-256-GCM</option><option value="ChaCha20-Poly1305">ChaCha20-Poly1305</option></select></div>
         <div><label className="text-sm font-medium">Key Rotation Interval (days)</label><input type="number" min={1} max={365} value={keyRotation} onChange={e => setKeyRotation(parseInt(e.target.value) || 90)} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
         <div><label className="text-sm font-medium">KMS Provider</label><select value={kmsProvider} onChange={e => setKmsProvider(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="internal">Internal (built-in)</option><option value="aws-kms">AWS KMS</option><option value="gcp-kms">Google Cloud KMS</option><option value="azure-kv">Azure Key Vault</option><option value="hashicorp-vault">HashiCorp Vault</option></select></div>
         <label className="flex items-center justify-between"><span className="text-sm">Envelope Encryption</span><input type="checkbox" checked={envelopeEncryption} onChange={e => setEnvelopeEncryption(e.target.checked)} className="rounded" /></label>
@@ -64,7 +64,7 @@ export default function EncryptionConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">TLS Configuration</h2>
-        <div><label className="text-sm font-medium">Minimum TLS Version</label><select value={tlsMinVersion} onChange={e => setTlsMinVersion(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="1.0">TLS 1.0 (deprecated)</option><option value="1.1">TLS 1.1 (deprecated)</option><option value="1.2">TLS 1.2</option><option value="1.3">TLS 1.3 (recommended)</option></select></div>
+        <div><label className="text-sm font-medium">Minimum TLS Version</label><select aria-label="Tls min version" value={tlsMinVersion} onChange={e => setTlsMinVersion(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="1.0">TLS 1.0 (deprecated)</option><option value="1.1">TLS 1.1 (deprecated)</option><option value="1.2">TLS 1.2</option><option value="1.3">TLS 1.3 (recommended)</option></select></div>
         <div><label className="text-sm font-medium">Cipher Suites</label><div className="space-y-2 mt-2">{allCiphers.map(c => <label key={c} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={cipherSuites.includes(c)} onChange={() => toggleCipher(c)} className="rounded" /><span className="font-mono text-xs">{c}</span></label>)}</div></div>
       </section>
     </div>

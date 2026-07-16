@@ -26,7 +26,7 @@ export default function SessionClusteringConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Topology</h2>
-        <div><label className="block text-sm font-medium mb-1">Cluster Topology</label><select value={form.cluster_topology} onChange={(e) => setForm({ ...form, cluster_topology: e.target.value as SessionClusteringConfig["cluster_topology"] })} className="border rounded px-3 py-2"><option value="single">Single</option><option value="HA">High Availability</option><option value="cluster">Cluster</option></select></div>
+        <div><label className="block text-sm font-medium mb-1">Cluster Topology</label><select aria-label="Select option" value={form.cluster_topology} onChange={(e) => setForm({ ...form, cluster_topology: e.target.value as SessionClusteringConfig["cluster_topology"] })} className="border rounded px-3 py-2"><option value="single">Single</option><option value="HA">High Availability</option><option value="cluster">Cluster</option></select></div>
         <div><label className="block text-sm font-medium mb-1">Failover Mode</label><select value={form.failover_mode} onChange={(e) => setForm({ ...form, failover_mode: e.target.value as SessionClusteringConfig["failover_mode"] })} className="border rounded px-3 py-2"><option value="automatic">Automatic</option><option value="manual">Manual</option></select></div>
       </div>
 
@@ -42,7 +42,7 @@ export default function SessionClusteringConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Strategy</h2>
         <div className="grid grid-cols-3 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Partition</label><select value={form.partition_strategy} onChange={(e) => setForm({ ...form, partition_strategy: e.target.value as SessionClusteringConfig["partition_strategy"] })} className="border rounded px-3 py-2"><option value="by_tenant">By Tenant</option><option value="by_user">By User</option></select></div>
+          <div><label className="block text-sm font-medium mb-1">Partition</label><select aria-label="Select option" value={form.partition_strategy} onChange={(e) => setForm({ ...form, partition_strategy: e.target.value as SessionClusteringConfig["partition_strategy"] })} className="border rounded px-3 py-2"><option value="by_tenant">By Tenant</option><option value="by_user">By User</option></select></div>
           <div><label className="block text-sm font-medium mb-1">Eviction</label><select value={form.eviction_policy} onChange={(e) => setForm({ ...form, eviction_policy: e.target.value as SessionClusteringConfig["eviction_policy"] })} className="border rounded px-3 py-2"><option value="lru">LRU</option><option value="lfu">LFU</option><option value="ttl">TTL</option></select></div>
           <div><label className="block text-sm font-medium mb-1">Serialization</label><select value={form.serialization_format} onChange={(e) => setForm({ ...form, serialization_format: e.target.value as SessionClusteringConfig["serialization_format"] })} className="border rounded px-3 py-2"><option value="json">JSON</option><option value="msgpack">MsgPack</option><option value="protobuf">Protobuf</option></select></div>
         </div>

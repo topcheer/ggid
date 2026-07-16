@@ -48,10 +48,10 @@ export default function SecurityEventStreamPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-3 mb-4">
-        <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} className="px-3 py-1.5 bg-gray-800 rounded-lg text-sm">
+        <select aria-label="Filter" value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} className="px-3 py-1.5 bg-gray-800 rounded-lg text-sm">
           <option value="all">All Severities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
         </select>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-1.5 bg-gray-800 rounded-lg text-sm">
+        <select aria-label="Filter" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="px-3 py-1.5 bg-gray-800 rounded-lg text-sm">
           <option value="all">All Types</option>
           {allTypes.map((t) => <option key={t} value={t}>{t}</option>)}
         </select>

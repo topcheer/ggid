@@ -112,7 +112,7 @@ export default function PermissionTreePage() {
 
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Effective Permissions</h2>
-          <select value={selectedUser} onChange={e => setSelectedUser(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+          <select aria-label="Selected user" value={selectedUser} onChange={e => setSelectedUser(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
             <option value="">Select user...</option>
             {users.map(u => <option key={u.user} value={u.user}>{u.user}</option>)}
           </select>

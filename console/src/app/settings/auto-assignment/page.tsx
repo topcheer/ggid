@@ -71,7 +71,7 @@ export default function AutoAssignmentPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <select value={campaign} onChange={(e) => setCampaign(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Campaign" value={campaign} onChange={(e) => setCampaign(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">Select Campaign</option>
           {campaigns.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>

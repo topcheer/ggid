@@ -27,7 +27,7 @@ export default function PolicyImportExportPage() {
           <div className="space-y-3">
             <div>
               <p className="text-xs text-gray-500 mb-1">{t("policyImportExport.scope")}</p>
-              <select className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm">
+              <select aria-label="Select option" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm">
                 <option>{t("policyImportExport.allPolicies")} ({data?.total_policies ?? 0})</option>
                 <option>{t("policyImportExport.selectedPolicies")}</option>
               </select>
@@ -54,7 +54,7 @@ export default function PolicyImportExportPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">{t("policyImportExport.conflictResolution")}</p>
-              <select className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm">
+              <select aria-label="Select option" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm">
                 <option>Skip</option><option>Overwrite</option><option>Merge</option>
               </select>
             </div>

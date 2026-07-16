@@ -59,7 +59,7 @@ export default function PasswordPolicyAuditPage() {
 
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-gray-400" />
-        <select value={filterRule} onChange={(e) => setFilterRule(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Filter" value={filterRule} onChange={(e) => setFilterRule(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="">All Rules</option>
           {ruleTypes.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>

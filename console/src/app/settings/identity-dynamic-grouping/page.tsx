@@ -127,14 +127,14 @@ export default function IdentityDynamicGroupingPage() {
       <div className="bg-gray-900 rounded-xl p-6 mt-6">
         <h2 className="text-lg font-semibold mb-4">{t("idDynamicGrouping.ruleBuilder")}</h2>
         <div className="flex items-center gap-2 flex-wrap">
-          <select className="text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5">
+          <select aria-label="Select option" className="text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5">
             <option>department</option>
             <option>title</option>
             <option>location</option>
             <option>manager</option>
             <option>cost_center</option>
           </select>
-          <select className="text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5">
+          <select aria-label="Select option" className="text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5">
             <option>equals</option>
             <option>contains</option>
             <option>in</option>

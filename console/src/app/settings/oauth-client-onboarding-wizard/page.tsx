@@ -43,7 +43,7 @@ export default function OAuthClientOnboardingWizardPage() {
             <h2 className="text-sm font-semibold">{t("oauthOnboarding.appInfo")}</h2>
             <input type="text" placeholder="App name" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" defaultValue={data?.app_info?.name ?? ""} />
             <input type="text" placeholder="Description" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm" defaultValue={data?.app_info?.description ?? ""} />
-            <select className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm">
+            <select aria-label="Select option" className="w-full px-3 py-2 bg-gray-800 rounded-lg text-sm">
               <option>{t("oauthOnboarding.webApp")}</option><option>{t("oauthOnboarding.mobileApp")}</option><option>{t("oauthOnboarding.serviceM2M")}</option>
             </select>
           </div>

@@ -199,12 +199,12 @@ export default function AlertingRulesPage() {
               defaultValue=""
               onChange={(e) => (defaultRule.name = e.target.value)}
             />
-            <select className={inputCls} defaultValue={defaultRule.metric}>
+            <select aria-label="Select option" className={inputCls} defaultValue={defaultRule.metric}>
               {METRICS.map((m) => (
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
-            <select className={inputCls} defaultValue={defaultRule.action}>
+            <select aria-label="Select option" className={inputCls} defaultValue={defaultRule.action}>
               {ACTIONS.map((a) => (
                 <option key={a.value} value={a.value}>{a.label}</option>
               ))}

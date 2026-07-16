@@ -38,7 +38,7 @@ export default function UserActivityDashboardPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">User Activity Dashboard</h1><p className="text-gray-600">Monitor user activity, login trends, and device breakdown.</p></div>
-        <select value={period} onChange={e => setPeriod(e.target.value)} className="border rounded px-3 py-2 text-sm"><option value="24h">Last 24 hours</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option></select>
+        <select aria-label="Period" value={period} onChange={e => setPeriod(e.target.value)} className="border rounded px-3 py-2 text-sm"><option value="24h">Last 24 hours</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option></select>
       </div>
 
       <div className="grid grid-cols-4 gap-4">

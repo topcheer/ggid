@@ -65,7 +65,7 @@ export default function ComplianceScorePage() {
 
       {/* Framework selector */}
       <div className="flex items-center gap-3">
-        <select value={selectedFramework} onChange={(e) => setSelectedFramework(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Selected framework" value={selectedFramework} onChange={(e) => setSelectedFramework(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           {frameworks.map((f) => <option key={f} value={f}>{f}</option>)}
         </select>
         {data && (

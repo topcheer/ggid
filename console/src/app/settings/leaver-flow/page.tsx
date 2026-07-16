@@ -54,7 +54,7 @@ export default function LeaverFlowPage() {
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserMinus className="w-6 h-6 text-red-500" /> {t("leaverFlow.title")}</h1><p className="text-sm text-gray-500 mt-1">Manage employee offboarding with deprovisioning checklist and cascade.</p></div>
 
-      <select value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Employee</option>{users.map((u) => <option key={u.user_id} value={u.user_id}>{u.username}</option>)}</select>
+      <select aria-label="Employee id" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Employee</option>{users.map((u) => <option key={u.user_id} value={u.user_id}>{u.username}</option>)}</select>
 
       {data && (
         <>

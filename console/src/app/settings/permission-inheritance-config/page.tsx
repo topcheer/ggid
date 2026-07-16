@@ -79,7 +79,7 @@ export default function PermissionInheritanceConfigPage() {
             <div key={r.role} className="flex items-center gap-3 border-b pb-2">
               <span className="font-mono text-sm w-32">{r.role}</span>
               <span className="text-gray-300">{'->'}</span>
-              <select value={r.parent} onChange={e => setParent(r.role, e.target.value)} className="border rounded px-2 py-1 text-sm">{allRoles.map(p => <option key={p} value={p}>{p}</option>)}</select>
+              <select aria-label="P" value={r.parent} onChange={e => setParent(r.role, e.target.value)} className="border rounded px-2 py-1 text-sm">{allRoles.map(p => <option key={p} value={p}>{p}</option>)}</select>
               <label className="flex items-center gap-1 ml-4"><input type="checkbox" checked={r.enabled} onChange={() => toggleInheritance(r.role)} className="rounded" /><span className="text-xs">{r.enabled ? 'inheriting' : 'standalone'}</span></label>
               <span className="text-xs text-gray-400">{r.ownPermissions.length} own perms</span>
             </div>
@@ -90,7 +90,7 @@ export default function PermissionInheritanceConfigPage() {
       <div className="grid grid-cols-2 gap-6">
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Effective Permissions Calculator</h2>
-          <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">{roles.map(r => <option key={r.role} value={r.role}>{r.role}</option>)}</select>
+          <select aria-label="Selected role" value={selectedRole} onChange={e => setSelectedRole(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">{roles.map(r => <option key={r.role} value={r.role}>{r.role}</option>)}</select>
           <div><div className="text-xs font-medium text-gray-500 mb-2">Effective Permissions ({effective.length}):</div><div className="flex flex-wrap gap-1">{effective.map(p => (<span key={p} className={`px-2 py-0.5 rounded text-xs ${inherited.includes(p) ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{p}{inherited.includes(p) ? ' (inh)' : ''}</span>))}</div></div>
         </section>
 

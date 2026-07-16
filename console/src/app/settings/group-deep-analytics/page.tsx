@@ -28,7 +28,7 @@ export default function GroupDeepAnalyticsPage() {
 
       {/* Group Selector */}
       <div className="mb-6">
-        <select value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)} className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
+        <select aria-label="Selected group" value={selectedGroup} onChange={(e) => setSelectedGroup(e.target.value)} className="px-3 py-2 bg-gray-800 rounded-lg text-sm">
           {(data?.groups ?? []).map((g) => <option key={g.name} value={g.name}>{g.name} ({g.member_count} members)</option>)}
         </select>
       </div>

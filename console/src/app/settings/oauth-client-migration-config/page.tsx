@@ -25,7 +25,7 @@ export default function OAuthClientMigrationConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">{t("oauthMigration.sourceSystem")}</h2>
-        <select value={form.source_system} onChange={(e) => setForm({ ...form, source_system: e.target.value as OAuthClientMigrationConfig["source_system"] })} className="border rounded px-3 py-2">
+        <select aria-label="Select option" value={form.source_system} onChange={(e) => setForm({ ...form, source_system: e.target.value as OAuthClientMigrationConfig["source_system"] })} className="border rounded px-3 py-2">
           <option value="Auth0">Auth0</option><option value="Okta">Okta</option><option value="Keycloak">Keycloak</option><option value="Ping">Ping</option>
         </select>
       </div>

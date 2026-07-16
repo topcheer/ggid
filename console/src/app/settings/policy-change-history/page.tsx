@@ -49,7 +49,7 @@ export default function PolicyChangeHistoryPage() {
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><History className="w-6 h-6 text-purple-500" />{t("policyChangeHistory.title")}</h1><p className="text-sm text-gray-500 mt-1">Track policy changes with version diffs, rollback, and comparison.</p></div>
 
       <div className="flex items-center gap-3">
-        <select value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
+        <select aria-label="Policy id" value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
         {selectedVersions.length === 2 && <span className="text-sm text-blue-600 flex items-center gap-1"><GitCompare className="w-4 h-4" /> Compare {selectedVersions[0]} vs {selectedVersions[1]}</span>}
       </div>
 

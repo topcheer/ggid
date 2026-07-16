@@ -62,8 +62,8 @@ export default function ProvisioningLogPage() {
 
       <div className="flex items-center gap-2">
         <Filter className="w-4 h-4 text-gray-400" />
-        <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Sources</option><option value="SCIM">SCIM</option><option value="JIT">JIT</option><option value="manual">Manual</option></select>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Status</option><option value="success">Success</option><option value="failed">Failed</option></select>
+        <select aria-label="Filter" value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Sources</option><option value="SCIM">SCIM</option><option value="JIT">JIT</option><option value="manual">Manual</option></select>
+        <select aria-label="Filter" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">All Status</option><option value="success">Success</option><option value="failed">Failed</option></select>
         <span className="text-sm text-gray-500">{filtered.length} events</span>
       </div>
 

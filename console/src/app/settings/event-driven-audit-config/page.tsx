@@ -34,7 +34,7 @@ export default function EventDrivenAuditConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Consumer & Ordering</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Consumer Pattern</label><select value={form.consumer_pattern} onChange={(e) => setForm({ ...form, consumer_pattern: e.target.value as EventDrivenAuditConfig["consumer_pattern"] })} className="border rounded px-3 py-2"><option value="competing">Competing</option><option value="shared">Shared</option><option value="fanout">Fanout</option></select></div>
+          <div><label className="block text-sm font-medium mb-1">Consumer Pattern</label><select aria-label="Select option" value={form.consumer_pattern} onChange={(e) => setForm({ ...form, consumer_pattern: e.target.value as EventDrivenAuditConfig["consumer_pattern"] })} className="border rounded px-3 py-2"><option value="competing">Competing</option><option value="shared">Shared</option><option value="fanout">Fanout</option></select></div>
           <div><label className="block text-sm font-medium mb-1">Ordering</label><select value={form.ordering} onChange={(e) => setForm({ ...form, ordering: e.target.value as EventDrivenAuditConfig["ordering"] })} className="border rounded px-3 py-2"><option value="per_tenant">Per Tenant</option><option value="global">Global</option></select></div>
         </div>
         <div><label className="block text-sm font-medium mb-1">Deduplication Window (ms)</label><input type="number" value={form.deduplication_window_ms} onChange={(e) => setForm({ ...form, deduplication_window_ms: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>

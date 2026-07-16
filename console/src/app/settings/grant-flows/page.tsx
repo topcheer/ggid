@@ -63,7 +63,7 @@ export default function GrantFlowsPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2"><Workflow className="w-6 h-6 text-blue-500" /> {t("big1.grantFlows.title")}</h1>
           <p className="text-sm text-gray-500 mt-1">{t("big1.grantFlows.oauthGrantFlowStatisticsAndPerformanceMetrics")}</p>
         </div>
-        <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
+        <select aria-label="Time range" value={timeRange} onChange={(e) => setTimeRange(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
           <option value="24h">{t("big1.grantFlows.last24Hours")}</option>
           <option value="7d">{t("big1.grantFlows.last7Days")}</option>
           <option value="30d">{t("big1.grantFlows.last30Days")}</option>
