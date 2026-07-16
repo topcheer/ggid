@@ -33,12 +33,13 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { checkApiHealthDetailed, type HealthResult } from "@/lib/api-config";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { mode, toggle } = useTheme();
-  const { locale, setLocale, t } = useI18n();
+  const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
   const [health, setHealth] = useState<HealthResult | null>(null);
   const [reconnecting, setReconnecting] = useState(false);
@@ -191,14 +192,7 @@ export function Sidebar() {
               <Monitor className="h-4 w-4" />
             )}
           </button>
-          <button
-            onClick={() => setLocale(locale === "en" ? "zh" : "en")}
-            className="flex h-8 items-center gap-1 rounded-lg border border-gray-200 px-2 text-xs font-medium text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-            title="Switch language"
-          >
-            <Globe className="h-3.5 w-3.5" />
-            {locale === "en" ? "EN" : "中"}
-          </button>
+          <LanguageSwitcher compact />
         </div>
       </div>
 

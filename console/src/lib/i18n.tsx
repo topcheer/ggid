@@ -1,13 +1,15 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { en, zh } from "./i18n-dicts";
+import { en, locales } from "./i18n-dicts";
 
-export type Locale = "en" | "zh";
+export type Locale =
+  | "en" | "zh" | "zh-TW"
+  | "es" | "hi" | "fr" | "ar" | "pt"
+  | "ru" | "de" | "ja" | "ko"
+  | "tr" | "vi" | "id";
 
 type Dict = Record<string, string>;
-
-const dictionaries: Record<Locale, Dict> = { en, zh };
 
 interface I18nContextValue {
   locale: Locale;
@@ -34,23 +36,51 @@ export function useTranslations() {
   return t;
 }
 
+/**
+ * Locale metadata for UI selectors.
+ */
+export const LOCALE_INFO: Record<Locale, { label: string; flag: string; rtl?: boolean }> = {
+  en:    { label: "English",    flag: "🇺🇸" },
+  zh:    { label: "简体中文",    flag: "🇨🇳" },
+  "zh-TW": { label: "繁體中文",  flag: "🇭🇰" },
+  es:    { label: "Español",    flag: "🇪🇸" },
+  hi:    { label: "हिन्दी",      flag: "🇮🇳" },
+  fr:    { label: "Français",   flag: "🇫🇷" },
+  ar:    { label: "العربية",     flag: "🇸🇦", rtl: true },
+  pt:    { label: "Português",  flag: "🇵🇹" },
+  ru:    { label: "Русский",    flag: "🇷🇺" },
+  de:    { label: "Deutsch",    flag: "🇩🇪" },
+  ja:    { label: "日本語",      flag: "🇯🇵" },
+  ko:    { label: "한국어",      flag: "🇰🇷" },
+  tr:    { label: "Türkçe",     flag: "🇹🇷" },
+  vi:    { label: "Tiếng Việt", flag: "🇻🇳" },
+  id:    { label: "Indonesia",  flag: "🇮🇩" },
+};
+
+const RTL_LOCALES = ["ar"];
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
 
   useEffect(() => {
-    const saved = localStorage.getItem("ggid_locale") as Locale;
-    if (saved === "en" || saved === "zh") {
-      setLocaleState(saved);
+    const saved = localStorage.getItem("ggid_locale");
+    const validLocales = Object.keys(LOCALE_INFO);
+    if (saved && validLocales.includes(saved)) {
+      setLocaleState(saved as Locale);
     }
   }, []);
 
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     localStorage.setItem("ggid_locale", l);
+    // Set document direction for RTL languages
+    const isRtl = RTL_LOCALES.includes(l);
+    document.documentElement.dir = isRtl ? "rtl" : "ltr";
+    document.documentElement.lang = l;
   }, []);
 
   const t = useCallback(
-    (key: string): string => dictionaries[locale]?.[key] || dictionaries.en[key] || key,
+    (key: string): string => locales[locale]?.[key] || locales.en?.[key] || en[key] || key,
     [locale],
   );
 

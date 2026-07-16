@@ -296,7 +296,7 @@ export default function SettingsPage() {
             <div><label className={labelCls}>Display Name</label><input aria-label="profile" value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} className={inputCls} /></div>
             <div><label className={labelCls}>Email</label><input aria-label="profile" value={profile.email} disabled className={`${inputCls} cursor-not-allowed opacity-60`} /></div>
             <div><label className={labelCls}>Avatar URL</label><input aria-label="profile" value={profile.avatar_url} onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })} className={inputCls} /></div>
-            <div><label className={labelCls}>Locale</label><select aria-label="profile" value={profile.locale} onChange={(e) => setProfile({ ...profile, locale: e.target.value })} className={inputCls}><option value="en">English</option><option value="zh">中文</option></select></div>
+            <div><label className={labelCls}>Locale</label><select aria-label="profile locale" value={profile.locale} onChange={(e) => setProfile({ ...profile, locale: e.target.value })} className={inputCls}><option value="en">English</option><option value="zh">简体中文</option><option value="zh-TW">繁體中文</option><option value="es">Español</option><option value="hi">हिन्दी</option><option value="fr">Français</option><option value="ar">العربية</option><option value="pt">Português</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="ja">日本語</option><option value="ko">한국어</option><option value="tr">Türkçe</option><option value="vi">Tiếng Việt</option><option value="id">Indonesia</option></select></div>
           </div>
         </div>
       )}
