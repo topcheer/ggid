@@ -147,3 +147,51 @@ See docs/research/ for full research docs.
 **业务价值**: MEDIUM-HIGH（与国密 KeyProvider 绑定）
 **实现难度**: High（涉及硬件对接、密评流程）
 **实现路径**: 国密 KeyProvider → 国密 SSL/TLS → 密评文档与工具 → 认证
+
+---
+
+## WebAuthn Signal API 支持 (2026-07-17 第2小时研究) - Priority: P2 - Status: Proposed - Suggested: frontend + backend
+
+**描述**: WebAuthn Level 3 的 Signal API 允许 RP 向客户端认证器同步凭证状态。GGID 当前 passkey 管理页删除凭证后，用户设备上的 passkey 仍残留在自动填充列表中（点击后登录失败，UX 差）。Signal API 三个方法：
+- `signalAllAcceptedCredentials()`：登录成功后同步有效凭证全集，自动隐藏已删除的 passkey（推荐每次登录后调用）
+- `signalCurrentUserDetails()`：用户改名/改邮箱后更新认证器中的 user.name/displayName
+- `signalUnknownCredential()`：无效凭证登录尝试时实时删除
+
+**业务价值**: MEDIUM-HIGH
+- Chrome 132+ 默认启用，Safari 26+ (iCloud Keychain) 支持，Android Chrome 143 beta
+- FIDO 2025 主推特性，企业级 passkey 部署的运维刚需
+- 9 个 passkey 管理页面已就绪，只差同步闭环
+
+**实现难度**: Low-Medium
+- 前端（主）：console 登录成功后 + passkey 删除后调用 Signal API（特性检测 `PublicKeyCredential.signalAllAcceptedCredentials`）
+- 后端（辅）：新增 GET /api/v1/auth/webauthn/credentials/valid-ids 返回用户有效 credential ID 列表
+- 注意 Safari 26 promise bug (WebKit #298951)，需 try/catch 兜底
+
+**兼容性**: 纯增量，go-webauthn v0.17.4 无需升级
+
+---
+
+## Conditional Create 密码无感升级 Passkey (2026-07-17 第2小时研究) - Priority: P2 - Status: Proposed - Suggested: frontend
+
+**描述**: WebAuthn L3 的 conditional create（mediation: "conditional"）让用户密码登录成功后，浏览器自动在密码管理器界面提议创建 passkey —— 无需跳转注册流程。FIDO Passkey Index 2025 显示 93% 账户技术上可升级 passkey，但转化率取决于注册摩擦。这是提升 passkey 采用率的标准做法。
+
+**业务价值**: MEDIUM-HIGH
+- 直接提升 passkey 渗透率（GGID 已有 passkey-health dashboard backlog #8，数据会好看）
+- 企业 SSO 场景的"静默迁移"路径：员工无感知完成密码→passkey 升级
+
+**实现难度**: Medium
+- 前端：密码登录成功后调 navigator.credentials.create({mediation:"conditional"})，需要 Chrome 136+/ Safari 18+
+- 后端：webauthn register begin 需支持 conditional 会话（challenge 预生成 + 会话保持）
+- 需要 tenant 级开关（部分企业不希望自动提示）
+
+**兼容性**: 增量，现有 passwordless 流程可复用
+
+---
+
+## Credential Exchange Protocol (CXP) 跨平台凭证迁移 (2026-07-17 第2小时研究) - Priority: P3 - Status: Watch - Suggested: IAMExpert 跟踪
+
+**描述**: FIDO 联盟 2025 推进的 Credential Exchange Protocol 允许 passkey 在密码管理器之间安全迁移（1Password ↔ Google Password Manager ↔ iCloud Keychain）。解决企业用户换设备/换密码管理器时 passkey 锁定问题。标准尚在 draft 阶段。
+
+**业务价值**: MEDIUM（当前）→ HIGH（标准落地后）
+**实现难度**: High（服务端导出/导入加密凭证包）
+**行动**: 跟踪标准进展，标准稳定后评估 GGID 作为 RP 的支持方案。无需立即编码。
