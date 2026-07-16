@@ -25,6 +25,8 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [totpCode, setTotpCode] = useState("");
+  const [useBackupCode, setUseBackupCode] = useState(false);
+  const [backupCode, setBackupCode] = useState("");
   const [remember, setRemember] = useState(true);
   const [mfaToken, setMfaToken] = useState("");
   const [error, setError] = useState("");
@@ -172,6 +174,27 @@ export default function LoginPage() {
     setError("");
 
     try {
+      if (useBackupCode) {
+        const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/login`, {
+          method: "POST",
+          headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
+          body: JSON.stringify({ mfa_token: mfaToken, backup_code: backupCode.trim() }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          setError(data.error?.message || data.error || data.message || "Invalid backup code");
+          return;
+        }
+        if (data.access_token) {
+          if (typeof window !== "undefined") {
+            localStorage.setItem("ggid_access_token", data.access_token);
+            localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
+          }
+          router.push("/dashboard");
+          return;
+        }
+      }
+
       const resp = await fetch(`${API_BASE}/api/v1/auth/mfa/verify`, {
         method: "POST",
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
@@ -433,34 +456,62 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="mb-6">
-              <label className="mb-1 flex items-center gap-1.5 text-sm font-medium">
-                <KeyRound className="h-4 w-4 text-gray-400" /> {t("login.verificationCode")}
-              </label>
-              <input
-                type="text"
-                id="totp-code"
-                name="totp-code"
-                aria-label={t("login.verificationCode")}
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                required
-                autoFocus
-                placeholder="000000"
-                className="w-full rounded-lg border border-gray-300 px-3 py-3 text-center text-2xl font-mono tracking-widest focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
-                inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength={6}
-              />
-            </div>
+            {!useBackupCode ? (
+              <div className="mb-6">
+                <label className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                  <KeyRound className="h-4 w-4 text-gray-400" /> {t("login.verificationCode")}
+                </label>
+                <input
+                  type="text"
+                  id="totp-code"
+                  name="totp-code"
+                  aria-label={t("login.verificationCode")}
+                  value={totpCode}
+                  onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  required
+                  autoFocus
+                  placeholder="000000"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-3 text-center text-2xl font-mono tracking-widest focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                />
+              </div>
+            ) : (
+              <div className="mb-6">
+                <label className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                  <KeyRound className="h-4 w-4 text-gray-400" /> Backup Code
+                </label>
+                <input
+                  type="text"
+                  id="backup-code"
+                  name="backup-code"
+                  aria-label="Backup code"
+                  value={backupCode}
+                  onChange={(e) => setBackupCode(e.target.value.trim())}
+                  required
+                  autoFocus
+                  placeholder="XXXX-XXXX-XXXX"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-3 text-center text-lg font-mono tracking-wider focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
-              disabled={loading || totpCode.length !== 6}
+              disabled={loading || (!useBackupCode ? totpCode.length !== 6 : !backupCode.trim())}
               aria-label={loading ? t("login.verifying") : t("login.verifySignIn")}
               className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
               {loading ? t("login.verifying") : t("login.verifySignIn")}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setUseBackupCode(!useBackupCode); setError(""); }}
+              className="mt-3 w-full text-center text-xs text-gray-500 hover:text-gray-700"
+            >
+              {useBackupCode ? "Use authenticator app instead" : "Use backup code instead"}
             </button>
 
             <button
