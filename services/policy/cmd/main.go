@@ -127,7 +127,18 @@ func main() {
 	httpAPI := httpserver.NewHTTPServer(roleSvc, policySvc, evaluator)
 	httpAPI.RegisterRoutes(mux)
 
-	httpServer := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
+	httpServer := &http.Server{
+		Addr: cfg.HTTPAddr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rvr := recover(); rvr != nil {
+					log.Printf("PANIC recovered in policy handler: %v", rvr)
+					http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+				}
+			}()
+			mux.ServeHTTP(w, r)
+		}),
+	}
 
 	go func() {
 		log.Printf("Policy Engine: HTTP listening on %s", cfg.HTTPAddr)

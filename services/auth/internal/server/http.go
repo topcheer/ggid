@@ -406,6 +406,13 @@ func (h *Handler) registerRoutes() {
 
 // ServeHTTP implements http.Handler.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// PanicRecovery — catch panics so a single bad request cannot crash the process.
+	defer func() {
+		if rvr := recover(); rvr != nil {
+			log.Printf("PANIC recovered in auth handler: %v", rvr)
+			writeError(w, http.StatusInternalServerError, "internal server error")
+		}
+	}()
 	// Inject tenant context from X-Tenant-ID header
 	if tenantIDStr := r.Header.Get("X-Tenant-ID"); tenantIDStr != "" {
 		tenantID, err := uuid.Parse(tenantIDStr)

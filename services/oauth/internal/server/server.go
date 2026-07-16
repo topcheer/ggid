@@ -186,9 +186,22 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	// Build HTTP handler.
 	handler := buildHandler(oauthSvc, cfg, rotatingKP, auditPub)
 
+	// Wrap with panic recovery so a single bad request cannot crash the process.
+	wrappedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rvr := recover(); rvr != nil {
+				log.Printf("PANIC recovered in oauth handler: %v", rvr)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(map[string]string{"error": "internal server error"})
+			}
+		}()
+		handler.ServeHTTP(w, r)
+	})
+
 	httpSrv := &http.Server{
 		Addr:         cfg.HTTP.Addr,
-		Handler:      handler,
+		Handler:      wrappedHandler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}

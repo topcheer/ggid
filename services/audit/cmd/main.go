@@ -136,7 +136,18 @@ func main() {
 	httpAPI := httpserver.NewHTTPServer(auditSvc)
 	httpAPI.RegisterRoutes(mux)
 
-	httpServer := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
+	httpServer := &http.Server{
+		Addr: cfg.HTTPAddr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rvr := recover(); rvr != nil {
+					log.Printf("PANIC recovered in audit handler: %v", rvr)
+					http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+				}
+			}()
+			mux.ServeHTTP(w, r)
+		}),
+	}
 
 	// SIEM Forwarder — forward audit events to external SIEM (Splunk/Datadog/Elasticsearch)
 	var siemForwarder *audit.SIEMForwarder

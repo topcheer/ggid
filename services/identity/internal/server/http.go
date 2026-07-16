@@ -218,6 +218,13 @@ func (h *HTTPHandler) registerRoutes() {
 
 // ServeHTTP implements http.Handler.
 func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// PanicRecovery — catch panics so a single bad request cannot crash the process.
+	defer func() {
+		if rvr := recover(); rvr != nil {
+			log.Printf("PANIC recovered in identity handler: %v", rvr)
+			writeError(w, http.StatusInternalServerError, "internal server error")
+		}
+	}()
 	h.mux.ServeHTTP(w, r)
 }
 

@@ -132,7 +132,18 @@ func main() {
 	httpAPI := httpserver.NewHTTPServer(orgSvc, deptSvc, teamSvc, memberSvc)
 	httpAPI.RegisterRoutes(mux)
 
-	httpServer := &http.Server{Addr: cfg.HTTPAddr, Handler: mux}
+	httpServer := &http.Server{
+		Addr: cfg.HTTPAddr,
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			defer func() {
+				if rvr := recover(); rvr != nil {
+					log.Printf("PANIC recovered in org handler: %v", rvr)
+					http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+				}
+			}()
+			mux.ServeHTTP(w, r)
+		}),
+	}
 
 	go func() {
 		log.Printf("Org Service: HTTP listening on %s", cfg.HTTPAddr)
