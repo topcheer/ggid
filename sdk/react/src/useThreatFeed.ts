@@ -38,6 +38,7 @@ export function useThreatFeed(maxEvents = 100): UseThreatFeedResult {
   const tenantId = typeof window !== 'undefined' ? localStorage.getItem('ggid_tenant_id') || '' : '';
 
   const [threats, setThreats] = useState<ThreatEvent[]>([]);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);

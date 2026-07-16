@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface TokenFamily {
   family_id: string;
   root_token_hash: string;
@@ -21,12 +25,17 @@ export interface TokenFamilyAnalysisData {
 
 export function useTokenFamilyAnalysis() {
   const [data, setData] = useState<TokenFamilyAnalysisData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         families: [
           { family_id: "fam_001", root_token_hash: "sha256:abc123...", child_count: 3, status: "active" },
@@ -41,5 +50,5 @@ export function useTokenFamilyAnalysis() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface ZeroTrustViolation {
   type: string;
   severity: "low" | "medium" | "high" | "critical";
@@ -19,6 +23,7 @@ export interface ZeroTrustPostureData {
 
 export function useZeroTrustPosture() {
   const [data, setData] = useState<ZeroTrustPostureData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +31,11 @@ export function useZeroTrustPosture() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         trust_score: 78,
         device_compliance_pct: 92,
@@ -52,5 +61,5 @@ export function useZeroTrustPosture() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

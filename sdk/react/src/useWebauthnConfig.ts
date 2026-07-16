@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface SupportedAlgEntry {
   id: string;
   cose_id: number;
@@ -26,12 +30,17 @@ export interface WebauthnConfigData {
 
 export function useWebauthnConfig() {
   const [data, setData] = useState<WebauthnConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         rp_id: "auth.ggid.dev", rp_name: "GGID", origin: "https://auth.ggid.dev",
         attestation_requirement: "indirect", user_verification: "preferred", timeout_seconds: 300,
@@ -50,5 +59,5 @@ export function useWebauthnConfig() {
     finally { setLoading(false); }
   }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

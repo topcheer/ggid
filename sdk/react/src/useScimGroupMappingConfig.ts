@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface ScimMapping {
   id: string;
   external_group: string;
@@ -29,14 +33,19 @@ export interface ScimGroupMappingConfigData {
 
 export function useScimGroupMappingConfig() {
   const [data, setData] = useState<ScimGroupMappingConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
-    try { await new Promise((r) => setTimeout(r, 400));
+    try { // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({ mappings: [
-        { id: "s1", external_group: "Azure-Admin", local_role: "admin", auto_provision: true, sync_direction: "bidirectional" },
-        { id: "s2", external_group: "GitHub-Devs", local_role: "developer", auto_provision: true, sync_direction: "inbound" },
+        { id: "s1", external_group: "Azure-Admin", local_role: "admin", auto_provision: false, sync_direction: "bidirectional" },
+        { id: "s2", external_group: "GitHub-Devs", local_role: "developer", auto_provision: false, sync_direction: "inbound" },
         { id: "s3", external_group: "Okta-Readonly", local_role: "viewer", auto_provision: false, sync_direction: "inbound" },
       ], per_app: [
         { app: "Slack", mapping_count: 3 }, { app: "Jira", mapping_count: 2 }, { app: "GitHub", mapping_count: 5 },
@@ -44,5 +53,5 @@ export function useScimGroupMappingConfig() {
     } catch (e) { setError(e instanceof Error ? e.message : "Failed"); } finally { setLoading(false); }
   }, []);
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

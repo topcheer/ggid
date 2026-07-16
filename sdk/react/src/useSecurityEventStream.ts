@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface SecurityEvent {
   id: string;
   type: string;
@@ -18,13 +22,18 @@ export interface SecurityEventStreamData {
 
 export function useSecurityEventStream() {
   const [data, setData] = useState<SecurityEventStreamData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         events: [
           { id: "ev-001", type: "auth.brute_force", severity: "critical", message: "12 failed logins from 203.0.113.50 in 60s", source: "auth-service", timestamp: "2s ago", affected_entities: ["alice@corp.com", "bob@corp.com"], correlation_id: "corr-789", raw_data: '{"src_ip":"203.0.113.50","attempts":12,"window_sec":60}' },
@@ -39,5 +48,5 @@ export function useSecurityEventStream() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

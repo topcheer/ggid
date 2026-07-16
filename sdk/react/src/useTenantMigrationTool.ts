@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface MigrationScopeItem {
   name: string;
   record_count: number;
@@ -28,13 +32,18 @@ export interface TenantMigrationToolData {
 
 export function useTenantMigrationTool() {
   const [data, setData] = useState<TenantMigrationToolData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         source_tenant: "tenant-staging (0000...0001)",
         destination_tenant: "tenant-prod (0000...0002)",

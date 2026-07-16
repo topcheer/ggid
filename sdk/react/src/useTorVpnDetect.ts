@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface DetectedConnection {
   ip: string;
   type: string;
@@ -28,6 +32,7 @@ export interface TorVpnDetectData {
 
 export function useTorVpnDetect() {
   const [data, setData] = useState<TorVpnDetectData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +40,11 @@ export function useTorVpnDetect() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         detected_connections: [
           { ip: "185.220.101.45", type: "tor", confidence: 0.98, first_seen: "5m ago", user: "anonymous login" },
@@ -56,7 +65,7 @@ export function useTorVpnDetect() {
           { country: "France", connections: 4 },
           { country: "Russia", connections: 3 },
         ],
-        auto_challenge_enabled: true,
+        auto_challenge_enabled: false,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load data");
@@ -66,5 +75,5 @@ export function useTorVpnDetect() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

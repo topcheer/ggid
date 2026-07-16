@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface AllowedIdp {
   entity_id: string;
   provider_name: string;
@@ -22,6 +26,7 @@ export interface SamlIdpInitiatedSSOData {
 
 export function useSamlIdpInitiatedSSO() {
   const [data, setData] = useState<SamlIdpInitiatedSSOData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,11 +34,15 @@ export function useSamlIdpInitiatedSSO() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         allowed_idps: [
-          { entity_id: "https://idp.univ.edu/idp", provider_name: "University IdP", status: "active", idp_initiated_enabled: true },
-          { entity_id: "https://corp.okta.com", provider_name: "Okta Corporate", status: "active", idp_initiated_enabled: true },
+          { entity_id: "https://idp.univ.edu/idp", provider_name: "University IdP", status: "active", idp_initiated_enabled: false },
+          { entity_id: "https://corp.okta.com", provider_name: "Okta Corporate", status: "active", idp_initiated_enabled: false },
           { entity_id: "https://ad.corp.local", provider_name: "Active Directory FS", status: "pending", idp_initiated_enabled: false },
         ],
         relay_state_config: "sp:app1.home",

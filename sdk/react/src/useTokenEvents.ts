@@ -37,6 +37,7 @@ export function useTokenEvents(maxEvents = 100): UseTokenEventsResult {
   const tenantId = typeof window !== 'undefined' ? localStorage.getItem('ggid_tenant_id') || '' : '';
 
   const [events, setEvents] = useState<TokenEvent[]>([]);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
