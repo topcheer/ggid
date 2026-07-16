@@ -9,8 +9,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// pgBackupCodeRepo implements BackupCodeRepository using PostgreSQL.
-type pgBackupCodeRepo struct {
+// PgBackupCodeRepo implements BackupCodeRepository using PostgreSQL.
+type PgBackupCodeRepo struct {
 	pool *pgxpool.Pool
 }
 
@@ -20,11 +20,11 @@ func NewPgBackupCodeRepo(pool *pgxpool.Pool) BackupCodeRepository {
 	if pool == nil {
 		return NewInMemBackupCodeRepo()
 	}
-	return &pgBackupCodeRepo{pool: pool}
+	return &PgBackupCodeRepo{pool: pool}
 }
 
 // EnsureSchema creates the backup_codes table if it doesn't exist.
-func (r *pgBackupCodeRepo) EnsureSchema(ctx context.Context) error {
+func (r *PgBackupCodeRepo) EnsureSchema(ctx context.Context) error {
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS backup_codes (
 			id UUID PRIMARY KEY,
@@ -40,20 +40,29 @@ func (r *pgBackupCodeRepo) EnsureSchema(ctx context.Context) error {
 	return err
 }
 
-func (r *pgBackupCodeRepo) Create(ctx context.Context, codes []*BackupCode) error {
-	for _, c := range codes {
-		_, err := r.pool.Exec(ctx,
-			`INSERT INTO backup_codes (id, tenant_id, user_id, code_hash, created_at) VALUES ($1, $2, $3, $4, $5)`,
-			c.ID, c.TenantID, c.UserID, c.CodeHash, c.CreatedAt,
-		)
-		if err != nil {
-			return fmt.Errorf("insert backup code: %w", err)
+func (r *PgBackupCodeRepo) Create(ctx context.Context, codes []*BackupCode) error {
+	if len(codes) == 0 {
+		return nil
+	}
+	// Single multi-row INSERT — avoids 10 sequential round trips.
+	query := `INSERT INTO backup_codes (id, tenant_id, user_id, code_hash, created_at) VALUES `
+	args := make([]any, 0, len(codes)*5)
+	for i, c := range codes {
+		if i > 0 {
+			query += ", "
 		}
+		base := i * 5
+		query += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", base+1, base+2, base+3, base+4, base+5)
+		args = append(args, c.ID, c.TenantID, c.UserID, c.CodeHash, c.CreatedAt)
+	}
+	_, err := r.pool.Exec(ctx, query, args...)
+	if err != nil {
+		return fmt.Errorf("insert backup codes: %w", err)
 	}
 	return nil
 }
 
-func (r *pgBackupCodeRepo) ListUnused(ctx context.Context, tenantID, userID uuid.UUID) ([]*BackupCode, error) {
+func (r *PgBackupCodeRepo) ListUnused(ctx context.Context, tenantID, userID uuid.UUID) ([]*BackupCode, error) {
 	rows, err := r.pool.Query(ctx,
 		`SELECT id, tenant_id, user_id, code_hash, used_at, created_at FROM backup_codes WHERE tenant_id = $1 AND user_id = $2 AND used_at IS NULL`,
 		tenantID, userID,
@@ -74,7 +83,7 @@ func (r *pgBackupCodeRepo) ListUnused(ctx context.Context, tenantID, userID uuid
 	return result, nil
 }
 
-func (r *pgBackupCodeRepo) MarkUsed(ctx context.Context, id uuid.UUID) error {
+func (r *PgBackupCodeRepo) MarkUsed(ctx context.Context, id uuid.UUID) error {
 	now := time.Now()
 	tag, err := r.pool.Exec(ctx, `UPDATE backup_codes SET used_at = $1 WHERE id = $2 AND used_at IS NULL`, now, id)
 	if err != nil {
@@ -86,7 +95,7 @@ func (r *pgBackupCodeRepo) MarkUsed(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *pgBackupCodeRepo) DeleteAll(ctx context.Context, tenantID, userID uuid.UUID) error {
+func (r *PgBackupCodeRepo) DeleteAll(ctx context.Context, tenantID, userID uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, `DELETE FROM backup_codes WHERE tenant_id = $1 AND user_id = $2`, tenantID, userID)
 	return err
 }

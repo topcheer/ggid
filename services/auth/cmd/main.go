@@ -147,6 +147,14 @@ func main() {
 
 	// 5b. Backup code service (PostgreSQL-backed for persistence)
 	backupCodeRepo := service.NewPgBackupCodeRepo(pool)
+	// Ensure schema exists at startup.
+	if pgRepo, ok := backupCodeRepo.(*service.PgBackupCodeRepo); ok {
+		if err := pgRepo.EnsureSchema(ctx); err != nil {
+			log.Printf("WARNING: backup_codes schema setup failed (non-fatal): %v", err)
+		} else {
+			log.Println("backup_codes table ensured")
+		}
+	}
 	backupCodeService := service.NewBackupCodeService(backupCodeRepo)
 
 	// 6. Build identity client (HTTP-based, connects to Identity Service)

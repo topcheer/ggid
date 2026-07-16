@@ -111,20 +111,52 @@ func (s *BackupCodeService) GenerateBackupCodes(ctx context.Context, userID uuid
 	// Delete existing codes.
 	_ = s.repo.DeleteAll(ctx, tc.TenantID, userID)
 
-	var plainCodes []string
-	var hashed []*BackupCode
-	for i := 0; i < backupCodeCount; i++ {
-		code := generateBackupCode()
-		hash, _ := crypto.HashPassword(code)
+	// Generate all 10 random codes first (crypto/rand is fast).
+	type codePair struct {
+		plain string
+		hash  string
+	}
+	pairs := make([]codePair, backupCodeCount)
+	for i := range pairs {
+		pairs[i].plain = generateBackupCode()
+	}
 
-		plainCodes = append(plainCodes, code)
-		hashed = append(hashed, &BackupCode{
+	// Hash all codes in parallel — argon2id is CPU-intensive (~0.5-1s each
+	// with 64MB memory params). Running concurrently reduces wall-clock
+	// from ~5-10s to ~1s, preventing gateway proxy timeouts.
+	var wg sync.WaitGroup
+	errCh := make(chan error, backupCodeCount)
+	for i := 0; i < backupCodeCount; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			h, err := crypto.HashPassword(pairs[idx].plain)
+			if err != nil {
+				errCh <- err
+				return
+			}
+			pairs[idx].hash = h
+		}(i)
+	}
+	wg.Wait()
+	close(errCh)
+	if e := <-errCh; e != nil {
+		return nil, fmt.Errorf("hash backup code: %w", e)
+	}
+
+	// Build result slices.
+	plainCodes := make([]string, backupCodeCount)
+	hashed := make([]*BackupCode, backupCodeCount)
+	now := time.Now()
+	for i := 0; i < backupCodeCount; i++ {
+		plainCodes[i] = pairs[i].plain
+		hashed[i] = &BackupCode{
 			ID:        uuid.New(),
 			TenantID:  tc.TenantID,
 			UserID:    userID,
-			CodeHash:  hash,
-			CreatedAt: time.Now(),
-		})
+			CodeHash:  pairs[i].hash,
+			CreatedAt: now,
+		}
 	}
 
 	if err := s.repo.Create(ctx, hashed); err != nil {
