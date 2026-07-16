@@ -20,6 +20,53 @@ func NewITDRRepository(pool *pgxpool.Pool) *ITDRRepository {
 	return &ITDRRepository{pool: pool}
 }
 
+// EnsureSchema creates itdr_detections and itdr_rules tables if they don't exist.
+func (r *ITDRRepository) EnsureSchema(ctx context.Context) error {
+	if r.pool == nil {
+		return nil
+	}
+	_, err := r.pool.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS itdr_detections (
+			id           UUID PRIMARY KEY,
+			tenant_id    UUID NOT NULL,
+			rule_id      TEXT NOT NULL,
+			actor_id     UUID,
+			severity     TEXT NOT NULL,
+			title        TEXT NOT NULL,
+			detail       JSONB NOT NULL DEFAULT '{}',
+			event_ids    UUID[] NOT NULL DEFAULT '{}',
+			status       TEXT NOT NULL DEFAULT 'new',
+			hit_count    INT NOT NULL DEFAULT 1,
+			detected_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_itdr_det_tenant_time ON itdr_detections (tenant_id, detected_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_itdr_det_status ON itdr_detections (tenant_id, status, severity);
+
+		CREATE TABLE IF NOT EXISTS itdr_rules (
+			id          TEXT NOT NULL,
+			tenant_id   UUID NOT NULL,
+			enabled     BOOLEAN NOT NULL DEFAULT TRUE,
+			severity    TEXT,
+			threshold   JSONB NOT NULL DEFAULT '{}',
+			updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+			PRIMARY KEY (id, tenant_id)
+		);
+
+		CREATE TABLE IF NOT EXISTS iga_campaign_items (
+			id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			campaign_id  UUID NOT NULL,
+			user_id      UUID NOT NULL,
+			role_id      UUID NOT NULL,
+			decision     TEXT,
+			decided_at   TIMESTAMPTZ,
+			created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_iga_items_campaign ON iga_campaign_items (campaign_id);
+	`)
+	return err
+}
+
 // InsertDetection inserts or updates (UPSERT) a detection.
 // Dedup key: same rule_id + actor_id + 5-minute bucket.
 // On conflict: hit_count+1, event_ids appended, updated_at refreshed.

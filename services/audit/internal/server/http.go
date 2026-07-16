@@ -43,6 +43,11 @@ type HTTPServer struct {
 	itdrRepo  *repository.ITDRRepository
 }
 
+// SetITDRRepository injects the ITDR repository for detection API queries.
+func (s *HTTPServer) SetITDRRepository(repo *repository.ITDRRepository) {
+	s.itdrRepo = repo
+}
+
 // NewHTTPServer creates a new Audit Service HTTP server.
 func NewHTTPServer(svc *service.AuditService) *HTTPServer {
 	h := &HTTPServer{svc: svc, hub: NewStreamHub()}

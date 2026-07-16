@@ -100,8 +100,8 @@ func main() {
 
 		// Wire ITDR detection engine into the consumer loop.
 		if db != nil {
-			itdrRepo := repository.NewITDRRepository(db)
-			engine := detection.NewEngine(itdrRepo, detection.NewMemStateStore())
+			engineRepo := repository.NewITDRRepository(db)
+			engine := detection.NewEngine(engineRepo, detection.NewMemStateStore())
 			nc.SetEngine(engine)
 			log.Println("Audit Service: ITDR detection engine enabled")
 		}
@@ -144,6 +144,18 @@ func main() {
 	})
 	// REST API endpoints
 	httpAPI := httpserver.NewHTTPServer(auditSvc)
+
+	// Wire ITDR repository into HTTP server for API queries.
+	if db != nil {
+		itdrRepo := repository.NewITDRRepository(db)
+		// Ensure tables exist at startup.
+		if err := itdrRepo.EnsureSchema(ctx); err != nil {
+			log.Printf("Warning: ITDR EnsureSchema failed: %v", err)
+		}
+		httpAPI.SetITDRRepository(itdrRepo)
+		log.Println("Audit Service: ITDR API enabled")
+	}
+
 	httpAPI.RegisterRoutes(mux)
 
 	httpServer := &http.Server{
