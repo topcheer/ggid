@@ -383,6 +383,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mfa/config", h.handleMFAConfig)
 	h.mux.HandleFunc("/api/v1/auth/impersonation/config", h.handleImpersonationConfig)
 	h.mux.HandleFunc("/api/v1/auth/credentials/rotation/due", h.handleRotationDue)
+	h.mux.HandleFunc("/api/v1/auth/credentials/rotation", h.handleRotationRoute)
+	h.mux.HandleFunc("/api/v1/auth/credentials/rotation/execute", h.handleRotationRoute)
 	h.mux.HandleFunc("/api/v1/auth/passkey/register/begin", h.handlePasskeyRegisterBegin)
 	h.mux.HandleFunc("/api/v1/auth/passkey/register/finish", h.handlePasskeyRegisterFinish)
 	h.mux.HandleFunc("/api/v1/auth/passkey/auth/begin", h.handlePasskeyAuthBegin)
