@@ -1,7 +1,7 @@
 # Backend Autonomous IAM Optimization Prompt
 
-> This file is the source of truth for the backend cron prompt.  
-> The prompt itself contains instructions for self-improvement (Phase 7).  
+> This file is the source of truth for the backend cron prompt.
+> The prompt itself contains instructions for self-improvement (Phase 7).
 > Last updated: Round 87 baseline
 
 ## Effectiveness Tracking
