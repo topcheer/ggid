@@ -77,6 +77,7 @@ func Default() *Config {
 			"/api/v1/scim":            envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/scim/v2":                envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/system":          envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/provisioning":    envOrDefault("PROVISIONING_SERVICE_URL", "http://localhost:9090"),
 			"/api/v1/idp":             envOrDefault("OAUTH_SERVICE_URL", "http://localhost:9005"),
 			"/api/v1/webhooks":        envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/org":             envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),

@@ -346,17 +346,10 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Provisioning stub — no separate provisioning service exists yet.
-	// Return empty valid responses so frontend pages don't error.
-	if strings.HasPrefix(r.URL.Path, "/api/v1/provisioning/") {
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"status":   "ok",
-			"items":    []map[string]any{},
-			"total":    0,
-		})
-		return
-	}
+	// Provisioning requests are proxied to the ggid-operator API server
+	// (registered in cfg.Routes as /api/v1/provisioning). No stub fallback:
+	// if the operator is unreachable the proxy returns 502, which is more
+	// honest than fake empty data.
 
 	// Find matching backend by longest prefix
 	backend, prefix := gw.matchBackend(r.URL.Path)
