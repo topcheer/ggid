@@ -6,6 +6,7 @@ import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2 } from "lu
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
+import { offerPasskeyUpgrade } from "@/lib/webauthn-conditional";
 
 const API_BASE = API_BASE_URL;
 
@@ -157,6 +158,17 @@ export default function LoginPage() {
           window.location.href = redirectTo;
           return;
         }
+      }
+
+      // Conditional Create: offer passkey upgrade after password login (non-blocking)
+      // Browser auto-prompts user to create passkey if supported (FIDO L3 silent migration)
+      try {
+        const userId = localStorage.getItem("ggid_user_id") || "";
+        if (userId) {
+          await offerPasskeyUpgrade({ accessToken: data.access_token, userId });
+        }
+      } catch {
+        // Non-blocking: login proceeds regardless of passkey creation outcome
       }
 
       // No MFA needed — redirect to dashboard
