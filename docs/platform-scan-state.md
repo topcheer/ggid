@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 83
-## Last scan focus: D (Data Persistence) — 0 GAPs; all 7 services have PG-backed repos with complete CRUD; webauthn repo verified
-## Next scan focus: E (Error Handling) — Round 84
-## Total findings: 68
-## Done: 67
+## Current round: 84
+## Last scan focus: E (Error Handling) + proactive — Fixed SCIM Groups hardcoded mock data → DB-backed; 6 API endpoints curl-tested
+## Next scan focus: F (Test Coverage) — Round 85
+## Total findings: 70
+## Done: 69
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
@@ -49,8 +49,8 @@ LOW (acceptable for now — short-lived or fallback):
 - Agent consent (session-scoped)
 
 ## Commits this cycle:
+- 283e835a: Round 84 SCIM Groups hardcoded data → DB-backed query + 6 endpoint curl tests
 - df9cfb01: Round 80 Fix Identity + OAuth gRPC service registration
-- 361f66da: Round 78 oauth/domain 0%→100%, policy/handler 1.7%→9.6%
 - dc7ff6db: Round 76 OAuth memory repo CRUD fix + 13 tests (0%→34.1%)
 - 6eaba42e: Round 75 PanicRecovery middleware for all 6 backend services
 - ad51128d: Fix loadEncryptionKey dev fallback (BIOMETRIC_AES_KEY panic fix)
