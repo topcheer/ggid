@@ -427,3 +427,28 @@ See docs/research/ for full research docs.
 ## LLM 检测解释（Detection Narrative） (2026-07-17 第7小时研究) - Priority: P3 - Status: Watch - Suggested: IAMExpert
 
 **描述**: 2025 趋势：SOC 告警的 LLM 自然语言解释。ITDR detection 产生时调用 LLM 生成分析师友好的叙述（证据摘要+影响评估+建议处置）。GGID MCP 已有 LLM 通道。等 ITDR 引擎上线积累真实 detection 后评估。
+
+---
+
+## OIDC Federation 1.0 支持 (2026-07-17 第8小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: OIDC Federation 1.0 (RFC 9486) 允许 IdP/SP 间无元数据交换自动建立信任（信任链：组织根 CA → 实体 → 子实体）。多组织联邦（高校/政府跨域 SSO）场景的标准方案。GGID 已有 oidc-federation-config 页面和 handler，但需验证是否实现信任链解析（entity statement + authority hints + JWKS 自动发现）。
+
+**GGID 现状审计**: SAML 实现质量高（XMLDSig 签名、assertion 解析、IdP/SP 双向、条件验证全有）。OIDC discovery 有。OIDC Federation handler 存在但深度未验证。这是一个真实的 SAML/OIDC 双协议 IdP（罕见的完整度）。
+
+**业务价值**: MEDIUM-HIGH（高校/政府联邦 SSO 标配，GGID 已有 SAML 基础）| **实现难度**: Medium-High
+- 实现路径：验证 trust chain resolution → 补 entity statement 签发/验证 → federation metadata 端点
+
+---
+
+## SAML SP Connector 增强 (2026-07-17 第8小时审计) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: GGID 作为 SP 对接外部 IdP（Okta/Entra/Azure AD）是企业 SSO 主场景。现有 /saml/acs 接收断言并解析（ParseAssertion + ValidateConditions + ExtractAttributes），但用户映射（nameID/email → GGID user）需验证是否有 JIT provisioning（首次 SSO 自动创建用户）。
+
+**业务价值**: HIGH（企业 SSO POC 必演）| **实现难度**: Low-Medium
+
+---
+
+## IssueSAMLToken 命名误导修复 (2026-07-17 第8小时审计) - Priority: P3 - Status: Proposed - Suggested: backend
+
+**描述**: `IssueSAMLToken` 实际签发的是 JWT（issueAccessToken with "saml" grant type），不是 SAML XML 断言。函数名误导。建议重命名 IssueTokenForSAMLUser 或在注释中明确。
