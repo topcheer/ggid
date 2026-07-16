@@ -210,3 +210,17 @@ The arch/PM E2E verification found that `POST /api/v1/users/{id}/roles` returns 
 ### P1: Audit events still 0 (unchanged from Round 64)
 
 Write operations across all services still don't publish NATS audit events. See Round 64 entry above for details.
+
+## E2E Verification Gap: LDAP Sync Entirely Mock (2026-07-16 Round 68)
+
+**P0 — LDAP directory sync is non-functional.** Only authentication (login) works.
+
+**What's mock/stub:**
+- `ldap_sync_config_handler.go` — GET returns hardcoded fake config, PUT doesn't persist
+- `sync_status_handler.go` — Returns hardcoded mock data (okta/azure-ad/ldap providers)
+- No `/ldap/sync-config/test`, `/ldap/sync`, `/ldap/sync-status` endpoints exist
+
+**What works:**
+- `pkg/authprovider/ldap.go` — Real LDAP authentication with connection pool, TLS, group-to-role mapping
+
+**Design document:** `docs/architecture/ldap-sync-design.md` — full architecture for config storage, sync flow, group sync, scheduler, and API endpoints.
