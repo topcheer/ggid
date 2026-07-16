@@ -93,7 +93,7 @@ export default function InactiveCleanupPage() {
           <input aria-label="threshold" type="number" value={threshold} onChange={(e) => setThreshold(parseInt(e.target.value) || 90)} min={1} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm" />
           <span className="text-sm text-gray-400">{t("big1.inactiveCleanup.days")}</span>
         </div>
-        <button onClick={fetchUsers} disabled={loading} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? t("big1.inactiveCleanup.loading") : t("big1.inactiveCleanup.refresh")}</button>
+        <button aria-label="action" onClick={fetchUsers} disabled={loading} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? t("big1.inactiveCleanup.loading") : t("big1.inactiveCleanup.refresh")}</button>
         {selectedIds.size > 0 && (
           <button onClick={() => setShowConfirm(true)} className="px-3 py-1.5 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 flex items-center gap-2"><Play className="w-4 h-4" />{t("big1.inactiveCleanup.scheduleCleanup")}{selectedIds.size})</button>
         )}
@@ -172,7 +172,7 @@ export default function InactiveCleanupPage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">{t("big1.inactiveCleanup.cancel")}</button>
-              <button onClick={scheduleCleanup} disabled={scheduling} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50">{scheduling ? t("big1.inactiveCleanup.scheduling") : t("big1.inactiveCleanup.scheduleCleanup")}</button>
+              <button aria-label="action" onClick={scheduleCleanup} disabled={scheduling} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50">{scheduling ? t("big1.inactiveCleanup.scheduling") : t("big1.inactiveCleanup.scheduleCleanup")}</button>
             </div>
           </div>
         </div>

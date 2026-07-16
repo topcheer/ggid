@@ -560,7 +560,7 @@ export default function ConsentPage() {
                 onClick={handleSaveText}
                 disabled={savingText}
                 className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-              >
+               aria-label="RefreshCw">
                 {savingText ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 {savingText ? "Saving..." : "Save Text"}
               </button>

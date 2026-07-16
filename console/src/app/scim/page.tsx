@@ -306,7 +306,7 @@ export default function ScimPage() {
         <button
           onClick={loadApps}
           className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600"
-        >
+         aria-label="RefreshCw">
           <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
         </button>
       </div>
@@ -555,7 +555,7 @@ export default function ScimPage() {
               <button
                 onClick={addMapping}
                 className="flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-500 hover:border-brand-400 hover:text-brand-600 dark:border-gray-600 dark:text-gray-400"
-              >
+               aria-label="Plus">
                 <Plus className="h-3.5 w-3.5" /> {t("scim.addMapping")}
               </button>
             </div>

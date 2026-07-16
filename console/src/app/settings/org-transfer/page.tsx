@@ -123,7 +123,7 @@ export default function OrgTransferPage() {
               <div className="rounded-lg border dark:border-gray-800 p-4">
                 <div className="flex items-center gap-2 mb-3"><Building2 className="w-4 h-4 text-gray-400" /><span className="text-sm text-gray-500">Current: <span className="font-medium text-gray-700 dark:text-gray-300">{selectedUser.org_name}</span> ({selectedUser.role})</span></div>
                 <div className="flex items-center gap-2 mb-3"><ArrowRightLeft className="w-4 h-4 text-blue-400" /><span className="text-sm text-gray-500">Transfer to:</span><input aria-label="new-org-uuid" type="text" value={newOrgId} onChange={(e) => setNewOrgId(e.target.value)} placeholder="new-org-uuid" className="flex-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
-                <button onClick={previewImpact} disabled={!newOrgId || previewing} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{previewing ? "Previewing..." : "Preview Impact"}</button>
+                <button aria-label="action" onClick={previewImpact} disabled={!newOrgId || previewing} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{previewing ? "Previewing..." : "Preview Impact"}</button>
                 {previewing && (
                   <div className="mt-2 rounded-lg border dark:border-gray-800 p-3 text-center">
                     <div className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-1" />
@@ -166,7 +166,7 @@ export default function OrgTransferPage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">{executing ? "Transferring..." : "Confirm Transfer"}</button>
+              <button aria-label="action" onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">{executing ? "Transferring..." : "Confirm Transfer"}</button>
             </div>
           </div>
         </div>

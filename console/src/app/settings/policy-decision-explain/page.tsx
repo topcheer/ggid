@@ -34,7 +34,7 @@ export default function PolicyDecisionExplainPage() {
           <input aria-label="doc:project" type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
           <input aria-label="access" type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
         </div>
-        <button onClick={explain} disabled={loading || !subject || !resource} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Analyzing..." : "Explain"}</button>
+        <button aria-label="Play" onClick={explain} disabled={loading || !subject || !resource} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Analyzing..." : "Explain"}</button>
       </div>
 
       {result && (<>

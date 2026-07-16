@@ -167,7 +167,7 @@ export default function TokenBindingStrategiesPage() {
             <div className="space-y-2 border rounded p-3">
               <input aria-label="Certificate name" type="text" placeholder="Certificate name" value={newThumb.certName} onChange={e => setNewThumb(prev => ({ ...prev, certName: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm" />
               <input aria-label="SHA-256 thumbprint (hex:colon)" type="text" placeholder="SHA-256 thumbprint (hex:colon)" value={newThumb.thumbprint} onChange={e => setNewThumb(prev => ({ ...prev, thumbprint: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm font-mono" />
-              <button onClick={addThumbprint} disabled={!newThumb.certName || !newThumb.thumbprint} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("tokenBindingStrategies.addToAllowlist")}</button>
+              <button aria-label="action" onClick={addThumbprint} disabled={!newThumb.certName || !newThumb.thumbprint} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("tokenBindingStrategies.addToAllowlist")}</button>
             </div>
           )}
           <div className="space-y-2">

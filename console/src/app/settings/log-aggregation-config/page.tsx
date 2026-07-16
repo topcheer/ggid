@@ -94,7 +94,7 @@ export default function LogAggregationConfigPage() {
           <button
             onClick={addOutput}
             className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
-          >
+           aria-label="Action">
             {"Add Output"}
           </button>
         </div>
@@ -127,7 +127,7 @@ export default function LogAggregationConfigPage() {
       </section>
 
       <div className="flex justify-end">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm" aria-label="Action">
           {"Save"}
         </button>
       </div>

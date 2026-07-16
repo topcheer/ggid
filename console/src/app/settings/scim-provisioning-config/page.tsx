@@ -35,7 +35,7 @@ export default function ScimProvisioningConfigPage() {
         </div>
         <div className="flex items-center gap-4">
           <span className={`px-3 py-1 rounded text-sm ${form.test_connection_status === "connected" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`} >{form.test_connection_status}</span>
-          <button onClick={handleTest} disabled={testing} className="px-4 py-1 border rounded text-sm hover:bg-gray-50">{testing ? "Testing..." : "Test Connection"}</button>
+          <button aria-label="action" onClick={handleTest} disabled={testing} className="px-4 py-1 border rounded text-sm hover:bg-gray-50">{testing ? "Testing..." : "Test Connection"}</button>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function ScimProvisioningConfigPage() {
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

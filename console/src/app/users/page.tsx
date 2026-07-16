@@ -418,13 +418,13 @@ export default function UsersPage() {
                   <button
                     onClick={handleExportCSV}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
-                  >
+                   aria-label="FileText">
                     <FileText className="h-4 w-4 text-green-600" /> {t("users.exportCsv")}
                   </button>
                   <button
                     onClick={handleExportJSON}
                     className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
-                  >
+                   aria-label="FileJson">
                     <FileJson className="h-4 w-4 text-amber-600" /> {t("users.exportJson")}
                   </button>
                 </div>
@@ -572,7 +572,7 @@ export default function UsersPage() {
             <button
               onClick={closeCsvImport}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-            >
+             aria-label="Action">
               {t("common.cancel")}
             </button>
           </div>
@@ -604,7 +604,7 @@ export default function UsersPage() {
             placeholder={"alice,alice@example.com,Pass123!\nbob,bob@example.com,Pass123!"}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm"
           />
-          <button onClick={handleImportCSV} disabled={!importText.trim()} className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50">
+          <button onClick={handleImportCSV} disabled={!importText.trim()} className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700 disabled:opacity-50" aria-label="trim">
             {t("users.importUsers")}
           </button>
           {importResult && <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{importResult}</p>}
@@ -629,7 +629,7 @@ export default function UsersPage() {
             </div>
           </div>
           <div className="mt-4 flex gap-2">
-            <button type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">{t("common.create")}</button>
+            <button aria-label="action" type="submit" className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">{t("common.create")}</button>
             <button type="button" onClick={() => setShowCreate(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-700">{t("common.cancel")}</button>
           </div>
         </form>
@@ -662,10 +662,10 @@ export default function UsersPage() {
                 <option key={r.id} value={r.id}>{r.name || r.key}</option>
               ))}
             </select>
-            <button onClick={handleBatchAssignRole} disabled={!batchRole} className="flex items-center gap-1 rounded bg-brand-600 px-2 py-1 text-xs text-white disabled:opacity-50">
+            <button onClick={handleBatchAssignRole} disabled={!batchRole} className="flex items-center gap-1 rounded bg-brand-600 px-2 py-1 text-xs text-white disabled:opacity-50" aria-label="Shield">
               <Shield className="h-3 w-3" /> {t("users.assign")}
             </button>
-            <button onClick={handleBatchDelete} className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 text-xs text-white">
+            <button onClick={handleBatchDelete} className="flex items-center gap-1 rounded bg-red-600 px-2 py-1 text-xs text-white" aria-label="Trash2">
               <Trash2 className="h-3 w-3" /> {t("common.delete")}
             </button>
           </div>

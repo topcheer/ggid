@@ -428,7 +428,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={closeDrawer}>
         <div className="rounded-lg bg-white p-6 text-red-700 dark:bg-gray-800 dark:text-red-400" onClick={(e) => e.stopPropagation()}>
           {error}
-          <button onClick={closeDrawer} className="mt-3 block text-sm text-brand-600">{t("userDetail.goBack")}</button>
+          <button aria-label="action" onClick={closeDrawer} className="mt-3 block text-sm text-brand-600">{t("userDetail.goBack")}</button>
         </div>
       </div>
     );

@@ -57,7 +57,7 @@ export default function TimelineReconstructPage() {
           <div><label className="text-sm font-medium">User ID</label><input aria-label="usr-xxxx" type="text" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="usr-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
           <div><label className="text-sm font-medium">Session ID</label><input aria-label="sess-xxxx" type="text" value={sessionId} onChange={(e) => setSessionId(e.target.value)} placeholder="sess-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
         </div>
-        <button onClick={reconstruct} disabled={loading || (!userId && !sessionId)} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {loading ? "Reconstructing..." : "Reconstruct"}</button>
+        <button aria-label="Eye" onClick={reconstruct} disabled={loading || (!userId && !sessionId)} className="px-4 py-2 rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {loading ? "Reconstructing..." : "Reconstruct"}</button>
       </div>
 
       {data && (

@@ -38,7 +38,7 @@ export default function IdpMetadataImportConfigPage() {
             <div><span className="text-xs text-gray-400">{t("big1.idpMetadataImportConfig.nameidFormat")}</span><p>{data.preview.name_id_format}</p></div>
             <div><span className="text-xs text-gray-400">{t("big1.idpMetadataImportConfig.certificates")}</span><p>{data.preview.cert_count}{t("big1.idpMetadataImportConfig.certS")}</p></div>
           </div>
-          <div className="mt-3 flex items-center gap-2"><span className={"text-xs px-2 py-0.5 rounded flex items-center gap-1 " + (data.preview.valid ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300")}>{data.preview.valid ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}{data.preview.valid ? t("big1.idpMetadataImportConfig.valid") : t("big1.idpMetadataImportConfig.invalid")}</span><button onClick={refresh} className="ml-auto px-3 py-1 bg-green-700 hover:bg-green-600 rounded text-xs">{t("big1.idpMetadataImportConfig.import")}</button></div>
+          <div className="mt-3 flex items-center gap-2"><span className={"text-xs px-2 py-0.5 rounded flex items-center gap-1 " + (data.preview.valid ? "bg-green-900 text-green-300" : "bg-red-900 text-red-300")}>{data.preview.valid ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}{data.preview.valid ? t("big1.idpMetadataImportConfig.valid") : t("big1.idpMetadataImportConfig.invalid")}</span><button aria-label="action" onClick={refresh} className="ml-auto px-3 py-1 bg-green-700 hover:bg-green-600 rounded text-xs">{t("big1.idpMetadataImportConfig.import")}</button></div>
         </div>
       )}
 

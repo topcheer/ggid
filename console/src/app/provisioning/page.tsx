@@ -891,7 +891,7 @@ function TabButton({
           ? "border-b-2 border-brand-600 text-brand-600"
           : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
       }`}
-    >
+     aria-label="Icon">
       <Icon className="h-4 w-4" />
       {label}
     </button>

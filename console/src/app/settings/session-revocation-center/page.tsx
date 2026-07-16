@@ -97,7 +97,7 @@ export default function SessionRevocationCenterPage() {
       {bulkConfirm ? (
         <div className="flex items-center gap-3 bg-red-50 rounded p-3">
           <span className="text-sm">Revoke ALL {sessions.length} sessions?</span>
-          <button onClick={bulkRevoke} className="px-3 py-1 bg-red-600 text-white rounded text-sm">{t("sessionRevocation.confirm")}</button>
+          <button aria-label="action" onClick={bulkRevoke} className="px-3 py-1 bg-red-600 text-white rounded text-sm">{t("sessionRevocation.confirm")}</button>
           <button onClick={() => setBulkConfirm(false)} className="px-3 py-1 border rounded text-sm">{t("sessionRevocation.cancel")}</button>
         </div>
       ) : (

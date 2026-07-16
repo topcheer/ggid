@@ -30,7 +30,7 @@ export default function IdentityTokenPrefetchConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">{t("idTokenPrefetch.perApp")}</h2><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("idTokenPrefetch.application")}</th><th scope="col">{t("idTokenPrefetch.prediction")}</th><th>{t("idTokenPrefetch.customInterval")}</th></tr></thead><tbody>{form.per_app_integration.map((a: AppIntegration, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-medium">{a.application_name}</td><td>{a.prediction_enabled ? "On" : "Off"}</td><td>{a.custom_interval}</td></tr>))}</tbody></table></div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

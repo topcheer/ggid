@@ -114,8 +114,8 @@ export default function IdentityRoleMiningConfigPage() {
                     </div>
                     <span className="text-xs font-medium">{Math.round(role.confidence_score * 100)}%</span>
                   </div>
-                  <button className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 rounded">{t("idRoleMiningConfig.accept")}</button>
-                  <button className="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded">{t("idRoleMiningConfig.reject")}</button>
+                  <button aria-label="action" className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 rounded">{t("idRoleMiningConfig.accept")}</button>
+                  <button aria-label="action" className="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded">{t("idRoleMiningConfig.reject")}</button>
                 </div>
               </div>
               <div className="flex flex-wrap gap-1">

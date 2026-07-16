@@ -55,7 +55,7 @@ export default function AccessRequestCenterPage() {
           </div>
           <div><label className="text-sm font-medium">{t('accessRequestCenter.justification')}</label><textarea aria-label="Text input" value={newReq.justification} onChange={e => setNewReq(prev => ({ ...prev, justification: e.target.value }))} rows={2} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">{t('accessRequestCenter.durationHours')}</label><input aria-label="new Req" type="number" min={1} max={720} value={newReq.duration} onChange={e => setNewReq(prev => ({ ...prev, duration: parseInt(e.target.value) || 24 }))} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
-          <button onClick={submit} disabled={!newReq.resource || !newReq.justification} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t('accessRequestCenter.submit')}</button>
+          <button aria-label="action" onClick={submit} disabled={!newReq.resource || !newReq.justification} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t('accessRequestCenter.submit')}</button>
         </section>
       )}
 

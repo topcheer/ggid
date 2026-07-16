@@ -652,7 +652,7 @@ export default function SAMLPage() {
           <button
             onClick={addMapping}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"
-          >
+           aria-label="Plus">
             <Plus className="h-4 w-4" /> {t("saml.addMapping")}
           </button>
         </div>

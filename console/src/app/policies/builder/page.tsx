@@ -662,7 +662,7 @@ export default function PolicyBuilderPage() {
                 onClick={handleDryRun}
                 disabled={dryRunLoading}
                 className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-              >
+               aria-label="div">
                 {dryRunLoading ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />

@@ -68,7 +68,7 @@ export default function RegisterPage() {
             <input autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className={inputCls} placeholder="••••••••" />
           </div>
 
-          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50" aria-label="UserPlus">
             {loading ? "Creating..." : <><UserPlus className="h-4 w-4" /> Create Account</>}
           </button>
 

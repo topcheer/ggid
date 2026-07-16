@@ -124,7 +124,7 @@ const [breakingChanges, setBreakingChanges] = useState([
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Version Registry</h2>
-          <button onClick={addVersion} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.apiVersioning.addVersion")}</button>
+          <button aria-label="action" onClick={addVersion} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend2.apiVersioning.addVersion")}</button>
         </div>
         <table className="w-full text-sm">
           <thead>
@@ -207,7 +207,7 @@ const [breakingChanges, setBreakingChanges] = useState([
       </section>
 
       <div className="flex justify-end gap-3">
-        <button className="px-4 py-2 border rounded text-sm">{t("backend2.apiVersioning.reset")}</button>
+        <button aria-label="action" className="px-4 py-2 border rounded text-sm">{t("backend2.apiVersioning.reset")}</button>
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Save Configuration</button>
       </div>
     </div>

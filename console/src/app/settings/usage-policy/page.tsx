@@ -118,7 +118,7 @@ export default function UsagePolicyPage() {
                     ))}
                     <div className="flex items-center gap-2">
                       <input aria-label="10.0.0.0/8" type="text" value={newIpRange} onChange={(e) => setNewIpRange(e.target.value)} placeholder="10.0.0.0/8" className="flex-1 px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
-                      <button onClick={addIpRange} className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"><Plus className="w-4 h-4" /></button>
+                      <button aria-label="Plus" onClick={addIpRange} className="p-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700"><Plus className="w-4 h-4" /></button>
                     </div>
                   </div>
                 </div>
@@ -132,7 +132,7 @@ export default function UsagePolicyPage() {
 
                 <div className="flex justify-end gap-2">
                   <button onClick={() => { setEditingId(null); setEditForm(null); }} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-                  <button onClick={saveEdit} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
+                  <button aria-label="Save" onClick={saveEdit} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
                 </div>
               </div>
             ) : (

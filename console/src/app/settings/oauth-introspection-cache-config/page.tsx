@@ -34,7 +34,7 @@ export default function OAuthIntrospectionCacheConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">Cache Stats</h2><div className="grid grid-cols-4 gap-4"><div className="text-center"><div className="text-2xl font-bold text-green-600">{form.cache_stats.hits}</div><div className="text-xs text-gray-500">Hits</div></div><div className="text-center"><div className="text-2xl font-bold text-red-600">{form.cache_stats.misses}</div><div className="text-xs text-gray-500">Misses</div></div><div className="text-center"><div className="text-2xl font-bold text-yellow-600">{form.cache_stats.evictions}</div><div className="text-xs text-gray-500">Evictions</div></div><div className="text-center"><div className="text-2xl font-bold">{form.cache_stats.size}</div><div className="text-xs text-gray-500">Size</div></div></div></div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

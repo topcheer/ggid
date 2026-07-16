@@ -123,7 +123,7 @@ export default function AccessReviewCenterPage() {
               ))}
             </div>
           </div>
-          <button onClick={createReview} disabled={!newReview.user} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.accessReviewCenter.createReview")}</button>
+          <button aria-label="action" onClick={createReview} disabled={!newReview.user} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.accessReviewCenter.createReview")}</button>
         </section>
       )}
 
@@ -161,7 +161,7 @@ export default function AccessReviewCenterPage() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-3 bg-blue-50 rounded p-3">
           <span className="text-sm">{selectedIds.size} selected</span>
-          <button onClick={bulkApprove} className="px-3 py-1 bg-green-600 text-white rounded text-sm">{t("backend3.accessReviewCenter.bulkApprove")}</button>
+          <button aria-label="action" onClick={bulkApprove} className="px-3 py-1 bg-green-600 text-white rounded text-sm">{t("backend3.accessReviewCenter.bulkApprove")}</button>
           <button onClick={() => setSelectedIds(new Set())} className="px-3 py-1 border rounded text-sm">{t("backend3.accessReviewCenter.clear")}</button>
         </div>
       )}

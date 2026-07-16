@@ -90,7 +90,7 @@ export default function AccessReviewCampaignsPage() {
               <div><label className="text-sm font-medium">Deadline</label><input aria-label="form" type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
               <label className="flex items-center gap-2 text-sm"><input aria-label="Form" type="checkbox" checked={form.auto_revoke} onChange={(e) => setForm({ ...form, auto_revoke: e.target.checked })} className="rounded" /> {t("accessReviewCampaigns.autoRevokeAfterDeadline")}</label>
             </div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">{t("accessReviewCampaigns.cancel")}</button><button onClick={create} disabled={!form.name} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{t("accessReviewCampaigns.create")}</button></div>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">{t("accessReviewCampaigns.cancel")}</button><button onClick={create} disabled={!form.name} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50" aria-label="Action">{t("accessReviewCampaigns.create")}</button></div>
           </div>
         </div>
       )}

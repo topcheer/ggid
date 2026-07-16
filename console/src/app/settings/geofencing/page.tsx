@@ -55,7 +55,7 @@ export default function GeofencingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold flex items-center gap-2"><Globe className="w-6 h-6 text-blue-500" /> {t("geofencing.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure geo-based access rules with country/region controls.</p></div>
-        <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Rules"}</button>
+        <button aria-label="Save" onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Rules"}</button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -63,7 +63,7 @@ export default function PolicyExportPage() {
         <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
           <h3 className="font-semibold flex items-center gap-2"><Download className="w-4 h-4 text-blue-500" /> Export</h3>
           <p className="text-sm text-gray-500">Download all policies, roles, and permission rules as a JSON package.</p>
-          <button onClick={doExport} disabled={exporting} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Download className="w-4 h-4" /> {exporting ? "Exporting..." : "Export All Policies"}</button>
+          <button aria-label="Download" onClick={doExport} disabled={exporting} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Download className="w-4 h-4" /> {exporting ? "Exporting..." : "Export All Policies"}</button>
         </div>
 
         {/* Import */}
@@ -72,7 +72,7 @@ export default function PolicyExportPage() {
           <textarea aria-label="Paste JSON policy package..." value={importJson} onChange={(e) => setImportJson(e.target.value)} placeholder="Paste JSON policy package..." rows={5} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
           <div className="flex items-center gap-2">
             <button onClick={previewImport} disabled={!importJson || importing} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> Preview Diff</button>
-            {diff && <button onClick={doImport} disabled={importing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Upload className="w-4 h-4" /> {importing ? "Importing..." : "Execute Import"}</button>}
+            {diff && <button aria-label="action" onClick={doImport} disabled={importing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Upload className="w-4 h-4" /> {importing ? "Importing..." : "Execute Import"}</button>}
           </div>
         </div>
       </div>

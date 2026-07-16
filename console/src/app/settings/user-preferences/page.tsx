@@ -144,7 +144,7 @@ export default function UserPreferencesPage() {
           </div>
 
           <div className="flex justify-end">
-            <button onClick={save} disabled={saving || layoutError} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Preferences"}</button>
+            <button aria-label="Save" onClick={save} disabled={saving || layoutError} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Preferences"}</button>
           </div>
         </div>
       )}

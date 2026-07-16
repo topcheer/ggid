@@ -113,7 +113,7 @@ export default function TokenBindingConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Per-Client Overrides</h2>
-          <button onClick={addOverride} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend.tokenBindingConfig.addOverride")}</button>
+          <button aria-label="action" onClick={addOverride} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{t("backend.tokenBindingConfig.addOverride")}</button>
         </div>
         <div className="space-y-3">
           {overrides.map((o, idx) => (

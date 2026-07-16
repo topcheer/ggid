@@ -80,7 +80,7 @@ export default function ClientRateLimitsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
+            <button aria-label="Save" onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
             <button onClick={() => fetchConfig(selectedId)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm flex items-center gap-2"><RotateCcw className="w-4 h-4" /> Reset</button>
             {saved && <span className="text-sm text-green-600">Saved!</span>}
           </div>

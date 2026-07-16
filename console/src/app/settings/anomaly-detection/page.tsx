@@ -59,7 +59,7 @@ export default function AnomalyDetectionPage() {
     <div className="p-8">
       <div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4">
         <p className="text-red-700 dark:text-red-400 text-sm font-medium">{t("common.error")}: {error}</p>
-        <button onClick={fetchData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("common.retry")}</button>
+        <button aria-label="action" onClick={fetchData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("common.retry")}</button>
       </div>
     </div>
   );

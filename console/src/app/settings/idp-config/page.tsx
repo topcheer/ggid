@@ -163,7 +163,7 @@ export default function IdPConfigPage() {
             onClick={handleSaveAll}
             disabled={saving}
             className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
+           aria-label="Loader2">
             {saving ? <Loader2 className="mr-1 inline h-4 w-4 animate-spin" /> : <Save className="mr-1 inline h-4 w-4" />}{t("big1.idpConfig.saveAll")}</button>
         </div>
       </div>

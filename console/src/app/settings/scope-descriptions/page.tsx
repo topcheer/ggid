@@ -99,7 +99,7 @@ export default function ScopeDescriptionsPage() {
                   <h3 className="font-semibold font-mono text-sm">{s.scope}</h3>
                   <div className="flex items-center gap-2">
                     <button onClick={() => setEditScope(null)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-                    <button onClick={saveEdit} disabled={saving} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
+                    <button aria-label="Save" onClick={saveEdit} disabled={saving} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

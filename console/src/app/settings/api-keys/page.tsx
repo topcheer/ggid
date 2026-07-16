@@ -189,7 +189,7 @@ export default function ApiKeysPage() {
           <button
             onClick={loadKeys}
             className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
+           aria-label="RefreshCw">
             <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
           </button>
           <button
@@ -404,7 +404,7 @@ export default function ApiKeysPage() {
                 <button
                   onClick={copyNewKey}
                   className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
+                 aria-label="Check">
                   {keyCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   {keyCopied ? t("apiKeys.copied") : t("apiKeys.copy")}
                 </button>

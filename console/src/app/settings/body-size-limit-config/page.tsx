@@ -85,7 +85,7 @@ export default function BodySizeLimitConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{"Route Overrides"}</h2>
-          <button onClick={addRoute} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Route"}</button>
+          <button aria-label="action" onClick={addRoute} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Route"}</button>
         </div>
         <div className="space-y-3">
           {routes.map((route, index) => (
@@ -116,7 +116,7 @@ export default function BodySizeLimitConfigPage() {
       </section>
 
       <div className="flex justify-end">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm" aria-label="Action">
           {"Save"}
         </button>
       </div>

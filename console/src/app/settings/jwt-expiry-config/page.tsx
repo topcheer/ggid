@@ -117,7 +117,7 @@ export default function JwtExpiryConfigPage() {
             <input aria-label="client-id" type="text" placeholder="client-id" value={newOverride.clientId} onChange={e => setNewOverride(prev => ({ ...prev, clientId: e.target.value }))} className="flex-1 border rounded px-2 py-1 text-sm font-mono" />
             <input aria-label="access (s)" type="number" placeholder="access (s)" value={newOverride.accessTokenExpiry} onChange={e => setNewOverride(prev => ({ ...prev, accessTokenExpiry: parseInt(e.target.value) || 15 }))} className="w-28 border rounded px-2 py-1 text-sm" />
             <input aria-label="refresh (s)" type="number" placeholder="refresh (s)" value={newOverride.refreshTokenExpiry} onChange={e => setNewOverride(prev => ({ ...prev, refreshTokenExpiry: parseInt(e.target.value) || 43200 }))} className="w-28 border rounded px-2 py-1 text-sm" />
-            <button onClick={addOverride} disabled={!newOverride.clientId} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("big1.jwtExpiryConfig.add")}</button>
+            <button aria-label="action" onClick={addOverride} disabled={!newOverride.clientId} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("big1.jwtExpiryConfig.add")}</button>
           </div>
         )}
         <table className="w-full text-sm">

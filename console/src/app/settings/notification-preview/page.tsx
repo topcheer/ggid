@@ -60,7 +60,7 @@ export default function NotificationPreviewPage() {
         </select>
         <label className="flex items-center gap-1 text-sm"><input aria-label="Dark mode" type="checkbox" checked={darkMode} onChange={e => setDarkMode(e.target.checked)} className="rounded" />Dark mode</label>
         <label className="flex items-center gap-1 text-sm"><input aria-label="Mobile preview" type="checkbox" checked={mobilePreview} onChange={e => setMobilePreview(e.target.checked)} className="rounded" />Mobile</label>
-        <button onClick={sendTest} disabled={sending} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{sending ? 'Sending...' : 'Send Test'}</button>
+        <button aria-label="action" onClick={sendTest} disabled={sending} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{sending ? 'Sending...' : 'Send Test'}</button>
       </div>
       {sendResult && <div className="text-sm p-3 rounded bg-green-50 text-green-700">{sendResult}</div>}
 

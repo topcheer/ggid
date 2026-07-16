@@ -79,7 +79,7 @@ export default function OidcIdpConfigPage() {
           <div><label className="text-sm font-medium">{t("oidcIdpConfig.clientSecret")}</label><input autoComplete="current-password" type="password" value={clientSecret} onChange={e => setClientSecret(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div><label className="text-sm font-medium">{t("oidcIdpConfig.redirectUri")}</label><input aria-label="redirect Uri" type="text" readOnly value={redirectUri} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono bg-gray-50" /></div>
-        <button onClick={testDiscovery} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? t("common.loading") : t("common.test")}</button>
+        <button aria-label="action" onClick={testDiscovery} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? t("common.loading") : t("common.test")}</button>
         {testResult && <div className={`text-sm p-3 rounded ${testResult.includes('Error') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{testResult}</div>}
       </section>
 

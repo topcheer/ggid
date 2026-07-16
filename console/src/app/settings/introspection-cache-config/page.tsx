@@ -102,7 +102,7 @@ export default function IntrospectionCacheConfigPage() {
         <h2 className="text-lg font-semibold">{t("big1.introspectionCacheConfig.invalidateByToken")}</h2>
         <div className="flex gap-3">
           <input aria-label="Paste token to invalidate..." type="text" placeholder="Paste token to invalidate..." value={invalidateToken} onChange={e => setInvalidateToken(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm font-mono" />
-          <button disabled={!invalidateToken} className="px-4 py-2 bg-red-600 text-white rounded text-sm disabled:opacity-50">{t("big1.introspectionCacheConfig.invalidate")}</button>
+          <button aria-label="action" disabled={!invalidateToken} className="px-4 py-2 bg-red-600 text-white rounded text-sm disabled:opacity-50">{t("big1.introspectionCacheConfig.invalidate")}</button>
         </div>
       </section>
     </div>

@@ -75,7 +75,7 @@ export default function ComplianceReportsPage() {
           <div><label className="text-sm font-medium">End Date</label><input aria-label="date Range" type="date" value={dateRange.end} onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div className="flex gap-3">
-          <button onClick={generate} disabled={generating} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{generating ? 'Generating...' : 'Generate Report'}</button>
+          <button aria-label="action" onClick={generate} disabled={generating} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{generating ? 'Generating...' : 'Generate Report'}</button>
           <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" className="rounded" />Schedule monthly</label>
         </div>
       </section>

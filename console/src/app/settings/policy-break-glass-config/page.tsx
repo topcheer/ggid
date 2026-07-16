@@ -40,7 +40,7 @@ export default function PolicyBreakGlassConfigPage() {
         <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.auto_revert} onChange={(e) => setForm({ ...form, auto_revert: e.target.checked })} className="w-4 h-4" /><label>Auto-Revert After Expiry</label></div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

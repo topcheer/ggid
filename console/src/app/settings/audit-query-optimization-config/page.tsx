@@ -31,7 +31,7 @@ export default function AuditQueryOptimizationConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-3"><h2 className="text-lg font-semibold">Auto Vacuum</h2><div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.auto_vacuum_config.enabled} onChange={(e) => setForm({ ...form, auto_vacuum_config: { ...form.auto_vacuum_config, enabled: e.target.checked } })} className="w-4 h-4" /><label>Enabled</label></div><div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1">Threshold (%)</label><input type="number" value={form.auto_vacuum_config.threshold_pct} onChange={(e) => setForm({ ...form, auto_vacuum_config: { ...form.auto_vacuum_config, threshold_pct: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div><div><label className="block text-sm font-medium mb-1">Scale Factor</label><input type="number" step="0.1" value={form.auto_vacuum_config.scale_factor} onChange={(e) => setForm({ ...form, auto_vacuum_config: { ...form.auto_vacuum_config, scale_factor: parseFloat(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div></div></div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

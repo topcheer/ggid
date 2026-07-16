@@ -221,7 +221,7 @@ export default function ClientMigrationPage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"><Play className="w-4 h-4" /> {executing ? "Executing..." : "Execute"}</button>
+              <button aria-label="Play" onClick={execute} disabled={executing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1"><Play className="w-4 h-4" /> {executing ? "Executing..." : "Execute"}</button>
             </div>
           </div>
         </div>

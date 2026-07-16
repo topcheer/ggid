@@ -81,7 +81,7 @@ export default function SiemIntegrationPage() {
           <div><label className="block text-sm font-medium mb-1">{t("siem.endpoint")}</label><input aria-label="endpoint" type="text" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
           <div><label className="block text-sm font-medium mb-1">{t("siem.logFormat")}</label><select aria-label="log Format" value={logFormat} onChange={(e) => setLogFormat(e.target.value)} className="border rounded px-3 py-2 w-full"><option>CEF</option><option>JSON</option><option>LEEF</option></select></div>
         </div>
-        <div className="flex items-center gap-4"><button onClick={handleTest} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{testing ? t("siem.testing") : t("siem.testConnection")}</button>{testResult && <span className="text-sm text-green-600">{testResult}</span>}</div>
+        <div className="flex items-center gap-4"><button aria-label="action" onClick={handleTest} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{testing ? t("siem.testing") : t("siem.testConnection")}</button>{testResult && <span className="text-sm text-green-600">{testResult}</span>}</div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">

@@ -61,7 +61,7 @@ export default function PolicySimulationPage() {
         <div className="rounded-lg border dark:border-gray-800 p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">{t("policySimulation.proposedRules")} ({rules.length})</h3>
-            <button onClick={addRule} className="p-1 rounded bg-blue-600 text-white"><Plus className="w-4 h-4" /></button>
+            <button aria-label="Plus" onClick={addRule} className="p-1 rounded bg-blue-600 text-white"><Plus className="w-4 h-4" /></button>
           </div>
           <div className="space-y-2">
             {rules.map((r) => (
@@ -86,7 +86,7 @@ export default function PolicySimulationPage() {
 
         {/* Results */}
         <div className="space-y-3">
-          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={retry} className="text-xs underline hover:text-red-700">{t("policySimulation.retry")}</button></div>}
+          {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button aria-label="action" onClick={retry} className="text-xs underline hover:text-red-700">{t("policySimulation.retry")}</button></div>}
           {running && (
             <div className="rounded-lg border dark:border-gray-800 p-8 text-center">
               <div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" />

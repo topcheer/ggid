@@ -68,7 +68,7 @@ export default function BulkOperationsPage() {
         <input aria-label="Input field" type="file" accept=".csv" className="text-sm" />
         <textarea aria-label="username,email,role&#10;alice,alice@ggid.io,developer&#10;bob,bob@ggid.io,auditor" value={csvPreview} onChange={e => setCsvPreview(e.target.value)} rows={5} placeholder="username,email,role&#10;alice,alice@ggid.io,developer&#10;bob,bob@ggid.io,auditor" className="w-full border rounded px-3 py-2 text-sm font-mono" />
         <div className="flex gap-3">
-          <button onClick={runOp} disabled={running} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{running ? 'Running...' : 'Run Operation'}</button>
+          <button aria-label="action" onClick={runOp} disabled={running} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{running ? 'Running...' : 'Run Operation'}</button>
           <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" className="rounded" />Schedule for later</label>
         </div>
       </section>

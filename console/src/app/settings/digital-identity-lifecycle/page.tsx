@@ -186,7 +186,7 @@ export default function DigitalIdentityLifecyclePage() {
               <option value="deprovision">{t("digitalIdLifecycle.deprovision")}</option>
             </select>
             <textarea aria-label="Enter user emails (one per line)" placeholder="Enter user emails (one per line)" rows={4} className="w-full border rounded px-3 py-2 text-sm" />
-            <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{t("digitalIdLifecycle.applyToAll")}</button>
+            <button aria-label="action" className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{t("digitalIdLifecycle.applyToAll")}</button>
           </div>
         </section>
       </div>

@@ -143,7 +143,7 @@ export default function CloneTemplatePage() {
               ))}
             </div>
           </div>
-          <button onClick={previewTemplate} disabled={!selectedUserId || loading} className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? "Loading..." : "Preview Template"}</button>
+          <button aria-label="action" onClick={previewTemplate} disabled={!selectedUserId || loading} className="w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? "Loading..." : "Preview Template"}</button>
         </div>
 
         {/* Template preview */}
@@ -245,7 +245,7 @@ export default function CloneTemplatePage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={createFromTemplate} disabled={!selectedTemplateId || !targetUsername || creating} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">{creating ? "Creating..." : "Create User"}</button>
+              <button aria-label="action" onClick={createFromTemplate} disabled={!selectedTemplateId || !targetUsername || creating} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50">{creating ? "Creating..." : "Create User"}</button>
             </div>
           </div>
         </div>

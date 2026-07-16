@@ -48,7 +48,7 @@ export default function GrantTypeStatsPage() {
         <p className="text-sm text-gray-500 mt-1">{t("big1.grantTypeStats.oauthGrantTypeDistributionAnd30DayTrends")}</p>
       </div>
 
-      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">{t("big1.grantTypeStats.retry")}</button></div>}
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> {error}</span><button aria-label="action" onClick={fetchData} className="text-xs underline hover:text-red-700">{t("big1.grantTypeStats.retry")}</button></div>}
 
       {loading && <div className="rounded-lg border dark:border-gray-800 p-8 text-center"><div className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin text-blue-600 mb-2" /><div className="text-sm text-gray-500">{t("big1.grantTypeStats.loadingStats")}</div></div>}
 

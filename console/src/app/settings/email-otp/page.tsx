@@ -95,7 +95,7 @@ export default function EmailOTPPage() {
                 <label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Allowed Domains</label>
                 <div className="flex gap-2">
                   <input aria-label="example.com" value={domainInput} onChange={(e) => setDomainInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addDomain()} placeholder="example.com" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
-                  <button onClick={addDomain} className="rounded-lg bg-gray-100 px-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-300"><Plus className="h-4 w-4" /></button>
+                  <button aria-label="Plus" onClick={addDomain} className="rounded-lg bg-gray-100 px-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-300"><Plus className="h-4 w-4" /></button>
                 </div>
                 {config.allowed_domains.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">

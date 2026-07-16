@@ -173,7 +173,7 @@ export default function TenantSettingsPage() {
             onClick={handleSave}
             disabled={saving}
             className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-          >
+           aria-label="Save">
             <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>

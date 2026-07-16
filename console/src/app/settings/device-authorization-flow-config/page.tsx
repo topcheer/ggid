@@ -52,7 +52,7 @@ export default function DeviceAuthorizationFlowConfigPage() {
         </div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? t("big1.deviceAuthorizationFlowConfig.saving") : t("big1.deviceAuthorizationFlowConfig.saveChanges")}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? t("big1.deviceAuthorizationFlowConfig.saving") : t("big1.deviceAuthorizationFlowConfig.saveChanges")}</button>
     </div>
   );
 }

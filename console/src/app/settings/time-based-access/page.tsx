@@ -147,7 +147,7 @@ export default function TimeBasedAccessPage() {
                 <label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Allowed Roles</label>
                 <div className="flex gap-2">
                   <input aria-label="role name" value={roleInput} onChange={(e) => setRoleInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addRole()} placeholder="role name" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
-                  <button onClick={addRole} className="rounded-lg bg-gray-100 px-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-300"><Plus className="h-4 w-4" /></button>
+                  <button aria-label="Plus" onClick={addRole} className="rounded-lg bg-gray-100 px-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-300"><Plus className="h-4 w-4" /></button>
                 </div>
                 {editing.allowed_roles.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">

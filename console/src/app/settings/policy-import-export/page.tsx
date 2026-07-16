@@ -39,7 +39,7 @@ export default function PolicyImportExportPage() {
                 <button className="flex-1 px-3 py-2 bg-gray-800 rounded-lg text-xs font-medium">YAML</button>
               </div>
             </div>
-            <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("policyImportExport.export")}</button>
+            <button aria-label="action" className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("policyImportExport.export")}</button>
           </div>
         </div>
 

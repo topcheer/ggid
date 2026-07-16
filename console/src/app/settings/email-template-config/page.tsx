@@ -20,7 +20,7 @@ export default function EmailTemplateConfigPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-6">
         <div><h1 className="text-2xl font-bold">{t("big1.emailTemplateConfig.title")}</h1><p className="text-sm text-gray-400 mt-1">{t("big1.emailTemplateConfig.customizeSystemEmails")}</p></div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("big1.emailTemplateConfig.save")}</button>
+        <button aria-label="action" onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("big1.emailTemplateConfig.save")}</button>
       </div>
 
       <div className="flex gap-2 mb-4">

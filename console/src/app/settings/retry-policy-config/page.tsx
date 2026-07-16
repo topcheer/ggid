@@ -111,7 +111,7 @@ export default function RetryPolicyConfigPage() {
           <button
             onClick={addRetryOn}
             className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
-          >
+           aria-label="Action">
             {"Add Retry On"}
           </button>
         </div>
@@ -123,7 +123,7 @@ export default function RetryPolicyConfigPage() {
           <button
             onClick={addRoute}
             className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
-          >
+           aria-label="Action">
             {"Add Route"}
           </button>
         </div>
@@ -164,7 +164,7 @@ export default function RetryPolicyConfigPage() {
       </section>
 
       <div className="flex justify-end">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm" aria-label="Action">
           {"Save"}
         </button>
       </div>

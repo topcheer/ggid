@@ -133,7 +133,7 @@ const [filters, setFilters] = useState<FilterRule[]>([
               <input aria-label="new Dest" type="number" min={1} max={1000} value={newDest.batchSize} onChange={e => setNewDest(prev => ({ ...prev, batchSize: parseInt(e.target.value) || 100 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
-          <button onClick={addDestination} disabled={!newDest.name || !newDest.url} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("siemForwarder.addDestination")}</button>
+          <button aria-label="action" onClick={addDestination} disabled={!newDest.name || !newDest.url} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("siemForwarder.addDestination")}</button>
         </section>
       )}
 

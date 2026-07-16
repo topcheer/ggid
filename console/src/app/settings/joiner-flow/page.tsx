@@ -67,7 +67,7 @@ export default function JoinerFlowPage() {
   const tasksDone = form.preboarding.filter((t) => t.done).length;
 
   if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>);
-  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">{t("big1.joinerFlow.error")}{error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("big1.joinerFlow.retry")}</button></div></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">{t("big1.joinerFlow.error")}{error}</p><button aria-label="action" onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("big1.joinerFlow.retry")}</button></div></div>);
 
   return (
     <div className="space-y-6">
@@ -113,7 +113,7 @@ export default function JoinerFlowPage() {
 
       <div className="flex items-center gap-3">
         <span className={`px-2 py-0.5 rounded text-xs ${statusColors[submitted ? "in_progress" : form.status]}`}>{submitted ? t("big1.joinerFlow.inProgress") : form.status}</span>
-        <button onClick={submit} disabled={!form.employee_id || !form.start_date || submitted} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Rocket className="w-4 h-4" /> {submitted ? t("big1.joinerFlow.started") : t("big1.joinerFlow.startOnboarding")}</button>
+        <button aria-label="action" onClick={submit} disabled={!form.employee_id || !form.start_date || submitted} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Rocket className="w-4 h-4" /> {submitted ? t("big1.joinerFlow.started") : t("big1.joinerFlow.startOnboarding")}</button>
       </div>
     </div>
   );

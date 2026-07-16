@@ -117,7 +117,7 @@ export default function SodRulesConfigPage() {
             <select aria-label="Select option" value={newRule.conflictLevel} onChange={e => setNewRule(prev => ({ ...prev, conflictLevel: e.target.value }))} className="border rounded px-2 py-1 text-sm">
               {levels.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
-            <button onClick={addRule} disabled={!newRule.roleA || !newRule.roleB} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.sodRulesConfig.add")}</button>
+            <button aria-label="action" onClick={addRule} disabled={!newRule.roleA || !newRule.roleB} className="px-3 py-1 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.sodRulesConfig.add")}</button>
           </div>
         )}
 

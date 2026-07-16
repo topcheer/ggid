@@ -148,7 +148,7 @@ export default function DeviceBindingConfigPage() {
             <p className="text-sm text-gray-600">Unbind <strong>{unbindTarget.deviceName}</strong> ({unbindTarget.platform})? The user will need to re-bind this device for authentication.</p>
             <div className="flex justify-end gap-3">
               <button onClick={() => setUnbindTarget(null)} className="px-4 py-2 border rounded text-sm">{t("backend.deviceBindingConfig.cancel")}</button>
-              <button onClick={confirmUnbind} className="px-4 py-2 bg-red-600 text-white rounded text-sm">{t("backend.deviceBindingConfig.confirmUnbind")}</button>
+              <button aria-label="action" onClick={confirmUnbind} className="px-4 py-2 bg-red-600 text-white rounded text-sm">{t("backend.deviceBindingConfig.confirmUnbind")}</button>
             </div>
           </div>
         </div>

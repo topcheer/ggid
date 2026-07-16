@@ -58,7 +58,7 @@ export default function OnboardingWizardPage() {
             <button onClick={prev} disabled={current === 0} className="px-4 py-2 border rounded text-sm disabled:opacity-50">Previous</button>
             <div className="flex gap-2">
               {current < 6 && <button onClick={skip} className="px-4 py-2 text-gray-500 text-sm">Skip</button>}
-              <button onClick={next} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{current === 6 ? 'Complete Setup' : 'Next'}</button>
+              <button aria-label="action" onClick={next} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">{current === 6 ? 'Complete Setup' : 'Next'}</button>
             </div>
           </div>
         </section>

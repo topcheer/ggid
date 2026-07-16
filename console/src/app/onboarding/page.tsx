@@ -156,7 +156,7 @@ export default function OnboardingPage() {
                 <button onClick={() => { setStep(1); }} className="text-sm text-gray-400 hover:text-gray-600">
                   {t("common.skip") || "Skip"}
                 </button>
-                <button onClick={handleCreateOrg} disabled={loading || !orgName} className={btnCls + " ml-auto"}>
+                <button onClick={handleCreateOrg} disabled={loading || !orgName} className={btnCls + " ml-auto"} aria-label="ArrowRight">
                   {loading ? t("common.loading") : "Continue"} <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -185,7 +185,7 @@ export default function OnboardingPage() {
                 <button onClick={() => { setStep(2); }} className="text-sm text-gray-400 hover:text-gray-600">
                   {t("common.skip") || "Skip"}
                 </button>
-                <button onClick={handleCreateUser} disabled={loading || !userName} className={btnCls + " ml-auto"}>
+                <button onClick={handleCreateUser} disabled={loading || !userName} className={btnCls + " ml-auto"} aria-label="ArrowRight">
                   {loading ? t("common.loading") : "Continue"} <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
@@ -208,7 +208,7 @@ export default function OnboardingPage() {
                     <button onClick={() => { handleFinish(); }} className="text-sm text-gray-400 hover:text-gray-600">
                       {t("common.skip") || "Skip"}
                     </button>
-                    <button onClick={handleCreateApiKey} disabled={loading} className={btnCls + " ml-auto"}>
+                    <button onClick={handleCreateApiKey} disabled={loading} className={btnCls + " ml-auto"} aria-label="KeyRound">
                       <KeyRound className="h-4 w-4" /> {t("onboarding.generateKey") || "Generate Key"}
                     </button>
                   </div>
@@ -223,7 +223,7 @@ export default function OnboardingPage() {
                       <button onClick={() => navigator.clipboard.writeText(generatedKey)} className="rounded-lg border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">{t("common.copy") || "Copy"}</button>
                     </div>
                   </div>
-                  <button onClick={handleFinish} className={btnCls + " w-full justify-center"}>
+                  <button onClick={handleFinish} className={btnCls + " w-full justify-center"} aria-label="Rocket">
                     <Rocket className="h-4 w-4" /> {t("onboarding.finish") || "Go to Dashboard"}
                   </button>
                 </>

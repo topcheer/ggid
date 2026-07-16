@@ -66,7 +66,7 @@ export default function RevokeCascadePage() {
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-md"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" /><input aria-label="Enter token or token ID..." type="text" value={tokenInput} onChange={(e) => setTokenInput(e.target.value)} placeholder="Enter token or token ID..." className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-        <button onClick={lookup} disabled={loading || !tokenInput} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? "Looking up..." : "Lookup"}</button>
+        <button aria-label="action" onClick={lookup} disabled={loading || !tokenInput} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? "Looking up..." : "Lookup"}</button>
       </div>
 
       {tree && (
@@ -88,7 +88,7 @@ export default function RevokeCascadePage() {
           <div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-red-500" /> Confirm Cascade Revoke</h3><button onClick={() => setShowConfirm(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button></div>
             <div className="px-6 py-4 text-sm space-y-2"><p>This will revoke <span className="font-bold text-red-600">{countNodes(tree)}</span> tokens in the cascade chain.</p><p className="text-red-600">All derived tokens will be immediately invalidated. Users will need to re-authenticate.</p></div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button><button onClick={revokeAll} disabled={revoking} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50">{revoking ? "Revoking..." : "Revoke All"}</button></div>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button><button onClick={revokeAll} disabled={revoking} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50" aria-label="Action">{revoking ? "Revoking..." : "Revoke All"}</button></div>
           </div>
         </div>
       )}

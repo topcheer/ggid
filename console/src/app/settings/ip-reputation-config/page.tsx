@@ -120,7 +120,7 @@ export default function IpReputationConfigPage() {
         <div className="flex flex-wrap gap-2">
           {asnBlocklist.map(a => <div key={a} className="flex items-center gap-1"><span className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs font-mono">{a}</span><button onClick={() => removeAsn(a)} className="text-red-600 text-xs">{t("big1.ipReputationConfig.x")}</button></div>)}
         </div>
-        <div className="flex gap-2"><input aria-label="AS12345" type="text" placeholder="AS12345" value={newAsn} onChange={e => setNewAsn(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={addAsn} className="px-3 py-1 bg-red-600 text-white rounded text-sm">{t("big1.ipReputationConfig.add")}</button></div>
+        <div className="flex gap-2"><input aria-label="AS12345" type="text" placeholder="AS12345" value={newAsn} onChange={e => setNewAsn(e.target.value)} className="flex-1 border rounded px-2 py-1 text-sm font-mono" /><button onClick={addAsn} className="px-3 py-1 bg-red-600 text-white rounded text-sm" aria-label="Action">{t("big1.ipReputationConfig.add")}</button></div>
       </section>
     </div>
   );

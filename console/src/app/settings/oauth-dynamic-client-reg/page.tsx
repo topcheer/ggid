@@ -98,7 +98,7 @@ export default function OAuthDynamicClientRegPage() {
             </div>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded">{t("oauthDCR.cancel")}</button>
-              <button onClick={handleRegister} className="px-4 py-2 bg-blue-600 text-white rounded">{t("oauthDCR.register")}</button>
+              <button aria-label="action" onClick={handleRegister} className="px-4 py-2 bg-blue-600 text-white rounded">{t("oauthDCR.register")}</button>
             </div>
           </div>
         </div>

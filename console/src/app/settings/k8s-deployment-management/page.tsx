@@ -100,7 +100,7 @@ export default function K8sDeploymentManagementPage() {
                   <button onClick={() => scale(d.name, 1)} className="px-2 py-1 text-xs border rounded">+1</button>
                   <button onClick={() => scale(d.name, -1)} className="px-2 py-1 text-xs border rounded">-1</button>
                   <button onClick={() => restart(d.name)} className="px-2 py-1 text-xs bg-blue-600 text-white rounded">{"Restart"}</button>
-                  <button className="px-2 py-1 text-xs border rounded">{"Edit"}</button>
+                  <button aria-label="action" className="px-2 py-1 text-xs border rounded">{"Edit"}</button>
                 </td>
               </tr>
             ))}

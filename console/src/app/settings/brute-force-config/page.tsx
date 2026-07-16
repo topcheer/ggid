@@ -55,13 +55,13 @@ export default function BruteForceConfigPage() {
   }, [config]);
 
   if (loading) return (<div className="p-8 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600" /></div>);
-  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("common.refresh")}</button></div></div>);
+  if (error) return (<div className="p-8"><div className="rounded-lg border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 p-4"><p className="text-red-700 dark:text-red-400 text-sm font-medium">Error: {error}</p><button aria-label="action" onClick={loadData} className="mt-2 px-4 py-1.5 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">{t("common.refresh")}</button></div></div>);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold flex items-center gap-2"><Lock className="w-6 h-6 text-red-500" /> {t("bruteForce.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("bruteForce.subtitle")}</p></div>
-        <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {t("common.save")}</button>
+        <button aria-label="Save" onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {t("common.save")}</button>
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-4 max-w-lg">

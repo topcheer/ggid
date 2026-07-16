@@ -417,21 +417,21 @@ export default function PoliciesPage() {
             onClick={handleExportJson}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
             title={t("policies.exportPolicy")}
-          >
+           aria-label="Download">
             <Download className="h-4 w-4" /> {t("policies.export")}
           </button>
           <button
             onClick={handleExportAllJson}
             className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-gray-200"
             title={t("policies.exportAll")}
-          >
+           aria-label="FileJson">
             <FileJson className="h-4 w-4" /> {t("policies.exportAllBtn")}
           </button>
           {selectedPolicy && (
             <button
               onClick={resetEditor}
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-            >
+             aria-label="Action">
               {t("policies.newPolicy")}
             </button>
           )}
@@ -516,7 +516,7 @@ export default function PoliciesPage() {
                 <button
                   onClick={handleCreatePolicy}
                   className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-                >
+                 aria-label="Save">
                   <Save className="h-4 w-4" /> {selectedPolicy ? t("policies.update") : t("common.create")}
                 </button>
               </div>
@@ -574,7 +574,7 @@ export default function PoliciesPage() {
               <button
                 onClick={addRule}
                 className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-              >
+               aria-label="Plus">
                 <Plus className="h-3.5 w-3.5" /> {t("policies.addRule")}
               </button>
             </div>
@@ -637,7 +637,7 @@ export default function PoliciesPage() {
                 <button
                   onClick={addRbacRole}
                   className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
+                 aria-label="Plus">
                   <Plus className="h-3.5 w-3.5" /> {t("policies.addRole")}
                 </button>
                 <button
@@ -714,7 +714,7 @@ export default function PoliciesPage() {
                 <button
                   onClick={addAbacRule}
                   className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
+                 aria-label="Plus">
                   <Plus className="h-3.5 w-3.5" /> {t("policies.addRule")}
                 </button>
                 <button
@@ -851,13 +851,13 @@ export default function PoliciesPage() {
                 <button
                   onClick={handleExportJson}
                   className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
+                 aria-label="Download">
                   <Download className="h-3.5 w-3.5" /> {t("policies.export")}
                 </button>
                 <button
                   onClick={syncJsonToRules}
                   className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
+                 aria-label="Action">
                   {t("policies.syncJsonToRules")}
                 </button>
               </div>
@@ -909,7 +909,7 @@ export default function PoliciesPage() {
               onClick={handleDryRun}
               disabled={!dryRunSubject || !dryRunResource || !dryRunAction || dryRunLoading}
               className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-            >
+             aria-label="Loader2">
               {dryRunLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {t("policies.evaluate")}
             </button>

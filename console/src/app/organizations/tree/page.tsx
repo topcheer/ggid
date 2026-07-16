@@ -746,7 +746,7 @@ export default function OrganizationTreePage() {
                 onClick={handleSaveModal}
                 disabled={saving}
                 className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-              >
+               aria-label="Action">
                 {saving ? "Saving..." : "Save"}
               </button>
             </div>

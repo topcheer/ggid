@@ -398,7 +398,7 @@ export default function GroupsPage() {
         onClick={isEdit ? handleEdit : handleCreate}
         disabled={!form.name}
         className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-      >
+       aria-label="Action">
         {isEdit ? "Save Changes" : "Create Group"}
       </button>
     </div>
@@ -509,7 +509,7 @@ export default function GroupsPage() {
               <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/50">
                 <tr>
                   <th scope="col" className="px-4 py-3 text-left">
-                    <button onClick={toggleSelectAll} className="text-gray-400 hover:text-brand-600">
+                    <button onClick={toggleSelectAll} className="text-gray-400 hover:text-brand-600" aria-label="CheckSquare">
                       {selectedIds.size === groups.length && groups.length > 0 ? (
                         <CheckSquare className="h-4 w-4 text-brand-600" />
                       ) : (
@@ -698,14 +698,14 @@ function GroupRow({
     <>
       <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selected ? "bg-brand-50/30 dark:bg-brand-900/10" : ""}`}>
         <td className="px-4 py-3">
-          <button onClick={onToggleSelect} className="text-gray-400 hover:text-brand-600">
+          <button onClick={onToggleSelect} className="text-gray-400 hover:text-brand-600" aria-label="CheckSquare">
             {selected ? <CheckSquare className="h-4 w-4 text-brand-600" /> : <Square className="h-4 w-4" />}
           </button>
         </td>
         <td className="px-4 py-3">
           <div className="flex items-center" style={{ paddingLeft: `${depth * 24}px` }}>
             {depth > 0 && <span className="mr-1 text-gray-300">|</span>}
-            <button onClick={onToggleExpand} className="mr-1.5 text-gray-400 hover:text-gray-600">
+            <button onClick={onToggleExpand} className="mr-1.5 text-gray-400 hover:text-gray-600" aria-label="ChevronDown">
               {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>
             <div>
@@ -742,10 +742,10 @@ function GroupRow({
         </td>
         <td className="px-4 py-3">
           <div className="flex justify-end gap-1">
-            <button onClick={onEdit} title="Edit" className="rounded p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600">
+            <button onClick={onEdit} title="Edit" className="rounded p-1.5 text-gray-400 hover:bg-blue-50 hover:text-blue-600" aria-label="Pencil">
               <Pencil className="h-4 w-4" />
             </button>
-            <button onClick={onDelete} title="Delete" className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
+            <button onClick={onDelete} title="Delete" className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600" aria-label="Trash2">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>

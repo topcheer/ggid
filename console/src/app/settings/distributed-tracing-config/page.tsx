@@ -114,14 +114,14 @@ export default function DistributedTracingConfigPage() {
           <button
             onClick={addBaggage}
             className="px-4 py-2 bg-blue-600 text-white rounded text-sm"
-          >
+           aria-label="Action">
             {"Add Baggage"}
           </button>
         </div>
       </section>
 
       <div className="flex justify-end">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm" aria-label="Action">
           {"Save"}
         </button>
       </div>

@@ -129,7 +129,7 @@ export default function HashChainVerificationPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Verification Actions</h2>
         <div className="flex items-center gap-4">
-          <button onClick={handleVerify} disabled={verifying} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{verifying ? "Verifying..." : "Manual Verification"}</button>
+          <button aria-label="action" onClick={handleVerify} disabled={verifying} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{verifying ? "Verifying..." : "Manual Verification"}</button>
           <button onClick={handleReAnchor} disabled={verifying} className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50">Re-Anchor Chain</button>
         </div>
         <div><label className="block text-sm font-medium mb-1">Scheduled Verification Interval (minutes)</label><input aria-label="verify Interval" type="number" value={verifyInterval} onChange={(e) => setVerifyInterval(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" /></div>

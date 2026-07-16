@@ -41,7 +41,7 @@ export default function PolicyLifecycleDashboardPage() {
         <button
           onClick={refresh}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition"
-        >
+         aria-label="Action">
           {t("policyLifecycle.refresh")}
         </button>
       </div>

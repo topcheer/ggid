@@ -40,7 +40,7 @@ export default function ApiGatewayConfigPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("backend2.gatewayConfig.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure rate limits, timeouts, CORS, and circuit breaker.</p></div>
-        <div className="flex gap-2 items-center"><button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>{saved && <span className="text-sm text-green-600">Saved!</span>}</div>
+        <div className="flex gap-2 items-center"><button aria-label="Save" onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>{saved && <span className="text-sm text-green-600">Saved!</span>}</div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

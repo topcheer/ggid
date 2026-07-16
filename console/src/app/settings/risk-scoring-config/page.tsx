@@ -62,7 +62,7 @@ export default function RiskScoringConfigPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold flex items-center gap-2"><Sliders className="w-6 h-6 text-orange-500" /> {t("riskScoringConfig.title")}</h1><p className="text-sm text-gray-500 mt-1">Configure risk scoring weights, thresholds, and automated actions.</p></div>
-        <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
+        <button aria-label="Save" onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2"><Save className="w-4 h-4" /> {saving ? "Saving..." : "Save"}</button>
       </div>
 
       {totalWeight !== 100 && <div className="rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Total weight is {totalWeight} (should be 100)</div>}

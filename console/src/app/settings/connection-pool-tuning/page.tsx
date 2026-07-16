@@ -42,7 +42,7 @@ export default function ConnectionPoolTuningPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Per-Service Pool Settings</h2>
-          <button onClick={addService} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Service"}</button>
+          <button aria-label="action" onClick={addService} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Service"}</button>
         </div>
         <div className="space-y-4">
           {pools.map((pool, index) => (
@@ -108,7 +108,7 @@ export default function ConnectionPoolTuningPage() {
       </section>
 
       <div className="flex justify-end">
-        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm" aria-label="Action">
           {"Save"}
         </button>
       </div>

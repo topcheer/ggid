@@ -107,7 +107,7 @@ export default function JITElevationPage() {
             <label className="text-sm font-medium">Justification</label>
             <textarea aria-label="Need admin access to fix production incident..." value={form.justification} onChange={(e) => setForm({ ...form, justification: e.target.value })} rows={3} placeholder="Need admin access to fix production incident..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
           </div>
-          <button onClick={submitRequest} disabled={submitting || !form.role || !form.justification} className="w-full px-4 py-2 rounded-lg bg-yellow-600 text-white text-sm font-medium hover:bg-yellow-700 disabled:opacity-50">{submitting ? "Submitting..." : "Request Elevation"}</button>
+          <button aria-label="action" onClick={submitRequest} disabled={submitting || !form.role || !form.justification} className="w-full px-4 py-2 rounded-lg bg-yellow-600 text-white text-sm font-medium hover:bg-yellow-700 disabled:opacity-50">{submitting ? "Submitting..." : "Request Elevation"}</button>
         </div>
 
         {/* Pending queue */}

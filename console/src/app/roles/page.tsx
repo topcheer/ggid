@@ -279,7 +279,7 @@ export default function RolesPage() {
             onClick={handleCreate}
             disabled={!createForm.key || !createForm.name}
             className="mt-3 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-          >
+           aria-label="Action">
             {t("roles.createBtn")}
           </button>
         </div>
@@ -335,7 +335,7 @@ export default function RolesPage() {
           <button
             onClick={handleSaveEdit}
             className="mt-3 flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-          >
+           aria-label="Pencil">
             <Pencil className="h-4 w-4" /> {t("roles.saveChanges")}
           </button>
         </div>
@@ -585,7 +585,7 @@ function PolicyChecker({
             onClick={handleCheck}
             disabled={checking || !form.user_id || !form.resource_type || !form.action}
             className="flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-          >
+           aria-label="Search">
             <Search className="h-4 w-4" />
             {checking ? t("roles.checking") : t("roles.checkPermission")}
           </button>
@@ -862,7 +862,7 @@ function TabButton({
           ? "border-b-2 border-brand-600 text-brand-600"
           : "text-gray-500 hover:text-gray-700"
       }`}
-    >
+     aria-label="Action">
       {label}
     </button>
   );
@@ -1254,7 +1254,7 @@ function ABACConditionBuilder({
           <button
             onClick={handleSave}
             className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-          >
+           aria-label="Action">
             {t("roles.savePolicy")}
           </button>
           <button

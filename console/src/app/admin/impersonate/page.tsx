@@ -563,7 +563,7 @@ export default function ImpersonatePage() {
               onClick={handleImpersonate}
               disabled={!selectedUser || reason.trim().length < 10 || submitting}
               className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+             aria-label="User">
               {submitting ? (
                 "Starting..."
               ) : (
@@ -588,7 +588,7 @@ export default function ImpersonatePage() {
                 onClick={loadHistory}
                 disabled={loadingHistory}
                 className="text-xs text-brand-600 hover:underline disabled:opacity-50"
-              >
+               aria-label="Action">
                 {loadingHistory ? "Loading..." : "Refresh"}
               </button>
             </div>

@@ -161,7 +161,7 @@ export default function EvidenceVersioningPage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={createVersion} disabled={!newDescription || creating} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{creating ? "Creating..." : "Create Version"}</button>
+              <button aria-label="action" onClick={createVersion} disabled={!newDescription || creating} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{creating ? "Creating..." : "Create Version"}</button>
             </div>
           </div>
         </div>

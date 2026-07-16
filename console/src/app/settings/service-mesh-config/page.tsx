@@ -90,7 +90,7 @@ export default function ServiceMeshConfigPage() {
         <div><label className="block text-sm font-medium mb-1">Interval (s)</label><input aria-label="form" type="number" value={form.observability_export.interval_seconds} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, interval_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-32" /></div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

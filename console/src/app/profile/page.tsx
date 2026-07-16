@@ -167,7 +167,7 @@ export default function ProfilePage() {
                   <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{mfaEnabled ? "Enabled — scan QR in your authenticator app" : "Add an extra layer of security"}</p>
                 </div>
               </div>
-              <button onClick={handleToggleMFA} className={`relative h-6 w-11 rounded-full transition-colors ${mfaEnabled ? "bg-green-500" : "bg-gray-300"}`}>
+              <button onClick={handleToggleMFA} className={`relative h-6 w-11 rounded-full transition-colors ${mfaEnabled ? "bg-green-500" : "bg-gray-300"}`} aria-label="span">
                 <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${mfaEnabled ? "left-5" : "left-0.5"}`} />
               </button>
             </div>

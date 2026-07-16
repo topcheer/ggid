@@ -58,7 +58,7 @@ export default function AdaptiveAuthDesignPage() {
         <div><label className="block text-sm font-medium mb-1">Variant B Label</label><input aria-label="form" type="text" value={form.a_b_test.variant_b_label} onChange={(e) => setForm({ ...form, a_b_test: { ...form.a_b_test, variant_b_label: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>
       </div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

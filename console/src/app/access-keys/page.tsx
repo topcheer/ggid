@@ -554,7 +554,7 @@ export default function AccessKeysPage() {
               <label className="mb-1 block text-xs font-medium text-gray-500">Your Access Key</label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 font-mono text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">{newKeySecret}</code>
-                <button onClick={copySecret} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
+                <button onClick={copySecret} className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700" aria-label="Check">
                   {keyCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}{keyCopied ? "Copied!" : "Copy"}
                 </button>
               </div>

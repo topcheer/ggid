@@ -30,7 +30,7 @@ export default function OAuthBackpressureConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow"><h2 className="text-lg font-semibold mb-4">{t("oauthBackpressure.gracefulDegradation")}</h2><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-2">{t("oauthBackpressure.metric")}</th><th scope="col">{t("oauthBackpressure.threshold")}</th><th>{t("oauthBackpressure.action")}</th></tr></thead><tbody>{form.graceful_degradation_rules.map((r: DegradationRule, i: number) => (<tr key={i} className="border-b"><td className="py-2 font-medium">{r.metric}</td><td>{r.threshold}</td><td className="text-xs">{r.action}</td></tr>))}</tbody></table></div>
 
-      <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
+      <button aria-label="action" onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>
     </div>
   );
 }

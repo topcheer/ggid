@@ -89,7 +89,7 @@ export default function DirectoryReconcilePage() {
             ))}</div>
           </div>
 
-          <button onClick={execute} disabled={executing || executed} className={`px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2 ${dryRun ? "bg-gray-600 hover:bg-gray-700" : "bg-red-600 hover:bg-red-700"} disabled:opacity-50`}><Play className="w-4 h-4" /> {executing ? "Executing..." : executed ? "Done" : dryRun ? "Simulate" : "Execute Cleanup"}</button>
+          <button aria-label="Play" onClick={execute} disabled={executing || executed} className={`px-4 py-2 rounded-lg text-white text-sm font-medium flex items-center gap-2 ${dryRun ? "bg-gray-600 hover:bg-gray-700" : "bg-red-600 hover:bg-red-700"} disabled:opacity-50`}><Play className="w-4 h-4" /> {executing ? "Executing..." : executed ? "Done" : dryRun ? "Simulate" : "Execute Cleanup"}</button>
           {executed && <span className="text-sm text-green-600 ml-2">{dryRun ? "Simulation complete." : "Cleanup executed."}</span>}
         </>
       )}

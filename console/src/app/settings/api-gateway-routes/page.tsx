@@ -73,7 +73,7 @@ export default function ApiGatewayRoutesPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Route Table</h2>
-          <button className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t("backend2.gatewayRoutes.addRoute")}</button>
+          <button aria-label="action" className="px-4 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">{t("backend2.gatewayRoutes.addRoute")}</button>
         </div>
         <table className="w-full text-sm">
           <thead><tr className="border-b text-left"><th className="py-2">{t("backend2.gatewayRoutes.path")}</th><th scope="col">{t("backend2.gatewayRoutes.methods")}</th><th>Upstream</th><th>Strip Prefix</th><th>Rate Limit</th><th>{t("backend2.gatewayRoutes.auth")}</th><th>{t("backend2.gatewayRoutes.health")}</th><th>{t("backend2.gatewayRoutes.actions")}</th></tr></thead>
@@ -87,7 +87,7 @@ export default function ApiGatewayRoutesPage() {
                 <td>{r.rate_limit}/s</td>
                 <td>{r.auth_required ? "Yes" : "No"}</td>
                 <td><span className={`inline-block w-2.5 h-2.5 rounded-full ${r.upstream_healthy ? "bg-green-500" : "bg-red-500"}`} /></td>
-                <td className="flex gap-2"><button className="text-xs text-blue-600 hover:underline">{t("backend2.gatewayRoutes.edit")}</button><button className="text-xs text-red-600 hover:underline">{t("backend2.gatewayRoutes.delete")}</button></td>
+                <td className="flex gap-2"><button aria-label="action" className="text-xs text-blue-600 hover:underline">{t("backend2.gatewayRoutes.edit")}</button><button className="text-xs text-red-600 hover:underline" aria-label="Action">{t("backend2.gatewayRoutes.delete")}</button></td>
               </tr>
             ))}
           </tbody>
@@ -99,7 +99,7 @@ export default function ApiGatewayRoutesPage() {
         <div className="flex gap-3 items-end">
           <div><label className="block text-sm font-medium mb-1">{t("backend2.gatewayRoutes.method")}</label><select aria-label="Test method" value={testMethod} onChange={(e) => setTestMethod(e.target.value)} className="border rounded px-3 py-2"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div>
           <div className="flex-1"><label className="block text-sm font-medium mb-1">{t("backend2.gatewayRoutes.path")}</label><input aria-label="/api/v1/users" type="text" value={testPath} onChange={(e) => setTestPath(e.target.value)} placeholder="/api/v1/users" className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
-          <button onClick={handleTest} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{testing ? "Sending..." : "Send"}</button>
+          <button aria-label="action" onClick={handleTest} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{testing ? "Sending..." : "Send"}</button>
         </div>
         {testResult && <pre className="bg-gray-50 rounded p-4 text-xs overflow-x-auto whitespace-pre-wrap font-mono border mt-3">{testResult}</pre>}
       </div>

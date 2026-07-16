@@ -14,7 +14,7 @@ export default function OidcClaimMappingConfigPage() {
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <div className="flex items-center justify-between mb-8">
         <div><h1 className="text-2xl font-bold">{t("oidcClaimMappingConfig.title")}</h1><p className="text-sm text-gray-400 mt-1">{t("oidcClaimMappingConfig.subtitle")}</p></div>
-        <div className="flex gap-2"><button className="flex items-center gap-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"><Plus className="w-4 h-4" /> {t("oidcClaimMapping.addClaim")}</button><button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("oidcClaimMappingConfig.save")}</button></div>
+        <div className="flex gap-2"><button aria-label="Plus" className="flex items-center gap-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition"><Plus className="w-4 h-4" /> {t("oidcClaimMapping.addClaim")}</button><button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition" aria-label="Action">{t("oidcClaimMappingConfig.save")}</button></div>
       </div>
 
       <div className="bg-gray-900 rounded-xl p-6 mb-6">

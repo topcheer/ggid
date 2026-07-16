@@ -35,7 +35,7 @@ export default function ImpersonationLogPage() {
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><UserCog className="w-6 h-6 text-orange-500" /> {t("big1.impersonationLog.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("big1.impersonationLog.trackAdminImpersonationSessions")}</p></div>
       {active > 0 && <div className="rounded-lg border border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 p-3 flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-orange-500" /><span className="font-semibold text-orange-700 dark:text-orange-400">{active}{t("big1.impersonationLog.activeImpersonationSessionS")}</span></div>}
-      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button onClick={fetchData} className="text-xs underline hover:text-red-700">{t("big1.impersonationLog.retry")}</button></div>}
+      {error && <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 flex items-center justify-between"><span>{error}</span><button aria-label="action" onClick={fetchData} className="text-xs underline hover:text-red-700">{t("big1.impersonationLog.retry")}</button></div>}
       <div className="relative max-w-xs">
         <Search className="absolute left-2 top-2.5 w-4 h-4 text-gray-400" />
         <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search user..." aria-label="Search impersonation log" className="w-full pl-8 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />

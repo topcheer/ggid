@@ -190,7 +190,7 @@ export default function BrandingSettingsPage() {
               onClick={handleSave}
               disabled={saving}
               className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-            >
+             aria-label="Loader2">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("common.save")}
             </button>
           </div>

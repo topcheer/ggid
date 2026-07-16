@@ -64,7 +64,7 @@ export default function K8sDeploymentPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{t("backend2.k8sDeployment.title")}</h1>
-        <button onClick={addDeployment} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Deployment"}</button>
+        <button aria-label="action" onClick={addDeployment} className="px-3 py-1 bg-blue-600 text-white rounded text-sm">{"Add Deployment"}</button>
       </div>
       <p className="text-gray-600">Manage Kubernetes deployment manifests and resource settings.</p>
 
@@ -93,7 +93,7 @@ export default function K8sDeploymentPage() {
                   <span className={`px-2 py-1 rounded text-xs font-medium ${statusClass(d.status)}`}>{d.status}</span>
                 </td>
                 <td className="px-4 py-3 flex gap-2">
-                  <button className="text-xs text-blue-600 hover:underline">{"Edit"}</button>
+                  <button aria-label="action" className="text-xs text-blue-600 hover:underline">{"Edit"}</button>
                   <button onClick={() => deleteDeployment(idx)} className="text-xs text-red-600 hover:underline">{"Delete"}</button>
                 </td>
               </tr>

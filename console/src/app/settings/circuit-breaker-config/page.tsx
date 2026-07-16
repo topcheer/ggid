@@ -172,7 +172,7 @@ export default function CircuitBreakerConfigPage() {
       </section>
 
       <div className="flex justify-end gap-3">
-        <button className="px-4 py-2 border rounded text-sm">{t("backend2.circuitBreakerConfig.reset")}</button>
+        <button aria-label="action" className="px-4 py-2 border rounded text-sm">{t("backend2.circuitBreakerConfig.reset")}</button>
         <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Save Configuration</button>
       </div>
     </div>

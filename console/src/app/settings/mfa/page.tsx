@@ -207,7 +207,7 @@ export default function MFAPage() {
               <button
                 onClick={startTotpEnrollment}
                 className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-              >
+               aria-label="Key">
                 <Key className="h-4 w-4" /> {t("mfa.startEnrollment")}
               </button>
             </div>
@@ -278,7 +278,7 @@ export default function MFAPage() {
                         onClick={verifyTotp}
                         disabled={verifyCode.length !== 6 || verifying}
                         className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-                      >
+                       aria-label="Loader2">
                         {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                         {t("mfa.enroll")}
                       </button>
@@ -317,7 +317,7 @@ export default function MFAPage() {
                 <button
                   onClick={copyAllCodes}
                   className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
+                 aria-label="Check">
                   {codesCopied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
                   {codesCopied ? t("settings.copied") : t("settings.copyAll")}
                 </button>

@@ -190,7 +190,7 @@ export default function PrivilegedAccessPage() {
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={batchRevoke} disabled={revoking} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"><Trash2 className="w-4 h-4" /> {revoking ? "Revoking..." : "Revoke Access"}</button>
+              <button aria-label="Trash" onClick={batchRevoke} disabled={revoking} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-1"><Trash2 className="w-4 h-4" /> {revoking ? "Revoking..." : "Revoke Access"}</button>
             </div>
           </div>
         </div>

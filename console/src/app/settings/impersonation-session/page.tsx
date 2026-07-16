@@ -62,7 +62,7 @@ export default function ImpersonationSessionPage() {
           <div><label className="text-sm font-medium">{t("big1.impersonationSession.targetUser")}</label><input aria-label="user@ggid.io" type="text" placeholder="user@ggid.io" value={newSession.target} onChange={e => setNewSession(prev => ({ ...prev, target: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">{t("big1.impersonationSession.reason")}</label><input aria-label="Why are you impersonating?" type="text" placeholder="Why are you impersonating?" value={newSession.reason} onChange={e => setNewSession(prev => ({ ...prev, reason: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">{t("big1.impersonationSession.durationMinutes")}</label><input aria-label="new Session" type="number" min={5} max={60} value={newSession.duration} onChange={e => setNewSession(prev => ({ ...prev, duration: parseInt(e.target.value) || 30 }))} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
-          <button onClick={start} disabled={!newSession.target || !newSession.reason} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("big1.impersonationSession.start")}</button>
+          <button aria-label="action" onClick={start} disabled={!newSession.target || !newSession.reason} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("big1.impersonationSession.start")}</button>
         </section>
       )}
 

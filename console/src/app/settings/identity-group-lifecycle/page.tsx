@@ -33,7 +33,7 @@ export default function IdentityGroupLifecyclePage() {
           <button className="flex items-center gap-1 px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium">
             <Download className="w-4 h-4" /> Export
           </button>
-          <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("idGroupLifecycle.refresh")}</button>
+          <button aria-label="action" onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("idGroupLifecycle.refresh")}</button>
         </div>
       </div>
 

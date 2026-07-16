@@ -18,7 +18,7 @@ export default function IdentityCertificateLifecyclePage() {
           <h1 className="text-2xl font-bold">{t("idCertLifecycle.title")}</h1>
           <p className="text-sm text-gray-400 mt-1">{t("idCertLifecycle.subtitle")}</p>
         </div>
-        <button onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("idCertLifecycle.refresh")}</button>
+        <button aria-label="action" onClick={refresh} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium transition">{t("idCertLifecycle.refresh")}</button>
       </div>
 
       {/* Summary */}

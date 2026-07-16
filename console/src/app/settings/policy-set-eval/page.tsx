@@ -51,7 +51,7 @@ export default function PolicySetEvalPage() {
           <div><label className="text-sm font-medium">Resource</label><input aria-label="doc:project-plan" type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project-plan" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
           <div><label className="text-sm font-medium">Action</label><input aria-label="access (default)" type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access (default)" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
         </div>
-        <button onClick={evaluate} disabled={loading || !subject || !resource} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Evaluating..." : "Evaluate"}</button>
+        <button aria-label="Play" onClick={evaluate} disabled={loading || !subject || !resource} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Evaluating..." : "Evaluate"}</button>
       </div>
 
       {finalDecision && (() => {

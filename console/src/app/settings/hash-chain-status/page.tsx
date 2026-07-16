@@ -110,7 +110,7 @@ const [alerts] = useState<TamperAlert[]>([
           </div>
         </div>
         <div className="flex gap-3 mt-4">
-          <button onClick={verify} disabled={verifying} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">
+          <button onClick={verify} disabled={verifying} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50" aria-label="Action">
             {verifying ? 'Verifying...' : 'Manual Verify'}
           </button>
           <button onClick={exportProof} className="px-4 py-2 border rounded text-sm">Export Chain Proof</button>

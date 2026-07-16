@@ -164,7 +164,7 @@ export default function ApiKeysPage() {
             <code className="flex-1 truncate rounded-lg bg-white px-3 py-2 font-mono text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200">
               {newKey}
             </code>
-            <button onClick={copyKey} className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
+            <button onClick={copyKey} className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700" aria-label="Check">
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </button>
             <button onClick={() => setNewKey(null)} className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:text-gray-700">

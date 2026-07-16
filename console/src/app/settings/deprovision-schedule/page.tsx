@@ -93,7 +93,7 @@ export default function DeprovisionSchedulePage() {
               <div><label className="text-sm font-medium">{t("deprovisionSchedule.notifyBefore")}</label><input aria-label="form" type="number" min={0} value={form.notify_before_days} onChange={(e) => setForm({ ...form, notify_before_days: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
               <label className="flex items-center gap-2 text-sm"><input aria-label="Form" type="checkbox" checked={form.cascade_to_apps} onChange={(e) => setForm({ ...form, cascade_to_apps: e.target.checked })} className="rounded" /> Cascade to all connected apps</label>
             </div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">{t("deprovisionSchedule.cancel")}</button><button onClick={create} disabled={!form.user_id || !form.scheduled_at} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50">{t("deprovisionSchedule.schedule")}</button></div>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800"><button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">{t("deprovisionSchedule.cancel")}</button><button onClick={create} disabled={!form.user_id || !form.scheduled_at} className="px-4 py-2 rounded-lg bg-orange-600 text-white text-sm font-medium hover:bg-orange-700 disabled:opacity-50" aria-label="Action">{t("deprovisionSchedule.schedule")}</button></div>
           </div>
         </div>
       )}

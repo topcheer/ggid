@@ -66,7 +66,7 @@ export default function ImpossibleTravelPage() {
           <span className="text-gray-400">{t("big1.impossibleTravel.to")}</span>
           <input aria-label="End date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
-        <button onClick={fetchData} disabled={loading} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? t("big1.impossibleTravel.loading") : t("big1.impossibleTravel.refresh")}</button>
+        <button aria-label="action" onClick={fetchData} disabled={loading} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? t("big1.impossibleTravel.loading") : t("big1.impossibleTravel.refresh")}</button>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

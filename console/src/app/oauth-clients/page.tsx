@@ -306,7 +306,7 @@ export default function OAuthClientsPage() {
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-              <button onClick={handleCreate} disabled={!form.client_name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+              <button onClick={handleCreate} disabled={!form.client_name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50" aria-label="Loader2">
                 {creating && <Loader2 className="h-4 w-4 animate-spin" />} {t("oauth.register")}
               </button>
             </div>
@@ -326,7 +326,7 @@ export default function OAuthClientsPage() {
             <textarea aria-label="Edit uris" value={editUris} onChange={(e) => setEditUris(e.target.value)} rows={5} className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={() => setEditClient(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
-              <button onClick={handleSaveEdit} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><RefreshCw className="h-4 w-4" /> {t("common.save")}</button>
+              <button aria-label="RefreshCw" onClick={handleSaveEdit} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><RefreshCw className="h-4 w-4" /> {t("common.save")}</button>
             </div>
           </div>
         </div>

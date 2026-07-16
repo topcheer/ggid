@@ -145,7 +145,7 @@ export default function SodConflictDetectionPage() {
               <option value="high">{t("backend3.sodConflictDetection.high")}</option>
               <option value="medium">{t("backend3.sodConflictDetection.medium")}</option>
             </select>
-            <button onClick={addRule} disabled={!newRule.ruleName} className="col-span-4 px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.sodConflictDetection.addRule")}</button>
+            <button aria-label="action" onClick={addRule} disabled={!newRule.ruleName} className="col-span-4 px-3 py-1.5 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("backend3.sodConflictDetection.addRule")}</button>
           </div>
         )}
 

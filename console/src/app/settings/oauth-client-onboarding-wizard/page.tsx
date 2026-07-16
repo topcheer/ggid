@@ -108,7 +108,7 @@ export default function OAuthClientOnboardingWizardPage() {
         {step < 5 ? (
           <button onClick={() => setStep(Math.min(5, step + 1))} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium">{t("oauthOnboarding.next")}</button>
         ) : (
-          <button className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium">{t("oauthOnboarding.completeRegistration")}</button>
+          <button aria-label="action" className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium">{t("oauthOnboarding.completeRegistration")}</button>
         )}
       </div>
     </div>
