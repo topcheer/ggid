@@ -131,7 +131,7 @@ Verified working (curl-tested, not just code review):
 - SCIM Bulk: POST creates user, returns 201 with location ✓
 - Device-bound SSO: implemented (prior rounds) ✓
 
-[FIXED] Backup Codes HTTP API — service+PG repo existed but `_ = backupCodeService` discarded in main.go; no endpoints. Wired by backend team (commit 2b238d1b): POST /generate, POST /verify, GET /remaining, MFA login fallback. Follow-up: generate endpoint argon2id×10 serial hashing exceeds gateway timeout (context canceled); parallel-hash fix assigned to docs member. Table `backup_codes` manually created; EnsureSchema startup call pending.
+[FIXED] Backup Codes HTTP API — service+PG repo existed but `_ = backupCodeService` discarded in main.go; no endpoints. Wired by backend team (commit 2b238d1b): POST /generate, POST /verify, GET /remaining, MFA login fallback. Timeout fix (37738d7a parallel hash) caused OOMKilled (10×64MB argon2id > 512Mi limit); bounded pool of 4 (a30c0d8d) + auth resource bump (CPU 200m→1000m, mem 512Mi→1Gi) resolved it. E2E verified: 10 codes generated in 2.1s, remaining=10/10, pod stable.
 
 [FIXED] Gateway Content-Type validator rejected `application/scim+json` (RFC 7644 Section 3.1 violation) — SCIM clients sending the standard media type got 415. Added /scim/ path branch accepting application/scim+json (application/json still accepted). Deployed.
 

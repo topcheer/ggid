@@ -1,13 +1,13 @@
 # Platform Scan State
 
 ## Current round: 86
-## Last scan focus: F (Functional Deep Verification) — SAML/PAR/CIBA/MFA/SCIM Bulk verified working; backup codes API wired (2b238d1b, generate timeout fix pending); gateway SCIM scim+json fix
+## Last scan focus: F (Functional Deep Verification) — SAML/PAR/CIBA/MFA/SCIM Bulk verified; backup codes API wired+E2E verified (2b238d1b/37738d7a/a30c0d8d + auth CPU 200m→1000m, mem 512Mi→1Gi); gateway SCIM scim+json fix (3443123a)
 ## Next scan focus: E2E tests (Round 86 = even round, Workflow A)
 ## Total findings: 72
-## Done: 71
+## Done: 72
 ## Fixed (pending verification): 0
 ## Partial: 0
-## Remaining: 1 (FedCM ACCEPTABLE)
+## Remaining: 1 (FedCM ACCEPTABLE) + 1 LOW (CIBA Basic auth per RFC 6749 2.3.1)
 ## Remaining (non-gap): 0
 ## Source of truth: docs/platform-completeness-report.md
 
