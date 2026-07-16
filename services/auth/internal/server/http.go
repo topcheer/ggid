@@ -40,6 +40,7 @@ type Handler struct {
 	tsHandler      *TrustStoreHandler
 	sysconfigStore sysconfig.Store
 	auditPublisher *audit.Publisher
+	waCredStore    webauthn.CredentialStore
 }
 
 // New creates a new Auth Service HTTP handler.
@@ -62,6 +63,12 @@ func New(authSvc *service.AuthService) *Handler {
 	}
 	h.registerRoutes()
 	return h
+}
+
+// SetWebAuthnCredentialStore injects a DB-backed credential store for WebAuthn.
+// Must be called before ServeHTTP / registerRoutes.
+func (h *Handler) SetWebAuthnCredentialStore(store webauthn.CredentialStore) {
+	h.waCredStore = store
 }
 
 // SetSysconfigStore injects the system config store for hot-reloadable settings.
@@ -266,7 +273,7 @@ func (h *Handler) registerRoutes() {
 		}
 		waOpts = append(waOpts, webauthn.WithIOSAppSiteAssociation(iosIDs))
 	}
-	webauthnHandler, err := webauthn.NewHandler(rpID, rpName, nil, waOpts...)
+	webauthnHandler, err := webauthn.NewHandler(rpID, rpName, h.waCredStore, waOpts...)
 	if err != nil {
 		log.Printf("warning: webauthn init failed: %v", err)
 	} else {

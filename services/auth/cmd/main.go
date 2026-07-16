@@ -211,6 +211,13 @@ func main() {
 
 	handler := server.New(authSvc)
 	handler.SetSysconfigStore(sysconfigStore)
+	// Wire DB-backed WebAuthn credential store so passkeys persist across restarts.
+	if pool != nil {
+		handler.SetWebAuthnCredentialStore(repository.NewWebAuthnCredentialStore(pool))
+		log.Println("WebAuthn: DB-backed credential store enabled")
+	} else {
+		log.Println("WebAuthn: WARNING no DB pool — credentials will not persist")
+	}
 	httpServer := &http.Server{
 		Addr:         cfg.Server.HTTP.Addr,
 		Handler:      handler,

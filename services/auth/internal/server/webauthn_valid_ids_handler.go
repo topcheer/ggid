@@ -1,12 +1,14 @@
 package server
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"strings"
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/ggid/ggid/services/auth/internal/webauthn"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -57,13 +59,14 @@ func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Get tenant from context or use default.
+	// Require tenant from context — no fallback to default tenant.
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil || tc == nil {
-		tc = &ggidtenant.Context{TenantID: uuid.MustParse("00000000-0000-0000-0000-000000000001")}
+		writeError(w, http.StatusBadRequest, "tenant context required")
+		return
 	}
 
-	// Get user display info.
+	// Get user display info from identity service.
 	var userName, displayName string
 	if h.authSvc != nil {
 		if ic := h.authSvc.IdentityClient(); ic != nil {
@@ -89,27 +92,43 @@ func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request)
 	// WebAuthn user handle: user UUID bytes as base64url.
 	userHandle := base64.RawURLEncoding.EncodeToString(userID[:])
 
-	// Collect credential IDs.
-	credIDSet := make(map[string]bool)
+	// Collect credential IDs from the DB-backed credential store.
+	var credentialIDs []string
 
-	// 1. Check in-memory passkey store.
+	if h.waCredStore != nil {
+		creds, err := h.waCredStore.GetCredentialsByUser(r.Context(), tc.TenantID, userID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal server error")
+			return
+		}
+		for _, c := range creds {
+			if len(c.CredentialID) > 0 {
+				credentialIDs = append(credentialIDs, base64.RawURLEncoding.EncodeToString(c.CredentialID))
+			}
+		}
+	}
+
+	// Also check in-memory passkey store as fallback (for dev/test without DB).
 	pkMu.RLock()
 	for _, cred := range pkCredentials {
 		if cred.UserID == userIDStr && !cred.Revoked {
-			credIDSet[cred.ID] = true
+			// Avoid duplicates.
+			found := false
+			for _, existing := range credentialIDs {
+				if existing == cred.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				credentialIDs = append(credentialIDs, cred.ID)
+			}
 		}
 	}
 	pkMu.RUnlock()
 
-	// 2. DB-backed webauthn credentials would be queried here if pool is available.
-	// The pool is accessed via the repository layer, not directly on authSvc.
-	// For now, we rely on the in-memory passkey store. Production will use the
-	// pgWebAuthnCredentialStore via the webauthn handler.
-
-	// Convert set to slice.
-	credentialIDs := make([]string, 0, len(credIDSet))
-	for id := range credIDSet {
-		credentialIDs = append(credentialIDs, id)
+	if credentialIDs == nil {
+		credentialIDs = []string{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -120,3 +139,7 @@ func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request)
 		CredentialIDs: credentialIDs,
 	})
 }
+
+// Ensure webauthn package is imported for CredentialStore interface usage.
+var _ webauthn.CredentialStore = (webauthn.CredentialStore)(nil)
+var _ = context.Background
