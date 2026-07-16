@@ -172,10 +172,8 @@ export default function LoginPage() {
       }
 
       // Signal API: sync browser passkey list (remove stale credentials)
-      // TEMPORARILY DISABLED — valid-ids endpoint returns incomplete credential list
-      // (in-memory map only, not DB). This causes cross-device passkeys to be hidden.
-      // Will re-enable after backend fixes valid-ids to query DB. See arch advisory.
-      // syncSignalAfterLogin().catch(() => {});
+      // Re-enabled — backend valid-ids now queries DB store (commit 4a5bff9c)
+      syncSignalAfterLogin().catch(() => {});
 
       // No MFA needed — redirect to dashboard
       router.push("/dashboard");
