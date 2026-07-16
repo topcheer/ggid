@@ -6,7 +6,7 @@ import { Shield, ArrowLeft, KeyRound, Building2, AlertCircle, Loader2 } from "lu
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
-import { offerPasskeyUpgrade } from "@/lib/webauthn-conditional";
+import { offerPasskeyUpgrade, syncSignalAfterLogin } from "@/lib/webauthn-conditional";
 
 const API_BASE = API_BASE_URL;
 
@@ -170,6 +170,10 @@ export default function LoginPage() {
       } catch {
         // Non-blocking: login proceeds regardless of passkey creation outcome
       }
+
+      // Signal API: sync browser passkey list (remove stale credentials)
+      // Non-blocking — no-ops on unsupported browsers
+      syncSignalAfterLogin().catch(() => {});
 
       // No MFA needed — redirect to dashboard
       router.push("/dashboard");

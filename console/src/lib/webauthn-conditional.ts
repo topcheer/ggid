@@ -204,3 +204,136 @@ function encodeAttestation(credential: PublicKeyCredential): Record<string, unkn
     authenticatorAttachment: credential.authenticatorAttachment,
   };
 }
+
+// ==================== Signal API (WebAuthn L3) ====================
+// After login or credential changes, signal the browser to sync its
+// autofill list — removes stale/deleted credentials from the password
+// manager's passkey picker.
+//
+// Browser support: Chrome 132+ (default), Safari 26+
+// Gracefully no-ops on unsupported browsers.
+
+/** Check if Signal API is available. */
+export function isSignalApiSupported(): boolean {
+  return typeof PublicKeyCredential !== "undefined" &&
+    typeof (PublicKeyCredential as unknown as {
+      signalAllAcceptedCredentials?: unknown;
+    }).signalAllAcceptedCredentials === "function";
+}
+
+interface ValidIdsResponse {
+  user_id: string;
+  user_name: string;
+  display_name: string;
+  credential_ids: string[];
+}
+
+/**
+ * Fetch valid credential IDs from backend.
+ * GET /api/v1/auth/webauthn/credentials/valid-ids (JWT-protected)
+ */
+export async function fetchValidCredentialIds(): Promise<ValidIdsResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/auth/webauthn/credentials/valid-ids`, {
+      headers: { ...authHeader(), "X-Tenant-ID": TENANT_ID },
+    });
+    if (!res.ok) return null;
+    return await res.json() as ValidIdsResponse;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Signal the browser to sync its passkey autofill list after login.
+ * Removes stale credentials (deleted passkeys) from the browser's picker.
+ *
+ * Should be called after:
+ * - Successful login (password or passkey)
+ * - Passkey deletion
+ * - Username/displayName change
+ *
+ * Non-blocking: all failures are silent (progressive enhancement).
+ */
+export async function syncSignalAfterLogin(): Promise<void> {
+  if (!isSignalApiSupported()) {
+    console.debug("[SignalAPI] Not supported in this browser");
+    return;
+  }
+
+  try {
+    const data = await fetchValidCredentialIds();
+    if (!data || !data.credential_ids || data.credential_ids.length === 0) {
+      console.debug("[SignalAPI] No valid credentials to signal");
+      return;
+    }
+
+    const rpId = window.location.hostname;
+
+    // Signal all accepted credentials (syncs the browser's passkey list)
+    const pkc = PublicKeyCredential as unknown as {
+      signalAllAcceptedCredentials: (opts: {
+        rpId: string;
+        userId: ArrayBuffer;
+        allAcceptedCredentialIds: ArrayBuffer[];
+      }) => Promise<void>;
+      signalCurrentUserDetails?: (opts: {
+        userId: ArrayBuffer;
+        name?: string;
+        displayName?: string;
+      }) => Promise<void>;
+    };
+
+    const userIdBuffer = b64urlToBuffer(data.user_id);
+    const credIdBuffers = data.credential_ids.map(id => b64urlToBuffer(id));
+
+    await pkc.signalAllAcceptedCredentials({
+      rpId,
+      userId: userIdBuffer,
+      allAcceptedCredentialIds: credIdBuffers,
+    });
+    console.debug("[SignalAPI] signalAllAcceptedCredentials completed");
+
+    // Sync user details (name/displayName changes)
+    if (pkc.signalCurrentUserDetails) {
+      await pkc.signalCurrentUserDetails({
+        userId: userIdBuffer,
+        name: data.user_name || undefined,
+        displayName: data.display_name || undefined,
+      });
+      console.debug("[SignalAPI] signalCurrentUserDetails completed");
+    }
+  } catch (err) {
+    // AbortError or NotAllowedError are normal — user dismissed or browser blocked
+    console.debug("[SignalAPI] Error:", err);
+  }
+}
+
+/**
+ * Signal credential removal after a passkey is deleted.
+ * Uses signalUnknownCredential to tell the browser to remove a deleted
+ * passkey from its autofill list.
+ */
+export async function signalCredentialRemoved(credentialId: string): Promise<void> {
+  if (!isSignalApiSupported()) return;
+
+  try {
+    const rpId = window.location.hostname;
+    const pkc = PublicKeyCredential as unknown as {
+      signalUnknownCredential?: (opts: {
+        rpId: string;
+        credentialId: ArrayBuffer;
+      }) => Promise<void>;
+    };
+
+    if (pkc.signalUnknownCredential) {
+      await pkc.signalUnknownCredential({
+        rpId,
+        credentialId: b64urlToBuffer(credentialId),
+      });
+      console.debug("[SignalAPI] signalUnknownCredential completed for:", credentialId);
+    }
+  } catch (err) {
+    console.debug("[SignalAPI] signalUnknownCredential error:", err);
+  }
+}
