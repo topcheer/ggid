@@ -195,3 +195,30 @@ See docs/research/ for full research docs.
 **业务价值**: MEDIUM（当前）→ HIGH（标准落地后）
 **实现难度**: High（服务端导出/导入加密凭证包）
 **行动**: 跟踪标准进展，标准稳定后评估 GGID 作为 RP 的支持方案。无需立即编码。
+
+---
+
+## ITDR 假数据清理 + 检测引擎落地 (2026-07-17 第3小时研究+审计) - Priority: P0 - Status: Proposed - Suggested: backend + frontend + IAMExpert
+
+**市场背景**: ITDR 市场 2025 年 $5.6B → 2034 年 $29.4B（CAGR 20.3%），是 IAM 增长最快的细分领域。Gartner 将 ITDR 列为身份安全必备能力。
+
+**GGID 现状审计（第3小时深度核查）**:
+- 资产：26 个 ITDR 相关 console 页面（itdr-dashboard, threat-hunting-workbench, risk-engine-dashboard, golden-ticket-detect 等）
+- **真实检测（4 项）**: impossible travel、credential stuffing（detect+stats+block）、risk-assess、session anomaly-score、HIBP breach check
+- **P0 假数据发现**:
+  1. `sdk/react/src/useITDRDashboard.ts` — `setTimeout(r,400)` 假延迟 + 100% 硬编码威胁（47 受影响用户、auto_response_enabled: true —— SOC 误以为自动响应已开启，危险）
+  2. `services/auth/internal/server/itdr_detections_handler.go` — handleITDRDetections 硬编码 5 威胁+5 规则+3 playbook（已注册路由但无人调用）
+  3. **规模扩散：sdk/react 490 个 hooks 中 150 个（31%）存在 setTimeout 假数据模式**；抽样 10 个 ITDR dashboard 页面 8 个零 API 调用
+
+**业务价值**: HIGH
+- 安全运营场景展示假威胁数据 = 产品信誉致命伤（客户 POC 必查）
+- ITDR 是最高客单价 IAM 模块，真实检测引擎是核心竞争力
+
+**实现难度**: High（检测引擎）/ Medium（假数据清理）
+- 实现路径：
+  1. **P0 紧急**：150 个假 hooks 分批处理 — 有对应真端点的接线；无端点的页面标注"演示数据"横幅（ frontend 主导，~3 天/批 × 5 批）
+  2. **P0**: useITDRDashboard 接 /api/v1/auth/itdr/detections；该端点改为从 audit 事件真实统计（auth 登录失败计数、凭证填充检测记录）
+  3. **P1**: ITDR 检测引擎统一 — audit 服务消费 NATS JetStream 事件流 → 规则引擎（已有 4 项真检测逻辑迁移统一）→ 检测结果写 DB → dashboard 查询
+  4. **P2**: threat-intelligence-feed 接 abuse.ch/MISP 开源威胁情报
+
+**兼容性**: audit 服务已有 NATS consumer 框架，检测引擎为增量模块
