@@ -455,7 +455,7 @@ func (h *Handler) beginRegistration(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.buildWebAuthnUser(ctx, tenantID, userID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -528,7 +528,7 @@ func (h *Handler) finishRegistration(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.buildWebAuthnUser(ctx, tenantID, userID)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -836,7 +836,7 @@ func (h *Handler) deleteCredential(w http.ResponseWriter, r *http.Request) {
 			IsolationLevel: ggidtenant.IsolationShared,
 		})
 		if err := h.creds.DeleteCredential(ctx, tenantID, credID); err != nil {
-			writeError(w, http.StatusInternalServerError, err.Error())
+			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 	}

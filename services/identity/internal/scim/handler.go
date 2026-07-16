@@ -315,7 +315,7 @@ func (h *Handler) listUsers(ctx context.Context, w http.ResponseWriter, r *http.
 		ExternalID: externalID,
 	})
 	if err != nil {
-		writeSCIMErrorWithType(w, http.StatusInternalServerError, ScimTypeInvalidFilter, err.Error())
+		writeSCIMErrorWithType(w, http.StatusInternalServerError, ScimTypeInvalidFilter, "internal server error")
 		return
 	}
 
@@ -401,7 +401,7 @@ func (h *Handler) searchUsers(ctx context.Context, w http.ResponseWriter, r *htt
 		SortDesc: sortDesc,
 	})
 	if err != nil {
-		writeSCIMError(w, http.StatusInternalServerError, err.Error())
+		writeSCIMError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
@@ -633,7 +633,7 @@ func (h *Handler) patchUser(ctx context.Context, w http.ResponseWriter, r *http.
 
 	updatedUser, err := h.svc.UpdateUser(ctx, userID, input)
 	if err != nil {
-		writeSCIMError(w, http.StatusInternalServerError, err.Error())
+		writeSCIMError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 

@@ -739,7 +739,7 @@ func TestDeleteCredential_StoreError(t *testing.T) {
 	req.Header.Set("X-Tenant-ID", testTenantIDStr)
 	h.deleteCredential(rr, req)
 	assertStatus(t, rr, http.StatusInternalServerError)
-	assertBodyContains(t, rr, "db locked")
+	assertBodyContains(t, rr, "internal server error")
 }
 
 func TestDeleteCredential_Success(t *testing.T) {
