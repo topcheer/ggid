@@ -378,7 +378,7 @@ export default function CertificatesPage() {
       {/* Key Rotation Confirmation Dialog */}
       {showRotateDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-lg dark:bg-gray-800">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900">
                 <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />

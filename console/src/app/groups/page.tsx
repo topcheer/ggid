@@ -560,7 +560,7 @@ export default function GroupsPage() {
       {/* Member Picker Modal */}
       {showMemberPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowMemberPicker(null)}>
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold dark:text-gray-100">{t("groups.addmembers")}</h3>
               <button onClick={() => setShowMemberPicker(null)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
@@ -605,7 +605,7 @@ export default function GroupsPage() {
       {/* Bulk Role Picker Modal */}
       {showBulkRolePicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowBulkRolePicker(false)}>
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold dark:text-gray-100">Add Roles to {selectedIds.size} Group(s)</h3>
               <button onClick={() => setShowBulkRolePicker(false)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>
@@ -647,7 +647,7 @@ export default function GroupsPage() {
       {/* Bulk Member Picker Modal */}
       {showBulkMemberPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowBulkMemberPicker(false)}>
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-sm font-semibold dark:text-gray-100">Add Member to {selectedIds.size} Group(s)</h3>
               <button onClick={() => setShowBulkMemberPicker(false)} className="text-gray-400 hover:text-gray-600" aria-label="Close"><X className="h-5 w-5" /></button>

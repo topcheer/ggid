@@ -899,7 +899,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
       {/* ── Impersonate Confirmation Dialog ── */}
       {showImpersonate && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-          <div className="mx-4 max-w-md rounded-xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+          <div role="dialog" aria-modal="true" className="mx-4 max-w-md rounded-xl bg-white p-6 shadow-2xl dark:bg-gray-800">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950">
                 <AlertTriangle className="h-5 w-5 text-amber-600" />

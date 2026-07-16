@@ -103,7 +103,7 @@ export default function PolicyAsCodePage() {
       {/* Import modal */}
       {showImport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowImport(false)}>
-          <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Import YAML Policy</h3><button onClick={() => setShowImport(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <textarea value={importYaml} onChange={(e) => setImportYaml(e.target.value)} rows={12} placeholder={"name: my-policy\neffect: allow\nconditions:\n  - attribute: role\n    operator: eq\n    value: admin"} className="w-full rounded-lg border border-gray-300 p-3 font-mono text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
             <button onClick={handleImport} disabled={!importYaml.trim() || importing} className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">{importing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Import</button>
@@ -114,7 +114,7 @@ export default function PolicyAsCodePage() {
       {/* Edit + diff modal */}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setEditing(null)}>
-          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700"><h3 className="text-lg font-bold text-gray-900 dark:text-white">{editing.name}</h3><div className="flex gap-2"><button onClick={handlePreviewDiff} disabled={previewing} className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 dark:border-gray-600 dark:text-gray-300">{previewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitCompare className="h-4 w-4" />} Preview Diff</button><button onClick={() => setEditing(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div></div>
             <div className="flex flex-1 gap-4 overflow-hidden p-6">
               <div className="flex-1"><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">YAML Editor</label><textarea value={editing.yaml} onChange={(e) => setEditing({ ...editing, yaml: e.target.value })} rows={20} className="w-full rounded-lg border border-gray-300 p-3 font-mono text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>

@@ -518,7 +518,7 @@ export default function WebhooksPage() {
       {/* Test Result Viewer Modal */}
       {testViewerId && testResults[testViewerId] && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setTestViewerId(null)}>
-          <div className="mx-4 w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Test Payload Viewer</h2>
               <button onClick={() => setTestViewerId(null)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" aria-label="Close"><X className="h-5 w-5" /></button>
@@ -552,7 +552,7 @@ export default function WebhooksPage() {
       {/* HMAC Secret Rotation Modal */}
       {newSecret && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => savedAck && setNewSecret(null)}>
-          <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950"><AlertCircle className="h-5 w-5 text-amber-600" /></div>
               <div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">New HMAC Secret</h2><p className="text-xs text-gray-500">Store it securely</p></div>
@@ -584,7 +584,7 @@ export default function WebhooksPage() {
       {/* Delete Confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDeleteTarget(null)}>
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-950"><AlertCircle className="h-5 w-5 text-red-600" /></div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Delete Webhook?</h2>

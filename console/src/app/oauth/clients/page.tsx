@@ -263,7 +263,7 @@ export default function OAuthClientsPage() {
       {/* Create/Edit Modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowForm(false)}>
-          <div className="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{editingClient ? "Edit Client" : "Create OAuth Client"}</h2>
               <button onClick={() => setShowForm(false)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Close"><X className="h-5 w-5" /></button>
@@ -336,7 +336,7 @@ export default function OAuthClientsPage() {
       {/* Delete Confirmation */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setDeleteTarget(null)}>
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-950"><Trash2 className="h-5 w-5 text-red-600" /></div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Delete Client?</h2></div>
             <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">Are you sure you want to delete <span className="font-semibold">{deleteTarget.name}</span>? This action cannot be undone.</p>
             <div className="flex justify-end gap-2">
@@ -350,7 +350,7 @@ export default function OAuthClientsPage() {
       {/* Rotate Confirmation */}
       {rotateTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setRotateTarget(null)}>
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950"><RotateCw className="h-5 w-5 text-amber-600" /></div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Rotate Secret?</h2></div>
             <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">This will generate a new secret for <span className="font-semibold">{rotateTarget.name}</span>. The old secret will stop working immediately.</p>
             <div className="flex justify-end gap-2">

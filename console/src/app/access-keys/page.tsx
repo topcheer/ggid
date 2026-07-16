@@ -541,7 +541,7 @@ export default function AccessKeysPage() {
       {/* Copy-once Secret Modal */}
       {newKeySecret && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => savedAck && setNewKeySecret(null)}>
-          <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950"><AlertCircle className="h-5 w-5 text-amber-600" /></div>
               <div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Access Key Secret</h2><p className="text-xs text-gray-500">Store it securely</p></div>
@@ -573,7 +573,7 @@ export default function AccessKeysPage() {
       {/* Revoke Confirmation */}
       {revokeTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setRevokeTarget(null)}>
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-950"><AlertCircle className="h-5 w-5 text-red-600" /></div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Revoke Access Key?</h2>

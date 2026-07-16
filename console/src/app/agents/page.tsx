@@ -437,7 +437,7 @@ export default function AgentsPage() {
       {/* Register Modal */}
       {showRegister && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowRegister(false)}>
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
                 <Plus className="h-5 w-5 text-brand-600" /> Register New Agent
@@ -488,7 +488,7 @@ export default function AgentsPage() {
       {/* Token Exchange Modal */}
       {showTokenExchange && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowTokenExchange(false)}>
-          <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
+          <div role="dialog" aria-modal="true" className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
                 <Terminal className="h-5 w-5 text-brand-600" /> Token Exchange & Verify
