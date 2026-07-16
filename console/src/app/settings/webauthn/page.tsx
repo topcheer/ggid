@@ -31,9 +31,9 @@ interface Credential {
 const STORAGE_KEY = "ggid_webauthn_config";
 
 const defaultConfig: WebAuthnConfig = {
-  rp_id: "localhost",
+  rp_id: typeof window !== "undefined" ? window.location.hostname : "localhost",
   rp_name: "GGID",
-  origins: "window.location.origin",
+  origins: typeof window !== "undefined" ? window.location.origin : "",
   timeout: 60000,
   attestation: "none",
   user_verification: "preferred",
