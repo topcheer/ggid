@@ -222,3 +222,38 @@ See docs/research/ for full research docs.
   4. **P2**: threat-intelligence-feed 接 abuse.ch/MISP 开源威胁情报
 
 **兼容性**: audit 服务已有 NATS consumer 框架，检测引擎为增量模块
+
+## RFC 8693 标准 Token Exchange Grant (2026-07-17 研究) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**市场背景**: AI agent 委托授权已成为 2026 年 IAM 核心场景。MCP 授权规范基于 OAuth 2.1，agent 代用户操作的标准模式就是 RFC 8693 token exchange（delegation + act claim）。Salesforce Agentforce、Microsoft Copilot Studio、AWS Bedrock Agents 全部收敛到"从用户 token 派生收窄权限 token"模式。
+
+**GGID 现状**:
+- 已有：自定义端点 POST /api/v1/oauth/token-exchange-delegation（JSON body，delegation chain 存内存 map）
+- 缺失：标准 grant `urn:ietf:params:oauth:grant-type:token-exchange` 在 /oauth/token 中不可用
+- 风险：delegationChains 是 sync.Map 内存存储，重启丢失（与 Round 5-6 修复的 6 个内存存储同类问题）
+
+**业务价值**: HIGH — MCP 客户端和标准 OAuth 库（oauth4webapi、AppAuth）期望标准 grant；自定义端点需要客户写定制代码，是集成障碍。
+
+**实现难度**: Medium
+- Phase 1（P1）：/oauth/token grant switch 加 token-exchange case；service.TokenExchange() 验证 subject_token、构建 act claim（支持嵌套）、强制 scope ⊆ subject scope、返回 issued_token_type；客户端加 token_exchange_allowed 策略位（~1 天）
+- Phase 2（P2）：delegationChains 迁移 PG（参照 backup_codes_pg.go EnsureSchema 模式）；subject token 撤销时级联撤销派生 token（~0.5 天）
+- Phase 3（P2）：Go/Node/Python SDK 加 TokenExchange()（~0.5 天）
+
+**兼容性**: 纯增量，不影响现有 grant；研究文档 docs/research/token-exchange-standard-grant-gap.md
+
+## ML-DSA JOSE 后量子 JWT 签名准备 (2026-07-17 研究) - Priority: P2 - Status: Proposed - Suggested: backend（spike 先行）
+
+**市场背景**: draft-ietf-cose-dilithium 已到 draft-10（即将成为 RFC），定义 JOSE alg ML-DSA-44/65/87 和 JWK kty=AKP。CNSA 2.0 要求 2027 年新系统支持 PQC；Auth0/Okta 2025 年已发布 PQC 路线图，企业 RFP 开始询问。
+
+**GGID 现状**:
+- 架构已准备好算法敏捷性：KeyProvider 抽象（SM2 已验证模式）、alg 白名单（7cea65ab）、kid 统一派生（a3e29625）
+- TLS 层 ML-KEM 混合密钥交换由 Go 1.25 stdlib 免费获得（需验证启用）
+- 完全缺失：ML-DSA 签名、AKP JWK、SDK PQC 验证
+
+**业务价值**: MEDIUM（当前）→ HIGH（2027 后）— 政府/金融/密评客户的前置门槛；及早布局成本低（KeyProvider 模式已跑通 SM2）
+
+**实现难度**: Medium（spike 1 天验证 cloudflare/circl FIPS 204 最终测试向量兼容性；纯 Go 无 CGo 符合 CGO_ENABLED=0 构建）
+- 顺序：TLS ML-KEM 验证（0.5 天）→ circl spike（1 天）→ AKP JWKS + 白名单（0.5 天）→ Go SDK 验证 feature flag（0.5 天）→ 租户 PQC 迁移指南（0.5 天）
+- 注意：ML-DSA-65 签名 3.3KB，JWT 体积 ~4-5KB（HTTP header 8KB 内可行，cookie 场景需评估）
+
+**兼容性**: 增量；spike 未通过前不启动实现；研究文档 docs/research/mldsa-jose-pqc-jwt.md
