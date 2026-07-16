@@ -51,8 +51,9 @@ export default function MonitoringPage() {
         });
         const deepData = await resp.json();
         const allServices = deepData.services || {};
-        const healthChecks = Object.entries(allServices).map(([key, svc]: [string, any]) => ({
+        const healthChecks: ServiceHealth[] = Object.entries(allServices).map(([key, svc]: [string, any]) => ({
           name: key.charAt(0).toUpperCase() + key.slice(1),
+          url: key,
           status: svc.status === "healthy" ? "healthy" as const : "unhealthy" as const,
           latency: svc.latency_ms || (Date.now() - start),
         }));
