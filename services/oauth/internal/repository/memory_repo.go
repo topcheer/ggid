@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/ggid/ggid/services/oauth/internal/domain"
 	"github.com/google/uuid"
@@ -66,6 +65,9 @@ func (r *MemoryClientRepository) ListClients(_ context.Context, _ uuid.UUID, pag
 func (r *MemoryClientRepository) UpdateClient(_ context.Context, _ uuid.UUID, clientID string, client *domain.OAuthClient) (*domain.OAuthClient, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if _, ok := r.clients[clientID]; !ok {
+		return nil, ErrClientNotFound
+	}
 	r.clients[clientID] = client
 	return client, nil
 }
@@ -73,6 +75,9 @@ func (r *MemoryClientRepository) UpdateClient(_ context.Context, _ uuid.UUID, cl
 func (r *MemoryClientRepository) DeleteClient(_ context.Context, _ uuid.UUID, clientID string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if _, ok := r.clients[clientID]; !ok {
+		return ErrClientNotFound
+	}
 	delete(r.clients, clientID)
 	return nil
 }
@@ -157,8 +162,6 @@ func (r *MemoryIDTokenRepository) RevokeAllRefreshTokens(_ context.Context, _, _
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	// Simplified: clear all (proper impl would filter by clientID)
-	now := time.Now()
-	_ = now
 	r.refresh = make(map[string]*domain.RefreshTokenRecord)
 	return nil
 }
