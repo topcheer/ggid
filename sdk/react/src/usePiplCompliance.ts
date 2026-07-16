@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface DataHandlingRules {
   consent_required: boolean;
   data_minimization: boolean;
@@ -44,6 +48,7 @@ export interface PiplComplianceData {
 
 export function usePiplCompliance() {
   const [data, setData] = useState<PiplComplianceData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,7 +56,11 @@ export function usePiplCompliance() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         compliance_status: "Compliant",
         data_handling_rules: { consent_required: true, data_minimization: true, purpose_limitation: true, cross_border_assessment: true },
@@ -81,5 +90,5 @@ export function usePiplCompliance() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

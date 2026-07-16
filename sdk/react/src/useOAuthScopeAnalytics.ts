@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface ScopeUsageEntry {
   scope_name: string;
   requested_count: number;
@@ -17,6 +21,7 @@ export interface OAuthScopeAnalyticsData {
 
 export function useOAuthScopeAnalytics() {
   const [data, setData] = useState<OAuthScopeAnalyticsData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +29,11 @@ export function useOAuthScopeAnalytics() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         scope_usage: [
           { scope_name: "openid", requested_count: 45200, granted_count: 44980, denied_count: 220, deny_reasons: ["invalid_request"], avg_per_token: 1.0 },
@@ -52,5 +61,5 @@ export function useOAuthScopeAnalytics() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

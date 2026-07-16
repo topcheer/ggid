@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface ConflictingRolePair {
   role_a: string;
   role_b: string;
@@ -22,6 +26,7 @@ export interface PolicySoDConfigData {
 
 export function usePolicySoDConfig() {
   const [data, setData] = useState<PolicySoDConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +34,11 @@ export function usePolicySoDConfig() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         conflicting_roles: [
           { role_a: "Payment Initiator", role_b: "Payment Approver", conflict_type: "approval" },
@@ -41,7 +50,7 @@ export function usePolicySoDConfig() {
           { user: "alice.chen", conflicting_roles: ["Payment Initiator", "Payment Approver"], detected_at: "2h ago", action_required: "immediate" },
           { user: "bob.martinez", conflicting_roles: ["Admin", "Audit Reviewer"], detected_at: "1d ago", action_required: "review" },
         ],
-        auto_enforce: true,
+        auto_enforce: false,
         bypass_requires_c_level: true,
       });
     } catch (e) {
@@ -55,5 +64,5 @@ export function usePolicySoDConfig() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

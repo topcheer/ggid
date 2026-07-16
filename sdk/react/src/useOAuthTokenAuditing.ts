@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface TokenAuditEntry {
   token_id: string;
   client: string;
@@ -26,6 +30,7 @@ export interface OAuthTokenAuditingData {
 
 export function useOAuthTokenAuditing() {
   const [data, setData] = useState<OAuthTokenAuditingData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +38,11 @@ export function useOAuthTokenAuditing() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         audit_trail: [
           { token_id: "tok-001", client: "client-web-001", user: "alice.chen", issued_at: "2026-01-15T10:00:00Z", scopes: ["openid", "profile", "read"], revoked_at: null, revoked_by: null, revoke_reason: null },
@@ -59,5 +68,5 @@ export function useOAuthTokenAuditing() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

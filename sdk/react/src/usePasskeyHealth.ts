@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface PasskeyInfo {
   id: string;
   user: string;
@@ -26,6 +30,7 @@ export interface PasskeyHealthData {
 
 export function usePasskeyHealth() {
   const [data, setData] = useState<PasskeyHealthData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +38,11 @@ export function usePasskeyHealth() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         registered_passkeys: [
           { id: "pk-001", user: "alice@ggid.dev", device: "iPhone 15 Pro", platform: "iOS", created_at: "10d ago", last_used: "1m ago", backup_eligible: true, backup_state: "synced" },
@@ -61,5 +70,5 @@ export function usePasskeyHealth() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

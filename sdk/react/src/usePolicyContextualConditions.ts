@@ -1,5 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ */
+
 export interface ConditionCategory {
   name: string;
   available_attributes: string[];
@@ -19,6 +23,7 @@ export interface PolicyContextualConditionsData {
 
 export function usePolicyContextualConditions() {
   const [data, setData] = useState<PolicyContextualConditionsData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +31,11 @@ export function usePolicyContextualConditions() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try { res = await fetch("/api/v1/data", { headers: { "Content-Type": "application/json" } }); } catch { res = null; }
+      if (res?.ok) { const d = await res.json(); setData(d); setIsDemoData(false); return; }
+      setIsDemoData(true);
       setData({
         condition_categories: [
           { name: "time", available_attributes: ["hour_of_day", "day_of_week", "is_holiday", "timezone"] },
