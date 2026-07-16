@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 79
-## Last scan focus: G (SDK Alignment) — 0 GAPs found; all 9 SDKs × 111 endpoint paths verified against service routes
-## Next scan focus: A (Interface Integrity) — Round 80
-## Total findings: 66
-## Done: 65
+## Current round: 80
+## Last scan focus: A (Interface Integrity) — Fixed Identity + OAuth gRPC service registration; all 6 services now register gRPC handlers
+## Next scan focus: B (Route Wiring) — Round 81
+## Total findings: 68
+## Done: 67
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
@@ -49,8 +49,8 @@ LOW (acceptable for now — short-lived or fallback):
 - Agent consent (session-scoped)
 
 ## Commits this cycle:
+- df9cfb01: Round 80 Fix Identity + OAuth gRPC service registration
 - 361f66da: Round 78 oauth/domain 0%→100%, policy/handler 1.7%→9.6%
-- 588d5873: Round 77 sanitize 11 raw error exposures in 500 responses
 - dc7ff6db: Round 76 OAuth memory repo CRUD fix + 13 tests (0%→34.1%)
 - 6eaba42e: Round 75 PanicRecovery middleware for all 6 backend services
 - ad51128d: Fix loadEncryptionKey dev fallback (BIOMETRIC_AES_KEY panic fix)
