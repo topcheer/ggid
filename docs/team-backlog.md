@@ -300,3 +300,47 @@ See docs/research/ for full research docs.
 **描述**: 现有 campaign scope 仅覆盖人类用户。2025 趋势要求 agent/service account/API key 同样定期审查（与 AAM backlog 项协同）。campaign scope 增加 "agents"、"service_accounts" 类型。
 
 **业务价值**: MEDIUM-HIGH | **实现难度**: Low-Medium（scope 扩展 + agent 数据源接入）
+
+---
+
+## 持续访问评估 CAE (Continuous Access Evaluation) (2026-07-17 第5小时研究) - Priority: P1 - Status: Proposed - Suggested: backend + IAMExpert
+
+**描述**: NIST SP 800-207 零信任核心原则：访问授权不是一次性登录事件，而是持续评估。当会话期间上下文恶化（IP 突变、设备失信任、ITDR 检测命中），访问应立即撤销或降级。Microsoft CAE 已成为事实标准。
+
+**GGID 现状审计**: 数据源全部齐备 — device trust（register/trusted/bind 真实端点）、adaptive MFA 风险引擎、ITDR 检测引擎（刚端到端打通）、session 管理。缺的是**联动层**：ITDR critical detection 产生后，没有任何机制自动撤销该用户会话。
+
+**业务价值**: HIGH
+- 零信任是政企采购的 checklist 必备项
+- GGID 各组件已建，联动即可讲故事："检测→撤销 <1s"
+- 与 ITDR 引擎协同形成完整 ITDR+ZT 叙事
+
+**实现难度**: Medium
+- 实现路径：
+  1. ITDR playbook 增加内置动作 `revoke_sessions`（v2 接口已预留）：critical/high detection → auth 服务撤销用户全部会话（Redis session 删除 + refresh token 吊销）
+  2. Gateway JWT 验证增加"会话存活"检查（Redis 快速查，~0.5ms）或被撤销 jti 黑名单
+  3. 会话绑定设备状态变化时触发重评估（device untrust → 降权只读）
+  4. 审计链：每次自动撤销写 audit 事件 + ITDR detection.detail.execution
+
+**兼容性**: 全部复用现有组件；ITDR playbook v2 接口设计已留
+
+---
+
+## 零信任统一策略决策点 PDP (2026-07-17 第5小时研究) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**描述**: NIST ZTA 参考架构核心：统一 PDP/PEP。GGID 现有 device trust、session risk、ITDR detections、ABAC 属性分散在各服务，策略评估时无法组合使用（如"仅当设备可信 AND 无未处理 critical 检测 AND 工作时间 才允许导出报表"）。
+
+**业务价值**: MEDIUM-HIGH | **实现难度**: Medium-High
+- 实现路径：
+  1. policy 服务评估输入扩展：注入 device_trust_score（auth API）+ open_detections_count（audit itdr API）+ session_risk
+  2. ABAC 条件 DSL 增加内置属性：$device.trusted, $itdr.critical_open, $session.risk_score
+  3. 评估缓存（5s TTL）避免每次跨服务调用
+- 建议先做 3 个内置属性验证价值，再开放自定义
+
+---
+
+## Zero Trust 姿态评估真实化 (2026-07-17 第5小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + frontend
+
+**描述**: useZeroTrustPosture SDK hook 是 setTimeout 假数据（属 frontend P0 清理范围）。姿态评分应来自真实数据源：设备信任覆盖率（trusted/total devices）、MFA 覆盖率、24h 未处理 critical detections 数、会话绑定率。
+
+**业务价值**: MEDIUM（管理态势感知真实化）| **实现难度**: Low-Medium
+- 实现路径：auth 或 audit 新增 GET /api/v1/zt/posture 聚合四项指标 → hook 接真端点（纳入 frontend 清理批次）
