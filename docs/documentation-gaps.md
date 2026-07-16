@@ -242,3 +242,24 @@ Fixes applied:
 
 New/verified gaps:
 - None. Backup codes endpoints now fully documented in MFA guide.
+
+## Doc Consistency: Backup Codes API + SCIM Content-Type (2026-07-17)
+
+### Backup Codes API Documentation
+Verified and updated 3 files with complete endpoint documentation:
+- `docs/mfa-guide.md` — full curl examples for generate/verify/remaining (done Round 94)
+- `docs/authentication-guide.md` — replaced stale placeholder section with correct endpoints,
+  request/response JSON, Bearer auth, error codes (401)
+- `docs/api-reference.md` — added Backup Codes subsections under MFA Endpoints
+
+Endpoints documented:
+- `POST /api/v1/auth/mfa/backup-codes/generate` — Bearer auth, returns 10 codes
+- `POST /api/v1/auth/mfa/backup-codes/verify` — login with backup code (alternative MFA)
+- `GET /api/v1/auth/mfa/backup-codes/remaining` — Bearer auth, returns count
+
+### SCIM Content-Type Audit
+Checked all SCIM-related docs. Result: all already correct.
+- `docs/scim-2.0-provisioning.md` — uses `application/scim+json` throughout, notes compatibility with `application/json`
+- `docs/guides/scim-2-0-implementation.md` — uses `application/scim+json`
+- `docs/platform-completeness-report.md` line 136 — documents the gateway fix (commit 3443123a)
+- No docs found using `application/json` in SCIM endpoint context

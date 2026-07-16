@@ -174,10 +174,11 @@ Response:
 ```json
 {
   "secret": "JBSWY3DPEHPK3PXP",
-  "qr_code": "data:image/png;base64,...",
-  "backup_codes": ["12345678", "87654321", ...]
+  "qr_code": "data:image/png;base64,..."
 }
 ```
+
+> **Note:** Backup codes are generated separately via the dedicated endpoints below.
 
 ```bash
 # Step 2: Verify with code from authenticator app
@@ -189,10 +190,80 @@ curl -X POST http://localhost:8080/api/v1/auth/mfa/verify \
 
 ### Backup Codes
 
-- 10 single-use codes generated at enrollment
-- Used when primary MFA device is unavailable
-- Each code can only be used once
-- Regenerate: `POST /api/v1/auth/mfa/backup-codes/regenerate`
+Backup codes are one-time recovery codes used when the primary MFA factor
+is unavailable. They are hashed at rest with Argon2id and displayed only once.
+
+#### Generate Backup Codes
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/mfa/backup-codes/generate \
+  -H "Authorization: Bearer <JWT>" \
+  -H "X-Tenant-ID: <tenant-id>" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": "<user-uuid>"}'
+```
+
+Response (200 OK):
+
+```json
+{
+  "codes": ["BCDFG-HJKLM", "NPQRS-TVWXY", "BCDFG-HJKLM", "..."],
+  "count": 10,
+  "warning": "Store these codes securely. They will not be shown again.",
+  "expires_in": "until regenerated"
+}
+```
+
+- 10 single-use codes generated per request
+- Regenerating invalidates all previous codes
+- Codes are Argon2id-hashed; plaintext is returned only once
+
+#### Login with Backup Code (Alternative MFA Factor)
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/mfa/backup-codes/verify \
+  -H "X-Tenant-ID: <tenant-id>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "alice",
+    "password": "secret",
+    "backup_code": "BCDFG-HJKLM"
+  }'
+```
+
+Alternatively, the standard MFA login endpoint accepts a `backup_code` field:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/mfa/login \
+  -H "X-Tenant-ID: <tenant-id>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "alice",
+    "password": "secret",
+    "backup_code": "BCDFG-HJKLM"
+  }'
+```
+
+Response: standard `TokenSet` (access_token, refresh_token, session_id).
+Error: `401 Unauthorized` if backup code is invalid or already used.
+
+#### Check Remaining Codes
+
+```bash
+curl http://localhost:8080/api/v1/auth/mfa/backup-codes/remaining?user_id=<uuid> \
+  -H "Authorization: Bearer <JWT>" \
+  -H "X-Tenant-ID: <tenant-id>"
+```
+
+Response:
+
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "remaining": 8,
+  "total": 10
+}
+```
 
 ### Per-Role MFA Enforcement
 

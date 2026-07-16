@@ -959,6 +959,52 @@ Authorization: Bearer <JWT>
 }
 ```
 
+### Backup Codes — Generate
+```http
+POST /api/v1/auth/mfa/backup-codes/generate
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "user_id": "<user-uuid>" }
+```
+**Response 200:**
+```json
+{
+  "codes": ["BCDFG-HJKLM", "NPQRS-TVWXY", "..."],
+  "count": 10,
+  "warning": "Store these codes securely. They will not be shown again.",
+  "expires_in": "until regenerated"
+}
+```
+Generates 10 new single-use backup codes. Previous codes are invalidated.
+Codes are Argon2id-hashed at rest; plaintext is returned only once.
+
+### Backup Codes — Verify (Login)
+```http
+POST /api/v1/auth/mfa/backup-codes/verify
+Content-Type: application/json
+
+{ "username": "alice", "password": "secret", "backup_code": "BCDFG-HJKLM" }
+```
+**Response 200:** Standard `TokenSet` (access_token, refresh_token, session_id).
+**Response 401:** `invalid or used backup code` — the code is invalid, already consumed, or credentials are wrong.
+
+Alternatively, `POST /api/v1/auth/mfa/login` accepts a `backup_code` field instead of `mfa_code`.
+
+### Backup Codes — Remaining
+```http
+GET /api/v1/auth/mfa/backup-codes/remaining?user_id=<uuid>
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "remaining": 8,
+  "total": 10
+}
+```
+
 ### Step-Up Authentication
 ```http
 POST /api/v1/auth/stepup
