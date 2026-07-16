@@ -76,7 +76,7 @@ export default function GDPRForgetPage() {
       {/* Warning */}
       <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20"><AlertOctagon className="h-5 w-5 text-red-600 shrink-0" /><p className="text-sm text-red-700 dark:text-red-400">This permanently deletes all user data including audit logs. This action cannot be undone.</p></div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {/* Search */}
       <div className={cardCls}>
@@ -100,7 +100,7 @@ export default function GDPRForgetPage() {
       {confirmUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmUser(null)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-400"><AlertOctagon className="h-5 w-5" /> Confirm Deletion</h3><button onClick={() => setConfirmUser(null)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-400"><AlertOctagon className="h-5 w-5" /> Confirm Deletion</h3><button onClick={() => setConfirmUser(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">You are about to permanently delete ALL data for <span className="font-bold text-red-600">{confirmUser.username}</span> ({confirmUser.email}). This includes {confirmUser.record_count} records and all associated audit logs.</p>
             <div className="rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-400">Type the username to confirm: {confirmUser.username}</div>
             <button onClick={handleExecute} disabled={executing} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{executing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />} Confirm Permanent Deletion</button>

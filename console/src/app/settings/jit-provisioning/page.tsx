@@ -59,7 +59,7 @@ export default function JITProvisioningPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Auto-provision users on first login from external identity providers.</p>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       : config ? (
@@ -108,7 +108,7 @@ export default function JITProvisioningPage() {
       {editProvider && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !saving && setEditProvider(null)}>
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">Edit {editProvider.name}</h2><button onClick={() => setEditProvider(null)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">Edit {editProvider.name}</h2><button onClick={() => setEditProvider(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="mt-4 space-y-4">
               <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300"><input type="checkbox" checked={editProvider.enabled} onChange={(e) => setEditProvider((p) => p ? { ...p, enabled: e.target.checked } : null)} className="rounded border-gray-300 text-indigo-600" />Enable provider</label>
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Auto-Assign Role</label><input value={editProvider.auto_assign_role ?? ""} onChange={(e) => setEditProvider((p) => p ? { ...p, auto_assign_role: e.target.value || null } : null)} placeholder="viewer" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>

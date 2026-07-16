@@ -73,7 +73,7 @@ export default function PolicyExceptionsPage() {
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreate(false)}>
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">New Policy Exception</h3><button onClick={() => setShowCreate(false)}><X className="w-5 h-5 text-gray-400" /></button></div>
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">New Policy Exception</h3><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button></div>
             <div className="px-6 py-4 space-y-3">
               <div><label className="text-sm font-medium">Policy ID</label><input type="text" value={form.policy_id} onChange={(e) => setForm({ ...form, policy_id: e.target.value })} placeholder="pol-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
               <div><label className="text-sm font-medium">Granted To</label><input type="text" value={form.granted_to} onChange={(e) => setForm({ ...form, granted_to: e.target.value })} placeholder="user:alice" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>

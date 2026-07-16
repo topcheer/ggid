@@ -125,7 +125,7 @@ export default function LoginSecurityPage() {
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />{error}
-          <button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
         </div>
       )}
 
@@ -220,7 +220,7 @@ export default function LoginSecurityPage() {
           <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Add IP/CIDR</h2>
-              <button onClick={() => setShowIpAdd(false)}><X className="h-5 w-5 text-gray-400" /></button>
+              <button onClick={() => setShowIpAdd(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-3">
               <input value={ipForm.cidr} onChange={(e) => setIpForm((p) => ({ ...p, cidr: e.target.value }))} placeholder="10.0.0.0/8 or 192.168.1.100" className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />

@@ -80,7 +80,7 @@ export default function IdpFederationPage() {
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAdd(false)}>
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">{t("big1.idpFederation.addFederation")}</h3><button onClick={() => setShowAdd(false)}><X className="w-5 h-5 text-gray-400" /></button></div>
+            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800"><h3 className="font-semibold">{t("big1.idpFederation.addFederation")}</h3><button onClick={() => setShowAdd(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button></div>
             <div className="px-6 py-4 space-y-3">
               <div><label className="text-sm font-medium">{t("big1.idpFederation.providerType")}</label><select value={form.provider_type} onChange={(e) => setForm({ ...form, provider_type: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm"><option value="saml">{t("big1.idpFederation.saml")}</option><option value="oidc">{t("big1.idpFederation.oidc")}</option></select></div>
               <div><label className="text-sm font-medium">{t("big1.idpFederation.name")}</label><input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>

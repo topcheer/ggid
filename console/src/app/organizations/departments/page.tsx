@@ -144,7 +144,7 @@ export default function DepartmentsPage() {
 
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          <AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          <AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
         </div>
       )}
 
@@ -170,7 +170,7 @@ export default function DepartmentsPage() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{editDept ? "Edit Department" : "New Department"}</h2>
-              <button onClick={() => setShowAdd(false)}><X className="h-5 w-5 text-gray-400" /></button>
+              <button onClick={() => setShowAdd(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-3">
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Engineering" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>

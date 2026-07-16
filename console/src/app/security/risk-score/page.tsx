@@ -101,7 +101,7 @@ export default function RiskScorePage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Continuous user risk assessment based on behavioral and contextual signals.</p>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       : (
@@ -186,7 +186,7 @@ export default function RiskScorePage() {
               <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
                 <div className="mb-4 flex items-center justify-between">
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">{selectedUser.username}</h3>
-                  <button onClick={() => setSelectedUser(null)}><X className="h-5 w-5 text-gray-400" /></button>
+                  <button onClick={() => setSelectedUser(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
                 </div>
                 <div className="mb-4 flex items-center justify-center"><RiskGauge score={selectedUser.score} /></div>
                 <div className="space-y-3">

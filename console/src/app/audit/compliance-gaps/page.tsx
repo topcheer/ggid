@@ -156,7 +156,7 @@ export default function ComplianceGapsPage() {
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-lg w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800">
               <h3 className="font-semibold flex items-center gap-2"><AlertCircle className="w-5 h-5 text-blue-500" /> Update Gap Status</h3>
-              <button onClick={() => setUpdateGap(null)}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={() => setUpdateGap(null)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-4">
               <div>

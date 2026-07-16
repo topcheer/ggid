@@ -179,7 +179,7 @@ export default function PrivilegedAccessPage() {
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800">
               <h3 className="font-semibold flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-red-500" /> Confirm Batch Revoke</h3>
-              <button onClick={() => setShowConfirm(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={() => setShowConfirm(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 text-sm space-y-2">
               <p>Revoking privileged access for <span className="font-bold text-red-600">{selectedIds.size} account{selectedIds.size > 1 ? "s" : ""}</span>:</p>

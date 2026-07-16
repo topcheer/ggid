@@ -74,7 +74,7 @@ export default function ApprovalsPage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("approvals.subtitle")}</p>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /></div>
       : pending.length === 0 ? (
@@ -115,7 +115,7 @@ export default function ApprovalsPage() {
       {selectedReq && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSelectedReq(null)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Review: {selectedReq.request_type}</h3><button onClick={() => setSelectedReq(null)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Review: {selectedReq.request_type}</h3><button onClick={() => setSelectedReq(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="mb-4 rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-900"><div className="text-gray-400">{t("approvals.requester")}</div><div className="font-medium text-gray-900 dark:text-white">{selectedReq.requester_name || selectedReq.requester.slice(0, 12)}</div>{selectedReq.description && <p className="mt-1 text-gray-500">{selectedReq.description}</p>}</div>
             <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">{t("approvals.comment")}</label><textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder={t("approvals.commentPlaceholder")} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
             <div className="mt-4 flex gap-3">
