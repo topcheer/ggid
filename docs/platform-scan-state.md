@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 76
-## Last scan focus: D (Data Persistence) — CRUD verified complete in all 7 services; fixed OAuth memory repo existence checks + 13 repo tests (0%→34.1%)
-## Next scan focus: E (Error Handling) — Round 77
-## Total findings: 63
-## Done: 62
+## Current round: 77
+## Last scan focus: E (Error Handling) — 11 raw error exposures sanitized across 5 services (identity, auth, oauth, policy, audit)
+## Next scan focus: F (Test Coverage) — Round 78
+## Total findings: 64
+## Done: 63
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
@@ -49,6 +49,7 @@ LOW (acceptable for now — short-lived or fallback):
 - Agent consent (session-scoped)
 
 ## Commits this cycle:
+- 588d5873: Round 77 sanitize 11 raw error exposures in 500 responses
 - dc7ff6db: Round 76 OAuth memory repo CRUD fix + 13 tests (0%→34.1%)
 - 6eaba42e: Round 75 PanicRecovery middleware for all 6 backend services
 - ad51128d: Fix loadEncryptionKey dev fallback (BIOMETRIC_AES_KEY panic fix)
