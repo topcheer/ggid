@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface LinkingMethod {
   method: "email_match" | "saml_subject" | "oidc_sub" | "manual";
   description: string;
@@ -35,6 +40,7 @@ export interface IdentityAccountLinkingConfigData {
 
 export function useIdentityAccountLinkingConfig() {
   const [data, setData] = useState<IdentityAccountLinkingConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +48,23 @@ export function useIdentityAccountLinkingConfig() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         linking_methods: [
           { method: "email_match", description: "Match accounts by verified email address", enabled: true },
@@ -79,5 +101,5 @@ export function useIdentityAccountLinkingConfig() {
     fetchData();
   }, [fetchData]);
 
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

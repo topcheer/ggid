@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface MiningParameters {
   min_usage_threshold: number;
   co_occurrence_window_days: number;
@@ -25,6 +30,7 @@ export interface IdentityRoleMiningConfigData {
 
 export function useIdentityRoleMiningConfig() {
   const [data, setData] = useState<IdentityRoleMiningConfigData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,14 +38,30 @@ export function useIdentityRoleMiningConfig() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         mining_parameters: {
           min_usage_threshold: 10,
           co_occurrence_window_days: 30,
           confidence_score_min: 0.75,
         },
-        auto_suggest_roles: true,
+        auto_suggest_roles: false,
         similarity_algorithm: "jaccard",
         last_mining_run: "3h ago",
         suggested_roles_review_queue: [

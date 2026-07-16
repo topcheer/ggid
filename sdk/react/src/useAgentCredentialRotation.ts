@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface RotationEntry {
   agent_id: string;
   agent_name: string;
@@ -24,6 +29,7 @@ export interface AgentCredentialRotationData {
 
 export function useAgentCredentialRotation() {
   const [data, setData] = useState<AgentCredentialRotationData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,13 +37,29 @@ export function useAgentCredentialRotation() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         rotation_schedule: [
-          { agent_id: "agent-001", agent_name: "CI/CD Bot", current_key_age_days: 30, rotation_due_days: 60, auto_rotate: true },
-          { agent_id: "agent-002", agent_name: "Monitoring Agent", current_key_age_days: 85, rotation_due_days: 5, auto_rotate: true },
+          { agent_id: "agent-001", agent_name: "CI/CD Bot", current_key_age_days: 30, rotation_due_days: 60, auto_rotate: false },
+          { agent_id: "agent-002", agent_name: "Monitoring Agent", current_key_age_days: 85, rotation_due_days: 5, auto_rotate: false },
           { agent_id: "agent-003", agent_name: "Data Pipeline", current_key_age_days: 95, rotation_due_days: -5, auto_rotate: false },
-          { agent_id: "agent-004", agent_name: "Security Scanner", current_key_age_days: 15, rotation_due_days: 75, auto_rotate: true },
+          { agent_id: "agent-004", agent_name: "Security Scanner", current_key_age_days: 15, rotation_due_days: 75, auto_rotate: false },
           { agent_id: "agent-005", agent_name: "Legacy Integration", current_key_age_days: 180, rotation_due_days: -90, auto_rotate: false },
         ],
         rotation_history: [

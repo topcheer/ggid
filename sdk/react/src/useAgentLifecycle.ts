@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface RegisteredAgent {
   agent_id: string;
   name: string;
@@ -31,6 +36,7 @@ export interface AgentLifecycleData {
 
 export function useAgentLifecycle() {
   const [data, setData] = useState<AgentLifecycleData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +44,23 @@ export function useAgentLifecycle() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         registered_agents: [
           { agent_id: "agent-001", name: "CI/CD Bot", owner: "devops@ggid.dev", status: "active", created_at: "30d ago", last_active: "2m ago", permissions: ["deploy:staging", "read:config"], request_rate_per_min: 45, rotation_due: false },
@@ -61,5 +83,5 @@ export function useAgentLifecycle() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

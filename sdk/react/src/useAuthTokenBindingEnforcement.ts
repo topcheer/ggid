@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ClientBindingPolicy {
   client_id: string;
   min_binding_strength: string;
@@ -24,6 +29,7 @@ export interface AuthTokenBindingEnforcementData {
 
 export function useAuthTokenBindingEnforcement() {
   const [data, setData] = useState<AuthTokenBindingEnforcementData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +37,23 @@ export function useAuthTokenBindingEnforcement() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         enforcement_level: "required",
         per_client_binding_policy: [
@@ -42,7 +64,7 @@ export function useAuthTokenBindingEnforcement() {
         ],
         grace_period_days: 30,
         non_compliant_tokens_count: 15,
-        auto_revoke_enabled: true,
+        auto_revoke_enabled: false,
         migration_timeline: [
           { phase: "Discovery", description: "Identify all clients and their current binding status", status: "completed" },
           { phase: "Notification", description: "Notify non-compliant client owners", status: "completed" },
@@ -59,5 +81,5 @@ export function useAuthTokenBindingEnforcement() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-  return { data, loading, error, refresh: fetchData };
+  return { data, loading, error, refresh: fetchData, isDemoData };
 }

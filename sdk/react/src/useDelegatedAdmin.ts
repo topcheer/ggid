@@ -51,6 +51,7 @@ export function useDelegatedAdmin(): UseDelegatedAdminResult {
   const [delegations, setDelegations] = useState<Delegation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
 
   const makeHeaders = useCallback(() => {
     const tok = getAccessToken();

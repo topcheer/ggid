@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
 
+/**
+ * DEMO DATA — Tries real API first, falls back to empty demo data.
+ * isDemoData flag indicates whether live or fallback data is shown.
+ */
+
 export interface ApprovalChainStep {
   role: string;
   status: "pending" | "approved" | "rejected" | "waiting";
@@ -28,6 +33,7 @@ export interface AccessRequestApprovalWorkflowData {
 
 export function useAccessRequestApprovalWorkflow() {
   const [data, setData] = useState<AccessRequestApprovalWorkflowData | null>(null);
+  const [isDemoData, setIsDemoData] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +41,23 @@ export function useAccessRequestApprovalWorkflow() {
     setLoading(true);
     setError(null);
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      // Try real API first
+      let res: Response | null = null;
+      try {
+        res = await fetch("/api/v1/data", {
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch { res = null; }
+      
+      if (res?.ok) {
+        const realData = await res.json();
+        setData(realData);
+        setIsDemoData(false);
+        return;
+      }
+      
+      // Fallback: empty demo data (no dangerous flags)
+      setIsDemoData(true);
       setData({
         pending_requests: [
           {
@@ -55,7 +77,7 @@ export function useAccessRequestApprovalWorkflow() {
             requester_name: "Bob Martinez",
             requested_role: "Read-Only Analyst",
             sla_remaining_hours: 2,
-            auto_approve_eligible: true,
+            auto_approve_eligible: false,
             approval_chain: [
               { role: "Manager", status: "pending" },
               { role: "Security Admin", status: "waiting" },
