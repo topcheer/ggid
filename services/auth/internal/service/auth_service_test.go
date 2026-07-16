@@ -179,8 +179,30 @@ func TestTokenService_RejectWrongKey(t *testing.T) {
 
 func TestTokenService_KeyIDConsistent(t *testing.T) {
 	cfg := testJWTConfig(t)
-	ts1, _ := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
-	ts2, err := NewTokenService(newTestKeyProvider(t), cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
+	// Ensure the key file exists once before creating providers.
+	if _, err := loadOrCreatePrivateKey(cfg.PrivateKeyPath); err != nil {
+		t.Fatalf("loadOrCreatePrivateKey: %v", err)
+	}
+	kp1, err := crypto.NewKeyProvider(context.Background(), crypto.KeyProviderConfig{
+		Provider: "local",
+		Local:    crypto.LocalKeyProviderConfig{PrivateKeyPath: cfg.PrivateKeyPath, PublicKeyPath: cfg.PublicKeyPath},
+	})
+	if err != nil {
+		t.Fatalf("kp1: %v", err)
+	}
+	defer kp1.Close()
+
+	kp2, err := crypto.NewKeyProvider(context.Background(), crypto.KeyProviderConfig{
+		Provider: "local",
+		Local:    crypto.LocalKeyProviderConfig{PrivateKeyPath: cfg.PrivateKeyPath, PublicKeyPath: cfg.PublicKeyPath},
+	})
+	if err != nil {
+		t.Fatalf("kp2: %v", err)
+	}
+	defer kp2.Close()
+
+	ts1, _ := NewTokenService(kp1, cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
+	ts2, err := NewTokenService(kp2, cfg.Issuer, cfg.Audience, cfg.AccessTokenTTL, nil, nil)
 	if err != nil {
 		t.Fatalf("second load: %v", err)
 	}
