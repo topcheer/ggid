@@ -363,6 +363,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/anomaly/detect", h.handleAnomalyDetect)
 	h.mux.HandleFunc("/api/v1/auth/brute-force/config", h.handleBruteForceConfig)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/config", h.handleWebAuthnConfig)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/credentials/valid-ids", h.handleWebAuthnValidIDs)
 	h.mux.HandleFunc("/api/v1/auth/passwordless/config", h.handlePasswordlessConfig)
 	h.mux.HandleFunc("/api/v1/auth/adaptive-auth/config", h.handleAdaptiveAuthConfig)
 	h.mux.HandleFunc("/api/v1/auth/mfa/challenge-config", h.handleMFAChallengeConfig)
