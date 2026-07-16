@@ -82,7 +82,7 @@ export default function OAuthLifecyclePage() {
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Monitor and manage OAuth client status: active, suspended, expired, revoked.</p>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       : (
@@ -137,7 +137,7 @@ export default function OAuthLifecyclePage() {
       {suspendTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setSuspendTarget(null)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white"><Pause className="h-5 w-5 text-yellow-600" /> Suspend Client</h3><button onClick={() => setSuspendTarget(null)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="mb-4 flex items-center justify-between"><h3 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white"><Pause className="h-5 w-5 text-yellow-600" /> Suspend Client</h3><button onClick={() => setSuspendTarget(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <p className="mb-4 text-sm text-gray-500">Suspending <span className="font-medium text-gray-900 dark:text-white">{suspendTarget.client_name}</span> will immediately invalidate all active tokens.</p>
             <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Reason</label><textarea value={suspendReason} onChange={(e) => setSuspendReason(e.target.value)} rows={3} placeholder="Reason for suspension..." className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
             <button onClick={handleSuspend} disabled={actioning === suspendTarget.id} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-yellow-600 py-2 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50">{actioning === suspendTarget.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Pause className="h-4 w-4" />}Confirm Suspend</button>

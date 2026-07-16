@@ -154,7 +154,7 @@ export default function EvidenceVersioningPage() {
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800">
               <h3 className="font-semibold flex items-center gap-2"><FileText className="w-5 h-5 text-blue-500" /> New Version</h3>
-              <button onClick={() => setShowCreate(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-3">
               <div><label className="text-sm font-medium">Change Description</label><textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} placeholder="Updated evidence collection scope..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
@@ -173,7 +173,7 @@ export default function EvidenceVersioningPage() {
           <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800">
               <h3 className="font-semibold flex items-center gap-2"><RotateCcw className="w-5 h-5 text-orange-500" /> Confirm Rollback</h3>
-              <button onClick={() => setRollbackVersion(null)}><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={() => setRollbackVersion(null)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 text-sm space-y-2">
               <p>Rolling back <span className="font-mono font-medium">{rollbackVersion.item.control_id}</span> to v{rollbackVersion.version.version}.</p>

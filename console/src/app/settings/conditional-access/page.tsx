@@ -96,7 +96,7 @@ export default function ConditionalAccessPage() {
         <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Plus className="h-4 w-4" /> New Policy</button>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       : policies.length === 0 ? <div className={cardCls}><div className="py-12 text-center"><Shield className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No conditional access policies.</p></div></div>
@@ -123,7 +123,7 @@ export default function ConditionalAccessPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="relative inline-flex cursor-pointer items-center"><input type="checkbox" checked={p.enabled} onChange={() => handleToggle(p)} className="peer sr-only" /><div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:transition-all peer-checked:bg-indigo-600 peer-checked:after:translate-x-full dark:bg-gray-700" /></label>
-                    <button onClick={() => setConfirmDelete(p)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => setConfirmDelete(p)} aria-label="Delete policy" className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
               </div>
@@ -136,7 +136,7 @@ export default function ConditionalAccessPage() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => !creating && setShowCreate(false)}>
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">New Access Policy</h2><button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="flex items-center justify-between"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">New Access Policy</h2><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="mt-4 space-y-3">
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
               <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</label><input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>

@@ -101,7 +101,7 @@ export default function MagicLinkPage() {
 
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
-          <AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          <AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
         </div>
       )}
 
@@ -156,13 +156,13 @@ export default function MagicLinkPage() {
                 {cfg.allowed_domains.map((d) => (
                   <span key={d} className="flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1 text-xs text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">
                     @{d}
-                    {editing && <button onClick={() => removeDomain(d)}><X className="h-3 w-3" /></button>}
+                    {editing && <button onClick={() => removeDomain(d)} aria-label="Remove domain"><X className="h-3 w-3" /></button>}
                   </span>
                 ))}
                 {editing && (
                   <div className="flex items-center gap-1">
                     <input value={newDomain} onChange={(e) => setNewDomain(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addDomain()} placeholder="company.com" className="w-32 rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-                    <button onClick={addDomain} className="rounded p-1 text-indigo-600 hover:bg-indigo-50"><Plus className="h-3.5 w-3.5" /></button>
+                    <button onClick={addDomain} aria-label="Add domain" className="rounded p-1 text-indigo-600 hover:bg-indigo-50"><Plus className="h-3.5 w-3.5" /></button>
                   </div>
                 )}
                 {!editing && cfg.allowed_domains.length === 0 && <span className="text-xs text-gray-400">All domains allowed</span>}
