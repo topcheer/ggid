@@ -1,10 +1,10 @@
 # Platform Scan State
 
-## Current round: 69
-## Last scan focus: E (Error Handling) — 2 raw error exposures fixed; no 500+raw patterns remain
-## Next scan focus: F (Test Coverage) — Round 70
-## Total findings: 59
-## Done: 58
+## Current round: 71
+## Last scan focus: F (Test Coverage) — MCP server (10 tools), LDAP tests (10), auth handler tests (8)
+## Next scan focus: G (SDK Alignment) — Round 72
+## Total findings: 61
+## Done: 60
 ## Fixed (pending verification): 0
 ## Partial: 0
 ## Remaining: 1 (FedCM ACCEPTABLE)
