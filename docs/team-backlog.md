@@ -344,3 +344,45 @@ See docs/research/ for full research docs.
 
 **业务价值**: MEDIUM（管理态势感知真实化）| **实现难度**: Low-Medium
 - 实现路径：auth 或 audit 新增 GET /api/v1/zt/posture 聚合四项指标 → hook 接真端点（纳入 frontend 清理批次）
+
+---
+
+## K8s Workload Identity 接入（TokenReview → GGID Token） (2026-07-17 第6小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: 云原生标准场景：K8s Pod 内的 workload 需要访问受 GGID 保护的 API。标准模式（GCP/AWS/Azure 一致）：Pod 挂载 ServiceAccount token → 应用用它向 IdP 换访问令牌。GGID 需要：K8s TokenReview API 验证 SA token → 按命名空间/SA 映射策略签发 GGID access token。SPIFFE JWT-SVID 采用同构流程（OIDC 发现 + JWT 验证）。
+
+**市场背景**: CIEM 市场 $3.9B(2025)→$46.3B(2034)，CAGR 31.7%，云安全增长最快细分。GCP 2025 推 managed workload identity（SPIFFE 池化）。
+
+**GGID 现状**: operator 已有（instance/tenant CRD + provisioning controller，Round 87 部署）；RFC 8693 token exchange 已在 backlog（可复用其 grant 机制）；无 TokenReview 支持。
+
+**业务价值**: MEDIUM-HIGH（k8s 部署的客户的刚需，operator 故事补全）
+**实现难度**: Medium
+- 实现路径：
+  1. auth 服务新增 POST /api/v1/auth/workload/token：入参 k8s_sa_token → TokenReview（in-cluster 或 kubeconfig）→ 验证 namespace/SA/audience → 映射 GGID service identity → 签发 access token（短 TTL）
+  2. 配置：tenant 级 workload identity pool（允许哪些 cluster/namespace/SA）
+  3. SPIFFE 兼容：接受 spiffe:// trust domain 的 JWT-SVID（验签 + trust bundle 配置）
+  4. NHI 联动：workload token 的 subject 注册为 NHI（与 AAM backlog 协同）
+
+**兼容性**: 复用 JWT 签发管线；TokenReview 仅出站 HTTPS 调用
+
+---
+
+## CIEM 权限使用分析（Unused/Excessive Entitlements） (2026-07-17 第6小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: CIEM 核心能力：交叉分析"授予的权限"（policy 服务角色/权限数据）与"实际使用"（audit 事件资源访问记录），产出：90 天未使用权限清单、过度授权角色（使用率<10%）、权限右移建议（right-sizing）。与 IGA GenAI 审查建议（审查时点动作）互补：CIEM 是持续分析 dashboard。
+
+**业务价值**: MEDIUM-HIGH（CIEM 独立产品线能力，GGID 数据全有只差计算）
+**实现难度**: Medium
+- 实现路径：
+  1. audit 新增分析 job（每日）：role_assignments × audit_events(resource_type/action) 交叉 → entitlement_usage 表
+  2. GET /api/v1/audit/ciem/insights：unused_permissions / excessive_roles / right_sizing_suggestions
+  3. console entitlement-review 页面接真数据（当前属假数据清理批次）
+  4. 与 ITDR 联动：excessive role + 异常使用 → 风险信号
+
+---
+
+## Operator 扩展：GGIDClient/Application CRD (2026-07-17 第6小时研究) - Priority: P3 - Status: Proposed - Suggested: backend
+
+**描述**: operator 现有 instance/tenant CRD。扩展 GGIDClient CRD 实现 OAuth client 的 K8s 声明式管理（GitOps 场景：应用部署清单中直接声明 redirect_uris/scopes，operator 自动注册 client 并写回 secret）。ArgoCD/Flux 用户的标准期望。
+
+**业务价值**: MEDIUM | **实现难度**: Low-Medium（controller 模式已就绪，新增一种 CRD + reconcile 调 identity admin API）
