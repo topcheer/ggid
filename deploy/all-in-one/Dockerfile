@@ -24,7 +24,8 @@ RUN CGO_ENABLED=0 go build -o /bin/identity-server ./services/identity/cmd/ && \
     CGO_ENABLED=0 go build -o /bin/org-server ./services/org/cmd/ && \
     CGO_ENABLED=0 go build -o /bin/audit-server ./services/audit/cmd/ && \
     CGO_ENABLED=0 go build -o /bin/gateway-server ./services/gateway/cmd/ && \
-    CGO_ENABLED=0 go build -o /bin/ggid-migrate ./services/ggid-migrate/
+    CGO_ENABLED=0 go build -o /bin/ggid-migrate ./services/ggid-migrate/ && \
+    CGO_ENABLED=0 go build -o /bin/mcp-server ./services/mcp/cmd/
 
 # ---------------- Stage 2: Console SDK builder ----------------
 FROM node:22-alpine AS console-sdk-builder
@@ -82,6 +83,7 @@ COPY --from=go-builder /bin/policy-server /usr/local/bin/
 COPY --from=go-builder /bin/org-server /usr/local/bin/
 COPY --from=go-builder /bin/audit-server /usr/local/bin/
 COPY --from=go-builder /bin/gateway-server /usr/local/bin/
+COPY --from=go-builder /bin/mcp-server /usr/local/bin/
 COPY --from=go-builder /bin/ggid-migrate /usr/local/bin/
 
 # Copy migration SQL files
