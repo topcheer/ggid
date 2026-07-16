@@ -149,3 +149,11 @@ Note: CIBA endpoint only accepts form-encoded client credentials (client_id/clie
 - Round 53 (odd, Focus D): Data Persistence scan — pending
 - Research backlog: NIS2/CRA/PIPL compliance trends, OAuth 2.1 enforcement, PQC migration, passkey health dashboard
 
+
+| 2026-07-17 | Round 87 — Focus A (Stub/Placeholder) | +1 (provisioning stub masking undeployed operator) | 1 (operator deployed + gateway wired, eae696b5) |
+
+### Round 87 Focus A — Stub/Placeholder Scan Results
+
+- services/ Go 代码零 TODO/FIXME（HTML placeholder 属性除外，非问题）
+- [FIXED] **Provisioning gateway stub** — gateway 对所有 /api/v1/provisioning/* 请求返回假空响应 `{"items":[],"total":0}`，包括 POST/DELETE（静默假成功）。实际上 deploy/operator 有完整代码（CRD + controllers + HTTP API）但从未部署。本轮：创建 operator Dockerfile（含 kubectl/helm/chart）、安装 CRD、部署到 ggid-operator namespace、gateway 路由切换到真实 API（PROVISIONING_SERVICE_URL）。E2E 验证 environment/instances/tenants 返回真实集群状态。Commit eae696b5。
+- 注意：operator environment 报告的 operatorNamespace 为 "ggid-system"（默认配置），实际 GGID 部署在 "ggid" namespace — 真实 provision 操作前需校正 operator 的命名空间配置（记录为后续项）。

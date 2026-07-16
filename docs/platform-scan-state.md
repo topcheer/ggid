@@ -1,13 +1,13 @@
 # Platform Scan State
 
-## Current round: 87
-## Last scan focus: E2E (Round 86) — OAuth 8/8 PASS, ERP 4/4 PASS, SDK 8/8 PASS; fixed JWT kid mismatch (a3e29625, erp-api 401→200); Ruby SDK Ruby-4.0 compat fixes
-## Next scan focus: A (Stub/Placeholder scan, Round 87 = odd round, Workflow B)
-## Total findings: 72
-## Done: 72
+## Current round: 88
+## Last scan focus: A (Stub/Placeholder, Round 87) — services/ 零 TODO; found provisioning gateway stub masking undeployed operator; deployed operator + wired gateway (eae696b5)
+## Next scan focus: E2E tests (Round 88 = even round, Workflow A)
+## Total findings: 73
+## Done: 73
 ## Fixed (pending verification): 0
 ## Partial: 0
-## Remaining: 1 (FedCM ACCEPTABLE) + 1 LOW (CIBA Basic auth per RFC 6749 2.3.1)
+## Remaining: 1 (FedCM ACCEPTABLE) + 1 LOW (CIBA Basic auth) + 1 (operator namespace config ggid-system vs ggid)
 ## Remaining (non-gap): 0
 ## Source of truth: docs/platform-completeness-report.md
 
