@@ -150,7 +150,7 @@ export default function ApiKeysPage() {
         <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
-          <button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
         </div>
       )}
 
@@ -267,7 +267,7 @@ export default function ApiKeysPage() {
                 </div>
                 <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
                   <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{k.expires_at ? new Date(k.expires_at).toLocaleDateString() : "Never"}</span>
-                  <button onClick={() => setConfirmDelete(k.id)} className="text-red-500"><Trash2 className="h-4 w-4" /></button>
+                  <button onClick={() => setConfirmDelete(k.id)} aria-label="Delete key" className="text-red-500"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
             ))}
@@ -281,7 +281,7 @@ export default function ApiKeysPage() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Create API Key</h2>
-              <button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button>
+              <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-4">
               <div>

@@ -96,7 +96,7 @@ export default function IncidentsPage() {
         <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><Plus className="h-4 w-4" /> {t("incidents.new")}</button>
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-red-600" /></div>
       : (
@@ -151,7 +151,7 @@ export default function IncidentsPage() {
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">{t("incidents.new")}</h3><button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">{t("incidents.new")}</h3><button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="space-y-4">
               <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Title</label><input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               <div className="flex gap-4">
@@ -169,7 +169,7 @@ export default function IncidentsPage() {
       {resolveIncident && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setResolveIncident(null)}>
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Resolve: {resolveIncident.title}</h3><button onClick={() => setResolveIncident(null)}><X className="h-5 w-5 text-gray-400" /></button></div>
+            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold text-gray-900 dark:text-white">Resolve: {resolveIncident.title}</h3><button onClick={() => setResolveIncident(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button></div>
             <div className="mb-4 rounded-lg bg-gray-50 p-3 text-sm dark:bg-gray-900"><span className="text-gray-400">Severity:</span> <span className={`font-medium ${resolveIncident.severity === "critical" ? "text-red-600" : resolveIncident.severity === "high" ? "text-orange-600" : "text-gray-600"}`}>{resolveIncident.severity}</span></div>
             <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Resolution Notes</label><textarea value={resolveNotes} onChange={(e) => setResolveNotes(e.target.value)} rows={4} placeholder="Describe the investigation, root cause, and actions taken..." className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
             <button onClick={handleResolve} disabled={!resolveNotes.trim() || resolving !== null} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">{resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}{t("incidents.resolveIncident")}</button>

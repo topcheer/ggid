@@ -155,7 +155,7 @@ export default function OAuthClientsPage() {
       {error && (
         <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />{error}
-          <button onClick={() => setError(null)} className="ml-auto"><X className="h-4 w-4" /></button>
+          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
         </div>
       )}
 
@@ -250,7 +250,7 @@ export default function OAuthClientsPage() {
                   <span className="font-medium text-gray-800 dark:text-gray-200">{c.client_name}</span>
                   <div className="flex gap-1">
                     <button onClick={() => { setEditClient(c); setEditUris(c.redirect_uris.join("\n")); }} className="p-1 text-gray-400"><ExternalLink className="h-4 w-4" /></button>
-                    <button onClick={() => setConfirmDelete(c)} className="p-1 text-red-500"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => setConfirmDelete(c)} aria-label="Delete client" className="p-1 text-red-500"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </div>
                 <p className="mt-1 font-mono text-xs text-indigo-600">{c.client_id.substring(0, 20)}...</p>
@@ -272,7 +272,7 @@ export default function OAuthClientsPage() {
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("oauth.registerTitle")}</h2>
-              <button onClick={() => setShowCreate(false)}><X className="h-5 w-5 text-gray-400" /></button>
+              <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-4">
               <div>
@@ -320,7 +320,7 @@ export default function OAuthClientsPage() {
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("oauth.editRedirectUris")}</h2>
-              <button onClick={() => setEditClient(null)}><X className="h-5 w-5 text-gray-400" /></button>
+              <button onClick={() => setEditClient(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <p className="mt-1 text-sm text-gray-500">{editClient.client_name}</p>
             <textarea value={editUris} onChange={(e) => setEditUris(e.target.value)} rows={5} className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
