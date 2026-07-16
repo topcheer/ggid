@@ -3353,5 +3353,6 @@
   "zeroTrustNetworkConfig.title": "Zero Trust Network Configuration",
   "zeroTrustPosture.title": "Zero-Trust Posture",
   "nav.aiAgents": "AI Agents",
-  "nav.accessRequests": "Access Requests"
+  "nav.accessRequests": "Access Requests",
+  "nav.logout": "Sign Out"
 }

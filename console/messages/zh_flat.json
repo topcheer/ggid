@@ -3353,5 +3353,6 @@
   "zeroTrustNetworkConfig.title": "零信任网络配置",
   "zeroTrustPosture.title": "Zero-Trust Posture",
   "nav.aiAgents": "AI 代理",
-  "nav.accessRequests": "访问请求"
+  "nav.accessRequests": "访问请求",
+  "nav.logout": "退出登录"
 }

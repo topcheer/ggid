@@ -29,6 +29,7 @@ import {
   Menu,
   AlertCircle,
   Loader2,
+  LogOut,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
@@ -231,13 +232,25 @@ export function Sidebar() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium dark:bg-gray-700 dark:text-gray-300">
+          <Link href="/profile" className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600">
             A
-          </div>
+          </Link>
           <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-200">admin@ggid.dev</p>
+            <Link href="/profile" className="block truncate text-sm font-medium text-gray-900 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-400">admin@ggid.dev</Link>
             <p className="truncate text-xs text-gray-500 dark:text-gray-500">{t("sidebar.administrator")}</p>
           </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem("ggid_access_token");
+              localStorage.removeItem("ggid_refresh_token");
+              localStorage.removeItem("ggid_tenant_id");
+              window.location.href = "/login";
+            }}
+            className="flex-shrink-0 rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-red-600 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-red-400"
+            title={t("nav.logout") || "Sign Out"}
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </aside>
