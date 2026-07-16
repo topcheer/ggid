@@ -82,17 +82,17 @@ func InternalAuth(secret []byte, opts ...Option) func(http.Handler) http.Handler
 
 ---
 
-# SCIM Bearer Token 设计规格
+## SCIM Bearer Token 设计规格
 
 > 状态: Proposed | 关联: 审计 P1 — SCIM 对真实 IdP 不可用
 
-## 1. 问题
+### 1. 问题
 
 Okta/Entra/Google Workspace 的 SCIM provisioning 使用**长期 bearer token**（管理员在 IdP 控制台配置），而非用户 JWT。GGID 现状：/scim/v2 走 gateway 用户 JWT → IdP 无法对接，SCIM 主场景（IdP 驱动的用户/组 provisioning）不可用。
 
-## 2. 设计
+### 2. 设计
 
-### 2.1 令牌模型
+#### 2.1 令牌模型
 
 新表 `scim_tokens`（migration 013）：
 ```sql
@@ -113,7 +113,7 @@ CREATE TABLE scim_tokens (
 
 令牌格式：`ggid_scim_<base64url(32 bytes)>`（前缀便于识别与泄露扫描）。
 
-### 2.2 认证流程
+#### 2.2 认证流程
 
 1. 管理员在 console 创建 token（POST /api/v1/identity/scim/tokens，需 JWT + admin）
 2. IdP 侧配置：SCIM Base URL = `https://<ggid-gateway>/scim/v2`，HTTP Header Authorization = `Bearer ggid_scim_...`
@@ -124,7 +124,7 @@ CREATE TABLE scim_tokens (
 
 **关键点**：SCIM token 认证的请求跳过 InternalAuth（因为不来自 gateway），但 tenant 来自 token 本身，比 gateway 注入更严格。
 
-### 2.3 管理 API（identity 服务）
+#### 2.3 管理 API（identity 服务）
 
 | Method | Path | 说明 |
 |--------|------|------|
@@ -135,20 +135,20 @@ CREATE TABLE scim_tokens (
 
 console 页面：settings/scim-tokens（创建/列表/吊销/复制一次明文引导 + IdP 配置指引：Okta/Entra 分步截图位）。
 
-### 2.4 安全要求
+#### 2.4 安全要求
 
 - 验证用 Argon2id（复用 pkg/crypto HashPassword/VerifyPassword）
 - 全量请求写 audit 事件（scim.provision.create/update/delete，actor=token name）
 - 速率限制：gateway 对 /scim/v2 独立限流桶（防 IdP 配置错误打爆）
 - token 泄露应急：DELETE 立即吊销（软删即时生效，无缓存）
 
-### 2.5 测试
+#### 2.5 测试
 
 - token 生命周期：创建→验证→轮换→吊销→过期
 - 跨租户拒绝：tenant A 的 token + X-Tenant-ID: tenant B → 操作落在 tenant A（忽略头）
 - IdP 兼容性 smoke：Okta SCIM 2.0 标准 payload（User/Group CRUD + PATCH）
 - 回归：内部认证中间件与 scimTokenAuth 顺序正确（healthz 通、scim token 通、无认证 403）
 
-## 3. 工作量
+### 3. 工作量
 
 ~1.5 天（migration+repo 0.5d + 中间件+管理 API 0.5d + console 页面前端协同 0.5d）。
