@@ -150,7 +150,7 @@ export default function OnboardingPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("onboarding.orgName") || "Organization Name"}</label>
-                <input value={orgName} onChange={(e) => setOrgName(e.target.value)} className={inputCls} placeholder="Acme Corporation" autoFocus />
+                <input aria-label="Acme Corporation" value={orgName} onChange={(e) => setOrgName(e.target.value)} className={inputCls} placeholder="Acme Corporation" autoFocus />
               </div>
               <div className="flex gap-2">
                 <button onClick={() => { setStep(1); }} className="text-sm text-gray-400 hover:text-gray-600">
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("users.usernameLbl") || "Username"}</label>
-                <input value={userName} onChange={(e) => setUserName(e.target.value)} className={inputCls} placeholder="john.doe" autoFocus />
+                <input aria-label="john.doe" value={userName} onChange={(e) => setUserName(e.target.value)} className={inputCls} placeholder="john.doe" autoFocus />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("users.email") || "Email"}</label>
@@ -199,7 +199,7 @@ export default function OnboardingPage() {
                 <>
                   <div>
                     <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("onboarding.keyName") || "API Key Name"}</label>
-                    <input value={apiKeyName} onChange={(e) => setApiKeyName(e.target.value)} className={inputCls} placeholder="CI/CD Pipeline" autoFocus />
+                    <input aria-label="CI/CD Pipeline" value={apiKeyName} onChange={(e) => setApiKeyName(e.target.value)} className={inputCls} placeholder="CI/CD Pipeline" autoFocus />
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => setStep(1)} className="text-sm text-gray-400 hover:text-gray-600">

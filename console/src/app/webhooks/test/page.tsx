@@ -113,7 +113,7 @@ export default function WebhookTesterPage() {
           {/* Event Selector */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 block">Event Type</label>
-            <select value={selectedEvent} onChange={(e) => updateEventPayload(e.target.value)}
+            <select aria-label="selected Event" value={selectedEvent} onChange={(e) => updateEventPayload(e.target.value)}
               className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent text-gray-900 dark:text-white">
               {WEBHOOK_EVENTS.map(ev => <option key={ev.id} value={ev.id}>{ev.name} — {ev.desc}</option>)}
             </select>
@@ -122,14 +122,14 @@ export default function WebhookTesterPage() {
           {/* Webhook URL */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 block">Webhook URL</label>
-            <input type="text" value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)}
+            <input aria-label="webhook Url" type="text" value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)}
               className="w-full px-3 py-2 text-sm font-mono border border-gray-300 dark:border-gray-700 rounded-lg bg-transparent text-gray-900 dark:text-white" />
           </div>
 
           {/* Payload Editor */}
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
             <label className="text-sm font-semibold text-gray-900 dark:text-white mb-2 block">Payload (JSON)</label>
-            <textarea value={payload} onChange={(e) => setPayload(e.target.value)}
+            <textarea aria-label="Text input" value={payload} onChange={(e) => setPayload(e.target.value)}
               className="w-full h-48 px-3 py-2 text-sm font-mono border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white resize-none" />
           </div>
 

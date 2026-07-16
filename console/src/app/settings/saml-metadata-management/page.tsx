@@ -39,8 +39,8 @@ export default function SamlMetadataManagementPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Settings</h2>
-        <div><label className="block text-sm font-medium mb-1">Refresh Schedule (cron)</label><input type="text" value={form.refresh_schedule_cron} onChange={(e) => setForm({ ...form, refresh_schedule_cron: e.target.value })} className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.federation_aggregation} onChange={(e) => setForm({ ...form, federation_aggregation: e.target.checked })} className="w-4 h-4" /><label>Federation Aggregation</label></div>
+        <div><label className="block text-sm font-medium mb-1">Refresh Schedule (cron)</label><input aria-label="form" type="text" value={form.refresh_schedule_cron} onChange={(e) => setForm({ ...form, refresh_schedule_cron: e.target.value })} className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.federation_aggregation} onChange={(e) => setForm({ ...form, federation_aggregation: e.target.checked })} className="w-4 h-4" /><label>Federation Aggregation</label></div>
         <div className="text-sm text-gray-500">Entity Categories: {form.entity_categories.join(", ")}</div>
       </div>
 

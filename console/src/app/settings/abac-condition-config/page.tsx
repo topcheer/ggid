@@ -84,7 +84,7 @@ export default function AbacConditionConfigPage() {
         <h2 className="text-lg font-semibold">Evaluation Settings</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Evaluation Cache TTL (seconds)</label>
-          <input type="number" value={form.evaluation_cache_ttl}
+          <input aria-label="form" type="number" value={form.evaluation_cache_ttl}
             onChange={(e) => setForm({ ...form, evaluation_cache_ttl: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-48" />
         </div>

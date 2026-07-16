@@ -200,7 +200,7 @@ export default function NotificationPage() {
                   </div>
                 </div>
                 <label className="relative inline-flex cursor-pointer items-center">
-                  <input type="checkbox" checked={cfg.enabled} onChange={() => toggleProvider(ch)} className="peer sr-only" />
+                  <input aria-label="Cfg" type="checkbox" checked={cfg.enabled} onChange={() => toggleProvider(ch)} className="peer sr-only" />
                   <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:transition-all peer-checked:bg-indigo-600 peer-checked:after:translate-x-full dark:bg-gray-700" />
                 </label>
               </div>
@@ -286,7 +286,7 @@ export default function NotificationPage() {
             <div className="mt-4 space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Template Name</label>
-                <input value={tmplForm.name} onChange={(e) => setTmplForm((p) => ({ ...p, name: e.target.value }))} placeholder="Password Reset" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="Password Reset" value={tmplForm.name} onChange={(e) => setTmplForm((p) => ({ ...p, name: e.target.value }))} placeholder="Password Reset" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Channel</label>
@@ -304,11 +304,11 @@ export default function NotificationPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
-                <input value={tmplForm.subject} onChange={(e) => setTmplForm((p) => ({ ...p, subject: e.target.value }))} placeholder="[GGID] Your verification code" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="[GGID] Your verification code" value={tmplForm.subject} onChange={(e) => setTmplForm((p) => ({ ...p, subject: e.target.value }))} placeholder="[GGID] Your verification code" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Body (use {`{{variables}}`})</label>
-                <textarea value={tmplForm.body} onChange={(e) => setTmplForm((p) => ({ ...p, body: e.target.value }))} rows={5} placeholder={"Hello {{name}},\n\nYour verification code is: {{code}}\n\nThis code expires in {{expiry}} minutes."} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <textarea aria-label="Text input" value={tmplForm.body} onChange={(e) => setTmplForm((p) => ({ ...p, body: e.target.value }))} rows={5} placeholder={"Hello {{name}},\n\nYour verification code is: {{code}}\n\nThis code expires in {{expiry}} minutes."} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">

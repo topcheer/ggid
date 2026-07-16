@@ -140,8 +140,8 @@ export default function RoleRequestsPage() {
               <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-3">
-              <div><label className="text-sm font-medium">Role</label><input type="text" value={createForm.requested_role} onChange={(e) => setCreateForm({ ...createForm, requested_role: e.target.value })} placeholder="admin" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
-              <div><label className="text-sm font-medium">Justification</label><textarea value={createForm.justification} onChange={(e) => setCreateForm({ ...createForm, justification: e.target.value })} rows={3} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">Role</label><input aria-label="admin" type="text" value={createForm.requested_role} onChange={(e) => setCreateForm({ ...createForm, requested_role: e.target.value })} placeholder="admin" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
+              <div><label className="text-sm font-medium">Justification</label><textarea aria-label="Text input" value={createForm.justification} onChange={(e) => setCreateForm({ ...createForm, justification: e.target.value })} rows={3} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>

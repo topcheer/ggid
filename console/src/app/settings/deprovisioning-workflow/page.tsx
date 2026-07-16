@@ -51,8 +51,8 @@ export default function DeprovisioningWorkflowPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Configuration</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Grace Period (days)</label><input type="number" value={gracePeriodDays} onChange={(e) => setGracePeriodDays(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" /></div>
-          <div className="flex items-center gap-3 pt-6"><input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="w-4 h-4" /><label>Dry-Run Mode (no actual changes)</label></div>
+          <div><label className="block text-sm font-medium mb-1">Grace Period (days)</label><input aria-label="grace Period Days" type="number" value={gracePeriodDays} onChange={(e) => setGracePeriodDays(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" /></div>
+          <div className="flex items-center gap-3 pt-6"><input aria-label="Dry run" type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="w-4 h-4" /><label>Dry-Run Mode (no actual changes)</label></div>
         </div>
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center"><p className="text-sm text-gray-500">Bulk Deprovision: Drop CSV file here (user_id column required)</p><button className="mt-2 px-4 py-1 bg-gray-100 border rounded text-sm hover:bg-gray-200">Upload CSV</button></div>
       </div>

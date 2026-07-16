@@ -27,7 +27,7 @@ export default function RefreshTokenRotationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Rotation Policy</h2>
         <div><label className="block text-sm font-medium mb-1">Rotation Mode</label>
-          <select value={form.rotation_mode} onChange={(e) => setForm({ ...form, rotation_mode: e.target.value as RefreshTokenRotationConfig["rotation_mode"] })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.rotation_mode} onChange={(e) => setForm({ ...form, rotation_mode: e.target.value as RefreshTokenRotationConfig["rotation_mode"] })} className="border rounded px-3 py-2">
             <option value="rotate">Rotate</option><option value="reuse">Reuse</option>
           </select>
         </div>
@@ -44,8 +44,8 @@ export default function RefreshTokenRotationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Timing</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Grace Period (s)</label><input type="number" value={form.grace_period_seconds} onChange={(e) => setForm({ ...form, grace_period_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Backward Compat Duration (s)</label><input type="number" value={form.backward_compat_duration} onChange={(e) => setForm({ ...form, backward_compat_duration: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Grace Period (s)</label><input aria-label="form" type="number" value={form.grace_period_seconds} onChange={(e) => setForm({ ...form, grace_period_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Backward Compat Duration (s)</label><input aria-label="form" type="number" value={form.backward_compat_duration} onChange={(e) => setForm({ ...form, backward_compat_duration: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 

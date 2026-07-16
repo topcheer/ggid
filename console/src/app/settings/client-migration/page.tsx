@@ -179,7 +179,7 @@ export default function ClientMigrationPage() {
             ))}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Grace Period (days)</label>
-              <input type="number" value={gracePeriod} onChange={(e) => setGracePeriod(parseInt(e.target.value) || 0)} min={0} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+              <input aria-label="grace Period" type="number" value={gracePeriod} onChange={(e) => setGracePeriod(parseInt(e.target.value) || 0)} min={0} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm" />
             </div>
           </div>
 

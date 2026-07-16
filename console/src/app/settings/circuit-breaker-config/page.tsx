@@ -134,11 +134,11 @@ export default function CircuitBreakerConfigPage() {
 
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={autoRestore} onChange={e => setAutoRestore(e.target.checked)} />
+            <input aria-label="Auto restore" type="checkbox" checked={autoRestore} onChange={e => setAutoRestore(e.target.checked)} />
             Auto-restore to half-open after timeout
           </label>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={excludeClientErrors} onChange={e => setExcludeClientErrors(e.target.checked)} />
+            <input aria-label="Exclude client errors" type="checkbox" checked={excludeClientErrors} onChange={e => setExcludeClientErrors(e.target.checked)} />
             Exclude 4xx client errors from failure count
           </label>
         </div>

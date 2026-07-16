@@ -164,21 +164,21 @@ export default function EventCorrelationRulesPage() {
           <div className="mt-4 space-y-4">
             <div>
               <label className="block text-xs font-medium text-gray-600">Rule Name</label>
-              <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Rapid API Calls" className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+              <input aria-label="e.g. Rapid API Calls" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. Rapid API Calls" className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600">Event Pattern</label>
-              <input value={newPattern} onChange={e => setNewPattern(e.target.value)} placeholder="e.g. api_call > 100 AND user != admin" className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
+              <input aria-label="e.g. api_call > 100 AND user != admin" value={newPattern} onChange={e => setNewPattern(e.target.value)} placeholder="e.g. api_call > 100 AND user != admin" className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
               <p className="mt-1 text-xs text-gray-400">Use event types with comparison operators and AND/OR logic</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600">Time Window (seconds)</label>
-                <input type="number" value={newWindow} onChange={e => setNewWindow(Number(e.target.value))} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <input aria-label="new Window" type="number" value={newWindow} onChange={e => setNewWindow(Number(e.target.value))} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Action</label>
-                <select value={newAction} onChange={e => setNewAction(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <select aria-label="new Action" value={newAction} onChange={e => setNewAction(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                   <option value="alert_admin">Alert Admin</option>
                   <option value="lock_account">Lock Account</option>
                   <option value="require_mfa">Require MFA</option>

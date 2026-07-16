@@ -92,17 +92,17 @@ export default function PolicySimulationCenterPage() {
         <div className="space-y-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <label className="block text-sm font-medium text-gray-700">Policy Selector</label>
-            <select value={selectedPolicy} onChange={e => setSelectedPolicy(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+            <select aria-label="selected Policy" value={selectedPolicy} onChange={e => setSelectedPolicy(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
               {policies.map(p => <option key={p.id} value={p.id}>{p.name} (priority: {p.priority}, effect: {p.effect})</option>)}
             </select>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Subject Attributes (JSON)</label><textarea value={subjectAttrs} onChange={e => setSubjectAttrs(e.target.value)} rows={6} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Resource Attributes (JSON)</label><textarea value={resourceAttrs} onChange={e => setResourceAttrs(e.target.value)} rows={6} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Subject Attributes (JSON)</label><textarea aria-label="Text input" value={subjectAttrs} onChange={e => setSubjectAttrs(e.target.value)} rows={6} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Resource Attributes (JSON)</label><textarea aria-label="Text input" value={resourceAttrs} onChange={e => setResourceAttrs(e.target.value)} rows={6} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Action</label><input value={action} onChange={e => setAction(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></div>
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Environment (JSON)</label><textarea value={environment} onChange={e => setEnvironment(e.target.value)} rows={3} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Action</label><input aria-label="action" value={action} onChange={e => setAction(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></div>
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Environment (JSON)</label><textarea aria-label="Text input" value={environment} onChange={e => setEnvironment(e.target.value)} rows={3} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
           </div>
           <button onClick={simulate} disabled={simulating} aria-label="Run policy simulation" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">{simulating ? 'Simulating...' : 'Run Simulation'}</button>
           {result && (
@@ -118,7 +118,7 @@ export default function PolicySimulationCenterPage() {
 
       {activeTab === 'batch' && (
         <div className="space-y-4">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Batch CSV Input</label><textarea value={csvInput} onChange={e => setCsvInput(e.target.value)} rows={8} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"><label className="block text-sm font-medium text-gray-700">Batch CSV Input</label><textarea aria-label="Text input" value={csvInput} onChange={e => setCsvInput(e.target.value)} rows={8} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" /></div>
           <button onClick={runBatch} aria-label="Run batch simulation" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Run Batch</button>
           {batchResults.length > 0 && (
             <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm overflow-hidden">

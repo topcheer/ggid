@@ -25,15 +25,15 @@ export default function AuditTamperDetectionConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Verification Settings</h2>
-        <div><label className="block text-sm font-medium mb-1">Verify Interval (minutes)</label><input type="number" value={form.verify_interval_minutes} onChange={(e) => setForm({ ...form, verify_interval_minutes: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div><label className="block text-sm font-medium mb-1">Insertion Gap Threshold</label><input type="number" value={form.insertion_gap_threshold} onChange={(e) => setForm({ ...form, insertion_gap_threshold: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div><label className="block text-sm font-medium mb-1">Reorder Detection Sensitivity</label><select value={form.reorder_detection_sensitivity} onChange={(e) => setForm({ ...form, reorder_detection_sensitivity: e.target.value as AuditTamperDetectionConfig["reorder_detection_sensitivity"] })} className="border rounded px-3 py-2"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+        <div><label className="block text-sm font-medium mb-1">Verify Interval (minutes)</label><input aria-label="form" type="number" value={form.verify_interval_minutes} onChange={(e) => setForm({ ...form, verify_interval_minutes: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Insertion Gap Threshold</label><input aria-label="form" type="number" value={form.insertion_gap_threshold} onChange={(e) => setForm({ ...form, insertion_gap_threshold: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Reorder Detection Sensitivity</label><select aria-label="form" value={form.reorder_detection_sensitivity} onChange={(e) => setForm({ ...form, reorder_detection_sensitivity: e.target.value as AuditTamperDetectionConfig["reorder_detection_sensitivity"] })} className="border rounded px-3 py-2"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">Alerting & Forensics</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.alert_on_tamper} onChange={(e) => setForm({ ...form, alert_on_tamper: e.target.checked })} className="w-4 h-4" /><label>Alert on Tamper Detection</label></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.forensics_auto_collection} onChange={(e) => setForm({ ...form, forensics_auto_collection: e.target.checked })} className="w-4 h-4" /><label>Forensics Auto-Collection</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.alert_on_tamper} onChange={(e) => setForm({ ...form, alert_on_tamper: e.target.checked })} className="w-4 h-4" /><label>Alert on Tamper Detection</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.forensics_auto_collection} onChange={(e) => setForm({ ...form, forensics_auto_collection: e.target.checked })} className="w-4 h-4" /><label>Forensics Auto-Collection</label></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">

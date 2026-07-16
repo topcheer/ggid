@@ -57,7 +57,7 @@ export default function RegisterPage() {
 
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">Username</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus className={inputCls} placeholder="johndoe" />
+            <input aria-label="johndoe" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus className={inputCls} placeholder="johndoe" />
           </div>
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">Email</label>

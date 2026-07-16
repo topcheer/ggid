@@ -271,12 +271,12 @@ export default function OAuthClientsPage() {
 
             <div className="space-y-5">
               {/* Name */}
-              <div><label className={labelCls}>Client Name</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputCls} placeholder="My Application" /></div>
+              <div><label className={labelCls}>Client Name</label><input aria-label="My Application" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className={inputCls} placeholder="My Application" /></div>
 
               {/* Redirect URIs */}
               <div>
                 <label className={labelCls}>Redirect URIs (one per line)</label>
-                <textarea value={form.redirectUris} onChange={e => setForm({ ...form, redirectUris: e.target.value })} className={`${inputCls} min-h-[80px] font-mono text-xs`} placeholder={"https://app.example.com/callback\nhttps://staging.example.com/callback"} />
+                <textarea aria-label="Text input" value={form.redirectUris} onChange={e => setForm({ ...form, redirectUris: e.target.value })} className={`${inputCls} min-h-[80px] font-mono text-xs`} placeholder={"https://app.example.com/callback\nhttps://staging.example.com/callback"} />
               </div>
 
               {/* Grant Types */}
@@ -285,7 +285,7 @@ export default function OAuthClientsPage() {
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {GRANT_TYPES.map(g => (
                     <label key={g} className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2 text-xs transition-colors ${form.grantTypes.includes(g) ? "border-brand-400 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/20" : "border-gray-200 dark:border-gray-700"}`}>
-                      <input type="checkbox" checked={form.grantTypes.includes(g)} onChange={() => toggleGrant(g)} className="h-3.5 w-3.5" />
+                      <input aria-label="Form" type="checkbox" checked={form.grantTypes.includes(g)} onChange={() => toggleGrant(g)} className="h-3.5 w-3.5" />
                       <span className="text-gray-700 dark:text-gray-300">{g}</span>
                     </label>
                   ))}
@@ -298,7 +298,7 @@ export default function OAuthClientsPage() {
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {STANDARD_SCOPES.map(s => (
                     <label key={s} className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2 text-xs transition-colors ${form.scopes.includes(s) ? "border-brand-400 bg-brand-50 dark:border-brand-700 dark:bg-brand-900/20" : "border-gray-200 dark:border-gray-700"}`}>
-                      <input type="checkbox" checked={form.scopes.includes(s)} onChange={() => toggleScope(s)} className="h-3.5 w-3.5" />
+                      <input aria-label="Form" type="checkbox" checked={form.scopes.includes(s)} onChange={() => toggleScope(s)} className="h-3.5 w-3.5" />
                       <span className="text-gray-700 dark:text-gray-300">{s}</span>
                     </label>
                   ))}
@@ -318,8 +318,8 @@ export default function OAuthClientsPage() {
 
               {/* Token Lifetimes */}
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><label className={labelCls}>Access Token TTL (seconds)</label><input type="number" min={60} value={form.accessTokenTtl} onChange={e => setForm({ ...form, accessTokenTtl: Number(e.target.value) || 3600 })} className={inputCls} /></div>
-                <div><label className={labelCls}>Refresh Token TTL (seconds)</label><input type="number" min={60} value={form.refreshTokenTtl} onChange={e => setForm({ ...form, refreshTokenTtl: Number(e.target.value) || 2592000 })} className={inputCls} /></div>
+                <div><label className={labelCls}>Access Token TTL (seconds)</label><input aria-label="form" type="number" min={60} value={form.accessTokenTtl} onChange={e => setForm({ ...form, accessTokenTtl: Number(e.target.value) || 3600 })} className={inputCls} /></div>
+                <div><label className={labelCls}>Refresh Token TTL (seconds)</label><input aria-label="form" type="number" min={60} value={form.refreshTokenTtl} onChange={e => setForm({ ...form, refreshTokenTtl: Number(e.target.value) || 2592000 })} className={inputCls} /></div>
               </div>
             </div>
 

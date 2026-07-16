@@ -20,10 +20,10 @@ export default function RedirectURIValidationConfigPage() {
       <div className="bg-gray-900 rounded-xl p-6 mb-6">
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-green-400" /> Global Policy</h2>
         <div className="grid grid-cols-2 gap-4">
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data?.https_only} /> HTTPS Only</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data?.exact_match_only} /> Exact Match Only (no wildcards)</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data?.localhost_allowlist} /> Allow localhost</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data?.fragment_allowed} /> Allow fragments</label>
+          <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.https_only} /> HTTPS Only</label>
+          <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.exact_match_only} /> Exact Match Only (no wildcards)</label>
+          <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.localhost_allowlist} /> Allow localhost</label>
+          <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.fragment_allowed} /> Allow fragments</label>
         </div>
       </div>
 

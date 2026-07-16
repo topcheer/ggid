@@ -166,7 +166,7 @@ export default function SSOPage() {
         <div className="flex gap-2">
           <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
             <Upload className="h-4 w-4" /> Upload Metadata
-            <input type="file" accept=".xml" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMetadataUpload(f); }} />
+            <input aria-label="Input field" type="file" accept=".xml" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMetadataUpload(f); }} />
           </label>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
             <Plus className="h-4 w-4" /> Add Provider
@@ -219,7 +219,7 @@ export default function SSOPage() {
                     </div>
                   </div>
                   <label className="relative inline-flex cursor-pointer items-center">
-                    <input type="checkbox" checked={p.enabled} onChange={() => handleToggle(p)} className="peer sr-only" />
+                    <input aria-label="P" type="checkbox" checked={p.enabled} onChange={() => handleToggle(p)} className="peer sr-only" />
                     <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:transition-all peer-checked:bg-indigo-600 peer-checked:after:translate-x-full dark:bg-gray-700" />
                   </label>
                 </div>
@@ -297,26 +297,26 @@ export default function SSOPage() {
 
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Display Name</label>
-                <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Corporate Okta" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="e.g. Corporate Okta" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Corporate Okta" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
 
               {form.type === "saml" && (
                 <>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Entity ID</label>
-                    <input value={form.entity_id} onChange={(e) => setForm((p) => ({ ...p, entity_id: e.target.value }))} placeholder="https://idp.example.com/entity" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="https://idp.example.com/entity" value={form.entity_id} onChange={(e) => setForm((p) => ({ ...p, entity_id: e.target.value }))} placeholder="https://idp.example.com/entity" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SSO URL</label>
-                    <input value={form.sso_url} onChange={(e) => setForm((p) => ({ ...p, sso_url: e.target.value }))} placeholder="https://idp.example.com/sso" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="https://idp.example.com/sso" value={form.sso_url} onChange={(e) => setForm((p) => ({ ...p, sso_url: e.target.value }))} placeholder="https://idp.example.com/sso" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Metadata URL (optional)</label>
-                    <input value={form.metadata_url} onChange={(e) => setForm((p) => ({ ...p, metadata_url: e.target.value }))} placeholder="https://idp.example.com/metadata" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="https://idp.example.com/metadata" value={form.metadata_url} onChange={(e) => setForm((p) => ({ ...p, metadata_url: e.target.value }))} placeholder="https://idp.example.com/metadata" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">X.509 Certificate</label>
-                    <textarea value={form.certificate} onChange={(e) => setForm((p) => ({ ...p, certificate: e.target.value }))} placeholder="-----BEGIN CERTIFICATE-----" rows={3} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <textarea aria-label="-----BEGIN CERTIFICATE-----" value={form.certificate} onChange={(e) => setForm((p) => ({ ...p, certificate: e.target.value }))} placeholder="-----BEGIN CERTIFICATE-----" rows={3} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                 </>
               )}
@@ -324,11 +324,11 @@ export default function SSOPage() {
                 <>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Issuer URL</label>
-                    <input value={form.metadata_url} onChange={(e) => setForm((p) => ({ ...p, metadata_url: e.target.value }))} placeholder="https://accounts.google.com" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="https://accounts.google.com" value={form.metadata_url} onChange={(e) => setForm((p) => ({ ...p, metadata_url: e.target.value }))} placeholder="https://accounts.google.com" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Client ID</label>
-                    <input value={form.entity_id} onChange={(e) => setForm((p) => ({ ...p, entity_id: e.target.value }))} placeholder="your-client-id" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="your-client-id" value={form.entity_id} onChange={(e) => setForm((p) => ({ ...p, entity_id: e.target.value }))} placeholder="your-client-id" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                 </>
               )}
@@ -336,17 +336,17 @@ export default function SSOPage() {
                 <>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Server URL</label>
-                    <input value={form.sso_url} onChange={(e) => setForm((p) => ({ ...p, sso_url: e.target.value }))} placeholder="ldap://dc.example.com:389" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="ldap://dc.example.com:389" value={form.sso_url} onChange={(e) => setForm((p) => ({ ...p, sso_url: e.target.value }))} placeholder="ldap://dc.example.com:389" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Base DN</label>
-                    <input value={form.entity_id} onChange={(e) => setForm((p) => ({ ...p, entity_id: e.target.value }))} placeholder="dc=example,dc=com" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                    <input aria-label="dc=example,dc=com" value={form.entity_id} onChange={(e) => setForm((p) => ({ ...p, entity_id: e.target.value }))} placeholder="dc=example,dc=com" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                 </>
               )}
 
               <label className="flex cursor-pointer items-center gap-2">
-                <input type="checkbox" checked={form.jit_provisioning} onChange={(e) => setForm((p) => ({ ...p, jit_provisioning: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" />
+                <input aria-label="Form" type="checkbox" checked={form.jit_provisioning} onChange={(e) => setForm((p) => ({ ...p, jit_provisioning: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" />
                 <span className="text-sm text-gray-600 dark:text-gray-300">Enable JIT provisioning (auto-create users on first login)</span>
               </label>
             </div>

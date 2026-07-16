@@ -119,24 +119,24 @@ export default function PolicyEmergencyChangesPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-400">Policy</label>
-                <input className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" placeholder="Policy name" />
+                <input aria-label="Policy name" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" placeholder="Policy name" />
               </div>
               <div>
                 <label className="text-xs text-gray-400">Change Description</label>
-                <textarea className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" rows={2} placeholder="Describe the change" />
+                <textarea aria-label="Describe the change" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" rows={2} placeholder="Describe the change" />
               </div>
               <div>
                 <label className="text-xs text-gray-400">Justification</label>
-                <textarea className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" rows={3} placeholder="Why is this an emergency?" />
+                <textarea aria-label="Why is this an emergency?" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" rows={3} placeholder="Why is this an emergency?" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-400">Duration (hours)</label>
-                  <input type="number" defaultValue={4} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" />
+                  <input aria-label="Input field" type="number" defaultValue={4} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" />
                 </div>
                 <div>
                   <label className="text-xs text-gray-400">Approver Chain</label>
-                  <select className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
+                  <select aria-label="Select option" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
                     <option>CISO + CTO</option>
                     <option>Security Lead</option>
                     <option>On-call Admin</option>

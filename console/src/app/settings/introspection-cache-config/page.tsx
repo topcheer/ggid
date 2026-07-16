@@ -54,25 +54,25 @@ export default function IntrospectionCacheConfigPage() {
         <h2 className="text-lg font-semibold">{t("big1.introspectionCacheConfig.cacheSettings")}</h2>
         <label className="flex items-center justify-between">
           <span className="text-sm font-medium">{t("big1.introspectionCacheConfig.cacheEnabled")}</span>
-          <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
+          <input aria-label="Enabled" type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between">
           <span className="text-sm font-medium">{t("big1.introspectionCacheConfig.cacheWarmingPrePopulateOnStartup")}</span>
-          <input type="checkbox" checked={cacheWarming} onChange={e => setCacheWarming(e.target.checked)} className="rounded" />
+          <input aria-label="Cache warming" type="checkbox" checked={cacheWarming} onChange={e => setCacheWarming(e.target.checked)} className="rounded" />
         </label>
         <div>
           <label className="text-sm font-medium">{t("big1.introspectionCacheConfig.activeTokenTTL")}{activeTtl}{t("big1.introspectionCacheConfig.s")}</label>
-          <input type="range" min={30} max={300} value={activeTtl} onChange={e => setActiveTtl(parseInt(e.target.value))} className="w-full mt-2" />
+          <input aria-label="active Ttl" type="range" min={30} max={300} value={activeTtl} onChange={e => setActiveTtl(parseInt(e.target.value))} className="w-full mt-2" />
           <div className="flex justify-between text-xs text-gray-400"><span>{t("big1.introspectionCacheConfig.30s")}</span><span>{t("big1.introspectionCacheConfig.300s")}</span></div>
         </div>
         <div>
           <label className="text-sm font-medium">{t("big1.introspectionCacheConfig.inactiveTokenTTL")}{inactiveTtl}{t("big1.introspectionCacheConfig.s")}</label>
-          <input type="range" min={300} max={3600} step={60} value={inactiveTtl} onChange={e => setInactiveTtl(parseInt(e.target.value))} className="w-full mt-2" />
+          <input aria-label="inactive Ttl" type="range" min={300} max={3600} step={60} value={inactiveTtl} onChange={e => setInactiveTtl(parseInt(e.target.value))} className="w-full mt-2" />
           <div className="flex justify-between text-xs text-gray-400"><span>{t("big1.introspectionCacheConfig.300s")}</span><span>{t("big1.introspectionCacheConfig.3600s")}</span></div>
         </div>
         <div>
           <label className="text-sm font-medium">{t("big1.introspectionCacheConfig.maxCacheSize")}</label>
-          <input type="number" min={1000} max={100000} value={maxSize} onChange={e => setMaxSize(parseInt(e.target.value) || 10000)} className="w-32 border rounded px-2 py-1 text-sm mt-1" />
+          <input aria-label="max Size" type="number" min={1000} max={100000} value={maxSize} onChange={e => setMaxSize(parseInt(e.target.value) || 10000)} className="w-32 border rounded px-2 py-1 text-sm mt-1" />
         </div>
       </section>
 

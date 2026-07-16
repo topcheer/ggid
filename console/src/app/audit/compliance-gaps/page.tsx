@@ -173,7 +173,7 @@ export default function ComplianceGapsPage() {
               </div>
               <div>
                 <label className="text-sm font-medium">New Status</label>
-                <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                <select aria-label="new Status" value={newStatus} onChange={(e) => setNewStatus(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
                   <option value="open">Open</option>
                   <option value="in_progress">In Progress</option>
                   <option value="remediated">Remediated</option>

@@ -142,13 +142,13 @@ export default function ProvisioningWebhooksPage() {
               <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-3">
-              <div><label className="text-sm font-medium">URL</label><input type="text" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://api.example.com/webhooks/scim" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
+              <div><label className="text-sm font-medium">URL</label><input aria-label="https://api.example.com/webhooks/scim" type="text" value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} placeholder="https://api.example.com/webhooks/scim" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
               <div>
                 <label className="text-sm font-medium">Events</label>
                 <div className="grid grid-cols-2 gap-1 mt-1">
                   {eventTypes.map((e) => (
                     <label key={e} className="flex items-center gap-2 text-xs cursor-pointer">
-                      <input type="checkbox" checked={form.events.includes(e)} onChange={() => toggleEvent(e)} className="rounded" />
+                      <input aria-label="Form" type="checkbox" checked={form.events.includes(e)} onChange={() => toggleEvent(e)} className="rounded" />
                       <span className="font-mono">{e}</span>
                     </label>
                   ))}

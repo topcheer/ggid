@@ -53,7 +53,7 @@ export default function PkceEnforcementPage() {
       {config && (
         <>
           <div className="flex items-center gap-6">
-            <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={config.global_require_pkce} onChange={(e) => setConfig({ ...config, global_require_pkce: e.target.checked })} className="rounded" /><span className="text-sm font-medium">Require PKCE for all clients</span></label>
+            <label className="flex items-center gap-3 cursor-pointer"><input aria-label="Config" type="checkbox" checked={config.global_require_pkce} onChange={(e) => setConfig({ ...config, global_require_pkce: e.target.checked })} className="rounded" /><span className="text-sm font-medium">Require PKCE for all clients</span></label>
             <div className="relative w-20 h-20"><svg viewBox="0 0 64 64" className="w-full h-full"><circle cx={32} cy={32} r={28} fill="none" stroke="currentColor" strokeWidth={6} className="text-gray-200 dark:text-gray-800" /><circle cx={32} cy={32} r={28} fill="none" stroke={gaugeColor} strokeWidth={6} strokeDasharray={`${(config.compliance_pct / 100) * 176} 176`} strokeLinecap="round" transform="rotate(-90 32 32)" /></svg><div className="absolute inset-0 flex items-center justify-center"><span className="text-sm font-bold" style={{ color: gaugeColor }}>{config.compliance_pct.toFixed(0)}%</span></div></div>
             <span className="text-sm text-gray-500">Compliance</span>
           </div>

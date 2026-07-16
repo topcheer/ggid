@@ -272,21 +272,21 @@ export default function AccessRequestsPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Requester ID *</label>
-                <input value={createForm.requester_id} onChange={(e) => setCreateForm({ ...createForm, requester_id: e.target.value })} className={inputCls} placeholder="user-uuid" autoFocus />
+                <input aria-label="user-uuid" value={createForm.requester_id} onChange={(e) => setCreateForm({ ...createForm, requester_id: e.target.value })} className={inputCls} placeholder="user-uuid" autoFocus />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Resource Type</label>
-                <select value={createForm.resource_type} onChange={(e) => setCreateForm({ ...createForm, resource_type: e.target.value })} className={inputCls}>
+                <select aria-label="create Form" value={createForm.resource_type} onChange={(e) => setCreateForm({ ...createForm, resource_type: e.target.value })} className={inputCls}>
                   {RESOURCE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Resource ID *</label>
-                <input value={createForm.resource_id} onChange={(e) => setCreateForm({ ...createForm, resource_id: e.target.value })} className={inputCls} placeholder="resource-uuid or name" />
+                <input aria-label="resource-uuid or name" value={createForm.resource_id} onChange={(e) => setCreateForm({ ...createForm, resource_id: e.target.value })} className={inputCls} placeholder="resource-uuid or name" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Reason</label>
-                <textarea value={createForm.reason} onChange={(e) => setCreateForm({ ...createForm, reason: e.target.value })} className={inputCls} rows={3} placeholder="Why do you need access?" />
+                <textarea aria-label="Why do you need access?" value={createForm.reason} onChange={(e) => setCreateForm({ ...createForm, reason: e.target.value })} className={inputCls} rows={3} placeholder="Why do you need access?" />
               </div>
             </div>
             <div className="mt-6 flex gap-2">

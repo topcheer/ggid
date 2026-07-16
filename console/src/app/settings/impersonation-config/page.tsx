@@ -70,19 +70,19 @@ export default function ImpersonationConfigPage() {
       <div className="grid grid-cols-2 gap-4">
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">{t("big1.impersonationConfig.requireReason")}</span>
-          <input type="checkbox" checked={requireReason} onChange={e => setRequireReason(e.target.checked)} className="rounded" />
+          <input aria-label="Require reason" type="checkbox" checked={requireReason} onChange={e => setRequireReason(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">{t("big1.impersonationConfig.requireTargetConsent")}</span>
-          <input type="checkbox" checked={requireTargetConsent} onChange={e => setRequireTargetConsent(e.target.checked)} className="rounded" />
+          <input aria-label="Require target consent" type="checkbox" checked={requireTargetConsent} onChange={e => setRequireTargetConsent(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">{t("big1.impersonationConfig.autoRevokeOnIdle")}</span>
-          <input type="checkbox" checked={autoRevokeOnIdle} onChange={e => setAutoRevokeOnIdle(e.target.checked)} className="rounded" />
+          <input aria-label="Auto revoke on idle" type="checkbox" checked={autoRevokeOnIdle} onChange={e => setAutoRevokeOnIdle(e.target.checked)} className="rounded" />
         </label>
         <div className="bg-white rounded-lg shadow p-4">
           <label className="text-sm font-medium">{t("big1.impersonationConfig.auditLevel")}</label>
-          <select value={auditLevel} onChange={e => setAuditLevel(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
+          <select aria-label="audit Level" value={auditLevel} onChange={e => setAuditLevel(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
             <option value="full">{t("big1.impersonationConfig.fullAllActionsLogged")}</option>
             <option value="summary">{t("big1.impersonationConfig.summaryStartEndOnly")}</option>
             <option value="disabled">{t("big1.impersonationConfig.disabledNotRecommended")}</option>

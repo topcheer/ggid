@@ -52,7 +52,7 @@ export default function UserLifecyclePage() {
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 flex items-center gap-4">
-        <TrendingDown className="w-5 h-5 text-orange-500" /><div><label className="text-sm font-medium">Auto-deactivate after</label><div className="flex items-center gap-2 mt-1"><input type="number" min={30} max={365} value={autoDays} onChange={(e) => setAutoDays(parseInt(e.target.value))} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm" /><span className="text-sm text-gray-500">days of inactivity</span></div></div>
+        <TrendingDown className="w-5 h-5 text-orange-500" /><div><label className="text-sm font-medium">Auto-deactivate after</label><div className="flex items-center gap-2 mt-1"><input aria-label="auto Days" type="number" min={30} max={365} value={autoDays} onChange={(e) => setAutoDays(parseInt(e.target.value))} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm" /><span className="text-sm text-gray-500">days of inactivity</span></div></div>
         <div className="ml-auto flex gap-2"><button onClick={() => bulkAction("deactivate")} className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700">Deactivate All</button><button onClick={() => bulkAction("notify")} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 text-xs">Notify All</button></div>
       </div>
 

@@ -115,7 +115,7 @@ const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
           {approaches.map(a => (
             <label key={a.key} className={`border rounded p-4 cursor-pointer ${approach === a.key ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
               <div className="flex items-center gap-2">
-                <input type="radio" checked={approach === a.key} onChange={() => setApproach(a.key)} />
+                <input aria-label="Approach" type="radio" checked={approach === a.key} onChange={() => setApproach(a.key)} />
                 <span className="font-medium text-sm">{a.label}</span>
               </div>
               <div className="text-xs text-gray-500 mt-1">{a.desc}</div>
@@ -130,7 +130,7 @@ const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
           <h2 className="text-lg font-semibold">Sunset Timeline</h2>
           <div>
             <label className="text-sm font-medium">Sunset Period (months)</label>
-            <input type="number" min={1} max={24} value={sunsetMonths} onChange={e => setSunsetMonths(parseInt(e.target.value) || 6)} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
+            <input aria-label="sunset Months" type="number" min={1} max={24} value={sunsetMonths} onChange={e => setSunsetMonths(parseInt(e.target.value) || 6)} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
           </div>
           <p className="text-xs text-gray-400">After a version is deprecated, it remains supported for {sunsetMonths} months before returning 410 Gone.</p>
           <div className="space-y-2 mt-3">
@@ -173,7 +173,7 @@ const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
             <div className="space-y-2">
               {migrationSteps.map((s, idx) => (
                 <label key={idx} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={s.done} onChange={() => toggleMigrationStep(idx)} className="rounded" />
+                  <input aria-label="S" type="checkbox" checked={s.done} onChange={() => toggleMigrationStep(idx)} className="rounded" />
                   <span className={s.done ? 'line-through text-gray-400' : ''}>{s.step}</span>
                 </label>
               ))}
@@ -189,7 +189,7 @@ const [changeRules, setChangeRules] = useState<BreakingChangeRule[]>([
           {changeRules.map(r => (
             <div key={r.id} className="flex items-center gap-3 border-b pb-2">
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
+                <input aria-label="R" type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
                 <span className={`text-sm ${r.enabled ? '' : 'text-gray-400'}`}>{r.rule}</span>
               </label>
               <span className={`px-2 py-0.5 rounded text-xs ${r.severity === 'breaking' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>{r.severity.replace('-', ' ')}</span>

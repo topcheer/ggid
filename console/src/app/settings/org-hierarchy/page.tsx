@@ -120,11 +120,11 @@ export default function OrgHierarchyPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Name</label>
-              <input type="text" placeholder="Organization name" value={newOrg.name} onChange={e => setNewOrg(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="Organization name" type="text" placeholder="Organization name" value={newOrg.name} onChange={e => setNewOrg(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Parent Organization</label>
-              <select value={newOrg.parentId} onChange={e => setNewOrg(prev => ({ ...prev, parentId: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="new Org" value={newOrg.parentId} onChange={e => setNewOrg(prev => ({ ...prev, parentId: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {orgs.map(o => <option key={o.id} value={o.id}>{'  '.repeat(getDepth(o.id))}{o.name}</option>)}
               </select>
             </div>

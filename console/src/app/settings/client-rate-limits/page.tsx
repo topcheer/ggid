@@ -70,13 +70,13 @@ export default function ClientRateLimitsPage() {
         <div className="rounded-lg border dark:border-gray-800 p-6 space-y-4 max-w-lg">
           <div className="flex items-center justify-between">
             <div><span className="font-semibold">{config.client_name}</span><p className="text-xs text-gray-400 font-mono">{config.client_id}</p></div>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={config.enabled} onChange={(e) => setConfig({ ...config, enabled: e.target.checked })} className="rounded" /> Enabled</label>
+            <label className="flex items-center gap-2 text-sm"><input aria-label="Config" type="checkbox" checked={config.enabled} onChange={(e) => setConfig({ ...config, enabled: e.target.checked })} className="rounded" /> Enabled</label>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <div><label className="text-sm font-medium">Requests / min</label><input type="number" min={0} value={config.requests_per_minute} onChange={(e) => setConfig({ ...config, requests_per_minute: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-            <div><label className="text-sm font-medium">{t("backend.clientRateLimits.burst")}</label><input type="number" min={0} value={config.burst} onChange={(e) => setConfig({ ...config, burst: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-            <div><label className="text-sm font-medium">{t("backend.clientRateLimits.dailyQuota")}</label><input type="number" min={0} value={config.daily_quota} onChange={(e) => setConfig({ ...config, daily_quota: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+            <div><label className="text-sm font-medium">Requests / min</label><input aria-label="config" type="number" min={0} value={config.requests_per_minute} onChange={(e) => setConfig({ ...config, requests_per_minute: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+            <div><label className="text-sm font-medium">{t("backend.clientRateLimits.burst")}</label><input aria-label="config" type="number" min={0} value={config.burst} onChange={(e) => setConfig({ ...config, burst: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+            <div><label className="text-sm font-medium">{t("backend.clientRateLimits.dailyQuota")}</label><input aria-label="config" type="number" min={0} value={config.daily_quota} onChange={(e) => setConfig({ ...config, daily_quota: parseInt(e.target.value) || 0 })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
           </div>
 
           <div className="flex items-center gap-2">

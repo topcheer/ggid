@@ -54,8 +54,8 @@ export default function DataSovereigntyConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">GDPR Compliance</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.gdpr_article_45_compliant} onChange={(e) => setForm({ ...form, gdpr_article_45_compliant: e.target.checked })} className="w-4 h-4" /><label>Article 45 (Adequacy Decision) Compliant</label></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.gdpr_article_49_compliant} onChange={(e) => setForm({ ...form, gdpr_article_49_compliant: e.target.checked })} className="w-4 h-4" /><label>Article 49 (Derogations) Compliant</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.gdpr_article_45_compliant} onChange={(e) => setForm({ ...form, gdpr_article_45_compliant: e.target.checked })} className="w-4 h-4" /><label>Article 45 (Adequacy Decision) Compliant</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.gdpr_article_49_compliant} onChange={(e) => setForm({ ...form, gdpr_article_49_compliant: e.target.checked })} className="w-4 h-4" /><label>Article 49 (Derogations) Compliant</label></div>
         <div className="text-sm text-gray-500">Data Localization Status: {form.data_localization_status}</div>
       </div>
 

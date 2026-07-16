@@ -86,9 +86,9 @@ export default function DataMaskingConfigPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Add PII Field</h2>
           <div className="grid grid-cols-3 gap-4">
-            <div><label className="text-sm font-medium">Field Name</label><input type="text" placeholder="date_of_birth" value={newField.field} onChange={e => setNewField(prev => ({ ...prev, field: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">Masking Pattern</label><select value={newField.pattern} onChange={e => setNewField(prev => ({ ...prev, pattern: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">{patterns.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
-            <div><label className="text-sm font-medium">Unmask Roles (comma-separated)</label><input type="text" placeholder="admin, security-admin" value={newField.unmaskRoles} onChange={e => setNewField(prev => ({ ...prev, unmaskRoles: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Field Name</label><input aria-label="date_of_birth" type="text" placeholder="date_of_birth" value={newField.field} onChange={e => setNewField(prev => ({ ...prev, field: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Masking Pattern</label><select aria-label="new Field" value={newField.pattern} onChange={e => setNewField(prev => ({ ...prev, pattern: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">{patterns.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+            <div><label className="text-sm font-medium">Unmask Roles (comma-separated)</label><input aria-label="admin, security-admin" type="text" placeholder="admin, security-admin" value={newField.unmaskRoles} onChange={e => setNewField(prev => ({ ...prev, unmaskRoles: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           </div>
           <button onClick={addField} disabled={!newField.field} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add</button>
         </section>

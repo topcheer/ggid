@@ -35,15 +35,15 @@ export default function PolicyDryRunConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Simulation Settings</h2>
-        <div><label className="block text-sm font-medium mb-1">Max Simulation Subjects</label><input type="number" value={form.max_simulation_subjects} onChange={(e) => setForm({ ...form, max_simulation_subjects: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div><label className="block text-sm font-medium mb-1">Cache Results (minutes)</label><input type="number" value={form.cache_results_minutes} onChange={(e) => setForm({ ...form, cache_results_minutes: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div><label className="block text-sm font-medium mb-1">Results Retention (days)</label><input type="number" value={form.results_retention_days} onChange={(e) => setForm({ ...form, results_retention_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Max Simulation Subjects</label><input aria-label="form" type="number" value={form.max_simulation_subjects} onChange={(e) => setForm({ ...form, max_simulation_subjects: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Cache Results (minutes)</label><input aria-label="form" type="number" value={form.cache_results_minutes} onChange={(e) => setForm({ ...form, cache_results_minutes: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Results Retention (days)</label><input aria-label="form" type="number" value={form.results_retention_days} onChange={(e) => setForm({ ...form, results_retention_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">Automation</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.compare_against_current} onChange={(e) => setForm({ ...form, compare_against_current: e.target.checked })} className="w-4 h-4" /><label>Compare Against Current Policy</label></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.auto_run_on_policy_change} onChange={(e) => setForm({ ...form, auto_run_on_policy_change: e.target.checked })} className="w-4 h-4" /><label>Auto-Run on Policy Change</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.compare_against_current} onChange={(e) => setForm({ ...form, compare_against_current: e.target.checked })} className="w-4 h-4" /><label>Compare Against Current Policy</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.auto_run_on_policy_change} onChange={(e) => setForm({ ...form, auto_run_on_policy_change: e.target.checked })} className="w-4 h-4" /><label>Auto-Run on Policy Change</label></div>
       </div>
 
       <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>

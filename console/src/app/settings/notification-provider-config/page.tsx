@@ -81,17 +81,17 @@ export default function NotificationProviderConfigPage() {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium">Type</label>
-              <select value={newProvider.type} onChange={e => setNewProvider(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="new Provider" value={newProvider.type} onChange={e => setNewProvider(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {types.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="text-sm font-medium">Name</label>
-              <input type="text" placeholder="Provider name" value={newProvider.name} onChange={e => setNewProvider(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="Provider name" type="text" placeholder="Provider name" value={newProvider.name} onChange={e => setNewProvider(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Rate Limit (/min)</label>
-              <input type="number" min={1} max={1000} value={newProvider.rateLimit} onChange={e => setNewProvider(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 100 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="new Provider" type="number" min={1} max={1000} value={newProvider.rateLimit} onChange={e => setNewProvider(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 100 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
           <button onClick={addProvider} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Add</button>
@@ -121,7 +121,7 @@ export default function NotificationProviderConfigPage() {
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${statusColor(p.status)}`}>{p.status}</span></td>
                 <td className="p-3 font-mono text-xs text-gray-500">{p.template}</td>
                 <td className="p-3">{p.rateLimit}/min</td>
-                <td className="p-3"><label className="flex items-center"><input type="checkbox" checked={p.enabled} onChange={() => toggleProvider(p.id)} className="rounded" /></label></td>
+                <td className="p-3"><label className="flex items-center"><input aria-label="P" type="checkbox" checked={p.enabled} onChange={() => toggleProvider(p.id)} className="rounded" /></label></td>
                 <td className="p-3"><button onClick={() => sendTest(p.name)} className="text-blue-600 text-xs hover:underline">Test</button></td>
               </tr>
             ))}

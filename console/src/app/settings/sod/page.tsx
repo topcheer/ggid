@@ -214,7 +214,7 @@ export default function SoDPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <label className="relative inline-flex cursor-pointer items-center">
-                        <input type="checkbox" checked={rule.enabled} onChange={() => handleToggle(rule)} className="peer sr-only" />
+                        <input aria-label="Rule" type="checkbox" checked={rule.enabled} onChange={() => handleToggle(rule)} className="peer sr-only" />
                         <div className="h-5 w-9 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:transition-all peer-checked:bg-indigo-600 peer-checked:after:translate-x-full dark:bg-gray-700" />
                       </label>
                       <button onClick={() => setConfirmDelete(rule)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
@@ -280,12 +280,12 @@ export default function SoDPage() {
             <div className="mt-4 space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Conflicting Roles (comma-separated, min 2)</label>
-                <input value={form.roles} onChange={(e) => setForm((p) => ({ ...p, roles: e.target.value }))} placeholder="admin, auditor" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="admin, auditor" value={form.roles} onChange={(e) => setForm((p) => ({ ...p, roles: e.target.value }))} placeholder="admin, auditor" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 <p className="mt-1 text-xs text-gray-400">These roles will be mutually exclusive — a user cannot hold all of them simultaneously.</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.sod.description")}</label>
-                <input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Admin and auditor roles are mutually exclusive" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="Admin and auditor roles are mutually exclusive" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Admin and auditor roles are mutually exclusive" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.sod.severity")}</label>

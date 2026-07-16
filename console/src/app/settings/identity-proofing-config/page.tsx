@@ -42,15 +42,15 @@ export default function IdentityProofingConfigPage() {
         <h2 className="text-lg font-semibold">{t("big1.identityProofingConfig.requirements")}</h2>
         <div>
           <label className="block text-sm font-medium mb-1">{t("big1.identityProofingConfig.requiredFactors")}{form.required_factors}</label>
-          <input type="range" min={1} max={5} value={form.required_factors} onChange={(e) => setForm({ ...form, required_factors: parseInt(e.target.value) })} className="w-full" />
+          <input aria-label="form" type="range" min={1} max={5} value={form.required_factors} onChange={(e) => setForm({ ...form, required_factors: parseInt(e.target.value) })} className="w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t("big1.identityProofingConfig.confidenceThreshold")}{form.confidence_threshold}%</label>
-          <input type="range" min={50} max={100} value={form.confidence_threshold} onChange={(e) => setForm({ ...form, confidence_threshold: parseInt(e.target.value) })} className="w-full" />
+          <input aria-label="form" type="range" min={50} max={100} value={form.confidence_threshold} onChange={(e) => setForm({ ...form, confidence_threshold: parseInt(e.target.value) })} className="w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t("big1.identityProofingConfig.verificationProvider")}</label>
-          <select value={form.verification_provider} onChange={(e) => setForm({ ...form, verification_provider: e.target.value })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.verification_provider} onChange={(e) => setForm({ ...form, verification_provider: e.target.value })} className="border rounded px-3 py-2">
             <option value="onfido">{t("big1.identityProofingConfig.onfido")}</option><option value="jumio">{t("big1.identityProofingConfig.jumio")}</option><option value="idology">{t("big1.identityProofingConfig.idology")}</option><option value="internal">{t("big1.identityProofingConfig.internal")}</option>
           </select>
         </div>

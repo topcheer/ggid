@@ -27,13 +27,13 @@ export default function WebauthnServerConfigPage() {
         <h2 className="text-lg font-semibold">Ceremony Settings</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Ceremony Timeout (seconds)</label>
-          <input type="number" value={form.ceremony_timeout}
+          <input aria-label="form" type="number" value={form.ceremony_timeout}
             onChange={(e) => setForm({ ...form, ceremony_timeout: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-32" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Attestation Trust Path</label>
-          <select value={form.attestation_trust_path}
+          <select aria-label="form" value={form.attestation_trust_path}
             onChange={(e) => setForm({ ...form, attestation_trust_path: e.target.value as WebauthnServerConfig["attestation_trust_path"] })}
             className="border rounded px-3 py-2">
             <option value="none">None</option>
@@ -48,19 +48,19 @@ export default function WebauthnServerConfigPage() {
         <h2 className="text-lg font-semibold">Relying Party Entity</h2>
         <div>
           <label className="block text-sm font-medium mb-1">RP ID</label>
-          <input type="text" value={form.rp_entity.id}
+          <input aria-label="form" type="text" value={form.rp_entity.id}
             onChange={(e) => setForm({ ...form, rp_entity: { ...form.rp_entity, id: e.target.value } })}
             className="border rounded px-3 py-2 w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">RP Name</label>
-          <input type="text" value={form.rp_entity.name}
+          <input aria-label="form" type="text" value={form.rp_entity.name}
             onChange={(e) => setForm({ ...form, rp_entity: { ...form.rp_entity, name: e.target.value } })}
             className="border rounded px-3 py-2 w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Origins</label>
-          <input type="text" value={form.rp_entity.origins.join(", ")} readOnly className="border rounded px-3 py-2 w-full bg-gray-50" />
+          <input aria-label="form" type="text" value={form.rp_entity.origins.join(", ")} readOnly className="border rounded px-3 py-2 w-full bg-gray-50" />
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export default function WebauthnServerConfigPage() {
         <h2 className="text-lg font-semibold">Credential & Security</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Credential Storage Policy</label>
-          <select value={form.credential_storage_policy}
+          <select aria-label="form" value={form.credential_storage_policy}
             onChange={(e) => setForm({ ...form, credential_storage_policy: e.target.value as WebauthnServerConfig["credential_storage_policy"] })}
             className="border rounded px-3 py-2">
             <option value="database">Database</option>
@@ -78,7 +78,7 @@ export default function WebauthnServerConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Counter Enforcement</label>
-          <select value={form.counter_enforcement}
+          <select aria-label="form" value={form.counter_enforcement}
             onChange={(e) => setForm({ ...form, counter_enforcement: e.target.value as WebauthnServerConfig["counter_enforcement"] })}
             className="border rounded px-3 py-2">
             <option value="strict">Strict</option>

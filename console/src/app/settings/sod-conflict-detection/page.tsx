@@ -117,7 +117,7 @@ export default function SodConflictDetectionPage() {
           <h2 className="text-lg font-semibold">Auto-Remediation</h2>
           <label className="flex items-center justify-between">
             <span className="text-sm">{t("backend3.sodConflictDetection.autoRemove")}</span>
-            <input type="checkbox" checked={autoRemediate} onChange={e => setAutoRemediate(e.target.checked)} className="rounded" />
+            <input aria-label="Auto remediate" type="checkbox" checked={autoRemediate} onChange={e => setAutoRemediate(e.target.checked)} className="rounded" />
           </label>
           <p className="text-xs text-gray-400">When enabled, the system automatically removes the less recently assigned role upon conflict detection.</p>
         </section>

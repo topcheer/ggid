@@ -97,7 +97,7 @@ export default function UserProvisioningRulesPage() {
         </div>
         <div className="flex gap-2">
           <label className="flex items-center gap-2 px-3 py-1.5 border rounded text-sm">
-            <input type="checkbox" checked={autoProvision} onChange={e => setAutoProvision(e.target.checked)} className="rounded" />
+            <input aria-label="Auto provision" type="checkbox" checked={autoProvision} onChange={e => setAutoProvision(e.target.checked)} className="rounded" />
             Auto-Provision
           </label>
           <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
@@ -128,13 +128,13 @@ export default function UserProvisioningRulesPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Source</label>
-              <select value={newRule.source} onChange={e => setNewRule(prev => ({ ...prev, source: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="new Rule" value={newRule.source} onChange={e => setNewRule(prev => ({ ...prev, source: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {sources.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div>
               <label className="text-sm font-medium">Trigger</label>
-              <select value={newRule.trigger} onChange={e => setNewRule(prev => ({ ...prev, trigger: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="new Rule" value={newRule.trigger} onChange={e => setNewRule(prev => ({ ...prev, trigger: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {triggers.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
@@ -151,7 +151,7 @@ export default function UserProvisioningRulesPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
+                    <input aria-label="R" type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
                     <span className="font-mono text-sm font-medium">{r.source}-{r.trigger}</span>
                   </label>
                   <span className={`px-2 py-0.5 rounded text-xs ${r.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>{r.enabled ? 'enabled' : 'disabled'}</span>

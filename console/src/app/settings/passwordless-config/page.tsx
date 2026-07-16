@@ -27,7 +27,7 @@ export default function PasswordlessConfigPage() {
               <div className={m.enabled ? "text-green-400" : "text-gray-600"}>{icons[m.id] ?? <KeyRound className="w-5 h-5" />}</div>
               <div className="flex-1"><p className="text-sm font-medium">{m.label}</p><p className="text-xs text-gray-400">{m.description}</p></div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" defaultChecked={m.enabled} className="sr-only peer" />
+                <input aria-label="Toggle option" type="checkbox" defaultChecked={m.enabled} className="sr-only peer" />
                 <div className="w-9 h-5 bg-gray-700 rounded-full peer-checked:bg-green-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
               </label>
             </div>
@@ -38,9 +38,9 @@ export default function PasswordlessConfigPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-gray-900 rounded-xl p-6 space-y-3">
           <h2 className="text-sm font-semibold">Settings</h2>
-          <div><label className="text-xs text-gray-400">Magic Link Expiry (minutes)</label><input type="number" defaultValue={data?.magic_link_expiry_minutes} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
-          <div><label className="text-xs text-gray-400">Passkey RP ID</label><input type="text" defaultValue={data?.passkey_rp_id} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
-          <div className="flex items-center gap-2"><input type="checkbox" defaultChecked={data?.fallback_to_password} id="fb" /><label htmlFor="fb" className="text-sm">Fallback to password if passwordless fails</label></div>
+          <div><label className="text-xs text-gray-400">Magic Link Expiry (minutes)</label><input aria-label="Input field" type="number" defaultValue={data?.magic_link_expiry_minutes} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div><label className="text-xs text-gray-400">Passkey RP ID</label><input aria-label="Input field" type="text" defaultValue={data?.passkey_rp_id} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div className="flex items-center gap-2"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.fallback_to_password} id="fb" /><label htmlFor="fb" className="text-sm">Fallback to password if passwordless fails</label></div>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Per-Role Requirement</h2>

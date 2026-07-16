@@ -95,20 +95,20 @@ export default function CredentialRotationPage() {
           <h2 className="text-lg font-semibold">New Rotation Schedule</h2>
           <div>
             <label className="text-sm font-medium">Credential</label>
-            <input type="text" placeholder="Credential name" value={newSchedule.credential} onChange={e => setNewSchedule(prev => ({ ...prev, credential: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input aria-label="Credential name" type="text" placeholder="Credential name" value={newSchedule.credential} onChange={e => setNewSchedule(prev => ({ ...prev, credential: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Interval (days)</label>
-              <input type="number" min={1} max={365} value={newSchedule.intervalDays} onChange={e => setNewSchedule(prev => ({ ...prev, intervalDays: parseInt(e.target.value) || 90 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="new Schedule" type="number" min={1} max={365} value={newSchedule.intervalDays} onChange={e => setNewSchedule(prev => ({ ...prev, intervalDays: parseInt(e.target.value) || 90 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Notify Before (days)</label>
-              <input type="number" min={1} max={30} value={newSchedule.notifyBeforeDays} onChange={e => setNewSchedule(prev => ({ ...prev, notifyBeforeDays: parseInt(e.target.value) || 7 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="new Schedule" type="number" min={1} max={30} value={newSchedule.notifyBeforeDays} onChange={e => setNewSchedule(prev => ({ ...prev, notifyBeforeDays: parseInt(e.target.value) || 7 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
           <label className="flex items-center gap-2">
-            <input type="checkbox" checked={newSchedule.autoRotate} onChange={e => setNewSchedule(prev => ({ ...prev, autoRotate: e.target.checked }))} className="rounded" />
+            <input aria-label="New schedule" type="checkbox" checked={newSchedule.autoRotate} onChange={e => setNewSchedule(prev => ({ ...prev, autoRotate: e.target.checked }))} className="rounded" />
             <span className="text-sm">Auto-rotate when due</span>
           </label>
           <button onClick={addSchedule} disabled={!newSchedule.credential} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add Schedule</button>

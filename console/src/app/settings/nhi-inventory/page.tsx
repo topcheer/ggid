@@ -148,7 +148,7 @@ export default function NHIInventoryPage() {
             <p className="text-sm text-gray-600">You are about to decommission <strong>{modal.entry?.name}</strong>. This action will revoke all credentials and disable access.</p>
             <div>
               <label className="text-sm font-medium">Reason</label>
-              <select value={modal.reason} onChange={e => setModal(prev => ({ ...prev, reason: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="modal" value={modal.reason} onChange={e => setModal(prev => ({ ...prev, reason: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 <option value="">Select reason...</option>
                 <option value="orphaned">Orphaned - No recent usage</option>
                 <option value="replaced">Replaced by new identity</option>

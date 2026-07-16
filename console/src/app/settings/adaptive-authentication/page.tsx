@@ -104,11 +104,11 @@ export default function AdaptiveAuthenticationPage() {
       <div className="grid grid-cols-2 gap-4">
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Real-time Risk Evaluation</span>
-          <input type="checkbox" checked={realTimeEval} onChange={e => setRealTimeEval(e.target.checked)} className="rounded" />
+          <input aria-label="Real time eval" type="checkbox" checked={realTimeEval} onChange={e => setRealTimeEval(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Adaptive MFA Policy</span>
-          <input type="checkbox" checked={adaptiveMfa} onChange={e => setAdaptiveMfa(e.target.checked)} className="rounded" />
+          <input aria-label="Adaptive mfa" type="checkbox" checked={adaptiveMfa} onChange={e => setAdaptiveMfa(e.target.checked)} className="rounded" />
         </label>
       </div>
 
@@ -140,7 +140,7 @@ export default function AdaptiveAuthenticationPage() {
           ) : rules.map(r => (
             <div key={r.id} className="flex items-center gap-3 border-b pb-2">
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
+                <input aria-label="R" type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
                 <span className={`text-sm ${r.enabled ? '' : 'text-gray-400'}`}>{r.condition}</span>
               </label>
               <span className="text-gray-300">{'->'}</span>

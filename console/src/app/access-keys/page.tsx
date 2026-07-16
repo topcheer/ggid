@@ -334,11 +334,11 @@ export default function AccessKeysPage() {
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Name</label>
-              <input type="text" value={keyName} onChange={(e) => setKeyName(e.target.value)} placeholder='e.g. "CI/CD Pipeline Key"' className={inputCls} />
+              <input aria-label="key Name" type="text" value={keyName} onChange={(e) => setKeyName(e.target.value)} placeholder='e.g. "CI/CD Pipeline Key"' className={inputCls} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
-              <input type="text" value={keyDesc} onChange={(e) => setKeyDesc(e.target.value)} placeholder="Optional description for this key" className={inputCls} />
+              <input aria-label="Optional description for this key" type="text" value={keyDesc} onChange={(e) => setKeyDesc(e.target.value)} placeholder="Optional description for this key" className={inputCls} />
             </div>
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">Scopes</label>
@@ -560,7 +560,7 @@ export default function AccessKeysPage() {
               </div>
             </div>
             <label className="mb-4 flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input type="checkbox" checked={savedAck} onChange={(e) => setSavedAck(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+              <input aria-label="Saved ack" type="checkbox" checked={savedAck} onChange={(e) => setSavedAck(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
               {"I've saved it"}
             </label>
             <div className="flex justify-end">

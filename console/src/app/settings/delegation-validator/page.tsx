@@ -78,19 +78,19 @@ export default function DelegationValidatorPage() {
             <div className="mt-4 space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-600">Delegator</label>
-                <input value={delegator} onChange={e => setDelegator(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
+                <input aria-label="delegator" value={delegator} onChange={e => setDelegator(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Delegatee</label>
-                <input value={delegatee} onChange={e => setDelegatee(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
+                <input aria-label="delegatee" value={delegatee} onChange={e => setDelegatee(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Scopes (comma-separated)</label>
-                <input value={scopes} onChange={e => setScopes(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
+                <input aria-label="scopes" value={scopes} onChange={e => setScopes(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-mono" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Max Depth: {maxDepth}</label>
-                <input type="range" min={1} max={10} value={maxDepth} onChange={e => setMaxDepth(Number(e.target.value))} className="mt-2 w-full" />
+                <input aria-label="max Depth" type="range" min={1} max={10} value={maxDepth} onChange={e => setMaxDepth(Number(e.target.value))} className="mt-2 w-full" />
               </div>
               <button
                 onClick={validate}

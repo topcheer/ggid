@@ -47,9 +47,9 @@ export default function PolicySetEvalPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label className="text-sm font-medium">Subject</label><input type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="user:alice@example.com" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">Resource</label><input type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project-plan" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">Action</label><input type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access (default)" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Subject</label><input aria-label="user:alice@example.com" type="text" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="user:alice@example.com" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Resource</label><input aria-label="doc:project-plan" type="text" value={resource} onChange={(e) => setResource(e.target.value)} placeholder="doc:project-plan" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">Action</label><input aria-label="access (default)" type="text" value={action} onChange={(e) => setAction(e.target.value)} placeholder="access (default)" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
         </div>
         <button onClick={evaluate} disabled={loading || !subject || !resource} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Play className="w-4 h-4" /> {loading ? "Evaluating..." : "Evaluate"}</button>
       </div>

@@ -167,7 +167,7 @@ export default function AuditComplianceSchedulerPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Framework</label>
-                <select className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                <select aria-label="Select option" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm">
                   <option>SOC2</option>
                   <option>ISO27001</option>
                   <option>GDPR</option>
@@ -177,11 +177,11 @@ export default function AuditComplianceSchedulerPage() {
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Cron Expression</label>
-                <input type="text" placeholder="0 0 1 * *" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono" />
+                <input aria-label="0 0 1 * *" type="text" placeholder="0 0 1 * *" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono" />
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Scope</label>
-                <input type="text" placeholder="All systems" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm" />
+                <input aria-label="All systems" type="text" placeholder="All systems" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm" />
               </div>
             </div>
             <div className="flex gap-2 mt-4">

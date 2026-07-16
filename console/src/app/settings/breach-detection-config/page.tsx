@@ -174,7 +174,7 @@ export default function BreachDetectionConfigPage() {
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <div className="flex items-center gap-4 mb-4">
               <label className="text-sm font-medium text-gray-700">{t("breachDetect.filterByUser")}</label>
-              <select value={filterUser} onChange={e => setFilterUser(e.target.value)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm">
+              <select aria-label="filter User" value={filterUser} onChange={e => setFilterUser(e.target.value)} className="rounded-md border border-gray-300 px-3 py-1.5 text-sm">
                 <option value="all">{t("breachDetect.allUsers")}</option>
                 <option value="alice@corp.com">alice@corp.com</option>
                 <option value="bob@corp.com">bob@corp.com</option>

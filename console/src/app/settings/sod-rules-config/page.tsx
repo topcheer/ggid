@@ -84,7 +84,7 @@ export default function SodRulesConfigPage() {
       <div className="grid grid-cols-2 gap-4">
         <section className="bg-white rounded-lg shadow p-4">
           <label className="text-sm font-medium">{t("backend3.sodRulesConfig.sensitivityLevel")}</label>
-          <select value={sensitivity} onChange={e => setSensitivity(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
+          <select aria-label="sensitivity" value={sensitivity} onChange={e => setSensitivity(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
             <option value="strict">Strict — all conflict levels enforced</option>
             <option value="moderate">Moderate — high + medium enforced</option>
             <option value="relaxed">Relaxed — only high enforced</option>
@@ -93,7 +93,7 @@ export default function SodRulesConfigPage() {
 
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Auto-Remediation</span>
-          <input type="checkbox" checked={autoRemediate} onChange={e => setAutoRemediate(e.target.checked)} className="rounded" />
+          <input aria-label="Auto remediate" type="checkbox" checked={autoRemediate} onChange={e => setAutoRemediate(e.target.checked)} className="rounded" />
         </label>
       </div>
 

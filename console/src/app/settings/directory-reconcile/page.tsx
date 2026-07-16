@@ -53,8 +53,8 @@ export default function DirectoryReconcilePage() {
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4 flex items-center gap-4">
-        <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="rounded" /> Dry Run</label>
-        <div className="flex items-center gap-2"><label className="text-sm font-medium">{t("directoryReconcile.mergeStrategy")}</label><select value={mergeStrategy} onChange={(e) => setMergeStrategy(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="newest">{t("directoryReconcile.newestEntry")}</option><option value="oldest">{t("directoryReconcile.oldestEntry")}</option><option value="most_complete">{t("directoryReconcile.mostComplete")}</option><option value="manual">{t("directoryReconcile.manualReview")}</option></select></div>
+        <label className="flex items-center gap-2 text-sm font-medium"><input aria-label="Dry run" type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="rounded" /> Dry Run</label>
+        <div className="flex items-center gap-2"><label className="text-sm font-medium">{t("directoryReconcile.mergeStrategy")}</label><select aria-label="merge Strategy" value={mergeStrategy} onChange={(e) => setMergeStrategy(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="newest">{t("directoryReconcile.newestEntry")}</option><option value="oldest">{t("directoryReconcile.oldestEntry")}</option><option value="most_complete">{t("directoryReconcile.mostComplete")}</option><option value="manual">{t("directoryReconcile.manualReview")}</option></select></div>
       </div>
 
       {data && (

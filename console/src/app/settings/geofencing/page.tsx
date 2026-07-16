@@ -65,7 +65,7 @@ export default function GeofencingPage() {
           <div className="grid grid-cols-4 gap-2">
             {countries.map((c) => (
               <label key={c} className="flex items-center gap-1 text-xs cursor-pointer">
-                <input type="checkbox" checked={rule.allowed_countries.includes(c)} onChange={() => toggleCountry(c)} className="rounded" /><span className="font-mono">{c}</span>
+                <input aria-label="Rule" type="checkbox" checked={rule.allowed_countries.includes(c)} onChange={() => toggleCountry(c)} className="rounded" /><span className="font-mono">{c}</span>
               </label>
             ))}
           </div>
@@ -77,7 +77,7 @@ export default function GeofencingPage() {
           <div className="grid grid-cols-3 gap-2">
             {regions.map((r) => (
               <label key={r} className="flex items-center gap-1 text-xs cursor-pointer">
-                <input type="checkbox" checked={rule.denied_regions.includes(r)} onChange={() => toggleRegion(r)} className="rounded" /><span className="font-mono">{r}</span>
+                <input aria-label="Rule" type="checkbox" checked={rule.denied_regions.includes(r)} onChange={() => toggleRegion(r)} className="rounded" /><span className="font-mono">{r}</span>
               </label>
             ))}
           </div>
@@ -87,7 +87,7 @@ export default function GeofencingPage() {
       {/* Action + enabled */}
       <div className="rounded-lg border dark:border-gray-800 p-4 flex items-center gap-4">
         <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-gray-400" /><label className="text-sm font-medium">Action for violations:</label><select aria-label="Select option" value={rule.action} onChange={(e) => setRule({ ...rule, action: e.target.value as GeofenceRule["action"] })} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm"><option value="allow">Allow</option><option value="deny">Deny</option><option value="mfa">Require MFA</option></select></div>
-        <label className="flex items-center gap-2 text-sm cursor-pointer ml-auto"><input type="checkbox" checked={rule.enabled} onChange={(e) => setRule({ ...rule, enabled: e.target.checked })} className="rounded" /><span>{rule.enabled ? "Enabled" : "Disabled"}</span></label>
+        <label className="flex items-center gap-2 text-sm cursor-pointer ml-auto"><input aria-label="Rule" type="checkbox" checked={rule.enabled} onChange={(e) => setRule({ ...rule, enabled: e.target.checked })} className="rounded" /><span>{rule.enabled ? "Enabled" : "Disabled"}</span></label>
       </div>
 
       {/* Test IP */}

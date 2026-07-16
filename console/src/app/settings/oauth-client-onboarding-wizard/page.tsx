@@ -53,7 +53,7 @@ export default function OAuthClientOnboardingWizardPage() {
             <h2 className="text-sm font-semibold">{t("oauthOnboarding.grantTypes")}</h2>
             {(data?.grant_types ?? []).map((g) => (
               <label key={g.value} className="flex items-center gap-2 bg-gray-800 rounded-lg p-3 cursor-pointer">
-                <input type="checkbox" defaultChecked={g.selected} />
+                <input aria-label="Toggle option" type="checkbox" defaultChecked={g.selected} />
                 <div><p className="text-sm font-medium">{g.value}</p><p className="text-xs text-gray-400">{g.description}</p></div>
               </label>
             ))}
@@ -76,7 +76,7 @@ export default function OAuthClientOnboardingWizardPage() {
             <h2 className="text-sm font-semibold">{t("oauthOnboarding.requestedScopes")}</h2>
             {(data?.scopes ?? []).map((sc) => (
               <label key={sc.name} className="flex items-center gap-2 bg-gray-800 rounded-lg p-3 cursor-pointer">
-                <input type="checkbox" defaultChecked={sc.required} disabled={sc.required} />
+                <input aria-label="Toggle option" type="checkbox" defaultChecked={sc.required} disabled={sc.required} />
                 <div><p className="text-sm font-medium font-mono">{sc.name}</p><p className="text-xs text-gray-400">{sc.description}</p></div>
                 {sc.required && <span className="text-xs text-yellow-400 ml-auto">{t("oauthOnboarding.required")}</span>}
               </label>

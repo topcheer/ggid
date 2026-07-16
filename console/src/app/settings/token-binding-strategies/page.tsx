@@ -141,16 +141,16 @@ export default function TokenBindingStrategiesPage() {
           <h2 className="text-lg font-semibold">{t("tokenBindingStrategies.proofTokenSettings")}</h2>
           <div>
             <label className="text-sm font-medium">{t("tokenBindingStrategies.proofTokenLifetime")}</label>
-            <input type="number" min={30} max={3600} value={proofLifetime} onChange={e => setProofLifetime(parseInt(e.target.value) || 300)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
+            <input aria-label="proof Lifetime" type="number" min={30} max={3600} value={proofLifetime} onChange={e => setProofLifetime(parseInt(e.target.value) || 300)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
           </div>
           <label className="flex items-center justify-between">
             <span className="text-sm">Token Replay Detection</span>
-            <input type="checkbox" checked={replayDetection} onChange={e => setReplayDetection(e.target.checked)} className="rounded" />
+            <input aria-label="Replay detection" type="checkbox" checked={replayDetection} onChange={e => setReplayDetection(e.target.checked)} className="rounded" />
           </label>
           {replayDetection && (
             <div>
               <label className="text-sm font-medium">{t("tokenBindingStrategies.replayWindow")}</label>
-              <input type="number" min={10} max={300} value={replayWindow} onChange={e => setReplayWindow(parseInt(e.target.value) || 60)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
+              <input aria-label="replay Window" type="number" min={10} max={300} value={replayWindow} onChange={e => setReplayWindow(parseInt(e.target.value) || 60)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
               <p className="text-xs text-gray-400 mt-1">Tokens presented within this window after first use are rejected as replays.</p>
             </div>
           )}

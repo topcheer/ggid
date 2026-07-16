@@ -64,19 +64,19 @@ export default function TokenBindingConfigPage() {
         <h2 className="text-lg font-semibold">{t("backend.tokenBindingConfig.bindingSettings")}</h2>
         <label className="flex items-center justify-between">
           <span className="text-sm">{t("backend.tokenBindingConfig.dpop")}</span>
-          <input type="checkbox" checked={dpopEnabled} onChange={e => setDpopEnabled(e.target.checked)} className="rounded" />
+          <input aria-label="Dpop enabled" type="checkbox" checked={dpopEnabled} onChange={e => setDpopEnabled(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between">
           <span className="text-sm">Sender-Constrained Tokens</span>
-          <input type="checkbox" checked={senderConstrained} onChange={e => setSenderConstrained(e.target.checked)} className="rounded" />
+          <input aria-label="Sender constrained" type="checkbox" checked={senderConstrained} onChange={e => setSenderConstrained(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between">
           <span className="text-sm">mTLS Token Binding</span>
-          <input type="checkbox" checked={mtlsBinding} onChange={e => setMtlsBinding(e.target.checked)} className="rounded" />
+          <input aria-label="Mtls binding" type="checkbox" checked={mtlsBinding} onChange={e => setMtlsBinding(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between">
           <span className="text-sm">Token Replay Detection</span>
-          <input type="checkbox" checked={replayDetection} onChange={e => setReplayDetection(e.target.checked)} className="rounded" />
+          <input aria-label="Replay detection" type="checkbox" checked={replayDetection} onChange={e => setReplayDetection(e.target.checked)} className="rounded" />
         </label>
       </section>
 

@@ -125,7 +125,7 @@ export default function PolicyClauseLibraryPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Category</label>
-                <select className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                <select aria-label="Select option" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm">
                   <option value="access_control">Access Control</option>
                   <option value="data_protection">Data Protection</option>
                   <option value="audit">Audit</option>
@@ -134,11 +134,11 @@ export default function PolicyClauseLibraryPage() {
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Clause Text</label>
-                <textarea rows={3} placeholder="Enter clause text..." className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm" />
+                <textarea aria-label="Enter clause text..." rows={3} placeholder="Enter clause text..." className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="text-xs text-gray-400 mb-1 block">Parameters (JSON)</label>
-                <textarea rows={2} placeholder="{&quot;key&quot;: &quot;value&quot;}" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono" />
+                <textarea aria-label="{&quot;key&quot;: &quot;value&quot;}" rows={2} placeholder="{&quot;key&quot;: &quot;value&quot;}" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm font-mono" />
               </div>
             </div>
             <div className="flex gap-2 mt-4">

@@ -66,7 +66,7 @@ export default function HibpBreachCheckPage() {
         <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.apiConfiguration")}</h2>
         <label className="flex items-center justify-between">
           <span className="text-sm font-medium">{t("big1.hibpBreachCheck.enableHibpBreachCheck")}</span>
-          <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
+          <input aria-label="Enabled" type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
         </label>
         <div>
           <label className="text-sm font-medium">{t("big1.hibpBreachCheck.hibpApiKey")}</label>
@@ -80,18 +80,18 @@ export default function HibpBreachCheckPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.checkTriggers")}</h2>
         <div className="space-y-2">
-          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnLogin")}</span><input type="checkbox" checked={checkOnLogin} onChange={e => setCheckOnLogin(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnPasswordChange")}</span><input type="checkbox" checked={checkOnPasswordChange} onChange={e => setCheckOnPasswordChange(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnRegister")}</span><input type="checkbox" checked={checkOnRegister} onChange={e => setCheckOnRegister(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnLogin")}</span><input aria-label="Check on login" type="checkbox" checked={checkOnLogin} onChange={e => setCheckOnLogin(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnPasswordChange")}</span><input aria-label="Check on password change" type="checkbox" checked={checkOnPasswordChange} onChange={e => setCheckOnPasswordChange(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.checkOnRegister")}</span><input aria-label="Check on register" type="checkbox" checked={checkOnRegister} onChange={e => setCheckOnRegister(e.target.checked)} className="rounded" /></label>
         </div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("big1.hibpBreachCheck.responseActions")}</h2>
         <div className="space-y-2">
-          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.autoForcePasswordResetOnBreach")}</span><input type="checkbox" checked={autoForceReset} onChange={e => setAutoForceReset(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.notifyUser")}</span><input type="checkbox" checked={notifyUser} onChange={e => setNotifyUser(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.notifyAdmin")}</span><input type="checkbox" checked={notifyAdmin} onChange={e => setNotifyAdmin(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.autoForcePasswordResetOnBreach")}</span><input aria-label="Auto force reset" type="checkbox" checked={autoForceReset} onChange={e => setAutoForceReset(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.notifyUser")}</span><input aria-label="Notify user" type="checkbox" checked={notifyUser} onChange={e => setNotifyUser(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">{t("big1.hibpBreachCheck.notifyAdmin")}</span><input aria-label="Notify admin" type="checkbox" checked={notifyAdmin} onChange={e => setNotifyAdmin(e.target.checked)} className="rounded" /></label>
         </div>
       </section>
 

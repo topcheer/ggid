@@ -117,19 +117,19 @@ export default function ProfilePage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Username</label>
-              <input value={profile.username} onChange={(e) => setProfile({ ...profile, username: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+              <input aria-label="profile" value={profile.username} onChange={(e) => setProfile({ ...profile, username: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Email</label>
-              <input value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+              <input aria-label="profile" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Full Name</label>
-              <input value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+              <input aria-label="profile" value={profile.full_name} onChange={(e) => setProfile({ ...profile, full_name: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Phone</label>
-              <input value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
+              <input aria-label="profile" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200" />
             </div>
           </div>
           <button onClick={handleSaveProfile} className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm text-white hover:bg-brand-700">

@@ -110,17 +110,17 @@ export default function CredentialVaultManagementPage() {
           <h2 className="text-lg font-semibold">Add Credential</h2>
           <div>
             <label className="text-sm font-medium">Type</label>
-            <select value={newCred.type} onChange={e => setNewCred(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+            <select aria-label="new Cred" value={newCred.type} onChange={e => setNewCred(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
               {types.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div>
             <label className="text-sm font-medium">Name</label>
-            <input type="text" placeholder="Credential name" value={newCred.name} onChange={e => setNewCred(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input aria-label="Credential name" type="text" placeholder="Credential name" value={newCred.name} onChange={e => setNewCred(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">Rotation Policy (days)</label>
-            <input type="number" min={1} max={365} value={newCred.rotationDays} onChange={e => setNewCred(prev => ({ ...prev, rotationDays: parseInt(e.target.value) || 90 }))} className="w-24 border rounded px-3 py-2 text-sm mt-1" />
+            <input aria-label="new Cred" type="number" min={1} max={365} value={newCred.rotationDays} onChange={e => setNewCred(prev => ({ ...prev, rotationDays: parseInt(e.target.value) || 90 }))} className="w-24 border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <button onClick={addCredential} disabled={!newCred.name} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add to Vault</button>
         </section>

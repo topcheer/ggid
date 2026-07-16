@@ -274,7 +274,7 @@ export default function ExportsPage() {
             {/* Data Type */}
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Data Type</label>
-              <select value={dataType} onChange={(e) => setDataType(e.target.value)} className={inputCls}>
+              <select aria-label="data Type" value={dataType} onChange={(e) => setDataType(e.target.value)} className={inputCls}>
                 {DATA_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}

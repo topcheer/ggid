@@ -106,7 +106,7 @@ export default function ScopeDescriptionsPage() {
                   {languages.map((l) => (
                     <div key={l.code}>
                       <label className="text-xs font-medium flex items-center gap-1"><Globe className="w-3 h-3" /> {l.flag} - {l.label}</label>
-                      <textarea value={editValues[l.code] || ""} onChange={(e) => setEditValues({ ...editValues, [l.code]: e.target.value })} rows={2} placeholder={`${s.scope} description in ${l.label}`} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                      <textarea aria-label="Text input" value={editValues[l.code] || ""} onChange={(e) => setEditValues({ ...editValues, [l.code]: e.target.value })} rows={2} placeholder={`${s.scope} description in ${l.label}`} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
                     </div>
                   ))}
                 </div>

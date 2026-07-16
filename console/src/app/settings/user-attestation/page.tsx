@@ -104,13 +104,13 @@ export default function UserAttestationPage() {
                 <button onClick={() => setConfig({ ...config, enabled: !config.enabled })} className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium ${config.enabled ? "bg-green-100 text-green-700 dark:bg-green-900/30" : "bg-gray-100 text-gray-500 dark:bg-gray-700"}`}>{config.enabled ? "Enabled" : "Disabled"}</button>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Frequency (days)</label><input type="number" value={config.frequency_days} onChange={(e) => setConfig({ ...config, frequency_days: parseInt(e.target.value) || 90 })} min={7} max={365} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
-                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Reminder (days before expiry)</label><input type="number" value={config.reminder_days_before} onChange={(e) => setConfig({ ...config, reminder_days_before: parseInt(e.target.value) || 7 })} min={1} max={30} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
+                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Frequency (days)</label><input aria-label="config" type="number" value={config.frequency_days} onChange={(e) => setConfig({ ...config, frequency_days: parseInt(e.target.value) || 90 })} min={7} max={365} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
+                <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Reminder (days before expiry)</label><input aria-label="config" type="number" value={config.reminder_days_before} onChange={(e) => setConfig({ ...config, reminder_days_before: parseInt(e.target.value) || 7 })} min={1} max={30} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
               </div>
               <div className="mt-4">
                 <label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Required Fields</label>
                 <div className="flex gap-2">
-                  <input value={fieldInput} onChange={(e) => setFieldInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addField()} placeholder="e.g. phone, department" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
+                  <input aria-label="e.g. phone, department" value={fieldInput} onChange={(e) => setFieldInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addField()} placeholder="e.g. phone, department" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" />
                   <button onClick={addField} className="rounded-lg bg-gray-100 px-3 text-sm text-gray-600 dark:bg-gray-700 dark:text-gray-300"><Plus className="h-4 w-4" /></button>
                 </div>
                 {config.required_fields.length > 0 && (

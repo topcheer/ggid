@@ -396,31 +396,31 @@ export default function AuditReportsPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <label className={labelCls}><Calendar className="mr-1 inline h-3.5 w-3.5" />Date From</label>
-                <input type="date" value={config.date_from} onChange={(e) => setConfig({ ...config, date_from: e.target.value })} className={inputCls} />
+                <input aria-label="config" type="date" value={config.date_from} onChange={(e) => setConfig({ ...config, date_from: e.target.value })} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}><Calendar className="mr-1 inline h-3.5 w-3.5" />Date To</label>
-                <input type="date" value={config.date_to} onChange={(e) => setConfig({ ...config, date_to: e.target.value })} className={inputCls} />
+                <input aria-label="config" type="date" value={config.date_to} onChange={(e) => setConfig({ ...config, date_to: e.target.value })} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}><Filter className="mr-1 inline h-3.5 w-3.5" />User Search</label>
-                <input type="text" value={config.user_search} onChange={(e) => setConfig({ ...config, user_search: e.target.value })} placeholder="username or ID..." className={inputCls} />
+                <input aria-label="username or ID..." type="text" value={config.user_search} onChange={(e) => setConfig({ ...config, user_search: e.target.value })} placeholder="username or ID..." className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Event Type</label>
-                <select value={config.event_type} onChange={(e) => setConfig({ ...config, event_type: e.target.value })} className={inputCls}>
+                <select aria-label="config" value={config.event_type} onChange={(e) => setConfig({ ...config, event_type: e.target.value })} className={inputCls}>
                   {EVENT_TYPES.map((t) => <option key={t} value={t}>{t === "all" ? "All Events" : t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>Severity</label>
-                <select value={config.severity} onChange={(e) => setConfig({ ...config, severity: e.target.value })} className={inputCls}>
+                <select aria-label="config" value={config.severity} onChange={(e) => setConfig({ ...config, severity: e.target.value })} className={inputCls}>
                   {SEVERITIES.map((s) => <option key={s} value={s}>{s === "all" ? "All Severities" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
               </div>
               <div>
                 <label className={labelCls}>Service</label>
-                <select value={config.service} onChange={(e) => setConfig({ ...config, service: e.target.value })} className={inputCls}>
+                <select aria-label="config" value={config.service} onChange={(e) => setConfig({ ...config, service: e.target.value })} className={inputCls}>
                   {SERVICES.map((s) => <option key={s} value={s}>{s === "all" ? "All Services" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
               </div>
@@ -433,7 +433,7 @@ export default function AuditReportsPage() {
                 <div className="flex flex-wrap gap-2">
                   {(["none", "day", "user", "service", "event_type"] as const).map((g) => (
                     <label key={g} className={`cursor-pointer rounded-lg border px-3 py-1.5 text-xs font-medium ${config.group_by === g ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-400" : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400"}`}>
-                      <input type="radio" name="group_by" value={g} checked={config.group_by === g} onChange={(e) => setConfig({ ...config, group_by: e.target.value as ReportConfig["group_by"] })} className="hidden" />
+                      <input aria-label="Config" type="radio" name="group_by" value={g} checked={config.group_by === g} onChange={(e) => setConfig({ ...config, group_by: e.target.value as ReportConfig["group_by"] })} className="hidden" />
                       {g === "none" ? "None" : g === "event_type" ? "Event Type" : g.charAt(0).toUpperCase() + g.slice(1)}
                     </label>
                   ))}
@@ -448,7 +448,7 @@ export default function AuditReportsPage() {
                     { v: "pie", icon: PieIcon, label: "Pie" },
                   ] as const).map((c) => (
                     <label key={c.v} className={`flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium ${config.chart_type === c.v ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-400" : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400"}`}>
-                      <input type="radio" name="chart_type" value={c.v} checked={config.chart_type === c.v} onChange={(e) => setConfig({ ...config, chart_type: e.target.value as ReportConfig["chart_type"] })} className="hidden" />
+                      <input aria-label="Config" type="radio" name="chart_type" value={c.v} checked={config.chart_type === c.v} onChange={(e) => setConfig({ ...config, chart_type: e.target.value as ReportConfig["chart_type"] })} className="hidden" />
                       <c.icon className="h-3.5 w-3.5" /> {c.label}
                     </label>
                   ))}
@@ -523,7 +523,7 @@ export default function AuditReportsPage() {
                 <Clock className="h-4 w-4 text-brand-600" /> Schedule Report
               </h2>
               <label className="relative inline-flex cursor-pointer items-center">
-                <input type="checkbox" checked={schedule.enabled} onChange={(e) => setSchedule({ ...schedule, enabled: e.target.checked })} className="peer sr-only" />
+                <input aria-label="Schedule" type="checkbox" checked={schedule.enabled} onChange={(e) => setSchedule({ ...schedule, enabled: e.target.checked })} className="peer sr-only" />
                 <div className="h-5 w-9 rounded-full bg-gray-300 peer-checked:bg-brand-600 dark:bg-gray-600 dark:peer-checked:bg-brand-500" />
                 <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform peer-checked:translate-x-4" />
               </label>
@@ -533,7 +533,7 @@ export default function AuditReportsPage() {
               <div className="space-y-3">
                 <div>
                   <label className={labelCls}>Frequency</label>
-                  <select value={schedule.frequency} onChange={(e) => setSchedule({ ...schedule, frequency: e.target.value as ScheduleConfig["frequency"] })} className={inputCls}>
+                  <select aria-label="schedule" value={schedule.frequency} onChange={(e) => setSchedule({ ...schedule, frequency: e.target.value as ScheduleConfig["frequency"] })} className={inputCls}>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
                     <option value="monthly">Monthly</option>
@@ -542,7 +542,7 @@ export default function AuditReportsPage() {
                 {schedule.frequency === "weekly" && (
                   <div>
                     <label className={labelCls}>Day of Week</label>
-                    <select value={schedule.day_of_week} onChange={(e) => setSchedule({ ...schedule, day_of_week: parseInt(e.target.value) })} className={inputCls}>
+                    <select aria-label="schedule" value={schedule.day_of_week} onChange={(e) => setSchedule({ ...schedule, day_of_week: parseInt(e.target.value) })} className={inputCls}>
                       {DAYS_OF_WEEK.map((d, i) => <option key={i} value={i}>{d}</option>)}
                     </select>
                   </div>
@@ -550,18 +550,18 @@ export default function AuditReportsPage() {
                 {schedule.frequency === "monthly" && (
                   <div>
                     <label className={labelCls}>Day of Month</label>
-                    <select value={schedule.day_of_month} onChange={(e) => setSchedule({ ...schedule, day_of_month: parseInt(e.target.value) })} className={inputCls}>
+                    <select aria-label="schedule" value={schedule.day_of_month} onChange={(e) => setSchedule({ ...schedule, day_of_month: parseInt(e.target.value) })} className={inputCls}>
                       {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => <option key={d} value={d}>{d}</option>)}
                     </select>
                   </div>
                 )}
                 <div>
                   <label className={labelCls}>Time</label>
-                  <input type="time" value={schedule.time} onChange={(e) => setSchedule({ ...schedule, time: e.target.value })} className={inputCls} />
+                  <input aria-label="schedule" type="time" value={schedule.time} onChange={(e) => setSchedule({ ...schedule, time: e.target.value })} className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}><Mail className="mr-1 inline h-3.5 w-3.5" />Email Recipients</label>
-                  <input type="text" value={schedule.recipients} onChange={(e) => setSchedule({ ...schedule, recipients: e.target.value })} placeholder="admin@example.com, team@example.com" className={inputCls} />
+                  <input aria-label="admin@example.com, team@example.com" type="text" value={schedule.recipients} onChange={(e) => setSchedule({ ...schedule, recipients: e.target.value })} placeholder="admin@example.com, team@example.com" className={inputCls} />
                   <p className="mt-1 text-xs text-gray-400">Comma-separated email addresses</p>
                 </div>
               </div>

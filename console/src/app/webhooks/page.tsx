@@ -347,11 +347,11 @@ export default function WebhooksPage() {
           <div className="space-y-4">
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">URL</label>
-              <input type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://example.com/webhooks/ggid" className={inputCls} />
+              <input aria-label="https://example.com/webhooks/ggid" type="url" value={urlInput} onChange={(e) => setUrlInput(e.target.value)} placeholder="https://example.com/webhooks/ggid" className={inputCls} />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-500">Description</label>
-              <input type="text" value={descInput} onChange={(e) => setDescInput(e.target.value)} placeholder="e.g. Slack notification endpoint" className={inputCls} />
+              <input aria-label="e.g. Slack notification endpoint" type="text" value={descInput} onChange={(e) => setDescInput(e.target.value)} placeholder="e.g. Slack notification endpoint" className={inputCls} />
             </div>
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-500">Event Subscriptions</label>
@@ -571,7 +571,7 @@ export default function WebhooksPage() {
               </div>
             </div>
             <label className="mb-4 flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input type="checkbox" checked={savedAck} onChange={(e) => setSavedAck(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+              <input aria-label="Saved ack" type="checkbox" checked={savedAck} onChange={(e) => setSavedAck(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
               {"I've saved it"}
             </label>
             <div className="flex justify-end">

@@ -85,11 +85,11 @@ export default function ScopeManagementPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Create Scope</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-sm font-medium">Name</label><input type="text" placeholder="read:reports" value={newScope.name} onChange={e => setNewScope(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
-            <div><label className="text-sm font-medium">Parent Scope</label><select value={newScope.parent} onChange={e => setNewScope(prev => ({ ...prev, parent: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="-">(none)</option>{allScopeNames.map(n => <option key={n} value={n}>{n}</option>)}</select></div>
+            <div><label className="text-sm font-medium">Name</label><input aria-label="read:reports" type="text" placeholder="read:reports" value={newScope.name} onChange={e => setNewScope(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
+            <div><label className="text-sm font-medium">Parent Scope</label><select aria-label="new Scope" value={newScope.parent} onChange={e => setNewScope(prev => ({ ...prev, parent: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="-">(none)</option>{allScopeNames.map(n => <option key={n} value={n}>{n}</option>)}</select></div>
           </div>
-          <div><label className="text-sm font-medium">Description</label><input type="text" value={newScope.description} onChange={e => setNewScope(prev => ({ ...prev, description: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div className="flex gap-4"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newScope.defaultForClients} onChange={e => setNewScope(prev => ({ ...prev, defaultForClients: e.target.checked }))} className="rounded" />Default for new clients</label></div>
+          <div><label className="text-sm font-medium">Description</label><input aria-label="new Scope" type="text" value={newScope.description} onChange={e => setNewScope(prev => ({ ...prev, description: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div className="flex gap-4"><label className="flex items-center gap-2 text-sm"><input aria-label="New scope" type="checkbox" checked={newScope.defaultForClients} onChange={e => setNewScope(prev => ({ ...prev, defaultForClients: e.target.checked }))} className="rounded" />Default for new clients</label></div>
           <button onClick={addScope} disabled={!newScope.name} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add Scope</button>
         </section>
       )}

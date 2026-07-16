@@ -212,7 +212,7 @@ export default function AccessReviewsPage() {
             <div className="space-y-3">
               {/* Select all */}
               <label className="flex items-center gap-2 text-sm text-gray-500">
-                <input type="checkbox" checked={selected.size === reviews.length && reviews.length > 0} onChange={toggleSelectAll} className="rounded border-gray-300 text-indigo-600" />
+                <input aria-label="Selected" type="checkbox" checked={selected.size === reviews.length && reviews.length > 0} onChange={toggleSelectAll} className="rounded border-gray-300 text-indigo-600" />
                 Select all
               </label>
 

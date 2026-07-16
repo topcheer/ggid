@@ -42,7 +42,7 @@ export default function BlastRadiusPage() {
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div><label className="text-sm font-medium">Policy</label><select aria-label="Policy id" value={policyId} onChange={(e) => setPolicyId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div className="flex items-end"><label className="flex items-center gap-2 text-sm font-medium pb-2"><input type="checkbox" checked={previewMode} onChange={(e) => setPreviewMode(e.target.checked)} className="rounded" /> Preview Mode (read-only)</label></div>
+          <div className="flex items-end"><label className="flex items-center gap-2 text-sm font-medium pb-2"><input aria-label="Preview mode" type="checkbox" checked={previewMode} onChange={(e) => setPreviewMode(e.target.checked)} className="rounded" /> Preview Mode (read-only)</label></div>
         </div>
         <button onClick={analyze} disabled={loading || !policyId} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"><Eye className="w-4 h-4" /> {loading ? "Analyzing..." : "Analyze Blast Radius"}</button>
       </div>

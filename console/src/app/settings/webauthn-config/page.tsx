@@ -20,15 +20,15 @@ export default function WebauthnConfigPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-900 rounded-xl p-6 space-y-4">
           <h2 className="text-sm font-semibold flex items-center gap-2"><Fingerprint className="w-4 h-4 text-blue-400" /> {t("webauthnConfig.relyingParty")}</h2>
-          <div><label className="text-xs text-gray-400">{t("webauthnConfig.rpId")}</label><input type="text" defaultValue={data?.rp_id} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
-          <div><label className="text-xs text-gray-400">{t("webauthnConfig.rpName")}</label><input type="text" defaultValue={data?.rp_name} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
-          <div><label className="text-xs text-gray-400">{t("webauthnConfig.origin")}</label><input type="text" defaultValue={data?.origin} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div><label className="text-xs text-gray-400">{t("webauthnConfig.rpId")}</label><input aria-label="Input field" type="text" defaultValue={data?.rp_id} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div><label className="text-xs text-gray-400">{t("webauthnConfig.rpName")}</label><input aria-label="Input field" type="text" defaultValue={data?.rp_name} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div><label className="text-xs text-gray-400">{t("webauthnConfig.origin")}</label><input aria-label="Input field" type="text" defaultValue={data?.origin} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
         </div>
         <div className="bg-gray-900 rounded-xl p-6 space-y-4">
           <h2 className="text-sm font-semibold flex items-center gap-2"><Shield className="w-4 h-4 text-green-400" /> {t("webauthnConfig.securityPolicy")}</h2>
           <div><label className="text-xs text-gray-400">{t("webauthnConfig.attestationReq")}</label><select aria-label="Select option" defaultValue={data?.attestation_requirement} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm"><option>none</option><option>indirect</option><option>direct</option></select></div>
-          <div><label className="text-xs text-gray-400">{t("webauthnConfig.userVerification")}</label><select defaultValue={data?.user_verification} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm"><option>required</option><option>preferred</option><option>discouraged</option></select></div>
-          <div><label className="text-xs text-gray-400">{t("webauthnConfig.timeout")}: {data?.timeout_seconds}s</label><input type="range" min="30" max="600" defaultValue={data?.timeout_seconds} className="w-full mt-1" /></div>
+          <div><label className="text-xs text-gray-400">{t("webauthnConfig.userVerification")}</label><select aria-label="Select option" defaultValue={data?.user_verification} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm"><option>required</option><option>preferred</option><option>discouraged</option></select></div>
+          <div><label className="text-xs text-gray-400">{t("webauthnConfig.timeout")}: {data?.timeout_seconds}s</label><input aria-label="Input field" type="range" min="30" max="600" defaultValue={data?.timeout_seconds} className="w-full mt-1" /></div>
         </div>
       </div>
 
@@ -37,7 +37,7 @@ export default function WebauthnConfigPage() {
         <div className="grid grid-cols-3 gap-3">
           {(data?.supported_algorithms ?? []).map((alg) => (
             <label key={alg.id} className="flex items-center gap-2 bg-gray-800 rounded-lg p-3 cursor-pointer">
-              <input type="checkbox" defaultChecked={alg.enabled} />
+              <input aria-label="Toggle option" type="checkbox" defaultChecked={alg.enabled} />
               <div><p className="text-sm font-medium font-mono">{alg.id}</p><p className="text-xs text-gray-400">COSE: {alg.cose_id}</p></div>
             </label>
           ))}

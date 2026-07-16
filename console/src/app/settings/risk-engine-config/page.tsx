@@ -75,7 +75,7 @@ export default function RiskEngineConfigPage() {
           {weights.map((w, idx) => (
             <div key={w.factor} className="flex items-center gap-4">
               <label className="flex items-center gap-2 w-48">
-                <input type="checkbox" checked={w.enabled} onChange={() => handleToggle(idx)} className="rounded" />
+                <input aria-label="W" type="checkbox" checked={w.enabled} onChange={() => handleToggle(idx)} className="rounded" />
                 <span className="text-sm">{w.factor}</span>
               </label>
               <input
@@ -143,15 +143,15 @@ export default function RiskEngineConfigPage() {
         <div className="space-y-3">
           <label className="flex items-center justify-between">
             <span className="text-sm">IP Reputation Lookup</span>
-            <input type="checkbox" checked={ipReputation} onChange={e => setIpReputation(e.target.checked)} className="rounded" />
+            <input aria-label="Ip reputation" type="checkbox" checked={ipReputation} onChange={e => setIpReputation(e.target.checked)} className="rounded" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-sm">Device Fingerprint Analysis</span>
-            <input type="checkbox" checked={deviceFingerprint} onChange={e => setDeviceFingerprint(e.target.checked)} className="rounded" />
+            <input aria-label="Device fingerprint" type="checkbox" checked={deviceFingerprint} onChange={e => setDeviceFingerprint(e.target.checked)} className="rounded" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-sm">Real-time Risk Evaluation</span>
-            <input type="checkbox" checked={realTimeEval} onChange={e => setRealTimeEval(e.target.checked)} className="rounded" />
+            <input aria-label="Real time eval" type="checkbox" checked={realTimeEval} onChange={e => setRealTimeEval(e.target.checked)} className="rounded" />
           </label>
         </div>
         <p className="text-xs text-gray-400">When real-time evaluation is disabled, risk scores are computed asynchronously after login.</p>

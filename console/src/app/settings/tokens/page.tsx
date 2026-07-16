@@ -117,19 +117,19 @@ export default function TokensPage() {
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <label className="text-xs text-gray-400">Access Token (min)</label>
-              {editConfig ? <input type="number" value={draftConfig.access_token_lifetime_minutes} onChange={(e) => setDraftConfig((p) => ({ ...p, access_token_lifetime_minutes: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 text-lg font-bold text-indigo-600">{config.access_token_lifetime_minutes}</p>}
+              {editConfig ? <input aria-label="draft Config" type="number" value={draftConfig.access_token_lifetime_minutes} onChange={(e) => setDraftConfig((p) => ({ ...p, access_token_lifetime_minutes: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 text-lg font-bold text-indigo-600">{config.access_token_lifetime_minutes}</p>}
             </div>
             <div>
               <label className="text-xs text-gray-400">Refresh Token (days)</label>
-              {editConfig ? <input type="number" value={draftConfig.refresh_token_lifetime_days} onChange={(e) => setDraftConfig((p) => ({ ...p, refresh_token_lifetime_days: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 text-lg font-bold text-indigo-600">{config.refresh_token_lifetime_days}</p>}
+              {editConfig ? <input aria-label="draft Config" type="number" value={draftConfig.refresh_token_lifetime_days} onChange={(e) => setDraftConfig((p) => ({ ...p, refresh_token_lifetime_days: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 text-lg font-bold text-indigo-600">{config.refresh_token_lifetime_days}</p>}
             </div>
             <div>
               <label className="text-xs text-gray-400">Issuer</label>
-              {editConfig ? <input value={draftConfig.issuer} onChange={(e) => setDraftConfig((p) => ({ ...p, issuer: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 truncate text-sm font-mono text-gray-600 dark:text-gray-300">{config.issuer || "—"}</p>}
+              {editConfig ? <input aria-label="draft Config" value={draftConfig.issuer} onChange={(e) => setDraftConfig((p) => ({ ...p, issuer: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 truncate text-sm font-mono text-gray-600 dark:text-gray-300">{config.issuer || "—"}</p>}
             </div>
             <div>
               <label className="text-xs text-gray-400">JWKS Rotation (days)</label>
-              {editConfig ? <input type="number" value={draftConfig.jwks_rotation_days} onChange={(e) => setDraftConfig((p) => ({ ...p, jwks_rotation_days: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 text-lg font-bold text-indigo-600">{config.jwks_rotation_days}</p>}
+              {editConfig ? <input aria-label="draft Config" type="number" value={draftConfig.jwks_rotation_days} onChange={(e) => setDraftConfig((p) => ({ ...p, jwks_rotation_days: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /> : <p className="mt-1 text-lg font-bold text-indigo-600">{config.jwks_rotation_days}</p>}
             </div>
           </div>
         </div>

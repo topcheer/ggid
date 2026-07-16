@@ -65,8 +65,8 @@ export default function RbacMatrixPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Create Role</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-sm font-medium">Role Name</label><input type="text" value={newRole.name} onChange={e => setNewRole(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">Description</label><input type="text" value={newRole.description} onChange={e => setNewRole(prev => ({ ...prev, description: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Role Name</label><input aria-label="new Role" type="text" value={newRole.name} onChange={e => setNewRole(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Description</label><input aria-label="new Role" type="text" value={newRole.description} onChange={e => setNewRole(prev => ({ ...prev, description: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           </div>
           <button onClick={addRole} disabled={!newRole.name} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Create</button>
         </section>

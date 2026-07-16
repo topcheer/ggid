@@ -279,19 +279,19 @@ export default function IdPConfigPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.entityId")}</label>
-                        <input className={inputCls} placeholder="https://idp.example.com/entity" value={cfg.entityId ?? ""} onChange={(e) => handleUpdate(cfg.id, "entityId", e.target.value)} />
+                        <input aria-label="https://idp.example.com/entity" className={inputCls} placeholder="https://idp.example.com/entity" value={cfg.entityId ?? ""} onChange={(e) => handleUpdate(cfg.id, "entityId", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.ssoUrl")}</label>
-                        <input className={inputCls} placeholder="https://idp.example.com/sso" value={cfg.ssoUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "ssoUrl", e.target.value)} />
+                        <input aria-label="https://idp.example.com/sso" className={inputCls} placeholder="https://idp.example.com/sso" value={cfg.ssoUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "ssoUrl", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.sloUrl")}</label>
-                        <input className={inputCls} placeholder="https://idp.example.com/slo" value={cfg.sloUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "sloUrl", e.target.value)} />
+                        <input aria-label="https://idp.example.com/slo" className={inputCls} placeholder="https://idp.example.com/slo" value={cfg.sloUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "sloUrl", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.certificateFingerprintSHA256")}</label>
-                        <input className={inputCls} placeholder="AB:CD:EF:..." value={cfg.certFingerprint ?? ""} onChange={(e) => handleUpdate(cfg.id, "certFingerprint", e.target.value)} />
+                        <input aria-label="AB:CD:EF:..." className={inputCls} placeholder="AB:CD:EF:..." value={cfg.certFingerprint ?? ""} onChange={(e) => handleUpdate(cfg.id, "certFingerprint", e.target.value)} />
                       </div>
                     </div>
                   )}
@@ -301,11 +301,11 @@ export default function IdPConfigPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.issuerUrl")}</label>
-                        <input className={inputCls} placeholder="https://accounts.google.com" value={cfg.issuerUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "issuerUrl", e.target.value)} />
+                        <input aria-label="https://accounts.google.com" className={inputCls} placeholder="https://accounts.google.com" value={cfg.issuerUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "issuerUrl", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.clientId")}</label>
-                        <input className={inputCls} placeholder="your-client-id" value={cfg.clientId ?? ""} onChange={(e) => handleUpdate(cfg.id, "clientId", e.target.value)} />
+                        <input aria-label="your-client-id" className={inputCls} placeholder="your-client-id" value={cfg.clientId ?? ""} onChange={(e) => handleUpdate(cfg.id, "clientId", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.clientSecret")}</label>
@@ -313,15 +313,15 @@ export default function IdPConfigPage() {
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.scopes")}</label>
-                        <input className={inputCls} placeholder="openid profile email" value={cfg.scopes ?? ""} onChange={(e) => handleUpdate(cfg.id, "scopes", e.target.value)} />
+                        <input aria-label="openid profile email" className={inputCls} placeholder="openid profile email" value={cfg.scopes ?? ""} onChange={(e) => handleUpdate(cfg.id, "scopes", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.authorizationEndpoint")}</label>
-                        <input className={inputCls} placeholder="https://idp/authorize" value={cfg.authorizationEndpoint ?? ""} onChange={(e) => handleUpdate(cfg.id, "authorizationEndpoint", e.target.value)} />
+                        <input aria-label="https://idp/authorize" className={inputCls} placeholder="https://idp/authorize" value={cfg.authorizationEndpoint ?? ""} onChange={(e) => handleUpdate(cfg.id, "authorizationEndpoint", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.tokenEndpoint")}</label>
-                        <input className={inputCls} placeholder="https://idp/token" value={cfg.tokenEndpoint ?? ""} onChange={(e) => handleUpdate(cfg.id, "tokenEndpoint", e.target.value)} />
+                        <input aria-label="https://idp/token" className={inputCls} placeholder="https://idp/token" value={cfg.tokenEndpoint ?? ""} onChange={(e) => handleUpdate(cfg.id, "tokenEndpoint", e.target.value)} />
                       </div>
                     </div>
                   )}
@@ -331,19 +331,19 @@ export default function IdPConfigPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.ldapUrl")}</label>
-                        <input className={inputCls} placeholder="ldap://ldap.example.com:389" value={cfg.ldapUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "ldapUrl", e.target.value)} />
+                        <input aria-label="ldap://ldap.example.com:389" className={inputCls} placeholder="ldap://ldap.example.com:389" value={cfg.ldapUrl ?? ""} onChange={(e) => handleUpdate(cfg.id, "ldapUrl", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.bindDn")}</label>
-                        <input className={inputCls} placeholder="cn=admin,dc=example,dc=com" value={cfg.bindDn ?? ""} onChange={(e) => handleUpdate(cfg.id, "bindDn", e.target.value)} />
+                        <input aria-label="cn=admin,dc=example,dc=com" className={inputCls} placeholder="cn=admin,dc=example,dc=com" value={cfg.bindDn ?? ""} onChange={(e) => handleUpdate(cfg.id, "bindDn", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.baseDn")}</label>
-                        <input className={inputCls} placeholder="ou=users,dc=example,dc=com" value={cfg.baseDn ?? ""} onChange={(e) => handleUpdate(cfg.id, "baseDn", e.target.value)} />
+                        <input aria-label="ou=users,dc=example,dc=com" className={inputCls} placeholder="ou=users,dc=example,dc=com" value={cfg.baseDn ?? ""} onChange={(e) => handleUpdate(cfg.id, "baseDn", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.userFilter")}</label>
-                        <input className={inputCls} placeholder="(uid={username})" value={cfg.userFilter ?? ""} onChange={(e) => handleUpdate(cfg.id, "userFilter", e.target.value)} />
+                        <input aria-label="(uid={username})" className={inputCls} placeholder="(uid={username})" value={cfg.userFilter ?? ""} onChange={(e) => handleUpdate(cfg.id, "userFilter", e.target.value)} />
                       </div>
                       <div className="flex items-center gap-2 pt-5">
                         <input

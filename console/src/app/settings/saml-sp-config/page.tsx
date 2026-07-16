@@ -27,25 +27,25 @@ export default function SamlSpConfigPage() {
         <h2 className="text-lg font-semibold">SP Endpoints</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Entity ID</label>
-          <input type="text" value={form.entity_id}
+          <input aria-label="form" type="text" value={form.entity_id}
             onChange={(e) => setForm({ ...form, entity_id: e.target.value })}
             className="border rounded px-3 py-2 w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">ACS URL</label>
-          <input type="text" value={form.acs_url}
+          <input aria-label="form" type="text" value={form.acs_url}
             onChange={(e) => setForm({ ...form, acs_url: e.target.value })}
             className="border rounded px-3 py-2 w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">SLO URL</label>
-          <input type="text" value={form.slo_url}
+          <input aria-label="form" type="text" value={form.slo_url}
             onChange={(e) => setForm({ ...form, slo_url: e.target.value })}
             className="border rounded px-3 py-2 w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Metadata URL</label>
-          <input type="text" value={form.metadata_url}
+          <input aria-label="form" type="text" value={form.metadata_url}
             onChange={(e) => setForm({ ...form, metadata_url: e.target.value })}
             className="border rounded px-3 py-2 w-full" />
         </div>
@@ -55,7 +55,7 @@ export default function SamlSpConfigPage() {
         <h2 className="text-lg font-semibold">Security</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Signature Algorithm</label>
-          <select value={form.signature_algorithm}
+          <select aria-label="form" value={form.signature_algorithm}
             onChange={(e) => setForm({ ...form, signature_algorithm: e.target.value as SamlSpConfig["signature_algorithm"] })}
             className="border rounded px-3 py-2">
             <option value="RSA-SHA256">RSA-SHA256</option>
@@ -65,7 +65,7 @@ export default function SamlSpConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Name ID Format</label>
-          <select value={form.name_id_format}
+          <select aria-label="form" value={form.name_id_format}
             onChange={(e) => setForm({ ...form, name_id_format: e.target.value as SamlSpConfig["name_id_format"] })}
             className="border rounded px-3 py-2">
             <option value="unspecified">Unspecified</option>

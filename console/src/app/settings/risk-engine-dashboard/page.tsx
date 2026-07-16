@@ -82,7 +82,7 @@ export default function RiskEngineDashboardPage() {
             {factors.map((f, idx) => (
               <div key={f.name} className="flex items-center gap-4">
                 <label className="flex items-center gap-2 w-40">
-                  <input type="checkbox" checked={f.enabled} onChange={() => toggleFactor(idx)} className="rounded" />
+                  <input aria-label="F" type="checkbox" checked={f.enabled} onChange={() => toggleFactor(idx)} className="rounded" />
                   <span className="text-sm">{f.name}</span>
                 </label>
                 <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">

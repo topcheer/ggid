@@ -173,19 +173,19 @@ export default function DepartmentsPage() {
               <button onClick={() => setShowAdd(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-3">
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label><input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Engineering" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label><input aria-label="Engineering" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Engineering" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Parent Department</label>
-                <select value={form.parent_id} onChange={(e) => setForm((p) => ({ ...p, parent_id: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                <select aria-label="form" value={form.parent_id} onChange={(e) => setForm((p) => ({ ...p, parent_id: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">
                   <option value="">None (Top-level)</option>
                   {allDepts.filter((d) => d.id !== editDept?.id).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Headcount</label><input type="number" value={form.headcount} onChange={(e) => setForm((p) => ({ ...p, headcount: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
-                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Budget ($)</label><input type="number" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Headcount</label><input aria-label="form" type="number" value={form.headcount} onChange={(e) => setForm((p) => ({ ...p, headcount: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Budget ($)</label><input aria-label="form" type="number" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
               </div>
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cost Center</label><input value={form.cost_center} onChange={(e) => setForm((p) => ({ ...p, cost_center: e.target.value }))} placeholder="CC-1000" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cost Center</label><input aria-label="CC-1000" value={form.cost_center} onChange={(e) => setForm((p) => ({ ...p, cost_center: e.target.value }))} placeholder="CC-1000" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowAdd(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>

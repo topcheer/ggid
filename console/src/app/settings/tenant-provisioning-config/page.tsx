@@ -27,7 +27,7 @@ export default function TenantProvisioningConfigPage() {
         <h2 className="text-lg font-semibold">{t("tenantProvisioning.generalSettings")}</h2>
         <div>
           <label className="block text-sm font-medium mb-1">{t("tenantProvisioning.defaultQuota")}</label>
-          <select value={form.default_quota_template}
+          <select aria-label="form" value={form.default_quota_template}
             onChange={(e) => setForm({ ...form, default_quota_template: e.target.value })}
             className="border rounded px-3 py-2">
             <option value="free">{t("tenantProvisioning.free")}</option>
@@ -44,7 +44,7 @@ export default function TenantProvisioningConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t("tenantProvisioning.trialPeriod")}</label>
-          <input type="number" value={form.trial_period_days}
+          <input aria-label="form" type="number" value={form.trial_period_days}
             onChange={(e) => setForm({ ...form, trial_period_days: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-32" />
         </div>

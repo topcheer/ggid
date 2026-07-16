@@ -108,18 +108,18 @@ export default function AuditExportPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">From Date</label>
-                  <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                  <input aria-label="date From" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">To Date</label>
-                  <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                  <input aria-label="date To" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                 </div>
               </div>
 
               {/* Event type */}
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Event Type Filter (optional)</label>
-                <input value={eventType} onChange={(e) => setEventType(e.target.value)} placeholder="e.g. login, role.update, policy.change" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="e.g. login, role.update, policy.change" value={eventType} onChange={(e) => setEventType(e.target.value)} placeholder="e.g. login, role.update, policy.change" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
             </div>
 

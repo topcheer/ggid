@@ -51,7 +51,7 @@ export default function JwtClaimValidationConfigPage() {
         <h2 className="text-lg font-semibold">{t("big1.jwtClaimValidationConfig.validationSettings")}</h2>
         <div>
           <label className="block text-sm font-medium mb-1">{t("big1.jwtClaimValidationConfig.clockSkewSeconds")}</label>
-          <input type="number" value={form.clock_skew_seconds}
+          <input aria-label="form" type="number" value={form.clock_skew_seconds}
             onChange={(e) => setForm({ ...form, clock_skew_seconds: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-32" />
         </div>

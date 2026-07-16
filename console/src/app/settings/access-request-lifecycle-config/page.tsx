@@ -40,8 +40,8 @@ export default function AccessRequestLifecycleConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">{t("backend3.accessRequestLifecycle.globalLimits")}</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">{t("backend3.accessRequestLifecycle.maxDuration")}</label><input type="number" value={form.max_duration_days} onChange={(e) => setForm({ ...form, max_duration_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Renewal Reminder (days before)</label><input type="number" value={form.renewal_reminder_days} onChange={(e) => setForm({ ...form, renewal_reminder_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">{t("backend3.accessRequestLifecycle.maxDuration")}</label><input aria-label="form" type="number" value={form.max_duration_days} onChange={(e) => setForm({ ...form, max_duration_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Renewal Reminder (days before)</label><input aria-label="form" type="number" value={form.renewal_reminder_days} onChange={(e) => setForm({ ...form, renewal_reminder_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 

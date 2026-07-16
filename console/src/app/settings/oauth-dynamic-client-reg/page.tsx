@@ -40,7 +40,7 @@ export default function OAuthDynamicClientRegPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <label className="block text-sm font-medium mb-1">{t("oauthDCR.registrationEndpoint")}</label>
-        <input type="text" value={form.registration_endpoint} readOnly className="border rounded px-3 py-2 w-full bg-gray-50" />
+        <input aria-label="form" type="text" value={form.registration_endpoint} readOnly className="border rounded px-3 py-2 w-full bg-gray-50" />
         <div className="mt-3 flex items-center gap-3">
           <input aria-label="Toggle" type="checkbox" checked={form.software_statement_enabled} readOnly className="w-4 h-4" />
           <label>Software Statement Enabled</label>
@@ -86,15 +86,15 @@ export default function OAuthDynamicClientRegPage() {
             <h2 className="text-lg font-bold">{t("oauthDCR.registerNew")}</h2>
             <div>
               <label className="block text-sm font-medium mb-1">{t("oauthDCR.clientName")}</label>
-              <input type="text" value={newClient.client_name} onChange={(e) => setNewClient({ ...newClient, client_name: e.target.value })} className="border rounded px-3 py-2 w-full" />
+              <input aria-label="new Client" type="text" value={newClient.client_name} onChange={(e) => setNewClient({ ...newClient, client_name: e.target.value })} className="border rounded px-3 py-2 w-full" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">{t("oauthDCR.grantTypesPlaceholder")}</label>
-              <input type="text" value={newClient.grant_types} onChange={(e) => setNewClient({ ...newClient, grant_types: e.target.value })} className="border rounded px-3 py-2 w-full" />
+              <input aria-label="new Client" type="text" value={newClient.grant_types} onChange={(e) => setNewClient({ ...newClient, grant_types: e.target.value })} className="border rounded px-3 py-2 w-full" />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">{t("oauthDCR.redirectUrisPlaceholder")}</label>
-              <input type="text" value={newClient.redirect_uris} onChange={(e) => setNewClient({ ...newClient, redirect_uris: e.target.value })} className="border rounded px-3 py-2 w-full" />
+              <input aria-label="new Client" type="text" value={newClient.redirect_uris} onChange={(e) => setNewClient({ ...newClient, redirect_uris: e.target.value })} className="border rounded px-3 py-2 w-full" />
             </div>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded">{t("oauthDCR.cancel")}</button>

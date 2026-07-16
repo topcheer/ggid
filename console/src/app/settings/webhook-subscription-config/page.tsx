@@ -93,14 +93,14 @@ const [deliveries] = useState<Delivery[]>([
           <h2 className="text-lg font-semibold">Add Subscription</h2>
           <div>
             <label className="text-sm font-medium">Event Type</label>
-            <select value={newSub.eventType} onChange={e => setNewSub(prev => ({ ...prev, eventType: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+            <select aria-label="new Sub" value={newSub.eventType} onChange={e => setNewSub(prev => ({ ...prev, eventType: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
               <option value="">Select event...</option>
               {eventCatalog.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
           <div>
             <label className="text-sm font-medium">Endpoint URL</label>
-            <input type="url" placeholder="https://app.example.com/webhook" value={newSub.endpointUrl} onChange={e => setNewSub(prev => ({ ...prev, endpointUrl: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input aria-label="https://app.example.com/webhook" type="url" placeholder="https://app.example.com/webhook" value={newSub.endpointUrl} onChange={e => setNewSub(prev => ({ ...prev, endpointUrl: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">HMAC Secret</label>
@@ -108,7 +108,7 @@ const [deliveries] = useState<Delivery[]>([
           </div>
           <div>
             <label className="text-sm font-medium">Max Retries</label>
-            <input type="number" min={0} max={10} value={newSub.maxRetries} onChange={e => setNewSub(prev => ({ ...prev, maxRetries: parseInt(e.target.value) || 3 }))} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
+            <input aria-label="new Sub" type="number" min={0} max={10} value={newSub.maxRetries} onChange={e => setNewSub(prev => ({ ...prev, maxRetries: parseInt(e.target.value) || 3 }))} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
           </div>
           <button onClick={addSub} disabled={!newSub.eventType || !newSub.endpointUrl} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Add</button>
         </section>
@@ -131,7 +131,7 @@ const [deliveries] = useState<Delivery[]>([
               <tr key={s.id} className="border-b">
                 <td className="p-3 font-mono text-xs">{s.eventType}</td>
                 <td className="p-3 font-mono text-xs text-gray-500 truncate max-w-xs">{s.endpointUrl}</td>
-                <td className="p-3"><label className="flex items-center"><input type="checkbox" checked={s.enabled} onChange={() => toggleSub(s.id)} className="rounded" /></label></td>
+                <td className="p-3"><label className="flex items-center"><input aria-label="S" type="checkbox" checked={s.enabled} onChange={() => toggleSub(s.id)} className="rounded" /></label></td>
                 <td className="p-3">{s.retryCount > 0 ? <span className="text-amber-600 text-xs">{s.retryCount}</span> : <span className="text-gray-400 text-xs">0</span>}</td>
                 <td className="p-3">{s.maxRetries}</td>
                 <td className="p-3"><button className="text-blue-600 text-xs hover:underline">Test</button></td>

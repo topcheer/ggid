@@ -26,18 +26,18 @@ export default function TokenIntrospectionDesignPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Caching Strategy</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.caching.enabled} onChange={(e) => setForm({ ...form, caching: { ...form.caching, enabled: e.target.checked } })} className="w-4 h-4" /><label>Enabled</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.caching.enabled} onChange={(e) => setForm({ ...form, caching: { ...form.caching, enabled: e.target.checked } })} className="w-4 h-4" /><label>Enabled</label></div>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">TTL (seconds)</label><input type="number" value={form.caching.ttl_seconds} onChange={(e) => setForm({ ...form, caching: { ...form.caching, ttl_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Max Entries</label><input type="number" value={form.caching.max_entries} onChange={(e) => setForm({ ...form, caching: { ...form.caching, max_entries: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">TTL (seconds)</label><input aria-label="form" type="number" value={form.caching.ttl_seconds} onChange={(e) => setForm({ ...form, caching: { ...form.caching, ttl_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Max Entries</label><input aria-label="form" type="number" value={form.caching.max_entries} onChange={(e) => setForm({ ...form, caching: { ...form.caching, max_entries: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">Options</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.scope_filtering} onChange={(e) => setForm({ ...form, scope_filtering: e.target.checked })} className="w-4 h-4" /><label>Scope Filtering</label></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.privacy_mode} onChange={(e) => setForm({ ...form, privacy_mode: e.target.checked })} className="w-4 h-4" /><label>Privacy Mode (minimal claims in response)</label></div>
-        <div><label className="block text-sm font-medium mb-1">Rate Limit Per Client (req/min)</label><input type="number" value={form.rate_limit_per_client} onChange={(e) => setForm({ ...form, rate_limit_per_client: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.scope_filtering} onChange={(e) => setForm({ ...form, scope_filtering: e.target.checked })} className="w-4 h-4" /><label>Scope Filtering</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.privacy_mode} onChange={(e) => setForm({ ...form, privacy_mode: e.target.checked })} className="w-4 h-4" /><label>Privacy Mode (minimal claims in response)</label></div>
+        <div><label className="block text-sm font-medium mb-1">Rate Limit Per Client (req/min)</label><input aria-label="form" type="number" value={form.rate_limit_per_client} onChange={(e) => setForm({ ...form, rate_limit_per_client: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">

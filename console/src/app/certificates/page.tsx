@@ -560,14 +560,14 @@ export default function CertificatesPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Select CSR File (.csr)</label>
-                <input ref={csrFileInputRef} type="file" accept=".csr,.pem,.txt" onChange={handleCsrFileSelect} className="hidden" id="csr-file-input" />
+                <input aria-label="Input field" ref={csrFileInputRef} type="file" accept=".csr,.pem,.txt" onChange={handleCsrFileSelect} className="hidden" id="csr-file-input" />
                 <button onClick={() => csrFileInputRef.current?.click()} className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
                   <FileText className="h-4 w-4" /> Choose File
                 </button>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Or Paste CSR Content</label>
-                <textarea value={csrText} onChange={(e) => { setCsrText(e.target.value); setCsrInfo(parseCsr(e.target.value)); }} placeholder={"-----BEGIN CERTIFICATE REQUEST-----\nMIICvDCCAaQCAQA...\n-----END CERTIFICATE REQUEST-----"} rows={6} className={`${inputCls} font-mono text-xs`} />
+                <textarea aria-label="Text input" value={csrText} onChange={(e) => { setCsrText(e.target.value); setCsrInfo(parseCsr(e.target.value)); }} placeholder={"-----BEGIN CERTIFICATE REQUEST-----\nMIICvDCCAaQCAQA...\n-----END CERTIFICATE REQUEST-----"} rows={6} className={`${inputCls} font-mono text-xs`} />
               </div>
               {csrInfo && (
                 <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
@@ -601,11 +601,11 @@ export default function CertificatesPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Certificate Name</label>
-                <input type="text" value={importName} onChange={(e) => setImportName(e.target.value)} placeholder="e.g. Production TLS" className={inputCls} />
+                <input aria-label="e.g. Production TLS" type="text" value={importName} onChange={(e) => setImportName(e.target.value)} placeholder="e.g. Production TLS" className={inputCls} />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Type</label>
-                <select value={importType} onChange={(e) => setImportType(e.target.value)} className={inputCls}>
+                <select aria-label="import Type" value={importType} onChange={(e) => setImportType(e.target.value)} className={inputCls}>
                   <option value="TLS">TLS</option>
                   <option value="SAML">SAML</option>
                   <option value="OAuth">OAuth</option>
@@ -614,14 +614,14 @@ export default function CertificatesPage() {
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Select File (.pem / .crt)</label>
-                <input ref={fileInputRef} type="file" accept=".pem,.crt,.cer" onChange={handleImportFileSelect} className="hidden" id="import-file-input" />
+                <input aria-label="Input field" ref={fileInputRef} type="file" accept=".pem,.crt,.cer" onChange={handleImportFileSelect} className="hidden" id="import-file-input" />
                 <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
                   <FileText className="h-4 w-4" /> Choose File
                 </button>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Or Paste PEM Content</label>
-                <textarea value={importPem} onChange={(e) => setImportPem(e.target.value)} placeholder={"-----BEGIN CERTIFICATE-----\nMIIElDCCA3yg...\n-----END CERTIFICATE-----"} rows={6} className={`${inputCls} font-mono text-xs`} />
+                <textarea aria-label="Text input" value={importPem} onChange={(e) => setImportPem(e.target.value)} placeholder={"-----BEGIN CERTIFICATE-----\nMIIElDCCA3yg...\n-----END CERTIFICATE-----"} rows={6} className={`${inputCls} font-mono text-xs`} />
               </div>
               <div className="flex gap-2">
                 <button onClick={handleImport} disabled={importing || !importPem || !importName.trim()} className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">

@@ -83,7 +83,7 @@ export default function LoginVelocityPage() {
         </div>
         <label className="flex items-center gap-2 text-sm cursor-pointer">
           <RefreshCw className={`w-4 h-4 ${autoRefresh ? "text-blue-500 animate-spin" : "text-gray-400"}`} style={autoRefresh ? { animationDuration: "3s" } : {}} />
-          <input type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} className="sr-only" />
+          <input aria-label="Auto refresh" type="checkbox" checked={autoRefresh} onChange={(e) => setAutoRefresh(e.target.checked)} className="sr-only" />
           <span className={autoRefresh ? "text-blue-600" : "text-gray-500"}>Auto-refresh</span>
         </label>
       </div>

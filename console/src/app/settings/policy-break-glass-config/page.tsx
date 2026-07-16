@@ -35,9 +35,9 @@ export default function PolicyBreakGlassConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Safeguards</h2>
-        <div><label className="block text-sm font-medium mb-1">Cooldown Period (minutes)</label><input type="number" value={form.cooldown_period_minutes} onChange={(e) => setForm({ ...form, cooldown_period_minutes: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div><label className="block text-sm font-medium mb-1">Max Concurrent Break-Glass Sessions</label><input type="number" value={form.max_concurrent} onChange={(e) => setForm({ ...form, max_concurrent: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.auto_revert} onChange={(e) => setForm({ ...form, auto_revert: e.target.checked })} className="w-4 h-4" /><label>Auto-Revert After Expiry</label></div>
+        <div><label className="block text-sm font-medium mb-1">Cooldown Period (minutes)</label><input aria-label="form" type="number" value={form.cooldown_period_minutes} onChange={(e) => setForm({ ...form, cooldown_period_minutes: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Max Concurrent Break-Glass Sessions</label><input aria-label="form" type="number" value={form.max_concurrent} onChange={(e) => setForm({ ...form, max_concurrent: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.auto_revert} onChange={(e) => setForm({ ...form, auto_revert: e.target.checked })} className="w-4 h-4" /><label>Auto-Revert After Expiry</label></div>
       </div>
 
       <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>

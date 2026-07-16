@@ -43,7 +43,7 @@ export default function TokenScopeDiffPage() {
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div><label className="text-sm font-medium">Token A</label><select aria-label="Token a" value={tokenA} onChange={(e) => setTokenA(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Token</option>{tokens.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
-          <div><label className="text-sm font-medium">Token B</label><select value={tokenB} onChange={(e) => setTokenB(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Token</option>{tokens.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Token B</label><select aria-label="token B" value={tokenB} onChange={(e) => setTokenB(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Token</option>{tokens.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}</select></div>
         </div>
         <button onClick={compare} disabled={loading || !tokenA || !tokenB} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> {loading ? "Comparing..." : "Compare Scopes"}</button>
       </div>

@@ -140,11 +140,11 @@ export default function TenantConfigPage() {
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
               <label className={labelCls}>{t("common.name")}</label>
-              <input value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className={inputCls} placeholder="My Organization" />
+              <input aria-label="My Organization" value={profile.name} onChange={e => setProfile({ ...profile, name: e.target.value })} className={inputCls} placeholder="My Organization" />
             </div>
             <div>
               <label className={labelCls}>{t("common.domain")}</label>
-              <input value={profile.domain} onChange={e => setProfile({ ...profile, domain: e.target.value })} className={inputCls} placeholder="company.com" />
+              <input aria-label="company.com" value={profile.domain} onChange={e => setProfile({ ...profile, domain: e.target.value })} className={inputCls} placeholder="company.com" />
             </div>
           </div>
           <div className="mt-4 flex items-center gap-6">
@@ -193,11 +193,11 @@ export default function TenantConfigPage() {
           <div className="grid gap-6 sm:grid-cols-2">
             <div>
               <label className={labelCls}>{t("tenant.requestsPerMinute")}</label>
-              <input type="number" min={1} value={rateLimit.requestsPerMinute} onChange={e => setRateLimit({ ...rateLimit, requestsPerMinute: Number(e.target.value) || 100 })} className={inputCls} />
+              <input aria-label="rate Limit" type="number" min={1} value={rateLimit.requestsPerMinute} onChange={e => setRateLimit({ ...rateLimit, requestsPerMinute: Number(e.target.value) || 100 })} className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>{t("tenant.burstLimit")}</label>
-              <input type="number" min={1} value={rateLimit.burstLimit} onChange={e => setRateLimit({ ...rateLimit, burstLimit: Number(e.target.value) || 200 })} className={inputCls} />
+              <input aria-label="rate Limit" type="number" min={1} value={rateLimit.burstLimit} onChange={e => setRateLimit({ ...rateLimit, burstLimit: Number(e.target.value) || 200 })} className={inputCls} />
             </div>
           </div>
           <div className="mt-4 flex justify-end">
@@ -216,7 +216,7 @@ export default function TenantConfigPage() {
                 <label className={labelCls}>{t("tenant.minPasswordLength")}</label>
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{pwPolicy.minLength}</span>
               </div>
-              <input type="range" min={8} max={128} value={pwPolicy.minLength} onChange={e => setPwPolicy({ ...pwPolicy, minLength: Number(e.target.value) })} className="w-full accent-brand-600" />
+              <input aria-label="pw Policy" type="range" min={8} max={128} value={pwPolicy.minLength} onChange={e => setPwPolicy({ ...pwPolicy, minLength: Number(e.target.value) })} className="w-full accent-brand-600" />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {(["requireUpper", "requireLower", "requireDigit", "requireSpecial"] as const).map((key) => (
@@ -227,8 +227,8 @@ export default function TenantConfigPage() {
               ))}
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
-              <div><label className={labelCls}>{t("tenant.passwordHistory")}</label><input type="number" min={0} max={24} value={pwPolicy.historyCount} onChange={e => setPwPolicy({ ...pwPolicy, historyCount: Number(e.target.value) || 0 })} className={inputCls} /></div>
-              <div><label className={labelCls}>{t("tenant.expiryDays")}</label><input type="number" min={0} max={365} value={pwPolicy.expiryDays} onChange={e => setPwPolicy({ ...pwPolicy, expiryDays: Number(e.target.value) || 0 })} className={inputCls} /></div>
+              <div><label className={labelCls}>{t("tenant.passwordHistory")}</label><input aria-label="pw Policy" type="number" min={0} max={24} value={pwPolicy.historyCount} onChange={e => setPwPolicy({ ...pwPolicy, historyCount: Number(e.target.value) || 0 })} className={inputCls} /></div>
+              <div><label className={labelCls}>{t("tenant.expiryDays")}</label><input aria-label="pw Policy" type="number" min={0} max={365} value={pwPolicy.expiryDays} onChange={e => setPwPolicy({ ...pwPolicy, expiryDays: Number(e.target.value) || 0 })} className={inputCls} /></div>
             </div>
           </div>
           <div className="mt-4 flex justify-end">
@@ -242,9 +242,9 @@ export default function TenantConfigPage() {
         <div className={cardCls}>
           <h2 className={headingCls}><Clock className="mr-2 inline h-5 w-5 text-brand-600" /> {t("tenant.sessionPolicy")}</h2>
           <div className="grid gap-6 sm:grid-cols-3">
-            <div><label className={labelCls}>{t("tenant.sessionTimeout")}</label><input type="number" min={5} max={1440} value={sessPolicy.timeout} onChange={e => setSessPolicy({ ...sessPolicy, timeout: Number(e.target.value) || 60 })} className={inputCls} /></div>
-            <div><label className={labelCls}>{t("tenant.idleTimeout")}</label><input type="number" min={1} max={1440} value={sessPolicy.idleTimeout} onChange={e => setSessPolicy({ ...sessPolicy, idleTimeout: Number(e.target.value) || 30 })} className={inputCls} /></div>
-            <div><label className={labelCls}>{t("tenant.concurrentSessions")}</label><input type="number" min={1} max={100} value={sessPolicy.concurrentLimit} onChange={e => setSessPolicy({ ...sessPolicy, concurrentLimit: Number(e.target.value) || 5 })} className={inputCls} /></div>
+            <div><label className={labelCls}>{t("tenant.sessionTimeout")}</label><input aria-label="sess Policy" type="number" min={5} max={1440} value={sessPolicy.timeout} onChange={e => setSessPolicy({ ...sessPolicy, timeout: Number(e.target.value) || 60 })} className={inputCls} /></div>
+            <div><label className={labelCls}>{t("tenant.idleTimeout")}</label><input aria-label="sess Policy" type="number" min={1} max={1440} value={sessPolicy.idleTimeout} onChange={e => setSessPolicy({ ...sessPolicy, idleTimeout: Number(e.target.value) || 30 })} className={inputCls} /></div>
+            <div><label className={labelCls}>{t("tenant.concurrentSessions")}</label><input aria-label="sess Policy" type="number" min={1} max={100} value={sessPolicy.concurrentLimit} onChange={e => setSessPolicy({ ...sessPolicy, concurrentLimit: Number(e.target.value) || 5 })} className={inputCls} /></div>
           </div>
           <div className="mt-4 flex justify-end">
             <button onClick={async () => { setSavingSess(true); try { await apiFetch(`/api/v1/tenants/${TENANT_ID}`, { method: "PUT", body: JSON.stringify({ session_policy: { timeout: sessPolicy.timeout, idle_timeout: sessPolicy.idleTimeout, concurrent_limit: sessPolicy.concurrentLimit } }) }); setMsg(t("tenant.sessSaved")); } catch { setMsg(t("tenant.sessSavedOffline")); } finally { setSavingSess(false); } }} disabled={savingSess} aria-label={t("tenant.saveSessPolicy")} className={saveBtn}>
@@ -270,7 +270,7 @@ export default function TenantConfigPage() {
             <div className="grid gap-6 sm:grid-cols-2">
               <div>
                 <label className={labelCls}>{t("tenant.requiredMethod")}</label>
-                <select value={mfa.method} onChange={e => setMfa({ ...mfa, method: e.target.value })} className={inputCls}>
+                <select aria-label="mfa" value={mfa.method} onChange={e => setMfa({ ...mfa, method: e.target.value })} className={inputCls}>
                   <option value="TOTP">TOTP</option>
                   <option value="WebAuthn">WebAuthn</option>
                   <option value="Any">Any</option>
@@ -278,7 +278,7 @@ export default function TenantConfigPage() {
               </div>
               <div>
                 <label className={labelCls}>{t("tenant.gracePeriod")}</label>
-                <input type="number" min={0} max={90} value={mfa.gracePeriod} onChange={e => setMfa({ ...mfa, gracePeriod: Number(e.target.value) || 0 })} className={inputCls} />
+                <input aria-label="mfa" type="number" min={0} max={90} value={mfa.gracePeriod} onChange={e => setMfa({ ...mfa, gracePeriod: Number(e.target.value) || 0 })} className={inputCls} />
               </div>
             </div>
           </div>

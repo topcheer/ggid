@@ -145,11 +145,11 @@ export default function PolicySnapshotsPage() {
             <div className="px-6 py-4 space-y-4">
               <div>
                 <label className="text-sm font-medium">Policy ID</label>
-                <input type="text" value={policyId} onChange={(e) => setPolicyId(e.target.value)} placeholder="policy-uuid" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                <input aria-label="policy-uuid" type="text" value={policyId} onChange={(e) => setPolicyId(e.target.value)} placeholder="policy-uuid" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
               </div>
               <div>
                 <label className="text-sm font-medium">Description (optional)</label>
-                <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Pre-deployment checkpoint" rows={3} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                <textarea aria-label="Pre-deployment checkpoint" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Pre-deployment checkpoint" rows={3} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
               </div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">

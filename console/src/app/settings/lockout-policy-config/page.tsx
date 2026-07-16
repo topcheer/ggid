@@ -27,11 +27,11 @@ export default function LockoutPolicyConfigPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-900 rounded-xl p-6 space-y-3">
           <h2 className="text-sm font-semibold">Settings</h2>
-          <div><label className="text-xs text-gray-400">Max Failed Attempts: {data?.max_failed_attempts}</label><input type="range" min="3" max="20" defaultValue={data?.max_failed_attempts} className="w-full mt-1" /></div>
-          <div><label className="text-xs text-gray-400">Lockout Duration (min)</label><input type="number" defaultValue={data?.lockout_duration_minutes} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
-          <div className="flex items-center gap-2"><input type="checkbox" defaultChecked={data?.progressive_backoff} id="pb" /><label htmlFor="pb" className="text-sm">Progressive backoff</label></div>
-          <div><label className="text-xs text-gray-400">Captcha After</label><input type="number" defaultValue={data?.captcha_after} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
-          <div><label className="text-xs text-gray-400">Auto-Unlock After (min)</label><input type="number" defaultValue={data?.auto_unlock_after} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div><label className="text-xs text-gray-400">Max Failed Attempts: {data?.max_failed_attempts}</label><input aria-label="Input field" type="range" min="3" max="20" defaultValue={data?.max_failed_attempts} className="w-full mt-1" /></div>
+          <div><label className="text-xs text-gray-400">Lockout Duration (min)</label><input aria-label="Input field" type="number" defaultValue={data?.lockout_duration_minutes} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div className="flex items-center gap-2"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.progressive_backoff} id="pb" /><label htmlFor="pb" className="text-sm">Progressive backoff</label></div>
+          <div><label className="text-xs text-gray-400">Captcha After</label><input aria-label="Input field" type="number" defaultValue={data?.captcha_after} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
+          <div><label className="text-xs text-gray-400">Auto-Unlock After (min)</label><input aria-label="Input field" type="number" defaultValue={data?.auto_unlock_after} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" /></div>
         </div>
         <div className="bg-gray-900 rounded-xl p-6">
           <h2 className="text-sm font-semibold mb-3">Current Lockouts</h2>

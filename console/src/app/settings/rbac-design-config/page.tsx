@@ -61,13 +61,13 @@ export default function RbacDesignConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Max Depth</label>
-          <input type="number" value={form.max_depth}
+          <input aria-label="form" type="number" value={form.max_depth}
             onChange={(e) => setForm({ ...form, max_depth: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-32" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Delegation Max Depth</label>
-          <input type="number" value={form.delegation_max_depth}
+          <input aria-label="form" type="number" value={form.delegation_max_depth}
             onChange={(e) => setForm({ ...form, delegation_max_depth: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-32" />
         </div>

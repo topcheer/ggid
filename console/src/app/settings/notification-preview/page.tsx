@@ -58,8 +58,8 @@ export default function NotificationPreviewPage() {
         <select aria-label="Template" value={template} onChange={e => setTemplate(e.target.value)} className="border rounded px-3 py-2 text-sm">
           {Object.keys(templates).map(t => <option key={t} value={t}>{t}</option>)}
         </select>
-        <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={darkMode} onChange={e => setDarkMode(e.target.checked)} className="rounded" />Dark mode</label>
-        <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={mobilePreview} onChange={e => setMobilePreview(e.target.checked)} className="rounded" />Mobile</label>
+        <label className="flex items-center gap-1 text-sm"><input aria-label="Dark mode" type="checkbox" checked={darkMode} onChange={e => setDarkMode(e.target.checked)} className="rounded" />Dark mode</label>
+        <label className="flex items-center gap-1 text-sm"><input aria-label="Mobile preview" type="checkbox" checked={mobilePreview} onChange={e => setMobilePreview(e.target.checked)} className="rounded" />Mobile</label>
         <button onClick={sendTest} disabled={sending} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{sending ? 'Sending...' : 'Send Test'}</button>
       </div>
       {sendResult && <div className="text-sm p-3 rounded bg-green-50 text-green-700">{sendResult}</div>}
@@ -68,9 +68,9 @@ export default function NotificationPreviewPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Variables</h2>
           <div className="space-y-3">
-            <div><label className="text-sm font-medium">name</label><input type="text" value={variables.name} onChange={e => setVariables(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-1 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">org</label><input type="text" value={variables.org} onChange={e => setVariables(prev => ({ ...prev, org: e.target.value }))} className="w-full border rounded px-3 py-1 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">code</label><input type="text" value={variables.code} onChange={e => setVariables(prev => ({ ...prev, code: e.target.value }))} className="w-full border rounded px-3 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">name</label><input aria-label="variables" type="text" value={variables.name} onChange={e => setVariables(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">org</label><input aria-label="variables" type="text" value={variables.org} onChange={e => setVariables(prev => ({ ...prev, org: e.target.value }))} className="w-full border rounded px-3 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">code</label><input aria-label="variables" type="text" value={variables.code} onChange={e => setVariables(prev => ({ ...prev, code: e.target.value }))} className="w-full border rounded px-3 py-1 text-sm mt-1" /></div>
           </div>
         </section>
 

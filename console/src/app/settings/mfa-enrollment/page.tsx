@@ -88,7 +88,7 @@ export default function MfaEnrollmentPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Factor Type</label>
               <div className="flex flex-wrap gap-3">
-                {factorTypes.map(t => <label key={t} className={`px-4 py-2 rounded border text-sm cursor-pointer ${selectedType === t ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}><input type="radio" checked={selectedType === t} onChange={() => setSelectedType(t)} className="hidden" />{t}</label>)}
+                {factorTypes.map(t => <label key={t} className={`px-4 py-2 rounded border text-sm cursor-pointer ${selectedType === t ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}><input aria-label="Selected type" type="radio" checked={selectedType === t} onChange={() => setSelectedType(t)} className="hidden" />{t}</label>)}
               </div>
               <button onClick={() => setWizardStep(1)} disabled={!selectedType} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Next</button>
             </div>
@@ -104,7 +104,7 @@ export default function MfaEnrollmentPage() {
           {wizardStep === 2 && (
             <div className="space-y-3">
               <label className="text-sm font-medium">Enter verification code</label>
-              <input type="text" placeholder="123456" className="w-32 border rounded px-3 py-2 text-sm font-mono" />
+              <input aria-label="123456" type="text" placeholder="123456" className="w-32 border rounded px-3 py-2 text-sm font-mono" />
               <button onClick={() => setWizardStep(3)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Verify</button>
             </div>
           )}

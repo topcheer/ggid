@@ -168,8 +168,8 @@ export default function ScimGroupsPage() {
               <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-4">
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Group Name</label><input value={form.display_name} onChange={(e) => setForm((p) => ({ ...p, display_name: e.target.value }))} placeholder="Engineering Team" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Member IDs (comma-separated)</label><input value={form.member_ids} onChange={(e) => setForm((p) => ({ ...p, member_ids: e.target.value }))} placeholder="user-1, user-2" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Group Name</label><input aria-label="Engineering Team" value={form.display_name} onChange={(e) => setForm((p) => ({ ...p, display_name: e.target.value }))} placeholder="Engineering Team" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Member IDs (comma-separated)</label><input aria-label="user-1, user-2" value={form.member_ids} onChange={(e) => setForm((p) => ({ ...p, member_ids: e.target.value }))} placeholder="user-1, user-2" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowCreate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>

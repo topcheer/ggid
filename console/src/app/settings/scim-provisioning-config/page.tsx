@@ -29,7 +29,7 @@ export default function ScimProvisioningConfigPage() {
         <h2 className="text-lg font-semibold">Endpoint</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Endpoint URL</label>
-          <input type="text" value={form.endpoint_url}
+          <input aria-label="form" type="text" value={form.endpoint_url}
             onChange={(e) => setForm({ ...form, endpoint_url: e.target.value })}
             className="border rounded px-3 py-2 w-full" />
         </div>
@@ -77,7 +77,7 @@ export default function ScimProvisioningConfigPage() {
         <h2 className="text-lg font-semibold">Sync Settings</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Sync Direction</label>
-          <select value={form.sync_direction}
+          <select aria-label="form" value={form.sync_direction}
             onChange={(e) => setForm({ ...form, sync_direction: e.target.value as ScimProvisioningConfig["sync_direction"] })}
             className="border rounded px-3 py-2">
             <option value="inbound">Inbound</option>

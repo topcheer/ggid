@@ -20,7 +20,7 @@ export default function GeoFencingConfigPage() {
 
       <div className="flex items-center gap-3 mb-6">
         <label className="text-sm">{t("big1.geoFencingConfig.enabled")}</label>
-        <input type="checkbox" defaultChecked={data?.enabled} />
+        <input aria-label="Toggle option" type="checkbox" defaultChecked={data?.enabled} />
       </div>
 
       <div className="bg-gray-900 rounded-xl p-6 mb-6">

@@ -50,17 +50,17 @@ export default function PasswordHistoryConfigPage() {
         <h2 className="text-lg font-semibold">History Settings</h2>
         <div>
           <label className="text-sm font-medium">Max History Count: {maxHistory}</label>
-          <input type="range" min={5} max={24} value={maxHistory} onChange={e => setMaxHistory(parseInt(e.target.value))} className="w-full mt-2" />
+          <input aria-label="max History" type="range" min={5} max={24} value={maxHistory} onChange={e => setMaxHistory(parseInt(e.target.value))} className="w-full mt-2" />
           <div className="flex justify-between text-xs text-gray-400"><span>5</span><span>24</span></div>
           <p className="text-xs text-gray-500 mt-1">Users cannot reuse their last {maxHistory} passwords.</p>
         </div>
         <label className="flex items-center justify-between">
           <span className="text-sm">Check on Password Change</span>
-          <input type="checkbox" checked={checkOnChange} onChange={e => setCheckOnChange(e.target.checked)} className="rounded" />
+          <input aria-label="Check on change" type="checkbox" checked={checkOnChange} onChange={e => setCheckOnChange(e.target.checked)} className="rounded" />
         </label>
         <div>
           <label className="text-sm font-medium">Purge After (days)</label>
-          <input type="number" min={30} max={1095} value={purgeAfter} onChange={e => setPurgeAfter(parseInt(e.target.value) || 365)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
+          <input aria-label="purge After" type="number" min={30} max={1095} value={purgeAfter} onChange={e => setPurgeAfter(parseInt(e.target.value) || 365)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
           <p className="text-xs text-gray-500 mt-1">Password history entries older than {purgeAfter} days are automatically purged.</p>
         </div>
       </section>
@@ -73,7 +73,7 @@ export default function PasswordHistoryConfigPage() {
         </div>
         <label className="flex items-center justify-between">
           <span className="text-sm">Per-Tenant Override</span>
-          <input type="checkbox" checked={perTenantOverride} onChange={e => setPerTenantOverride(e.target.checked)} className="rounded" />
+          <input aria-label="Per tenant override" type="checkbox" checked={perTenantOverride} onChange={e => setPerTenantOverride(e.target.checked)} className="rounded" />
         </label>
         {perTenantOverride && <p className="text-xs text-gray-400">Individual tenants can configure their own history count and purge settings.</p>}
       </section>

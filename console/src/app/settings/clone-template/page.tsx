@@ -214,8 +214,8 @@ export default function CloneTemplatePage() {
               <button onClick={() => setShowSave(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-3">
-              <div><label className="text-sm font-medium">Template Name</label><input type="text" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="Standard Developer" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-              <div><label className="text-sm font-medium">Description</label><input type="text" value={templateDesc} onChange={(e) => setTemplateDesc(e.target.value)} placeholder="Base developer access" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">Template Name</label><input aria-label="Standard Developer" type="text" value={templateName} onChange={(e) => setTemplateName(e.target.value)} placeholder="Standard Developer" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">Description</label><input aria-label="Base developer access" type="text" value={templateDesc} onChange={(e) => setTemplateDesc(e.target.value)} placeholder="Base developer access" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowSave(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
@@ -235,13 +235,13 @@ export default function CloneTemplatePage() {
             </div>
             <div className="px-6 py-4 space-y-3">
               <div><label className="text-sm font-medium">Template</label>
-                <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                <select aria-label="selected Template Id" value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
                   <option value="">Select...</option>
                   {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
-              <div><label className="text-sm font-medium">New Username</label><input type="text" value={targetUsername} onChange={(e) => setTargetUsername(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-              <div><label className="text-sm font-medium">Email</label><input type="text" value={targetEmail} onChange={(e) => setTargetEmail(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">New Username</label><input aria-label="target Username" type="text" value={targetUsername} onChange={(e) => setTargetUsername(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">Email</label><input aria-label="target Email" type="text" value={targetEmail} onChange={(e) => setTargetEmail(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>

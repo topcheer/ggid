@@ -27,7 +27,7 @@ export default function PkceDeepDiveConfigPage() {
         <h2 className="text-lg font-semibold">Global Settings</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Code Challenge Method</label>
-          <select value={form.code_challenge_method} onChange={(e) => setForm({ ...form, code_challenge_method: e.target.value as PkceDeepDiveConfig["code_challenge_method"] })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.code_challenge_method} onChange={(e) => setForm({ ...form, code_challenge_method: e.target.value as PkceDeepDiveConfig["code_challenge_method"] })} className="border rounded px-3 py-2">
             <option value="S256">S256</option><option value="plain">Plain</option>
           </select>
         </div>

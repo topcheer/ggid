@@ -97,7 +97,7 @@ export default function AlertWebhookConfigPage() {
           <h2 className="text-lg font-semibold">Add Webhook</h2>
           <div>
             <label className="text-sm font-medium">URL</label>
-            <input type="url" placeholder="https://hooks.example.com/alerts" value={newUrl} onChange={e => setNewUrl(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input aria-label="https://hooks.example.com/alerts" type="url" placeholder="https://hooks.example.com/alerts" value={newUrl} onChange={e => setNewUrl(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">HMAC Secret</label>
@@ -108,7 +108,7 @@ export default function AlertWebhookConfigPage() {
             <div className="flex gap-4 mt-2">
               {allEvents.map(e => (
                 <label key={e} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={newEvents.includes(e)} onChange={() => toggleEvent(e)} className="rounded" />
+                  <input aria-label="New events" type="checkbox" checked={newEvents.includes(e)} onChange={() => toggleEvent(e)} className="rounded" />
                   {e}
                 </label>
               ))}
@@ -138,7 +138,7 @@ export default function AlertWebhookConfigPage() {
                 <td className="p-3">
                   <div className="font-mono text-xs truncate max-w-xs">{w.url}</div>
                   <label className="flex items-center gap-1 mt-1">
-                    <input type="checkbox" checked={w.enabled} onChange={() => toggleWebhook(w.id)} className="rounded" />
+                    <input aria-label="W" type="checkbox" checked={w.enabled} onChange={() => toggleWebhook(w.id)} className="rounded" />
                     <span className="text-xs">{w.enabled ? 'enabled' : 'disabled'}</span>
                   </label>
                 </td>

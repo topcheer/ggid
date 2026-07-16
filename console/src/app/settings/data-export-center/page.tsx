@@ -64,15 +64,15 @@ export default function DataExportCenterPage() {
           <h2 className="text-lg font-semibold">Create Export Job</h2>
           <div className="grid grid-cols-2 gap-4">
             <div><label className="text-sm font-medium">Export Type</label><select aria-label="T" value={newJob.type} onChange={e => setNewJob(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">{exportTypes.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-            <div><label className="text-sm font-medium">Format</label><select value={newJob.format} onChange={e => setNewJob(prev => ({ ...prev, format: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">{formats.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
+            <div><label className="text-sm font-medium">Format</label><select aria-label="new Job" value={newJob.format} onChange={e => setNewJob(prev => ({ ...prev, format: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">{formats.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-sm font-medium">Start Date</label><input type="date" value={newJob.startDate} onChange={e => setNewJob(prev => ({ ...prev, startDate: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">End Date</label><input type="date" value={newJob.endDate} onChange={e => setNewJob(prev => ({ ...prev, endDate: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Start Date</label><input aria-label="new Job" type="date" value={newJob.startDate} onChange={e => setNewJob(prev => ({ ...prev, startDate: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">End Date</label><input aria-label="new Job" type="date" value={newJob.endDate} onChange={e => setNewJob(prev => ({ ...prev, endDate: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           </div>
           <div className="flex gap-4">
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={newJob.maskPii} onChange={e => setNewJob(prev => ({ ...prev, maskPii: e.target.checked }))} className="rounded" />Mask PII fields</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={scheduled} onChange={e => setScheduled(e.target.checked)} className="rounded" />Schedule weekly</label>
+            <label className="flex items-center gap-2 text-sm"><input aria-label="New job" type="checkbox" checked={newJob.maskPii} onChange={e => setNewJob(prev => ({ ...prev, maskPii: e.target.checked }))} className="rounded" />Mask PII fields</label>
+            <label className="flex items-center gap-2 text-sm"><input aria-label="Scheduled" type="checkbox" checked={scheduled} onChange={e => setScheduled(e.target.checked)} className="rounded" />Schedule weekly</label>
           </div>
           <button onClick={createJob} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Create Export</button>
         </section>

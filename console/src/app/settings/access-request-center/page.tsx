@@ -50,18 +50,18 @@ export default function AccessRequestCenterPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">{t('accessRequestCenter.submitAccessRequest')}</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-sm font-medium">{t('accessRequestCenter.resource')}</label><input type="text" placeholder="production-db" value={newReq.resource} onChange={e => setNewReq(prev => ({ ...prev, resource: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">{t('accessRequestCenter.role')}</label><input type="text" placeholder="read-only" value={newReq.role} onChange={e => setNewReq(prev => ({ ...prev, role: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">{t('accessRequestCenter.resource')}</label><input aria-label="production-db" type="text" placeholder="production-db" value={newReq.resource} onChange={e => setNewReq(prev => ({ ...prev, resource: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">{t('accessRequestCenter.role')}</label><input aria-label="read-only" type="text" placeholder="read-only" value={newReq.role} onChange={e => setNewReq(prev => ({ ...prev, role: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           </div>
-          <div><label className="text-sm font-medium">{t('accessRequestCenter.justification')}</label><textarea value={newReq.justification} onChange={e => setNewReq(prev => ({ ...prev, justification: e.target.value }))} rows={2} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">{t('accessRequestCenter.durationHours')}</label><input type="number" min={1} max={720} value={newReq.duration} onChange={e => setNewReq(prev => ({ ...prev, duration: parseInt(e.target.value) || 24 }))} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t('accessRequestCenter.justification')}</label><textarea aria-label="Text input" value={newReq.justification} onChange={e => setNewReq(prev => ({ ...prev, justification: e.target.value }))} rows={2} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t('accessRequestCenter.durationHours')}</label><input aria-label="new Req" type="number" min={1} max={720} value={newReq.duration} onChange={e => setNewReq(prev => ({ ...prev, duration: parseInt(e.target.value) || 24 }))} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
           <button onClick={submit} disabled={!newReq.resource || !newReq.justification} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t('accessRequestCenter.submit')}</button>
         </section>
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex items-center justify-between bg-white rounded-lg shadow p-4"><span className="text-sm font-medium">{t('accessRequestCenter.autoApproveLow')}</span><input type="checkbox" checked={autoApproveLow} onChange={e => setAutoApproveLow(e.target.checked)} className="rounded" /></label>
-        <div className="bg-white rounded-lg shadow p-4"><label className="text-sm font-medium">{t('accessRequestCenter.slaTarget')}</label><input type="number" min={1} max={168} value={slaHours} onChange={e => setSlaHours(parseInt(e.target.value) || 48)} className="w-20 border rounded px-2 py-1 text-sm mt-1" /></div>
+        <label className="flex items-center justify-between bg-white rounded-lg shadow p-4"><span className="text-sm font-medium">{t('accessRequestCenter.autoApproveLow')}</span><input aria-label="Auto approve low" type="checkbox" checked={autoApproveLow} onChange={e => setAutoApproveLow(e.target.checked)} className="rounded" /></label>
+        <div className="bg-white rounded-lg shadow p-4"><label className="text-sm font-medium">{t('accessRequestCenter.slaTarget')}</label><input aria-label="sla Hours" type="number" min={1} max={168} value={slaHours} onChange={e => setSlaHours(parseInt(e.target.value) || 48)} className="w-20 border rounded px-2 py-1 text-sm mt-1" /></div>
       </div>
 
       <section className="bg-white rounded-lg shadow overflow-hidden">

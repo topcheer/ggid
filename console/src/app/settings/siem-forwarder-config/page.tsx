@@ -110,27 +110,27 @@ const [filters, setFilters] = useState<FilterRule[]>([
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">{t("common.name")}</label>
-              <input type="text" placeholder={t("siemForwarder.namePlaceholder")} value={newDest.name} onChange={e => setNewDest(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="new Dest" type="text" placeholder={t("siemForwarder.namePlaceholder")} value={newDest.name} onChange={e => setNewDest(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">{t("common.type")}</label>
-              <select value={newDest.type} onChange={e => setNewDest(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="new Dest" value={newDest.type} onChange={e => setNewDest(prev => ({ ...prev, type: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {types.map(type => <option key={type} value={type}>{type}</option>)}
               </select>
             </div>
             <div className="col-span-2">
               <label className="text-sm font-medium">{t("siemForwarder.url")}</label>
-              <input type="text" placeholder={t("siemForwarder.urlPlaceholder")} value={newDest.url} onChange={e => setNewDest(prev => ({ ...prev, url: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
+              <input aria-label="new Dest" type="text" placeholder={t("siemForwarder.urlPlaceholder")} value={newDest.url} onChange={e => setNewDest(prev => ({ ...prev, url: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
             </div>
             <div>
               <label className="text-sm font-medium">{t("siemForwarder.authMethod")}</label>
-              <select value={newDest.authMethod} onChange={e => setNewDest(prev => ({ ...prev, authMethod: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="new Dest" value={newDest.authMethod} onChange={e => setNewDest(prev => ({ ...prev, authMethod: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {authMethods.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
             <div>
               <label className="text-sm font-medium">{t("siemForwarder.batchSize")}</label>
-              <input type="number" min={1} max={1000} value={newDest.batchSize} onChange={e => setNewDest(prev => ({ ...prev, batchSize: parseInt(e.target.value) || 100 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="new Dest" type="number" min={1} max={1000} value={newDest.batchSize} onChange={e => setNewDest(prev => ({ ...prev, batchSize: parseInt(e.target.value) || 100 }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
           <button onClick={addDestination} disabled={!newDest.name || !newDest.url} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{t("siemForwarder.addDestination")}</button>
@@ -203,11 +203,11 @@ const [filters, setFilters] = useState<FilterRule[]>([
           <div className="space-y-3">
             <div>
               <label className="text-sm font-medium">{t("siemForwarder.maxRetries")}</label>
-              <input type="number" min={0} max={20} value={retry.maxRetries} onChange={e => setRetry(prev => ({ ...prev, maxRetries: parseInt(e.target.value) || 0 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
+              <input aria-label="retry" type="number" min={0} max={20} value={retry.maxRetries} onChange={e => setRetry(prev => ({ ...prev, maxRetries: parseInt(e.target.value) || 0 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">{t("siemForwarder.backoffStrategy")}</label>
-              <select value={retry.backoff} onChange={e => setRetry(prev => ({ ...prev, backoff: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="retry" value={retry.backoff} onChange={e => setRetry(prev => ({ ...prev, backoff: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 <option value="exponential">{t("siemForwarder.exponential")}</option>
                 <option value="linear">{t("siemForwarder.linear")}</option>
                 <option value="fixed">{t("siemForwarder.fixedInterval")}</option>
@@ -215,7 +215,7 @@ const [filters, setFilters] = useState<FilterRule[]>([
             </div>
             <div>
               <label className="text-sm font-medium">{t("siemForwarder.circuitBreakerThreshold")}</label>
-              <input type="number" min={1} max={100} value={retry.circuitBreakerThreshold} onChange={e => setRetry(prev => ({ ...prev, circuitBreakerThreshold: parseInt(e.target.value) || 10 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
+              <input aria-label="retry" type="number" min={1} max={100} value={retry.circuitBreakerThreshold} onChange={e => setRetry(prev => ({ ...prev, circuitBreakerThreshold: parseInt(e.target.value) || 10 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
             </div>
           </div>
         </section>
@@ -226,11 +226,11 @@ const [filters, setFilters] = useState<FilterRule[]>([
         <div className="space-y-3">
           <label className="flex items-center justify-between">
             <span className="text-sm">{t("siemForwarder.enableTls")}</span>
-            <input type="checkbox" checked={tlsEnabled} onChange={e => setTlsEnabled(e.target.checked)} className="rounded" />
+            <input aria-label="Tls enabled" type="checkbox" checked={tlsEnabled} onChange={e => setTlsEnabled(e.target.checked)} className="rounded" />
           </label>
           <label className="flex items-center justify-between">
             <span className="text-sm">{t("siemForwarder.verifyCertificates")}</span>
-            <input type="checkbox" checked={tlsVerify} onChange={e => setTlsVerify(e.target.checked)} className="rounded" />
+            <input aria-label="Tls verify" type="checkbox" checked={tlsVerify} onChange={e => setTlsVerify(e.target.checked)} className="rounded" />
           </label>
         </div>
       </section>

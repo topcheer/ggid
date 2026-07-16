@@ -40,10 +40,10 @@ export default function RoleTemplatesConfigPage() {
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Create Template from Existing Role</h2>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-sm font-medium">Template Name</label><input type="text" className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">Category</label><select className="w-full border rounded px-3 py-2 text-sm mt-1">{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+            <div><label className="text-sm font-medium">Template Name</label><input aria-label="Input field" type="text" className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Category</label><select aria-label="c" className="w-full border rounded px-3 py-2 text-sm mt-1">{categories.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
           </div>
-          <div><label className="text-sm font-medium">Source Role</label><select className="w-full border rounded px-3 py-2 text-sm mt-1"><option>admin</option><option>developer</option><option>auditor</option></select></div>
+          <div><label className="text-sm font-medium">Source Role</label><select aria-label="Select option" className="w-full border rounded px-3 py-2 text-sm mt-1"><option>admin</option><option>developer</option><option>auditor</option></select></div>
           <button className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Create</button>
         </section>
       )}

@@ -117,7 +117,7 @@ export default function AgentAccessReviewPage() {
             <div className="flex flex-wrap gap-2 mt-2">
               {allScopes.map(s => (
                 <label key={s} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={selectedScopes.includes(s)} onChange={() => toggleScope(s)} className="rounded" />
+                  <input aria-label="Selected scopes" type="checkbox" checked={selectedScopes.includes(s)} onChange={() => toggleScope(s)} className="rounded" />
                   {s}
                 </label>
               ))}
@@ -128,7 +128,7 @@ export default function AgentAccessReviewPage() {
             <div className="flex gap-4 mt-2">
               {['approve', 'reject', 'revoke'].map(d => (
                 <label key={d} className="flex items-center gap-2 text-sm">
-                  <input type="radio" checked={decision === d} onChange={() => setDecision(d)} />
+                  <input aria-label="Decision" type="radio" checked={decision === d} onChange={() => setDecision(d)} />
                   <span className="capitalize">{d}</span>
                 </label>
               ))}

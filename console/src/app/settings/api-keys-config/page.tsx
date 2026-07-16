@@ -59,12 +59,12 @@ export default function ApiKeysConfigPage() {
       {showForm && (
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Create API Key</h2>
-          <div><label className="text-sm font-medium">Name</label><input type="text" value={newKey.name} onChange={e => setNewKey(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">Scopes</label><div className="flex flex-wrap gap-2 mt-2">{allScopes.map(s => <label key={s} className="flex items-center gap-1 text-sm"><input type="checkbox" checked={newKey.scopes.includes(s)} onChange={() => toggleScope(s)} className="rounded" />{s}</label>)}</div></div>
+          <div><label className="text-sm font-medium">Name</label><input aria-label="new Key" type="text" value={newKey.name} onChange={e => setNewKey(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">Scopes</label><div className="flex flex-wrap gap-2 mt-2">{allScopes.map(s => <label key={s} className="flex items-center gap-1 text-sm"><input aria-label="New key" type="checkbox" checked={newKey.scopes.includes(s)} onChange={() => toggleScope(s)} className="rounded" />{s}</label>)}</div></div>
           <div className="grid grid-cols-3 gap-4">
-            <div><label className="text-sm font-medium">Expires</label><input type="date" value={newKey.expires} onChange={e => setNewKey(prev => ({ ...prev, expires: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">Rate Limit (req/min)</label><input type="number" min={1} value={newKey.rateLimit} onChange={e => setNewKey(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 1000 }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">IP Restriction</label><input type="text" value={newKey.ipRestriction} onChange={e => setNewKey(prev => ({ ...prev, ipRestriction: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Expires</label><input aria-label="new Key" type="date" value={newKey.expires} onChange={e => setNewKey(prev => ({ ...prev, expires: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Rate Limit (req/min)</label><input aria-label="new Key" type="number" min={1} value={newKey.rateLimit} onChange={e => setNewKey(prev => ({ ...prev, rateLimit: parseInt(e.target.value) || 1000 }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">IP Restriction</label><input aria-label="new Key" type="text" value={newKey.ipRestriction} onChange={e => setNewKey(prev => ({ ...prev, ipRestriction: e.target.value }))} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
           </div>
           <button onClick={createKey} disabled={!newKey.name} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Create</button>
         </section>

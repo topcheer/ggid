@@ -26,10 +26,10 @@ export default function AdaptiveAuthDesignPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Risk Scoring Model</h2>
-        <div><label className="block text-sm font-medium mb-1">Model</label><input type="text" value={form.risk_scoring_model} onChange={(e) => setForm({ ...form, risk_scoring_model: e.target.value })} className="border rounded px-3 py-2 w-full" /></div>
+        <div><label className="block text-sm font-medium mb-1">Model</label><input aria-label="form" type="text" value={form.risk_scoring_model} onChange={(e) => setForm({ ...form, risk_scoring_model: e.target.value })} className="border rounded px-3 py-2 w-full" /></div>
         <div>
           <label className="block text-sm font-medium mb-1">Engine Type</label>
-          <select value={form.ml_vs_rule_based} onChange={(e) => setForm({ ...form, ml_vs_rule_based: e.target.value as AdaptiveAuthDesign["ml_vs_rule_based"] })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.ml_vs_rule_based} onChange={(e) => setForm({ ...form, ml_vs_rule_based: e.target.value as AdaptiveAuthDesign["ml_vs_rule_based"] })} className="border rounded px-3 py-2">
             <option value="rule">Rule-Based</option><option value="ml">ML-Based</option><option value="hybrid">Hybrid</option>
           </select>
         </div>
@@ -46,16 +46,16 @@ export default function AdaptiveAuthDesignPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Threshold Tuning</h2>
-        <div><label className="block text-sm font-medium mb-1">Low: {form.threshold_tuning.low}</label><input type="range" min={0} max={100} value={form.threshold_tuning.low} onChange={(e) => setForm({ ...form, threshold_tuning: { ...form.threshold_tuning, low: parseInt(e.target.value) } })} className="w-full" /></div>
-        <div><label className="block text-sm font-medium mb-1">Medium: {form.threshold_tuning.medium}</label><input type="range" min={0} max={100} value={form.threshold_tuning.medium} onChange={(e) => setForm({ ...form, threshold_tuning: { ...form.threshold_tuning, medium: parseInt(e.target.value) } })} className="w-full" /></div>
-        <div><label className="block text-sm font-medium mb-1">High: {form.threshold_tuning.high}</label><input type="range" min={0} max={100} value={form.threshold_tuning.high} onChange={(e) => setForm({ ...form, threshold_tuning: { ...form.threshold_tuning, high: parseInt(e.target.value) } })} className="w-full" /></div>
+        <div><label className="block text-sm font-medium mb-1">Low: {form.threshold_tuning.low}</label><input aria-label="form" type="range" min={0} max={100} value={form.threshold_tuning.low} onChange={(e) => setForm({ ...form, threshold_tuning: { ...form.threshold_tuning, low: parseInt(e.target.value) } })} className="w-full" /></div>
+        <div><label className="block text-sm font-medium mb-1">Medium: {form.threshold_tuning.medium}</label><input aria-label="form" type="range" min={0} max={100} value={form.threshold_tuning.medium} onChange={(e) => setForm({ ...form, threshold_tuning: { ...form.threshold_tuning, medium: parseInt(e.target.value) } })} className="w-full" /></div>
+        <div><label className="block text-sm font-medium mb-1">High: {form.threshold_tuning.high}</label><input aria-label="form" type="range" min={0} max={100} value={form.threshold_tuning.high} onChange={(e) => setForm({ ...form, threshold_tuning: { ...form.threshold_tuning, high: parseInt(e.target.value) } })} className="w-full" /></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">A/B Testing</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.a_b_test.enabled} onChange={(e) => setForm({ ...form, a_b_test: { ...form.a_b_test, enabled: e.target.checked } })} className="w-4 h-4" /><label>Enabled</label></div>
-        <div><label className="block text-sm font-medium mb-1">Variant A (%): {form.a_b_test.variant_a_pct}</label><input type="range" min={0} max={100} value={form.a_b_test.variant_a_pct} onChange={(e) => setForm({ ...form, a_b_test: { ...form.a_b_test, variant_a_pct: parseInt(e.target.value) } })} className="w-full" /></div>
-        <div><label className="block text-sm font-medium mb-1">Variant B Label</label><input type="text" value={form.a_b_test.variant_b_label} onChange={(e) => setForm({ ...form, a_b_test: { ...form.a_b_test, variant_b_label: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.a_b_test.enabled} onChange={(e) => setForm({ ...form, a_b_test: { ...form.a_b_test, enabled: e.target.checked } })} className="w-4 h-4" /><label>Enabled</label></div>
+        <div><label className="block text-sm font-medium mb-1">Variant A (%): {form.a_b_test.variant_a_pct}</label><input aria-label="form" type="range" min={0} max={100} value={form.a_b_test.variant_a_pct} onChange={(e) => setForm({ ...form, a_b_test: { ...form.a_b_test, variant_a_pct: parseInt(e.target.value) } })} className="w-full" /></div>
+        <div><label className="block text-sm font-medium mb-1">Variant B Label</label><input aria-label="form" type="text" value={form.a_b_test.variant_b_label} onChange={(e) => setForm({ ...form, a_b_test: { ...form.a_b_test, variant_b_label: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>
       </div>
 
       <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>

@@ -61,7 +61,7 @@ export default function UserProvisioningPipelineConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Webhook URL</label>
-          <input type="text" value={form.webhook_notifications.url} onChange={(e) => setForm({ ...form, webhook_notifications: { ...form.webhook_notifications, url: e.target.value } })} className="border rounded px-3 py-2 w-full" />
+          <input aria-label="form" type="text" value={form.webhook_notifications.url} onChange={(e) => setForm({ ...form, webhook_notifications: { ...form.webhook_notifications, url: e.target.value } })} className="border rounded px-3 py-2 w-full" />
         </div>
       </div>
 
@@ -70,11 +70,11 @@ export default function UserProvisioningPipelineConfigPage() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Max Attempts</label>
-            <input type="number" value={form.error_retry_policy.max_attempts} onChange={(e) => setForm({ ...form, error_retry_policy: { ...form.error_retry_policy, max_attempts: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" />
+            <input aria-label="form" type="number" value={form.error_retry_policy.max_attempts} onChange={(e) => setForm({ ...form, error_retry_policy: { ...form.error_retry_policy, max_attempts: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Backoff (s)</label>
-            <input type="number" value={form.error_retry_policy.backoff_seconds} onChange={(e) => setForm({ ...form, error_retry_policy: { ...form.error_retry_policy, backoff_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" />
+            <input aria-label="form" type="number" value={form.error_retry_policy.backoff_seconds} onChange={(e) => setForm({ ...form, error_retry_policy: { ...form.error_retry_policy, backoff_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" />
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -85,7 +85,7 @@ export default function UserProvisioningPipelineConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <label className="block text-sm font-medium mb-1">Throughput Target (users/min)</label>
-        <input type="number" value={form.throughput_target} onChange={(e) => setForm({ ...form, throughput_target: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
+        <input aria-label="form" type="number" value={form.throughput_target} onChange={(e) => setForm({ ...form, throughput_target: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
       </div>
 
       <button onClick={handleSave} disabled={saving} aria-label="Save provisioning pipeline config" className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>

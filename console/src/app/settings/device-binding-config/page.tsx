@@ -91,11 +91,11 @@ export default function DeviceBindingConfigPage() {
         <div className="flex items-center gap-6">
           <div>
             <label className="text-sm font-medium">Trusted ({'>='})</label>
-            <input type="number" min={0} max={100} value={thresholds.trusted} onChange={e => setThresholds(prev => ({ ...prev, trusted: parseInt(e.target.value) || 70 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
+            <input aria-label="thresholds" type="number" min={0} max={100} value={thresholds.trusted} onChange={e => setThresholds(prev => ({ ...prev, trusted: parseInt(e.target.value) || 70 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">Suspicious ({'>='})</label>
-            <input type="number" min={0} max={100} value={thresholds.suspicious} onChange={e => setThresholds(prev => ({ ...prev, suspicious: parseInt(e.target.value) || 40 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
+            <input aria-label="thresholds" type="number" min={0} max={100} value={thresholds.suspicious} onChange={e => setThresholds(prev => ({ ...prev, suspicious: parseInt(e.target.value) || 40 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" />
           </div>
         </div>
       </section>

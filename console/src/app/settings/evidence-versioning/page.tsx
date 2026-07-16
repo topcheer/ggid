@@ -157,7 +157,7 @@ export default function EvidenceVersioningPage() {
               <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="px-6 py-4 space-y-3">
-              <div><label className="text-sm font-medium">Change Description</label><textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} placeholder="Updated evidence collection scope..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">Change Description</label><textarea aria-label="Updated evidence collection scope..." value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} placeholder="Updated evidence collection scope..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>

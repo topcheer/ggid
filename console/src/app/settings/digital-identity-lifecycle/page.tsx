@@ -147,7 +147,7 @@ export default function DigitalIdentityLifecyclePage() {
           {rules.map(r => (
             <div key={r.id} className="flex items-center gap-3 border-b pb-2">
               <label className="flex items-center gap-2">
-                <input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
+                <input aria-label="R" type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" />
                 <span className={`text-sm ${r.enabled ? '' : 'text-gray-400'}`}>{r.trigger}</span>
               </label>
               <span className="text-gray-300">{'->'}</span>
@@ -169,7 +169,7 @@ export default function DigitalIdentityLifecyclePage() {
           <div className="space-y-2">
             {checklist.map((c, idx) => (
               <label key={idx} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={c.done} onChange={() => toggleChecklist(idx)} className="rounded" />
+                <input aria-label="C" type="checkbox" checked={c.done} onChange={() => toggleChecklist(idx)} className="rounded" />
                 <span className={c.done ? 'line-through text-gray-400' : ''}>{c.item}</span>
               </label>
             ))}

@@ -83,7 +83,7 @@ export default function MfaEnrollmentCenterPage() {
         <button className="px-4 py-1 border rounded text-sm hover:bg-gray-50">Regenerate Codes</button>
       </div>
 
-      <div className="bg-white rounded-lg p-4 shadow flex items-center gap-3"><input type="checkbox" checked={forceEnroll} onChange={(e) => setForceEnroll(e.target.checked)} className="w-4 h-4" /><label className="text-sm font-medium">Force MFA enrollment for all users without exemption</label></div>
+      <div className="bg-white rounded-lg p-4 shadow flex items-center gap-3"><input aria-label="Force enroll" type="checkbox" checked={forceEnroll} onChange={(e) => setForceEnroll(e.target.checked)} className="w-4 h-4" /><label className="text-sm font-medium">Force MFA enrollment for all users without exemption</label></div>
     </div>
   );
 }

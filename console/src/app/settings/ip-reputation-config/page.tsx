@@ -80,14 +80,14 @@ export default function IpReputationConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("big1.ipReputationConfig.generalSettings")}</h2>
-        <label className="flex items-center justify-between"><span className="text-sm font-medium">{t("big1.ipReputationConfig.enableIpReputation")}</span><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" /></label>
+        <label className="flex items-center justify-between"><span className="text-sm font-medium">{t("big1.ipReputationConfig.enableIpReputation")}</span><input aria-label="Enabled" type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" /></label>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.reputationProvider")}</label><select value={provider} onChange={e => setProvider(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="internal">{t("big1.ipReputationConfig.internalBuiltInDatabase")}</option><option value="external">{t("big1.ipReputationConfig.externalAPIAbuseIPDB")}</option><option value="hybrid">{t("big1.ipReputationConfig.hybridInternalExternal")}</option></select></div>
-          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.checkIntervalS")}</label><input type="number" min={60} value={checkInterval} onChange={e => setCheckInterval(parseInt(e.target.value) || 300)} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.reputationProvider")}</label><select aria-label="provider" value={provider} onChange={e => setProvider(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="internal">{t("big1.ipReputationConfig.internalBuiltInDatabase")}</option><option value="external">{t("big1.ipReputationConfig.externalAPIAbuseIPDB")}</option><option value="hybrid">{t("big1.ipReputationConfig.hybridInternalExternal")}</option></select></div>
+          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.checkIntervalS")}</label><input aria-label="check Interval" type="number" min={60} value={checkInterval} onChange={e => setCheckInterval(parseInt(e.target.value) || 300)} className="w-full border rounded px-2 py-1 text-sm mt-1" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.blockThreshold")}{blockThreshold}</label><input type="range" min={0} max={100} value={blockThreshold} onChange={e => setBlockThreshold(parseInt(e.target.value))} className="w-full mt-2" /></div>
-          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.suspiciousThreshold")}{suspiciousThreshold}</label><input type="range" min={0} max={100} value={suspiciousThreshold} onChange={e => setSuspiciousThreshold(parseInt(e.target.value))} className="w-full mt-2" /></div>
+          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.blockThreshold")}{blockThreshold}</label><input aria-label="block Threshold" type="range" min={0} max={100} value={blockThreshold} onChange={e => setBlockThreshold(parseInt(e.target.value))} className="w-full mt-2" /></div>
+          <div><label className="text-sm font-medium">{t("big1.ipReputationConfig.suspiciousThreshold")}{suspiciousThreshold}</label><input aria-label="suspicious Threshold" type="range" min={0} max={100} value={suspiciousThreshold} onChange={e => setSuspiciousThreshold(parseInt(e.target.value))} className="w-full mt-2" /></div>
         </div>
       </section>
 
@@ -109,7 +109,7 @@ export default function IpReputationConfigPage() {
         <div className="flex flex-wrap gap-2">
           {countries.map(c => (
             <label key={c} className={`px-3 py-1 rounded text-sm cursor-pointer ${blockedCountries.includes(c) ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
-              <input type="checkbox" checked={blockedCountries.includes(c)} onChange={() => toggleCountry(c)} className="hidden" />{c}
+              <input aria-label="Blocked countries" type="checkbox" checked={blockedCountries.includes(c)} onChange={() => toggleCountry(c)} className="hidden" />{c}
             </label>
           ))}
         </div>

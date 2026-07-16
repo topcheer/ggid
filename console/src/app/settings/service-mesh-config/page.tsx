@@ -28,13 +28,13 @@ export default function ServiceMeshConfigPage() {
         <h2 className="text-lg font-semibold">Mesh Settings</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Mesh Type</label>
-          <select value={form.mesh_type} onChange={(e) => setForm({ ...form, mesh_type: e.target.value as ServiceMeshConfig["mesh_type"] })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.mesh_type} onChange={(e) => setForm({ ...form, mesh_type: e.target.value as ServiceMeshConfig["mesh_type"] })} className="border rounded px-3 py-2">
             <option value="none">None</option><option value="istio">Istio</option><option value="linkerd">Linkerd</option>
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">mTLS Mode</label>
-          <select value={form.mtls_mode} onChange={(e) => setForm({ ...form, mtls_mode: e.target.value as ServiceMeshConfig["mtls_mode"] })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.mtls_mode} onChange={(e) => setForm({ ...form, mtls_mode: e.target.value as ServiceMeshConfig["mtls_mode"] })} className="border rounded px-3 py-2">
             <option value="disable">Disable</option><option value="permissive">Permissive</option><option value="strict">Strict</option>
           </select>
         </div>
@@ -53,11 +53,11 @@ export default function ServiceMeshConfigPage() {
         <h2 className="text-lg font-semibold">Identity Propagation</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Header Name</label>
-          <input type="text" value={form.identity_propagation.header_name} onChange={(e) => setForm({ ...form, identity_propagation: { ...form.identity_propagation, header_name: e.target.value } })} className="border rounded px-3 py-2 w-full" />
+          <input aria-label="form" type="text" value={form.identity_propagation.header_name} onChange={(e) => setForm({ ...form, identity_propagation: { ...form.identity_propagation, header_name: e.target.value } })} className="border rounded px-3 py-2 w-full" />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Format</label>
-          <select value={form.identity_propagation.format} onChange={(e) => setForm({ ...form, identity_propagation: { ...form.identity_propagation, format: e.target.value as "jwt" | "plain" } })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.identity_propagation.format} onChange={(e) => setForm({ ...form, identity_propagation: { ...form.identity_propagation, format: e.target.value as "jwt" | "plain" } })} className="border rounded px-3 py-2">
             <option value="jwt">JWT</option><option value="plain">Plain</option>
           </select>
         </div>
@@ -74,9 +74,9 @@ export default function ServiceMeshConfigPage() {
           <label>Enabled</label>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Max Connections</label><input type="number" value={form.circuit_breaking.max_connections} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, max_connections: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Max Pending</label><input type="number" value={form.circuit_breaking.max_pending_requests} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, max_pending_requests: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Max Retries</label><input type="number" value={form.circuit_breaking.max_retries} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, max_retries: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Max Connections</label><input aria-label="form" type="number" value={form.circuit_breaking.max_connections} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, max_connections: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Max Pending</label><input aria-label="form" type="number" value={form.circuit_breaking.max_pending_requests} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, max_pending_requests: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Max Retries</label><input aria-label="form" type="number" value={form.circuit_breaking.max_retries} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, max_retries: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 
@@ -86,8 +86,8 @@ export default function ServiceMeshConfigPage() {
           <input aria-label="Form" type="checkbox" checked={form.observability_export.enabled} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, enabled: e.target.checked } })} className="w-4 h-4" />
           <label>Enabled</label>
         </div>
-        <div><label className="block text-sm font-medium mb-1">Endpoint</label><input type="text" value={form.observability_export.endpoint} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, endpoint: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>
-        <div><label className="block text-sm font-medium mb-1">Interval (s)</label><input type="number" value={form.observability_export.interval_seconds} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, interval_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Endpoint</label><input aria-label="form" type="text" value={form.observability_export.endpoint} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, endpoint: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>
+        <div><label className="block text-sm font-medium mb-1">Interval (s)</label><input aria-label="form" type="number" value={form.observability_export.interval_seconds} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, interval_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-32" /></div>
       </div>
 
       <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>

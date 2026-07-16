@@ -60,7 +60,7 @@ export default function AuditLogViewerPage() {
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold">Audit Log Viewer</h1><p className="text-gray-600">Search, filter, and export audit events with hash chain verification.</p></div>
         <div className="flex gap-2">
-          <label className="flex items-center gap-1 text-sm"><input type="checkbox" checked={realtime} onChange={e => setRealtime(e.target.checked)} className="rounded" />Real-time</label>
+          <label className="flex items-center gap-1 text-sm"><input aria-label="Realtime" type="checkbox" checked={realtime} onChange={e => setRealtime(e.target.checked)} className="rounded" />Real-time</label>
           <button onClick={() => exportData('csv')} className="px-3 py-1 border rounded text-sm">CSV</button>
           <button onClick={() => exportData('json')} className="px-3 py-1 border rounded text-sm">JSON</button>
         </div>

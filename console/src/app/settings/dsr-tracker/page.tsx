@@ -160,15 +160,15 @@ export default function DSRTrackerPage() {
             <div className="px-6 py-4 space-y-3">
               <div>
                 <label className="text-sm font-medium">Type</label>
-                <select value={newType} onChange={(e) => setNewType(e.target.value as DSRRequest["type"])} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                <select aria-label="new Type" value={newType} onChange={(e) => setNewType(e.target.value as DSRRequest["type"])} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
                   <option value="access">Access</option>
                   <option value="erasure">Erasure</option>
                   <option value="portability">Portability</option>
                   <option value="rectification">Rectification</option>
                 </select>
               </div>
-              <div><label className="text-sm font-medium">User ID</label><input type="text" value={newUserId} onChange={(e) => setNewUserId(e.target.value)} placeholder="user-uuid" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
-              <div><label className="text-sm font-medium">Notes</label><textarea value={newNotes} onChange={(e) => setNewNotes(e.target.value)} rows={3} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
+              <div><label className="text-sm font-medium">User ID</label><input aria-label="user-uuid" type="text" value={newUserId} onChange={(e) => setNewUserId(e.target.value)} placeholder="user-uuid" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
+              <div><label className="text-sm font-medium">Notes</label><textarea aria-label="Text input" value={newNotes} onChange={(e) => setNewNotes(e.target.value)} rows={3} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>

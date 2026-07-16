@@ -188,7 +188,7 @@ export default function DeprovisioningPage() {
           <div className="space-y-2">
             {CHECKLIST.map((c) => (
               <label key={c.key} className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                <input type="checkbox" checked={checklist[c.key]} onChange={(e) => setChecklist((p) => ({ ...p, [c.key]: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-indigo-600" />
+                <input aria-label="Checklist" type="checkbox" checked={checklist[c.key]} onChange={(e) => setChecklist((p) => ({ ...p, [c.key]: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-indigo-600" />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{c.label}</span>
                 {c.key === "transfer_data" && checklist.transfer_data && (
                   <input aria-label="Transfer to user ID" value={transferTarget} onChange={(e) => setTransferTarget(e.target.value)} placeholder="Transfer to user ID" className="ml-auto w-48 rounded border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
@@ -198,7 +198,7 @@ export default function DeprovisioningPage() {
           </div>
           <div className="mt-4">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reason (optional)</label>
-            <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Employee departure" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            <input aria-label="e.g. Employee departure" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Employee departure" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
           </div>
           <div className="mt-5 flex justify-end gap-2">
             <button onClick={() => setStep("search")} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Back</button>

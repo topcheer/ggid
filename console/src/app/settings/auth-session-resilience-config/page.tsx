@@ -28,14 +28,14 @@ export default function AuthSessionResilienceConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Failover Configuration</h2>
-        <div><label className="block text-sm font-medium mb-1">Primary Redis</label><input type="text" value={form.failover_config.primary_redis} onChange={(e) => setForm({ ...form, failover_config: { ...form.failover_config, primary_redis: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.failover_config.fallback_memory} onChange={(e) => setForm({ ...form, failover_config: { ...form.failover_config, fallback_memory: e.target.checked } })} className="w-4 h-4" /><label>Fallback to In-Memory</label></div>
+        <div><label className="block text-sm font-medium mb-1">Primary Redis</label><input aria-label="form" type="text" value={form.failover_config.primary_redis} onChange={(e) => setForm({ ...form, failover_config: { ...form.failover_config, primary_redis: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.failover_config.fallback_memory} onChange={(e) => setForm({ ...form, failover_config: { ...form.failover_config, fallback_memory: e.target.checked } })} className="w-4 h-4" /><label>Fallback to In-Memory</label></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Resilience Settings</h2>
-        <div><label className="block text-sm font-medium mb-1">Grace Period During Outage (s)</label><input type="number" value={form.grace_period_during_outage_seconds} onChange={(e) => setForm({ ...form, grace_period_during_outage_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.offline_token_validation} onChange={(e) => setForm({ ...form, offline_token_validation: e.target.checked })} className="w-4 h-4" /><label>Offline Token Validation</label></div>
+        <div><label className="block text-sm font-medium mb-1">Grace Period During Outage (s)</label><input aria-label="form" type="number" value={form.grace_period_during_outage_seconds} onChange={(e) => setForm({ ...form, grace_period_during_outage_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.offline_token_validation} onChange={(e) => setForm({ ...form, offline_token_validation: e.target.checked })} className="w-4 h-4" /><label>Offline Token Validation</label></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">

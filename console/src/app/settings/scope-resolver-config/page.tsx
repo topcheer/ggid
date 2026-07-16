@@ -116,8 +116,8 @@ export default function ScopeResolverConfigPage() {
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <h3 className="text-sm font-medium text-gray-700">Effective Scope Calculator</h3>
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div><label className="block text-xs font-medium text-gray-600">User</label><input type="text" value={calcUser} onChange={e => setCalcUser(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></div>
-              <div><label className="block text-xs font-medium text-gray-600">Client</label><select value={calcClient} onChange={e => setCalcClient(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">{clientMappings.map(m => <option key={m.client} value={m.client}>{m.client}</option>)}</select></div>
+              <div><label className="block text-xs font-medium text-gray-600">User</label><input aria-label="calc User" type="text" value={calcUser} onChange={e => setCalcUser(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" /></div>
+              <div><label className="block text-xs font-medium text-gray-600">Client</label><select aria-label="calc Client" value={calcClient} onChange={e => setCalcClient(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">{clientMappings.map(m => <option key={m.client} value={m.client}>{m.client}</option>)}</select></div>
             </div>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">

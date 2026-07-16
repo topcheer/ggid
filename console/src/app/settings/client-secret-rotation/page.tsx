@@ -132,7 +132,7 @@ const [history] = useState([
                 <td className="p-3 text-gray-500">{c.nextRotation}</td>
                 <td className="p-3">{c.ageDays}d</td>
                 <td className="p-3">{ageBadge(c)}</td>
-                <td className="p-3"><label className="flex items-center"><input type="checkbox" checked={c.autoRotate} onChange={() => toggleAutoRotate(c.id)} className="rounded" /></label></td>
+                <td className="p-3"><label className="flex items-center"><input aria-label="C" type="checkbox" checked={c.autoRotate} onChange={() => toggleAutoRotate(c.id)} className="rounded" /></label></td>
                 <td className="p-3">{c.dualSecret ? <span className="text-xs text-blue-600">{c.dualPeriodDays}d period</span> : <span className="text-xs text-gray-400">no</span>}</td>
                 <td className="p-3"><button onClick={() => { setRotateTarget(c); setNewSecret(''); }} className="text-blue-600 text-xs hover:underline">Rotate</button></td>
               </tr>

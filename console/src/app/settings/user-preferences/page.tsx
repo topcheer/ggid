@@ -102,19 +102,19 @@ export default function UserPreferencesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-sm font-medium">Locale</label>
-                <select value={prefs.locale} onChange={(e) => setPrefs({ ...prefs, locale: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                <select aria-label="prefs" value={prefs.locale} onChange={(e) => setPrefs({ ...prefs, locale: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
                   {locales.map((l) => <option key={l} value={l}>{l}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-sm font-medium">Timezone</label>
-                <select value={prefs.timezone} onChange={(e) => setPrefs({ ...prefs, timezone: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                <select aria-label="prefs" value={prefs.timezone} onChange={(e) => setPrefs({ ...prefs, timezone: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
                   {timezones.map((tz) => <option key={tz} value={tz}>{tz}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-sm font-medium">Theme</label>
-                <select value={prefs.theme} onChange={(e) => setPrefs({ ...prefs, theme: e.target.value as UserPreferences["theme"] })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                <select aria-label="prefs" value={prefs.theme} onChange={(e) => setPrefs({ ...prefs, theme: e.target.value as UserPreferences["theme"] })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
                   <option value="light">Light</option>
                   <option value="dark">Dark</option>
                   <option value="system">System</option>
@@ -129,7 +129,7 @@ export default function UserPreferencesPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {(["email", "push", "sms", "webhook"] as const).map((ch) => (
                 <label key={ch} className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" checked={prefs.notification_channels[ch]} onChange={(e) => setPrefs({ ...prefs, notification_channels: { ...prefs.notification_channels, [ch]: e.target.checked } })} className="rounded" />
+                  <input aria-label="Prefs" type="checkbox" checked={prefs.notification_channels[ch]} onChange={(e) => setPrefs({ ...prefs, notification_channels: { ...prefs.notification_channels, [ch]: e.target.checked } })} className="rounded" />
                   <span className="capitalize">{ch}</span>
                 </label>
               ))}

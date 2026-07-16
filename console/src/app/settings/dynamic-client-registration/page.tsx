@@ -87,23 +87,23 @@ export default function DynamicClientRegistrationPage() {
       <div className="grid grid-cols-2 gap-4">
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Open Registration</span>
-          <input type="checkbox" checked={openRegistration} onChange={e => setOpenRegistration(e.target.checked)} className="rounded" />
+          <input aria-label="Open registration" type="checkbox" checked={openRegistration} onChange={e => setOpenRegistration(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Auto-Approve New Clients</span>
-          <input type="checkbox" checked={autoApprove} onChange={e => setAutoApprove(e.target.checked)} className="rounded" />
+          <input aria-label="Auto approve" type="checkbox" checked={autoApprove} onChange={e => setAutoApprove(e.target.checked)} className="rounded" />
         </label>
       </div>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Validation Settings</h2>
         <div className="grid grid-cols-2 gap-4">
-          <label className="flex items-center justify-between"><span className="text-sm">Validate Software Statements</span><input type="checkbox" checked={validateSoftware} onChange={e => setValidateSoftware(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">Validate Client URIs</span><input type="checkbox" checked={validateUri} onChange={e => setValidateUri(e.target.checked)} className="rounded" /></label>
-          <label className="flex items-center justify-between"><span className="text-sm">Validate Logo URIs</span><input type="checkbox" checked={validateLogo} onChange={e => setValidateLogo(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">Validate Software Statements</span><input aria-label="Validate software" type="checkbox" checked={validateSoftware} onChange={e => setValidateSoftware(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">Validate Client URIs</span><input aria-label="Validate uri" type="checkbox" checked={validateUri} onChange={e => setValidateUri(e.target.checked)} className="rounded" /></label>
+          <label className="flex items-center justify-between"><span className="text-sm">Validate Logo URIs</span><input aria-label="Validate logo" type="checkbox" checked={validateLogo} onChange={e => setValidateLogo(e.target.checked)} className="rounded" /></label>
           <div className="flex items-center gap-3">
             <label className="text-sm">Max Redirect URIs:</label>
-            <input type="number" min={1} max={20} value={maxRedirectUris} onChange={e => setMaxRedirectUris(parseInt(e.target.value) || 5)} className="w-16 border rounded px-2 py-1 text-sm" />
+            <input aria-label="max Redirect Uris" type="number" min={1} max={20} value={maxRedirectUris} onChange={e => setMaxRedirectUris(parseInt(e.target.value) || 5)} className="w-16 border rounded px-2 py-1 text-sm" />
           </div>
         </div>
       </section>
@@ -119,23 +119,23 @@ export default function DynamicClientRegistrationPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">Client Name</label>
-              <input type="text" value={form.clientName} onChange={e => setForm(prev => ({ ...prev, clientName: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="form" type="text" value={form.clientName} onChange={e => setForm(prev => ({ ...prev, clientName: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Redirect URIs (comma-separated)</label>
-              <input type="text" placeholder="https://app.example.com/callback" value={form.redirectUris} onChange={e => setForm(prev => ({ ...prev, redirectUris: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="https://app.example.com/callback" type="text" placeholder="https://app.example.com/callback" value={form.redirectUris} onChange={e => setForm(prev => ({ ...prev, redirectUris: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Grant Types (comma-separated)</label>
-              <input type="text" placeholder="authorization_code, refresh_token" value={form.grantTypes} onChange={e => setForm(prev => ({ ...prev, grantTypes: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="authorization_code, refresh_token" type="text" placeholder="authorization_code, refresh_token" value={form.grantTypes} onChange={e => setForm(prev => ({ ...prev, grantTypes: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Scopes (space-separated)</label>
-              <input type="text" placeholder="openid profile email" value={form.scopes} onChange={e => setForm(prev => ({ ...prev, scopes: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="openid profile email" type="text" placeholder="openid profile email" value={form.scopes} onChange={e => setForm(prev => ({ ...prev, scopes: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={form.softwareStatement} onChange={e => setForm(prev => ({ ...prev, softwareStatement: e.target.checked }))} className="rounded" />
+            <input aria-label="Form" type="checkbox" checked={form.softwareStatement} onChange={e => setForm(prev => ({ ...prev, softwareStatement: e.target.checked }))} className="rounded" />
             Include Software Statement (JWT)
           </label>
           <button onClick={register} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Register</button>

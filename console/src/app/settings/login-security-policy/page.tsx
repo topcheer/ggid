@@ -72,15 +72,15 @@ export default function LoginSecurityPolicyPage() {
         <div className="grid grid-cols-3 gap-4">
           <div>
             <label className="text-sm font-medium">Max Attempts</label>
-            <input type="number" min={1} max={20} value={maxAttempts} onChange={e => setMaxAttempts(parseInt(e.target.value) || 5)} className="w-full border rounded px-2 py-1 text-sm mt-1" />
+            <input aria-label="max Attempts" type="number" min={1} max={20} value={maxAttempts} onChange={e => setMaxAttempts(parseInt(e.target.value) || 5)} className="w-full border rounded px-2 py-1 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">Lockout Duration: {lockoutDuration}s</label>
-            <input type="range" min={60} max={3600} step={60} value={lockoutDuration} onChange={e => setLockoutDuration(parseInt(e.target.value))} className="w-full mt-2" />
+            <input aria-label="lockout Duration" type="range" min={60} max={3600} step={60} value={lockoutDuration} onChange={e => setLockoutDuration(parseInt(e.target.value))} className="w-full mt-2" />
           </div>
           <div>
             <label className="text-sm font-medium">Captcha After: {captchaAfter} attempts</label>
-            <input type="range" min={1} max={10} value={captchaAfter} onChange={e => setCaptchaAfter(parseInt(e.target.value))} className="w-full mt-2" />
+            <input aria-label="captcha After" type="range" min={1} max={10} value={captchaAfter} onChange={e => setCaptchaAfter(parseInt(e.target.value))} className="w-full mt-2" />
           </div>
         </div>
       </section>
@@ -88,11 +88,11 @@ export default function LoginSecurityPolicyPage() {
       <div className="grid grid-cols-2 gap-4">
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Enforce MFA for Admins</span>
-          <input type="checkbox" checked={enforceMfaAdmin} onChange={e => setEnforceMfaAdmin(e.target.checked)} className="rounded" />
+          <input aria-label="Enforce mfa admin" type="checkbox" checked={enforceMfaAdmin} onChange={e => setEnforceMfaAdmin(e.target.checked)} className="rounded" />
         </label>
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Login Anomaly Alerts</span>
-          <input type="checkbox" checked={anomalyAlert} onChange={e => setAnomalyAlert(e.target.checked)} className="rounded" />
+          <input aria-label="Anomaly alert" type="checkbox" checked={anomalyAlert} onChange={e => setAnomalyAlert(e.target.checked)} className="rounded" />
         </label>
       </div>
 

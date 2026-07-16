@@ -85,11 +85,11 @@ const [breakingChanges, setBreakingChanges] = useState([
         <h2 className="text-lg font-semibold">Versioning Strategy</h2>
         <div className="space-y-3">
           <label className="flex items-center gap-3">
-            <input type="radio" checked={versioningStyle === 'header'} onChange={() => setVersioningStyle('header')} />
+            <input aria-label="Versioning style" type="radio" checked={versioningStyle === 'header'} onChange={() => setVersioningStyle('header')} />
             <span className="text-sm">Header-based (Accept-Version: v2)</span>
           </label>
           <label className="flex items-center gap-3">
-            <input type="radio" checked={versioningStyle === 'url'} onChange={() => setVersioningStyle('url')} />
+            <input aria-label="Versioning style" type="radio" checked={versioningStyle === 'url'} onChange={() => setVersioningStyle('url')} />
             <span className="text-sm">URL-based (/api/v2/resource)</span>
           </label>
         </div>

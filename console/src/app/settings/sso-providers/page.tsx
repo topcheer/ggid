@@ -181,24 +181,24 @@ export default function SSOProvidersPage() {
                   {/* Type-specific fields */}
                   {p.type === "saml" && (
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Entity ID</label><input className={inputCls} value={p.entityId ?? ""} onChange={(e) => handleUpdate(p.id, "entityId", e.target.value)} /></div>
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">SSO URL</label><input className={inputCls} value={p.ssoUrl ?? ""} onChange={(e) => handleUpdate(p.id, "ssoUrl", e.target.value)} /></div>
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Cert Fingerprint</label><input className={inputCls} value={p.certFingerprint ?? ""} onChange={(e) => handleUpdate(p.id, "certFingerprint", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Entity ID</label><input aria-label="p" className={inputCls} value={p.entityId ?? ""} onChange={(e) => handleUpdate(p.id, "entityId", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">SSO URL</label><input aria-label="p" className={inputCls} value={p.ssoUrl ?? ""} onChange={(e) => handleUpdate(p.id, "ssoUrl", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Cert Fingerprint</label><input aria-label="p" className={inputCls} value={p.certFingerprint ?? ""} onChange={(e) => handleUpdate(p.id, "certFingerprint", e.target.value)} /></div>
                     </div>
                   )}
                   {p.type === "oidc" && (
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Issuer URL</label><input className={inputCls} value={p.issuerUrl ?? ""} onChange={(e) => handleUpdate(p.id, "issuerUrl", e.target.value)} /></div>
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Client ID</label><input className={inputCls} value={p.clientId ?? ""} onChange={(e) => handleUpdate(p.id, "clientId", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Issuer URL</label><input aria-label="p" className={inputCls} value={p.issuerUrl ?? ""} onChange={(e) => handleUpdate(p.id, "issuerUrl", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Client ID</label><input aria-label="p" className={inputCls} value={p.clientId ?? ""} onChange={(e) => handleUpdate(p.id, "clientId", e.target.value)} /></div>
                       <div><label className="mb-1 block text-xs font-medium text-gray-500">Client Secret</label><input autoComplete="current-password" className={inputCls} type="password" value={p.clientSecret ?? ""} onChange={(e) => handleUpdate(p.id, "clientSecret", e.target.value)} /></div>
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Scopes</label><input className={inputCls} value={p.scopes ?? ""} onChange={(e) => handleUpdate(p.id, "scopes", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Scopes</label><input aria-label="p" className={inputCls} value={p.scopes ?? ""} onChange={(e) => handleUpdate(p.id, "scopes", e.target.value)} /></div>
                     </div>
                   )}
                   {p.type === "ldap" && (
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">LDAP URL</label><input className={inputCls} value={p.ldapUrl ?? ""} onChange={(e) => handleUpdate(p.id, "ldapUrl", e.target.value)} /></div>
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Bind DN</label><input className={inputCls} value={p.bindDn ?? ""} onChange={(e) => handleUpdate(p.id, "bindDn", e.target.value)} /></div>
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Base DN</label><input className={inputCls} value={p.baseDn ?? ""} onChange={(e) => handleUpdate(p.id, "baseDn", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">LDAP URL</label><input aria-label="p" className={inputCls} value={p.ldapUrl ?? ""} onChange={(e) => handleUpdate(p.id, "ldapUrl", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Bind DN</label><input aria-label="p" className={inputCls} value={p.bindDn ?? ""} onChange={(e) => handleUpdate(p.id, "bindDn", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Base DN</label><input aria-label="p" className={inputCls} value={p.baseDn ?? ""} onChange={(e) => handleUpdate(p.id, "baseDn", e.target.value)} /></div>
                     </div>
                   )}
 

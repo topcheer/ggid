@@ -116,18 +116,18 @@ export default function VelocityRulesConfigPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-xs text-gray-400">Rule Name</label>
-                <input className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" placeholder="e.g. Rapid signups" />
+                <input aria-label="e.g. Rapid signups" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" placeholder="e.g. Rapid signups" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-400">Metric</label>
-                  <select className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
+                  <select aria-label="Select option" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
                     <option>registrations</option><option>logins</option><option>password_changes</option><option>api_calls</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-xs text-gray-400">Window</label>
-                  <select className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
+                  <select aria-label="Select option" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
                     <option>per_minute</option><option>per_hour</option><option>per_day</option>
                   </select>
                 </div>
@@ -135,11 +135,11 @@ export default function VelocityRulesConfigPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-gray-400">Threshold</label>
-                  <input type="number" defaultValue={10} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" />
+                  <input aria-label="Input field" type="number" defaultValue={10} className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm" />
                 </div>
                 <div>
                   <label className="text-xs text-gray-400">Action</label>
-                  <select className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
+                  <select aria-label="Select option" className="w-full mt-1 px-3 py-2 bg-gray-800 rounded-lg text-sm">
                     <option>throttle</option><option>block</option><option>challenge</option>
                   </select>
                 </div>

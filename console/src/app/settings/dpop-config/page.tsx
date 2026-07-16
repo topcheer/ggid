@@ -76,21 +76,21 @@ export default function DpopConfigPage() {
         <h2 className="text-lg font-semibold">General Settings</h2>
         <label className="flex items-center justify-between">
           <span className="text-sm font-medium">Enable DPoP</span>
-          <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
+          <input aria-label="Enabled" type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="rounded" />
         </label>
         <div>
           <label className="text-sm font-medium">Proof Token Expiry: {proofExpiry}s</label>
-          <input type="range" min={30} max={120} value={proofExpiry} onChange={e => setProofExpiry(parseInt(e.target.value))} className="w-full mt-2" />
+          <input aria-label="proof Expiry" type="range" min={30} max={120} value={proofExpiry} onChange={e => setProofExpiry(parseInt(e.target.value))} className="w-full mt-2" />
           <div className="flex justify-between text-xs text-gray-400"><span>30s</span><span>120s</span></div>
         </div>
         <div>
           <label className="text-sm font-medium">Nonce Cache TTL (replay prevention)</label>
-          <input type="number" min={60} max={3600} value={nonceTtl} onChange={e => setNonceTtl(parseInt(e.target.value) || 600)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
+          <input aria-label="nonce Ttl" type="number" min={60} max={3600} value={nonceTtl} onChange={e => setNonceTtl(parseInt(e.target.value) || 600)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
           <p className="text-xs text-gray-500 mt-1">DPoP nonces are cached for {nonceTtl}s to prevent replay attacks.</p>
         </div>
         <label className="flex items-center justify-between">
           <span className="text-sm">Require DPoP for Sensitive Scopes</span>
-          <input type="checkbox" checked={requireSensitive} onChange={e => setRequireSensitive(e.target.checked)} className="rounded" />
+          <input aria-label="Require sensitive" type="checkbox" checked={requireSensitive} onChange={e => setRequireSensitive(e.target.checked)} className="rounded" />
         </label>
       </section>
 
@@ -99,7 +99,7 @@ export default function DpopConfigPage() {
         <div className="flex flex-wrap gap-3">
           {allAlgorithms.map(alg => (
             <label key={alg} className="flex items-center gap-1 text-sm">
-              <input type="checkbox" checked={algorithms.includes(alg)} onChange={() => toggleAlgorithm(alg)} className="rounded" />
+              <input aria-label="Algorithms" type="checkbox" checked={algorithms.includes(alg)} onChange={() => toggleAlgorithm(alg)} className="rounded" />
               <span className="font-mono">{alg}</span>
             </label>
           ))}
@@ -112,7 +112,7 @@ export default function DpopConfigPage() {
           {clients.map((c, idx) => (
             <label key={c.clientId} className="flex items-center justify-between border-b pb-2">
               <span className="font-mono text-sm">{c.clientId}</span>
-              <input type="checkbox" checked={c.enforce} onChange={() => toggleClient(idx)} className="rounded" />
+              <input aria-label="C" type="checkbox" checked={c.enforce} onChange={() => toggleClient(idx)} className="rounded" />
             </label>
           ))}
         </div>

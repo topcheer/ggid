@@ -40,10 +40,10 @@ export default function AuthMtlsConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Binding & Revocation</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.per_client_cert_binding} onChange={(e) => setForm({ ...form, per_client_cert_binding: e.target.checked })} className="w-4 h-4" /><label>Per-Client Certificate Binding</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.per_client_cert_binding} onChange={(e) => setForm({ ...form, per_client_cert_binding: e.target.checked })} className="w-4 h-4" /><label>Per-Client Certificate Binding</label></div>
         <div>
           <label className="block text-sm font-medium mb-1">Revocation Check</label>
-          <select value={form.revocation_check} onChange={(e) => setForm({ ...form, revocation_check: e.target.value as AuthMtlsConfig["revocation_check"] })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.revocation_check} onChange={(e) => setForm({ ...form, revocation_check: e.target.value as AuthMtlsConfig["revocation_check"] })} className="border rounded px-3 py-2">
             <option value="none">None</option><option value="CRL">CRL</option><option value="OCSP">OCSP</option><option value="both">Both</option>
           </select>
         </div>
@@ -51,8 +51,8 @@ export default function AuthMtlsConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">Fallback Options</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.allow_self_signed} onChange={(e) => setForm({ ...form, allow_self_signed: e.target.checked })} className="w-4 h-4" /><label>Allow Self-Signed Certificates</label></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.fallback_to_bearer} onChange={(e) => setForm({ ...form, fallback_to_bearer: e.target.checked })} className="w-4 h-4" /><label>Fallback to Bearer Token</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.allow_self_signed} onChange={(e) => setForm({ ...form, allow_self_signed: e.target.checked })} className="w-4 h-4" /><label>Allow Self-Signed Certificates</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.fallback_to_bearer} onChange={(e) => setForm({ ...form, fallback_to_bearer: e.target.checked })} className="w-4 h-4" /><label>Fallback to Bearer Token</label></div>
       </div>
 
       <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{saving ? "Saving..." : "Save Changes"}</button>

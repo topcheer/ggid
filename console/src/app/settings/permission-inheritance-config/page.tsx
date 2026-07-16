@@ -80,7 +80,7 @@ export default function PermissionInheritanceConfigPage() {
               <span className="font-mono text-sm w-32">{r.role}</span>
               <span className="text-gray-300">{'->'}</span>
               <select aria-label="P" value={r.parent} onChange={e => setParent(r.role, e.target.value)} className="border rounded px-2 py-1 text-sm">{allRoles.map(p => <option key={p} value={p}>{p}</option>)}</select>
-              <label className="flex items-center gap-1 ml-4"><input type="checkbox" checked={r.enabled} onChange={() => toggleInheritance(r.role)} className="rounded" /><span className="text-xs">{r.enabled ? 'inheriting' : 'standalone'}</span></label>
+              <label className="flex items-center gap-1 ml-4"><input aria-label="R" type="checkbox" checked={r.enabled} onChange={() => toggleInheritance(r.role)} className="rounded" /><span className="text-xs">{r.enabled ? 'inheriting' : 'standalone'}</span></label>
               <span className="text-xs text-gray-400">{r.ownPermissions.length} own perms</span>
             </div>
           ))}

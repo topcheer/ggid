@@ -156,22 +156,22 @@ export default function AuditExportCenterPage() {
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-xs font-medium text-gray-600">Start Date</label>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <input aria-label="start Date" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">End Date</label>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <input aria-label="end Date" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Event Type Filter</label>
-                <select value={eventType} onChange={e => setEventType(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <select aria-label="event Type" value={eventType} onChange={e => setEventType(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                   <option value="all">All Events</option>
                   {EVENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Tenant</label>
-                <select value={tenant} onChange={e => setTenant(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <select aria-label="tenant" value={tenant} onChange={e => setTenant(e.target.value)} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                   <option value="all">All Tenants</option>
                   <option value="tenant-001">tenant-001</option>
                   <option value="tenant-002">tenant-002</option>
@@ -179,7 +179,7 @@ export default function AuditExportCenterPage() {
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600">Format</label>
-                <select value={format} onChange={e => setFormat(e.target.value as 'CSV' | 'JSON' | 'Parquet')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
+                <select aria-label="format" value={format} onChange={e => setFormat(e.target.value as 'CSV' | 'JSON' | 'Parquet')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm">
                   <option value="CSV">CSV</option>
                   <option value="JSON">JSON</option>
                   <option value="Parquet">Parquet</option>

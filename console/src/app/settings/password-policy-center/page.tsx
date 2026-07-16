@@ -63,26 +63,26 @@ export default function PasswordPolicyCenterPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Complexity Rules</h2>
-        <div><label className="block text-sm font-medium mb-1">Minimum Length</label><input type="number" value={complexity.min_length} onChange={(e) => setComplexity({ ...complexity, min_length: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Minimum Length</label><input aria-label="complexity" type="number" value={complexity.min_length} onChange={(e) => setComplexity({ ...complexity, min_length: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center gap-3"><input type="checkbox" checked={complexity.require_uppercase} onChange={(e) => setComplexity({ ...complexity, require_uppercase: e.target.checked })} className="w-4 h-4" /><label>Require Uppercase</label></div>
-          <div className="flex items-center gap-3"><input type="checkbox" checked={complexity.require_lowercase} onChange={(e) => setComplexity({ ...complexity, require_lowercase: e.target.checked })} className="w-4 h-4" /><label>Require Lowercase</label></div>
-          <div className="flex items-center gap-3"><input type="checkbox" checked={complexity.require_digit} onChange={(e) => setComplexity({ ...complexity, require_digit: e.target.checked })} className="w-4 h-4" /><label>Require Digit</label></div>
-          <div className="flex items-center gap-3"><input type="checkbox" checked={complexity.require_special} onChange={(e) => setComplexity({ ...complexity, require_special: e.target.checked })} className="w-4 h-4" /><label>Require Special Character</label></div>
+          <div className="flex items-center gap-3"><input aria-label="Complexity" type="checkbox" checked={complexity.require_uppercase} onChange={(e) => setComplexity({ ...complexity, require_uppercase: e.target.checked })} className="w-4 h-4" /><label>Require Uppercase</label></div>
+          <div className="flex items-center gap-3"><input aria-label="Complexity" type="checkbox" checked={complexity.require_lowercase} onChange={(e) => setComplexity({ ...complexity, require_lowercase: e.target.checked })} className="w-4 h-4" /><label>Require Lowercase</label></div>
+          <div className="flex items-center gap-3"><input aria-label="Complexity" type="checkbox" checked={complexity.require_digit} onChange={(e) => setComplexity({ ...complexity, require_digit: e.target.checked })} className="w-4 h-4" /><label>Require Digit</label></div>
+          <div className="flex items-center gap-3"><input aria-label="Complexity" type="checkbox" checked={complexity.require_special} onChange={(e) => setComplexity({ ...complexity, require_special: e.target.checked })} className="w-4 h-4" /><label>Require Special Character</label></div>
         </div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Breach Detection (HIBP)</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={breachDetection} onChange={(e) => setBreachDetection(e.target.checked)} className="w-4 h-4" /><label>Check passwords against HaveIBeenPwned database</label></div>
+        <div className="flex items-center gap-3"><input aria-label="Breach detection" type="checkbox" checked={breachDetection} onChange={(e) => setBreachDetection(e.target.checked)} className="w-4 h-4" /><label>Check passwords against HaveIBeenPwned database</label></div>
         {breachDetection && (<div><label className="block text-sm font-medium mb-1">HIBP API Key</label><input autoComplete="current-password" type="password" value={hibpApiKey} onChange={(e) => setHibpApiKey(e.target.value)} placeholder="Enter HIBP API key" className="border rounded px-3 py-2 w-full" /></div>)}
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">History &amp; Expiry</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Password History (remember last N)</label><input type="number" value={historyCount} onChange={(e) => setHistoryCount(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" /></div>
-          <div><label className="block text-sm font-medium mb-1">Expiry (days, 0 = never)</label><input type="number" value={expiryDays} onChange={(e) => setExpiryDays(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" /></div>
+          <div><label className="block text-sm font-medium mb-1">Password History (remember last N)</label><input aria-label="history Count" type="number" value={historyCount} onChange={(e) => setHistoryCount(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" /></div>
+          <div><label className="block text-sm font-medium mb-1">Expiry (days, 0 = never)</label><input aria-label="expiry Days" type="number" value={expiryDays} onChange={(e) => setExpiryDays(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" /></div>
         </div>
       </div>
 

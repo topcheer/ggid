@@ -449,29 +449,29 @@ export default function AgentsPage() {
             <div className="space-y-4">
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Agent Name *</label>
-                <input value={regForm.name} onChange={(e) => setRegForm({ ...regForm, name: e.target.value })} className={inputCls} placeholder="My Coding Assistant" autoFocus />
+                <input aria-label="My Coding Assistant" value={regForm.name} onChange={(e) => setRegForm({ ...regForm, name: e.target.value })} className={inputCls} placeholder="My Coding Assistant" autoFocus />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Agent Type</label>
-                <select value={regForm.type} onChange={(e) => setRegForm({ ...regForm, type: e.target.value })} className={inputCls}>
+                <select aria-label="reg Form" value={regForm.type} onChange={(e) => setRegForm({ ...regForm, type: e.target.value })} className={inputCls}>
                   {AGENT_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Owner User ID (optional)</label>
-                <input value={regForm.owner_user_id} onChange={(e) => setRegForm({ ...regForm, owner_user_id: e.target.value })} className={inputCls} placeholder="user-uuid" />
+                <input aria-label="user-uuid" value={regForm.owner_user_id} onChange={(e) => setRegForm({ ...regForm, owner_user_id: e.target.value })} className={inputCls} placeholder="user-uuid" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Allowed Scopes (comma-separated)</label>
-                <input value={regForm.allowed_scopes} onChange={(e) => setRegForm({ ...regForm, allowed_scopes: e.target.value })} className={inputCls} placeholder="read:users,write:users" />
+                <input aria-label="read:users,write:users" value={regForm.allowed_scopes} onChange={(e) => setRegForm({ ...regForm, allowed_scopes: e.target.value })} className={inputCls} placeholder="read:users,write:users" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Max Delegation Depth</label>
-                <input type="number" min={1} max={10} value={regForm.max_delegation_depth} onChange={(e) => setRegForm({ ...regForm, max_delegation_depth: parseInt(e.target.value) || 3 })} className={inputCls} />
+                <input aria-label="reg Form" type="number" min={1} max={10} value={regForm.max_delegation_depth} onChange={(e) => setRegForm({ ...regForm, max_delegation_depth: parseInt(e.target.value) || 3 })} className={inputCls} />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">Allowed MCP Servers (comma-separated, optional)</label>
-                <input value={regForm.allowed_mcp_servers} onChange={(e) => setRegForm({ ...regForm, allowed_mcp_servers: e.target.value })} className={inputCls} placeholder="github-server,filesystem-server" />
+                <input aria-label="github-server,filesystem-server" value={regForm.allowed_mcp_servers} onChange={(e) => setRegForm({ ...regForm, allowed_mcp_servers: e.target.value })} className={inputCls} placeholder="github-server,filesystem-server" />
               </div>
             </div>
             <div className="mt-6 flex gap-2">
@@ -503,25 +503,25 @@ export default function AgentsPage() {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Exchange Token</h3>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Agent ID</label>
-                <input value={tokenForm.agent_id} onChange={(e) => setTokenForm({ ...tokenForm, agent_id: e.target.value })} className={inputCls} placeholder="agent-uuid" />
+                <input aria-label="agent-uuid" value={tokenForm.agent_id} onChange={(e) => setTokenForm({ ...tokenForm, agent_id: e.target.value })} className={inputCls} placeholder="agent-uuid" />
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Subject Token (user JWT)</label>
-                <textarea value={tokenForm.subject_token} onChange={(e) => setTokenForm({ ...tokenForm, subject_token: e.target.value })} className={inputCls + " font-mono"} rows={3} placeholder="eyJhbGciOi..." />
+                <textarea aria-label="eyJhbGciOi..." value={tokenForm.subject_token} onChange={(e) => setTokenForm({ ...tokenForm, subject_token: e.target.value })} className={inputCls + " font-mono"} rows={3} placeholder="eyJhbGciOi..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-500">Scope</label>
-                  <input value={tokenForm.scope} onChange={(e) => setTokenForm({ ...tokenForm, scope: e.target.value })} className={inputCls} placeholder="read:users" />
+                  <input aria-label="read:users" value={tokenForm.scope} onChange={(e) => setTokenForm({ ...tokenForm, scope: e.target.value })} className={inputCls} placeholder="read:users" />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-500">Audience (optional)</label>
-                  <input value={tokenForm.audience} onChange={(e) => setTokenForm({ ...tokenForm, audience: e.target.value })} className={inputCls} placeholder="mcp-server" />
+                  <input aria-label="mcp-server" value={tokenForm.audience} onChange={(e) => setTokenForm({ ...tokenForm, audience: e.target.value })} className={inputCls} placeholder="mcp-server" />
                 </div>
               </div>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">MCP Servers (optional)</label>
-                <input value={tokenForm.mcp_servers} onChange={(e) => setTokenForm({ ...tokenForm, mcp_servers: e.target.value })} className={inputCls} placeholder="github-server" />
+                <input aria-label="github-server" value={tokenForm.mcp_servers} onChange={(e) => setTokenForm({ ...tokenForm, mcp_servers: e.target.value })} className={inputCls} placeholder="github-server" />
               </div>
               <button onClick={handleTokenExchange} disabled={exchanging} className={btnPrimary}>
                 {exchanging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />} Exchange Token
@@ -549,7 +549,7 @@ export default function AgentsPage() {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Verify Token</h3>
               <div>
                 <label className="mb-1 block text-xs font-medium text-gray-500">Token to verify</label>
-                <textarea value={verifyInput} onChange={(e) => setVerifyInput(e.target.value)} className={inputCls + " font-mono"} rows={2} placeholder="eyJhbGciOi..." />
+                <textarea aria-label="eyJhbGciOi..." value={verifyInput} onChange={(e) => setVerifyInput(e.target.value)} className={inputCls + " font-mono"} rows={2} placeholder="eyJhbGciOi..." />
               </div>
               <button onClick={handleVerify} disabled={verifying || !verifyInput} className={btnGhost}>
                 {verifying ? <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" /> : <Shield className="mr-1 inline h-3.5 w-3.5" />} Verify

@@ -32,7 +32,7 @@ export default function TokenRotationConfigPage() {
         <div className="flex items-center gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Rotation Interval (days)</label>
-            <input type="number" value={bulkDays} onChange={(e) => setBulkDays(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" />
+            <input aria-label="bulk Days" type="number" value={bulkDays} onChange={(e) => setBulkDays(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" />
           </div>
           <div className="flex items-center gap-2 pt-6">
             <input aria-label="Bulk auto" type="checkbox" checked={bulkAuto} onChange={(e) => setBulkAuto(e.target.checked)} className="w-4 h-4" />
@@ -46,7 +46,7 @@ export default function TokenRotationConfigPage() {
         <h2 className="text-lg font-semibold">Grace Period</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Grace Period (hours)</label>
-          <input type="number" value={form.grace_period_hours}
+          <input aria-label="form" type="number" value={form.grace_period_hours}
             onChange={(e) => setForm({ ...form, grace_period_hours: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-32" />
         </div>

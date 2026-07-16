@@ -47,7 +47,7 @@ export default function CorsConfigPage() {
               const checked = form.allowed_methods.includes(m);
               return (
                 <label key={m} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={checked} readOnly className="w-4 h-4" />
+                  <input aria-label="Checked" type="checkbox" checked={checked} readOnly className="w-4 h-4" />
                   <span>{m}</span>
                 </label>
               );
@@ -56,7 +56,7 @@ export default function CorsConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t("corsSettings.allowedHeaders")}</label>
-          <input type="text" value={form.allowed_headers.join(", ")} readOnly className="border rounded px-3 py-2 w-full bg-gray-50" />
+          <input aria-label="form" type="text" value={form.allowed_headers.join(", ")} readOnly className="border rounded px-3 py-2 w-full bg-gray-50" />
         </div>
       </div>
 
@@ -64,7 +64,7 @@ export default function CorsConfigPage() {
         <h2 className="text-lg font-semibold">{t("corsSettings.preflightCache")}</h2>
         <div>
           <label className="block text-sm font-medium mb-1">{t("corsSettings.maxAge")}</label>
-          <input type="number" value={form.max_age_seconds} onChange={(e) => setForm({ ...form, max_age_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
+          <input aria-label="form" type="number" value={form.max_age_seconds} onChange={(e) => setForm({ ...form, max_age_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
         </div>
         <div className="flex items-center gap-3">
           <input aria-label="Form" type="checkbox" checked={form.preflight_cache_enabled} onChange={(e) => setForm({ ...form, preflight_cache_enabled: e.target.checked })} className="w-4 h-4" />

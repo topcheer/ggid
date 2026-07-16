@@ -114,14 +114,14 @@ export default function ClientLifecyclePage() {
           <h2 className="text-lg font-semibold">Register OAuth Client (RFC 7591)</h2>
           <div>
             <label className="text-sm font-medium">{t("backend.clientLifecycle.clientName")}</label>
-            <input type="text" placeholder="My Application" value={newClient.name} onChange={e => setNewClient(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input aria-label="My Application" type="text" placeholder="My Application" value={newClient.name} onChange={e => setNewClient(prev => ({ ...prev, name: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">{t("backend.clientLifecycle.grantTypes")}</label>
             <div className="flex flex-wrap gap-2 mt-2">
               {allGrantTypes.map(gt => (
                 <label key={gt} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={newClient.grantTypes.includes(gt)} onChange={() => toggleGrantType(gt)} className="rounded" />
+                  <input aria-label="New client" type="checkbox" checked={newClient.grantTypes.includes(gt)} onChange={() => toggleGrantType(gt)} className="rounded" />
                   {gt}
                 </label>
               ))}
@@ -129,7 +129,7 @@ export default function ClientLifecyclePage() {
           </div>
           <div>
             <label className="text-sm font-medium">Redirect URIs (comma-separated)</label>
-            <input type="text" placeholder="https://app.example.com/callback, com.example.app://cb" value={newClient.redirectUris} onChange={e => setNewClient(prev => ({ ...prev, redirectUris: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input aria-label="https://app.example.com/callback, com.example.app://cb" type="text" placeholder="https://app.example.com/callback, com.example.app://cb" value={newClient.redirectUris} onChange={e => setNewClient(prev => ({ ...prev, redirectUris: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <button onClick={registerClient} disabled={!newClient.name} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Register</button>
         </section>

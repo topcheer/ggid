@@ -38,13 +38,13 @@ export default function OAuthJwksRotationConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Rotation Settings</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Auto Rotation Interval (days)</label><input type="number" value={form.auto_rotation_interval_days} onChange={(e) => setForm({ ...form, auto_rotation_interval_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Key Overlap Period (days)</label><input type="number" value={form.key_overlap_period_days} onChange={(e) => setForm({ ...form, key_overlap_period_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Auto Rotation Interval (days)</label><input aria-label="form" type="number" value={form.auto_rotation_interval_days} onChange={(e) => setForm({ ...form, auto_rotation_interval_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Key Overlap Period (days)</label><input aria-label="form" type="number" value={form.key_overlap_period_days} onChange={(e) => setForm({ ...form, key_overlap_period_days: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
         <div className="grid grid-cols-3 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Signing Algorithm</label><input type="text" value={form.signing_alg} onChange={(e) => setForm({ ...form, signing_alg: e.target.value })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">KID Strategy</label><input type="text" value={form.kid_strategy} onChange={(e) => setForm({ ...form, kid_strategy: e.target.value })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Max Active Keys</label><input type="number" value={form.max_active_keys} onChange={(e) => setForm({ ...form, max_active_keys: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Signing Algorithm</label><input aria-label="form" type="text" value={form.signing_alg} onChange={(e) => setForm({ ...form, signing_alg: e.target.value })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">KID Strategy</label><input aria-label="form" type="text" value={form.kid_strategy} onChange={(e) => setForm({ ...form, kid_strategy: e.target.value })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Max Active Keys</label><input aria-label="form" type="number" value={form.max_active_keys} onChange={(e) => setForm({ ...form, max_active_keys: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 

@@ -48,12 +48,12 @@ export default function DelegationManagementPage() {
       {showForm && (
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Create Delegation</h2>
-          <div><label className="text-sm font-medium">Delegatee</label><input type="text" placeholder="user@ggid.io" value={newDelegation.delegatee} onChange={e => setNewDelegation(prev => ({ ...prev, delegatee: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">Delegatee</label><input aria-label="user@ggid.io" type="text" placeholder="user@ggid.io" value={newDelegation.delegatee} onChange={e => setNewDelegation(prev => ({ ...prev, delegatee: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           {selfError && <div className="text-xs text-red-600">{selfError}</div>}
-          <div><label className="text-sm font-medium">Scopes (comma-separated)</label><input type="text" placeholder="read:users, write:audit" value={newDelegation.scopes} onChange={e => setNewDelegation(prev => ({ ...prev, scopes: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
+          <div><label className="text-sm font-medium">Scopes (comma-separated)</label><input aria-label="read:users, write:audit" type="text" placeholder="read:users, write:audit" value={newDelegation.scopes} onChange={e => setNewDelegation(prev => ({ ...prev, scopes: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="text-sm font-medium">Max Delegation Depth</label><input type="number" min={0} max={10} value={newDelegation.maxDepth} onChange={e => setNewDelegation(prev => ({ ...prev, maxDepth: parseInt(e.target.value) || 0 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" /></div>
-            <div><label className="text-sm font-medium">Expiry (days)</label><input type="number" min={1} max={90} value={newDelegation.expiryDays} onChange={e => setNewDelegation(prev => ({ ...prev, expiryDays: parseInt(e.target.value) || 7 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Max Delegation Depth</label><input aria-label="new Delegation" type="number" min={0} max={10} value={newDelegation.maxDepth} onChange={e => setNewDelegation(prev => ({ ...prev, maxDepth: parseInt(e.target.value) || 0 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" /></div>
+            <div><label className="text-sm font-medium">Expiry (days)</label><input aria-label="new Delegation" type="number" min={1} max={90} value={newDelegation.expiryDays} onChange={e => setNewDelegation(prev => ({ ...prev, expiryDays: parseInt(e.target.value) || 7 }))} className="w-20 border rounded px-2 py-1 text-sm mt-1" /></div>
           </div>
           <button onClick={create} disabled={!newDelegation.delegatee} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Create</button>
         </section>

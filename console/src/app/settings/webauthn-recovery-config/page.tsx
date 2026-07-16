@@ -25,10 +25,10 @@ export default function WebauthnRecoveryConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Device & Recovery Settings</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.backup_authenticator_required} onChange={(e) => setForm({ ...form, backup_authenticator_required: e.target.checked })} className="w-4 h-4" /><label>Backup Authenticator Required</label></div>
-        <div><label className="block text-sm font-medium mb-1">Max Devices Per User</label><input type="number" value={form.max_devices_per_user} onChange={(e) => setForm({ ...form, max_devices_per_user: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div><label className="block text-sm font-medium mb-1">Recovery Codes Count</label><input type="number" value={form.recovery_codes_count} onChange={(e) => setForm({ ...form, recovery_codes_count: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div><label className="block text-sm font-medium mb-1">Recovery Code Format</label><select value={form.recovery_code_format} onChange={(e) => setForm({ ...form, recovery_code_format: e.target.value as WebauthnRecoveryConfig["recovery_code_format"] })} className="border rounded px-3 py-2"><option value="numeric">Numeric</option><option value="alphanumeric">Alphanumeric</option><option value="hex">Hex</option></select></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.backup_authenticator_required} onChange={(e) => setForm({ ...form, backup_authenticator_required: e.target.checked })} className="w-4 h-4" /><label>Backup Authenticator Required</label></div>
+        <div><label className="block text-sm font-medium mb-1">Max Devices Per User</label><input aria-label="form" type="number" value={form.max_devices_per_user} onChange={(e) => setForm({ ...form, max_devices_per_user: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Recovery Codes Count</label><input aria-label="form" type="number" value={form.recovery_codes_count} onChange={(e) => setForm({ ...form, recovery_codes_count: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Recovery Code Format</label><select aria-label="form" value={form.recovery_code_format} onChange={(e) => setForm({ ...form, recovery_code_format: e.target.value as WebauthnRecoveryConfig["recovery_code_format"] })} className="border rounded px-3 py-2"><option value="numeric">Numeric</option><option value="alphanumeric">Alphanumeric</option><option value="hex">Hex</option></select></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow">

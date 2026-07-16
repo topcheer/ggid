@@ -26,7 +26,7 @@ export default function UserLifecycleConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Auto Deactivation</h2>
         <label className="block text-sm font-medium mb-2">Auto Deactivate After (days): {form.auto_deactivate_after_days}</label>
-        <input type="range" min={30} max={365} value={form.auto_deactivate_after_days}
+        <input aria-label="form" type="range" min={30} max={365} value={form.auto_deactivate_after_days}
           onChange={(e) => setForm({ ...form, auto_deactivate_after_days: parseInt(e.target.value) })}
           className="w-full" />
       </div>
@@ -68,7 +68,7 @@ export default function UserLifecycleConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Days Before</label>
-          <input type="number" value={form.notification_before_deactivate.days_before}
+          <input aria-label="form" type="number" value={form.notification_before_deactivate.days_before}
             onChange={(e) => setForm({ ...form, notification_before_deactivate: { ...form.notification_before_deactivate, days_before: parseInt(e.target.value) || 0 } })}
             className="border rounded px-3 py-2 w-32" />
         </div>

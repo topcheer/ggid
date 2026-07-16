@@ -27,9 +27,9 @@ export default function LdapDirectoryConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Connection Pool</h2>
         <div className="grid grid-cols-3 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Min Connections</label><input type="number" value={form.connection_pool.min} onChange={(e) => setForm({ ...form, connection_pool: { ...form.connection_pool, min: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Max Connections</label><input type="number" value={form.connection_pool.max} onChange={(e) => setForm({ ...form, connection_pool: { ...form.connection_pool, max: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Idle Timeout (s)</label><input type="number" value={form.connection_pool.idle_timeout_seconds} onChange={(e) => setForm({ ...form, connection_pool: { ...form.connection_pool, idle_timeout_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Min Connections</label><input aria-label="form" type="number" value={form.connection_pool.min} onChange={(e) => setForm({ ...form, connection_pool: { ...form.connection_pool, min: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Max Connections</label><input aria-label="form" type="number" value={form.connection_pool.max} onChange={(e) => setForm({ ...form, connection_pool: { ...form.connection_pool, max: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Idle Timeout (s)</label><input aria-label="form" type="number" value={form.connection_pool.idle_timeout_seconds} onChange={(e) => setForm({ ...form, connection_pool: { ...form.connection_pool, idle_timeout_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 
@@ -40,14 +40,14 @@ export default function LdapDirectoryConfigPage() {
           <input aria-label="Form" type="checkbox" checked={form.search_optimization.query_cache_enabled} onChange={(e) => setForm({ ...form, search_optimization: { ...form.search_optimization, query_cache_enabled: e.target.checked } })} className="w-4 h-4" />
           <label>Query Cache Enabled</label>
         </div>
-        <div><label className="block text-sm font-medium mb-1">Query Cache TTL (s)</label><input type="number" value={form.search_optimization.query_cache_ttl} onChange={(e) => setForm({ ...form, search_optimization: { ...form.search_optimization, query_cache_ttl: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-32" /></div>
+        <div><label className="block text-sm font-medium mb-1">Query Cache TTL (s)</label><input aria-label="form" type="number" value={form.search_optimization.query_cache_ttl} onChange={(e) => setForm({ ...form, search_optimization: { ...form.search_optimization, query_cache_ttl: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-32" /></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Group Membership Resolution</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Nested Depth</label><input type="number" value={form.group_membership_resolution.nested_depth} onChange={(e) => setForm({ ...form, group_membership_resolution: { ...form.group_membership_resolution, nested_depth: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Cache TTL (s)</label><input type="number" value={form.group_membership_resolution.cache_ttl} onChange={(e) => setForm({ ...form, group_membership_resolution: { ...form.group_membership_resolution, cache_ttl: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Nested Depth</label><input aria-label="form" type="number" value={form.group_membership_resolution.nested_depth} onChange={(e) => setForm({ ...form, group_membership_resolution: { ...form.group_membership_resolution, nested_depth: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Cache TTL (s)</label><input aria-label="form" type="number" value={form.group_membership_resolution.cache_ttl} onChange={(e) => setForm({ ...form, group_membership_resolution: { ...form.group_membership_resolution, cache_ttl: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 
@@ -63,8 +63,8 @@ export default function LdapDirectoryConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow">
         <h2 className="text-lg font-semibold mb-4">Sync Tuning</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Batch Size</label><input type="number" value={form.sync_tuning.batch_size} onChange={(e) => setForm({ ...form, sync_tuning: { ...form.sync_tuning, batch_size: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Interval (s)</label><input type="number" value={form.sync_tuning.interval_seconds} onChange={(e) => setForm({ ...form, sync_tuning: { ...form.sync_tuning, interval_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Batch Size</label><input aria-label="form" type="number" value={form.sync_tuning.batch_size} onChange={(e) => setForm({ ...form, sync_tuning: { ...form.sync_tuning, batch_size: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Interval (s)</label><input aria-label="form" type="number" value={form.sync_tuning.interval_seconds} onChange={(e) => setForm({ ...form, sync_tuning: { ...form.sync_tuning, interval_seconds: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 

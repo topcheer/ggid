@@ -66,16 +66,16 @@ export default function ParConfigManagementPage() {
         <h2 className="text-lg font-semibold">Global Settings</h2>
         <label className="flex items-center justify-between">
           <span className="text-sm font-medium">Require PAR for All Clients</span>
-          <input type="checkbox" checked={requirePar} onChange={e => setRequirePar(e.target.checked)} className="rounded" />
+          <input aria-label="Require par" type="checkbox" checked={requirePar} onChange={e => setRequirePar(e.target.checked)} className="rounded" />
         </label>
         <div>
           <label className="text-sm font-medium">PAR Expiry: {parExpiry}s</label>
-          <input type="range" min={60} max={600} step={30} value={parExpiry} onChange={e => setParExpiry(parseInt(e.target.value))} className="w-full mt-2" />
+          <input aria-label="par Expiry" type="range" min={60} max={600} step={30} value={parExpiry} onChange={e => setParExpiry(parseInt(e.target.value))} className="w-full mt-2" />
           <div className="flex justify-between text-xs text-gray-400"><span>60s</span><span>600s</span></div>
         </div>
         <div>
           <label className="text-sm font-medium">Cleanup Interval: {cleanupInterval}s</label>
-          <input type="number" min={60} max={3600} value={cleanupInterval} onChange={e => setCleanupInterval(parseInt(e.target.value) || 300)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
+          <input aria-label="cleanup Interval" type="number" min={60} max={3600} value={cleanupInterval} onChange={e => setCleanupInterval(parseInt(e.target.value) || 300)} className="w-24 border rounded px-2 py-1 text-sm mt-1" />
         </div>
       </section>
 
@@ -100,7 +100,7 @@ export default function ParConfigManagementPage() {
           {clients.map((c, idx) => (
             <label key={c.clientId} className="flex items-center justify-between border-b pb-2">
               <span className="font-mono text-sm">{c.clientId}</span>
-              <input type="checkbox" checked={c.requirePar} onChange={() => toggleClient(idx)} className="rounded" />
+              <input aria-label="C" type="checkbox" checked={c.requirePar} onChange={() => toggleClient(idx)} className="rounded" />
             </label>
           ))}
         </div>

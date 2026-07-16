@@ -78,8 +78,8 @@ export default function SiemIntegrationPage() {
         <h2 className="text-lg font-semibold">{t("siem.destinationConfiguration")}</h2>
         <div className="grid grid-cols-3 gap-4">
           <div><label className="block text-sm font-medium mb-1">{t("siem.siemPlatform")}</label><select aria-label="Destination" value={destination} onChange={(e) => setDestination(e.target.value)} className="border rounded px-3 py-2 w-full"><option>Splunk</option><option>Elastic</option><option>Datadog</option><option>HTTP</option></select></div>
-          <div><label className="block text-sm font-medium mb-1">{t("siem.endpoint")}</label><input type="text" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
-          <div><label className="block text-sm font-medium mb-1">{t("siem.logFormat")}</label><select value={logFormat} onChange={(e) => setLogFormat(e.target.value)} className="border rounded px-3 py-2 w-full"><option>CEF</option><option>JSON</option><option>LEEF</option></select></div>
+          <div><label className="block text-sm font-medium mb-1">{t("siem.endpoint")}</label><input aria-label="endpoint" type="text" value={endpoint} onChange={(e) => setEndpoint(e.target.value)} className="border rounded px-3 py-2 w-full font-mono text-sm" /></div>
+          <div><label className="block text-sm font-medium mb-1">{t("siem.logFormat")}</label><select aria-label="log Format" value={logFormat} onChange={(e) => setLogFormat(e.target.value)} className="border rounded px-3 py-2 w-full"><option>CEF</option><option>JSON</option><option>LEEF</option></select></div>
         </div>
         <div className="flex items-center gap-4"><button onClick={handleTest} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">{testing ? t("siem.testing") : t("siem.testConnection")}</button>{testResult && <span className="text-sm text-green-600">{testResult}</span>}</div>
       </div>
@@ -97,8 +97,8 @@ export default function SiemIntegrationPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">{t("siem.eventFilters")}</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">{t("siem.includeEventTypes")}</label><input type="text" value={filters.include_types.join(", ")} onChange={(e) => setFilters({ ...filters, include_types: e.target.value.split(",").map((s) => s.trim()) })} className="border rounded px-3 py-2 w-full text-sm" /></div>
-          <div><label className="block text-sm font-medium mb-1">{t("siem.minSeverity")}</label><select value={filters.min_severity} onChange={(e) => setFilters({ ...filters, min_severity: e.target.value })} className="border rounded px-3 py-2 w-full"><option value="info">{t("siem.info")}</option><option value="warn">{t("siem.warn")}</option><option value="error">{t("siem.error")}</option><option value="critical">{t("siem.critical")}</option></select></div>
+          <div><label className="block text-sm font-medium mb-1">{t("siem.includeEventTypes")}</label><input aria-label="filters" type="text" value={filters.include_types.join(", ")} onChange={(e) => setFilters({ ...filters, include_types: e.target.value.split(",").map((s) => s.trim()) })} className="border rounded px-3 py-2 w-full text-sm" /></div>
+          <div><label className="block text-sm font-medium mb-1">{t("siem.minSeverity")}</label><select aria-label="filters" value={filters.min_severity} onChange={(e) => setFilters({ ...filters, min_severity: e.target.value })} className="border rounded px-3 py-2 w-full"><option value="info">{t("siem.info")}</option><option value="warn">{t("siem.warn")}</option><option value="error">{t("siem.error")}</option><option value="critical">{t("siem.critical")}</option></select></div>
         </div>
       </div>
 

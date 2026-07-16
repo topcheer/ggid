@@ -121,17 +121,17 @@ export default function VerifiableCredentialsPage() {
           <h2 className="text-lg font-semibold">Issue Verifiable Credential</h2>
           <div>
             <label className="text-sm font-medium">Template</label>
-            <select value={template} onChange={e => setTemplate(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
+            <select aria-label="template" value={template} onChange={e => setTemplate(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
               {templates.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div>
             <label className="text-sm font-medium">Subject DID</label>
-            <input type="text" placeholder="did:web:subject.example" value={subjectDid} onChange={e => setSubjectDid(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
+            <input aria-label="did:web:subject.example" type="text" placeholder="did:web:subject.example" value={subjectDid} onChange={e => setSubjectDid(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
           </div>
           <div>
             <label className="text-sm font-medium">Claims (JSON)</label>
-            <textarea value={claimsJson} onChange={e => setClaimsJson(e.target.value)} rows={4} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" placeholder='{"key": "value"}' />
+            <textarea aria-label="Text input" value={claimsJson} onChange={e => setClaimsJson(e.target.value)} rows={4} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" placeholder='{"key": "value"}' />
           </div>
           <button onClick={issueVC} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Issue Credential</button>
         </section>

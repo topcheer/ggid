@@ -26,17 +26,17 @@ export default function PolicyEvaluationEngineConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Evaluation Settings</h2>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.rbac_fast_path} onChange={(e) => setForm({ ...form, rbac_fast_path: e.target.checked })} className="w-4 h-4" /><label>RBAC Fast Path</label></div>
-        <div><label className="block text-sm font-medium mb-1">ABAC CEL Timeout (ms)</label><input type="number" value={form.abac_cel_timeout_ms} onChange={(e) => setForm({ ...form, abac_cel_timeout_ms: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
-        <div className="flex items-center gap-3"><input type="checkbox" checked={form.decision_tree_optimization} onChange={(e) => setForm({ ...form, decision_tree_optimization: e.target.checked })} className="w-4 h-4" /><label>Decision Tree Optimization</label></div>
-        <div><label className="block text-sm font-medium mb-1">Hot Path Threshold</label><input type="number" value={form.hot_path_threshold} onChange={(e) => setForm({ ...form, hot_path_threshold: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.rbac_fast_path} onChange={(e) => setForm({ ...form, rbac_fast_path: e.target.checked })} className="w-4 h-4" /><label>RBAC Fast Path</label></div>
+        <div><label className="block text-sm font-medium mb-1">ABAC CEL Timeout (ms)</label><input aria-label="form" type="number" value={form.abac_cel_timeout_ms} onChange={(e) => setForm({ ...form, abac_cel_timeout_ms: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
+        <div className="flex items-center gap-3"><input aria-label="Form" type="checkbox" checked={form.decision_tree_optimization} onChange={(e) => setForm({ ...form, decision_tree_optimization: e.target.checked })} className="w-4 h-4" /><label>Decision Tree Optimization</label></div>
+        <div><label className="block text-sm font-medium mb-1">Hot Path Threshold</label><input aria-label="form" type="number" value={form.hot_path_threshold} onChange={(e) => setForm({ ...form, hot_path_threshold: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" /></div>
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Cache Settings</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="block text-sm font-medium mb-1">Cache TTL (s)</label><input type="number" value={form.cache_ttl_seconds} onChange={(e) => setForm({ ...form, cache_ttl_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
-          <div><label className="block text-sm font-medium mb-1">Max Cache Entries</label><input type="number" value={form.max_cache_entries} onChange={(e) => setForm({ ...form, max_cache_entries: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Cache TTL (s)</label><input aria-label="form" type="number" value={form.cache_ttl_seconds} onChange={(e) => setForm({ ...form, cache_ttl_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
+          <div><label className="block text-sm font-medium mb-1">Max Cache Entries</label><input aria-label="form" type="number" value={form.max_cache_entries} onChange={(e) => setForm({ ...form, max_cache_entries: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-full" /></div>
         </div>
       </div>
 

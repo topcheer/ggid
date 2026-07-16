@@ -236,15 +236,15 @@ export default function DelegationPage() {
             <div className="mt-4 space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Delegate User ID</label>
-                <input value={form.delegate_id} onChange={(e) => setForm((p) => ({ ...p, delegate_id: e.target.value }))} placeholder="user-uuid" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="user-uuid" value={form.delegate_id} onChange={(e) => setForm((p) => ({ ...p, delegate_id: e.target.value }))} placeholder="user-uuid" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Roles (comma-separated)</label>
-                <input value={form.roles} onChange={(e) => setForm((p) => ({ ...p, roles: e.target.value }))} placeholder="admin, auditor" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="admin, auditor" value={form.roles} onChange={(e) => setForm((p) => ({ ...p, roles: e.target.value }))} placeholder="admin, auditor" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Scope</label>
-                <input value={form.scope} onChange={(e) => setForm((p) => ({ ...p, scope: e.target.value }))} placeholder="* or specific resource" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="* or specific resource" value={form.scope} onChange={(e) => setForm((p) => ({ ...p, scope: e.target.value }))} placeholder="* or specific resource" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Expires In (hours)</label>

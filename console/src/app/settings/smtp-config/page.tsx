@@ -69,44 +69,44 @@ export default function SmtpConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("smtp.serverSettings")}</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("smtp.smtpHost")}</label><input type="text" value={host} onChange={e => setHost(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">{t("smtp.port")}</label><input type="number" min={1} max={65535} value={port} onChange={e => setPort(parseInt(e.target.value) || 587)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.smtpHost")}</label><input aria-label="host" type="text" value={host} onChange={e => setHost(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.port")}</label><input aria-label="port" type="number" min={1} max={65535} value={port} onChange={e => setPort(parseInt(e.target.value) || 587)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("smtp.encryption")}</label><select value={encryption} onChange={e => setEncryption(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="none">{t("smtp.none")}</option><option value="starttls">{t("smtp.starttls")}</option><option value="ssl">{t("smtp.ssl")}</option></select></div>
-          <div><label className="text-sm font-medium">{t("smtp.authMethod")}</label><select value={authMethod} onChange={e => setAuthMethod(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="plain">{t("smtp.plain")}</option><option value="login">{t("smtp.login")}</option><option value="cram-md5">{t("smtp.cramMd5")}</option><option value="oauth2">{t("smtp.oauth2")}</option></select></div>
+          <div><label className="text-sm font-medium">{t("smtp.encryption")}</label><select aria-label="encryption" value={encryption} onChange={e => setEncryption(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="none">{t("smtp.none")}</option><option value="starttls">{t("smtp.starttls")}</option><option value="ssl">{t("smtp.ssl")}</option></select></div>
+          <div><label className="text-sm font-medium">{t("smtp.authMethod")}</label><select aria-label="auth Method" value={authMethod} onChange={e => setAuthMethod(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1"><option value="plain">{t("smtp.plain")}</option><option value="login">{t("smtp.login")}</option><option value="cram-md5">{t("smtp.cramMd5")}</option><option value="oauth2">{t("smtp.oauth2")}</option></select></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("smtp.username")}</label><input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.username")}</label><input aria-label="username" type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">{t("smtp.password")}</label><input autoComplete="current-password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
-        <div><label className="text-sm font-medium">{t("smtp.connectionTimeout")}</label><input type="number" min={5} max={120} value={timeout} onChange={e => setTimeout(parseInt(e.target.value) || 30)} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
+        <div><label className="text-sm font-medium">{t("smtp.connectionTimeout")}</label><input aria-label="timeout" type="number" min={5} max={120} value={timeout} onChange={e => setTimeout(parseInt(e.target.value) || 30)} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("smtp.senderSettings")}</h2>
         <div className="grid grid-cols-2 gap-4">
           <div><label className="text-sm font-medium">{t("smtp.fromAddress")}</label><input autoComplete="email" type="email" value={fromAddress} onChange={e => setFromAddress(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">{t("smtp.fromName")}</label><input type="text" value={fromName} onChange={e => setFromName(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.fromName")}</label><input aria-label="from Name" type="text" value={fromName} onChange={e => setFromName(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><label className="text-sm font-medium">{t("smtp.replyTo")}</label><input autoComplete="email" type="email" value={replyTo} onChange={e => setReplyTo(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">{t("smtp.sendRateLimit")}</label><input type="number" min={1} value={rateLimit} onChange={e => setRateLimit(parseInt(e.target.value) || 100)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.sendRateLimit")}</label><input aria-label="rate Limit" type="number" min={1} value={rateLimit} onChange={e => setRateLimit(parseInt(e.target.value) || 100)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
       </section>
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">{t("smtp.dkimConfiguration")}</h2>
-          <label className="flex items-center gap-2"><input type="checkbox" checked={dkimEnabled} onChange={e => setDkimEnabled(e.target.checked)} className="rounded" /><span className="text-sm">{t("smtp.enableDkim")}</span></label>
+          <label className="flex items-center gap-2"><input aria-label="Dkim enabled" type="checkbox" checked={dkimEnabled} onChange={e => setDkimEnabled(e.target.checked)} className="rounded" /><span className="text-sm">{t("smtp.enableDkim")}</span></label>
         </div>
         {dkimEnabled && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-4">
-              <div><label className="text-sm font-medium">{t("smtp.domain")}</label><input type="text" value={dkimDomain} onChange={e => setDkimDomain(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-              <div><label className="text-sm font-medium">{t("smtp.selector")}</label><input type="text" value={dkimSelector} onChange={e => setDkimSelector(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-sm font-medium">{t("smtp.domain")}</label><input aria-label="dkim Domain" type="text" value={dkimDomain} onChange={e => setDkimDomain(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+              <div><label className="text-sm font-medium">{t("smtp.selector")}</label><input aria-label="dkim Selector" type="text" value={dkimSelector} onChange={e => setDkimSelector(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
             </div>
-            <div><label className="text-sm font-medium">{t("smtp.privateKey")}</label><textarea value={dkimKey} onChange={e => setDkimKey(e.target.value)} rows={4} placeholder={t("smtp.privateKeyPlaceholder")} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
+            <div><label className="text-sm font-medium">{t("smtp.privateKey")}</label><textarea aria-label="Text input" value={dkimKey} onChange={e => setDkimKey(e.target.value)} rows={4} placeholder={t("smtp.privateKeyPlaceholder")} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
           </div>
         )}
       </section>

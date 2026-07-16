@@ -78,9 +78,9 @@ export default function JoinerFlowPage() {
 
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div><label className="text-sm font-medium">{t("big1.joinerFlow.employeeId")}</label><input type="text" value={form.employee_id} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} placeholder="emp-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
-          <div><label className="text-sm font-medium">{t("big1.joinerFlow.startDate")}</label><input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-          <div><label className="text-sm font-medium">{t("big1.joinerFlow.department")}</label><input type="text" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="Engineering" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+          <div><label className="text-sm font-medium">{t("big1.joinerFlow.employeeId")}</label><input aria-label="emp-xxxx" type="text" value={form.employee_id} onChange={(e) => setForm({ ...form, employee_id: e.target.value })} placeholder="emp-xxxx" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" /></div>
+          <div><label className="text-sm font-medium">{t("big1.joinerFlow.startDate")}</label><input aria-label="form" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+          <div><label className="text-sm font-medium">{t("big1.joinerFlow.department")}</label><input aria-label="Engineering" type="text" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder="Engineering" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
         </div>
       </div>
 

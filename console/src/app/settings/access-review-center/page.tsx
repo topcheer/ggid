@@ -105,11 +105,11 @@ export default function AccessReviewCenterPage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">User</label>
-              <input type="text" placeholder="user@ggid.io" value={newReview.user} onChange={e => setNewReview(prev => ({ ...prev, user: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="user@ggid.io" type="text" placeholder="user@ggid.io" value={newReview.user} onChange={e => setNewReview(prev => ({ ...prev, user: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Reviewer</label>
-              <input type="text" placeholder="reviewer@ggid.io" value={newReview.reviewer} onChange={e => setNewReview(prev => ({ ...prev, reviewer: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="reviewer@ggid.io" type="text" placeholder="reviewer@ggid.io" value={newReview.reviewer} onChange={e => setNewReview(prev => ({ ...prev, reviewer: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
           </div>
           <div>
@@ -117,7 +117,7 @@ export default function AccessReviewCenterPage() {
             <div className="flex flex-wrap gap-2 mt-2">
               {allScopes.map(s => (
                 <label key={s} className="flex items-center gap-1 text-sm">
-                  <input type="checkbox" checked={newReview.scopes.includes(s)} onChange={() => toggleScope(s)} className="rounded" />
+                  <input aria-label="New review" type="checkbox" checked={newReview.scopes.includes(s)} onChange={() => toggleScope(s)} className="rounded" />
                   {s}
                 </label>
               ))}
@@ -145,11 +145,11 @@ export default function AccessReviewCenterPage() {
       <div className="grid grid-cols-2 gap-4">
         <label className="flex items-center justify-between bg-white rounded-lg shadow p-4">
           <span className="text-sm font-medium">Scheduled Reviews</span>
-          <input type="checkbox" checked={scheduledReview} onChange={e => setScheduledReview(e.target.checked)} className="rounded" />
+          <input aria-label="Scheduled review" type="checkbox" checked={scheduledReview} onChange={e => setScheduledReview(e.target.checked)} className="rounded" />
         </label>
         <section className="bg-white rounded-lg shadow p-4">
           <label className="text-sm font-medium">Review Frequency</label>
-          <select value={reviewFrequency} onChange={e => setReviewFrequency(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
+          <select aria-label="review Frequency" value={reviewFrequency} onChange={e => setReviewFrequency(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1">
             <option value="monthly">{t("backend3.accessReviewCenter.monthly")}</option>
             <option value="quarterly">{t("backend3.accessReviewCenter.quarterly")}</option>
             <option value="semiannual">Semi-Annual</option>

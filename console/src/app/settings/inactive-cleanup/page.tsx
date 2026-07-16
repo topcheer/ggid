@@ -90,7 +90,7 @@ export default function InactiveCleanupPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium">{t("big1.inactiveCleanup.inactiveThreshold")}</label>
-          <input type="number" value={threshold} onChange={(e) => setThreshold(parseInt(e.target.value) || 90)} min={1} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+          <input aria-label="threshold" type="number" value={threshold} onChange={(e) => setThreshold(parseInt(e.target.value) || 90)} min={1} className="w-20 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-800 text-sm" />
           <span className="text-sm text-gray-400">{t("big1.inactiveCleanup.days")}</span>
         </div>
         <button onClick={fetchUsers} disabled={loading} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50">{loading ? t("big1.inactiveCleanup.loading") : t("big1.inactiveCleanup.refresh")}</button>
@@ -162,7 +162,7 @@ export default function InactiveCleanupPage() {
               </div>
               <div>
                 <label className="font-medium">{t("big1.inactiveCleanup.scheduleDateOptional")}</label>
-                <input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+                <input aria-label="schedule Date" type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
                 <p className="text-xs text-gray-400 mt-1">{t("big1.inactiveCleanup.leaveEmptyToExecuteImmediately")}</p>
               </div>
               <div className="text-gray-500">

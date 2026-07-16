@@ -71,9 +71,9 @@ export default function MergeConflictsPage() {
       <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div><label className="text-sm font-medium">Policy Version A</label><select aria-label="Policy a" value={policyA} onChange={(e) => setPolicyA(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div><label className="text-sm font-medium">Policy Version B</label><select value={policyB} onChange={(e) => setPolicyB(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div><label className="text-sm font-medium">Policy Version B</label><select aria-label="policy B" value={policyB} onChange={(e) => setPolicyB(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm"><option value="">Select Policy</option>{policies.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
         </div>
-        <div className="flex items-center gap-3"><label className="text-sm font-medium">Strategy:</label><select value={strategy} onChange={(e) => setStrategy(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">{strategies.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}</select></div>
+        <div className="flex items-center gap-3"><label className="text-sm font-medium">Strategy:</label><select aria-label="strategy" value={strategy} onChange={(e) => setStrategy(e.target.value)} className="px-3 py-1.5 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">{strategies.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}</select></div>
       </div>
 
       {conflicts.length > 0 && (

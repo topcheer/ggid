@@ -47,20 +47,20 @@ export default function AuditExportScheduleConfigPage() {
         <h2 className="text-lg font-semibold">Global Settings</h2>
         <div>
           <label className="block text-sm font-medium mb-1">Max Concurrent Jobs</label>
-          <input type="number" value={form.max_concurrent}
+          <input aria-label="form" type="number" value={form.max_concurrent}
             onChange={(e) => setForm({ ...form, max_concurrent: parseInt(e.target.value) || 0 })}
             className="border rounded px-3 py-2 w-32" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Max Retry Attempts</label>
-            <input type="number" value={form.retry_policy.max_attempts}
+            <input aria-label="form" type="number" value={form.retry_policy.max_attempts}
               onChange={(e) => setForm({ ...form, retry_policy: { ...form.retry_policy, max_attempts: parseInt(e.target.value) || 0 } })}
               className="border rounded px-3 py-2 w-32" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Backoff (seconds)</label>
-            <input type="number" value={form.retry_policy.backoff_seconds}
+            <input aria-label="form" type="number" value={form.retry_policy.backoff_seconds}
               onChange={(e) => setForm({ ...form, retry_policy: { ...form.retry_policy, backoff_seconds: parseInt(e.target.value) || 0 } })}
               className="border rounded px-3 py-2 w-32" />
           </div>
@@ -77,7 +77,7 @@ export default function AuditExportScheduleConfigPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Webhook URL</label>
-          <input type="text" value={form.notification_on_complete.webhook_url}
+          <input aria-label="form" type="text" value={form.notification_on_complete.webhook_url}
             onChange={(e) => setForm({ ...form, notification_on_complete: { ...form.notification_on_complete, webhook_url: e.target.value } })}
             className="border rounded px-3 py-2 w-full" />
         </div>

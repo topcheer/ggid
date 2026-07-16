@@ -86,15 +86,15 @@ export default function RiskScoringConfigPage() {
           {(["low", "medium", "high", "critical"] as const).map((level) => (
             <div key={level} className="flex items-center gap-3">
               <span className={"px-2 py-1 rounded text-xs font-medium " + (level === "low" ? "bg-gray-100 dark:bg-gray-800" : level === "medium" ? "bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400" : level === "high" ? "bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400" : "bg-red-100 dark:bg-red-900/30 dark:text-red-400")}>{level}</span>
-              <div><label className="text-xs text-gray-500">Score {"\u2265"}</label><input type="number" min={0} max={100} value={config.thresholds[level]} onChange={(e) => setConfig({ ...config, thresholds: { ...config.thresholds, [level]: parseInt(e.target.value) } })} className="w-16 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
-              <select value={config.actions_per_level[level]} onChange={(e) => setConfig({ ...config, actions_per_level: { ...config.actions_per_level, [level]: e.target.value } })} className="px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm">{actionOptions.map((a) => <option key={a} value={a}>{a}</option>)}</select>
+              <div><label className="text-xs text-gray-500">Score {"\u2265"}</label><input aria-label="config" type="number" min={0} max={100} value={config.thresholds[level]} onChange={(e) => setConfig({ ...config, thresholds: { ...config.thresholds, [level]: parseInt(e.target.value) } })} className="w-16 px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm" /></div>
+              <select aria-label="config" value={config.actions_per_level[level]} onChange={(e) => setConfig({ ...config, actions_per_level: { ...config.actions_per_level, [level]: e.target.value } })} className="px-2 py-1 rounded border dark:border-gray-700 dark:bg-gray-900 text-sm">{actionOptions.map((a) => <option key={a} value={a}>{a}</option>)}</select>
             </div>
           ))}
         </div>
       </div>
 
       <div className="rounded-lg border dark:border-gray-800 p-4">
-        <label className="flex items-center gap-3 cursor-pointer"><input type="checkbox" checked={config.adaptive_mfa_trigger} onChange={(e) => setConfig({ ...config, adaptive_mfa_trigger: e.target.checked })} className="rounded" /><div><span className="text-sm font-medium">Adaptive MFA Trigger</span><p className="text-xs text-gray-500">Automatically require MFA when risk score exceeds medium threshold</p></div></label>
+        <label className="flex items-center gap-3 cursor-pointer"><input aria-label="Config" type="checkbox" checked={config.adaptive_mfa_trigger} onChange={(e) => setConfig({ ...config, adaptive_mfa_trigger: e.target.checked })} className="rounded" /><div><span className="text-sm font-medium">Adaptive MFA Trigger</span><p className="text-xs text-gray-500">Automatically require MFA when risk score exceeds medium threshold</p></div></label>
       </div>
     </div>
   );

@@ -277,11 +277,11 @@ export default function OAuthClientsPage() {
             <div className="mt-4 space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("oauth.clientName")}</label>
-                <input value={form.client_name} onChange={(e) => setForm((p) => ({ ...p, client_name: e.target.value }))} placeholder="e.g. My Web App" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <input aria-label="e.g. My Web App" value={form.client_name} onChange={(e) => setForm((p) => ({ ...p, client_name: e.target.value }))} placeholder="e.g. My Web App" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("oauth.redirectUrisHint")}</label>
-                <textarea value={form.redirect_uris} onChange={(e) => setForm((p) => ({ ...p, redirect_uris: e.target.value }))} placeholder={"https://app.example.com/callback\nhttps://app.example.com/auth/callback"} rows={3} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+                <textarea aria-label="Text input" value={form.redirect_uris} onChange={(e) => setForm((p) => ({ ...p, redirect_uris: e.target.value }))} placeholder={"https://app.example.com/callback\nhttps://app.example.com/auth/callback"} rows={3} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("oauth.grantTypes")}</label>

@@ -104,17 +104,17 @@ export default function AccountLinkingConfigPage() {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="text-sm font-medium">User</label>
-              <input type="text" placeholder="user@ggid.io" value={newLink.user} onChange={e => setNewLink(prev => ({ ...prev, user: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+              <input aria-label="user@ggid.io" type="text" placeholder="user@ggid.io" value={newLink.user} onChange={e => setNewLink(prev => ({ ...prev, user: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
             </div>
             <div>
               <label className="text-sm font-medium">Provider</label>
-              <select value={newLink.provider} onChange={e => setNewLink(prev => ({ ...prev, provider: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
+              <select aria-label="new Link" value={newLink.provider} onChange={e => setNewLink(prev => ({ ...prev, provider: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1">
                 {providers.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div>
               <label className="text-sm font-medium">External ID</label>
-              <input type="text" placeholder="external-id" value={newLink.externalId} onChange={e => setNewLink(prev => ({ ...prev, externalId: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
+              <input aria-label="external-id" type="text" placeholder="external-id" value={newLink.externalId} onChange={e => setNewLink(prev => ({ ...prev, externalId: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" />
             </div>
           </div>
           <button onClick={addLink} disabled={!newLink.user} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">Link Account</button>

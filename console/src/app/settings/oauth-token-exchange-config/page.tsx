@@ -44,13 +44,13 @@ export default function OAuthTokenExchangeConfigPage() {
         <h2 className="text-lg font-semibold">{t("oauthTokenExchange.policySettings")}</h2>
         <div>
           <label className="block text-sm font-medium mb-1">{t("oauthTokenExchange.audienceRestriction")}</label>
-          <select value={form.audience_restriction_policy} onChange={(e) => setForm({ ...form, audience_restriction_policy: e.target.value as OAuthTokenExchangeConfig["audience_restriction_policy"] })} className="border rounded px-3 py-2">
+          <select aria-label="form" value={form.audience_restriction_policy} onChange={(e) => setForm({ ...form, audience_restriction_policy: e.target.value as OAuthTokenExchangeConfig["audience_restriction_policy"] })} className="border rounded px-3 py-2">
             <option value="strict">{t("oauthTokenExchange.strict")}</option><option value="permissive">{t("oauthTokenExchange.permissive")}</option><option value="none">{t("oauthTokenExchange.none")}</option>
           </select>
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">{t("oauthTokenExchange.maxDelegationDepth")}</label>
-          <input type="number" value={form.max_delegation_depth} onChange={(e) => setForm({ ...form, max_delegation_depth: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
+          <input aria-label="form" type="number" value={form.max_delegation_depth} onChange={(e) => setForm({ ...form, max_delegation_depth: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
         </div>
       </div>
 

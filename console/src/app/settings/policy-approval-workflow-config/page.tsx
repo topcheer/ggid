@@ -53,8 +53,8 @@ export default function PolicyApprovalWorkflowConfigPage() {
           </div>
           <div className="bg-gray-900 rounded-xl p-6 space-y-2">
             <h2 className="text-sm font-semibold mb-3 flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-green-400" /> Controls</h2>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data?.sod_enforced} /> Enforce Segregation of Duties</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" defaultChecked={data?.emergency_bypass_enabled} /> Emergency bypass (requires C-level)</label>
+            <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.sod_enforced} /> Enforce Segregation of Duties</label>
+            <label className="flex items-center gap-2 text-sm"><input aria-label="Toggle option" type="checkbox" defaultChecked={data?.emergency_bypass_enabled} /> Emergency bypass (requires C-level)</label>
           </div>
         </div>
       </div>

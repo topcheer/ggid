@@ -97,15 +97,15 @@ export default function JITElevationPage() {
           <h3 className="font-semibold flex items-center gap-2"><Zap className="w-4 h-4 text-yellow-500" /> Request Elevation</h3>
           <div>
             <label className="text-sm font-medium">Role</label>
-            <input type="text" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="admin" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
+            <input aria-label="admin" type="text" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="admin" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
           </div>
           <div>
             <label className="text-sm font-medium">Duration (minutes)</label>
-            <input type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 60 })} min={5} max={480} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+            <input aria-label="form" type="number" value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 60 })} min={5} max={480} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
           </div>
           <div>
             <label className="text-sm font-medium">Justification</label>
-            <textarea value={form.justification} onChange={(e) => setForm({ ...form, justification: e.target.value })} rows={3} placeholder="Need admin access to fix production incident..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
+            <textarea aria-label="Need admin access to fix production incident..." value={form.justification} onChange={(e) => setForm({ ...form, justification: e.target.value })} rows={3} placeholder="Need admin access to fix production incident..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" />
           </div>
           <button onClick={submitRequest} disabled={submitting || !form.role || !form.justification} className="w-full px-4 py-2 rounded-lg bg-yellow-600 text-white text-sm font-medium hover:bg-yellow-700 disabled:opacity-50">{submitting ? "Submitting..." : "Request Elevation"}</button>
         </div>

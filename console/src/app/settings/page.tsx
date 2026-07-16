@@ -293,10 +293,10 @@ export default function SettingsPage() {
             </button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div><label className={labelCls}>Display Name</label><input value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} className={inputCls} /></div>
-            <div><label className={labelCls}>Email</label><input value={profile.email} disabled className={`${inputCls} cursor-not-allowed opacity-60`} /></div>
-            <div><label className={labelCls}>Avatar URL</label><input value={profile.avatar_url} onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })} className={inputCls} /></div>
-            <div><label className={labelCls}>Locale</label><select value={profile.locale} onChange={(e) => setProfile({ ...profile, locale: e.target.value })} className={inputCls}><option value="en">English</option><option value="zh">中文</option></select></div>
+            <div><label className={labelCls}>Display Name</label><input aria-label="profile" value={profile.display_name} onChange={(e) => setProfile({ ...profile, display_name: e.target.value })} className={inputCls} /></div>
+            <div><label className={labelCls}>Email</label><input aria-label="profile" value={profile.email} disabled className={`${inputCls} cursor-not-allowed opacity-60`} /></div>
+            <div><label className={labelCls}>Avatar URL</label><input aria-label="profile" value={profile.avatar_url} onChange={(e) => setProfile({ ...profile, avatar_url: e.target.value })} className={inputCls} /></div>
+            <div><label className={labelCls}>Locale</label><select aria-label="profile" value={profile.locale} onChange={(e) => setProfile({ ...profile, locale: e.target.value })} className={inputCls}><option value="en">English</option><option value="zh">中文</option></select></div>
           </div>
         </div>
       )}
