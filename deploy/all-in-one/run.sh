@@ -23,12 +23,8 @@ echo "Starting container..."
 docker run -d \
     -p 127.0.0.1:8080:8080 \
     -p 127.0.0.1:3000:3000 \
-    -p 127.0.0.1:8081:8081 \
-    -p 127.0.0.1:9001:9001 \
-    -p 127.0.0.1:9005:9005 \
-    -p 127.0.0.1:8070:8070 \
-    -p 127.0.0.1:8071:8071 \
-    -p 127.0.0.1:8072:8072 \
+    # Do NOT map backend ports to host — they bypass gateway authentication.
+    # Only gateway (8080) and console (3000) are accessible externally.
     --name "$NAME" \
     "$IMAGE"
 

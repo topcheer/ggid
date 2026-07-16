@@ -149,7 +149,9 @@ ENV NEXT_PUBLIC_TENANT_ID=00000000-0000-0000-0000-000000000001
 ENV PGPASSWORD=ggid
 
 # Ports: gateway + console + internal services (optional)
-EXPOSE 8080 3000 8070 8071 8072 9001 9005 8081
+# Only expose gateway + console to host. Backend services communicate internally.
+# Do NOT expose backend ports (8081/9001/9005/8070-8072) — they bypass gateway auth.
+EXPOSE 8080 3000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
