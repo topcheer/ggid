@@ -55,7 +55,7 @@ export default function BrandingConfigPage() {
                 <p className="text-sm text-gray-800 font-medium">Sign in to your account</p>
                 <div className="mt-2 space-y-2">
                   <input type="text" placeholder="Email" aria-label="Preview email" className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" />
-                  <input type="password" placeholder="Password" aria-label="Preview password" className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" />
+                  <input autoComplete="current-password" type="password" placeholder="Password" aria-label="Preview password" className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs" />
                   <button aria-label="Preview sign in" className="w-full py-1.5 text-white text-xs rounded" style={{ background: data?.primary_color || "#1e40af" }}>Sign In</button>
                 </div>
               </div>

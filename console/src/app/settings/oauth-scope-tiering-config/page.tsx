@@ -30,11 +30,11 @@ export default function OAuthScopeTieringConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">{t("oauthScopeTiering.general")}</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.least_privilege_defaults} onChange={(e) => setForm({ ...form, least_privilege_defaults: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.least_privilege_defaults} onChange={(e) => setForm({ ...form, least_privilege_defaults: e.target.checked })} className="w-4 h-4" />
           <label>{t("oauthScopeTiering.leastPrivilege")}</label>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.migration_from_flat_scopes} onChange={(e) => setForm({ ...form, migration_from_flat_scopes: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.migration_from_flat_scopes} onChange={(e) => setForm({ ...form, migration_from_flat_scopes: e.target.checked })} className="w-4 h-4" />
           <label>{t("oauthScopeTiering.migration")}</label>
         </div>
       </div>

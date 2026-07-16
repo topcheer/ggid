@@ -86,7 +86,7 @@ export default function WebauthnServerConfigPage() {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.uv_preferred}
+          <input aria-label="Toggle" type="checkbox" checked={form.uv_preferred}
             onChange={(e) => setForm({ ...form, uv_preferred: e.target.checked })}
             className="w-4 h-4" />
           <label>User Verification Preferred</label>

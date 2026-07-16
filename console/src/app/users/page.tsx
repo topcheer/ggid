@@ -621,11 +621,11 @@ export default function UsersPage() {
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium">{t("users.email")}</label>
-              <input name="email" type="email" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="john@example.com" />
+              <input autoComplete="email" name="email" type="email" required className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="john@example.com" />
             </div>
             <div className="col-span-2">
               <label className="mb-1 block text-sm font-medium">{t("users.passwordLbl")}</label>
-              <input name="password" type="password" required minLength={12} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="At least 12 characters" />
+              <input autoComplete="current-password" name="password" type="password" required minLength={12} className="w-full rounded-lg border border-gray-300 px-3 py-2" placeholder="At least 12 characters" />
             </div>
           </div>
           <div className="mt-4 flex gap-2">

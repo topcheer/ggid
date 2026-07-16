@@ -174,7 +174,7 @@ export default function SSOProvidersPage() {
                 <div className="mt-4 space-y-4 border-t border-gray-200 pt-4 dark:border-gray-700">
                   {/* JIT */}
                   <div className="flex items-center gap-2">
-                    <input type="checkbox" id={`jit-${p.id}`} checked={p.jit_provisioning} onChange={(e) => handleUpdate(p.id, "jit_provisioning", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-indigo-600" />
+                    <input aria-label="Toggle" type="checkbox" id={`jit-${p.id}`} checked={p.jit_provisioning} onChange={(e) => handleUpdate(p.id, "jit_provisioning", e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-indigo-600" />
                     <label htmlFor={`jit-${p.id}`} className="text-sm text-gray-700 dark:text-gray-300">JIT provisioning (auto-create users on first login)</label>
                   </div>
 
@@ -190,7 +190,7 @@ export default function SSOProvidersPage() {
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div><label className="mb-1 block text-xs font-medium text-gray-500">Issuer URL</label><input className={inputCls} value={p.issuerUrl ?? ""} onChange={(e) => handleUpdate(p.id, "issuerUrl", e.target.value)} /></div>
                       <div><label className="mb-1 block text-xs font-medium text-gray-500">Client ID</label><input className={inputCls} value={p.clientId ?? ""} onChange={(e) => handleUpdate(p.id, "clientId", e.target.value)} /></div>
-                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Client Secret</label><input className={inputCls} type="password" value={p.clientSecret ?? ""} onChange={(e) => handleUpdate(p.id, "clientSecret", e.target.value)} /></div>
+                      <div><label className="mb-1 block text-xs font-medium text-gray-500">Client Secret</label><input autoComplete="current-password" className={inputCls} type="password" value={p.clientSecret ?? ""} onChange={(e) => handleUpdate(p.id, "clientSecret", e.target.value)} /></div>
                       <div><label className="mb-1 block text-xs font-medium text-gray-500">Scopes</label><input className={inputCls} value={p.scopes ?? ""} onChange={(e) => handleUpdate(p.id, "scopes", e.target.value)} /></div>
                     </div>
                   )}

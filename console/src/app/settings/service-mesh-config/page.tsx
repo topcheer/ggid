@@ -62,7 +62,7 @@ export default function ServiceMeshConfigPage() {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.identity_propagation.propagate} onChange={(e) => setForm({ ...form, identity_propagation: { ...form.identity_propagation, propagate: e.target.checked } })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.identity_propagation.propagate} onChange={(e) => setForm({ ...form, identity_propagation: { ...form.identity_propagation, propagate: e.target.checked } })} className="w-4 h-4" />
           <label>Propagate Identity</label>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function ServiceMeshConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Circuit Breaking</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.circuit_breaking.enabled} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, enabled: e.target.checked } })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.circuit_breaking.enabled} onChange={(e) => setForm({ ...form, circuit_breaking: { ...form.circuit_breaking, enabled: e.target.checked } })} className="w-4 h-4" />
           <label>Enabled</label>
         </div>
         <div className="grid grid-cols-3 gap-4">
@@ -83,7 +83,7 @@ export default function ServiceMeshConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Observability Export</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.observability_export.enabled} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, enabled: e.target.checked } })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.observability_export.enabled} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, enabled: e.target.checked } })} className="w-4 h-4" />
           <label>Enabled</label>
         </div>
         <div><label className="block text-sm font-medium mb-1">Endpoint</label><input type="text" value={form.observability_export.endpoint} onChange={(e) => setForm({ ...form, observability_export: { ...form.observability_export, endpoint: e.target.value } })} className="border rounded px-3 py-2 w-full" /></div>

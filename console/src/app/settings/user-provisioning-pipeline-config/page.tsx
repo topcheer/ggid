@@ -56,7 +56,7 @@ export default function UserProvisioningPipelineConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">Webhook Notifications</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.webhook_notifications.enabled} onChange={(e) => setForm({ ...form, webhook_notifications: { ...form.webhook_notifications, enabled: e.target.checked } })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.webhook_notifications.enabled} onChange={(e) => setForm({ ...form, webhook_notifications: { ...form.webhook_notifications, enabled: e.target.checked } })} className="w-4 h-4" />
           <label>Enabled</label>
         </div>
         <div>
@@ -78,7 +78,7 @@ export default function UserProvisioningPipelineConfigPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.error_retry_policy.dead_letter_queue} onChange={(e) => setForm({ ...form, error_retry_policy: { ...form.error_retry_policy, dead_letter_queue: e.target.checked } })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.error_retry_policy.dead_letter_queue} onChange={(e) => setForm({ ...form, error_retry_policy: { ...form.error_retry_policy, dead_letter_queue: e.target.checked } })} className="w-4 h-4" />
           <label>Dead Letter Queue</label>
         </div>
       </div>

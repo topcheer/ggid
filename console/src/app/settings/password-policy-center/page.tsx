@@ -75,7 +75,7 @@ export default function PasswordPolicyCenterPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Breach Detection (HIBP)</h2>
         <div className="flex items-center gap-3"><input type="checkbox" checked={breachDetection} onChange={(e) => setBreachDetection(e.target.checked)} className="w-4 h-4" /><label>Check passwords against HaveIBeenPwned database</label></div>
-        {breachDetection && (<div><label className="block text-sm font-medium mb-1">HIBP API Key</label><input type="password" value={hibpApiKey} onChange={(e) => setHibpApiKey(e.target.value)} placeholder="Enter HIBP API key" className="border rounded px-3 py-2 w-full" /></div>)}
+        {breachDetection && (<div><label className="block text-sm font-medium mb-1">HIBP API Key</label><input autoComplete="current-password" type="password" value={hibpApiKey} onChange={(e) => setHibpApiKey(e.target.value)} placeholder="Enter HIBP API key" className="border rounded px-3 py-2 w-full" /></div>)}
       </div>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">

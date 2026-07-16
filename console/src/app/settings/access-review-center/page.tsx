@@ -182,7 +182,7 @@ export default function AccessReviewCenterPage() {
           <tbody>
             {reviews.map(r => (
               <tr key={r.id} className="border-b hover:bg-gray-50">
-                <td className="p-3"><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} className="rounded" /></td>
                 <td className="p-3 font-medium">
                   {r.user}
                   {r.overdue && <span className="ml-1 px-1.5 py-0.5 bg-red-100 text-red-700 rounded text-xs">{t("backend3.accessReviewCenter.overdue")}</span>}

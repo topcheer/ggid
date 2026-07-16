@@ -52,7 +52,7 @@ export default function VPNDetectionPage() {
 
       {/* Batch input */}
       <div className="space-y-2">
-        <textarea value={ipInput} onChange={(e) => setIpInput(e.target.value)} placeholder="Enter IPs (one per line or comma-separated)..." rows={3} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
+        <textarea aria-label="Enter IPs (one per line or comma-separated)..." value={ipInput} onChange={(e) => setIpInput(e.target.value)} placeholder="Enter IPs (one per line or comma-separated)..." rows={3} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono" />
         <button onClick={checkIP} disabled={loading} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><Search className="w-4 h-4" /> {loading ? "Checking..." : "Check IPs"}</button>
       </div>
 

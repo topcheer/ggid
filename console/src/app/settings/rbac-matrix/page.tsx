@@ -80,7 +80,7 @@ export default function RbacMatrixPage() {
             {roles.map(r => (
               <tr key={r.id} className="border-b">
                 <td className="p-3"><div className="font-medium">{r.name}</div><div className="text-xs text-gray-500">{r.description}</div></td>
-                {matrix[r.id]?.map((v, i) => <td key={i} className="p-3 text-center"><input type="checkbox" checked={v} onChange={() => toggleCell(r.id, i)} className="rounded" /></td>)}
+                {matrix[r.id]?.map((v, i) => <td key={i} className="p-3 text-center"><input aria-label="Toggle" type="checkbox" checked={v} onChange={() => toggleCell(r.id, i)} className="rounded" /></td>)}
               </tr>
             ))}
           </tbody>

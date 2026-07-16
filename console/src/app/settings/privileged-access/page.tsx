@@ -124,7 +124,7 @@ export default function PrivilegedAccessPage() {
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
               <th scope="col" className="px-4 py-3 text-left font-medium w-8">
-                <input type="checkbox" checked={selectedIds.size === accounts.length && accounts.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(accounts.map((a) => a.id)) : new Set())} className="rounded" />
+                <input aria-label="Selected ids" type="checkbox" checked={selectedIds.size === accounts.length && accounts.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(accounts.map((a) => a.id)) : new Set())} className="rounded" />
               </th>
               <th scope="col" className="px-4 py-3 text-left font-medium">User</th>
               <th scope="col" className="px-4 py-3 text-left font-medium">Roles</th>
@@ -140,7 +140,7 @@ export default function PrivilegedAccessPage() {
               const isExpiring = a.days_until_expiry > 0 && a.days_until_expiry <= 7;
               return (
                 <tr key={a.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                  <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className="rounded" /></td>
+                  <td className="px-4 py-3"><input aria-label="Toggle" type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className="rounded" /></td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Shield className="w-3 h-3 text-gray-400" />

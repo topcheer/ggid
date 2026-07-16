@@ -166,8 +166,8 @@ export default function RateLimitsPage() {
                       </td>
                       <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
                       <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.burst ?? 10} onChange={(e) => setDraft((p) => ({ ...p, burst: Number(e.target.value) }))} className={inputCls} /></td>
-                      <td className="px-4 py-2"><input type="checkbox" checked={draft.per_tenant ?? false} onChange={(e) => setDraft((p) => ({ ...p, per_tenant: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
-                      <td className="px-4 py-2"><input type="checkbox" checked={draft.enabled ?? true} onChange={(e) => setDraft((p) => ({ ...p, enabled: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
+                      <td className="px-4 py-2"><input aria-label="Draft" type="checkbox" checked={draft.per_tenant ?? false} onChange={(e) => setDraft((p) => ({ ...p, per_tenant: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
+                      <td className="px-4 py-2"><input aria-label="Draft" type="checkbox" checked={draft.enabled ?? true} onChange={(e) => setDraft((p) => ({ ...p, enabled: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
                       <td className="px-4 py-2">
                         <div className="flex justify-end gap-1">
                           <button onClick={saveEdit} aria-label="Save edit" className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"><Check className="h-3.5 w-3.5" /></button>
@@ -207,7 +207,7 @@ export default function RateLimitsPage() {
                   </td>
                   <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.requests_per_minute ?? 60} onChange={(e) => setDraft((p) => ({ ...p, requests_per_minute: Number(e.target.value) }))} className={inputCls} /></td>
                   <td className="px-4 py-2"><input aria-label="Input field" type="number" value={draft.burst ?? 10} onChange={(e) => setDraft((p) => ({ ...p, burst: Number(e.target.value) }))} className={inputCls} /></td>
-                  <td className="px-4 py-2"><input type="checkbox" checked={draft.per_tenant ?? false} onChange={(e) => setDraft((p) => ({ ...p, per_tenant: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
+                  <td className="px-4 py-2"><input aria-label="Draft" type="checkbox" checked={draft.per_tenant ?? false} onChange={(e) => setDraft((p) => ({ ...p, per_tenant: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" /></td>
                   <td className="px-4 py-2" />
                   <td className="px-4 py-2">
                     <div className="flex justify-end gap-1">

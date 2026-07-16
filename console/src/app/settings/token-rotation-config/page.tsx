@@ -35,7 +35,7 @@ export default function TokenRotationConfigPage() {
             <input type="number" value={bulkDays} onChange={(e) => setBulkDays(parseInt(e.target.value) || 0)} className="border rounded px-3 py-2 w-32" />
           </div>
           <div className="flex items-center gap-2 pt-6">
-            <input type="checkbox" checked={bulkAuto} onChange={(e) => setBulkAuto(e.target.checked)} className="w-4 h-4" />
+            <input aria-label="Bulk auto" type="checkbox" checked={bulkAuto} onChange={(e) => setBulkAuto(e.target.checked)} className="w-4 h-4" />
             <label>Auto Rotate</label>
           </div>
           <button onClick={handleBulk} disabled={saving} className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700 disabled:opacity-50 ml-4 mt-4">Apply to All</button>

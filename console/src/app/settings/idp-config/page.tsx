@@ -309,7 +309,7 @@ export default function IdPConfigPage() {
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.clientSecret")}</label>
-                        <input className={inputCls} type="password" placeholder="••••••••" value={cfg.clientSecret ?? ""} onChange={(e) => handleUpdate(cfg.id, "clientSecret", e.target.value)} />
+                        <input autoComplete="current-password" className={inputCls} type="password" placeholder="••••••••" value={cfg.clientSecret ?? ""} onChange={(e) => handleUpdate(cfg.id, "clientSecret", e.target.value)} />
                       </div>
                       <div>
                         <label className="mb-1 block text-xs font-medium text-gray-500">{t("big1.idpConfig.scopes")}</label>

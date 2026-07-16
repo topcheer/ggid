@@ -79,7 +79,7 @@ export default function LdapConfigPage() {
         <div><label className="text-sm font-medium">LDAP URL</label><input type="text" value={ldapUrl} onChange={e => setLdapUrl(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
         <div className="grid grid-cols-2 gap-4">
           <div><label className="text-sm font-medium">Bind DN</label><input type="text" value={bindDn} onChange={e => setBindDn(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
-          <div><label className="text-sm font-medium">Bind Password</label><input type="password" value={bindPassword} onChange={e => setBindPassword(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">Bind Password</label><input autoComplete="current-password" type="password" value={bindPassword} onChange={e => setBindPassword(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div><label className="text-sm font-medium">Base DN</label><input type="text" value={baseDn} onChange={e => setBaseDn(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
         <div className="grid grid-cols-3 gap-4">

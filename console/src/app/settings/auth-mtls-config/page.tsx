@@ -25,7 +25,7 @@ export default function AuthMtlsConfigPage() {
       <p className="text-gray-600">Configure mutual TLS certificate-based authentication.</p>
 
       <div className="flex items-center gap-3 bg-white rounded-lg p-4 shadow">
-        <input type="checkbox" checked={form.require_mtls} onChange={(e) => setForm({ ...form, require_mtls: e.target.checked })} className="w-5 h-5" />
+        <input aria-label="Form" type="checkbox" checked={form.require_mtls} onChange={(e) => setForm({ ...form, require_mtls: e.target.checked })} className="w-5 h-5" />
         <label className="font-medium">Require mTLS</label>
       </div>
 

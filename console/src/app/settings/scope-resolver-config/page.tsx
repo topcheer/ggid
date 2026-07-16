@@ -102,7 +102,7 @@ export default function ScopeResolverConfigPage() {
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-medium text-gray-700">Wildcard Scope Expansion Rules</h3>
           <p className="mt-1 text-xs text-gray-400">Define how wildcard scopes (e.g. audit:*) expand to concrete scopes</p>
-          <textarea value={wildcardRules} onChange={e => setWildcardRules(e.target.value)} rows={8} className="mt-3 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" />
+          <textarea aria-label="Wildcard rules" value={wildcardRules} onChange={e => setWildcardRules(e.target.value)} rows={8} className="mt-3 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs" />
           <div className="mt-4 flex items-center gap-3">
             <button onClick={() => setConsentEnforcement(!consentEnforcement)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${consentEnforcement ? 'bg-blue-600' : 'bg-gray-200'}`}><span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${consentEnforcement ? 'translate-x-6' : 'translate-x-1'}`} /></button>
             <span className="text-sm text-gray-700">Scope Consent Enforcement {consentEnforcement ? 'Enabled' : 'Disabled'}</span>

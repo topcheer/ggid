@@ -76,7 +76,7 @@ export default function OidcIdpConfigPage() {
         <div><label className="text-sm font-medium">{t("oidcIdpConfig.discoveryUrl")}</label><input type="url" value={discoveryUrl} onChange={e => setDiscoveryUrl(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono" /></div>
         <div className="grid grid-cols-2 gap-4">
           <div><label className="text-sm font-medium">{t("oidcIdpConfig.clientId")}</label><input type="text" value={clientId} onChange={e => setClientId(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">{t("oidcIdpConfig.clientSecret")}</label><input type="password" value={clientSecret} onChange={e => setClientSecret(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("oidcIdpConfig.clientSecret")}</label><input autoComplete="current-password" type="password" value={clientSecret} onChange={e => setClientSecret(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div><label className="text-sm font-medium">{t("oidcIdpConfig.redirectUri")}</label><input type="text" readOnly value={redirectUri} className="w-full border rounded px-3 py-2 text-sm mt-1 font-mono bg-gray-50" /></div>
         <button onClick={testDiscovery} disabled={testing} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? t("common.loading") : t("common.test")}</button>

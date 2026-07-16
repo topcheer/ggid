@@ -221,7 +221,7 @@ export default function AccessReviewsPage() {
                 return (
                   <div key={r.id} className={`${cardCls} ${isOverdue ? "border-red-200 dark:border-red-800" : ""}`}>
                     <div className="flex items-start gap-3">
-                      <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSelect(r.id)} className="mt-1 rounded border-gray-300 text-indigo-600" />
+                      <input aria-label="Toggle" type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSelect(r.id)} className="mt-1 rounded border-gray-300 text-indigo-600" />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-gray-400" />

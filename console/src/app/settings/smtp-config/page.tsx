@@ -78,7 +78,7 @@ export default function SmtpConfigPage() {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div><label className="text-sm font-medium">{t("smtp.username")}</label><input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
-          <div><label className="text-sm font-medium">{t("smtp.password")}</label><input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.password")}</label><input autoComplete="current-password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div><label className="text-sm font-medium">{t("smtp.connectionTimeout")}</label><input type="number" min={5} max={120} value={timeout} onChange={e => setTimeout(parseInt(e.target.value) || 30)} className="w-24 border rounded px-2 py-1 text-sm mt-1" /></div>
       </section>
@@ -86,11 +86,11 @@ export default function SmtpConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("smtp.senderSettings")}</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("smtp.fromAddress")}</label><input type="email" value={fromAddress} onChange={e => setFromAddress(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.fromAddress")}</label><input autoComplete="email" type="email" value={fromAddress} onChange={e => setFromAddress(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">{t("smtp.fromName")}</label><input type="text" value={fromName} onChange={e => setFromName(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div><label className="text-sm font-medium">{t("smtp.replyTo")}</label><input type="email" value={replyTo} onChange={e => setReplyTo(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-sm font-medium">{t("smtp.replyTo")}</label><input autoComplete="email" type="email" value={replyTo} onChange={e => setReplyTo(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
           <div><label className="text-sm font-medium">{t("smtp.sendRateLimit")}</label><input type="number" min={1} value={rateLimit} onChange={e => setRateLimit(parseInt(e.target.value) || 100)} className="w-full border rounded px-3 py-2 text-sm mt-1" /></div>
         </div>
       </section>
@@ -114,7 +114,7 @@ export default function SmtpConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">{t("smtp.testEmail")}</h2>
         <div className="flex gap-3">
-          <input aria-label="Test email" type="email" placeholder={t("smtp.recipientPlaceholder")} value={testEmail} onChange={e => setTestEmail(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
+          <input autoComplete="email" aria-label="Test email" type="email" placeholder={t("smtp.recipientPlaceholder")} value={testEmail} onChange={e => setTestEmail(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
           <button onClick={sendTest} disabled={testing || !testEmail} aria-label={t("smtp.sendTest")} className="px-4 py-2 bg-blue-600 text-white rounded text-sm disabled:opacity-50">{testing ? t("smtp.sending") : t("smtp.sendTest")}</button>
         </div>
         {testResult && <div className="text-sm p-3 rounded bg-green-50 text-green-700">{testResult}</div>}

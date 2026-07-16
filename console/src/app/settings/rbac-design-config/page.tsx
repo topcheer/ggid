@@ -48,13 +48,13 @@ export default function RbacDesignConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Hierarchy Settings</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.inheritance_enabled}
+          <input aria-label="Toggle" type="checkbox" checked={form.inheritance_enabled}
             onChange={(e) => setForm({ ...form, inheritance_enabled: e.target.checked })}
             className="w-4 h-4" />
           <label>Inheritance Enabled</label>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.auto_inherit_from_parent}
+          <input aria-label="Toggle" type="checkbox" checked={form.auto_inherit_from_parent}
             onChange={(e) => setForm({ ...form, auto_inherit_from_parent: e.target.checked })}
             className="w-4 h-4" />
           <label>Auto Inherit from Parent</label>

@@ -69,7 +69,7 @@ export default function PolicyExportPage() {
         {/* Import */}
         <div className="rounded-lg border dark:border-gray-800 p-4 space-y-3">
           <h3 className="font-semibold flex items-center gap-2"><Upload className="w-4 h-4 text-green-500" /> Import</h3>
-          <textarea value={importJson} onChange={(e) => setImportJson(e.target.value)} placeholder="Paste JSON policy package..." rows={5} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
+          <textarea aria-label="Paste JSON policy package..." value={importJson} onChange={(e) => setImportJson(e.target.value)} placeholder="Paste JSON policy package..." rows={5} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" />
           <div className="flex items-center gap-2">
             <button onClick={previewImport} disabled={!importJson || importing} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"><GitCompare className="w-4 h-4" /> Preview Diff</button>
             {diff && <button onClick={doImport} disabled={importing} className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"><Upload className="w-4 h-4" /> {importing ? "Importing..." : "Execute Import"}</button>}

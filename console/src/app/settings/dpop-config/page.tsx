@@ -120,7 +120,7 @@ export default function DpopConfigPage() {
 
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Proof Validation Debug Viewer</h2>
-        <textarea value={debugProof} onChange={e => setDebugProof(e.target.value)} rows={3} placeholder="Paste DPoP proof JWT..." className="w-full border rounded px-3 py-2 text-sm font-mono" />
+        <textarea aria-label="Paste DPoP proof JWT..." value={debugProof} onChange={e => setDebugProof(e.target.value)} rows={3} placeholder="Paste DPoP proof JWT..." className="w-full border rounded px-3 py-2 text-sm font-mono" />
         <button onClick={validateProof} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Validate</button>
         {debugResult && <pre className="bg-gray-900 text-green-400 rounded p-3 text-xs overflow-x-auto max-h-48">{debugResult}</pre>}
       </section>

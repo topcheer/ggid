@@ -42,7 +42,7 @@ export default function OAuthDynamicClientRegPage() {
         <label className="block text-sm font-medium mb-1">{t("oauthDCR.registrationEndpoint")}</label>
         <input type="text" value={form.registration_endpoint} readOnly className="border rounded px-3 py-2 w-full bg-gray-50" />
         <div className="mt-3 flex items-center gap-3">
-          <input type="checkbox" checked={form.software_statement_enabled} readOnly className="w-4 h-4" />
+          <input aria-label="Toggle" type="checkbox" checked={form.software_statement_enabled} readOnly className="w-4 h-4" />
           <label>Software Statement Enabled</label>
         </div>
       </div>

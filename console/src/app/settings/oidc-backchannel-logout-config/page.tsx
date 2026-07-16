@@ -32,7 +32,7 @@ export default function OidcBackchannelLogoutConfigPage() {
           <input type="number" value={form.session_lifetime_after_logout} onChange={(e) => setForm({ ...form, session_lifetime_after_logout: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.token_revocation_on_logout} onChange={(e) => setForm({ ...form, token_revocation_on_logout: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.token_revocation_on_logout} onChange={(e) => setForm({ ...form, token_revocation_on_logout: e.target.checked })} className="w-4 h-4" />
           <label>{t("oidcBackchannelLogout.tokenRevocation")}</label>
         </div>
       </div>

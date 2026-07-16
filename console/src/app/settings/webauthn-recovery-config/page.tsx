@@ -45,7 +45,7 @@ export default function WebauthnRecoveryConfigPage() {
 
       <div className="bg-white rounded-lg p-6 shadow">
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.admin_assisted_recovery} onChange={(e) => setForm({ ...form, admin_assisted_recovery: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.admin_assisted_recovery} onChange={(e) => setForm({ ...form, admin_assisted_recovery: e.target.checked })} className="w-4 h-4" />
           <label className="font-medium">Admin Assisted Recovery</label>
         </div>
       </div>

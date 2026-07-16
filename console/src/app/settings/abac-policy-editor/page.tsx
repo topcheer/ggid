@@ -90,7 +90,7 @@ export default function AbacPolicyEditorPage() {
                 <td className="p-3 font-mono text-xs">{p.resource}</td>
                 <td className="p-3 font-mono text-xs">{p.action}</td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${effectColor(p.effect)}`}>{p.effect}</span></td>
-                <td className="p-3"><input type="checkbox" checked={p.enabled} onChange={() => togglePolicy(p.id)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={p.enabled} onChange={() => togglePolicy(p.id)} className="rounded" /></td>
                 <td className="p-3"><div className="flex gap-1"><button onClick={() => movePriority(p.id, 'up')} className="text-xs text-gray-400">up</button><button onClick={() => movePriority(p.id, 'down')} className="text-xs text-gray-400">down</button></div></td>
               </tr>
             ))}

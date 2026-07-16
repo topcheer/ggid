@@ -37,7 +37,7 @@ export default function CorsConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">{t("corsSettings.credentials")}</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.credential_mode} onChange={(e) => setForm({ ...form, credential_mode: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.credential_mode} onChange={(e) => setForm({ ...form, credential_mode: e.target.checked })} className="w-4 h-4" />
           <label>{t("corsSettings.credentialMode")}</label>
         </div>
         <div>
@@ -67,7 +67,7 @@ export default function CorsConfigPage() {
           <input type="number" value={form.max_age_seconds} onChange={(e) => setForm({ ...form, max_age_seconds: parseInt(e.target.value) || 0 })} className="border rounded px-3 py-2 w-32" />
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.preflight_cache_enabled} onChange={(e) => setForm({ ...form, preflight_cache_enabled: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.preflight_cache_enabled} onChange={(e) => setForm({ ...form, preflight_cache_enabled: e.target.checked })} className="w-4 h-4" />
           <label>{t("corsSettings.preflightEnabled")}</label>
         </div>
       </div>

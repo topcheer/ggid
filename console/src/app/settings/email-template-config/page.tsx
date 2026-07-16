@@ -39,7 +39,7 @@ export default function EmailTemplateConfigPage() {
           <div className="mb-2 flex flex-wrap gap-1">
             {tmpl?.variables.map((v) => <span key={v} className="text-xs font-mono px-1.5 py-0.5 bg-gray-800 rounded text-blue-400 cursor-pointer">{v}</span>)}
           </div>
-          <textarea defaultValue={tmpl?.body_html} rows={12} className="w-full px-3 py-2 bg-gray-800 rounded-lg text-xs font-mono" />
+          <textarea aria-label="Text input" defaultValue={tmpl?.body_html} rows={12} className="w-full px-3 py-2 bg-gray-800 rounded-lg text-xs font-mono" />
           <label className="flex items-center gap-2 mt-2 text-xs"><input type="checkbox" defaultChecked={tmpl?.enabled} />{t("big1.emailTemplateConfig.enabled")}</label>
         </div>
         <div className="bg-gray-900 rounded-xl p-4">

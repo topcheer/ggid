@@ -104,7 +104,7 @@ const [deliveries] = useState<Delivery[]>([
           </div>
           <div>
             <label className="text-sm font-medium">HMAC Secret</label>
-            <input type="password" placeholder="Shared secret for payload signing" value={newSub.secret} onChange={e => setNewSub(prev => ({ ...prev, secret: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input autoComplete="current-password" type="password" placeholder="Shared secret for payload signing" value={newSub.secret} onChange={e => setNewSub(prev => ({ ...prev, secret: e.target.value }))} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">Max Retries</label>

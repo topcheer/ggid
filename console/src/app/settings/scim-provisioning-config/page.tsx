@@ -54,19 +54,19 @@ export default function ScimProvisioningConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Provisioning Triggers</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.provisioning_triggers.create}
+          <input aria-label="Toggle" type="checkbox" checked={form.provisioning_triggers.create}
             onChange={(e) => setForm({ ...form, provisioning_triggers: { ...form.provisioning_triggers, create: e.target.checked } })}
             className="w-4 h-4" />
           <label>Create</label>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.provisioning_triggers.update}
+          <input aria-label="Toggle" type="checkbox" checked={form.provisioning_triggers.update}
             onChange={(e) => setForm({ ...form, provisioning_triggers: { ...form.provisioning_triggers, update: e.target.checked } })}
             className="w-4 h-4" />
           <label>Update</label>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.provisioning_triggers.deactivate}
+          <input aria-label="Toggle" type="checkbox" checked={form.provisioning_triggers.deactivate}
             onChange={(e) => setForm({ ...form, provisioning_triggers: { ...form.provisioning_triggers, deactivate: e.target.checked } })}
             className="w-4 h-4" />
           <label>Deactivate</label>
@@ -86,7 +86,7 @@ export default function ScimProvisioningConfigPage() {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.deprovision_on_disable}
+          <input aria-label="Toggle" type="checkbox" checked={form.deprovision_on_disable}
             onChange={(e) => setForm({ ...form, deprovision_on_disable: e.target.checked })}
             className="w-4 h-4" />
           <label>Deprovision on Disable</label>

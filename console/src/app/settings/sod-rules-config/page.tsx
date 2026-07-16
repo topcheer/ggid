@@ -136,7 +136,7 @@ export default function SodRulesConfigPage() {
                 <td className="p-3 font-medium">{r.roleA}</td>
                 <td className="p-3 font-medium">{r.roleB}</td>
                 <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs capitalize ${levelColor(r.conflictLevel)}`}>{r.conflictLevel}</span></td>
-                <td className="p-3"><input type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={r.enabled} onChange={() => toggleRule(r.id)} className="rounded" /></td>
               </tr>
             ))}
           </tbody>

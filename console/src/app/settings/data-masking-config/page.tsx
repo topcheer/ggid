@@ -103,9 +103,9 @@ export default function DataMaskingConfigPage() {
               <tr key={f.id} className="border-b">
                 <td className="p-3 font-mono text-xs">{f.field}</td>
                 <td className="p-3"><span className="px-2 py-0.5 bg-gray-100 rounded text-xs">{f.pattern}</span></td>
-                <td className="p-3"><input type="checkbox" checked={f.maskInApi} onChange={e => updateField(f.id, 'maskInApi', e.target.checked)} className="rounded" /></td>
-                <td className="p-3"><input type="checkbox" checked={f.maskInAudit} onChange={e => updateField(f.id, 'maskInAudit', e.target.checked)} className="rounded" /></td>
-                <td className="p-3"><input type="checkbox" checked={f.maskInExports} onChange={e => updateField(f.id, 'maskInExports', e.target.checked)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={f.maskInApi} onChange={e => updateField(f.id, 'maskInApi', e.target.checked)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={f.maskInAudit} onChange={e => updateField(f.id, 'maskInAudit', e.target.checked)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={f.maskInExports} onChange={e => updateField(f.id, 'maskInExports', e.target.checked)} className="rounded" /></td>
                 <td className="p-3"><div className="flex flex-wrap gap-1">{f.unmaskRoles.map(r => <span key={r} className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">{r}</span>)}</div></td>
                 <td className="p-3"><button onClick={() => removeField(f.id)} className="text-red-600 text-xs hover:underline">Remove</button></td>
               </tr>

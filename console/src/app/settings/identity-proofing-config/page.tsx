@@ -31,7 +31,7 @@ export default function IdentityProofingConfigPage() {
         <div className="space-y-2">
           {form.verification_methods.map((m: VerificationMethod, i: number) => (
             <div key={i} className="flex items-center gap-3 border-b py-2">
-              <input type="checkbox" checked={m.enabled} readOnly className="w-4 h-4" />
+              <input aria-label="Toggle" type="checkbox" checked={m.enabled} readOnly className="w-4 h-4" />
               <span className="font-medium">{m.method}</span>
             </div>
           ))}

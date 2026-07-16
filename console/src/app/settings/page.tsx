@@ -308,9 +308,9 @@ export default function SettingsPage() {
             <h2 className="mb-4 text-lg font-semibold"><Lock className="mr-2 inline h-5 w-5 text-brand-600" /> Change Password</h2>
             {pwError && <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-700">{pwError}</div>}
             <div className="grid gap-4 sm:grid-cols-3">
-              <div><label className={labelCls}>Current</label><input type="password" value={pwForm.current} onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })} className={inputCls} /></div>
-              <div><label className={labelCls}>New</label><input type="password" value={pwForm.new} onChange={(e) => setPwForm({ ...pwForm, new: e.target.value })} className={inputCls} /></div>
-              <div><label className={labelCls}>Confirm</label><input type="password" value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} className={inputCls} /></div>
+              <div><label className={labelCls}>Current</label><input autoComplete="current-password" type="password" value={pwForm.current} onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })} className={inputCls} /></div>
+              <div><label className={labelCls}>New</label><input autoComplete="current-password" type="password" value={pwForm.new} onChange={(e) => setPwForm({ ...pwForm, new: e.target.value })} className={inputCls} /></div>
+              <div><label className={labelCls}>Confirm</label><input autoComplete="current-password" type="password" value={pwForm.confirm} onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} className={inputCls} /></div>
             </div>
             <button onClick={changePassword} className="mt-4 flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700"><Save className="h-4 w-4" /> Change Password</button>
           </div>

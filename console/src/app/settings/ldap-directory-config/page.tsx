@@ -37,7 +37,7 @@ export default function LdapDirectoryConfigPage() {
         <h2 className="text-lg font-semibold">Search Optimization</h2>
         <div className="text-sm text-gray-500">Indexed Attributes: {form.search_optimization.indexed_attributes.join(", ")}</div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.search_optimization.query_cache_enabled} onChange={(e) => setForm({ ...form, search_optimization: { ...form.search_optimization, query_cache_enabled: e.target.checked } })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.search_optimization.query_cache_enabled} onChange={(e) => setForm({ ...form, search_optimization: { ...form.search_optimization, query_cache_enabled: e.target.checked } })} className="w-4 h-4" />
           <label>Query Cache Enabled</label>
         </div>
         <div><label className="block text-sm font-medium mb-1">Query Cache TTL (s)</label><input type="number" value={form.search_optimization.query_cache_ttl} onChange={(e) => setForm({ ...form, search_optimization: { ...form.search_optimization, query_cache_ttl: parseInt(e.target.value) || 0 } })} className="border rounded px-3 py-2 w-32" /></div>

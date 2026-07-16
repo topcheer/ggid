@@ -46,10 +46,10 @@ export default function TokenManagementPage() {
       </div>
 
       <section className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full text-sm"><thead className="bg-gray-50"><tr className="text-left"><th className="p-3"><input type="checkbox" className="rounded" /></th><th className="p-3">{t("backend.tokenManagement.type")}</th><th className="p-3">{t("backend.tokenManagement.user")}</th><th className="p-3">{t("backend.tokenManagement.client")}</th><th className="p-3">{t("backend.tokenManagement.issued")}</th><th className="p-3">{t("backend.tokenManagement.expires")}</th><th className="p-3">{t("backend.tokenManagement.scopes")}</th><th className="p-3">{t("backend.tokenManagement.dpop")}</th><th className="p-3">{t("backend.tokenManagement.action")}</th></tr></thead>
+        <table className="w-full text-sm"><thead className="bg-gray-50"><tr className="text-left"><th className="p-3"><input aria-label="Toggle" type="checkbox" className="rounded" /></th><th className="p-3">{t("backend.tokenManagement.type")}</th><th className="p-3">{t("backend.tokenManagement.user")}</th><th className="p-3">{t("backend.tokenManagement.client")}</th><th className="p-3">{t("backend.tokenManagement.issued")}</th><th className="p-3">{t("backend.tokenManagement.expires")}</th><th className="p-3">{t("backend.tokenManagement.scopes")}</th><th className="p-3">{t("backend.tokenManagement.dpop")}</th><th className="p-3">{t("backend.tokenManagement.action")}</th></tr></thead>
           <tbody>{filtered.map(tk => (
             <tr key={tk.id} className="border-b hover:bg-gray-50">
-              <td className="p-3"><input type="checkbox" checked={batchRevoke.includes(tk.id)} onChange={() => toggleBatch(tk.id)} className="rounded" /></td>
+              <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={batchRevoke.includes(tk.id)} onChange={() => toggleBatch(tk.id)} className="rounded" /></td>
               <td className="p-3"><span className={`px-2 py-0.5 rounded text-xs ${tk.type === 'access' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{tk.type}</span></td>
               <td className="p-3 font-medium">{tk.user}</td><td className="p-3 font-mono text-xs">{tk.client}</td>
               <td className="p-3 text-gray-500">{tk.issued}</td><td className="p-3 text-gray-500">{tk.expires}</td>

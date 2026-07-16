@@ -323,7 +323,7 @@ export default function OAuthClientsPage() {
               <button onClick={() => setEditClient(null)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <p className="mt-1 text-sm text-gray-500">{editClient.client_name}</p>
-            <textarea value={editUris} onChange={(e) => setEditUris(e.target.value)} rows={5} className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
+            <textarea aria-label="Edit uris" value={editUris} onChange={(e) => setEditUris(e.target.value)} rows={5} className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={() => setEditClient(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">{t("common.cancel")}</button>
               <button onClick={handleSaveEdit} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><RefreshCw className="h-4 w-4" /> {t("common.save")}</button>

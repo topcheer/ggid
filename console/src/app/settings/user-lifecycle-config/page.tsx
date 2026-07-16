@@ -39,7 +39,7 @@ export default function UserLifecycleConfigPage() {
             {form.dormant_detection_rules.map((r: DormantDetectionRule, i: number) => (
               <tr key={i} className="border-b">
                 <td className="py-2">{r.metric}</td><td>{r.threshold_days}</td>
-                <td><input type="checkbox" checked={r.enabled} readOnly className="w-4 h-4" /></td>
+                <td><input aria-label="Toggle" type="checkbox" checked={r.enabled} readOnly className="w-4 h-4" /></td>
               </tr>
             ))}
           </tbody>
@@ -61,7 +61,7 @@ export default function UserLifecycleConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">Notification Before Deactivation</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.notification_before_deactivate.enabled}
+          <input aria-label="Toggle" type="checkbox" checked={form.notification_before_deactivate.enabled}
             onChange={(e) => setForm({ ...form, notification_before_deactivate: { ...form.notification_before_deactivate, enabled: e.target.checked } })}
             className="w-4 h-4" />
           <label>Enabled</label>

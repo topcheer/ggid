@@ -171,7 +171,7 @@ export default function AgentAccessReviewPage() {
           <tbody>
             {reviews.map(r => (
               <tr key={r.id} className="border-b hover:bg-gray-50">
-                <td className="p-3"><input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} className="rounded" /></td>
                 <td className="p-3">
                   <div className="font-mono text-xs text-gray-500">{r.agentId}</div>
                   <div className="font-medium">{r.agentName}</div>

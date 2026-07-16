@@ -32,7 +32,7 @@ export default function PkceDeepDiveConfigPage() {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.migrate_non_pkce_clients} onChange={(e) => setForm({ ...form, migrate_non_pkce_clients: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.migrate_non_pkce_clients} onChange={(e) => setForm({ ...form, migrate_non_pkce_clients: e.target.checked })} className="w-4 h-4" />
           <label>Migrate Non-PKCE Clients</label>
         </div>
       </div>

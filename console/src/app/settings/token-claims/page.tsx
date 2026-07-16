@@ -101,7 +101,7 @@ export default function TokenClaimsPage() {
 
       {/* Token input */}
       <div className="space-y-2">
-        <textarea value={token} onChange={(e) => setToken(e.target.value)} placeholder="Paste a JWT token here..." rows={4} spellCheck={false} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono resize-y" />
+        <textarea aria-label="Paste a JWT token here..." value={token} onChange={(e) => setToken(e.target.value)} placeholder="Paste a JWT token here..." rows={4} spellCheck={false} className="w-full px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm font-mono resize-y" />
         <div className="flex items-center gap-2">
           <button onClick={decode} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Decode Token</button>
           <button onClick={() => { setToken(""); setDecoded(null); setError(""); }} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Clear</button>

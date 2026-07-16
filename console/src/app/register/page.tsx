@@ -61,11 +61,11 @@ export default function RegisterPage() {
           </div>
           <div className="mb-4">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">Email</label>
-            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className={inputCls} placeholder="you@example.com" />
+            <input autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className={inputCls} placeholder="you@example.com" />
           </div>
           <div className="mb-6">
             <label className="mb-1 block text-sm font-medium dark:text-gray-300">Password</label>
-            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className={inputCls} placeholder="••••••••" />
+            <input autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className={inputCls} placeholder="••••••••" />
           </div>
 
           <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50">

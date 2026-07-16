@@ -112,7 +112,7 @@ export default function InactiveCleanupPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-900/50">
             <tr>
-              <th scope="col" className="px-4 py-3 text-left font-medium w-8"><input type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(users.map((u) => u.user_id)) : new Set())} className="rounded" /></th>
+              <th scope="col" className="px-4 py-3 text-left font-medium w-8"><input aria-label="Selected ids" type="checkbox" checked={selectedIds.size === users.length && users.length > 0} onChange={(e) => setSelectedIds(e.target.checked ? new Set(users.map((u) => u.user_id)) : new Set())} className="rounded" /></th>
               <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.user")}</th>
               <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.lastLogin")}</th>
               <th scope="col" className="px-4 py-3 text-left font-medium">{t("big1.inactiveCleanup.daysInactive")}</th>
@@ -124,7 +124,7 @@ export default function InactiveCleanupPage() {
               const ActionIcon = u.days_inactive >= 180 ? actionConfig.delete.icon : u.days_inactive >= 90 ? actionConfig.archive.icon : actionConfig.disable.icon;
               return (
                 <tr key={u.user_id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                  <td className="px-4 py-3"><input type="checkbox" checked={selectedIds.has(u.user_id)} onChange={() => toggleSelect(u.user_id)} className="rounded" /></td>
+                  <td className="px-4 py-3"><input aria-label="Toggle" type="checkbox" checked={selectedIds.has(u.user_id)} onChange={() => toggleSelect(u.user_id)} className="rounded" /></td>
                   <td className="px-4 py-3"><span className="font-medium">{u.username}</span><p className="text-xs text-gray-400">{u.email}</p></td>
                   <td className="px-4 py-3 text-gray-500">{u.last_login || "Never"}</td>
                   <td className="px-4 py-3"><span className={`font-bold ${u.days_inactive >= 180 ? "text-red-600" : u.days_inactive >= 90 ? "text-orange-600" : "text-yellow-600"}`}>{u.days_inactive}</span></td>

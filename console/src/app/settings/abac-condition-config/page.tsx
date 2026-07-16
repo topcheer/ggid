@@ -89,7 +89,7 @@ export default function AbacConditionConfigPage() {
             className="border rounded px-3 py-2 w-48" />
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.default_deny}
+          <input aria-label="Toggle" type="checkbox" checked={form.default_deny}
             onChange={(e) => setForm({ ...form, default_deny: e.target.checked })}
             className="w-4 h-4" />
           <label>Default Deny (deny if no policy matches)</label>

@@ -172,11 +172,11 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("users.email") || "Email"}</label>
-                <input value={userEmail} onChange={(e) => setUserEmail(e.target.value)} type="email" className={inputCls} placeholder="john@acme.com" />
+                <input autoComplete="email" value={userEmail} onChange={(e) => setUserEmail(e.target.value)} type="email" className={inputCls} placeholder="john@acme.com" />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("users.passwordLbl") || "Password"}</label>
-                <input value={userPassword} onChange={(e) => setUserPassword(e.target.value)} type="password" className={inputCls} placeholder="••••••••" />
+                <input autoComplete="current-password" value={userPassword} onChange={(e) => setUserPassword(e.target.value)} type="password" className={inputCls} placeholder="••••••••" />
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setStep(0)} className="text-sm text-gray-400 hover:text-gray-600">

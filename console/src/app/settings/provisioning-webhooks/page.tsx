@@ -154,7 +154,7 @@ export default function ProvisioningWebhooksPage() {
                   ))}
                 </div>
               </div>
-              <div><label className="text-sm font-medium">Secret {editId && "(leave empty to keep current)"}</label><input type="password" value={form.secret} onChange={(e) => setForm({ ...form, secret: e.target.value })} placeholder="whsec_..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
+              <div><label className="text-sm font-medium">Secret {editId && "(leave empty to keep current)"}</label><input autoComplete="current-password" type="password" value={form.secret} onChange={(e) => setForm({ ...form, secret: e.target.value })} placeholder="whsec_..." className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
             </div>
             <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
               <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>

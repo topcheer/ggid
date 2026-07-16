@@ -70,7 +70,7 @@ export default function AuditExportScheduleConfigPage() {
       <div className="bg-white rounded-lg p-6 shadow space-y-3">
         <h2 className="text-lg font-semibold">Notification on Complete</h2>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.notification_on_complete.enabled}
+          <input aria-label="Toggle" type="checkbox" checked={form.notification_on_complete.enabled}
             onChange={(e) => setForm({ ...form, notification_on_complete: { ...form.notification_on_complete, enabled: e.target.checked } })}
             className="w-4 h-4" />
           <label>Enabled</label>

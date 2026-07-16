@@ -139,7 +139,7 @@ export default function UserPreferencesPage() {
           {/* Dashboard layout JSON */}
           <div className="rounded-lg border dark:border-gray-800 p-4">
             <h3 className="font-semibold mb-3 flex items-center gap-2"><Code className="w-4 h-4" /> Dashboard Layout</h3>
-            <textarea value={prefs.dashboard_layout} onChange={(e) => validateLayout(e.target.value)} rows={8} spellCheck={false} className={`w-full px-3 py-2 rounded-lg border text-sm font-mono dark:bg-gray-800 ${layoutError ? "border-red-400" : "dark:border-gray-700"}`} />
+            <textarea aria-label="Text input" value={prefs.dashboard_layout} onChange={(e) => validateLayout(e.target.value)} rows={8} spellCheck={false} className={`w-full px-3 py-2 rounded-lg border text-sm font-mono dark:bg-gray-800 ${layoutError ? "border-red-400" : "dark:border-gray-700"}`} />
             {layoutError && <p className="text-xs text-red-500 mt-1">Invalid JSON</p>}
           </div>
 

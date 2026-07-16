@@ -32,11 +32,11 @@ export default function RefreshTokenRotationConfigPage() {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.reuse_detection} onChange={(e) => setForm({ ...form, reuse_detection: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.reuse_detection} onChange={(e) => setForm({ ...form, reuse_detection: e.target.checked })} className="w-4 h-4" />
           <label>Reuse Detection</label>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.family_revocation_on_reuse} onChange={(e) => setForm({ ...form, family_revocation_on_reuse: e.target.checked })} className="w-4 h-4" />
+          <input aria-label="Form" type="checkbox" checked={form.family_revocation_on_reuse} onChange={(e) => setForm({ ...form, family_revocation_on_reuse: e.target.checked })} className="w-4 h-4" />
           <label>Family Revocation on Reuse</label>
         </div>
       </div>

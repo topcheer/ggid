@@ -221,8 +221,8 @@ export default function BrandingPage() {
                     )}
                   </div>
                   <h2 className="text-center text-lg font-semibold text-gray-900 dark:text-white">{t("branding.signIn")}</h2>
-                  <input aria-label="Email address" type="email" placeholder="Email address" disabled className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-900 text-gray-500" style={{ borderColor: `${primaryColor}40` }} />
-                  <input aria-label="Password" type="password" placeholder="Password" disabled className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-900 text-gray-500" style={{ borderColor: `${primaryColor}40` }} />
+                  <input autoComplete="email" aria-label="Email address" type="email" placeholder="Email address" disabled className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-900 text-gray-500" style={{ borderColor: `${primaryColor}40` }} />
+                  <input autoComplete="current-password" aria-label="Password" type="password" placeholder="Password" disabled className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-900 text-gray-500" style={{ borderColor: `${primaryColor}40` }} />
                   <button disabled className="w-full py-2 text-sm font-medium text-white rounded-lg" style={{ backgroundColor: primaryColor }}>
                     Sign In
                   </button>

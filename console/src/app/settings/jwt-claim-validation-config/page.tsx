@@ -28,7 +28,7 @@ export default function JwtClaimValidationConfigPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">{t("big1.jwtClaimValidationConfig.requiredClaims")}</h2>
           <div className="flex items-center gap-3">
-            <input type="checkbox" checked={form.strict_mode}
+            <input aria-label="Toggle" type="checkbox" checked={form.strict_mode}
               onChange={(e) => setForm({ ...form, strict_mode: e.target.checked })}
               className="w-4 h-4" />
             <label className="text-sm font-medium">{t("big1.jwtClaimValidationConfig.strictMode")}</label>
@@ -40,7 +40,7 @@ export default function JwtClaimValidationConfigPage() {
             {form.required_claims.map((rc: RequiredClaim, i: number) => (
               <tr key={i} className="border-b">
                 <td className="py-2 font-mono">{rc.claim}</td>
-                <td><input type="checkbox" checked={rc.enabled} readOnly className="w-4 h-4" /></td>
+                <td><input aria-label="Toggle" type="checkbox" checked={rc.enabled} readOnly className="w-4 h-4" /></td>
               </tr>
             ))}
           </tbody>

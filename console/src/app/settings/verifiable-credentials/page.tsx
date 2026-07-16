@@ -140,7 +140,7 @@ export default function VerifiableCredentialsPage() {
       {showImport && (
         <section className="bg-white rounded-lg shadow p-6 space-y-4">
           <h2 className="text-lg font-semibold">Import VC (JSON)</h2>
-          <textarea value={importText} onChange={e => setImportText(e.target.value)} rows={6} className="w-full border rounded px-3 py-2 text-sm font-mono" placeholder='Paste VC JSON here...' />
+          <textarea aria-label="Import text" value={importText} onChange={e => setImportText(e.target.value)} rows={6} className="w-full border rounded px-3 py-2 text-sm font-mono" placeholder='Paste VC JSON here...' />
           <button onClick={importVC} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Import</button>
         </section>
       )}

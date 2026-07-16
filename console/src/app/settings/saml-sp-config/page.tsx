@@ -75,13 +75,13 @@ export default function SamlSpConfigPage() {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.want_signed}
+          <input aria-label="Toggle" type="checkbox" checked={form.want_signed}
             onChange={(e) => setForm({ ...form, want_signed: e.target.checked })}
             className="w-4 h-4" />
           <label>Require Signed Responses</label>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.want_encrypted}
+          <input aria-label="Toggle" type="checkbox" checked={form.want_encrypted}
             onChange={(e) => setForm({ ...form, want_encrypted: e.target.checked })}
             className="w-4 h-4" />
           <label>Require Encrypted Assertions</label>

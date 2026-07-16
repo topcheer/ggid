@@ -37,7 +37,7 @@ export default function TenantProvisioningConfigPage() {
           </select>
         </div>
         <div className="flex items-center gap-3">
-          <input type="checkbox" checked={form.auto_approve_new_tenants}
+          <input aria-label="Toggle" type="checkbox" checked={form.auto_approve_new_tenants}
             onChange={(e) => setForm({ ...form, auto_approve_new_tenants: e.target.checked })}
             className="w-4 h-4" />
           <label>{t("tenantProvisioning.autoApprove")}</label>
@@ -70,7 +70,7 @@ export default function TenantProvisioningConfigPage() {
         <div className="space-y-2">
           {form.onboarding_checklist.map((item: OnboardingChecklistItem, i: number) => (
             <div key={i} className="flex items-center gap-3 border-b py-2">
-              <input type="checkbox" checked={item.completed} readOnly className="w-4 h-4" />
+              <input aria-label="Toggle" type="checkbox" checked={item.completed} readOnly className="w-4 h-4" />
               <span className={item.completed ? "text-gray-400 line-through" : ""}>{item.item}</span>
             </div>
           ))}

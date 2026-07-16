@@ -101,7 +101,7 @@ export default function AlertWebhookConfigPage() {
           </div>
           <div>
             <label className="text-sm font-medium">HMAC Secret</label>
-            <input type="password" placeholder="Shared secret for HMAC signing" value={newSecret} onChange={e => setNewSecret(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+            <input autoComplete="current-password" type="password" placeholder="Shared secret for HMAC signing" value={newSecret} onChange={e => setNewSecret(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           </div>
           <div>
             <label className="text-sm font-medium">Event Types</label>

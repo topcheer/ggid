@@ -81,7 +81,7 @@ export default function PasswordHistoryConfigPage() {
       <section className="bg-white rounded-lg shadow p-6 space-y-4">
         <h2 className="text-lg font-semibold">Test Password Against History</h2>
         <div className="flex gap-3">
-          <input aria-label="Enter test password" type="password" placeholder="Enter test password" value={testPassword} onChange={e => setTestPassword(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
+          <input autoComplete="current-password" aria-label="Enter test password" type="password" placeholder="Enter test password" value={testPassword} onChange={e => setTestPassword(e.target.value)} className="flex-1 border rounded px-3 py-2 text-sm" />
           <button onClick={runTest} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">Test</button>
         </div>
         {testResult && (

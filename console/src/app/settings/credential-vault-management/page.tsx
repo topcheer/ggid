@@ -173,7 +173,7 @@ export default function CredentialVaultManagementPage() {
               <tr><td colSpan={9} className="p-3 text-center text-gray-400">No data available</td></tr>
             ) : credentials.map(c => (
               <tr key={c.id} className="border-b hover:bg-gray-50">
-                <td className="p-3"><input type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleSelect(c.id)} className="rounded" /></td>
+                <td className="p-3"><input aria-label="Toggle" type="checkbox" checked={selectedIds.has(c.id)} onChange={() => toggleSelect(c.id)} className="rounded" /></td>
                 <td className="p-3 font-medium">{c.name}</td>
                 <td className="p-3"><span className="px-2 py-0.5 bg-gray-100 rounded text-xs">{c.type}</span></td>
                 <td className="p-3 text-gray-500">{c.created}</td>

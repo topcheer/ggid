@@ -70,7 +70,7 @@ export default function HibpBreachCheckPage() {
         </label>
         <div>
           <label className="text-sm font-medium">{t("big1.hibpBreachCheck.hibpApiKey")}</label>
-          <input type="password" placeholder="Enter HIBP API key" value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" />
+          <input autoComplete="current-password" type="password" placeholder="Enter HIBP API key" value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full border rounded px-3 py-2 text-sm mt-1" />
           <p className="text-xs text-gray-400 mt-1">{t("big1.hibpBreachCheck.getYourAPIKeyAtHttpsHaveibeenpwnedComAPIKey")}</p>
         </div>
         <div className="text-sm text-gray-500">{t("big1.hibpBreachCheck.lastCheck")}{lastCheck}</div>
