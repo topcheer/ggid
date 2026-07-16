@@ -216,13 +216,21 @@ func (s *Server) Run(ctx context.Context) error {
 		return fmt.Errorf("listen: %w", err)
 	}
 
-	errCh := make(chan error, 1)
+	errCh := make(chan error, 2)
 	go func() {
 		log.Printf("OAuth/OIDC server listening on %s", s.cfg.HTTP.Addr)
 		if err := s.httpSrv.Serve(lis); err != nil && err != http.ErrServerClosed {
 			errCh <- fmt.Errorf("http serve: %w", err)
 		}
 	}()
+
+	// Start gRPC server if address is configured.
+	if grpcAddr := os.Getenv("OAUTH_GRPC_ADDR"); grpcAddr != "" {
+		_, _, gerr := s.startGRPCServer(grpcAddr)
+		if gerr != nil {
+			log.Printf("OAuth gRPC: failed to start on %s: %v (continuing HTTP-only)", grpcAddr, gerr)
+		}
+	}
 
 	select {
 	case <-ctx.Done():

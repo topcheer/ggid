@@ -72,7 +72,9 @@ func New(cfg *conf.Config) (*Server, error) {
 	identitySvc := service.NewIdentityService(repo)
 
 	grpcSrv := newGRPCServer()
-	// gRPC handlers will be registered once proto code is generated.
+	// Register gRPC handlers now that proto code is generated.
+	identityGRPC := NewIdentityGRPCHandler(identitySvc)
+	identityGRPC.RegisterGRPC(grpcSrv)
 
 	httpHandler := NewHTTPHandler(identitySvc)
 	httpSrv := &http.Server{
