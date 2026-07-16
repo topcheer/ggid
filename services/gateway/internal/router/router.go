@@ -908,13 +908,34 @@ func (gw *Gateway) handleDashboardStats(w http.ResponseWriter, r *http.Request) 
 func (gw *Gateway) handleHealthOverview(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	services := []map[string]interface{}{}
-	for prefix, backendURL := range gw.cfg.Routes {
-		name := strings.TrimPrefix(prefix, "/api/v1/")
-		services = append(services, map[string]interface{}{
-			"name":   name,
-			"url":    backendURL,
-			"status": "healthy",
-		})
+	// Add gateway itself first
+	services = append(services, map[string]interface{}{
+		"name":   "gateway",
+		"url":    "self",
+		"status": "healthy",
+	})
+	if gw.healthChecker != nil {
+		// Use real health checker results
+		status := gw.healthChecker.CheckAll(context.Background())
+		for _, svc := range status.Services {
+			services = append(services, map[string]interface{}{
+				"name":   svc.Name,
+				"status": svc.Status,
+			})
+		}
+	} else {
+		// Fallback: list routes as healthy
+		for prefix, backendURL := range gw.cfg.Routes {
+			name := strings.TrimPrefix(prefix, "/api/v1/")
+			if name == "" {
+				name = strings.TrimPrefix(prefix, "/")
+			}
+			services = append(services, map[string]interface{}{
+				"name":   name,
+				"url":    backendURL,
+				"status": "healthy",
+			})
+		}
 	}
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":   "ok",

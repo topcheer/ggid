@@ -70,13 +70,13 @@ export default function BreakGlassHistoryPage() {
 
       {/* Date filter */}
       <div className={`${cardCls} flex items-end gap-3`}>
-        <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Start Date</label><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
-        <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">End Date</label><input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
+        <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">Start Date</label><input aria-label="start Date" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
+        <div><label className="mb-1 block text-xs font-semibold uppercase text-gray-400">End Date</label><input aria-label="end Date" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200" /></div>
         <button onClick={handleFilter} disabled={filtering} className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">{filtering ? <Loader2 className="h-4 w-4 animate-spin" /> : <Filter className="h-4 w-4" />} Filter</button>
         {(startDate || endDate) && <button onClick={() => { setStartDate(""); setEndDate(""); handleFilter(); }} className="text-sm text-gray-500 hover:underline">Clear</button>}
       </div>
 
-      {error && <div className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button></div>}
 
       {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-purple-600" /></div>
       : (
@@ -95,14 +95,14 @@ export default function BreakGlassHistoryPage() {
             <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800"><tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Requester</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Reason</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Scope</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Duration</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Activated</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Deactivated</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Approver</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Requester</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Reason</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Scope</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Duration</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Activated</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Deactivated</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Approver</th>
+                  <th scope="col" className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300">Status</th>
                 </tr></thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {records.map((r) => (
