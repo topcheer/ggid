@@ -277,7 +277,7 @@ func (c *Client) verifyTokenOnline(ctx context.Context, accessToken string) (*Us
 	}
 
 	token, err := jwt.Parse(accessToken, func(t *jwt.Token) (any, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
+		if !IsSupportedAlg(t.Method.Alg()) {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
 		return pubKey, nil

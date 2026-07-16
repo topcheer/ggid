@@ -233,8 +233,8 @@ func (c *jwksCache) verify(tokenString string) (*UserInfo, error) {
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Validate signing method
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		// Validate signing method against the GGID algorithm whitelist
+		if !isSupportedAlg(token.Method.Alg()) {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		kid, _ := token.Header["kid"].(string)

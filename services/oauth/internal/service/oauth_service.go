@@ -621,12 +621,7 @@ func (s *OAuthService) ParseAccessToken(tokenStr string) (jwt.MapClaims, error) 
 }
 
 func isSupportedSigningMethod(method jwt.SigningMethod) bool {
-	switch method.(type) {
-	case *jwt.SigningMethodRSA, *jwt.SigningMethodRSAPSS, *jwt.SigningMethodECDSA, *jwt.SigningMethodEd25519:
-		return true
-	default:
-		return false
-	}
+	return pkgcrypto.IsSupportedAlg(method.Alg())
 }
 
 // UserInfoResponse holds the standard OIDC UserInfo claims.

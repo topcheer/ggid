@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	ggidcrypto "github.com/ggid/ggid/pkg/crypto"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -22,7 +23,7 @@ func (h *Handler) parseTokenFromHeader(r *http.Request) (jwt.MapClaims, error) {
 		return nil, fmt.Errorf("invalid authorization header format")
 	}
 	token, err := jwt.Parse(parts[1], func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+		if !ggidcrypto.IsSupportedAlg(token.Method.Alg()) {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 		return h.authSvc.PublicKey(), nil

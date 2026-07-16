@@ -548,7 +548,7 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 		// Build validation options: jwt/v5 validates exp/nbf/iat by default
 		// when claims are present. We add issuer, audience, and method restrictions.
 		parseOpts := []jwt.ParserOption{
-			jwt.WithValidMethods([]string{"RS256"}),
+			jwt.WithValidMethods(crypto.SupportedAlgs()),
 		}
 		if issuer != "" {
 			parseOpts = append(parseOpts, jwt.WithIssuer(issuer))
@@ -557,7 +557,7 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 			parseOpts = append(parseOpts, jwt.WithAudience(audience))
 		}
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			if !crypto.IsSupportedAlg(token.Method.Alg()) {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 			keyID, _ := token.Header["kid"].(string)
