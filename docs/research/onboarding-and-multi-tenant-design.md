@@ -462,7 +462,7 @@ ON CONFLICT (key) DO NOTHING;
 
 1. **Bootstrap endpoints must self-disable**: Once `initialized == true`, all bootstrap routes return `403`. This is enforced at the middleware level, not just per-handler.
 
-2. **Setup token**: 
+2. **Setup token**:
    - 32-byte random hex, stored in Redis with 30-min TTL.
    - Single-use or rate-limited (max 5 calls).
    - Invalidated after completion or expiry.
