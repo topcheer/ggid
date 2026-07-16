@@ -281,6 +281,8 @@ func jwtSigningMethod(alg ggidcrypto.KeyAlgorithm) jwt.SigningMethod {
 		return jwt.SigningMethodES512
 	case ggidcrypto.EdDSA:
 		return jwt.SigningMethodEdDSA
+	case ggidcrypto.SM2SM3:
+		return ggidcrypto.SigningMethodSM2
 	default:
 		return jwt.SigningMethodRS256
 	}

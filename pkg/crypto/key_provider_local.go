@@ -77,7 +77,10 @@ func inferAlgorithm(pub crypto.PublicKey) KeyAlgorithm {
 		_ = k
 		return RS256
 	case *ecdsa.PublicKey:
-		_ = k
+		// SM2 uses a P-256-like curve with different parameters; detect by OID.
+		if isSM2Curve(k.Curve) {
+			return SM2SM3
+		}
 		return ES256
 	case ed25519.PublicKey:
 		return EdDSA

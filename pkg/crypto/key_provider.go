@@ -22,6 +22,8 @@ const (
 	PS384 KeyAlgorithm = "PS384"
 	PS512 KeyAlgorithm = "PS512"
 	EdDSA KeyAlgorithm = "EdDSA"
+	// SM2SM3 is the Chinese GM algorithm: SM2 signature with SM3 hash (GB/T 32918.2-2016).
+	SM2SM3 KeyAlgorithm = "SM2SM3"
 )
 
 // KeyMetadata describes the key used by a provider.
@@ -71,6 +73,18 @@ type KeyProviderConfig struct {
 
 	// HashiCorp Vault Transit
 	Vault VaultTransitConfig `json:"vault,omitempty" yaml:"vault,omitempty"`
+
+	// Chinese GM SM2 (国密)
+	SM2 SM2KeyProviderConfig `json:"sm2,omitempty" yaml:"sm2,omitempty"`
+}
+
+// SM2KeyProviderConfig configures a Chinese GM SM2 signing key.
+type SM2KeyProviderConfig struct {
+	PrivateKeyPath string `json:"private_key_path,omitempty" yaml:"private_key_path,omitempty"`
+	PublicKeyPath  string `json:"public_key_path,omitempty" yaml:"public_key_path,omitempty"`
+	KeyID          string `json:"key_id,omitempty" yaml:"key_id,omitempty"`
+	// Generate creates an ephemeral in-memory key pair (development/testing only).
+	Generate bool `json:"generate,omitempty" yaml:"generate,omitempty"`
 }
 
 // LocalKeyProviderConfig loads a signing key from PEM files.
@@ -144,6 +158,8 @@ func NewKeyProvider(ctx context.Context, cfg KeyProviderConfig) (KeyProvider, er
 		return newAzureKMSKeyProvider(ctx, cfg.Azure)
 	case "vault":
 		return newVaultTransitKeyProvider(ctx, cfg.Vault)
+	case "sm2":
+		return newSM2KeyProvider(cfg.SM2)
 	default:
 		return nil, ErrKeyProviderNotSupported
 	}
