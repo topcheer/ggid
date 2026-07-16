@@ -2,66 +2,23 @@ package server
 
 import (
 	"net/http"
-	"sync"
 	"time"
 )
 
 // idpSyncStatus tracks external IdP directory sync state.
 type idpSyncStatus struct {
-	Provider      string                   `json:"provider"`
-	LastSync      string                   `json:"last_sync"`
-	NextSync      string                   `json:"next_sync"`
-	Status        string                   `json:"status"` // success, failed, in_progress, never
-	SyncedUsers   int                      `json:"synced_users"`
-	TotalUsers    int                      `json:"total_users"`
-	Errors        []map[string]any         `json:"errors"`
-	Frequency     string                   `json:"frequency"`
+	Provider    string           `json:"provider"`
+	LastSync    string           `json:"last_sync"`
+	NextSync    string           `json:"next_sync"`
+	Status      string           `json:"status"` // success, failed, in_progress, never
+	SyncedUsers int              `json:"synced_users"`
+	TotalUsers  int              `json:"total_users"`
+	Errors      []map[string]any `json:"errors"`
+	Frequency   string           `json:"frequency"`
 }
 
-var idpSyncStore = struct {
-	sync.RWMutex
-	statuses []idpSyncStatus
-}{statuses: []idpSyncStatus{
-	{
-		Provider: "okta", Status: "success",
-		LastSync: time.Now().UTC().Add(-15 * time.Minute).Format(time.RFC3339),
-		NextSync: time.Now().UTC().Add(45 * time.Minute).Format(time.RFC3339),
-		SyncedUsers: 15420, TotalUsers: 15420,
-		Errors: []map[string]any{}, Frequency: "hourly",
-	},
-	{
-		Provider: "azure-ad", Status: "success",
-		LastSync: time.Now().UTC().Add(-2 * time.Hour).Format(time.RFC3339),
-		NextSync: time.Now().UTC().Add(4 * time.Hour).Format(time.RFC3339),
-		SyncedUsers: 8930, TotalUsers: 8945,
-		Errors: []map[string]any{
-			{"user": "user-8931", "error": "duplicate UPN, skipped", "code": "DUPLICATE_UPN"},
-			{"user": "user-8942", "error": "missing required field: email", "code": "VALIDATION_ERROR"},
-		},
-		Frequency: "6h",
-	},
-	{
-		Provider: "ldap", Status: "failed",
-		LastSync: time.Now().UTC().Add(-3 * time.Hour).Format(time.RFC3339),
-		NextSync: time.Now().UTC().Add(15 * time.Minute).Format(time.RFC3339),
-		SyncedUsers: 0, TotalUsers: 3200,
-		Errors: []map[string]any{
-			{"error": "connection refused", "code": "CONN_REFUSED", "host": "ldap.internal:389"},
-		},
-		Frequency: "hourly",
-	},
-	{
-		Provider: "scim-endpoint", Status: "never",
-		LastSync: "", NextSync: "",
-		SyncedUsers: 0, TotalUsers: 0,
-		Errors: []map[string]any{
-			{"error": "SCIM endpoint not configured", "code": "NOT_CONFIGURED"},
-		},
-		Frequency: "manual",
-	},
-}}
-
 // GET /api/v1/identity/sync-status?provider=X
+// Returns real sync status from the LDAP sync state + other configured providers.
 func (h *HTTPHandler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -70,15 +27,22 @@ func (h *HTTPHandler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
 
 	providerFilter := r.URL.Query().Get("provider")
 
-	idpSyncStore.RLock()
 	result := []idpSyncStatus{}
-	for _, s := range idpSyncStore.statuses {
-		if providerFilter != "" && s.Provider != providerFilter {
-			continue
-		}
-		result = append(result, s)
+
+	// LDAP sync status from real state
+	if providerFilter == "" || providerFilter == "ldap" {
+		ldapSyncState.RLock()
+		result = append(result, idpSyncStatus{
+			Provider:    "ldap",
+			LastSync:    ldapSyncState.lastRun.Format(time.RFC3339),
+			Status:      ldapSyncState.status,
+			SyncedUsers: ldapSyncState.synced,
+			TotalUsers:  ldapSyncState.totalFound,
+			Errors:      ldapSyncState.errs,
+			Frequency:   "manual",
+		})
+		ldapSyncState.RUnlock()
 	}
-	idpSyncStore.RUnlock()
 
 	// Summary
 	totalSynced := 0
@@ -110,7 +74,7 @@ func (h *HTTPHandler) handleSyncStatus(w http.ResponseWriter, r *http.Request) {
 			}
 			return float64(totalSynced) / float64(totalUsers) * 100
 		}(),
-		"total_errors":      totalErrors,
-		"checked_at":        time.Now().UTC().Format(time.RFC3339),
+		"total_errors": totalErrors,
+		"checked_at":   time.Now().UTC().Format(time.RFC3339),
 	})
 }
