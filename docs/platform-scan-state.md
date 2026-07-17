@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 113
-## Last scan focus: E2E (Round 112) — Core 10/10, ERP 4/4, all pods Running; platform stable
-## Next scan focus: G (SDK matrix restart, Round 113 = odd round) — research next round (114)
+## Current round: 114
+## Last scan focus: G (SDK matrix restart, Round 113) — Go/Python/Node/Dart all PASS; SDK matrix stable
+## Next scan focus: E2E tests (Round 114 = even) — research cycle R114
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
