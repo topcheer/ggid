@@ -5,7 +5,7 @@ import {
   Shield, Loader2, AlertCircle, X, RefreshCw, Plus, Trash2, Check,
   CheckCircle, XCircle, KeyRound, FileJson, Eye, Code, Download,
   ArrowRight, ChevronRight, ShieldCheck, ShieldAlert, Clock,
-  QrCode, List, Award, Smartphone, RefreshCw, Check, X,
+  QrCode, List, Award, Smartphone,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader } from "@/lib/auth-helpers";
