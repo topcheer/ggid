@@ -178,6 +178,12 @@
 | KB-164 | **DB-backed decision audit** (replace in-memory log + async via NATS) | backend | P0 | continuous-authz | 3d |
 | KB-165 | **Risk overlay in evaluator** (risk score upgrades decision to step_up) | backend | P1 | continuous-authz | 3d |
 | KB-166 | **Decision audit query API** (replace hardcoded decision stats) | backend | P1 | continuous-authz | 2d |
+| KB-167 | **MDM connector framework** (Intune + Jamf API integration) | backend | P0 | mdm-integration | 5d |
+| KB-168 | **Compliance policy engine** (configurable rules + scoring) | backend | P0 | mdm-integration | 4d |
+| KB-169 | **Compliance webhooks + CAE integration** (real-time revocation) | backend | P1 | mdm-integration | 4d |
+| KB-170 | **SCEP certificate provisioning** (internal CA + device certs) | backend | P1 | mdm-integration | 3d |
+| KB-171 | **Hardware attestation verification** (TPM + Apple + Android) | backend | P2 | mdm-integration | 5d |
+| KB-172 | **Fleet compliance dashboard** (Console) | frontend | P2 | mdm-integration | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -283,6 +289,7 @@ Arch audit found 50+ additional global in-memory maps NOT covered by batch 4:
 | Decentralized Identity & Verifiable Credentials (W3C DID/VC) | DONE | docs/research/decentralized-identity-vc.md |
 | Zero Trust Maturity Assessment & Gap Analysis | DONE | docs/research/zero-trust-maturity-assessment.md |
 | Continuous Authorization & PDP | DONE | docs/research/continuous-authorization-pdp.md |
+| MDM Integration (Intune/Jamf/Android) | DONE | docs/research/mdm-integration.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---
