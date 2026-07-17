@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/audit"
+	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/saml"
 	"github.com/ggid/ggid/pkg/tenant"
@@ -199,9 +200,15 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 		handler.ServeHTTP(w, r)
 	})
 
+	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
+	protectedHandler := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
+		Secret:     mwSecret,
+		PrevSecret: mwPrevSecret,
+	})(wrappedHandler)
+
 	httpSrv := &http.Server{
 		Addr:         cfg.HTTP.Addr,
-		Handler:      wrappedHandler,
+		Handler:      protectedHandler,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}

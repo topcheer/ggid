@@ -14,6 +14,7 @@ import (
 
 	pb "github.com/ggid/ggid/api/gen/policy/v1"
 	"github.com/ggid/ggid/pkg/audit"
+	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/services/policy/internal/config"
 	"github.com/ggid/ggid/services/policy/internal/data"
 	"github.com/ggid/ggid/services/policy/internal/handler"
@@ -129,6 +130,12 @@ func main() {
 	httpAPI.SetCampaignRepo(httpserver.NewCampaignRepo(db))
 	httpAPI.RegisterRoutes(mux)
 
+	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
+	protectedMux := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
+		Secret:     mwSecret,
+		PrevSecret: mwPrevSecret,
+	})(mux)
+
 	httpServer := &http.Server{
 		Addr: cfg.HTTPAddr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +145,7 @@ func main() {
 					http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 				}
 			}()
-			mux.ServeHTTP(w, r)
+			protectedMux.ServeHTTP(w, r)
 		}),
 	}
 

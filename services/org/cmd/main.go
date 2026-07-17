@@ -14,6 +14,7 @@ import (
 
 	pb "github.com/ggid/ggid/api/gen/org/v1"
 	"github.com/ggid/ggid/pkg/audit"
+	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/services/org/internal/config"
 	"github.com/ggid/ggid/services/org/internal/data"
 	"github.com/ggid/ggid/services/org/internal/handler"
@@ -132,6 +133,12 @@ func main() {
 	httpAPI := httpserver.NewHTTPServer(orgSvc, deptSvc, teamSvc, memberSvc)
 	httpAPI.RegisterRoutes(mux)
 
+	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
+	protectedMux := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
+		Secret:     mwSecret,
+		PrevSecret: mwPrevSecret,
+	})(mux)
+
 	httpServer := &http.Server{
 		Addr: cfg.HTTPAddr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +148,7 @@ func main() {
 					http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 				}
 			}()
-			mux.ServeHTTP(w, r)
+			protectedMux.ServeHTTP(w, r)
 		}),
 	}
 

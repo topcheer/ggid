@@ -176,3 +176,22 @@ func DefaultWhitelist() []string {
 		"/readyz",
 	}
 }
+
+// InternalAuthPathOnly applies InternalAuth only to paths containing "/internal/".
+// All other paths (public APIs, healthz, metrics) pass through without any auth check.
+// If no secret is configured, it is a complete no-op (dev mode).
+func InternalAuthPathOnly(cfg InternalAuthConfig) func(http.Handler) http.Handler {
+	if len(cfg.Secret) == 0 {
+		return func(next http.Handler) http.Handler { return next }
+	}
+	authMW := InternalAuth(cfg)
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !strings.Contains(r.URL.Path, "/internal/") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			authMW(next).ServeHTTP(w, r)
+		})
+	}
+}

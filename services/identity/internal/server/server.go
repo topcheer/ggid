@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/services/identity/internal/conf"
 	"github.com/ggid/ggid/services/identity/internal/data"
 	"github.com/ggid/ggid/services/identity/internal/repository"
@@ -77,9 +78,16 @@ func New(cfg *conf.Config) (*Server, error) {
 	identityGRPC.RegisterGRPC(grpcSrv)
 
 	httpHandler := NewHTTPHandler(identitySvc)
+
+	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
+	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
+		Secret:     mwSecret,
+		PrevSecret: mwPrevSecret,
+	})
+
 	httpSrv := &http.Server{
 		Addr:         cfg.HTTP.Addr,
-		Handler:      httpHandler,
+		Handler:      internalMW(httpHandler),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}

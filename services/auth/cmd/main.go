@@ -22,6 +22,7 @@ import (
 	"github.com/ggid/ggid/pkg/authprovider"
 	ggidauth "github.com/ggid/ggid/pkg/auth"
 	"github.com/ggid/ggid/pkg/audit"
+	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/pkg/truststore"
@@ -261,9 +262,15 @@ func main() {
 	if natsURL := os.Getenv("NATS_URL"); natsURL != "" && revocationMgr != nil {
 		go startSessionRevokeSubscriber(ctx, natsURL, revocationMgr)
 	}
+	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
+	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
+		Secret:     mwSecret,
+		PrevSecret: mwPrevSecret,
+	})
+
 	httpServer := &http.Server{
 		Addr:         cfg.Server.HTTP.Addr,
-		Handler:      handler,
+		Handler:      internalMW(handler),
 		ReadTimeout:  cfg.Server.HTTP.ReadTimeout,
 		WriteTimeout: cfg.Server.HTTP.WriteTimeout,
 	}
