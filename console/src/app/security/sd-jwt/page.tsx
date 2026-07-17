@@ -207,6 +207,7 @@ export default function SDJWTPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
