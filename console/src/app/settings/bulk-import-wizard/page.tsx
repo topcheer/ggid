@@ -50,7 +50,7 @@ export default function BulkImportWizard() {
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
   const [roleField, setRoleField] = useState("");
-  const [roleMapping, setRoleMapping] = useState(Record<string, string>>({...ROLE_PRESETS.reduce((a, r) => ({...a, [r.source_value]: r.ggid_role}), {})});
+  const [roleMapping, setRoleMapping] = useState<Record<string, string>>({...ROLE_PRESETS.reduce((a, r) => ({...a, [r.source_value]: r.ggid_role}), {})});
   const [hashAlgo, setHashAlgo] = useState("argon2id");
   const [progress, setProgress] = useState<ImportProgress>({ total: 0, processed: 0, succeeded: 0, failed: 0, status: "idle", errors: [] });
   const [error, setError] = useState<string | null>(null);
