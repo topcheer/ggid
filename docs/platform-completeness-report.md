@@ -226,3 +226,21 @@ All services extract X-Tenant-ID at the handler level and set up ggidtenant cont
 | gRPC TLS | DONE | GRPC_TLS_ENABLED env with cert/key loading, plaintext fallback only with explicit GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true. |
 
 **No P0 issues. 1 deployment hardening item (pepper), 1 low-priority DCR validation improvement.**
+
+### Round 97 Focus F — Feature Deep Verification Results
+
+| Feature | Status | Details |
+|---------|--------|---------|
+| SAML Metadata | DONE | GET /saml/metadata → 200 valid XML EntityDescriptor |
+| SAML SSO | DONE | GET /saml/sso?SpEntityID=... → 302 redirect with SAMLRequest |
+| SAML SLO | DONE | Route registered at /saml/slo |
+| PAR | DONE | POST /api/v1/oauth/par → 201 request_uri (RFC 9126). Note: uses JSON body, not form-encoded |
+| MFA TOTP | DONE | POST /api/v1/auth/mfa/setup {method:totp} → secret + QR URI |
+| Backup Codes | DONE | POST generate → 10 codes; GET remaining → count persisted |
+| SCIM Bulk | DONE | POST /scim/v2/Bulk → 200 |
+| CIBA | PARTIAL | Config endpoint exists (/api/v1/oauth/ciba/config). No bc-authorize endpoint — CIBA flow not implemented. Known gap. |
+| Device Code | DONE | POST /api/v1/oauth/device_authorization → device_code (R88) |
+| Introspect | DONE | POST /api/v1/oauth/introspect → active=true (R88) |
+| WebAuthn | DONE | Registration + attestation verification (R95) |
+
+**1 known gap:** CIBA bc-authorize endpoint missing (config-only, tracked).

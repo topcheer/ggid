@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 97
-## Last scan focus: E2E (Round 96) — Core 7/7, ERP 4/4, OAuth 3/3, SDK 8/8 PASS; kanban D-01/D-02 done + README security added (0eba6edf); A-03 added (pepper deployment hardening)
-## Next scan focus: F (Feature deep verification, Round 97 = odd round, Workflow B)
+## Current round: 98
+## Last scan focus: F (Feature deep verification, Round 97) — SAML/SSO/SLO, PAR, TOTP, Backup Codes, SCIM Bulk, WebAuthn all working; CIBA bc-authorize missing (config-only, known gap)
+## Next scan focus: E2E tests (Round 98 = even round, Workflow A)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
