@@ -182,31 +182,40 @@
 
 | ID | Title | Owner | Status |
 |----|-------|-------|--------|
-| B-37b | Threat Intel → ITDR + CAE integration | IAMExpert | design doc (Unified Risk Engine) assigned |
+| Batch 5a | auth service 14 in-memory maps → PG (OTP, passkey, biometrics, etc.) | IAMExpert | in progress |
 | KB-131b | oauth/service/consent.go in-memory map → DB migration | backend | in progress |
-| — | P0 i18n fixes: 9 pages with zero i18n coverage (~100 strings) | frontend | in progress |
+| — | P0 i18n fixes: 9 pages with zero i18n coverage (~100 strings) | frontend | REVIEW (commit 39d920df) |
 | — | E2E console page verification sweep (F-44 through F-49) | UIAutomationExpert | in progress |
 | — | P1 i18n fixes: 13 pages with partial hardcoded strings (~80 strings) | techwriter | in progress |
-| — | Decentralized Identity & VC research | researcher | in progress |
+| — | Zero Trust Maturity Assessment research | researcher | in progress |
+
+## Batch 5: In-Memory Map Migration (NEW — 50+ maps found)
+
+Arch audit found 50+ additional global in-memory maps NOT covered by batch 4:
+- auth: 14 maps (security-critical: OTP, passkey, biometrics, sessions)
+- policy: 10 maps (delegated admins, ABAC, permission boundaries, certifications)
+- identity: 7 maps (delegations, attestations, DID, templates)
+- oauth: 8+ maps (client lifecycle, PAR, consent receipts, certs)
+- audit: 5 maps (incidents, subscriptions, reports, signatures)
+- org: 2 maps (budgets, role bindings)
 
 ## Done (Recent)
 
 | Item | Detail | Verified |
 |------|--------|----------|
-| B-37 Threat Intel Hub | commit c83a4ec9 — PG schema + adapters + 5 endpoints + collector. 901 lines, 6 tests | PASS by arch (build + tests) |
-| B-37b ITDR/CAE integration | commit 2be3e84b — ThreatIntelRule + risk score injection. 6 tests | PASS by arch (build + tests) |
-| KB-131/132 Consent backend | commit a8e57c93 — migration 029 + consentRepo + GDPR Art.7/17. 4 tests | PASS by arch (build + tests) |
-| B-34 batch 4 COMPLETE | commit 8de27c2d — all 11 maps → PG. `make(map[` = 0 globally | PASS by UIAutomationExpert |
-| B-34a OAuth batch 4 (6 maps) | commit 84924873 | PASS by IAMExpert |
-| **In-memory map milestone** | **Global `var = make(map[string])` = 0 across ALL services** | Retrospective tech debt #3 closed |
-| i18n data bugs fix | commit ea89fca8 — corrupted t() string + 12 Chinese-in-EN values | PASS by UIAutomationExpert |
-| Console deploy + route aliases | commit 13938ace — /risk-scoring + /threat-intel 200 OK | Verified by techwriter |
-| F-47 Passkey Health Dashboard | commit fb1aadb7 | Pushed |
-| F-48 ReBAC Console UI | commit ffab77d2 | Pushed |
-| F-49 JIT Provisioning Dashboard | commit e2e8a16a | Pushed |
+| URE Design Doc | commit 6576be96 — Unified Risk Engine, 503 lines, 12 chapters | Pushed |
+| DID/VC research | commit b086f5c1 — 31KB, 6 backlog items (KB-149 to KB-154) | Pushed |
+| AI Agent Identity research | commit e8fb71a0 — 33KB + 2108-line analysis, 6 items | Pushed |
+| P0 i18n fixes | commit 39d920df — 9 pages, 35 new keys, React Hooks violation fixed | REVIEW |
+| B-37 Threat Intel Hub | commit c83a4ec9 — PG schema + adapters + 5 endpoints + collector. 901 lines | PASS by arch |
+| B-37b ITDR/CAE integration | commit 2be3e84b — ThreatIntelRule + risk score injection. 6 tests | PASS by arch |
+| KB-131/132 Consent backend | commit a8e57c93 — migration 029 + consentRepo + GDPR Art.7/17 | PASS by arch |
+| B-34 batch 4 COMPLETE | commit 8de27c2d — all 11 maps → PG | PASS by UIAutomationExpert |
+| i18n data bugs fix | commit ea89fca8 — corrupted t() string + 12 Chinese-in-EN values | PASS |
+| Console deploy + routes | commit 13938ace — /risk-scoring + /threat-intel 200 OK | Verified |
+| F-47/F-48/F-49 | commits fb1aadb7, ffab77d2, e2e8a16a | Pushed |
 | User guides F-46/F-47/F-48 | commit 13938ace | Pushed |
-| Consent Management research | commit c5452b5b — 38KB, 6 backlog items | Pushed |
-| Adaptive Auth Engine research | commit 314ff498 — 32KB, 6 backlog items | Pushed |
+| Consent + Adaptive Auth + AI Agent research | 3 research docs, 18 backlog items | Pushed |
 | AI Agent Identity research | commit e8fb71a0 — 33KB + 2108-line analysis, 6 backlog items | Pushed |
 | F-47 Passkey Health Dashboard | commit fb1aadb7 — 4 tabs (KB-024) | Pushed |
 | F-48 ReBAC Console UI | commit ffab77d2 — schema editor + playground + tuples + graph (KB-029) | Pushed |
