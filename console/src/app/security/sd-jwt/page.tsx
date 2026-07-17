@@ -143,7 +143,11 @@ export default function SDJWTPage() {
           <div className={cardCls}>
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><CheckCircle className="h-4 w-4" /> Verification Result</h2>
             {verifyResult ? (
-              <div><div className={"flex items-center gap-3 rounded-xl border-2 p-4 " + (verifyResult.valid ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/30" : "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30")}>{verifyResult.valid ? <CheckCircle className="h-8 w-8 text-green-500" /> : <XCircle className="h-8 w-8 text-red-500" /><div><p className={"text-lg font-bold " + (verifyResult.valid ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")}>{verifyResult.valid ? "VALID" : "INVALID"}</p><p className="text-xs text-gray-500">Issuer: {verifyResult.issuer || "—"}</p></div></div>
+              <div>
+              <div className={"flex items-center gap-3 rounded-xl border-2 p-4 " + (verifyResult.valid ? "border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-950/30" : "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30")}>
+                {verifyResult.valid ? <CheckCircle className="h-8 w-8 text-green-500" /> : <XCircle className="h-8 w-8 text-red-500" />}
+                <div><p className={"text-lg font-bold " + (verifyResult.valid ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")}>{verifyResult.valid ? "VALID" : "INVALID"}</p><p className="text-xs text-gray-500">Issuer: {verifyResult.issuer || "—"}</p></div>
+              </div>
               {verifyResult.checks?.map((c, i) => <div key={i} className="mt-2 flex items-center gap-2 text-xs">{c.passed ? <CheckCircle className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-red-500" />}<span>{c.name}</span></div>)}
               {verifyResult.disclosed_claims && Object.keys(verifyResult.disclosed_claims).length > 0 && <div className="mt-3"><p className="text-xs font-semibold text-gray-400 mb-1">Disclosed Claims ({verifyResult.hidden_claims_count || 0} hidden)</p><div className="flex flex-wrap gap-1">{Object.entries(verifyResult.disclosed_claims).map(([k, v]) => <span key={k} className="px-1.5 py-0.5 rounded bg-green-50 dark:bg-green-950/30 text-xs font-mono">{k}={v}</span>)}</div></div>}
               </div>
