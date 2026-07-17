@@ -1,13 +1,13 @@
 # Platform Scan State
 
-## Current round: 89
-## Last scan focus: E2E (Round 88) — OAuth 8/8 PASS, ERP 4/4 PASS, SDK 8/8 PASS; no new bugs; JWT kid unification stable
-## Next scan focus: B (Route/Wiring scan, Round 89 = odd round, Workflow B)
-## Total findings: 73
-## Done: 73
-## Fixed (pending verification): 0
+## Current round: 90
+## Last scan focus: B (Route/Wiring, Round 89) — wired CircuitMiddleware (b993dd37); found 2 unwired auth handlers (assigned backend); 5 orphaned gateway middleware (acceptable); other services clean
+## Next scan focus: E2E tests (Round 90 = even round, Workflow A)
+## Total findings: 76
+## Done: 74
+## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
 ## Partial: 0
-## Remaining: 1 (FedCM ACCEPTABLE) + 1 LOW (CIBA Basic auth) + 1 (operator namespace config ggid-system vs ggid)
+## Remaining: 1 (FedCM ACCEPTABLE) + 1 LOW (CIBA Basic auth) + 1 (operator namespace config) + 1 (handleSessionFingerprint stub — needs real data)
 ## Remaining (non-gap): 0
 ## Source of truth: docs/platform-completeness-report.md
 

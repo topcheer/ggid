@@ -157,3 +157,19 @@ Note: CIBA endpoint only accepts form-encoded client credentials (client_id/clie
 - services/ Go 代码零 TODO/FIXME（HTML placeholder 属性除外，非问题）
 - [FIXED] **Provisioning gateway stub** — gateway 对所有 /api/v1/provisioning/* 请求返回假空响应 `{"items":[],"total":0}`，包括 POST/DELETE（静默假成功）。实际上 deploy/operator 有完整代码（CRD + controllers + HTTP API）但从未部署。本轮：创建 operator Dockerfile（含 kubectl/helm/chart）、安装 CRD、部署到 ggid-operator namespace、gateway 路由切换到真实 API（PROVISIONING_SERVICE_URL）。E2E 验证 environment/instances/tenants 返回真实集群状态。Commit eae696b5。
 - 注意：operator environment 报告的 operatorNamespace 为 "ggid-system"（默认配置），实际 GGID 部署在 "ggid" namespace — 真实 provision 操作前需校正 operator 的命名空间配置（记录为后续项）。
+
+### Round 89 Focus B — Route/Wiring Scan Results
+
+**Auth service unwired handlers (assigned to backend):**
+- [NEW] **handleRotationRoute** — rotation_handler.go:13, real RotationScheduler service behind it, never mux-registered → key rotation API 404. DM'd backend.
+- [STUB] **handleSessionFingerprint** — session_fingerprint_handler.go:10, returns hardcoded fake fingerprint data (user_agent "Mozilla/5.0", screen "1920x1080"). Not wired (correctly). Needs real session data. DM'd backend.
+
+**Gateway orphaned middleware (6 defined, 0 wired):**
+- [FIXED] **CircuitMiddleware** — circuitbreaker.go:237, production-ready per-backend circuit breaker, now wired into proxy dispatch (b993dd37). Failing backends return 503 instead of cascading timeouts.
+- [ACCEPTABLE] **APIKeyAuth** — apikey.go, gateway-level API key validation. Auth service handles API keys internally; gateway-level duplicate not needed currently.
+- [ACCEPTABLE] **AuditMiddleware** — audit_log.go, gateway-level audit logging. Individual services publish audit events via NATS; redundant at gateway.
+- [ACCEPTABLE] **CSRFProtect** — middleware.go, CSRF protection. JWT Bearer auth (no cookies for auth) makes CSRF moot for API gateway.
+- [ACCEPTABLE] **CoalesceMiddleware** — coalesce.go, request coalescing. Performance optimization, not critical.
+- [ACCEPTABLE] **APIVersioningMiddleware** — api_versioning.go, API version enforcement. No versioning scheme in use yet.
+
+**Other services (identity, oauth, policy, org, audit):** All handler methods properly mux-registered. No unwired handlers found.
