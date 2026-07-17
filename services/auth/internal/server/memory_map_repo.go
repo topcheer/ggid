@@ -184,6 +184,20 @@ func (r *authMemoryMapRepo) EnsureSchema(ctx context.Context) error {
 			enabled BOOLEAN DEFAULT TRUE,
 			created_at TIMESTAMPTZ DEFAULT now()
 		);
+
+		-- Generic JSON tables for write-through handlers (StoreJSON/ListJSON/GetJSON)
+		CREATE TABLE IF NOT EXISTS auth_otp_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_passkey_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_biometric_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_credvault_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
 	`)
 	return err
 }

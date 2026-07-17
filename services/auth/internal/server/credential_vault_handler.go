@@ -98,6 +98,17 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 		}
 		credVault[req.UserID][req.Key] = cred
 		credVaultMu.Unlock()
+
+		// PG write-through
+		if h.memMapRepo != nil {
+			vaultID := req.UserID + ":" + req.Key
+			h.memMapRepo.StoreJSON(r.Context(), "auth_credvault_json", vaultID, map[string]any{
+				"id": vaultID, "user_id": req.UserID,
+				"cred_key": req.Key, "encrypted_value": encVal,
+				"created_at": now, "updated_at": now,
+			})
+		}
+
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"status": "stored", "user_id": req.UserID, "key": req.Key,
 			"encryption": "AES-256-GCM", "stored_at": now.Format(time.RFC3339),
@@ -109,19 +120,33 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 			writeError(w, http.StatusBadRequest, "key and user_id required")
 			return
 		}
-		credVaultMu.RLock()
-		userVault, ok := credVault[userID]
-		credVaultMu.RUnlock()
-		if !ok {
-			writeError(w, http.StatusNotFound, "vault not found")
-			return
+		// Try PG first, fall back to in-memory.
+		var cred *StoredCredential
+		if h.memMapRepo != nil {
+			vaultID := userID + ":" + key
+			if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_credvault_json", vaultID); row != nil {
+				cred = &StoredCredential{
+					Key:   getString(row, "cred_key"),
+					Value: getString(row, "encrypted_value"),
+				}
+			}
 		}
-		credVaultMu.RLock()
-		cred, ok := userVault[key]
-		credVaultMu.RUnlock()
-		if !ok {
-			writeError(w, http.StatusNotFound, "credential not found")
-			return
+		if cred == nil {
+			credVaultMu.RLock()
+			userVault, ok := credVault[userID]
+			credVaultMu.RUnlock()
+			if !ok {
+				writeError(w, http.StatusNotFound, "vault not found")
+				return
+			}
+			credVaultMu.RLock()
+			c, ok := userVault[key]
+			credVaultMu.RUnlock()
+			if !ok {
+				writeError(w, http.StatusNotFound, "credential not found")
+				return
+			}
+			cred = c
 		}
 		decVal, err := decryptCredential(cred.Value)
 		if err != nil {

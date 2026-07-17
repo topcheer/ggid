@@ -79,6 +79,17 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 	biometrics[tmpl.ID] = tmpl
 	biometricMu.Unlock()
 
+	// PG write-through
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_biometric_json", tmpl.ID, map[string]any{
+			"id": tmpl.ID, "user_id": tmpl.UserID,
+			"template_encrypted": tmpl.TemplateEnc,
+			"device_type": tmpl.DeviceType,
+			"enrolled_at": tmpl.EnrolledAt,
+			"verify_count": 0,
+		})
+	}
+
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"status":       "enrolled",
 		"template_id":  tmpl.ID,
@@ -110,11 +121,29 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 	biometricMu.Lock()
 	defer biometricMu.Unlock()
 
+	// Find template for user — try PG first, fall back to in-memory.
 	var found *BiometricTemplate
-	for _, t := range biometrics {
-		if t.UserID == req.UserID {
-			found = t
-			break
+	if h.memMapRepo != nil {
+		rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_biometric_json")
+		for _, row := range rows {
+			if uid, _ := row["user_id"].(string); uid == req.UserID {
+				found = &BiometricTemplate{
+					ID:          getString(row, "id"),
+					UserID:      req.UserID,
+					TemplateEnc: getString(row, "template_encrypted"),
+					DeviceType:  getString(row, "device_type"),
+					VerifyCount: getInt(row, "verify_count"),
+				}
+				break
+			}
+		}
+	}
+	if found == nil {
+		for _, t := range biometrics {
+			if t.UserID == req.UserID {
+				found = t
+				break
+			}
 		}
 	}
 	if found == nil {
@@ -153,6 +182,16 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 	now := time.Now().UTC()
 	found.VerifiedAt = &now
 	found.VerifyCount++
+	// PG write-through: update verify metadata
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_biometric_json", found.ID, map[string]any{
+			"id": found.ID, "user_id": found.UserID,
+			"template_encrypted": found.TemplateEnc,
+			"device_type": found.DeviceType,
+			"enrolled_at": found.EnrolledAt,
+			"verified_at": now, "verify_count": found.VerifyCount,
+		})
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"verified":      true,

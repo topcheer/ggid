@@ -73,6 +73,14 @@ func (h *Handler) handleEmailOTPSend(w http.ResponseWriter, r *http.Request) {
 	}
 	otpStoreMu.Unlock()
 
+	// PG write-through
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_otp_json", code, map[string]any{
+			"code": code, "email": req.Email,
+			"expires_at": now.Add(5 * time.Minute), "used": false,
+		})
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":     "sent",
 		"email":      req.Email,
@@ -98,6 +106,38 @@ func (h *Handler) handleEmailOTPVerify(w http.ResponseWriter, r *http.Request) {
 	if req.Email == "" || req.Code == "" {
 		writeError(w, http.StatusBadRequest, "email and code are required")
 		return
+	}
+
+	// Try PG first, fall back to in-memory map.
+	if h.memMapRepo != nil {
+		row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_otp_json", req.Code)
+		if row != nil {
+			if email, _ := row["email"].(string); email != req.Email {
+				writeError(w, http.StatusUnauthorized, "OTP email mismatch")
+				return
+			}
+			if used, _ := row["used"].(bool); used {
+				writeError(w, http.StatusUnauthorized, "OTP already used")
+				return
+			}
+			// Mark as used in PG
+			row["used"] = true
+			h.memMapRepo.StoreJSON(r.Context(), "auth_otp_json", req.Code, row)
+			// Backward-compat: update in-memory
+			otpStoreMu.Lock()
+			if e, ok := otpStore[req.Code]; ok {
+				e.Used = true
+			}
+			otpStoreMu.Unlock()
+			writeJSON(w, http.StatusOK, map[string]any{
+				"status":     "authenticated",
+				"email":      req.Email,
+				"method":     "email_otp",
+				"token_type": "Bearer",
+				"expires_in": 3600,
+			})
+			return
+		}
 	}
 
 	otpStoreMu.Lock()

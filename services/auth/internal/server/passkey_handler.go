@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -67,6 +68,15 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 	pkRegSessions[sess.SessionID] = sess
 	pkMu.Unlock()
 
+	// PG write-through
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "reg:"+sess.SessionID, map[string]any{
+			"session_id": sess.SessionID, "user_id": sess.UserID,
+			"challenge": sess.Challenge, "rp_id": sess.RPID,
+			"created_at": sess.CreatedAt, "status": sess.Status,
+		})
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(sess)
@@ -90,10 +100,24 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 	}
 	pkMu.Lock()
 	defer pkMu.Unlock()
-	sess, ok := pkRegSessions[req.SessionID]
-	if !ok {
-		http.Error(w, `{"error":"session not found"}`, http.StatusNotFound)
-		return
+	// Try PG first for session lookup, fall back to in-memory.
+	var sess *PasskeyRegistrationSession
+	if h.memMapRepo != nil {
+		if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_passkey_json", "reg:"+req.SessionID); row != nil {
+			sess = &PasskeyRegistrationSession{
+				SessionID: req.SessionID,
+				UserID:    getString(row, "user_id"),
+				Status:    getString(row, "status"),
+			}
+		}
+	}
+	if sess == nil {
+		var ok bool
+		sess, ok = pkRegSessions[req.SessionID]
+		if !ok {
+			http.Error(w, `{"error":"session not found"}`, http.StatusNotFound)
+			return
+		}
 	}
 	pkSeq++
 	cred := &PasskeyCredential{
@@ -104,6 +128,18 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 	}
 	pkCredentials[cred.ID] = cred
 	sess.Status = "completed"
+	// PG write-through for credential and session
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "cred:"+cred.ID, map[string]any{
+			"id": cred.ID, "user_id": cred.UserID,
+			"public_key": cred.PublicKey, "counter": cred.Counter,
+			"created_at": cred.CreatedAt, "revoked": cred.Revoked,
+		})
+		h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "reg:"+req.SessionID, map[string]any{
+			"session_id": req.SessionID, "user_id": sess.UserID,
+			"status": "completed",
+		})
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(cred)
 }
@@ -125,6 +161,15 @@ func (h *Handler) handlePasskeyAuthBegin(w http.ResponseWriter, r *http.Request)
 	pkAuthSessions[sess.SessionID] = sess
 	pkMu.Unlock()
 
+	// PG write-through
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "auth:"+sess.SessionID, map[string]any{
+			"session_id": sess.SessionID, "challenge": sess.Challenge,
+			"rp_id": sess.RPID, "created_at": sess.CreatedAt,
+			"status": sess.Status,
+		})
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(sess)
 }
@@ -145,13 +190,38 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 	}
 	pkMu.Lock()
 	defer pkMu.Unlock()
-	sess, ok := pkAuthSessions[req.SessionID]
-	if !ok {
-		http.Error(w, `{"error":"session not found"}`, http.StatusNotFound)
-		return
+	// Try PG first for session and credential lookup.
+	var sess *PasskeyAuthSession
+	var cred *PasskeyCredential
+	if h.memMapRepo != nil {
+		if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_passkey_json", "auth:"+req.SessionID); row != nil {
+			sess = &PasskeyAuthSession{SessionID: req.SessionID, Status: getString(row, "status")}
+		}
+		if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_passkey_json", "cred:"+req.CredentialID); row != nil {
+			cred = &PasskeyCredential{
+				ID:      req.CredentialID,
+				UserID:  getString(row, "user_id"),
+				Counter: getInt(row, "counter"),
+				Revoked: getBool(row, "revoked"),
+			}
+		}
 	}
-	cred, ok := pkCredentials[req.CredentialID]
-	if !ok || cred.Revoked {
+	if sess == nil {
+		var ok bool
+		sess, ok = pkAuthSessions[req.SessionID]
+		if !ok {
+			http.Error(w, `{"error":"session not found"}`, http.StatusNotFound)
+			return
+		}
+	}
+	if cred == nil {
+		var ok bool
+		cred, ok = pkCredentials[req.CredentialID]
+		if !ok || cred.Revoked {
+			http.Error(w, `{"error":"credential not found or revoked"}`, http.StatusUnauthorized)
+			return
+		}
+	} else if cred.Revoked {
 		http.Error(w, `{"error":"credential not found or revoked"}`, http.StatusUnauthorized)
 		return
 	}
@@ -180,6 +250,17 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cred.Revoked = true
+	// PG write-through
+	if h.memMapRepo != nil {
+		if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_passkey_json", "cred:"+id); row != nil {
+			row["revoked"] = true
+			h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "cred:"+id, row)
+		} else {
+			h.memMapRepo.StoreJSON(r.Context(), "auth_passkey_json", "cred:"+id, map[string]any{
+				"id": id, "revoked": true,
+			})
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"status": "revoked", "id": id})
 }
@@ -220,4 +301,46 @@ func fmtPKID(n int) string {
 		n /= 16
 	}
 	return "pk_" + string(buf)
+}
+
+// --- map[string]any type-assertion helpers ---
+
+func getString(m map[string]any, key string) string {
+	if v, ok := m[key]; ok {
+		switch s := v.(type) {
+		case string:
+			return s
+		case fmt.Stringer:
+			return s.String()
+		default:
+			return fmt.Sprintf("%v", v)
+		}
+	}
+	return ""
+}
+
+func getInt(m map[string]any, key string) int {
+	if v, ok := m[key]; ok {
+		switch n := v.(type) {
+		case int:
+			return n
+		case int64:
+			return int(n)
+		case float64:
+			return int(n)
+		case json.Number:
+			i, _ := n.Int64()
+			return int(i)
+		}
+	}
+	return 0
+}
+
+func getBool(m map[string]any, key string) bool {
+	if v, ok := m[key]; ok {
+		if b, ok := v.(bool); ok {
+			return b
+		}
+	}
+	return false
 }
