@@ -164,18 +164,25 @@
 
 | ID | Title | Owner | Status |
 |----|-------|-------|--------|
-| B-34b | Batch 4 remaining: audit (3 maps) + auth (2 maps) rewire | backend | in progress |
 | B-37 | Threat Intelligence Integration Hub (backend) | IAMExpert | in progress — design doc ready |
-| — | Console rebuild + deploy for F-44/F-45 pages | techwriter | in progress |
-| — | i18n audit sweep (hardcoded strings + missing keys) | UIAutomationExpert | in progress |
-| — | Consent Management Platform research | researcher | in progress |
+| KB-131/132 | Consent Management Backend (replace mock data + in-memory maps) | backend | in progress |
+| — | P0 i18n fixes: 9 pages with zero i18n coverage (~100 strings) | frontend | in progress |
+| — | Verify batch 4 final commit 8de27c2d + fix P2/P3 i18n data bugs | UIAutomationExpert | in progress |
+| — | User guides: F-47 Passkey, F-48 ReBAC, F-46 API Keys | techwriter | in progress |
+| — | PQC migration or Risk-Based Adaptive Auth research | researcher | in progress |
 
 ## Done (Recent)
 
 | Item | Detail | Verified |
 |------|--------|----------|
+| B-34 batch 4 COMPLETE | commit 8de27c2d — all 11 maps (oauth 6 + audit 3 + auth 2) → PG repos. `make(map[` = 0 globally | Pending verification |
 | B-34a OAuth batch 4 (6 maps) | commit 84924873 — brandingStore, customScopes, dpopBindings, resourceAllow, clientScopes, delegationChains → PG mapRepoVar | PASS by IAMExpert |
 | **In-memory map milestone** | **Global `var = make(map[string])` = 0 across ALL services** (originally 13+ → 0) | Retrospective tech debt #3 closed |
+| F-47 Passkey Health Dashboard | commit fb1aadb7 — 4 tabs (KB-024) | Pushed |
+| F-48 ReBAC Console UI | commit ffab77d2 — schema editor + playground + tuples + graph (KB-029) | Pushed |
+| Console deploy F-44/F-45 | /security/risk-score + /security/threat-intel live (200 OK) | Verified by techwriter |
+| i18n audit report | 9 P0 files + 13 P1 files + P2 missing keys + P3 Chinese-in-EN bugs | Reported by UIAutomationExpert |
+| Consent Management research | commit c5452b5b — 38KB doc + 6 backlog items (KB-131 to KB-136) | Pushed |
 
 ## Done (Recent)
 
