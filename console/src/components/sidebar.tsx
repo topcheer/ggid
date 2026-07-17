@@ -30,6 +30,11 @@ import {
   AlertCircle,
   Loader2,
   LogOut,
+  Gauge,
+  Radar,
+  Fingerprint,
+  Share2,
+  ArrowUpCircle,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useI18n } from "@/lib/i18n";
@@ -91,21 +96,27 @@ export function Sidebar() {
       label: "Security",
       items: [
         { href: "/audit", label: t("nav.audit"), icon: ScrollText },
+        { href: "/security/risk-score", label: t("nav.riskScore"), icon: Gauge },
+        { href: "/security/threat-intel", label: t("nav.threatIntel"), icon: Radar },
+        { href: "/security/rebac", label: t("nav.rebac"), icon: Share2 },
         { href: "/agents", label: t("nav.aiAgents"), icon: Bot },
         { href: "/access-requests", label: t("nav.accessRequests"), icon: FileCheck },
+        { href: "/api-keys", label: t("nav.apiKeys"), icon: KeyRound },
         { href: "/oauth-clients", label: t("nav.oauthClients"), icon: KeyRound },
         { href: "/webhooks", label: t("nav.webhooks"), icon: Webhook },
         { href: "/sessions", label: t("nav.sessions"), icon: Monitor },
         { href: "/scim", label: t("nav.scim"), icon: BookOpen },
-        { href: "/settings/scim", label: "SCIM Config", icon: BookOpen },
-        { href: "/settings/ldap-config", label: "LDAP Config", icon: Network },
-        { href: "/settings/ldap-sync-config", label: "LDAP Sync", icon: RefreshCw },
+        { href: "/settings/scim", label: t("nav.scimConfig"), icon: BookOpen },
+        { href: "/settings/ldap-config", label: t("nav.ldapConfig"), icon: Network },
+        { href: "/settings/ldap-sync-config", label: t("nav.ldapSync"), icon: RefreshCw },
       ],
     },
     {
       label: "System",
       items: [
         { href: "/provisioning", label: "Provisioning", icon: Cloud },
+        { href: "/settings/passkey-management", label: t("nav.passkeyManagement"), icon: Fingerprint },
+        { href: "/settings/jit-elevation", label: t("nav.jitElevation"), icon: ArrowUpCircle },
         { href: "/monitoring", label: t("nav.monitoring"), icon: Server },
         { href: "/api-explorer", label: t("nav.apiExplorer"), icon: Send },
         { href: "/settings", label: t("nav.settings"), icon: Settings },
