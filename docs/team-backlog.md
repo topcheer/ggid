@@ -452,3 +452,39 @@ See docs/research/ for full research docs.
 ## IssueSAMLToken 命名误导修复 (2026-07-17 第8小时审计) - Priority: P3 - Status: Proposed - Suggested: backend
 
 **描述**: `IssueSAMLToken` 实际签发的是 JWT（issueAccessToken with "saml" grant type），不是 SAML XML 断言。函数名误导。建议重命名 IssueTokenForSAMLUser 或在注释中明确。
+
+---
+
+## Zero Standing Privileges + JIT 权限提升 (2026-07-17 第9小时研究) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**市场背景**: CSA 2025 主推"杀死常驻权限"（Zero Standing Privileges）。现代 PAM 从"永久 admin"转向"需要时才提权"（JIT elevation），提权有时间限制（30min-4h）+ 审批流 + 全审计。CyberArk、Palo Alto XSIAM 全部转向此模式。
+
+**GGID 现状审计**:
+- 有 JIT elevation console 页面 + `/api/v1/policy/jit-elevation` 端点（需验证深度）
+- 有 break-glass 紧急访问页面，但后端**只有 GET history（内存数组）**，无 activate/审批/到期撤销
+- 有 jit-provisioning-config（identity 服务）97 行 handler
+- 缺核心：提权请求 → 审批 → 临时角色绑定 → 到期自动解绑 → 审计闭环
+
+**业务价值**: HIGH
+- CSA + Gartner 2025 PAM 第一推荐：Zero Standing
+- 政企合规必查项（等保要求最小权限 + 审计）
+- break-glass 是安全运维最后防线，当前不完整
+
+**实现难度**: Medium
+- 实现路径：
+  1. policy 服务：POST /api/v1/policies/jit/request — 用户请求临时权限（role + scope + duration + reason）
+  2. 审批流：role.assign 临时绑定（expires_at 列）→ 到期自动解绑（goroutine 或 cron 清理）
+  3. break-glass activate：POST /api/v1/auth/break-glass/activate — 紧急提权（双人审批或自动 + 强审计 + 告警 webhook）
+  4. 全审计链：每次 JIT 提权写 audit 事件（谁、什么权限、多久、为什么）
+  5. 迁移：现有 admin 角色从"永久"改为"JIT 默认 8h 续期"（渐进式）
+
+**兼容性**: 复用 role assignment（加 expires_at）；CAE 联动（JIT 到期后 session 自动降权）
+
+---
+
+## PAM Credential Vault 集成 (2026-07-17 第9小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: GGID 有 credential-vault 和 credential-vault-management 两个 console 页面。PAM 标准能力：特权密码/密钥集中保管 → 按需 checkout → 使用完自动轮换 → 审计。与 JIT elevation 互补（JIT 管权限，Vault 管密码）。
+
+**业务价值**: MEDIUM-HIGH | **实现难度**: Medium-High（需要密码代理或 API 集成）
+- 简化版：GGID 作为 credential broker（存储/checkout/轮换 API），不做密码代理注入
