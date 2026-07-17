@@ -82,6 +82,7 @@ func Default() *Config {
 			"/api/v1/webhooks":        envOrDefault("AUDIT_SERVICE_URL", "http://localhost:8072"),
 			"/api/v1/org":             envOrDefault("ORG_SERVICE_URL", "http://localhost:8071"),
 			"/api/v1/zt":              envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
+			"/api/v1/ztna":            envOrDefault("USERS_SERVICE_URL", "http://localhost:8081"),
 			"/api/v1/policy":          envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
 			"/api/v1/webauthn":        envOrDefault("AUTH_SERVICE_URL", "http://localhost:9001"),
 			"/api/v1/rate-limits":     envOrDefault("POLICY_SERVICE_URL", "http://localhost:8070"),
