@@ -77,6 +77,13 @@
 | KB-063 | **Attribute + role mapping engine** | backend | P1 | data-migration | 3d |
 | KB-064 | **Import wizard** (Console multi-step) | frontend | P2 | data-migration | 5d |
 | KB-065 | **Migration dashboard** (stats, progress, errors) | frontend | P2 | data-migration | 3d |
+| KB-066 | **Device posture API + evaluation engine** | backend | P0 | ztna-integration | 5d |
+| KB-067 | **Gateway device posture middleware** (per-request check) | backend | P0 | ztna-integration | 2d |
+| KB-068 | **SAML groups claim standardization** | backend | P0 | ztna-integration | 2d |
+| KB-069 | **SCIM outbound client** (push to ZTNA brokers) | backend | P0 | ztna-integration | 4d |
+| KB-070 | **CAEP event transmitter** (continuous verification) | backend | P1 | ztna-integration | 4d |
+| KB-071 | **Provider setup guide generator** (Terraform snippets) | backend | P1 | ztna-integration | 3d |
+| KB-072 | **ZTNA dashboard + provider wizard** (Console) | frontend | P2 | ztna-integration | 5d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -97,7 +104,8 @@
 
 | ID | Title | Owner | Commit |
 |----|-------|-------|--------|
-| — | Data Migration research doc | researcher | pending commit |
+| — | ZTNA Broker Integration research doc | researcher | pending commit |
+| — | Data Migration research doc | researcher | 02c52040 |
 | — | Cloud IAM Federation research doc | researcher | 5880e4ac |
 | — | Identity Orchestration / Journeys research doc | researcher | 4f76fbdc |
 | — | ReBAC/Zanzibar research doc | researcher | 4ce3b8ba |
@@ -115,7 +123,8 @@
 | Identity Orchestration | DONE | docs/research/identity-orchestration-journeys.md |
 | Cloud IAM Federation | DONE | docs/research/cloud-iam-federation.md |
 | Data Migration / Bulk Import | DONE | docs/research/data-migration-bulk-import.md |
-| Zero Trust Network Access (ZTNA) | NEXT | — |
+| Zero Trust Network Access (ZTNA) | DONE | docs/research/ztna-broker-integration.md |
+| Passwordless Migration | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
