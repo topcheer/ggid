@@ -39,7 +39,6 @@ type EventConsumer struct {
 	nc       *nats.Conn
 	js       jetstream.JetStream
 	repo     *repository.AuditRepository
-	itdrRepo *repository.ITDRRepository
 	engine   *detection.Engine
 	cfg      Config
 	ctx      context.Context

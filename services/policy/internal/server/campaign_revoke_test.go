@@ -3,22 +3,8 @@ package httpserver
 import (
 	"testing"
 
-	"github.com/ggid/ggid/services/policy/internal/domain"
-	"github.com/ggid/ggid/services/policy/internal/service"
 	"github.com/google/uuid"
 )
-
-// mockRoleSvc tracks RevokeRole calls to verify correct user/role targeting.
-type mockRoleSvc struct {
-	revokedUsers  []uuid.UUID
-	revokedRoles  []uuid.UUID
-	revokeErrors  []error
-}
-
-// We need to satisfy the *service.RoleService type. Since we can't easily mock
-// a concrete type, we test executeCampaignRevoke logic indirectly via the
-// campaign submit flow. For unit test, we verify the logic doesn't touch
-// the reviewer's permissions.
 
 func TestExecuteCampaignRevoke_NoItemsSkips(t *testing.T) {
 	s := &HTTPServer{roleSvc: nil} // nil roleSvc = early return, no panic
@@ -61,7 +47,3 @@ func TestCampaignItem_Struct(t *testing.T) {
 		t.Error("user_id and role_id must not be empty")
 	}
 }
-
-// Ensure domain import is used for potential future mock-based tests.
-var _ = domain.ScopeType("")
-var _ = (*service.RoleService)(nil)

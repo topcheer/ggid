@@ -101,6 +101,7 @@ func (r *JITRequestRepository) List(ctx context.Context, tenantID uuid.UUID, sta
 		args = append(args, *userID)
 		argIdx++
 	}
+	_ = argIdx
 	query += " ORDER BY created_at DESC LIMIT 50"
 
 	rows, err := r.pool.Query(ctx, query, args...)

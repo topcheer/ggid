@@ -43,9 +43,10 @@ func (s *RedisStateStore) EventsSince(ctx context.Context, key string, since int
 	if s.rdb == nil {
 		return nil, nil
 	}
-	result, err := s.rdb.ZRangeByScore(ctx, redisKey(key), &redis.ZRangeBy{
-		Min: fmt.Sprintf("%d", since),
-		Max: "+inf",
+	result, err := s.rdb.ZRangeArgs(ctx, redis.ZRangeArgs{
+		Key:   redisKey(key),
+		Start: fmt.Sprintf("%d", since),
+		Stop:  "+inf",
 	}).Result()
 	if err != nil {
 		if err == redis.Nil {

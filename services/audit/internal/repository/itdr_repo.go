@@ -144,6 +144,7 @@ func (r *ITDRRepository) ListDetections(ctx context.Context, f domain.DetectionF
 		args = append(args, *f.Since)
 		argIdx++
 	}
+	_ = argIdx // suppress ineffectual assignment lint
 
 	// Count total.
 	var total int

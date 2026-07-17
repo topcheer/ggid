@@ -165,7 +165,7 @@ func deny(w http.ResponseWriter, r *http.Request, reason string) {
 	log.Printf("internal auth denied: %s remote=%s path=%s", reason, r.RemoteAddr, r.URL.Path)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusForbidden)
-	w.Write([]byte(`{"error":"internal auth failed"}`))
+	_, _ = w.Write([]byte(`{"error":"internal auth failed"}`))
 }
 
 // DefaultWhitelist returns standard paths that skip internal auth.
