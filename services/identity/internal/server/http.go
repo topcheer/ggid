@@ -38,6 +38,7 @@ type HTTPHandler struct {
 	accessRequestSvc *service.AccessRequestService
 	idpConfigSvc     *idpconfig.Service
 	auditPublisher   *audit.Publisher
+	scimRepo         *scimTokenRepo
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -180,6 +181,10 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/branding/config", h.handleBrandingConfig)
 	h.mux.HandleFunc("/api/v1/identity/user-lifecycle/config", h.handleUserLifecycleConfig)
 	h.mux.HandleFunc("/api/v1/identity/scim/provisioning-config", h.handleSCIMProvisioningConfig)
+
+	// SCIM token management API (admin JWT required).
+	h.mux.HandleFunc("/api/v1/identity/scim/tokens", h.handleSCIMTokens)
+	h.mux.HandleFunc("/api/v1/identity/scim/tokens/", h.handleSCIMTokens)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
@@ -217,6 +222,7 @@ func (h *HTTPHandler) registerRoutes() {
 }
 
 // ServeHTTP implements http.Handler.
+// SCIM token auth middleware wraps /scim/v2/ paths for bearer token verification.
 func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// PanicRecovery — catch panics so a single bad request cannot crash the process.
 	defer func() {
@@ -225,7 +231,7 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "internal server error")
 		}
 	}()
-	h.mux.ServeHTTP(w, r)
+	h.scimTokenAuth(h.mux).ServeHTTP(w, r)
 }
 
 func (h *HTTPHandler) healthz(w http.ResponseWriter, r *http.Request) {

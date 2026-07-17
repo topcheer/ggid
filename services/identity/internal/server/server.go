@@ -79,6 +79,13 @@ func New(cfg *conf.Config) (*Server, error) {
 
 	httpHandler := NewHTTPHandler(identitySvc)
 
+	// SCIM token management — DB-backed.
+	scimRepo := newSCIMTokenRepo(pool)
+	if err := scimRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("SCIM token schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.scimRepo = scimRepo
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
