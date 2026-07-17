@@ -122,6 +122,13 @@
 | KB-108 | **Scheduled compliance reports** (SOC2/GDPR/ISO PDF) | backend | P1 | analytics-reporting | 4d |
 | KB-109 | **Analytics dashboard** (Console) | frontend | P2 | analytics-reporting | 4d |
 | KB-110 | **Data export + custom dashboards** | backend | P2 | analytics-reporting | 4d |
+| KB-111 | **GraphQL SDL schema + gqlgen setup** | backend | P0 | graphql-api | 3d |
+| KB-112 | **Query resolvers + dataloaders** (nested resolution, batch) | backend | P0 | graphql-api | 5d |
+| KB-113 | **Field-level @auth directive** (PDP integration) | backend | P0 | graphql-api | 3d |
+| KB-114 | **Query complexity analysis** (depth + cost limits) | backend | P0 | graphql-api | 2d |
+| KB-115 | **Mutation resolvers** (CRUD via GraphQL) | backend | P1 | graphql-api | 4d |
+| KB-116 | **Persisted queries + GraphQL query log** | backend | P1 | graphql-api | 3d |
+| KB-117 | **Console GraphQL playground + migration** | frontend | P2 | graphql-api | 5d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -171,7 +178,8 @@
 | Fine-grained Delegation Patterns | DONE | docs/research/fine-grained-delegation-patterns.md |
 | WASM Plugin Architecture | DONE | docs/research/wasm-plugin-architecture.md |
 | Identity Analytics & Reporting | DONE | docs/research/identity-analytics-reporting.md |
-| GraphQL API Layer for Identity Queries | NEXT | — |
+| GraphQL API Layer for Identity Queries | DONE | docs/research/graphql-api-layer.md |
+| OAuth Client Lifecycle Management (DCR, rotation) | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
