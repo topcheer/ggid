@@ -82,7 +82,7 @@
 ### IN_PROGRESS
 | ID | Task | Assignee | Started |
 |----|------|----------|---------|
-| I-03 | PAM JIT E2E 验收（等 B-07 完成） | IAMExpert | 07-17 |
+| I-03 | ~~PAM JIT E2E 验收~~ → DONE | IAMExpert | B-07 verified ✓ |
 
 ### TODO
 | ID | Task | Priority | Acceptance |
