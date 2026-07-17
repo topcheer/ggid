@@ -266,3 +266,85 @@ See docs/research/ for full research docs.
   2. 审计事件：agent token 发放 + MCP server 访问写入 audit_events
   3. Console 页面：agent 活动审计日志
 - 参考: docs/research/oauth21-fapi2-mcp-auth-gap.md
+
+---
+
+## Device Posture as Policy Input (2026-07-17 研究驱动 ZT) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: ZT posture score (当前 65/100) 仅作为信息展示，未接入 Access Broker PDP 决策。NIST SP 800-207 要求设备状态作为访问策略输入（如 score < 50 时拒绝访问）。
+
+**业务价值**: HIGH — ZT 闭环核心 | **实现难度**: Medium
+- 实现路径：
+  1. Access Broker evaluateAccessPolicy() 增加 device_posture 输入
+  2. 策略条件支持 `device_posture >= N` 表达式
+  3. posture 低于阈值时返回 deny + 原因
+- 参考: docs/research/zero-trust-maturity-compliance-automation.md
+
+---
+
+## Compliance Evidence Export API (2026-07-17 研究驱动) - Priority: P2 - Status: Proposed - Suggested: backend + docs
+
+**描述**: SOC2/ISO27001 审计需要结构化合规证据（用户访问权限、MFA 覆盖率、策略变更历史）。GGID 有全部数据但无导出 API。CCM 工具（Drata/Vanta）需要 API 集成。
+
+**业务价值**: HIGH — 企业合规必需 | **实现难度**: Medium
+- 实现路径：
+  1. GET /api/v1/audit/compliance/export?framework=soc2&period=Q2-2025
+  2. 返回 JSON：access_reviews[], mfa_coverage, policy_changes[], privileged_access_log[]
+  3. 支持 SOC2 (Trust Services Criteria) 和 ISO 27001 (Annex A) 框架
+  4. 文档：docs/compliance-evidence-guide.md
+- 参考: docs/research/zero-trust-maturity-compliance-automation.md
+
+---
+
+## Scheduled IGA Campaigns (2026-07-17 研究驱动) - Priority: P3 - Status: Proposed - Suggested: backend
+
+**描述**: IGA access certification campaigns 需要手动触发。企业合规要求季度自动执行（SOC2 CC6.1, CC6.2）。
+
+**业务价值**: MEDIUM — 合规自动化 | **实现难度**: Low
+- 实现路径：
+  1. cron/scheduler 在每季度首日自动创建 campaign
+  2. 通知所有 certifiers（邮件 + console）
+  3. 记录超时未完成审核
+- 参考: docs/research/zero-trust-maturity-compliance-automation.md
+
+---
+
+## OWASP MCP Top 10 合规：GGID MCP Server 安全加固 (2026-07-17 第14小时研究) - Priority: P1 - Status: Proposed - Suggested: backend + IAMExpert
+
+**市场背景**: OWASP MCP Top 10 (2025) 发布 — 2026 年 1-2 月研究者提交 30+ MCP CVE（含 CVSS 9.6 mcp-remote，43.7 万下载）。MCP 已成 AI agent 与企业系统的默认连接协议。GGID 有自己的 MCP Server（13 个 LLM 管理 tools），必须对标 OWASP MCP Top 10 加固。
+
+**OWASP MCP Top 10 与 GGID 对照**：
+
+| OWASP # | 风险 | GGID 现状 | 缺口 |
+|---------|------|-----------|------|
+| MCP01 | Token 管理 | Client 用静态 Bearer token | 需短时 OAuth 2.1 token + scope |
+| MCP02 | 权限蔓延 | Tools 无 scope/per-tool authz | 需 per-tool RBAC + scope 过期 |
+| MCP03 | Tool Poisoning | 无签名/版本锁定 | 需 tool 签名 + schema 固定 |
+| MCP04 | 供应链 | 无 AIBOM | 需 MCP 依赖清单 + provenance |
+| MCP05 | 命令注入 | Tools 参数化较好 | 需输入校验审计 |
+| MCP06 | Prompt Injection | 无 context 隔离 | 需 instruction quarantine |
+| MCP07 | 认证不足 | **无 MCP auth 中间件**（grep 无结果）| 需 OAuth 2.1 + per-server audience |
+| MCP08 | 审计缺失 | 无 tool invocation 审计 | 需 immutable audit log + behavioral monitoring |
+| MCP09 | Shadow MCP | 无发现机制 | 需 allowlist + discovery |
+| MCP10 | Context 泄露 | 无 context 隔离 | 需 per-session context scope |
+
+**最紧急（MCP07）**：GGID MCP Server **无认证中间件**（grep 零结果）— 任何能访问 MCP 端口的人可调用 13 个管理 tool（创建用户/角色/策略）。这与之前 SCIM 直连同型问题。
+
+**业务价值**: HIGH
+- MCP 安全是 AI 时代的 OWASP Top 10 等价物 — 2026 合规刚需
+- GGID 作为 IAM 平台保护 AI agent 身份 = 差异化叙事
+- MCP07 + MCP02 + MCP08 三项是安全底线
+
+**实现难度**: Medium（基于已有 OAuth 2.1 + RBAC + audit 基础设施）
+- 完整实现路径（按 OWASP 优先级）：
+  1. **MCP07 认证**：MCP Server 加 JWT 验证（复用 gateway JWTAuth）+ per-tool scope 检查（tool 需声明 required_scope）
+  2. **MCP08 审计**：每次 tool invocation 写 audit 事件（tool_name/caller/params/result/duration）
+  3. **MCP01 Token**：静态 Bearer → OAuth 2.1 token exchange（RFC 8693 — 已在 backlog B-06 中）
+  4. **MCP02 Scope**：per-tool RBAC — tool 注册时声明 required_permissions，调用时检查 caller 是否有权限
+  5. **MCP10 Context**：per-session context scope + ephemeral memory
+  6. **MCP03/04 供应链**：tool 签名 + AIBOM
+  7. **MCP09 Discovery**：MCP allowlist + shadow detection
+  8. **MCP06 Isolation**：instruction quarantine（retrieved content 标记 untrusted）
+  9. **MCP05 Injection**：输入校验审计（已有基础，补审计）
+
+**兼容性**: 复用 OAuth 2.1 (RFC 8693 B-06)、RBAC (policy 服务)、audit publisher (NATS)
