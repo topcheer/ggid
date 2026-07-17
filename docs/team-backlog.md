@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 54: Consent Management Platform research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 55: Risk-Based Adaptive Authentication Engine research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -128,6 +128,11 @@
 | 102 | **DSR workflow + GPC detection** (P1) | backend | GDPR/CCPA compliance | Data Subject Request pipeline (access/deletion/portability) + Global Privacy Control auto-withdraw |
 | 103 | **Policy versioning + re-consent** (P1) | backend | Compliance | Privacy policy version bump → supersede old consents → prompt re-consent |
 | 104 | **Console preference center + cookie banner** (P2) | frontend | Self-service | Preference center UI + admin DSR console + cookie consent banner with GPC detection |
+| 105 | **Unified Risk Engine** (P0) | backend | Adaptive auth | Composite risk scorer aggregating 5 signal categories (device/geo/network/behavioral/session). See docs/research/risk-adaptive-auth-engine.md |
+| 106 | **Risk assessment + config API** (P0) | backend | Replace 3 engines | Unified API replacing 3 in-memory risk engines + 12 hardcoded handlers with DB-backed URE |
+| 107 | **Decision policy + step-up** (P1) | backend | Adaptive decisions | Risk → action mapping (allow/step_up/step_up_strong/block) + step-up integration |
+| 108 | **Behavioral baselines + analytics** (P1) | backend | Continuous auth | 30-day per-user baselines (hours/locations/devices) + risk score analytics dashboard |
+| 109 | **Risk dashboard + CAE middleware** (P2) | backend+frontend | UI + continuous | Risk analytics dashboard + continuous evaluation middleware for active sessions |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -168,6 +173,7 @@
 14. API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md) — 7 backlog items added
 15. Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md) — 6 backlog items added
 16. Consent Management Platform → DONE (docs/research/consent-management-platform.md) — 6 backlog items added
+17. Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md) — 6 backlog items added
 
 ## Rules
 
@@ -180,6 +186,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
 - Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md)
 - API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md)

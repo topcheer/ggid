@@ -148,6 +148,12 @@
 | KB-134 | **DSR workflow** (access/deletion/portability) | backend | P1 | consent-platform | 4d |
 | KB-135 | **GPC detection + policy versioning + re-consent** | backend | P1 | consent-platform | 3d |
 | KB-136 | **Console preference center + DSR admin + cookie banner** | frontend | P2 | consent-platform | 4d |
+| KB-137 | **Unified Risk Engine (URE)** — composite scorer + signal collectors | backend | P0 | adaptive-auth | 5d |
+| KB-138 | **Risk assessment + config API** (replace 3 in-memory engines) | backend | P0 | adaptive-auth | 4d |
+| KB-139 | **Decision policy + step-up integration** (risk → action) | backend | P1 | adaptive-auth | 3d |
+| KB-140 | **Replace 12 hardcoded risk handlers** (real URE data) | backend | P1 | adaptive-auth | 3d |
+| KB-141 | **Behavioral baselines + risk analytics** | backend | P1 | adaptive-auth | 3d |
+| KB-142 | **Risk dashboard + continuous evaluation middleware** | backend+frontend | P2 | adaptive-auth | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -227,8 +233,8 @@
 | API Key Lifecycle Management | DONE | docs/research/api-key-lifecycle.md |
 | Credential Recovery Workflow Engine | DONE | docs/research/credential-recovery-workflow.md |
 | Consent Management Platform (GDPR/CCPA) | DONE | docs/research/consent-management-platform.md |
-| Audit Tamper-Evidence (Hash Chain) | NEXT | — |
-| PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
+| Risk-Based Adaptive Authentication Engine | DONE | docs/research/risk-adaptive-auth-engine.md |
+| PQC Migration (FIPS 203/204/205) | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md (stub: 220 lines) |
 
 ---
 
