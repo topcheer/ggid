@@ -129,6 +129,13 @@
 | KB-115 | **Mutation resolvers** (CRUD via GraphQL) | backend | P1 | graphql-api | 4d |
 | KB-116 | **Persisted queries + GraphQL query log** | backend | P1 | graphql-api | 3d |
 | KB-117 | **Console GraphQL playground + migration** | frontend | P2 | graphql-api | 5d |
+| KB-118 | **API key DB-backed storage + hashing** (replace in-memory) | backend | P0 | api-key-lifecycle | 2d |
+| KB-119 | **API key repository + CRUD handler** (replace in-memory handler) | backend | P0 | api-key-lifecycle | 2d |
+| KB-120 | **Gateway API key validator** (DB-backed + Redis cache + expiry) | backend | P0 | api-key-lifecycle | 3d |
+| KB-121 | **Key rotation with grace period** (dual-key + auto-revoke) | backend | P1 | api-key-lifecycle | 3d |
+| KB-122 | **Scope enforcement + per-key rate limiting** (gateway) | backend | P1 | api-key-lifecycle | 2d |
+| KB-123 | **IP allow-list + usage tracking** | backend | P1 | api-key-lifecycle | 2d |
+| KB-124 | **Console key management + rotation UI** | frontend | P2 | api-key-lifecycle | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -180,7 +187,8 @@
 | WASM Plugin Architecture | DONE | docs/research/wasm-plugin-architecture.md |
 | Identity Analytics & Reporting | DONE | docs/research/identity-analytics-reporting.md |
 | GraphQL API Layer for Identity Queries | DONE | docs/research/graphql-api-layer.md |
-| OAuth Client Lifecycle Management (DCR, rotation) | NEXT | — |
+| API Key Lifecycle Management | DONE | docs/research/api-key-lifecycle.md |
+| Credential Recovery Workflow Engine | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
