@@ -23,7 +23,6 @@
 | ID | Task | Assignee | Started | Notes |
 |----|------|----------|---------|-------|
 | B-06 | RFC 8693 Token Exchange 标准 grant | backend | 07-17 | docs/research/token-exchange-standard-grant-gap.md |
-| B-13 | ZT posture 真实聚合端点 | backend | 07-17 | services/identity/ |
 
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
@@ -43,6 +42,7 @@
 | B-10 | ITDR Phase 4：3 条新规则 | backend | f1c85214 |
 | B-11 | ITDR Redis StateStore | backend | 709a94c4 |
 | B-12 | SCIM bearer token 实现 | backend | bb2fbf94 |
+| B-13 | ZT posture 真实聚合端点 | backend | d7ad68d1 |
 | B-15 | IGA GenAI 回收建议端点 | backend | 76aee44c |
 | B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | f3580d58 |
 

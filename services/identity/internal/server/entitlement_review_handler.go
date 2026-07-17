@@ -31,6 +31,13 @@ func (h *HTTPHandler) handleEntitlementReview(w http.ResponseWriter, r *http.Req
 		return
 	}
 	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/identity/entitlement-review/"), "/")
+
+	// Cross-analysis sub-endpoint: granted vs used comparison across all users.
+	if len(parts) >= 1 && parts[0] == "cross-analysis" {
+		h.handleEntitlementCrossAnalysis(w, r)
+		return
+	}
+
 	userID := parts[0]
 	if userID == "" {
 		userID = "unknown"
