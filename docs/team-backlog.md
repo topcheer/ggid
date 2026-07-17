@@ -101,3 +101,37 @@ Active research topics:
 - **Next**: Cloud IAM federation (AWS IAM / Azure AD / GCP IAM)
 
 See docs/research/ for full research docs.
+---
+
+## Access Broker / Identity-Aware Proxy (ZTNA) (2026-07-17 第12小时研究) - Priority: P1 - Status: Proposed - Suggested: backend + arch
+
+**市场背景**: Identity-Aware Proxy (IAP) / ZTNA 是 2025 企业安全最高优先级投资。Cloudflare Access、Google IAP、AWS Verified Access 全部增长 40%+。核心价值：**替代 VPN** — 任何内部应用（Jenkins/Grafana/Jupyter/internal dashboard）放在 GGID 身份层后面，按身份+上下文授权访问，无需 VPN。
+
+**GGID 现状审计**: gateway 已有 reverse proxy + route config（path_prefix→backend URL）+ JWT 验证 + ABAC + CAE。**基础设施完全就绪**，差一个"受保护应用注册"层：
+- 当前 routes 硬编码为 GGID 自己的 7 个服务（identity/auth/oauth/...）
+- 无法注册"外部应用"（如 https://ggid.example.com/grafana/ → 代理到 Grafana 实例 + GGID JWT 验证）
+- 无 per-application access policy（"Grafana 只允许 SRE 角色 + 工作时间 + 设备可信"）
+
+**业务价值**: HIGH
+- GGID 从"IAM 平台"升级为"Zero Trust Access Platform"（市场天花板提升 3-5x）
+- 替代 VPN 是 CISO 2025 第一预算项
+- GGID 已有全部组件：reverse proxy + JWT + ABAC + CAE + device trust + ITDR
+- 差异化：国内无同类产品（竹云/玉籽数科均无 ZTNA 能力）
+
+**实现难度**: Medium
+- 实现路径（完整一步到位，不降级）：
+  1. **受保护应用注册**：protected_apps 表（name, path_prefix, backend_url, access_policy_id, tenant_id, auth_mode[jwt/session/anonymous]）
+  2. **Gateway 动态路由**：启动时 + 热加载（Redis pub/sub 或 DB 轮询）从 protected_apps 表构建路由表，与现有静态路由合并
+  3. **Per-app access policy**：复用 ABAC PDP（$security.* + $data.classification），增加 $app.name / $app.backend 属性
+  4. **Session passthrough**：对不支持 OAuth 的传统应用（Jenkins/Grafana），GGID 完成认证后注入 header（X-Authenticated-User + X-Tenant-ID），后端配置 trusted header 模式
+  5. **Access logs**：每次受保护应用访问写 audit 事件（与 ITDR 联动：异常访问模式自动检测）
+  6. **Console 管理页面**：受保护应用列表 + CRUD + 实时访问日志 + access policy 配置器（可视化条件构建器）
+
+**兼容性**: gateway 已有全部基础设施（reverse proxy + JWT + ABAC + CAE），纯增量注册层 + 动态路由
+**工作量**: ~5d（gateway 动态路由 2d + protected_apps API 1d + session passthrough 1d + console UI 1d）
+
+---
+
+## Quantum-Safe Access (后量子密码学准备) (2026-07-17 第12小时研究) - Priority: P3 - Status: Watch - Suggested: IAMExpert
+
+**描述**: Cloudflare Access 2025 已支持 quantum-safe access。NIST PQC 标准（ML-KEM/ML-DSA）2024 年最终化。GGID 已有 gmsm 库（可扩展 ML-DSA JOSE 支持，researcher a07e344c 已标记 gap）。Harvest Now Decrypt Later 威胁要求长寿命凭证提前迁移。跟踪标准落地，不立即编码。
