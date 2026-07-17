@@ -37,15 +37,21 @@ type retentionConfig struct {
 
 // HTTPServer exposes the Audit Service as a REST API.
 type HTTPServer struct {
-	svc       *service.AuditService
-	retention retentionConfig
-	hub       *StreamHub
-	itdrRepo  *repository.ITDRRepository
+	svc           *service.AuditService
+	retention     retentionConfig
+	hub           *StreamHub
+	itdrRepo      *repository.ITDRRepository
+	compositeRepo *compositeRuleRepo
 }
 
 // SetITDRRepository injects the ITDR repository for detection API queries.
 func (s *HTTPServer) SetITDRRepository(repo *repository.ITDRRepository) {
 	s.itdrRepo = repo
+}
+
+// SetCompositeRepo injects the composite rule repository.
+func (s *HTTPServer) SetCompositeRepo(repo *compositeRuleRepo) {
+	s.compositeRepo = repo
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.

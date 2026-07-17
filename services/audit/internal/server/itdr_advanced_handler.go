@@ -84,12 +84,20 @@ var (
 func (s *HTTPServer) handleITDRComposite(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		compositeRulesMu.RLock()
-		result := make([]*CompositeRule, 0, len(compositeRules))
-		for _, cr := range compositeRules {
-			result = append(result, cr)
+		var result []*CompositeRule
+		if s.compositeRepo != nil {
+			rules, _ := s.compositeRepo.List(r.Context())
+			result = rules
+		} else {
+			compositeRulesMu.RLock()
+			for _, cr := range compositeRules {
+				result = append(result, cr)
+			}
+			compositeRulesMu.RUnlock()
 		}
-		compositeRulesMu.RUnlock()
+		if result == nil {
+			result = []*CompositeRule{}
+		}
 		writeJSON2(w, http.StatusOK, map[string]any{"rules": result, "total": len(result)})
 	case http.MethodPost:
 		var rule CompositeRule
@@ -113,35 +121,48 @@ func (s *HTTPServer) handleITDRComposite(w http.ResponseWriter, r *http.Request)
 		}
 		rule.Enabled = true
 		rule.CreatedAt = time.Now()
-		compositeRulesMu.Lock()
-		compositeRules[rule.ID] = &rule
-		compositeRulesMu.Unlock()
+		if s.compositeRepo != nil {
+			if err := s.compositeRepo.Create(r.Context(), &rule); err != nil {
+				writeJSON2(w, http.StatusInternalServerError, map[string]string{"error": "failed"})
+				return
+			}
+		} else {
+			compositeRulesMu.Lock()
+			compositeRules[rule.ID] = &rule
+			compositeRulesMu.Unlock()
+		}
 		writeJSON2(w, http.StatusCreated, rule)
 	case http.MethodPut:
 		parts := strings.Split(r.URL.Path, "/")
 		id := parts[len(parts)-1]
-		compositeRulesMu.RLock()
-		rule, ok := compositeRules[id]
-		compositeRulesMu.RUnlock()
-		if !ok {
-			writeJSON2(w, http.StatusNotFound, map[string]string{"error": "not found"})
-			return
-		}
 		var update CompositeRule
 		json.NewDecoder(r.Body).Decode(&update)
-		if update.Name != "" {
-			rule.Name = update.Name
+		update.ID = id
+		if s.compositeRepo != nil {
+			s.compositeRepo.Update(r.Context(), &update)
+		} else {
+			compositeRulesMu.Lock()
+			if rule, ok := compositeRules[id]; ok {
+				if update.Name != "" {
+					rule.Name = update.Name
+				}
+				rule.Signals = update.Signals
+				rule.MinSignals = update.MinSignals
+				rule.Enabled = update.Enabled
+			}
+			compositeRulesMu.Unlock()
 		}
-		rule.Signals = update.Signals
-		rule.MinSignals = update.MinSignals
-		rule.Enabled = update.Enabled
-		writeJSON2(w, http.StatusOK, rule)
+		writeJSON2(w, http.StatusOK, update)
 	case http.MethodDelete:
 		parts := strings.Split(r.URL.Path, "/")
 		id := parts[len(parts)-1]
-		compositeRulesMu.Lock()
-		delete(compositeRules, id)
-		compositeRulesMu.Unlock()
+		if s.compositeRepo != nil {
+			s.compositeRepo.Delete(r.Context(), id)
+		} else {
+			compositeRulesMu.Lock()
+			delete(compositeRules, id)
+			compositeRulesMu.Unlock()
+		}
 		writeJSON2(w, http.StatusOK, map[string]bool{"deleted": true})
 	}
 }
