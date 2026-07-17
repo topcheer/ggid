@@ -4,20 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 )
 
 type UsagePolicy struct {
-	MaxTokensPerDay     int    `json:"max_tokens_per_day"`
-	MaxRequestsPerMin   int    `json:"max_requests_per_min"`
+	MaxTokensPerDay     int      `json:"max_tokens_per_day"`
+	MaxRequestsPerMin   int      `json:"max_requests_per_min"`
 	AllowedScopes       []string `json:"allowed_scopes"`
-	RateLimitStrategy   string `json:"rate_limit_strategy"`
+	RateLimitStrategy   string   `json:"rate_limit_strategy"`
 }
-
-var (
-	usagePolicyMu sync.RWMutex
-	usagePolicies = make(map[string]*UsagePolicy)
-)
 
 // GET/PUT /api/v1/oauth/clients/{id}/usage-policy
 func handleUsagePolicy(w http.ResponseWriter, r *http.Request) {
@@ -32,12 +26,14 @@ func handleUsagePolicy(w http.ResponseWriter, r *http.Request) {
 	}
 	switch r.Method {
 	case http.MethodGet:
-		usagePolicyMu.RLock()
-		p, ok := usagePolicies[clientID]
-		usagePolicyMu.RUnlock()
-		if !ok {
-			p = &UsagePolicy{MaxTokensPerDay: 10000, MaxRequestsPerMin: 100, AllowedScopes: []string{"openid", "profile"}, RateLimitStrategy: "token_bucket"}
+		if mapRepoVar != nil {
+			data, err := mapRepoVar.Get(r.Context(), "oauth_usage_policies", clientID)
+			if err == nil {
+				writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "policy": data})
+				return
+			}
 		}
+		p := &UsagePolicy{MaxTokensPerDay: 10000, MaxRequestsPerMin: 100, AllowedScopes: []string{"openid", "profile"}, RateLimitStrategy: "token_bucket"}
 		writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "policy": p})
 	case http.MethodPut, http.MethodPost:
 		var p UsagePolicy
@@ -45,7 +41,12 @@ func handleUsagePolicy(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 			return
 		}
-		usagePolicyMu.Lock(); usagePolicies[clientID] = &p; usagePolicyMu.Unlock()
+		if mapRepoVar != nil {
+			b, _ := json.Marshal(p)
+			var dataMap map[string]any
+			json.Unmarshal(b, &dataMap)
+			mapRepoVar.Store(r.Context(), "oauth_usage_policies", clientID, dataMap)
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "client_id": clientID, "policy": p})
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})

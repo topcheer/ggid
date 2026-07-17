@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,11 +18,6 @@ type AdminOverride struct {
 	Reason     string    `json:"reason"`
 	CreatedAt  time.Time `json:"created_at"`
 }
-
-var (
-	adminOverrideMu sync.RWMutex
-	adminOverrides  = make(map[string]*AdminOverride)
-)
 
 // POST /api/v1/oauth/consent/admin-override
 func handleConsentAdminOverride(w http.ResponseWriter, r *http.Request) {
@@ -54,9 +48,12 @@ func handleConsentAdminOverride(w http.ResponseWriter, r *http.Request) {
 		Scope: req.Scope, Action: req.Action, AdminID: req.AdminID,
 		Reason: req.Reason, CreatedAt: time.Now().UTC(),
 	}
-	adminOverrideMu.Lock()
-	adminOverrides[override.ID] = override
-	adminOverrideMu.Unlock()
+	if mapRepoVar != nil {
+		b, _ := json.Marshal(override)
+		var dataMap map[string]any
+		json.Unmarshal(b, &dataMap)
+		mapRepoVar.Store(r.Context(), "oauth_consent_overrides", override.ID, dataMap)
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":   "applied",

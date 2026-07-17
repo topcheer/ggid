@@ -1,10 +1,10 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -16,11 +16,6 @@ type ClientDeprecation struct {
 	DeprecationNotice  string     `json:"deprecation_notice,omitempty"`
 	MarkedAt           time.Time  `json:"marked_at"`
 }
-
-var (
-	deprecationMu sync.RWMutex
-	deprecations  = make(map[string]*ClientDeprecation)
-)
 
 // PUT /api/v1/oauth/clients/{id}/deprecation
 // GET /api/v1/oauth/clients/{id}/deprecation
@@ -51,22 +46,25 @@ func handleClientDeprecation(w http.ResponseWriter, r *http.Request) {
 			t, _ := time.Parse(time.RFC3339, req.SunsetDate)
 			dep.SunsetDate = &t
 		}
-		deprecationMu.Lock()
-		deprecations[clientID] = dep
-		deprecationMu.Unlock()
+		if mapRepoVar != nil {
+			b, _ := json.Marshal(dep)
+			var dataMap map[string]any
+			json.Unmarshal(b, &dataMap)
+			mapRepoVar.Store(r.Context(), "oauth_client_deprecations", clientID, dataMap)
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status": "deprecated", "deprecation": dep,
 			"note": "token responses will include deprecation_warning header",
 		})
 	case http.MethodGet:
-		deprecationMu.RLock()
-		dep, ok := deprecations[clientID]
-		deprecationMu.RUnlock()
-		if !ok {
-			writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "deprecated": false})
-			return
+		if mapRepoVar != nil {
+			data, err := mapRepoVar.Get(r.Context(), "oauth_client_deprecations", clientID)
+			if err == nil {
+				writeJSON(w, http.StatusOK, data)
+				return
+			}
 		}
-		writeJSON(w, http.StatusOK, dep)
+		writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "deprecated": false})
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 	}
@@ -74,7 +72,14 @@ func handleClientDeprecation(w http.ResponseWriter, r *http.Request) {
 
 // GetClientDeprecation returns deprecation status for header injection (internal)
 func GetClientDeprecation(clientID string) *ClientDeprecation {
-	deprecationMu.RLock()
-	defer deprecationMu.RUnlock()
-	return deprecations[clientID]
+	if mapRepoVar != nil {
+		data, err := mapRepoVar.Get(context.Background(), "oauth_client_deprecations", clientID)
+		if err == nil {
+			b, _ := json.Marshal(data)
+			var dep ClientDeprecation
+			json.Unmarshal(b, &dep)
+			return &dep
+		}
+	}
+	return nil
 }

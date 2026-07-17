@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,18 +10,13 @@ import (
 
 // cascadeNode represents a node in the token revocation cascade tree.
 type cascadeNode struct {
-	TokenID    string         `json:"token_id"`
-	TokenType  string         `json:"token_type"` // access, refresh, delegated
-	UserID     string         `json:"user_id"`
-	ClientID   string         `json:"client_id"`
-	Children   []cascadeNode  `json:"children,omitempty"`
-	Revoked    bool           `json:"revoked"`
+	TokenID    string        `json:"token_id"`
+	TokenType  string        `json:"token_type"` // access, refresh, delegated
+	UserID     string        `json:"user_id"`
+	ClientID   string        `json:"client_id"`
+	Children   []cascadeNode `json:"children,omitempty"`
+	Revoked    bool          `json:"revoked"`
 }
-
-var tokenCascadeStore = struct {
-	sync.RWMutex
-	cascades map[string][]cascadeNode
-}{cascades: make(map[string][]cascadeNode)}
 
 // POST /api/v1/oauth/revoke-cascade
 // Body: {"token_id": "...", "token_type": "refresh", "user_id": "...", "client_id": "..."}
@@ -65,9 +59,13 @@ func handleRevokeCascade(w http.ResponseWriter, r *http.Request) {
 	// Count total revoked
 	totalRevoked := countCascadeNodes(root)
 
-	tokenCascadeStore.Lock()
-	tokenCascadeStore.cascades[cascadeID] = []cascadeNode{root}
-	tokenCascadeStore.Unlock()
+	if mapRepoVar != nil {
+		b, _ := json.Marshal(root)
+		var dataMap map[string]any
+		json.Unmarshal(b, &dataMap)
+		dataMap["cascade_id"] = cascadeID
+		mapRepoVar.Store(r.Context(), "oauth_revoke_cascades", cascadeID, dataMap)
+	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
 		"cascade_id":    cascadeID,

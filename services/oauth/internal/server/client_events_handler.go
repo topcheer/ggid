@@ -1,10 +1,10 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,26 +20,25 @@ type clientEvent struct {
 	Timestamp  string `json:"timestamp"`
 }
 
-var clientEventStore = struct {
-	sync.RWMutex
-	events map[string][]clientEvent // clientID → events
-}{events: make(map[string][]clientEvent)}
-
 // recordClientEvent adds a lifecycle event for the given client (thread-safe).
 func recordClientEvent(clientID, eventType, actorID, detail string) {
 	if clientID == "" {
 		return
 	}
-	clientEventStore.Lock()
-	defer clientEventStore.Unlock()
-	clientEventStore.events[clientID] = append(clientEventStore.events[clientID], clientEvent{
+	evt := clientEvent{
 		ID:        uuid.New().String(),
 		ClientID:  clientID,
 		EventType: eventType,
 		ActorID:   actorID,
 		Detail:    detail,
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	})
+	}
+	if mapRepoVar != nil {
+		b, _ := json.Marshal(evt)
+		var dataMap map[string]any
+		json.Unmarshal(b, &dataMap)
+		mapRepoVar.Store(context.Background(), "oauth_client_events", evt.ID, dataMap)
+	}
 }
 
 // GET /api/v1/oauth/clients/{id}/events — list lifecycle events for a client
@@ -56,20 +55,29 @@ func handleClientEvents(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		clientEventStore.RLock()
-		events := clientEventStore.events[clientID]
-		result := make([]clientEvent, len(events))
-		copy(result, events)
-		clientEventStore.RUnlock()
+		var events []map[string]any
+		if mapRepoVar != nil {
+			rows, _ := mapRepoVar.List(r.Context(), "oauth_client_events")
+			for _, row := range rows {
+				if cid, ok := row["client_id"].(string); ok && cid == clientID {
+					events = append(events, row)
+				}
+			}
+		}
+		if events == nil {
+			events = []map[string]any{}
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
 			"client_id": clientID,
-			"events":    result,
-			"total":     len(result),
+			"events":    events,
+			"total":     len(events),
 			"event_type_summary": func() map[string]int {
 				summary := map[string]int{}
-				for _, e := range result {
-					summary[e.EventType]++
+				for _, e := range events {
+					if et, ok := e["event_type"].(string); ok {
+						summary[et]++
+					}
 				}
 				return summary
 			}(),
@@ -101,14 +109,22 @@ func handleClientEvents(w http.ResponseWriter, r *http.Request) {
 			req.ActorID = "system"
 		}
 
-		recordClientEvent(clientID, req.EventType, req.ActorID, req.Detail)
+		evt := clientEvent{
+			ID:        uuid.New().String(),
+			ClientID:  clientID,
+			EventType: req.EventType,
+			ActorID:   req.ActorID,
+			Detail:    req.Detail,
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+		}
+		if mapRepoVar != nil {
+			b, _ := json.Marshal(evt)
+			var dataMap map[string]any
+			json.Unmarshal(b, &dataMap)
+			mapRepoVar.Store(r.Context(), "oauth_client_events", evt.ID, dataMap)
+		}
 
-		clientEventStore.RLock()
-		events := clientEventStore.events[clientID]
-		lastEvent := events[len(events)-1]
-		clientEventStore.RUnlock()
-
-		writeJSON(w, http.StatusCreated, lastEvent)
+		writeJSON(w, http.StatusCreated, evt)
 
 	default:
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})

@@ -20,7 +20,7 @@ type reviewAdapter struct {
 var reviewAdapterVar *reviewAdapter
 
 func newReviewAdapter(pool *pgxpool.Pool) *reviewAdapter {
-	a := &reviewAdapter{mu: &reviewMu, store: reviewStore}
+	a := &reviewAdapter{mu: &sync.RWMutex{}, store: make(map[string]*AgentReview)}
 	if pool != nil {
 		a.pg = &pgReviewStore{pool: pool}
 		ctx := context.Background()

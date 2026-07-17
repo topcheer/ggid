@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,29 +11,24 @@ import (
 
 // PAREntry stores a pushed authorization request.
 type PAREntry struct {
-	RequestURI        string         `json:"request_uri"`
-	ClientID          string         `json:"client_id"`
-	Params            map[string]any `json:"params"`
-	SignedRequestObject string       `json:"signed_request_object,omitempty"`
-	CreatedAt         time.Time      `json:"created_at"`
-	ExpiresAt         time.Time      `json:"expires_at"`
-	Used              bool           `json:"used"`
+	RequestURI          string         `json:"request_uri"`
+	ClientID            string         `json:"client_id"`
+	Params              map[string]any `json:"params"`
+	SignedRequestObject string         `json:"signed_request_object,omitempty"`
+	CreatedAt           time.Time      `json:"created_at"`
+	ExpiresAt           time.Time      `json:"expires_at"`
+	Used                bool           `json:"used"`
 }
-
-var (
-	parStoreMu sync.RWMutex
-	parStore   = make(map[string]*PAREntry)
-)
 
 // POST /api/v1/oauth/par — push authorization request, return request_uri.
 // GET /api/v1/oauth/par/{request_uri} — retrieve stored request.
 func handlePAR(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var req struct {
-			ClientID          string         `json:"client_id"`
-			Params            map[string]any `json:"params"`
-			SignedRequestObject string     `json:"signed_request_object"`
-			ExpirySecs        int            `json:"expiry_seconds"`
+			ClientID            string         `json:"client_id"`
+			Params              map[string]any `json:"params"`
+			SignedRequestObject string         `json:"signed_request_object"`
+			ExpirySecs          int            `json:"expiry_seconds"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON body"})
@@ -60,9 +54,12 @@ func handlePAR(w http.ResponseWriter, r *http.Request) {
 			CreatedAt: now, ExpiresAt: now.Add(time.Duration(req.ExpirySecs) * time.Second),
 		}
 
-		parStoreMu.Lock()
-		parStore[requestURI] = entry
-		parStoreMu.Unlock()
+		if mapRepoVar != nil {
+			b, _ := json.Marshal(entry)
+			var dataMap map[string]any
+			json.Unmarshal(b, &dataMap)
+			mapRepoVar.Store(r.Context(), "oauth_par_store", requestURI, dataMap)
+		}
 
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"request_uri": requestURI,
@@ -79,20 +76,21 @@ func handlePAR(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		parStoreMu.RLock()
-		entry, ok := parStore[uri]
-		parStoreMu.RUnlock()
-		if !ok {
-			writeJSON(w, http.StatusNotFound, map[string]any{"error": "request_uri not found"})
-			return
+		if mapRepoVar != nil {
+			data, err := mapRepoVar.Get(r.Context(), "oauth_par_store", uri)
+			if err == nil {
+				if expiresAtStr, ok := data["expires_at"].(string); ok {
+					expiresAt, _ := time.Parse(time.RFC3339, expiresAtStr)
+					if time.Now().UTC().After(expiresAt) {
+						writeJSON(w, http.StatusGone, map[string]any{"error": "request_uri expired"})
+						return
+					}
+				}
+				writeJSON(w, http.StatusOK, data)
+				return
+			}
 		}
-
-		if time.Now().UTC().After(entry.ExpiresAt) {
-			writeJSON(w, http.StatusGone, map[string]any{"error": "request_uri expired"})
-			return
-		}
-
-		writeJSON(w, http.StatusOK, entry)
+		writeJSON(w, http.StatusNotFound, map[string]any{"error": "request_uri not found"})
 		return
 	}
 

@@ -21,7 +21,7 @@ type parAdapter struct {
 var parAdapterVar *parAdapter
 
 func newPARAdapter(pool *pgxpool.Pool) *parAdapter {
-	a := &parAdapter{mu: &parStoreMu, mem: parStore}
+	a := &parAdapter{mu: &sync.RWMutex{}, mem: make(map[string]*PAREntry)}
 	if pool != nil {
 		a.pg = &pgPARStore{pool: pool}
 		ctx := context.Background()

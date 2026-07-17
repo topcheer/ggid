@@ -5,10 +5,10 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,18 +16,13 @@ import (
 
 // ClientCert holds mTLS certificate rotation state for an OAuth client.
 type ClientCert struct {
-	ClientID     string    `json:"client_id"`
-	CertPEM      string    `json:"cert_pem"`
-	KeyPEM       string    `json:"key_pem,omitempty"`
-	Fingerprint  string    `json:"fingerprint"`
-	IssuedAt     time.Time `json:"issued_at"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ClientID    string    `json:"client_id"`
+	CertPEM     string    `json:"cert_pem"`
+	KeyPEM      string    `json:"key_pem,omitempty"`
+	Fingerprint string    `json:"fingerprint"`
+	IssuedAt    time.Time `json:"issued_at"`
+	ExpiresAt   time.Time `json:"expires_at"`
 }
-
-var (
-	clientCertMu sync.RWMutex
-	clientCerts  = make(map[string]*ClientCert)
-)
 
 // POST /api/v1/oauth/clients/{id}/rotate-cert — generate new mTLS cert for client.
 // GET /api/v1/oauth/clients/{id}/cert-status — check cert status.
@@ -73,9 +68,12 @@ func handleClientCert(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt:   expiry,
 		}
 
-		clientCertMu.Lock()
-		clientCerts[clientID] = cert
-		clientCertMu.Unlock()
+		if mapRepoVar != nil {
+			b, _ := json.Marshal(cert)
+			var dataMap map[string]any
+			json.Unmarshal(b, &dataMap)
+			mapRepoVar.Store(r.Context(), "oauth_client_certs", clientID, dataMap)
+		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status":      "rotated",
@@ -95,25 +93,30 @@ func handleClientCert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientCertMu.RLock()
-	cert, ok := clientCerts[clientID]
-	clientCertMu.RUnlock()
-	if !ok {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"client_id":    clientID,
-			"has_cert":     false,
-		})
-		return
+	if mapRepoVar != nil {
+		data, err := mapRepoVar.Get(r.Context(), "oauth_client_certs", clientID)
+		if err == nil {
+			fingerprint, _ := data["fingerprint"].(string)
+			issuedAtStr, _ := data["issued_at"].(string)
+			expiresAtStr, _ := data["expires_at"].(string)
+			issuedAt, _ := time.Parse(time.RFC3339, issuedAtStr)
+			expiresAt, _ := time.Parse(time.RFC3339, expiresAtStr)
+			daysLeft := int(time.Until(expiresAt).Hours() / 24)
+			writeJSON(w, http.StatusOK, map[string]any{
+				"client_id":      clientID,
+				"has_cert":       true,
+				"fingerprint":    fingerprint,
+				"issued_at":      issuedAt.Format(time.RFC3339),
+				"expires_at":     expiresAt.Format(time.RFC3339),
+				"days_left":      daysLeft,
+				"needs_rotation": daysLeft < 30,
+			})
+			return
+		}
 	}
 
-	daysLeft := int(time.Until(cert.ExpiresAt).Hours() / 24)
 	writeJSON(w, http.StatusOK, map[string]any{
-		"client_id":    clientID,
-		"has_cert":     true,
-		"fingerprint":  cert.Fingerprint,
-		"issued_at":    cert.IssuedAt.Format(time.RFC3339),
-		"expires_at":   cert.ExpiresAt.Format(time.RFC3339),
-		"days_left":    daysLeft,
-		"needs_rotation": daysLeft < 30,
+		"client_id": clientID,
+		"has_cert":  false,
 	})
 }

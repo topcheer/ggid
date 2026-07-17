@@ -1,10 +1,10 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -17,16 +17,13 @@ type ClientLifecycle struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
-var (
-	clientLifecycleMu sync.RWMutex
-	clientLifecycles  = make(map[string]*ClientLifecycle)
-)
-
 func GetClientStatus(clientID string) string {
-	clientLifecycleMu.RLock()
-	defer clientLifecycleMu.RUnlock()
-	if cl, ok := clientLifecycles[clientID]; ok {
-		return cl.Status
+	if mapRepoVar != nil {
+		if data, err := mapRepoVar.Get(context.Background(), "oauth_client_lifecycles", clientID); err == nil {
+			if status, ok := data["status"].(string); ok {
+				return status
+			}
+		}
 	}
 	return "active"
 }
@@ -69,25 +66,26 @@ func handleClientLifecycle(w http.ResponseWriter, r *http.Request) {
 			ClientID: clientID, Status: "suspended",
 			SuspendedAt: &now, SuspendedBy: req.By, Reason: req.Reason, UpdatedAt: now,
 		}
-		clientLifecycleMu.Lock()
-		clientLifecycles[clientID] = cl
-		clientLifecycleMu.Unlock()
+		if mapRepoVar != nil {
+			b, _ := json.Marshal(cl)
+			var dataMap map[string]any
+			json.Unmarshal(b, &dataMap)
+			mapRepoVar.Store(r.Context(), "oauth_client_lifecycles", clientID, dataMap)
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status": "suspended", "client_id": clientID,
 			"suspended_at": now, "reason": req.Reason,
 		})
 	case "reinstate":
-		clientLifecycleMu.Lock()
-		if cl, ok := clientLifecycles[clientID]; ok {
-			cl.Status = "active"
-			cl.SuspendedAt = nil
-			cl.UpdatedAt = now
-		} else {
-			clientLifecycles[clientID] = &ClientLifecycle{
-				ClientID: clientID, Status: "active", UpdatedAt: now,
-			}
+		cl := &ClientLifecycle{
+			ClientID: clientID, Status: "active", UpdatedAt: now,
 		}
-		clientLifecycleMu.Unlock()
+		if mapRepoVar != nil {
+			b, _ := json.Marshal(cl)
+			var dataMap map[string]any
+			json.Unmarshal(b, &dataMap)
+			mapRepoVar.Store(r.Context(), "oauth_client_lifecycles", clientID, dataMap)
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status": "active", "client_id": clientID, "reinstate_at": now,
 		})

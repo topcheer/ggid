@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -18,11 +17,7 @@ type AgentReview struct {
 	Timestamp       time.Time `json:"timestamp"`
 }
 
-var (
-	reviewStore = make(map[string]*AgentReview)
-	reviewMu    sync.RWMutex
-	reviewSeq   int
-)
+var reviewSeq int
 
 func handleAgentReviewCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -38,12 +33,15 @@ func handleAgentReviewCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"agent_id and reviewer required"}`, http.StatusBadRequest)
 		return
 	}
-	reviewMu.Lock()
 	reviewSeq++
 	rv.ID = fmtReviewID(reviewSeq)
 	rv.Timestamp = time.Now()
-	reviewStore[rv.ID] = &rv
-	reviewMu.Unlock()
+	if mapRepoVar != nil {
+		b, _ := json.Marshal(rv)
+		var dataMap map[string]any
+		json.Unmarshal(b, &dataMap)
+		mapRepoVar.Store(r.Context(), "oauth_agent_reviews", rv.ID, dataMap)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -55,11 +53,9 @@ func handleAgentReviewList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"method not allowed"}`, http.StatusMethodNotAllowed)
 		return
 	}
-	reviewMu.RLock()
-	defer reviewMu.RUnlock()
-	var list []*AgentReview
-	for _, rv := range reviewStore {
-		list = append(list, rv)
+	var list []map[string]any
+	if mapRepoVar != nil {
+		list, _ = mapRepoVar.List(r.Context(), "oauth_agent_reviews")
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(list)
@@ -76,13 +72,14 @@ func handleAgentReviewGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	agentID := parts[4]
-	reviewMu.RLock()
-	defer reviewMu.RUnlock()
-	for _, rv := range reviewStore {
-		if rv.AgentID == agentID {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(rv)
-			return
+	if mapRepoVar != nil {
+		rows, _ := mapRepoVar.List(r.Context(), "oauth_agent_reviews")
+		for _, row := range rows {
+			if aid, ok := row["agent_id"].(string); ok && aid == agentID {
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(row)
+				return
+			}
 		}
 	}
 	http.Error(w, `{"error":"review not found"}`, http.StatusNotFound)
@@ -104,18 +101,21 @@ func handleAgentReviewUpdate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
 		return
 	}
-	reviewMu.Lock()
-	defer reviewMu.Unlock()
-	existing, ok := reviewStore[reviewID]
-	if !ok {
-		http.Error(w, `{"error":"review not found"}`, http.StatusNotFound)
+	if mapRepoVar != nil {
+		existing, err := mapRepoVar.Get(r.Context(), "oauth_agent_reviews", reviewID)
+		if err != nil {
+			http.Error(w, `{"error":"review not found"}`, http.StatusNotFound)
+			return
+		}
+		existing["decision"] = rv.Decision
+		existing["comment"] = rv.Comment
+		existing["timestamp"] = time.Now()
+		mapRepoVar.Store(r.Context(), "oauth_agent_reviews", reviewID, existing)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(existing)
 		return
 	}
-	existing.Decision = rv.Decision
-	existing.Comment = rv.Comment
-	existing.Timestamp = time.Now()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existing)
+	http.Error(w, `{"error":"review not found"}`, http.StatusNotFound)
 }
 
 func fmtReviewID(n int) string {

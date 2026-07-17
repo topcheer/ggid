@@ -1,9 +1,9 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -15,16 +15,11 @@ type TokenFamilyMember struct {
 }
 
 type TokenFamily struct {
-	FamilyID    string             `json:"family_id"`
-	Tokens      []TokenFamilyMember `json:"tokens"`
-	TheftDetected bool             `json:"theft_detected"`
-	CreatedAt   time.Time          `json:"created_at"`
+	FamilyID      string              `json:"family_id"`
+	Tokens        []TokenFamilyMember `json:"tokens"`
+	TheftDetected bool                `json:"theft_detected"`
+	CreatedAt     time.Time           `json:"created_at"`
 }
-
-var (
-	tokenFamilyMu sync.RWMutex
-	tokenFamilies = make(map[string]*TokenFamily) // keyed by refresh_token_id (first token)
-)
 
 // GET /api/v1/oauth/token-families/{refresh_token_id}
 func handleTokenFamily(w http.ResponseWriter, r *http.Request) {
@@ -38,70 +33,87 @@ func handleTokenFamily(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenFamilyMu.RLock()
-	family, ok := tokenFamilies[rtID]
-	tokenFamilyMu.RUnlock()
-
-	if !ok {
-		// Return empty family structure
-		writeJSON(w, http.StatusOK, map[string]any{
-			"refresh_token_id": rtID,
-			"family_id":        "",
-			"tokens":           []TokenFamilyMember{},
-			"theft_detected":   false,
-			"note":             "no token family found for this refresh token",
-		})
-		return
+	if mapRepoVar != nil {
+		data, err := mapRepoVar.Get(r.Context(), "oauth_token_families", rtID)
+		if err == nil {
+			writeJSON(w, http.StatusOK, data)
+			return
+		}
 	}
 
-	writeJSON(w, http.StatusOK, family)
+	// Return empty family structure
+	writeJSON(w, http.StatusOK, map[string]any{
+		"refresh_token_id": rtID,
+		"family_id":        "",
+		"tokens":           []TokenFamilyMember{},
+		"theft_detected":   false,
+		"note":             "no token family found for this refresh token",
+	})
 }
 
 // RegisterTokenFamily registers a token rotation event (helper for internal use).
 func RegisterTokenFamily(familyID, oldTokenID, newTokenID string) {
-	tokenFamilyMu.Lock()
-	defer tokenFamilyMu.Unlock()
+	if mapRepoVar == nil {
+		return
+	}
+	ctx := context.Background()
 
-	if _, ok := tokenFamilies[familyID]; !ok {
-		tokenFamilies[familyID] = &TokenFamily{
-			FamilyID:  familyID,
-			CreatedAt: time.Now().UTC(),
+	var data map[string]any
+	if existing, err := mapRepoVar.Get(ctx, "oauth_token_families", familyID); err == nil {
+		data = existing
+	} else {
+		data = map[string]any{
+			"family_id":      familyID,
+			"created_at":     time.Now().UTC(),
+			"tokens":         []map[string]any{},
+			"theft_detected": false,
 		}
 	}
 
-	family := tokenFamilies[familyID]
+	tokensRaw, _ := data["tokens"].([]any)
 
 	// Check for theft: if oldTokenID is already rotated, reuse = theft
-	for i := range family.Tokens {
-		if family.Tokens[i].TokenID == oldTokenID && family.Tokens[i].Status == "rotated" {
-			family.TheftDetected = true
-			family.Tokens[i].Status = "revoked" // revoke on theft detection
+	for i, t := range tokensRaw {
+		if tm, ok := t.(map[string]any); ok {
+			if tid, _ := tm["token_id"].(string); tid == oldTokenID {
+				if status, _ := tm["status"].(string); status == "rotated" {
+					data["theft_detected"] = true
+					tm["status"] = "revoked"
+					tokensRaw[i] = tm
+				}
+			}
 		}
 	}
 
 	// Add old token as rotated
 	found := false
-	for i := range family.Tokens {
-		if family.Tokens[i].TokenID == oldTokenID {
-			family.Tokens[i].Status = "rotated"
-			family.Tokens[i].RotatedTo = newTokenID
-			found = true
-			break
+	for i, t := range tokensRaw {
+		if tm, ok := t.(map[string]any); ok {
+			if tid, _ := tm["token_id"].(string); tid == oldTokenID {
+				tm["status"] = "rotated"
+				tm["rotated_to"] = newTokenID
+				tokensRaw[i] = tm
+				found = true
+				break
+			}
 		}
 	}
 	if !found {
-		family.Tokens = append(family.Tokens, TokenFamilyMember{
-			TokenID:   oldTokenID,
-			IssuedAt:  time.Now().UTC(),
-			Status:    "rotated",
-			RotatedTo: newTokenID,
+		tokensRaw = append(tokensRaw, map[string]any{
+			"token_id":   oldTokenID,
+			"issued_at":  time.Now().UTC(),
+			"status":     "rotated",
+			"rotated_to": newTokenID,
 		})
 	}
 
 	// Add new token as active
-	family.Tokens = append(family.Tokens, TokenFamilyMember{
-		TokenID:  newTokenID,
-		IssuedAt: time.Now().UTC(),
-		Status:   "active",
+	tokensRaw = append(tokensRaw, map[string]any{
+		"token_id":  newTokenID,
+		"issued_at": time.Now().UTC(),
+		"status":    "active",
 	})
+
+	data["tokens"] = tokensRaw
+	mapRepoVar.Store(ctx, "oauth_token_families", familyID, data)
 }
