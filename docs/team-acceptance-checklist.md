@@ -3,9 +3,11 @@
 > 本文件由团队 retrospective 讨论产生，所有成员必须遵守。
 
 ## Git Push 规则（最高优先级）
-1. **每次 git commit 后必须立即 git push** — 不等下次轮次
-2. **报告完成时确认已 push** — 格式："XXX 完成 commit XXX 已 push"
-3. **没有 push 的 commit = 未交付** — 远程成员无法验收
+1. **push 前必须跑 `golangci-lint run ./...`** — 有 error 必须先修复，不许 //nolint 绕过（除非有明确理由注释）
+2. **push 前必须跑 `go build ./...`** — 编译不过禁止 push
+3. **每次 git commit 后必须立即 git push** — 不等下次轮次
+4. **报告完成时确认已 push** — 格式："XXX 完成 commit XXX 已 push"
+5. **没有 push 的 commit = 未交付** — 远程成员无法验收
 
 ## 任务认领规则
 
