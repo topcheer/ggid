@@ -44,6 +44,7 @@ type Handler struct {
 	waCredStore    webauthn.CredentialStore
 	revocationMgr  *service.SessionRevocationManager
 	breakGlassRepo  *repository.BreakGlassRepository
+	smsSender       service.SMSSender
 	internalSecret     string
 	internalPrevSecret string
 }
@@ -1593,8 +1594,12 @@ func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// In production, send OTP via SMS. In dev mode, log the OTP.
-	if os.Getenv("DEV_MODE") == "true" {
+	// Send OTP via configured SMS provider (twilio/sns/log).
+	if h.smsSender != nil {
+		if err := h.smsSender.SendSMS(body.Phone, "Your GGID verification code: "+otp); err != nil {
+			log.Printf("SMS send failed for %s: %v", body.Phone, err)
+		}
+	} else {
 		log.Printf("[DEV] phone OTP for %s: %s", body.Phone, otp)
 	}
 	writeJSON(w, http.StatusOK, map[string]string{
