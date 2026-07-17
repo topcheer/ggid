@@ -234,6 +234,10 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Bulk user import (multi-hash, transparent re-hash).
 	h.mux.HandleFunc("/api/v1/identity/users/bulk-import", h.handleBulkImport)
+
+	// Identity orchestration journeys (JDL CRUD + dry-run).
+	h.mux.HandleFunc("/api/v1/identity/journeys", h.handleJourneys)
+	h.mux.HandleFunc("/api/v1/identity/journeys/", h.handleJourneys)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
