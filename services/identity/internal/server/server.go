@@ -93,6 +93,14 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetReBACRepo(rebacRepo)
 
+	// JML lifecycle engine.
+	jmlRepo := newLifecycleRepo(pool)
+	if err := jmlRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("JML schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.lifecycleRepo = jmlRepo
+	httpHandler.lifecycleEngine = newJMLEngine(jmlRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
