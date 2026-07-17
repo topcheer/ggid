@@ -4,35 +4,33 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"sync"
 
 	"github.com/google/uuid"
 )
 
 type UserPreferences struct {
-	Locale          string `json:"locale"`
-	Timezone        string `json:"timezone"`
-	Theme           string `json:"theme"`
-	EmailNotif      bool   `json:"email_notifications"`
-	PushNotif       bool   `json:"push_notifications"`
-	DateFormat      string `json:"date_format"`
-	DefaultLanding  string `json:"default_landing_page"`
+	Locale         string `json:"locale"`
+	Timezone       string `json:"timezone"`
+	Theme          string `json:"theme"`
+	EmailNotif     bool   `json:"email_notifications"`
+	PushNotif      bool   `json:"push_notifications"`
+	DateFormat     string `json:"date_format"`
+	DefaultLanding string `json:"default_landing_page"`
 }
 
-var (
-	userPrefMu sync.RWMutex
-	userPrefs  = make(map[uuid.UUID]*UserPreferences)
-)
-
-// GET/PUT /api/v1/users/{id}/preferences
 func (h *HTTPHandler) handleUserPreferences(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
+	uid := userID.String()
 	switch r.Method {
 	case http.MethodGet:
-		userPrefMu.RLock()
-		prefs, ok := userPrefs[userID]
-		userPrefMu.RUnlock()
-		if !ok {
-			prefs = &UserPreferences{Locale: "en", Timezone: "UTC", Theme: "system", EmailNotif: true, PushNotif: false, DateFormat: "YYYY-MM-DD", DefaultLanding: "/dashboard"}
+		var prefs any
+		if h.identityPolicyMap != nil {
+			row, _ := h.identityPolicyMap.Get(r.Context(), "identity_user_preferences", uid)
+			if row != nil {
+				prefs = row
+			}
+		}
+		if prefs == nil {
+			prefs = &UserPreferences{Locale: "en", Timezone: "UTC", Theme: "system", EmailNotif: true, DateFormat: "YYYY-MM-DD", DefaultLanding: "/dashboard"}
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"user_id": userID, "preferences": prefs})
 	case http.MethodPut, http.MethodPost:
@@ -41,7 +39,13 @@ func (h *HTTPHandler) handleUserPreferences(ctx context.Context, userID uuid.UUI
 			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
-		userPrefMu.Lock(); userPrefs[userID] = &prefs; userPrefMu.Unlock()
+		if h.identityPolicyMap != nil {
+			h.identityPolicyMap.Store(r.Context(), "identity_user_preferences", uid, map[string]any{
+				"locale": prefs.Locale, "timezone": prefs.Timezone, "theme": prefs.Theme,
+				"email_notifications": prefs.EmailNotif, "push_notifications": prefs.PushNotif,
+				"date_format": prefs.DateFormat, "default_landing_page": prefs.DefaultLanding,
+			})
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "user_id": userID, "preferences": prefs})
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")

@@ -4,28 +4,21 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Delegation struct {
-	ID         string    `json:"id"`
-	DelegatedTo string   `json:"delegated_to"`
-	Scope      []string  `json:"scope"`
-	StartDate  time.Time `json:"start_date"`
-	EndDate    time.Time `json:"end_date"`
-	Status     string    `json:"status"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	DelegatedTo string    `json:"delegated_to"`
+	Scope       []string  `json:"scope"`
+	StartDate   time.Time `json:"start_date"`
+	EndDate     time.Time `json:"end_date"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
-var (
-	delegationMu sync.RWMutex
-	delegations  = make(map[string][]*Delegation) // userID → delegations
-)
-
-// GET/POST /api/v1/users/{id}/delegations
 func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	uid := userID.String()
 	switch r.Method {
@@ -37,10 +30,12 @@ func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w
 			EndDate     string   `json:"end_date"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid JSON"); return
+			writeError(w, http.StatusBadRequest, "invalid JSON")
+			return
 		}
 		if req.DelegatedTo == "" {
-			writeError(w, http.StatusBadRequest, "delegated_to required"); return
+			writeError(w, http.StatusBadRequest, "delegated_to required")
+			return
 		}
 		now := time.Now().UTC()
 		end, _ := time.Parse(time.RFC3339, req.EndDate)
@@ -48,13 +43,24 @@ func (h *HTTPHandler) handleDelegations(ctx context.Context, userID uuid.UUID, w
 		start, _ := time.Parse(time.RFC3339, req.StartDate)
 		if start.IsZero() { start = now }
 		d := &Delegation{ID: "dlg-" + uuid.New().String()[:8], DelegatedTo: req.DelegatedTo, Scope: req.Scope, StartDate: start, EndDate: end, Status: "active", CreatedAt: now}
-		delegationMu.Lock(); delegations[uid] = append(delegations[uid], d); delegationMu.Unlock()
+		if h.identityPolicyMap != nil {
+			h.identityPolicyMap.Store(r.Context(), "identity_delegations", d.ID, map[string]any{
+				"user_id": uid, "delegated_to": d.DelegatedTo, "scope": d.Scope,
+				"start_date": d.StartDate, "end_date": d.EndDate, "status": d.Status,
+			})
+		}
 		writeJSON(w, http.StatusCreated, d)
 	case http.MethodGet:
-		delegationMu.RLock()
-		result := delegations[uid]
-		if result == nil { result = []*Delegation{} }
-		delegationMu.RUnlock()
+		var result []map[string]any
+		if h.identityPolicyMap != nil {
+			rows, _ := h.identityPolicyMap.List(r.Context(), "identity_delegations")
+			for _, row := range rows {
+				if getString(row, "user_id") == uid {
+					result = append(result, row)
+				}
+			}
+		}
+		if result == nil { result = []map[string]any{} }
 		writeJSON(w, http.StatusOK, map[string]any{"delegations": result, "count": len(result)})
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")

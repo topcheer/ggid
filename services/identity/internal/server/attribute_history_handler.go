@@ -3,13 +3,11 @@ package server
 import (
 	"context"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// AttributeChange tracks a user attribute modification for audit.
 type AttributeChange struct {
 	ID        string    `json:"id"`
 	UserID    string    `json:"user_id"`
@@ -20,47 +18,45 @@ type AttributeChange struct {
 	ChangedAt time.Time `json:"changed_at"`
 }
 
-var (
-	attrHistoryMu sync.RWMutex
-	attrHistory   = make(map[string][]*AttributeChange) // user_id → changes
-)
-
-// RecordAttributeChange logs a user attribute modification.
 func RecordAttributeChange(userID, field, oldVal, newVal, changedBy string) {
 	c := &AttributeChange{
 		ID: uuid.New().String(), UserID: userID, Field: field,
 		OldValue: oldVal, NewValue: newVal, ChangedBy: changedBy,
 		ChangedAt: time.Now().UTC(),
 	}
-	attrHistoryMu.Lock()
-	attrHistory[userID] = append(attrHistory[userID], c)
-	attrHistoryMu.Unlock()
+	if globalIdentityMap != nil {
+		globalIdentityMap.Store(nil, "identity_attribute_history", c.ID, map[string]any{
+			"user_id": c.UserID, "field": c.Field, "old_value": c.OldValue,
+			"new_value": c.NewValue, "changed_by": c.ChangedBy,
+		})
+	}
 }
 
-// GET /api/v1/users/{id}/attribute-history — returns attribute change history.
+var globalIdentityMap *identityPolicyMapRepo
+
+func SetGlobalIdentityMap(repo *identityPolicyMapRepo) {
+	globalIdentityMap = repo
+}
+
 func (h *HTTPHandler) handleAttributeHistory(ctx context.Context, userID uuid.UUID, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-
 	field := r.URL.Query().Get("field")
-	limit := 100
-
-	attrHistoryMu.RLock()
-	changes := attrHistory[userID.String()]
-	result := []*AttributeChange{}
-	for i := len(changes) - 1; i >= 0 && len(result) < limit; i-- {
-		if field != "" && changes[i].Field != field {
-			continue
+	var result []map[string]any
+	if h.identityPolicyMap != nil {
+		rows, _ := h.identityPolicyMap.List(r.Context(), "identity_attribute_history")
+		for _, row := range rows {
+			if getString(row, "user_id") != userID.String() {
+				continue
+			}
+			if field != "" && getString(row, "field") != field {
+				continue
+			}
+			result = append(result, row)
 		}
-		result = append(result, changes[i])
 	}
-	attrHistoryMu.RUnlock()
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"user_id": userID.String(),
-		"changes": result,
-		"count":   len(result),
-	})
+	if result == nil { result = []map[string]any{} }
+	writeJSON(w, http.StatusOK, map[string]any{"user_id": userID.String(), "changes": result, "count": len(result)})
 }
