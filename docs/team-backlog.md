@@ -569,3 +569,36 @@ See docs/research/ for full research docs.
 - GET /api/v1/identity/dsr/request — 数据主体提交权利请求
 - GET /api/v1/identity/dsr/export — 数据可携带（JSON 包，含用户全部数据）
 - POST /api/v1/identity/dsr/delete — 被遗忘权（级联删除 + 审计留痕）
+
+---
+
+## 身份编排引擎：JML 事件驱动自动化 (2026-07-17 第11小时研究) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**市场背景**: Identity Orchestration（Saviynt/SailPoint/Oleria 主推）是 2025 IAM 增长引擎。核心能力：HR 系统变更 → 自动触发 JML（Joiner/Mover/Leaver）规则 → 级联开通/变更/回收权限 + 通知 + 审计。2025 关键趋势："no-code workflow builder" + "28+ HR 系统集成"。
+
+**GGID 现状审计**:
+- 有 LifecycleRule 模型（trigger=joiner/mover/leaver + actions=[assign_role/revoke_access/notify_manager]）
+- 有 lifecycle_rules CRUD 端点（内存 map 存储 — 又一个不持久化！）
+- 有 provision_webhook（接收外部 IdP 事件）+ deprovision handler + reactivate handler + joiner dashboard
+- **核心缺口**：规则定义存在，但 trigger → action 执行链**未接线**。LifecycleRule 存了但没人监听 user.created/role.changed 事件去触发它
+
+**业务价值**: HIGH
+- JML 是 IAM 落地最大价值场景（HR 变更 → 自动权限，消除 IT 工单）
+- GGID 已有 ITDR 引擎（事件驱动模式可复用）、provision webhook（HR 集成入口）、SCIM（下游同步）
+- 与 PAM JIT（临时权限）、CAE（leaver → 立即 revoke session）天然协同
+
+**实现难度**: Medium
+- 实现路径：
+  1. lifecycle_rules 内存 → Postgres（lifecycle_rules 表，同 itdr_rules 模式）
+  2. 事件触发器：provision_webhook 收到 HR 事件（user.created/role_changed/user.deleted）→ 查匹配规则 → 执行 actions
+  3. action 执行器：assign_role（调 policy 服务）、revoke_access（调 policy revoke + auth session revoke via CAE）、notify_manager（webhook/email）
+  4. 与 CAE 联动：leaver 触发 → CAE RevokeUser → session <1s 吊销
+  5. 审计：每条 JML action 写 audit 事件（lifecycle.joiner/leaver）
+
+**兼容性**: 复用 ITDR 引擎模式（规则注册 + 事件评估）、CAE revoke pipeline、provision webhook 入口
+
+---
+
+## Identity Orchestration 可视化工作流编辑器 (2026-07-17 第11小时研究) - Priority: P3 - Status: Watch - Suggested: frontend
+
+**描述**: Saviynt/SailPoint 2025 差异化能力：拖拽式 JML 工作流编辑器（类似 n8n/Zapier）。GGID 可先做规则列表 CRUD（已有），后续 v2 加可视化。
