@@ -342,10 +342,8 @@ func (h *HTTPHandler) journeyDryRun(w http.ResponseWriter, r *http.Request, id s
 			ds.Result = "error"
 			ds.Message = fmt.Sprintf("unknown action: %s", step.Action)
 			result.Success = false
-		} else {
-			if ds.Message == "" {
-				ds.Message = fmt.Sprintf("would execute %s", step.Action)
-			}
+		} else if ds.Message == "" {
+			ds.Message = fmt.Sprintf("would execute %s", step.Action)
 		}
 
 		result.Steps = append(result.Steps, ds)

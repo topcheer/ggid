@@ -93,6 +93,7 @@ func (gw *Gateway) SetCAECheck(cae func(http.Handler) http.Handler) {
 
 // loadInternalSecret loads GGID_INTERNAL_SECRET from env.
 // In production, missing secret is fatal. In dev, uses default.
+//nolint:unused // kept for InternalAuth middleware initialization
 func loadInternalSecret() []byte {
 	s := os.Getenv("GGID_INTERNAL_SECRET")
 	if s == "" {

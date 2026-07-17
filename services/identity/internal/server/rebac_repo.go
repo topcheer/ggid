@@ -119,6 +119,7 @@ func (r *relationTupleRepo) ReadTuples(ctx context.Context, tenantID uuid.UUID, 
 	if subj != "" {
 		query += fmt.Sprintf(" AND subject = $%d", idx); args = append(args, subj); idx++
 	}
+	_ = idx // suppress ineffectual assignment lint
 	query += " ORDER BY created_at DESC LIMIT 100"
 
 	rows, err := r.pool.Query(ctx, query, args...)

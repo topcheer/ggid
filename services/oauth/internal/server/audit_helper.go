@@ -7,6 +7,7 @@ import (
 
 // publishAuditEvent sends an audit event via NATS if publisher is configured.
 // Fails silently — audit events are best-effort.
+//nolint:unused // available for audit event publishing from token flows
 func (s *Server) publishAuditEvent(action, result, resourceType string, resourceID, tenantID uuid.UUID) {
 	if s.auditPub == nil {
 		return

@@ -148,6 +148,7 @@ func EvaluateConditionalAccess(tenantID string, ctx map[string]any) (action stri
 	return "allow", nil
 }
 
+//nolint:unused // kept for EvaluateConditionalAccess callers and future use
 func matchConditions(conditions, ctx map[string]any) bool {
 	for key, expected := range conditions {
 		actual, ok := ctx[key]
