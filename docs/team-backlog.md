@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 71: PostgreSQL RLS Implementation Guide complete — 3 backlog items)*
+*Last updated: 2026-07-17 (Round 72: SDK Parity & Developer Experience research complete — 3 backlog items)*
 
 ## Current Stats
 
@@ -177,6 +177,7 @@
 | 151 | **PostgreSQL RLS + tenant lifecycle** (P0) | backend | Multi-tenant | Native RLS defense-in-depth + automated tenant onboarding/offboarding API + quota enforcement. See docs/research/multi-tenant-isolation.md |
 | 152 | **Cross-tenant IDOR detection** (P1) | backend | Multi-tenant | ITDR rule for cross-tenant access attempts + tenant isolation audit suite |
 | 153 | **PostgreSQL RLS implementation** (P0) | backend | Multi-tenant | RLS migration (30+ tables) + RLSPool wrapper + FORCE enforcement + cross-tenant test suite. See docs/research/postgresql-rls-implementation.md |
+| 154 | **SDK parity** (P0-P1) | backend | Developer experience | Expand Python SDK + token manager/DPoP in all SDKs + OpenAPI spec + package publishing. See docs/research/sdk-parity-developer-experience.md |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -234,6 +235,7 @@
 31. Session Management & Token Lifecycle Security → DONE (docs/research/session-token-lifecycle-security.md) — 3 backlog items added
 32. Multi-Tenant Architecture & Data Isolation → DONE (docs/research/multi-tenant-isolation.md) — 3 backlog items added
 33. PostgreSQL RLS Implementation Guide → DONE (docs/research/postgresql-rls-implementation.md) — 3 backlog items added
+34. SDK Parity & Developer Experience → DONE (docs/research/sdk-parity-developer-experience.md) — 3 backlog items added
 
 ## Rules
 
@@ -261,6 +263,7 @@ Active research topics:
 - Session Management & Token Lifecycle → DONE (docs/research/session-token-lifecycle-security.md)
 - Multi-Tenant Isolation → DONE (docs/research/multi-tenant-isolation.md)
 - PostgreSQL RLS Implementation → DONE (docs/research/postgresql-rls-implementation.md)
+- SDK Parity & Developer Experience → DONE (docs/research/sdk-parity-developer-experience.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

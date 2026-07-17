@@ -226,6 +226,9 @@
 | KB-212 | **PostgreSQL RLS migration** (30+ tables ENABLE + FORCE + BYPASSRLS role) | backend | P0 | rls-implementation | 3d |
 | KB-213 | **RLSPool wrapper + test suite** (WithTenant + cross-tenant isolation tests) | backend | P0 | rls-implementation | 3d |
 | KB-214 | **Enable FORCE RLS + performance verification** (all tables enforced) | backend | P1 | rls-implementation | 2d |
+| KB-215 | **Expand Python SDK** (auth + pagination + errors + all modules) | backend | P0 | sdk-parity | 5d |
+| KB-216 | **Token manager + DPoP in all SDKs** (auto-refresh + PoP) | backend | P0 | sdk-parity | 4d |
+| KB-217 | **OpenAPI spec + package publishing CI/CD** (npm/PyPI/Maven) | backend | P1 | sdk-parity | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -350,6 +353,7 @@
 | Session Management & Token Lifecycle Security | DONE | docs/research/session-token-lifecycle-security.md |
 | Multi-Tenant Architecture & Data Isolation | DONE | docs/research/multi-tenant-isolation.md |
 | PostgreSQL RLS Implementation Guide | DONE | docs/research/postgresql-rls-implementation.md |
+| SDK Parity & Developer Experience | DONE | docs/research/sdk-parity-developer-experience.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
