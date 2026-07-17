@@ -83,7 +83,7 @@ export default function CredentialRotationPage() {
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Credential Rotation</h1>
+          <h1 className="text-2xl font-bold">{t("credentialRotation.title")}</h1>
           <p className="text-gray-600">Schedule and execute credential rotation across the organization.</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">

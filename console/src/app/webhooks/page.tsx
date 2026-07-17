@@ -76,6 +76,7 @@ function isValidUrl(url: string): boolean {
 }
 
 export default function WebhooksPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
   const [loading, setLoading] = useState(true);
@@ -317,7 +318,7 @@ export default function WebhooksPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Webhooks</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("webhooks.title")}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Manage webhook endpoints with delivery tracking</p>
         </div>
         <div className="flex gap-2">

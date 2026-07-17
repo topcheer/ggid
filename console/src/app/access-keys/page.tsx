@@ -123,6 +123,7 @@ const DEMO_KEYS: AccessKey[] = [
 ];
 
 export default function AccessKeysPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [keys, setKeys] = useState<AccessKey[]>([]);
   const [loading, setLoading] = useState(true);
@@ -303,7 +304,7 @@ export default function AccessKeysPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
             <Shield className="h-7 w-7 text-brand-600" />
-            Access Keys
+            {t("accessKeys.title")}
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Manage scoped API access keys with IP binding and usage tracking</p>
         </div>
