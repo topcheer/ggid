@@ -142,25 +142,25 @@ type VCIssuer struct {
 func (i *VCIssuer) IssueCredential(ctx context.Context, req IssueRequest) (*VerifiableCredential, error) {
     // 1. 获取模板
     tmpl, err := i.templates.Get(req.Type)
-    
+
     // 2. 填充 credentialSubject（模板占位符 → 用户属性）
     subject := fillTemplate(tmpl, req.UserClaims)
-    
+
     // 3. 分配 statusList index
     statusIdx, statusCredID := i.statusList.Allocate(ctx)
-    
+
     // 4. 构建 VC 文档（不含 proof）
     vc := buildVCDoc(req.IssuerDID, subject, statusIdx, statusCredID, req.ExpiresAt)
-    
+
     // 5. 签名（canonicalize → sign）
     proof, err := i.signProof(vc, req.Algorithm) // Ed25519 或 SM2SM3
-    
+
     // 6. 存储
     i.repo.Store(ctx, vc, proof, statusIdx)
-    
+
     // 7. Audit
     i.auditPub.Publish(ctx, audit.Event{Action: "vc.issued", ...})
-    
+
     return vc.WithProof(proof), nil
 }
 ```
@@ -173,7 +173,7 @@ proof.type = "SM2Signature2024"（自定义 suite），proofValue = ASN.1 DER SM
 func (i *VCIssuer) signProof(vc map[string]any, alg string) (*Proof, error) {
     canonicalized := canonicalizeJSONLD(vc)  // URDNA2015 规范化
     hash := sm3.Sum256(canonicalized)        // SM3 哈希
-    
+
     switch alg {
     case "SM2SM3":
         sig, err := i.keyProvider.Signer().Sign(rand.Reader, hash, sm2.NewSM2SignerOption(true, nil))
@@ -194,10 +194,10 @@ func (v *VCVerifier) VerifyCredential(ctx context.Context, vc *VerifiableCredent
     // 1. 解析 issuer DID → 获取 verificationMethod → 公钥
     didDoc, err := v.didResolver.ResolveDID(vc.Issuer)
     pubKey := didDoc.GetVerificationMethod(vc.Proof.VerificationMethod)
-    
+
     // 2. 规范化 VC（去掉 proof）+ SM3/SHA-256 哈希
     canonicalized := canonicalizeJSONLD(vc.WithoutProof())
-    
+
     // 3. 验签
     switch vc.Proof.Type {
     case "SM2Signature2024":
@@ -205,13 +205,13 @@ func (v *VCVerifier) VerifyCredential(ctx context.Context, vc *VerifiableCredent
     case "Ed25519Signature2020":
         ok := ed25519.Verify(pubKey, canonicalized, sig)
     }
-    
+
     // 4. 检查过期
     if vc.ExpirationDate.Before(time.Now()) { return "expired" }
-    
+
     // 5. 检查吊销（StatusList2021）
     revoked := v.statusList.CheckRevoked(ctx, vc.CredentialStatus.StatusListIndex, vc.CredentialStatus.ID)
-    
+
     // 6. 返回结果 + 提取 claims
     return &VerificationResult{
         Valid: ok && !revoked && !expired,
@@ -230,14 +230,14 @@ W3C StatusList2021 标准：一个 VC 的吊销状态用一个 bit 表示（0=�
 func (s *StatusListManager) Revoke(ctx context.Context, vcID uuid.UUID) error {
     vc, _ := s.repo.Get(vcID)
     list, _ := s.statusListRepo.Get(vc.StatusListCredentialID)
-    
+
     // 设置对应 bit = 1
     s.setBit(list.Bitstring, vc.StatusListIndex, 1)
     s.statusListRepo.Update(ctx, list)
-    
+
     // 更新 VC revoked 标记
     s.repo.MarkRevoked(ctx, vcID)
-    
+
     // Audit
     s.auditPub.Publish(ctx, audit.Event{Action: "vc.revoked", ...})
 }

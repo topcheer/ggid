@@ -225,7 +225,7 @@ Token authorization_details: [{type: "user_profile", actions: ["read"], fields: 
   action = "read" (from RAR actions)
   subject = token sub
   data_classification = "important" (from data_classifications table)
-  
+
 → PDP result: allow/deny/stepup
 ```
 

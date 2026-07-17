@@ -503,11 +503,11 @@ func (s *PostureService) Evaluate(
     // 1. Gather device signals from all sources
     signals, err := s.gatherSignals(ctx, deviceID)
     if err != nil { return nil, err }
-    
+
     // 2. Get applicable policies for tenant
     policies, err := s.repo.GetActivePolicies(ctx, tenantID)
     if err != nil { return nil, err }
-    
+
     // 3. Evaluate each policy
     results := []PolicyResult{}
     overallCompliant := true
@@ -518,7 +518,7 @@ func (s *PostureService) Evaluate(
             overallCompliant = false
         }
     }
-    
+
     return &PostureResult{
         DeviceID:    deviceID,
         Compliant:   overallCompliant,
@@ -538,20 +538,20 @@ func (s *PostureService) Evaluate(
 ```
 1. User authenticates via GGID (password + MFA)
    → GGID creates session, records device posture
-   
+
 2. ZTNA broker authenticates user via SAML/OIDC
    → GGID issues assertion with session reference
-   
+
 3. ZTNA broker grants per-app session
    → Session tied to GGID session ID
-   
+
 4. GGID continuously monitors user/device state:
    ├── Password changed? → CAEP: credential-change
-   ├── Device fell out of compliance? → CAEP: device-compliance-change  
+   ├── Device fell out of compliance? → CAEP: device-compliance-change
    ├── Session revoked by admin? → CAEP: session-revoked
    ├── User role changed? → CAEP: token-claims-change
    └── Impossible travel detected? → CAEP: session-revoked
-   
+
 5. ZTNA broker receives CAEP event
    → Terminates affected sessions immediately
    → User must re-authenticate
@@ -568,10 +568,10 @@ GGID transmits CAEP events to configured ZTNA brokers:
 func (s *CAEPTransmitter) TransmitEvent(ctx context.Context, event *CAEPEvent) error {
     receivers, err := s.repo.GetActiveReceivers(ctx, event.TenantID)
     if err != nil { return err }
-    
+
     // Build SET (Security Event Token) per RFC 8417
     set := s.buildSET(event)
-    
+
     for _, receiver := range receivers {
         // Push via HTTP (RFC 8935)
         go s.pushSET(ctx, receiver, set)
@@ -590,7 +590,7 @@ func (s *CAEPTransmitter) buildSET(event *CAEPEvent) string {
             "https://schemas.openid.net/secevent/caep/event-type/" + event.EventType: event.Payload,
         },
     }
-    
+
     token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
     token.Header["kid"] = s.keyProvider.Metadata().KeyID
     signed, _ := token.SignedString(s.keyProvider.Private())
@@ -609,12 +609,12 @@ CREATE TABLE device_posture_signals (
     tenant_id       UUID NOT NULL,
     device_id       VARCHAR(256) NOT NULL,
     user_id         UUID,
-    
+
     -- OS information
     os_name         VARCHAR(64),
     os_version      VARCHAR(64),
     os_up_to_date   BOOLEAN,
-    
+
     -- Security state
     managed         BOOLEAN DEFAULT false,
     encrypted       BOOLEAN DEFAULT false,
@@ -623,20 +623,20 @@ CREATE TABLE device_posture_signals (
     antivirus_active BOOLEAN DEFAULT false,
     jailbroken      BOOLEAN DEFAULT false,
     screen_lock     BOOLEAN DEFAULT false,
-    
+
     -- EDR/MDM integration data
     mdm_provider    VARCHAR(64),                 -- 'intune', 'jamf', 'kandji'
     edr_provider    VARCHAR(64),                 -- 'crowdstrike', 'sentinelone'
     edr_active      BOOLEAN DEFAULT false,
     edr_zta_score   INT,                         -- 0-100 risk score from EDR
-    
+
     -- Metadata
     device_name     VARCHAR(256),
     device_type     VARCHAR(32),                 -- 'laptop', 'mobile', 'desktop'
     fingerprint     VARCHAR(256),
     last_seen       TIMESTAMPTZ,
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     UNIQUE(tenant_id, device_id)
 );
 
@@ -679,7 +679,7 @@ CREATE TABLE ztna_provider_configs (
     last_sync_at    TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     UNIQUE(tenant_id, provider, name)
 );
 
@@ -877,7 +877,7 @@ resource "cloudflare_access_identity_provider" "ggid" {
   account_id = var.cloudflare_account_id
   name       = "GGID"
   type       = "saml"
-  
+
   config {
     issuer_url     = "https://ggid.corp.com/saml/idp/metadata"
     sso_url        = "https://ggid.corp.com/saml/idp/sso"
@@ -890,7 +890,7 @@ resource "cloudflare_access_policy" "engineering" {
   application_id = cloudflare_access_application.internal_app.id
   name           = "Engineering Access"
   precedence     = 1
-  
+
   include {
     email_domain = ["corp.com"]
     saml         = ["engineering"]
