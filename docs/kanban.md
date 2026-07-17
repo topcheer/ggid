@@ -23,16 +23,13 @@
 | ID | Task | Assignee | Started | Notes |
 |----|------|----------|---------|-------|
 | B-06 | RFC 8693 Token Exchange 标准 grant | backend | 07-17 | docs/research/token-exchange-standard-grant-gap.md |
-| B-11 | ITDR Phase 4: Redis StateStore | backend | 07-17 | 替换 MemStateStore |
+| B-13 | ZT posture 真实聚合端点 | backend | 07-17 | services/identity/ |
 
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
 | B-07 | PAM JIT Zero Standing 实现 | P1 | services/policy/ + services/auth/ | request→approve→temp bind→expire→revoke→audit。参考 docs/architecture/pam-jit-design.md |
-| B-12 | SCIM bearer token 实现 | P1 | services/identity/ + services/gateway/ | ggid_scim_ 前缀 + Argon2id + tenant 绑定。参考 docs/architecture/internal-auth-and-scim-token-design.md |
-| B-13 | ZT /api/v1/zt/posture 真实聚合端点 | P2 | services/identity/ | 设备信任+MFA覆盖+critical+session绑定 |
 | B-14 | CIEM /api/v1/identity/entitlement-review/cross-analysis | P2 | services/identity/ | 授予×使用交叉分析 |
-| B-15 | IGA GenAI /api/v1/policy/campaigns/{id}/recommendations | P2 | services/policy/ | 规则先行版：90天未使用→建议回收 |
 
 ### DONE
 | ID | Task | Assignee | Commit |
@@ -44,6 +41,8 @@
 | B-08 | break-glass 内存数组迁 DB | backend | 88a85dfd |
 | B-09 | IGA revoke 写 audit 事件 | backend | 008762a4 |
 | B-10 | ITDR Phase 4：3 条新规则 | backend | f1c85214 |
+| B-11 | ITDR Redis StateStore | backend | 709a94c4 |
+| B-12 | SCIM bearer token 实现 | backend | bb2fbf94 |
 | B-15 | IGA GenAI 回收建议端点 | backend | 76aee44c |
 | B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | f3580d58 |
 
@@ -55,7 +54,6 @@
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
-| F-12 | Console OAuth PKCE 登录流程端到端验证 | P1 | console/src/app/login/ + auth/callback/ | browser 工具验证完整流程：登录→authorize→callback→token→dashboard |
 | F-13 | ITDR Detections 实时仪表盘 | P2 | console/src/app/security/itdr-dashboard/ | SSE/streaming 接 /api/v1/audit/itdr/detections，实时刷新检测列表 |
 | F-14 | KMS 配置页面对接后端真实端点 | P2 | console/src/app/settings/kms-config/ | 当前页面已有，验证 PUT/POST/test 端点返回真实数据 |
 
@@ -66,6 +64,14 @@
 | F-02 | CIEM 权限使用分析页面 | frontend | 593c2c7e |
 | F-03 | SDK 假数据清理 153 hooks (Batch 1-5) | frontend | fc559c27+4 |
 | F-04 | IGA GenAI 辅助审查 UI | frontend | 6270900f |
+| F-05 | Onboarding Wizard 4 步引导 | frontend | already-existed |
+| F-06 | Passkey 删除接 signalCredentialRemoved | frontend | 12db7caa |
+| F-07 | Profile 改名接 signalCurrentUserDetails | frontend | 12db7caa |
+| F-08 | CAE Session Revocation 管理页面 | frontend | 1d8b3da3 |
+| F-09 | PAM JIT 权限提升请求页面 | frontend | 19c72dbe |
+| F-10 | Break-glass 紧急访问页面 | frontend | 19c72dbe |
+| F-11 | ITDR Rules 管理页面 | frontend | 19c72dbe |
+| F-12 | Console OAuth PKCE 端到端验证 | frontend | verified-no-change |
 | F-05 | Onboarding Wizard 4 步引导 | frontend | verified |
 | F-06 | Passkey 删除接 signalCredentialRemoved | frontend | 12db7caa |
 | F-07 | Profile 改名接 signalCurrentUserDetails | frontend | 12db7caa |
