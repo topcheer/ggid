@@ -54,6 +54,7 @@ type HTTPHandler struct {
 consentRepo       *consentRepo
 hrConnectorRepo   *hrConnectorRepo
 dormantRepo       *dormantRepo
+rlsRepo           *rlsRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 }
@@ -185,6 +186,10 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/hr/sync/log", h.handleHRSyncLog)
 	h.mux.HandleFunc("/api/v1/hr/dormant", h.handleHRDormant)
 	h.mux.HandleFunc("/api/v1/hr/reconcile", h.handleHRReconcile)
+	// RLS Administration.
+	h.mux.HandleFunc("/api/v1/admin/rls/enable/", h.handleRLSEnable)
+	h.mux.HandleFunc("/api/v1/admin/rls/status", h.handleRLSStatus)
+	h.mux.HandleFunc("/api/v1/admin/rls/test", h.handleRLSTest)
 	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 	h.mux.HandleFunc("/api/v1/identity/scim/error-recovery", h.handleSCIMErrorRecovery)
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)

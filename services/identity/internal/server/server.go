@@ -185,6 +185,10 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetDormantRepo(dRepo)
 
+	// RLS Administration.
+	rlsRepo := newRLSRepo(pool)
+	httpHandler.SetRLSRepo(rlsRepo)
+
 	// Policy memory map repo (lifecycle_rules + review_campaigns).
 	ipmRepo := newIdentityPolicyMapRepo(pool)
 	if err := ipmRepo.EnsureSchema(ctx); err != nil {
