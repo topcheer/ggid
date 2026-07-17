@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 53: Credential Recovery Workflow Engine research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 54: Consent Management Platform research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -123,6 +123,11 @@
 | 97 | **Temporary Access Pass** (P0) | backend | Passkey recovery | 15-min single-use TAP for lost passkey device → new credential enrollment |
 | 98 | **Risk-based delay + admin approval** (P1) | backend | Security | Graduated wait (0min→72h) based on risk score + dual-control admin approval |
 | 99 | **Recovery console UI** (P2) | frontend | Self-service | Self-service recovery page + admin approvals console + audit trail |
+| 100 | **Consent DB schema + repository** (P0) | backend | Replace mock | Replace consent_registry_handler.go mock + consent.go in-memory with PostgreSQL. See docs/research/consent-management-platform.md |
+| 101 | **Consent CRUD API + withdrawal cascade** (P0) | backend | Consent lifecycle | Grant/list/withdraw APIs + cascade engine (email + token revoke + 3rd-party notify) |
+| 102 | **DSR workflow + GPC detection** (P1) | backend | GDPR/CCPA compliance | Data Subject Request pipeline (access/deletion/portability) + Global Privacy Control auto-withdraw |
+| 103 | **Policy versioning + re-consent** (P1) | backend | Compliance | Privacy policy version bump → supersede old consents → prompt re-consent |
+| 104 | **Console preference center + cookie banner** (P2) | frontend | Self-service | Preference center UI + admin DSR console + cookie consent banner with GPC detection |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -162,6 +167,7 @@
 13. GraphQL API Layer → DONE (docs/research/graphql-api-layer.md) — 7 backlog items added
 14. API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md) — 7 backlog items added
 15. Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md) — 6 backlog items added
+16. Consent Management Platform → DONE (docs/research/consent-management-platform.md) — 6 backlog items added
 
 ## Rules
 
@@ -174,6 +180,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Consent Management Platform → DONE (docs/research/consent-management-platform.md)
 - Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md)
 - API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md)
 - GraphQL API Layer → DONE (docs/research/graphql-api-layer.md)
