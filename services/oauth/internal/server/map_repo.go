@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,15 +15,18 @@ import (
 // Covers: branding, client_scopes, dpop_bindings, resource_allow,
 // custom_scopes, delegation_chains.
 type oauthMapRepo struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	fallback map[string]map[string]map[string]any // table → id → data (used when pool is nil)
+	mu     sync.RWMutex
 }
 
 func newOAuthMapRepo(pool *pgxpool.Pool) *oauthMapRepo {
-	return &oauthMapRepo{pool: pool}
+	return &oauthMapRepo{pool: pool, fallback: make(map[string]map[string]map[string]any)}
 }
 
 // mapRepoVar is the package-level instance set during buildHandler init.
-var mapRepoVar *oauthMapRepo
+// For tests without DB, init with nil pool (fallback map provides in-memory storage).
+var mapRepoVar = newOAuthMapRepo(nil)
 
 func (r *oauthMapRepo) EnsureSchema(ctx context.Context) error {
 	if r.pool == nil {
@@ -73,6 +77,22 @@ func (r *oauthMapRepo) EnsureSchema(ctx context.Context) error {
 
 func (r *oauthMapRepo) Store(ctx context.Context, table, id string, data map[string]any) error {
 	if r.pool == nil {
+		if r.fallback == nil {
+			return nil
+		}
+		if id == "" {
+			id = uuid.New().String()
+		}
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.fallback[table] == nil {
+			r.fallback[table] = make(map[string]map[string]any)
+		}
+		cp := make(map[string]any, len(data))
+		for k, v := range data {
+			cp[k] = v
+		}
+		r.fallback[table][id] = cp
 		return nil
 	}
 	if id == "" {
@@ -87,7 +107,23 @@ func (r *oauthMapRepo) Store(ctx context.Context, table, id string, data map[str
 
 func (r *oauthMapRepo) List(ctx context.Context, table string) ([]map[string]any, error) {
 	if r.pool == nil {
-		return []map[string]any{}, nil
+		if r.fallback == nil {
+			return []map[string]any{}, nil
+		}
+		r.mu.RLock()
+		defer r.mu.RUnlock()
+		var result []map[string]any
+		for _, data := range r.fallback[table] {
+			cp := make(map[string]any, len(data))
+			for k, v := range data {
+				cp[k] = v
+			}
+			result = append(result, cp)
+		}
+		if result == nil {
+			return []map[string]any{}, nil
+		}
+		return result, nil
 	}
 	rows, err := r.pool.Query(ctx, fmt.Sprintf(`SELECT id, data, created_at FROM %s ORDER BY created_at DESC`, table))
 	if err != nil {
@@ -113,6 +149,18 @@ func (r *oauthMapRepo) List(ctx context.Context, table string) ([]map[string]any
 
 func (r *oauthMapRepo) Get(ctx context.Context, table, id string) (map[string]any, error) {
 	if r.pool == nil {
+		if r.fallback == nil {
+			return nil, fmt.Errorf("not found")
+		}
+		r.mu.RLock()
+		defer r.mu.RUnlock()
+		if data, ok := r.fallback[table][id]; ok {
+			cp := make(map[string]any, len(data))
+			for k, v := range data {
+				cp[k] = v
+			}
+			return cp, nil
+		}
 		return nil, fmt.Errorf("not found")
 	}
 	var data []byte
@@ -130,6 +178,14 @@ func (r *oauthMapRepo) Get(ctx context.Context, table, id string) (map[string]an
 
 func (r *oauthMapRepo) Delete(ctx context.Context, table, id string) error {
 	if r.pool == nil {
+		if r.fallback == nil {
+			return nil
+		}
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.fallback[table] != nil {
+			delete(r.fallback[table], id)
+		}
 		return nil
 	}
 	_, err := r.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, table), id)
