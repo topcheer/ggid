@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 115
-## Last scan focus: E2E (Round 114) — Core 10/10, ERP 4/4, all pods Running; platform stable
-## Next scan focus: A (Stub scan restart, Round 115 = odd)
+## Current round: 116
+## Last scan focus: A (Stub restart, Round 115) — zero new stubs/TODOs; F-33 passwordless + B-29 composite rules endpoints live; clean
+## Next scan focus: E2E tests (Round 116 = even)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
