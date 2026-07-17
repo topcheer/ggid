@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 124
-## Last scan focus: E2E (Round 123) — Core 10/10, ERP 4/4, all pods Running; WASM is gateway middleware (not endpoint), 6 tests PASS; oauth rebuilt+deployed
-## Next scan focus: E (Security scan, Round 124 = even)
+## Current round: 125
+## Last scan focus: E2E (Round 124) — Core 10/10, ERP 4/4, make test PASS; PQC rename ACCEPT, DPoP proof enforcement ACCEPT
+## Next scan focus: F (Coverage scan, Round 125 = odd)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
