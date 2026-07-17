@@ -21,6 +21,7 @@ import (
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/healthcheck"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
+	pkgmiddleware "github.com/ggid/ggid/pkg/middleware"
 )
 
 // publicPaths are paths that skip JWT verification.
@@ -78,7 +79,22 @@ type Gateway struct {
 	graphql        *middleware.GraphQLResolver
 	sessionMgr     *middleware.SessionManager
 	sysconfigStore sysconfig.Store
+	internalSecret []byte
 	mu             sync.RWMutex
+}
+
+// loadInternalSecret loads GGID_INTERNAL_SECRET from env.
+// In production, missing secret is fatal. In dev, uses default.
+func loadInternalSecret() []byte {
+	s := os.Getenv("GGID_INTERNAL_SECRET")
+	if s == "" {
+		if os.Getenv("GGID_ENV") == "production" {
+			log.Fatal("GGID_INTERNAL_SECRET must be set in production")
+		}
+		s = "dev-internal-secret"
+		log.Println("WARNING: using default internal secret — not for production")
+	}
+	return []byte(s)
 }
 
 // New creates a new API Gateway handler.
@@ -163,6 +179,7 @@ func (gw *Gateway) buildProxies() {
 			// Forward resolved identity headers to the backend service
 			if requestID, ok := req.Context().Value(middleware.RequestIDKey).(string); ok {
 				req.Header.Set("X-Request-ID", requestID)
+				pkgmiddleware.SignInternalRequest(req, "gateway", gw.internalSecret)
 			}
 			if userID, ok := middleware.UserIDFromRequest(req); ok {
 				req.Header.Set("X-User-ID", userID.String())
@@ -837,6 +854,7 @@ func (gw *Gateway) buildProxiesLocked() {
 			originalDirector(req)
 			if requestID, ok := req.Context().Value(middleware.RequestIDKey).(string); ok {
 				req.Header.Set("X-Request-ID", requestID)
+				pkgmiddleware.SignInternalRequest(req, "gateway", gw.internalSecret)
 			}
 			if userID, ok := middleware.UserIDFromRequest(req); ok {
 				req.Header.Set("X-User-ID", userID.String())
