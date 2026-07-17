@@ -150,6 +150,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetRateLimitRepo(rlRepo)
 
+	// DLP (Data Loss Prevention).
+	dlpRepo := newDLPRepo(pool)
+	if err := dlpRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("DLP schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetDLPRepo(dlpRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,

@@ -49,6 +49,7 @@ type HTTPHandler struct {
 	fedRepo          *federationRepo
 	jitRepo          *jitRepo
 	rateLimitRepo    *rateLimitRepo
+	dlpPolicyRepo    *dlpRepo
 	devicePostureRepo *devicePostureRepo
 }
 
@@ -265,6 +266,12 @@ func (h *HTTPHandler) registerRoutes() {
 	// Per-tenant rate limiting.
 	h.mux.HandleFunc("/api/v1/identity/tenants/rate-limits", h.handleRateLimits)
 	h.mux.HandleFunc("/api/v1/identity/tenants/rate-limits/", h.handleRateLimits)
+
+	// DLP (Data Loss Prevention).
+	h.mux.HandleFunc("/api/v1/identity/dlp/policies", h.handleDLP)
+	h.mux.HandleFunc("/api/v1/identity/dlp/policies/", h.handleDLP)
+	h.mux.HandleFunc("/api/v1/identity/dlp/events", h.handleDLP)
+	h.mux.HandleFunc("/api/v1/identity/dlp/heatmap", h.handleDLP)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
