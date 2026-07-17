@@ -1,286 +1,271 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { useApi } from "@/lib/api";
+import { useState, useCallback, useEffect } from "react";
 import {
-  Users, UserCheck, Clock, Plus, X, AlertCircle, Loader2,
-  Shield, ArrowRight, Trash2, XCircle, CheckCircle2,
+  Users, Loader2, AlertCircle, X, RefreshCw, Plus, Trash2, Check,
+  Shield, ChevronRight, Clock, Ban, Settings, Activity,
+  CheckCircle2, XCircle, AlertTriangle, KeyRound, Lock,
 } from "lucide-react";
+import { authHeader } from "@/lib/auth-helpers";
 import { useTranslations } from "@/lib/i18n";
 
-interface Delegation {
-  id: string;
-  delegator_id: string;
-  delegator_name: string;
-  delegate_id: string;
-  delegate_name: string;
-  roles: string[];
-  scope: string;
-  created_at: string;
-  expires_at: string;
-  status: "active" | "expired" | "revoked";
-  last_used?: string;
+const TENANT_ID = "00000000-0000-0000-0000-000000000001";
+
+interface Delegation { id: string; delegator: string; delegate: string; scope: string; status: "active" | "expired" | "revoked"; expires_at: string; created_at: string; reason: string; }
+interface DelegationConfig {
+  max_delegation_depth: number; allowed_delegator_roles: string[]; delegation_expiry_hours: number;
+  revocation_by_delegator: boolean; require_consent: boolean; audit_all_delegations: boolean;
+  cascade_revoke_on_delegator_disable: boolean;
 }
+
+type Tab = "active" | "history" | "config";
+
+const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
+  active: { label: "Active", color: "text-green-600", bg: "bg-green-100 dark:bg-green-900/30" },
+  expired: { label: "Expired", color: "text-gray-500", bg: "bg-gray-100 dark:bg-gray-800" },
+  revoked: { label: "Revoked", color: "text-red-600", bg: "bg-red-100 dark:bg-red-900/30" },
+};
 
 export default function DelegationPage() {
   const t = useTranslations();
-
-  const { apiFetch } = useApi();
+  const [tab, setTab] = useState<Tab>("active");
   const [delegations, setDelegations] = useState<Delegation[]>([]);
+  const [config, setConfig] = useState<DelegationConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showDelegate, setShowDelegate] = useState(false);
-  const [confirmRevoke, setConfirmRevoke] = useState<Delegation | null>(null);
-  const [tab, setTab] = useState<"active" | "expired">("active");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Delegate form
-  const [form, setForm] = useState({
-    delegate_id: "",
-    roles: "",
-    scope: "",
-    expires_hours: 24,
-  });
-  const [creating, setCreating] = useState(false);
+  // Create form
+  const [showForm, setShowForm] = useState(false);
+  const [dDelegator, setDDelegator] = useState("");
+  const [dDelegate, setDDelegate] = useState("");
+  const [dScope, setDScope] = useState("read:users");
+  const [dReason, setDReason] = useState("");
 
-  const load = useCallback(async () => {
+  // Revoke
+  const [confirmRevoke, setConfirmRevoke] = useState<string | null>(null);
+
+  const h = { ...authHeader(), "X-Tenant-ID": TENANT_ID };
+  const H = { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID };
+  const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
+
+  const loadData = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
-      const data = await apiFetch<{ delegations?: Delegation[]; items?: Delegation[] }>("/api/v1/settings/delegations").catch(() => null);
-      setDelegations(data?.delegations ?? data?.items ?? []);
-    } catch {
-      setError("Failed to load delegations");
-    } finally {
-      setLoading(false);
-    }
-  }, [apiFetch]);
+      const [dRes, cRes] = await Promise.all([
+        fetch("/api/v1/policies/delegations", { headers: h }).catch(() => null),
+        fetch("/api/v1/policy/delegation/config", { headers: h }).catch(() => null),
+      ]);
+      if (dRes?.ok) { const d = await dRes.json(); setDelegations(d.delegations || []); }
+      if (cRes?.ok) setConfig(await cRes.json());
+    } catch { setError(t("delegation.loadError")); }
+    finally { setLoading(false); }
+  }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const handleDelegate = async () => {
-    if (!form.delegate_id.trim()) return;
-    setCreating(true);
+  const createDelegation = async () => {
+    if (!dDelegator || !dDelegate) return;
+    setActionLoading("create");
     try {
-      const roles = form.roles.split(",").map((r) => r.trim()).filter(Boolean);
-      await apiFetch("/api/v1/settings/delegations", {
-        method: "POST",
-        body: JSON.stringify({
-          delegate_id: form.delegate_id,
-          roles,
-          scope: form.scope || "*",
-          expires_hours: form.expires_hours,
-        }),
-      });
-      setForm({ delegate_id: "", roles: "", scope: "", expires_hours: 24 });
-      setShowDelegate(false);
-      await load();
-    } catch {
-      setError("Failed to create delegation");
-    } finally {
-      setCreating(false);
-    }
+      await fetch("/api/v1/policies/delegate", { method: "POST", headers: H, body: JSON.stringify({ delegator: dDelegator, delegate: dDelegate, scope: dScope, reason: dReason }) });
+      setShowForm(false); setDDelegator(""); setDDelegate(""); setDReason("");
+      loadData();
+    } catch { setError(t("delegation.createError")); }
+    finally { setActionLoading(null); }
   };
 
-  const handleRevoke = async (id: string) => {
-    try {
-      await apiFetch(`/api/v1/settings/delegations/${id}`, { method: "DELETE" });
-      setConfirmRevoke(null);
-      await load();
-    } catch {
-      setError("Failed to revoke delegation");
-    }
+  const revokeDelegation = async (id: string) => {
+    setActionLoading(`rvk-${id}`);
+    try { await fetch(`/api/v1/policies/delegate?id=${id}`, { method: "DELETE", headers: h }); setConfirmRevoke(null); loadData(); }
+    catch { setError(t("delegation.revokeError")); }
+    finally { setActionLoading(null); }
   };
 
-  const active = delegations.filter((d) => d.status === "active");
-  const past = delegations.filter((d) => d.status !== "active");
-  const display = tab === "active" ? active : past;
-
-  const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
+  const activeDelegations = delegations.filter(d => d.status === "active");
+  const pastDelegations = delegations.filter(d => d.status !== "active");
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <UserCheck className="h-6 w-6 text-indigo-600" /> Role Delegation
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Temporarily delegate roles to other users with automatic expiry.
-          </p>
-        </div>
-        <button onClick={() => setShowDelegate(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-          <Plus className="h-4 w-4" /> Delegate
-        </button>
-      </div>
-
-      {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">Active</p>
-          <p className="mt-1 text-2xl font-bold text-green-600">{active.length}</p>
-        </div>
-        <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">Expiring (24h)</p>
-          <p className="mt-1 text-2xl font-bold text-orange-600">
-            {active.filter((d) => { const h = (new Date(d.expires_at).getTime() - Date.now()) / 3600000; return h > 0 && h < 24; }).length}
-          </p>
-        </div>
-        <div className={cardCls}>
-          <p className="text-xs font-medium text-gray-400">Past</p>
-          <p className="mt-1 text-2xl font-bold text-gray-500">{past.length}</p>
-        </div>
+      <div>
+        <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
+          <Users className="h-6 w-6 text-purple-500" /> {t("delegation.title")}
+        </h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("delegation.subtitle")}</p>
       </div>
 
       {error && (
         <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />{error}
-          <button onClick={() => setError(null)} aria-label="Dismiss error" className="ml-auto"><X className="h-4 w-4" /></button>
+          <button onClick={() => setError(null)} aria-label="Dismiss" className="ml-auto"><X className="h-4 w-4" /></button>
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700">
-        <button onClick={() => setTab("active")} className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "active" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
-          <CheckCircle2 className="h-4 w-4" /> Active ({active.length})
-        </button>
-        <button onClick={() => setTab("expired")} className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium ${tab === "expired" ? "border-indigo-600 text-indigo-600" : "border-transparent text-gray-400 hover:text-gray-600"}`}>
-          <Clock className="h-4 w-4" /> History ({past.length})
-        </button>
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        {([
+          { id: "active" as Tab, label: `${t("delegation.active")} (${activeDelegations.length})`, icon: Shield },
+          { id: "history" as Tab, label: t("delegation.history"), icon: Clock },
+          { id: "config" as Tab, label: t("delegation.config"), icon: Settings },
+        ]).map(tb => {
+          const Icon = tb.icon;
+          return (
+            <button key={tb.id} onClick={() => setTab(tb.id)} aria-pressed={tab === tb.id}
+              className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === tb.id ? "border-purple-600 text-purple-600 dark:text-purple-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}>
+              <Icon className="h-4 w-4" /> {tb.label}
+            </button>
+          );
+        })}
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
-      ) : display.length === 0 ? (
-        <div className={cardCls}>
-          <div className="py-12 text-center">
-            <UserCheck className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-4 text-sm text-gray-400">{tab === "active" ? "No active delegations." : "No delegation history."}</p>
+      {loading ? <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-purple-500" /></div> : (<>
+
+      {/* ════ ACTIVE ════ */}
+      {tab === "active" && (
+        <div>
+          <div className="mb-4 flex items-center justify-between">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="text-center"><p className="text-lg font-bold">{activeDelegations.length}</p><p className="text-xs text-gray-400">{t("delegation.activeCount")}</p></div>
+              <div className="text-center"><p className="text-lg font-bold">{new Set(delegations.map(d => d.delegator)).size}</p><p className="text-xs text-gray-400">{t("delegation.delegators")}</p></div>
+              <div className="text-center"><p className="text-lg font-bold">{new Set(delegations.map(d => d.delegate)).size}</p><p className="text-xs text-gray-400">{t("delegation.delegates")}</p></div>
+            </div>
+            <button onClick={() => setShowForm(true)} className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700">
+              <Plus className="h-3 w-3" /> {t("delegation.delegate")}
+            </button>
           </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {display.map((d) => {
-            const expHours = (new Date(d.expires_at).getTime() - Date.now()) / 3600000;
-            const expiringSoon = d.status === "active" && expHours > 0 && expHours < 24;
-            return (
-              <div key={d.id} className={cardCls}>
-                <div className="flex items-start justify-between">
+          {activeDelegations.length === 0 ? (
+            <div className={card}><div className="py-12 text-center"><Users className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("delegation.noActive")}</p></div></div>
+          ) : (
+            <div className="space-y-2">
+              {activeDelegations.map(d => (
+                <div key={d.id} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
                   <div className="flex items-center gap-3">
-                    {/* Delegator → Delegate flow */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1.5">
-                        <div className="rounded-lg bg-blue-100 p-1.5 dark:bg-blue-900/30">
-                          <Users className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.delegator_name}</p>
-                          <p className="text-xs text-gray-400">Delegator</p>
-                        </div>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30"><KeyRound className="h-4 w-4 text-purple-500" /></div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono">{d.delegator}</span>
+                        <ChevronRight className="h-3 w-3 text-gray-300" />
+                        <span className="text-xs font-mono font-medium">{d.delegate}</span>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-gray-300" />
-                      <div className="flex items-center gap-1.5">
-                        <div className="rounded-lg bg-indigo-100 p-1.5 dark:bg-indigo-900/30">
-                          <UserCheck className="h-4 w-4 text-indigo-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{d.delegate_name}</p>
-                          <p className="text-xs text-gray-400">Delegate</p>
-                        </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-600 text-xs font-mono">{d.scope}</span>
+                        <span className="text-xs text-gray-400">{new Date(d.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {d.status === "active" ? (
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${expiringSoon ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"}`}>
-                        {expiringSoon ? "Expiring" : "Active"}
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-gray-700">{d.status}</span>
-                    )}
-                    {d.status === "active" && (
-                      <button onClick={() => setConfirmRevoke(d)} className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-                        <XCircle className="h-4 w-4" />
-                      </button>
-                    )}
+                    <span className={`px-1.5 py-0.5 rounded text-xs ${STATUS_CFG[d.status]?.bg} ${STATUS_CFG[d.status]?.color}`}>{STATUS_CFG[d.status]?.label}</span>
+                    <button onClick={() => setConfirmRevoke(d.id)} disabled={actionLoading === `rvk-${d.id}`} aria-label="Revoke" className="rounded p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                      {actionLoading === `rvk-${d.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ban className="h-3.5 w-3.5" />}
+                    </button>
                   </div>
                 </div>
-
-                {/* Details */}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {d.roles.map((r) => (
-                    <span key={r} className="flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">
-                      <Shield className="h-3 w-3" />{r}
-                    </span>
-                  ))}
-                  <span className="text-xs text-gray-400">Scope: {d.scope}</span>
-                </div>
-
-                <div className="mt-2 flex items-center gap-4 text-xs text-gray-400">
-                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Expires: {new Date(d.expires_at).toLocaleString()}</span>
-                  {d.last_used && <span>Last used: {new Date(d.last_used).toLocaleString()}</span>}
-                </div>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Delegate modal */}
-      {showDelegate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowDelegate(false)}>
-          <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Delegate Roles</h2>
-              <button onClick={() => setShowDelegate(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
-            </div>
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Delegate User ID</label>
-                <input aria-label="user-uuid" value={form.delegate_id} onChange={(e) => setForm((p) => ({ ...p, delegate_id: e.target.value }))} placeholder="user-uuid" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Roles (comma-separated)</label>
-                <input aria-label="admin, auditor" value={form.roles} onChange={(e) => setForm((p) => ({ ...p, roles: e.target.value }))} placeholder="admin, auditor" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Scope</label>
-                <input aria-label="* or specific resource" value={form.scope} onChange={(e) => setForm((p) => ({ ...p, scope: e.target.value }))} placeholder="* or specific resource" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Expires In (hours)</label>
-                <div className="mt-2 flex gap-2">
-                  {[4, 8, 24, 72].map((h) => (
-                    <button key={h} onClick={() => setForm((p) => ({ ...p, expires_hours: h }))} className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${form.expires_hours === h ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
-                      {h < 24 ? `${h}h` : `${h / 24}d`}
-                    </button>
-                  ))}
+      {/* ════ HISTORY ════ */}
+      {tab === "history" && (
+        <div className={card}>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Clock className="h-4 w-4" /> {t("delegation.pastDelegations")}</h2>
+          {pastDelegations.length === 0 ? (
+            <div className="py-8 text-center"><Clock className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">{t("delegation.noHistory")}</p></div>
+          ) : (
+            <div className="space-y-2">
+              {pastDelegations.map(d => (
+                <div key={d.id} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700 opacity-75">
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${STATUS_CFG[d.status]?.bg}`}>
+                      {d.status === "revoked" ? <Ban className={`h-4 w-4 ${STATUS_CFG[d.status]?.color}`} /> : <Clock className={`h-4 w-4 ${STATUS_CFG[d.status]?.color}`} />}
+                    </div>
+                    <div>
+                      <span className="text-xs font-mono">{d.delegator}</span>
+                      <ChevronRight className="inline h-3 w-3 text-gray-300 mx-1" />
+                      <span className="text-xs font-mono">{d.delegate}</span>
+                      <p className="text-xs text-gray-400">{d.reason || "—"} · {new Date(d.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <span className={`px-1.5 py-0.5 rounded text-xs ${STATUS_CFG[d.status]?.bg} ${STATUS_CFG[d.status]?.color}`}>{STATUS_CFG[d.status]?.label}</span>
                 </div>
-              </div>
+              ))}
             </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <button onClick={() => setShowDelegate(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={handleDelegate} disabled={!form.delegate_id.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-                {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />} Delegate
+          )}
+        </div>
+      )}
+
+      {/* ════ CONFIG ════ */}
+      {tab === "config" && config && (
+        <div className="space-y-4">
+          <div className={card}>
+            <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Settings className="h-4 w-4" /> {t("delegation.policyConfig")}</h3>
+            <div className="space-y-3">
+              {([
+                ["max_delegation_depth", t("delegation.maxDepth"), String(config.max_delegation_depth)],
+                ["delegation_expiry_hours", t("delegation.expiryHours"), `${config.delegation_expiry_hours}h`],
+                ["allowed_delegator_roles", t("delegation.allowedRoles"), config.allowed_delegator_roles.join(", ")],
+              ] as const).map(([key, label, val]) => (
+                <div key={key} className="flex items-center justify-between rounded-lg border p-3 dark:border-gray-700">
+                  <span className="text-sm font-medium">{label}</span>
+                  <span className="text-sm font-mono text-gray-500">{val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className={card}>
+            <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("delegation.safeguards")}</h3>
+            <div className="space-y-2">
+              {([
+                ["revocation_by_delegator", t("delegation.revocationByDelegator"), config.revocation_by_delegator],
+                ["require_consent", t("delegation.requireConsent"), config.require_consent],
+                ["audit_all_delegations", t("delegation.auditAll"), config.audit_all_delegations],
+                ["cascade_revoke", t("delegation.cascadeRevoke"), config.cascade_revoke_on_delegator_disable],
+              ] as const).map(([key, label, val]) => (
+                <div key={key} className="flex items-center justify-between rounded-lg border p-2 dark:border-gray-700">
+                  <span className="text-sm">{label}</span>
+                  {val ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-gray-300" />}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      </>)}
+
+      {/* Create delegation modal */}
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowForm(false)}>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white"><Plus className="h-5 w-5 text-purple-500" /> {t("delegation.createDelegation")}</h3>
+            <div className="mt-4 space-y-3">
+              <div><label className="text-sm font-medium">{t("delegation.delegator")}</label><input type="text" value={dDelegator} onChange={e => setDDelegator(e.target.value)} placeholder="user:alice" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm font-mono" autoFocus /></div>
+              <div><label className="text-sm font-medium">{t("delegation.delegate")}</label><input type="text" value={dDelegate} onChange={e => setDDelegate(e.target.value)} placeholder="user:bob" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm font-mono" /></div>
+              <div><label className="text-sm font-medium">{t("delegation.scope")}</label>
+                <select value={dScope} onChange={e => setDScope(e.target.value)} className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">
+                  <option value="read:users">read:users</option><option value="write:users">write:users</option><option value="admin:orgs">admin:orgs</option><option value="read:audit">read:audit</option>
+                </select>
+              </div>
+              <div><label className="text-sm font-medium">{t("delegation.reason")}</label><input type="text" value={dReason} onChange={e => setDReason(e.target.value)} placeholder="Vacation coverage" className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" /></div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setShowForm(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button>
+              <button onClick={createDelegation} disabled={!dDelegator || !dDelegate || actionLoading === "create"} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50">
+                {actionLoading === "create" ? <Loader2 className="h-4 w-4 animate-spin" /> : t("delegation.create")}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Revoke confirmation */}
+      {/* Revoke confirm */}
       {confirmRevoke && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmRevoke(null)}>
-          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><XCircle className="h-5 w-5 text-red-600" /></div>
-              <div>
-                <h2 className="font-semibold text-gray-900 dark:text-white">Revoke Delegation?</h2>
-                <p className="text-sm text-gray-500">Delegate <strong>{confirmRevoke.delegate_name}</strong> will lose roles: {confirmRevoke.roles.join(", ")} immediately.</p>
-              </div>
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setConfirmRevoke(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
-              <button onClick={() => handleRevoke(confirmRevoke.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Revoke</button>
+          <div role="dialog" aria-modal="true" className="mx-4 w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-red-500" /><h3 className="text-lg font-semibold">{t("delegation.revokeTitle")}</h3></div>
+            <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">{t("delegation.revokeConfirm")}</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setConfirmRevoke(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">{t("common.cancel")}</button>
+              <button onClick={() => revokeDelegation(confirmRevoke)} className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"><Ban className="h-4 w-4" /> {t("delegation.revoke")}</button>
             </div>
           </div>
         </div>
