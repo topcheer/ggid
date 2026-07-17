@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ggid/ggid/pkg/posture"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/healthcheck"
@@ -74,6 +75,7 @@ type Gateway struct {
 	healthChecker  *healthcheck.Checker
 	rateLimiter    *middleware.TenantBucketLimiter
 	multiDimLimiter *middleware.MultiDimRateLimiter
+	postureEngine   *posture.Engine
 	reloadFunc     ReloadFunc
 	routeVersion   int64
 	stats          *middleware.StatsCollector
@@ -366,6 +368,23 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.HasPrefix(r.URL.Path, "/api/v1/gateway/rate-limits/") && r.Method == http.MethodPut {
 		gw.handleUpdateRateLimit(w, r)
+		return
+	}
+	// Device posture endpoints.
+	if r.URL.Path == "/api/v1/devices/posture/evaluate" && r.Method == http.MethodPost {
+		gw.handlePostureEvaluate(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/devices/posture/policies" && r.Method == http.MethodGet {
+		gw.handlePostureGetPolicy(w, r)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, "/api/v1/devices/posture/policies/") && r.Method == http.MethodPut {
+		gw.handlePostureUpdatePolicy(w, r)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, "/api/v1/devices/posture/") && r.Method == http.MethodGet {
+		gw.handlePostureGet(w, r)
 		return
 	}
 	if r.URL.Path == "/graphql" && r.Method == http.MethodPost {
@@ -1052,4 +1071,86 @@ func (gw *Gateway) handleUpdateRateLimit(w http.ResponseWriter, r *http.Request)
 		"tier":   tierStr,
 		"config": cfg,
 	})
+}
+
+// SetPostureEngine injects the device posture evaluation engine.
+func (gw *Gateway) SetPostureEngine(engine *posture.Engine) {
+	gw.postureEngine = engine
+}
+
+func (gw *Gateway) handlePostureEvaluate(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if gw.postureEngine == nil {
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "posture engine not configured"})
+		return
+	}
+	var input posture.PostureInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid JSON"})
+		return
+	}
+	tenantID := r.Header.Get("X-Tenant-ID")
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	result := gw.postureEngine.Evaluate(tenantID, input)
+	gw.postureEngine.PersistResult(r.Context(), tenantID, result)
+	_ = json.NewEncoder(w).Encode(result)
+}
+
+func (gw *Gateway) handlePostureGet(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if gw.postureEngine == nil {
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "posture engine not configured"})
+		return
+	}
+	deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/devices/posture/")
+	tenantID := r.Header.Get("X-Tenant-ID")
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	result, _ := gw.postureEngine.GetLatestScore(r.Context(), tenantID, deviceID)
+	if result == nil {
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "no posture data for device"})
+		return
+	}
+	_ = json.NewEncoder(w).Encode(result)
+}
+
+func (gw *Gateway) handlePostureGetPolicy(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if gw.postureEngine == nil {
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "posture engine not configured"})
+		return
+	}
+	tenantID := r.Header.Get("X-Tenant-ID")
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	_ = json.NewEncoder(w).Encode(gw.postureEngine.GetPolicy(tenantID))
+}
+
+func (gw *Gateway) handlePostureUpdatePolicy(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if gw.postureEngine == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "posture engine not configured"})
+		return
+	}
+	tenantID := strings.TrimPrefix(r.URL.Path, "/api/v1/devices/posture/policies/")
+	if tenantID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "tenant_id required"})
+		return
+	}
+	var policy posture.PosturePolicy
+	if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid JSON"})
+		return
+	}
+	gw.postureEngine.SetPolicy(tenantID, policy)
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "updated", "tenant_id": tenantID})
 }
