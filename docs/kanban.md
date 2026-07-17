@@ -69,6 +69,14 @@
 | KB-055 | **SCIM client** (push users to AWS IAM Identity Center) | backend | P1 | cloud-iam-federation | 4d |
 | KB-056 | **Federation health monitoring** | backend | P1 | cloud-iam-federation | 3d |
 | KB-057 | **Federation setup wizard** (Console multi-cloud) | frontend | P2 | cloud-iam-federation | 5d |
+| KB-058 | **Multi-hash password verifier** (bcrypt/PBKDF2/scrypt/SSHA) | backend | P0 | data-migration | 4d |
+| KB-059 | **Transparent rehashing** (auto-upgrade to Argon2id) | backend | P0 | data-migration | 2d |
+| KB-060 | **Bulk import pipeline** (async job, JSON/CSV) | backend | P0 | data-migration | 5d |
+| KB-061 | **Dry-run validation** (test import without committing) | backend | P0 | data-migration | 2d |
+| KB-062 | **Lazy migration engine** (JIT from legacy DB) | backend | P1 | data-migration | 5d |
+| KB-063 | **Attribute + role mapping engine** | backend | P1 | data-migration | 3d |
+| KB-064 | **Import wizard** (Console multi-step) | frontend | P2 | data-migration | 5d |
+| KB-065 | **Migration dashboard** (stats, progress, errors) | frontend | P2 | data-migration | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -89,7 +97,8 @@
 
 | ID | Title | Owner | Commit |
 |----|-------|-------|--------|
-| — | Cloud IAM Federation research doc | researcher | pending commit |
+| — | Data Migration research doc | researcher | pending commit |
+| — | Cloud IAM Federation research doc | researcher | 5880e4ac |
 | — | Identity Orchestration / Journeys research doc | researcher | 4f76fbdc |
 | — | ReBAC/Zanzibar research doc | researcher | 4ce3b8ba |
 | — | PIPL/NIS2/CRA compliance research | arch | done |
@@ -105,7 +114,8 @@
 | PIPL/NIS2/CRA | DONE | docs/research/nis2-cra-pipl-compliance.md |
 | Identity Orchestration | DONE | docs/research/identity-orchestration-journeys.md |
 | Cloud IAM Federation | DONE | docs/research/cloud-iam-federation.md |
-| Continuous Access Evaluation (CAEP) | NEXT | — |
+| Data Migration / Bulk Import | DONE | docs/research/data-migration-bulk-import.md |
+| Zero Trust Network Access (ZTNA) | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---

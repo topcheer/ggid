@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 43: Cloud IAM Federation research complete — 9 new backlog items)*
+*Last updated: 2026-07-17 (Round 44: Data Migration research complete — 8 new backlog items)*
 
 ## Current Stats
 
@@ -60,6 +60,13 @@
 | 34 | **SCIM client** (P1) | backend | Auto-provisioning | Push user changes to AWS IAM Identity Center via SCIM 2.0 |
 | 35 | **Federation health monitoring** (P1) | backend | Operations | Periodic checks: metadata access, cert expiry, SCIM connectivity |
 | 36 | **Federation setup wizard** (P2) | frontend | Console UI | Multi-step wizard with metadata download, Terraform copy, test login |
+| 37 | **Multi-hash password verifier** (P0) | backend | Migration compatibility | bcrypt, PBKDF2, scrypt, LDAP SSHA, SHA256 verification. See docs/research/data-migration-bulk-import.md |
+| 38 | **Transparent rehashing** (P0) | backend | Password security | Auto-upgrade legacy hashes to Argon2id on successful login |
+| 39 | **Bulk import pipeline** (P0) | backend | User migration | Async job-based JSON/CSV import with batch processing, progress tracking |
+| 40 | **Dry-run validation** (P0) | backend | Safety | Validate import data without committing; return error report |
+| 41 | **Lazy migration engine** (P1) | backend | Zero-downtime migration | Legacy DB connector, per-tenant config, JIT user creation on login |
+| 42 | **Attribute + role mapping engine** (P1) | backend | Data transformation | Configurable field + role mapping from legacy schema to GGID schema |
+| 43 | **Import wizard + dashboard** (P2) | frontend | Console UI | Multi-step wizard (upload, map, validate, import) + migration dashboard with stats |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -89,6 +96,7 @@
 3. ReBAC / Zanzibar fine-grained authz → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md) — 7 backlog items added
 4. Identity Orchestration / Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md) — 8 backlog items added
 5. Cloud IAM Federation → DONE (docs/research/cloud-iam-federation.md) — 9 backlog items added
+6. Data Migration / Bulk Import → DONE (docs/research/data-migration-bulk-import.md) — 8 backlog items added
 
 ## Rules
 
@@ -101,6 +109,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Data Migration / Bulk User Import → DONE (docs/research/data-migration-bulk-import.md)
 - Cloud IAM Federation (AWS/Azure/GCP) → DONE (docs/research/cloud-iam-federation.md)
 - Identity Orchestration / Configurable Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md)
 - ReBAC / Google Zanzibar fine-grained authorization → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md)
@@ -109,6 +118,6 @@ Active research topics:
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
-- **Next**: Continuous Access Evaluation Protocol (CAEP) / Shared Signals Framework
+- **Next**: Zero Trust Network Access (ZTNA) integration / Passwordless migration
 
 See docs/research/ for full research docs.
