@@ -39,6 +39,7 @@ type HTTPHandler struct {
 	idpConfigSvc     *idpconfig.Service
 	auditPublisher   *audit.Publisher
 	scimRepo         *scimTokenRepo
+	rebacRepo        *relationTupleRepo
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -188,6 +189,10 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Zero-trust posture aggregation endpoint.
 	h.mux.HandleFunc("/api/v1/zt/posture", h.handleZTPosture)
+
+	// ReBAC tuple store + relation engine.
+	h.mux.HandleFunc("/api/v1/identity/tuples", h.handleReBACTuples)
+	h.mux.HandleFunc("/api/v1/identity/check", h.handleReBACCheck)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)

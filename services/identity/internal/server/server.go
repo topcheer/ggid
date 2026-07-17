@@ -86,6 +86,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.scimRepo = scimRepo
 
+	// ReBAC tuple store.
+	rebacRepo := newRelationTupleRepo(pool)
+	if err := rebacRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("ReBAC schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetReBACRepo(rebacRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
