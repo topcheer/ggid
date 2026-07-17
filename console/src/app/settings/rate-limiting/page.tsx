@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import { Gauge, Loader2, AlertCircle, X, RefreshCw, Plus, Trash2, Check, CheckCircle, XCircle, Activity, Zap, Settings, Eye, TrendingUp, Clock, AlertTriangle, Globe } from "lucide-react";
+import { Gauge, Loader2, AlertCircle, X, RefreshCw, Plus, Trash2, Check, CheckCircle, XCircle, Activity, Zap, Settings, Eye, TrendingUp, Clock, AlertTriangle, Globe, TestTube } from "lucide-react";
 import { authHeader } from "@/lib/auth-helpers";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
