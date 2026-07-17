@@ -38,10 +38,11 @@ type DetectionCallback func(ctx context.Context, det *domain.Detection)
 
 // Engine evaluates audit events against registered rules.
 type Engine struct {
-	registry *RuleRegistry
-	state    StateStore
-	repo     DetectionRepo
-	callback DetectionCallback // optional: invoked after each detection is persisted
+	registry     *RuleRegistry
+	state        StateStore
+	repo         DetectionRepo
+	callback     DetectionCallback // optional: invoked after each detection is persisted
+	threatIntel  ThreatIntelChecker // optional: checks external threat indicators
 }
 
 // NewEngine creates a detection engine.
@@ -50,6 +51,16 @@ func NewEngine(repo DetectionRepo, state StateStore) *Engine {
 		registry: NewRuleRegistry(),
 		state:    state,
 		repo:     repo,
+	}
+}
+
+// SetThreatIntelChecker injects the threat intel checker for ITDR enrichment.
+// When set, the engine will query threat indicators during Evaluate and
+// auto-registers the threat_intel_hit rule.
+func (e *Engine) SetThreatIntelChecker(checker ThreatIntelChecker) {
+	e.threatIntel = checker
+	if checker != nil {
+		e.registry.Register(NewThreatIntelRule(checker))
 	}
 }
 
