@@ -174,3 +174,45 @@ See docs/research/ for full research docs.
   3. GET /api/v1/oauth/consent/history — consent 变更历史
   4. Consent 版本绑定到 scope 定义变更
 - 参考: docs/research/ciam-2025-trends-gap-analysis.md
+
+---
+
+## B2B CIAM 增强：客户身份管理 + 自助注册 + 品牌定制 (2026-07-17 第13小时研究) - Priority: P1 - Status: Proposed - Suggested: backend + frontend
+
+**市场背景**: Auth0 Customer Identity Trends Report 2025 — CIAM 市场 $27B（2025），4 大趋势：passwordless 默认化、AI agent 身份、身份欺诈防护、B2B CIAM（组织/租户层级管理）。GGID 当前是 workforce IAM，B2B CIAM 扩展是市场天花板翻倍路径。
+
+**GGID 现状审计（CIAM 能力部分就绪）**：
+- ✓ 社交登录（social providers stats handler）
+- ✓ OAuth consent screen + consent override
+- ✓ 租户品牌（branding_pg.go + client_branding.go）
+- ✓ 密码自助重置（forgot + reset）
+- ✓ 组织管理（org 服务 LTREE 树）
+- ✓ 注册页面（register/page.tsx）
+- ✗ 缺：客户自助组织管理（B2B 客户自己注册组织 + 管理成员）
+- ✗ 缺：渐进式注册（progressive profiling — 首次只收 email，后续逐步补全）
+- ✗ 缺：MFA 强制策略（CIAM 场景：高风险操作才要求 MFA，而非每次登录）
+- ✗ 缺：客户身份欺诈防护（step-up based on risk score + bot detection）
+
+**业务价值**: HIGH（从 workforce 扩展到 CIAM = 市场翻倍，$27B TAM）
+**实现难度**: Medium
+- 完整实现路径（不降级）：
+  1. **B2B 自助注册**：POST /api/v1/auth/register-organization — 客户自己创建组织（自动分配 tenant + admin 角色 + 组织根节点）
+  2. **渐进式注册**：user.profile_completeness 字段 + 登录后检测缺失字段 + 前端引导补全
+  3. **品牌深度定制**：登录/注册/MFA 页面主题色 + Logo + CSS + 自定义域名（CNAME 验证 → tenant_branding 表扩展）
+  4. **风险驱动 MFA**：risk_engine.Evaluate > 0.5 → step-up MFA（低风险无缝登录，高风险才要求 MFA）
+  5. **身份欺诈防护**：bot detection（已有 middleware）+ velocity check（已有 risk_engine）+ disposable email 阻止 + email verification 强制
+  6. **客户旅程分析**：/api/v1/auth/journey-analytics — 注册转化漏斗、MFA 放弃率、社交登录偏好
+
+**兼容性**: 全部基于现有组件扩展；oauth 服务已有品牌+consent+社交+注册基础设施
+
+---
+
+## 可验证凭证 (Verifiable Credentials) / EUDI Wallet 支持 (2026-07-17 第13小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + IAMExpert
+
+**市场背景**: KuppingerCole EIC 2025 CIAM 第一推荐：EUDI Wallet（欧盟数字身份钱包 2026 强制）+ W3C Verifiable Credentials。去中心化身份从概念进入落地期。Auth0 已推出 VC 支持。
+
+**GGID 现状**: SCIM（同步）+ OAuth/OIDC（联邦）+ SAML（企业 SSO）已完整。缺：VC 签发/验证/呈现。
+
+**业务价值**: MEDIUM-HIGH（欧盟市场准入 + 政府/金融场景差异化）
+**实现难度**: High（DID 方法选择 + VC JSON-LD 签名 + VP 验证 + Wallet 交互协议）
+- 完整路径：DID:web 方法 → VC签发（JSON-LD + Ed25519/SM2 签名）→ VP 验证端点 → statusList 吊销 → Console 签发管理
