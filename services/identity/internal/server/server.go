@@ -115,6 +115,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.abRepo = abRepo
 
+	// Device posture + compliance.
+	dpRepo := newDevicePostureRepo(pool, nil) // Redis wired later
+	if err := dpRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Device posture schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.devicePostureRepo = dpRepo
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
