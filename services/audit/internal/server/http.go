@@ -258,6 +258,9 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/itdr/incidents", s.handleITDRIncidents)
 	mux.HandleFunc("/api/v1/audit/itdr/kill-chain/", s.handleITDRKillChain)
 	mux.HandleFunc("/api/v1/audit/itdr/playbooks", s.handleITDRPlaybooks)
+	mux.HandleFunc("/api/v1/soar/playbooks", s.handleSOARRoute)
+	mux.HandleFunc("/api/v1/soar/playbooks/", s.handleSOARRoute)
+	mux.HandleFunc("/api/v1/soar/executions", s.handleSOARRoute)
 	mux.HandleFunc("/api/v1/audit/itdr/threat-heatmap", s.handleITDRThreatHeatmap)
 }
 
