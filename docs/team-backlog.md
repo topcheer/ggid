@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 44: Data Migration research complete — 8 new backlog items)*
+*Last updated: 2026-07-17 (Round 45: ZTNA Broker Integration research complete — 7 new backlog items)*
 
 ## Current Stats
 
@@ -67,6 +67,13 @@
 | 41 | **Lazy migration engine** (P1) | backend | Zero-downtime migration | Legacy DB connector, per-tenant config, JIT user creation on login |
 | 42 | **Attribute + role mapping engine** (P1) | backend | Data transformation | Configurable field + role mapping from legacy schema to GGID schema |
 | 43 | **Import wizard + dashboard** (P2) | frontend | Console UI | Multi-step wizard (upload, map, validate, import) + migration dashboard with stats |
+| 44 | **Device posture API + evaluation engine** (P0) | backend | ZTNA integration | Standardized posture API for ZTNA brokers + configurable policy engine. See docs/research/ztna-broker-integration.md |
+| 45 | **Gateway device posture middleware** (P0) | backend | Per-request enforcement | DevicePosture middleware in gateway chain, Redis-cached posture check |
+| 46 | **SAML groups claim standardization** (P0) | backend | ZTNA policy | Standardized groups attribute in SAML assertions for ZTNA broker policies |
+| 47 | **SCIM outbound client** (P0) | backend | ZTNA provisioning | Push users/groups to Zscaler/Cloudflare/Twingate/Tailscale via SCIM 2.0 |
+| 48 | **CAEP event transmitter** (P1) | backend | Continuous verification | Push CAEP SET tokens (session-revoked, credential-change) to ZTNA brokers |
+| 49 | **ZTNA provider setup guide generator** (P1) | backend | Developer experience | Auto-generate provider-specific Terraform/config snippets |
+| 50 | **ZTNA dashboard + provider wizard** (P2) | frontend | Console UI | Provider status cards, posture compliance, CAEP events, setup wizard |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -97,6 +104,7 @@
 4. Identity Orchestration / Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md) — 8 backlog items added
 5. Cloud IAM Federation → DONE (docs/research/cloud-iam-federation.md) — 9 backlog items added
 6. Data Migration / Bulk Import → DONE (docs/research/data-migration-bulk-import.md) — 8 backlog items added
+7. ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md) — 7 backlog items added
 
 ## Rules
 
@@ -109,6 +117,7 @@
 ## Research Pipeline
 
 Active research topics:
+- ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md)
 - Data Migration / Bulk User Import → DONE (docs/research/data-migration-bulk-import.md)
 - Cloud IAM Federation (AWS/Azure/GCP) → DONE (docs/research/cloud-iam-federation.md)
 - Identity Orchestration / Configurable Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md)
@@ -118,7 +127,7 @@ Active research topics:
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
-- **Next**: Zero Trust Network Access (ZTNA) integration / Passwordless migration
+- **Next**: Passwordless migration strategies / JIT user provisioning
 
 See docs/research/ for full research docs.
 ---
