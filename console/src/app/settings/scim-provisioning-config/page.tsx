@@ -1,11 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useScimProvisioningConfig, ScimProvisioningConfig, ScimMappingRule } from "@ggid/sdk-react";
 import { useTranslations } from "@/lib/i18n";
 
 export default function ScimProvisioningConfigPage() {
   const t = useTranslations();
   const { config, loading, error, fetchConfig, updateConfig, testConnection } = useScimProvisioningConfig();
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>;
+  if (error) return <div className="p-8 text-red-500">Error: {error}</div>;
   const [form, setForm] = useState<ScimProvisioningConfig | null>(null);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
