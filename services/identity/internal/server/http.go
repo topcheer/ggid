@@ -55,6 +55,7 @@ consentRepo       *consentRepo
 hrConnectorRepo   *hrConnectorRepo
 dormantRepo       *dormantRepo
 rlsRepo           *rlsRepo
+quotaRepo         *quotaRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 }
@@ -190,6 +191,12 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/admin/rls/enable/", h.handleRLSEnable)
 	h.mux.HandleFunc("/api/v1/admin/rls/status", h.handleRLSStatus)
 	h.mux.HandleFunc("/api/v1/admin/rls/test", h.handleRLSTest)
+	// SCIM outbound targets.
+	h.mux.HandleFunc("/api/v1/scim/targets", h.handleSCIMTargets)
+	h.mux.HandleFunc("/api/v1/scim/sync/log", h.handleSCIMSyncLog)
+	h.mux.HandleFunc("/api/v1/scim/sync/", h.handleSCIMSyncTarget)
+	// Tenant Quota Engine.
+	h.mux.HandleFunc("/api/v1/quotas/", h.handleTenantQuota)
 	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 	h.mux.HandleFunc("/api/v1/identity/scim/error-recovery", h.handleSCIMErrorRecovery)
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)

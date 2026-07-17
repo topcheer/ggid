@@ -189,6 +189,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	rlsRepo := newRLSRepo(pool)
 	httpHandler.SetRLSRepo(rlsRepo)
 
+	// Tenant Quota Engine.
+	qRepo := newQuotaRepo(pool)
+	if err := qRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Quota schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetQuotaRepo(qRepo)
+
 	// Policy memory map repo (lifecycle_rules + review_campaigns).
 	ipmRepo := newIdentityPolicyMapRepo(pool)
 	if err := ipmRepo.EnsureSchema(ctx); err != nil {
