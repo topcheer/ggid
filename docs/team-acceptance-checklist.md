@@ -29,7 +29,7 @@
 
 ## 验收流程
 
-1. 实现者完成 → 标记 REVIEW（不是 DONE）
+1. 实现者完成 → **git commit 后立即 git push** → 标记 REVIEW（不是 DONE）
 2. arch 查 idle 成员 → DM 验收（含 git pull 提醒）
 3. 验收人按 checklist 逐项检查
 4. 全部通过 → 标 DONE
