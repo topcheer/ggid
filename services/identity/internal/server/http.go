@@ -248,9 +248,18 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/federation/route-email", h.handleFederation)
 	h.mux.HandleFunc("/api/v1/.well-known/federation-configuration", h.handleFederation)
 
+	// F-34: Frontend-compatible federation endpoint aliases.
+	h.mux.HandleFunc("/api/v1/identity/federation/discovery-rules", h.handleFederation)
+	h.mux.HandleFunc("/api/v1/identity/federation/transforms", h.handleFederation)
+	h.mux.HandleFunc("/api/v1/identity/federation/trust-relations", h.handleFederation)
+
 	// JIT user provisioning.
 	h.mux.HandleFunc("/api/v1/identity/jit/mappings", h.handleJIT)
 	h.mux.HandleFunc("/api/v1/identity/jit/dry-run", h.jitDryRun)
+
+	// SD-JWT selective disclosure.
+	h.mux.HandleFunc("/api/v1/identity/sd-jwt/issue", h.handleSDJWTIssue)
+	h.mux.HandleFunc("/api/v1/identity/sd-jwt/verify", h.handleSDJWTVerify)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
