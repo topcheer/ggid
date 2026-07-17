@@ -143,26 +143,10 @@ func (s *HTTPServer) handleConditionalAccess(w http.ResponseWriter, r *http.Requ
 }
 
 // EvaluateConditionalAccess checks all enabled policies against the given context.
+// Returns the first matching policy's action or "allow" if none match.
+// Note: currently always returns "allow" — policies are loaded from DB at request time.
 func EvaluateConditionalAccess(tenantID string, ctx map[string]any) (action string, matchedPolicy *ConditionalAccessPolicy) {
-	// In-memory evaluation only for tests without DB — production uses DB-backed handler above.
 	return "allow", nil
-}
-
-//nolint:unused // kept for EvaluateConditionalAccess callers and future use
-func matchConditions(conditions, ctx map[string]any) bool {
-	for key, expected := range conditions {
-		actual, ok := ctx[key]
-		if !ok {
-			return false
-		}
-		if key == "time_window" {
-			continue
-		}
-		if fmt.Sprintf("%v", expected) != fmt.Sprintf("%v", actual) {
-			return false
-		}
-	}
-	return true
 }
 
 // --- policy map helpers ---

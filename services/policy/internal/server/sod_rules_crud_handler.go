@@ -3,7 +3,6 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,13 +18,6 @@ type SoDRulePair struct {
 	Enabled     bool      `json:"enabled"`
 	CreatedAt   time.Time `json:"created_at"`
 }
-
-type sodRuleStore struct {
-	mu    sync.RWMutex
-	rules map[string]*SoDRulePair
-}
-
-var sodRulesCRUD = &sodRuleStore{rules: make(map[string]*SoDRulePair)}
 
 // POST/GET/PUT/DELETE /api/v1/policies/sod/rules
 func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
@@ -48,33 +40,41 @@ func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		rule := &SoDRulePair{
-			ID:          uuid.New().String(),
-			TenantID:    req.TenantID,
-			RoleA:       req.RoleA,
-			RoleB:       req.RoleB,
-			Description: req.Description,
-			Enabled:     true,
-			CreatedAt:   time.Now().UTC(),
+			ID: uuid.New().String(), TenantID: req.TenantID, RoleA: req.RoleA,
+			RoleB: req.RoleB, Description: req.Description, Enabled: true,
+			CreatedAt: time.Now().UTC(),
 		}
-		sodRulesCRUD.mu.Lock()
-		sodRulesCRUD.rules[rule.ID] = rule
-		sodRulesCRUD.mu.Unlock()
+		if s.policyMap != nil {
+			s.policyMap.Store(r.Context(), "policy_sod_rule_pairs", rule.ID, map[string]any{
+				"tenant_id": rule.TenantID, "role_a": rule.RoleA, "role_b": rule.RoleB,
+				"description": rule.Description, "enabled": rule.Enabled,
+			})
+		}
 		writeJSON(w, http.StatusCreated, rule)
 
 	case http.MethodGet:
 		tenantID := r.URL.Query().Get("tenant_id")
-		sodRulesCRUD.mu.RLock()
-		result := []*SoDRulePair{}
-		for _, rl := range sodRulesCRUD.rules {
-			if id != "" && rl.ID != id {
-				continue
+		var result []*SoDRulePair
+		if s.policyMap != nil {
+			rows, _ := s.policyMap.List(r.Context(), "policy_sod_rule_pairs")
+			for _, row := range rows {
+				rl := &SoDRulePair{
+					ID: pmGetString(row, "id"), TenantID: pmGetString(row, "tenant_id"),
+					RoleA: pmGetString(row, "role_a"), RoleB: pmGetString(row, "role_b"),
+					Description: pmGetString(row, "description"), Enabled: pmGetBool(row, "enabled"),
+				}
+				if id != "" && rl.ID != id {
+					continue
+				}
+				if tenantID != "" && rl.TenantID != tenantID {
+					continue
+				}
+				result = append(result, rl)
 			}
-			if tenantID != "" && rl.TenantID != tenantID {
-				continue
-			}
-			result = append(result, rl)
 		}
-		sodRulesCRUD.mu.RUnlock()
+		if result == nil {
+			result = []*SoDRulePair{}
+		}
 		if id != "" && len(result) == 1 {
 			writeJSON(w, http.StatusOK, result[0])
 			return
@@ -96,33 +96,26 @@ func (s *HTTPServer) handleSoDRules(w http.ResponseWriter, r *http.Request) {
 		if req.ID == "" {
 			req.ID = id
 		}
-		sodRulesCRUD.mu.Lock()
-		rl, ok := sodRulesCRUD.rules[req.ID]
-		if !ok {
-			sodRulesCRUD.mu.Unlock()
-			writeJSONError(w, http.StatusNotFound, "rule not found")
-			return
+		if s.policyMap != nil {
+			update := map[string]any{
+				"role_a": req.RoleA, "role_b": req.RoleB,
+				"description": req.Description,
+			}
+			if req.Enabled != nil {
+				update["enabled"] = *req.Enabled
+			}
+			s.policyMap.Store(r.Context(), "policy_sod_rule_pairs", req.ID, update)
 		}
-		if req.RoleA != "" { rl.RoleA = req.RoleA }
-		if req.RoleB != "" { rl.RoleB = req.RoleB }
-		if req.Description != "" { rl.Description = req.Description }
-		if req.Enabled != nil { rl.Enabled = *req.Enabled }
-		sodRulesCRUD.mu.Unlock()
-		writeJSON(w, http.StatusOK, rl)
+		writeJSON(w, http.StatusOK, map[string]any{"status": "updated", "id": req.ID})
 
 	case http.MethodDelete:
 		if id == "" {
 			writeJSONError(w, http.StatusBadRequest, "id is required")
 			return
 		}
-		sodRulesCRUD.mu.Lock()
-		if _, ok := sodRulesCRUD.rules[id]; !ok {
-			sodRulesCRUD.mu.Unlock()
-			writeJSONError(w, http.StatusNotFound, "rule not found")
-			return
+		if s.policyMap != nil {
+			s.policyMap.Delete(r.Context(), "policy_sod_rule_pairs", id)
 		}
-		delete(sodRulesCRUD.rules, id)
-		sodRulesCRUD.mu.Unlock()
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "id": id})
 
 	default:

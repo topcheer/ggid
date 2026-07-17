@@ -722,6 +722,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Pragma", "no-cache")
+
+		// Publish audit event for token issuance.
+		if resp != nil && auditPub != nil {
+			event := audit.NewEvent("token_issued", "success", tenantID, uuid.Nil)
+			event.ResourceType = "oauth_token"
+			auditPub.PublishAsync(event)
+		}
+
 		writeJSON(w, http.StatusOK, resp)
 	})
 

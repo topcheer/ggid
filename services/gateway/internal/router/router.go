@@ -91,21 +91,6 @@ func (gw *Gateway) SetCAECheck(cae func(http.Handler) http.Handler) {
 	gw.caeCheck = cae
 }
 
-// loadInternalSecret loads GGID_INTERNAL_SECRET from env.
-// In production, missing secret is fatal. In dev, uses default.
-//nolint:unused // kept for InternalAuth middleware initialization
-func loadInternalSecret() []byte {
-	s := os.Getenv("GGID_INTERNAL_SECRET")
-	if s == "" {
-		if os.Getenv("GGID_ENV") == "production" {
-			log.Fatal("GGID_INTERNAL_SECRET must be set in production")
-		}
-		s = "dev-internal-secret"
-		log.Println("WARNING: using default internal secret — not for production")
-	}
-	return []byte(s)
-}
-
 // New creates a new API Gateway handler.
 func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
 	gw := &Gateway{
