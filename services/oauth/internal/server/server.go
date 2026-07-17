@@ -49,6 +49,11 @@ type Server struct {
 	stopTicker   func()
 	rotatingKP   *service.RotatingKeyProvider
 	auditPub     *audit.Publisher
+	mapRepo      *oauthMapRepo
+}
+
+func (s *Server) SetMapRepo(repo *oauthMapRepo) {
+	s.mapRepo = repo
 }
 
 // keyProvider implements pkg/crypto.KeyProvider by loading RSA keys from disk.
@@ -132,6 +137,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 				delegationAdapterVar = newDelegationAdapter(pool)
 				reviewAdapterVar = newReviewAdapter(pool)
 				scopeLifecycleAdapterVar = newScopeLifecycleAdapter(pool)
+				// Initialize map repo for remaining in-memory stores.
 				log.Println("OAuth database connected")
 			} else if err != nil {
 				log.Printf("warning: failed to connect database: %v (running without DB)", err)
@@ -214,7 +220,16 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 		WriteTimeout: 30 * time.Second,
 	}
 
-	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool, stopTicker: stopTicker, rotatingKP: rotatingKP, auditPub: auditPub}, nil
+	// Initialize OAuth map repo for in-memory stores migration.
+	var mapRepo *oauthMapRepo
+	if pool != nil {
+		mapRepo = newOAuthMapRepo(pool)
+		if err := mapRepo.EnsureSchema(ctx); err != nil {
+			log.Printf("warning: oauth map repo schema error: %v", err)
+		}
+	}
+
+	return &Server{cfg: cfg, httpSrv: httpSrv, oauthSvc: oauthSvc, pool: pool, stopTicker: stopTicker, rotatingKP: rotatingKP, auditPub: auditPub, mapRepo: mapRepo}, nil
 }
 
 // Run starts the server and blocks until ctx is cancelled.
