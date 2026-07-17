@@ -345,6 +345,7 @@
 | Compliance Automation & Audit Evidence | DONE | docs/research/compliance-automation-audit-evidence.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | DONE | Already implemented (hash_chain.go HMAC-SHA256 + tamper detection + API) |
 | Session Management & Token Lifecycle Security | DONE | docs/research/session-token-lifecycle-security.md |
+| Multi-Tenant Architecture & Data Isolation | DONE | docs/research/multi-tenant-isolation.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---

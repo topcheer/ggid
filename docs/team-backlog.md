@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 69: Session Management & Token Lifecycle Security research complete — 3 new backlog items)*
+*Last updated: 2026-07-17 (Round 70: Multi-Tenant Isolation research complete — 3 new backlog items)*
 
 ## Current Stats
 
@@ -174,6 +174,8 @@
 | 148 | **Framework mapping + reports + trust center** (P1) | backend | Compliance | SOC2/ISO/NIST control mapping + PDF evidence-attached reports + public trust center page |
 | 149 | **Session security hardening** (P0) | backend | Session defense | Replace hijack/anomaly/inspect hardcoded handlers with real detection + device binding + CAE. See docs/research/session-token-lifecycle-security.md |
 | 150 | **DB-backed session store + DPoP** (P1) | backend | Session defense | PostgreSQL session store with audit trail + DPoP binding on all sessions + CAE risk re-evaluation |
+| 151 | **PostgreSQL RLS + tenant lifecycle** (P0) | backend | Multi-tenant | Native RLS defense-in-depth + automated tenant onboarding/offboarding API + quota enforcement. See docs/research/multi-tenant-isolation.md |
+| 152 | **Cross-tenant IDOR detection** (P1) | backend | Multi-tenant | ITDR rule for cross-tenant access attempts + tenant isolation audit suite |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -229,6 +231,7 @@
 29. Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md) — 4 backlog items added
 30. Compliance Automation → DONE (docs/research/compliance-automation-audit-evidence.md) — 4 backlog items added
 31. Session Management & Token Lifecycle Security → DONE (docs/research/session-token-lifecycle-security.md) — 3 backlog items added
+32. Multi-Tenant Architecture & Data Isolation → DONE (docs/research/multi-tenant-isolation.md) — 3 backlog items added
 
 ## Rules
 
@@ -254,6 +257,7 @@ Active research topics:
 - Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md)
 - Compliance Automation → DONE (docs/research/compliance-automation-audit-evidence.md)
 - Session Management & Token Lifecycle → DONE (docs/research/session-token-lifecycle-security.md)
+- Multi-Tenant Isolation → DONE (docs/research/multi-tenant-isolation.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
