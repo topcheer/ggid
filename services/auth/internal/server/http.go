@@ -24,6 +24,7 @@ import (
 	"github.com/ggid/ggid/pkg/sysconfig"
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/ggid/ggid/services/auth/internal/conf"
+	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/ggid/ggid/services/auth/internal/service"
 	"github.com/ggid/ggid/services/auth/internal/webauthn"
 	"github.com/google/uuid"
@@ -42,6 +43,7 @@ type Handler struct {
 	auditPublisher *audit.Publisher
 	waCredStore    webauthn.CredentialStore
 	revocationMgr  *service.SessionRevocationManager
+	breakGlassRepo  *repository.BreakGlassRepository
 	internalSecret     string
 	internalPrevSecret string
 }
@@ -85,7 +87,6 @@ func (h *Handler) SetInternalAuthSecret(secret, prevSecret string) {
 	h.internalSecret = secret
 	h.internalPrevSecret = prevSecret
 }
-
 // SetSysconfigStore injects the system config store for hot-reloadable settings.
 func (h *Handler) SetSysconfigStore(store sysconfig.Store) {
 	h.sysconfigStore = store
@@ -334,7 +335,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/api-keys/", h.handleAPIKeys)
 	h.mux.HandleFunc("/api/v1/auth/access-keys", h.handleAccessKeys)
 	h.mux.HandleFunc("/api/v1/auth/access-keys/", h.handleAccessKeys)
-	h.mux.HandleFunc("/api/v1/auth/break-glass/history", h.handleBreakGlassHistory)
+	h.mux.HandleFunc("/api/v1/auth/break-glass/history", h.handleBreakGlass)
+	h.mux.HandleFunc("/api/v1/auth/break-glass/activate", h.handleBreakGlass)
 	h.mux.HandleFunc("/api/v1/admin/feature-flags", h.handleFeatureFlags)
 	h.mux.HandleFunc("/api/v1/admin/feature-flags/", h.handleFeatureFlags)
 	h.mux.HandleFunc("/api/v1/certificates", h.handleCertificatesV2)

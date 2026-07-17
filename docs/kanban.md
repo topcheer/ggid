@@ -79,7 +79,7 @@
 | ID | Task | Priority | Acceptance |
 |----|------|----------|------------|
 | I-04 | ~~UEBA per-user baselines 设计文档~~ → DONE IAMExpert | P2 | docs/architecture/ueba-design.md，30天滑窗+3σ+冷启动 |
-| I-05 | 零信任统一 PDP 设计文档 | P2 | ABAC DSL + $device.trusted/$itdr.critical/$session.risk |
+| I-05 | 零信任统一 PDP 设计文档 → IN_PROGRESS IAMExpert | P2 | ABAC DSL + $device.trusted/$itdr.critical/$session.risk |
 | I-06 | ~~内部认证 6 服务 mux 完成后 E2E 验收~~ → DONE | P1 | 6/6 wrapped ✓ build 53pkg 0FAIL |
 
 ### DONE

@@ -6,6 +6,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	ggidtenant "github.com/ggid/ggid/pkg/tenant"
+	"github.com/google/uuid"
 )
 
 // TestLoginPolicyHandler tests GET/PUT /api/v1/auth/login-policy
@@ -121,17 +124,21 @@ func TestAPIKeysHandler(t *testing.T) {
 func TestBreakGlassHandler(t *testing.T) {
 	h := &Handler{}
 
+	// Inject tenant context (required by DB-backed handler).
+	tc := &ggidtenant.Context{TenantID: uuid.New(), IsolationLevel: ggidtenant.IsolationShared}
 	req := httptest.NewRequest("GET", "/api/v1/auth/break-glass/history", nil)
+	req = req.WithContext(ggidtenant.WithContext(req.Context(), tc))
 	w := httptest.NewRecorder()
-	h.handleBreakGlassHistory(w, req)
+	h.handleBreakGlass(w, req)
 	if w.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", w.Code)
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
 	}
 
 	// Method not allowed
 	req = httptest.NewRequest("POST", "/api/v1/auth/break-glass/history", nil)
+	req = req.WithContext(ggidtenant.WithContext(req.Context(), tc))
 	w = httptest.NewRecorder()
-	h.handleBreakGlassHistory(w, req)
+	h.handleBreakGlass(w, req)
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Errorf("expected 405, got %d", w.Code)
 	}

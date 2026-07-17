@@ -248,6 +248,13 @@ func main() {
 	}
 	handler.SetSessionRevocationManager(revocationMgr)
 
+	// Break-glass DB-backed repository.
+	breakGlassRepo := repository.NewBreakGlassRepository(pool)
+	if err := breakGlassRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Break-glass schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetBreakGlassRepo(breakGlassRepo)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")
