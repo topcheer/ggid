@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 51: GraphQL API Layer research complete — 7 new backlog items)*
+*Last updated: 2026-07-17 (Round 52: API Key Lifecycle Management research complete — 7 new backlog items)*
 
 ## Current Stats
 
@@ -113,6 +113,11 @@
 | 87 | **Query complexity analysis** (P0) | backend | DoS prevention | Depth limit (≤10) + cost limit (≤1000) to prevent nested query attacks |
 | 88 | **GraphQL mutations + persisted queries** (P1) | backend | Full CRUD via GraphQL | Create/update/disable user, assign/revoke role via mutations; persisted query allow-list |
 | 89 | **Console GraphQL playground** (P2) | frontend | Developer experience | GraphiQL in dev mode, Console dashboard migration to GraphQL |
+| 90 | **API key DB storage + hashing** (P0) | backend | Replace in-memory | Replace api_keys_handler.go in-memory map with PostgreSQL + SHA-256 hashing. See docs/research/api-key-lifecycle.md |
+| 91 | **API key CRUD + gateway validator** (P0) | backend | M2M auth | DB-backed CRUD handler + gateway APIKeyValidator with Redis cache + expiry enforcement |
+| 92 | **Key rotation + scope enforcement** (P1) | backend | Lifecycle | Rotation with 24h grace period + per-route scope checking + per-key Redis rate limiting |
+| 93 | **IP allow-list + usage tracking** (P1) | backend | Security | CIDR IP binding + async last_used/usage_count tracking |
+| 94 | **Console key management UI** (P2) | frontend | Self-service | Key create/list/revoke + rotation with grace countdown + usage analytics |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -150,6 +155,7 @@
 11. WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md) — 7 backlog items added
 12. Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md) — 7 backlog items added
 13. GraphQL API Layer → DONE (docs/research/graphql-api-layer.md) — 7 backlog items added
+14. API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md) — 7 backlog items added
 
 ## Rules
 
@@ -162,6 +168,7 @@
 ## Research Pipeline
 
 Active research topics:
+- API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md)
 - GraphQL API Layer → DONE (docs/research/graphql-api-layer.md)
 - Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md)
 - WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md)
