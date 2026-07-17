@@ -146,3 +146,31 @@ See docs/research/ for full research docs.
 ## Quantum-Safe Access (后量子密码学准备) (2026-07-17 第12小时研究) - Priority: P3 - Status: Watch - Suggested: IAMExpert
 
 **描述**: Cloudflare Access 2025 已支持 quantum-safe access。NIST PQC 标准（ML-KEM/ML-DSA）2024 年最终化。GGID 已有 gmsm 库（可扩展 ML-DSA JOSE 支持，researcher a07e344c 已标记 gap）。Harvest Now Decrypt Later 威胁要求长寿命凭证提前迁移。跟踪标准落地，不立即编码。
+
+---
+
+## SMS OTP Provider Integration (2026-07-17 研究驱动) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: Auth 服务有 SMS OTP 代码验证逻辑（http.go:1598）但只有 DEV 模式日志输出（log.Printf("[DEV] phone OTP..."），没有真正的 SMS 提供商集成。Passwordless 场景需要 SMS 验证码。
+
+**业务价值**: MEDIUM — 补齐 passwordless 方法链 | **实现难度**: Low
+- 实现路径：
+  1. pkg/notification/sms.go — SMS provider 接口
+  2. Twilio provider 实现（或 AWS SNS）
+  3. auth/cmd/main.go 注入 provider（env TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN）
+  4. 替换 http.go:1598 的 DEV 日志为 provider.Send()
+- 参考: docs/research/ciam-2025-trends-gap-analysis.md
+
+---
+
+## Consent Versioning + Withdrawal API (2026-07-17 研究驱动) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: OAuth consent 只有一 checkbox 级别。GDPR/CCPA 要求版本化、可撤回、可审计的 consent 记录。当前 consent analytics 端点存在但没有 consent 版本管理或撤回 API。
+
+**业务价值**: MEDIUM-HIGH — 合规要求 | **实现难度**: Medium
+- 实现路径：
+  1. consent_records 表（user_id, client_id, scopes, version, granted_at, withdrawn_at）
+  2. POST /api/v1/oauth/consent/withdraw — 撤回 consent
+  3. GET /api/v1/oauth/consent/history — consent 变更历史
+  4. Consent 版本绑定到 scope 定义变更
+- 参考: docs/research/ciam-2025-trends-gap-analysis.md
