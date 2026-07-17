@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 60: MDM Integration research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 61: CMK & KMS Integration research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -153,6 +153,9 @@
 | 127 | **MDM connector framework** (P0) | backend | Device compliance | Intune Graph API + Jamf Pro API connectors for device compliance posture. See docs/research/mdm-integration.md |
 | 128 | **Compliance policy engine** (P0) | backend | Device security | Configurable rules (min OS, encryption, jailbreak) + scoring + per-platform policies |
 | 129 | **Compliance webhooks + SCEP + attestation** (P1-P2) | backend | Real-time + certs | MDM webhooks → CAE session revocation + SCEP device cert provisioning + TPM/Apple/Android attestation |
+| 130 | **DataKeyProvider + envelope encryption** (P0) | backend | Data security | Extend key_provider.go with GenerateDataKey/Encrypt/Decrypt (DEK/KEK hierarchy). See docs/research/customer-managed-keys-kms.md |
+| 131 | **Per-tenant CMK management** (P0) | backend | Data security | CRUD API for per-tenant customer-managed keys (AWS KMS + Vault + Azure) + BYOK import + rotation |
+| 132 | **SM4 + field-level encryption** (P1) | backend | China + PII | SM4 symmetric encryption (GM compliance) + AES-256-GCM field-level encryption for PII columns |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -199,6 +202,7 @@
 20. Zero Trust Maturity Assessment → DONE (docs/research/zero-trust-maturity-assessment.md) — 6 backlog items added
 21. Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md) — 6 backlog items added
 22. MDM Integration → DONE (docs/research/mdm-integration.md) — 6 backlog items added
+23. CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md) — 6 backlog items added
 
 ## Rules
 
@@ -215,6 +219,7 @@ Active research topics:
 - Zero Trust Maturity Assessment → DONE (docs/research/zero-trust-maturity-assessment.md)
 - Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md)
 - MDM Integration → DONE (docs/research/mdm-integration.md)
+- CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
