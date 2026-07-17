@@ -78,7 +78,7 @@
 ### TODO
 | ID | Task | Priority | Acceptance |
 |----|------|----------|------------|
-| I-04 | UEBA per-user baselines 设计文档 → IN_PROGRESS IAMExpert | P2 | docs/architecture/ueba-design.md，30天滑窗+3σ+冷启动 |
+| I-04 | ~~UEBA per-user baselines 设计文档~~ → DONE IAMExpert | P2 | docs/architecture/ueba-design.md，30天滑窗+3σ+冷启动 |
 | I-05 | 零信任统一 PDP 设计文档 | P2 | ABAC DSL + $device.trusted/$itdr.critical/$session.risk |
 | I-06 | ~~内部认证 6 服务 mux 完成后 E2E 验收~~ → DONE | P1 | 6/6 wrapped ✓ build 53pkg 0FAIL |
 
@@ -103,3 +103,4 @@
 |----|------|----------|------------|
 | A-01 | all-in-one Docker 重建（含全部最新代码） | P1 | 所有新功能在 Docker 中可用 |
 | A-02 | k3s 镜像全量推送 | P1 | 所有服务最新镜像 |
+| A-03 | K3s 部署安全加固：设置 PASSWORD_PEPPER + INTERNAL_AUTH_SECRET + AUDIT_HASH_CHAIN_SECRET env | P1 | kubectl set env 3 secrets, verify auth pod restarts cleanly, login still works |
