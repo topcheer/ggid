@@ -27,7 +27,7 @@
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
-| B-06 | RFC 8693 Token Exchange | P1 | services/oauth/ | docs/research/token-exchange-standard-grant-gap.md |
+(empty — all backend tasks complete)
 
 ### DONE
 | ID | Task | Assignee | Commit |
@@ -46,6 +46,7 @@
 | B-15 | IGA GenAI 回收建议端点 | backend | 76aee44c |
 | B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | f3580d58 |
 | B-07 | PAM JIT Zero Standing 实现 | backend | 0a083fff |
+| B-06 | RFC 8693 Token Exchange | backend | 07bcf5cb |
 
 ## === FRONTEND (console/src/) ===
 
