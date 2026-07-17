@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 67: Identity Lifecycle Automation research complete — 4 new backlog items)*
+*Last updated: 2026-07-17 (Round 68: Compliance Automation research complete — 4 new backlog items)*
 
 ## Current Stats
 
@@ -170,6 +170,8 @@
 | 144 | **Pseudonymization + minimization** (P2) | backend | Privacy | CMK-backed pseudonymization vault + schema-level data minimization rules + retention auto-purge |
 | 145 | **HR connectors + dormant detection** (P0) | backend | Lifecycle | Workday/BambooHR HR connectors + JML webhooks + dormant account auto-detection + ghost account reconciliation. See docs/research/identity-lifecycle-automation.md |
 | 146 | **Approval workflows + SCIM outbound** (P1) | backend | Lifecycle | Multi-step approval engine (manager + security for privileged) + SCIM 2.0 outbound push + bulk import/offboard |
+| 147 | **Evidence engine + CCM** (P0) | backend | Compliance | 5 evidence collectors querying real audit/policy data + continuous control monitoring + replace 12 hardcoded handlers. See docs/research/compliance-automation-audit-evidence.md |
+| 148 | **Framework mapping + reports + trust center** (P1) | backend | Compliance | SOC2/ISO/NIST control mapping + PDF evidence-attached reports + public trust center page |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -223,6 +225,7 @@
 27. ITDR Maturity & MITRE ATT&CK Mapping → DONE (docs/research/itdr-maturity-mitre-attack.md) — 5 backlog items added
 28. Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md) — 4 backlog items added
 29. Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md) — 4 backlog items added
+30. Compliance Automation → DONE (docs/research/compliance-automation-audit-evidence.md) — 4 backlog items added
 
 ## Rules
 
@@ -246,6 +249,7 @@ Active research topics:
 - ITDR Maturity & MITRE ATT&CK → DONE (docs/research/itdr-maturity-mitre-attack.md)
 - Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md)
 - Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md)
+- Compliance Automation → DONE (docs/research/compliance-automation-audit-evidence.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

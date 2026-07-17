@@ -216,6 +216,10 @@
 | KB-202 | **Dormant account detection + ghost reconciliation** (cron + auto-stage) | backend | P0 | lifecycle-automation | 3d |
 | KB-203 | **Approval workflow engine** (multi-step manager/security approval) | backend | P1 | lifecycle-automation | 4d |
 | KB-204 | **SCIM 2.0 outbound + bulk operations** (push to downstream apps) | backend | P1 | lifecycle-automation | 3d |
+| KB-205 | **Evidence collection engine + CCM** (5 collectors + continuous monitoring) | backend | P0 | compliance-automation | 5d |
+| KB-206 | **Replace 12 hardcoded compliance handlers** (real CCM data) | backend | P0 | compliance-automation | 3d |
+| KB-207 | **Framework mapping + PDF reports** (SOC2/ISO/NIST + evidence-attached) | backend | P1 | compliance-automation | 3d |
+| KB-208 | **Trust center + gap detection** (public compliance status) | backend | P1 | compliance-automation | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -335,6 +339,7 @@
 | ITDR Maturity & MITRE ATT&CK Mapping | DONE | docs/research/itdr-maturity-mitre-attack.md |
 | Privacy-Enhancing Technologies (PETs) | DONE | docs/research/pets-privacy-by-design.md |
 | Identity Lifecycle Automation & HR-Driven Provisioning | DONE | docs/research/identity-lifecycle-automation.md |
+| Compliance Automation & Audit Evidence | DONE | docs/research/compliance-automation-audit-evidence.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---
