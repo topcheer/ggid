@@ -429,3 +429,22 @@ See docs/research/ for full research docs.
 **业务价值**: HIGH（保险合规 + 企业 CISO 必查项）
 **实现难度**: Medium（全部基于已建组件，复合规则 + playbook 联动是新增量）
 **工作量**: ~3d（复合检测规则 + playbook + 时间线 UI）
+
+---
+
+## Adaptive Authentication Choreography (动态认证编排) (2026-07-17 第16小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + IAMExpert
+
+**市场背景**: Auth0/CyberArk/Stytch 2025 推出 "adaptive auth step-up" — 认证不是固定流程，而是基于实时风险信号的动态编排。B-28 刚交付 AAL/AMR claims（NIST 800-63B），但 AAL 目前是静态的（登录时确定）。Adaptive Choreography 使 AAL **动态升降**：会话期间风险升高（ITDR detection / device untrust / geo anomaly）→ AAL2 自动降为 AAL1（受限访问）或要求 step-up 恢复 AAL2。
+
+**GGID 协同**：B-28 AAL/AMR claims ✓ + ITDR 引擎 ✓ + CAE ✓ + risk_engine ✓ + device_posture ✓ — 全部就绪，差一个 **AAL 状态机 + 动态降级** 层。
+
+**完整实现路径（不降级）**：
+1. **AAL 状态机**：每用户会话维护 current_aal（1/2/3）+ expires_at。AAL2 有效期可配（如 4h 后自动降为 AAL1 需 re-MFA）
+2. **动态降级触发**：CAE callback 中增加 aal_downgrade 动作 — ITDR medium detection → aal=AAL1（受限）→ 受保护应用 PDP 检查 $security.current_aal
+3. **Step-up 恢复**：用户完成 MFA → AAL 恢复 2 → session 继续。无需重新登录
+4. **PDP 集成**：$security.current_aal 属性 → per-app policy 可要求 min_aal=2
+5. **Console 可视化**：用户当前 AAL 状态 + 降级历史 + step-up 记录
+
+**业务价值**: MEDIUM-HIGH（B-28 AAL claims 的动态化延伸，企业 SSO 核心体验）
+**实现难度**: Medium（状态机 + CAE callback + step-up API + PDP 属性）
+**工作量**: ~3d
