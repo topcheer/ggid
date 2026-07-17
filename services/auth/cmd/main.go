@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -19,6 +20,8 @@ import (
 	"time"
 
 	"github.com/ggid/ggid/pkg/authprovider"
+	ggidauth "github.com/ggid/ggid/pkg/auth"
+	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/pkg/truststore"
@@ -26,7 +29,9 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/ggid/ggid/services/auth/internal/server"
 	"github.com/ggid/ggid/services/auth/internal/service"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/nats-io/nats.go"
 	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc"
@@ -217,6 +222,44 @@ func main() {
 		log.Println("WebAuthn: DB-backed credential store enabled")
 	} else {
 		log.Println("WebAuthn: WARNING no DB pool — credentials will not persist")
+	}
+
+	// CAE Phase 2: SessionRevocationManager + JTI Blocklist
+	jtiBlocklist := ggidauth.NewJTIBlocklist(rdb)
+	var revocationMgr *service.SessionRevocationManager
+	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
+		if pub, err := audit.NewPublisher(ctx, natsURL); err == nil {
+			revocationMgr = service.NewSessionRevocationManager(
+				sessionRepo, refreshRepo, jtiBlocklist, rdb, pub,
+			)
+			log.Println("CAE: SessionRevocationManager initialized (with NATS audit)")
+		} else {
+			revocationMgr = service.NewSessionRevocationManager(
+				sessionRepo, refreshRepo, jtiBlocklist, rdb, nil,
+			)
+			log.Printf("CAE: SessionRevocationManager initialized (NATS audit disabled: %v)", err)
+		}
+	} else {
+		revocationMgr = service.NewSessionRevocationManager(
+			sessionRepo, refreshRepo, jtiBlocklist, rdb, nil,
+		)
+		log.Println("CAE: SessionRevocationManager initialized (no NATS)")
+	}
+	handler.SetSessionRevocationManager(revocationMgr)
+
+	// Internal auth HMAC secrets for cross-service endpoints.
+	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
+	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")
+	if internalSecret != "" {
+		handler.SetInternalAuthSecret(internalSecret, internalPrevSecret)
+		log.Println("CAE: Internal auth HMAC enabled for /internal/ endpoints")
+	}
+
+	// CAE Phase 3: Subscribe to ggid.session.revoke for ITDR → CAE linkage.
+	// When the audit service detects a critical threat (e.g. brute_force),
+	// it publishes a revocation event that this subscriber consumes.
+	if natsURL := os.Getenv("NATS_URL"); natsURL != "" && revocationMgr != nil {
+		go startSessionRevokeSubscriber(ctx, natsURL, revocationMgr)
 	}
 	httpServer := &http.Server{
 		Addr:         cfg.Server.HTTP.Addr,
@@ -435,3 +478,70 @@ func loadTrustStoreCAs(ctx context.Context, pool *pgxpool.Pool) *truststore.Memo
 	log.Printf("Trust store: %d CA(s) loaded", count)
 	return ts
 }
+
+// sessionRevokeMessage is the NATS message format for ggid.session.revoke.
+type sessionRevokeMessage struct {
+	TenantID string `json:"tenant_id"`
+	UserID   string `json:"user_id"`
+	Reason   string `json:"reason"`
+}
+
+// startSessionRevokeSubscriber subscribes to the ggid.session.revoke NATS subject.
+// When a message arrives (e.g. from the ITDR detection engine on a critical threat),
+// it calls SessionRevocationManager.RevokeUser to invalidate all sessions, JTIs, and refresh tokens.
+//
+// This is the ITDR → CAE linkage (Phase 3): detection → NATS → auth → gateway 401.
+func startSessionRevokeSubscriber(ctx context.Context, natsURL string, mgr *service.SessionRevocationManager) {
+	nc, err := nats.Connect(natsURL,
+		nats.MaxReconnects(-1),
+		nats.ReconnectWait(2*time.Second),
+	)
+	if err != nil {
+		log.Printf("CAE: failed to connect to NATS for session.revoke subscriber: %v", err)
+		return
+	}
+	defer nc.Close()
+
+	sub, err := nc.Subscribe("ggid.session.revoke", func(msg *nats.Msg) {
+		var req sessionRevokeMessage
+		if err := json.Unmarshal(msg.Data, &req); err != nil {
+			log.Printf("CAE: failed to decode session.revoke message: %v", err)
+			return
+		}
+
+		tenantID, err := uuid.Parse(req.TenantID)
+		if err != nil {
+			log.Printf("CAE: invalid tenant_id in session.revoke: %s", req.TenantID)
+			return
+		}
+		userID, err := uuid.Parse(req.UserID)
+		if err != nil {
+			log.Printf("CAE: invalid user_id in session.revoke: %s", req.UserID)
+			return
+		}
+
+		if req.Reason == "" {
+			req.Reason = "itdr_detection"
+		}
+
+		log.Printf("CAE: received session.revoke for user %s (reason: %s)", req.UserID, req.Reason)
+		result, err := mgr.RevokeUser(ctx, tenantID, userID, req.Reason)
+		if err != nil {
+			log.Printf("CAE: session.revoke failed for user %s: %v", req.UserID, err)
+			return
+		}
+		log.Printf("CAE: session.revoke completed for user %s: %d sessions, %d JTIs blocked",
+			req.UserID, result.SessionsRevoked, result.JTIsBlocked)
+	})
+	if err != nil {
+		log.Printf("CAE: failed to subscribe to ggid.session.revoke: %v", err)
+		return
+	}
+
+	log.Println("CAE: subscribed to ggid.session.revoke (ITDR → CAE linkage active)")
+
+	<-ctx.Done()
+	_ = sub.Unsubscribe()
+	log.Println("CAE: session.revoke subscriber stopped")
+}
+

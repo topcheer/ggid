@@ -85,6 +85,22 @@ func (ss *SessionService) RevokeAllForUser(ctx context.Context, tenantID, userID
 	return ss.sessionRepo.RevokeAllForUser(ctx, tenantID, userID, exceptID)
 }
 
+// UpdateSessionJTI writes the JTI and token expiry back to the session record (CAE Phase 2).
+func (ss *SessionService) UpdateSessionJTI(ctx context.Context, sessionID uuid.UUID, jti string, tokenExp time.Time) error {
+	if ss.sessionRepo == nil {
+		return nil
+	}
+	return ss.sessionRepo.UpdateJTI(ctx, sessionID, jti, tokenExp)
+}
+
+// ListActiveJTIForUser returns JTI + token expiry for all active sessions of a user.
+func (ss *SessionService) ListActiveJTIForUser(ctx context.Context, tenantID, userID uuid.UUID) ([]domain.SessionJTI, error) {
+	if ss.sessionRepo == nil {
+		return nil, nil
+	}
+	return ss.sessionRepo.ListActiveJTIForUser(ctx, tenantID, userID)
+}
+
 // CleanupExpired removes expired and revoked sessions. Returns count of deleted rows.
 func (ss *SessionService) CleanupExpired(ctx context.Context, retention time.Duration) (int64, error) {
 	cutoff := time.Now().Add(-retention)

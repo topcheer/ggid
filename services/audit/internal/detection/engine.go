@@ -32,11 +32,16 @@ type DetectionRepo interface {
 	InsertDetection(ctx context.Context, d *domain.Detection) error
 }
 
+// DetectionCallback is invoked after a detection is persisted.
+// Used for ITDR → CAE linkage: critical detections can trigger session revocation.
+type DetectionCallback func(ctx context.Context, det *domain.Detection)
+
 // Engine evaluates audit events against registered rules.
 type Engine struct {
 	registry *RuleRegistry
 	state    StateStore
 	repo     DetectionRepo
+	callback DetectionCallback // optional: invoked after each detection is persisted
 }
 
 // NewEngine creates a detection engine.
@@ -46,6 +51,11 @@ func NewEngine(repo DetectionRepo, state StateStore) *Engine {
 		state:    state,
 		repo:     repo,
 	}
+}
+
+// SetCallback injects a post-detection callback (e.g. for CAE session revocation).
+func (e *Engine) SetCallback(cb DetectionCallback) {
+	e.callback = cb
 }
 
 // Registry returns the rule registry so callers can register custom rules.
@@ -86,6 +96,10 @@ func (e *Engine) Evaluate(ctx context.Context, evt *domain.AuditEvent) {
 				if err := e.repo.InsertDetection(ctx, det); err != nil {
 					slog.Warn("ITDR insert detection error", "rule", rule.ID(), "error", err)
 				}
+			}
+			// ITDR → CAE linkage: invoke callback (e.g. publish session.revoke for critical).
+			if e.callback != nil {
+				e.callback(ctx, det)
 			}
 		}
 	}

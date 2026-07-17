@@ -101,6 +101,38 @@ func (r *SessionRepository) RevokeAllForUser(ctx context.Context, tenantID, user
 	return err
 }
 
+// UpdateJTI writes the JTI and token expiry for a session (CAE Phase 2).
+func (r *SessionRepository) UpdateJTI(ctx context.Context, sessionID uuid.UUID, jti string, tokenExp time.Time) error {
+	_, err := r.db.Exec(ctx, `
+		UPDATE sessions SET jti = $2, token_exp = $3 WHERE id = $1`,
+		sessionID, jti, tokenExp,
+	)
+	return err
+}
+
+// ListActiveJTIForUser returns JTI + token expiry for all active (non-revoked) sessions of a user.
+func (r *SessionRepository) ListActiveJTIForUser(ctx context.Context, tenantID, userID uuid.UUID) ([]domain.SessionJTI, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, jti, token_exp FROM sessions
+		WHERE tenant_id = $1 AND user_id = $2 AND revoked_at IS NULL AND jti IS NOT NULL`,
+		tenantID, userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []domain.SessionJTI
+	for rows.Next() {
+		var s domain.SessionJTI
+		if err := rows.Scan(&s.SessionID, &s.JTI, &s.TokenExp); err != nil {
+			return nil, err
+		}
+		result = append(result, s)
+	}
+	return result, rows.Err()
+}
+
 // DeleteExpired removes expired and revoked sessions older than the cutoff.
 func (r *SessionRepository) DeleteExpired(ctx context.Context, cutoff time.Time) (int64, error) {
 	tag, err := r.db.Exec(ctx, `

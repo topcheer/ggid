@@ -89,6 +89,12 @@ func (m *tSessionRepo) RevokeAllForUser(_ context.Context, _ uuid.UUID, u uuid.U
 	return nil
 }
 func (m *tSessionRepo) DeleteExpired(_ context.Context, _ time.Time) (int64, error) { return 0, nil }
+func (m *tSessionRepo) UpdateJTI(_ context.Context, _ uuid.UUID, _ string, _ time.Time) error {
+	return nil
+}
+func (m *tSessionRepo) ListActiveJTIForUser(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]domain.SessionJTI, error) {
+	return nil, nil
+}
 
 type tRefreshRepo struct {
 	t map[string]*domain.RefreshToken

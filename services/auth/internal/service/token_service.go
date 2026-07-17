@@ -68,8 +68,16 @@ type AccessTokenClaims struct {
 
 // IssueAccessToken signs a new JWT for the given user.
 func (ts *TokenService) IssueAccessToken(tenantID, userID uuid.UUID, scopes []string) (string, int, error) {
+	token, _, expiresIn, err := ts.IssueAccessTokenWithJTI(tenantID, userID, scopes)
+	return token, expiresIn, err
+}
+
+// IssueAccessTokenWithJTI signs a new JWT and returns the token + jti + expiresIn.
+// The jti is needed to write back to the session record for CAE revocation (Phase 2).
+func (ts *TokenService) IssueAccessTokenWithJTI(tenantID, userID uuid.UUID, scopes []string) (token, jti string, expiresIn int, err error) {
 	now := time.Now()
 	expiresAt := now.Add(ts.jwtTTL)
+	jti = uuid.New().String()
 
 	claims := AccessTokenClaims{
 		TenantID: tenantID.String(),
@@ -80,20 +88,20 @@ func (ts *TokenService) IssueAccessToken(tenantID, userID uuid.UUID, scopes []st
 			Audience:  jwt.ClaimStrings{ts.jwtAudience},
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
-			ID:        uuid.New().String(),
+			ID:        jti,
 		},
 	}
 
 	method := jwtSigningMethod(ts.algorithm)
-	token := jwt.NewWithClaims(method, claims)
-	token.Header["kid"] = ts.keyID
+	jwtToken := jwt.NewWithClaims(method, claims)
+	jwtToken.Header["kid"] = ts.keyID
 
-	signed, err := token.SignedString(ts.provider.Signer())
+	signed, err := jwtToken.SignedString(ts.provider.Signer())
 	if err != nil {
-		return "", 0, fmt.Errorf("sign access token: %w", err)
+		return "", "", 0, fmt.Errorf("sign access token: %w", err)
 	}
 
-	return signed, int(ts.jwtTTL.Seconds()), nil
+	return signed, jti, int(ts.jwtTTL.Seconds()), nil
 }
 
 // IssueRefreshToken creates a new opaque refresh token, stores its hash in Redis

@@ -8,12 +8,21 @@ import (
 	"log"
 	"time"
 
-"github.com/ggid/ggid/services/audit/internal/detection"
+	"github.com/ggid/ggid/services/audit/internal/detection"
 	"github.com/ggid/ggid/services/audit/internal/domain"
 	"github.com/ggid/ggid/services/audit/internal/repository"
+	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 )
+
+// sessionRevokeEvent is the NATS message published to ggid.session.revoke.
+// The auth service subscriber consumes this to trigger SessionRevocationManager.RevokeUser.
+type sessionRevokeEvent struct {
+	TenantID string `json:"tenant_id"`
+	UserID   string `json:"user_id"`
+	Reason   string `json:"reason"`
+}
 
 // Config holds NATS connection parameters.
 type Config struct {
@@ -27,14 +36,14 @@ type Config struct {
 
 // EventConsumer subscribes to audit events from NATS JetStream and persists them.
 type EventConsumer struct {
-	nc    *nats.Conn
-	js    jetstream.JetStream
-	repo  *repository.AuditRepository
+	nc       *nats.Conn
+	js       jetstream.JetStream
+	repo     *repository.AuditRepository
 	itdrRepo *repository.ITDRRepository
-	engine *detection.Engine
-	cfg   Config
-	ctx   context.Context
-	cancel context.CancelFunc
+	engine   *detection.Engine
+	cfg      Config
+	ctx      context.Context
+	cancel   context.CancelFunc
 }
 
 // New creates a new NATS consumer.
@@ -170,8 +179,39 @@ func (c *EventConsumer) processMessage(ctx context.Context, msg jetstream.Msg) e
 }
 
 // SetEngine injects the ITDR detection engine for real-time threat evaluation.
+// Also wires the ITDR → CAE callback: critical detections trigger session revocation
+// by publishing to the ggid.session.revoke NATS subject.
 func (c *EventConsumer) SetEngine(engine *detection.Engine) {
 	c.engine = engine
+
+	// ITDR → CAE linkage: when a critical detection is persisted, publish a
+	// session.revoke event so the auth service can invalidate the user's tokens.
+	engine.SetCallback(func(ctx context.Context, det *domain.Detection) {
+		if det.Severity != domain.SeverityCritical {
+			return
+		}
+		if det.ActorID == nil || *det.ActorID == uuid.Nil {
+			return
+		}
+
+		revokeMsg := sessionRevokeEvent{
+			TenantID: det.TenantID.String(),
+			UserID:   det.ActorID.String(),
+			Reason:   fmt.Sprintf("itdr:%s:%s", det.RuleID, det.Title),
+		}
+		data, err := json.Marshal(revokeMsg)
+		if err != nil {
+			log.Printf("ITDR→CAE: failed to marshal session.revoke: %v", err)
+			return
+		}
+
+		if err := c.nc.Publish("ggid.session.revoke", data); err != nil {
+			log.Printf("ITDR→CAE: failed to publish session.revoke: %v", err)
+		} else {
+			log.Printf("ITDR→CAE: published session.revoke for user %s (rule=%s, severity=%s)",
+				det.ActorID, det.RuleID, det.Severity)
+		}
+	})
 }
 
 // Close shuts down the consumer.

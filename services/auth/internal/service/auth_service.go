@@ -207,10 +207,12 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 	}
 
 	// 6. Issue JWT access token
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
+	// Write JTI back to session for CAE revocation (Phase 2).
+	s.writeJTI(ctx, session.ID, jti, expiresIn)
 
 	// 7. Issue refresh token
 	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tc.TenantID, userID, session.ID)
@@ -230,6 +232,15 @@ func (s *AuthService) Login(ctx context.Context, username, password, ip, userAge
 // Logout revokes the session and all associated refresh tokens.
 func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	return s.tokenService.RevokeRefreshToken(ctx, refreshToken)
+}
+
+// writeJTI is a nil-safe helper that writes the JTI + token expiry back to the session record.
+// Best-effort: errors are logged but never block the login/refresh flow.
+func (s *AuthService) writeJTI(ctx context.Context, sessionID uuid.UUID, jti string, expiresIn int) {
+	if s.sessionService == nil || jti == "" {
+		return
+	}
+	_ = s.sessionService.UpdateSessionJTI(ctx, sessionID, jti, time.Now().Add(time.Duration(expiresIn)*time.Second))
 }
 
 // Register creates a new user credential.
@@ -283,10 +294,12 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*domain
 	}
 
 	// 2. Issue new access token
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(rt.TenantID, rt.UserID, []string{"admin"})
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(rt.TenantID, rt.UserID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
+	// Write JTI back to session for CAE revocation (Phase 2).
+	s.writeJTI(ctx, rt.SessionID, jti, expiresIn)
 
 	return &domain.TokenSet{
 		AccessToken:  accessToken,
@@ -499,10 +512,12 @@ func (s *AuthService) LoginMFA(ctx context.Context, username, password, mfaCode,
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
+	// Write JTI back to session for CAE revocation (Phase 2).
+	s.writeJTI(ctx, session.ID, jti, expiresIn)
 
 	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tc.TenantID, userID, session.ID)
 	if err != nil {
@@ -581,10 +596,12 @@ func (s *AuthService) LoginWithBackupCode(ctx context.Context, username, passwor
 		return nil, fmt.Errorf("create session: %w", err)
 	}
 
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
+	// Write JTI back to session for CAE revocation (Phase 2).
+	s.writeJTI(ctx, session.ID, jti, expiresIn)
 
 	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tc.TenantID, userID, session.ID)
 	if err != nil {
@@ -769,10 +786,12 @@ func (s *AuthService) VerifyMagicLink(ctx context.Context, token, ip, userAgent 
 	}
 
 	// Issue JWT tokens.
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tenantID, userID, []string{"admin"})
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
+	// Write JTI back to session for CAE revocation (Phase 2).
+	s.writeJTI(ctx, session.ID, jti, expiresIn)
 
 	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tenantID, userID, session.ID)
 	if err != nil {
@@ -855,10 +874,12 @@ func (s *AuthService) SocialLogin(ctx context.Context, provider, externalID, ema
 	}
 
 	// 5. Issue JWT tokens.
-	accessToken, expiresIn, err := s.tokenService.IssueAccessToken(tc.TenantID, userID, []string{"admin"})
+	accessToken, jti, expiresIn, err := s.tokenService.IssueAccessTokenWithJTI(tc.TenantID, userID, []string{"admin"})
 	if err != nil {
 		return nil, fmt.Errorf("issue access token: %w", err)
 	}
+	// Write JTI back to session for CAE revocation (Phase 2).
+	s.writeJTI(ctx, session.ID, jti, expiresIn)
 
 	refreshToken, err := s.tokenService.IssueRefreshToken(ctx, tc.TenantID, userID, session.ID)
 	if err != nil {

@@ -101,6 +101,12 @@ func (m *mockSessionRepo) RevokeAllForUser(_ context.Context, _ uuid.UUID, uid u
 	return nil
 }
 func (m *mockSessionRepo) DeleteExpired(_ context.Context, _ time.Time) (int64, error) { return 0, nil }
+func (m *mockSessionRepo) UpdateJTI(_ context.Context, _ uuid.UUID, _ string, _ time.Time) error {
+	return nil
+}
+func (m *mockSessionRepo) ListActiveJTIForUser(_ context.Context, _ uuid.UUID, _ uuid.UUID) ([]domain.SessionJTI, error) {
+	return nil, nil
+}
 
 type mockRefreshTokenRepo struct {
 	tokens map[string]*domain.RefreshToken

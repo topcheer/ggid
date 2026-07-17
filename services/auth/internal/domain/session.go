@@ -6,6 +6,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// SessionJTI holds the JTI and token expiry for an active session.
+// Used by SessionRevocationManager to revoke access tokens via the Redis blocklist.
+type SessionJTI struct {
+	SessionID uuid.UUID
+	JTI       string
+	TokenExp  time.Time
+}
+
 // Session represents an active user session.
 type Session struct {
 	ID         uuid.UUID
@@ -19,6 +27,8 @@ type Session struct {
 	RevokedAt  *time.Time
 	CreatedAt  time.Time
 	Metadata   map[string]any  // MFA verified, auth context, etc.
+	JTI        string          // JWT ID of the access token (CAE Phase 2)
+	TokenExp   time.Time       // Expiry of the access token (for Redis ZSET score)
 }
 
 // IsActive returns true if the session has not been revoked and hasn't expired.

@@ -41,6 +41,9 @@ type Handler struct {
 	sysconfigStore sysconfig.Store
 	auditPublisher *audit.Publisher
 	waCredStore    webauthn.CredentialStore
+	revocationMgr  *service.SessionRevocationManager
+	internalSecret     string
+	internalPrevSecret string
 }
 
 // New creates a new Auth Service HTTP handler.
@@ -69,6 +72,18 @@ func New(authSvc *service.AuthService) *Handler {
 // Must be called before ServeHTTP / registerRoutes.
 func (h *Handler) SetWebAuthnCredentialStore(store webauthn.CredentialStore) {
 	h.waCredStore = store
+}
+
+// SetSessionRevocationManager injects the CAE Phase 2 session revocation manager.
+func (h *Handler) SetSessionRevocationManager(mgr *service.SessionRevocationManager) {
+	h.revocationMgr = mgr
+}
+
+// SetInternalAuthSecret configures HMAC internal-auth verification for
+// internal endpoints (e.g. /api/v1/auth/internal/revoke-user).
+func (h *Handler) SetInternalAuthSecret(secret, prevSecret string) {
+	h.internalSecret = secret
+	h.internalPrevSecret = prevSecret
 }
 
 // SetSysconfigStore injects the system config store for hot-reloadable settings.
@@ -168,6 +183,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/force-logout", h.forceLogout)
 	h.mux.HandleFunc("/api/v1/auth/sessions/limit", h.sessionLimit)
 	h.mux.HandleFunc("/api/v1/auth/sessions/revoke", h.handleRevokeSessions)
+	h.mux.HandleFunc("/api/v1/auth/sessions/revoke-user", h.handleRevokeUser)
+	h.mux.HandleFunc("/api/v1/auth/internal/revoke-user", h.handleInternalRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/rotate", h.handlePepperRotate)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/passwordless/begin", h.handleWebAuthnPasswordlessBegin)

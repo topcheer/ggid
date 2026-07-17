@@ -30,6 +30,11 @@ type SessionRepo interface {
 	Revoke(ctx context.Context, id uuid.UUID) error
 	RevokeAllForUser(ctx context.Context, tenantID, userID, exceptSessionID uuid.UUID) error
 	DeleteExpired(ctx context.Context, cutoff time.Time) (int64, error)
+
+	// UpdateJTI writes the JTI and token expiry back to the session record (CAE Phase 2).
+	UpdateJTI(ctx context.Context, sessionID uuid.UUID, jti string, tokenExp time.Time) error
+	// ListActiveJTIForUser returns JTI + token expiry for all active sessions of a user.
+	ListActiveJTIForUser(ctx context.Context, tenantID, userID uuid.UUID) ([]domain.SessionJTI, error)
 }
 
 // RefreshTokenRepo is the interface for refresh-token persistence.
