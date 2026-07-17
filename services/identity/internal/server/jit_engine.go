@@ -319,20 +319,34 @@ func (h *HTTPHandler) provisionUserViaHTTP(tenantID uuid.UUID, email, username s
 		identityURL = "http://localhost:8081"
 	}
 
-	// Build create/update payload.
 	body, _ := json.Marshal(map[string]any{
 		"email":    email,
 		"username": username,
 		"status":   "active",
 	})
 
-	// Try to find existing user first (GET by email).
+	// Check if user exists first (GET by email).
 	checkResp, err := http.Get(identityURL + "/api/v1/users?email=" + url.QueryEscape(email))
 	if err == nil && checkResp != nil {
-		checkResp.Body.Close()
+		defer checkResp.Body.Close()
+		if checkResp.StatusCode == http.StatusOK {
+			// User exists → PUT update.
+			var existing struct {
+				ID string `json:"id"`
+			}
+			if json.NewDecoder(checkResp.Body).Decode(&existing) == nil && existing.ID != "" {
+				req, _ := http.NewRequest(http.MethodPut, identityURL+"/api/v1/users/"+existing.ID, bytes.NewReader(body))
+				req.Header.Set("Content-Type", "application/json")
+				resp, err := http.DefaultClient.Do(req)
+				if err == nil {
+					resp.Body.Close()
+				}
+				return existing.ID, "updated"
+			}
+		}
 	}
 
-	// Create user via POST.
+	// User doesn't exist → POST create.
 	resp, err := http.Post(identityURL+"/api/v1/users", "application/json", bytes.NewReader(body))
 	if err != nil {
 		return "", "error"
