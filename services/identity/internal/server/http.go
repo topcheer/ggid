@@ -46,6 +46,7 @@ type HTTPHandler struct {
 	dataGovRepo      *dataGovRepo
 	abRepo           *accessBrokerRepo
 	journeyRepo      *journeyRepo
+	fedRepo          *federationRepo
 	devicePostureRepo *devicePostureRepo
 }
 
@@ -239,6 +240,12 @@ func (h *HTTPHandler) registerRoutes() {
 	// Identity orchestration journeys (JDL CRUD + dry-run).
 	h.mux.HandleFunc("/api/v1/identity/journeys", h.handleJourneys)
 	h.mux.HandleFunc("/api/v1/identity/journeys/", h.handleJourneys)
+
+	// Federation Hub.
+	h.mux.HandleFunc("/api/v1/identity/federation/entities", h.handleFederation)
+	h.mux.HandleFunc("/api/v1/identity/federation/transform-rules", h.handleFederation)
+	h.mux.HandleFunc("/api/v1/identity/federation/route-email", h.handleFederation)
+	h.mux.HandleFunc("/api/v1/.well-known/federation-configuration", h.handleFederation)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)

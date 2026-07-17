@@ -129,6 +129,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetJourneyRepo(journeyRepo)
 
+	// Federation Hub.
+	fedRepo := newFederationRepo(pool)
+	if err := fedRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Federation schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetFedRepo(fedRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
