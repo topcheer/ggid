@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Shield, Loader2, AlertCircle, X, RefreshCw, Plus, Trash2, Check, CheckCircle, XCircle, Eye, TestTube, Activity, AlertTriangle, Download, Lock, Zap, Settings, Globe } from "lucide-react";
 import { authHeader } from "@/lib/auth-helpers";
+import { useTranslations } from "@/lib/i18n";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -26,6 +27,7 @@ const actionConfig = {
 type Tab = "policies" | "events" | "heatmap" | "tester";
 
 export default function DLPPage() {
+  const t = useTranslations();
   const [tab, setTab] = useState<Tab>("policies");
   const [policies, setPolicies] = useState<DLPPolicy[]>([]);
   const [events, setEvents] = useState<DLPEvent[]>([]);
@@ -148,7 +150,7 @@ export default function DLPPage() {
             <button onClick={() => setShowForm(true)} className="flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"><Plus className="h-3 w-3" /> Add Policy</button>
           </div>
           {policies.length === 0 ? (
-            <div className="py-8 text-center"><Shield className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No DLP policies configured.</p></div>
+            <div className="py-8 text-center"><Shield className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">{t("dlp.noPolicies")}</p></div>
           ) : (
             <div className="space-y-2">{policies.map(p => {
               const aCfg = actionConfig[p.action];

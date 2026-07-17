@@ -169,10 +169,10 @@ export default function AccessBrokerPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
             <Shield className="h-6 w-6 text-indigo-500" />
-            Access Broker / ZTNA Console
+            {t("accessBroker.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Zero Trust Network Access — protect apps with identity-aware proxy, ABAC policies, and real-time monitoring.
+            {t("accessBroker.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">

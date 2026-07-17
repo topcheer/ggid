@@ -24,8 +24,8 @@ export default function ServiceMeshConfigPage() {
 
   return (
     <div className="p-8 space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">Service Mesh Configuration</h1>
-      <p className="text-gray-600">Configure service mesh integration, mTLS, and traffic policies.</p>
+      <h1 className="text-2xl font-bold">{t("serviceMesh.title")}</h1>
+      <p className="text-gray-600">{t("serviceMesh.subtitle")}</p>
 
       <div className="bg-white rounded-lg p-6 shadow space-y-4">
         <h2 className="text-lg font-semibold">Mesh Settings</h2>

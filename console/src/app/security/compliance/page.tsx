@@ -159,8 +159,8 @@ export default function ComplianceExportPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-emerald-500" /> Compliance Evidence Export</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">SOC2/ISO27001/等保/GDPR evidence collection, control mapping, and audit-ready export.</p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-emerald-500" /> {t("complianceExport.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("complianceExport.subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => { setWizStep(0); setWizFramework(""); setWizSelectedControls([]); setWizResult(null); setShowWizard(true); }} className="flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"><Download className="h-4 w-4" /> Export Evidence</button>

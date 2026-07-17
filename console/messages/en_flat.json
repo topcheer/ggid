@@ -4896,5 +4896,14 @@
   "threatIntel.itdr": "ITDR Correlation",
   "threatIntel.statistics": "Statistics",
   "vc.title": "Verifiable Credentials",
-  "vc.subtitle": "Issue, verify, revoke, and manage W3C Verifiable Credentials."
+  "vc.subtitle": "Issue, verify, revoke, and manage W3C Verifiable Credentials.",
+  "serviceMesh.title": "Service Mesh Configuration",
+  "serviceMesh.subtitle": "Configure service mesh integration, mTLS, and traffic policies.",
+  "passwordlessMigration.title": "Passwordless Migration",
+  "passwordlessMigration.subtitle": "Track and manage the transition from passwords to passkeys with analytics, prompts, and disable planning.",
+  "complianceExport.title": "Compliance Evidence Export",
+  "complianceExport.subtitle": "SOC2/ISO27001/GDPR evidence collection, control mapping, and audit-ready export.",
+  "dlp.noPolicies": "No DLP policies configured.",
+  "accessBroker.title": "Access Broker / ZTNA Console",
+  "accessBroker.subtitle": "Zero Trust Network Access — protect apps with identity-aware proxy, ABAC policies, and real-time monitoring."
 }

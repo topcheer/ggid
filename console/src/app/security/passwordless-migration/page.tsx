@@ -123,8 +123,8 @@ export default function PasswordlessMigrationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Fingerprint className="h-6 w-6 text-indigo-500" /> Passwordless Migration</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Track and manage the transition from passwords to passkeys with analytics, prompts, and disable planning.</p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Fingerprint className="h-6 w-6 text-indigo-500" /> {t("passwordlessMigration.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("passwordlessMigration.subtitle")}</p>
         </div>
         <button onClick={loadData} disabled={loading} aria-label="Refresh" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"><RefreshCw className={"h-4 w-4 " + (loading ? "animate-spin" : "")} /> Refresh</button>
       </div>
