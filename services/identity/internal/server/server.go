@@ -164,6 +164,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetSecretBrokerRepo(sbRepo)
 
+	// Consent Management (GDPR Art. 7 & 17).
+	consentRepo := newConsentRepo(pool)
+	if err := consentRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Consent schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetConsentRepo(consentRepo)
+
 	// Policy memory map repo (lifecycle_rules + review_campaigns).
 	ipmRepo := newIdentityPolicyMapRepo(pool)
 	if err := ipmRepo.EnsureSchema(ctx); err != nil {
