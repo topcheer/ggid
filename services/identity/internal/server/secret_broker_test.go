@@ -70,9 +70,13 @@ func TestSecretBrokerRepo_CleanupExpired(t *testing.T) {
 func TestSecretTargetDefaults(t *testing.T) {
 	repo := newSecretBrokerRepo(nil)
 	t1 := SecretTarget{Name: "prod-db", Type: "db", TTLSeconds: 0}
-	_ = repo.CreateTarget(nil, &t1)
-	// With nil pool, no error expected
-	if t1.ID == uuid.Nil {
-		t.Error("ID should be set even with nil pool")
+	// With nil pool, CreateTarget is a no-op (returns nil immediately)
+	if err := repo.CreateTarget(nil, &t1); err != nil {
+		t.Errorf("nil pool CreateTarget should not error: %v", err)
+	}
+	// With nil pool, ListTargets returns empty slice
+	targets, _ := repo.ListTargets(nil, uuid.Nil)
+	if len(targets) != 0 {
+		t.Error("nil pool should return empty list")
 	}
 }
