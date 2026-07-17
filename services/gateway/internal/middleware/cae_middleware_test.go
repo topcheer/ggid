@@ -47,6 +47,8 @@ func TestCAEMiddleware_BlockDecision(t *testing.T) {
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard", nil)
 	req.Header.Set("X-Session-ID", "sess-block")
+	// Set a valid user ID in context (same key as auth middleware).
+	req = req.WithContext(context.WithValue(req.Context(), UserIDKey, uuid.New().String()))
 
 	w := httptest.NewRecorder()
 	mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -67,8 +69,8 @@ func TestCAEMiddleware_AllowDecision(t *testing.T) {
 	called := false
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard", nil)
 	req.Header.Set("X-Session-ID", "sess-allow")
-	// Set a valid user ID in context.
-	req = req.WithContext(context.WithValue(req.Context(), contextKey("userID"), uuid.New()))
+	// Set a valid user ID in context (same key as auth middleware).
+	req = req.WithContext(context.WithValue(req.Context(), UserIDKey, uuid.New().String()))
 
 	w := httptest.NewRecorder()
 	mw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -80,6 +82,3 @@ func TestCAEMiddleware_AllowDecision(t *testing.T) {
 		t.Error("next handler should be called on allow")
 	}
 }
-
-// contextKey is a type for context values used by CAE middleware.
-type contextKey string
