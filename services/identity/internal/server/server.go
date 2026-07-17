@@ -178,6 +178,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetHRConnectorRepo(hrRepo)
 
+	// Dormant account detection + ghost reconciliation.
+	dRepo := newDormantRepo(pool)
+	if err := dRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Dormant schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetDormantRepo(dRepo)
+
 	// Policy memory map repo (lifecycle_rules + review_campaigns).
 	ipmRepo := newIdentityPolicyMapRepo(pool)
 	if err := ipmRepo.EnsureSchema(ctx); err != nil {

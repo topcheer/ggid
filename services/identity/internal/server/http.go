@@ -53,6 +53,7 @@ type HTTPHandler struct {
 	secretBrokerRepo  *secretBrokerRepo
 consentRepo       *consentRepo
 hrConnectorRepo   *hrConnectorRepo
+dormantRepo       *dormantRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 }

@@ -213,8 +213,12 @@ func (h *HTTPHandler) handleHRDormant(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	// Dormant = no login >90 days. Would query user last_login_at.
-	writeJSON(w, http.StatusOK, map[string]any{"dormant_accounts": []map[string]any{}, "count": 0})
+	var dormant []*UserLifecycleState
+	if h.dormantRepo != nil {
+		dormant, _ = h.dormantRepo.ListDormant(r.Context())
+	}
+	if dormant == nil { dormant = []*UserLifecycleState{} }
+	writeJSON(w, http.StatusOK, map[string]any{"dormant_accounts": dormant, "count": len(dormant)})
 }
 
 func (h *HTTPHandler) handleHRReconcile(w http.ResponseWriter, r *http.Request) {
@@ -222,13 +226,21 @@ func (h *HTTPHandler) handleHRReconcile(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-	// Ghost reconciliation: compare GGID users vs HR active employees.
+	var ghosts []*GhostAccount
+	if h.dormantRepo != nil {
+		ghosts, _ = h.dormantRepo.ListGhosts(r.Context())
+	}
+	if ghosts == nil { ghosts = []*GhostAccount{} }
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status": "reconciled", "orphans_found": 0,
-		"reconciled_at": time.Now().UTC(),
+		"status": "reconciled", "ghosts_found": len(ghosts),
+		"ghost_accounts": ghosts, "reconciled_at": time.Now().UTC(),
 	})
 }
 
 func (h *HTTPHandler) SetHRConnectorRepo(repo *hrConnectorRepo) {
 	h.hrConnectorRepo = repo
+}
+
+func (h *HTTPHandler) SetDormantRepo(repo *dormantRepo) {
+	h.dormantRepo = repo
 }
