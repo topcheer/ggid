@@ -92,8 +92,8 @@
 ### DONE
 | ID | Task | Assignee | Commit | Notes |
 |----|------|----------|--------|-------|
-| D-01 | API Reference 补充 ITDR/CAE/PAM 新端点 | docs&devops | (pending) | Added 7 new endpoint sections to api-reference.md: ITDR detections/stats/rules, CAE session revoke/posture, security-posture, anomaly-detection, break-glass activate/history, threat-intel feed |
-| D-02 | 部署指南更新（端口安全 + CAE Redis 依赖） | docs&devops | (pending) | Updated all-in-one-deployment.md: removed backend port exposure (P0 fix), added security note + CAE Redis dependency section |
+| D-01 | API Reference 补充 ITDR/CAE/PAM 新端点 | docs&devops | fec4ffd2 | Added 7 new endpoint sections to api-reference.md: ITDR detections/stats/rules, CAE session revoke/posture, security-posture, anomaly-detection, break-glass activate/history, threat-intel feed |
+| D-02 | 部署指南更新（端口安全 + CAE Redis 依赖） | docs&devops | fec4ffd2 | Updated all-in-one-deployment.md: removed backend port exposure (P0 fix), added security note + CAE Redis dependency section |
 
 ## === ARCH (pkg/, sdk/, deploy/) ===
 
