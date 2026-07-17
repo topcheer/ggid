@@ -37,12 +37,13 @@ type retentionConfig struct {
 
 // HTTPServer exposes the Audit Service as a REST API.
 type HTTPServer struct {
-	svc           *service.AuditService
-	retention     retentionConfig
-	hub           *StreamHub
-	itdrRepo      *repository.ITDRRepository
-	compositeRepo *compositeRuleRepo
-	memMapRepo2   *auditMemoryMapRepo2
+	svc            *service.AuditService
+	retention      retentionConfig
+	hub            *StreamHub
+	itdrRepo       *repository.ITDRRepository
+	compositeRepo  *compositeRuleRepo
+	memMapRepo2    *auditMemoryMapRepo2
+	threatIntelRepo *repository.ThreatIntelRepository
 }
 
 // SetITDRRepository injects the ITDR repository for detection API queries.
@@ -57,6 +58,10 @@ func (s *HTTPServer) SetCompositeRepo(repo *compositeRuleRepo) {
 
 func (s *HTTPServer) SetMemMapRepo2(repo *auditMemoryMapRepo2) {
 	s.memMapRepo2 = repo
+}
+
+func (s *HTTPServer) SetThreatIntelRepo(repo *repository.ThreatIntelRepository) {
+	s.threatIntelRepo = repo
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.
@@ -146,6 +151,11 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/isolation-check", s.handleIsolationCheck)
 	mux.HandleFunc("/api/v1/audit/security-posture", s.handleSecurityPosture)
 	mux.HandleFunc("/api/v1/audit/threat-feed", s.handleThreatFeed)
+	mux.HandleFunc("/api/v1/audit/threat-intel/sources", s.handleThreatIntel)
+	mux.HandleFunc("/api/v1/audit/threat-intel/sources/", s.handleThreatIntel)
+	mux.HandleFunc("/api/v1/audit/threat-intel/indicators", s.handleThreatIntel)
+	mux.HandleFunc("/api/v1/audit/threat-intel/check", s.handleThreatIntel)
+	mux.HandleFunc("/api/v1/audit/threat-intel/stats", s.handleThreatIntel)
 	mux.HandleFunc("/api/v1/audit/anomalies/detect", s.handleAnomalyDetect)
 	mux.HandleFunc("/api/v1/audit/anomaly-detection", s.handleAnomalyDetectionCRUD)
 	mux.HandleFunc("/api/v1/audit/anomaly-detection/", s.handleAnomalyDetectionCRUD)

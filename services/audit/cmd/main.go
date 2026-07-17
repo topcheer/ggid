@@ -179,7 +179,18 @@ func main() {
 		}
 		httpAPI.SetMemMapRepo2(mmRepo2)
 
-		log.Println("Audit Service: ITDR API enabled")
+		// Threat Intelligence Integration Hub (B-37).
+		threatRepo := repository.NewThreatIntelRepository(db)
+		if err := threatRepo.EnsureSchema(ctx); err != nil {
+			log.Printf("Warning: ThreatIntel EnsureSchema failed: %v", err)
+		}
+		httpAPI.SetThreatIntelRepo(threatRepo)
+
+		// Start async collector goroutine.
+		collector := httpserver.NewIntelCollector(threatRepo)
+		go collector.Run(ctx, 10*time.Minute)
+
+		log.Println("Audit Service: ITDR + Threat Intel API enabled")
 }
 
 	httpAPI.RegisterRoutes(mux)
