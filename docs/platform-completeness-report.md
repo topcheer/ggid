@@ -213,3 +213,16 @@ All services extract X-Tenant-ID at the handler level and set up ggidtenant cont
 | impersonation tokens | package-level map | In-memory, NO DB | GAP — issue endpoint not wired (404); feature incomplete |
 
 **Summary:** 3 stores properly persisted (PG/Redis), 4 operational caches (acceptable), 2 known gaps (rotation + impersonation, both already tracked).
+
+### Round 95 Focus E — Security Configuration Scan Results
+
+| Check | Status | Details |
+|-------|--------|---------|
+| Password pepper | DEPLOYMENT GAP | Code supports `PASSWORD_PEPPER` env (HMAC-SHA256 pre-hash), but K3s deployment doesn't set it. Argon2id still applied (strong), but no server-side secret. Non-fatal — add env in deployment hardening. |
+| JWT RSA keys | DONE | Loaded from Kubernetes secrets (JWT_PRIV/JWT_PUB → initContainer → /configs/rsa_private.pem). Not generated at runtime. |
+| OAuth introspect auth | DONE | Requires client authentication per RFC 7662 §2.1 (HTTP Basic, form, or Bearer). Verified `isClientAuthenticated(r)` check present. |
+| DCR grant_types | PARTIAL | No allowlist validation — clients can register with arbitrary grant_types (e.g., `password`, `client_credentials`). RFC 7591 recommends validating. Low priority for current deployment (admin-only DCR). |
+| WebAuthn attestation | DONE | Attestation requirement = "preferred" (not "none"). Full attestation verification in webauthn/attestation.go (packed, none, fido-u2f formats). |
+| gRPC TLS | DONE | GRPC_TLS_ENABLED env with cert/key loading, plaintext fallback only with explicit GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true. |
+
+**No P0 issues. 1 deployment hardening item (pepper), 1 low-priority DCR validation improvement.**
