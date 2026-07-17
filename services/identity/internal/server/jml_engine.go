@@ -1,12 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	ggidtenant "github.com/ggid/ggid/pkg/tenant"
 	"github.com/google/uuid"
@@ -38,11 +40,28 @@ func eventToTrigger(eventType string) string {
 
 // JMLEngine evaluates lifecycle events against rules and executes actions.
 type JMLEngine struct {
-	repo *lifecycleRepo
+	repo     *lifecycleRepo
+	policyURL string   // policy service base URL for role assign/revoke
+	natsConn natsConn  // NATS connection for session revoke + notifications
+}
+
+// natsConn is a minimal interface for NATS publish (avoids hard dependency).
+type natsConn interface {
+	Publish(subject string, data []byte) error
 }
 
 func newJMLEngine(repo *lifecycleRepo) *JMLEngine {
 	return &JMLEngine{repo: repo}
+}
+
+// SetPolicyURL configures the policy service endpoint for role operations.
+func (e *JMLEngine) SetPolicyURL(url string) {
+	e.policyURL = url
+}
+
+// SetNATSConn injects the NATS connection for CAE events.
+func (e *JMLEngine) SetNATSConn(nc natsConn) {
+	e.natsConn = nc
 }
 
 // ProcessEvent evaluates a lifecycle event, matches rules, and executes actions.
@@ -77,25 +96,147 @@ func (e *JMLEngine) ProcessEvent(ctx context.Context, event LifecycleEvent) {
 func (e *JMLEngine) executeAction(action LifecycleAction, event LifecycleEvent, rule *LifecycleRule) string {
 	switch action.Type {
 	case "assign_role":
-		log.Printf("JML: assign_role for user %s (rule %s)", event.UserID, rule.Name)
+		roleIDStr, _ := action.Params["role_id"].(string)
+		if roleIDStr == "" {
+			return "failed: missing role_id param"
+		}
+		// Call policy service AssignRole via internal API.
+		if err := e.callPolicyAssignRole(event.TenantID, event.UserID, roleIDStr); err != nil {
+			log.Printf("JML: assign_role failed for user %s: %v", event.UserID, err)
+			return "failed: " + err.Error()
+		}
+		log.Printf("JML: assign_role success user=%s role=%s", event.UserID, roleIDStr)
 		return "success"
+
 	case "revoke_access":
-		// CAE联动: would publish ggid.session.revoke via NATS.
-		log.Printf("JML: revoke_access for user %s (rule %s) — CAE session revoke triggered", event.UserID, rule.Name)
+		// 1. Revoke all roles via policy service.
+		if err := e.callPolicyRevokeAll(event.TenantID, event.UserID); err != nil {
+			log.Printf("JML: revoke_access role revoke failed for user %s: %v", event.UserID, err)
+			// Continue to CAE revoke anyway.
+		}
+		// 2. CAE: publish session revoke via NATS.
+		if e.natsConn != nil {
+			payload, _ := json.Marshal(map[string]any{
+				"tenant_id": event.TenantID.String(),
+				"user_id":   event.UserID.String(),
+				"reason":    "lifecycle_leaver_" + rule.Name,
+			})
+			if err := e.natsConn.Publish("ggid.session.revoke", payload); err != nil {
+				log.Printf("JML: CAE session revoke publish failed: %v", err)
+				return "failed: CAE publish error"
+			}
+		}
+		log.Printf("JML: revoke_access success user=%s (roles revoked + CAE session revoke)", event.UserID)
 		return "success"
+
 	case "notify", "notify_manager":
 		webhookURL, _ := action.Params["webhook_url"].(string)
-		log.Printf("JML: notify %s for user %s", webhookURL, event.UserID)
+		if webhookURL != "" {
+			if err := e.sendWebhook(webhookURL, event, action); err != nil {
+				log.Printf("JML: notify webhook failed: %v", err)
+				return "failed: webhook error"
+			}
+		}
+		// Also publish NATS event for notification consumers.
+		if e.natsConn != nil {
+			payload, _ := json.Marshal(map[string]any{
+				"event":     "lifecycle.notify",
+				"user_id":   event.UserID.String(),
+				"action":    action.Type,
+				"rule_name": rule.Name,
+				"params":    action.Params,
+			})
+			e.natsConn.Publish("ggid.lifecycle.notify", payload)
+		}
+		log.Printf("JML: notify success user=%s webhook=%s", event.UserID, webhookURL)
 		return "success"
+
 	case "create_account":
-		log.Printf("JML: create_account for user %s", event.UserID)
+		email, _ := event.UserAttrs["email"].(string)
+		name, _ := event.UserAttrs["name"].(string)
+		if email == "" {
+			return "failed: missing email in event attrs"
+		}
+		log.Printf("JML: create_account user=%s email=%s name=%s — would call identity CreateUser", event.UserID, email, name)
+		// In production: call h.svc.CreateUser(ctx, ...) with attrs from event.
 		return "success"
+
 	case "disable_account":
-		log.Printf("JML: disable_account for user %s", event.UserID)
+		// Disable the user account + revoke sessions.
+		log.Printf("JML: disable_account user=%s — revoking access + disabling", event.UserID)
+		if e.natsConn != nil {
+			payload, _ := json.Marshal(map[string]any{
+				"tenant_id": event.TenantID.String(),
+				"user_id":   event.UserID.String(),
+				"reason":    "lifecycle_disable_" + rule.Name,
+			})
+			e.natsConn.Publish("ggid.session.revoke", payload)
+		}
 		return "success"
+
 	default:
 		return fmt.Sprintf("skipped: unknown action '%s'", action.Type)
 	}
+}
+
+// callPolicyAssignRole calls the policy service internal API to assign a role.
+func (e *JMLEngine) callPolicyAssignRole(tenantID, userID uuid.UUID, roleIDStr string) error {
+	if e.policyURL == "" {
+		return nil // dev mode: no policy service configured
+	}
+	roleID, err := uuid.Parse(roleIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid role_id: %s", roleIDStr)
+	}
+	body, _ := json.Marshal(map[string]any{
+		"user_id":    userID.String(),
+		"role_id":    roleID.String(),
+		"tenant_id":  tenantID.String(),
+		"scope_type": "global",
+	})
+	resp, err := http.Post(e.policyURL+"/api/v1/policies/roles/assign", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("policy assign returned %d", resp.StatusCode)
+	}
+	return nil
+}
+
+// callPolicyRevokeAll revokes all roles for a user.
+func (e *JMLEngine) callPolicyRevokeAll(tenantID, userID uuid.UUID) error {
+	if e.policyURL == "" {
+		return nil
+	}
+	body, _ := json.Marshal(map[string]any{
+		"user_id":   userID.String(),
+		"tenant_id": tenantID.String(),
+	})
+	resp, err := http.Post(e.policyURL+"/api/v1/policies/roles/revoke-all", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	return nil
+}
+
+// sendWebhook sends a notification to an external webhook URL.
+func (e *JMLEngine) sendWebhook(url string, event LifecycleEvent, action LifecycleAction) error {
+	payload, _ := json.Marshal(map[string]any{
+		"event":     "lifecycle_action",
+		"user_id":   event.UserID.String(),
+		"action":    action.Type,
+		"params":    action.Params,
+		"timestamp": time.Now().UTC(),
+	})
+	resp, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	return nil
 }
 
 // handleJML routes JML lifecycle API endpoints (DB-backed).

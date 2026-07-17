@@ -280,9 +280,12 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		return "", errors.InvalidArgument("nonce parameter is required for OIDC flows")
 	}
 
-	// Enforce PKCE for public clients or clients with RequirePKCE.
-	// OAuth 2.1: ALL public clients must use PKCE — not optional.
-	if (client.IsPublic() || client.RequiresPKCE()) && req.CodeChallenge == "" {
+	// Enforce PKCE for ALL public clients (OAuth 2.1 mandate) + configured clients.
+	// This is unconditional for public clients — does not depend on RequirePKCE flag.
+	if client.IsPublic() && req.CodeChallenge == "" {
+		return "", errors.InvalidArgument("code_challenge is required for public clients (OAuth 2.1 PKCE mandate)")
+	}
+	if client.RequirePKCE && req.CodeChallenge == "" {
 		return "", errors.InvalidArgument("code_challenge is required for this client (PKCE enforced)")
 	}
 
