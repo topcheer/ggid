@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -71,8 +73,16 @@ func (h *HTTPHandler) scimTokenAuth(next http.Handler) http.Handler {
 	})
 }
 
-// hashSCIMToken hashes a SCIM token plaintext using SHA-256 for DB lookup.
+// hashSCIMToken hashes a SCIM token using HMAC-SHA256 with a server-side secret key.
+// This is deterministic (O(1) DB lookup) but safe against DB-only leaks —
+// an attacker who steals the DB cannot reverse the hashes without the HMAC key.
+// The key is loaded from GGID_INTERNAL_SECRET (same env var used for internal auth).
 func hashSCIMToken(plaintext string) string {
-	h := sha256.Sum256([]byte(plaintext))
-	return hex.EncodeToString(h[:])
+	secret := os.Getenv("GGID_INTERNAL_SECRET")
+	if secret == "" {
+		secret = "dev-internal-secret"
+	}
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(plaintext))
+	return hex.EncodeToString(mac.Sum(nil))
 }
