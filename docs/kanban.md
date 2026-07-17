@@ -100,6 +100,14 @@
 | KB-086 | **SCIM inbound JIT** (enhance SCIM handler for external push) | backend | P1 | jit-provisioning | 3d |
 | KB-087 | **JIT config + dry-run API** (CRUD + simulation) | backend | P1 | jit-provisioning | 3d |
 | KB-088 | **JIT provisioning dashboard** (Console) | frontend | P2 | jit-provisioning | 3d |
+| KB-089 | **Delegation DB persistence** (replace in-memory store) | backend | P0 | delegation-patterns | 3d |
+| KB-090 | **Delegation management API** (REST CRUD + check) | backend | P0 | delegation-patterns | 3d |
+| KB-091 | **Policy evaluator integration** (check delegated permissions) | backend | P0 | delegation-patterns | 2d |
+| KB-092 | **Per-resource delegation scoping** | backend | P0 | delegation-patterns | 2d |
+| KB-093 | **Delegation policy DSL** (YAML who→what→whom) | backend | P1 | delegation-patterns | 3d |
+| KB-094 | **JWT act claim injection** (delegation in access token) | backend | P1 | delegation-patterns | 3d |
+| KB-095 | **Delegation approval workflow** (sensitive delegations) | backend | P1 | delegation-patterns | 3d |
+| KB-096 | **Delegation dashboard** (Console self-service UI) | frontend | P2 | delegation-patterns | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -120,7 +128,8 @@
 
 | ID | Title | Owner | Commit |
 |----|-------|-------|--------|
-| — | JIT User Provisioning research doc | researcher | pending commit |
+| — | Fine-grained Delegation research doc | researcher | pending commit |
+| — | JIT User Provisioning research doc | researcher | 91938ddd |
 | — | Passwordless Migration research doc | researcher | ddf0fbe4 |
 | — | ZTNA Broker Integration research doc | researcher | 9c8ed3cf |
 | — | Data Migration research doc | researcher | 02c52040 |
@@ -144,7 +153,8 @@
 | Zero Trust Network Access (ZTNA) | DONE | docs/research/ztna-broker-integration.md |
 | Passwordless Migration | DONE | docs/research/passwordless-migration-strategy.md |
 | JIT User Provisioning | DONE | docs/research/jit-user-provisioning.md |
-| Fine-grained Delegation Patterns | NEXT | — |
+| Fine-grained Delegation Patterns | DONE | docs/research/fine-grained-delegation-patterns.md |
+| Verifiable Credentials / W3C DID | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
