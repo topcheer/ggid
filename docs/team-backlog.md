@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 50: Identity Analytics & Reporting research complete — 7 new backlog items)*
+*Last updated: 2026-07-17 (Round 51: GraphQL API Layer research complete — 7 new backlog items)*
 
 ## Current Stats
 
@@ -107,6 +107,12 @@
 | 81 | **Anomaly detection engine** (P1) | backend | Threat detection | 3σ behavioral baselining, impossible travel, new location/IP detection |
 | 82 | **Scheduled compliance reports** (P1) | backend | Compliance | SOC2/GDPR/ISO PDF report generation with cron scheduling + email delivery |
 | 83 | **Analytics dashboard + export** (P2) | frontend+backend | Console UI | Overview cards, trend charts, method distribution, CSV/JSON export |
+| 84 | **GraphQL SDL schema + gqlgen setup** (P0) | backend | API modernization | Typed schema for identity/policy/oauth/audit domains. See docs/research/graphql-api-layer.md |
+| 85 | **GraphQL resolvers + dataloaders** (P0) | backend | Query optimization | Query/nested resolvers with dataloader batch resolution (prevents N+1) |
+| 86 | **Field-level @auth directive** (P0) | backend | Authorization | @auth(requires: ADMIN) on field-level with PDP integration |
+| 87 | **Query complexity analysis** (P0) | backend | DoS prevention | Depth limit (≤10) + cost limit (≤1000) to prevent nested query attacks |
+| 88 | **GraphQL mutations + persisted queries** (P1) | backend | Full CRUD via GraphQL | Create/update/disable user, assign/revoke role via mutations; persisted query allow-list |
+| 89 | **Console GraphQL playground** (P2) | frontend | Developer experience | GraphiQL in dev mode, Console dashboard migration to GraphQL |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -143,6 +149,7 @@
 10. Fine-grained Delegation → DONE (docs/research/fine-grained-delegation-patterns.md) — 8 backlog items added
 11. WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md) — 7 backlog items added
 12. Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md) — 7 backlog items added
+13. GraphQL API Layer → DONE (docs/research/graphql-api-layer.md) — 7 backlog items added
 
 ## Rules
 
@@ -155,6 +162,7 @@
 ## Research Pipeline
 
 Active research topics:
+- GraphQL API Layer → DONE (docs/research/graphql-api-layer.md)
 - Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md)
 - WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md)
 - Fine-grained Delegation Patterns → DONE (docs/research/fine-grained-delegation-patterns.md)
