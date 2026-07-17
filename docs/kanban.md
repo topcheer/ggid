@@ -153,6 +153,7 @@
 | — | PIPL/NIS2/CRA compliance research | arch | done |
 | — | OAuth 2.1 enforcement mode | backend | dfcb8a7f |
 | — | FAPI 2.0 profile | backend | ccae234f |
+| F-42 | WASM Plugin Management Console (5 tabs, 10 hooks, upload wizard) | frontend | f7355534 |
 
 ## Research Pipeline
 
