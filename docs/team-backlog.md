@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-15 (Round 40 E2E; PIPL/NIS2/CRA research complete — no new gaps)*
+*Last updated: 2026-07-15 (Round 41: ReBAC/Zanzibar research complete — 7 new backlog items)*
 
 ## Current Stats
 
@@ -36,6 +36,13 @@
 | 10 | NIS2 / CRA compliance dashboard | frontend | EU regulation | Security incident reporting, SBOM, vulnerability tracking |
 | 11 | AI agent identity lifecycle | backend | agentic AI | Persistent registry, consent flow, credential rotation, drift detection |
 | 12 | Fraud: TOR/VPN/proxy detection | backend | ITDR/fraud | IP intelligence integration, geo-velocity anomaly |
+| 13 | **ReBAC tuple store** (P0) | backend | Google Zanzibar / fine-grained authz | PostgreSQL tuple store + repository layer. See docs/research/rebac-zanzibar-fine-grained-authz.md §13 |
+| 14 | **ReBAC schema DSL parser** (P0) | backend | Zanzibar schema language | Parse `definition type { relation, permission }` syntax |
+| 15 | **ReBAC graph traversal engine** (P0) | backend | Relationship graph | Recursive check with depth limiting, memoization |
+| 16 | **ReBAC check/write API** (P0) | backend | REST + gRPC | /api/v1/policy/rebac/check, /tuples, /list-objects |
+| 17 | **ReBAC evaluator integration** (P0) | backend | Policy service | Wire ReBAC as 3rd layer in evaluator.Check() pipeline |
+| 18 | **ReBAC Redis caching** (P1) | backend | Performance | Tuple cache with write invalidation |
+| 19 | **ReBAC console UI** (P2) | frontend | Developer experience | Schema editor, tuple browser, check playground |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -62,6 +69,7 @@
 ### Docs/Research
 1. OAuth 2.1 / FAPI 2.0 research → DONE
 2. Console mock-pages audit (continuing)
+3. ReBAC / Zanzibar fine-grained authz → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md) — 7 backlog items added
 
 ## Rules
 
@@ -74,10 +82,12 @@
 ## Research Pipeline
 
 Active research topics:
+- ReBAC / Google Zanzibar fine-grained authorization → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md)
 - OAuth 2.1 / FAPI 2.0 compliance gap analysis
 - PQC migration for IAM systems
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
+- **Next**: Identity orchestration / adaptive auth journeys
 
 See docs/research/ for full research docs.

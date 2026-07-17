@@ -1,0 +1,90 @@
+# GGID Kanban Board
+
+*Last updated: 2026-07-15 by ggcxf (researcher)*
+
+## Backlog (Ready for Implementation)
+
+### P0 — Critical Security & Core Features
+
+| ID | Title | Owner | Priority | Source | Est |
+|----|-------|-------|----------|--------|-----|
+| KB-001 | OAuth state validation on token exchange (P0) | backend | P0 | tech-debt.md | 1d |
+| KB-002 | JWT jti tracking — anti-replay (P0) | backend | P0 | tech-debt.md | 3d |
+| KB-003 | HasScope() actual scope enforcement (P0) | backend | P0 | tech-debt.md | 2d |
+| KB-004 | gRPC mTLS between all services | backend | P0 | tech-debt.md | 5d |
+| KB-005 | **ReBAC tuple store** (PostgreSQL) | backend | P0 | rebac-zanzibar | 3d |
+| KB-006 | **ReBAC schema DSL parser** | backend | P0 | rebac-zanzibar | 4d |
+| KB-007 | **ReBAC graph traversal engine** | backend | P0 | rebac-zanzibar | 5d |
+| KB-008 | **ReBAC check/write REST + gRPC API** | backend | P0 | rebac-zanzibar | 4d |
+| KB-009 | **ReBAC evaluator integration** (3rd authz layer) | backend | P0 | rebac-zanzibar | 2d |
+
+### P1 — High Value Features
+
+| ID | Title | Owner | Priority | Source | Est |
+|----|-------|-------|----------|--------|-----|
+| KB-010 | Password breach check (HIBP API) | backend | P1 | tech-debt.md | 2d |
+| KB-011 | JWT key rotation automation | backend | P1 | tech-debt.md | 3d |
+| KB-012 | Auto-generated RSA keys / shared key store | backend | P1 | tech-debt.md | 3d |
+| KB-013 | NATS subject tenant namespacing | backend | P1 | tech-debt.md | 2d |
+| KB-014 | Audit service RLS enforcement | backend | P1 | tech-debt.md | 2d |
+| KB-015 | SCIM 2.0 server implementation | backend | P1 | roadmap.md | 5d |
+| KB-016 | Session management with revocation | backend | P1 | roadmap.md | 5d |
+| KB-017 | SAML IdP-initiated SSO | backend | P1 | roadmap.md | 3d |
+| KB-018 | PQC migration (ML-DSA / ML-KEM) | arch | P1 | NIST PQC | 10d |
+| KB-019 | AI agent identity lifecycle | backend | P1 | agentic AI | 8d |
+| KB-020 | Fraud detection: TOR/VPN/proxy | backend | P1 | ITDR | 5d |
+| KB-021 | **ReBAC Redis caching** | backend | P1 | rebac-zanzibar | 2d |
+| KB-022 | **ReBAC caveats** (conditional permissions) | backend | P1 | rebac-zanzibar | 4d |
+| KB-023 | **ReBAC ListObjects/ListSubjects API** | backend | P1 | rebac-zanzibar | 3d |
+
+### P2 — Enhancement & Quality
+
+| ID | Title | Owner | Priority | Source | Est |
+|----|-------|-------|----------|--------|-----|
+| KB-024 | Passkey health dashboard | frontend | P2 | backlog | 3d |
+| KB-025 | NIS2/CRA compliance dashboard | frontend | P2 | EU regulation | 5d |
+| KB-026 | Console loading/error states (remaining) | frontend | P2 | tech-debt.md | 3d |
+| KB-027 | i18n extraction (1051 strings) | frontend | P2 | tech-debt.md | 5d |
+| KB-028 | SDK parity completion | arch | P2 | backlog | 5d |
+| KB-029 | **ReBAC console UI** (schema editor, playground) | frontend | P2 | rebac-zanzibar | 5d |
+| KB-030 | **ReBAC migration tooling** (RBAC→tuple sync) | backend | P2 | rebac-zanzibar | 3d |
+| KB-031 | **ReBAC Watch API** (cache invalidation) | backend | P2 | rebac-zanzibar | 4d |
+
+### P3 — Future / Research
+
+| ID | Title | Owner | Priority | Source |
+|----|-------|-------|----------|--------|
+| KB-032 | OpenTelemetry distributed tracing | arch | P3 | tech-debt.md |
+| KB-033 | Multi-region active-active | arch | P3 | tech-debt.md |
+| KB-034 | Vault/KMS integration | arch | P3 | tech-debt.md |
+| KB-035 | Plugin system architecture | arch | P3 | tech-debt.md |
+| KB-036 | **Identity orchestration** (adaptive journeys) | backend | P3 | next research |
+| KB-037 | **Cloud IAM federation** (AWS/Azure/GCP) | backend | P3 | next research |
+
+## In Progress
+
+*(None currently)*
+
+## Done (Recent)
+
+| ID | Title | Owner | Commit |
+|----|-------|-------|--------|
+| — | ReBAC/Zanzibar research doc | researcher | pending commit |
+| — | PIPL/NIS2/CRA compliance research | arch | done |
+| — | OAuth 2.1 enforcement mode | backend | dfcb8a7f |
+| — | FAPI 2.0 profile | backend | ccae234f |
+
+## Research Pipeline
+
+| Topic | Status | Doc |
+|-------|--------|-----|
+| ReBAC / Google Zanzibar | DONE | docs/research/rebac-zanzibar-fine-grained-authz.md |
+| OAuth 2.1 / FAPI 2.0 | DONE | docs/research/oauth21-fapi-fedcm-gap.md |
+| PIPL/NIS2/CRA | DONE | docs/research/nis2-cra-pipl-compliance.md |
+| Identity Orchestration | NEXT | — |
+| Cloud IAM Federation | PLANNED | — |
+| PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
+
+---
+
+*Board maintained by researcher (ggcxf). Implementation items are ready for pickup by backend/frontend/arch.*
