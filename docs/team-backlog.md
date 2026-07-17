@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 61: CMK & KMS Integration research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 62: DLP Egress Control & PII Redaction research complete — 4 new backlog items)*
 
 ## Current Stats
 
@@ -156,6 +156,8 @@
 | 130 | **DataKeyProvider + envelope encryption** (P0) | backend | Data security | Extend key_provider.go with GenerateDataKey/Encrypt/Decrypt (DEK/KEK hierarchy). See docs/research/customer-managed-keys-kms.md |
 | 131 | **Per-tenant CMK management** (P0) | backend | Data security | CRUD API for per-tenant customer-managed keys (AWS KMS + Vault + Azure) + BYOK import + rotation |
 | 132 | **SM4 + field-level encryption** (P1) | backend | China + PII | SM4 symmetric encryption (GM compliance) + AES-256-GCM field-level encryption for PII columns |
+| 133 | **DLP egress middleware + PII redaction** (P0) | backend | Data egress | Gateway middleware inspecting API responses for PII + redaction engine. See docs/research/dlp-egress-pii-redaction.md |
+| 134 | **Egress policy DSL + replace mock** (P1) | backend | DLP rules | Declarative redaction rules + classification-driven auto-masking + replace auth DLP hardcoded mock |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -203,6 +205,7 @@
 21. Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md) — 6 backlog items added
 22. MDM Integration → DONE (docs/research/mdm-integration.md) — 6 backlog items added
 23. CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md) — 6 backlog items added
+24. DLP Egress Control & PII Redaction → DONE (docs/research/dlp-egress-pii-redaction.md) — 4 backlog items added
 
 ## Rules
 
@@ -220,6 +223,7 @@ Active research topics:
 - Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md)
 - MDM Integration → DONE (docs/research/mdm-integration.md)
 - CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md)
+- DLP Egress Control → DONE (docs/research/dlp-egress-pii-redaction.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

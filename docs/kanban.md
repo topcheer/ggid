@@ -190,6 +190,10 @@
 | KB-176 | **SM4 data encryption** (China GM compliance) | backend | P1 | cmk-kms | 3d |
 | KB-177 | **Field-level encryption** (PII columns AES-256-GCM) | backend | P1 | cmk-kms | 3d |
 | KB-178 | **HYOK + key audit + Console UI** | backend+frontend | P2 | cmk-kms | 4d |
+| KB-179 | **DLP egress middleware + PII detection + redaction** (gateway) | backend | P0 | dlp-egress | 4d |
+| KB-180 | **Egress redaction engine** (mask/partial/tokenize/redact/hash) | backend | P0 | dlp-egress | 3d |
+| KB-181 | **Egress policy DSL + classification auto-mask** | backend | P1 | dlp-egress | 3d |
+| KB-182 | **Replace auth DLP hardcoded mock + egress analytics** | backend | P1 | dlp-egress | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -297,6 +301,7 @@ Arch audit found 50+ additional global in-memory maps NOT covered by batch 4:
 | Continuous Authorization & PDP | DONE | docs/research/continuous-authorization-pdp.md |
 | MDM Integration (Intune/Jamf/Android) | DONE | docs/research/mdm-integration.md |
 | Customer-Managed Keys (CMK) & KMS Integration | DONE | docs/research/customer-managed-keys-kms.md |
+| DLP Egress Control & PII Redaction | DONE | docs/research/dlp-egress-pii-redaction.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---
