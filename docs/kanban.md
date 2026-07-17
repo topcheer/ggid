@@ -203,6 +203,11 @@
 | KB-189 | **Circuit breaker in router** (per-backend, auto-trip + half-open) | backend | P0 | gateway-hardening | 3d |
 | KB-190 | **Request validation + payload sanitization** (JSON schema, SQLi/XSS) | backend | P1 | gateway-hardening | 3d |
 | KB-191 | **Enhanced observability** (P50/P95/P99 histograms + hardening dashboard) | backend | P1 | gateway-hardening | 2d |
+| KB-192 | **8 new ITDR detection rules** (consent phishing, MFA fatigue, token theft, session hijack, mass creation, federation anomaly, MFA bypass, mass export) | backend | P0 | itdr-maturity | 4d |
+| KB-193 | **Attack simulation API** (purple team, 7 scenarios, coverage validation) | backend | P1 | itdr-maturity | 4d |
+| KB-194 | **SOAR webhook + auto-response** (session revoke + account lock on critical) | backend | P1 | itdr-maturity | 3d |
+| KB-195 | **ML-based UEBA** (isolation forest, per-user models, anomaly scoring) | backend | P2 | itdr-maturity | 4d |
+| KB-196 | **MITRE coverage dashboard + detection-as-code** (YAML versioned rules) | backend | P2 | itdr-maturity | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -319,6 +324,7 @@
 | DLP Egress Control & PII Redaction | DONE | docs/research/dlp-egress-pii-redaction.md |
 | Service Mesh & Microsegmentation | DONE | docs/research/service-mesh-microsegmentation.md |
 | API Gateway Hardening & Rate Limiting | DONE | docs/research/api-gateway-hardening.md |
+| ITDR Maturity & MITRE ATT&CK Mapping | DONE | docs/research/itdr-maturity-mitre-attack.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---

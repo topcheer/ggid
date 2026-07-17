@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 64: API Gateway Hardening research complete — 4 new backlog items)*
+*Last updated: 2026-07-17 (Round 65: ITDR Maturity & MITRE ATT&CK Mapping research complete — 5 new backlog items)*
 
 ## Current Stats
 
@@ -163,6 +163,8 @@
 | 137 | **Mesh observability** (P2) | devops | Visibility | Jaeger distributed tracing + Prometheus mesh metrics + traffic visualization |
 | 138 | **Hierarchical rate limiting + circuit breaker** (P0) | backend | Gateway hardening | Per-user/key/IP/endpoint rate limits (Redis) with burst/sustained + per-backend circuit breaker. See docs/research/api-gateway-hardening.md |
 | 139 | **Request validation + observability** (P1) | backend | Gateway hardening | JSON schema validation + SQLi/XSS payload sanitization + P50/P95/P99 latency histograms |
+| 140 | **8 new ITDR detection rules** (P0) | backend | Threat detection | consent_phishing/mfa_fatigue/token_theft/session_hijack/mass_creation/federation_anomaly/mfa_bypass/mass_export. See docs/research/itdr-maturity-mitre-attack.md |
+| 141 | **Attack simulation + SOAR + ML UEBA** (P1-P2) | backend | Enterprise ITDR | Purple team simulation API + SOAR webhook auto-response + isolation forest ML anomaly detection + MITRE coverage dashboard |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -213,6 +215,7 @@
 24. DLP Egress Control & PII Redaction → DONE (docs/research/dlp-egress-pii-redaction.md) — 4 backlog items added
 25. Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md) — 5 backlog items added
 26. API Gateway Hardening & Rate Limiting → DONE (docs/research/api-gateway-hardening.md) — 4 backlog items added
+27. ITDR Maturity & MITRE ATT&CK Mapping → DONE (docs/research/itdr-maturity-mitre-attack.md) — 5 backlog items added
 
 ## Rules
 
@@ -233,6 +236,7 @@ Active research topics:
 - DLP Egress Control → DONE (docs/research/dlp-egress-pii-redaction.md)
 - Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md)
 - API Gateway Hardening → DONE (docs/research/api-gateway-hardening.md)
+- ITDR Maturity & MITRE ATT&CK → DONE (docs/research/itdr-maturity-mitre-attack.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
