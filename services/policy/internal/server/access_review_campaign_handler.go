@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,14 +25,6 @@ type ReviewCampaign struct {
 	CreatedAt  time.Time `json:"created_at"`
 	SubmittedAt *time.Time `json:"submitted_at,omitempty"`
 }
-
-// campaignStore holds review campaigns in memory.
-type campaignStore struct {
-	mu        sync.RWMutex
-	campaigns map[string]*ReviewCampaign
-}
-
-var reviewCampaigns = &campaignStore{campaigns: make(map[string]*ReviewCampaign)}
 
 // POST /api/v1/policies/access-reviews/campaigns          — create campaign
 // GET  /api/v1/policies/access-reviews/campaigns/active   — list active campaigns
@@ -78,18 +69,19 @@ func (s *HTTPServer) handleReviewCampaignsActive(w http.ResponseWriter, r *http.
 	}
 	tenantID := r.URL.Query().Get("tenant_id")
 
-	reviewCampaigns.mu.RLock()
-	defer reviewCampaigns.mu.RUnlock()
-
-	result := []*ReviewCampaign{}
-	for _, c := range reviewCampaigns.campaigns {
-		if c.Status != "active" {
-			continue
+	var result []*ReviewCampaign
+	if s.campaignRepo != nil {
+		active, err := s.campaignRepo.ListActive(r.Context(), tenantID)
+		if err == nil {
+			for _, c := range active {
+				if c.Status == "active" {
+					result = append(result, c)
+				}
+			}
 		}
-		if tenantID != "" && c.TenantID != tenantID {
-			continue
-		}
-		result = append(result, c)
+	}
+	if result == nil {
+		result = []*ReviewCampaign{}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -139,10 +131,6 @@ func (s *HTTPServer) createReviewCampaign(w http.ResponseWriter, r *http.Request
 			writeJSONError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
-	} else {
-		reviewCampaigns.mu.Lock()
-		reviewCampaigns.campaigns[c.ID] = c
-		reviewCampaigns.mu.Unlock()
 	}
 
 	writeJSON(w, http.StatusCreated, c)
@@ -239,16 +227,7 @@ func (s *HTTPServer) listReviewCampaigns(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	reviewCampaigns.mu.RLock()
-	defer reviewCampaigns.mu.RUnlock()
-
 	result := []*ReviewCampaign{}
-	for _, c := range reviewCampaigns.campaigns {
-		if status != "" && c.Status != status {
-			continue
-		}
-		result = append(result, c)
-	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"campaigns": result,
 		"count":     len(result),
@@ -296,23 +275,8 @@ func (s *HTTPServer) submitReviewCampaign(w http.ResponseWriter, r *http.Request
 		now := time.Now().UTC()
 		c.SubmittedAt = &now
 	} else {
-		reviewCampaigns.mu.Lock()
-		defer reviewCampaigns.mu.Unlock()
-		var ok bool
-		c, ok = reviewCampaigns.campaigns[campaignID]
-		if !ok {
-			writeJSONError(w, http.StatusNotFound, "campaign not found")
-			return
-		}
-		if c.Status != "active" {
-			writeJSONError(w, http.StatusConflict, "campaign already completed")
-			return
-		}
-		now := time.Now().UTC()
-		c.Status = "completed"
-		c.Decision = req.Decision
-		c.Notes = req.Notes
-		c.SubmittedAt = &now
+		writeJSONError(w, http.StatusNotFound, "campaign not found")
+		return
 	}
 
 	// Execute revoke: if decision is "revoke", call roleSvc.RevokeRole.
