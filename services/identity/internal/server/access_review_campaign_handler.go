@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type AccessReviewCampaign struct {
@@ -32,8 +33,6 @@ type CampaignRequest struct {
 	AutoRevokeOnExpiry bool     `json:"auto_revoke_on_expiry"`
 }
 
-var campaignStore sync.Map
-
 func (h *HTTPHandler) handleAccessReviewCampaigns(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -55,7 +54,7 @@ func (h *HTTPHandler) handleAccessReviewCampaigns(w http.ResponseWriter, r *http
 			req.Deadline = time.Now().Add(30 * 24 * time.Hour).UTC().Format("2006-01-02")
 		}
 		camp := AccessReviewCampaign{
-			CampaignID:         fmt.Sprintf("arc-%d", time.Now().UnixNano()%100000),
+			CampaignID:         uuid.New().String(),
 			CampaignName:       req.CampaignName,
 			Scope:              req.Scope,
 			Reviewers:          req.Reviewers,
@@ -65,19 +64,38 @@ func (h *HTTPHandler) handleAccessReviewCampaigns(w http.ResponseWriter, r *http
 			CompletionPct:      0,
 			Status:             "active",
 			CreatedAt:          time.Now().UTC().Format(time.RFC3339),
-			ItemsTotal:         50,
+			ItemsTotal:         0,
 			ItemsReviewed:      0,
 		}
-		campaignStore.Store(camp.CampaignID, camp)
+		// Persist to PG.
+		if h.identityPolicyMap != nil {
+			data := map[string]any{
+				"campaign_name": camp.CampaignName, "scope": camp.Scope,
+				"reviewers": camp.Reviewers, "deadline": camp.Deadline,
+				"reminders_enabled": camp.RemindersEnabled, "auto_revoke_on_expiry": camp.AutoRevokeOnExpiry,
+				"status": camp.Status, "created_at": camp.CreatedAt,
+			}
+			h.identityPolicyMap.Store(r.Context(), "review_campaigns_store", camp.CampaignID, data)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(camp)
 	case http.MethodGet:
 		var campaigns []AccessReviewCampaign
-		campaignStore.Range(func(_, v any) bool {
-			campaigns = append(campaigns, v.(AccessReviewCampaign))
-			return true
-		})
+		if h.identityPolicyMap != nil {
+			rows, _ := h.identityPolicyMap.List(r.Context(), "review_campaigns_store")
+			for _, row := range rows {
+				camp := AccessReviewCampaign{
+					CampaignID:   getString(row, "id"),
+					CampaignName: getString(row, "campaign_name"),
+					Scope:        getString(row, "scope"),
+					Deadline:     getString(row, "deadline"),
+					Status:       getString(row, "status"),
+					CreatedAt:    getString(row, "created_at"),
+				}
+				campaigns = append(campaigns, camp)
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"campaigns": campaigns, "count": len(campaigns)})
 	default:

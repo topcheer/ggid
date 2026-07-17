@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,13 +27,6 @@ type LifecycleAction struct {
 	Type  string         `json:"type"`  // assign_role, revoke_access, notify_manager
 	Params map[string]any `json:"params,omitempty"`
 }
-
-type lifecycleRuleStore struct {
-	mu    sync.RWMutex
-	rules map[string]*LifecycleRule
-}
-
-var lifecycleRules = &lifecycleRuleStore{rules: make(map[string]*LifecycleRule)}
 
 // POST /api/v1/users/lifecycle/rules          — create rule
 // GET  /api/v1/users/lifecycle/rules          — list rules
@@ -75,27 +68,45 @@ func (h *HTTPHandler) handleLifecycleRules(w http.ResponseWriter, r *http.Reques
 			Enabled:    enabled,
 			CreatedAt:  time.Now().UTC(),
 		}
-		lifecycleRules.mu.Lock()
-		lifecycleRules.rules[rule.ID] = rule
-		lifecycleRules.mu.Unlock()
+		// Persist to PG via identityPolicyMap.
+		if h.identityPolicyMap != nil {
+			data := map[string]any{
+				"tenant_id": rule.TenantID, "name": rule.Name, "trigger": rule.Trigger,
+				"conditions": rule.Conditions, "actions": rule.Actions,
+				"enabled": rule.Enabled, "created_at": rule.CreatedAt,
+			}
+			h.identityPolicyMap.Store(r.Context(), "lifecycle_rules_store", rule.ID, data)
+		}
 		writeJSON(w, http.StatusCreated, rule)
 
 	case http.MethodGet:
 		trigger := r.URL.Query().Get("trigger")
 		tenantID := r.URL.Query().Get("tenant_id")
-		lifecycleRules.mu.RLock()
-		result := []*LifecycleRule{}
-		for _, rl := range lifecycleRules.rules {
-			if trigger != "" && rl.Trigger != trigger {
-				continue
+		var rules []*LifecycleRule
+		if h.identityPolicyMap != nil {
+			rows, _ := h.identityPolicyMap.List(r.Context(), "lifecycle_rules_store")
+			for _, row := range rows {
+				rl := &LifecycleRule{
+					ID:        getString(row, "id"),
+					TenantID:  getString(row, "tenant_id"),
+					Name:      getString(row, "name"),
+					Trigger:   getString(row, "trigger"),
+					Conditions: getMap(row, "conditions"),
+					Enabled:   getBool(row, "enabled"),
+				}
+				if trigger != "" && rl.Trigger != trigger {
+					continue
+				}
+				if tenantID != "" && rl.TenantID != tenantID {
+					continue
+				}
+				rules = append(rules, rl)
 			}
-			if tenantID != "" && rl.TenantID != tenantID {
-				continue
-			}
-			result = append(result, rl)
 		}
-		lifecycleRules.mu.RUnlock()
-		writeJSON(w, http.StatusOK, map[string]any{"rules": result, "count": len(result)})
+		if rules == nil {
+			rules = []*LifecycleRule{}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"rules": rules, "count": len(rules)})
 
 	default:
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -128,31 +139,42 @@ func (h *HTTPHandler) handleLifecyclePreview(ctx context.Context, userID uuid.UU
 		applicableTriggers = []string{"joiner", "mover", "leaver"}
 	}
 
-	lifecycleRules.mu.RLock()
-	applicableRules := []*LifecycleRule{}
-	for _, rl := range lifecycleRules.rules {
-		if !rl.Enabled {
-			continue
-		}
-		for _, t := range applicableTriggers {
-			if rl.Trigger == t {
-				applicableRules = append(applicableRules, rl)
-				break
+	// Load rules from PG.
+	var applicableRules []*LifecycleRule
+	if h.identityPolicyMap != nil {
+		rows, _ := h.identityPolicyMap.List(r.Context(), "lifecycle_rules_store")
+		for _, row := range rows {
+			rl := &LifecycleRule{
+				ID:      getString(row, "id"),
+				Name:    getString(row, "name"),
+				Trigger: getString(row, "trigger"),
+				Enabled: getBool(row, "enabled"),
+			}
+			if !rl.Enabled {
+				continue
+			}
+			for _, t := range applicableTriggers {
+				if rl.Trigger == t {
+					applicableRules = append(applicableRules, rl)
+					break
+				}
 			}
 		}
 	}
-	lifecycleRules.mu.RUnlock()
+	if applicableRules == nil {
+		applicableRules = []*LifecycleRule{}
+	}
 
 	// Build preview actions
 	previewActions := []map[string]any{}
 	for _, rl := range applicableRules {
 		for _, a := range rl.Actions {
 			previewActions = append(previewActions, map[string]any{
-				"rule_id":    rl.ID,
-				"rule_name":  rl.Name,
-				"trigger":    rl.Trigger,
-				"action":     a.Type,
-				"params":     a.Params,
+				"rule_id":        rl.ID,
+				"rule_name":      rl.Name,
+				"trigger":        rl.Trigger,
+				"action":         a.Type,
+				"params":         a.Params,
 				"would_execute": true,
 			})
 		}
@@ -167,4 +189,34 @@ func (h *HTTPHandler) handleLifecyclePreview(ctx context.Context, userID uuid.UU
 		"actions":      previewActions,
 		"action_count": len(previewActions),
 	})
+}
+
+// --- helpers for JSONB row access ---
+
+func getString(m map[string]any, key string) string {
+	if v, ok := m[key]; ok {
+		return fmt.Sprintf("%v", v)
+	}
+	return ""
+}
+
+func getBool(m map[string]any, key string) bool {
+	if v, ok := m[key]; ok {
+		switch val := v.(type) {
+		case bool:
+			return val
+		case string:
+			return val == "true"
+		}
+	}
+	return false
+}
+
+func getMap(m map[string]any, key string) map[string]any {
+	if v, ok := m[key]; ok {
+		if mp, ok := v.(map[string]any); ok {
+			return mp
+		}
+	}
+	return nil
 }

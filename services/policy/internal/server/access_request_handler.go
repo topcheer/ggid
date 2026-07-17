@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,32 +11,19 @@ import (
 
 // AccessRequest represents a user's request for elevated access.
 type AccessRequest struct {
-	ID           string    `json:"id"`
-	TenantID     string    `json:"tenant_id"`
-	RequesterID  string    `json:"requester_id"`
-	RoleID       string    `json:"role_id"`
-	Justification string   `json:"justification"`
-	Status       string    `json:"status"` // pending, approved, rejected, expired
-	ApproverID   string    `json:"approver_id,omitempty"`
-	ReviewedAt   *time.Time `json:"reviewed_at,omitempty"`
-	ReviewNote   string    `json:"review_note,omitempty"`
-	CreatedAt    time.Time `json:"created_at"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ID            string     `json:"id"`
+	TenantID      string     `json:"tenant_id"`
+	RequesterID   string     `json:"requester_id"`
+	RoleID        string     `json:"role_id"`
+	Justification string     `json:"justification"`
+	Status        string     `json:"status"`
+	ApproverID    string     `json:"approver_id,omitempty"`
+	ReviewedAt    *time.Time `json:"reviewed_at,omitempty"`
+	ReviewNote    string     `json:"review_note,omitempty"`
+	CreatedAt     time.Time  `json:"created_at"`
+	ExpiresAt     time.Time  `json:"expires_at"`
 }
 
-// accessRequestStore holds access requests in memory.
-type accessRequestStore struct {
-	mu       sync.RWMutex
-	requests map[string]*AccessRequest
-}
-
-var accessRequests = &accessRequestStore{requests: make(map[string]*AccessRequest)}
-
-// POST /api/v1/policies/access-requests          — create access request
-// GET  /api/v1/policies/access-requests           — list (filter by status/requester)
-// GET  /api/v1/policies/access-requests/pending   — list pending requests
-// POST /api/v1/policies/access-requests/{id}/approve — approve request
-// POST /api/v1/policies/access-requests/{id}/reject  — reject request
 func (s *HTTPServer) handleAccessRequests(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/policies/access-requests")
 
@@ -53,21 +39,19 @@ func (s *HTTPServer) handleAccessRequests(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Sub-paths
 	parts := strings.Split(strings.Trim(path, "/"), "/")
 	reqID := parts[0]
 
 	if len(parts) == 1 {
-		// GET /access-requests/{id}
 		if r.Method == http.MethodGet {
-			accessRequests.mu.RLock()
-			ar, ok := accessRequests.requests[reqID]
-			accessRequests.mu.RUnlock()
-			if !ok {
-				writeJSONError(w, http.StatusNotFound, "access request not found")
-				return
+			if s.policyMap != nil {
+				ar, _ := s.policyMap.Get(r.Context(), "access_requests_store", reqID)
+				if ar != nil {
+					writeJSON(w, http.StatusOK, ar)
+					return
+				}
 			}
-			writeJSON(w, http.StatusOK, ar)
+			writeJSONError(w, http.StatusNotFound, "access request not found")
 			return
 		}
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -93,27 +77,24 @@ func (s *HTTPServer) handleAccessRequestsPending(w http.ResponseWriter, r *http.
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-
 	tenantID := r.URL.Query().Get("tenant_id")
-
-	accessRequests.mu.RLock()
-	defer accessRequests.mu.RUnlock()
-
-	result := []*AccessRequest{}
-	for _, ar := range accessRequests.requests {
-		if ar.Status != "pending" {
-			continue
+	var result []map[string]any
+	if s.policyMap != nil {
+		rows, _ := s.policyMap.List(r.Context(), "access_requests_store")
+		for _, row := range rows {
+			if pmGetString(row, "status") != "pending" {
+				continue
+			}
+			if tenantID != "" && pmGetString(row, "tenant_id") != tenantID {
+				continue
+			}
+			result = append(result, row)
 		}
-		if tenantID != "" && ar.TenantID != tenantID {
-			continue
-		}
-		result = append(result, ar)
 	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"requests": result,
-		"count":    len(result),
-	})
+	if result == nil {
+		result = []map[string]any{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"requests": result, "count": len(result)})
 }
 
 func (s *HTTPServer) createAccessRequest(w http.ResponseWriter, r *http.Request) {
@@ -136,27 +117,22 @@ func (s *HTTPServer) createAccessRequest(w http.ResponseWriter, r *http.Request)
 		writeJSONError(w, http.StatusBadRequest, "role_id is required")
 		return
 	}
-
 	if req.ExpiryHours <= 0 {
-		req.ExpiryHours = 72 // default 72-hour expiry
+		req.ExpiryHours = 72
 	}
-
 	now := time.Now().UTC()
 	ar := &AccessRequest{
-		ID:            uuid.New().String(),
-		TenantID:      req.TenantID,
-		RequesterID:   req.RequesterID,
-		RoleID:        req.RoleID,
-		Justification: req.Justification,
-		Status:        "pending",
-		CreatedAt:     now,
-		ExpiresAt:     now.Add(time.Duration(req.ExpiryHours) * time.Hour),
+		ID: uuid.New().String(), TenantID: req.TenantID, RequesterID: req.RequesterID,
+		RoleID: req.RoleID, Justification: req.Justification, Status: "pending",
+		CreatedAt: now, ExpiresAt: now.Add(time.Duration(req.ExpiryHours) * time.Hour),
 	}
-
-	accessRequests.mu.Lock()
-	accessRequests.requests[ar.ID] = ar
-	accessRequests.mu.Unlock()
-
+	if s.policyMap != nil {
+		s.policyMap.Store(r.Context(), "access_requests_store", ar.ID, map[string]any{
+			"tenant_id": ar.TenantID, "requester_id": ar.RequesterID, "role_id": ar.RoleID,
+			"justification": ar.Justification, "status": ar.Status,
+			"created_at": ar.CreatedAt, "expires_at": ar.ExpiresAt,
+		})
+	}
 	writeJSON(w, http.StatusCreated, ar)
 }
 
@@ -164,28 +140,26 @@ func (s *HTTPServer) listAccessRequests(w http.ResponseWriter, r *http.Request) 
 	status := r.URL.Query().Get("status")
 	requesterID := r.URL.Query().Get("requester_id")
 	tenantID := r.URL.Query().Get("tenant_id")
-
-	accessRequests.mu.RLock()
-	defer accessRequests.mu.RUnlock()
-
-	result := []*AccessRequest{}
-	for _, ar := range accessRequests.requests {
-		if status != "" && ar.Status != status {
-			continue
+	var result []map[string]any
+	if s.policyMap != nil {
+		rows, _ := s.policyMap.List(r.Context(), "access_requests_store")
+		for _, row := range rows {
+			if status != "" && pmGetString(row, "status") != status {
+				continue
+			}
+			if requesterID != "" && pmGetString(row, "requester_id") != requesterID {
+				continue
+			}
+			if tenantID != "" && pmGetString(row, "tenant_id") != tenantID {
+				continue
+			}
+			result = append(result, row)
 		}
-		if requesterID != "" && ar.RequesterID != requesterID {
-			continue
-		}
-		if tenantID != "" && ar.TenantID != tenantID {
-			continue
-		}
-		result = append(result, ar)
 	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"requests": result,
-		"count":    len(result),
-	})
+	if result == nil {
+		result = []map[string]any{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"requests": result, "count": len(result)})
 }
 
 func (s *HTTPServer) reviewAccessRequest(w http.ResponseWriter, r *http.Request, reqID, decision string) {
@@ -193,38 +167,22 @@ func (s *HTTPServer) reviewAccessRequest(w http.ResponseWriter, r *http.Request,
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
-
 	var req struct {
 		ApproverID string `json:"approver_id"`
 		Note       string `json:"review_note"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
-	if req.ApproverID == "" {
-		req.ApproverID = r.URL.Query().Get("approver_id")
+	json.NewDecoder(r.Body).Decode(&req)
+	if s.policyMap != nil {
+		existing, _ := s.policyMap.Get(r.Context(), "access_requests_store", reqID)
+		if existing == nil {
+			writeJSONError(w, http.StatusNotFound, "access request not found")
+			return
+		}
+		existing["status"] = decision
+		existing["approver_id"] = req.ApproverID
+		existing["review_note"] = req.Note
+		existing["reviewed_at"] = time.Now().UTC()
+		s.policyMap.Store(r.Context(), "access_requests_store", reqID, existing)
 	}
-	if req.ApproverID == "" {
-		writeJSONError(w, http.StatusBadRequest, "approver_id is required")
-		return
-	}
-
-	accessRequests.mu.Lock()
-	defer accessRequests.mu.Unlock()
-
-	ar, ok := accessRequests.requests[reqID]
-	if !ok {
-		writeJSONError(w, http.StatusNotFound, "access request not found")
-		return
-	}
-	if ar.Status != "pending" {
-		writeJSONError(w, http.StatusConflict, "access request already reviewed")
-		return
-	}
-
-	now := time.Now().UTC()
-	ar.Status = decision
-	ar.ApproverID = req.ApproverID
-	ar.ReviewedAt = &now
-	ar.ReviewNote = req.Note
-
-	writeJSON(w, http.StatusOK, ar)
+	writeJSON(w, http.StatusOK, map[string]any{"status": decision, "id": reqID})
 }
