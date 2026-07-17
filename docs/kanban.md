@@ -142,6 +142,12 @@
 | KB-128 | **Risk-based graduated delay + admin approval** | backend | P1 | credential-recovery | 3d |
 | KB-129 | **Recovery rate limiting + notifications + audit** | backend | P1 | credential-recovery | 2d |
 | KB-130 | **Console self-service + admin recovery UI** | frontend | P2 | credential-recovery | 3d |
+| KB-131 | **Consent DB schema + repository** (replace mock + in-memory) | backend | P0 | consent-platform | 2d |
+| KB-132 | **Consent CRUD API + withdrawal cascade** | backend | P0 | consent-platform | 4d |
+| KB-133 | **Replace mock consent registry + in-memory OAuth store** | backend | P0 | consent-platform | 3d |
+| KB-134 | **DSR workflow** (access/deletion/portability) | backend | P1 | consent-platform | 4d |
+| KB-135 | **GPC detection + policy versioning + re-consent** | backend | P1 | consent-platform | 3d |
+| KB-136 | **Console preference center + DSR admin + cookie banner** | frontend | P2 | consent-platform | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -211,7 +217,8 @@
 | GraphQL API Layer for Identity Queries | DONE | docs/research/graphql-api-layer.md |
 | API Key Lifecycle Management | DONE | docs/research/api-key-lifecycle.md |
 | Credential Recovery Workflow Engine | DONE | docs/research/credential-recovery-workflow.md |
-| Consent Management Platform (GDPR/CCPA) | NEXT | — |
+| Consent Management Platform (GDPR/CCPA) | DONE | docs/research/consent-management-platform.md |
+| Audit Tamper-Evidence (Hash Chain) | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
