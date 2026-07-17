@@ -448,3 +448,34 @@ See docs/research/ for full research docs.
 **业务价值**: MEDIUM-HIGH（B-28 AAL claims 的动态化延伸，企业 SSO 核心体验）
 **实现难度**: Medium（状态机 + CAE callback + step-up API + PDP 属性）
 **工作量**: ~3d
+
+---
+
+## Cross-Domain Identity Federation Hub (联邦身份中枢) (2026-07-17 第17小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + IAMExpert
+
+**市场背景**: 大型企业/政府/高校的身份联邦场景：一个 GGID 实例作为 Hub，连接 N 个 IdP（Okta/Entra/Azure AD/ADFS/飞书/钉钉）+ N 个 SP（内部应用/云服务/SaaS）。用户从任意 IdP 登录 → Hub 转换断言 → 访问任意 SP。Auth0/Ping Identity 的核心商业价值就是 Federation Hub。W3C VC + DID:web 正在将联邦从协议层（SAML/OIDC）升级为信任层（VC verification）。
+
+**GGID 现状（联邦基础设施最完整的一次盘点）**：
+- ✓ SAML SP（ACS 断言解析）+ SAML IdP（签发 XMLDSig 签名断言）
+- ✓ OIDC Discovery + JWKS + Dynamic Registration
+- ✓ OIDC Federation config handler（存在但深度未验证）
+- ✓ DID:web resolver + handler（注册/解析/列表/停用）
+- ✓ SCIM 2.0 inbound（IdP → GGID provisioning）
+- ✓ Social login（Google/GitHub/WeChat providers）
+- ✓ LDAP/AD integration（authprovider chain）
+- ✓ VC 设计文档（vc-design.md — DID:web + SM2 签发）
+- ✗ 缺：**Trust Chain 自动建立**（IdP A 信任 GGID，GGID 信任 SP B → A 的用户自动可访问 B，无需 SP B 单独配置 A）
+- ✗ 缺：**Assertion Transformation Engine**（SAML 断言 → OIDC token 转换 / OIDC → VC 转换 / 属性映射 DSL）
+- ✗ 缺：**Federation Metadata Aggregate**（统一发布 `/federation/metadata` — 所有 IdP + SP 元数据聚合，新 SP 自动发现）
+
+**完整实现路径（不降级）**：
+1. **Trust Chain Registry**：trusted_idps 表（entity_id + protocol[SAML/OIDC/VC] + trust_direction[inbound/outbound/bidirectional] + auto_discovery）
+2. **Assertion Transformation Engine**：规则 DSL `source.protocol → target.protocol`（SAML attribute "eduPersonAffiliation" → OIDC claim "role" → SP header "X-WebAuth-Role"）
+3. **Federation Metadata Aggregate**：`GET /federation/metadata` 返回所有注册 IdP/SP 元数据聚合 XML/JSON
+4. **Discovery Service**：`GET /discovery` — 用户选择来源 IdP（WAYF/IdP picker 页面），或基于 email domain 自动路由
+5. **VC Verification Endpoint**：外部系统提交 VP → GGID 验证 → 返回 claims（去中心化联邦）
+6. **Console Federation Manager**：IdP/SP 信任关系拓扑图 + 属性映射配置器 + 实时 SSO 测试
+
+**业务价值**: HIGH（GGID 从单点 IAM 升级为联邦中枢 = Auth0/Ping 级产品定位）
+**实现难度**: Medium-High（Trust Chain + Assertion Transformation 是核心复杂度）
+**工作量**: ~7d（Trust Chain 2d + Transformation 2d + Metadata 1d + Discovery 1d + Console 1d）
