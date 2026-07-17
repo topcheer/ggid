@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 49: WASM Plugin Architecture research complete — 7 new backlog items)*
+*Last updated: 2026-07-17 (Round 50: Identity Analytics & Reporting research complete — 7 new backlog items)*
 
 ## Current Stats
 
@@ -102,6 +102,11 @@
 | 76 | **Auth/token/policy hook integration** (P1) | backend | Custom logic | post_login claim injection, pre_issue token modify, pre_check policy override |
 | 77 | **Plugin SDK** (P1) | backend | Developer experience | Go + Rust bindings, example plugins, documentation |
 | 78 | **Plugin dashboard** (P2) | frontend | Console UI | Plugin list, upload wizard, hook selector, test mode, execution stats |
+| 79 | **Analytics event pipeline** (P0) | backend | Data collection | NATS event collector → analytics_events table. See docs/research/identity-analytics-reporting.md |
+| 80 | **Aggregation jobs + analytics APIs** (P0) | backend | Metrics rollups | Hourly/daily rollup jobs + overview/trends/method APIs |
+| 81 | **Anomaly detection engine** (P1) | backend | Threat detection | 3σ behavioral baselining, impossible travel, new location/IP detection |
+| 82 | **Scheduled compliance reports** (P1) | backend | Compliance | SOC2/GDPR/ISO PDF report generation with cron scheduling + email delivery |
+| 83 | **Analytics dashboard + export** (P2) | frontend+backend | Console UI | Overview cards, trend charts, method distribution, CSV/JSON export |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -137,6 +142,7 @@
 9. JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md) — 9 backlog items added
 10. Fine-grained Delegation → DONE (docs/research/fine-grained-delegation-patterns.md) — 8 backlog items added
 11. WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md) — 7 backlog items added
+12. Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md) — 7 backlog items added
 
 ## Rules
 
@@ -149,6 +155,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md)
 - WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md)
 - Fine-grained Delegation Patterns → DONE (docs/research/fine-grained-delegation-patterns.md)
 - JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md)

@@ -115,6 +115,13 @@
 | KB-101 | **Auth/token/policy hook integration** | backend | P1 | wasm-plugin | 5d |
 | KB-102 | **Plugin SDK** (Go + Rust bindings) | backend | P1 | wasm-plugin | 3d |
 | KB-103 | **Plugin dashboard + upload wizard** (Console) | frontend | P2 | wasm-plugin | 3d |
+| KB-104 | **Analytics event pipeline** (NATS collector + DB store) | backend | P0 | analytics-reporting | 4d |
+| KB-105 | **Aggregation jobs + overview API** (hourly/daily rollups) | backend | P0 | analytics-reporting | 5d |
+| KB-106 | **Auth method + trends analytics API** | backend | P0 | analytics-reporting | 3d |
+| KB-107 | **Anomaly detection engine** (3σ + impossible travel) | backend | P1 | analytics-reporting | 4d |
+| KB-108 | **Scheduled compliance reports** (SOC2/GDPR/ISO PDF) | backend | P1 | analytics-reporting | 4d |
+| KB-109 | **Analytics dashboard** (Console) | frontend | P2 | analytics-reporting | 4d |
+| KB-110 | **Data export + custom dashboards** | backend | P2 | analytics-reporting | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -162,7 +169,8 @@
 | JIT User Provisioning | DONE | docs/research/jit-user-provisioning.md |
 | Fine-grained Delegation Patterns | DONE | docs/research/fine-grained-delegation-patterns.md |
 | WASM Plugin Architecture | DONE | docs/research/wasm-plugin-architecture.md |
-| Verifiable Credentials / W3C DID | NEXT | — |
+| Identity Analytics & Reporting | DONE | docs/research/identity-analytics-reporting.md |
+| GraphQL API Layer for Identity Queries | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
