@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 120
-## Last scan focus: C (Middleware, Round 119) — B-27 device posture→PDP wired (pg+redis); B-31 JIT provisioning registered; oauth panic recovery confirmed
-## Next scan focus: E2E tests (Round 120 = even)
+## Current round: 121
+## Last scan focus: E2E (Round 120) — Core 10/10, ERP 4/4, OAuth OK, Go SDK PASS; all 6 pods Running; platform stable
+## Next scan focus: D (Persistence scan, Round 121 = odd)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)

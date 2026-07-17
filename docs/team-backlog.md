@@ -497,3 +497,22 @@ See docs/research/ for full research docs.
 **业务价值**: HIGH（GGID 从单点 IAM 升级为联邦中枢 = Auth0/Ping 级产品定位）
 **实现难度**: Medium-High（Trust Chain + Assertion Transformation 是核心复杂度）
 **工作量**: ~7d（Trust Chain 2d + Transformation 2d + Metadata 1d + Discovery 1d + Console 1d）
+
+---
+
+## Per-Tenant API Rate Limiting + Quota Management (2026-07-17 第18小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**市场背景**: Multi-tenant SaaS 核心能力 — 防止 noisy neighbor（一个租户耗尽 API 配额影响其他租户）。Auth0 每租户可配 per-endpoint RPS/burst/daily quota，超额 429 + Retry-After。Cloudflare/AWS API Gateway 标准功能。
+
+**GGID 现状**: WSConnLimiter（per-tenant WebSocket 连接数）✓ + IPFilter（per-tenant IP 白名单）✓。缺 HTTP API 级别 per-tenant 限流（当前 gateway TenantBucketLimiter 可能是全局配置非 per-tenant 可调）。
+
+**完整实现路径（不降级）**：
+1. tenant_rate_limits 表（tenant_id + endpoint_pattern + rps_limit + burst_limit + daily_quota + strategy[token_bucket/sliding_window] + enabled）
+2. gateway 中间件：每请求查 tenant_rate_limits（Redis 缓存 30s）→ token bucket / sliding window 计数（Redis INCR + EXPIRE）→ 超额 429 + RateLimit-* headers
+3. quota 超额告警（80%/95%/100% webhook + Console 通知）
+4. Console：per-tenant 限流配置 + 实时用量 dashboard + top endpoints by RPS
+5. 默认策略：免费租户 100 RPM，付费 1000 RPM，企业无限制（可配）
+
+**业务价值**: MEDIUM-HIGH（multi-tenant SaaS 刚需，客户差异化定价依据）
+**实现难度**: Medium（Redis 计数器 + DB 配置 + gateway 中间件）
+**工作量**: ~3d
