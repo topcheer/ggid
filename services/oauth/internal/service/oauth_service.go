@@ -281,7 +281,8 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 	}
 
 	// Enforce PKCE for public clients or clients with RequirePKCE.
-	if client.RequiresPKCE() && req.CodeChallenge == "" {
+	// OAuth 2.1: ALL public clients must use PKCE — not optional.
+	if (client.IsPublic() || client.RequiresPKCE()) && req.CodeChallenge == "" {
 		return "", errors.InvalidArgument("code_challenge is required for this client (PKCE enforced)")
 	}
 

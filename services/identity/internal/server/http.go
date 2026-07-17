@@ -214,6 +214,11 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/ztna/access-logs", h.handleZTNA)
 	h.mux.HandleFunc("/api/v1/ztna/metrics", h.handleZTNA)
 	h.mux.HandleFunc("/api/v1/ztna/test-policy", h.handleZTNA)
+
+	// CIAM B2B self-registration + metrics + branding.
+	h.mux.HandleFunc("/api/v1/identity/tenants/self-register", h.handleSelfRegister)
+	h.mux.HandleFunc("/api/v1/identity/ciam/metrics", h.handleCIAMMetrics)
+	h.mux.HandleFunc("/api/v1/identity/tenants/branding", h.handleTenantBranding)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
