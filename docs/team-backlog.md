@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 46: Passwordless Migration research complete — 7 new backlog items)*
+*Last updated: 2026-07-17 (Round 47: JIT User Provisioning research complete — 9 new backlog items)*
 
 ## Current Stats
 
@@ -81,6 +81,14 @@
 | 55 | **Migration metrics API** (P1) | backend | Analytics | Enrollment rate, AAL distribution, password usage trend, helpdesk ticket reduction |
 | 56 | **Passkey profiles** (P1) | backend | Authenticator restriction | AAGUID allow-list, attestation requirements, user verification mode enforcement |
 | 57 | **Passwordless migration dashboard** (P2) | frontend | Console UI | Enrollment rate gauge, trend chart, AAL distribution, policy list, nudge config |
+| 58 | **Universal JIT engine** (P0) | backend | Multi-source provisioning | Protocol-agnostic JIT from SAML/OIDC/LDAP/SCIM. See docs/research/jit-user-provisioning.md |
+| 59 | **Attribute mapping DSL** (P0) | backend | Data transformation | Declarative YAML mapping: external attr → GGID fields, per-IdP configurable |
+| 60 | **SAML JIT integration** (P0) | backend | SAML federation | Auto-create/update user from SAML assertion at /saml/acs |
+| 61 | **OIDC JIT integration** (P0) | backend | OIDC federation | Auto-create/update from OIDC ID Token / UserInfo claims |
+| 62 | **Role/group mapping** (P0) | backend | Authorization | Map external groups (LDAP CN, SAML groups, OIDC claims) to GGID roles |
+| 63 | **JIT update + deprovisioning** (P1) | backend | Lifecycle | Update attrs on login; disable users removed from IdP |
+| 64 | **SCIM inbound JIT + dry-run API** (P1) | backend | SCIM provisioning | Enhance SCIM handler; JIT simulation/test mode |
+| 65 | **JIT provisioning dashboard** (P2) | frontend | Console UI | Source cards, event log, config editor, test mode |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -113,6 +121,7 @@
 6. Data Migration / Bulk Import → DONE (docs/research/data-migration-bulk-import.md) — 8 backlog items added
 7. ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md) — 7 backlog items added
 8. Passwordless Migration → DONE (docs/research/passwordless-migration-strategy.md) — 7 backlog items added
+9. JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md) — 9 backlog items added
 
 ## Rules
 
@@ -125,6 +134,7 @@
 ## Research Pipeline
 
 Active research topics:
+- JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md)
 - Passwordless Migration Strategy → DONE (docs/research/passwordless-migration-strategy.md)
 - ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md)
 - Data Migration / Bulk User Import → DONE (docs/research/data-migration-bulk-import.md)
@@ -136,7 +146,7 @@ Active research topics:
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
-- **Next**: JIT user provisioning / Fine-grained delegation patterns
+- **Next**: Fine-grained delegation patterns / Verifiable Credentials
 
 See docs/research/ for full research docs.
 ---

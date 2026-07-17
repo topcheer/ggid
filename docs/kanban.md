@@ -91,6 +91,15 @@
 | KB-077 | **Migration metrics API** (enrollment rate, AAL distribution) | backend | P1 | passwordless-migration | 3d |
 | KB-078 | **Passkey profiles** (AAGUID allow-list enforcement) | backend | P1 | passwordless-migration | 3d |
 | KB-079 | **Passwordless migration dashboard** (Console) | frontend | P2 | passwordless-migration | 4d |
+| KB-080 | **Universal JIT engine** (SAML/OIDC/LDAP/SCIM) | backend | P0 | jit-provisioning | 5d |
+| KB-081 | **Attribute mapping DSL parser** (YAML declarative) | backend | P0 | jit-provisioning | 3d |
+| KB-082 | **SAML JIT integration** (auto-create from assertion) | backend | P0 | jit-provisioning | 3d |
+| KB-083 | **OIDC JIT integration** (auto-create from claims) | backend | P0 | jit-provisioning | 3d |
+| KB-084 | **Role/group mapping engine** (external groups → GGID roles) | backend | P0 | jit-provisioning | 3d |
+| KB-085 | **JIT update + deprovisioning** (sync on login + disable on removal) | backend | P1 | jit-provisioning | 3d |
+| KB-086 | **SCIM inbound JIT** (enhance SCIM handler for external push) | backend | P1 | jit-provisioning | 3d |
+| KB-087 | **JIT config + dry-run API** (CRUD + simulation) | backend | P1 | jit-provisioning | 3d |
+| KB-088 | **JIT provisioning dashboard** (Console) | frontend | P2 | jit-provisioning | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -111,7 +120,8 @@
 
 | ID | Title | Owner | Commit |
 |----|-------|-------|--------|
-| — | Passwordless Migration research doc | researcher | pending commit |
+| — | JIT User Provisioning research doc | researcher | pending commit |
+| — | Passwordless Migration research doc | researcher | ddf0fbe4 |
 | — | ZTNA Broker Integration research doc | researcher | 9c8ed3cf |
 | — | Data Migration research doc | researcher | 02c52040 |
 | — | Cloud IAM Federation research doc | researcher | 5880e4ac |
@@ -133,7 +143,8 @@
 | Data Migration / Bulk Import | DONE | docs/research/data-migration-bulk-import.md |
 | Zero Trust Network Access (ZTNA) | DONE | docs/research/ztna-broker-integration.md |
 | Passwordless Migration | DONE | docs/research/passwordless-migration-strategy.md |
-| JIT User Provisioning | NEXT | — |
+| JIT User Provisioning | DONE | docs/research/jit-user-provisioning.md |
+| Fine-grained Delegation Patterns | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
