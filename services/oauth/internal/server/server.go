@@ -316,6 +316,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		nonce := r.URL.Query().Get("nonce")
 		codeChallenge := r.URL.Query().Get("code_challenge")
 		codeChallengeMethod := r.URL.Query().Get("code_challenge_method")
+		acrValues := r.URL.Query().Get("acr_values") // NIST 800-63-3 requested AAL level
 
 		if clientID == "" || redirectURI == "" || responseType == "" {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "client_id, redirect_uri, and response_type are required"})
@@ -507,6 +508,7 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			CodeChallengeMethod:  codeChallengeMethod,
 			UserID:               userID,
 			AuthorizationDetails: authDetailsJSON,
+			RequestedACR:          acrValues,
 		})
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})

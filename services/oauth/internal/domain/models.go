@@ -128,6 +128,11 @@ type AuthorizationCode struct {
 	ExpiresAt           time.Time
 	Used                bool
 	CreatedAt           time.Time
+	// NIST 800-63B AAL/AMR support
+	AMR      []string  // Authentication Method References
+	ACR      string    // Authentication Context Class Reference (AAL1/AAL2/AAL3)
+	AuthTime time.Time // When authentication occurred
+	RequestedACR string // acr_values from /authorize
 }
 
 // IsExpired returns true if the authorization code has expired.

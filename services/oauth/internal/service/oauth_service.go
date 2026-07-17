@@ -247,7 +247,10 @@ type AuthorizeRequest struct {
 	CodeChallenge       string // PKCE
 	CodeChallengeMethod string // "S256" or "plain"
 	UserID              uuid.UUID // the authenticated user
-	AuthorizationDetails json.RawMessage // RAR authorization_details (RFC 9396) — stored as JSON
+	AuthorizationDetails json.RawMessage // RAR authorization_details (RFC 9396)
+	// NIST 800-63B AAL/AMR
+	AuthMethods []string // methods used during auth (password, totp, webauthn)
+	RequestedACR string  // acr_values param from /authorize
 }
 
 // CreateAuthorizationCode creates a short-lived authorization code.
@@ -312,7 +315,12 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		CodeChallenge:       req.CodeChallenge,
 		CodeChallengeMethod: codeChallengeMethod,
 		Nonce:               req.Nonce,
-		ExpiresAt:           time.Now().Add(10 * time.Minute), // auth codes are short-lived
+		ExpiresAt:           time.Now().Add(10 * time.Minute),
+		// NIST 800-63B: store auth context for token exchange.
+		AMR:         computeAMR(req.AuthMethods),
+		ACR:         computeACR(req.AuthMethods),
+		AuthTime:    time.Now(),
+		RequestedACR: req.RequestedACR,
 	}
 
 	if err := s.codeRepo.CreateCode(ctx, code); err != nil {
@@ -405,8 +413,8 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 		return nil, errors.InvalidArgument("PKCE verification failed")
 	}
 
-	// 7. Issue a signed self-contained JWT access token.
-	accessToken, expiresIn, err := s.issueAccessToken(code.UserID, code.TenantID, client.ClientID, joinScopes(code.Scope))
+	// 7. Issue a signed self-contained JWT access token with AMR/ACR from auth code.
+	accessToken, expiresIn, err := s.issueAccessTokenWithAMR(code.UserID, code.TenantID, client.ClientID, joinScopes(code.Scope), code.AMR, code.ACR, code.AuthTime)
 	if err != nil {
 		return nil, err
 	}
@@ -546,6 +554,11 @@ func padBytes(b []byte, length int) []byte {
 // --- Internal helpers ---
 
 func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, scope string) (string, int, error) {
+	return s.issueAccessTokenWithAMR(userID, tenantID, audience, scope, nil, "", time.Time{})
+}
+
+// issueAccessTokenWithAMR issues a JWT with optional AMR/ACR claims.
+func (s *OAuthService) issueAccessTokenWithAMR(userID, tenantID uuid.UUID, audience, scope string, amr []string, acr string, authTime time.Time) (string, int, error) {
 	now := time.Now()
 	expiresAt := now.Add(15 * time.Minute)
 
@@ -568,6 +581,15 @@ func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, sc
 		"jti":       uuid.New().String(),
 		"tenant_id": tenantID.String(),
 		"scope":     scope,
+	}
+	if len(amr) > 0 {
+		claimsMap["amr"] = amr
+	}
+	if acr != "" {
+		claimsMap["acr"] = acr
+	}
+	if !authTime.IsZero() {
+		claimsMap["auth_time"] = authTime.Unix()
 	}
 
 	token := jwt.NewWithClaims(s.signingMethod(), claimsMap)
@@ -1891,4 +1913,55 @@ func (s *OAuthService) JWTBearerGrant(ctx context.Context, req *JWTBearerRequest
 		ExpiresIn:   int(time.Until(expiresAt).Seconds()),
 		Scope:       scopeStr,
 	}, nil
+}
+
+// computeAMR builds the amr claim from auth methods (oauth-local version).
+func computeAMR(authMethods []string) []string {
+	amr := []string{}
+	hasMFA := false
+	for _, m := range authMethods {
+		switch m {
+		case "password":
+			amr = append(amr, "pwd")
+		case "totp", "hotp":
+			amr = append(amr, "otp")
+			hasMFA = true
+		case "webauthn":
+			amr = append(amr, "fpt")
+			hasMFA = true
+		case "sms_otp":
+			amr = append(amr, "sms")
+			hasMFA = true
+		}
+	}
+	if hasMFA {
+		amr = append(amr, "mfa")
+	}
+	return amr
+}
+
+// computeACR determines the NIST AAL level from auth methods.
+func computeACR(authMethods []string) string {
+	hasPwd, hasMFA, hasHardware := false, false, false
+	for _, m := range authMethods {
+		switch m {
+		case "password":
+			hasPwd = true
+		case "webauthn":
+			hasHardware = true
+			hasMFA = true
+		case "totp", "hotp", "sms_otp":
+			hasMFA = true
+		}
+	}
+	if hasHardware {
+		return "AAL3"
+	}
+	if hasMFA {
+		return "AAL2"
+	}
+	if hasPwd {
+		return "AAL1"
+	}
+	return ""
 }
