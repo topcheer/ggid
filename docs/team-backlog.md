@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 62: DLP Egress Control & PII Redaction research complete — 4 new backlog items)*
+*Last updated: 2026-07-17 (Round 63: Service Mesh & Microsegmentation research complete — 5 new backlog items)*
 
 ## Current Stats
 
@@ -158,6 +158,9 @@
 | 132 | **SM4 + field-level encryption** (P1) | backend | China + PII | SM4 symmetric encryption (GM compliance) + AES-256-GCM field-level encryption for PII columns |
 | 133 | **DLP egress middleware + PII redaction** (P0) | backend | Data egress | Gateway middleware inspecting API responses for PII + redaction engine. See docs/research/dlp-egress-pii-redaction.md |
 | 134 | **Egress policy DSL + replace mock** (P1) | backend | DLP rules | Declarative redaction rules + classification-driven auto-masking + replace auth DLP hardcoded mock |
+| 135 | **Istio mTLS + microsegmentation** (P0) | devops | Network pillar | Istio sidecar auto-injection on k3s + mTLS STRICT + zone-based default-deny segmentation. See docs/research/service-mesh-microsegmentation.md |
+| 136 | **ExtAuthz + mesh policy API** (P1) | backend | East-west authz | Envoy ExtAuthz adapter calling GGID PDP for inter-service authz + SPIFFE ID registry + mesh policy CRUD |
+| 137 | **Mesh observability** (P2) | devops | Visibility | Jaeger distributed tracing + Prometheus mesh metrics + traffic visualization |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -206,6 +209,7 @@
 22. MDM Integration → DONE (docs/research/mdm-integration.md) — 6 backlog items added
 23. CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md) — 6 backlog items added
 24. DLP Egress Control & PII Redaction → DONE (docs/research/dlp-egress-pii-redaction.md) — 4 backlog items added
+25. Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md) — 5 backlog items added
 
 ## Rules
 
@@ -224,6 +228,7 @@ Active research topics:
 - MDM Integration → DONE (docs/research/mdm-integration.md)
 - CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md)
 - DLP Egress Control → DONE (docs/research/dlp-egress-pii-redaction.md)
+- Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

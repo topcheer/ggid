@@ -194,6 +194,11 @@
 | KB-180 | **Egress redaction engine** (mask/partial/tokenize/redact/hash) | backend | P0 | dlp-egress | 3d |
 | KB-181 | **Egress policy DSL + classification auto-mask** | backend | P1 | dlp-egress | 3d |
 | KB-182 | **Replace auth DLP hardcoded mock + egress analytics** | backend | P1 | dlp-egress | 2d |
+| KB-183 | **Istio mTLS STRICT** (auto sidecar injection on k3s) | devops | P0 | service-mesh | 3d |
+| KB-184 | **Microsegmentation zone policies** (default-deny + explicit allows) | devops | P0 | service-mesh | 3d |
+| KB-185 | **ExtAuthz adapter** (Envoy → GGID PDP for east-west authz) | backend | P1 | service-mesh | 3d |
+| KB-186 | **SPIFFE ID registry + mesh policy management API** | backend | P1 | service-mesh | 3d |
+| KB-187 | **Distributed tracing + mesh observability** (Jaeger + Prometheus) | devops | P2 | service-mesh | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -308,6 +313,7 @@
 | MDM Integration (Intune/Jamf/Android) | DONE | docs/research/mdm-integration.md |
 | Customer-Managed Keys (CMK) & KMS Integration | DONE | docs/research/customer-managed-keys-kms.md |
 | DLP Egress Control & PII Redaction | DONE | docs/research/dlp-egress-pii-redaction.md |
+| Service Mesh & Microsegmentation | DONE | docs/research/service-mesh-microsegmentation.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---
