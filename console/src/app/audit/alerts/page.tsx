@@ -43,6 +43,7 @@ export default function AuditAlertsPage() {
   const { apiFetch } = useApi();
   const [rules, setRules] = useState<AlertRule[]>([]);
   const [history, setHistory] = useState<AlertHistoryEntry[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"rules" | "history">("rules");
   const [statusFilter, setStatusFilter] = useState("");
@@ -57,7 +58,7 @@ export default function AuditAlertsPage() {
       setRules(rulesRes.rules ?? []);
       setHistory(historyRes.alerts ?? []);
     } catch {
-      // ignore
+      setError("Failed to load alert rules");
     } finally {
       setLoading(false);
     }

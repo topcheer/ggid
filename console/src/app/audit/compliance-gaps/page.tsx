@@ -36,6 +36,7 @@ export default function ComplianceGapsPage() {
 
   const [gaps, setGaps] = useState<ComplianceGap[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [updateGap, setUpdateGap] = useState<ComplianceGap | null>(null);
   const [newStatus, setNewStatus] = useState("");
@@ -49,7 +50,7 @@ export default function ComplianceGapsPage() {
         setGaps(data.gaps || data || []);
       }
     } catch {
-      /* noop */
+      setError("Failed to load compliance gaps");
     } finally {
       setLoading(false);
     }

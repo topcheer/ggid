@@ -69,6 +69,7 @@ export default function AuditEventsPage() {
   const { apiFetch } = useApi();
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Filters
@@ -103,6 +104,7 @@ export default function AuditEventsPage() {
       setEvents(data.events ?? []);
       setTotal(data.total ?? 0);
     } catch {
+      setError("Failed to load audit events");
       setEvents([]);
     } finally {
       setLoading(false);

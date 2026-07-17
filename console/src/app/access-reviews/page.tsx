@@ -54,6 +54,7 @@ export default function AccessReviewsPage() {
   const [reviews, setReviews] = useState<AccessReview[]>([]);
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [decisionLoading, setDecisionLoading] = useState<string | null>(null);
 
@@ -63,7 +64,7 @@ export default function AccessReviewsPage() {
       const data = await apiFetch<{ reviews?: AccessReview[] }>("/api/v1/access-reviews").catch(() => ({ reviews: [] }));
       setReviews(data.reviews ?? []);
     } catch {
-      // ignore
+      setError("Failed to load access reviews");
     } finally {
       setLoading(false);
     }
