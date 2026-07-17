@@ -56,6 +56,7 @@ hrConnectorRepo   *hrConnectorRepo
 dormantRepo       *dormantRepo
 rlsRepo           *rlsRepo
 quotaRepo         *quotaRepo
+secretRepo        *secretRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 }
@@ -197,6 +198,7 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/scim/sync/", h.handleSCIMSyncTarget)
 	// Tenant Quota Engine.
 	h.mux.HandleFunc("/api/v1/quotas/", h.handleTenantQuota)
+	// Secrets Management (Vault/KMS/env).\n\th.mux.HandleFunc(\"/api/v1/admin/secrets\", h.handleSecretsList)\n\th.mux.HandleFunc(\"/api/v1/admin/secrets/health\", h.handleSecretsHealth)\n\th.mux.HandleFunc(\"/api/v1/admin/secrets/rotate/\", h.handleSecretsRotate)
 	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 	h.mux.HandleFunc("/api/v1/identity/scim/error-recovery", h.handleSCIMErrorRecovery)
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)
