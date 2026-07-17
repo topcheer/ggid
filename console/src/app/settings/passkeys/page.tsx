@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Key, Trash2, Smartphone, Monitor, Fingerprint, Check, X } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
+import { signalCredentialRemoved } from "@/lib/webauthn-conditional";
 
 interface Passkey {
   id: string;
@@ -57,6 +58,8 @@ export default function PasskeysPage() {
         headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
       });
       setPasskeys((prev) => prev.filter((p) => p.id !== id));
+      // Signal API: notify browser to remove deleted credential from autofill
+      signalCredentialRemoved(id).catch(() => {});
     } catch {
       /* noop */
     } finally {

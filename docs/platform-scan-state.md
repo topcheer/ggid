@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 96
-## Last scan focus: E (Security config, Round 95) — JWT keys from k8s secrets ✓, introspect auth ✓, WebAuthn attestation "preferred" ✓, gRPC TLS ✓; pepper not set in deployment (hardening); DCR grant_types no allowlist (low)
-## Next scan focus: E2E tests (Round 96 = even round, Workflow A)
+## Current round: 97
+## Last scan focus: E2E (Round 96) — Core 7/7, ERP 4/4, OAuth 3/3, SDK 8/8 PASS; kanban D-01/D-02 done + README security added (0eba6edf); A-03 added (pepper deployment hardening)
+## Next scan focus: F (Feature deep verification, Round 97 = odd round, Workflow B)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)

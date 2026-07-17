@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import { useTheme } from "@/lib/theme";
+import { syncSignalAfterLogin } from "@/lib/webauthn-conditional";
 import {
   Save, Shield, Key, Lock, Globe, Server, Mail, Palette, Moon, Sun, Monitor,
   User, Clock, Smartphone, LogOut, Fingerprint, Link2, Trash2, Check, Loader2,
@@ -288,7 +289,7 @@ export default function SettingsPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold"><User className="mr-2 inline h-5 w-5 text-brand-600" /> Profile</h2>
-            <button onClick={async () => { try { await apiFetch("/api/v1/users/me", { method: "PUT", body: JSON.stringify({ display_name: profile.display_name, avatar_url: profile.avatar_url, locale: profile.locale, timezone: profile.timezone }) }); setMsg("Profile saved"); } catch { setMsg("Saved locally"); } }} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700">
+            <button onClick={async () => { try { await apiFetch("/api/v1/users/me", { method: "PUT", body: JSON.stringify({ display_name: profile.display_name, avatar_url: profile.avatar_url, locale: profile.locale, timezone: profile.timezone }) }); setMsg("Profile saved"); syncSignalAfterLogin().catch(() => {}); } catch { setMsg("Saved locally"); } }} className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm text-white hover:bg-brand-700">
               <Save className="h-4 w-4" /> Save
             </button>
           </div>
