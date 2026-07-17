@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 117
-## Last scan focus: E2E (Round 116) — Core 7/7, ERP 4/4 PASS; platform stable
-## Next scan focus: B (Route/Wiring scan, Round 117 = odd)
+## Current round: 118
+## Last scan focus: B (Route/Wiring, Round 117) — found 9 orphaned oauth handlers (unregistered, DM'd backend); identity routes all covered
+## Next scan focus: E2E tests (Round 118 = even)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
