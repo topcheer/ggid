@@ -43,6 +43,7 @@ type HTTPHandler struct {
 	lifecycleRepo    *lifecycleRepo
 	lifecycleEngine  *JMLEngine
 	dataGovRepo      *dataGovRepo
+	abRepo           *accessBrokerRepo
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -206,6 +207,13 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/data-governance/classifications", h.handleDataGovernance)
 	h.mux.HandleFunc("/api/v1/identity/data-governance/dsr", h.handleDataGovernance)
 	h.mux.HandleFunc("/api/v1/identity/data-governance/inventory", h.handleDataGovernance)
+
+	// ZTNA Access Broker.
+	h.mux.HandleFunc("/api/v1/ztna/apps", h.handleZTNA)
+	h.mux.HandleFunc("/api/v1/ztna/apps/", h.handleZTNA)
+	h.mux.HandleFunc("/api/v1/ztna/access-logs", h.handleZTNA)
+	h.mux.HandleFunc("/api/v1/ztna/metrics", h.handleZTNA)
+	h.mux.HandleFunc("/api/v1/ztna/test-policy", h.handleZTNA)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)

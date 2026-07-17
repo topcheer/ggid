@@ -108,6 +108,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.dataGovRepo = dataRepo
 
+	// ZTNA Access Broker.
+	abRepo := newAccessBrokerRepo(pool)
+	if err := abRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Access broker schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.abRepo = abRepo
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
