@@ -431,14 +431,18 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={async () => {
-                  const { initOAuthFlow } = await import("@/lib/oauth-pkce");
-                  const redirectUri = `${window.location.origin}/auth/callback`;
-                  const authUrl = await initOAuthFlow(
-                    `${API_BASE}/oauth/authorize`,
-                    "ggid-console",
-                    redirectUri,
-                  );
-                  window.location.href = authUrl;
+                  try {
+                    const { initOAuthFlow } = await import("@/lib/oauth-pkce");
+                    const redirectUri = `${window.location.origin}/auth/callback`;
+                    const authUrl = await initOAuthFlow(
+                      `${API_BASE}/oauth/authorize`,
+                      "ggid-console",
+                      redirectUri,
+                    );
+                    window.location.href = authUrl;
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "OAuth initialization failed");
+                  }
                 }}
                 aria-label="Sign in with OAuth SSO"
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-950"

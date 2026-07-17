@@ -18,7 +18,7 @@ import {
   FileJson,
   X,
 } from "lucide-react";
-import { useTranslations } from "@/lib/i18n";
+
 
 // Node type definitions
 type NodeType = "subject" | "resource" | "action" | "condition";
@@ -84,8 +84,6 @@ const ALL_OPERATORS = ["equals", "in", "contains", "between"];
 
 let nodeSeq = 0;
 function makeNode(type: NodeType): PolicyNode {
-  const t = useTranslations();
-
   const config = NODE_CONFIG[type];
   return {
     id: `node-${Date.now()}-${nodeSeq++}`,

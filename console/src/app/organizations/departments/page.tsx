@@ -114,9 +114,9 @@ export default function DepartmentsPage() {
             {dept.cost_center && <span className="flex items-center gap-1"><Hash className="h-3 w-3" />{dept.cost_center}</span>}
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={() => startAdd(dept.id)} className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" title="Add sub-department"><Plus className="h-3.5 w-3.5" /></button>
-            <button onClick={() => startEdit(dept)} className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Pencil className="h-3.5 w-3.5" /></button>
-            <button onClick={() => setConfirmDelete(dept)} className="rounded p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-3.5 w-3.5" /></button>
+            <button onClick={() => startAdd(dept.id)} aria-label={"Add sub-department to " + dept.name} className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700" title="Add sub-department"><Plus className="h-3.5 w-3.5" /></button>
+            <button onClick={() => startEdit(dept)} aria-label={"Edit " + dept.name} className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Pencil className="h-3.5 w-3.5" /></button>
+            <button onClick={() => setConfirmDelete(dept)} aria-label={"Delete " + dept.name} className="rounded p-1 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-3.5 w-3.5" /></button>
           </div>
         </div>
         {/* Mobile details */}
