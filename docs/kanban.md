@@ -223,6 +223,9 @@
 | KB-209 | **Replace session hijack/anomaly/inspect hardcoded handlers** (real detection) | backend | P0 | session-security | 3d |
 | KB-210 | **Device fingerprint session binding + CAE risk re-evaluation** | backend | P1 | session-security | 3d |
 | KB-211 | **DB-backed session store + DPoP binding** (audit trail + PoP) | backend | P1 | session-security | 3d |
+| KB-212 | **PostgreSQL RLS migration** (30+ tables ENABLE + FORCE + BYPASSRLS role) | backend | P0 | rls-implementation | 3d |
+| KB-213 | **RLSPool wrapper + test suite** (WithTenant + cross-tenant isolation tests) | backend | P0 | rls-implementation | 3d |
+| KB-214 | **Enable FORCE RLS + performance verification** (all tables enforced) | backend | P1 | rls-implementation | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -346,6 +349,7 @@
 | Audit Tamper-Evidence (Hash Chain Verification) | DONE | Already implemented (hash_chain.go HMAC-SHA256 + tamper detection + API) |
 | Session Management & Token Lifecycle Security | DONE | docs/research/session-token-lifecycle-security.md |
 | Multi-Tenant Architecture & Data Isolation | DONE | docs/research/multi-tenant-isolation.md |
+| PostgreSQL RLS Implementation Guide | DONE | docs/research/postgresql-rls-implementation.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
