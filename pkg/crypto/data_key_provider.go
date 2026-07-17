@@ -90,10 +90,10 @@ func (p *EnvelopeEncryptionProvider) DecryptDataKey(ctx context.Context, encrypt
 // EncryptedEnvelope is the wire format for encrypted field values.
 // It bundles the encrypted DEK + ciphertext so decryption only needs the KEK.
 type EncryptedEnvelope struct {
-	EncryptedDEK string `json:"edek"}`          // base64
-	Ciphertext   string `json:"ct"}`             // base64
-	Cipher       string `json:"cipher"`          // "aes-256-gcm" or "sm4-gcm"
-	Timestamp    int64  `json:"ts"`              // creation time
+	EncryptedDEK string `json:"edek"`   // base64
+	Ciphertext   string `json:"ct"`     // base64
+	Cipher       string `json:"cipher"` // aes-256-gcm or sm4-gcm
+	Timestamp    int64  `json:"ts"`     // creation time
 }
 
 // EncryptField encrypts a plaintext value using envelope encryption.
@@ -217,6 +217,9 @@ func EnsureTenantKeysSchema() string {
 var _ DataKeyProvider = (*EnvelopeEncryptionProvider)(nil)
 
 // ensureAES256Key returns a 32-byte key suitable for AES-256.
+// Used by callers that need to normalize key material before encryption.
+var _ = ensureAES256Key
+
 func ensureAES256Key(key []byte) []byte {
 	if len(key) >= 32 {
 		return key[:32]

@@ -73,6 +73,7 @@ type Gateway struct {
 	timeouts       map[string]time.Duration
 	healthChecker  *healthcheck.Checker
 	rateLimiter    *middleware.TenantBucketLimiter
+	multiDimLimiter *middleware.MultiDimRateLimiter
 	reloadFunc     ReloadFunc
 	routeVersion   int64
 	stats          *middleware.StatsCollector
@@ -89,6 +90,11 @@ type Gateway struct {
 // SetCAECheck injects the CAE (Continuous Access Evaluation) middleware.
 func (gw *Gateway) SetCAECheck(cae func(http.Handler) http.Handler) {
 	gw.caeCheck = cae
+}
+
+// SetMultiDimRateLimiter injects the 5-dimensional rate limiter.
+func (gw *Gateway) SetMultiDimRateLimiter(rl *middleware.MultiDimRateLimiter) {
+	gw.multiDimLimiter = rl
 }
 
 // New creates a new API Gateway handler.
@@ -347,6 +353,19 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(map[string]string{"status": "stats not configured"})
 		}
+		return
+	}
+	// 5-dimensional rate limit endpoints.
+	if r.URL.Path == "/api/v1/gateway/rate-limits" && r.Method == http.MethodGet {
+		gw.handleGetRateLimits(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/gateway/rate-limits/status" && r.Method == http.MethodGet {
+		gw.handleRateLimitStatus(w, r)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, "/api/v1/gateway/rate-limits/") && r.Method == http.MethodPut {
+		gw.handleUpdateRateLimit(w, r)
 		return
 	}
 	if r.URL.Path == "/graphql" && r.Method == http.MethodPost {
@@ -964,5 +983,73 @@ func (gw *Gateway) handleHealthOverview(w http.ResponseWriter, _ *http.Request) 
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":   "ok",
 		"services": services,
+	})
+}
+
+// --- 5-Dimensional Rate Limit Endpoints ---
+
+// handleGetRateLimits returns all configured rate limit tiers.
+func (gw *Gateway) handleGetRateLimits(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if gw.multiDimLimiter == nil {
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "multi-dimensional rate limiter not configured"})
+		return
+	}
+	_ = json.NewEncoder(w).Encode(gw.multiDimLimiter.AllTiers())
+}
+
+// handleRateLimitStatus returns current rate limit usage for the caller.
+func (gw *Gateway) handleRateLimitStatus(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if gw.multiDimLimiter == nil {
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "multi-dimensional rate limiter not configured"})
+		return
+	}
+	tier, tenantID, userID, apiKey, ip, endpoint := middleware.DefaultTierResolver(r)
+	usage := gw.multiDimLimiter.GetUsage(middleware.Tier(tier), tenantID, userID, apiKey, ip, endpoint)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"tier":    tier,
+		"usage":   usage,
+	})
+}
+
+// handleUpdateRateLimit updates limits for a specific tier.
+func (gw *Gateway) handleUpdateRateLimit(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if gw.multiDimLimiter == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "multi-dimensional rate limiter not configured"})
+		return
+	}
+	// Extract tier from path: /api/v1/gateway/rate-limits/:tier
+	tierStr := strings.TrimPrefix(r.URL.Path, "/api/v1/gateway/rate-limits/")
+	if tierStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "tier required in path"})
+		return
+	}
+
+	var req struct {
+		BurstPerMin      map[string]int `json:"burst_per_min"`
+		SustainedPerHour map[string]int `json:"sustained_per_hour"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid JSON"})
+		return
+	}
+
+	cfg := middleware.MultiDimTierConfig{
+		Tenant:   middleware.MultiDimRateLimit{BurstPerMin: req.BurstPerMin["tenant"], SustainedPerHour: req.SustainedPerHour["tenant"]},
+		User:     middleware.MultiDimRateLimit{BurstPerMin: req.BurstPerMin["user"], SustainedPerHour: req.SustainedPerHour["user"]},
+		APIKey:   middleware.MultiDimRateLimit{BurstPerMin: req.BurstPerMin["api_key"], SustainedPerHour: req.SustainedPerHour["api_key"]},
+		IP:       middleware.MultiDimRateLimit{BurstPerMin: req.BurstPerMin["ip"], SustainedPerHour: req.SustainedPerHour["ip"]},
+		Endpoint: middleware.MultiDimRateLimit{BurstPerMin: req.BurstPerMin["endpoint"], SustainedPerHour: req.SustainedPerHour["endpoint"]},
+	}
+	gw.multiDimLimiter.UpdateTier(middleware.Tier(tierStr), cfg)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"status": "updated",
+		"tier":   tierStr,
+		"config": cfg,
 	})
 }

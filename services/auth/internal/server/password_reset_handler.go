@@ -80,8 +80,21 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Validate token
 		// PG-first lookup
+		if h.memMapRepo != nil {
+			row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_pwd_reset_tokens", req.Token)
+			if row != nil {
+				if used, _ := row["used"].(bool); used {
+					writeError(w, http.StatusBadRequest, "token already used")
+					return
+				}
+				// Valid token in PG — proceed to reset.
+				writeJSON(w, http.StatusOK, map[string]any{"status": "verified", "token": req.Token})
+				return
+			}
+		}
+
+		// Fallback: in-memory map
 		pwdResetMu.Lock()
 		rt, ok := pwdResetTokens[req.Token]
 		if !ok {
