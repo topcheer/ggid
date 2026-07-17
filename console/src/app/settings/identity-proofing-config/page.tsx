@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useIdentityProofingConfig, IdentityProofingConfig, VerificationMethod, RiskLevelConfig } from "@ggid/sdk-react";
 import { useTranslations } from "@/lib/i18n";
 
@@ -15,9 +16,9 @@ export default function IdentityProofingConfigPage() {
 
   const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
 
-  if (loading && !form) return <div className="p-8">{t("big1.identityProofingConfig.loading")}</div>;
+  if (loading && !form) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>;
   if (error) return <div className="p-8 text-red-600">{t("big1.identityProofingConfig.error")}{error}</div>;
-  if (!form) return <div className="p-8">{t("big1.identityProofingConfig.noData")}</div>;
+  if (!form) return <div className="p-8 text-gray-400">No data</div>;
 
   const completionPct = form.completion_rate.total > 0 ? Math.round((form.completion_rate.completed / form.completion_rate.total) * 100) : 0;
 

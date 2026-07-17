@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useOAuth21ComplianceChecker, ComplianceCheckItem } from "@ggid/sdk-react";
 import { useTranslations } from "@/lib/i18n";
 
@@ -28,9 +29,9 @@ export default function OAuth21ComplianceCheckerPage() {
   const [form, setForm] = useState<LocalComplianceChecker | null>(null);
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
   useEffect(() => { if (config) setForm(config as unknown as LocalComplianceChecker); }, [config]);
-  if (loading && !form) return <div className="p-8">Loading...</div>;
+  if (loading && !form) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">No data</div>;
+  if (!form) return <div className="p-8 text-gray-400">No data</div>;
   const statusColors: Record<string, string> = { pass: "bg-green-100 text-green-700", fail: "bg-red-100 text-red-700", warn: "bg-yellow-100 text-yellow-700" };
 
   return (

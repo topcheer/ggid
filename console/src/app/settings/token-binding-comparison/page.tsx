@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 import { useTokenBindingComparison, TokenBindingComparison, ComparisonRow, RecommendationEntry, BenchmarkResult, PerClientMethod } from "@ggid/sdk-react";
 
@@ -11,9 +12,9 @@ export default function TokenBindingComparisonPage() {
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
   useEffect(() => { if (config) setForm(config); }, [config]);
 
-  if (loading && !form) return <div className="p-8">{t("tokenBindingCompare.loading")}</div>;
+  if (loading && !form) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">{t("tokenBindingCompare.noData")}</div>;
+  if (!form) return <div className="p-8 text-gray-400">No data</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-4xl">

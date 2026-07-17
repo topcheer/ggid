@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useAuditQueryOptimizationConfig, AuditQueryOptimizationConfig, IndexConfig } from "@ggid/sdk-react";
 import { useTranslations } from "@/lib/i18n";
 
@@ -12,9 +13,9 @@ export default function AuditQueryOptimizationConfigPage() {
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
   useEffect(() => { if (config) setForm(config); }, [config]);
   const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form); setSaving(false); };
-  if (loading && !form) return <div className="p-8">Loading...</div>;
+  if (loading && !form) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">No data</div>;
+  if (!form) return <div className="p-8 text-gray-400">No data</div>;
 
   return (
     <div className="p-8 space-y-6 max-w-4xl">

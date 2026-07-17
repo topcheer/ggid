@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { useHealthCheckDesignConfig, HealthCheckDesignConfig, DependencyCheck } from "@ggid/sdk-react";
 import { useTranslations } from "@/lib/i18n";
 
@@ -19,9 +20,9 @@ export default function HealthCheckDesignConfigPage() {
   useEffect(() => { fetchConfig(); }, [fetchConfig]); useEffect(() => { if (config) setForm(config as unknown as LocalHealthCheckDesignConfig); }, [config]);
   const t = useTranslations();
   const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form as unknown as Parameters<typeof updateConfig>[0]); setSaving(false); };
-  if (loading && !form) return <div className="p-8">{t("healthCheckDesign.loading")}</div>;
+  if (loading && !form) return <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-500" /></div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;
-  if (!form) return <div className="p-8">{t("healthCheckDesign.noData")}</div>;
+  if (!form) return <div className="p-8 text-gray-400">No data</div>;
   const statusColors: Record<string, string> = { healthy: "bg-green-100 text-green-700", degraded: "bg-yellow-100 text-yellow-700", down: "bg-red-100 text-red-700" };
 
   return (
