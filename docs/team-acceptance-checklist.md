@@ -2,6 +2,11 @@
 
 > 本文件由团队 retrospective 讨论产生，所有成员必须遵守。
 
+## Git Push 规则（最高优先级）
+1. **每次 git commit 后必须立即 git push** — 不等下次轮次
+2. **报告完成时确认已 push** — 格式："XXX 完成 commit XXX 已 push"
+3. **没有 push 的 commit = 未交付** — 远程成员无法验收
+
 ## 任务认领规则
 
 ### Frontend 认领前
