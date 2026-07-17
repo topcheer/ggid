@@ -476,17 +476,37 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
+		// RAR: read authorization_details parameter (RFC 9396).
+		authDetailsJSON := json.RawMessage(nil)
+		if ad := r.URL.Query().Get("authorization_details"); ad != "" {
+			// Validate it's valid JSON array.
+			var parsed []any
+			if err := json.Unmarshal([]byte(ad), &parsed); err == nil {
+				authDetailsJSON = json.RawMessage(ad)
+			}
+		}
+		// Also accept from form POST body.
+		if len(authDetailsJSON) == 0 && r.Method == http.MethodPost {
+			if ad := r.FormValue("authorization_details"); ad != "" {
+				var parsed []any
+				if err := json.Unmarshal([]byte(ad), &parsed); err == nil {
+					authDetailsJSON = json.RawMessage(ad)
+				}
+			}
+		}
+
 		code, err := oauthSvc.CreateAuthorizationCode(ctx, &service.AuthorizeRequest{
-			TenantID:            tenantID,
-			ClientID:            clientID,
-			RedirectURI:         redirectURI,
-			ResponseType:        responseType,
-			Scope:               scopes,
-			State:               state,
-			Nonce:               nonce,
-			CodeChallenge:       codeChallenge,
-			CodeChallengeMethod: codeChallengeMethod,
-			UserID:              userID,
+			TenantID:             tenantID,
+			ClientID:             clientID,
+			RedirectURI:          redirectURI,
+			ResponseType:         responseType,
+			Scope:                scopes,
+			State:                state,
+			Nonce:                nonce,
+			CodeChallenge:        codeChallenge,
+			CodeChallengeMethod:  codeChallengeMethod,
+			UserID:               userID,
+			AuthorizationDetails: authDetailsJSON,
 		})
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": err.Error()})
@@ -1812,6 +1832,9 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 	mux.HandleFunc("/api/v1/oauth/token/dpop-bind", handleDPoPTokenBind)
 	mux.HandleFunc("/api/v1/oauth/token/dpop-verify", handleDPoPTokenVerify)
 	mux.HandleFunc("/api/v1/oauth/token-exchange-delegation", handleTokenExchangeDelegation)
+
+	// RAR (RFC 9396): consent preview for authorization_details.
+	mux.HandleFunc("/api/v1/oauth/rar/consent-preview", RARConsentPreviewHandler)
 	mux.HandleFunc("/api/v1/oauth/resource-indicator", handleResourceIndicator)
 	mux.HandleFunc("/api/v1/oauth/resource-allowed", handleResourceAllowed)
 	mux.HandleFunc("/api/v1/oauth/token-events/stream", handleTokenEventStream)

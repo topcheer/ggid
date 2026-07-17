@@ -247,6 +247,7 @@ type AuthorizeRequest struct {
 	CodeChallenge       string // PKCE
 	CodeChallengeMethod string // "S256" or "plain"
 	UserID              uuid.UUID // the authenticated user
+	AuthorizationDetails json.RawMessage // RAR authorization_details (RFC 9396) — stored as JSON
 }
 
 // CreateAuthorizationCode creates a short-lived authorization code.
@@ -318,6 +319,14 @@ func (s *OAuthService) CreateAuthorizationCode(ctx context.Context, req *Authori
 		return "", err
 	}
 
+	// Store RAR authorization_details for retrieval at token exchange.
+	if len(req.AuthorizationDetails) > 0 {
+		rarKey := fmt.Sprintf("oauth:rar:%s", hashCode(plaintextCode))
+		if s.rdb != nil {
+			s.rdb.Set(ctx, rarKey, req.AuthorizationDetails, 10*time.Minute)
+		}
+	}
+
 	// Store state for CSRF validation during token exchange.
 	if req.State != "" {
 		stateKey := fmt.Sprintf("oauth:state:%s:%s", req.ClientID, req.State)
@@ -350,12 +359,13 @@ type TokenExchangeRequest struct {
 
 // TokenResponse is the standard OAuth2 token endpoint response.
 type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token,omitempty"`
-	IDToken      string `json:"id_token,omitempty"`
-	Scope        string `json:"scope,omitempty"`
+	AccessToken          string `json:"access_token"`
+	TokenType            string `json:"token_type"`
+	ExpiresIn            int    `json:"expires_in"`
+	RefreshToken         string `json:"refresh_token,omitempty"`
+	IDToken              string `json:"id_token,omitempty"`
+	Scope                string `json:"scope,omitempty"`
+	AuthorizationDetails any    `json:"authorization_details,omitempty"` // RFC 9396 RAR
 }
 
 // ExchangeAuthorizationCode exchanges an authorization code for tokens.
@@ -406,6 +416,19 @@ func (s *OAuthService) ExchangeAuthorizationCode(ctx context.Context, req *Token
 		TokenType:   "Bearer",
 		ExpiresIn:   expiresIn,
 		Scope:       joinScopes(code.Scope),
+	}
+
+	// 7a. Retrieve RAR authorization_details if stored during authorize.
+	if s.rdb != nil {
+		rarKey := fmt.Sprintf("oauth:rar:%s", code.CodeHash)
+		if rarStr, err := s.rdb.Get(ctx, rarKey); err == nil && rarStr != "" {
+			// Include authorization_details in token response for client use.
+			var rarClaims any
+			if json.Unmarshal([]byte(rarStr), &rarClaims) == nil {
+				resp.AuthorizationDetails = rarClaims
+			}
+			s.rdb.Del(ctx, rarKey) // one-time read
+		}
 	}
 
 	// 8. Issue ID Token if OIDC scope is present.
