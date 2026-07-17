@@ -287,3 +287,17 @@ All services extract X-Tenant-ID at the handler level and set up ggidtenant cont
 - Identity tenant context fix (c18d5f22): Verified live ✓
 
 **Unwired handler scan:** All 5 services (identity, oauth, policy, org, audit) — zero orphans found.
+
+### Round 107 Focus D (restart cycle) — Data Persistence Scan
+
+**New in-memory stores since R93:**
+
+| Store | Location | Persisted? | Assessment |
+|-------|----------|-----------|------------|
+| otpStore | auth/email_otp_handler.go:22 | In-memory | ACCEPTABLE — OTP codes expire in minutes, same pattern as breach_detection cache |
+| agent reviewStore | oauth/agent_review_handler.go:22 | YES (pg adapter) | DONE — newReviewAdapter(pool) wired at server.go:133 |
+| delegationChains | oauth/token_exchange_delegation.go:23 | YES (pg backing) | DONE — newDelegationAdapter(pool) wired at server.go:132 |
+| parStore | oauth/par_handler.go:26 | In-memory | ACCEPTABLE — RFC 9126: 60s TTL, single replica (replicas=1). Needs Redis for HA multi-replica. |
+| customScopes | oauth/scope_management.go:30 | In-memory | TRACK — custom OAuth scopes lost on restart. Low priority (rarely modified). |
+
+**Summary:** 2 new PG-backed stores properly wired. 3 in-memory caches acceptable for current deployment. parStore + customScopes flagged for Redis migration if scaling to multi-replica.
