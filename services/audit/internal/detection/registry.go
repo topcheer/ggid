@@ -67,6 +67,8 @@ func (r *RuleRegistry) registerBuiltins() {
 	r.Register(&OffHoursAdminRule{})
 	r.Register(&NewDevicePrivilegedRule{})
 	r.Register(&TokenReplayRule{})
+	// Phase 5: UEBA behavioral baseline deviation
+	r.Register(&BaselineDeviationRule{})
 }
 
 // All returns all registered rules.
