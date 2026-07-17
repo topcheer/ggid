@@ -254,6 +254,7 @@ func main() {
 		log.Printf("Break-glass schema ensure error (non-fatal): %v", err)
 	}
 	handler.SetBreakGlassRepo(breakGlassRepo)
+	handler.SetSMSSender(service.NewSMSSenderFromEnv())
 
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")

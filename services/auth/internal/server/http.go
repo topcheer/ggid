@@ -82,6 +82,11 @@ func (h *Handler) SetSessionRevocationManager(mgr *service.SessionRevocationMana
 	h.revocationMgr = mgr
 }
 
+// SetSMSSender injects the SMS provider for phone OTP.
+func (h *Handler) SetSMSSender(sender service.SMSSender) {
+	h.smsSender = sender
+}
+
 // SetInternalAuthSecret configures HMAC internal-auth verification for
 // internal endpoints (e.g. /api/v1/auth/internal/revoke-user).
 func (h *Handler) SetInternalAuthSecret(secret, prevSecret string) {
