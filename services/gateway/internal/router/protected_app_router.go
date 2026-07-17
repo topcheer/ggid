@@ -52,6 +52,7 @@ type ProtectedAppRouter struct {
 	apps     map[string]*ProtectedApp // slug → app
 	proxies  map[string]*httputil.ReverseProxy // slug → reverse proxy
 	auditPub middleware.AuditPublisher // NATS publisher for access logs
+	postureCache sync.Map // tenantID:deviceID → postureCacheEntry
 }
 
 func NewProtectedAppRouter() *ProtectedAppRouter {
@@ -200,6 +201,8 @@ func (r *ProtectedAppRouter) HandleRequest(w http.ResponseWriter, req *http.Requ
 }
 
 // evaluatePolicy performs simplified ABAC evaluation for the app.
+// When $security.device_trusted or $security.compliance_score conditions
+// are present, queries the identity service device posture API (cached 5min).
 func (r *ProtectedAppRouter) evaluatePolicy(app *ProtectedApp, req *http.Request) PDPResult {
 	if len(app.AccessPolicy) == 0 {
 		return PDPResult{Decision: "allow"}
@@ -218,7 +221,22 @@ func (r *ProtectedAppRouter) evaluatePolicy(app *ProtectedApp, req *http.Request
 	// Extract user info from JWT claims (injected by gateway JWT middleware).
 	userID := req.Header.Get("X-User-ID")
 	userRole := req.Header.Get("X-User-Role")
+
+	// Resolve device posture from identity service (cached 5min).
+	// Device ID comes from the JWT "device_id" claim or X-Device-ID header.
+	deviceID := req.Header.Get("X-Device-ID")
+	tenantID := req.Header.Get("X-Tenant-ID")
 	deviceTrusted := req.Header.Get("X-Device-Trusted") == "true"
+	complianceScore := 0
+
+	// If device ID present, query posture API for real-time trust.
+	if deviceID != "" && tenantID != "" {
+		posture := r.resolveDevicePosture(tenantID, deviceID)
+		if posture != nil {
+			deviceTrusted = posture.Compliant
+			complianceScore = posture.PostureScore
+		}
+	}
 
 	for _, cond := range andConds {
 		condMap, ok := cond.(map[string]any)
@@ -239,11 +257,81 @@ func (r *ProtectedAppRouter) evaluatePolicy(app *ProtectedApp, req *http.Request
 				if fmt.Sprintf("%v", expected) != userID {
 					return PDPResult{Decision: "deny", Reason: "user mismatch"}
 				}
+			case "$security.compliance_score":
+				// Support $gte operator: {"$security.compliance_score": {"$gte": 70}}
+				if expMap, ok := expected.(map[string]any); ok {
+					if gte, has := expMap["$gte"]; has {
+						if minScore, ok := toInt(gte); ok && complianceScore < minScore {
+							return PDPResult{Decision: "stepup", Reason: fmt.Sprintf("device compliance score %d < required %d", complianceScore, minScore)}
+						}
+					}
+				} else if minScore, ok := toInt(expected); ok {
+					if complianceScore < minScore {
+						return PDPResult{Decision: "stepup", Reason: fmt.Sprintf("device compliance score %d < required %d", complianceScore, minScore)}
+					}
+				}
 			}
 		}
 	}
 
 	return PDPResult{Decision: "allow"}
+}
+
+// DevicePosture is the cached posture response from identity service.
+type DevicePosture struct {
+	Compliant    bool `json:"compliant"`
+	PostureScore int  `json:"posture_score"`
+}
+
+// resolveDevicePosture queries identity service with 5min cache.
+func (r *ProtectedAppRouter) resolveDevicePosture(tenantID, deviceID string) *DevicePosture {
+	cacheKey := tenantID + ":" + deviceID
+
+	// Check cache.
+	if cached, ok := r.postureCache.Load(cacheKey); ok {
+		if entry, ok := cached.(postureCacheEntry); ok {
+			if time.Since(entry.fetchedAt) < 5*time.Minute {
+				return entry.posture
+			}
+		}
+	}
+
+	// Query identity service.
+	url := "http://localhost:8081/api/v1/identity/devices/" + deviceID + "/posture"
+	httpReq, _ := http.NewRequest("GET", url, nil)
+	httpReq.Header.Set("X-Tenant-ID", tenantID)
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil || resp == nil {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	var dp DevicePosture
+	if json.NewDecoder(resp.Body).Decode(&dp) != nil {
+		return nil
+	}
+
+	// Cache result.
+	r.postureCache.Store(cacheKey, postureCacheEntry{posture: &dp, fetchedAt: time.Now()})
+	return &dp
+}
+
+type postureCacheEntry struct {
+	posture   *DevicePosture
+	fetchedAt time.Time
+}
+
+// toInt safely converts any to int.
+func toInt(v any) (int, bool) {
+	switch n := v.(type) {
+	case int:
+		return n, true
+	case int64:
+		return int(n), true
+	case float64:
+		return int(n), true
+	}
+	return 0, false
 }
 
 // PDPResult is the policy decision for a ZTNA request.
