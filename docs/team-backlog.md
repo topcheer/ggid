@@ -488,3 +488,45 @@ See docs/research/ for full research docs.
 
 **业务价值**: MEDIUM-HIGH | **实现难度**: Medium-High（需要密码代理或 API 集成）
 - 简化版：GGID 作为 credential broker（存储/checkout/轮换 API），不做密码代理注入
+
+---
+
+## OpenID Shared Signals Framework (SSF) 1.0 Implementation (2026-07-17 研究驱动) - Priority: P1 - Status: Proposed - Suggested: backend + techwriter
+
+**描述**: SSF 1.0 + CAEP 1.0 于 2025年9月正式发布（不再是 draft）。GGID 有专有 CAE（Redis JTI blocklist）但未实现标准化的 SET（Security Event Token）格式和 SSE 传输框架。企业联邦场景下，下游 RP 无法消费 GGID 的安全事件。
+
+**业务价值**: HIGH — 企业客户在联邦环境中需要 SSF 互操作性 | **实现难度**: Medium
+- 实现路径：
+  1. SET 信封格式（pkg/audit/set.go）— 将现有审计事件包装为 SET JWT
+  2. 流管理 API（audit 服务）— POST/GET /sse/streams, 验证流, subject 管理
+  3. Push + Poll 投递模式
+  4. CAEP 映射 — ITDR 检测 → CAEP session-revoked 事件
+  5. RISC 映射 — 账户生命周期 → RISC 事件类型
+- 参考: docs/research/shared-signals-final-spec-implementation-gap.md
+
+---
+
+## DPoP Nonce 支持 (RFC 9449) (2026-07-17 研究驱动) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: GGID 有 DPoP token binding (dpop_token_bind.go) 但未实现 RFC 9449 的 nonce 机制。没有 nonce，DPoP proof JWT 在 ~60 秒有效期内可被重放。也未验证 DPoP proof JWT 的 JWS 签名、htm/htu/iat/jti claims。
+
+**业务价值**: MEDIUM — 当前 DPoP 仍提供客户端绑定，nonce 缺失将重放窗口缩小到 60s | **实现难度**: Medium
+- 实现路径：
+  1. 中间件 pkg/middleware/dpop.go — 解析 DPoP header → 验证 JWS → 校验 htm/htu/iat/jti
+  2. Nonce 签发 — 每次 token 响应返回 DPoP-Nonce header，Redis 存储 per-client nonce
+  3. Token 绑定验证 — 资源访问时校验 cnf.jkt 与 DPoP header proof 匹配
+  4. SDK 更新 — 各 SDK 增加 DPoP proof 生成
+- 参考: docs/research/dpop-nonce-gap-rfc9449.md
+
+---
+
+## WebAuthn Conditional UI / Passkey Autofill (2026-07-17 研究驱动) - Priority: P2 - Status: Proposed - Suggested: frontend
+
+**描述**: WebAuthn Conditional UI (passkey autofill) 允许用户在浏览器自动填充菜单中直接看到 passkey 选项，减少登录摩擦。Authenticate 2025 峰会强调这是 passkey 采用的关键 UX 模式。GGID console 登录页面未使用此特性。
+
+**业务价值**: MEDIUM — UX 改善，passkey 采用率提升 | **实现难度**: Low
+- 实现路径：
+  1. 登录表单 input 添加 `webauthn` autocomplete 属性
+  2. 调用 navigator.credentials.get({ mediation: 'conditional' })
+  3. 浏览器在 autofill 中展示 passkey + password 选项
+- 前端文件: console/src/app/login/page.tsx
