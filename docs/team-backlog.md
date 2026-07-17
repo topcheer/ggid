@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 56: AI Agent Identity & Delegated Access research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 57: Decentralized Identity & Verifiable Credentials research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -137,6 +137,10 @@
 | 111 | **Token exchange + workload attestation** (P0) | backend | Delegated auth | RFC 8693 token exchange with act claim + k8s SA/SPIFFE workload attestation |
 | 112 | **Multi-agent delegation + rate limiting** (P1) | backend | Agent chains | Max depth enforcement + cycle detection + scope narrowing + per-agent Redis rate limiting |
 | 113 | **Agent behavioral anomaly + console** (P2) | backend+frontend | Security | Per-agent behavioral baselines + anomaly detection + dual-attribution audit + Console UI |
+| 114 | **DB-backed VC/DID core** (P0) | backend | Replace in-memory | Replace vc_issuer.go (sync.RWMutex + 4 maps) + did_resolver.go (sync.RWMutex + map) with PostgreSQL. See docs/research/decentralized-identity-vc.md |
+| 115 | **Credential schema + StatusList2021** (P0) | backend | Revocation | Schema registry CRUD + bitmap revocation status list (RFC 9114) + GZIP compression |
+| 116 | **OID4VCI + OID4VP flows** (P1) | backend | Credential exchange | OID4VCI issuance (offer + pre-authz code) + OID4VP presentation verification + asymmetric SD-JWT |
+| 117 | **Console credential manager + did:ebsi** (P2) | frontend+backend | EU compliance | VC issue/list/revoke UI + did:ebsi resolution (eIDAS 2.0 compatibility) |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -179,6 +183,7 @@
 16. Consent Management Platform → DONE (docs/research/consent-management-platform.md) — 6 backlog items added
 17. Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md) — 6 backlog items added
 18. AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md) — 6 backlog items added
+19. Decentralized Identity & Verifiable Credentials → DONE (docs/research/decentralized-identity-vc.md) — 6 backlog items added
 
 ## Rules
 
@@ -191,6 +196,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Decentralized Identity & Verifiable Credentials → DONE (docs/research/decentralized-identity-vc.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

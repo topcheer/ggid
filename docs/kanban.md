@@ -160,6 +160,12 @@
 | KB-146 | **Per-agent rate limiting + dual-attribution audit** | backend | P1 | ai-agent-identity | 3d |
 | KB-147 | **Agent behavioral anomaly detection** | backend | P2 | ai-agent-identity | 3d |
 | KB-148 | **Console agent management UI** | frontend | P2 | ai-agent-identity | 4d |
+| KB-149 | **DB-backed VC/DID core** (replace in-memory VCIssuer + DIDResolver) | backend | P0 | decentralized-vc | 4d |
+| KB-150 | **Credential schema registry + StatusList2021 revocation** | backend | P0 | decentralized-vc | 3d |
+| KB-151 | **Asymmetric SD-JWT** (ES256/EdDSA, replace HMAC) | backend | P0 | decentralized-vc | 2d |
+| KB-152 | **OID4VCI credential issuance flow** | backend | P1 | decentralized-vc | 4d |
+| KB-153 | **OID4VP presentation verification** | backend | P1 | decentralized-vc | 3d |
+| KB-154 | **Console credential manager + did:ebsi** | frontend+backend | P2 | decentralized-vc | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -253,7 +259,8 @@
 | Consent Management Platform (GDPR/CCPA) | DONE | docs/research/consent-management-platform.md |
 | Risk-Based Adaptive Authentication Engine | DONE | docs/research/risk-adaptive-auth-engine.md |
 | AI Agent Identity & Delegated Access | DONE | docs/research/ai-agent-identity.md |
-| OAuth Client Lifecycle Management (DCR, rotation) | NEXT | — |
+| Decentralized Identity & Verifiable Credentials (W3C DID/VC) | DONE | docs/research/decentralized-identity-vc.md |
+| Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---
 
