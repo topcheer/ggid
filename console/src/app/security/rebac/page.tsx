@@ -35,6 +35,95 @@ const nsColors: Record<string, string> = {
   resource: "text-green-500", folder: "text-yellow-500", document: "text-cyan-500",
 };
 
+/** SVG-based relationship graph renderer. */
+function ReBACGraph({ tuples, highlightPath }: { tuples: Tuple[]; highlightPath: string[] }) {
+  // Build unique nodes (subjects + objects)
+  const nodeSet = new Map<string, { id: string; label: string; type: string }>();
+  for (const t of tuples) {
+    const subjKey = t.subject;
+    if (!nodeSet.has(subjKey)) nodeSet.set(subjKey, { id: subjKey, label: subjKey, type: subjKey.split(":")[0] || "user" });
+    const objKey = `${t.namespace}:${t.object}`;
+    if (!nodeSet.has(objKey)) nodeSet.set(objKey, { id: objKey, label: objKey, type: t.namespace });
+  }
+  const nodes = Array.from(nodeSet.values());
+
+  // Position nodes in a circle
+  const W = 600, H = 360, cx = W / 2, cy = H / 2, r = Math.min(W, H) / 2 - 60;
+  const positions = new Map<string, { x: number; y: number }>();
+  nodes.forEach((n, i) => {
+    const angle = (i / nodes.length) * 2 * Math.PI - Math.PI / 2;
+    positions.set(n.id, { x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+  });
+
+  // Check if edge is on highlight path
+  const isHighlighted = (t: Tuple) => {
+    if (!highlightPath || highlightPath.length < 2) return false;
+    const subj = t.subject;
+    const obj = `${t.namespace}:${t.object}`;
+    return highlightPath.includes(subj) && highlightPath.includes(obj);
+  };
+
+  const nodeColors: Record<string, string> = {
+    user: "#3b82f6", group: "#a855f7", role: "#6366f1",
+    document: "#10b981", folder: "#eab308", resource: "#22c55e",
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="mx-auto" aria-label="Permission relationship graph">
+        {/* Edges */}
+        {tuples.map((t, i) => {
+          const from = positions.get(t.subject);
+          const to = positions.get(`${t.namespace}:${t.object}`);
+          if (!from || !to) return null;
+          const hl = isHighlighted(t);
+          return (
+            <g key={`edge-${i}`}>
+              <line x1={from.x} y1={from.y} x2={to.x} y2={to.y}
+                stroke={hl ? "#8b5cf6" : "#cbd5e1"} strokeWidth={hl ? 2.5 : 1}
+                strokeDasharray={hl ? "0" : "4"} opacity={hl ? 1 : 0.6}
+                markerEnd="url(#arrow)" />
+              <text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 4}
+                fontSize={9} fill={hl ? "#7c3aed" : "#94a3b8"} textAnchor="middle"
+                className="font-mono">{t.relation}</text>
+            </g>
+          );
+        })}
+        {/* Arrow marker */}
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#cbd5e1" />
+          </marker>
+          <marker id="arrow-hl" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#8b5cf6" />
+          </marker>
+        </defs>
+        {/* Nodes */}
+        {nodes.map(n => {
+          const pos = positions.get(n.id)!;
+          const color = nodeColors[n.type] || "#64748b";
+          const onPath = highlightPath.includes(n.id);
+          return (
+            <g key={n.id}>
+              <circle cx={pos.x} cy={pos.y} r={onPath ? 22 : 18}
+                fill={color} opacity={onPath ? 1 : 0.7}
+                stroke={onPath ? "#8b5cf6" : "none"} strokeWidth={onPath ? 3 : 0} />
+              <text x={pos.x} y={pos.y + 4} fontSize={8} fill="white" textAnchor="middle" fontWeight="bold">
+                {n.label.length > 12 ? n.label.substring(0, 10) + "…" : n.label}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      {highlightPath.length > 0 && (
+        <p className="mt-2 text-center text-xs text-purple-600 dark:text-purple-400">
+          Purple path shows the evaluated permission trace.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ReBACPage() {
   const t = useTranslations();
   const [tuples, setTuples] = useState<Tuple[]>([]);
@@ -202,6 +291,16 @@ export default function ReBACPage() {
         <div className={cardCls}><span className="text-xs font-semibold uppercase text-gray-400">Subjects</span><p className="mt-2 text-2xl font-bold text-blue-600">{new Set(tuples.map(t => t.subject)).size}</p></div>
         <div className={cardCls}><span className="text-xs font-semibold uppercase text-gray-400">Objects</span><p className="mt-2 text-2xl font-bold text-green-600">{new Set(tuples.map(t => `${t.namespace}:${t.object}`)).size}</p></div>
       </div>
+
+      {/* SVG Graph Visualization */}
+      {tuples.length > 0 && (
+        <div className={cardCls}>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400">
+            <Network className="h-4 w-4" /> Relationship Graph
+          </h2>
+          <ReBACGraph tuples={tuples} highlightPath={checkResult?.trace || []} />
+        </div>
+      )}
 
       {/* Tuples table */}
       <div className={cardCls}>
