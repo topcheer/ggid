@@ -43,6 +43,7 @@ export default function DLPPage() {
   const [tUser, setTUser] = useState("user:alice");
   const [tDataType, setTDataType] = useState("customer_pii");
   const [tOperation, setTOperation] = useState("export");
+  const [tPolicyId, setTPolicyId] = useState("");
   const [tResult, setTResult] = useState<TestResult | null>(null);
   const [testing, setTesting] = useState(false);
   // Actions
@@ -54,9 +55,9 @@ export default function DLPPage() {
     try {
       const h = { ...authHeader(), "X-Tenant-ID": TENANT_ID };
       const [pRes, eRes, hmRes] = await Promise.all([
-        fetch("/api/v1/auth/dlp/policies", { headers: h }).catch(() => null),
-        fetch("/api/v1/auth/dlp/events?page_size=100", { headers: h }).catch(() => null),
-        fetch("/api/v1/auth/dlp/heatmap", { headers: h }).catch(() => null),
+        fetch("/api/v1/identity/dlp/policies", { headers: h }).catch(() => null),
+        fetch("/api/v1/identity/dlp/events?page_size=100", { headers: h }).catch(() => null),
+        fetch("/api/v1/identity/dlp/heatmap", { headers: h }).catch(() => null),
       ]);
       if (pRes?.ok) { const d = await pRes.json(); setPolicies(d.policies || d.items || []); }
       if (eRes?.ok) { const d = await eRes.json(); setEvents(d.events || d.items || []); }
@@ -71,7 +72,7 @@ export default function DLPPage() {
     if (!pName) return;
     setSaving(true);
     try {
-      await fetch("/api/v1/auth/dlp/policies", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID }, body: JSON.stringify({ name: pName, data_class: pClass, scope: pScope, action: pAction }) });
+      await fetch("/api/v1/identity/dlp/policies", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID }, body: JSON.stringify({ name: pName, data_class: pClass, scope: pScope, action: pAction }) });
       setShowForm(false); setPName(""); loadData();
     } catch { setError("Failed to save policy"); }
     finally { setSaving(false); }
@@ -80,7 +81,7 @@ export default function DLPPage() {
   const togglePolicy = async (id: string, enabled: boolean) => {
     setTogglingId(id);
     try {
-      await fetch(`/api/v1/auth/dlp/policies/${id}`, { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID }, body: JSON.stringify({ enabled: !enabled }) });
+      await fetch(`/api/v1/identity/dlp/policies/${id}`, { method: "PUT", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID }, body: JSON.stringify({ enabled: !enabled }) });
       setPolicies(prev => prev.map(p => p.id === id ? { ...p, enabled: !enabled } : p));
     } catch { /* noop */ }
     finally { setTogglingId(null); }
@@ -89,7 +90,10 @@ export default function DLPPage() {
   const runTest = async () => {
     setTesting(true); setTResult(null);
     try {
-      const res = await fetch("/api/v1/auth/dlp/test", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID }, body: JSON.stringify({ user_id: tUser, data_type: tDataType, operation: tOperation }) });
+      const testUrl = tPolicyId
+        ? `/api/v1/identity/dlp/policies/${tPolicyId}/test`
+        : "/api/v1/identity/dlp/test";
+      const res = await fetch(testUrl, { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": TENANT_ID }, body: JSON.stringify({ user_id: tUser, data_type: tDataType, operation: tOperation }) });
       if (res.ok) setTResult(await res.json());
       else setError("Test failed");
     } catch { setError("Network error"); }
@@ -250,6 +254,13 @@ export default function DLPPage() {
               <div>
                 <label className="text-sm font-medium">User ID</label>
                 <input aria-label="Test user" type="text" value={tUser} onChange={e => setTUser(e.target.value)} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm font-mono" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Policy (optional)</label>
+                <select aria-label="Test policy" value={tPolicyId} onChange={e => setTPolicyId(e.target.value)} className="mt-1 w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">
+                  <option value="">All active policies</option>
+                  {policies.filter(p => p.enabled).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
