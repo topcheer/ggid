@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 104
-## Last scan focus: B (Route/Wiring restart, Round 103) — RFC 8693 + SCIM hash + delegation all wired; zero orphans across 5 services
-## Next scan focus: E2E tests (Round 104 = even round, Workflow A)
+## Current round: 105
+## Last scan focus: E2E (Round 104) — Core 10/10, ERP 4/4, SDK Go+Py PASS; platform stable
+## Next scan focus: C (Middleware chain scan restart, Round 105 = odd round)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
