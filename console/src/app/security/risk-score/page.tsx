@@ -110,14 +110,14 @@ export default function RiskScorePage() {
           {summary && (
             <div className="grid grid-cols-4 gap-4">
               <div className={cardCls}><div className="flex items-center gap-2"><Users className="h-4 w-4 text-indigo-500" /><span className="text-xs font-semibold uppercase text-gray-400">Total Users</span></div><p className="mt-2 text-2xl font-bold text-indigo-600">{summary.total_users}</p></div>
-              <div className={cardCls}><div className="flex items-center gap-2"><Activity className="h-4 w-4 text-blue-500" /><span className="text-xs font-semibold uppercase text-gray-400">Average Score</span></div><p className="mt-2 text-2xl font-bold text-blue-600">{summary.average_score.toFixed(1)}</p></div>
+              <div className={cardCls}><div className="flex items-center gap-2"><Activity className="h-4 w-4 text-blue-500" /><span className="text-xs font-semibold uppercase text-gray-400">Average Score</span></div><p className="mt-2 text-2xl font-bold text-blue-600">{(summary.average_score ?? 0).toFixed(1)}</p></div>
               <div className={cardCls}><div className="flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-orange-500" /><span className="text-xs font-semibold uppercase text-gray-400">High Risk</span></div><p className="mt-2 text-2xl font-bold text-orange-600">{summary.high_risk_count}</p></div>
               <div className={cardCls}><div className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500" /><span className="text-xs font-semibold uppercase text-gray-400">Critical</span></div><p className="mt-2 text-2xl font-bold text-red-600">{summary.critical_count}</p></div>
             </div>
           )}
 
           {/* Top factors */}
-          {summary && summary.top_factors.length > 0 && (
+          {summary && (summary.top_factors?.length ?? 0) > 0 && (
             <div className={cardCls}>
               <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Top Risk Factors</h3>
               <div className="space-y-3">
@@ -133,7 +133,7 @@ export default function RiskScorePage() {
           )}
 
           {/* Distribution */}
-          {summary && summary.distribution.length > 0 && (
+          {summary && (summary.distribution?.length ?? 0) > 0 && (
             <div className="grid grid-cols-4 gap-3">
               {summary.distribution.map((d) => (
                 <div key={d.level} className={`${cardCls} text-center`}>

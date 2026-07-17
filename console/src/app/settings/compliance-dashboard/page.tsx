@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -37,13 +37,13 @@ export default function ComplianceDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setFrameworks(await apiFetch<FrameworkSummary[]>("/api/v1/audit/compliance-dashboard").catch(() => [])); }
       catch { setError(t("complianceDashboard.failedLoad")); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const totalGaps = frameworks.reduce((s, f) => s + f.gap_count, 0);
