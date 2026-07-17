@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 74: CI/CD Pipeline Hardening research complete — 3 backlog items)*
+*Last updated: 2026-07-17 (Round 75: Disaster Recovery & Backup Automation research complete — 3 backlog items)*
 
 ## Current Stats
 
@@ -180,6 +180,7 @@
 | 154 | **SDK parity** (P0-P1) | backend | Developer experience | Expand Python SDK + token manager/DPoP in all SDKs + OpenAPI spec + package publishing. See docs/research/sdk-parity-developer-experience.md |
 | 155 | **Production hardening** (P0) | devops | Production ready | Vault+cert-manager+CORS+graceful shutdown+PG backup+Redis config+alerting+load testing. See docs/research/production-hardening-checklist.md |
 | 156 | **CI/CD hardening** (P0-P1) | devops | Delivery pipeline | Pre-commit hooks + parallel CI + lint + container scanning + migration CI + ArgoCD GitOps. See docs/research/cicd-pipeline-hardening.md |
+| 157 | **Disaster recovery & backup** (P0) | devops | Production ready | PG pg_dump+WAL PITR + Redis AOF/RDB + encrypted S3 off-site + automated restore testing + streaming replication + DR runbook. See docs/research/disaster-recovery-backup.md |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -240,6 +241,7 @@
 34. SDK Parity & Developer Experience → DONE (docs/research/sdk-parity-developer-experience.md) — 3 backlog items added
 35. Production Hardening & Security Checklist → DONE (docs/research/production-hardening-checklist.md) — 3 backlog items added
 36. CI/CD Pipeline & GitOps Hardening → DONE (docs/research/cicd-pipeline-hardening.md) — 3 backlog items added
+37. Disaster Recovery & Backup Automation → DONE (docs/research/disaster-recovery-backup.md) — 3 backlog items added
 
 ## Rules
 
@@ -270,6 +272,7 @@ Active research topics:
 - SDK Parity & Developer Experience → DONE (docs/research/sdk-parity-developer-experience.md)
 - Production Hardening Checklist → DONE (docs/research/production-hardening-checklist.md)
 - CI/CD Pipeline & GitOps Hardening → DONE (docs/research/cicd-pipeline-hardening.md)
+- Disaster Recovery & Backup → DONE (docs/research/disaster-recovery-backup.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

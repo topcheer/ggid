@@ -235,6 +235,9 @@
 | KB-221 | **Pre-commit hooks + parallel CI + branch protection + lint** | devops | P0 | cicd-hardening | 3d |
 | KB-222 | **Container scanning + multi-stage Dockerfile + migration CI** | devops | P0 | cicd-hardening | 3d |
 | KB-223 | **ArgoCD GitOps for k3s** (auto-deploy from main) | devops | P1 | cicd-hardening | 3d |
+| KB-224 | **PG backup + WAL archiving + PITR** (encrypted to S3) | devops | P0 | dr-backup | 3d |
+| KB-225 | **Redis persistence + off-site backup + restore testing** | devops | P0 | dr-backup | 3d |
+| KB-226 | **PG streaming replication + DR runbook** (automated failover) | devops | P1 | dr-backup | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -362,6 +365,7 @@
 | SDK Parity & Developer Experience | DONE | docs/research/sdk-parity-developer-experience.md |
 | Production Hardening & Security Checklist | DONE | docs/research/production-hardening-checklist.md |
 | CI/CD Pipeline & GitOps Hardening | DONE | docs/research/cicd-pipeline-hardening.md |
+| Disaster Recovery & Backup Automation | DONE | docs/research/disaster-recovery-backup.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
