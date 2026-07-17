@@ -201,9 +201,9 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/passwordless/begin", h.handleWebAuthnPasswordlessBegin)
 	h.mux.HandleFunc("/api/v1/auth/webauthn/passwordless/finish", h.handleWebAuthnPasswordlessFinish)
-	h.mux.HandleFunc("/api/v1/auth/sessions/bind-device", h.handleBindDevice)
-	h.mux.HandleFunc("/api/v1/auth/sessions/check-device", h.handleCheckDevice)
-	h.mux.HandleFunc("/api/v1/auth/sessions/unbind-device", h.handleUnbindDevice)
+	h.mux.HandleFunc("/api/v1/auth/sessions/bind-device", h.handleDeviceBind)
+	h.mux.HandleFunc("/api/v1/auth/sessions/check-device", h.handleDeviceCheck)
+	h.mux.HandleFunc("/api/v1/auth/sessions/unbind-device", h.handleDeviceUnbind)
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)

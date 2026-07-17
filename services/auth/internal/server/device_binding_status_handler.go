@@ -12,12 +12,13 @@ func (h *Handler) handleDeviceBindingStatus(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	deviceBindings.mu.RLock()
-	allBindings := deviceBindings.List()
-	deviceBindings.mu.RUnlock()
-
+	// Iterate the binding cache (sync.Map) for active bindings.
 	statuses := []map[string]any{}
-	for _, b := range allBindings {
+	bindingCache.Range(func(key, value any) bool {
+		b, ok := value.(*DeviceBinding)
+		if !ok {
+			return true
+		}
 		statuses = append(statuses, map[string]any{
 			"session_id":         b.SessionID,
 			"token_jti":          b.TokenJTI,
@@ -28,16 +29,14 @@ func (h *Handler) handleDeviceBindingStatus(w http.ResponseWriter, r *http.Reque
 			"last_match":         time.Now().UTC().Format(time.RFC3339),
 			"is_active":          true,
 		})
-	}
-
-	if len(statuses) == 0 {
-		// No real bindings — return empty, not hardcoded mock data.
-		statuses = []map[string]any{}
-	}
+		return true
+	})
 
 	uniqueDevices := map[string]bool{}
 	for _, s := range statuses {
-		uniqueDevices[s["device_fingerprint"].(string)] = true
+		if fp, ok := s["device_fingerprint"].(string); ok {
+			uniqueDevices[fp] = true
+		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{

@@ -2,9 +2,9 @@ package httpserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,22 +16,13 @@ type DashboardWidget struct {
 	DashboardID     string    `json:"dashboard_id"`
 	Title           string    `json:"title"`
 	Query           string    `json:"query"`
-	ChartType       string    `json:"chart_type"` // line, bar, pie, table, gauge
-	RefreshInterval int       `json:"refresh_interval"` // seconds
+	ChartType       string    `json:"chart_type"`
+	RefreshInterval int       `json:"refresh_interval"`
 	Position        int       `json:"position"`
 	CreatedAt       time.Time `json:"created_at"`
 }
 
-type widgetStore struct {
-	mu      sync.RWMutex
-	widgets map[string]*DashboardWidget
-}
-
-var dashboardWidgets = &widgetStore{widgets: make(map[string]*DashboardWidget)}
-
-// POST/GET/DELETE /api/v1/audit/dashboards/{id}/widgets
 func (s *HTTPServer) handleDashboardWidgets(w http.ResponseWriter, r *http.Request) {
-	// Extract dashboard_id from path
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/audit/dashboards/")
 	parts := strings.Split(path, "/")
 	if len(parts) < 2 || parts[1] != "widgets" {
@@ -58,81 +49,67 @@ func (s *HTTPServer) handleDashboardWidgets(w http.ResponseWriter, r *http.Reque
 			writeJSONError(w, http.StatusBadRequest, "title is required")
 			return
 		}
-		if req.ChartType == "" {
-			req.ChartType = "line"
-		}
-		if req.RefreshInterval <= 0 {
-			req.RefreshInterval = 60
-		}
-
+		if req.ChartType == "" { req.ChartType = "line" }
+		if req.RefreshInterval <= 0 { req.RefreshInterval = 60 }
 		widget := &DashboardWidget{
-			ID:              uuid.New().String(),
-			DashboardID:     dashboardID,
-			Title:           req.Title,
-			Query:           req.Query,
-			ChartType:       req.ChartType,
-			RefreshInterval: req.RefreshInterval,
-			Position:        req.Position,
-			CreatedAt:       time.Now().UTC(),
+			ID: uuid.New().String(), DashboardID: dashboardID, Title: req.Title,
+			Query: req.Query, ChartType: req.ChartType,
+			RefreshInterval: req.RefreshInterval, Position: req.Position,
+			CreatedAt: time.Now().UTC(),
 		}
-
-		dashboardWidgets.mu.Lock()
-		dashboardWidgets.widgets[widget.ID] = widget
-		dashboardWidgets.mu.Unlock()
-
-		// Return widget config + simulated live data
-		writeJSON(w, http.StatusCreated, map[string]any{
-			"widget": widget,
-			"live_data": map[string]any{
-				"labels": []string{"00:00", "04:00", "08:00", "12:00", "16:00", "20:00"},
-				"values": []int{12, 19, 45, 67, 82, 56},
-			},
-		})
-
-	case http.MethodGet:
-		dashboardWidgets.mu.RLock()
-		result := []*DashboardWidget{}
-		for _, wgt := range dashboardWidgets.widgets {
-			if wgt.DashboardID != dashboardID {
-				continue
-			}
-			result = append(result, wgt)
-		}
-		dashboardWidgets.mu.RUnlock()
-
-		// Include live data for each widget
-		widgetsWithData := make([]map[string]any, 0, len(result))
-		for _, wgt := range result {
-			widgetsWithData = append(widgetsWithData, map[string]any{
-				"widget": wgt,
-				"live_data": map[string]any{
-					"labels": []string{"00:00", "04:00", "08:00", "12:00", "16:00", "20:00"},
-					"values": []int{12, 19, 45, 67, 82, 56},
-				},
+		if s.memMapRepo2 != nil {
+			s.memMapRepo2.StoreJSON(r.Context(), "dashboard_widgets", widget.ID, map[string]any{
+				"dashboard_id": widget.DashboardID, "title": widget.Title,
+				"query": widget.Query, "chart_type": widget.ChartType,
+				"refresh_interval": widget.RefreshInterval, "position": widget.Position,
 			})
 		}
+		writeJSON(w, http.StatusCreated, map[string]any{"widget": widget})
 
-		writeJSON(w, http.StatusOK, map[string]any{
-			"widgets": widgetsWithData,
-			"count":   len(widgetsWithData),
-		})
+	case http.MethodGet:
+		var result []*DashboardWidget
+		if s.memMapRepo2 != nil {
+			rows, _ := s.memMapRepo2.ListJSON(r.Context(), "dashboard_widgets")
+			for _, row := range rows {
+				if amGetString(row, "dashboard_id") != dashboardID {
+					continue
+				}
+				result = append(result, &DashboardWidget{
+					ID: amGetString(row, "id"), DashboardID: amGetString(row, "dashboard_id"),
+					Title: amGetString(row, "title"), Query: amGetString(row, "query"),
+					ChartType: amGetString(row, "chart_type"),
+				})
+			}
+		}
+		if result == nil { result = []*DashboardWidget{} }
+		writeJSON(w, http.StatusOK, map[string]any{"widgets": result, "count": len(result)})
 
 	case http.MethodDelete:
 		if widgetID == "" {
 			writeJSONError(w, http.StatusBadRequest, "widget_id is required")
 			return
 		}
-		dashboardWidgets.mu.Lock()
-		if _, ok := dashboardWidgets.widgets[widgetID]; !ok {
-			dashboardWidgets.mu.Unlock()
-			writeJSONError(w, http.StatusNotFound, "widget not found")
-			return
+		if s.memMapRepo2 != nil {
+			s.memMapRepo2.DeleteJSON(r.Context(), "dashboard_widgets", widgetID)
 		}
-		delete(dashboardWidgets.widgets, widgetID)
-		dashboardWidgets.mu.Unlock()
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "widget_id": widgetID})
 
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
+}
+
+func amGetString(m map[string]any, key string) string {
+	if v, ok := m[key]; ok { return fmt.Sprintf("%v", v) }
+	return ""
+}
+
+func amGetBool(m map[string]any, key string) bool {
+	if v, ok := m[key]; ok {
+		switch val := v.(type) {
+		case bool: return val
+		case string: return val == "true"
+		}
+	}
+	return false
 }

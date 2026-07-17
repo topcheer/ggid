@@ -22,19 +22,21 @@ func (s *HTTPServer) handleRetentionExecute(w http.ResponseWriter, r *http.Reque
 		tenantID, _ = uuid.Parse(tenantIDStr)
 	}
 
-	// Get all retention policies
-	retentionPolicies.mu.RLock()
-	policies := []*RetentionPolicy{}
-	for _, p := range retentionPolicies.policies {
-		if !p.Enabled {
-			continue
+	// Get all retention policies from PG
+	var policies []*RetentionPolicy
+	if s.memMapRepo2 != nil {
+		rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_retention_policies")
+		for _, row := range rows {
+			p := &RetentionPolicy{
+				ID: amGetString(row, "id"), TenantID: amGetString(row, "tenant_id"),
+				EventType: amGetString(row, "event_type"), Action: amGetString(row, "action"),
+				Enabled: amGetBool(row, "enabled"),
+			}
+			if !p.Enabled { continue }
+			if tenantIDStr != "" && p.TenantID != tenantIDStr { continue }
+			policies = append(policies, p)
 		}
-		if tenantIDStr != "" && p.TenantID != tenantIDStr {
-			continue
-		}
-		policies = append(policies, p)
 	}
-	retentionPolicies.mu.RUnlock()
 
 	if len(policies) == 0 {
 		writeJSON(w, http.StatusOK, map[string]any{
