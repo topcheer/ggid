@@ -31,6 +31,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/service"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -102,7 +103,23 @@ func main() {
 		// Wire ITDR detection engine into the consumer loop.
 		if db != nil {
 			engineRepo := repository.NewITDRRepository(db)
-			engine := detection.NewEngine(engineRepo, detection.NewMemStateStore())
+
+			// Use Redis StateStore for multi-replica safety. Fall back to MemStateStore if Redis unavailable.
+			var stateStore detection.StateStore
+			if redisURL := os.Getenv("REDIS_URL"); redisURL != "" {
+				opts, err := redis.ParseURL(redisURL)
+				if err == nil {
+					rdb := redis.NewClient(opts)
+					stateStore = detection.NewRedisStateStore(rdb)
+					log.Println("Audit Service: ITDR using Redis StateStore (multi-replica safe)")
+				}
+			}
+			if stateStore == nil {
+				stateStore = detection.NewMemStateStore()
+				log.Println("Audit Service: ITDR using MemStateStore (single-replica only)")
+			}
+
+			engine := detection.NewEngine(engineRepo, stateStore)
 			nc.SetEngine(engine)
 			log.Println("Audit Service: ITDR detection engine enabled")
 		}

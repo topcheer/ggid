@@ -23,13 +23,12 @@
 | ID | Task | Assignee | Started | Notes |
 |----|------|----------|---------|-------|
 | B-06 | RFC 8693 Token Exchange 标准 grant | backend | 07-17 | docs/research/token-exchange-standard-grant-gap.md |
-| B-15 | IGA GenAI 回收建议端点 | backend | 07-17 | 规则先行版 90天未使用 |
+| B-11 | ITDR Phase 4: Redis StateStore | backend | 07-17 | 替换 MemStateStore |
 
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
 | B-07 | PAM JIT Zero Standing 实现 | P1 | services/policy/ + services/auth/ | request→approve→temp bind→expire→revoke→audit。参考 docs/architecture/pam-jit-design.md |
-| B-11 | ITDR Phase 4：Redis StateStore 替换 MemStateStore | P2 | services/audit/ | 多副本安全 |
 | B-12 | SCIM bearer token 实现 | P1 | services/identity/ + services/gateway/ | ggid_scim_ 前缀 + Argon2id + tenant 绑定。参考 docs/architecture/internal-auth-and-scim-token-design.md |
 | B-13 | ZT /api/v1/zt/posture 真实聚合端点 | P2 | services/identity/ | 设备信任+MFA覆盖+critical+session绑定 |
 | B-14 | CIEM /api/v1/identity/entitlement-review/cross-analysis | P2 | services/identity/ | 授予×使用交叉分析 |
@@ -45,6 +44,7 @@
 | B-08 | break-glass 内存数组迁 DB | backend | 88a85dfd |
 | B-09 | IGA revoke 写 audit 事件 | backend | 008762a4 |
 | B-10 | ITDR Phase 4：3 条新规则 | backend | f1c85214 |
+| B-15 | IGA GenAI 回收建议端点 | backend | 76aee44c |
 | B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | f3580d58 |
 
 ## === FRONTEND (console/src/) ===
