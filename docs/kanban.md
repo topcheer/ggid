@@ -169,6 +169,8 @@
 | — | FAPI 2.0 profile | backend | ccae234f |
 | F-42 | WASM Plugin Management Console (5 tabs, 10 hooks, upload wizard) | frontend | f7355534 |
 | F-43 | Identity Analytics & Reporting Dashboard (5 tabs, SVG charts, compliance gen) | frontend | fa83a950 |
+| F-44 | Zero-Trust Secret Broker (5 tabs, Vault-level, JIT linkage) | frontend | 7f4c1855 |
+| F-45 | Threat Intelligence Hub (5 tabs, CrowdStrike-level, ITDR correlation) | frontend | 52fe00bd |
 
 ## Research Pipeline
 
