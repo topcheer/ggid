@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-15 (Round 41: ReBAC/Zanzibar research complete — 7 new backlog items)*
+*Last updated: 2026-07-15 (Round 42: Identity Orchestration research complete — 8 new backlog items)*
 
 ## Current Stats
 
@@ -43,6 +43,14 @@
 | 17 | **ReBAC evaluator integration** (P0) | backend | Policy service | Wire ReBAC as 3rd layer in evaluator.Check() pipeline |
 | 18 | **ReBAC Redis caching** (P1) | backend | Performance | Tuple cache with write invalidation |
 | 19 | **ReBAC console UI** (P2) | frontend | Developer experience | Schema editor, tuple browser, check playground |
+| 20 | **Journey definition store** (P0) | backend | Configurable auth flows | PostgreSQL tables for journey_definitions, bindings, executions, sessions |
+| 21 | **Journey engine + JDL parser** (P0) | backend | Identity orchestration | YAML Journey Definition Language + state machine executor. See docs/research/identity-orchestration-journeys.md |
+| 22 | **Journey core nodes** (P0) | backend | Auth extensibility | password_verify, risk_assessment, mfa_orchestrate, issue_tokens, conditional (CEL) |
+| 23 | **Journey management + execution API** (P0) | backend | REST + gRPC | CRUD journeys, bindings, start/resume execution, dry-run |
+| 24 | **Auth service integration** (P0) | backend | Replace hardcoded Login() | Wire Journey Engine as auth flow dispatcher (backward-compatible default journey) |
+| 25 | **Journey templates + dry-run** (P1) | backend | Developer experience | Pre-built templates (login, registration, recovery) + simulation mode |
+| 26 | **Journey visual builder** (P2) | frontend | Console UI | Drag-and-drop canvas with React Flow, node config panel, edge labels |
+| 27 | **Journey analytics** (P3) | backend | Observability | Conversion rates, drop-off points, per-step latency dashboards |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -70,6 +78,7 @@
 1. OAuth 2.1 / FAPI 2.0 research → DONE
 2. Console mock-pages audit (continuing)
 3. ReBAC / Zanzibar fine-grained authz → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md) — 7 backlog items added
+4. Identity Orchestration / Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md) — 8 backlog items added
 
 ## Rules
 
@@ -82,12 +91,13 @@
 ## Research Pipeline
 
 Active research topics:
+- Identity Orchestration / Configurable Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md)
 - ReBAC / Google Zanzibar fine-grained authorization → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md)
 - OAuth 2.1 / FAPI 2.0 compliance gap analysis
 - PQC migration for IAM systems
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
-- **Next**: Identity orchestration / adaptive auth journeys
+- **Next**: Cloud IAM federation (AWS IAM / Azure AD / GCP IAM)
 
 See docs/research/ for full research docs.

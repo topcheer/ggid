@@ -1,6 +1,6 @@
 # GGID Kanban Board
 
-*Last updated: 2026-07-15 by ggcxf (researcher)*
+*Last updated: 2026-07-15 by ggcxf (researcher) — Round 2: Identity Orchestration journeys*
 
 ## Backlog (Ready for Implementation)
 
@@ -58,8 +58,19 @@
 | KB-033 | Multi-region active-active | arch | P3 | tech-debt.md |
 | KB-034 | Vault/KMS integration | arch | P3 | tech-debt.md |
 | KB-035 | Plugin system architecture | arch | P3 | tech-debt.md |
-| KB-036 | **Identity orchestration** (adaptive journeys) | backend | P3 | next research |
+| KB-036 | ~~**Identity orchestration** (adaptive journeys)~~ → Promoted to P0/P1 below | — | DONE (research) | — |
 | KB-037 | **Cloud IAM federation** (AWS/Azure/GCP) | backend | P3 | next research |
+| KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
+| KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
+| KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
+| KB-041 | **Core node executors** (password, risk, MFA, tokens) | backend | P0 | identity-orchestration | 4d |
+| KB-042 | **CEL condition evaluator** | backend | P0 | identity-orchestration | 3d |
+| KB-043 | **Journey management + execution API** | backend | P0 | identity-orchestration | 5d |
+| KB-044 | **Auth service integration** (replace hardcoded flow) | backend | P0 | identity-orchestration | 3d |
+| KB-045 | **Dry-run / simulation mode** | backend | P1 | identity-orchestration | 3d |
+| KB-046 | **Journey templates** (login, registration, recovery) | backend | P1 | identity-orchestration | 2d |
+| KB-047 | **Visual flow builder** (Console drag-and-drop) | frontend | P2 | identity-orchestration | 5d |
+| KB-048 | **Journey analytics** (conversion, drop-off, latency) | backend | P3 | identity-orchestration | 3d |
 
 ## In Progress
 
@@ -69,7 +80,8 @@
 
 | ID | Title | Owner | Commit |
 |----|-------|-------|--------|
-| — | ReBAC/Zanzibar research doc | researcher | pending commit |
+| — | Identity Orchestration / Journeys research doc | researcher | pending commit |
+| — | ReBAC/Zanzibar research doc | researcher | 4ce3b8ba |
 | — | PIPL/NIS2/CRA compliance research | arch | done |
 | — | OAuth 2.1 enforcement mode | backend | dfcb8a7f |
 | — | FAPI 2.0 profile | backend | ccae234f |
@@ -81,8 +93,8 @@
 | ReBAC / Google Zanzibar | DONE | docs/research/rebac-zanzibar-fine-grained-authz.md |
 | OAuth 2.1 / FAPI 2.0 | DONE | docs/research/oauth21-fapi-fedcm-gap.md |
 | PIPL/NIS2/CRA | DONE | docs/research/nis2-cra-pipl-compliance.md |
-| Identity Orchestration | NEXT | — |
-| Cloud IAM Federation | PLANNED | — |
+| Identity Orchestration | DONE | docs/research/identity-orchestration-journeys.md |
+| Cloud IAM Federation | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
