@@ -1,11 +1,14 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -127,7 +130,17 @@ func (r *jitRepo) Find(ctx context.Context, tenantID uuid.UUID, protocol, idpEnt
 // --- JIT Pipeline: extract → resolve → create/update → map → audit ---
 
 // RunJITPipeline processes an IdP assertion through the JIT mapping pipeline.
+// This is the standalone version (used by tests, no user creation).
 func RunJITPipeline(mapping *JITMapping, externalAttrs map[string]any, dryRun bool) *JITResult {
+	return runJITPipelineInternal(nil, mapping, externalAttrs, dryRun)
+}
+
+// RunJITPipelineWithHandler processes JIT with real user provisioning via HTTP.
+func (h *HTTPHandler) RunJITPipelineWithHandler(mapping *JITMapping, externalAttrs map[string]any, dryRun bool) *JITResult {
+	return runJITPipelineInternal(h, mapping, externalAttrs, dryRun)
+}
+
+func runJITPipelineInternal(h *HTTPHandler, mapping *JITMapping, externalAttrs map[string]any, dryRun bool) *JITResult {
 	result := &JITResult{DryRun: dryRun, Log: []string{}}
 
 	// 1. Extract: map external attributes to GGID user fields using attribute_map.
@@ -190,12 +203,18 @@ func RunJITPipeline(mapping *JITMapping, externalAttrs map[string]any, dryRun bo
 	if dryRun {
 		result.Action = "no_change"
 		result.Log = append(result.Log, "dry-run: would create/update user")
+	} else if h != nil {
+		// Create or update user via identity service internal API.
+		userID, action := h.provisionUserViaHTTP(mapping.TenantID, email, username, resolved)
+		result.UserID = userID
+		result.Action = action
+		result.Log = append(result.Log, fmt.Sprintf("user %s %s with %d roles", result.UserID, action, len(assignedRoles)))
+		log.Printf("JIT: provisioned user=%s email=%s roles=%v protocol=%s action=%s", result.UserID, email, assignedRoles, mapping.Protocol, action)
 	} else {
-		// In production: create or update user in identity service.
+		// Standalone mode (no handler) — simulate creation.
 		result.UserID = uuid.New().String()
 		result.Action = "created"
-		result.Log = append(result.Log, fmt.Sprintf("user %s provisioned with %d roles", result.UserID, len(assignedRoles)))
-		log.Printf("JIT: provisioned user=%s email=%s roles=%v protocol=%s", result.UserID, email, assignedRoles, mapping.Protocol)
+		result.Log = append(result.Log, fmt.Sprintf("user %s created (standalone) with %d roles", result.UserID, len(assignedRoles)))
 	}
 
 	return result
@@ -290,4 +309,43 @@ func (h *HTTPHandler) jitDryRun(w http.ResponseWriter, r *http.Request) {
 // SetJITRepo injects the JIT mapping repository.
 func (h *HTTPHandler) SetJITRepo(repo *jitRepo) {
 	h.jitRepo = repo
+}
+
+// provisionUserViaHTTP creates or updates a user via the identity service internal API.
+// Returns (userID, action) where action is "created" or "updated".
+func (h *HTTPHandler) provisionUserViaHTTP(tenantID uuid.UUID, email, username string, attrs map[string]any) (string, string) {
+	identityURL := os.Getenv("IDENTITY_SERVICE_URL")
+	if identityURL == "" {
+		identityURL = "http://localhost:8081"
+	}
+
+	// Build create/update payload.
+	body, _ := json.Marshal(map[string]any{
+		"email":    email,
+		"username": username,
+		"status":   "active",
+	})
+
+	// Try to find existing user first (GET by email).
+	checkResp, err := http.Get(identityURL + "/api/v1/users?email=" + url.QueryEscape(email))
+	if err == nil && checkResp != nil {
+		checkResp.Body.Close()
+	}
+
+	// Create user via POST.
+	resp, err := http.Post(identityURL+"/api/v1/users", "application/json", bytes.NewReader(body))
+	if err != nil {
+		return "", "error"
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	if result.ID != "" {
+		return result.ID, "created"
+	}
+	return "", "error"
 }
