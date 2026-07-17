@@ -230,6 +230,14 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/hash-chain", s.handleHashChainStatus)
 	mux.HandleFunc("/api/v1/event-correlation/rules", s.handleEventCorrelationRules)
 	mux.HandleFunc("/api/v1/compliance/schedules", s.handleComplianceSchedulesList)
+
+	// ITDR advanced: composite rules + incidents + kill chain + playbooks + heatmap.
+	mux.HandleFunc("/api/v1/audit/itdr/composite-rules", s.handleITDRComposite)
+	mux.HandleFunc("/api/v1/audit/itdr/composite-rules/", s.handleITDRComposite)
+	mux.HandleFunc("/api/v1/audit/itdr/incidents", s.handleITDRIncidents)
+	mux.HandleFunc("/api/v1/audit/itdr/kill-chain/", s.handleITDRKillChain)
+	mux.HandleFunc("/api/v1/audit/itdr/playbooks", s.handleITDRPlaybooks)
+	mux.HandleFunc("/api/v1/audit/itdr/threat-heatmap", s.handleITDRThreatHeatmap)
 }
 
 // GET /api/v1/audit/events?tenant_id=X&action=Y&result=Z&page_size=N
