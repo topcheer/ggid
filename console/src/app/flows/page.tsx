@@ -71,8 +71,6 @@ const STEP_MAP: Record<string, StepTypeDef> = Object.fromEntries(
 );
 
 function getStepDef(type: StepType): StepTypeDef {
-  const t = useTranslations();
-
   return STEP_MAP[type] || STEP_TYPES[0];
 }
 
