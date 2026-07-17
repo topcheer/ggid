@@ -22,7 +22,15 @@
     "exports": "Data Export",
     "flows": "Login Flows",
     "orgAnalytics": "Org Analytics",
-    "apiExplorer": "API Explorer"
+    "apiExplorer": "API Explorer",
+    "riskScore": "Risk Score",
+    "threatIntel": "Threat Intelligence",
+    "rebac": "ReBAC Console",
+    "passkeyManagement": "Passkey Management",
+    "jitElevation": "JIT Elevation",
+    "scimConfig": "SCIM Config",
+    "ldapConfig": "LDAP Config",
+    "ldapSync": "LDAP Sync"
   },
   "common": {
     "loading": "Loading...",

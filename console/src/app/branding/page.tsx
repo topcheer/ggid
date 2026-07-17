@@ -228,22 +228,22 @@ export default function BrandingPage() {
                     Sign In
                   </button>
                   <div className="text-center">
-                    <a href="#" className="text-xs" style={{ color: accentColor }}>Forgot password?</a>
+                    <a href="#" className="text-xs" style={{ color: accentColor }}>{t("branding.forgotPassword")}</a>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                 <div className="h-16 flex items-center px-4" style={{ backgroundColor: primaryColor }}>
-                  {logo ? <img src={logo} alt="Branded login logo" className="h-8" /> : <span className="text-white font-bold">Your Brand</span>}
+                  {logo ? <img src={logo} alt="Branded login logo" className="h-8" /> : <span className="text-white font-bold">{t("branding.yourBrand")}</span>}
                 </div>
                 <div className="p-4 bg-white dark:bg-gray-900">
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Welcome to GGID</h4>
-                  <p className="text-xs text-gray-500 mt-1">Your verification code is:</p>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{t("branding.welcomeToGgid")}</h4>
+                  <p className="text-xs text-gray-500 mt-1">{t("branding.verificationCode")}</p>
                   <div className="my-2 p-2 rounded text-center text-2xl font-bold tracking-widest text-white" style={{ backgroundColor: accentColor }}>
                     123456
                   </div>
-                  <p className="text-xs text-gray-400">This code expires in 10 minutes.</p>
+                  <p className="text-xs text-gray-400">{t("branding.expiresIn")}</p>
                 </div>
                 <div className="px-4 py-2 text-xs text-gray-400" style={{ backgroundColor: secondaryColor, color: "#fff8" }}>
                   &copy; 2024 Your Brand. All rights reserved.

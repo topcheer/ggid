@@ -61,11 +61,11 @@ export default function SSOPage() {
       const data = await apiFetch<{ providers?: SSOProvider[]; items?: SSOProvider[] }>("/api/v1/settings/sso/providers").catch(() => null);
       setProviders(data?.providers ?? data?.items ?? []);
     } catch {
-      setError("Failed to load SSO providers");
+      setError(t("sso.testFailed"));
     } finally {
       setLoading(false);
     }
-  }, [apiFetch]);
+  }, [apiFetch, t]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -95,7 +95,7 @@ export default function SSOPage() {
       setShowAdd(false);
       await load();
     } catch {
-      setError("Failed to create SSO provider");
+      setError(t("sso.testFailed"));
     } finally {
       setCreating(false);
     }
@@ -157,10 +157,10 @@ export default function SSOPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <Shield className="h-6 w-6 text-indigo-600" /> SSO Providers
+            <Shield className="h-6 w-6 text-indigo-600" /> {t("sso.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Configure external identity providers for single sign-on.
+            {t("sso.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
@@ -169,7 +169,7 @@ export default function SSOPage() {
             <input aria-label="Input field" type="file" accept=".xml" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMetadataUpload(f); }} />
           </label>
           <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-            <Plus className="h-4 w-4" /> Add Provider
+            <Plus className="h-4 w-4" /> {t("sso.addProvider")}
           </button>
         </div>
       </div>
@@ -198,7 +198,7 @@ export default function SSOPage() {
         <div className={cardCls}>
           <div className="py-12 text-center">
             <Shield className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-4 text-sm text-gray-400">No SSO providers configured. Add one or upload SAML metadata.</p>
+            <p className="mt-4 text-sm text-gray-400">{t("sso.noProviders")}</p>
           </div>
         </div>
       ) : (
@@ -257,7 +257,7 @@ export default function SSOPage() {
                     className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     {testing === p.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
-                    Test Connection
+                    {t("sso.test")}
                   </button>
                   <button onClick={() => setConfirmDelete(p)} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20">
                     <Trash2 className="h-3.5 w-3.5" />
@@ -274,13 +274,13 @@ export default function SSOPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAdd(false)}>
           <div role="dialog" aria-modal="true" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Add SSO Provider</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{t("sso.addProvider")}</h2>
               <button onClick={() => setShowAdd(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-4">
               {/* Provider type selector */}
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Provider Type</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("sso.providerType")}</label>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   {PROVIDER_TYPES.map((t) => {
                     const Icon = t.icon;
@@ -296,26 +296,26 @@ export default function SSOPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Display Name</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("sso.providerName")}</label>
                 <input aria-label="e.g. Corporate Okta" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="e.g. Corporate Okta" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
               </div>
 
               {form.type === "saml" && (
                 <>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Entity ID</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("sso.entityId")}</label>
                     <input aria-label="https://idp.example.com/entity" value={form.entity_id} onChange={(e) => setForm((p) => ({ ...p, entity_id: e.target.value }))} placeholder="https://idp.example.com/entity" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">SSO URL</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("sso.ssoUrl")}</label>
                     <input aria-label="https://idp.example.com/sso" value={form.sso_url} onChange={(e) => setForm((p) => ({ ...p, sso_url: e.target.value }))} placeholder="https://idp.example.com/sso" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Metadata URL (optional)</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("sso.metadataUrl")}</label>
                     <input aria-label="https://idp.example.com/metadata" value={form.metadata_url} onChange={(e) => setForm((p) => ({ ...p, metadata_url: e.target.value }))} placeholder="https://idp.example.com/metadata" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">X.509 Certificate</label>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("sso.certificate")}</label>
                     <textarea aria-label="-----BEGIN CERTIFICATE-----" value={form.certificate} onChange={(e) => setForm((p) => ({ ...p, certificate: e.target.value }))} placeholder="-----BEGIN CERTIFICATE-----" rows={3} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs dark:border-gray-600 dark:bg-gray-700 dark:text-white" />
                   </div>
                 </>
@@ -347,13 +347,13 @@ export default function SSOPage() {
 
               <label className="flex cursor-pointer items-center gap-2">
                 <input aria-label="Form" type="checkbox" checked={form.jit_provisioning} onChange={(e) => setForm((p) => ({ ...p, jit_provisioning: e.target.checked }))} className="rounded border-gray-300 text-indigo-600" />
-                <span className="text-sm text-gray-600 dark:text-gray-300">Enable JIT provisioning (auto-create users on first login)</span>
+                <span className="text-sm text-gray-600 dark:text-gray-300">{t("sso.jitProvisioning")}</span>
               </label>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <button onClick={() => setShowAdd(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
               <button onClick={handleCreate} disabled={!form.name.trim() || creating} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
-                {creating && <Loader2 className="h-4 w-4 animate-spin" />} Add Provider
+                {creating && <Loader2 className="h-4 w-4 animate-spin" />} {t("sso.addProvider")}
               </button>
             </div>
           </div>

@@ -68,6 +68,7 @@ function buildTree(orgs: Organization[]): OrgNode[] {
 
 export default function OrgChartPage() {
   const { apiFetch } = useApi();
+  const t = useTranslations();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -345,9 +346,9 @@ export default function OrgChartPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold dark:text-gray-100">Organization Chart</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{t("orgChart.title")}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Drag org cards to reassign. Click the gear to edit settings.
+            {t("orgChart.subtitle")}
           </p>
         </div>
       </div>
@@ -408,6 +409,7 @@ function SettingsDrawer({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations();
   const [name, setName] = useState(org.name);
   const [description, setDescription] = useState(org.description || "");
   const [defaultRole, setDefaultRole] = useState("");
@@ -496,7 +498,7 @@ function SettingsDrawer({
         <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
           <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Building2 className="h-5 w-5 text-brand-600" />
-            Org Settings
+            {t("orgChart.settings")}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
             <X className="h-5 w-5" />

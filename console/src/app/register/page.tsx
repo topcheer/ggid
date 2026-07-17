@@ -49,33 +49,33 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white text-xl font-bold">G</div>
-          <h1 className="text-2xl font-bold dark:text-gray-100">Create Account</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started with GGID</p>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{t("register.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("register.getStarted")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">{error}</div>}
 
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Username</label>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("register.username")}</label>
             <input aria-label="johndoe" value={username} onChange={(e) => setUsername(e.target.value)} required autoFocus className={inputCls} placeholder="johndoe" />
           </div>
           <div className="mb-4">
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Email</label>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("register.email")}</label>
             <input autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required className={inputCls} placeholder="you@example.com" />
           </div>
           <div className="mb-6">
-            <label className="mb-1 block text-sm font-medium dark:text-gray-300">Password</label>
+            <label className="mb-1 block text-sm font-medium dark:text-gray-300">{t("register.password")}</label>
             <input autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} type="password" required className={inputCls} placeholder="••••••••" />
           </div>
 
           <button type="submit" disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50" aria-label="UserPlus">
-            {loading ? "Creating..." : <><UserPlus className="h-4 w-4" /> Create Account</>}
+            {loading ? t("register.creating") : <><UserPlus className="h-4 w-4" /> {t("register.createAccount")}</>}
           </button>
 
           <p className="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
-            Already have an account?{" "}
-            <a href="/login" className="font-medium text-brand-600 hover:underline">Sign In</a>
+            {t("register.alreadyHaveAccount")}{" "}
+            <a href="/login" className="font-medium text-brand-600 hover:underline">{t("register.signIn")}</a>
           </p>
         </form>
       </div>

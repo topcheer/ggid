@@ -113,6 +113,7 @@ interface ContextMenuState {
 
 export default function OrganizationTreePage() {
   const { apiFetch } = useApi();
+  const { t } = useI18n();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -624,16 +625,16 @@ export default function OrganizationTreePage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold dark:text-gray-100">Organization Tree</h1>
+          <h1 className="text-2xl font-bold dark:text-gray-100">{t("orgTree.title")}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Drag cards to reassign parent. Right-click for context menu.
+            {t("orgTree.subtitle")}
           </p>
         </div>
         <button
           onClick={openCreateRoot}
           className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
         >
-          <Plus className="h-4 w-4" /> Add Root Org
+          <Plus className="h-4 w-4" /> {t("orgTree.addOrg")}
         </button>
       </div>
 

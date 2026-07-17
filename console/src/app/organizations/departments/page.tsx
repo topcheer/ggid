@@ -135,11 +135,11 @@ export default function DepartmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <Building2 className="h-6 w-6 text-indigo-600" /> Departments
+            <Building2 className="h-6 w-6 text-indigo-600" /> {t("departments.title")}
           </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Hierarchical department tree with budget, headcount, and cost center tracking.</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("departments.subtitle")}</p>
         </div>
-        <button onClick={() => startAdd()} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Plus className="h-4 w-4" /> Add Department</button>
+        <button onClick={() => startAdd()} className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"><Plus className="h-4 w-4" /> {t("departments.addDepartment")}</button>
       </div>
 
       {error && (
@@ -151,7 +151,7 @@ export default function DepartmentsPage() {
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-indigo-600" /></div>
       ) : departments.length === 0 ? (
-        <div className={cardCls}><div className="py-12 text-center"><Building2 className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">No departments defined.</p></div></div>
+        <div className={cardCls}><div className="py-12 text-center"><Building2 className="mx-auto h-12 w-12 text-gray-300" /><p className="mt-4 text-sm text-gray-400">{t("departments.noDepartments")}</p></div></div>
       ) : (
         <div className={cardCls}>
           {/* Summary row */}
@@ -169,23 +169,23 @@ export default function DepartmentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAdd(false)}>
           <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{editDept ? "Edit Department" : "New Department"}</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{editDept ? t("departments.editDepartment") : t("departments.addDepartment")}</h2>
               <button onClick={() => setShowAdd(false)} aria-label="Close"><X className="h-5 w-5 text-gray-400" /></button>
             </div>
             <div className="mt-4 space-y-3">
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Name</label><input aria-label="Engineering" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Engineering" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("departments.departmentName")}</label><input aria-label="Engineering" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Engineering" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
               <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Parent Department</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("departments.parentDepartment")}</label>
                 <select aria-label="form" value={form.parent_id} onChange={(e) => setForm((p) => ({ ...p, parent_id: e.target.value }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white">
-                  <option value="">None (Top-level)</option>
+                  <option value="">{t("departments.rootLevel")}</option>
                   {allDepts.filter((d) => d.id !== editDept?.id).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Headcount</label><input aria-label="form" type="number" value={form.headcount} onChange={(e) => setForm((p) => ({ ...p, headcount: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
-                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Budget ($)</label><input aria-label="form" type="number" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("departments.headcount")}</label><input aria-label="form" type="number" value={form.headcount} onChange={(e) => setForm((p) => ({ ...p, headcount: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+                <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("departments.budget")}</label><input aria-label="form" type="number" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
               </div>
-              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cost Center</label><input aria-label="CC-1000" value={form.cost_center} onChange={(e) => setForm((p) => ({ ...p, cost_center: e.target.value }))} placeholder="CC-1000" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
+              <div><label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("departments.costCenter")}</label><input aria-label="CC-1000" value={form.cost_center} onChange={(e) => setForm((p) => ({ ...p, cost_center: e.target.value }))} placeholder="CC-1000" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></div>
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setShowAdd(false)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
@@ -199,7 +199,7 @@ export default function DepartmentsPage() {
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setConfirmDelete(null)}>
           <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl dark:bg-gray-800" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3"><div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><Trash2 className="h-5 w-5 text-red-600" /></div><div><h2 className="font-semibold text-gray-900 dark:text-white">Delete {confirmDelete.name}?</h2><p className="text-sm text-gray-500">This department and all sub-departments will be removed.</p></div></div>
+            <div className="flex items-center gap-3"><div className="rounded-full bg-red-100 p-2 dark:bg-red-900/30"><Trash2 className="h-5 w-5 text-red-600" /></div><div><h2 className="font-semibold text-gray-900 dark:text-white">Delete {confirmDelete.name}?</h2><p className="text-sm text-gray-500">{t("departments.deleteConfirm")}</p></div></div>
             <div className="mt-5 flex justify-end gap-2"><button onClick={() => setConfirmDelete(null)} className="rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button><button onClick={() => handleDelete(confirmDelete.id)} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700">Delete</button></div>
           </div>
         </div>

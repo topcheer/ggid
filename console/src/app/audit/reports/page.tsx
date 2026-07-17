@@ -276,7 +276,7 @@ export default function AuditReportsPage() {
         ))}
         <circle cx={cx} cy={cy} r={45} fill="white" />
         <text x={cx} y={cy - 5} textAnchor="middle" fontSize={18} fontWeight={700} fill="#374151">{total}</text>
-        <text x={cx} y={cy + 12} textAnchor="middle" fontSize={10} fill="#9ca3af">Total Events</text>
+        <text x={cx} y={cy + 12} textAnchor="middle" fontSize={10} fill="#9ca3af">{t("auditReports.totalEvents")}</text>
       </svg>
     );
   };
@@ -285,7 +285,7 @@ export default function AuditReportsPage() {
     if (chartData.length === 0) {
       return (
         <div className="flex h-[250px] items-center justify-center text-sm text-gray-400">
-          No data to display
+          {t("auditReports.noData")}
         </div>
       );
     }
@@ -362,8 +362,8 @@ export default function AuditReportsPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between no-print">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Audit Report Builder</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Build, visualize, and schedule custom audit reports</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t("auditReports.title")}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("auditReports.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => window.print()} className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
@@ -395,31 +395,31 @@ export default function AuditReportsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
-                <label className={labelCls}><Calendar className="mr-1 inline h-3.5 w-3.5" />Date From</label>
+                <label className={labelCls}><Calendar className="mr-1 inline h-3.5 w-3.5" />{t("auditReports.from")}</label>
                 <input aria-label="config" type="date" value={config.date_from} onChange={(e) => setConfig({ ...config, date_from: e.target.value })} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}><Calendar className="mr-1 inline h-3.5 w-3.5" />Date To</label>
+                <label className={labelCls}><Calendar className="mr-1 inline h-3.5 w-3.5" />{t("auditReports.to")}</label>
                 <input aria-label="config" type="date" value={config.date_to} onChange={(e) => setConfig({ ...config, date_to: e.target.value })} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}><Filter className="mr-1 inline h-3.5 w-3.5" />User Search</label>
+                <label className={labelCls}><Filter className="mr-1 inline h-3.5 w-3.5" />{t("auditReports.userSearch")}</label>
                 <input aria-label="username or ID..." type="text" value={config.user_search} onChange={(e) => setConfig({ ...config, user_search: e.target.value })} placeholder="username or ID..." className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Event Type</label>
+                <label className={labelCls}>{t("auditReports.eventType")}</label>
                 <select aria-label="config" value={config.event_type} onChange={(e) => setConfig({ ...config, event_type: e.target.value })} className={inputCls}>
                   {EVENT_TYPES.map((t) => <option key={t} value={t}>{t === "all" ? "All Events" : t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Severity</label>
+                <label className={labelCls}>{t("auditReports.severity")}</label>
                 <select aria-label="config" value={config.severity} onChange={(e) => setConfig({ ...config, severity: e.target.value })} className={inputCls}>
                   {SEVERITIES.map((s) => <option key={s} value={s}>{s === "all" ? "All Severities" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Service</label>
+                <label className={labelCls}>{t("auditReports.service")}</label>
                 <select aria-label="config" value={config.service} onChange={(e) => setConfig({ ...config, service: e.target.value })} className={inputCls}>
                   {SERVICES.map((s) => <option key={s} value={s}>{s === "all" ? "All Services" : s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
@@ -429,7 +429,7 @@ export default function AuditReportsPage() {
             {/* Group By + Chart Type */}
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={labelCls}>Group By</label>
+                <label className={labelCls}>{t("auditReports.groupBy")}</label>
                 <div className="flex flex-wrap gap-2">
                   {(["none", "day", "user", "service", "event_type"] as const).map((g) => (
                     <label key={g} className={`cursor-pointer rounded-lg border px-3 py-1.5 text-xs font-medium ${config.group_by === g ? "border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/30 dark:text-brand-400" : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-400"}`}>
@@ -440,7 +440,7 @@ export default function AuditReportsPage() {
                 </div>
               </div>
               <div>
-                <label className={labelCls}>Chart Type</label>
+                <label className={labelCls}>{t("auditReports.chartType")}</label>
                 <div className="flex gap-2">
                   {([
                     { v: "bar", icon: BarChart3, label: "Bar" },
@@ -460,7 +460,7 @@ export default function AuditReportsPage() {
           {/* Chart Preview */}
           <div className={cardCls}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Chart Preview</h2>
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">{t("auditReports.preview")}</h2>
               {loading && <RefreshCw className="h-4 w-4 animate-spin text-gray-400" />}
             </div>
             {renderChart()}
@@ -520,7 +520,7 @@ export default function AuditReportsPage() {
           <div className={cardCls}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-                <Clock className="h-4 w-4 text-brand-600" /> Schedule Report
+                <Clock className="h-4 w-4 text-brand-600" /> {t("auditReports.schedule")}
               </h2>
               <label className="relative inline-flex cursor-pointer items-center">
                 <input aria-label="Schedule" type="checkbox" checked={schedule.enabled} onChange={(e) => setSchedule({ ...schedule, enabled: e.target.checked })} className="peer sr-only" />
@@ -532,7 +532,7 @@ export default function AuditReportsPage() {
             {schedule.enabled && (
               <div className="space-y-3">
                 <div>
-                  <label className={labelCls}>Frequency</label>
+                  <label className={labelCls}>{t("auditReports.frequency")}</label>
                   <select aria-label="schedule" value={schedule.frequency} onChange={(e) => setSchedule({ ...schedule, frequency: e.target.value as ScheduleConfig["frequency"] })} className={inputCls}>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
@@ -560,7 +560,7 @@ export default function AuditReportsPage() {
                   <input aria-label="schedule" type="time" value={schedule.time} onChange={(e) => setSchedule({ ...schedule, time: e.target.value })} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}><Mail className="mr-1 inline h-3.5 w-3.5" />Email Recipients</label>
+                  <label className={labelCls}><Mail className="mr-1 inline h-3.5 w-3.5" />{t("auditReports.recipients")}</label>
                   <input aria-label="admin@example.com, team@example.com" type="text" value={schedule.recipients} onChange={(e) => setSchedule({ ...schedule, recipients: e.target.value })} placeholder="admin@example.com, team@example.com" className={inputCls} />
                   <p className="mt-1 text-xs text-gray-400">Comma-separated email addresses</p>
                 </div>
@@ -570,13 +570,13 @@ export default function AuditReportsPage() {
 
           {/* Save button */}
           <button onClick={handleSaveReport} className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">
-            <Save className="h-4 w-4" /> Save Report Template
+            <Save className="h-4 w-4" /> {t("auditReports.saveReport")}
           </button>
 
           {/* Saved Reports */}
           <div className={cardCls}>
             <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
-              <FolderOpen className="h-4 w-4 text-brand-600" /> Saved Reports
+              <FolderOpen className="h-4 w-4 text-brand-600" /> {t("auditReports.savedReports")}
             </h2>
             {savedReports.length === 0 ? (
               <p className="py-4 text-center text-xs text-gray-400">No saved reports yet</p>

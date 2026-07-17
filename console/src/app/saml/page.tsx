@@ -414,13 +414,13 @@ export default function SAMLPage() {
         </div>
         <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1">
-            <span className="font-semibold text-blue-600 dark:text-blue-400">Tags</span>
+            <span className="font-semibold text-blue-600 dark:text-blue-400">{t("saml.tags")}</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="font-semibold text-green-600 dark:text-green-400">Attributes</span>
+            <span className="font-semibold text-green-600 dark:text-green-400">{t("saml.attributes")}</span>
           </span>
           <span className="flex items-center gap-1">
-            <span className="font-semibold text-orange-600 dark:text-orange-400">Values</span>
+            <span className="font-semibold text-orange-600 dark:text-orange-400">{t("saml.values")}</span>
           </span>
         </div>
       </div>
@@ -530,15 +530,15 @@ export default function SAMLPage() {
                   <CheckCircle className="h-4 w-4" /> {t("saml.certificateParsed")}
                 </div>
                 <dl className="grid grid-cols-2 gap-2 text-xs">
-                  <dt className="text-gray-500 dark:text-gray-400">Issuer</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">{t("saml.issuer")}</dt>
                   <dd className="break-all text-gray-800 dark:text-gray-200">{certInfo.issuer}</dd>
-                  <dt className="text-gray-500 dark:text-gray-400">Subject</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">{t("saml.subject")}</dt>
                   <dd className="break-all text-gray-800 dark:text-gray-200">{certInfo.subject}</dd>
-                  <dt className="text-gray-500 dark:text-gray-400">Valid From</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">{t("saml.validFrom")}</dt>
                   <dd className="text-gray-800 dark:text-gray-200">{new Date(certInfo.valid_from).toLocaleDateString()}</dd>
-                  <dt className="text-gray-500 dark:text-gray-400">Valid To</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">{t("saml.validTo")}</dt>
                   <dd className="text-gray-800 dark:text-gray-200">{new Date(certInfo.valid_to).toLocaleDateString()}</dd>
-                  <dt className="text-gray-500 dark:text-gray-400">Fingerprint (SHA1)</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">{t("saml.fingerprint")}</dt>
                   <dd className="break-all font-mono text-gray-800 dark:text-gray-200">{certInfo.fingerprint}</dd>
                 </dl>
               </div>
@@ -613,7 +613,7 @@ export default function SAMLPage() {
                 <dl className="space-y-2 text-xs">
                   {testResult.entity_id && (
                     <div>
-                      <dt className="text-gray-500 dark:text-gray-400">Entity ID</dt>
+                      <dt className="text-gray-500 dark:text-gray-400">{t("saml.entityId")}</dt>
                       <dd className="break-all text-gray-800 dark:text-gray-200">{testResult.entity_id}</dd>
                     </div>
                   )}
@@ -625,7 +625,7 @@ export default function SAMLPage() {
                   )}
                   {testResult.cert_info && (
                     <div>
-                      <dt className="text-gray-500 dark:text-gray-400">Cert Issuer</dt>
+                      <dt className="text-gray-500 dark:text-gray-400">{t("saml.certIssuer")}</dt>
                       <dd className="break-all text-gray-800 dark:text-gray-200">{testResult.cert_info.issuer}</dd>
                     </div>
                   )}

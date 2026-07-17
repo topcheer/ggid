@@ -418,7 +418,7 @@ export default function SessionsPage() {
               onClick={() => setShowRevokeAllModal(true)}
               className="flex items-center gap-2 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950"
             >
-              <Trash2 className="h-4 w-4" /> Revoke All
+              <Trash2 className="h-4 w-4" /> {t("sessions.revokeAll")}
             </button>
           )}
         </div>
@@ -495,7 +495,7 @@ export default function SessionsPage() {
         </h2>
         <div className="grid gap-6 md:grid-cols-3">
           <div>
-            <label className={labelCls}>Session Timeout (minutes)</label>
+            <label className={labelCls}>{t("sessions.sessionTimeout")}</label>
             <input
               type="number"
               min={5}
@@ -507,10 +507,10 @@ export default function SessionsPage() {
               }}
               className={`${inputCls} max-w-[160px]`}
             />
-            <p className="mt-1 text-xs text-gray-400">Range: 5 - 1440 minutes (24h)</p>
+            <p className="mt-1 text-xs text-gray-400">{t("sessions.timeoutHint")}</p>
           </div>
           <div>
-            <label className={labelCls}>Concurrent Sessions</label>
+            <label className={labelCls}>{t("sessions.concurrentSessions")}</label>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setLimitConcurrent(!limitConcurrent)}
@@ -524,11 +524,11 @@ export default function SessionsPage() {
                   }`}
                 />
               </button>
-              <span className="text-sm text-gray-600 dark:text-gray-400">Limit Concurrent Sessions</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">{t("sessions.limit")}</span>
             </div>
           </div>
           <div>
-            <label className={labelCls}>Max Sessions Per User</label>
+            <label className={labelCls}>{t("sessions.maxSessions")}</label>
             <input
               type="number"
               min={1}
@@ -605,7 +605,7 @@ export default function SessionsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-          <span className="ml-2 text-gray-500">Loading sessions...</span>
+          <span className="ml-2 text-gray-500">{t("sessions.loadingSessions")}</span>
         </div>
       ) : processedSessions.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -736,7 +736,7 @@ export default function SessionsPage() {
                             ) : (
                               <Trash2 className="h-3.5 w-3.5" />
                             )}
-                            Revoke
+                            {t("sessions.revoke")}
                           </button>
                         ) : (
                           <span className="text-xs text-gray-400">{t("sessions.current")}</span>
@@ -818,8 +818,7 @@ export default function SessionsPage() {
               </h2>
             </div>
             <p className="mb-6 text-sm text-gray-600 dark:text-gray-400">
-              This will sign out all devices except your current session. {sessions.length - 1} other session(s)
-              will be terminated. Continue?
+              {t("sessions.revokeConfirm")}
             </p>
             <div className="flex justify-end gap-2">
               <button
@@ -838,7 +837,7 @@ export default function SessionsPage() {
                 ) : (
                   <Trash2 className="h-4 w-4" />
                 )}
-                Revoke All
+                {t("sessions.revokeAll")}
               </button>
             </div>
           </div>

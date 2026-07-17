@@ -168,8 +168,8 @@ export default function ActivityLogPage() {
         <div className="flex items-center gap-3">
           <Activity className="h-7 w-7 text-brand-600" />
           <div>
-            <h1 className="text-2xl font-bold dark:text-gray-100">Activity Log</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Your personal activity history</p>
+            <h1 className="text-2xl font-bold dark:text-gray-100">{t("activity.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t("activity.subtitle")}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -198,7 +198,7 @@ export default function ActivityLogPage() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="mb-1 block text-xs text-gray-400">From Date</label>
+            <label className="mb-1 block text-xs text-gray-400">{t("activity.fromDate")}</label>
             <input
               type="date"
               value={dateFrom}
@@ -207,7 +207,7 @@ export default function ActivityLogPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-gray-400">To Date</label>
+            <label className="mb-1 block text-xs text-gray-400">{t("activity.toDate")}</label>
             <input
               type="date"
               value={dateTo}
@@ -216,7 +216,7 @@ export default function ActivityLogPage() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-gray-400">Event Type</label>
+            <label className="mb-1 block text-xs text-gray-400">{t("activity.eventType")}</label>
             <select
               value={eventTypeFilter}
               onChange={(e) => setEventTypeFilter(e.target.value)}
@@ -231,15 +231,15 @@ export default function ActivityLogPage() {
             </select>
           </div>
           <div>
-            <label className="mb-1 block text-xs text-gray-400">Result</label>
+            <label className="mb-1 block text-xs text-gray-400">{t("activity.result")}</label>
             <select
               value={resultFilter}
               onChange={(e) => setResultFilter(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               <option value="">{t("activity.allResults")}</option>
-              <option value="success">Success</option>
-              <option value="failure">Failure</option>
+              <option value="success">{t("activity.success")}</option>
+              <option value="failure">{t("activity.failure")}</option>
             </select>
           </div>
         </div>
@@ -264,11 +264,11 @@ export default function ActivityLogPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-              <th scope="col" className="px-4 py-3">Timestamp</th>
-              <th scope="col" className="px-4 py-3">Event Type</th>
-              <th scope="col" className="px-4 py-3">IP Address</th>
-              <th scope="col" className="hidden px-4 py-3 lg:table-cell">Device / User Agent</th>
-              <th scope="col" className="px-4 py-3">Result</th>
+              <th scope="col" className="px-4 py-3">{t("activity.timestamp")}</th>
+              <th scope="col" className="px-4 py-3">{t("activity.eventType")}</th>
+              <th scope="col" className="px-4 py-3">{t("activity.ipAddress")}</th>
+              <th scope="col" className="hidden px-4 py-3 lg:table-cell">{t("activity.userAgent")}</th>
+              <th scope="col" className="px-4 py-3">{t("activity.result")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -283,7 +283,7 @@ export default function ActivityLogPage() {
             {!loading && paginatedEvents.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">
-                  No activity events found
+                  {t("activity.noEvents")}
                 </td>
               </tr>
             )}
@@ -307,11 +307,11 @@ export default function ActivityLogPage() {
                   <td className="px-4 py-3">
                     {event.result === "success" ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                        <CheckCircle className="h-3 w-3" /> Success
+                        <CheckCircle className="h-3 w-3" /> {t("activity.success")}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                        <XCircle className="h-3 w-3" /> Failure
+                        <XCircle className="h-3 w-3" /> {t("activity.failure")}
                       </span>
                     )}
                   </td>
