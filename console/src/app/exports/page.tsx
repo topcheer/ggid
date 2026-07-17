@@ -58,8 +58,6 @@ const RECURRENCE_OPTIONS = [
 ];
 
 function statusBadge(status: string) {
-  const t = useTranslations();
-
   switch (status) {
     case "completed":
       return "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400";
@@ -83,6 +81,7 @@ function formatFileSize(bytes?: number): string {
 }
 
 export default function ExportsPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const [jobs, setJobs] = useState<ExportJob[]>([]);
   const [loading, setLoading] = useState(true);

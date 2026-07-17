@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useApi } from "@/lib/api";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, useTranslations } from "@/lib/i18n";
 import { Building2, TrendingUp, Users, Shield, Layers, RefreshCw } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -22,6 +22,7 @@ interface OrgStats {
 const PIE_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"];
 
 export default function OrgAnalyticsPage() {
+  const t = useTranslations();
   const { apiFetch, TENANT_ID } = useApi();
   const [stats, setStats] = useState<OrgStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,33 +77,33 @@ export default function OrgAnalyticsPage() {
 
   useEffect(() => { loadStats(); }, [loadStats]);
 
-  if (loading) return <p className="text-gray-500">Loading...</p>;
+  if (loading) return <p className="text-gray-500">{t("common.loading")}</p>;
   if (error) return (
     <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
   );
-  if (!stats) return <p className="text-gray-500">No data available</p>;
+  if (!stats) return <p className="text-gray-500">{t("common.noDataAvailable")}</p>;
 
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Organization Analytics</h1>
-          <p className="text-sm text-gray-500">Member trends, role distribution, and department insights</p>
+          <h1 className="text-2xl font-bold">{t("orgAnalytics.title")}</h1>
+          <p className="text-sm text-gray-500">{t("orgAnalytics.subtitle")}</p>
         </div>
         <button
           onClick={loadStats}
           className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
         >
-          <RefreshCw className="h-4 w-4" /> Refresh
+          <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
         </button>
       </div>
 
       {/* Stat cards */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Building2} label="Organizations" value={stats.total_orgs} color="indigo" />
-        <StatCard icon={Users} label="Total Members" value={stats.total_members} color="green" />
-        <StatCard icon={Layers} label="Departments" value={stats.total_departments} color="purple" />
-        <StatCard icon={Shield} label="Teams" value={stats.total_teams} color="amber" />
+        <StatCard icon={Building2} label={t("orgAnalytics.organizations")} value={stats.total_orgs} color="indigo" />
+        <StatCard icon={Users} label={t("orgAnalytics.totalMembers")} value={stats.total_members} color="green" />
+        <StatCard icon={Layers} label={t("orgAnalytics.departments")} value={stats.total_departments} color="purple" />
+        <StatCard icon={Shield} label={t("orgAnalytics.teams")} value={stats.total_teams} color="amber" />
       </div>
 
       {/* Growth trend */}
@@ -110,7 +111,7 @@ export default function OrgAnalyticsPage() {
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold">
             <TrendingUp className="h-4 w-4 text-brand-600" />
-            Member Growth Trend
+            {t("orgAnalytics.memberGrowthTrend")}
           </h3>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={stats.growth_trend}>
@@ -134,7 +135,7 @@ export default function OrgAnalyticsPage() {
       {/* Members by Org */}
         {stats.members_by_org.length > 0 && (
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-sm font-semibold">Members by Organization</h3>
+            <h3 className="mb-4 text-sm font-semibold">{t("orgAnalytics.membersByOrg")}</h3>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={stats.members_by_org} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={false} />
@@ -150,7 +151,7 @@ export default function OrgAnalyticsPage() {
       {/* Role Distribution */}
         {stats.role_distribution.length > 0 && (
           <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="mb-4 text-sm font-semibold">Role Distribution</h3>
+            <h3 className="mb-4 text-sm font-semibold">{t("orgAnalytics.roleDistribution")}</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
@@ -177,9 +178,9 @@ export default function OrgAnalyticsPage() {
       {stats.members_by_org.length === 0 && stats.role_distribution.length === 0 && (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm">
           <Building2 className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-          <p className="text-gray-500">No analytics data available yet</p>
+          <p className="text-gray-500">{t("orgAnalytics.noDataYet")}</p>
           <p className="mt-1 text-xs text-gray-400">
-            Data will populate as organizations and members are created.
+            {t("orgAnalytics.dataWillPopulate")}
           </p>
         </div>
       )}

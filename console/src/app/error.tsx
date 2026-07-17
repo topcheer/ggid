@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { RefreshCw, AlertTriangle } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
 export default function Error({
   error,
@@ -10,6 +11,7 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations();
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -20,20 +22,20 @@ export default function Error({
         <AlertTriangle className="h-10 w-10 text-red-500" />
       </div>
       <h1 className="mt-6 text-xl font-bold text-gray-900 dark:text-white">
-        Something went wrong
+        {t("common.somethingWentWrong")}
       </h1>
       <p className="mt-2 max-w-md text-center text-sm text-gray-500 dark:text-gray-400">
-        An unexpected error occurred. You can try reloading the page.
+        {t("common.unexpectedError")}
       </p>
       {error.digest && (
-        <p className="mt-2 font-mono text-xs text-gray-400">Error ID: {error.digest}</p>
+        <p className="mt-2 font-mono text-xs text-gray-400">{t("common.errorId")}: {error.digest}</p>
       )}
       <button
         onClick={reset}
         className="mt-6 flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-brand-700 transition"
       >
         <RefreshCw className="h-4 w-4" />
-        Reload
+        {t("common.reload")}
       </button>
     </div>
   );

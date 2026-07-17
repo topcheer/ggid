@@ -131,17 +131,17 @@ export default function ApiKeysPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <Key className="h-6 w-6 text-indigo-600" /> API Keys
+            <Key className="h-6 w-6 text-indigo-600" /> {t("apiKeys.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage API keys for programmatic access to GGID.
+            {t("apiKeys.subtitle")}
           </p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
         >
-          <Plus className="h-4 w-4" /> Create Key
+          <Plus className="h-4 w-4" /> {t("apiKeys.createKey")}
         </button>
       </div>
 
@@ -158,7 +158,7 @@ export default function ApiKeysPage() {
       {newKey && (
         <div className="rounded-xl border border-green-300 bg-green-50 p-5 dark:border-green-700 dark:bg-green-900/20">
           <div className="flex items-center gap-2 text-sm font-semibold text-green-800 dark:text-green-400">
-            <Check className="h-5 w-5" /> API Key Created — Copy Now (shown only once)
+            <Check className="h-5 w-5" /> {t("apiKeys.keyCreated")}
           </div>
           <div className="mt-3 flex items-center gap-2">
             <code className="flex-1 truncate rounded-lg bg-white px-3 py-2 font-mono text-sm text-gray-800 dark:bg-gray-900 dark:text-gray-200">
@@ -168,7 +168,7 @@ export default function ApiKeysPage() {
               {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
             </button>
             <button onClick={() => setNewKey(null)} className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:text-gray-700">
-              Dismiss
+              {t("common.dismiss")}
             </button>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function ApiKeysPage() {
         <div className={cardCls}>
           <div className="py-12 text-center">
             <Key className="mx-auto h-12 w-12 text-gray-300" />
-            <p className="mt-4 text-sm text-gray-400">No API keys yet. Create one to get started.</p>
+            <p className="mt-4 text-sm text-gray-400">{t("apiKeys.noKeys")}</p>
           </div>
         </div>
       ) : (

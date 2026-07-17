@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { validateCallback, exchangeCodeForTokens } from "@/lib/oauth-pkce";
 import { API_BASE_URL, DEFAULT_TENANT_ID } from "@/lib/api-config";
+import { useTranslations } from "@/lib/i18n";
 
 function OAuthCallbackInner() {
+  const t = useTranslations();
   const router = useRouter();
   const params = useSearchParams();
   const [status, setStatus] = useState<"processing" | "success" | "error">("processing");
@@ -62,26 +64,26 @@ function OAuthCallbackInner() {
         {status === "processing" && (
           <div className="text-center">
             <Loader2 className="mx-auto h-10 w-10 animate-spin text-brand-600" />
-            <p className="mt-4 text-sm text-gray-500">Completing authentication...</p>
+            <p className="mt-4 text-sm text-gray-500">{t("auth.completingAuthentication")}</p>
           </div>
         )}
         {status === "success" && (
           <div className="text-center">
             <CheckCircle className="mx-auto h-10 w-10 text-green-500" />
-            <p className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">Authentication successful</p>
-            <p className="mt-1 text-xs text-gray-500">Redirecting to dashboard...</p>
+            <p className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">{t("auth.authenticationSuccessful")}</p>
+            <p className="mt-1 text-xs text-gray-500">{t("auth.redirectingToDashboard")}</p>
           </div>
         )}
         {status === "error" && (
           <div className="text-center">
             <XCircle className="mx-auto h-10 w-10 text-red-500" />
-            <p className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">Authentication failed</p>
+            <p className="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100">{t("auth.authenticationFailed")}</p>
             <p className="mt-1 text-xs text-red-500">{errorMsg}</p>
             <button
               onClick={() => router.push("/login")}
               className="mt-4 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
-              Back to Login
+              {t("auth.backToLogin")}
             </button>
           </div>
         )}

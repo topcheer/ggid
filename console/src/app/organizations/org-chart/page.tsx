@@ -100,28 +100,28 @@ export default function OrgChartPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2"><Network className="w-6 h-6 text-blue-500" /> {t("organizationsOrgChart.title")}</h1>
-        <p className="text-sm text-gray-500 mt-1">Interactive org chart with expand/collapse and person search.</p>
+        <p className="text-sm text-gray-500 mt-1">{t("organizationsOrgChart.subtitle")}</p>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
         <select value={selectedOrg} onChange={(e) => setSelectedOrg(e.target.value)} aria-label="Select organization" className="px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm">
-          <option value="">Select an org...</option>
+          <option value="">{t("common.selectOrg")}</option>
           {orgs.map((o) => (<option key={o.id} value={o.id}>{o.name}</option>
           ))}
         </select>
-        {tree && <span className="text-xs text-gray-500">{countNodes(tree)} people</span>}
+        {tree && <span className="text-xs text-gray-500">{countNodes(tree)} {t("organizationsOrgChart.people")}</span>}
         <div className="relative flex-1 max-w-xs ml-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search person..." value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search person" className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
+          <input type="text" placeholder={t("organizationsOrgChart.searchPerson")} value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search person" className="w-full pl-9 pr-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-900 text-sm" />
         </div>
         {tree && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setCollapsedIds(new Set())} aria-label="Expand all nodes" className="text-xs text-blue-600 hover:underline">Expand All</button>
+            <button onClick={() => setCollapsedIds(new Set())} aria-label="Expand all nodes" className="text-xs text-blue-600 hover:underline">{t("common.expandAll")}</button>
             <button onClick={() => {
               const allIds = new Set<string>();
               const collect = (n: OrgNode) => { allIds.add(n.id); (n.children || []).forEach(collect); };
               if (tree) collect(tree);
               setCollapsedIds(allIds);
-            }} aria-label="Collapse all nodes" className="text-xs text-blue-600 hover:underline">Collapse All</button>
+            }} aria-label="Collapse all nodes" className="text-xs text-blue-600 hover:underline">{t("common.collapseAll")}</button>
           </div>
         )}
       </div>
@@ -131,7 +131,7 @@ export default function OrgChartPage() {
           <TreeNode node={tree} depth={0} collapsedIds={collapsedIds} toggleNode={toggleNode} highlight={search} />
         </div>
       )}
-      {!tree && !loading && <p className="text-sm text-gray-500 text-center py-8">Select an org to view its chart.</p>}
+      {!tree && !loading && <p className="text-sm text-gray-500 text-center py-8">{t("organizationsOrgChart.selectOrgPrompt")}</p>}
     </div>
   );
 }

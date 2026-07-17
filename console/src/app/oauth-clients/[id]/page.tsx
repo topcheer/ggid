@@ -98,11 +98,11 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
     }
   };
 
-  if (loading) return <p className="text-gray-500">Loading...</p>;
+  if (loading) return <p className="text-gray-500">{t("common.loading")}</p>;
   if (error) return (
     <div>
       <button onClick={() => router.push("/oauth-clients")} className="mb-4 flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
-        <ArrowLeft className="h-4 w-4" /> Back
+        <ArrowLeft className="h-4 w-4" /> {t("common.back")}
       </button>
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
     </div>
@@ -126,10 +126,10 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
         </div>
         <div className="flex gap-2">
           <button onClick={handleRotateSecret} className="rounded-lg border border-amber-300 px-3 py-2 text-sm text-amber-700 hover:bg-amber-50">
-            Rotate Secret
+            {t("oauthClients.rotateSecret")}
           </button>
           <button onClick={handleDelete} className="flex items-center gap-1 rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-            <Trash2 className="h-4 w-4" /> Delete
+            <Trash2 className="h-4 w-4" /> {t("common.delete")}
           </button>
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
       <div className="space-y-4">
         {/* Client info */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-sm font-semibold">Client Information</h3>
+          <h3 className="mb-4 text-sm font-semibold">{t("oauthClients.clientInfo")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <InfoRow label="Type" value={client.type} />
             <InfoRow label="Created" value={client.created_at ? new Date(client.created_at).toLocaleString() : "-"} />
@@ -160,7 +160,7 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
 
         {/* Scopes */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="mb-3 text-sm font-semibold">Scopes</h3>
+          <h3 className="mb-3 text-sm font-semibold">{t("oauthClients.scopes")}</h3>
           <div className="flex flex-wrap gap-2">
             {(client.scopes || []).map((scope, i) => (
               <span key={i} className="rounded-full bg-purple-50 px-3 py-1 text-xs text-purple-700">{scope}</span>
@@ -171,9 +171,9 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
         {/* Redirect URIs */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Redirect URIs</h3>
+            <h3 className="text-sm font-semibold">{t("oauthClients.redirectUris")}</h3>
             {!editingURIs ? (
-              <button onClick={() => setEditingURIs(true)} className="text-xs text-brand-600 hover:underline">Edit</button>
+              <button onClick={() => setEditingURIs(true)} className="text-xs text-brand-600 hover:underline">{t("common.edit")}</button>
             ) : (
               <div className="flex gap-2">
                 <button onClick={() => setEditingURIs(false)} className="text-xs text-gray-500">Cancel</button>
