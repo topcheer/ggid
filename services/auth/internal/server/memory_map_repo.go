@@ -56,6 +56,134 @@ func (r *authMemoryMapRepo) EnsureSchema(ctx context.Context) error {
 			metadata JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
 		);
 		CREATE INDEX IF NOT EXISTS idx_loginflow_tenant ON auth_login_flows(tenant_id, created_at DESC);
+
+		-- Batch 5: OTP, passkey, biometric, credential vault, trusted devices, session limits, session risks,
+		-- device fingerprints, encryption keys, breach notifs, passwordless sessions, impersonation
+		CREATE TABLE IF NOT EXISTS auth_otp_entries (
+			code TEXT PRIMARY KEY, email TEXT NOT NULL, tenant_id TEXT,
+			hashed_code TEXT, attempts INT DEFAULT 0,
+			created_at TIMESTAMPTZ DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL
+		);
+		CREATE INDEX IF NOT EXISTS idx_otp_email ON auth_otp_entries(email);
+		CREATE TABLE IF NOT EXISTS auth_otp_sendlog (
+			id SERIAL PRIMARY KEY, email TEXT NOT NULL, sent_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_otp_sendlog_email ON auth_otp_sendlog(email, sent_at DESC);
+
+		CREATE TABLE IF NOT EXISTS auth_passkey_sessions (
+			id TEXT PRIMARY KEY, session_type TEXT NOT NULL,
+			user_id TEXT, challenge TEXT, tenant_id TEXT,
+			created_at TIMESTAMPTZ DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS auth_passkey_credentials (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL, credential_id TEXT,
+			public_key TEXT, device_type TEXT, tenant_id TEXT,
+			created_at TIMESTAMPTZ DEFAULT now(), last_used TIMESTAMPTZ
+		);
+		CREATE INDEX IF NOT EXISTS idx_passkey_cred_user ON auth_passkey_credentials(user_id);
+
+		CREATE TABLE IF NOT EXISTS auth_biometrics (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL,
+			template_hash TEXT, device_id TEXT, algorithm TEXT,
+			enabled BOOLEAN DEFAULT TRUE, created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_biometrics_user ON auth_biometrics(user_id);
+
+		CREATE TABLE IF NOT EXISTS auth_credential_vault (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL, cred_key TEXT NOT NULL,
+			encrypted_value TEXT, cred_type TEXT,
+			created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_credvault_user ON auth_credential_vault(user_id, cred_key);
+
+		CREATE TABLE IF NOT EXISTS auth_trusted_devices (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL, device_id TEXT,
+			trust_level TEXT DEFAULT 'trusted', fingerprint TEXT,
+			created_at TIMESTAMPTZ DEFAULT now(), last_seen TIMESTAMPTZ
+		);
+		CREATE INDEX IF NOT EXISTS idx_trusted_dev_user ON auth_trusted_devices(user_id);
+
+		CREATE TABLE IF NOT EXISTS auth_session_limits (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL, tenant_id TEXT,
+			max_sessions INT DEFAULT 5, current_sessions INT DEFAULT 0,
+			updated_at TIMESTAMPTZ DEFAULT now()
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_session_risks (
+			id TEXT PRIMARY KEY, session_id TEXT NOT NULL, user_id TEXT,
+			risk_score REAL DEFAULT 0, decision TEXT,
+			evaluated_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_session_risk_user ON auth_session_risks(user_id, evaluated_at DESC);
+
+		CREATE TABLE IF NOT EXISTS auth_device_fingerprints (
+			id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL,
+			user_id TEXT, device_info JSONB DEFAULT '{}',
+			first_seen TIMESTAMPTZ DEFAULT now(), last_seen TIMESTAMPTZ
+		);
+		CREATE INDEX IF NOT EXISTS idx_devfp_hash ON auth_device_fingerprints(fingerprint);
+
+		CREATE TABLE IF NOT EXISTS auth_encryption_keys (
+			id TEXT PRIMARY KEY, key_name TEXT NOT NULL,
+			encrypted_key BYTEA, algorithm TEXT DEFAULT 'AES-256-GCM',
+			rotation_count INT DEFAULT 0,
+			created_at TIMESTAMPTZ DEFAULT now(), rotated_at TIMESTAMPTZ
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_breach_notifications (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL,
+			breach_name TEXT, severity TEXT DEFAULT 'medium',
+			notified BOOLEAN DEFAULT FALSE,
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_breach_notif_user ON auth_breach_notifications(user_id);
+
+		CREATE TABLE IF NOT EXISTS auth_passwordless_sessions (
+			id TEXT PRIMARY KEY, user_id TEXT,
+			challenge TEXT, status TEXT DEFAULT 'pending',
+			created_at TIMESTAMPTZ DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_impersonation_jti (
+			jti TEXT PRIMARY KEY, impersonator TEXT NOT NULL,
+			target TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL,
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_breach_warnings (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL,
+			source TEXT, severity TEXT DEFAULT 'medium',
+			metadata JSONB DEFAULT '{}',
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_breach_warn_user ON auth_breach_warnings(user_id);
+
+		CREATE TABLE IF NOT EXISTS auth_session_anomalies (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL,
+			anomaly_type TEXT, detail JSONB DEFAULT '{}',
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE INDEX IF NOT EXISTS idx_session_anom_user ON auth_session_anomalies(user_id);
+
+		CREATE TABLE IF NOT EXISTS auth_credential_stuffing (
+			ip TEXT PRIMARY KEY, attempt_count INT DEFAULT 0,
+			blocked BOOLEAN DEFAULT FALSE,
+			first_seen TIMESTAMPTZ DEFAULT now(), last_seen TIMESTAMPTZ
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_throttle_states (
+			id TEXT PRIMARY KEY, user_id TEXT NOT NULL,
+			state TEXT DEFAULT 'normal', retry_after TIMESTAMPTZ,
+			updated_at TIMESTAMPTZ DEFAULT now()
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_velocity_rules (
+			id TEXT PRIMARY KEY, tenant_id TEXT,
+			rule_name TEXT, max_events INT DEFAULT 100,
+			window_seconds INT DEFAULT 3600, action TEXT DEFAULT 'block',
+			enabled BOOLEAN DEFAULT TRUE,
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
 	`)
 	return err
 }
@@ -244,4 +372,37 @@ func (r *authMemoryMapRepo) ListLoginFlows(ctx context.Context, limit int) ([]ma
 		result = append(result, m)
 	}
 	return result, nil
+}
+
+// GetJSON retrieves a single row by ID from a generic JSON table.
+func (r *authMemoryMapRepo) GetJSON(ctx context.Context, table, id string) (map[string]any, error) {
+	if r.pool == nil {
+		return nil, nil
+	}
+	var data []byte
+	var created time.Time
+	err := r.pool.QueryRow(ctx, fmt.Sprintf(`SELECT data, created_at FROM %s WHERE id = $1`, table), id).Scan(&data, &created)
+	if err != nil {
+		return nil, nil
+	}
+	var m map[string]any
+	json.Unmarshal(data, &m)
+	m["id"] = id
+	m["created_at"] = created
+	return m, nil
+}
+
+// CleanupExpired deletes rows past their expires_at timestamp.
+func (r *authMemoryMapRepo) CleanupExpired(ctx context.Context) (int64, error) {
+	if r.pool == nil {
+		return 0, nil
+	}
+	var total int64
+	for _, table := range []string{"auth_otp_entries", "auth_passkey_sessions", "auth_passwordless_sessions", "auth_impersonation_jti"} {
+		ct, err := r.pool.Exec(ctx, fmt.Sprintf(`DELETE FROM %s WHERE expires_at IS NOT NULL AND expires_at < now()`, table))
+		if err == nil {
+			total += ct.RowsAffected()
+		}
+	}
+	return total, nil
 }
