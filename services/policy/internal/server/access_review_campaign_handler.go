@@ -153,6 +153,10 @@ func (s *HTTPServer) SetCampaignRepo(repo *CampaignRepo) {
 	s.campaignRepo = repo
 }
 
+func (s *HTTPServer) SetPolicyMapRepo(repo *policyMapRepo) {
+	s.policyMap = repo
+}
+
 // executeCampaignRevoke executes revoke decisions for each campaign item.
 // Iterates items with decision=revoke and calls roleSvc.RevokeRole for each
 // (user_id, role_id) pair. The reviewer's own permissions are never touched.

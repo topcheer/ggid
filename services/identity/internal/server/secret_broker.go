@@ -457,3 +457,7 @@ func (h *HTTPHandler) sbRevoke(w http.ResponseWriter, r *http.Request, tc *ggidt
 func (h *HTTPHandler) SetSecretBrokerRepo(repo *secretBrokerRepo) {
 	h.secretBrokerRepo = repo
 }
+
+func (h *HTTPHandler) SetIdentityPolicyMapRepo(repo *identityPolicyMapRepo) {
+	h.identityPolicyMap = repo
+}

@@ -31,6 +31,7 @@ type HTTPServer struct {
 	auditPublisher *audit.Publisher
 	campaignRepo  *CampaignRepo
 	jitRepo       *repository.JITRequestRepository
+	policyMap     *policyMapRepo
 }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.

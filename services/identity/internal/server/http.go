@@ -51,6 +51,7 @@ type HTTPHandler struct {
 	rateLimitRepo     *rateLimitRepo
 	dlpPolicyRepo     *dlpRepo
 	secretBrokerRepo  *secretBrokerRepo
+identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 }
 

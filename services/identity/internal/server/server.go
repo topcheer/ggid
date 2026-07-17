@@ -164,6 +164,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetSecretBrokerRepo(sbRepo)
 
+	// Policy memory map repo (lifecycle_rules + review_campaigns).
+	ipmRepo := newIdentityPolicyMapRepo(pool)
+	if err := ipmRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Identity policy map schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetIdentityPolicyMapRepo(ipmRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,

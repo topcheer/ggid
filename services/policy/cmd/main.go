@@ -134,6 +134,14 @@ func main() {
 		log.Printf("JIT schema ensure error (non-fatal): %v", err)
 	}
 	httpAPI.SetJITRepo(jitRepo)
+
+	// Policy memory map repo (conditional_access, access_requests, optimization, auto_assign).
+	pmRepo := httpserver.NewPolicyMapRepo(db)
+	if err := pmRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Policy map schema ensure error (non-fatal): %v", err)
+	}
+	httpAPI.SetPolicyMapRepo(pmRepo)
+
 	httpAPI.RegisterRoutes(mux)
 
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
