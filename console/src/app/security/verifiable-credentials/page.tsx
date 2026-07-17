@@ -5,6 +5,7 @@ import {
   Shield, Loader2, AlertCircle, X, RefreshCw, Plus, Trash2, Check,
   CheckCircle, XCircle, KeyRound, FileJson, Eye, Code, Download,
   ArrowRight, ChevronRight, ShieldCheck, ShieldAlert, Clock,
+  QrCode, List, Award, Smartphone, RefreshCw, Check, X,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader } from "@/lib/auth-helpers";
@@ -49,7 +50,7 @@ interface VerifyResult {
   claims: Record<string, string>;
 }
 
-type Tab = "templates" | "issue" | "verify" | "issued" | "did";
+type Tab = "templates" | "issue" | "oid4vci" | "verify" | "issued" | "statuslist" | "did" | "trust";
 
 const claimTypes = ["string", "number", "boolean", "date", "email", "url"];
 const signAlgos = [
@@ -189,9 +190,12 @@ export default function VerifiableCredentialsPage() {
         {([
           { id: "templates" as Tab, label: "Templates", icon: FileJson },
           { id: "issue" as Tab, label: "Issue", icon: ShieldCheck },
+          { id: "oid4vci" as Tab, label: "OID4VCI", icon: QrCode },
           { id: "verify" as Tab, label: "Verify", icon: Eye },
           { id: "issued" as Tab, label: "Issued VCs", icon: KeyRound },
+          { id: "statuslist" as Tab, label: "Status List", icon: List },
           { id: "did" as Tab, label: "DID Management", icon: Shield },
+          { id: "trust" as Tab, label: "Trust Registry", icon: Award },
         ]).map(tb => { const Icon = tb.icon; return (
           <button key={tb.id} onClick={() => setTab(tb.id)} aria-pressed={tab === tb.id} className={"flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap " + (tab === tb.id ? "border-purple-600 text-purple-600 dark:text-purple-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300")}><Icon className="h-4 w-4" /> {tb.label}</button>
         ); })}
@@ -254,7 +258,7 @@ export default function VerifiableCredentialsPage() {
                   <div><p className={"text-xl font-bold " + (verifyResult.valid ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400")}>{verifyResult.valid ? "VALID" : "INVALID"}</p></div>
                 </div>
                 <div className="mt-3 space-y-1">{verifyResult.checks?.map((c, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">{c.passed ? <CheckCircle className="h-3.5 w-3.5 text-green-500" /> : <XCircle className="h-3.5 w-3.5 text-red-500" />}<span className="font-medium">{c.name}</span><span className="text-gray-400">{c.detail}</span></div>
+                  <div key={i} className={"flex items-center gap-2 rounded-lg p-2 " + (c.passed ? "bg-green-50 dark:bg-green-950/20" : "bg-red-50 dark:bg-red-950/20")}>{c.passed ? <CheckCircle className="h-3.5 w-3.5 text-green-500 shrink-0" /> : <XCircle className="h-3.5 w-3.5 text-red-500 shrink-0" />}<span className="font-medium text-xs">{c.name}</span>{i < (verifyResult.checks?.length || 1) - 1 && <ArrowRight className="h-3 w-3 text-gray-300 ml-auto" />}<span className="text-gray-400 text-xs ml-auto">{c.detail}</span></div>
                 ))}</div>
                 {verifyResult.claims && Object.keys(verifyResult.claims).length > 0 && (
                   <div className="mt-4"><p className="text-xs font-semibold uppercase text-gray-400 mb-2">Extracted Claims</p><div className="space-y-1">{Object.entries(verifyResult.claims).map(([k, v]) => <div key={k} className="flex justify-between text-xs"><span className="text-gray-500">{k}</span><span className="font-mono">{v}</span></div>)}</div></div>
@@ -284,6 +288,89 @@ export default function VerifiableCredentialsPage() {
               ))}</tbody>
             </table></div>
           )}
+        </div>
+      )}
+
+      {/* OID4VCI */}
+      {tab === "oid4vci" && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className={cardCls}>
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><QrCode className="h-4 w-4" /> OID4VCI Issuance</h2>
+            <div className="space-y-3">
+              <div><label className="text-sm font-medium">Credential Offer URL</label><div className="mt-1 rounded-lg bg-gray-900 p-3 font-mono text-xs text-green-400 break-all">openid-credential-offer://?credential_offer_uri=https://ggid.dev/api/v1/identity/vc/offer/{issueTemplateId || "TEMPLATE_ID"}</div></div>
+              <div className="flex items-center justify-center py-6"><div className="h-48 w-48 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center"><QrCode className="h-24 w-24 text-gray-300" /></div></div>
+              <div className="space-y-2">
+                {[
+                  { step: "Wallet scans QR", status: "pending" },
+                  { step: "User authorizes issuance", status: "pending" },
+                  { step: "Server signs credential", status: "pending" },
+                  { step: "Wallet stores credential", status: "pending" },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center gap-3 rounded-lg border p-2 dark:border-gray-700">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-bold">{i + 1}</div>
+                    <span className="flex-1 text-sm">{s.step}</span>
+                    <span className="text-xs text-gray-400">{s.status}</span>
+                  </div>
+                ))}
+              </div>
+              <div>
+                <label className="text-sm font-medium">Signing Algorithm</label>
+                <div className="mt-1 grid grid-cols-2 gap-2">
+                  {[{ id: "EdDSA", name: "Ed25519", desc: "Standard" }, { id: "SM2Signature2024", name: "SM2 (国密)", desc: "China compliant" }].map(a => (
+                    <button key={a.id} className="rounded-lg border-2 border-gray-200 dark:border-gray-700 p-2 text-left hover:border-purple-400"><p className="text-sm font-medium">{a.name}</p><p className="text-xs text-gray-400">{a.desc}</p></button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className={cardCls}>
+            <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Smartphone className="h-4 w-4" /> Wallet Connection Status</h2>
+            <div className="rounded-xl bg-gray-50 p-6 text-center dark:bg-gray-900/50">
+              <Smartphone className="mx-auto h-12 w-12 text-gray-300" />
+              <p className="mt-3 text-sm text-gray-400">Waiting for wallet to scan QR code...</p>
+              <div className="mt-4 flex items-center justify-center gap-1"><RefreshCw className="h-4 w-4 animate-spin text-purple-500" /><span className="text-xs text-gray-400">Listening for wallet connection</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STATUS LIST */}
+      {tab === "statuslist" && (
+        <div className={cardCls}>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><List className="h-4 w-4" /> StatusList2021 Management</h2>
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border p-3 dark:border-gray-700"><span className="text-xs text-gray-400">List Index Size</span><p className="text-xl font-bold mt-1">131,072</p></div>
+              <div className="rounded-lg border p-3 dark:border-gray-700"><span className="text-xs text-gray-400">Revoked</span><p className="text-xl font-bold text-red-600 mt-1">0</p></div>
+              <div className="rounded-lg border p-3 dark:border-gray-700"><span className="text-xs text-gray-400">Active</span><p className="text-xl font-bold text-green-600 mt-1">0</p></div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-gray-400 mb-2">Status Bitmap (first 256 positions)</p>
+              <div className="grid grid-cols-16 gap-0.5" style={{ gridTemplateColumns: "repeat(32, 1fr)" }}>
+                {Array.from({ length: 256 }).map((_, i) => (
+                  <div key={i} className="aspect-square rounded-sm bg-green-200 dark:bg-green-900/30 hover:bg-red-300 cursor-pointer transition" title={`Index ${i}: Active`} />
+                ))}
+              </div>
+              <div className="mt-2 flex gap-4 text-xs"><span className="flex items-center gap-1"><div className="h-3 w-3 rounded bg-green-200 dark:bg-green-900/30" /> Active</span><span className="flex items-center gap-1"><div className="h-3 w-3 rounded bg-red-300" /> Revoked</span></div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input aria-label="Revoke index" type="number" placeholder="Index to revoke..." className="w-40 rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm" />
+              <button className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 dark:bg-red-950/20">Revoke</button>
+              <button className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700">Batch Revoke CSV</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TRUST REGISTRY */}
+      {tab === "trust" && (
+        <div className={cardCls}>
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Award className="h-4 w-4" /> Trusted Issuer Registry</h2>
+          <div className="space-y-3">
+            <div className="rounded-lg border p-3 dark:border-gray-700"><div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-green-500" /><div className="flex-1"><p className="font-medium text-sm">did:web:ggid.dev</p><p className="text-xs text-gray-400">Self · Active</p></div><span className="px-2 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">Verified</span></div></div>
+            <div className="rounded-lg border p-3 dark:border-gray-700"><div className="flex items-center gap-2"><KeyRound className="h-5 w-5 text-gray-400" /><div className="flex-1"><p className="font-mono text-sm">did:web:partner.example.com</p><p className="text-xs text-gray-400">Partner · Verified 2024-01-15</p></div><span className="px-2 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs">Trusted</span></div></div>
+            <div className="flex items-center gap-2"><input aria-label="Add trusted issuer" type="text" placeholder="did:web:new-issuer.com" className="flex-1 rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm font-mono" /><button className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-2 text-sm font-medium text-white hover:bg-purple-700"><Plus className="h-4 w-4" /> Add Trusted Issuer</button></div>
+          </div>
         </div>
       )}
 
