@@ -22,14 +22,13 @@
 ### IN_PROGRESS
 | ID | Task | Assignee | Started | Notes |
 |----|------|----------|---------|-------|
-| B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | 07-17 | gateway Director 已注入 |
 | B-06 | RFC 8693 Token Exchange 标准 grant | backend | 07-17 | docs/research/token-exchange-standard-grant-gap.md |
+| B-08 | break-glass 内存数组迁 DB | backend | 07-17 | break_glass_records 表 + activate 端点 + SOC webhook |
 
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
 | B-07 | PAM JIT Zero Standing 实现 | P1 | services/policy/ + services/auth/ | request→approve→temp bind→expire→revoke→audit。参考 docs/architecture/pam-jit-design.md |
-| B-08 | break-glass 内存数组迁 DB | P1 | services/auth/ | break_glass_records 表 + activate 端点 + SOC webhook |
 | B-09 | IGA revoke 写 audit 事件 | P2 | services/policy/ | 每条回收写 audit event |
 | B-10 | ITDR Phase 4：3 条新规则 (offhours_admin, new_device_privileged, token_replay) | P2 | services/audit/internal/detection/ | 每规则 ≥3 单测 |
 | B-11 | ITDR Phase 4：Redis StateStore 替换 MemStateStore | P2 | services/audit/ | 多副本安全 |
@@ -45,6 +44,7 @@
 | B-02 | 内部认证 HMAC 中间件 | backend | e52a3528 |
 | B-03 | 内部认证 gateway Director 注入 | backend | db2a5a9a |
 | B-04 | WebAuthn 持久化 + valid-ids 改 DB | backend | 4a5bff9c |
+| B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | f3580d58 |
 
 ## === FRONTEND (console/src/) ===
 
@@ -77,9 +77,9 @@
 ### TODO
 | ID | Task | Priority | Acceptance |
 |----|------|----------|------------|
-| I-04 | UEBA per-user baselines 设计文档 | P2 | docs/architecture/ueba-design.md，30天滑窗+3σ+冷启动 |
+| I-04 | UEBA per-user baselines 设计文档 → IN_PROGRESS IAMExpert | P2 | docs/architecture/ueba-design.md，30天滑窗+3σ+冷启动 |
 | I-05 | 零信任统一 PDP 设计文档 | P2 | ABAC DSL + $device.trusted/$itdr.critical/$session.risk |
-| I-06 | 内部认证 6 服务 mux 完成后 E2E 验收 | P1 | 直连后端→403，经 gateway→正常 |
+| I-06 | ~~内部认证 6 服务 mux 完成后 E2E 验收~~ → DONE | P1 | 6/6 wrapped ✓ build 53pkg 0FAIL |
 
 ### DONE
 | ID | Task | Assignee | Output |
