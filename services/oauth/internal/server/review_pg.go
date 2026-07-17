@@ -31,13 +31,15 @@ func newReviewAdapter(pool *pgxpool.Pool) *reviewAdapter {
 
 func (s *pgReviewStore) EnsureSchema(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS agent_reviews (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, reviewer TEXT NOT NULL, scopes_reviewed JSONB DEFAULT '[]', decision TEXT DEFAULT '', comment TEXT DEFAULT '', timestamp TIMESTAMPTZ DEFAULT NOW())`)
-	return fmt.Errorf("schema operation failed: %w", err)
+	if err != nil { return fmt.Errorf("schema operation failed: %w", err) }
+	return nil
 }
 
 func (s *pgReviewStore) Put(ctx context.Context, rv *AgentReview) error {
 	scopesJSON, _ := json.Marshal(rv.ScopesReviewed)
 	_, err := s.pool.Exec(ctx, `INSERT INTO agent_reviews (id, agent_id, reviewer, scopes_reviewed, decision, comment, timestamp) VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO UPDATE SET decision=$5, comment=$6, timestamp=$7`, rv.ID, rv.AgentID, rv.Reviewer, scopesJSON, rv.Decision, rv.Comment, rv.Timestamp)
-	return fmt.Errorf("schema operation failed: %w", err)
+	if err != nil { return fmt.Errorf("schema operation failed: %w", err) }
+	return nil
 }
 
 func (s *pgReviewStore) Get(ctx context.Context, id string) (*AgentReview, bool) {

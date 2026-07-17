@@ -31,12 +31,14 @@ func newDPoPAdapter(pool *pgxpool.Pool) *dpopAdapter {
 
 func (s *pgDPoPStore) EnsureSchema(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS dpop_bindings (token_hash TEXT PRIMARY KEY, jkt TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())`)
-	return fmt.Errorf("schema operation failed: %w", err)
+	if err != nil { return fmt.Errorf("schema operation failed: %w", err) }
+	return nil
 }
 
 func (s *pgDPoPStore) Put(ctx context.Context, tokenHash, jkt string) error {
 	_, err := s.pool.Exec(ctx, `INSERT INTO dpop_bindings (token_hash, jkt, created_at) VALUES ($1,$2,NOW()) ON CONFLICT (token_hash) DO UPDATE SET jkt=$2`, tokenHash, jkt)
-	return fmt.Errorf("schema operation failed: %w", err)
+	if err != nil { return fmt.Errorf("schema operation failed: %w", err) }
+	return nil
 }
 
 func (s *pgDPoPStore) Get(ctx context.Context, tokenHash string) (string, bool) {

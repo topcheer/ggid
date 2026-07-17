@@ -30,13 +30,15 @@ func newScopeLifecycleAdapter(pool *pgxpool.Pool) *scopeLifecycleAdapter {
 
 func (s *pgScopeLifecycleStore) EnsureSchema(ctx context.Context) error {
 	_, err := s.pool.Exec(ctx, `CREATE TABLE IF NOT EXISTS scope_lifecycle (scope_id TEXT PRIMARY KEY, requested_scope TEXT NOT NULL, requester TEXT DEFAULT '', approver_chain JSONB DEFAULT '[]', status TEXT DEFAULT 'pending', risk_level TEXT DEFAULT 'low', auto_expire_days INT DEFAULT 0, created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`)
-	return fmt.Errorf("schema operation failed: %w", err)
+	if err != nil { return fmt.Errorf("schema operation failed: %w", err) }
+	return nil
 }
 
 func (s *pgScopeLifecycleStore) Put(ctx context.Context, sl *ScopeLifecycle) error {
 	approverJSON, _ := json.Marshal(sl.ApproverChain)
 	_, err := s.pool.Exec(ctx, `INSERT INTO scope_lifecycle (scope_id, requested_scope, requester, approver_chain, status, risk_level, auto_expire_days, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) ON CONFLICT (scope_id) DO UPDATE SET status=$5, risk_level=$6, auto_expire_days=$7, updated_at=NOW()`, sl.ScopeID, sl.RequestedScope, sl.Requester, approverJSON, sl.Status, sl.RiskLevel, sl.AutoExpireDays, sl.CreatedAt)
-	return fmt.Errorf("schema operation failed: %w", err)
+	if err != nil { return fmt.Errorf("schema operation failed: %w", err) }
+	return nil
 }
 
 func (s *pgScopeLifecycleStore) Get(ctx context.Context, scopeID string) (*ScopeLifecycle, bool) {
