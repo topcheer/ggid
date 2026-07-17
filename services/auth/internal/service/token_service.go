@@ -63,13 +63,121 @@ func NewTokenService(provider ggidcrypto.KeyProvider, issuer, audience string, t
 type AccessTokenClaims struct {
 	TenantID string   `json:"tenant_id"`
 	Scopes   []string `json:"scopes,omitempty"`
+	AMR      []string `json:"amr,omitempty"` // Authentication Method References (RFC 8707)
+	ACR      string   `json:"acr,omitempty"` // Authentication Context Class Reference (AAL1/AAL2/AAL3)
 	jwt.RegisteredClaims
+}
+
+// AAL (Authenticator Assurance Level) values per NIST 800-63B.
+const (
+	AAL1 = "AAL1" // single-factor (password)
+	AAL2 = "AAL2" // multi-factor (password + OTP/WebAuthn)
+	AAL3 = "AAL3" // hardware-based MFA (WebAuthn with attestation)
+)
+
+// AMR method references.
+const (
+	AMRPwd      = "pwd"      // password
+	AMROTP      = "otp"      // TOTP/HOTP
+	AMRFIDO     = "fpt"      // FIDO/WebAuthn
+	AMRMFA      = "mfa"      // multi-factor authentication
+	AMRKerberos = "kerb"     // Kerberos
+	AMRSMS      = "sms"      // SMS OTP
+	AMREmail    = "email"    // Email OTP
+)
+
+// ComputeAMR builds the amr claim from auth methods used.
+func ComputeAMR(authMethods []string) []string {
+	amr := make([]string, 0, len(authMethods))
+	hasMFA := false
+	for _, m := range authMethods {
+		switch m {
+		case "password":
+			amr = append(amr, AMRPwd)
+		case "totp", "hotp":
+			amr = append(amr, AMROTP)
+			hasMFA = true
+		case "webauthn":
+			amr = append(amr, AMRFIDO)
+			hasMFA = true
+		case "sms_otp":
+			amr = append(amr, AMRSMS)
+			hasMFA = true
+		case "email_otp":
+			amr = append(amr, AMREmail)
+			hasMFA = true
+		}
+	}
+	if hasMFA {
+		amr = append(amr, AMRMFA)
+	}
+	return amr
+}
+
+// ComputeACR determines the ACR (AAL level) from auth methods.
+func ComputeACR(authMethods []string) string {
+	hasPassword := false
+	hasMFA := false
+	hasHardware := false
+	for _, m := range authMethods {
+		switch m {
+		case "password":
+			hasPassword = true
+		case "webauthn":
+			hasHardware = true
+			hasMFA = true
+		case "totp", "hotp", "sms_otp", "email_otp":
+			hasMFA = true
+		}
+	}
+	if hasHardware {
+		return AAL3
+	}
+	if hasMFA {
+		return AAL2
+	}
+	if hasPassword {
+		return AAL1
+	}
+	return ""
 }
 
 // IssueAccessToken signs a new JWT for the given user.
 func (ts *TokenService) IssueAccessToken(tenantID, userID uuid.UUID, scopes []string) (string, int, error) {
 	token, _, expiresIn, err := ts.IssueAccessTokenWithJTI(tenantID, userID, scopes)
 	return token, expiresIn, err
+}
+
+// IssueAccessTokenWithAMR issues a JWT with AMR/ACR claims from auth methods.
+func (ts *TokenService) IssueAccessTokenWithAMR(tenantID, userID uuid.UUID, scopes []string, authMethods []string) (token, jti string, expiresIn int, err error) {
+	now := time.Now()
+	expiresAt := now.Add(ts.jwtTTL)
+	jti = uuid.New().String()
+
+	claims := AccessTokenClaims{
+		TenantID: tenantID.String(),
+		Scopes:   scopes,
+		AMR:      ComputeAMR(authMethods),
+		ACR:      ComputeACR(authMethods),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    ts.jwtIssuer,
+			Subject:   userID.String(),
+			Audience:  jwt.ClaimStrings{ts.jwtAudience},
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+			ID:        jti,
+		},
+	}
+
+	method := jwtSigningMethod(ts.algorithm)
+	jwtToken := jwt.NewWithClaims(method, claims)
+	jwtToken.Header["kid"] = ts.keyID
+
+	signed, err := jwtToken.SignedString(ts.provider.Signer())
+	if err != nil {
+		return "", "", 0, err
+	}
+	return signed, jti, int(expiresAt.Sub(now).Seconds()), nil
 }
 
 // IssueAccessTokenWithJTI signs a new JWT and returns the token + jti + expiresIn.
