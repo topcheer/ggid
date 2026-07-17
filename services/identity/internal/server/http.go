@@ -48,6 +48,7 @@ type HTTPHandler struct {
 	journeyRepo      *journeyRepo
 	fedRepo          *federationRepo
 	jitRepo          *jitRepo
+	rateLimitRepo    *rateLimitRepo
 	devicePostureRepo *devicePostureRepo
 }
 
@@ -260,6 +261,10 @@ func (h *HTTPHandler) registerRoutes() {
 	// SD-JWT selective disclosure.
 	h.mux.HandleFunc("/api/v1/identity/sd-jwt/issue", h.handleSDJWTIssue)
 	h.mux.HandleFunc("/api/v1/identity/sd-jwt/verify", h.handleSDJWTVerify)
+
+	// Per-tenant rate limiting.
+	h.mux.HandleFunc("/api/v1/identity/tenants/rate-limits", h.handleRateLimits)
+	h.mux.HandleFunc("/api/v1/identity/tenants/rate-limits/", h.handleRateLimits)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)

@@ -143,6 +143,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetJITRepo(jitRepo)
 
+	// Per-tenant rate limiting.
+	rlRepo := newRateLimitRepo(pool, nil)
+	if err := rlRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Rate limit schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetRateLimitRepo(rlRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
