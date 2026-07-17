@@ -42,6 +42,7 @@ type HTTPHandler struct {
 	rebacRepo        *relationTupleRepo
 	lifecycleRepo    *lifecycleRepo
 	lifecycleEngine  *JMLEngine
+	dataGovRepo      *dataGovRepo
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -200,6 +201,11 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/rules", h.handleJML)
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/events", h.handleJML)
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/executions", h.handleJML)
+
+	// Data governance + compliance engine.
+	h.mux.HandleFunc("/api/v1/identity/data-governance/classifications", h.handleDataGovernance)
+	h.mux.HandleFunc("/api/v1/identity/data-governance/dsr", h.handleDataGovernance)
+	h.mux.HandleFunc("/api/v1/identity/data-governance/inventory", h.handleDataGovernance)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)

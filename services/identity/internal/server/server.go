@@ -101,6 +101,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	httpHandler.lifecycleRepo = jmlRepo
 	httpHandler.lifecycleEngine = newJMLEngine(jmlRepo)
 
+	// Data governance compliance engine.
+	dataRepo := newDataGovRepo(pool)
+	if err := dataRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Data governance schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.dataGovRepo = dataRepo
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
