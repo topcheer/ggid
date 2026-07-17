@@ -58,7 +58,7 @@ CREATE TABLE protected_apps (
 
     -- 认证模式
     auth_mode       TEXT NOT NULL DEFAULT 'jwt', -- 'jwt' | 'session_header' | 'anonymous'
-    
+
     -- 访问策略（ABAC 条件 JSON）
     access_policy   JSONB NOT NULL DEFAULT '{}',
     -- 示例: {"conditions":{"and":[{"$security.device_trusted":true},{"$security.itdr_critical_open":0},{"$app.role":"sre"}]}}
@@ -80,7 +80,7 @@ CREATE TABLE protected_apps (
     created_by      UUID,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    
+
     UNIQUE(tenant_id, slug)
 );
 
@@ -173,7 +173,7 @@ func (pr *ProtectedAppRouter) ServeHTTP(w http.ResponseWriter, r *http.Request) 
     // 3. PDP 评估
     secCtx, _ := pr.pdp.Collect(r.Context(), userID, tenantID)
     decision := pr.pdp.Evaluate(appProxy.Policy, secCtx, userClaims)
-    
+
     switch decision.Effect {
     case "deny":
         writeAccessDenied(w, decision.Reason)

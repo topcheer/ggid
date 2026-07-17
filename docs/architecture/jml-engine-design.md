@@ -122,18 +122,18 @@ func (e *ActionExecutor) Execute(ctx context.Context, action LifecycleAction, us
     case "assign_role":
         roleID := uuid.Parse(action.Params["role_id"].(string))
         return e.policyClient.AssignRole(ctx, userID, roleID, tenantID)
-    
+
     case "revoke_access":
         // 1. 撤销所有角色
         e.policyClient.RevokeAllRoles(ctx, userID, tenantID)
         // 2. CAE: 撤销所有会话
         e.authClient.RevokeUser(ctx, userID, "lifecycle_leaver")
-    
+
     case "notify_manager":
         e.webhookSender.Send(action.Params["webhook_url"], map[string]any{
             "event": "lifecycle_action", "user_id": userID, ...
         })
-    
+
     case "create_account":
         // 已有 CreateUserFromSocial，复用
     case "disable_account":

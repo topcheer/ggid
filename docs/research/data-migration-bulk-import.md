@@ -91,7 +91,7 @@ But GGID is **missing critical migration capabilities**:
 ### Scale Considerations
 
 | Organization Size | User Count | Import Time (Batch) | Key Risk |
-|-------------------|-----------|--------------------|---------| 
+|-------------------|-----------|--------------------|---------|
 | Startup | 100-1K | Minutes | Minimal |
 | Mid-market | 1K-50K | Hours | Password reset friction |
 | Enterprise | 50K-500K | Days | Session disruption, rate limits |
@@ -436,32 +436,32 @@ func DetectHashAlgorithm(hash string) HashAlgorithm {
 // Returns (valid, algorithm, error).
 func VerifyPasswordMulti(password, hash string) (bool, HashAlgorithm, error) {
     algo := DetectHashAlgorithm(hash)
-    
+
     switch algo {
     case HashArgon2id:
         ok, err := VerifyPassword(password, hash) // existing Argon2id path
         return ok, algo, err
-        
+
     case HashBcrypt:
         err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
         return err == nil, algo, nil
-        
+
     case HashPBKDF2:
         ok, err := verifyPBKDF2(password, hash)
         return ok, algo, err
-        
+
     case HashScrypt:
         ok, err := verifyScrypt(password, hash)
         return ok, algo, err
-        
+
     case HashLDAPSSHA:
         ok, err := verifyLDAPSSHA(password, hash)
         return ok, algo, err
-        
+
     case HashSHA256:
         ok, err := verifySHA256Salted(password, hash)
         return ok, algo, err
-        
+
     default:
         return false, algo, fmt.Errorf("unsupported hash format")
     }
@@ -488,10 +488,10 @@ In `services/auth/internal/service/local_provider.go`, the login flow is modifie
 func (p *LocalProvider) Authenticate(ctx context.Context, email, password string) (*User, error) {
     user, err := p.repo.GetByEmail(ctx, email)
     if err != nil { return nil, err }
-    
+
     ok, err := crypto.VerifyPassword(password, user.PasswordHash)
     if !ok || err != nil { return nil, ErrInvalidCredentials }
-    
+
     return user, nil
 }
 
@@ -499,11 +499,11 @@ func (p *LocalProvider) Authenticate(ctx context.Context, email, password string
 func (p *LocalProvider) Authenticate(ctx context.Context, email, password string) (*User, error) {
     user, err := p.repo.GetByEmail(ctx, email)
     if err != nil { return nil, err }
-    
+
     // Multi-hash verification
     ok, algo, err := crypto.VerifyPasswordMulti(password, user.PasswordHash)
     if !ok || err != nil { return nil, ErrInvalidCredentials }
-    
+
     // Transparent rehash to Argon2id if needed
     if crypto.ShouldRehash(algo) {
         newHash, err := crypto.RehashToArgon2id(password)
@@ -513,7 +513,7 @@ func (p *LocalProvider) Authenticate(ctx context.Context, email, password string
         }
         // Non-fatal: if rehash fails, user still authenticated; will retry next login
     }
-    
+
     return user, nil
 }
 ```
@@ -632,16 +632,16 @@ type ImportError struct {
 func (s *MigrationService) ProcessImportFile(ctx context.Context, jobID uuid.UUID, data []byte, format string) error {
     // 1. Update job status → validating
     s.updateJobStatus(ctx, jobID, ImportStatusValidating)
-    
+
     // 2. Parse users from file
     users, err := s.parseUsers(data, format)
     if err != nil {
         s.failJob(ctx, jobID, "parse error: "+err.Error())
         return err
     }
-    
+
     s.setJobTotal(ctx, jobID, len(users))
-    
+
     // 3. Validate each user record
     var validUsers []ImportUser
     for i, u := range users {
@@ -651,25 +651,25 @@ func (s *MigrationService) ProcessImportFile(ctx context.Context, jobID uuid.UUI
         }
         validUsers = append(validUsers, u)
     }
-    
+
     // 4. Update status → importing
     s.updateJobStatus(ctx, jobID, ImportStatusImporting)
-    
+
     // 5. Batch insert (configurable batch size, default 100)
     batchSize := 100
     for i := 0; i < len(validUsers); i += batchSize {
         end := i + batchSize
         if end > len(validUsers) { end = len(validUsers) }
-        
+
         batch := validUsers[i:end]
         if err := s.batchCreateUsers(ctx, batch); err != nil {
             // Log error, continue with next batch
             s.addJobError(ctx, jobID, i, "", "", err.Error())
         }
-        
+
         s.incrementJobProgress(ctx, jobID, len(batch))
     }
-    
+
     // 6. Mark complete
     s.completeJob(ctx, jobID)
     return nil
@@ -1199,7 +1199,7 @@ Every migration action is logged to the audit service:
 ```
 1. Export users from Auth0 Management API:
    GET /api/v2/users?include_totals=true (paginate)
-   
+
 2. Transform Auth0 format to GGID format:
    - user_id → legacy_id
    - email → email

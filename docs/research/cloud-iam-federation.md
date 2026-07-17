@@ -229,7 +229,7 @@ data "http" "ggid_saml_metadata" {
 # Create IAM role that trusts GGID SAML provider
 resource "aws_iam_role" "developer" {
   name = "GGID-Developer"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
@@ -390,7 +390,7 @@ attribute_mapping:
   google.subject:        "assertion.subject"
   google.display_name:   "assertion.attributes.displayName[0]"
   google.groups:         "assertion.attributes.groups"
-  
+
   # Custom attributes for ABAC
   attribute.department:  "assertion.attributes.department[0]"
   attribute.role:        "assertion.attributes.role[0]"
@@ -426,15 +426,15 @@ resource "google_iam_workforce_pool_provider" "saml" {
   location                  = "global"
   provider_id               = "ggid-saml"
   display_name              = "GGID SAML IdP"
-  
+
   attribute_mapping = {
     "google.subject"      = "assertion.subject"
     "google.display_name" = "assertion.attributes.displayName[0]"
     "google.groups"       = "assertion.attributes.groups"
   }
-  
+
   attribute_condition = "assertion.attributes.tenant[0] == 'production'"
-  
+
   saml {
     idp_metadata_xml = data.http.ggid_saml_metadata.response_body
   }
@@ -574,27 +574,27 @@ type CloudFederationConfig struct {
     Provider        CloudProvider   `json:"provider"`     // aws, azure, gcp
     Name            string          `json:"name"`         // "Production AWS"
     Protocol        string          `json:"protocol"`     // "saml" or "oidc"
-    
+
     // Provider-specific configuration
     AWSConfig       *AWSFedConfig   `json:"aws_config,omitempty"`
     AzureConfig     *AzureFedConfig `json:"azure_config,omitempty"`
     GCPConfig       *GCPFedConfig   `json:"gcp_config,omitempty"`
-    
+
     // Role mapping (GGID role → cloud role)
     RoleMappings    []RoleMapping   `json:"role_mappings"`
-    
+
     // Claim/attribute mapping
     AttributeMapping map[string]string `json:"attribute_mapping"`
-    
+
     // SAML settings
     SAMLEntityID    string          `json:"saml_entity_id"`
     ACSURL          string          `json:"acs_url"`         // Cloud provider's ACS URL
-    
+
     // SCIM provisioning
     SCIMEnabled     bool            `json:"scim_enabled"`
     SCIMEndpoint    string          `json:"scim_endpoint"`
     SCIMToken       string          `json:"-"`               // Encrypted, never returned
-    
+
     // Status
     Enabled         bool            `json:"enabled"`
     CreatedAt       time.Time       `json:"created_at"`
@@ -642,7 +642,7 @@ CREATE TABLE cloud_federation_configs (
     enabled         BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     UNIQUE(tenant_id, provider, name)
 );
 
@@ -678,7 +678,7 @@ CREATE TABLE cloud_scim_state (
     last_sync_at        TIMESTAMPTZ,
     error               TEXT,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     UNIQUE(federation_id, user_id)
 );
 
@@ -853,7 +853,7 @@ func (e *ClaimMappingEngine) BuildCloudSAMLAttributes(
     fedConfig *CloudFederationConfig,
 ) (map[string][]string, error) {
     attrs := make(map[string][]string)
-    
+
     for _, mapping := range e.mappings {
         var value string
         switch mapping.GGIDSource {
@@ -869,17 +869,17 @@ func (e *ClaimMappingEngine) BuildCloudSAMLAttributes(
             attrs[mapping.CloudAttribute] = cloudRoles
             continue
         }
-        
+
         // Apply transform
         value = applyTransform(value, mapping.Transform)
-        
+
         if value == "" && mapping.Required {
             return nil, fmt.Errorf("required attribute %s is empty", mapping.GGIDSource)
         }
-        
+
         attrs[mapping.CloudAttribute] = []string{value}
     }
-    
+
     return attrs, nil
 }
 ```
@@ -991,22 +991,22 @@ func (c *SCIMClient) ProvisionUser(ctx context.Context, user *User, roles []stri
         Active:     true,
         Roles:      roles,
     }
-    
+
     body, _ := json.Marshal(scimUser)
     req, _ := http.NewRequestWithContext(ctx, "POST", c.endpoint+"/Users", bytes.NewReader(body))
     req.Header.Set("Authorization", "Bearer "+c.token)
     req.Header.Set("Content-Type", "application/scim+json")
-    
+
     resp, err := c.http.Do(req)
     if err != nil {
         return fmt.Errorf("SCIM provision failed: %w", err)
     }
     defer resp.Body.Close()
-    
+
     if resp.StatusCode != http.StatusCreated {
         return fmt.Errorf("SCIM provision returned %d", resp.StatusCode)
     }
-    
+
     // Store cloud user ID for future updates
     var result SCIMUser
     json.NewDecoder(resp.Body).Decode(&result)

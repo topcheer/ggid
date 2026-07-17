@@ -51,7 +51,7 @@ Auth0 implements full RFC 9449 including:
    - Validate `htm`, `htu`, `iat` freshness
    - Check `jti` against Redis replay cache
    - Validate `nonce` claim against per-client nonce
-   
+
 2. **Nonce issuance** (OAuth service):
    - Generate random nonce on each token response
    - Return in `DPoP-Nonce` response header
@@ -60,7 +60,7 @@ Auth0 implements full RFC 9449 including:
 3. **Token binding verification**:
    - On resource access, check `cnf.jkt` in access token
    - Match against `DPoP` header proof JWT's `jkt`
-   
+
 4. **Tests**: DPoP proof generation helper for test clients
 
 ## 6. Priority

@@ -258,7 +258,7 @@ type document
 GGID's Policy service implements a **hybrid RBAC + ABAC** evaluator:
 
 ```
-CheckRequest → 
+CheckRequest →
   1. Resolve user roles (with inheritance) → collect permissions
   2. Check if any permission matches (resource_type, action) → RBAC allow
   3. Evaluate ABAC policies (deny override) → may deny or allow
@@ -346,7 +346,7 @@ CREATE TABLE rebac_tuples (
     caveat      JSONB,  -- Optional caveat context
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expired_at  TIMESTAMPTZ,
-    
+
     UNIQUE(tenant_id, object_type, object_id, relation, subject_type, subject_id, subject_relation)
 );
 
@@ -383,17 +383,17 @@ func (e *RebacEvaluator) Check(
     if err != nil {
         return false, err
     }
-    
+
     // 2. For each tuple, check if subject matches
     for _, t := range tuples {
         // Direct user match
         if t.SubjectType == subjectType && t.SubjectID == subjectID {
             return true, nil
         }
-        
+
         // Userset match: subject is a group, check membership
         if t.SubjectType == "group" {
-            member, err := e.Check(ctx, tenantID, 
+            member, err := e.Check(ctx, tenantID,
                 t.SubjectType, t.SubjectID,
                 t.SubjectRelation,  // e.g., "member"
                 subjectType, subjectID)
@@ -404,7 +404,7 @@ func (e *RebacEvaluator) Check(
                 return true, nil
             }
         }
-        
+
         // Computed userset: traverse to parent object
         if t.SubjectType == objectType && t.SubjectID != objectID {
             // Recursive: check if subject has the permission on the parent
@@ -420,7 +420,7 @@ func (e *RebacEvaluator) Check(
             }
         }
     }
-    
+
     return false, nil
 }
 ```
@@ -438,7 +438,7 @@ definition organization {
     relation owner: user
     relation admin: user
     relation member: user | organization#member  // nested orgs
-    
+
     permission manage = owner
     permission administer = admin + owner
     permission view = member + administer
@@ -448,7 +448,7 @@ definition department {
     relation org: organization
     relation head: user
     relation member: user
-    
+
     permission manage = head + org->manage
     permission administer = head + org->administer
     permission view = member + org->view
@@ -458,7 +458,7 @@ definition team {
     relation dept: department
     relation lead: user
     relation member: user
-    
+
     permission manage = lead + dept->manage
     permission view = member + dept->view
 }
@@ -466,7 +466,7 @@ definition team {
 definition role {
     relation tenant: organization
     relation assignee: user
-    
+
     permission assign = tenant->administer
     permission revoke = tenant->administer
 }
@@ -476,7 +476,7 @@ definition resource {
     relation org: organization
     relation dept: department
     relation team: team
-    
+
     permission manage = owner + org->administer
     permission view = owner + org->view + dept->view + team->view
     permission edit = owner + org->administer
@@ -489,7 +489,7 @@ definition document {
     relation editor: user
     relation viewer: user
     relation commenter: user
-    
+
     permission edit = owner + editor + parent->edit
     permission comment = commenter + edit
     permission view = viewer + comment + parent->view
@@ -503,7 +503,7 @@ definition folder {
     relation owner: user
     relation editor: user
     relation viewer: user
-    
+
     permission edit = owner + editor + parent->edit
     permission view = viewer + edit + parent->view + org->view
     permission manage = owner + org->administer
@@ -706,7 +706,7 @@ definition document {
 ```sql
 -- Migrate existing user-role assignments to ReBAC tuples
 INSERT INTO rebac_tuples (tenant_id, object_type, object_id, relation, subject_type, subject_id)
-SELECT 
+SELECT
     ur.tenant_id,
     'organization', ur.scope_id::text,
     'member',
@@ -716,7 +716,7 @@ WHERE ur.scope_type = 'organization';
 
 -- Migrate department-scoped roles
 INSERT INTO rebac_tuples (tenant_id, object_type, object_id, relation, subject_type, subject_id)
-SELECT 
+SELECT
     ur.tenant_id,
     'department', ur.scope_id::text,
     'member',

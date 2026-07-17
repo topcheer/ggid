@@ -341,7 +341,7 @@ CREATE TABLE journey_definitions (
     status      VARCHAR(32) NOT NULL,        -- "draft", "active", "archived"
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    
+
     UNIQUE(tenant_id, name, version)
 );
 
