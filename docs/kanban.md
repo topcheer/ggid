@@ -156,7 +156,20 @@
 
 ## In Progress
 
-*(None currently)*
+| ID | Title | Owner | Status |
+|----|-------|-------|--------|
+| B-34b | Batch 4 remaining: audit (3 maps) + auth (2 maps) rewire | backend | in progress |
+| B-37 | Threat Intelligence Integration Hub (backend) | IAMExpert | in progress — design doc ready |
+| — | Console rebuild + deploy for F-44/F-45 pages | techwriter | in progress |
+| — | i18n audit sweep (hardcoded strings + missing keys) | UIAutomationExpert | in progress |
+| — | Consent Management Platform research | researcher | in progress |
+
+## Done (Recent)
+
+| Item | Detail | Verified |
+|------|--------|----------|
+| B-34a OAuth batch 4 (6 maps) | commit 84924873 — brandingStore, customScopes, dpopBindings, resourceAllow, clientScopes, delegationChains → PG mapRepoVar | PASS by IAMExpert |
+| **In-memory map milestone** | **Global `var = make(map[string])` = 0 across ALL services** (originally 13+ → 0) | Retrospective tech debt #3 closed |
 
 ## Done (Recent)
 
