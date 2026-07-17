@@ -47,6 +47,7 @@ type HTTPHandler struct {
 	abRepo           *accessBrokerRepo
 	journeyRepo      *journeyRepo
 	fedRepo          *federationRepo
+	jitRepo          *jitRepo
 	devicePostureRepo *devicePostureRepo
 }
 
@@ -246,6 +247,10 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/federation/transform-rules", h.handleFederation)
 	h.mux.HandleFunc("/api/v1/identity/federation/route-email", h.handleFederation)
 	h.mux.HandleFunc("/api/v1/.well-known/federation-configuration", h.handleFederation)
+
+	// JIT user provisioning.
+	h.mux.HandleFunc("/api/v1/identity/jit/mappings", h.handleJIT)
+	h.mux.HandleFunc("/api/v1/identity/jit/dry-run", h.jitDryRun)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)

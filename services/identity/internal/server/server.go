@@ -136,6 +136,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetFedRepo(fedRepo)
 
+	// JIT user provisioning.
+	jitRepo := newJITRepo(pool)
+	if err := jitRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("JIT schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetJITRepo(jitRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,
