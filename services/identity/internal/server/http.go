@@ -203,6 +203,9 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/list-objects", h.handleReBACListObjects)
 	h.mux.HandleFunc("/api/v1/identity/list-subjects", h.handleReBACListSubjects)
 
+	// ReBAC RBAC→tuple migration sync.
+	h.mux.HandleFunc("/api/v1/identity/rebac/sync-rbac", h.handleReBACSyncRBAC)
+
 	// JML identity lifecycle orchestration.
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/rules", h.handleJML)
 	h.mux.HandleFunc("/api/v1/identity/lifecycle/events", h.handleJML)
