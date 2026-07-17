@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
+	"sync"
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
