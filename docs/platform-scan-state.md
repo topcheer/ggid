@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 98
-## Last scan focus: F (Feature deep verification, Round 97) — SAML/SSO/SLO, PAR, TOTP, Backup Codes, SCIM Bulk, WebAuthn all working; CIBA bc-authorize missing (config-only, known gap)
-## Next scan focus: E2E tests (Round 98 = even round, Workflow A)
+## Current round: 99
+## Last scan focus: E2E (Round 98) — Core 7/7, ERP 4/4, OAuth 3/3, SDK 5/5 (Go/Py/Node/Dart tested); platform stable
+## Next scan focus: G (SDK function matrix, Round 99 = odd round, Workflow B)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)

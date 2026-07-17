@@ -63,6 +63,10 @@ func (r *RuleRegistry) registerBuiltins() {
 	r.Register(&BruteForceRule{})
 	r.Register(&CredentialStuffingRule{})
 	r.Register(&ImpossibleTravelRule{})
+	// Phase 4 rules
+	r.Register(&OffHoursAdminRule{})
+	r.Register(&NewDevicePrivilegedRule{})
+	r.Register(&TokenReplayRule{})
 }
 
 // All returns all registered rules.
