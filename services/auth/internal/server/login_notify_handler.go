@@ -25,7 +25,16 @@ func (h *Handler) handleLoginNotify(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/api/v1/auth/login-notify/config" && r.Method == http.MethodGet {
 		userID := r.URL.Query().Get("user_id")
 		loginNotifyMu.RLock()
-		cfg, ok := loginNotifyConfigs[userID]
+		// PG-first lookup
+	if h.memMapRepo != nil {
+		row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_login_notify_configs", userID)
+		if row != nil {
+			writeJSON(w, http.StatusOK, row)
+			return
+		}
+	}
+
+	cfg, ok := loginNotifyConfigs[userID]
 		loginNotifyMu.RUnlock()
 		if !ok {
 			cfg = &LoginNotifyConfig{UserID: userID, Channel: "email", Enabled: true, NewDeviceOnly: false}

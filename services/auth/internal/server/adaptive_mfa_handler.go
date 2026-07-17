@@ -82,6 +82,14 @@ func (h *Handler) handleAdaptiveMFA(w http.ResponseWriter, r *http.Request) {
 
 	adaptiveMFAMu.Lock()
 	adaptiveDecisions[req.UserID] = &result
+
+	// PG write-through
+	if h.memMapRepo != nil {
+		data, _ := json.Marshal(result)
+		var m map[string]any
+		json.Unmarshal(data, &m)
+		h.memMapRepo.StoreJSON(r.Context(), "auth_adaptive_mfa_decisions", req.UserID, m)
+	}
 	adaptiveMFAMu.Unlock()
 
 	writeJSON(w, http.StatusOK, map[string]any{

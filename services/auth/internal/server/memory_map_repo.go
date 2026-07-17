@@ -185,6 +185,26 @@ func (r *authMemoryMapRepo) EnsureSchema(ctx context.Context) error {
 			created_at TIMESTAMPTZ DEFAULT now()
 		);
 
+		CREATE TABLE IF NOT EXISTS auth_dlp_policies (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}',
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_pwd_reset_tokens (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}',
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_login_notify_configs (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}',
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+
+		CREATE TABLE IF NOT EXISTS auth_adaptive_mfa_decisions (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}',
+			created_at TIMESTAMPTZ DEFAULT now()
+		);
+
 		-- Generic JSON tables for write-through handlers (StoreJSON/ListJSON/GetJSON)
 		CREATE TABLE IF NOT EXISTS auth_otp_json (
 			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()

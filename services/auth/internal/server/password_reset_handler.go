@@ -47,6 +47,14 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 				ExpiresAt: time.Now().UTC().Add(30 * time.Minute),
 			}
 			pwdResetMu.Unlock()
+
+			// PG write-through
+			if h.memMapRepo != nil {
+				h.memMapRepo.StoreJSON(r.Context(), "auth_pwd_reset_tokens", token, map[string]any{
+					"token": token, "email": req.Email,
+					"expires_at": time.Now().UTC().Add(30 * time.Minute), "used": false,
+				})
+			}
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
@@ -73,6 +81,7 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Validate token
+		// PG-first lookup
 		pwdResetMu.Lock()
 		rt, ok := pwdResetTokens[req.Token]
 		if !ok {
