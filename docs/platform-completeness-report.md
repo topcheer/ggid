@@ -195,3 +195,21 @@ All services extract X-Tenant-ID at the handler level and set up ggidtenant cont
 - Other services: not yet applying InternalAuth — backend actively working on this
 
 **No new issues found in this scan dimension.**
+
+### Round 91 Focus D — Data Persistence Scan Results
+
+**Scanned 9 in-memory stores across auth + audit services:**
+
+| Store | Type | Persisted? | Assessment |
+|-------|------|-----------|------------|
+| backup_codes | map[uuid]*BackupCode | YES (PgBackupCodeRepo) | DONE — backup_codes_pg.go wired in main.go |
+| SessionRevocationManager | maps → Redis+DB | YES (Redis ZSET + DB) | DONE — session_revocation_manager.go uses Redis + sessionRepo + refreshRepo |
+| account_lockout | map[string]*LockoutState | YES (Redis) | DONE — email_lockout.go uses redis.Client |
+| breach_detection | map[string]*BreachInfo | Cache (HIBP API, 24h TTL) | ACCEPTABLE — cache for external API responses |
+| risk_engine (audit) | velocityStore, knownDevices/IPs/Locations | In-memory | ACCEPTABLE — real-time detection state, fresh start on restart is safe |
+| alert_webhook dedup | map[string]time.Time | In-memory | ACCEPTABLE — operational dedup cache |
+| siem_forwarder circuits | map[string]CircuitState | In-memory | ACCEPTABLE — operational circuit state |
+| rotation_scheduler | package-level map | In-memory | KNOWN — assigned to backend (R89), not yet wired |
+| impersonation tokens | package-level map | In-memory, NO DB | GAP — issue endpoint not wired (404); feature incomplete |
+
+**Summary:** 3 stores properly persisted (PG/Redis), 4 operational caches (acceptable), 2 known gaps (rotation + impersonation, both already tracked).
