@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 108
-## Last scan focus: D (Persistence restart, Round 107) — 2 new PG-backed stores wired (review+delegation); 3 in-memory caches acceptable (otp/par/scopes); parStore+customScopes flagged for Redis if HA
-## Next scan focus: E2E tests (Round 108 = even round, Workflow A)
+## Current round: 109
+## Last scan focus: E2E (Round 108) — Core 7/7, ERP 4/4 PASS; platform stable
+## Next scan focus: E (Security config scan restart, Round 109 = odd round) — research cycle every 3 rounds, this is R109 = research round
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
