@@ -357,3 +357,40 @@ See docs/research/ for full research docs.
   9. **MCP05 Injection**：输入校验审计（已有基础，补审计）
 
 **兼容性**: 复用 OAuth 2.1 (RFC 8693 B-06)、RBAC (policy 服务)、audit publisher (NATS)
+
+---
+
+## AAL/AMR Claims in JWT (2026-07-17 研究驱动 NIST 800-63B-4) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**描述**: NIST SP 800-63B Rev 4 (2025年8月发布) 要求 OIDC token 包含标准化认证保证级别。GGID 有 step-up 认证但不暴露 AAL1/AAL2/AAL3 级别映射到 JWT `acr`/`amr` claims。WebAuthn 单独应满足 AAL2（phishing-resistant）。
+
+**业务价值**: HIGH — 联邦认证和合规场景必需 | **实现难度**: Medium
+- 实现路径：
+  1. 定义 AAL 级别映射：password=AAL1, WebAuthn=AAL2, WebAuthn+PIN=AAL3
+  2. JWT token 添加 `acr` (Assurance Context Reference) 和 `amr` (Authentication Methods References) claims
+  3. step-up trigger 时升级 AAL 并签发新 token
+  4. 资源服务可根据 AAL 要求拒绝低级别访问
+- 参考: docs/research/verifiable-credentials-nist80063-webauthn-hybrid.md
+
+---
+
+## SD-JWT Verifiable Credential Support (2026-07-17 研究驱动 EUDI) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: EU Digital Identity Wallet 2026 强制要求 OpenID4VP 凭证展示。GGID 当前不支持 SD-JWT (Selective Disclosure JWT) 可验证凭证的签发 (OpenID4VCI) 或验证 (OpenID4VP)。RAR handler 提到 "Issue Credential" 但无实际实现。
+
+**业务价值**: HIGH — 欧盟市场合规 | **实现难度**: High
+- 实现路径：
+  1. SD-JWT 签发：POST /api/v1/oauth/credential-issue — 生成选择性披露凭证
+  2. OpenID4VP 验证：POST /api/v1/oauth/credential-verify — 验证第三方凭证
+  3. DCQL 查询语言支持 — 按属性查询凭证
+  4. Console：凭证管理页面（签发/撤销/查看）
+- 参考: docs/research/verifiable-credentials-nist80063-webauthn-hybrid.md
+
+---
+
+## Federation Assurance Level (FAL) (2026-07-17 研究驱动 NIST 800-63-4) - Priority: P3 - Status: Proposed - Suggested: backend
+
+**描述**: NIST 800-63-4 新增 Federation Assurance Level (FAL) 要求 — 联邦认证场景需要 metadata 签名、R&P (Resolution and Policy) profiles、trust frameworks。GGID 有 SAML/OIDC 联邦但未映射到 FAL1/FAL2/FAL3 级别。
+
+**业务价值**: MEDIUM — 政府联邦认证场景 | **实现难度**: Medium
+- 参考: docs/research/verifiable-credentials-nist80063-webauthn-hybrid.md
