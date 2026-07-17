@@ -259,3 +259,21 @@ All services extract X-Tenant-ID at the handler level and set up ggidtenant cont
 | discovery | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 
 **8/8 methods x 8/8 SDKs = 64/64 PASS.** Complete coverage.
+
+### Round 101 Focus A (restart cycle) — Stub/Placeholder Scan
+
+**Scan results across all services:**
+
+| Service | Endpoints Tested | Result |
+|---------|-----------------|--------|
+| audit | security-posture, anomaly-detection/rules, itdr/detections/stats/rules | All 200 ✓ |
+| auth | mfa/setup, backup-codes, rotation/due, impersonation, break-glass, orchestrator, step-up | All 200 ✓ |
+| policy | standing-access, jit-elevate(405=POST only), break-glass | All working ✓ |
+| identity | scim/tokens, zt/posture | **404 — pod running old image (13h)** |
+
+**Issue found:** Identity service needs Docker rebuild + redeploy.
+- bb2fbf94 (SCIM bearer tokens) and d7ad68d1 (ZT posture aggregation) committed but not deployed
+- DM'd backend to rebuild + deploy
+- No new stubs/hardcoded data found across services
+
+**No new TODO/FIXME/hardcoded data in Go code** — all recent commits are clean implementations.
