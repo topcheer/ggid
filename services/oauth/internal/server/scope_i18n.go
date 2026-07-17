@@ -58,16 +58,8 @@ func handleScopesI18n(w http.ResponseWriter, r *http.Request) {
 		lang = "en"
 	}
 
-	// Include custom scopes too
-	customScopes.mu.RLock()
-	for name := range customScopes.scopes {
-		if _, exists := scopeDescStore[name]; !exists {
-			scopeDescStore[name] = &scopeDesc{Name: name, Descriptions: map[string]string{
-				"en": name, "zh": name, "ja": name, "de": name, "fr": name,
-			}}
-		}
-	}
-	customScopes.mu.RUnlock()
+	// Custom scopes are loaded from PG via mapRepoVar at request time.
+	// No in-memory iteration needed.
 
 	scopeDescMu.RLock()
 	result := []map[string]any{}

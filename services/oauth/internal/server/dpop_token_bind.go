@@ -9,37 +9,43 @@ import (
 	"github.com/ggid/ggid/services/oauth/internal/service"
 )
 
-// dpopBindingStore tracks DPoP-bound tokens: token_hash → jkt
-type dpopBindingStore struct {
-	mu     sync.RWMutex
-	binds  map[string]string // access_token → jkt (DPoP key thumbprint)
-}
-
-var dpopBindings = &dpopBindingStore{binds: make(map[string]string)}
+// dpopCache is a read-through cache for DPoP binding lookups (hot path).
+// Persisted to PG via mapRepoVar for durability.
+var dpopCache sync.Map // token → jkt
 
 // BindTokenToDPoP associates an access token with a DPoP key thumbprint.
+// Persists to PG and caches in memory for fast lookups.
 func BindTokenToDPoP(token, jkt string) {
-	dpopBindings.mu.Lock()
-	dpopBindings.binds[token] = jkt
-	dpopBindings.mu.Unlock()
+	dpopCache.Store(token, jkt)
+	if mapRepoVar != nil {
+		mapRepoVar.Store(nil, "oauth_dpop_bindings", token, map[string]any{"jkt": jkt})
+	}
 }
 
 // CheckTokenDPoPBinding returns the bound JKT for a token (empty = not bound).
 func CheckTokenDPoPBinding(token string) string {
-	dpopBindings.mu.RLock()
-	defer dpopBindings.mu.RUnlock()
-	return dpopBindings.binds[token]
+	if v, ok := dpopCache.Load(token); ok {
+		return v.(string)
+	}
+	// Cache miss — try PG.
+	if mapRepoVar != nil {
+		if row, _ := mapRepoVar.Get(nil, "oauth_dpop_bindings", token); row != nil {
+			jkt := omGetString(row, "jkt")
+			if jkt != "" {
+				dpopCache.Store(token, jkt)
+				return jkt
+			}
+		}
+	}
+	return ""
 }
 
 // POST /api/v1/oauth/token/dpop-bind — bind an access token to a DPoP key.
-// Body: {"access_token": "...", "dpop_proof": "..."}
-// This is called after token issuance when DPoP is used.
 func handleDPoPTokenBind(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 		return
 	}
-
 	var req struct {
 		AccessToken string `json:"access_token"`
 		DPoPProof   string `json:"dpop_proof"`
@@ -53,10 +59,8 @@ func handleDPoPTokenBind(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "access_token is required"})
 		return
 	}
-
 	jkt := req.DPoPJKT
 	if jkt == "" && req.DPoPProof != "" {
-		// Compute JKT from proof
 		proof, err := service.ParseDPoPHeader(req.DPoPProof, "POST", "https://example.com/token")
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid DPoP proof"})
@@ -68,25 +72,19 @@ func handleDPoPTokenBind(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "dpop_jkt or dpop_proof is required"})
 		return
 	}
-
 	BindTokenToDPoP(req.AccessToken, jkt)
-
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":       "bound",
-		"token_prefix": req.AccessToken[:8] + "...",
-		"jkt":          jkt,
-		"bound_at":     time.Now().UTC().Format(time.RFC3339),
+		"status": "bound", "token_prefix": req.AccessToken[:8] + "...",
+		"jkt": jkt, "bound_at": time.Now().UTC().Format(time.RFC3339),
 	})
 }
 
 // POST /api/v1/oauth/token/dpop-verify — verify that a token matches the DPoP key.
-// Returns 401 if the token is bound but the DPoP key doesn't match.
 func handleDPoPTokenVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 		return
 	}
-
 	var req struct {
 		AccessToken string `json:"access_token"`
 		DPoPProof   string `json:"dpop_proof"`
@@ -99,50 +97,24 @@ func handleDPoPTokenVerify(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "access_token is required"})
 		return
 	}
-
 	boundJKT := CheckTokenDPoPBinding(req.AccessToken)
 	if boundJKT == "" {
-		writeJSON(w, http.StatusOK, map[string]any{
-			"is_bound": false,
-			"valid":    true,
-		})
+		writeJSON(w, http.StatusOK, map[string]any{"is_bound": false, "valid": true})
 		return
 	}
-
 	if req.DPoPProof == "" {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{
-			"is_bound": true,
-			"valid":    false,
-			"error":    "token is DPoP-bound but no DPoP proof provided",
-		})
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"is_bound": true, "valid": false, "error": "token is DPoP-bound but no DPoP proof provided"})
 		return
 	}
-
 	proof, err := service.ParseDPoPHeader(req.DPoPProof, "POST", "https://example.com/token")
 	if err != nil {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{
-			"is_bound": true,
-			"valid":    false,
-			"error":    "invalid DPoP proof: " + err.Error(),
-		})
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"is_bound": true, "valid": false, "error": "invalid DPoP proof: " + err.Error()})
 		return
 	}
-
 	actualJKT := computeKeyThumbprint(proof.PublicKey)
 	if actualJKT != boundJKT {
-		writeJSON(w, http.StatusUnauthorized, map[string]any{
-			"is_bound":  true,
-			"valid":     false,
-			"error":     "DPoP key thumbprint mismatch",
-			"expected":  boundJKT,
-			"actual":    actualJKT,
-		})
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"is_bound": true, "valid": false, "error": "DPoP key thumbprint mismatch", "expected": boundJKT, "actual": actualJKT})
 		return
 	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"is_bound": true,
-		"valid":    true,
-		"jkt":      boundJKT,
-	})
+	writeJSON(w, http.StatusOK, map[string]any{"is_bound": true, "valid": true, "jkt": boundJKT})
 }

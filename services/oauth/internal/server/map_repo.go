@@ -21,6 +21,9 @@ func newOAuthMapRepo(pool *pgxpool.Pool) *oauthMapRepo {
 	return &oauthMapRepo{pool: pool}
 }
 
+// mapRepoVar is the package-level instance set during buildHandler init.
+var mapRepoVar *oauthMapRepo
+
 func (r *oauthMapRepo) EnsureSchema(ctx context.Context) error {
 	if r.pool == nil {
 		return nil

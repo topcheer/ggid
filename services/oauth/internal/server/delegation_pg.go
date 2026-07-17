@@ -20,7 +20,7 @@ type delegationAdapter struct {
 var delegationAdapterVar *delegationAdapter
 
 func newDelegationAdapter(pool *pgxpool.Pool) *delegationAdapter {
-	a := &delegationAdapter{mu: &delegationChains.mu, chains: delegationChains.chains}
+	a := &delegationAdapter{}
 	if pool != nil {
 		a.pg = &pgDelegationStore{pool: pool}
 		ctx := context.Background()

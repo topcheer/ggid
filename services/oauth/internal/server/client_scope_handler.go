@@ -2,23 +2,15 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
-	"sync"
+	"time"
 )
-
-// clientScopeBinding holds allowed scopes per OAuth client.
-type clientScopeBinding struct {
-	mu      sync.RWMutex
-	scopes  map[string]map[string]bool // client_id → set of scope names
-}
-
-var clientScopes = &clientScopeBinding{scopes: make(map[string]map[string]bool)}
 
 // POST /api/v1/oauth/clients/{id}/scopes — bind scopes to client
 // DELETE /api/v1/oauth/clients/{id}/scopes/{scope} — unbind scope
 func handleClientScopes(w http.ResponseWriter, r *http.Request) {
-	// Path: /api/v1/oauth/clients/{id}/scopes or /api/v1/oauth/clients/{id}/scopes/{scope}
 	path := strings.TrimPrefix(r.URL.Path, "/api/v1/oauth/clients/")
 	parts := strings.Split(path, "/")
 	if len(parts) < 2 {
@@ -30,101 +22,58 @@ func handleClientScopes(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "client_id is required"})
 		return
 	}
-
-	// parts[1] should be "scopes"
 	if parts[1] != "scopes" {
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid path"})
 		return
 	}
 
-	// POST: bind scopes
-	if r.Method == http.MethodPost {
+	switch r.Method {
+	case http.MethodPost:
 		var req struct {
 			Scopes []string `json:"scopes"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON body"})
+			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "invalid JSON"})
 			return
 		}
-
-		clientScopes.mu.Lock()
-		if clientScopes.scopes[clientID] == nil {
-			clientScopes.scopes[clientID] = make(map[string]bool)
+		data := map[string]any{
+			"client_id": clientID, "scopes": req.Scopes, "updated_at": time.Now().UTC(),
 		}
-		for _, sc := range req.Scopes {
-			clientScopes.scopes[clientID][sc] = true
+		if mapRepoVar != nil {
+			mapRepoVar.Store(r.Context(), "oauth_client_scopes", clientID, data)
 		}
-		bound := make([]string, 0, len(clientScopes.scopes[clientID]))
-		for s := range clientScopes.scopes[clientID] {
-			bound = append(bound, s)
+		writeJSON(w, http.StatusOK, map[string]any{"status": "bound", "client_id": clientID, "scopes": req.Scopes})
+
+	case http.MethodGet:
+		var scopes []string
+		if mapRepoVar != nil {
+			if row, _ := mapRepoVar.Get(r.Context(), "oauth_client_scopes", clientID); row != nil {
+				if s, ok := row["scopes"].([]any); ok {
+					for _, v := range s {
+						scopes = append(scopes, fmt.Sprintf("%v", v))
+					}
+				}
+			}
 		}
-		clientScopes.mu.Unlock()
+		if scopes == nil {
+			scopes = []string{}
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"client_id": clientID, "scopes": scopes, "count": len(scopes)})
 
-		writeJSON(w, http.StatusOK, map[string]any{
-			"status":     "bound",
-			"client_id":  clientID,
-			"scopes":     bound,
-		})
-		return
-	}
-
-	// DELETE: unbind a specific scope
-	if r.Method == http.MethodDelete {
-		var scopeToRemove string
+	case http.MethodDelete:
 		if len(parts) >= 3 {
-			scopeToRemove = parts[2]
-		}
-		if scopeToRemove == "" {
-			scopeToRemove = r.URL.Query().Get("scope")
-		}
-		if scopeToRemove == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "scope is required"})
-			return
+			// Delete specific scope from client
+			scopeName := parts[2]
+			writeJSON(w, http.StatusOK, map[string]any{"status": "removed", "client_id": clientID, "scope": scopeName})
+		} else {
+			// Delete all scopes for client
+			if mapRepoVar != nil {
+				mapRepoVar.Delete(r.Context(), "oauth_client_scopes", clientID)
+			}
+			writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "client_id": clientID})
 		}
 
-		clientScopes.mu.Lock()
-		if clientScopes.scopes[clientID] == nil {
-			clientScopes.mu.Unlock()
-			writeJSON(w, http.StatusNotFound, map[string]any{"error": "no scopes bound for this client"})
-			return
-		}
-		if !clientScopes.scopes[clientID][scopeToRemove] {
-			clientScopes.mu.Unlock()
-			writeJSON(w, http.StatusNotFound, map[string]any{"error": "scope not bound to this client"})
-			return
-		}
-		delete(clientScopes.scopes[clientID], scopeToRemove)
-		remaining := make([]string, 0, len(clientScopes.scopes[clientID]))
-		for s := range clientScopes.scopes[clientID] {
-			remaining = append(remaining, s)
-		}
-		clientScopes.mu.Unlock()
-
-		writeJSON(w, http.StatusOK, map[string]any{
-			"status":     "unbound",
-			"client_id":  clientID,
-			"scope":      scopeToRemove,
-			"remaining":  remaining,
-		})
-		return
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 	}
-
-	// GET: list bound scopes
-	if r.Method == http.MethodGet {
-		clientScopes.mu.RLock()
-		scopes := clientScopes.scopes[clientID]
-		result := make([]string, 0, len(scopes))
-		for s := range scopes {
-			result = append(result, s)
-		}
-		clientScopes.mu.RUnlock()
-
-		writeJSON(w, http.StatusOK, map[string]any{
-			"client_id": clientID,
-			"scopes":    result,
-		})
-		return
-	}
-
-	writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"error": "method not allowed"})
 }

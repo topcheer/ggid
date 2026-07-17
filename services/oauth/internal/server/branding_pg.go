@@ -1,9 +1,8 @@
 package server
 
 import (
-	"fmt"
 	"context"
-	"sync"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -15,7 +14,7 @@ type pgBrandingStore struct {
 }
 
 func newBrandingAdapter(pool *pgxpool.Pool) *brandingAdapter {
-	a := &brandingAdapter{mem: brandingStore, mu: &brandingMu}
+	a := &brandingAdapter{}
 	if pool != nil {
 		a.pg = &pgBrandingStore{pool: pool}
 		ctx := context.Background()
@@ -46,8 +45,7 @@ func (s *pgBrandingStore) Put(ctx context.Context, clientID string, b *ClientBra
 
 type brandingAdapter struct {
 	pg  *pgBrandingStore
-	mem map[string]*ClientBranding
-	mu  *sync.RWMutex
+	mem map[string]*ClientBranding // test/dev fallback when no PG or mapRepoVar
 }
 
 func (a *brandingAdapter) Get(clientID string) (*ClientBranding, bool) {
@@ -55,13 +53,34 @@ func (a *brandingAdapter) Get(clientID string) (*ClientBranding, bool) {
 		b, ok := a.pg.Get(context.Background(), clientID)
 		if ok { return b, true }
 	}
-	a.mu.RLock(); b, ok := a.mem[clientID]; a.mu.RUnlock()
-	return b, ok
+	if mapRepoVar != nil {
+		if row, _ := mapRepoVar.Get(context.Background(), "oauth_branding", clientID); row != nil {
+			return &ClientBranding{
+				LogoURL: omGetString(row, "logo_url"),
+				PrimaryColor: omGetString(row, "primary_color"),
+				BackgroundURL: omGetString(row, "background_url"),
+				CustomCSS: omGetString(row, "custom_css"),
+			}, true
+		}
+	}
+	if a.mem != nil {
+		b, ok := a.mem[clientID]
+		return b, ok
+	}
+	return nil, false
 }
 
 func (a *brandingAdapter) Put(clientID string, b *ClientBranding) {
 	if a.pg != nil { a.pg.Put(context.Background(), clientID, b); return }
-	a.mu.Lock(); a.mem[clientID] = b; a.mu.Unlock()
+	if mapRepoVar != nil {
+		mapRepoVar.Store(context.Background(), "oauth_branding", clientID, map[string]any{
+			"logo_url": b.LogoURL, "primary_color": b.PrimaryColor,
+			"background_url": b.BackgroundURL, "custom_css": b.CustomCSS,
+		})
+		return
+	}
+	if a.mem == nil { a.mem = make(map[string]*ClientBranding) }
+	a.mem[clientID] = b
 }
 
 var brandingAdapterVar *brandingAdapter

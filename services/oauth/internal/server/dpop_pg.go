@@ -20,7 +20,7 @@ type dpopAdapter struct {
 var dpopAdapterVar *dpopAdapter
 
 func newDPoPAdapter(pool *pgxpool.Pool) *dpopAdapter {
-	a := &dpopAdapter{mu: &dpopBindings.mu, binds: dpopBindings.binds}
+	a := &dpopAdapter{}
 	if pool != nil {
 		a.pg = &pgDPoPStore{pool: pool}
 		ctx := context.Background()

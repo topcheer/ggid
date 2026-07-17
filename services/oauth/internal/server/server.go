@@ -138,6 +138,10 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 				reviewAdapterVar = newReviewAdapter(pool)
 				scopeLifecycleAdapterVar = newScopeLifecycleAdapter(pool)
 				// Initialize map repo for remaining in-memory stores.
+				mapRepoVar = newOAuthMapRepo(pool)
+				if err := mapRepoVar.EnsureSchema(ctx); err != nil {
+					log.Printf("warning: oauth map repo schema error: %v", err)
+				}
 				log.Println("OAuth database connected")
 			} else if err != nil {
 				log.Printf("warning: failed to connect database: %v (running without DB)", err)

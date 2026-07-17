@@ -114,12 +114,11 @@ func (s *pgScopeStore) scanScope(row scanner) (*CustomScope, error) {
 // then falls back to the in-memory store.
 type scopeStoreAdapter struct {
 	pg    *pgScopeStore
-	mem   *scopeStore
 }
 
 // newScopeStoreAdapter creates an adapter that uses PG if available, else memory.
 func newScopeStoreAdapter(pool *pgxpool.Pool) *scopeStoreAdapter {
-	a := &scopeStoreAdapter{mem: customScopes}
+	a := &scopeStoreAdapter{}
 	if pool != nil {
 		a.pg = &pgScopeStore{pool: pool}
 		// Best-effort schema creation
@@ -138,12 +137,8 @@ func (a *scopeStoreAdapter) Get(name string) (*CustomScope, bool) {
 		if err == nil && sc != nil {
 			return sc, true
 		}
-		// Fall through to memory
 	}
-	a.mem.mu.RLock()
-	sc, ok := a.mem.scopes[name]
-	a.mem.mu.RUnlock()
-	return sc, ok
+	return nil, false
 }
 
 func (a *scopeStoreAdapter) List() []*CustomScope {
@@ -153,22 +148,13 @@ func (a *scopeStoreAdapter) List() []*CustomScope {
 			return list
 		}
 	}
-	a.mem.mu.RLock()
-	scopes := make([]*CustomScope, 0, len(a.mem.scopes))
-	for _, s := range a.mem.scopes {
-		scopes = append(scopes, s)
-	}
-	a.mem.mu.RUnlock()
-	return scopes
+	return []*CustomScope{}
 }
 
 func (a *scopeStoreAdapter) Create(scope *CustomScope) error {
 	if a.pg != nil {
 		return a.pg.Create(context.Background(), scope)
 	}
-	a.mem.mu.Lock()
-	a.mem.scopes[scope.Name] = scope
-	a.mem.mu.Unlock()
 	return nil
 }
 
@@ -176,9 +162,6 @@ func (a *scopeStoreAdapter) Update(scope *CustomScope) error {
 	if a.pg != nil {
 		return a.pg.Update(context.Background(), scope)
 	}
-	a.mem.mu.Lock()
-	a.mem.scopes[scope.Name] = scope
-	a.mem.mu.Unlock()
 	return nil
 }
 
@@ -186,9 +169,6 @@ func (a *scopeStoreAdapter) Delete(name string) error {
 	if a.pg != nil {
 		return a.pg.Delete(context.Background(), name)
 	}
-	a.mem.mu.Lock()
-	delete(a.mem.scopes, name)
-	a.mem.mu.Unlock()
 	return nil
 }
 
