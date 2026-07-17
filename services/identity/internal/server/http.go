@@ -234,6 +234,13 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusInternalServerError, "internal server error")
 		}
 	}()
+	// Inject tenant context from X-Tenant-ID header (same pattern as auth/audit).
+	if tenantIDStr := r.Header.Get("X-Tenant-ID"); tenantIDStr != "" {
+		if tenantID, err := uuid.Parse(tenantIDStr); err == nil {
+			tc := &ggidtenant.Context{TenantID: tenantID, IsolationLevel: ggidtenant.IsolationShared}
+			r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
+		}
+	}
 	h.scimTokenAuth(h.mux).ServeHTTP(w, r)
 }
 
