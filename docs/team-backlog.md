@@ -516,3 +516,34 @@ See docs/research/ for full research docs.
 **业务价值**: MEDIUM-HIGH（multi-tenant SaaS 刚需，客户差异化定价依据）
 **实现难度**: Medium（Redis 计数器 + DB 配置 + gateway 中间件）
 **工作量**: ~3d
+
+---
+
+## Identity-Based Data Loss Prevention (DLP) (2026-07-17 第19小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**市场背景**: DLP 从网络层（防火墙/邮件网关）迁移到身份层（谁在什么时间导出了什么数据）。Forrester 2025 将 Identity-Centric DLP 列为增长最快的安全细分。核心：基于身份+上下文（device posture/ITDR/data classification）的实时数据外发控制。
+
+**GGID 现状审计**：dlp_policies_handler.go 存在但仅 45 行（stub）。audit export handler 有。data_classifications 有。全部安全信号（device/ITDR/risk/classification）已就绪。
+
+**完整实现路径（不降级）**：
+1. dlp_policies 表（tenant_id + name + trigger[export/api_access/bulk_query] + conditions[AND data_classification=core AND user_role=viewer] + action[block/require_approval/mask/log]）
+2. gateway 中间件：导出/bulk 端点 → DLP 评估（who + what data + context → policy match → action）
+3. 审批流：require_approval → DM manager → approve/reject
+4. 实时告警：block + webhook SOC + ITDR 检测（异常导出模式）
+5. Console：DLP 策略配置 + 导出审计日志 + 实时拦截事件流
+
+**端点清单**：
+- GET/POST /api/v1/identity/dlp/policies — 策略 CRUD
+- GET /api/v1/audit/dlp/events — 拦截事件日志
+- POST /api/v1/identity/dlp/policies/{id}/test — 策略模拟
+
+**验收 curl**：
+```bash
+curl -X POST /api/v1/identity/dlp/policies -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"Block core data export by non-admin","trigger":"export","conditions":{"and":[{"data_classification":"core"},{"user_role":{"$ne":"admin"}}]},"action":"block"}'
+curl /api/v1/audit/dlp/events?severity=blocked
+```
+
+**业务价值**: MEDIUM-HIGH（Identity-DLP 差异化，与数据安全法+ITDR+CAE 协同）
+**实现难度**: Medium
+**工作量**: ~4d
