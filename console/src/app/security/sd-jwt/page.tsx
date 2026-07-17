@@ -86,12 +86,17 @@ export default function SDJWTPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-purple-500" /> SD-JWT & OpenID4VP</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-purple-500" /> SD-JWT {"&"} OpenID4VP</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Selective Disclosure JWT issuance, verification, disclosure simulation, and credential exchange.</p>
         </div>
       </div>
 
-      {error && <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"><AlertCircle className="h-4 w-4 shrink-0" />{error}<button onClick={() => setError(null)} aria-label="Dismiss" className="ml-auto"><X className="h-4 w-4" /></button></div>}
+      {error && (
+        <div role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+          <AlertCircle className="h-4 w-4 shrink-0" />{error}
+          <button onClick={() => setError(null)} aria-label="Dismiss" className="ml-auto"><X className="h-4 w-4" /></button>
+        </div>
+      )}
 
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([
@@ -207,7 +212,6 @@ export default function SDJWTPage() {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }
