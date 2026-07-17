@@ -179,7 +179,7 @@ Phase 4: Enforce & Retire (Weeks 11-12+)
 ### Decision Matrix: Which Approach
 
 | Factor | Big Bang | Phased (Recommended) | Hybrid |
-|--------|---------|--------------------|---------| 
+|--------|---------|--------------------|---------|
 | User count | <500 | 500-100K | 100K+ |
 | Risk tolerance | High | Medium | Low |
 | Downtime tolerance | Some | None | None |
@@ -277,25 +277,25 @@ type AuthMethodPolicy struct {
     TenantID        uuid.UUID
     Name            string              // "Finance passkey required"
     Description     string
-    
+
     // Scope: who does this policy apply to?
     UserGroups      []string            // ["finance", "admin"]
     UserIDs         []uuid.UUID         // specific users
     Applications    []string            // OAuth client IDs (empty = all)
-    
+
     // Rules: what auth methods are required/forbidden?
     RequireMethods  []string            // ["passkey", "webauthn_platform"]
     AllowMethods    []string            // ["passkey", "totp", "email_otp"]
     ForbidMethods   []string            // ["password", "sms_otp"]
-    
+
     // Phased enforcement
     EnforceAfter    *time.Time          // Policy is advisory until this date, then mandatory
     GracePeriodEnd  *time.Time          // Users get a warning during grace period
-    
+
     // Conditions
     MinAAL          int                 // Minimum Authenticator Assurance Level (1, 2, 3)
     RequirePhishingResistant bool       // Require WebAuthn-based methods only
-    
+
     // Settings
     Priority        int                 // Higher = evaluated first
     Enabled         bool
@@ -313,7 +313,7 @@ func (s *PolicyService) Evaluate(
 ) (*PolicyResult, error) {
     // 1. Get applicable policies
     policies := s.getApplicablePolicies(ctx, tenantID, userID, context)
-    
+
     // 2. Evaluate by priority
     for _, policy := range policies {
         if policy.isEnforced(context.Time) {
@@ -333,7 +333,7 @@ func (s *PolicyService) Evaluate(
             }
         }
     }
-    
+
     return &PolicyResult{Allowed: true}, nil
 }
 ```
@@ -418,23 +418,23 @@ func (s *AuthService) checkEnrollmentNudge(ctx context.Context, userID uuid.UUID
     if hasPasskey {
         return nil // No nudge needed
     }
-    
+
     // 2. Get nudge config
     config := s.getNudgeConfig(ctx, tenantID)
     if !config.Enabled {
         return nil
     }
-    
+
     // 3. Check segment applicability
     if !s.userMatchesSegment(ctx, userID, config.Segment) {
         return nil
     }
-    
+
     // 4. Check dismiss history
     if s.isDismissed(ctx, userID, config.DismissDays) {
         return nil
     }
-    
+
     // 5. Return nudge for frontend to display
     return &NudgeResult{
         BannerText:  config.BannerText,
@@ -482,23 +482,23 @@ func (s *AuthService) checkDeprecationPolicy(ctx context.Context, userID uuid.UU
     if policy.Level == DeprecationOff {
         return nil
     }
-    
+
     if policy.ApplyToUsersWithPasskey {
         hasPasskey, _ := s.webauthnService.HasCredential(ctx, userID)
         if !hasPasskey {
             return nil // User has no passkey, password still allowed
         }
     }
-    
+
     if policy.Level == DeprecationDisabled {
         return ErrPasswordDeprecated // Reject password login
     }
-    
+
     if policy.Level == DeprecationWarn {
         // Log warning, add response header, but allow login
         s.logDeprecationWarning(ctx, userID)
     }
-    
+
     return nil
 }
 ```
@@ -583,23 +583,23 @@ CREATE TABLE auth_method_policies (
     tenant_id                   UUID NOT NULL,
     name                        VARCHAR(128) NOT NULL,
     description                 TEXT,
-    
+
     -- Scope
     user_groups                 JSONB DEFAULT '[]',           -- ["finance", "admin"]
     user_ids                    JSONB DEFAULT '[]',           -- specific user UUIDs
     applications                JSONB DEFAULT '[]',           -- OAuth client IDs
-    
+
     -- Rules
     require_methods             JSONB DEFAULT '[]',           -- ["passkey"]
     allow_methods               JSONB DEFAULT '[]',           -- ["passkey", "totp"]
     forbid_methods              JSONB DEFAULT '[]',           -- ["password"]
     min_aal                     INT DEFAULT 1,                -- 1, 2, or 3
     require_phishing_resistant  BOOLEAN DEFAULT false,
-    
+
     -- Phased enforcement
     enforce_after               TIMESTAMPTZ,                  -- Advisory until this date
     grace_period_end            TIMESTAMPTZ,                  -- Warning during grace period
-    
+
     -- Config
     priority                    INT DEFAULT 0,
     enabled                     BOOLEAN DEFAULT true,
@@ -695,7 +695,7 @@ CREATE TABLE auth_method_enrollments (
     enrolled_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_used_at                TIMESTAMPTZ,
     revoked_at                  TIMESTAMPTZ,
-    
+
     UNIQUE(tenant_id, user_id, method, method_detail)
 );
 

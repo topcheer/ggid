@@ -257,12 +257,12 @@ func (e *JITEngine) Process(ctx context.Context, req *JITRequest) (*JITResult, e
     if err != nil || !config.Enabled {
         return nil, ErrJITDisabled
     }
-    
+
     // 2. Resolve external identity
     existing, _ := e.identityService.repo.FindExternalIdentity(ctx, req.TenantID, req.Source, req.ExternalID)
-    
+
     result := &JITResult{}
-    
+
     if existing != nil {
         // User exists — update if configured
         if config.UpdateOnLogin {
@@ -281,13 +281,13 @@ func (e *JITEngine) Process(ctx context.Context, req *JITRequest) (*JITResult, e
         user, err := e.createUser(ctx, req, config)
         result.User = user
         result.Created = true
-        
+
         // Link external identity
         e.identityService.repo.LinkExternalIdentity(ctx, req.TenantID, user.ID, req.Source, req.ExternalID)
-        
+
         e.audit(ctx, "jit.create", req, result)
     }
-    
+
     // 3. Map groups → roles
     roles := e.mapGroupsToRoles(req.Attributes, config.RoleMappings)
     if len(roles) > 0 {
@@ -295,7 +295,7 @@ func (e *JITEngine) Process(ctx context.Context, req *JITRequest) (*JITResult, e
         result.RolesAdded = added
         result.RolesRemoved = removed
     }
-    
+
     return result, nil
 }
 ```

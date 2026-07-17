@@ -57,27 +57,27 @@ CREATE TABLE federation_entities (
     entity_name     TEXT NOT NULL,           -- "Okta Production"
     entity_type     TEXT NOT NULL,           -- 'idp' | 'sp' | 'both'
     protocol        TEXT NOT NULL,           -- 'saml' | 'oidc' | 'ldap' | 'did' | 'scim' | 'social'
-    
+
     -- 连接配置
     metadata_url    TEXT,                    -- SAML metadata URL / OIDC discovery URL
     acs_url         TEXT,                    -- SP Assertion Consumer Service URL
     slo_url         TEXT,                    -- Single Logout URL
     issuer          TEXT,                    -- OIDC issuer / SAML entityID
-    
+
     -- 信任
     trust_level     TEXT NOT NULL DEFAULT 'verified', -- 'verified' | 'pending' | 'revoked'
     trust_direction TEXT NOT NULL,           -- 'inbound' | 'outbound' | 'bidirectional'
-    
+
     -- 证书（SAML 签名验证 / OIDC JWKS URL）
     certificates    JSONB NOT NULL DEFAULT '[]', -- [{kid, pem, fingerprint, expires_at}]
     jwks_url        TEXT,                    -- OIDC JWKS endpoint
-    
+
     -- 自动发现
     auto_discovery  BOOLEAN NOT NULL DEFAULT FALSE, -- 自动从 metadata_url 刷新
-    
+
     -- 属性映射引用
     transform_rule_id UUID,                  -- 关联 assertion_transform_rules
-    
+
     -- 过期/状态
     expires_at      TIMESTAMPTZ,             -- 信任关系过期
     last_checked    TIMESTAMPTZ,             -- 最后 metadata 刷新时间
@@ -85,7 +85,7 @@ CREATE TABLE federation_entities (
     created_by      UUID,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    
+
     UNIQUE(tenant_id, entity_id, protocol)
 );
 
@@ -195,7 +195,7 @@ type TransformationEngine struct {
 // Transform 将源协议的断言属性转换为目标协议的 claims。
 func (e *TransformationEngine) Transform(ctx context.Context, sourceProto, targetProto string, sourceAttrs map[string][]string) (map[string]any, error) {
     rules, err := e.repo.FindRules(ctx, sourceProto, targetProto)
-    
+
     result := make(map[string]any)
     for _, rule := range rules {
         values, ok := sourceAttrs[rule.Source]
@@ -275,13 +275,13 @@ auto_discovery=true 的 entity → 每日 cron 拉 metadata_url → 更新 certi
 // DiscoverIdP 根据 email domain 自动路由到对应 IdP。
 func (s *DiscoveryService) DiscoverIdP(ctx context.Context, email string) (*FederationEntity, error) {
     domain := strings.Split(email, "@")[1]
-    
+
     // 查 domain → entity 映射
     entity, err := s.repo.GetByDomain(ctx, domain)
     if err == nil {
         return entity, nil  // 自动路由
     }
-    
+
     // 无匹配 → 返回 WAYF picker
     return nil, ErrWayfRequired
 }

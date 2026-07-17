@@ -344,31 +344,31 @@ CREATE TABLE delegations (
     tenant_id           UUID NOT NULL,
     delegator_id        UUID NOT NULL,               -- User A (grants)
     delegatee_id        UUID NOT NULL,               -- User B (receives)
-    
+
     -- What is delegated
     permissions         JSONB NOT NULL DEFAULT '[]',  -- ["doc:read", "doc:write"]
     resource_type       VARCHAR(64),                  -- "project", "document" (null = all)
     resource_id         VARCHAR(256),                 -- specific resource ID (null = all of type)
-    
+
     -- Scope constraints
     scopes              JSONB DEFAULT '[]',           -- OAuth scopes being delegated
-    
+
     -- Time bounds
     starts_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at          TIMESTAMPTZ NOT NULL,
-    
+
     -- State
     status              VARCHAR(32) NOT NULL DEFAULT 'active',  -- 'pending', 'active', 'revoked', 'expired'
     revoked_at          TIMESTAMPTZ,
     revoked_by          UUID,                          -- Who revoked (delegator or admin)
     revoke_reason       TEXT,
-    
+
     -- Metadata
     reason              TEXT,                          -- "Vacation coverage"
     approval_status     VARCHAR(32) DEFAULT 'approved', -- 'pending', 'approved', 'rejected'
     approver_id         UUID,
     approved_at         TIMESTAMPTZ,
-    
+
     -- Audit
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
