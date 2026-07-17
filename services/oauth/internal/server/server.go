@@ -185,7 +185,8 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	}
 
 	// Build HTTP handler.
-	handler := buildHandler(oauthSvc, cfg, rotatingKP, auditPub)
+	trustValidator := NewTrustChainValidator(pool)
+	handler := buildHandler(oauthSvc, cfg, rotatingKP, auditPub, trustValidator)
 
 	// Wrap with panic recovery so a single bad request cannot crash the process.
 	wrappedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -258,7 +259,7 @@ func (s *Server) Run(ctx context.Context) error {
 }
 
 // buildHandler creates the HTTP mux with all OAuth/OIDC endpoints.
-func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *service.RotatingKeyProvider, auditPub *audit.Publisher) http.Handler {
+func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *service.RotatingKeyProvider, auditPub *audit.Publisher, trustValidator *TrustChainValidator) http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -355,6 +356,14 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "valid X-Tenant-ID header or tenant_id query param required"})
 			return
+		}
+
+		// Federation TrustChainValidator: reject untrusted OIDC federation clients.
+		if trustValidator != nil {
+			if err := trustValidator.ValidateOIDCClient(r.Context(), tenantIDStr, clientID); err != nil {
+				writeJSON(w, http.StatusForbidden, map[string]string{"error": "untrusted_federation_client", "detail": err.Error()})
+				return
+			}
 		}
 
 		// The user must be authenticated (via JWT).
@@ -969,6 +978,18 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 		if err != nil {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid base64 encoding"})
 			return
+		}
+
+		// Federation TrustChainValidator: reject untrusted IdPs before parsing assertion.
+		if trustValidator != nil {
+			samlIssuer := extractSAMLIssuer(rawXML)
+			if samlIssuer != "" {
+				tenantIDStr := r.Header.Get("X-Tenant-ID")
+				if err := trustValidator.ValidateSAMLIssuer(r.Context(), tenantIDStr, samlIssuer); err != nil {
+					writeJSON(w, http.StatusForbidden, map[string]string{"error": "untrusted_saml_issuer", "detail": err.Error()})
+					return
+				}
+			}
 		}
 
 		assertion, err := saml.ParseAssertion(rawXML)

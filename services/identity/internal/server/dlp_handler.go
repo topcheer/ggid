@@ -170,11 +170,17 @@ func EvaluateDLP(policies []*DLPPolicy, trigger, resourceType, dataClassificatio
 			}
 		}
 	}
-	// Default action based on classification.
+	// Default action based on classification (admins bypass defaults).
 	switch dataClassification {
 	case "core":
+		if userRole == "admin" {
+			return &DLPTestResult{Matched: false, Action: "log", DataClassification: "core"}
+		}
 		return &DLPTestResult{Matched: true, Action: "block", Reason: "core data requires admin", DataClassification: "core"}
 	case "important":
+		if userRole == "admin" {
+			return &DLPTestResult{Matched: false, Action: "log", DataClassification: "important"}
+		}
 		return &DLPTestResult{Matched: true, Action: "mask", Reason: "important data PII masking", DataClassification: "important"}
 	default:
 		return &DLPTestResult{Matched: false, Action: "log"}
