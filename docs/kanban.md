@@ -55,12 +55,15 @@
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
-| F-13 | ITDR Detections 实时仪表盘 | P2 | console/src/app/security/itdr-dashboard/ | SSE/streaming 接 /api/v1/audit/itdr/detections，实时刷新检测列表 |
-| F-14 | KMS 配置页面对接后端真实端点 | P2 | console/src/app/settings/kms-config/ | 当前页面已有，验证 PUT/POST/test 端点返回真实数据 |
+| F-15 | ReBAC 权限可视化页面 | P2 | console/src/app/security/rebac/ | 关系图可视化 + tuple 浏览器。参考 docs/research/rebac-zanzibar-fine-grained-authz.md |
+| F-16 | SCIM Token 管理页面 | P1 | console/src/app/settings/scim-tokens/ | 创建/查看/撤销 SCIM token。接 /api/v1/identity/scim/tokens |
+| F-17 | 数据安全法合规仪表盘 | P2 | console/src/app/security/data-governance/ | 数据分类分级展示 + DSR 请求管理 |
 
 ### DONE
 | ID | Task | Assignee | Commit |
 |----|------|----------|--------|
+| F-13 | ITDR Detections 实时仪表盘 | frontend | cd25b1cb |
+| F-14 | KMS 配置页面对接验证 | frontend | cd25b1cb |
 | F-01 | ZT 姿态评分页面真实化 | frontend | 5a2a9728 |
 | F-02 | CIEM 权限使用分析页面 | frontend | 593c2c7e |
 | F-03 | SDK 假数据清理 153 hooks (Batch 1-5) | frontend | fc559c27+4 |
