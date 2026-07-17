@@ -21,15 +21,10 @@ type AccessReview struct {
 	Decision   string
 }
 
-var (
-	accessReviewMu sync.RWMutex
-	accessReviews  = make(map[uuid.UUID]*AccessReview)
-)
+var accessReviews sync.Map // key: uuid.UUID, value: *AccessReview
 
 // CreateAccessReview creates a pending access certification.
 func CreateAccessReview(managerID, userID, tenantID uuid.UUID, roles []string) *AccessReview {
-	accessReviewMu.Lock()
-	defer accessReviewMu.Unlock()
 	r := &AccessReview{
 		ID:        uuid.New(),
 		ManagerID: managerID,
@@ -39,18 +34,17 @@ func CreateAccessReview(managerID, userID, tenantID uuid.UUID, roles []string) *
 		Status:    "pending",
 		CreatedAt: time.Now().UTC(),
 	}
-	accessReviews[r.ID] = r
+	accessReviews.Store(r.ID, r)
 	return r
 }
 
 // SubmitAccessReview records approve/revoke decision.
 func SubmitAccessReview(reviewID uuid.UUID, decision string) (*AccessReview, error) {
-	accessReviewMu.Lock()
-	defer accessReviewMu.Unlock()
-	r, ok := accessReviews[reviewID]
+	v, ok := accessReviews.Load(reviewID)
 	if !ok {
 		return nil, fmt.Errorf("review not found")
 	}
+	r := v.(*AccessReview)
 	if r.Status != "pending" {
 		return nil, fmt.Errorf("already completed")
 	}
@@ -66,20 +60,21 @@ func SubmitAccessReview(reviewID uuid.UUID, decision string) (*AccessReview, err
 
 // ListPendingAccessReviews returns pending reviews for a manager.
 func ListPendingAccessReviews(managerID uuid.UUID) []*AccessReview {
-	accessReviewMu.RLock()
-	defer accessReviewMu.RUnlock()
 	var out []*AccessReview
-	for _, r := range accessReviews {
+	accessReviews.Range(func(key, value any) bool {
+		r := value.(*AccessReview)
 		if r.ManagerID == managerID && r.Status == "pending" {
 			out = append(out, r)
 		}
-	}
+		return true
+	})
 	return out
 }
 
 // ResetAccessReviews clears all reviews (for testing).
 func ResetAccessReviews() {
-	accessReviewMu.Lock()
-	defer accessReviewMu.Unlock()
-	accessReviews = make(map[uuid.UUID]*AccessReview)
+	accessReviews.Range(func(key, value any) bool {
+		accessReviews.Delete(key)
+		return true
+	})
 }

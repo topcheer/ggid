@@ -51,6 +51,18 @@ func (r *auditMemoryMapRepo2) EnsureSchema(ctx context.Context) error {
 			id TEXT PRIMARY KEY, event_hash TEXT UNIQUE,
 			first_seen TIMESTAMPTZ DEFAULT now(), last_seen TIMESTAMPTZ DEFAULT now(), seen_count INT DEFAULT 1
 		);
+		CREATE TABLE IF NOT EXISTS audit_incidents (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS audit_event_subscriptions (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS audit_reports (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS audit_sig_records (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
 	`)
 	return err
 }

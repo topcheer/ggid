@@ -3,7 +3,6 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,22 +10,47 @@ import (
 
 // GeneratedReport tracks a compliance report generation job.
 type GeneratedReport struct {
-	ID         string    `json:"id"`
-	TenantID   string    `json:"tenant_id"`
-	Framework  string    `json:"framework"`
-	FromDate   string    `json:"from_date"`
-	ToDate     string    `json:"to_date"`
-	Format     string    `json:"format"` // pdf, csv, json
-	Status     string    `json:"status"` // generating, ready, failed
-	Content    string    `json:"content,omitempty"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID          string     `json:"id"`
+	TenantID    string     `json:"tenant_id"`
+	Framework   string     `json:"framework"`
+	FromDate    string     `json:"from_date"`
+	ToDate      string     `json:"to_date"`
+	Format      string     `json:"format"` // pdf, csv, json
+	Status      string     `json:"status"` // generating, ready, failed
+	Content     string     `json:"content,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
 	CompletedAt *time.Time `json:"completed_at,omitempty"`
 }
 
-var (
-	reportMu sync.RWMutex
-	reports  = make(map[string]*GeneratedReport)
-)
+func reportToMap(r *GeneratedReport) map[string]any {
+	m := map[string]any{
+		"id":         r.ID,
+		"tenant_id":  r.TenantID,
+		"framework":  r.Framework,
+		"from_date":  r.FromDate,
+		"to_date":    r.ToDate,
+		"format":     r.Format,
+		"status":     r.Status,
+		"content":    r.Content,
+	}
+	if r.CompletedAt != nil {
+		m["completed_at"] = *r.CompletedAt
+	}
+	return m
+}
+
+func mapToReport(row map[string]any) *GeneratedReport {
+	r := &GeneratedReport{}
+	r.ID = amGetString(row, "id")
+	r.TenantID = amGetString(row, "tenant_id")
+	r.Framework = amGetString(row, "framework")
+	r.FromDate = amGetString(row, "from_date")
+	r.ToDate = amGetString(row, "to_date")
+	r.Format = amGetString(row, "format")
+	r.Status = amGetString(row, "status")
+	r.Content = amGetString(row, "content")
+	return r
+}
 
 // POST /api/v1/audit/reports/generate — trigger compliance report generation.
 // GET /api/v1/audit/reports/{id}/download — download generated report.
@@ -37,7 +61,7 @@ func (s *HTTPServer) handleReportGenerate(w http.ResponseWriter, r *http.Request
 	}
 
 	var req struct {
-		TenantID string `json:"tenant_id"`
+		TenantID  string `json:"tenant_id"`
 		Framework string `json:"framework"`
 		FromDate  string `json:"from_date"`
 		ToDate    string `json:"to_date"`
@@ -47,8 +71,12 @@ func (s *HTTPServer) handleReportGenerate(w http.ResponseWriter, r *http.Request
 		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	if req.Framework == "" { req.Framework = "soc2" }
-	if req.Format == "" { req.Format = "json" }
+	if req.Framework == "" {
+		req.Framework = "soc2"
+	}
+	if req.Format == "" {
+		req.Format = "json"
+	}
 
 	now := time.Now().UTC()
 	report := &GeneratedReport{
@@ -62,7 +90,9 @@ func (s *HTTPServer) handleReportGenerate(w http.ResponseWriter, r *http.Request
 	completed := now
 	report.CompletedAt = &completed
 
-	reportMu.Lock(); reports[report.ID] = report; reportMu.Unlock()
+	if s.memMapRepo2 != nil {
+		s.memMapRepo2.StoreJSON(r.Context(), "audit_reports", report.ID, reportToMap(report))
+	}
 	writeJSON(w, http.StatusOK, report)
 }
 
@@ -79,10 +109,17 @@ func (s *HTTPServer) handleReportDownload(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	reportMu.RLock()
-	report, ok := reports[reportID]
-	reportMu.RUnlock()
-	if !ok {
+	var report *GeneratedReport
+	if s.memMapRepo2 != nil {
+		rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_reports")
+		for _, row := range rows {
+			if amGetString(row, "id") == reportID {
+				report = mapToReport(row)
+				break
+			}
+		}
+	}
+	if report == nil {
 		writeJSONError(w, http.StatusNotFound, "report not found")
 		return
 	}

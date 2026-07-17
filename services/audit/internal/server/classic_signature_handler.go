@@ -28,8 +28,7 @@ type IntegritySignature struct {
 }
 
 var (
-	sigMu      sync.RWMutex
-	sigRecords  = make(map[string]*IntegritySignature)
+	sigCache    sync.Map // key: batchID (string), value: *IntegritySignature
 	classicPub  ed25519.PublicKey
 	classicPriv ed25519.PrivateKey
 )
@@ -71,9 +70,16 @@ func (s *HTTPServer) handlePQCSign(w http.ResponseWriter, r *http.Request) {
 		EventCount: req.EventCount,
 	}
 
-	sigMu.Lock()
-	sigRecords[batchID] = record
-	sigMu.Unlock()
+	sigCache.Store(batchID, record)
+	if s.memMapRepo2 != nil {
+		s.memMapRepo2.StoreJSON(r.Context(), "audit_sig_records", batchID, map[string]any{
+			"batch_id":    record.BatchID,
+			"signature":   record.Signature,
+			"algorithm":   record.Algorithm,
+			"signed_at":   record.SignedAt,
+			"event_count": record.EventCount,
+		})
+	}
 
 	writeJSON(w, http.StatusOK, record)
 }
@@ -89,13 +95,34 @@ func (s *HTTPServer) handlePQCVerify(w http.ResponseWriter, r *http.Request) {
 	batchID := r.URL.Query().Get("batch_id")
 	batchData := r.URL.Query().Get("batch_data")
 
-	sigMu.RLock()
-	rec, ok := sigRecords[batchID]
-	sigMu.RUnlock()
+	// Try cache first (covers test fallback when pool is nil)
+	v, ok := sigCache.Load(batchID)
+	if !ok && s.memMapRepo2 != nil {
+		rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_sig_records")
+		for _, row := range rows {
+			if amGetString(row, "id") == batchID || amGetString(row, "batch_id") == batchID {
+				eventCount := 0
+				if n, ok := row["event_count"].(float64); ok {
+					eventCount = int(n)
+				}
+				v = &IntegritySignature{
+					BatchID:    amGetString(row, "batch_id"),
+					Signature:  amGetString(row, "signature"),
+					Algorithm:  amGetString(row, "algorithm"),
+					SignedAt:   amGetString(row, "signed_at"),
+					EventCount: eventCount,
+				}
+				ok = true
+				break
+			}
+		}
+	}
 	if !ok {
 		writeJSONError(w, http.StatusNotFound, "batch not found")
 		return
 	}
+
+	rec := v.(*IntegritySignature)
 
 	sig, err := base64.StdEncoding.DecodeString(rec.Signature)
 	if err != nil {

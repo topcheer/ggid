@@ -20,10 +20,7 @@ type OrgRoleBinding struct {
 	CreatedBy string    `json:"created_by,omitempty"`
 }
 
-var (
-	orgRoleBindingMu sync.RWMutex
-	orgRoleBindings  = make(map[string]*OrgRoleBinding)
-)
+var orgRoleBindings sync.Map // key: binding ID, value: *OrgRoleBinding
 
 // POST /api/v1/organizations/{id}/role-bindings — bind role to user at org level.
 // GET /api/v1/organizations/{id}/role-bindings — list org role bindings.
@@ -97,30 +94,28 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 			UserID: req.UserID, RoleID: req.RoleID,
 			CreatedBy: req.CreatedBy, CreatedAt: time.Now().UTC(),
 		}
-		orgRoleBindingMu.Lock()
-		orgRoleBindings[binding.ID] = binding
-		orgRoleBindingMu.Unlock()
+		orgRoleBindings.Store(binding.ID, binding)
 		writeJSON(w, http.StatusCreated, binding)
 
 	case http.MethodGet:
 		userID := r.URL.Query().Get("user_id")
 		roleID := r.URL.Query().Get("role_id")
 
-		orgRoleBindingMu.RLock()
 		result := []*OrgRoleBinding{}
-		for _, b := range orgRoleBindings {
+		orgRoleBindings.Range(func(key, value any) bool {
+			b := value.(*OrgRoleBinding)
 			if b.OrgID != orgID {
-				continue
+				return true
 			}
 			if userID != "" && b.UserID != userID {
-				continue
+				return true
 			}
 			if roleID != "" && b.RoleID != roleID {
-				continue
+				return true
 			}
 			result = append(result, b)
-		}
-		orgRoleBindingMu.RUnlock()
+			return true
+		})
 		writeJSON(w, http.StatusOK, map[string]any{"bindings": result, "count": len(result)})
 
 	case http.MethodDelete:
@@ -129,14 +124,11 @@ func (s *HTTPServer) handleOrgRoleBindings(w http.ResponseWriter, r *http.Reques
 			writeJSONError(w, http.StatusBadRequest, "binding_id is required")
 			return
 		}
-		orgRoleBindingMu.Lock()
-		if _, ok := orgRoleBindings[bindingID]; !ok {
-			orgRoleBindingMu.Unlock()
+		_, ok := orgRoleBindings.LoadAndDelete(bindingID)
+		if !ok {
 			writeJSONError(w, http.StatusNotFound, "binding not found")
 			return
 		}
-		delete(orgRoleBindings, bindingID)
-		orgRoleBindingMu.Unlock()
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "binding_id": bindingID})
 
 	default:

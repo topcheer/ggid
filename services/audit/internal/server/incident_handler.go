@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -12,24 +11,55 @@ import (
 
 // SecurityIncident tracks a security incident.
 type SecurityIncident struct {
-	ID               string    `json:"id"`
-	TenantID         string    `json:"tenant_id"`
-	Severity         string    `json:"severity"` // low, medium, high, critical
-	Type             string    `json:"type"`     // breach, anomaly, intrusion, etc.
-	Title            string    `json:"title"`
-	Description      string    `json:"description"`
-	AffectedUsers    []string  `json:"affected_users"`
-	Status           string    `json:"status"` // open, investigating, resolved
-	ResolutionNotes  string    `json:"resolution_notes,omitempty"`
-	AssignedTo       string    `json:"assigned_to,omitempty"`
-	CreatedAt        time.Time `json:"created_at"`
-	ResolvedAt       *time.Time `json:"resolved_at,omitempty"`
+	ID              string     `json:"id"`
+	TenantID        string     `json:"tenant_id"`
+	Severity        string     `json:"severity"` // low, medium, high, critical
+	Type            string     `json:"type"`     // breach, anomaly, intrusion, etc.
+	Title           string     `json:"title"`
+	Description     string     `json:"description"`
+	AffectedUsers   []string   `json:"affected_users"`
+	Status          string     `json:"status"` // open, investigating, resolved
+	ResolutionNotes string     `json:"resolution_notes,omitempty"`
+	AssignedTo      string     `json:"assigned_to,omitempty"`
+	CreatedAt       time.Time  `json:"created_at"`
+	ResolvedAt      *time.Time `json:"resolved_at,omitempty"`
 }
 
-var (
-	incidentMu sync.RWMutex
-	incidents  = make(map[string]*SecurityIncident)
-)
+func incidentToMap(inc *SecurityIncident) map[string]any {
+	return map[string]any{
+		"id":               inc.ID,
+		"tenant_id":        inc.TenantID,
+		"severity":         inc.Severity,
+		"type":             inc.Type,
+		"title":            inc.Title,
+		"description":      inc.Description,
+		"affected_users":   inc.AffectedUsers,
+		"status":           inc.Status,
+		"resolution_notes": inc.ResolutionNotes,
+		"assigned_to":      inc.AssignedTo,
+	}
+}
+
+func mapToIncident(row map[string]any) *SecurityIncident {
+	inc := &SecurityIncident{}
+	inc.ID = amGetString(row, "id")
+	inc.TenantID = amGetString(row, "tenant_id")
+	inc.Severity = amGetString(row, "severity")
+	inc.Type = amGetString(row, "type")
+	inc.Title = amGetString(row, "title")
+	inc.Description = amGetString(row, "description")
+	inc.Status = amGetString(row, "status")
+	inc.ResolutionNotes = amGetString(row, "resolution_notes")
+	inc.AssignedTo = amGetString(row, "assigned_to")
+	if raw, ok := row["affected_users"].([]any); ok {
+		for _, a := range raw {
+			if s, ok := a.(string); ok {
+				inc.AffectedUsers = append(inc.AffectedUsers, s)
+			}
+		}
+	}
+	return inc
+}
 
 // POST /api/v1/audit/incidents — create incident
 // GET /api/v1/audit/incidents/active — list active incidents
@@ -41,13 +71,13 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			var req struct {
-				TenantID string   `json:"tenant_id"`
-				Severity string   `json:"severity"`
-				Type     string   `json:"type"`
-				Title    string   `json:"title"`
-				Description string `json:"description"`
+				TenantID      string   `json:"tenant_id"`
+				Severity      string   `json:"severity"`
+				Type          string   `json:"type"`
+				Title         string   `json:"title"`
+				Description   string   `json:"description"`
 				AffectedUsers []string `json:"affected_users"`
-				AssignedTo string `json:"assigned_to"`
+				AssignedTo    string   `json:"assigned_to"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
@@ -57,23 +87,30 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 				writeJSONError(w, http.StatusBadRequest, "title is required")
 				return
 			}
-			if req.Severity == "" { req.Severity = "medium" }
-			if req.Type == "" { req.Type = "anomaly" }
+			if req.Severity == "" {
+				req.Severity = "medium"
+			}
+			if req.Type == "" {
+				req.Type = "anomaly"
+			}
 			inc := &SecurityIncident{
 				ID: uuid.New().String(), TenantID: req.TenantID,
 				Severity: req.Severity, Type: req.Type, Title: req.Title,
 				Description: req.Description, AffectedUsers: req.AffectedUsers,
 				Status: "open", AssignedTo: req.AssignedTo, CreatedAt: time.Now().UTC(),
 			}
-			incidentMu.Lock(); incidents[inc.ID] = inc; incidentMu.Unlock()
+			if s.memMapRepo2 != nil {
+				s.memMapRepo2.StoreJSON(r.Context(), "audit_incidents", inc.ID, incidentToMap(inc))
+			}
 			writeJSON(w, http.StatusCreated, inc)
 		case http.MethodGet:
-			incidentMu.RLock()
 			result := []*SecurityIncident{}
-			for _, inc := range incidents {
-				result = append(result, inc)
+			if s.memMapRepo2 != nil {
+				rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_incidents")
+				for _, row := range rows {
+					result = append(result, mapToIncident(row))
+				}
 			}
-			incidentMu.RUnlock()
 			writeJSON(w, http.StatusOK, map[string]any{"incidents": result, "count": len(result)})
 		default:
 			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -91,11 +128,21 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 			ResolutionNotes string `json:"resolution_notes"`
 			ResolvedBy      string `json:"resolved_by"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
-		incidentMu.Lock()
-		inc, ok := incidents[parts[0]]
-		if !ok {
-			incidentMu.Unlock()
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			return
+		}
+		var inc *SecurityIncident
+		if s.memMapRepo2 != nil {
+			rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_incidents")
+			for _, row := range rows {
+				if amGetString(row, "id") == parts[0] {
+					inc = mapToIncident(row)
+					break
+				}
+			}
+		}
+		if inc == nil {
 			writeJSONError(w, http.StatusNotFound, "incident not found")
 			return
 		}
@@ -103,7 +150,9 @@ func (s *HTTPServer) handleIncidents(w http.ResponseWriter, r *http.Request) {
 		inc.Status = "resolved"
 		inc.ResolutionNotes = req.ResolutionNotes
 		inc.ResolvedAt = &now
-		incidentMu.Unlock()
+		if s.memMapRepo2 != nil {
+			s.memMapRepo2.StoreJSON(r.Context(), "audit_incidents", inc.ID, incidentToMap(inc))
+		}
 		writeJSON(w, http.StatusOK, inc)
 		return
 	}
@@ -120,17 +169,19 @@ func (s *HTTPServer) handleIncidentsActive(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	tenantID := r.URL.Query().Get("tenant_id")
-	incidentMu.RLock()
 	result := []*SecurityIncident{}
-	for _, inc := range incidents {
-		if inc.Status != "open" && inc.Status != "investigating" {
-			continue
+	if s.memMapRepo2 != nil {
+		rows, _ := s.memMapRepo2.ListJSON(r.Context(), "audit_incidents")
+		for _, row := range rows {
+			inc := mapToIncident(row)
+			if inc.Status != "open" && inc.Status != "investigating" {
+				continue
+			}
+			if tenantID != "" && inc.TenantID != tenantID {
+				continue
+			}
+			result = append(result, inc)
 		}
-		if tenantID != "" && inc.TenantID != tenantID {
-			continue
-		}
-		result = append(result, inc)
 	}
-	incidentMu.RUnlock()
 	writeJSON(w, http.StatusOK, map[string]any{"incidents": result, "count": len(result)})
 }

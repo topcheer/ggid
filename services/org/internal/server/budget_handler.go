@@ -8,24 +8,21 @@ import (
 )
 
 type DeptBudget struct {
-	DeptID       string  `json:"dept_id"`
-	Budget       float64 `json:"budget"`
-	Allocated    float64 `json:"allocated"`
-	Headcount    int     `json:"headcount"`
+	DeptID        string  `json:"dept_id"`
+	Budget        float64 `json:"budget"`
+	Allocated     float64 `json:"allocated"`
+	Headcount     int     `json:"headcount"`
 	HeadcountCost float64 `json:"headcount_cost"`
 }
 
-var (
-	deptBudgetMu sync.RWMutex
-	deptBudgets  = make(map[string]*DeptBudget) // key: orgID/deptID
-)
+var deptBudgets sync.Map // key: orgID/deptID, value: *DeptBudget
 
 func budgetKey(orgID, deptID string) string {
 	return orgID + "/" + deptID
 }
 
 // Routes: /api/v1/organizations/{id}/budget-summary
-//         /api/v1/organizations/{id}/departments/{dept_id}/budget
+//		   /api/v1/organizations/{id}/departments/{dept_id}/budget
 func (s *HTTPServer) handleOrgBudget(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 
@@ -42,11 +39,12 @@ func (s *HTTPServer) handleOrgBudget(w http.ResponseWriter, r *http.Request) {
 		}
 		orgID := parts[4]
 
-		deptBudgetMu.RLock()
 		var depts []*DeptBudget
 		var totalBudget, totalAllocated, totalHCCost float64
 		totalHC := 0
-		for k, db := range deptBudgets {
+		deptBudgets.Range(func(key, value any) bool {
+			k := key.(string)
+			db := value.(*DeptBudget)
 			if strings.HasPrefix(k, orgID+"/") {
 				depts = append(depts, db)
 				totalBudget += db.Budget
@@ -54,17 +52,17 @@ func (s *HTTPServer) handleOrgBudget(w http.ResponseWriter, r *http.Request) {
 				totalHC += db.Headcount
 				totalHCCost += db.HeadcountCost
 			}
-		}
-		deptBudgetMu.RUnlock()
+			return true
+		})
 
 		writeJSON(w, http.StatusOK, map[string]any{
-			"org_id":          orgID,
-			"total_budget":    totalBudget,
-			"allocated":       totalAllocated,
-			"remaining":       totalBudget - totalAllocated,
-			"headcount":       totalHC,
-			"headcount_cost":  totalHCCost,
-			"departments":     depts,
+			"org_id":         orgID,
+			"total_budget":   totalBudget,
+			"allocated":      totalAllocated,
+			"remaining":      totalBudget - totalAllocated,
+			"headcount":      totalHC,
+			"headcount_cost": totalHCCost,
+			"departments":    depts,
 		})
 		return
 	}
@@ -95,9 +93,7 @@ func (s *HTTPServer) handleOrgBudget(w http.ResponseWriter, r *http.Request) {
 				DeptID: deptID, Budget: req.Budget, Allocated: req.Allocated,
 				Headcount: req.Headcount, HeadcountCost: req.HeadcountCost,
 			}
-			deptBudgetMu.Lock()
-			deptBudgets[key] = db
-			deptBudgetMu.Unlock()
+			deptBudgets.Store(key, db)
 			writeJSON(w, http.StatusOK, map[string]any{
 				"status": "updated", "org_id": orgID, "department": db,
 			})
