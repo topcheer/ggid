@@ -55,10 +55,9 @@
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
-| F-08 | CAE Session Revocation 管理页面 | P1 | console/src/app/security/session-revocation/ | 显示被吊销 session 列表 + 手动 revoke 按钮 + 接 /api/v1/auth/sessions/revoke-user |
-| F-09 | PAM JIT 权限提升请求页面 | P1 | console/src/app/security/jit-elevation/ | request form(角色+时长+理由) → 审批列表 → active/expired 状态。接 /api/v1/policies/jit-elevate |
-| F-10 | Break-glass 紧急访问页面 | P1 | console/src/app/security/break-glass/ | activate 表单(理由+确认) + history 列表。接 /api/v1/auth/break-glass/* |
-| F-11 | ITDR Rules 管理页面 | P2 | console/src/app/security/itdr-rules/ | 规则列表 + 启停开关 + 阈值配置。接 /api/v1/audit/itdr/rules |
+| F-12 | Console OAuth PKCE 登录流程端到端验证 | P1 | console/src/app/login/ + auth/callback/ | browser 工具验证完整流程：登录→authorize→callback→token→dashboard |
+| F-13 | ITDR Detections 实时仪表盘 | P2 | console/src/app/security/itdr-dashboard/ | SSE/streaming 接 /api/v1/audit/itdr/detections，实时刷新检测列表 |
+| F-14 | KMS 配置页面对接后端真实端点 | P2 | console/src/app/settings/kms-config/ | 当前页面已有，验证 PUT/POST/test 端点返回真实数据 |
 
 ### DONE
 | ID | Task | Assignee | Commit |

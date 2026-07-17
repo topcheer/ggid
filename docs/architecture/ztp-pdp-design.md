@@ -35,23 +35,23 @@ type SecurityContext struct {
     UserID       uuid.UUID
     TenantID     uuid.UUID
     SessionID    uuid.UUID
-    
+
     // Device signals (from auth)
     DeviceTrusted    bool
     DeviceFingerprint string
-    
+
     // ITDR signals (from audit)
     OpenCriticalCount int   // 未处理的 critical detections
     OpenHighCount     int
-    
+
     // Risk signals (from audit risk_engine)
     SessionRiskScore  float64  // 0.0-1.0
     GeoAnomaly        bool
-    
+
     // Temporal
     RequestTime       time.Time
     UserLocalTime     time.Time // 用户时区
-    
+
     // UEBA (optional, when profile exists)
     BaselineDeviation  float64 // 最近偏差分数
 }
@@ -77,12 +77,12 @@ func (sc *SignalCollector) Collect(ctx context.Context, userID, tenantID uuid.UU
     var devAuth bool
     var itdrOpen int
     var risk float64
-    
+
     wg.Go(func() error { devAuth = sc.authClient.GetDeviceTrust(ctx, userID); return nil })
     wg.Go(func() error { itdrOpen = sc.auditClient.GetOpenCritical(ctx, userID); return nil })
     wg.Go(func() error { risk = sc.riskEngine.Evaluate(userID, ...).Score; return nil })
     wg.Wait()
-    
+
     secCtx := &SecurityContext{...}
     sc.cache.Set(userID, secCtx, 5*time.Second)
     return secCtx, nil

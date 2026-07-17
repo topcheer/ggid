@@ -85,7 +85,7 @@ JSONB 而非分列：profile 结构可能演进，JSONB 灵活。查询时 `prof
 func (pb *ProfileBuilder) BuildProfile(ctx context.Context, tenantID, userID uuid.UUID) error {
     // 1. 查 30 天 audit_events
     events, err := pb.repo.ListByUserSince(ctx, tenantID, userID, 30*24*time.Hour)
-    
+
     // 2. 统计各维度
     profile := &UserProfile{EventCount: len(events)}
     for _, evt := range events {
@@ -96,12 +96,12 @@ func (pb *ProfileBuilder) BuildProfile(ctx context.Context, tenantID, userID uui
         }
         // ... ASN, country, device, action type, resource type
     }
-    
+
     // 3. 归一化为概率分布
     normalize(profile.LoginHours[:])
     normalizeMap(profile.KnownIPs)
     // ...
-    
+
     // 4. UPSERT 到 DB
     return pb.repo.UpsertProfile(ctx, profile)
 }
@@ -130,10 +130,10 @@ func (r *BaselineDeviationRule) Evaluate(ctx context.Context, evt *domain.AuditE
     if err != nil || profile.EventCount < 50 {
         return nil, nil // 冷启动跳过
     }
-    
+
     var anomalies []string
     var maxDeviation float64
-    
+
     // 2. 逐维度评估偏差
     // a. 登录时间偏差
     hour := evt.CreatedAt.Hour()
@@ -144,7 +144,7 @@ func (r *BaselineDeviationRule) Evaluate(ctx context.Context, evt *domain.AuditE
             hour, commonHours(profile.LoginHours)))
         maxDeviation = math.Max(maxDeviation, 0.8)
     }
-    
+
     // b. IP/地理偏差
     if profile.KnownCountries[country] < 0.05 {
         anomalies = append(anomalies, fmt.Sprintf(
@@ -152,19 +152,19 @@ func (r *BaselineDeviationRule) Evaluate(ctx context.Context, evt *domain.AuditE
             country, commonCountries(profile.KnownCountries)))
         maxDeviation = math.Max(maxDeviation, 0.7)
     }
-    
+
     // c. 设备偏差
     if profile.KnownDevices[deviceFP] == 0 {
         anomalies = append(anomalies, "未见过此设备")
         maxDeviation = math.Max(maxDeviation, 0.5)
     }
-    
+
     // d. 资源类型偏差（用户首次访问新资源类型）
     if profile.ResourceTypes[evt.ResourceType] == 0 && evt.ResourceType != "" {
         anomalies = append(anomalies, fmt.Sprintf("首次访问资源类型 %s", evt.ResourceType))
         maxDeviation = math.Max(maxDeviation, 0.4)
     }
-    
+
     // 3. 多维度组合：≥2 个异常 → severity 升级
     severity := "medium"
     if len(anomalies) >= 2 {
@@ -173,11 +173,11 @@ func (r *BaselineDeviationRule) Evaluate(ctx context.Context, evt *domain.AuditE
     if len(anomalies) >= 3 {
         severity = "critical"
     }
-    
+
     if len(anomalies) == 0 {
         return nil, nil
     }
-    
+
     return &domain.Detection{
         RuleID:   "baseline_deviation",
         Severity: severity,
