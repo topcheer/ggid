@@ -610,8 +610,35 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 				Issuer:    cfg.Issuer,
 			})
 		default:
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_grant_type"})
-			return
+			// RFC 8693 Token Exchange.
+			if grantType == "urn:ietf:params:oauth:grant-type:token-exchange" {
+				resp, tokenErr = oauthSvc.ExchangeTokenRFC8693(ctx, &service.RFC8693ExchangeRequest{
+					TenantID:         tenantID,
+					ClientID:         clientID,
+					SubjectToken:     r.FormValue("subject_token"),
+					SubjectTokenType: r.FormValue("subject_token_type"),
+					ActorToken:       r.FormValue("actor_token"),
+					ActorTokenType:   r.FormValue("actor_token_type"),
+					Scope:            scopes,
+					Resource:         r.FormValue("resource"),
+				})
+				if tokenErr == nil {
+					// RFC 8693 requires issued_token_type in response.
+					w.Header().Set("Cache-Control", "no-store")
+					w.Header().Set("Pragma", "no-cache")
+					writeJSON(w, http.StatusOK, map[string]any{
+						"access_token":      resp.AccessToken,
+						"issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+						"token_type":        "Bearer",
+						"expires_in":        resp.ExpiresIn,
+						"scope":             resp.Scope,
+					})
+					return
+				}
+			} else {
+				writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported_grant_type"})
+				return
+			}
 		}
 
 		if tokenErr != nil {

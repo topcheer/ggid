@@ -555,7 +555,143 @@ func (s *OAuthService) issueAccessToken(userID, tenantID uuid.UUID, audience, sc
 	return signed, int(expiresAt.Sub(now).Seconds()), nil
 }
 
-// IDTokenOptions provides optional claims for OIDC ID Token enrichment.
+// RFC 8693 Token Exchange constants.
+const (
+	TokenExchangeGrantType = "urn:ietf:params:oauth:grant-type:token-exchange"
+	AccessTokenType        = "urn:ietf:params:oauth:token-type:access_token"
+)
+
+// RFC8693ExchangeRequest holds parameters for RFC 8693 token exchange.
+type RFC8693ExchangeRequest struct {
+	TenantID         uuid.UUID
+	ClientID         string
+	SubjectToken     string
+	SubjectTokenType string // must be urn:ietf:params:oauth:token-type:access_token
+	ActorToken       string // optional, for delegation
+	ActorTokenType   string
+	Scope            []string // requested scope (must be subset of subject)
+	Resource         string   // optional audience (RFC 8707)
+}
+
+// ExchangeTokenRFC8693 implements RFC 8693 OAuth 2.0 Token Exchange.
+// Validates subject_token, enforces scope narrowing, and issues a new token
+// with optional `act` claim for delegation chains.
+func (s *OAuthService) ExchangeTokenRFC8693(ctx context.Context, req *RFC8693ExchangeRequest) (*TokenResponse, error) {
+	// 1. Validate subject token.
+	subjectClaims, err := s.parseAndValidateJWT(req.SubjectToken)
+	if err != nil {
+		return nil, fmt.Errorf("invalid subject_token: %w", err)
+	}
+
+	subjectID, _ := subjectClaims["sub"].(string)
+	if subjectID == "" {
+		return nil, fmt.Errorf("subject_token missing sub claim")
+	}
+
+	// 2. Extract subject scopes — requested scope must be a subset.
+	subjectScopeStr, _ := subjectClaims["scope"].(string)
+	subjectScopes := strings.Fields(subjectScopeStr)
+	if len(subjectScopes) == 0 {
+		subjectScopes = []string{"openid"} // fallback
+	}
+
+	// 3. Enforce scope narrowing: requested ⊆ subject.
+	if len(req.Scope) > 0 {
+		subjectSet := make(map[string]bool, len(subjectScopes))
+		for _, sc := range subjectScopes {
+			subjectSet[sc] = true
+		}
+		for _, requested := range req.Scope {
+			if !subjectSet[requested] {
+				return nil, fmt.Errorf("invalid_scope: '%s' exceeds subject token scope", requested)
+			}
+		}
+	} else {
+		req.Scope = subjectScopes // inherit subject's scopes
+	}
+
+	// 4. Parse subject user ID (validate format).
+	if _, err := uuid.Parse(subjectID); err != nil {
+		return nil, fmt.Errorf("subject_token has invalid sub: %s", subjectID)
+	}
+
+	// 5. Determine audience.
+	audience := req.Resource
+	if audience == "" {
+		audience, _ = subjectClaims["aud"].(string)
+		if audience == "" {
+			audience = s.issuer
+		}
+	}
+
+	// 6. Build act claim for delegation.
+	var actClaim any
+	if req.ActorToken != "" {
+		actorClaims, err := s.parseAndValidateJWT(req.ActorToken)
+		if err != nil {
+			return nil, fmt.Errorf("invalid actor_token: %w", err)
+		}
+		actorSub, _ := actorClaims["sub"].(string)
+		actClaim = map[string]any{
+			"sub": actorSub,
+		}
+		// Nest if subject already has act (delegation chain).
+		if existingAct, ok := subjectClaims["act"]; ok {
+			actClaim.(map[string]any)["act"] = existingAct
+		}
+	}
+
+	// 7. Issue the exchanged token.
+	now := time.Now()
+	expiresAt := now.Add(15 * time.Minute)
+	scopeStr := strings.Join(req.Scope, " ")
+
+	claimsMap := jwt.MapClaims{
+		"iss":       s.issuer,
+		"sub":       subjectID,
+		"aud":       audience,
+		"iat":       now.Unix(),
+		"exp":       expiresAt.Unix(),
+		"jti":       uuid.New().String(),
+		"tenant_id": req.TenantID.String(),
+		"scope":     scopeStr,
+	}
+	if actClaim != nil {
+		claimsMap["act"] = actClaim
+	}
+
+	token := jwt.NewWithClaims(s.signingMethod(), claimsMap)
+	token.Header["kid"] = s.keyProvider.Metadata().KeyID
+
+	signed, err := token.SignedString(s.keyProvider.Signer())
+	if err != nil {
+		return nil, fmt.Errorf("sign exchanged token: %w", err)
+	}
+
+	return &TokenResponse{
+		AccessToken:      signed,
+		TokenType:        "Bearer",
+		ExpiresIn:        int(expiresAt.Sub(now).Seconds()),
+		Scope:            scopeStr,
+	}, nil
+}
+
+// parseAndValidateJWT parses and validates a JWT issued by this service.
+func (s *OAuthService) parseAndValidateJWT(raw string) (jwt.MapClaims, error) {
+	claims := jwt.MapClaims{}
+	_, err := jwt.ParseWithClaims(raw, claims, func(t *jwt.Token) (any, error) {
+		return s.keyProvider.Public(), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	// Check expiry.
+	exp, ok := claims["exp"].(float64)
+	if ok && exp > 0 && time.Now().Unix() > int64(exp) {
+		return nil, fmt.Errorf("token expired")
+	}
+	return claims, nil
+}
 type IDTokenOptions struct {
 	AMR      []string // authentication methods references (e.g. ["pwd","otp"])
 	ACR      string   // authentication context class reference
