@@ -33,6 +33,7 @@ campaignRepo  *CampaignRepo
 jitRepo       *repository.JITRequestRepository
 policyMap     *policyMapRepo
 pdpRepo       *pdpRepo
+riskRepo      *riskRepo
 }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.
@@ -197,6 +198,13 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policy/authorize", s.handleUnifiedAuthorize)
 	mux.HandleFunc("/api/v1/policy/decisions", s.handlePDPDecisions)
 	mux.HandleFunc("/api/v1/policy/cache", s.handleFlushPDPCache)
+
+	// Unified Risk Engine (URE).
+	mux.HandleFunc("/api/v1/risk/evaluate", s.handleRiskEvaluate)
+	mux.HandleFunc("/api/v1/risk/scores/", s.handleRiskScores)
+	mux.HandleFunc("/api/v1/risk/policies/", s.handleRiskPolicy)
+	mux.HandleFunc("/api/v1/risk/policies", s.handleRiskPolicy)
+	mux.HandleFunc("/api/v1/risk/signals", s.handleRiskSignals)
 }
 
 // --- Roles ---

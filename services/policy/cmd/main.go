@@ -149,6 +149,13 @@ func main() {
 	}
 	httpAPI.SetPDPRepo(pdpRepo)
 
+	// Unified Risk Engine.
+	riskRepo := httpserver.NewRiskRepo(db)
+	if err := riskRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Risk schema ensure error (non-fatal): %v", err)
+	}
+	httpAPI.SetRiskRepo(riskRepo)
+
 	httpAPI.RegisterRoutes(mux)
 
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
