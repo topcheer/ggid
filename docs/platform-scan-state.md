@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 123
-## Last scan focus: D (Persistence deep scan) — found 16 in-memory stores (11 audit + 5 auth) without PG; DLP backend still static stub; WASM F-42 not yet committed
-## Next scan focus: E2E tests (Round 122 = even) — pending
+## Current round: 124
+## Last scan focus: E2E (Round 123) — Core 10/10, ERP 4/4, all pods Running; WASM is gateway middleware (not endpoint), 6 tests PASS; oauth rebuilt+deployed
+## Next scan focus: E (Security scan, Round 124 = even)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
