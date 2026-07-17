@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   ShieldAlert, Loader2, AlertCircle, X, RefreshCw, Activity, Users,
@@ -68,7 +68,7 @@ export default function RiskScorePage() {
   const [recalculating, setRecalculating] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserRiskScore | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const [s, u] = await Promise.all([
@@ -79,7 +79,7 @@ export default function RiskScorePage() {
       } catch { setError("Failed to load risk score data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleRecalculate = async (userId: string) => {
     setRecalculating(userId);
