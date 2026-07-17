@@ -198,6 +198,39 @@ func (r *authMemoryMapRepo) EnsureSchema(ctx context.Context) error {
 		CREATE TABLE IF NOT EXISTS auth_credvault_json (
 			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
 		);
+		CREATE TABLE IF NOT EXISTS auth_trusted_devices_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_session_limits_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_session_risks_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_device_fingerprints_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_encryption_keys_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_breach_notifs_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_passwordless_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_breach_warnings_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_session_anomalies_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_cred_stuffing_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
+		CREATE TABLE IF NOT EXISTS auth_throttle_states_json (
+			id TEXT PRIMARY KEY, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
+		);
 	`)
 	return err
 }

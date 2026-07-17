@@ -40,6 +40,13 @@ func (h *Handler) handleThrottleStatus(w http.ResponseWriter, r *http.Request) {
 		throttleTracker.RUnlock()
 
 		if !exists {
+			// Try PG first
+			if h.memMapRepo != nil {
+				if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_throttle_states_json", userID); row != nil {
+					writeJSON(w, http.StatusOK, row)
+					return
+				}
+			}
 			writeJSON(w, http.StatusOK, &throttleState{
 				UserID:         userID,
 				IsThrottled:    false,
@@ -59,6 +66,15 @@ func (h *Handler) handleThrottleStatus(w http.ResponseWriter, r *http.Request) {
 				state.FailedAttempts = 0
 				state.DelaySeconds = 0
 				state.ResetAt = ""
+				// PG write-through (reset)
+				if h.memMapRepo != nil {
+					h.memMapRepo.StoreJSON(r.Context(), "auth_throttle_states_json", userID, map[string]any{
+						"user_id": state.UserID, "is_throttled": false,
+						"failed_attempts": 0, "max_attempts": state.MaxAttempts,
+						"delay_seconds": 0, "reset_at": "",
+						"last_attempt": state.LastAttempt,
+					})
+				}
 			}
 		}
 
@@ -102,13 +118,23 @@ func (h *Handler) handleThrottleStatus(w http.ResponseWriter, r *http.Request) {
 
 			if state.FailedAttempts >= state.MaxAttempts {
 				state.IsThrottled = true
-				delay := state.FailedAttempts * state.FailedAttempts // exponential: 25, 36, 49...
+				delay := state.FailedAttempts * state.FailedAttempts
 				if delay > 3600 {
 					delay = 3600
 				}
 				state.DelaySeconds = delay
 				state.ResetAt = time.Now().UTC().Add(time.Duration(delay) * time.Second).Format(time.RFC3339)
 			}
+		}
+
+		// PG write-through
+		if h.memMapRepo != nil {
+			h.memMapRepo.StoreJSON(r.Context(), "auth_throttle_states_json", req.UserID, map[string]any{
+				"user_id": state.UserID, "is_throttled": state.IsThrottled,
+				"failed_attempts": state.FailedAttempts, "max_attempts": state.MaxAttempts,
+				"delay_seconds": state.DelaySeconds, "reset_at": state.ResetAt,
+				"last_attempt": state.LastAttempt,
+			})
 		}
 
 		writeJSON(w, http.StatusOK, state)

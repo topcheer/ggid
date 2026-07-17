@@ -42,13 +42,29 @@ func (h *Handler) handleSessionLimit(w http.ResponseWriter, r *http.Request) {
 		}
 		limit := &SessionLimit{UserID: req.UserID, MaxSessions: req.MaxSessions, Strategy: req.Strategy, Enforced: true, UpdatedAt: time.Now().UTC()}
 		sessLimitMu.Lock(); sessLimits[req.UserID] = limit; sessLimitMu.Unlock()
+		// PG write-through
+		if h.memMapRepo != nil {
+			h.memMapRepo.StoreJSON(r.Context(), "auth_session_limits_json", req.UserID, map[string]any{
+				"user_id": req.UserID, "max_sessions": req.MaxSessions,
+				"strategy": req.Strategy, "enforced": true,
+				"updated_at": time.Now().UTC(),
+			})
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"status": "enforced", "user_id": req.UserID, "max_sessions": req.MaxSessions,
 			"strategy": req.Strategy, "action": "oldest sessions terminated if exceeded",
 		})
 		return
 	}
-	if r.Method == http.MethodGet {
+		if r.Method == http.MethodGet {
+		// Try PG first, fall back to in-memory map
+		if h.memMapRepo != nil {
+			rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_session_limits_json")
+			if len(rows) > 0 {
+				writeJSON(w, http.StatusOK, map[string]any{"limits": rows, "count": len(rows)})
+				return
+			}
+		}
 		sessLimitMu.RLock()
 		result := make([]*SessionLimit, 0, len(sessLimits))
 		for _, l := range sessLimits {

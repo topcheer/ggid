@@ -43,6 +43,13 @@ func (h *Handler) handleSessionAnomalyScore(w http.ResponseWriter, r *http.Reque
 		sessionAnomalyStore.RUnlock()
 
 		if !exists {
+			// Try PG first
+			if h.memMapRepo != nil {
+				if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_session_anomalies_json", sessionID); row != nil {
+					writeJSON(w, http.StatusOK, row)
+					return
+				}
+			}
 			// Return a default low-risk score
 			writeJSON(w, http.StatusOK, map[string]any{
 				"session_id": sessionID,
@@ -169,6 +176,21 @@ func (h *Handler) handleSessionAnomalyScore(w http.ResponseWriter, r *http.Reque
 		sessionAnomalyStore.Lock()
 		sessionAnomalyStore.data[req.SessionID] = data
 		sessionAnomalyStore.Unlock()
+
+		// PG write-through
+		if h.memMapRepo != nil {
+			h.memMapRepo.StoreJSON(r.Context(), "auth_session_anomalies_json", req.SessionID, map[string]any{
+				"session_id": data.SessionID,
+				"ip_change_rate": data.IPChangeRate,
+				"geo_velocity_kmh": data.GeoVelocity,
+				"device_match": data.DeviceMatch,
+				"unique_ips": data.UniqueIPs,
+				"ip_history": data.IPHistory,
+				"score": data.Score,
+				"risk_level": data.RiskLevel,
+				"contributing_factors": data.ContributingFactors,
+			})
+		}
 
 		writeJSON(w, http.StatusOK, data)
 

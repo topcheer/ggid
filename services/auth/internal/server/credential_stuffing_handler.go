@@ -61,11 +61,29 @@ func (h *Handler) handleCredentialStuffing(w http.ResponseWriter, r *http.Reques
 		credStuffingMu.Lock()
 		credStuffingIPs[req.IP] = blocked
 		credStuffingMu.Unlock()
+		// PG write-through
+		if h.memMapRepo != nil {
+			h.memMapRepo.StoreJSON(r.Context(), "auth_cred_stuffing_json", req.IP, map[string]any{
+				"ip": req.IP, "reason": req.Reason,
+				"blocked_at": now, "expires_at": expiry, "auto": false,
+			})
+		}
 		writeJSON(w, http.StatusOK, map[string]any{"status": "blocked", "ip": req.IP, "blocked_at": now})
 		return
 	}
 
-	if r.Method == http.MethodGet {
+		if r.Method == http.MethodGet {
+		// Try PG first, fall back to in-memory map
+		if h.memMapRepo != nil {
+			rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_cred_stuffing_json")
+			if len(rows) > 0 {
+				writeJSON(w, http.StatusOK, map[string]any{
+					"blocked_ips": rows, "total_blocked": len(rows),
+					"auto_block_rules": autoBlockRules,
+				})
+				return
+			}
+		}
 		credStuffingMu.RLock()
 		blocked := make([]*BlockedIP, 0, len(credStuffingIPs))
 		for _, b := range credStuffingIPs {

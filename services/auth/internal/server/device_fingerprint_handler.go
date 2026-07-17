@@ -51,11 +51,32 @@ func (h *Handler) handleDeviceFingerprint(w http.ResponseWriter, r *http.Request
 		fpKey := req.UserID + ":" + req.PluginsHash + ":" + req.UserAgent
 		now := time.Now().UTC()
 
+		// Try PG first for existing fingerprint
+		if h.memMapRepo != nil {
+			if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_device_fingerprints_json", fpKey); row != nil {
+				sessionCount, _ := row["session_count"].(float64)
+				sessionCount++
+				row["last_seen"] = now
+				row["session_count"] = sessionCount
+				h.memMapRepo.StoreJSON(r.Context(), "auth_device_fingerprints_json", fpKey, row)
+				row["last_seen"] = now
+				writeJSON(w, http.StatusOK, map[string]any{"status": "existing", "device": row})
+				return
+			}
+		}
 		deviceFPRegistryMu.Lock()
 		if fp, ok := deviceFPRegistry[fpKey]; ok {
 			fp.LastSeen = now
 			fp.SessionCount++
 			deviceFPRegistryMu.Unlock()
+			// PG write-through
+			if h.memMapRepo != nil {
+				h.memMapRepo.StoreJSON(r.Context(), "auth_device_fingerprints_json", fpKey, map[string]any{
+					"id": fp.ID, "user_id": fp.UserID, "user_agent": fp.UserAgent,
+					"screen": fp.Screen, "timezone": fp.Timezone, "plugins_hash": fp.PluginsHash,
+					"first_seen": fp.FirstSeen, "last_seen": fp.LastSeen, "session_count": fp.SessionCount,
+				})
+			}
 			writeJSON(w, http.StatusOK, map[string]any{
 				"status": "existing", "device": fp,
 			})
@@ -68,6 +89,14 @@ func (h *Handler) handleDeviceFingerprint(w http.ResponseWriter, r *http.Request
 		}
 		deviceFPRegistry[fpKey] = fp
 		deviceFPRegistryMu.Unlock()
+		// PG write-through
+		if h.memMapRepo != nil {
+			h.memMapRepo.StoreJSON(r.Context(), "auth_device_fingerprints_json", fpKey, map[string]any{
+				"id": fp.ID, "user_id": fp.UserID, "user_agent": fp.UserAgent,
+				"screen": fp.Screen, "timezone": fp.Timezone, "plugins_hash": fp.PluginsHash,
+				"first_seen": fp.FirstSeen, "last_seen": fp.LastSeen, "session_count": fp.SessionCount,
+			})
+		}
 
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"status": "registered", "device": fp,
@@ -80,6 +109,21 @@ func (h *Handler) handleDeviceFingerprint(w http.ResponseWriter, r *http.Request
 		if userID == "" {
 			writeError(w, http.StatusBadRequest, "user_id required")
 			return
+		}
+
+		// Try PG first, fall back to in-memory map
+		if h.memMapRepo != nil {
+			rows, _ := h.memMapRepo.ListJSON(r.Context(), "auth_device_fingerprints_json")
+			if len(rows) > 0 {
+				var devices []map[string]any
+				for _, row := range rows {
+					if uid, _ := row["user_id"].(string); uid == userID {
+						devices = append(devices, row)
+					}
+				}
+				writeJSON(w, http.StatusOK, map[string]any{"user_id": userID, "devices": devices, "device_count": len(devices)})
+				return
+			}
 		}
 
 		deviceFPRegistryMu.RLock()

@@ -56,6 +56,52 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check for IP change from previous evaluation
+	// Try PG first for previous state
+	var prevPG map[string]any
+	if h.memMapRepo != nil {
+		prevPG, _ = h.memMapRepo.GetJSON(r.Context(), "auth_session_risks_json", sessionID)
+		if prevPG != nil {
+			if prevIP, _ := prevPG["ip_address"].(string); prevIP != "" && prevIP != req.IPAddr {
+				score += 25
+			}
+			if score > 100 { score = 100 }
+			now := time.Now().UTC()
+			sr := &SessionRisk{
+				SessionID: sessionID, RiskScore: score,
+				IPAddr: req.IPAddr, DeviceFP: req.DeviceFP,
+				GeoRegion: req.GeoRegion, LastEvalAt: now,
+			}
+			sessionRiskMu.Lock()
+			sessionRisks[sessionID] = sr
+			sessionRiskMu.Unlock()
+			// PG write-through
+			h.memMapRepo.StoreJSON(r.Context(), "auth_session_risks_json", sessionID, map[string]any{
+				"session_id": sessionID, "risk_score": score,
+				"ip_address": req.IPAddr, "device_fingerprint": req.DeviceFP,
+				"geo_region": req.GeoRegion, "last_eval_at": now,
+			})
+			ipChanged := false
+			if prevIP, _ := prevPG["ip_address"].(string); prevIP != "" && prevIP != req.IPAddr {
+				ipChanged = true
+			}
+			action := "allow"
+			if score >= 70 {
+				action = "revoke_session"
+			} else if score >= 40 {
+				action = "require_step_up"
+			}
+			writeJSON(w, http.StatusOK, map[string]any{
+				"session_id": sessionID, "new_risk_score": score, "action": action,
+				"ip_changed": ipChanged, "evaluated_at": now.Format(time.RFC3339),
+				"factors": map[string]any{
+					"unknown_ip": req.IPAddr == "" || req.IPAddr == "0.0.0.0",
+					"unknown_device": req.DeviceFP == "unknown",
+					"unknown_geo": req.GeoRegion == "unknown",
+				},
+			})
+			return
+		}
+	}
 	sessionRiskMu.Lock()
 	prev, exists := sessionRisks[sessionID]
 	if exists && prev.IPAddr != "" && prev.IPAddr != req.IPAddr {
@@ -71,6 +117,14 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 	}
 	sessionRisks[sessionID] = sr
 	sessionRiskMu.Unlock()
+	// PG write-through
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_session_risks_json", sessionID, map[string]any{
+			"session_id": sessionID, "risk_score": score,
+			"ip_address": req.IPAddr, "device_fingerprint": req.DeviceFP,
+			"geo_region": req.GeoRegion, "last_eval_at": now,
+		})
+	}
 
 	action := "allow"
 	if score >= 70 {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -26,6 +27,18 @@ func loadEncryptionKey(envVar string) []byte {
 		return key
 	}
 
+	// Try PG first for cached key
+	if globalMemMapRepo != nil {
+		if row, _ := globalMemMapRepo.GetJSON(context.Background(), "auth_encryption_keys_json", envVar); row != nil {
+			if hexKey, _ := row["key_hex"].(string); hexKey != "" {
+				if decoded, err := hex.DecodeString(hexKey); err == nil && len(decoded) == 32 {
+					encKeys[envVar] = decoded
+					return decoded
+				}
+			}
+		}
+	}
+
 	val := os.Getenv(envVar)
 	if val == "" {
 		// Derive a deterministic development key so tests/dev work without
@@ -36,6 +49,13 @@ func loadEncryptionKey(envVar string) []byte {
 			envVar, envVar)
 		h := sha256.Sum256([]byte("dev-fallback-key:" + envVar))
 		encKeys[envVar] = h[:]
+		// PG write-through
+		if globalMemMapRepo != nil {
+			globalMemMapRepo.StoreJSON(context.Background(), "auth_encryption_keys_json", envVar, map[string]any{
+				"key_name": envVar, "key_hex": hex.EncodeToString(h[:]),
+				"algorithm": "AES-256-GCM",
+			})
+		}
 		return h[:]
 	}
 
@@ -43,6 +63,13 @@ func loadEncryptionKey(envVar string) []byte {
 	if len(val) == 64 {
 		if key, err := hex.DecodeString(val); err == nil && len(key) == 32 {
 			encKeys[envVar] = key
+			// PG write-through
+			if globalMemMapRepo != nil {
+				globalMemMapRepo.StoreJSON(context.Background(), "auth_encryption_keys_json", envVar, map[string]any{
+					"key_name": envVar, "key_hex": val,
+					"algorithm": "AES-256-GCM",
+				})
+			}
 			return key
 		}
 	}
@@ -50,5 +77,12 @@ func loadEncryptionKey(envVar string) []byte {
 	// Fallback: derive key from passphrase via SHA-256
 	h := sha256.Sum256([]byte(val))
 	encKeys[envVar] = h[:]
+	// PG write-through
+	if globalMemMapRepo != nil {
+		globalMemMapRepo.StoreJSON(context.Background(), "auth_encryption_keys_json", envVar, map[string]any{
+			"key_name": envVar, "key_hex": hex.EncodeToString(h[:]),
+			"algorithm": "AES-256-GCM",
+		})
+	}
 	return h[:]
 }

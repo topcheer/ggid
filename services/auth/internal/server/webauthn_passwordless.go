@@ -64,6 +64,15 @@ func (h *Handler) handleWebAuthnPasswordlessBegin(w http.ResponseWriter, r *http
 	passwordlessSessions[sessionID] = sess
 	passwordlessSessionsMu.Unlock()
 
+	// PG write-through
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_passwordless_json", sessionID, map[string]any{
+			"session_id": sessionID, "challenge": challenge,
+			"tenant_id": req.TenantID, "username": req.Username,
+			"created_at": now, "expires_at": sess.ExpiresAt,
+		})
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"session_id":   sessionID,
 		"challenge":    challenge,
@@ -97,14 +106,40 @@ func (h *Handler) handleWebAuthnPasswordlessFinish(w http.ResponseWriter, r *htt
 		return
 	}
 
-	passwordlessSessionsMu.Lock()
-	sess, ok := passwordlessSessions[req.SessionID]
-	if ok {
-		delete(passwordlessSessions, req.SessionID)
+	// Try PG first, fall back to in-memory map
+	var sess *passwordlessSession
+	var sessOK bool
+	if h.memMapRepo != nil {
+		if row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_passwordless_json", req.SessionID); row != nil {
+			challenge, _ := row["challenge"].(string)
+			tenantID, _ := row["tenant_id"].(string)
+			username, _ := row["username"].(string)
+			expiresAtStr, _ := row["expires_at"].(string)
+			expiresAt, _ := time.Parse(time.RFC3339, expiresAtStr)
+			createdAtStr, _ := row["created_at"].(string)
+			createdAt, _ := time.Parse(time.RFC3339, createdAtStr)
+			if createdAt.IsZero() {
+				createdAt = time.Now().UTC()
+			}
+			sess = &passwordlessSession{
+				SessionID: req.SessionID, Challenge: challenge,
+				TenantID: tenantID, Username: username,
+				CreatedAt: createdAt, ExpiresAt: expiresAt,
+			}
+			sessOK = true
+			h.memMapRepo.DeleteJSON(r.Context(), "auth_passwordless_json", req.SessionID)
+		}
 	}
-	passwordlessSessionsMu.Unlock()
+	if !sessOK {
+		passwordlessSessionsMu.Lock()
+		sess, sessOK = passwordlessSessions[req.SessionID]
+		if sessOK {
+			delete(passwordlessSessions, req.SessionID)
+		}
+		passwordlessSessionsMu.Unlock()
+	}
 
-	if !ok {
+	if !sessOK {
 		writeError(w, http.StatusNotFound, "session not found or expired")
 		return
 	}

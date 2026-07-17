@@ -69,6 +69,15 @@ func (h *Handler) handlePasswordBreachNotify(w http.ResponseWriter, r *http.Requ
 	breachNotifs[notif.ID] = notif
 	breachNotifMu.Unlock()
 
+	// PG write-through
+	if h.memMapRepo != nil {
+		h.memMapRepo.StoreJSON(r.Context(), "auth_breach_notifs_json", notif.ID, map[string]any{
+			"id": notif.ID, "breach_name": notif.BreachName,
+			"user_ids": notif.UserIDs, "reset_tokens": notif.ResetTokens,
+			"status": notif.Status, "notified_at": notif.NotifiedAt,
+		})
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"status":            "notified",
 		"notification_id":   notif.ID,

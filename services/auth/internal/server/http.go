@@ -101,7 +101,11 @@ func (h *Handler) SetSysconfigStore(store sysconfig.Store) {
 
 func (h *Handler) SetMemMapRepo(repo *authMemoryMapRepo) {
 	h.memMapRepo = repo
+	globalMemMapRepo = repo
 }
+
+// globalMemMapRepo is a package-level reference for non-handler functions.
+var globalMemMapRepo *authMemoryMapRepo
 
 // t translates a message key for the given request's locale.
 func (h *Handler) t(r *http.Request, key string) string {
