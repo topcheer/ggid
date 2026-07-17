@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 94
-## Last scan focus: D (Data persistence, Round 93) — 3 stores persisted (PG/Redis); 4 caches acceptable; 2 known gaps tracked; no new issues
-## Next scan focus: E2E tests (Round 94 = even round, Workflow A)
+## Current round: 95
+## Last scan focus: E2E (Round 94) — Core 7/7, ERP 4/4, OAuth 3/3, SDK 8/8 PASS; platform stable
+## Next scan focus: E (Security config scan, Round 95 = odd round, Workflow B)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
