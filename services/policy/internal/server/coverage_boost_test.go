@@ -317,6 +317,9 @@ func newTestHarness() *testHarness {
 
 // doReq sends a request with an optional JSON body string.
 func doReq(method, path, body string) *httptest.ResponseRecorder {
+	if testMux == nil {
+		newTestHarness() // lazy-init if a test calls doReq without setup
+	}
 	var r io.Reader
 	if body != "" {
 		r = strings.NewReader(body)
