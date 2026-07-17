@@ -191,6 +191,8 @@
 | F-44 | Zero-Trust Secret Broker (5 tabs, Vault-level, JIT linkage) | frontend | 7f4c1855 |
 | F-45 | Threat Intelligence Hub (5 tabs, CrowdStrike-level, ITDR correlation) | frontend | 52fe00bd |
 | F-46 | API Key Lifecycle Management (4 tabs, create/rotate/revoke/scopes) | frontend | 34997441 |
+| F-47 | Passkey Health Dashboard (4 tabs, health checks, enforcement policy) | frontend | fb1aadb7 |
+| F-48 | ReBAC Console UI — Schema Editor, Playground, Tuple Store (KB-029) | frontend | ffab77d2 |
 
 ## Research Pipeline
 
