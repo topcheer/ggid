@@ -120,6 +120,7 @@ func main() {
 			}
 
 			engine := detection.NewEngine(engineRepo, stateStore)
+			detection.RegisterKB192Rules(engine.Registry())
 			nc.SetEngine(engine)
 			log.Println("Audit Service: ITDR detection engine enabled")
 		}

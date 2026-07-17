@@ -103,10 +103,10 @@ func TestMFAFatigue_BelowThreshold(t *testing.T) {
 func TestMFAFatigue_AtThreshold(t *testing.T) {
 	rule := &MFAFatigueRule{}
 	state := newFakeState()
+	evt := makeEvent("mfa.push", "failure")
 	var lastDet *domain.Detection
 
 	for i := 0; i < 6; i++ {
-		evt := makeEvent("mfa.push", "failure")
 		lastDet, _ = rule.Evaluate(context.Background(), evt, state, domain.RuleConfig{Enabled: true})
 	}
 	if lastDet == nil {
@@ -201,10 +201,10 @@ func TestMassCreation_BelowThreshold(t *testing.T) {
 func TestMassCreation_AtThreshold(t *testing.T) {
 	rule := &MassCreationRule{}
 	state := newFakeState()
+	evt := makeEvent("user.create", "success")
 	var det *domain.Detection
 
 	for i := 0; i < 11; i++ {
-		evt := makeEvent("user.create", "success")
 		det, _ = rule.Evaluate(context.Background(), evt, state, domain.RuleConfig{Enabled: true})
 	}
 	if det == nil {
@@ -243,18 +243,16 @@ func TestFederationAnomaly_NewIdP(t *testing.T) {
 
 func TestFederationAnomaly_KnownIdP(t *testing.T) {
 	rule := &FederationAnomalyRule{}
-	state := newFakeState()
+	evt := makeEvent("saml.acs", "success")
 	idp := "https://known-idp.example.com"
+	evt.Metadata["idp_entity_id"] = idp
+	state := newFakeState()
 
-	// First call registers it.
-	evt1 := makeEvent("saml.acs", "success")
-	evt1.Metadata["idp_entity_id"] = idp
-	rule.Evaluate(context.Background(), evt1, state, domain.RuleConfig{Enabled: true})
+	// First call registers it (triggers detection for new IdP).
+	rule.Evaluate(context.Background(), evt, state, domain.RuleConfig{Enabled: true})
 
-	// Second call should not trigger (known IdP).
-	evt2 := makeEvent("saml.acs", "success")
-	evt2.Metadata["idp_entity_id"] = idp
-	det, _ := rule.Evaluate(context.Background(), evt2, state, domain.RuleConfig{Enabled: true})
+	// Second call with SAME tenant should not trigger (known IdP).
+	det, _ := rule.Evaluate(context.Background(), evt, state, domain.RuleConfig{Enabled: true})
 	if det != nil {
 		t.Fatal("known IdP should not trigger")
 	}
@@ -318,9 +316,9 @@ func TestMassExport_BelowThreshold(t *testing.T) {
 func TestMassExport_AtThreshold(t *testing.T) {
 	rule := &MassExportRule{}
 	state := newFakeState()
+	evt := makeEvent("audit.export", "success")
 	var det *domain.Detection
 	for i := 0; i < 6; i++ {
-		evt := makeEvent("audit.export", "success")
 		det, _ = rule.Evaluate(context.Background(), evt, state, domain.RuleConfig{Enabled: true})
 	}
 	if det == nil {
