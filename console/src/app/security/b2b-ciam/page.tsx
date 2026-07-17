@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import {
   Building2, User, Palette, Globe, Check, Loader2, AlertCircle, X,
   RefreshCw, ChevronRight, ChevronLeft, Upload, Eye, TrendingUp,
-  Users, Shield, Activity, AlertTriangle, Sparkles, Gauge,
+  Users, Shield, Activity, AlertTriangle, Sparkles, Gauge, Clock,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader } from "@/lib/auth-helpers";
