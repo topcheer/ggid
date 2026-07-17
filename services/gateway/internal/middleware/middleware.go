@@ -35,6 +35,7 @@ const (
 	RequestIDKey contextKey = "request_id"
 	UserIDKey    contextKey = "user_id"
 	TenantIDKey  contextKey = "tenant_id"
+	JTIKey       contextKey = "jti"
 )
 
 // --- Request ID ---
@@ -594,7 +595,36 @@ func JWTAuth(jwks *JWKSClient, required bool, issuer, audience string) func(http
 			if tid, _ := claims["tenant_id"].(string); tid != "" {
 				ctx = context.WithValue(ctx, TenantIDKey, tid)
 			}
+			if jti, _ := claims["jti"].(string); jti != "" {
+				ctx = context.WithValue(ctx, JTIKey, jti)
+			}
 			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// JTIFromRequest extracts the JWT ID from the request context.
+func JTIFromRequest(r *http.Request) (string, bool) {
+	jti, ok := r.Context().Value(JTIKey).(string)
+	return jti, ok
+}
+
+// CAECheck checks if the JWT's jti has been revoked via Redis blocklist.
+// Called after JWTAuth in the middleware chain.
+// Graceful degradation: Redis unavailable → allow + warn.
+func CAECheck(isRevoked func(ctx context.Context, jti string) bool) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			jti, ok := JTIFromRequest(r)
+			if !ok || jti == "" {
+				next.ServeHTTP(w, r) // no jti in token, allow
+				return
+			}
+			if isRevoked(r.Context(), jti) {
+				writeUnauthorized(w, "session revoked (CAE)")
+				return
+			}
+			next.ServeHTTP(w, r)
 		})
 	}
 }

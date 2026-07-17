@@ -80,7 +80,13 @@ type Gateway struct {
 	sessionMgr     *middleware.SessionManager
 	sysconfigStore sysconfig.Store
 	internalSecret []byte
+	caeCheck      func(http.Handler) http.Handler
 	mu             sync.RWMutex
+}
+
+// SetCAECheck injects the CAE (Continuous Access Evaluation) middleware.
+func (gw *Gateway) SetCAECheck(cae func(http.Handler) http.Handler) {
+	gw.caeCheck = cae
 }
 
 // loadInternalSecret loads GGID_INTERNAL_SECRET from env.
@@ -452,6 +458,10 @@ func (gw *Gateway) Handler() http.Handler {
 			// Public path: no JWT required, but still validate if token present
 			jwtMW := middleware.JWTAuth(gw.jwks, false, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
 			h := jwtMW(gw)
+			// CAE: check jti blocklist after JWT validation
+			if gw.caeCheck != nil {
+				h = gw.caeCheck(h)
+			}
 			if gw.sessionMgr != nil {
 				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
 			}
@@ -460,6 +470,10 @@ func (gw *Gateway) Handler() http.Handler {
 			// Protected path: JWT required
 			jwtMW := middleware.JWTAuth(gw.jwks, true, gw.cfg.JWTIssuer, gw.cfg.JWTAudience)
 			h := jwtMW(gw)
+			// CAE: check jti blocklist after JWT validation
+			if gw.caeCheck != nil {
+				h = gw.caeCheck(h)
+			}
 			if gw.sessionMgr != nil {
 				h = gw.sessionMgr.SessionTimeoutMiddleware(middleware.DefaultSessionTimeoutConfig())(h)
 			}

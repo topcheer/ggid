@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/ggid/ggid/pkg/auth"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/services/gateway/internal/config"
@@ -82,6 +83,14 @@ func main() {
 	// Create gateway router
 	gw := router.New(cfg, jwks)
 	gw.SetSysconfigStore(store)
+
+	// CAE: wire jti blocklist for continuous access evaluation
+	jtiBL := auth.NewJTIBlocklist(rdb)
+	gw.SetCAECheck(middleware.CAECheck(func(ctx context.Context, jti string) bool {
+		return jtiBL.IsRevoked(ctx, jti)
+	}))
+	log.Println("Gateway: CAE jti blocklist enabled")
+
 	gw.PrintRoutes()
 
 	// HTTP server
