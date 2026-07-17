@@ -16,6 +16,8 @@ const nextConfig = {
   async rewrites() {
     const gatewayUrl = process.env.GATEWAY_URL || 'http://localhost:8080';
     return [
+      { source: '/risk-scoring', destination: '/security/risk-score' },
+      { source: '/threat-intel', destination: '/security/threat-intel' },
       { source: '/healthz', destination: `${gatewayUrl}/healthz` },
       { source: '/healthz/:path*', destination: `${gatewayUrl}/healthz/:path*` },
       { source: '/api/:path*', destination: `${gatewayUrl}/api/:path*` },
