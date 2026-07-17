@@ -142,6 +142,13 @@ func main() {
 	}
 	httpAPI.SetPolicyMapRepo(pmRepo)
 
+	// Unified PDP (Policy Decision Point).
+	pdpRepo := httpserver.NewPDPRepo(db)
+	if err := pdpRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("PDP schema ensure error (non-fatal): %v", err)
+	}
+	httpAPI.SetPDPRepo(pdpRepo)
+
 	httpAPI.RegisterRoutes(mux)
 
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()

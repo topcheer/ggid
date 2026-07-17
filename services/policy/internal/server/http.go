@@ -29,9 +29,10 @@ type HTTPServer struct {
 	policySvc     *service.PolicyService
 	evaluator     *service.Evaluator
 	auditPublisher *audit.Publisher
-	campaignRepo  *CampaignRepo
-	jitRepo       *repository.JITRequestRepository
-	policyMap     *policyMapRepo
+campaignRepo  *CampaignRepo
+jitRepo       *repository.JITRequestRepository
+policyMap     *policyMapRepo
+pdpRepo       *pdpRepo
 }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.
@@ -191,6 +192,11 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policy/versions/", s.handlePolicyVersionDiff)
 	mux.HandleFunc("/api/v1/policies/access-requests/", s.handleAccessRequests)
 	mux.HandleFunc("/api/v1/policies/access-requests", s.handleAccessRequests)
+
+	// Unified PDP (Policy Decision Point).
+	mux.HandleFunc("/api/v1/policy/authorize", s.handleUnifiedAuthorize)
+	mux.HandleFunc("/api/v1/policy/decisions", s.handlePDPDecisions)
+	mux.HandleFunc("/api/v1/policy/cache", s.handleFlushPDPCache)
 }
 
 // --- Roles ---
