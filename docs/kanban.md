@@ -154,6 +154,12 @@
 | KB-140 | **Replace 12 hardcoded risk handlers** (real URE data) | backend | P1 | adaptive-auth | 3d |
 | KB-141 | **Behavioral baselines + risk analytics** | backend | P1 | adaptive-auth | 3d |
 | KB-142 | **Risk dashboard + continuous evaluation middleware** | backend+frontend | P2 | adaptive-auth | 4d |
+| KB-143 | **Agent registry + DB-backed consent** (replace in-memory) | backend | P0 | ai-agent-identity | 4d |
+| KB-144 | **Token exchange integration + workload attestation** | backend | P0 | ai-agent-identity | 4d |
+| KB-145 | **Multi-agent delegation chains + cycle detection** | backend | P1 | ai-agent-identity | 4d |
+| KB-146 | **Per-agent rate limiting + dual-attribution audit** | backend | P1 | ai-agent-identity | 3d |
+| KB-147 | **Agent behavioral anomaly detection** | backend | P2 | ai-agent-identity | 3d |
+| KB-148 | **Console agent management UI** | frontend | P2 | ai-agent-identity | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -234,7 +240,8 @@
 | Credential Recovery Workflow Engine | DONE | docs/research/credential-recovery-workflow.md |
 | Consent Management Platform (GDPR/CCPA) | DONE | docs/research/consent-management-platform.md |
 | Risk-Based Adaptive Authentication Engine | DONE | docs/research/risk-adaptive-auth-engine.md |
-| PQC Migration (FIPS 203/204/205) | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md (stub: 220 lines) |
+| AI Agent Identity & Delegated Access | DONE | docs/research/ai-agent-identity.md |
+| OAuth Client Lifecycle Management (DCR, rotation) | NEXT | — |
 
 ---
 
