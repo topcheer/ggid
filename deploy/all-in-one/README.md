@@ -72,6 +72,57 @@ Key variables you can override at runtime:
 | `GATEWAY_ADDR` | `:8080` | Gateway bind address |
 | `NEXT_PUBLIC_TENANT_ID` | `00000000-0000-0000-0000-000000000001` | Default tenant ID |
 | `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK` | `true` | Allow plaintext gRPC fallback (dev only) |
+| `PASSWORD_PEPPER` | _(unset)_ | HMAC-SHA256 pre-hash pepper. Set for production to add server-side password secret. |
+| `INTERNAL_AUTH_SECRET` | _(unset)_ | HMAC secret for service-to-service internal auth. Set when enabling CAE pipeline. |
+| `AUDIT_HASH_CHAIN_SECRET` | _(unset)_ | Secret for tamper-evident audit log hash chain. Set for production audit integrity. |
+
+## Security Considerations
+
+### Port Exposure (P0 — Fixed)
+
+Only the gateway (8080) and console (3000) ports should be exposed externally.
+All backend service ports (8081-8072, 9001, 9005, 5432, 6379, 4222) must remain
+internal. The all-in-one Dockerfile exposes only `8080` and `3000` — do not add
+additional `-p` port mappings in production deployments.
+
+### CAE (Continuous Access Evaluation) Redis Dependency
+
+The CAE pipeline uses Redis for the JTI (JWT ID) blocklist. When a user's sessions
+are revoked (e.g., by ITDR threat detection or admin action), the JTI is added
+to a Redis sorted set. The gateway's CAE middleware checks this set on every
+request (~0.3ms overhead).
+
+**Requirements for CAE:**
+- Redis must be running (embedded in all-in-one image)
+- `INTERNAL_AUTH_SECRET` must be set for ITDR → CAE trigger pipeline
+- Gateway pod must have Redis connectivity
+
+If Redis is unavailable, CAE checks are skipped (fail-open) — access tokens
+remain valid until natural expiry. This is acceptable for dev but not production.
+
+### Password Pepper
+
+Set `PASSWORD_PEPPER` to a strong random string (32+ characters) for production.
+Without it, passwords are still hashed with Argon2id (strong), but lack the
+additional server-side secret that protects against database-only breaches.
+
+```bash
+docker run -d -p 8080:8080 -p 3000:3000 \
+  -e PASSWORD_PEPPER=$(openssl rand -hex 32) \
+  -e INTERNAL_AUTH_SECRET=$(openssl rand -hex 32) \
+  -e AUDIT_HASH_CHAIN_SECRET=$(openssl rand -hex 32) \
+  -v ggid-data:/var/lib/postgresql/data \
+  --name ggid-all-in-one ggid/ggid-all-in-one:latest
+```
+
+### gRPC TLS
+
+gRPC services default to plaintext (`GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true`).
+For production, set:
+- `GRPC_TLS_ENABLED=true`
+- `GRPC_TLS_CERT=/path/to/cert.pem`
+- `GRPC_TLS_KEY=/path/to/key.pem`
+- Remove `GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK` (or set to `false`)
 
 ## Notes
 
