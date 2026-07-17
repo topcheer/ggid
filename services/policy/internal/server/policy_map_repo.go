@@ -44,6 +44,16 @@ func (r *policyMapRepo) EnsureSchema(ctx context.Context) error {
 			id TEXT PRIMARY KEY, tenant_id UUID,
 			data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
 		);
+		CREATE TABLE IF NOT EXISTS policy_delegated_admins (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_abac_groups (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_permission_boundaries (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_certifications (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_campaign_results (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_bundles (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_approvals (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_snapshots (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_resource_tags (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS policy_inheritance (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
 	`)
 	return err
 }

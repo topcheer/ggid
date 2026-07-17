@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -18,22 +16,14 @@ type PolicyInheritance struct {
 }
 
 type OverrideRule struct {
-	ID        string `json:"id"`
-	RuleRef   string `json:"rule_ref"`
-	Effect    string `json:"effect"` // allow, deny
-	Reason    string `json:"reason"`
+	ID      string `json:"id"`
+	RuleRef string `json:"rule_ref"`
+	Effect  string `json:"effect"`
+	Reason  string `json:"reason"`
 }
 
-var (
-	inheritanceMu sync.RWMutex
-	inheritance   = make(map[string]*PolicyInheritance)
-)
-
-// GET /api/v1/policies/{id}/inheritance
-// POST /api/v1/policies/{id}/override
 func (s *HTTPServer) handlePolicyInheritance(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	// /api/v1/policies/{id}/inheritance or /override
 	if len(parts) < 4 {
 		writeJSONError(w, http.StatusBadRequest, "invalid path")
 		return
@@ -41,12 +31,14 @@ func (s *HTTPServer) handlePolicyInheritance(w http.ResponseWriter, r *http.Requ
 	policyID := parts[3]
 
 	if strings.HasSuffix(r.URL.Path, "/inheritance") && r.Method == http.MethodGet {
-		inheritanceMu.RLock()
-		ih, ok := inheritance[policyID]
-		inheritanceMu.RUnlock()
-		if !ok {
-			ih = &PolicyInheritance{PolicyID: policyID, ChildPolicies: []string{}, OverriddenRules: []OverrideRule{}}
+		if s.policyMap != nil {
+			row, _ := s.policyMap.Get(r.Context(), "policy_inheritance", policyID)
+			if row != nil {
+				writeJSON(w, http.StatusOK, row)
+				return
+			}
 		}
+		ih := &PolicyInheritance{PolicyID: policyID, ChildPolicies: []string{}, OverriddenRules: []OverrideRule{}}
 		writeJSON(w, http.StatusOK, ih)
 		return
 	}
@@ -62,16 +54,19 @@ func (s *HTTPServer) handlePolicyInheritance(w http.ResponseWriter, r *http.Requ
 			return
 		}
 		override := OverrideRule{ID: "ov-" + uuid.New().String()[:8], RuleRef: req.RuleRef, Effect: req.Effect, Reason: req.Reason}
-		inheritanceMu.Lock()
-		if inheritance[policyID] == nil {
-			inheritance[policyID] = &PolicyInheritance{PolicyID: policyID, ChildPolicies: []string{}, OverriddenRules: []OverrideRule{}}
+		if s.policyMap != nil {
+			row, _ := s.policyMap.Get(r.Context(), "policy_inheritance", policyID)
+			if row == nil {
+				row = map[string]any{"policy_id": policyID, "child_policies": []string{}, "overridden_rules": []any{}}
+			}
+			rules, _ := row["overridden_rules"].([]any)
+			rules = append(rules, map[string]any{"id": override.ID, "rule_ref": override.RuleRef, "effect": override.Effect, "reason": override.Reason})
+			row["overridden_rules"] = rules
+			s.policyMap.Store(r.Context(), "policy_inheritance", policyID, row)
 		}
-		inheritance[policyID].OverriddenRules = append(inheritance[policyID].OverriddenRules, override)
-		inheritanceMu.Unlock()
 		writeJSON(w, http.StatusCreated, map[string]any{"status": "created", "override": override})
 		return
 	}
 
-	_ = time.Now
 	writeJSONError(w, http.StatusNotFound, "not found")
 }

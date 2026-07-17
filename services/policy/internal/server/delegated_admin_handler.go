@@ -3,32 +3,23 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-// DelegatedAdmin holds admin permissions delegated to another user.
 type DelegatedAdmin struct {
-	ID         string    `json:"id"`
-	TenantID   string    `json:"tenant_id"`
-	Delegator  string    `json:"delegator"`
-	Delegate   string    `json:"delegate"`
-	ScopeType  string    `json:"scope_type"`  // org, role, department
-	ScopeID    string    `json:"scope_id"`
-	Permissions []string `json:"permissions"`
-	ExpiresAt  time.Time `json:"expires_at"`
-	CreatedAt  time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	TenantID    string    `json:"tenant_id"`
+	Delegator   string    `json:"delegator"`
+	Delegate    string    `json:"delegate"`
+	ScopeType   string    `json:"scope_type"`
+	ScopeID     string    `json:"scope_id"`
+	Permissions []string  `json:"permissions"`
+	ExpiresAt   time.Time `json:"expires_at"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
-var (
-	delegatedAdminMu sync.RWMutex
-	delegatedAdmins  = make(map[string]*DelegatedAdmin)
-)
-
-// POST /api/v1/policies/delegated-admin — delegate admin scope.
-// GET /api/v1/policies/delegated-admin/list — list delegations.
 func (s *HTTPServer) handleDelegatedAdmin(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -59,22 +50,22 @@ func (s *HTTPServer) handleDelegatedAdmin(w http.ResponseWriter, r *http.Request
 			ExpiresAt: now.Add(time.Duration(req.ExpiryHours) * time.Hour),
 			CreatedAt: now,
 		}
-		delegatedAdminMu.Lock(); delegatedAdmins[da.ID] = da; delegatedAdminMu.Unlock()
-		writeJSON(w, http.StatusCreated, da)
-
-	case http.MethodGet:
-		delegate := r.URL.Query().Get("delegate")
-		scopeType := r.URL.Query().Get("scope_type")
-		delegatedAdminMu.RLock()
-		result := []*DelegatedAdmin{}
-		for _, da := range delegatedAdmins {
-			if delegate != "" && da.Delegate != delegate { continue }
-			if scopeType != "" && da.ScopeType != scopeType { continue }
-			result = append(result, da)
+		if s.policyMap != nil {
+			s.policyMap.Store(r.Context(), "policy_delegated_admins", da.ID, map[string]any{
+				"tenant_id": da.TenantID, "delegator": da.Delegator, "delegate": da.Delegate,
+				"scope_type": da.ScopeType, "scope_id": da.ScopeID,
+				"permissions": da.Permissions, "expires_at": da.ExpiresAt,
+			})
 		}
-		delegatedAdminMu.RUnlock()
+		writeJSON(w, http.StatusCreated, da)
+	case http.MethodGet:
+		var result []map[string]any
+		if s.policyMap != nil {
+			rows, _ := s.policyMap.List(r.Context(), "policy_delegated_admins")
+			result = rows
+		}
+		if result == nil { result = []map[string]any{} }
 		writeJSON(w, http.StatusOK, map[string]any{"delegations": result, "count": len(result)})
-
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

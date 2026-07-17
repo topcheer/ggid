@@ -3,7 +3,6 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,13 +15,6 @@ type ResourceTag struct {
 	CreatedAt time.Time         `json:"created_at"`
 }
 
-var (
-	resTagMu sync.RWMutex
-	resTags  = make(map[string]*ResourceTag) // key: resource path
-)
-
-// POST /api/v1/policies/resource-tags — tag a resource
-// GET /api/v1/policies/resource-tags?resource=X — query tags
 func (s *HTTPServer) handleResourceTags(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
@@ -39,30 +31,30 @@ func (s *HTTPServer) handleResourceTags(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 		tag := &ResourceTag{ID: uuid.New().String(), Resource: req.Resource, Tags: req.Tags, CreatedAt: time.Now().UTC()}
-		resTagMu.Lock()
-		resTags[req.Resource] = tag
-		resTagMu.Unlock()
+		if s.policyMap != nil {
+			s.policyMap.Store(r.Context(), "policy_resource_tags", req.Resource, map[string]any{
+				"id": tag.ID, "resource": tag.Resource, "tags": tag.Tags,
+			})
+		}
 		writeJSON(w, http.StatusCreated, tag)
 	case http.MethodGet:
 		resource := r.URL.Query().Get("resource")
-		if resource != "" {
-			resTagMu.RLock()
-			tag, ok := resTags[resource]
-			resTagMu.RUnlock()
-			if !ok {
-				writeJSON(w, http.StatusOK, map[string]any{"resource": resource, "tags": map[string]string{}})
+		if resource != "" && s.policyMap != nil {
+			row, _ := s.policyMap.Get(r.Context(), "policy_resource_tags", resource)
+			if row != nil {
+				writeJSON(w, http.StatusOK, row)
 				return
 			}
-			writeJSON(w, http.StatusOK, tag)
+			writeJSON(w, http.StatusOK, map[string]any{"resource": resource, "tags": map[string]string{}})
 			return
 		}
-		resTagMu.RLock()
-		all := make([]*ResourceTag, 0, len(resTags))
-		for _, t := range resTags {
-			all = append(all, t)
+		var result []map[string]any
+		if s.policyMap != nil {
+			rows, _ := s.policyMap.List(r.Context(), "policy_resource_tags")
+			result = rows
 		}
-		resTagMu.RUnlock()
-		writeJSON(w, http.StatusOK, map[string]any{"tags": all, "count": len(all)})
+		if result == nil { result = []map[string]any{} }
+		writeJSON(w, http.StatusOK, map[string]any{"tags": result, "count": len(result)})
 	default:
 		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}

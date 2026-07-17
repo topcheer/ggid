@@ -1,70 +1,51 @@
 package httpserver
 
 import (
-	"encoding/csv"
+	"encoding/json"
 	"net/http"
-	"sync"
-	"time"
 
 	"github.com/google/uuid"
 )
 
-// CampaignResult tracks individual review decisions within a campaign.
 type CampaignResult struct {
-	Reviewer  string    `json:"reviewer"`
-	Decision  string    `json:"decision"` // certify, revoke, modify
-	UserID    string    `json:"user_id"`
-	RoleID    string    `json:"role_id"`
-	Notes     string    `json:"notes,omitempty"`
-	DecidedAt time.Time `json:"decided_at"`
+	CampaignID string `json:"campaign_id"`
+	ItemID     string `json:"item_id"`
+	UserID     string `json:"user_id"`
+	RoleID     string `json:"role_id"`
+	Decision   string `json:"decision"`
 }
 
-var (
-	campaignResultMu sync.RWMutex
-	campaignResults  = make(map[string][]CampaignResult) // campaign_id → results
-)
-
-// RecordCampaignResult stores a review decision for a campaign.
-func RecordCampaignResult(campaignID, reviewer, decision, userID, roleID, notes string) {
-	campaignResultMu.Lock()
-	campaignResults[campaignID] = append(campaignResults[campaignID], CampaignResult{
-		Reviewer: reviewer, Decision: decision, UserID: userID,
-		RoleID: roleID, Notes: notes, DecidedAt: time.Now().UTC(),
-	})
-	campaignResultMu.Unlock()
-}
-
-// handleCampaignResults is called from handleReviewCampaigns for /{id}/results sub-path.
 func (s *HTTPServer) handleCampaignResults(w http.ResponseWriter, r *http.Request, campaignID string) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
-	format := r.URL.Query().Get("format")
-
-	campaignResultMu.RLock()
-	results := campaignResults[campaignID]
-	campaignResultMu.RUnlock()
-
-	if format == "csv" {
-		w.Header().Set("Content-Type", "text/csv")
-		w.Header().Set("Content-Disposition", "attachment; filename=campaign_"+campaignID+"_results.csv")
-		writer := csv.NewWriter(w)
-		writer.Write([]string{"reviewer", "decision", "user_id", "role_id", "notes", "decided_at"})
-		for _, res := range results {
-			writer.Write([]string{res.Reviewer, res.Decision, res.UserID, res.RoleID, res.Notes, res.DecidedAt.Format(time.RFC3339)})
+	switch r.Method {
+	case http.MethodPost:
+		var req CampaignResult
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+			return
 		}
-		writer.Flush()
-		return
+		req.ItemID = uuid.New().String()
+		if s.policyMap != nil {
+			s.policyMap.Store(r.Context(), "policy_campaign_results", req.ItemID, map[string]any{
+				"campaign_id": req.CampaignID, "user_id": req.UserID,
+				"role_id": req.RoleID, "decision": req.Decision,
+			})
+		}
+		writeJSON(w, http.StatusCreated, req)
+	case http.MethodGet:
+		campaignID := r.URL.Query().Get("campaign_id")
+		var result []map[string]any
+		if s.policyMap != nil {
+			rows, _ := s.policyMap.List(r.Context(), "policy_campaign_results")
+			for _, row := range rows {
+				if campaignID != "" && pmGetString(row, "campaign_id") != campaignID {
+					continue
+				}
+				result = append(result, row)
+			}
+		}
+		if result == nil { result = []map[string]any{} }
+		writeJSON(w, http.StatusOK, map[string]any{"results": result, "count": len(result)})
+	default:
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"campaign_id": campaignID,
-		"results":     results,
-		"count":       len(results),
-	})
 }
-
-// Ensure uuid import used
-var _ = uuid.New

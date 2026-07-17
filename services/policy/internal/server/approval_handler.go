@@ -4,65 +4,55 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type ApprovalRequest struct {
-	ID             string        `json:"id"`
-	RequestType    string        `json:"request_type"`
-	Requester      string        `json:"requester"`
-	ApproverChain  []string      `json:"approver_chain"`
-	CurrentStep    int           `json:"current_step"`
-	Status         string        `json:"status"` // pending, approved, rejected
-	Payload        map[string]any `json:"payload,omitempty"`
-	CreatedAt      time.Time     `json:"created_at"`
-	UpdatedAt      time.Time     `json:"updated_at"`
-	History        []ApprovalStep `json:"history"`
+	ID            string         `json:"id"`
+	RequestType   string         `json:"request_type"`
+	Requester     string         `json:"requester"`
+	ApproverChain []string       `json:"approver_chain"`
+	CurrentStep   int            `json:"current_step"`
+	Status        string         `json:"status"`
+	Payload       map[string]any `json:"payload"`
+	History       []ApprovalStep `json:"history"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
 }
 
 type ApprovalStep struct {
 	Step      int       `json:"step"`
 	Approver  string    `json:"approver"`
-	Action    string    `json:"action"` // approved, rejected
+	Action    string    `json:"action"`
 	Timestamp time.Time `json:"timestamp"`
-	Comment   string    `json:"comment,omitempty"`
+	Comment   string    `json:"comment"`
 }
 
-var (
-	approvalMu  sync.RWMutex
-	approvals   = make(map[string]*ApprovalRequest)
-)
-
-// POST /api/v1/policies/approvals — create approval request
-// GET /api/v1/policies/approvals/pending — list pending approvals
-// POST /api/v1/policies/approvals/{id}/approve — approve current step
-// POST /api/v1/policies/approvals/{id}/reject — reject
 func (s *HTTPServer) handleApprovals(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 
-	// GET pending
 	if strings.HasSuffix(path, "/pending") && r.Method == http.MethodGet {
-		approvalMu.RLock()
-		result := []*ApprovalRequest{}
-		for _, a := range approvals {
-			if a.Status == "pending" {
-				result = append(result, a)
+		var result []map[string]any
+		if s.policyMap != nil {
+			rows, _ := s.policyMap.List(r.Context(), "policy_approvals")
+			for _, row := range rows {
+				if pmGetString(row, "status") == "pending" {
+					result = append(result, row)
+				}
 			}
 		}
-		approvalMu.RUnlock()
+		if result == nil { result = []map[string]any{} }
 		writeJSON(w, http.StatusOK, map[string]any{"approvals": result, "count": len(result)})
 		return
 	}
 
-	// POST create
 	if path == "/api/v1/policies/approvals" && r.Method == http.MethodPost {
 		var req struct {
-			RequestType   string   `json:"request_type"`
-			Requester     string   `json:"requester"`
-			ApproverChain []string `json:"approver_chain"`
+			RequestType   string         `json:"request_type"`
+			Requester     string         `json:"requester"`
+			ApproverChain []string       `json:"approver_chain"`
 			Payload       map[string]any `json:"payload"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -79,61 +69,33 @@ func (s *HTTPServer) handleApprovals(w http.ResponseWriter, r *http.Request) {
 			ApproverChain: req.ApproverChain, CurrentStep: 0, Status: "pending",
 			Payload: req.Payload, CreatedAt: now, UpdatedAt: now,
 		}
-		approvalMu.Lock()
-		approvals[ar.ID] = ar
-		approvalMu.Unlock()
+		if s.policyMap != nil {
+			s.policyMap.Store(r.Context(), "policy_approvals", ar.ID, map[string]any{
+				"request_type": ar.RequestType, "requester": ar.Requester,
+				"approver_chain": ar.ApproverChain, "current_step": ar.CurrentStep,
+				"status": ar.Status, "payload": ar.Payload,
+			})
+		}
 		writeJSON(w, http.StatusCreated, ar)
 		return
 	}
 
-	// POST approve/reject
 	if (strings.HasSuffix(path, "/approve") || strings.HasSuffix(path, "/reject")) && r.Method == http.MethodPost {
 		action := "approved"
-		if strings.HasSuffix(path, "/reject") {
-			action = "rejected"
-		}
-		// Extract ID: /api/v1/policies/approvals/{id}/approve
+		if strings.HasSuffix(path, "/reject") { action = "rejected" }
 		parts := strings.Split(path, "/")
-		if len(parts) < 6 {
-			writeJSONError(w, http.StatusBadRequest, "invalid path")
-			return
-		}
+		if len(parts) < 6 { writeJSONError(w, http.StatusBadRequest, "invalid path"); return }
 		id := parts[5]
-
-		approvalMu.Lock()
-		ar, ok := approvals[id]
-		if !ok {
-			approvalMu.Unlock()
-			writeJSONError(w, http.StatusNotFound, "approval request not found")
-			return
-		}
-		if ar.Status != "pending" {
-			approvalMu.Unlock()
-			writeJSONError(w, http.StatusConflict, "approval already "+ar.Status)
-			return
-		}
-
-		var req struct{ Comment string `json:"comment"` }
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
-
-		step := ApprovalStep{
-			Step: ar.CurrentStep, Approver: ar.ApproverChain[ar.CurrentStep],
-			Action: action, Timestamp: time.Now().UTC(), Comment: req.Comment,
-		}
-		ar.History = append(ar.History, step)
-
-		if action == "rejected" {
-			ar.Status = "rejected"
-		} else {
-			ar.CurrentStep++
-			if ar.CurrentStep >= len(ar.ApproverChain) {
-				ar.Status = "approved"
+		if s.policyMap != nil {
+			row, _ := s.policyMap.Get(r.Context(), "policy_approvals", id)
+			if row == nil {
+				writeJSONError(w, http.StatusNotFound, "approval request not found")
+				return
 			}
+			row["status"] = action
+			s.policyMap.Store(r.Context(), "policy_approvals", id, row)
 		}
-		ar.UpdatedAt = time.Now().UTC()
-		approvalMu.Unlock()
-
-		writeJSON(w, http.StatusOK, ar)
+		writeJSON(w, http.StatusOK, map[string]any{"status": action, "id": id})
 		return
 	}
 

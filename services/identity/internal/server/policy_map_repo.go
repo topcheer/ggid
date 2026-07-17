@@ -35,6 +35,12 @@ func (r *identityPolicyMapRepo) EnsureSchema(ctx context.Context) error {
 			data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now()
 		);
 		CREATE INDEX IF NOT EXISTS idx_review_campaigns_tenant ON review_campaigns_store(tenant_id);
+		CREATE TABLE IF NOT EXISTS identity_delegations (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS identity_attestations (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS identity_user_preferences (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS identity_attribute_history (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS identity_did_registry (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
+		CREATE TABLE IF NOT EXISTS identity_templates (id TEXT PRIMARY KEY, tenant_id UUID, data JSONB DEFAULT '{}', created_at TIMESTAMPTZ DEFAULT now());
 	`)
 	return err
 }
