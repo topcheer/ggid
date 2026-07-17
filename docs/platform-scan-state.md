@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 102
-## Last scan focus: A (Stub scan restart, Round 101) — audit/auth/policy all clean; identity needs rebuild (SCIM tokens + ZT posture 404, DM'd backend); no new stubs
-## Next scan focus: E2E tests (Round 102 = even round, Workflow A)
+## Current round: 103
+## Last scan focus: E2E (Round 102) — Core 10/10 (incl zt/posture + scim/tokens), ERP 4/4, OAuth 3/3, SDK Go+Py PASS; all identity fixes verified live
+## Next scan focus: B (Route/Wiring scan restart, Round 103 = odd round, Workflow B — cycle restart)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
