@@ -7,6 +7,7 @@ import {
   Server, Hash, Mail, Fingerprint, Radar,
 } from "lucide-react";
 import { authHeader } from "@/lib/auth-helpers";
+import { useTranslations } from "@/lib/i18n";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -59,6 +60,7 @@ const SOURCE_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function ThreatIntelPage() {
+  const t = useTranslations();
   const [tab, setTab] = useState<Tab>("sources");
   const [feed, setFeed] = useState<ThreatFeedResult | null>(null);
   const [threatEvents, setThreatEvents] = useState<ThreatEvent[]>([]);
@@ -147,10 +149,10 @@ export default function ThreatIntelPage() {
       {/* Header */}
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-          <Radar className="h-6 w-6 text-rose-500" /> Threat Intelligence Hub
+          <Radar className="h-6 w-6 text-rose-500" /> {t("threatIntel.title")}
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Aggregate threat feeds, browse IOCs, run real-time checks, and correlate with ITDR incidents.
+          {t("threatIntel.subtitle")}
         </p>
       </div>
 
@@ -164,11 +166,11 @@ export default function ThreatIntelPage() {
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([
-          { id: "sources" as Tab, label: "Intel Sources", icon: Database },
-          { id: "indicators" as Tab, label: "Indicators (IOCs)", icon: Crosshair },
-          { id: "checker" as Tab, label: "Threat Checker", icon: Search },
-          { id: "itdr" as Tab, label: "ITDR Correlation", icon: Radar },
-          { id: "stats" as Tab, label: "Statistics", icon: TrendingUp },
+          { id: "sources" as Tab, label: t("threatIntel.sources"), icon: Database },
+          { id: "indicators" as Tab, label: t("threatIntel.indicators"), icon: Crosshair },
+          { id: "checker" as Tab, label: t("threatIntel.checker"), icon: Search },
+          { id: "itdr" as Tab, label: t("threatIntel.itdr"), icon: Radar },
+          { id: "stats" as Tab, label: t("threatIntel.statistics"), icon: TrendingUp },
         ]).map(tb => {
           const Icon = tb.icon;
           return (

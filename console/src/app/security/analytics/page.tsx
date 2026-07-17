@@ -7,6 +7,7 @@ import {
   Eye, Cpu, Hash, Save, RotateCcw, Filter, Gauge, Lock, ArrowRight,
 } from "lucide-react";
 import { authHeader } from "@/lib/auth-helpers";
+import { useTranslations } from "@/lib/i18n";
 
 const TENANT_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -127,6 +128,7 @@ function Donut({ segments, size = 120 }: {
 }
 
 export default function AnalyticsPage() {
+  const t = useTranslations();
   const [tab, setTab] = useState<Tab>("overview");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loginData, setLoginData] = useState<LoginAnalytics | null>(null);
@@ -226,10 +228,10 @@ export default function AnalyticsPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
-            <BarChart3 className="h-6 w-6 text-indigo-500" /> Identity Analytics & Reporting
+            <BarChart3 className="h-6 w-6 text-indigo-500" /> {t("analytics.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Real-time identity metrics, behavioral anomaly detection, and compliance reporting.
+            {t("analytics.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -254,11 +256,11 @@ export default function AnalyticsPage() {
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
         {([
-          { id: "overview" as Tab, label: "Overview", icon: Gauge },
-          { id: "trends" as Tab, label: "Trends", icon: TrendingUp },
-          { id: "anomalies" as Tab, label: "Anomalies", icon: AlertTriangle },
-          { id: "compliance" as Tab, label: "Compliance", icon: FileText },
-          { id: "dashboard" as Tab, label: "Custom Dashboard", icon: Settings },
+          { id: "overview" as Tab, label: t("analytics.overview"), icon: Gauge },
+          { id: "trends" as Tab, label: t("analytics.trends"), icon: TrendingUp },
+          { id: "anomalies" as Tab, label: t("analytics.anomalies"), icon: AlertTriangle },
+          { id: "compliance" as Tab, label: t("analytics.compliance"), icon: FileText },
+          { id: "dashboard" as Tab, label: t("analytics.customDashboard"), icon: Settings },
         ]).map(tb => {
           const Icon = tb.icon;
           return (

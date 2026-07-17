@@ -4882,5 +4882,19 @@
   "agents.subtitle": "Register and manage AI agents with delegated token exchange",
   "passkeyMgmt.title": "Passkey Management",
   "passkeyMgmt.subtitle": "Manage registered passkeys and enroll new devices.",
-  "passkeyMgmt.enrollPasskey": "Enroll Passkey"
+  "passkeyMgmt.enrollPasskey": "Enroll Passkey",
+  "analytics.title": "Identity Analytics & Reporting",
+  "analytics.subtitle": "Real-time identity metrics, behavioral anomaly detection, and compliance reporting.",
+  "analytics.overview": "Overview",
+  "analytics.trends": "Trends",
+  "analytics.anomalies": "Anomalies",
+  "analytics.compliance": "Compliance",
+  "analytics.customDashboard": "Custom Dashboard",
+  "threatIntel.sources": "Intel Sources",
+  "threatIntel.indicators": "Indicators (IOCs)",
+  "threatIntel.checker": "Threat Checker",
+  "threatIntel.itdr": "ITDR Correlation",
+  "threatIntel.statistics": "Statistics",
+  "vc.title": "Verifiable Credentials",
+  "vc.subtitle": "Issue, verify, revoke, and manage W3C Verifiable Credentials."
 }

@@ -96,17 +96,17 @@ export default function VerifiableCredentialsPage() {
   };
 
   if (loading) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Verifiable Credentials</h1><p>Loading...</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">{t("vc.title")}</h1><p>{t("common.loading")}</p></div>
   );
   if (error) return (
-    <div className="p-6"><h1 className="text-2xl font-bold mb-4">Verifiable Credentials</h1><p className="text-red-600">Error: {error}</p></div>
+    <div className="p-6"><h1 className="text-2xl font-bold mb-4">{t("vc.title")}</h1><p className="text-red-600">Error: {error}</p></div>
   );
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Verifiable Credentials</h1>
-          <p className="text-gray-600">Issue, verify, revoke, and manage W3C Verifiable Credentials.</p>
+          <h1 className="text-2xl font-bold">{t("vc.title")}</h1>
+          <p className="text-gray-600">{t("vc.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowImport(!showImport)} className="px-3 py-1.5 border rounded text-sm">Import</button>

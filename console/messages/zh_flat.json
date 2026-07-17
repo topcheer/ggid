@@ -4760,5 +4760,19 @@
   "agents.subtitle": "注册和管理具有委派令牌交换的 AI 代理",
   "passkeyMgmt.title": "通行密钥管理",
   "passkeyMgmt.subtitle": "管理已注册的通行密钥并注册新设备。",
-  "passkeyMgmt.enrollPasskey": "注册通行密钥"
+  "passkeyMgmt.enrollPasskey": "注册通行密钥",
+  "analytics.title": "身份分析与报告",
+  "analytics.subtitle": "实时身份指标、行为异常检测和合规报告。",
+  "analytics.overview": "概览",
+  "analytics.trends": "趋势",
+  "analytics.anomalies": "异常",
+  "analytics.compliance": "合规",
+  "analytics.customDashboard": "自定义仪表盘",
+  "threatIntel.sources": "情报源",
+  "threatIntel.indicators": "指标 (IOC)",
+  "threatIntel.checker": "威胁检查器",
+  "threatIntel.itdr": "ITDR 关联",
+  "threatIntel.statistics": "统计",
+  "vc.title": "可验证凭证",
+  "vc.subtitle": "签发、验证、吊销和管理 W3C 可验证凭证。"
 }

@@ -72,6 +72,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AuditExportCenterPage() {
+  const t = useTranslations();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +133,7 @@ export default function AuditExportCenterPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Audit Export Center</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("auditExport.title")}</h1>
         <p className="mt-1 text-sm text-gray-500">Export audit logs with PII masking, manage scheduled exports, and track export history.</p>
       </div>
 

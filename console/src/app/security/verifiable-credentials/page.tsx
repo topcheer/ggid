@@ -178,7 +178,7 @@ export default function VerifiableCredentialsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-purple-500" /> Verifiable Credentials</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Shield className="h-6 w-6 text-purple-500" /> {t("vc.title")}</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">W3C VC management — issue, verify, revoke credentials with DID:web + JSON-LD schemas.</p>
         </div>
         <button onClick={loadData} disabled={loading} aria-label="Refresh" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"><RefreshCw className={"h-4 w-4 " + (loading ? "animate-spin" : "")} /> Refresh</button>
