@@ -18,6 +18,7 @@ import (
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/ggid/ggid/services/policy/internal/domain"
+	"github.com/ggid/ggid/services/policy/internal/repository"
 	"github.com/ggid/ggid/services/policy/internal/service"
 	"github.com/google/uuid"
 )
@@ -29,6 +30,7 @@ type HTTPServer struct {
 	evaluator     *service.Evaluator
 	auditPublisher *audit.Publisher
 	campaignRepo  *CampaignRepo
+	jitRepo       *repository.JITRequestRepository
 }
 
 // NewHTTPServer creates a new Policy Engine HTTP server.
@@ -66,6 +68,12 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/policies/from-template/", s.handleFromTemplate)
 	mux.HandleFunc("/api/v1/policies/default-action", s.handleDefaultAction)
 	mux.HandleFunc("/api/v1/policies/time-conditions", s.handleTimeConditions)
+
+	// PAM JIT Zero Standing Privileges
+	mux.HandleFunc("/api/v1/policies/jit/request", s.handleJIT)
+	mux.HandleFunc("/api/v1/policies/jit/requests", s.handleJIT)
+	mux.HandleFunc("/api/v1/policies/jit/requests/", s.handleJIT)
+	mux.HandleFunc("/api/v1/policies/jit/active", s.handleJIT)
 	mux.HandleFunc("/api/v1/policies/dry-run", s.handleDryRun)
 	mux.HandleFunc("/api/v1/policies/sod/check", s.handleSoDCheck)
 	mux.HandleFunc("/api/v1/policies/sod/violations", s.handleSoDViolations)

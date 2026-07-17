@@ -128,6 +128,12 @@ func main() {
 	httpAPI := httpserver.NewHTTPServer(roleSvc, policySvc, evaluator)
 	// Wire DB-backed campaign store for SOX-compliant access review persistence.
 	httpAPI.SetCampaignRepo(httpserver.NewCampaignRepo(db))
+	// Wire JIT request repository for PAM zero-standing privileges.
+	jitRepo := repository.NewJITRequestRepository(db)
+	if err := jitRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("JIT schema ensure error (non-fatal): %v", err)
+	}
+	httpAPI.SetJITRepo(jitRepo)
 	httpAPI.RegisterRoutes(mux)
 
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
