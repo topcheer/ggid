@@ -220,6 +220,9 @@
 | KB-206 | **Replace 12 hardcoded compliance handlers** (real CCM data) | backend | P0 | compliance-automation | 3d |
 | KB-207 | **Framework mapping + PDF reports** (SOC2/ISO/NIST + evidence-attached) | backend | P1 | compliance-automation | 3d |
 | KB-208 | **Trust center + gap detection** (public compliance status) | backend | P1 | compliance-automation | 2d |
+| KB-209 | **Replace session hijack/anomaly/inspect hardcoded handlers** (real detection) | backend | P0 | session-security | 3d |
+| KB-210 | **Device fingerprint session binding + CAE risk re-evaluation** | backend | P1 | session-security | 3d |
+| KB-211 | **DB-backed session store + DPoP binding** (audit trail + PoP) | backend | P1 | session-security | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -340,7 +343,9 @@
 | Privacy-Enhancing Technologies (PETs) | DONE | docs/research/pets-privacy-by-design.md |
 | Identity Lifecycle Automation & HR-Driven Provisioning | DONE | docs/research/identity-lifecycle-automation.md |
 | Compliance Automation & Audit Evidence | DONE | docs/research/compliance-automation-audit-evidence.md |
-| Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
+| Audit Tamper-Evidence (Hash Chain Verification) | DONE | Already implemented (hash_chain.go HMAC-SHA256 + tamper detection + API) |
+| Session Management & Token Lifecycle Security | DONE | docs/research/session-token-lifecycle-security.md |
+| OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
 

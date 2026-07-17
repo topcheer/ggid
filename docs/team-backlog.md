@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 68: Compliance Automation research complete — 4 new backlog items)*
+*Last updated: 2026-07-17 (Round 69: Session Management & Token Lifecycle Security research complete — 3 new backlog items)*
 
 ## Current Stats
 
@@ -172,6 +172,8 @@
 | 146 | **Approval workflows + SCIM outbound** (P1) | backend | Lifecycle | Multi-step approval engine (manager + security for privileged) + SCIM 2.0 outbound push + bulk import/offboard |
 | 147 | **Evidence engine + CCM** (P0) | backend | Compliance | 5 evidence collectors querying real audit/policy data + continuous control monitoring + replace 12 hardcoded handlers. See docs/research/compliance-automation-audit-evidence.md |
 | 148 | **Framework mapping + reports + trust center** (P1) | backend | Compliance | SOC2/ISO/NIST control mapping + PDF evidence-attached reports + public trust center page |
+| 149 | **Session security hardening** (P0) | backend | Session defense | Replace hijack/anomaly/inspect hardcoded handlers with real detection + device binding + CAE. See docs/research/session-token-lifecycle-security.md |
+| 150 | **DB-backed session store + DPoP** (P1) | backend | Session defense | PostgreSQL session store with audit trail + DPoP binding on all sessions + CAE risk re-evaluation |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -226,6 +228,7 @@
 28. Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md) — 4 backlog items added
 29. Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md) — 4 backlog items added
 30. Compliance Automation → DONE (docs/research/compliance-automation-audit-evidence.md) — 4 backlog items added
+31. Session Management & Token Lifecycle Security → DONE (docs/research/session-token-lifecycle-security.md) — 3 backlog items added
 
 ## Rules
 
@@ -250,6 +253,7 @@ Active research topics:
 - Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md)
 - Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md)
 - Compliance Automation → DONE (docs/research/compliance-automation-audit-evidence.md)
+- Session Management & Token Lifecycle → DONE (docs/research/session-token-lifecycle-security.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
