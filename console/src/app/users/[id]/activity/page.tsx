@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { Search, Download, Filter, LogIn, LogOut, Shield, Key, UserCheck, FileEdit, AlertTriangle, ChevronLeft, Loader2, AlertCircle } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
 
 interface ActivityEvent {
   id: string;
@@ -53,7 +54,7 @@ export default function UserActivityPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     setLoading(true); setError("");
-    fetch(`/api/v1/identity/users/${params.id}/activity`, { headers: { "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
+    fetch(`/api/v1/identity/users/${params.id}/activity`, { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } })
       .then(async (res) => {
         if (res.ok) { const data = await res.json(); setEvents(Array.isArray(data.events) ? data.events : Array.isArray(data) ? data : []); }
         else { setError(`Failed to load activity: HTTP ${res.status}`); }

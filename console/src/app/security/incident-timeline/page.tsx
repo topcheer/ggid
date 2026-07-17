@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import { GitCommitVertical, Loader2, AlertCircle, X, Radio, Shield, Eye, Wrench, CheckCircle, FileSearch } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";

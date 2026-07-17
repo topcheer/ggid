@@ -1,7 +1,7 @@
 "use client";
 import { useTranslations } from "@/lib/i18n";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   ShieldCheck, Users, AlertTriangle, ClipboardCheck, Loader2,
@@ -27,13 +27,13 @@ export default function IdentityGovernancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setMetrics(await apiFetch<IGAMetrics>("/api/v1/audit/iga/metrics").catch(() => null)); }
       catch { setError("Failed to load IGA metrics"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 

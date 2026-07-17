@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -29,13 +29,13 @@ export default function PolicyAsCodePage() {
   const [importYaml, setImportYaml] = useState("");
   const [showImport, setShowImport] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setPolicies(await apiFetch<PolicyFile[]>("/api/v1/policy/as-code").catch(() => [])); }
       catch { setError("Failed to load policies"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handlePreviewDiff = async () => {
     if (!editing) return;

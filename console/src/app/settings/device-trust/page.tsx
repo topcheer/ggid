@@ -1,7 +1,7 @@
 "use client";
 import { useTranslations } from "@/lib/i18n";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import {
   Smartphone, Loader2, AlertCircle, X, ShieldCheck, Save, Lock, Unlock, TrendingUp,

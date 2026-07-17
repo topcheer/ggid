@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -39,13 +39,13 @@ export default function OAuthLifecyclePage() {
   const [suspendTarget, setSuspendTarget] = useState<ClientLifecycle | null>(null);
   const [suspendReason, setSuspendReason] = useState("");
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setClients(await apiFetch<ClientLifecycle[]>("/api/v1/oauth/clients/lifecycle").catch(() => [])); }
       catch { setError(t("oauthLifecycle.failedLoad")); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSuspend = async () => {
     if (!suspendTarget) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import {
   Grid3x3, Loader2, AlertCircle, X, XCircle, Info,

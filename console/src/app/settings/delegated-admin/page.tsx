@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   Users, Loader2, AlertCircle, X, Plus, Trash2, ShieldCheck, Clock,
@@ -38,13 +38,13 @@ export default function DelegatedAdminPage() {
   const [revoking, setRevoking] = useState<string | null>(null);
   const [form, setForm] = useState({ delegate: "", scope_type: "org" as Delegation["scope_type"], scope_value: "", permissions: [] as string[], expires_at: "" });
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setDelegations(await apiFetch<Delegation[]>("/api/v1/policy/delegated-admin").catch(() => [])); }
       catch { setError("Failed to load delegations"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const togglePerm = (perm: string) => {
     setForm((f) => ({ ...f, permissions: f.permissions.includes(perm) ? f.permissions.filter((p) => p !== perm) : [...f.permissions, perm] }));

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -40,7 +40,7 @@ export default function ConditionalAccessPage() {
   const [form, setForm] = useState({ name: "", description: "", action: "require_mfa" as const, ip_ranges: "", time_start: "", time_end: "", device_trusted: false, min_risk_score: 0 });
   const [creating, setCreating] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<{ policies?: Policy[]; items?: Policy[] }>("/api/v1/policy/conditional-access").catch(() => null);
@@ -48,7 +48,7 @@ export default function ConditionalAccessPage() {
       } catch { setError("Failed to load policies"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleCreate = async () => {
     if (!form.name.trim()) return;

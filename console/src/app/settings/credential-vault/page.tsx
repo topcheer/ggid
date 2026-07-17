@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import {
   KeyRound, Loader2, AlertCircle, X, Plus, Eye, EyeOff, Trash2, Save, Lock, Activity,
@@ -31,13 +31,13 @@ export default function CredentialVaultPage() {
   const [form, setForm] = useState({ key: "", value: "", description: "" });
   const [storing, setStoring] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setCreds(await apiFetch<StoredCredential[]>("/api/v1/auth/credential-vault").catch(() => [])); }
       catch { setError("Failed to load credentials"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleStore = async () => {
     if (!form.key || !form.value) return;

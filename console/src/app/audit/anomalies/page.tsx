@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import {
   AlertTriangle, Loader2, AlertCircle, X, ChevronDown, ChevronRight, CheckCircle, TrendingUp,

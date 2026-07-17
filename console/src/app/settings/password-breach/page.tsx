@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   ShieldAlert, Send, Loader2, AlertCircle, X, Check, Bell,
@@ -26,13 +26,13 @@ export default function PasswordBreachPage() {
   const [error, setError] = useState<string | null>(null);
   const [notifying, setNotifying] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setStatus(await apiFetch<BreachStatus>("/api/v1/auth/password-breach/status").catch(() => null)); }
       catch { setError("Failed to load breach status"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleNotify = async (breachName: string) => {
     setNotifying(breachName);
