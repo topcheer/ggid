@@ -122,9 +122,11 @@ export default function SDJWTPage() {
           <div className={cardCls}>
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><FileJson className="h-4 w-4" /> SD-JWT Preview</h2>
             {issuedSDJWT ? (
-              <div><pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs text-green-400 font-mono max-h-64 overflow-y-auto break-all">{issuedSDJWT}</pre>
+              <div>
+              <pre className="overflow-x-auto rounded-lg bg-gray-900 p-3 text-xs text-green-400 font-mono max-h-64 overflow-y-auto break-all">{issuedSDJWT}</pre>
               <div className="mt-3 flex gap-2"><button className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs dark:border-gray-700"><Copy className="h-3 w-3" /> Copy</button><button className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs dark:border-gray-700"><Download className="h-3 w-3" /> Download</button></div>
-              <div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-lg border p-2 dark:border-gray-700"><p className="text-xs text-gray-400">Disclosed</p><p className="text-lg font-bold text-green-600">{claims.filter(c => c.disclosed).length}</p></div><div className="rounded-lg border p-2 dark:border-gray-700"><p className="text-xs text-gray-400">Hidden (hashed)</p><p className="text-lg font-bold text-gray-400">{claims.filter(c => !c.disclosed).length}</p></div></div></div>
+              <div className="mt-3 grid grid-cols-2 gap-2"><div className="rounded-lg border p-2 dark:border-gray-700"><p className="text-xs text-gray-400">Disclosed</p><p className="text-lg font-bold text-green-600">{claims.filter(c => c.disclosed).length}</p></div><div className="rounded-lg border p-2 dark:border-gray-700"><p className="text-xs text-gray-400">Hidden (hashed)</p><p className="text-lg font-bold text-gray-400">{claims.filter(c => !c.disclosed).length}</p></div></div>
+              </div>
             ) : <div className="py-8 text-center"><KeyRound className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">Configure claims and issue to preview.</p></div>}
           </div>
         </div>
