@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 55: Risk-Based Adaptive Authentication Engine research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 56: AI Agent Identity & Delegated Access research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -133,6 +133,10 @@
 | 107 | **Decision policy + step-up** (P1) | backend | Adaptive decisions | Risk → action mapping (allow/step_up/step_up_strong/block) + step-up integration |
 | 108 | **Behavioral baselines + analytics** (P1) | backend | Continuous auth | 30-day per-user baselines (hours/locations/devices) + risk score analytics dashboard |
 | 109 | **Risk dashboard + CAE middleware** (P2) | backend+frontend | UI + continuous | Risk analytics dashboard + continuous evaluation middleware for active sessions |
+| 110 | **Agent registry + DB-backed consent** (P0) | backend | Agent identity | Agent CRUD API + replace in-memory agent_consent_handler.go with PostgreSQL. See docs/research/ai-agent-identity.md |
+| 111 | **Token exchange + workload attestation** (P0) | backend | Delegated auth | RFC 8693 token exchange with act claim + k8s SA/SPIFFE workload attestation |
+| 112 | **Multi-agent delegation + rate limiting** (P1) | backend | Agent chains | Max depth enforcement + cycle detection + scope narrowing + per-agent Redis rate limiting |
+| 113 | **Agent behavioral anomaly + console** (P2) | backend+frontend | Security | Per-agent behavioral baselines + anomaly detection + dual-attribution audit + Console UI |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -174,6 +178,7 @@
 15. Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md) — 6 backlog items added
 16. Consent Management Platform → DONE (docs/research/consent-management-platform.md) — 6 backlog items added
 17. Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md) — 6 backlog items added
+18. AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md) — 6 backlog items added
 
 ## Rules
 
@@ -186,6 +191,7 @@
 ## Research Pipeline
 
 Active research topics:
+- AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
 - Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md)
