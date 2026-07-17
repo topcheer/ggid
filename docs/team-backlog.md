@@ -622,3 +622,62 @@ curl -X DELETE /api/v1/identity/secrets/sec_xyz789 -H "Authorization: Bearer $TO
 **业务价值**: HIGH（ZTNA 最后一块 — 零信任 = 零常驻权限 + 零常驻凭据）
 **实现难度**: Medium-High（DB 动态用户 + SSH 证书签名 + Cloud STS）
 **工作量**: ~5d
+
+---
+
+## DPoP Proof Enforcement at Token Endpoint (2026-07-18 研究驱动 OAuth 2.1) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**描述**: OAuth 2.1 (draft-15) 要求 sender-constrained tokens。GGID 有 DPoP PG store + config handler，但 token endpoint 不验证 DPoP proof header。token 签发时不绑定 client 的 public key。
+
+**业务价值**: HIGH — OAuth 2.1 合规 | **实现难度**: Medium
+- 实现路径：
+  1. Token endpoint: 解析 `DPoP` header（JWT proof）
+  2. 验证 proof signature + htm/htu/iat/jti claims
+  3. 绑定 access_token `cnf.jkt` claim（thumbprint of client public key）
+  4. Resource server: 验证 `cnf` claim matches DPoP proof
+  5. 可选 per-client 强制（RequireDPoP config 已存在）
+- 参考: RFC 9449, docs/research/oauth21-mcp-agent-auth-pqc-migration.md
+
+---
+
+## AI Agent Per-Action Authorization + Delegation Chains (2026-07-18 研究驱动 MCP 2026) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**描述**: MCP 2026-07-28 spec 要求 per-action authorization（每个工具调用需授权）和 delegation chains（agent 代表用户操作的可追溯委托链）。GGID 有 agent registration 但无授权层。
+
+**业务价值**: HIGH — AI agent 安全核心 | **实现难度**: High
+- 实现路径：
+  1. Agent capability scoping: 每个 agent 注册时声明可调用的工具/资源列表
+  2. Per-action approval: 工具调用前检查 agent 是否有权限
+  3. Delegation chain: JWT 包含 `act` claim 链（user → agent → sub-agent）
+  4. On-behalf-of (OBO) flow: agent 用 user token 换取 scoped agent token
+  5. Audit: 记录每个 agent action + delegation chain
+- 参考: MCP 2026 spec, docs/research/oauth21-mcp-agent-auth-pqc-migration.md
+
+---
+
+## Fix Misleading PQC Label (2026-07-18 研究驱动 NIST PQC) - Priority: P0 - Status: Proposed - Suggested: backend
+
+**描述**: `pqc_signature_handler.go` 使用 ed25519（经典密码学），但命名为 "PQC"（后量子密码学）。这具有误导性——ed25519 不抗量子攻击。需要：(1) 重命名为 `ed25519_signature_handler.go`，或 (2) 实现真正的 ML-DSA (FIPS 204)。
+
+**业务价值**: HIGH — 安全准确性 | **实现难度**: Low (rename) / High (implement)
+- 选项 A: 重命名 + 更新所有引用（Low）
+- 选项 B: 集成 Go `crypto/mlkem` + `crypto/mldsa`（Go 1.24+）实现真正 PQC（High）
+- 参考: FIPS 203/204/205, docs/research/oauth21-mcp-agent-auth-pqc-migration.md
+
+---
+
+## ML-KEM/ML-DSA Crypto Package (2026-07-18 研究驱动 NIST PQC) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: 实现 FIPS 203 (ML-KEM) 和 FIPS 204 (ML-DSA) 后量子算法包，用于 JWT 签名、TLS key exchange、audit log signatures。Go 1.24+ 提供 `crypto/mlkem` 和 `crypto/mldsa` 标准库支持。
+
+**业务价值**: MEDIUM — 未来-proofing，2035 联邦强制 | **实现难度**: Medium
+- 参考: FIPS 203/204, docs/research/oauth21-mcp-agent-auth-pqc-migration.md
+
+---
+
+## ROPC Grant Deprecation (2026-07-18 研究驱动 OAuth 2.1) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: OAuth 2.1 移除 Resource Owner Password Credentials (ROPC) grant。GGID 应审计并弃用 `grant_type=password` 接受。迁移用户到 authorization_code + PKCE 或 device_code flow。
+
+**业务价值**: MEDIUM — OAuth 2.1 合规 | **实现难度**: Low
+- 参考: draft-ietf-oauth-v2-1-15, docs/research/oauth21-mcp-agent-auth-pqc-migration.md
