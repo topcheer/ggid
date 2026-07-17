@@ -238,6 +238,9 @@
 | KB-224 | **PG backup + WAL archiving + PITR** (encrypted to S3) | devops | P0 | dr-backup | 3d |
 | KB-225 | **Redis persistence + off-site backup + restore testing** | devops | P0 | dr-backup | 3d |
 | KB-226 | **PG streaming replication + DR runbook** (automated failover) | devops | P1 | dr-backup | 4d |
+| KB-227 | **k6 load test suite** (5 flows: login/token/user/policy/risk) | devops | P0 | load-testing | 4d |
+| KB-228 | **Baseline metrics + capacity model** (1K/10K/100K users → infra) | devops | P0 | load-testing | 2d |
+| KB-229 | **Soak + spike + DB index audit** (24h + 20x burst + tuning) | devops | P1 | load-testing | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -366,6 +369,7 @@
 | Production Hardening & Security Checklist | DONE | docs/research/production-hardening-checklist.md |
 | CI/CD Pipeline & GitOps Hardening | DONE | docs/research/cicd-pipeline-hardening.md |
 | Disaster Recovery & Backup Automation | DONE | docs/research/disaster-recovery-backup.md |
+| Load Testing Strategy & Capacity Planning | DONE | docs/research/load-testing-capacity-planning.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
