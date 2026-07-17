@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 121
-## Last scan focus: E2E (Round 120) — Core 10/10, ERP 4/4, OAuth OK, Go SDK PASS; all 6 pods Running; platform stable
-## Next scan focus: D (Persistence scan, Round 121 = odd)
+## Current round: 122
+## Last scan focus: D (Persistence, Round 121) — found 8 in-memory stores in F-40 audit + identity handlers, all without PG backing; violates retrospective checklist; DM'd arch
+## Next scan focus: E2E tests (Round 122 = even)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
