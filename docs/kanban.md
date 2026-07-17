@@ -84,6 +84,13 @@
 | KB-070 | **CAEP event transmitter** (continuous verification) | backend | P1 | ztna-integration | 4d |
 | KB-071 | **Provider setup guide generator** (Terraform snippets) | backend | P1 | ztna-integration | 3d |
 | KB-072 | **ZTNA dashboard + provider wizard** (Console) | frontend | P2 | ztna-integration | 5d |
+| KB-073 | **Auth method policy engine** (require/forbid methods per group) | backend | P0 | passwordless-migration | 4d |
+| KB-074 | **Password deprecation enforcement** (4 levels: off→disabled) | backend | P0 | passwordless-migration | 2d |
+| KB-075 | **Enrollment nudge system** (banners, segments, triggers) | backend | P0 | passwordless-migration | 3d |
+| KB-076 | **Temporary Access Pass** (passwordless recovery) | backend | P1 | passwordless-migration | 4d |
+| KB-077 | **Migration metrics API** (enrollment rate, AAL distribution) | backend | P1 | passwordless-migration | 3d |
+| KB-078 | **Passkey profiles** (AAGUID allow-list enforcement) | backend | P1 | passwordless-migration | 3d |
+| KB-079 | **Passwordless migration dashboard** (Console) | frontend | P2 | passwordless-migration | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -104,7 +111,8 @@
 
 | ID | Title | Owner | Commit |
 |----|-------|-------|--------|
-| — | ZTNA Broker Integration research doc | researcher | pending commit |
+| — | Passwordless Migration research doc | researcher | pending commit |
+| — | ZTNA Broker Integration research doc | researcher | 9c8ed3cf |
 | — | Data Migration research doc | researcher | 02c52040 |
 | — | Cloud IAM Federation research doc | researcher | 5880e4ac |
 | — | Identity Orchestration / Journeys research doc | researcher | 4f76fbdc |
@@ -124,7 +132,8 @@
 | Cloud IAM Federation | DONE | docs/research/cloud-iam-federation.md |
 | Data Migration / Bulk Import | DONE | docs/research/data-migration-bulk-import.md |
 | Zero Trust Network Access (ZTNA) | DONE | docs/research/ztna-broker-integration.md |
-| Passwordless Migration | NEXT | — |
+| Passwordless Migration | DONE | docs/research/passwordless-migration-strategy.md |
+| JIT User Provisioning | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---

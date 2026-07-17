@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 45: ZTNA Broker Integration research complete — 7 new backlog items)*
+*Last updated: 2026-07-17 (Round 46: Passwordless Migration research complete — 7 new backlog items)*
 
 ## Current Stats
 
@@ -74,6 +74,13 @@
 | 48 | **CAEP event transmitter** (P1) | backend | Continuous verification | Push CAEP SET tokens (session-revoked, credential-change) to ZTNA brokers |
 | 49 | **ZTNA provider setup guide generator** (P1) | backend | Developer experience | Auto-generate provider-specific Terraform/config snippets |
 | 50 | **ZTNA dashboard + provider wizard** (P2) | frontend | Console UI | Provider status cards, posture compliance, CAEP events, setup wizard |
+| 51 | **Auth method policy engine** (P0) | backend | Passwordless migration | Declarative policy: require/forbid auth methods per group/app/date. See docs/research/passwordless-migration-strategy.md |
+| 52 | **Password deprecation enforcement** (P0) | backend | Password phase-out | 4 levels: off → warn → secondary → disabled; auto-disable for passkey users |
+| 53 | **Enrollment nudge system** (P0) | backend | User adoption | Configurable banners with segments (no_passkey), triggers (after_login), dismiss tracking |
+| 54 | **Temporary Access Pass** (P1) | backend | Passwordless recovery | Admin-issued short-lived recovery pass for lost passkey devices; TAP + new enrollment |
+| 55 | **Migration metrics API** (P1) | backend | Analytics | Enrollment rate, AAL distribution, password usage trend, helpdesk ticket reduction |
+| 56 | **Passkey profiles** (P1) | backend | Authenticator restriction | AAGUID allow-list, attestation requirements, user verification mode enforcement |
+| 57 | **Passwordless migration dashboard** (P2) | frontend | Console UI | Enrollment rate gauge, trend chart, AAL distribution, policy list, nudge config |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -105,6 +112,7 @@
 5. Cloud IAM Federation → DONE (docs/research/cloud-iam-federation.md) — 9 backlog items added
 6. Data Migration / Bulk Import → DONE (docs/research/data-migration-bulk-import.md) — 8 backlog items added
 7. ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md) — 7 backlog items added
+8. Passwordless Migration → DONE (docs/research/passwordless-migration-strategy.md) — 7 backlog items added
 
 ## Rules
 
@@ -117,6 +125,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Passwordless Migration Strategy → DONE (docs/research/passwordless-migration-strategy.md)
 - ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md)
 - Data Migration / Bulk User Import → DONE (docs/research/data-migration-bulk-import.md)
 - Cloud IAM Federation (AWS/Azure/GCP) → DONE (docs/research/cloud-iam-federation.md)
@@ -127,7 +136,7 @@ Active research topics:
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
-- **Next**: Passwordless migration strategies / JIT user provisioning
+- **Next**: JIT user provisioning / Fine-grained delegation patterns
 
 See docs/research/ for full research docs.
 ---
