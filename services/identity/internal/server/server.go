@@ -171,6 +171,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetConsentRepo(consentRepo)
 
+	// HR Connector Framework.
+	hrRepo := newHRConnectorRepo(pool)
+	if err := hrRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("HR connector schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetHRConnectorRepo(hrRepo)
+
 	// Policy memory map repo (lifecycle_rules + review_campaigns).
 	ipmRepo := newIdentityPolicyMapRepo(pool)
 	if err := ipmRepo.EnsureSchema(ctx); err != nil {
