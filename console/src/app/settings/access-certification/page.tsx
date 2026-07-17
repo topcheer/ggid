@@ -2,8 +2,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
-import { ClipboardCheck, Search, Check, X, Edit3, MessageSquare, Users } from "lucide-react";
+import { ClipboardCheck, Search, Check, X, Edit3, MessageSquare, Users, Sparkles, Loader2 } from "lucide-react";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
+
+interface AiRecommendation {
+  user_id: string;
+  recommendation: "keep" | "revoke" | "reduce";
+  reason: string;
+  confidence: number;
+  last_used_days: number;
+}
 
 interface CertificationUser {
   user_id: string;
@@ -39,6 +47,8 @@ export default function AccessCertificationPage() {
   const [search, setSearch] = useState("");
   const [commentUser, setCommentUser] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [aiRecs, setAiRecs] = useState<Record<string, AiRecommendation>>({});
+  const [aiLoading, setAiLoading] = useState(false);
 
   const t = useTranslations();
 
@@ -65,8 +75,28 @@ export default function AccessCertificationPage() {
     finally { setLoading(false); }
   }, [selectedCampaign]);
 
+  const loadAiRecs = useCallback(async (campaignId: string) => {
+    setAiLoading(true);
+    try {
+      const res = await fetch(`/api/v1/policy/campaigns/${campaignId}/recommendations`, {
+        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
+      }).catch(() => null);
+      if (res?.ok) {
+        const data = await res.json();
+        const map: Record<string, AiRecommendation> = {};
+        for (const r of data.recommendations || data || []) {
+          map[r.user_id] = r;
+        }
+        setAiRecs(map);
+      }
+    } catch { /* endpoint not implemented yet */ }
+    finally { setAiLoading(false); }
+  }, []);
+
   useEffect(() => { fetchCampaigns(); }, [fetchCampaigns]);
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => {
+    if (selectedCampaign) { fetchUsers(); loadAiRecs(selectedCampaign); }
+  }, [selectedCampaign, fetchUsers, loadAiRecs]);
 
   const submitDecision = async (userId: string, decision: "certified" | "revoked" | "modified", comment?: string) => {
     try {
@@ -134,6 +164,28 @@ export default function AccessCertificationPage() {
                   <p className="text-xs text-gray-500 mt-0.5">Role: <span className="font-mono">{u.current_role}</span> · Last login: {u.last_login}</p>
                   {u.comment && <p className="text-xs text-gray-400 mt-0.5 italic">"{u.comment}"</p>}
                 </div>
+                {/* AI Recommendation */}
+                {u.status === "pending" && aiRecs[u.user_id] && (
+                  <div className="flex flex-col items-end gap-0.5 mr-3">
+                    {(() => {
+                      const rec = aiRecs[u.user_id];
+                      const recColors: Record<string, string> = {
+                        keep: "text-green-600 dark:text-green-400",
+                        revoke: "text-red-600 dark:text-red-400",
+                        reduce: "text-yellow-600 dark:text-yellow-400",
+                      };
+                      return (
+                        <>
+                          <span className="flex items-center gap-1 text-xs font-medium"><Sparkles className="w-3 h-3 text-purple-500" /> AI: <span className={recColors[rec.recommendation] || recColors.keep}>{rec.recommendation}</span></span>
+                          <span className="text-xs text-gray-400 max-w-[200px] text-right">{rec.reason}</span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+                {u.status === "pending" && aiLoading && !aiRecs[u.user_id] && (
+                  <span className="flex items-center gap-1 text-xs text-gray-400 mr-3"><Loader2 className="w-3 h-3 animate-spin" /> AI</span>
+                )}
                 {u.status === "pending" && (
                   <div className="flex items-center gap-1">
                     <button onClick={() => submitDecision(u.user_id, "certified")} className="px-2 py-1 rounded text-xs font-medium text-green-700 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 flex items-center gap-1"><Check className="w-3 h-3" /> {t("accessCertification.certify")}</button>
