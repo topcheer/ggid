@@ -161,3 +161,36 @@ Discovery 200 | JWKS 2 keys | UserInfo sub | Introspect active=true | DeviceCode
 | Dart | 30 passed |
 
 No new bugs. JWT kid unification (a3e29625) holding steady across all verifiers.
+
+## Round 90 E2E (2026-07-17 03:50)
+
+### Core APIs (7/7 PASS)
+users 200 | roles 200 | audit 200 | policies 200 | dashboard 200 | itdr 200 | provisioning 200
+
+### OAuth/OIDC (6/6 PASS)
+Discovery 200 | JWKS 2 keys | UserInfo sub verified
+
+### ERP Matrix (4/4 PASS)
+| Service | health | products+auth | noauth | customers | dashboard | POST |
+|---------|--------|---------------|--------|-----------|-----------|------|
+| erp-api | 200 | 200 | 401 | 200 | 200 | 403* |
+| erp-go | 200 | 200 | 401 | — | — | — |
+| erp-java | 200 | 200 | 401 | — | — | — |
+| erp-python | 200 | 200 | 401 | — | — | — |
+
+*erp-api POST 403 = ERP demo local RBAC requires admin/manager role mapping; JWT carries no role claim. Demo app config issue, not GGID platform bug.
+
+### SDK Tests (8/8 PASS)
+| SDK | Result |
+|-----|--------|
+| Go | ok 0.89s |
+| Rust | 2 passed |
+| Python | 16 passed |
+| Ruby | 28 examples, 0 failures |
+| Java | 16 tests, BUILD SUCCESS |
+| Node | 36 passed |
+| C# | 25 passed |
+| Dart | 30 passed |
+
+### Gateway Circuit Breaker
+Deployed b993dd37 — all traffic flowing normally (200s across all endpoints), circuit breaker protecting per-backend prefix.

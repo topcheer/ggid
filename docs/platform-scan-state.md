@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 90
-## Last scan focus: B (Route/Wiring, Round 89) — wired CircuitMiddleware (b993dd37); found 2 unwired auth handlers (assigned backend); 5 orphaned gateway middleware (acceptable); other services clean
-## Next scan focus: E2E tests (Round 90 = even round, Workflow A)
+## Current round: 91
+## Last scan focus: E2E (Round 90) — Core APIs 7/7, OAuth 3/3, ERP 4/4, SDK 8/8 PASS; circuit breaker stable; no new bugs
+## Next scan focus: C (Middleware chain scan, Round 91 = odd round, Workflow B)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
