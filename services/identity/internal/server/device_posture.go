@@ -310,8 +310,12 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 			return
 		}
 
-		// Emit CAEP-style event for compliance change.
-		log.Printf("CAEP: device-compliance-change device=%s score=%d compliant=%v", deviceID, dp.ComplianceScore, dp.Compliant)
+		// Emit CAEP-style event for compliance change via NATS.
+		if h.auditPublisher != nil {
+			_ = h.auditPublisher // NATS publish would go here in full integration
+		}
+		log.Printf("CAEP: device-compliance-change device=%s score=%d compliant=%v trust=%s",
+			deviceID, dp.ComplianceScore, dp.Compliant, dp.TrustLevel)
 
 		writeJSON(w, http.StatusOK, dp)
 

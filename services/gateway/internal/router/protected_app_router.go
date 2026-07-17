@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ggid/ggid/services/gateway/internal/middleware"
 )
 
 // ProtectedApp represents a ZTNA-protected application loaded into the gateway.
@@ -49,6 +51,7 @@ type ProtectedAppRouter struct {
 	mu       sync.RWMutex
 	apps     map[string]*ProtectedApp // slug → app
 	proxies  map[string]*httputil.ReverseProxy // slug → reverse proxy
+	auditPub middleware.AuditPublisher // NATS publisher for access logs
 }
 
 func NewProtectedAppRouter() *ProtectedAppRouter {
@@ -56,6 +59,11 @@ func NewProtectedAppRouter() *ProtectedAppRouter {
 		apps:    make(map[string]*ProtectedApp),
 		proxies: make(map[string]*httputil.ReverseProxy),
 	}
+}
+
+// SetAuditPublisher injects a NATS publisher for persisting access logs.
+func (r *ProtectedAppRouter) SetAuditPublisher(pub middleware.AuditPublisher) {
+	r.auditPub = pub
 }
 
 // RegisterApp adds or updates a protected app route.
@@ -291,24 +299,28 @@ func (r *ProtectedAppRouter) injectHeaders(app *ProtectedApp, req *http.Request)
 	}
 }
 
-// logAccess records an access log entry (async, best-effort).
+// logAccess records an access log entry via NATS (consumed by identity service → app_access_logs table).
 func (r *ProtectedAppRouter) logAccess(app *ProtectedApp, req *http.Request, statusCode int, duration time.Duration, decision, reason string) {
-	entry := AppAccessLogEntry{
-		AppID:          app.ID,
-		TenantID:       app.TenantID,
-		UserID:         req.Header.Get("X-User-ID"),
-		UserName:       req.Header.Get("X-User-Email"),
-		Method:         req.Method,
-		Path:           req.URL.Path,
-		StatusCode:     statusCode,
-		ResponseTimeMs: duration.Milliseconds(),
-		IPAddress:      req.RemoteAddr,
-		UserAgent:      req.UserAgent(),
-		PDPDecision:    decision,
-		PDPReason:      reason,
-	}
-	// In production: publish to NATS or write to DB (app_access_logs table).
-	// For now, structured logging.
+	userID := req.Header.Get("X-User-ID")
+
+	// Log to stdout (always).
 	log.Printf("ZTNA access: app=%s user=%s %s %s → %d (%s, %dms)",
-		app.Slug, entry.UserID, entry.Method, entry.Path, statusCode, decision, entry.ResponseTimeMs)
+		app.Slug, userID, req.Method, req.URL.Path, statusCode, decision, duration.Milliseconds())
+
+	// Publish to NATS for DB persistence (app_access_logs table).
+	if r.auditPub != nil {
+		event := &middleware.AuditEvent{
+			Timestamp:  time.Now(),
+			Method:     req.Method,
+			Path:       req.URL.Path,
+			StatusCode: statusCode,
+			LatencyMs:  float64(duration.Milliseconds()),
+			TenantID:   app.TenantID,
+			UserID:     userID,
+			ClientIP:   req.RemoteAddr,
+			UserAgent:  req.UserAgent(),
+			RequestID:  req.Header.Get("X-Request-ID"),
+		}
+		_ = r.auditPub.Publish(event)
+	}
 }
