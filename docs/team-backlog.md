@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-15 (Round 42: Identity Orchestration research complete — 8 new backlog items)*
+*Last updated: 2026-07-17 (Round 43: Cloud IAM Federation research complete — 9 new backlog items)*
 
 ## Current Stats
 
@@ -51,6 +51,15 @@
 | 25 | **Journey templates + dry-run** (P1) | backend | Developer experience | Pre-built templates (login, registration, recovery) + simulation mode |
 | 26 | **Journey visual builder** (P2) | frontend | Console UI | Drag-and-drop canvas with React Flow, node config panel, edge labels |
 | 27 | **Journey analytics** (P3) | backend | Observability | Conversion rates, drop-off points, per-step latency dashboards |
+| 28 | **Cloud federation data model + service** (P0) | backend | Multi-cloud identity | PostgreSQL tables for configs, role mappings, attribute mappings. See docs/research/cloud-iam-federation.md |
+| 29 | **Claim mapping engine** (P0) | backend | SAML/OIDC claims | Transform GGID attributes to AWS/Azure/GCP-specific SAML attributes |
+| 30 | **AWS SAML federation module** (P0) | backend | AWS IAM | Role ARN generation, https://aws.amazon.com/SAML/Attributes/* attributes |
+| 31 | **Azure SAML federation module** (P0) | backend | Azure AD | Azure claim URIs, app role mapping |
+| 32 | **Federation login + Terraform snippet API** (P0) | backend | Developer experience | POST /cloud-federation/{id}/login + GET /{id}/terraform |
+| 33 | **GCP workforce federation module** (P1) | backend | GCP IAM | SAML attributes for Workforce Identity Pool, CEL attribute mapping |
+| 34 | **SCIM client** (P1) | backend | Auto-provisioning | Push user changes to AWS IAM Identity Center via SCIM 2.0 |
+| 35 | **Federation health monitoring** (P1) | backend | Operations | Periodic checks: metadata access, cert expiry, SCIM connectivity |
+| 36 | **Federation setup wizard** (P2) | frontend | Console UI | Multi-step wizard with metadata download, Terraform copy, test login |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -79,6 +88,7 @@
 2. Console mock-pages audit (continuing)
 3. ReBAC / Zanzibar fine-grained authz → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md) — 7 backlog items added
 4. Identity Orchestration / Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md) — 8 backlog items added
+5. Cloud IAM Federation → DONE (docs/research/cloud-iam-federation.md) — 9 backlog items added
 
 ## Rules
 
@@ -91,6 +101,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Cloud IAM Federation (AWS/Azure/GCP) → DONE (docs/research/cloud-iam-federation.md)
 - Identity Orchestration / Configurable Auth Journeys → DONE (docs/research/identity-orchestration-journeys.md)
 - ReBAC / Google Zanzibar fine-grained authorization → DONE (docs/research/rebac-zanzibar-fine-grained-authz.md)
 - OAuth 2.1 / FAPI 2.0 compliance gap analysis
@@ -98,7 +109,7 @@ Active research topics:
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
-- **Next**: Cloud IAM federation (AWS IAM / Azure AD / GCP IAM)
+- **Next**: Continuous Access Evaluation Protocol (CAEP) / Shared Signals Framework
 
 See docs/research/ for full research docs.
 ---

@@ -59,7 +59,16 @@
 | KB-034 | Vault/KMS integration | arch | P3 | tech-debt.md |
 | KB-035 | Plugin system architecture | arch | P3 | tech-debt.md |
 | KB-036 | ~~**Identity orchestration** (adaptive journeys)~~ → Promoted to P0/P1 below | — | DONE (research) | — |
-| KB-037 | **Cloud IAM federation** (AWS/Azure/GCP) | backend | P3 | next research |
+| KB-037 | ~~**Cloud IAM federation** (AWS/Azure/GCP)~~ → Promoted to P0/P1 below | — | DONE (research) | — |
+| KB-049 | **Cloud federation data model + service** | backend | P0 | cloud-iam-federation | 5d |
+| KB-050 | **Claim mapping engine** (GGID attr → cloud SAML/OIDC) | backend | P0 | cloud-iam-federation | 4d |
+| KB-051 | **AWS SAML federation module** (role ARNs, attributes) | backend | P0 | cloud-iam-federation | 3d |
+| KB-052 | **Azure SAML federation module** (app roles, claim URIs) | backend | P0 | cloud-iam-federation | 3d |
+| KB-053 | **Federation login + Terraform snippet API** | backend | P0 | cloud-iam-federation | 5d |
+| KB-054 | **GCP workforce federation module** | backend | P1 | cloud-iam-federation | 3d |
+| KB-055 | **SCIM client** (push users to AWS IAM Identity Center) | backend | P1 | cloud-iam-federation | 4d |
+| KB-056 | **Federation health monitoring** | backend | P1 | cloud-iam-federation | 3d |
+| KB-057 | **Federation setup wizard** (Console multi-cloud) | frontend | P2 | cloud-iam-federation | 5d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -80,7 +89,8 @@
 
 | ID | Title | Owner | Commit |
 |----|-------|-------|--------|
-| — | Identity Orchestration / Journeys research doc | researcher | pending commit |
+| — | Cloud IAM Federation research doc | researcher | pending commit |
+| — | Identity Orchestration / Journeys research doc | researcher | 4f76fbdc |
 | — | ReBAC/Zanzibar research doc | researcher | 4ce3b8ba |
 | — | PIPL/NIS2/CRA compliance research | arch | done |
 | — | OAuth 2.1 enforcement mode | backend | dfcb8a7f |
@@ -94,7 +104,8 @@
 | OAuth 2.1 / FAPI 2.0 | DONE | docs/research/oauth21-fapi-fedcm-gap.md |
 | PIPL/NIS2/CRA | DONE | docs/research/nis2-cra-pipl-compliance.md |
 | Identity Orchestration | DONE | docs/research/identity-orchestration-journeys.md |
-| Cloud IAM Federation | NEXT | — |
+| Cloud IAM Federation | DONE | docs/research/cloud-iam-federation.md |
+| Continuous Access Evaluation (CAEP) | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---
