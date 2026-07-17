@@ -52,13 +52,13 @@ export default function IncidentsPage() {
 
   const [form, setForm] = useState({ title: "", type: "unauthorized_access", severity: "medium" as Incident["severity"], description: "" });
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setIncidents(await apiFetch<Incident[]>("/api/v1/audit/incidents").catch(() => [])); }
       catch { setError(t("incidents.failedLoad")); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleCreate = async () => {
     setCreating(true);

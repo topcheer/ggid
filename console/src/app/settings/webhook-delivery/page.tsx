@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "@/lib/i18n";
 import { useApi } from "@/lib/api";
 import {
@@ -25,7 +25,7 @@ export default function WebhookDeliveryPage() {
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<{ entries?: FailedDelivery[]; items?: FailedDelivery[] }>("/api/v1/settings/webhooks/delivery-log?status=failed").catch(() => null);
@@ -33,7 +33,7 @@ export default function WebhookDeliveryPage() {
       } catch { setError(t("webhookDelivery.failedToLoad")); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleRetry = async (id: string) => {
     setRetrying(id);

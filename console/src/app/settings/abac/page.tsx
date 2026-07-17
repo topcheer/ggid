@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   FileCheck, Loader2, AlertCircle, X, Upload, Download, Plus, Trash2, Save,
@@ -34,13 +34,13 @@ export default function ABACPage() {
   const [importText, setImportText] = useState("");
   const [showImport, setShowImport] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setPolicies(await apiFetch<ABACPolicy[]>("/api/v1/policy/abac/policies").catch(() => [])); }
       catch { setError("Failed to load ABAC policies"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSave = async () => {
     if (!editing) return;

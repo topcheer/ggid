@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   ShieldBan, Loader2, AlertCircle, X, Check, Ban, ToggleLeft, ToggleRight,
@@ -25,13 +25,13 @@ export default function CredentialStuffingPage() {
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setData(await apiFetch<StuffingData>("/api/v1/auth/credential-stuffing/status").catch(() => null)); }
       catch { setError("Failed to load credential stuffing data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleToggle = async () => {
     if (!data) return;

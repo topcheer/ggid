@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   ScanSearch, Loader2, AlertCircle, X, Play, Database, ShieldCheck,
@@ -48,13 +48,13 @@ export default function PIIScanPage() {
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setResult(await apiFetch<ScanResult>("/api/v1/audit/pii-scan/results").catch(() => null)); }
       catch { setError("Failed to load PII scan data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleScan = async () => {
     setScanning(true);

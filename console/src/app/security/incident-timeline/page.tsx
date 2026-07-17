@@ -36,7 +36,7 @@ export default function IncidentTimelinePage() {
   const [loadingTimeline, setLoadingTimeline] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => { (async () => { try { setIncidents(await apiFetch<Incident[]>("/api/v1/audit/incidents").catch(() => [])); } catch { setError("Failed to load incidents"); } finally { setLoading(false); } })(); });
+  useEffect(() => { (async () => { try { setIncidents(await apiFetch<Incident[]>("/api/v1/audit/incidents").catch(() => [])); } catch { setError("Failed to load incidents"); } finally { setLoading(false); } })(); });
 
   const handleSelect = async (id: string) => {
     setSelected(id); setLoadingTimeline(true); setEvents([]);

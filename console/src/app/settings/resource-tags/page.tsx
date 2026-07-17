@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { Tag, Loader2, AlertCircle, X, Plus, Trash2, Save, Filter } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
@@ -24,7 +24,7 @@ export default function ResourceTagsPage() {
   const [assignVal, setAssignVal] = useState("");
   const [assigning, setAssigning] = useState(false);
 
-  useState(() => { (async () => { try { setTags(await apiFetch<ResourceTagEntry[]>("/api/v1/policy/resource-tags").catch(() => [])); } catch { setError("Failed to load tags"); } finally { setLoading(false); } })(); });
+  useEffect(() => { (async () => { try { setTags(await apiFetch<ResourceTagEntry[]>("/api/v1/policy/resource-tags").catch(() => [])); } catch { setError("Failed to load tags"); } finally { setLoading(false); } })(); });
 
   const handleAssign = async () => {
     if (!assignPath || !assignKey) return;

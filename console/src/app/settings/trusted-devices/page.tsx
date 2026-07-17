@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { ShieldCheck, Loader2, AlertCircle, X, Trash2, ToggleLeft, ToggleRight, Smartphone, Monitor } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
@@ -19,7 +19,7 @@ export default function TrustedDevicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [actioning, setActioning] = useState<string | null>(null);
 
-  useState(() => { (async () => { try { setDevices(await apiFetch<TrustedDevice[]>("/api/v1/auth/trusted-devices").catch(() => [])); } catch { setError("Failed to load devices"); } finally { setLoading(false); } })(); });
+  useEffect(() => { (async () => { try { setDevices(await apiFetch<TrustedDevice[]>("/api/v1/auth/trusted-devices").catch(() => [])); } catch { setError("Failed to load devices"); } finally { setLoading(false); } })(); });
 
   const handleRemove = async (id: string) => { setActioning(id); try { await apiFetch(`/api/v1/auth/trusted-devices/${id}`, { method: "DELETE" }); setDevices((p) => p.filter((d) => d.id !== id)); } catch { setError("Remove failed"); } finally { setActioning(null); } };
   const handleToggleMfa = async (d: TrustedDevice) => { setActioning(d.id); try { await apiFetch(`/api/v1/auth/trusted-devices/${d.id}`, { method: "PATCH", body: JSON.stringify({ mfa_bypass_enabled: !d.mfa_bypass_enabled }) }); setDevices((p) => p.map((x) => x.id === d.id ? { ...x, mfa_bypass_enabled: !x.mfa_bypass_enabled } : x)); } catch { setError("Toggle failed"); } finally { setActioning(null); } };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   Smartphone, Loader2, AlertCircle, X, Trash2, Monitor, Tablet, HardDrive,
@@ -34,13 +34,13 @@ export default function DeviceRegistryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setDevices(await apiFetch<DeviceEntry[]>("/api/v1/auth/devices").catch(() => [])); }
       catch { setError("Failed to load device registry"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleRevoke = async (id: string) => {
     try { await apiFetch(`/api/v1/auth/devices/${id}`, { method: "DELETE" }); setDevices((p) => p.filter((d) => d.id !== id)); }

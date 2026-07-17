@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   Users, Loader2, AlertCircle, X, Download, Layers,
@@ -24,13 +24,13 @@ export default function UserSegmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setSegments(await apiFetch<UserSegment[]>("/api/v1/users/segments").catch(() => [])); }
       catch { setError("Failed to load segments"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleExport = (seg: UserSegment) => {
     const rows = [["user_id", "username", "email"], ...seg.users.map((u) => [u.user_id, u.username, u.email])];

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   Trash2, Loader2, AlertCircle, X, Search, AlertOctagon, CheckCircle, History,
@@ -36,13 +36,13 @@ export default function GDPRForgetPage() {
   const [executing, setExecuting] = useState(false);
   const [result, setResult] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setHistory(await apiFetch<ForgetRecord[]>("/api/v1/audit/gdpr-forget").catch(() => [])); }
       catch { setError("Failed to load history"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;

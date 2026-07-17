@@ -26,7 +26,7 @@ export default function SoDMatrixPage() {
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<{ roles: string[]; matrix: boolean[][]; rules: SoDRule[] }>("/api/v1/policy/sod-matrix").catch(() => ({ roles: [], matrix: [], rules: [] }));
@@ -34,7 +34,7 @@ export default function SoDMatrixPage() {
       } catch { setError("Failed to load SoD matrix"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleToggle = async (i: number, j: number) => {
     if (i === j) return;

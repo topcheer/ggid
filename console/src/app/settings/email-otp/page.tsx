@@ -28,13 +28,13 @@ export default function EmailOTPPage() {
   const [sending, setSending] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setConfig(await apiFetch<EmailOTPConfig>("/api/v1/auth/email-otp/config").catch(() => null)); }
       catch { setError("Failed to load config"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSave = async () => {
     if (!config) return;

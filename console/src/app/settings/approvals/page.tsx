@@ -47,13 +47,13 @@ export default function ApprovalsPage() {
   const [selectedReq, setSelectedReq] = useState<ApprovalRequest | null>(null);
   const [comment, setComment] = useState("");
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setPending(await apiFetch<ApprovalRequest[]>("/api/v1/policy/approvals?status=pending").catch(() => [])); }
       catch { setError("Failed to load approvals"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleAction = async (req: ApprovalRequest, action: "approve" | "reject") => {
     setActioning(req.id);

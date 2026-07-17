@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   BarChart3, Loader2, AlertCircle, X, KeyRound, Users, AlertOctagon, Activity,
@@ -28,13 +28,13 @@ export default function ClientAnalyticsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setStats(await apiFetch<ClientStat[]>("/api/v1/oauth/analytics").catch(() => [])); }
       catch { setError("Failed to load analytics"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const totalTokens = stats.reduce((s, c) => s + c.total_tokens, 0);

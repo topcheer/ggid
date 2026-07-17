@@ -49,13 +49,13 @@ export default function ResourceACLPage() {
   const [editing, setEditing] = useState<ACLRule | null>(null);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(["/"]));
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setRules(await apiFetch<ACLRule[]>("/api/v1/policy/resource-acl").catch(() => [])); }
       catch { setError("Failed to load resource ACLs"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   // Build tree from rules' resource paths
   const allPaths = Array.from(new Set(["/", ...rules.map((r) => r.resource_path)]));

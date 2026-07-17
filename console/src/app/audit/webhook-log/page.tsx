@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   Webhook, Loader2, AlertCircle, X, Check, Clock, Zap,
@@ -34,7 +34,7 @@ export default function WebhookLogPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<{ entries?: DeliveryEntry[]; items?: DeliveryEntry[] }>("/api/v1/settings/webhooks/delivery-log?limit=50").catch(() => null);
@@ -42,7 +42,7 @@ export default function WebhookLogPage() {
       } catch { setError("Failed to load delivery log"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const successCount = entries.filter((e) => e.status === "delivered").length;

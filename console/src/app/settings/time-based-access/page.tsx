@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   Clock, Loader2, AlertCircle, X, Plus, Trash2, Save, Calendar,
@@ -33,13 +33,13 @@ export default function TimeBasedAccessPage() {
   const [editing, setEditing] = useState<ScheduleRule | null>(null);
   const [roleInput, setRoleInput] = useState("");
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setRules(await apiFetch<ScheduleRule[]>("/api/v1/policy/time-based/rules").catch(() => [])); }
       catch { setError("Failed to load time-based access rules"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSave = async () => {
     if (!editing) return;

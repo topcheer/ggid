@@ -37,13 +37,13 @@ export default function ClientCertsPage() {
   const [rotating, setRotating] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setCerts(await apiFetch<ClientCert[]>("/api/v1/oauth/client-certs").catch(() => [])); }
       catch { setError("Failed to load certificates"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleRotate = async (certId: string) => {
     setRotating(certId);

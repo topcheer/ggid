@@ -22,7 +22,7 @@ export default function CorrelationRulesPage() {
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ matched: boolean; matches: number; ruleId: string } | null>(null);
 
-  useState(() => { (async () => { try { setRules(await apiFetch<CorrelationRule[]>("/api/v1/audit/correlation-rules").catch(() => [])); } catch { setError("Failed to load rules"); } finally { setLoading(false); } })(); });
+  useEffect(() => { (async () => { try { setRules(await apiFetch<CorrelationRule[]>("/api/v1/audit/correlation-rules").catch(() => [])); } catch { setError("Failed to load rules"); } finally { setLoading(false); } })(); });
 
   const handleSave = async () => {
     if (!editing) return;

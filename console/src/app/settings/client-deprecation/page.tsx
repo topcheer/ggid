@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { AlertTriangle, Loader2, AlertCircle, X, Calendar, FileText, Eye } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
@@ -29,7 +29,7 @@ export default function ClientDeprecationPage() {
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<DeprecationStatus | null>(null);
 
-  useState(() => { (async () => { try { setClients(await apiFetch<DeprecationStatus[]>("/api/v1/oauth/client-deprecation").catch(() => [])); } catch { setError("Failed to load deprecation data"); } finally { setLoading(false); } })(); });
+  useEffect(() => { (async () => { try { setClients(await apiFetch<DeprecationStatus[]>("/api/v1/oauth/client-deprecation").catch(() => [])); } catch { setError("Failed to load deprecation data"); } finally { setLoading(false); } })(); });
 
   const handleUpdateStatus = async (id: string, status: DeprecationStatus["status"]) => {
     try { await apiFetch(`/api/v1/oauth/client-deprecation/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }); setClients((p) => p.map((c) => c.id === id ? { ...c, status } : c)); } catch { setError("Update failed"); }

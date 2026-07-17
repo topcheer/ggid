@@ -38,13 +38,13 @@ export default function BreakGlassHistoryPage() {
   const [endDate, setEndDate] = useState("");
   const [filtering, setFiltering] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setRecords(await apiFetch<BreakGlassHistory[]>("/api/v1/auth/break-glass/history").catch(() => [])); }
       catch { setError("Failed to load history"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleFilter = async () => {
     setFiltering(true);

@@ -29,13 +29,13 @@ export default function PasswordResetPage() {
   const [sending, setSending] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setConfig(await apiFetch<ResetConfig>("/api/v1/auth/password-reset/config").catch(() => ({ token_expiry_minutes: 30, max_attempts: 5, check_password_history: true, history_count: 5, require_mfa: false, notify_on_reset: true, cooldown_minutes: 5 }))); }
       catch { setError("Failed to load config"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSave = async () => {
     if (!config) return;

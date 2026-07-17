@@ -69,7 +69,7 @@ export default function ComplianceEvidencePage() {
     finally { setLoading(false); }
   };
 
-  useState(() => { loadData(framework); });
+  useEffect(() => { loadData(framework); });
 
   const handleFrameworkChange = (fw: string) => { setFramework(fw); setSelectedControl(null); loadData(fw); };
 

@@ -52,13 +52,13 @@ export default function AnomaliesPage() {
   const [actionModal, setActionModal] = useState<{ anomaly: Anomaly; type: "dismiss" | "escalate" } | null>(null);
   const [note, setNote] = useState("");
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setAnomalies(await apiFetch<Anomaly[]>("/api/v1/audit/anomalies").catch(() => [])); }
       catch { setError("Failed to load anomalies"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleAction = async () => {
     if (!actionModal) return;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -50,7 +50,7 @@ export default function ComplianceMappingPage() {
     finally { setLoading(false); }
   };
 
-  useState(() => { load(framework); });
+  useEffect(() => { load(framework); });
 
   const handleStatusChange = async (id: string, status: ControlMapping["status"]) => {
     try { await apiFetch(`/api/v1/audit/compliance-mapping/${id}`, { method: "PUT", body: JSON.stringify({ status }) }); setMappings((p) => p.map((m) => m.id === id ? { ...m, status } : m)); }

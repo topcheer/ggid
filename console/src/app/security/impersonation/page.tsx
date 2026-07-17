@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   UserRound, ArrowRight, Filter, Loader2, AlertCircle, X, Clock,
@@ -45,7 +45,7 @@ export default function ImpersonationLogPage() {
     }
   };
 
-  useState(() => { load(); });
+  useEffect(() => { load(); });
 
   const formatDuration = (s: number) => s < 60 ? `${s}s` : s < 3600 ? `${Math.floor(s / 60)}m` : `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";

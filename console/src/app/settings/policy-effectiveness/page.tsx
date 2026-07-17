@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -26,13 +26,13 @@ export default function PolicyEffectivenessPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setStats(await apiFetch<PolicyStat[]>("/api/v1/policy/effectiveness").catch(() => [])); }
       catch { setError("Failed to load effectiveness data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const totalTriggers = stats.reduce((s, p) => s + p.trigger_count, 0);

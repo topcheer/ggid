@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
 import {
@@ -44,7 +44,7 @@ export default function RoleHierarchyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<{ tree?: RoleNode[]; nodes?: RoleNode[] }>("/api/v1/policy/roles/hierarchy").catch(() => null);
@@ -55,7 +55,7 @@ export default function RoleHierarchyPage() {
         setLoading(false);
       }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 

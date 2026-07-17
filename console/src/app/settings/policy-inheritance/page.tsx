@@ -23,7 +23,7 @@ export default function PolicyInheritancePage() {
   const [overrideDesc, setOverrideDesc] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useState(() => { (async () => { try { setPolicies(await apiFetch<PolicyNode[]>("/api/v1/policy/inheritance").catch(() => [])); } catch { setError("Failed to load policy tree"); } finally { setLoading(false); } })(); });
+  useEffect(() => { (async () => { try { setPolicies(await apiFetch<PolicyNode[]>("/api/v1/policy/inheritance").catch(() => [])); } catch { setError("Failed to load policy tree"); } finally { setLoading(false); } })(); });
 
   const toggleExpand = (id: string) => setExpanded((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const handleSaveOverride = async () => {

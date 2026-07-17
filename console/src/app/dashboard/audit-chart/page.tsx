@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   BarChart3, TrendingUp, Users, Activity, Loader2, AlertCircle, X,
@@ -27,7 +27,7 @@ export default function AuditChartPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<{ hourly?: HourBucket[]; top_types?: TopItem[]; top_users?: TopItem[] }>("/api/v1/audit/stats/chart").catch(() => null);
@@ -40,7 +40,7 @@ export default function AuditChartPage() {
         setLoading(false);
       }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const maxCount = Math.max(...hourly.map((h) => h.count), 1);

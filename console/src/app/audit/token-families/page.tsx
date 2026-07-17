@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   Share2, Loader2, AlertCircle, X, AlertOctagon, Shield, ChevronRight, KeyRound,
@@ -36,13 +36,13 @@ export default function TokenFamiliesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setFamilies(await apiFetch<TokenFamily[]>("/api/v1/oauth/token-families").catch(() => [])); }
       catch { setError("Failed to load token families"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const cardCls = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
   const flagged = families.filter((f) => f.theft_detected);

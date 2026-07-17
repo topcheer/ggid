@@ -37,7 +37,7 @@ export default function LoginOrchestratorPage() {
   const [testResult, setTestResult] = useState<{ method: string; provider: string } | null>(null);
   const [testing, setTesting] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const [m, p] = await Promise.all([
@@ -53,7 +53,7 @@ export default function LoginOrchestratorPage() {
       } catch { setError("Failed to load orchestrator config"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const moveMethod = (idx: number, dir: -1 | 1) => {
     const newIdx = idx + dir;

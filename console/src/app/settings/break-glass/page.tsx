@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   AlertTriangle, Loader2, AlertCircle, X, Plus, CheckCircle, Clock, Bell, Lock,
@@ -42,13 +42,13 @@ export default function BreakGlassPage() {
   const [showRequest, setShowRequest] = useState(false);
   const [form, setForm] = useState({ reason: "", scope: "", duration_minutes: 60 });
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setRequests(await apiFetch<BreakGlassRequest[]>("/api/v1/auth/break-glass").catch(() => [])); }
       catch { setError("Failed to load break-glass data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleRequest = async () => {
     try {

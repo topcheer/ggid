@@ -29,13 +29,13 @@ export default function DynamicRolesPage() {
   const [testRole, setTestRole] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<{ matched: boolean; reason: string } | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setRoles(await apiFetch<DynamicRole[]>("/api/v1/policy/dynamic-roles").catch(() => [])); }
       catch { setError("Failed to load dynamic roles"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSave = async () => {
     if (!editing) return;

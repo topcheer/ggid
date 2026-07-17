@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   ShieldCheck, Loader2, AlertCircle, X, RefreshCw, CheckCircle, AlertOctagon, ShieldAlert,
@@ -43,7 +43,7 @@ export default function TamperCheckPage() {
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const [s, i] = await Promise.all([
@@ -54,7 +54,7 @@ export default function TamperCheckPage() {
       } catch { setError("Failed to load tamper check data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleScan = async () => {
     setScanning(true); setError(null);

@@ -30,13 +30,13 @@ export default function HijackDetectionPage() {
   const [error, setError] = useState<string | null>(null);
   const [terminating, setTerminating] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setSessions(await apiFetch<SuspiciousSession[]>("/api/v1/auth/sessions/hijack-detection").catch(() => [])); }
       catch { setError("Failed to load hijack detection data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleTerminate = async (sessionId: string) => {
     setTerminating(sessionId);

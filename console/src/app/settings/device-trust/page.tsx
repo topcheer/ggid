@@ -44,7 +44,7 @@ export default function DeviceTrustPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const [d, c] = await Promise.all([
@@ -55,7 +55,7 @@ export default function DeviceTrustPage() {
       } catch { setError("Failed to load device trust data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSaveConfig = async () => {
     if (!config) return;

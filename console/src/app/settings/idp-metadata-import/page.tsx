@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Download, Upload, FileText, CheckCircle, XCircle, Link2 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
 import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
@@ -17,7 +17,7 @@ export default function IdpMetadataImportPage() {
   const fetchPreview = async () => { setLoading(true); try { const body = tab === "url" ? JSON.stringify({ url }) : JSON.stringify({ xml }); const res = await fetch("/api/v1/auth/idp-metadata/preview", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body }); if (res.ok) setMetadata(await res.json()); } catch { /* noop */ } finally { setLoading(false); } };
   const doImport = async () => { setLoading(true); try { const body = tab === "url" ? JSON.stringify({ url }) : JSON.stringify({ xml }); await fetch("/api/v1/auth/idp-metadata/import", { method: "POST", headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" }, body }); fetchList(); } catch { /* noop */ } finally { setLoading(false); } };
   const fetchList = async () => { try { const res = await fetch("/api/v1/auth/idp-metadata", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } }); if (res.ok) { const d = await res.json(); setImported(d.idps || d || []); } } catch { /* noop */ } };
-  useState(() => { fetchList(); });
+  useEffect(() => { fetchList(); });
   return (
     <div className="space-y-6">
       <div><h1 className="text-2xl font-bold flex items-center gap-2"><Download className="w-6 h-6 text-blue-500" /> {t("big1.idpMetadataImport.title")}</h1><p className="text-sm text-gray-500 mt-1">{t("big1.idpMetadataImport.importSAMLIdPMetadataFromURLXMLPasteOrFileUpload")}</p></div>

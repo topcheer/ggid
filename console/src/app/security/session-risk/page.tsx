@@ -45,13 +45,13 @@ export default function SessionRiskPage() {
   const [evaluating, setEvaluating] = useState<string | null>(null);
   const [evaluatingAll, setEvaluatingAll] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setSessions(await apiFetch<SessionRiskEntry[]>("/api/v1/auth/sessions/risk").catch(() => [])); }
       catch { setError("Failed to load session risk data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleReevaluate = async (sessionId: string) => {
     setEvaluating(sessionId);

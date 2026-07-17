@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   ShieldCheck, Send, AlertCircle, Loader2, X, Check, Clock, KeyRound,
@@ -29,7 +29,7 @@ export default function StepUpAuthPage() {
   const [form, setForm] = useState({ user_id: "", reason: "", method: "totp" });
   const [triggering, setTriggering] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<{ challenges?: Challenge[]; items?: Challenge[] }>("/api/v1/auth/step-up/challenges").catch(() => null);
@@ -37,7 +37,7 @@ export default function StepUpAuthPage() {
       } catch { setError("Failed to load challenges"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleTrigger = async () => {
     if (!form.user_id.trim()) return;

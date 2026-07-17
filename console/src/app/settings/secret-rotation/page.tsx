@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import {
   RefreshCw, Loader2, AlertCircle, X, KeyRound, Clock, Save, AlertOctagon,
@@ -31,13 +31,13 @@ export default function SecretRotationPage() {
   const [rotating, setRotating] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try { setSecrets(await apiFetch<SecretStatus[]>("/api/v1/oauth/secret-rotation").catch(() => [])); }
       catch { setError("Failed to load secrets"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleRotate = async (id: string) => {
     setRotating(id);

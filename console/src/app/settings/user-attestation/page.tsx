@@ -42,7 +42,7 @@ export default function UserAttestationPage() {
   const [reminding, setReminding] = useState<string | null>(null);
   const [fieldInput, setFieldInput] = useState("");
 
-  useState(() => {
+  useEffect(() => {
     (async () => {
       try {
         const [r, c] = await Promise.all([
@@ -53,7 +53,7 @@ export default function UserAttestationPage() {
       } catch { setError("Failed to load attestation data"); }
       finally { setLoading(false); }
     })();
-  });
+  }, []);
 
   const handleSave = async () => {
     if (!config) return;
