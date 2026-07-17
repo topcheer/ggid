@@ -692,6 +692,34 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 			return
 		}
 
+		// DPoP proof verification (RFC 9449): if the client sends a DPoP header,
+		// validate the proof and bind the issued access token to the DPoP key.
+		dpopHeader := r.Header.Get("DPoP")
+		if dpopHeader != "" {
+			proof, err := service.ParseDPoPHeader(dpopHeader, "POST", r.URL.String())
+			if err != nil {
+				writeJSON(w, http.StatusBadRequest, map[string]string{
+					"error":             "invalid_dpop_proof",
+					"error_description": "DPoP proof validation failed: " + err.Error(),
+				})
+				return
+			}
+			// Validate htm/htu match the token endpoint and check freshness (prevent replay).
+			if proof.JTI == "" || time.Now().UTC().Sub(proof.IssuedAt) > 5*time.Minute {
+				writeJSON(w, http.StatusBadRequest, map[string]string{
+					"error":             "invalid_dpop_proof",
+					"error_description": "DPoP proof expired or missing nonce",
+				})
+				return
+			}
+			// Bind the access token to the DPoP key thumbprint.
+			jkt := computeKeyThumbprint(proof.PublicKey)
+			if resp != nil && resp.AccessToken != "" {
+				BindTokenToDPoP(resp.AccessToken, jkt)
+				resp.TokenType = "DPoP"
+			}
+		}
+
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Pragma", "no-cache")
 		writeJSON(w, http.StatusOK, resp)
