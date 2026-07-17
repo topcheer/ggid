@@ -422,18 +422,6 @@ func (r *MassExportRule) Evaluate(ctx context.Context, evt *domain.AuditEvent, s
 		return nil, err
 	}
 
-	// Also count across all users (tenant baseline).
-	tenantKey := fmt.Sprintf("export_all:%s", evt.TenantID)
-	tenantCount, _ := state.Incr(ctx, tenantKey, time.Duration(windowMin)*time.Minute)
-
-	// If single user accounts for >threshold fraction of tenant-wide exports.
-	if tenantCount > 0 && count > 3 {
-		ratio := count * 10 / tenantCount // *10 for integer math
-		if ratio >= threshold*10/tenantCount*threshold {
-			// Single user dominating exports.
-		}
-	}
-
 	// Simpler: absolute threshold — more than `threshold` exports in window by one user.
 	absThreshold := threshold
 	if count < absThreshold {

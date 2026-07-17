@@ -24,7 +24,7 @@ type CustomScope struct {
 // scopeCache is a read-through cache for scope lookups (hot path during token issuance).
 var scopeCache sync.Map // name → *CustomScope
 
-// scopeAdapterVar holds the active scope store adapter (PG or in-memory fallback).
+// scopeStoreAdapter is used by the scope management handlers for PG-backed operations.
 var scopeAdapterVar *scopeStoreAdapter
 
 func handleScopes(w http.ResponseWriter, r *http.Request) {
