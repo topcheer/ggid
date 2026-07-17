@@ -80,7 +80,8 @@ type Gateway struct {
 	sessionMgr     *middleware.SessionManager
 	sysconfigStore sysconfig.Store
 	internalSecret []byte
-	caeCheck      func(http.Handler) http.Handler
+	caeCheck       func(http.Handler) http.Handler
+	circuitRegistry *middleware.CircuitRegistry
 	mu             sync.RWMutex
 }
 
@@ -108,9 +109,10 @@ func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
 	gw := &Gateway{
 		cfg:         cfg,
 		jwks:        jwks,
-		proxies:     make(map[string]*httputil.ReverseProxy),
-		timeouts:    make(map[string]time.Duration),
-		rateLimiter: middleware.NewTenantBucketLimiter(middleware.DefaultBucketRateLimitConfig()),
+		proxies:        make(map[string]*httputil.ReverseProxy),
+		timeouts:       make(map[string]time.Duration),
+		rateLimiter:    middleware.NewTenantBucketLimiter(middleware.DefaultBucketRateLimitConfig()),
+		circuitRegistry: middleware.NewCircuitRegistry(middleware.DefaultCircuitConfig()),
 	}
 	gw.buildProxies()
 	gw.buildHealthChecker()
@@ -413,7 +415,9 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		defer cancel()
 		r = r.WithContext(ctx)
 	}
-	backend.ServeHTTP(w, r)
+	// Wrap with circuit breaker: fail-fast 503 if backend is down
+	h := middleware.CircuitMiddleware(prefix, gw.circuitRegistry, backend)
+	h.ServeHTTP(w, r)
 }
 
 // matchBackend returns the proxy and its prefix for the given path.
