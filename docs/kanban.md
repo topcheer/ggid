@@ -212,6 +212,10 @@
 | KB-198 | **BBS+ signatures** (unlinkable selective disclosure) | backend | P1 | pets-privacy | 4d |
 | KB-199 | **Differential privacy + crypto-shredding** (analytics noise + DEK deletion) | backend | P1 | pets-privacy | 3d |
 | KB-200 | **Pseudonymization vault + data minimization** (CMK tokenization) | backend | P2 | pets-privacy | 4d |
+| KB-201 | **HR connector framework** (Workday/BambooHR + JML webhooks) | backend | P0 | lifecycle-automation | 5d |
+| KB-202 | **Dormant account detection + ghost reconciliation** (cron + auto-stage) | backend | P0 | lifecycle-automation | 3d |
+| KB-203 | **Approval workflow engine** (multi-step manager/security approval) | backend | P1 | lifecycle-automation | 4d |
+| KB-204 | **SCIM 2.0 outbound + bulk operations** (push to downstream apps) | backend | P1 | lifecycle-automation | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -330,6 +334,7 @@
 | API Gateway Hardening & Rate Limiting | DONE | docs/research/api-gateway-hardening.md |
 | ITDR Maturity & MITRE ATT&CK Mapping | DONE | docs/research/itdr-maturity-mitre-attack.md |
 | Privacy-Enhancing Technologies (PETs) | DONE | docs/research/pets-privacy-by-design.md |
+| Identity Lifecycle Automation & HR-Driven Provisioning | DONE | docs/research/identity-lifecycle-automation.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---

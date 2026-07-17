@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 66: Privacy-Enhancing Technologies research complete — 4 new backlog items)*
+*Last updated: 2026-07-17 (Round 67: Identity Lifecycle Automation research complete — 4 new backlog items)*
 
 ## Current Stats
 
@@ -168,6 +168,8 @@
 | 142 | **Asymmetric SD-JWT + erasure pipeline** (P0) | backend | Privacy | Upgrade SD-JWT from HMAC to EdDSA + automated right-to-be-forgotten cascade deletion. See docs/research/pets-privacy-by-design.md |
 | 143 | **BBS+ + differential privacy** (P1) | backend | Privacy | BBS+ unlinkable selective disclosure + Laplace noise for analytics + crypto-shredding per-user DEK |
 | 144 | **Pseudonymization + minimization** (P2) | backend | Privacy | CMK-backed pseudonymization vault + schema-level data minimization rules + retention auto-purge |
+| 145 | **HR connectors + dormant detection** (P0) | backend | Lifecycle | Workday/BambooHR HR connectors + JML webhooks + dormant account auto-detection + ghost account reconciliation. See docs/research/identity-lifecycle-automation.md |
+| 146 | **Approval workflows + SCIM outbound** (P1) | backend | Lifecycle | Multi-step approval engine (manager + security for privileged) + SCIM 2.0 outbound push + bulk import/offboard |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -220,6 +222,7 @@
 26. API Gateway Hardening & Rate Limiting → DONE (docs/research/api-gateway-hardening.md) — 4 backlog items added
 27. ITDR Maturity & MITRE ATT&CK Mapping → DONE (docs/research/itdr-maturity-mitre-attack.md) — 5 backlog items added
 28. Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md) — 4 backlog items added
+29. Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md) — 4 backlog items added
 
 ## Rules
 
@@ -242,6 +245,7 @@ Active research topics:
 - API Gateway Hardening → DONE (docs/research/api-gateway-hardening.md)
 - ITDR Maturity & MITRE ATT&CK → DONE (docs/research/itdr-maturity-mitre-attack.md)
 - Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md)
+- Identity Lifecycle Automation → DONE (docs/research/identity-lifecycle-automation.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)

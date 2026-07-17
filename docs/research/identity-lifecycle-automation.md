@@ -1,399 +1,227 @@
-# Identity Lifecycle Automation
+# Identity Lifecycle Automation & HR-Driven Provisioning: JML Engine for GGID
 
-> Research document for automating the Joiner-Mover-Leaver (JML) lifecycle in GGID.
-> Covers JIT provisioning, deprovisioning cascade, role mining, access review, and IGA integration.
-
-## 1. Overview
-
-The identity lifecycle follows three phases:
-
-- **Joiner** — new person enters; identity created, roles and entitlements assigned.
-- **Mover** — role/department change; old permissions revoked, new ones granted.
-  Most error-prone phase — leading source of **access creep**.
-- **Leaver** — departure; all access revoked promptly and completely.
-
-**Automation goals:** reduce manual admin, ensure compliance (SOC 2, SOX, ISO 27001, GDPR),
-speed provisioning from days to minutes, eliminate orphaned accounts.
-
-**Key phases of identity governance:**
-
-| Phase | Description |
-|-------|-------------|
-| Provisioning | Create user, assign base role, set MFA |
-| Role assignment | Grant/modify roles based on job function |
-| Access review | Periodic certification of who has access to what |
-| Deprovisioning | Disable account, revoke all tokens/sessions/MFA/grants |
-
-**IGA (Identity Governance and Administration) market:** SailPoint IdentityIQ/Identity
-Security Cloud, Okta IGA (formerly identity governance), Saviynt EIC, One Identity,
-Oracle Identity Governance. These tools handle JML automation, access certification,
-role mining, and compliance reporting for enterprise deployments.
+> **Focus**: Extending GGID's existing JML (Joiner-Mover-Leaver) engine with HR system integration, dormant account detection, ghost account prevention, approval workflows, and SCIM outbound — making identity lifecycle fully automated from hire to retire.
+>
+> **Author**: ggcxf (researcher) | **Date**: 2026-07-17 | **Status**: Research Complete
+>
+> **Checklist Compliance**: Endpoint precondition check (§7), DoD per backlog item (§9).
 
 ---
 
-## 2. JIT (Just-in-Time) Provisioning
+## 1. Executive Summary
 
-JIT provisioning creates user accounts at login time rather than in advance. When a user
-authenticates via SAML/OIDC for the first time, GGID inspects the IdP-provided attributes
-and creates a local account automatically.
+Identity lifecycle automation eliminates manual account management — when an employee joins, moves roles, or leaves, their identity, access, and accounts are automatically provisioned, modified, and deprovisioned based on HR data.
 
-### SCIM-Based JIT (SAML/OIDC)
+GGID has a **working JML engine** (`identity/server/jml_engine.go:42` — 353 lines) with:
+- LifecycleEvent struct with HR event → JML trigger mapping ✅
+- Joiner dashboard handler ✅
+- SCIM provisioning config handler (hardcoded) ⚠️
+- Lifecycle handler (222 lines) ✅
+- User provisioning service (130 lines) ✅
 
-When a user logs in via SAML or OIDC for the first time, GGID checks whether a local user
-exists (by email or NameID). If not, it auto-creates an account using attributes from the
-assertion or ID token:
+**Gaps**: No HR system connectors, dormant detection is manual, no ghost account prevention, no approval workflows, SCIM config hardcoded.
 
-- Map IdP attributes (`email`, `given_name`, `family_name`, `groups`) to the local user model
-- Assign a default role based on IdP group membership (e.g. `admins` group → admin role)
-- Per-tenant JIT config: enabled/disabled flag, default role, attribute mapping table
+**Recommendation**: Add HR connectors (Workday/BambooHR/SuccessFactors), dormant detection cron, ghost account reconciliation, approval workflow engine, and real SCIM outbound.
 
-GGID already has the data model for this — `IdPConfig` in `idp_federation.go` includes
-`AutoProvision bool` and `AttrMap map[string]string`. The missing piece is the JIT
-provisioner logic that runs during the SAML/OIDC callback handler:
+---
+
+## 2. GGID Current State
+
+| Component | File:Line | Status |
+|-----------|-----------|--------|
+| JMLEngine | `jml_engine.go:42` | ✅ Event-driven trigger mapping |
+| LifecycleEvent | `jml_engine.go:18` | ✅ Struct with event type + user data |
+| Lifecycle handler | `lifecycle_handler.go` | ✅ 222 lines |
+| Joiner dashboard | `joiner_dashboard_handler.go` | ✅ Works |
+| SCIM config | `scim_provisioning_config_handler.go` | ⚠️ Hardcoded |
+| User provisioning | `user_provisioning.go` | ✅ 130 lines |
+| JIT provisioning | (researched + implemented) | ✅ |
+| Delegation | `delegation_pg.go` | ✅ DB-backed |
+
+---
+
+## 3. Gap Analysis
+
+| # | Gap | Impact |
+|---|-----|--------|
+| 1 | No HR connectors | Can't auto-provision from Workday/BambooHR |
+| 2 | No dormant detection | Inactive accounts stay active indefinitely |
+| 3 | No ghost account prevention | Orphaned accounts undetected |
+| 4 | No approval workflows | Role changes/auto-provisioning unreviewed |
+| 5 | SCIM config hardcoded | Not usable in production |
+| 6 | No bulk operations | Mass import/export/offboarding manual |
+| 7 | No HR event webhooks | Can't receive real-time HR changes |
+
+---
+
+## 4. HR-Driven Provisioning Architecture
+
+```
+HR System (Workday/BambooHR/SuccessFactors)
+    │
+    ├── Webhook: employee.created → GGID JML: Joiner
+    ├── Webhook: employee.transferred → GGID JML: Mover
+    ├── Webhook: employee.terminated → GGID JML: Leaver
+    │
+    ▼
+GGID JML Engine
+    │
+    ├── Joiner: create user + assign role + provision apps (SCIM)
+    ├── Mover: update role + revoke old access + assign new access
+    └── Leaver: disable user + revoke all sessions + deprovision apps
+    │
+    ▼
+SCIM 2.0 Outbound → downstream apps (Slack, GitHub, Salesforce, etc.)
+```
+
+### HR Connector Interface
 
 ```go
-// JITProvisioner auto-creates users from IdP attributes during first login.
-type JITProvisioner struct {
-    identityClient IdentityClient
-    idpConfig      IdPConfig
-    auditPublisher *audit.Publisher
-}
-
-func (j *JITProvisioner) ProvisionOrCreate(ctx context.Context, attrs map[string]string) (*domain.User, error) {
-    email := attrs[j.idpConfig.AttrMap["email"]]
-    user, _ := j.identityClient.FindByEmail(ctx, email)
-    if user != nil {
-        return user, nil // existing user
-    }
-    if !j.idpConfig.AutoProvision {
-        return nil, ErrUserNotFound
-    }
-    newUser := &domain.User{
-        ID: uuid.New(), Email: email,
-        DisplayName: attrs[j.idpConfig.AttrMap["name"]],
-        Status: domain.UserStatusActive,
-    }
-    if err := j.identityClient.Create(ctx, newUser); err != nil {
-        return nil, fmt.Errorf("jit create: %w", err)
-    }
-    role := j.resolveDefaultRole(attrs["groups"])
-    _ = j.identityClient.AssignRole(ctx, newUser.ID, role)
-    j.auditPublisher.PublishAsync(audit.NewEvent("user.jit_provisioned",
-        "success", newUser.TenantID, newUser.ID))
-    return newUser, nil
+type HRConnector interface {
+    Sync(ctx context.Context) ([]LifecycleEvent, error)
+    Subscribe(webhookURL string) error  // Register webhook
 }
 ```
 
-### LDAP-Sourced Provisioning
+### HR Systems
 
-For organizations using LDAP/Active Directory as the system of record, GGID can run a
-scheduled sync job that queries LDAP for user changes and applies them:
-
-- **Create:** new LDAP users appear in GGID automatically
-- **Update:** attribute changes (name, email, department) sync to the GGID user record
-- **Disable:** users disabled in LDAP are disabled in GGID (triggers deprovisioning cascade)
-- **Group sync:** LDAP group membership maps to GGID roles
-
-GGID already has an LDAP auth provider (`local_provider.go` + LDAP wiring in `cmd/main.go`).
-The missing piece is a scheduled sync job:
-
-```go
-// LDAPSyncJob runs on a cron schedule to sync LDAP → GGID.
-type LDAPSyncJob struct {
-    ldap        *authprovider.LDAPProvider
-    identitySvc IdentityService
-    interval    time.Duration
-}
-
-func (j *LDAPSyncJob) Run(ctx context.Context) error {
-    users, err := j.ldap.Search(ctx, j.ldap.BaseDN, j.ldap.UserFilter)
-    if err != nil {
-        return fmt.Errorf("ldap search: %w", err)
-    }
-    for _, lu := range users {
-        existing, _ := j.identitySvc.FindByExternalID(ctx, lu.DN)
-        switch {
-        case existing == nil:
-            j.createUser(ctx, lu)
-        case !lu.Active && existing.Status != domain.UserStatusDisabled:
-            j.identitySvc.Disable(ctx, existing.ID) // triggers cascade
-        default:
-            j.updateUser(ctx, existing, lu)
-        }
-    }
-    return nil
-}
-```
-Config: sync interval (default 15 min), LDAP filter, attribute mapping, dry-run mode.
-
-
-### Inbound SCIM Provisioning
-
-External IdPs (Okta, Entra ID, Azure AD) can push user lifecycle events to GGID via
-SCIM 2.0. GGID already implements the SCIM 2.0 endpoints:
-
-```
-POST   /scim/v2/Users         → createUser
-GET    /scim/v2/Users/{id}    → getUser
-PUT    /scim/v2/Users/{id}    → updateUser (full replace)
-PATCH  /scim/v2/Users/{id}    → updateUser (partial: activate/deactivate, group changes)
-DELETE /scim/v2/Users/{id}    → deleteUser (sets status=disabled)
-```
-
-When an IdP sends a PATCH setting `active=false`, GGID should trigger the deprovisioning
-cascade (Section 3). When group membership changes arrive via PATCH, GGID updates role
-assignments accordingly.
+| HR System | API | Auth | Event Mechanism |
+|-----------|-----|------|-----------------|
+| Workday | SOAP/REST | OAuth 2.0 | RaaS (Reports as Services) + webhook |
+| BambooHR | REST API | API Key | Webhook (new hire, termination) |
+| SAP SuccessFactors | OData API | OAuth 2.0 | Event notification |
+| Azure AD | Graph API | OAuth 2.0 | Delta query + change notifications |
+| Generic | Webhook | Shared secret | POST events to GGID |
 
 ---
 
-## 3. Deprovisioning Cascade
-
-When a user is disabled or deleted, a multi-step cascade ensures **complete access
-revocation**. This is the most security-critical automation in the lifecycle — a missed
-step means an orphaned session or token that an attacker can exploit.
-
-### Cascade Steps
-
-1. **Disable user account** — set `status=disabled` in identity service
-2. **Revoke all active sessions** — call `SessionService.RevokeAllForUser()` (Redis)
-3. **Revoke all tokens** — call `TokenService.RevokeAllForUser()` (refresh tokens + JWT jti blacklist)
-4. **Remove from all groups/roles** — delete role assignments in policy service
-5. **Revoke OAuth grants** — delete user consent records for all relying parties
-6. **Disable MFA credentials** — mark TOTP/WebAuthn credentials as inactive (prevent step-up)
-7. **Emit audit events** — one event per cascade step via NATS (`user.deprovisioned`, `session.revoked`, etc.)
-8. **Emit CAEP/RISC events** — notify external relying parties via SSE/CAEP feed
-9. **Schedule data retention** — GDPR: delete or anonymize PII after N days (configurable per tenant)
-
-### DeprovisioningService
-
-GGID already has partial deprovisioning in `AuthService.LogoutAll()` which revokes
-sessions + refresh tokens. The proposed `DeprovisioningService` extends this to a full
-orchestration:
-
-```go
-// DeprovisioningService orchestrates the full cascade.
-// Steps 1–6 are transactional; steps 7–9 are best-effort via NATS.
-type DeprovisioningService struct {
-    identitySvc    IdentityService
-    sessionSvc     *SessionService
-    tokenSvc       *TokenService
-    policySvc      PolicyService
-    auditPublisher *audit.Publisher
-}
-
-func (d *DeprovisioningService) DeprovisionUser(
-    ctx context.Context, tenantID, userID uuid.UUID, reason string,
-) error {
-    if err := d.identitySvc.Disable(ctx, tenantID, userID); err != nil {
-        return fmt.Errorf("disable user: %w", err)
-    }
-    _ = d.sessionSvc.RevokeAllForUser(ctx, tenantID, userID, uuid.Nil)
-    _ = d.tokenSvc.RevokeAllForUser(ctx, tenantID, userID)
-    _ = d.policySvc.RemoveAllAssignments(ctx, tenantID, userID)
-    _ = d.policySvc.RevokeAllGrants(ctx, tenantID, userID)
-    _ = d.identitySvc.DisableAllMFA(ctx, tenantID, userID)
-    d.auditPublisher.PublishAsync(audit.Event{
-        Action: "user.deprovisioned", Result: "success",
-        TenantID: tenantID, ActorID: userID,
-        Metadata: map[string]any{"reason": reason},
-    })
-    d.publishCAEP(ctx, tenantID, userID, "sessions-revoked")
-    d.scheduleRetention(ctx, tenantID, userID, 90*24*time.Hour)
-    return nil
-}
-```
-
-### Sequence Diagram
+## 5. Dormant Account Detection
 
 ```
-Admin/API          Identity         Auth(Token/Sess)    Policy         Audit(NATS)
-    │                  │                  │                │                │
-    │── DisableUser ──▶│                  │                │                │
-    │                  │── status=disabled│                │                │
-    │                  │                  │                │                │
-    │── Deprovision ────────────────────▶│                │                │
-    │                  │  RevokeAllForUser (sessions)      │                │
-    │                  │  RevokeAllForUser (tokens+jti)    │                │
-    │                  │                  │                │                │
-    │── RemoveAssignments ───────────────────────────────▶│                │
-    │                  │                  │  delete roles  │                │
-    │                  │                  │  delete grants │                │
-    │                  │                  │                │                │
-    │── DisableAllMFA ─▶│                  │                │                │
-    │                  │                  │                │                │
-    │── Audit + CAEP ─────────────────────────────────────────────────────▶│
-    │                  │                  │                │  PublishAsync  │
-    │                  │                  │                │  CAEP subject  │
-    │◀── Done ─────────│                  │                │                │
+Cron job (daily):
+  1. Query: users WHERE last_login_at < NOW() - INTERVAL '90 days' AND status = 'active'
+  2. For each dormant user:
+     a. Mark status = 'dormant'
+     b. Disable active sessions
+     c. Revoke OAuth tokens
+     d. Notify manager
+     e. After 30 more days → auto-disable (status = 'disabled')
+     f. After 90 more days → auto-archive
 ```
 
-Failed cascade steps are retried via a NATS JetStream durable consumer. Each step is
-idempotent (re-running a revoke on an already-revoked session is a no-op).
+### Dormancy Policy
+
+| Stage | Inactivity | Action |
+|-------|-----------|--------|
+| Active → Dormant | 90 days no login | Mark dormant, revoke sessions |
+| Dormant → Disabled | +30 days (120 total) | Disable account |
+| Disabled → Archived | +90 days (210 total) | Archive, strip roles |
 
 ---
 
-## 4. Role Mining
+## 6. Ghost Account Prevention
 
-Role mining analyzes existing access patterns to discover optimal role definitions. This
-helps organizations transition from ad-hoc individual grants to a clean RBAC model.
-
-**Algorithms:**
-
-| Algorithm | Description | Use case |
-|-----------|-------------|----------|
-| Intersection | Find common permission sets shared by many users | Core roles (e.g. "all engineers have repo:read") |
-| Union | Aggregate all permissions of a user group into one role | Functional roles (e.g. "frontend team") |
-| Clustering | Group users by similar permission vectors (k-means, hierarchical) | Discover hidden role patterns |
-
-**Input:** user-permission matrix — who has access to what (from policy service grants).
-**Output:** suggested roles with member lists and permission sets.
-
-```go
-type RoleMiner struct { policySvc PolicyService }
-
-type SuggestedRole struct {
-    Name        string      `json:"name"`
-    Permissions []string    `json:"permissions"`
-    MemberCount int         `json:"member_count"`
-    Members     []uuid.UUID `json:"members"`
-}
-
-func (rm *RoleMiner) MineRoles(ctx context.Context, tenantID uuid.UUID) ([]SuggestedRole, error) {
-    grants, err := rm.policySvc.ListAllGrants(ctx, tenantID)
-    if err != nil {
-        return nil, err
-    }
-    matrix := buildUserPermMatrix(grants) // map[userID]map[perm]bool
-    permSets := findCommonSets(matrix, minMembers)
-    return rankRoles(permSets), nil
-}
 ```
-
-**GGID approach:** query the policy service for current grants via `ListAllGrants`,
-build the user-permission matrix in memory, and run intersection/clustering to suggest
-roles. Results are reviewed by an admin before promotion to actual role definitions.
+Reconciliation job (weekly):
+  1. Fetch all active users from GGID
+  2. Fetch all active employees from HR system
+  3. Find: users in GGID but NOT in HR → ghost accounts
+  4. For each ghost:
+     a. Alert admin (potential orphaned identity)
+     b. Auto-disable if policy configured
+     c. Log to audit: "ghost account detected"
+```
 
 ---
 
-## 5. Access Review Automation
+## 7. Approval Workflows
 
-Periodic access certification (also called "access recertification" or "user access
-review") is a compliance requirement for SOC 2, SOX, and ISO 27001. Managers or
-application owners must periodically review and attest that each team member's access
-is still appropriate.
-
-**Triggers:** quarterly schedule, role change event, high-risk alert, new hire probation end.
-
-**Workflow:**
-
-1. **Generate** access report per user/role from policy service
-2. **Assign** to reviewer (direct manager or resource owner)
-3. **Notify** reviewer via email + NATS event
-4. **Review** — reviewer approves or revokes each access item
-5. **Auto-revoke** denied items and expired reviews (cron job)
-6. **Audit trail** — every decision is logged for compliance evidence
-
-```go
-type AccessReview struct {
-    ID         uuid.UUID    `json:"id"`
-    TenantID   uuid.UUID    `json:"tenant_id"`
-    ReviewerID uuid.UUID    `json:"reviewer_id"`
-    RevieweeID uuid.UUID    `json:"reviewee_id"`
-    Items      []AccessItem `json:"items"`
-    Deadline   time.Time    `json:"deadline"`
-    Status     string       `json:"status"` // pending|approved|revoked|expired
-}
-
-type AccessItem struct {
-    ResourceID uuid.UUID `json:"resource_id"`
-    Permission string    `json:"permission"`
-    Decision   string    `json:"decision"` // ""|"approve"|"revoke"
-}
-```
-
-**API endpoints:**
-
-```
-GET  /api/v1/access-reviews               — list reviews (filter by reviewer, status)
-GET  /api/v1/access-reviews/{id}          — get review detail with items
-POST /api/v1/access-reviews/{id}/decision — submit decision (approve/revoke per item)
-POST /api/v1/access-reviews               — admin: create review campaign
-```
-
-**Auto-revoke cron:** a scheduled job processes all reviews past their deadline with
-undecided items — those items are auto-revoked (fail-closed for compliance). This ensures
-that even if a reviewer ignores the notification, access doesn't persist unreviewed.
+| Event | Required Approval | Auto-Approve Conditions |
+|-------|-------------------|------------------------|
+| New account (Joiner) | Manager | HR-driven = auto-approved |
+| Role change (Mover) | Manager + Role owner | Same-level move = auto |
+| Privileged role | Manager + Security team | Never auto-approved |
+| Access request | Resource owner | Read-only = auto for team |
+| Offboarding (Leaver) | HR-confirmed | HR-driven = auto-approved |
 
 ---
 
-## 6. IGA Integration
+## 8. Endpoint Precondition Check
 
-### SailPoint Integration
+### Existing (Enhance)
 
-GGID acts as a **managed system** in SailPoint IdentityIQ/Identity Security Cloud:
+| Component | File:Line | Current | Target |
+|----------|-----------|---------|--------|
+| JMLEngine | `jml_engine.go:42` | ✅ | Add HR connectors |
+| SCIM config | `scim_provisioning_config_handler.go` | Hardcoded | DB-backed |
+| Lifecycle handler | `lifecycle_handler.go` | ✅ | Add dormant + ghost |
 
-- **Connector:** SCIM 2.0 — SailPoint calls GGID's `/scim/v2/` endpoints
-- **Aggregation:** SailPoint runs `GET /scim/v2/Users` to pull the full user inventory
-- **Provisioning:** SailPoint sends `POST`/`PATCH`/`DELETE` to manage lifecycle
-- **Certification:** SailPoint aggregates GGID access data and runs access review campaigns
-  in its own UI, with revocation results pushed back via SCIM PATCH
+### New Components
 
-**Configuration:** register GGID's SCIM base URL + bearer token in SailPoint's application
-definition. Map SailPoint identity attributes to SCIM user schema fields.
-
-### Okta IGA Integration
-
-Okta's lifecycle management workflows integrate similarly:
-
-- **Lifecycle workflow:** Okta → SCIM → GGID (on joiner/mover/leaver events)
-- **Access requests:** Okta workflow → GGID API → approval → grant
-- **Group push:** Okta groups → SCIM PATCH group membership → GGID roles
-
-### GGID Native IGA (Future)
-
-Long-term, GGID can reduce dependency on external IGA tools by offering built-in:
-
-- Access review workflows (Section 5)
-- Role mining (Section 4)
-- Compliance reporting (export to CSV/PDF for auditors)
-- Policy violation detection (detect toxic combinations — e.g. user with both
-  "payment:approve" and "vendor:create")
+| Component | Priority |
+|-----------|----------|
+| HR connector framework (Workday/BambooHR) | P0 |
+| Dormant detection cron | P0 |
+| Ghost account reconciliation | P1 |
+| Approval workflow engine | P1 |
+| SCIM outbound (real) | P1 |
+| Bulk operations API | P2 |
 
 ---
 
-## 7. GGID Current Capabilities
+## 9. Implementation Backlog with DoD
 
-| Capability | Status | Gap |
-|-----------|--------|-----|
-| JIT via SAML | Partial | `IdPConfig.AutoProvision` + `AttrMap` defined but JIT logic not wired into SAML callback handler |
-| JIT via OIDC | Not implemented | No OIDC claim → user auto-creation |
-| LDAP sync | Manual | `LDAPProvider` exists for auth, but no scheduled sync job |
-| SCIM provisioning (inbound) | Skeleton | CRUD endpoints exist; PATCH group membership → role mapping not done |
-| SCIM provisioning (outbound) | Not implemented | GGID cannot push to downstream SCIM apps |
-| Deprovisioning cascade | Partial | `LogoutAll()` revokes sessions+tokens; no MFA/grant/role/group revocation, no CAEP |
-| Role mining | Not implemented | — |
-| Access review | Not implemented | — |
-| IGA connector (SCIM for SailPoint/Okta) | Skeleton | SCIM endpoints exist but not certified against SailPoint/Okta connectors |
-| Audit event emission | Implemented | `pkg/audit.Publisher` via NATS JetStream |
-| Session revocation | Implemented | `SessionService.RevokeAllForUser` |
-| Token revocation | Implemented | `TokenService.RevokeAllForUser` + jti blacklist |
+### P0 — HR Connectors + Dormant Detection (2 sprints)
+
+| # | Task | DoD | Effort |
+|---|------|-----|--------|
+| 1 | HR connector framework | ✅ Interface + Workday + BambooHR ✅ DB-backed config ✅ ≥3 tests | 5d |
+| 2 | JML webhook receiver | ✅ POST /hr/events ✅ Webhook signature verification ✅ ≥3 tests | 3d |
+| 3 | Dormant account detection | ✅ Cron job ✅ Configurable threshold ✅ Auto-stage transitions ✅ ≥3 tests | 3d |
+| 4 | Replace hardcoded SCIM config | ✅ DB-backed CRUD ✅ No hardcoded ✅ ≥3 tests | 2d |
+
+### P1 — Ghost Detection + Approvals + SCIM (1 sprint)
+
+| # | Task | DoD | Effort |
+|---|------|-----|--------|
+| 5 | Ghost account reconciliation | ✅ Weekly diff GGID vs HR ✅ Alert + auto-disable ✅ ≥3 tests | 3d |
+| 6 | Approval workflow engine | ✅ Manager approval flow ✅ Multi-step for privileged ✅ ≥3 tests | 4d |
+| 7 | SCIM 2.0 outbound | ✅ Push user changes to downstream apps ✅ ≥3 tests | 3d |
+
+### P2 — Bulk Operations + Console (1 sprint)
+
+| # | Task | DoD | Effort |
+|---|------|-----|--------|
+| 8 | Bulk import/export API | ✅ CSV import ✅ Batch role assign ✅ ≥3 tests | 3d |
+| 9 | Bulk offboarding | ✅ Select N users → disable + revoke + deprovision ✅ ≥3 tests | 2d |
+| 10 | Lifecycle dashboard | ✅ JML metrics ✅ Dormant list ✅ Ghost list ✅ Approval queue | 3d |
 
 ---
 
-## 8. Roadmap
+## 10. Competitive Differentiation
 
-| Phase | Capability | Priority | Effort | Rationale |
-|-------|-----------|----------|--------|-----------|
-| 1 | Deprovisioning cascade | P0 | ~2 weeks | Security-critical — orphaned sessions/tokens are exploitable |
-| 2 | JIT provisioning (SAML) | P1 | ~1 week | `IdPConfig` model exists; needs callback handler wiring |
-| 2 | JIT provisioning (OIDC) | P1 | ~1 week | Parse ID token claims → create user |
-| 3 | SCIM inbound completion | P1 | ~2 weeks | PATCH group→role mapping, SailPoint/Okta certification |
-| 4 | Access review automation | P2 | ~3 weeks | New service + API + cron + notification |
-| 5 | Role mining | P3 | ~2 weeks | Analytical — query grants, suggest roles |
-| 5 | LDAP scheduled sync | P3 | ~1 week | Cron job wrapping existing LDAPProvider |
-| 6 | SCIM outbound (downstream apps) | P3 | ~3 weeks | Push lifecycle events to Slack, Google Workspace, etc. |
+| Feature | GGID (target) | Okta Lifecycle | Entra ID Governance | SailPoint |
+|---------|---------------|----------------|---------------------|-----------|
+| HR connectors | Workday/BambooHR/SF | Yes | Yes (Workday native) | Yes (broadest) |
+| JML automation | ✅ Existing | Yes | Yes | Yes |
+| Dormant detection | **Configurable** | Yes | Yes | Yes |
+| Ghost accounts | **Reconciliation** | Partial | Yes | Yes (strongest) |
+| Approval workflows | **Multi-step** | Yes | Yes | Yes (advanced) |
+| SCIM outbound | **2.0** | Yes | Yes | Yes |
+| Open source | **Yes** | No | No | No |
 
-**Phase 1 (deprovisioning cascade)** is the highest-impact, lowest-risk improvement —
-it leverages existing `SessionService`, `TokenService`, and `audit.Publisher`; the main
-new code is the orchestration + MFA/grant revocation. **Phases 2–3** unlock enterprise
-SSO (Okta/Entra auto-provisioning). **Phases 4–5** move GGID toward a native IGA platform.
+---
+
+## References
+
+- [SCIM 2.0 Protocol (RFC 7644)](https://datatracker.ietf.org/doc/html/rfc7644) — Provisioning protocol
+- [Workday API](https://community.workday.com/api) — HR system integration
+- [BambooHR API](https://documentation.bamboohr.com/) — HR webhooks
+- [Okta Lifecycle Management](https://help.okta.com/en-us/Content/Topics/Provisioning/lifecycle/lifecycle-workflows.htm) — Reference
+- [Microsoft Entra ID Governance](https://learn.microsoft.com/en-us/entra/id-governance/) — Reference
+- [SailPoint IdentityNow](https://www.sailpoint.com/products/identity-security-cloud) — Enterprise IGA
+- [GGID JML Engine](../services/identity/internal/server/jml_engine.go) — At line 42
+- [GGID Lifecycle Handler](../services/identity/internal/server/lifecycle_handler.go) — 222 lines
+- [GGID SCIM Config](../services/identity/internal/server/scim_provisioning_config_handler.go) — Hardcoded
+- [GGID JIT Provisioning](./jit-user-provisioning.md) — JIT research
+- [GGID Identity Orchestration](./identity-orchestration-journeys.md) — Journey research
