@@ -56,7 +56,6 @@
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
-| F-05 | Onboarding Wizard 4 步引导 | P1 | console/src/app/onboarding/ | tenant 创建→admin 设置→LDAP 可选→完成 |
 | F-06 | Passkey 管理页删除接 signalCredentialRemoved | P2 | console/src/app/security/passkeys/ | 函数已就绪，接线即可 |
 | F-07 | Profile 改名页接 signalCurrentUserDetails | P2 | console/src/app/profile/ | 函数已就绪，接线即可 |
 
@@ -66,6 +65,8 @@
 | F-01 | ZT 姿态评分页面真实化 | frontend | 5a2a9728 |
 | F-02 | CIEM 权限使用分析页面 | frontend | 593c2c7e |
 | F-03 | SDK 假数据清理 153 hooks (Batch 1-5) | frontend | fc559c27+4 |
+| F-04 | IGA GenAI 辅助审查 UI | frontend | 6270900f |
+| F-05 | Onboarding Wizard 4 步引导 | frontend | IN_PROGRESS |
 
 ## === IAMEXPERT (pkg/crypto/ + 审计 + 设计) ===
 
