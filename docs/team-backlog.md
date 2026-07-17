@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 59: Continuous Authorization & PDP research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 60: MDM Integration research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -150,6 +150,9 @@
 | 124 | **Gateway PEP + Redis cache** (P0) | backend | Per-request authz | Gateway middleware calls PDP on every request + 5s Redis decision cache (<1ms cached, <5ms uncached) |
 | 125 | **DB-backed decision audit** (P0) | backend | Compliance | Replace in-memory decision log (evaluator.go:54 sync.Mutex+slice) with PostgreSQL + NATS async publish |
 | 126 | **Risk overlay + decision analytics** (P1) | backend | Adaptive authz | Risk score upgrades decision to step_up + decision audit trail query API (replace hardcoded stats) |
+| 127 | **MDM connector framework** (P0) | backend | Device compliance | Intune Graph API + Jamf Pro API connectors for device compliance posture. See docs/research/mdm-integration.md |
+| 128 | **Compliance policy engine** (P0) | backend | Device security | Configurable rules (min OS, encryption, jailbreak) + scoring + per-platform policies |
+| 129 | **Compliance webhooks + SCEP + attestation** (P1-P2) | backend | Real-time + certs | MDM webhooks → CAE session revocation + SCEP device cert provisioning + TPM/Apple/Android attestation |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -195,6 +198,7 @@
 19. Decentralized Identity & Verifiable Credentials → DONE (docs/research/decentralized-identity-vc.md) — 6 backlog items added
 20. Zero Trust Maturity Assessment → DONE (docs/research/zero-trust-maturity-assessment.md) — 6 backlog items added
 21. Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md) — 6 backlog items added
+22. MDM Integration → DONE (docs/research/mdm-integration.md) — 6 backlog items added
 
 ## Rules
 
@@ -210,6 +214,7 @@ Active research topics:
 - Decentralized Identity & Verifiable Credentials → DONE (docs/research/decentralized-identity-vc.md)
 - Zero Trust Maturity Assessment → DONE (docs/research/zero-trust-maturity-assessment.md)
 - Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md)
+- MDM Integration → DONE (docs/research/mdm-integration.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
