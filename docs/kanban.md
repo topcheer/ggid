@@ -136,6 +136,12 @@
 | KB-122 | **Scope enforcement + per-key rate limiting** (gateway) | backend | P1 | api-key-lifecycle | 2d |
 | KB-123 | **IP allow-list + usage tracking** | backend | P1 | api-key-lifecycle | 2d |
 | KB-124 | **Console key management + rotation UI** | frontend | P2 | api-key-lifecycle | 3d |
+| KB-125 | **Recovery DB schema + repository** (replace in-memory) | backend | P0 | credential-recovery | 2d |
+| KB-126 | **Recovery API + multi-factor verification pipeline** | backend | P0 | credential-recovery | 4d |
+| KB-127 | **Temporary Access Pass (TAP)** (15-min single-use) | backend | P0 | credential-recovery | 2d |
+| KB-128 | **Risk-based graduated delay + admin approval** | backend | P1 | credential-recovery | 3d |
+| KB-129 | **Recovery rate limiting + notifications + audit** | backend | P1 | credential-recovery | 2d |
+| KB-130 | **Console self-service + admin recovery UI** | frontend | P2 | credential-recovery | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -190,7 +196,8 @@
 | Identity Analytics & Reporting | DONE | docs/research/identity-analytics-reporting.md |
 | GraphQL API Layer for Identity Queries | DONE | docs/research/graphql-api-layer.md |
 | API Key Lifecycle Management | DONE | docs/research/api-key-lifecycle.md |
-| Credential Recovery Workflow Engine | NEXT | — |
+| Credential Recovery Workflow Engine | DONE | docs/research/credential-recovery-workflow.md |
+| Consent Management Platform (GDPR/CCPA) | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
 ---

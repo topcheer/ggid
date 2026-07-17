@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 52: API Key Lifecycle Management research complete — 7 new backlog items)*
+*Last updated: 2026-07-17 (Round 53: Credential Recovery Workflow Engine research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -118,6 +118,11 @@
 | 92 | **Key rotation + scope enforcement** (P1) | backend | Lifecycle | Rotation with 24h grace period + per-route scope checking + per-key Redis rate limiting |
 | 93 | **IP allow-list + usage tracking** (P1) | backend | Security | CIDR IP binding + async last_used/usage_count tracking |
 | 94 | **Console key management UI** (P2) | frontend | Self-service | Key create/list/revoke + rotation with grace countdown + usage analytics |
+| 95 | **Recovery DB schema + repository** (P0) | backend | Replace in-memory | Replace identity_recovery.go in-memory map with PostgreSQL. See docs/research/credential-recovery-workflow.md |
+| 96 | **Recovery API + multi-factor pipeline** (P0) | backend | Recovery engine | 6 REST endpoints + multi-factor verification (≥2 for medium risk) + crypto tokens |
+| 97 | **Temporary Access Pass** (P0) | backend | Passkey recovery | 15-min single-use TAP for lost passkey device → new credential enrollment |
+| 98 | **Risk-based delay + admin approval** (P1) | backend | Security | Graduated wait (0min→72h) based on risk score + dual-control admin approval |
+| 99 | **Recovery console UI** (P2) | frontend | Self-service | Self-service recovery page + admin approvals console + audit trail |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -156,6 +161,7 @@
 12. Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md) — 7 backlog items added
 13. GraphQL API Layer → DONE (docs/research/graphql-api-layer.md) — 7 backlog items added
 14. API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md) — 7 backlog items added
+15. Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md) — 6 backlog items added
 
 ## Rules
 
@@ -168,6 +174,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Credential Recovery Workflow Engine → DONE (docs/research/credential-recovery-workflow.md)
 - API Key Lifecycle Management → DONE (docs/research/api-key-lifecycle.md)
 - GraphQL API Layer → DONE (docs/research/graphql-api-layer.md)
 - Identity Analytics & Reporting → DONE (docs/research/identity-analytics-reporting.md)
