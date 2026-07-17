@@ -171,6 +171,7 @@
 | F-43 | Identity Analytics & Reporting Dashboard (5 tabs, SVG charts, compliance gen) | frontend | fa83a950 |
 | F-44 | Zero-Trust Secret Broker (5 tabs, Vault-level, JIT linkage) | frontend | 7f4c1855 |
 | F-45 | Threat Intelligence Hub (5 tabs, CrowdStrike-level, ITDR correlation) | frontend | 52fe00bd |
+| F-46 | API Key Lifecycle Management (4 tabs, create/rotate/revoke/scopes) | frontend | 34997441 |
 
 ## Research Pipeline
 
