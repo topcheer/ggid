@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 122
-## Last scan focus: D (Persistence, Round 121) — found 8 in-memory stores in F-40 audit + identity handlers, all without PG backing; violates retrospective checklist; DM'd arch
-## Next scan focus: E2E tests (Round 122 = even)
+## Current round: 123
+## Last scan focus: D (Persistence deep scan) — found 16 in-memory stores (11 audit + 5 auth) without PG; DLP backend still static stub; WASM F-42 not yet committed
+## Next scan focus: E2E tests (Round 122 = even) — pending
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
