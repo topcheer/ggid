@@ -28,7 +28,6 @@
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
 | B-07 | PAM JIT Zero Standing 实现 | P1 | services/policy/ + services/auth/ | request→approve→temp bind→expire→revoke→audit。参考 docs/architecture/pam-jit-design.md |
-| B-14 | CIEM /api/v1/identity/entitlement-review/cross-analysis | P2 | services/identity/ | 授予×使用交叉分析 |
 
 ### DONE
 | ID | Task | Assignee | Commit |
@@ -43,6 +42,7 @@
 | B-11 | ITDR Redis StateStore | backend | 709a94c4 |
 | B-12 | SCIM bearer token 实现 | backend | bb2fbf94 |
 | B-13 | ZT posture 真实聚合端点 | backend | d7ad68d1 |
+| B-14 | CIEM cross-analysis 端点 | backend | c6847200 |
 | B-15 | IGA GenAI 回收建议端点 | backend | 76aee44c |
 | B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | f3580d58 |
 
