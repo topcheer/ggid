@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 105
-## Last scan focus: E2E (Round 104) — Core 10/10, ERP 4/4, SDK Go+Py PASS; platform stable
-## Next scan focus: C (Middleware chain scan restart, Round 105 = odd round)
+## Current round: 106
+## Last scan focus: C (Middleware restart, Round 105) — all 7 services have panic recovery + tenant injection; auth rebuilt (10h old → fresh, internal/revoke-user now live with HMAC enforcement); gateway chain intact
+## Next scan focus: E2E tests (Round 106 = even round, Workflow A)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
