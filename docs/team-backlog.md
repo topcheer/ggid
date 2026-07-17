@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 47: JIT User Provisioning research complete — 9 new backlog items)*
+*Last updated: 2026-07-17 (Round 48: Fine-grained Delegation research complete — 8 new backlog items)*
 
 ## Current Stats
 
@@ -89,6 +89,12 @@
 | 63 | **JIT update + deprovisioning** (P1) | backend | Lifecycle | Update attrs on login; disable users removed from IdP |
 | 64 | **SCIM inbound JIT + dry-run API** (P1) | backend | SCIM provisioning | Enhance SCIM handler; JIT simulation/test mode |
 | 65 | **JIT provisioning dashboard** (P2) | frontend | Console UI | Source cards, event log, config editor, test mode |
+| 66 | **Delegation DB persistence** (P0) | backend | Delegation framework | Replace in-memory store with PostgreSQL. See docs/research/fine-grained-delegation-patterns.md |
+| 67 | **Delegation management API + evaluator** (P0) | backend | Self-service delegation | REST CRUD + policy evaluator checks delegated permissions |
+| 68 | **Per-resource delegation scoping** (P0) | backend | Fine-grained control | Scope delegation to specific resource_type + resource_id, not just permission keys |
+| 69 | **Delegation policy DSL + JWT act claim** (P1) | backend | Policy enforcement | YAML who→what→whom policy + act claim in delegated access tokens |
+| 70 | **Delegation approval workflow** (P1) | backend | Sensitive delegations | Manager/director approval for sensitive permission delegation |
+| 71 | **Delegation dashboard** (P2) | frontend | Console UI | Granted by me / granted to me lists, create wizard, activity log |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -122,6 +128,7 @@
 7. ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md) — 7 backlog items added
 8. Passwordless Migration → DONE (docs/research/passwordless-migration-strategy.md) — 7 backlog items added
 9. JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md) — 9 backlog items added
+10. Fine-grained Delegation → DONE (docs/research/fine-grained-delegation-patterns.md) — 8 backlog items added
 
 ## Rules
 
@@ -134,6 +141,7 @@
 ## Research Pipeline
 
 Active research topics:
+- Fine-grained Delegation Patterns → DONE (docs/research/fine-grained-delegation-patterns.md)
 - JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md)
 - Passwordless Migration Strategy → DONE (docs/research/passwordless-migration-strategy.md)
 - ZTNA Broker Integration → DONE (docs/research/ztna-broker-integration.md)
@@ -146,7 +154,7 @@ Active research topics:
 - AI agent identity governance patterns
 - NIS2 / CRA compliance for IAM vendors
 - Console mock data audit
-- **Next**: Fine-grained delegation patterns / Verifiable Credentials
+- **Next**: Verifiable Credentials / W3C DID
 
 See docs/research/ for full research docs.
 ---
