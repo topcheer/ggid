@@ -530,3 +530,42 @@ See docs/research/ for full research docs.
   2. 调用 navigator.credentials.get({ mediation: 'conditional' })
   3. 浏览器在 autofill 中展示 passkey + password 选项
 - 前端文件: console/src/app/login/page.tsx
+
+---
+
+## 数据安全法/PIPL 合规引擎：数据分类分级 + 访问控制联动 (2026-07-17 第10小时研究) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**市场背景**: 2025年《数据安全国家标准体系》+《网络数据安全管理条例》全面实施。核心要求：数据分类分级（一般/重要/核心）→ 按级别实施差异化的访问控制/加密/审计/出境管控。违规执法案例 2025 激增。GGID 作为 IAM 平台是合规落地的天然抓手。
+
+**GGID 现状审计**: 部分资产已就绪——
+- attribute_governance_handler.go（identity）：用户属性治理
+- pipl_data_inventory_handler.go（identity）：PIPL 数据清单
+- compliance_config_handler.go（audit）：合规配置
+- pii_logging.go（oauth）：PII 日志脱敏
+- 缺核心：数据分类分级标签体系 + 分级访问控制联动（分类标签→ABAC 条件→PDP 评估）
+
+**业务价值**: HIGH
+- 中国市场政企合规刚需（数据安全法第21条强制分类分级）
+- 与已建成的国密 SM2/SM3/SM4 + ABAC PDP + ITDR 审计链天然协同
+- GGID 从"IAM 平台"升级为"数据安全合规平台"的叙事升级
+
+**实现难度**: Medium
+- 实现路径：
+  1. identity 新增 data_classification 表（resource_type, resource_id, classification_level[general/important/core], tenant_id）
+  2. ABAC 条件 DSL 增加 $data.classification 属性（与 $security.* 同构，见 ztp-pdp-design.md）
+  3. PDP 评估：core 级数据要求 device_trusted + JIT + no_itdr_critical + MFA stepup
+  4. audit 事件增加 classification_level 字段，审计日志按分级差异化保留（core=7年, important=3年, general=1年）
+  5. 数据出境管控：core 级数据跨境访问 → 额外审批 + 日志
+
+**兼容性**: 复用 PDP（ztp-pdp-design.md）、国密加密、ITDR 审计；纯增量
+
+---
+
+## 数据主体权利自动化（PIPL 第44-50条） (2026-07-17 第10小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + frontend
+
+**描述**: PIPL 赋予数据主体 7 项权利（知情/查阅/复制/更正/删除/可携带/撤回同意）。GGID 作为身份与数据管理平台，应提供标准化的 DSR（Data Subject Rights）API。GDPR 的 GDPR 数据可移植性页面已存在，但 PIPL 版本尚缺（两法要求有差异）。
+
+**业务价值**: MEDIUM-HIGH | **实现难度**: Medium
+- GET /api/v1/identity/dsr/request — 数据主体提交权利请求
+- GET /api/v1/identity/dsr/export — 数据可携带（JSON 包，含用户全部数据）
+- POST /api/v1/identity/dsr/delete — 被遗忘权（级联删除 + 审计留痕）
