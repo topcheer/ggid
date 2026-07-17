@@ -138,6 +138,7 @@ interface CsrInfo {
 }
 
 export default function CertificatesPage() {
+  const t = useTranslations();
   const { apiFetch } = useApi();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csrFileInputRef = useRef<HTMLInputElement>(null);
@@ -410,9 +411,9 @@ export default function CertificatesPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
             <Shield className="h-7 w-7 text-brand-600" />
-            Certificate Manager
+            {t("certificates.title")}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Manage TLS, SAML, OAuth, and JWT certificates with CSR signing</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t("certificates.subtitle")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowCsr(true)} className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
@@ -462,7 +463,7 @@ export default function CertificatesPage() {
 
       {/* Certificates Table */}
       {loading ? (
-        <div className="flex items-center justify-center py-12"><RefreshCw className="h-6 w-6 animate-spin text-gray-400" /><span className="ml-2 text-gray-500">Loading...</span></div>
+        <div className="flex items-center justify-center py-12"><RefreshCw className="h-6 w-6 animate-spin text-gray-400" /><span className="ml-2 text-gray-500">{t("common.loading")}</span></div>
       ) : filteredCerts.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-12 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <Shield className="mx-auto mb-4 h-12 w-12 text-gray-300 dark:text-gray-600" />

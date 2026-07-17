@@ -189,10 +189,10 @@ export default function DataGovernancePage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
             <Shield className="h-6 w-6 text-emerald-500" />
-            Data Governance & Compliance
+            {t("dataGovernance.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Multi-jurisdiction data protection — PIPL, GDPR, CCPA, ISO 27001 compliance management.
+            {t("dataGovernance.subtitle")}
           </p>
         </div>
         <button onClick={loadData} disabled={loading} aria-label="Refresh" className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800">
@@ -220,7 +220,7 @@ export default function DataGovernancePage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {laws.length === 0 ? (
-              <div className={cardCls + " sm:col-span-2 lg:col-span-4"}><div className="py-8 text-center"><Scale className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No compliance data. Backend endpoints pending.</p></div></div>
+              <div className={cardCls + " sm:col-span-2 lg:col-span-4"}><div className="py-8 text-center"><Scale className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">{t("dataGovernance.noComplianceData")}</p></div></div>
             ) : laws.map(law => (
               <div key={law.id} className={cardCls}>
                 <div className="flex items-center justify-between">
@@ -249,7 +249,7 @@ export default function DataGovernancePage() {
       {tab === "assets" && (
         <div className={cardCls}>
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold uppercase text-gray-400"><Database className="h-4 w-4" /> Data Classification Matrix</h2>
-          {assets.length === 0 ? <div className="py-8 text-center"><Database className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No data assets registered.</p></div> : (
+          {assets.length === 0 ? <div className="py-8 text-center"><Database className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">{t("dataGovernance.noAssets")}</p></div> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900/50"><tr>
@@ -290,7 +290,7 @@ export default function DataGovernancePage() {
               <input aria-label="Search PII fields" type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search fields..." className="rounded-lg border dark:border-gray-700 dark:bg-gray-900 pl-8 pr-3 py-1.5 text-sm" />
             </div>
           </div>
-          {filteredPii.length === 0 ? <div className="py-8 text-center"><Lock className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">No PII fields cataloged.</p></div> : (
+          {filteredPii.length === 0 ? <div className="py-8 text-center"><Lock className="mx-auto h-10 w-10 text-gray-300" /><p className="mt-3 text-sm text-gray-400">{t("dataGovernance.noPiiFields")}</p></div> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900/50"><tr>

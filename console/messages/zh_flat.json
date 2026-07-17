@@ -4747,5 +4747,18 @@
   "federation.lastChecked": "上次检查",
   "federation.delete": "删除",
   "federation.entityType": "类型",
-  "common.next": "下一步"
+  "common.next": "下一步",
+  "dataGovernance.title": "数据治理与合规",
+  "dataGovernance.subtitle": "多管辖区数据保护 — PIPL、GDPR、CCPA、ISO 27001 合规管理。",
+  "dataGovernance.noComplianceData": "无合规数据。后端端点待就绪。",
+  "dataGovernance.noAssets": "未注册数据资产。",
+  "dataGovernance.noPiiFields": "未编目 PII 字段。",
+  "b2bCiam.title": "B2B CIAM — 自助与客户旅程",
+  "b2bCiam.subtitle": "客户身份管理 — 自助注册、品牌定制、基于风险的 MFA 和旅程分析。",
+  "b2bCiam.noData": "暂无数据。",
+  "certificates.subtitle": "管理 TLS、SAML、OAuth 和 JWT 证书及 CSR 签名",
+  "agents.subtitle": "注册和管理具有委派令牌交换的 AI 代理",
+  "passkeyMgmt.title": "通行密钥管理",
+  "passkeyMgmt.subtitle": "管理已注册的通行密钥并注册新设备。",
+  "passkeyMgmt.enrollPasskey": "注册通行密钥"
 }

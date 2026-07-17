@@ -218,10 +218,10 @@ export default function AgentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold dark:text-gray-100">
-            <Bot className="h-6 w-6 text-brand-600" /> AI Agents
+            <Bot className="h-6 w-6 text-brand-600" /> {t("agents.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Register and manage AI agents with delegated token exchange
+            {t("agents.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">

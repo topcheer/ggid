@@ -137,10 +137,10 @@ export default function B2BCIAMPage() {
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
             <Building2 className="h-6 w-6 text-indigo-500" />
-            B2B CIAM — Self-Service & Customer Journey
+            {t("b2bCiam.title")}
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Customer identity management — self-registration, branding, risk-based MFA, and journey analytics.
+            {t("b2bCiam.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export default function B2BCIAMPage() {
                 </div>
                 {metrics.drop_off_step && <p className="mt-2 flex items-center gap-1 text-xs text-yellow-600"><AlertTriangle className="h-3 w-3" /> Most users drop off at: <span className="font-medium">{metrics.drop_off_step}</span></p>}
               </div>
-            ) : <p className="text-sm text-gray-400">No data available.</p>}
+            ) : <p className="text-sm text-gray-400">{t("b2bCiam.noData")}</p>}
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[

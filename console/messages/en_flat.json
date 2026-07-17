@@ -4869,5 +4869,18 @@
   "federation.lastChecked": "Last checked",
   "federation.delete": "Delete",
   "federation.entityType": "Type",
-  "common.next": "Next"
+  "common.next": "Next",
+  "dataGovernance.title": "Data Governance & Compliance",
+  "dataGovernance.subtitle": "Multi-jurisdiction data protection — PIPL, GDPR, CCPA, ISO 27001 compliance management.",
+  "dataGovernance.noComplianceData": "No compliance data. Backend endpoints pending.",
+  "dataGovernance.noAssets": "No data assets registered.",
+  "dataGovernance.noPiiFields": "No PII fields cataloged.",
+  "b2bCiam.title": "B2B CIAM — Self-Service & Customer Journey",
+  "b2bCiam.subtitle": "Customer identity management — self-registration, branding, risk-based MFA, and journey analytics.",
+  "b2bCiam.noData": "No data available.",
+  "certificates.subtitle": "Manage TLS, SAML, OAuth, and JWT certificates with CSR signing",
+  "agents.subtitle": "Register and manage AI agents with delegated token exchange",
+  "passkeyMgmt.title": "Passkey Management",
+  "passkeyMgmt.subtitle": "Manage registered passkeys and enroll new devices.",
+  "passkeyMgmt.enrollPasskey": "Enroll Passkey"
 }

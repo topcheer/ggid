@@ -73,18 +73,18 @@ export default function PasskeyManagementPage() {
     setRevokeTarget(null);
   };
 
-  if (loading) return <div className="p-6"><p>Loading...</p></div>;
+  if (loading) return <div className="p-6"><p>{t("common.loading")}</p></div>;
   if (error) return <div className="p-6 text-red-600">Error: {error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Passkey Management</h1>
-          <p className="text-gray-600">Manage registered passkeys and enroll new devices.</p>
+          <h1 className="text-2xl font-bold">{t("passkeyMgmt.title")}</h1>
+          <p className="text-gray-600">{t("passkeyMgmt.subtitle")}</p>
         </div>
         <button onClick={() => setShowEnroll(!showEnroll)} className="px-4 py-2 bg-blue-600 text-white rounded text-sm">
-          {showEnroll ? 'Cancel' : 'Enroll Passkey'}
+          {showEnroll ? t("common.cancel") : t("passkeyMgmt.enrollPasskey")}
         </button>
       </div>
 
