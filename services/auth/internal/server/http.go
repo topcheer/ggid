@@ -44,7 +44,8 @@ type Handler struct {
 	waCredStore    webauthn.CredentialStore
 	revocationMgr  *service.SessionRevocationManager
 	breakGlassRepo  *repository.BreakGlassRepository
-	smsSender       service.SMSSender
+	smsSender           service.SMSSender
+	memMapRepo          *authMemoryMapRepo
 	internalSecret     string
 	internalPrevSecret string
 }
@@ -96,6 +97,10 @@ func (h *Handler) SetInternalAuthSecret(secret, prevSecret string) {
 // SetSysconfigStore injects the system config store for hot-reloadable settings.
 func (h *Handler) SetSysconfigStore(store sysconfig.Store) {
 	h.sysconfigStore = store
+}
+
+func (h *Handler) SetMemMapRepo(repo *authMemoryMapRepo) {
+	h.memMapRepo = repo
 }
 
 // t translates a message key for the given request's locale.

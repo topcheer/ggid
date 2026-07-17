@@ -42,6 +42,7 @@ type HTTPServer struct {
 	hub           *StreamHub
 	itdrRepo      *repository.ITDRRepository
 	compositeRepo *compositeRuleRepo
+	memMapRepo2   *auditMemoryMapRepo2
 }
 
 // SetITDRRepository injects the ITDR repository for detection API queries.
@@ -52,6 +53,10 @@ func (s *HTTPServer) SetITDRRepository(repo *repository.ITDRRepository) {
 // SetCompositeRepo injects the composite rule repository.
 func (s *HTTPServer) SetCompositeRepo(repo *compositeRuleRepo) {
 	s.compositeRepo = repo
+}
+
+func (s *HTTPServer) SetMemMapRepo2(repo *auditMemoryMapRepo2) {
+	s.memMapRepo2 = repo
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.

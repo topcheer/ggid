@@ -171,8 +171,16 @@ func main() {
 			log.Printf("Warning: ITDR EnsureSchema failed: %v", err)
 		}
 		httpAPI.SetITDRRepository(itdrRepo)
+
+		// Memory map batch 2: integrity, webhook_deliveries, dsr_requests, collect_schedules, dedup
+		mmRepo2 := httpserver.NewAuditMemoryMapRepo2(db)
+		if err := mmRepo2.EnsureSchema(ctx); err != nil {
+			log.Printf("Warning: MemoryMap2 EnsureSchema failed: %v", err)
+		}
+		httpAPI.SetMemMapRepo2(mmRepo2)
+
 		log.Println("Audit Service: ITDR API enabled")
-	}
+}
 
 	httpAPI.RegisterRoutes(mux)
 

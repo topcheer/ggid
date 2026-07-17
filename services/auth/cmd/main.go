@@ -216,6 +216,13 @@ func main() {
 	authSvc.SetBackupCodeService(backupCodeService)
 
 	handler := server.New(authSvc)
+
+	// Wire memory map repo for auth in-memory stores → PG
+	authMM := server.NewAuthMemoryMapRepo(pool)
+	if err := authMM.EnsureSchema(ctx); err != nil {
+		log.Printf("Warning: auth memmap EnsureSchema failed: %v", err)
+	}
+	handler.SetMemMapRepo(authMM)
 	handler.SetSysconfigStore(sysconfigStore)
 	// Wire DB-backed WebAuthn credential store so passkeys persist across restarts.
 	if pool != nil {
