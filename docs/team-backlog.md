@@ -225,3 +225,44 @@ See docs/research/ for full research docs.
 **业务价值**: MEDIUM-HIGH（欧盟市场准入 + 政府/金融场景差异化）
 **实现难度**: High（DID 方法选择 + VC JSON-LD 签名 + VP 验证 + Wallet 交互协议）
 - 完整路径：DID:web 方法 → VC签发（JSON-LD + Ed25519/SM2 签名）→ VP 验证端点 → statusList 吊销 → Console 签发管理
+
+---
+
+## PKCE Global Mandatory (2026-07-17 研究驱动 OAuth 2.1) - Priority: P1 - Status: Proposed - Suggested: backend
+
+**描述**: OAuth 2.1 (draft-15) 要求所有客户端使用 PKCE。当前 PKCE 在 RequirePKCE=true 或 public client 时强制，但不是全局默认。应改为默认强制，仅允许受信任的 confidential client opt-out。
+
+**业务价值**: HIGH — OAuth 2.1 合规基础要求 | **实现难度**: Low
+- 实现路径：
+  1. oauth/internal/conf: `RequirePKCE` 默认 true
+  2. server.go:331-332 — 移除 RequirePKCE 条件检查，改为全局检查（除非 client 显式标记 PKCE 豁免）
+  3. 客户端管理增加 `pkce_optional` 字段（仅 trusted confidential clients）
+- 参考: docs/research/oauth21-fapi2-mcp-auth-gap.md
+
+---
+
+## RAR (Rich Authorization Requests) (2026-07-17 研究驱动 FAPI 2.0) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: FAPI 2.0 要求 RAR 支持 — `authorization_details` 参数允许细粒度、类型化的授权请求（如 "transfer 100 EUR to account X"），比传统 scope 更精确。GGID 未实现。
+
+**业务价值**: MEDIUM-HIGH — 金融场景必需 | **实现难度**: Medium
+- 实现路径：
+  1. OAuth authorize 端点接收 `authorization_details` JSON 数组
+  2. 类型验证（每种 type 有独立 schema）
+  3. consent screen 展示 RAR details
+  4. token 中嵌入 authorization_details claim
+  5. 资源服务验证 details
+- 参考: docs/research/oauth21-fapi2-mcp-auth-gap.md
+
+---
+
+## Agent Token Revocation + Audit (2026-07-17 研究驱动 MCP Auth) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**描述**: GGID 有 AI agent 注册和 token 发放，但缺少：(1) agent token 主动撤销 API (2) MCP server 访问审计（哪个 agent 访问了哪个 server）。Agent 安全面需要这些能力。
+
+**业务价值**: MEDIUM — AI agent 安全闭环 | **实现难度**: Medium
+- 实现路径：
+  1. POST /api/v1/agents/{id}/revoke — 撤销 agent 所有 token
+  2. 审计事件：agent token 发放 + MCP server 访问写入 audit_events
+  3. Console 页面：agent 活动审计日志
+- 参考: docs/research/oauth21-fapi2-mcp-auth-gap.md
