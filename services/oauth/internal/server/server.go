@@ -1837,6 +1837,17 @@ func buildHandler(oauthSvc *service.OAuthService, cfg *conf.Config, rotatingKP *
 
 	// RAR (RFC 9396): consent preview for authorization_details.
 	mux.HandleFunc("/api/v1/oauth/rar/consent-preview", RARConsentPreviewHandler)
+
+	// Previously unreachable handlers — now registered.
+	mux.HandleFunc("/api/v1/oauth/client-cert", handleClientCert)
+	mux.HandleFunc("/api/v1/oauth/client-events", handleClientEvents)
+	mux.HandleFunc("/api/v1/oauth/client-rate-limits", handleClientRateLimits)
+	mux.HandleFunc("/api/v1/oauth/onboarding-checklist", handleOnboardingChecklist)
+	mux.HandleFunc("/api/v1/oauth/rotation-policy", handleRotationPolicy)
+	mux.HandleFunc("/api/v1/oauth/scope-drift", handleScopeDrift)
+	mux.HandleFunc("/api/v1/oauth/secret-compare", handleSecretCompare)
+	mux.HandleFunc("/api/v1/oauth/secret-history", handleSecretHistory)
+	mux.HandleFunc("/api/v1/oauth/validate-client-secret", handleValidateClientSecret)
 	mux.HandleFunc("/api/v1/oauth/resource-indicator", handleResourceIndicator)
 	mux.HandleFunc("/api/v1/oauth/resource-allowed", handleResourceAllowed)
 	mux.HandleFunc("/api/v1/oauth/token-events/stream", handleTokenEventStream)
