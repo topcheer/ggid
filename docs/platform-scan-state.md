@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 99
-## Last scan focus: E2E (Round 98) — Core 7/7, ERP 4/4, OAuth 3/3, SDK 5/5 (Go/Py/Node/Dart tested); platform stable
-## Next scan focus: G (SDK function matrix, Round 99 = odd round, Workflow B)
+## Current round: 100
+## Last scan focus: G (SDK function matrix, Round 99) — 8/8 methods x 8/8 SDKs = 64/64 PASS; complete coverage
+## Next scan focus: E2E tests (Round 100 = even round, Workflow A)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)

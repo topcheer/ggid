@@ -244,3 +244,18 @@ All services extract X-Tenant-ID at the handler level and set up ggidtenant cont
 | WebAuthn | DONE | Registration + attestation verification (R95) |
 
 **1 known gap:** CIBA bc-authorize endpoint missing (config-only, tracked).
+
+### Round 99 Focus G — SDK Function Matrix Results
+
+| Method | Go | Rust | Python | Ruby | Java | Node | C# | Dart |
+|--------|----|----|--------|------|------|------|----|----|
+| login | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| refresh | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| userinfo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| jwks | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| rbac | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| introspect | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| revoke | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| discovery | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+**8/8 methods x 8/8 SDKs = 64/64 PASS.** Complete coverage.
