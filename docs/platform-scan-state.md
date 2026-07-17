@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 125
-## Last scan focus: E2E (Round 124) — Core 10/10, ERP 4/4, make test PASS; PQC rename ACCEPT, DPoP proof enforcement ACCEPT
-## Next scan focus: F (Coverage scan, Round 125 = odd)
+## Current round: 126
+## Last scan focus: E2E (Round 125) — Core 10/10, ERP 4/4; console route aliases deployed (/risk-scoring + /threat-intel → 200); 3 user guides (F-46/F-47/F-48)
+## Next scan focus: F (Coverage scan, Round 126 = even)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
