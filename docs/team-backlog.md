@@ -681,3 +681,43 @@ curl -X DELETE /api/v1/identity/secrets/sec_xyz789 -H "Authorization: Bearer $TO
 
 **业务价值**: MEDIUM — OAuth 2.1 合规 | **实现难度**: Low
 - 参考: draft-ietf-oauth-v2-1-15, docs/research/oauth21-mcp-agent-auth-pqc-migration.md
+
+---
+
+## Threat Intelligence Integration Hub (ITDR 外部情报集成) (2026-07-18 第21小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**市场背景**: CrowdStrike/Splunk/IBM QRadar 2025 核心能力 — ITDR 检测引擎 + 外部威胁情报源（AlienVault OTX/AbuseIPDB/ HaveIBeenPwned/MISP）联动。GGID ITDR 引擎有 6+ 内部检测规则（brute_force/credential_stuffing/impossible_travel/baseline_deviation），但缺外部情报源接入。增加已知恶意 IP/泄露凭据/代理检测 → 提升检测准确率 + 降低误报。
+
+**GGID 现状**：threat_intel_feed_handler.go 存在但仅 69 行（stub）。ITDR 引擎不查询外部情报。CAE risk engine 不消费 threat feed。
+
+**完整实现路径（不降级）**：
+1. threat_intel_sources 表（tenant_id + name + type[ip_hash/credential/domain] + api_endpoint + api_key_ref + poll_interval + enabled）
+2. threat_indicators 表（source_id + indicator_type + value + severity + first_seen + last_seen + confidence）
+3. 情报采集器：定时 poll 外部 API（OTX/AbuseIPDB/HIBP）→ 解析 → 存 threat_indicators → TTL 过期清理
+4. ITDR 联动：每次 login/access → 查 threat_indicators（IP/email/hash）→ hit → 提升 risk score + ITDR detection
+5. CAE 联动：threat indicator hit → risk_engine 提高 → 可能触发 step-up MFA 或 session revoke
+6. Console：情报源配置 + indicators 统计 + hit 热力图
+
+**端点清单**：
+- GET/POST /api/v1/audit/threat-intel/sources — 情报源 CRUD
+- GET /api/v1/audit/threat-intel/indicators — indicators 查询
+- POST /api/v1/audit/threat-intel/check — 手动检查（IP/email → threat match）
+- GET /api/v1/audit/threat-intel/stats — 统计（source count / indicator count / hit count 24h）
+
+**验收 curl**：
+```bash
+# 注册情报源
+curl -X POST /api/v1/audit/threat-intel/sources -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"AbuseIPDB","type":"ip","api_endpoint":"https://api.abuseipdb.com/api/v2/check","poll_interval":"1h"}'
+
+# 检查 IP
+curl -X POST /api/v1/audit/threat-intel/check -H "Authorization: Bearer $TOKEN" \
+  -d '{"indicator":"192.168.1.100","type":"ip"}'
+
+# 统计
+curl /api/v1/audit/threat-intel/stats -H "Authorization: Bearer $TOKEN"
+```
+
+**业务价值**: HIGH（ITDR 从纯内部规则 → 内外联动，检测准确率显著提升）
+**实现难度**: Medium（外部 API 适配 + 定时采集 + ITDR 注入）
+**工作量**: ~4d
