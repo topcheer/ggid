@@ -168,6 +168,38 @@ func (r *CampaignRepo) ListRevokeItems(ctx context.Context, campaignID string) (
 	return items, nil
 }
 
+// ListItems returns ALL items for a campaign (regardless of decision).
+func (r *CampaignRepo) ListItems(ctx context.Context, campaignID string) ([]*CampaignItem, error) {
+	if r.pool == nil {
+		return []*CampaignItem{}, nil
+	}
+	cid, err := uuid.Parse(campaignID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid campaign_id: %w", err)
+	}
+	rows, err := r.pool.Query(ctx, `
+		SELECT id, campaign_id::text, user_id::text, role_id::text, decision, decided_at, created_at
+		FROM iga_campaign_items WHERE campaign_id = $1
+		ORDER BY created_at DESC
+	`, cid)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*CampaignItem
+	for rows.Next() {
+		var item CampaignItem
+		var decidedAt *time.Time
+		if err := rows.Scan(&item.ID, &item.CampaignID, &item.UserID, &item.RoleID, &item.Decision, &decidedAt, &item.CreatedAt); err != nil {
+			continue
+		}
+		item.DecidedAt = decidedAt
+		items = append(items, &item)
+	}
+	return items, nil
+}
+
 // AddItem adds a review item to a campaign.
 func (r *CampaignRepo) AddItem(ctx context.Context, item *CampaignItem) error {
 	if r.pool == nil {
