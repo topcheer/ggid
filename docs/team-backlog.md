@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 48: Fine-grained Delegation research complete — 8 new backlog items)*
+*Last updated: 2026-07-17 (Round 49: WASM Plugin Architecture research complete — 7 new backlog items)*
 
 ## Current Stats
 
@@ -95,6 +95,13 @@
 | 69 | **Delegation policy DSL + JWT act claim** (P1) | backend | Policy enforcement | YAML who→what→whom policy + act claim in delegated access tokens |
 | 70 | **Delegation approval workflow** (P1) | backend | Sensitive delegations | Manager/director approval for sensitive permission delegation |
 | 71 | **Delegation dashboard** (P2) | frontend | Console UI | Granted by me / granted to me lists, create wizard, activity log |
+| 72 | **Plugin DB schema + repository** (P0) | backend | Plugin persistence | PostgreSQL-backed plugin registry with .wasm binary storage. See docs/research/wasm-plugin-architecture.md |
+| 73 | **Plugin management API** (P0) | backend | Plugin CRUD | Upload/enable/disable/test/version plugins via REST |
+| 74 | **Per-tenant runtime isolation + resource limits** (P0) | backend | Sandbox security | Separate wazero runtime per tenant + ResourceLimiter (memory/fuel/timeout) |
+| 75 | **Universal hook dispatcher** (P0) | backend | Pipeline integration | 10 hooks across auth/token/policy/jit/gateway services |
+| 76 | **Auth/token/policy hook integration** (P1) | backend | Custom logic | post_login claim injection, pre_issue token modify, pre_check policy override |
+| 77 | **Plugin SDK** (P1) | backend | Developer experience | Go + Rust bindings, example plugins, documentation |
+| 78 | **Plugin dashboard** (P2) | frontend | Console UI | Plugin list, upload wizard, hook selector, test mode, execution stats |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -129,6 +136,7 @@
 8. Passwordless Migration → DONE (docs/research/passwordless-migration-strategy.md) — 7 backlog items added
 9. JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md) — 9 backlog items added
 10. Fine-grained Delegation → DONE (docs/research/fine-grained-delegation-patterns.md) — 8 backlog items added
+11. WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md) — 7 backlog items added
 
 ## Rules
 
@@ -141,6 +149,7 @@
 ## Research Pipeline
 
 Active research topics:
+- WASM Plugin Architecture → DONE (docs/research/wasm-plugin-architecture.md)
 - Fine-grained Delegation Patterns → DONE (docs/research/fine-grained-delegation-patterns.md)
 - JIT User Provisioning → DONE (docs/research/jit-user-provisioning.md)
 - Passwordless Migration Strategy → DONE (docs/research/passwordless-migration-strategy.md)

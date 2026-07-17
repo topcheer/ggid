@@ -108,6 +108,13 @@
 | KB-094 | **JWT act claim injection** (delegation in access token) | backend | P1 | delegation-patterns | 3d |
 | KB-095 | **Delegation approval workflow** (sensitive delegations) | backend | P1 | delegation-patterns | 3d |
 | KB-096 | **Delegation dashboard** (Console self-service UI) | frontend | P2 | delegation-patterns | 3d |
+| KB-097 | **Plugin DB schema + repository** (PostgreSQL-backed) | backend | P0 | wasm-plugin | 2d |
+| KB-098 | **Plugin management API** (upload/enable/disable/test) | backend | P0 | wasm-plugin | 3d |
+| KB-099 | **Per-tenant runtime isolation + resource limits** | backend | P0 | wasm-plugin | 3d |
+| KB-100 | **Hook dispatcher** (10 hooks: auth/token/policy/jit/gateway) | backend | P0 | wasm-plugin | 4d |
+| KB-101 | **Auth/token/policy hook integration** | backend | P1 | wasm-plugin | 5d |
+| KB-102 | **Plugin SDK** (Go + Rust bindings) | backend | P1 | wasm-plugin | 3d |
+| KB-103 | **Plugin dashboard + upload wizard** (Console) | frontend | P2 | wasm-plugin | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -154,6 +161,7 @@
 | Passwordless Migration | DONE | docs/research/passwordless-migration-strategy.md |
 | JIT User Provisioning | DONE | docs/research/jit-user-provisioning.md |
 | Fine-grained Delegation Patterns | DONE | docs/research/fine-grained-delegation-patterns.md |
+| WASM Plugin Architecture | DONE | docs/research/wasm-plugin-architecture.md |
 | Verifiable Credentials / W3C DID | NEXT | — |
 | PQC Migration | IN PROGRESS | docs/guides/post-quantum-crypto-migration.md |
 
