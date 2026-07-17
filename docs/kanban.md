@@ -154,6 +154,7 @@
 | — | OAuth 2.1 enforcement mode | backend | dfcb8a7f |
 | — | FAPI 2.0 profile | backend | ccae234f |
 | F-42 | WASM Plugin Management Console (5 tabs, 10 hooks, upload wizard) | frontend | f7355534 |
+| F-43 | Identity Analytics & Reporting Dashboard (5 tabs, SVG charts, compliance gen) | frontend | fa83a950 |
 
 ## Research Pipeline
 
