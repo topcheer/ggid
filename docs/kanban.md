@@ -27,7 +27,7 @@
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
-| B-07 | PAM JIT Zero Standing 实现 | P1 | services/policy/ + services/auth/ | request→approve→temp bind→expire→revoke→audit。参考 docs/architecture/pam-jit-design.md |
+| B-06 | RFC 8693 Token Exchange | P1 | services/oauth/ | docs/research/token-exchange-standard-grant-gap.md |
 
 ### DONE
 | ID | Task | Assignee | Commit |
@@ -45,6 +45,7 @@
 | B-14 | CIEM cross-analysis 端点 | backend | c6847200 |
 | B-15 | IGA GenAI 回收建议端点 | backend | 76aee44c |
 | B-05 | 内部认证：6 服务 mux 包裹 InternalAuth | backend | f3580d58 |
+| B-07 | PAM JIT Zero Standing 实现 | backend | 0a083fff |
 
 ## === FRONTEND (console/src/) ===
 
