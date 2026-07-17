@@ -122,6 +122,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.devicePostureRepo = dpRepo
 
+	// Journey definitions (JDL).
+	journeyRepo := newJourneyRepo(pool)
+	if err := journeyRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Journey schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetJourneyRepo(journeyRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,

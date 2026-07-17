@@ -45,6 +45,7 @@ type HTTPHandler struct {
 	lifecycleEngine  *JMLEngine
 	dataGovRepo      *dataGovRepo
 	abRepo           *accessBrokerRepo
+	journeyRepo      *journeyRepo
 	devicePostureRepo *devicePostureRepo
 }
 
