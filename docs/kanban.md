@@ -208,6 +208,10 @@
 | KB-194 | **SOAR webhook + auto-response** (session revoke + account lock on critical) | backend | P1 | itdr-maturity | 3d |
 | KB-195 | **ML-based UEBA** (isolation forest, per-user models, anomaly scoring) | backend | P2 | itdr-maturity | 4d |
 | KB-196 | **MITRE coverage dashboard + detection-as-code** (YAML versioned rules) | backend | P2 | itdr-maturity | 3d |
+| KB-197 | **Asymmetric SD-JWT + erasure pipeline** (EdDSA + cascade deletion) | backend | P0 | pets-privacy | 4d |
+| KB-198 | **BBS+ signatures** (unlinkable selective disclosure) | backend | P1 | pets-privacy | 4d |
+| KB-199 | **Differential privacy + crypto-shredding** (analytics noise + DEK deletion) | backend | P1 | pets-privacy | 3d |
+| KB-200 | **Pseudonymization vault + data minimization** (CMK tokenization) | backend | P2 | pets-privacy | 4d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -325,6 +329,7 @@
 | Service Mesh & Microsegmentation | DONE | docs/research/service-mesh-microsegmentation.md |
 | API Gateway Hardening & Rate Limiting | DONE | docs/research/api-gateway-hardening.md |
 | ITDR Maturity & MITRE ATT&CK Mapping | DONE | docs/research/itdr-maturity-mitre-attack.md |
+| Privacy-Enhancing Technologies (PETs) | DONE | docs/research/pets-privacy-by-design.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---

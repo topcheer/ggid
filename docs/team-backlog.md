@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 65: ITDR Maturity & MITRE ATT&CK Mapping research complete — 5 new backlog items)*
+*Last updated: 2026-07-17 (Round 66: Privacy-Enhancing Technologies research complete — 4 new backlog items)*
 
 ## Current Stats
 
@@ -165,6 +165,9 @@
 | 139 | **Request validation + observability** (P1) | backend | Gateway hardening | JSON schema validation + SQLi/XSS payload sanitization + P50/P95/P99 latency histograms |
 | 140 | **8 new ITDR detection rules** (P0) | backend | Threat detection | consent_phishing/mfa_fatigue/token_theft/session_hijack/mass_creation/federation_anomaly/mfa_bypass/mass_export. See docs/research/itdr-maturity-mitre-attack.md |
 | 141 | **Attack simulation + SOAR + ML UEBA** (P1-P2) | backend | Enterprise ITDR | Purple team simulation API + SOAR webhook auto-response + isolation forest ML anomaly detection + MITRE coverage dashboard |
+| 142 | **Asymmetric SD-JWT + erasure pipeline** (P0) | backend | Privacy | Upgrade SD-JWT from HMAC to EdDSA + automated right-to-be-forgotten cascade deletion. See docs/research/pets-privacy-by-design.md |
+| 143 | **BBS+ + differential privacy** (P1) | backend | Privacy | BBS+ unlinkable selective disclosure + Laplace noise for analytics + crypto-shredding per-user DEK |
+| 144 | **Pseudonymization + minimization** (P2) | backend | Privacy | CMK-backed pseudonymization vault + schema-level data minimization rules + retention auto-purge |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -216,6 +219,7 @@
 25. Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md) — 5 backlog items added
 26. API Gateway Hardening & Rate Limiting → DONE (docs/research/api-gateway-hardening.md) — 4 backlog items added
 27. ITDR Maturity & MITRE ATT&CK Mapping → DONE (docs/research/itdr-maturity-mitre-attack.md) — 5 backlog items added
+28. Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md) — 4 backlog items added
 
 ## Rules
 
@@ -237,6 +241,7 @@ Active research topics:
 - Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md)
 - API Gateway Hardening → DONE (docs/research/api-gateway-hardening.md)
 - ITDR Maturity & MITRE ATT&CK → DONE (docs/research/itdr-maturity-mitre-attack.md)
+- Privacy-Enhancing Technologies → DONE (docs/research/pets-privacy-by-design.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
