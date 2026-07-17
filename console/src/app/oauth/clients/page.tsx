@@ -29,6 +29,7 @@ export default function OAuthClientsPage() {
 
   const { apiFetch } = useApi();
   const [clients, setClients] = useState<OAuthClient[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [msg, setMsg] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function OAuthClientsPage() {
       if (!data) { setClients([]); return; }
       setClients(Array.isArray(data) ? data : data.clients || []);
     } catch {
+      setError("Failed to load OAuth clients");
       setClients([]);
     } finally {
       setLoading(false);

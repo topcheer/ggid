@@ -57,6 +57,7 @@ export default function OAuthFlowsPage() {
   const { apiFetch } = useApi();
   const [clients, setClients] = useState<OAuthClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<number | null>(null);
   const [flowHistory, setFlowHistory] = useState<FlowRecord[]>([]);

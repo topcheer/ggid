@@ -64,6 +64,7 @@ export default function DashboardPage() {
   const { apiFetch } = useApi();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<ServiceHealth[]>([]);
   const [compliance, setCompliance] = useState<ComplianceInfo | null>(null);
   const [sod, setSod] = useState<SoDInfo | null>(null);
@@ -90,6 +91,7 @@ export default function DashboardPage() {
       if (sodRes) setSod(sodRes);
       if (reviewRes) setAccessReview(reviewRes);
     } catch {
+      setError("Failed to load dashboard data");
       /* ignore */
     } finally {
       setLoading(false);

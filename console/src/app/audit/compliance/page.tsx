@@ -95,6 +95,7 @@ export default function ComplianceReportPage() {
 
   const { apiFetch } = useApi();
   const [reports, setReports] = useState<ComplianceReport[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [selectedFramework, setSelectedFramework] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
