@@ -199,6 +199,10 @@
 | KB-185 | **ExtAuthz adapter** (Envoy → GGID PDP for east-west authz) | backend | P1 | service-mesh | 3d |
 | KB-186 | **SPIFFE ID registry + mesh policy management API** | backend | P1 | service-mesh | 3d |
 | KB-187 | **Distributed tracing + mesh observability** (Jaeger + Prometheus) | devops | P2 | service-mesh | 2d |
+| KB-188 | **Hierarchical rate limiting** (per-user/key/IP/endpoint + burst/sustained) | backend | P0 | gateway-hardening | 4d |
+| KB-189 | **Circuit breaker in router** (per-backend, auto-trip + half-open) | backend | P0 | gateway-hardening | 3d |
+| KB-190 | **Request validation + payload sanitization** (JSON schema, SQLi/XSS) | backend | P1 | gateway-hardening | 3d |
+| KB-191 | **Enhanced observability** (P50/P95/P99 histograms + hardening dashboard) | backend | P1 | gateway-hardening | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -314,6 +318,7 @@
 | Customer-Managed Keys (CMK) & KMS Integration | DONE | docs/research/customer-managed-keys-kms.md |
 | DLP Egress Control & PII Redaction | DONE | docs/research/dlp-egress-pii-redaction.md |
 | Service Mesh & Microsegmentation | DONE | docs/research/service-mesh-microsegmentation.md |
+| API Gateway Hardening & Rate Limiting | DONE | docs/research/api-gateway-hardening.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---

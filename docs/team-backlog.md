@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 63: Service Mesh & Microsegmentation research complete — 5 new backlog items)*
+*Last updated: 2026-07-17 (Round 64: API Gateway Hardening research complete — 4 new backlog items)*
 
 ## Current Stats
 
@@ -161,6 +161,8 @@
 | 135 | **Istio mTLS + microsegmentation** (P0) | devops | Network pillar | Istio sidecar auto-injection on k3s + mTLS STRICT + zone-based default-deny segmentation. See docs/research/service-mesh-microsegmentation.md |
 | 136 | **ExtAuthz + mesh policy API** (P1) | backend | East-west authz | Envoy ExtAuthz adapter calling GGID PDP for inter-service authz + SPIFFE ID registry + mesh policy CRUD |
 | 137 | **Mesh observability** (P2) | devops | Visibility | Jaeger distributed tracing + Prometheus mesh metrics + traffic visualization |
+| 138 | **Hierarchical rate limiting + circuit breaker** (P0) | backend | Gateway hardening | Per-user/key/IP/endpoint rate limits (Redis) with burst/sustained + per-backend circuit breaker. See docs/research/api-gateway-hardening.md |
+| 139 | **Request validation + observability** (P1) | backend | Gateway hardening | JSON schema validation + SQLi/XSS payload sanitization + P50/P95/P99 latency histograms |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -210,6 +212,7 @@
 23. CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md) — 6 backlog items added
 24. DLP Egress Control & PII Redaction → DONE (docs/research/dlp-egress-pii-redaction.md) — 4 backlog items added
 25. Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md) — 5 backlog items added
+26. API Gateway Hardening & Rate Limiting → DONE (docs/research/api-gateway-hardening.md) — 4 backlog items added
 
 ## Rules
 
@@ -229,6 +232,7 @@ Active research topics:
 - CMK & KMS Integration → DONE (docs/research/customer-managed-keys-kms.md)
 - DLP Egress Control → DONE (docs/research/dlp-egress-pii-redaction.md)
 - Service Mesh & Microsegmentation → DONE (docs/research/service-mesh-microsegmentation.md)
+- API Gateway Hardening → DONE (docs/research/api-gateway-hardening.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
