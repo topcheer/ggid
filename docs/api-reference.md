@@ -1521,4 +1521,384 @@ If both `tenant_slug` and `X-Tenant-ID` header are provided, the header takes pr
 
 ---
 
-*Last updated: 2026-07-15*
+## ITDR Endpoints (Identity Threat Detection & Response)
+
+### List Detections
+```http
+GET /api/v1/audit/itdr/detections
+Authorization: Bearer <JWT>
+X-Tenant-ID: <tenant-id>
+```
+**Query params:** `?severity=critical&status=open&limit=50&offset=0`
+**Response 200:**
+```json
+{
+  "detections": [
+    {
+      "id": "det-uuid",
+      "rule_id": "offhours_admin",
+      "severity": "critical",
+      "status": "open",
+      "user_id": "user-uuid",
+      "description": "Admin activity outside business hours",
+      "indicators": {"time": "02:30", "action": "privilege_escalation"},
+      "created_at": "2026-07-17T02:30:00Z",
+      "resolved_at": null
+    }
+  ],
+  "total": 3
+}
+```
+
+### Get Detection by ID
+```http
+GET /api/v1/audit/itdr/detections/{id}
+Authorization: Bearer <JWT>
+```
+
+### ITDR Stats
+```http
+GET /api/v1/audit/itdr/stats
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "total": 42,
+  "by_severity": {"critical": 3, "high": 8, "medium": 15, "low": 16},
+  "by_status": {"open": 5, "acknowledged": 10, "resolved": 27},
+  "by_rule": {"offhours_admin": 12, "brute_force": 8, "impossible_travel": 3}
+}
+```
+
+### List ITDR Rules
+```http
+GET /api/v1/audit/itdr/rules
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "rules": [
+    {
+      "id": "offhours_admin",
+      "name": "Off-Hours Admin Activity",
+      "severity": "high",
+      "enabled": true,
+      "description": "Detects admin actions outside business hours"
+    }
+  ]
+}
+```
+
+### Resolve Detection
+```http
+PATCH /api/v1/audit/itdr/detections/{id}
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "status": "resolved", "note": "Investigated, false positive" }
+```
+
+---
+
+## CAE Endpoints (Continuous Access Evaluation)
+
+### Revoke Sessions (User-Wide CAE)
+```http
+POST /api/v1/auth/sessions/revoke
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "user_id": "<user-uuid>", "reason": "security_incident" }
+```
+Performs multi-layer revocation: DB sessions → Redis JTI blocklist → refresh-token
+cache eviction → DB refresh-token revocation → NATS audit event. The gateway
+CAE middleware checks the Redis blocklist on every request (~0.3ms).
+
+### Internal: Revoke User (Service-to-Service)
+```http
+POST /api/v1/auth/internal/revoke-user
+X-Internal-Service: <service-name>
+X-Internal-Timestamp: <unix-ts>
+X-Internal-Signature: <hmac-sha256>
+Content-Type: application/json
+
+{ "user_id": "<uuid>", "tenant_id": "<uuid>", "reason": "itdr_brute_force" }
+```
+Protected by HMAC internal-auth middleware (pkg/middleware/internal_auth.go).
+Used by the ITDR → CAE pipeline: when the audit service detects a critical
+threat, it triggers this endpoint to revoke the user's sessions in real-time.
+
+### Check Session Posture
+```http
+GET /api/v1/auth/session/posture
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "session_id": "<uuid>",
+  "jti_revoked": false,
+  "risk_score": 0.15,
+  "factors": {
+    "mfa_verified": true,
+    "device_trusted": true,
+    "itdr_critical": false
+  }
+}
+```
+
+---
+
+## PAM: Privileged Access Management
+
+### Standing Access Review
+```http
+GET /api/v1/policies/standing-access
+Authorization: Bearer <JWT>
+X-Tenant-ID: <tenant-id>
+```
+**Response 200:**
+```json
+{
+  "generated_at": "2026-07-17T08:00:00Z",
+  "jit_recommended": 3,
+  "standing_access": [
+    {
+      "access_type": "standing",
+      "approval_required": true,
+      "duration": "permanent",
+      "max_duration": "4h",
+      "recommendation": "convert_to_jit"
+    }
+  ]
+}
+```
+Returns standing access grants with JIT conversion recommendations.
+
+### JIT Elevation
+```http
+POST /api/v1/policies/jit-elevate
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "role": "admin", "duration": "1h", "reason": "Deploy hotfix" }
+```
+**Response 200:**
+```json
+{
+  "request_id": "<uuid>",
+  "status": "approved",
+  "elevated_role": "admin",
+  "expires_at": "2026-07-17T09:00:00Z"
+}
+```
+Request time-bound privileged role elevation. Requires approval workflow.
+
+### Break-Glass: Activate
+```http
+POST /api/v1/policies/break-glass/active
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "reason": "Production outage - unable to access admin console" }
+```
+**Response 200:**
+```json
+{
+  "break_glass_id": "<uuid>",
+  "temporary_token": "bg_...",
+  "expires_at": "2026-07-17T09:00:00Z",
+  "audit_logged": true
+}
+```
+Emergency access token for critical situations. Automatically publishes
+audit event and SOC webhook notification.
+
+---
+
+## Adaptive MFA: Step-Up Authentication
+
+### Check Step-Up Status
+```http
+GET /api/v1/auth/step-up-check
+Authorization: Bearer <JWT>
+```
+**Response 200 (sufficient):**
+```json
+{ "message": "step-up token valid", "acr": "AAL3" }
+```
+**Response 403 (step-up required):**
+```json
+{ "error": "step_up_required", "trigger_url": "/api/v1/auth/step-up", "acr_values": "AAL3" }
+```
+
+### Trigger Step-Up
+```http
+POST /api/v1/auth/step-up
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "method": "webauthn", "challenge": "<challenge-token>" }
+```
+Returns a new JWT with elevated ACR (Assurance Context of Reference).
+
+---
+
+## Credential Rotation
+
+### Check Rotations Due
+```http
+GET /api/v1/auth/credentials/rotation/due
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "due": [
+    { "credential_id": "<uuid>", "type": "password", "last_rotated": "2026-01-01T00:00:00Z" }
+  ],
+  "overdue": 2
+}
+```
+
+### Schedule Rotation
+```http
+POST /api/v1/auth/credentials/rotation
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "credential_id": "<uuid>", "policy": { "max_age_days": 90 } }
+```
+
+### Execute Rotation
+```http
+POST /api/v1/auth/credentials/rotation/execute
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "credential_id": "<uuid>" }
+```
+
+---
+
+## Security Posture & Anomaly Detection
+
+### Security Posture Summary
+```http
+GET /api/v1/audit/security-posture
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "overall_score": 78,
+  "mfa_coverage": 0.85,
+  "active_threats": 2,
+  "open_findings": 5,
+  "last_updated": "2026-07-17T08:00:00Z"
+}
+```
+
+### Anomaly Detection Rules
+```http
+GET /api/v1/audit/anomaly-detection
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "rules": [
+    {
+      "id": "rule-uuid",
+      "name": "Impossible Travel",
+      "metric": "geo_velocity",
+      "threshold": "500km/h",
+      "enabled": true
+    }
+  ]
+}
+```
+
+Create/Update anomaly detection rule:
+```http
+POST /api/v1/audit/anomaly-detection
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "name": "Brute Force Surge", "metric": "failed_logins", "threshold": "10/min" }
+```
+
+---
+
+## Break-Glass Access
+
+### Activate Break-Glass
+```http
+POST /api/v1/policies/break-glass/active
+Authorization: Bearer <JWT>
+Content-Type: application/json
+
+{ "reason": "Production outage - unable to access admin console" }
+```
+**Response 200:**
+```json
+{
+  "break_glass_id": "<uuid>",
+  "temporary_token": "bg_...",
+  "expires_at": "2026-07-17T09:00:00Z",
+  "audit_logged": true
+}
+```
+Creates a time-limited emergency access token. Automatically publishes an
+audit event and SOC webhook notification.
+
+### Break-Glass History
+```http
+GET /api/v1/auth/break-glass/history
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "records": [
+    {
+      "id": "<uuid>",
+      "user_id": "<uuid>",
+      "reason": "Production outage",
+      "activated_at": "2026-07-17T08:00:00Z",
+      "expired_at": "2026-07-17T09:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Threat Intelligence
+
+### Threat Intel Feed
+```http
+GET /api/v1/auth/threat-intel/feed
+Authorization: Bearer <JWT>
+```
+**Response 200:**
+```json
+{
+  "feed": [
+    {
+      "ioc": "192.168.1.100",
+      "type": "ip",
+      "source": "internal",
+      "confidence": 0.9,
+      "first_seen": "2026-07-16T12:00:00Z"
+    }
+  ],
+  "updated_at": "2026-07-17T08:00:00Z"
+}
+```
+
+---
+
+*Last updated: 2026-07-17 R96 — Fixed CAE paths (sessions/revoke), added internal revoke-user HMAC endpoint, PAM (standing-access, JIT-elevate, break-glass), Step-Up Auth, Credential Rotation endpoints. All verified via live curl.*

@@ -27,16 +27,12 @@ Alternatively, you can build and run manually:
 # Build the image from repository root
 docker build -f deploy/all-in-one/Dockerfile -t ggid/ggid-all-in-one:latest .
 
-# Run with all service ports
+# Run with only gateway + console ports exposed (security: P0 fix Round 91)
+# Backend service ports (8081/9001/9005/8070/8071/8072) are NOT exposed
+# externally. All traffic must go through the gateway at :8080.
 docker run -d \
   -p 127.0.0.1:8080:8080 \
   -p 127.0.0.1:3000:3000 \
-  -p 127.0.0.1:8081:8081 \
-  -p 127.0.0.1:9001:9001 \
-  -p 127.0.0.1:9005:9005 \
-  -p 127.0.0.1:8070:8070 \
-  -p 127.0.0.1:8071:8071 \
-  -p 127.0.0.1:8072:8072 \
   --name ggid-all-in-one \
   ggid/ggid-all-in-one:latest
 ```
@@ -101,20 +97,46 @@ Database (`DB_HOST`), Redis, and NATS still use `localhost` internally — these
 
 ## Exposed Ports
 
-All ports are bound to `127.0.0.1` (loopback only):
+Only gateway and console ports are exposed externally (P0 security fix, Round 91):
 
 | Port | Service | Protocol | Purpose |
 |------|---------|----------|---------|
 | **8080** | Gateway | HTTP | REST API gateway, reverse proxy to all services |
 | **3000** | Console | HTTP | Next.js admin UI |
-| **8081** | Identity | HTTP | User CRUD, SCIM 2.0, tenant management |
-| **9001** | Auth | HTTP | Login, register, MFA, password policy, sessions |
-| **9005** | OAuth | HTTP | OAuth2/OIDC, JWKS, SAML, discovery |
-| **8070** | Policy | HTTP | RBAC + ABAC engine, roles, permissions |
-| **8071** | Org | HTTP | Organizations, departments, teams, memberships |
-| **8072** | Audit | HTTP | Audit event query, compliance reports |
 
-For most use cases, only `8080` (API) and `3000` (Console) are needed — all API calls go through the gateway.
+Backend service ports are internal-only (not published to host):
+
+| Internal Port | Service | Purpose |
+|---------------|---------|---------|
+| 8081 | Identity | User CRUD, SCIM 2.0, tenant management |
+| 9001 | Auth | Login, register, MFA, password policy, sessions |
+| 9005 | OAuth | OAuth2/OIDC, JWKS, SAML, discovery |
+| 8070 | Policy | RBAC + ABAC engine, roles, permissions |
+| 8071 | Org | Organizations, departments, teams, memberships |
+| 8072 | Audit | Audit event query, compliance reports |
+
+> **Security note:** Direct backend access bypasses the gateway's JWT
+> verification, tenant binding, rate limiting, and bot detection layers.
+> The P0 fix (commit 11876559) removed all backend port mappings from
+> `docker run`. For debugging, you may add `-p 127.0.0.1:8081:8081`
+> temporarily, but never expose backend ports in production.
+
+## CAE (Continuous Access Evaluation) Redis Dependency
+
+GGID's CAE subsystem uses Redis for the JTI blocklist (session revocation).
+When CAE is enabled, ensure Redis has sufficient memory for the sorted-set:
+
+```bash
+# Redis must be running (included in all-in-one image)
+# JTI blocklist uses ~100 bytes per revoked token
+# Tokens auto-expire from the sorted set when the JWT expires
+```
+
+For standalone deployments, configure Redis with:
+```bash
+redis-cli CONFIG SET maxmemory-policy allkeys-lru
+redis-cli CONFIG SET maxmemory 256mb
+```
 
 ## New API Endpoints
 
