@@ -50,13 +50,13 @@
 ### IN_PROGRESS
 | ID | Task | Assignee | Started |
 |----|------|----------|---------|
-| F-04 | IGA GenAI 辅助审查 UI | frontend | 07-17 |
-
 ### TODO
 | ID | Task | Priority | Scope | Acceptance |
 |----|------|----------|-------|------------|
-| F-06 | Passkey 管理页删除接 signalCredentialRemoved | P2 | console/src/app/security/passkeys/ | 函数已就绪，接线即可 |
-| F-07 | Profile 改名页接 signalCurrentUserDetails | P2 | console/src/app/profile/ | 函数已就绪，接线即可 |
+| F-08 | CAE Session Revocation 管理页面 | P1 | console/src/app/security/session-revocation/ | 显示被吊销 session 列表 + 手动 revoke 按钮 + 接 /api/v1/auth/sessions/revoke-user |
+| F-09 | PAM JIT 权限提升请求页面 | P1 | console/src/app/security/jit-elevation/ | request form(角色+时长+理由) → 审批列表 → active/expired 状态。接 /api/v1/policies/jit-elevate |
+| F-10 | Break-glass 紧急访问页面 | P1 | console/src/app/security/break-glass/ | activate 表单(理由+确认) + history 列表。接 /api/v1/auth/break-glass/* |
+| F-11 | ITDR Rules 管理页面 | P2 | console/src/app/security/itdr-rules/ | 规则列表 + 启停开关 + 阈值配置。接 /api/v1/audit/itdr/rules |
 
 ### DONE
 | ID | Task | Assignee | Commit |
@@ -65,7 +65,9 @@
 | F-02 | CIEM 权限使用分析页面 | frontend | 593c2c7e |
 | F-03 | SDK 假数据清理 153 hooks (Batch 1-5) | frontend | fc559c27+4 |
 | F-04 | IGA GenAI 辅助审查 UI | frontend | 6270900f |
-| F-05 | Onboarding Wizard 4 步引导 | frontend | IN_PROGRESS |
+| F-05 | Onboarding Wizard 4 步引导 | frontend | verified |
+| F-06 | Passkey 删除接 signalCredentialRemoved | frontend | 12db7caa |
+| F-07 | Profile 改名接 signalCurrentUserDetails | frontend | 12db7caa |
 
 ## === IAMEXPERT (pkg/crypto/ + 审计 + 设计) ===
 
