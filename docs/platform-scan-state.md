@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 91
-## Last scan focus: E2E (Round 90) — Core APIs 7/7, OAuth 3/3, ERP 4/4, SDK 8/8 PASS; circuit breaker stable; no new bugs
-## Next scan focus: C (Middleware chain scan, Round 91 = odd round, Workflow B)
+## Current round: 92
+## Last scan focus: C (Middleware chain, Round 91) — gateway 10-layer chain verified; all 7 services have panic recovery + tenant injection; internal auth HMAC partial (backend in progress); no new issues
+## Next scan focus: E2E tests (Round 92 = even round, Workflow A)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)

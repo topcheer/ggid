@@ -173,3 +173,25 @@ Note: CIBA endpoint only accepts form-encoded client credentials (client_id/clie
 - [ACCEPTABLE] **APIVersioningMiddleware** — api_versioning.go, API version enforcement. No versioning scheme in use yet.
 
 **Other services (identity, oauth, policy, org, audit):** All handler methods properly mux-registered. No unwired handlers found.
+
+### Round 91 Focus C — Middleware Chain Scan Results
+
+**Gateway middleware chain (verified, 10 layers):**
+```
+PanicRecovery → SecurityHeaders → HostValidation → CORS → Gzip → RequestID → RequestLogger → ContentTypeValidator → RateLimit → [CircuitBreaker (R89)] → BotDetect → TenantResolver → TimeoutMiddleware → MaxBodySize → [JWTAuth → CAE → SessionTimeout] → inner
+```
+All layers verified active and correctly ordered.
+
+**Service-level panic recovery (7/7 services PASS):**
+All services (identity, auth, oauth, policy, org, audit, gateway) have inline panic recovery in their HTTP handler wrappers. No service will crash from a single request panic.
+
+**Tenant context injection (7/7 services PASS):**
+All services extract X-Tenant-ID at the handler level and set up ggidtenant context. Gateway injects X-Tenant-ID header + query param via proxy Director.
+
+**Internal auth HMAC (PARTIAL — backend in progress):**
+- pkg/middleware/internal_auth.go: middleware + SignInternalRequest helper created
+- Gateway: injects HMAC headers in proxy Director (af8eb9de)
+- Auth service: /api/v1/auth/internal/revoke-user checks HMAC at handler level (not middleware)
+- Other services: not yet applying InternalAuth — backend actively working on this
+
+**No new issues found in this scan dimension.**
