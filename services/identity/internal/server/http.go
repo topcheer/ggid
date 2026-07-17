@@ -231,6 +231,9 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Device posture + compliance evaluation.
 	h.mux.HandleFunc("/api/v1/identity/devices/", h.handleDevicePosture)
+
+	// Bulk user import (multi-hash, transparent re-hash).
+	h.mux.HandleFunc("/api/v1/identity/users/bulk-import", h.handleBulkImport)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
