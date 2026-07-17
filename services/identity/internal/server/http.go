@@ -185,6 +185,9 @@ func (h *HTTPHandler) registerRoutes() {
 	// SCIM token management API (admin JWT required).
 	h.mux.HandleFunc("/api/v1/identity/scim/tokens", h.handleSCIMTokens)
 	h.mux.HandleFunc("/api/v1/identity/scim/tokens/", h.handleSCIMTokens)
+
+	// Zero-trust posture aggregation endpoint.
+	h.mux.HandleFunc("/api/v1/zt/posture", h.handleZTPosture)
 	h.mux.HandleFunc("/api/v1/identity/risk-scoring/config", h.handleIdentityRiskScoringConfig)
 	h.mux.HandleFunc("/api/v1/identity/deprovisioning/config", h.handleDeprovisioningConfig)
 	h.mux.HandleFunc("/api/v1/identity/account-linking/config", h.handleAccountLinkingConfig)
