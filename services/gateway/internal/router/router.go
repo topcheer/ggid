@@ -81,6 +81,7 @@ type Gateway struct {
 	sysconfigStore sysconfig.Store
 	internalSecret []byte
 	caeCheck       func(http.Handler) http.Handler
+	appRouter      *ProtectedAppRouter
 	circuitRegistry *middleware.CircuitRegistry
 	mu             sync.RWMutex
 }
@@ -113,6 +114,7 @@ func New(cfg *config.Config, jwks *middleware.JWKSClient) *Gateway {
 		timeouts:       make(map[string]time.Duration),
 		rateLimiter:    middleware.NewTenantBucketLimiter(middleware.DefaultBucketRateLimitConfig()),
 		circuitRegistry: middleware.NewCircuitRegistry(middleware.DefaultCircuitConfig()),
+		appRouter:      NewProtectedAppRouter(),
 	}
 	gw.buildProxies()
 	gw.buildHealthChecker()
@@ -375,6 +377,13 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// (registered in cfg.Routes as /api/v1/provisioning). No stub fallback:
 	// if the operator is unreachable the proxy returns 502, which is more
 	// honest than fake empty data.
+
+	// --- ZTNA Access Broker: /app/{slug}/* dynamic routing ---
+	if gw.appRouter != nil {
+		if gw.appRouter.HandleRequest(w, r) {
+			return
+		}
+	}
 
 	// Find matching backend by longest prefix
 	backend, prefix := gw.matchBackend(r.URL.Path)
