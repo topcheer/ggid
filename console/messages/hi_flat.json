@@ -274,7 +274,7 @@
   "auditRetention.storageUsed": "Storage Used",
   "auditRetention.subtitle": "Configure event retention rules and storage management.",
   "auditRetention.title": "Audit Retention Policy",
-  "auditRetentionPolicy.title": "{t(\"auditRetention.title\")}",
+  "auditRetentionPolicy.title": "Audit Retention Policy",
   "auditRiskScore.title": "Risk Score",
   "auditSamplingConfig.title": "Audit Sampling Configuration",
   "auditSearch.title": "Audit Search",

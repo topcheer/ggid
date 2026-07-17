@@ -274,7 +274,7 @@
   "auditRetention.storageUsed": "已用存储",
   "auditRetention.subtitle": "配置事件保留规则和存储管理。",
   "auditRetention.title": "审计保留策略",
-  "auditRetentionPolicy.title": "{t(\"auditRetention.title\")}",
+  "auditRetentionPolicy.title": "Audit Retention Policy",
   "auditRiskScore.title": "风险评分",
   "auditSamplingConfig.title": "Audit Sampling Configuration",
   "auditSearch.title": "审计搜索",

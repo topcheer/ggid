@@ -2,7 +2,7 @@
   "en": {
     "auditLogViewer.title": "Audit Log Viewer",
     "auditSearch.title": "Audit Search",
-    "auditRetentionPolicy.title": "{t(\"auditRetention.title\")}",
+    "auditRetentionPolicy.title": "Audit Retention Policy",
     "auditRealtime.title": "Audit Realtime",
     "auditExport.title": "Audit Export",
     "auditSiemForwarding.title": "SIEM Forwarding",
@@ -23,7 +23,7 @@
   "zh": {
     "auditLogViewer.title": "审计日志查看器",
     "auditSearch.title": "审计搜索",
-    "auditRetentionPolicy.title": "{t(\"auditRetention.title\")}",
+    "auditRetentionPolicy.title": "Audit Retention Policy",
     "auditRealtime.title": "Audit Realtime",
     "auditExport.title": "Audit Export",
     "auditSiemForwarding.title": "SIEM 转发",
