@@ -166,6 +166,12 @@
 | KB-152 | **OID4VCI credential issuance flow** | backend | P1 | decentralized-vc | 4d |
 | KB-153 | **OID4VP presentation verification** | backend | P1 | decentralized-vc | 3d |
 | KB-154 | **Console credential manager + did:ebsi** | frontend+backend | P2 | decentralized-vc | 4d |
+| KB-155 | **Continuous evaluation middleware (CAE)** — per-request risk re-score | backend | P0 | zero-trust | 3d |
+| KB-156 | **MDM integration** (Intune/Jamf connector) + device cert auth | backend | P0 | zero-trust | 5d |
+| KB-157 | **CMK / KMS integration** (AWS KMS / Vault per-tenant keys) | backend | P0 | zero-trust | 5d |
+| KB-158 | **DLP at egress** (response scanning middleware) | backend | P0 | zero-trust | 4d |
+| KB-159 | **Service-to-service mTLS enforcement** + network policy engine | backend | P1 | zero-trust | 5d |
+| KB-160 | **Access review / certification** (periodic recertification campaigns) | backend | P1 | zero-trust | 5d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -269,6 +275,7 @@ Arch audit found 50+ additional global in-memory maps NOT covered by batch 4:
 | Risk-Based Adaptive Authentication Engine | DONE | docs/research/risk-adaptive-auth-engine.md |
 | AI Agent Identity & Delegated Access | DONE | docs/research/ai-agent-identity.md |
 | Decentralized Identity & Verifiable Credentials (W3C DID/VC) | DONE | docs/research/decentralized-identity-vc.md |
+| Zero Trust Maturity Assessment & Gap Analysis | DONE | docs/research/zero-trust-maturity-assessment.md |
 | Audit Tamper-Evidence (Hash Chain Verification) | NEXT | — |
 
 ---
