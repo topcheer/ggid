@@ -394,3 +394,29 @@ See docs/research/ for full research docs.
 
 **业务价值**: MEDIUM — 政府联邦认证场景 | **实现难度**: Medium
 - 参考: docs/research/verifiable-credentials-nist80063-webauthn-hybrid.md
+
+---
+
+## Identity-First Ransomware 防护（MITRE D3FEND 联动） (2026-07-17 第15小时研究) - Priority: P2 - Status: Proposed - Suggested: backend + IAMExpert
+
+**市场背景**: 2025 勒索软件攻击 80%+ 从身份入侵开始（初始访问→凭据窃取→横向移动→部署勒索）。CrowdStrike/Sophos/CyberArk 全部推出 identity-first ransomware 防护。MITRE ATT&CK + D3FEND 框架明确身份层的检测与防御映射。
+
+**GGID 协同优势（全部已实现/在建）**：
+- ITDR 检测引擎 → brute_force/credential_stuffing/impossible_travel/baseline_deviation ✓
+- CAE 持续评估 → critical detection → session <1s 吊销 ✓
+- PAM JIT → 零常驻权限 → 即使 admin 被攻破也无可常驻权限 ✓
+- JML → leaver 自动撤销 → 离职者 <3s 失效 ✓
+- UEBA → 行为基线偏差 → 低慢攻击检测 ✓
+- **缺最后一块拼图**：ransomware playbook（多信号联动自动响应链）
+
+**完整实现路径（不降级）**：
+1. **复合检测规则**（ITDR 新类型）：多个 medium detection 在短时间内累积 → 升级为 critical "possible ransomware precursor"
+   - 场景：baseline_deviation + new_device + offhours_admin + privilege_escalation 4 信号在 1h 内 → ransomware alert
+2. **自动隔离 playbook**（CAE + JML + PAM 联动）：
+   - ransomware alert → CAE RevokeUser（全 session 吊销）+ PAM 取消所有 active JIT + identity 锁定账户 + SOC webhook critical
+3. **ransomware kill chain 可视化**：console 事件时间线（初始访问→凭据窃取→横向→部署），SOC 可回溯
+4. **恢复就绪**：audit chain hash 验证（已有 HMAC chain）→ 确保证据链完整可用于取证
+
+**业务价值**: HIGH（保险合规 + 企业 CISO 必查项）
+**实现难度**: Medium（全部基于已建组件，复合规则 + playbook 联动是新增量）
+**工作量**: ~3d（复合检测规则 + playbook + 时间线 UI）
