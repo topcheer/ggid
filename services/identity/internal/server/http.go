@@ -40,6 +40,7 @@ type HTTPHandler struct {
 	auditPublisher   *audit.Publisher
 	scimRepo         *scimTokenRepo
 	rebacRepo        *relationTupleRepo
+	rebacCache       *rebacCache
 	lifecycleRepo    *lifecycleRepo
 	lifecycleEngine  *JMLEngine
 	dataGovRepo      *dataGovRepo
