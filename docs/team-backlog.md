@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 58: Zero Trust Maturity Assessment research complete — 6 new backlog items)*
+*Last updated: 2026-07-17 (Round 59: Continuous Authorization & PDP research complete — 6 new backlog items)*
 
 ## Current Stats
 
@@ -146,6 +146,10 @@
 | 120 | **CMK/KMS + DLP egress** (P0) | backend | Zero Trust | Per-tenant encryption keys (AWS KMS/Vault) + DLP response scanning middleware at API egress |
 | 121 | **Network policy + mTLS enforcement** (P1) | backend | Zero Trust | Service-to-service mTLS enforcement + declarative network policy engine + microsegmentation |
 | 122 | **Access review / certification** (P1) | backend | Governance | Periodic access recertification campaigns + manager review workflow |
+| 123 | **Unified PDP** (P0) | backend | Continuous authz | Combine RBAC+ABAC+ReBAC+risk in one Authorize() RPC. See docs/research/continuous-authorization-pdp.md |
+| 124 | **Gateway PEP + Redis cache** (P0) | backend | Per-request authz | Gateway middleware calls PDP on every request + 5s Redis decision cache (<1ms cached, <5ms uncached) |
+| 125 | **DB-backed decision audit** (P0) | backend | Compliance | Replace in-memory decision log (evaluator.go:54 sync.Mutex+slice) with PostgreSQL + NATS async publish |
+| 126 | **Risk overlay + decision analytics** (P1) | backend | Adaptive authz | Risk score upgrades decision to step_up + decision audit trail query API (replace hardcoded stats) |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -190,6 +194,7 @@
 18. AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md) — 6 backlog items added
 19. Decentralized Identity & Verifiable Credentials → DONE (docs/research/decentralized-identity-vc.md) — 6 backlog items added
 20. Zero Trust Maturity Assessment → DONE (docs/research/zero-trust-maturity-assessment.md) — 6 backlog items added
+21. Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md) — 6 backlog items added
 
 ## Rules
 
@@ -204,6 +209,7 @@
 Active research topics:
 - Decentralized Identity & Verifiable Credentials → DONE (docs/research/decentralized-identity-vc.md)
 - Zero Trust Maturity Assessment → DONE (docs/research/zero-trust-maturity-assessment.md)
+- Continuous Authorization & PDP → DONE (docs/research/continuous-authorization-pdp.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
