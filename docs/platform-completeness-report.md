@@ -277,3 +277,13 @@ All services extract X-Tenant-ID at the handler level and set up ggidtenant cont
 - No new stubs/hardcoded data found across services
 
 **No new TODO/FIXME/hardcoded data in Go code** — all recent commits are clean implementations.
+
+### Round 103 Focus B (restart cycle) — Route/Wiring Scan
+
+**Recent commits checked:**
+- RFC 8693 Token Exchange (07bcf5cb): Route wired at /api/v1/oauth/token grant_type=token-exchange ✓
+- Token Exchange Delegation: /api/v1/oauth/token-exchange-delegation ✓
+- SCIM Token Hash Upgrade (13731f72): HMAC-SHA256 hashSCIMToken ✓
+- Identity tenant context fix (c18d5f22): Verified live ✓
+
+**Unwired handler scan:** All 5 services (identity, oauth, policy, org, audit) — zero orphans found.

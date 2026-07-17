@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 103
-## Last scan focus: E2E (Round 102) — Core 10/10 (incl zt/posture + scim/tokens), ERP 4/4, OAuth 3/3, SDK Go+Py PASS; all identity fixes verified live
-## Next scan focus: B (Route/Wiring scan restart, Round 103 = odd round, Workflow B — cycle restart)
+## Current round: 104
+## Last scan focus: B (Route/Wiring restart, Round 103) — RFC 8693 + SCIM hash + delegation all wired; zero orphans across 5 services
+## Next scan focus: E2E tests (Round 104 = even round, Workflow A)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
