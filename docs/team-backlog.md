@@ -563,3 +563,54 @@ curl /api/v1/audit/dlp/events?severity=blocked
 **业务价值**: MEDIUM-HIGH（Identity-DLP 差异化，与数据安全法+ITDR+CAE 协同）
 **实现难度**: Medium
 **工作量**: ~4d
+
+---
+
+## Zero-Trust Secret Brokering (动态凭据分发) (2026-07-18 第20小时研究) - Priority: P2 - Status: Proposed - Suggested: backend
+
+**市场背景**: HashiCorp Vault Identity Brokering + CyberArk Dynamic Secrets 是 ZTNA 数据面的核心 — JIT 授权不仅给"访问权"，还给"临时凭据"（动态 DB 密码/TLS 证书/SSH key/Cloud STS token）。Vault 作为身份代理：验证身份 → 签发短 TTL 凭据 → 自动轮换 → 到期吊销。2025 趋势是将 secret broker 从独立系统整合进 IAM 平台。
+
+**GGID 现状**：
+- JIT user provisioning engine ✓（B-31，自动创建/更新用户）
+- PAM JIT grant 系统 ✓（零常驻权限 + 时间限制授权）
+- SCIM 2.0 provisioning ✓
+- Gateway PDP evaluatePolicy ✓
+- **缺**：动态凭据分发 — JIT 授权后不产生临时凭据（只给权限，不给 credential）
+
+**完整实现路径（不降级）**：
+1. secret_broker_targets 表（tenant_id + target_name + target_type[db/ssh/cloud/api_key] + connection_config JSONB + default_ttl + rotation_policy）
+2. Broker 引擎：PAM JIT grant 批准 → secret_broker 生成短 TTL 凭据 → 返回给请求者
+   - DB: 动态生成用户+密码（CREATE USER 'jit_xxx' WITH PASSWORD '...' VALID UNTIL '...')
+   - SSH: 短 TTL 证书签名（复用 vc-design.md 的 Ed25519 签名）
+   - Cloud: 假定角色（STS AssumeRole）token 分发
+   - API Key: 随机生成 + 过期自动删除
+3. 自动清理：TTL 到期 → revoke 凭据（DROP USER / 证书吊销 / token 失效）
+4. 审计链：每次凭据签发 + 吊销写入 audit_events（HMAC chain）
+5. Console：目标配置 + 实时活动凭据列表 + TTL 倒计时
+
+**端点清单**：
+- GET/POST/DELETE /api/v1/identity/secrets/targets — 目标 CRUD
+- POST /api/v1/identity/secrets/broker — 签发动态凭据（关联 JIT grant）
+- GET /api/v1/identity/secrets/active — 当前活动凭据列表
+- DELETE /api/v1/identity/secrets/{id} — 手动吊销
+
+**验收 curl**：
+```bash
+# 注册 DB 目标
+curl -X POST /api/v1/identity/secrets/targets -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"prod-postgres","type":"db","connection":{"host":"db.internal","port":5432},"default_ttl":"15m"}'
+
+# JIT 授权后签发动态凭据
+curl -X POST /api/v1/identity/secrets/broker -H "Authorization: Bearer $TOKEN" \
+  -d '{"target":"prod-postgres","jit_grant_id":"jgr_abc123","ttl":"15m"}'
+
+# 查看活动凭据
+curl /api/v1/identity/secrets/active -H "Authorization: Bearer $TOKEN"
+
+# 手动吊销
+curl -X DELETE /api/v1/identity/secrets/sec_xyz789 -H "Authorization: Bearer $TOKEN"
+```
+
+**业务价值**: HIGH（ZTNA 最后一块 — 零信任 = 零常驻权限 + 零常驻凭据）
+**实现难度**: Medium-High（DB 动态用户 + SSH 证书签名 + Cloud STS）
+**工作量**: ~5d
