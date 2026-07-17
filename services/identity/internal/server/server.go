@@ -157,6 +157,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.SetDLPRepo(dlpRepo)
 
+	// Secret Broker (Zero-Trust Secret Brokering).
+	sbRepo := newSecretBrokerRepo(pool)
+	if err := sbRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Secret broker schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.SetSecretBrokerRepo(sbRepo)
+
 	mwSecret, mwPrevSecret := middleware.LoadInternalSecrets()
 	internalMW := middleware.InternalAuthPathOnly(middleware.InternalAuthConfig{
 		Secret:     mwSecret,

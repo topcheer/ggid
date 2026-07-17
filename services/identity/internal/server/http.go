@@ -48,8 +48,9 @@ type HTTPHandler struct {
 	journeyRepo      *journeyRepo
 	fedRepo          *federationRepo
 	jitRepo          *jitRepo
-	rateLimitRepo    *rateLimitRepo
-	dlpPolicyRepo    *dlpRepo
+	rateLimitRepo     *rateLimitRepo
+	dlpPolicyRepo     *dlpRepo
+	secretBrokerRepo  *secretBrokerRepo
 	devicePostureRepo *devicePostureRepo
 }
 
@@ -266,6 +267,13 @@ func (h *HTTPHandler) registerRoutes() {
 	// Per-tenant rate limiting.
 	h.mux.HandleFunc("/api/v1/identity/tenants/rate-limits", h.handleRateLimits)
 	h.mux.HandleFunc("/api/v1/identity/tenants/rate-limits/", h.handleRateLimits)
+
+	// Secret Broker (Zero-Trust).
+	h.mux.HandleFunc("/api/v1/identity/secret-broker/targets", h.handleSecretBroker)
+	h.mux.HandleFunc("/api/v1/identity/secret-broker/targets/", h.handleSecretBroker)
+	h.mux.HandleFunc("/api/v1/identity/secret-broker/broker", h.handleSecretBroker)
+	h.mux.HandleFunc("/api/v1/identity/secret-broker/active", h.handleSecretBroker)
+	h.mux.HandleFunc("/api/v1/identity/secret-broker/revoke", h.handleSecretBroker)
 
 	// DLP (Data Loss Prevention).
 	h.mux.HandleFunc("/api/v1/identity/dlp/policies", h.handleDLP)
