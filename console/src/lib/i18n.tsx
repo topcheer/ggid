@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { en } from "./i18n-en";
+import { en } from "./i18n/en";
+import { loadLocale } from "./i18n/index";
 
 // Dynamic locale cache — other languages loaded on demand
 const localeCache: Record<string, Record<string, string>> = { en };
@@ -85,9 +86,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       setActiveDict(localeCache[locale]);
       return;
     }
-    // Dynamic import — only loads the requested language chunk
-    import("./i18n-dicts").then((mod) => {
-      const dict = mod.locales[locale];
+    // Dynamic import — only loads the requested language file
+    loadLocale(locale).then((dict) => {
       if (dict) {
         localeCache[locale] = dict;
         setActiveDict(dict);
