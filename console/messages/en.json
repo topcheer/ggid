@@ -2146,5 +2146,96 @@
       "reasonInactive": "Inactive 30+ days",
       "reasonStaleCreds": "Stale credentials"
     }
+  },
+  "setup": {
+    "title": "Welcome to GGID",
+    "subtitle": "Set up your identity platform in 5 minutes",
+    "step": "Step {n} of {total}",
+    "checking": "Checking system status...",
+    "alreadyInitialized": "System already initialized",
+    "redirecting": "Redirecting to dashboard...",
+    "steps": {
+      "admin": {
+        "title": "Create Admin Account",
+        "description": "Set up the first administrator for your organization",
+        "email": "Admin Email",
+        "emailPlaceholder": "admin@yourcompany.com",
+        "password": "Password",
+        "passwordPlaceholder": "Choose a strong password",
+        "confirmPassword": "Confirm Password",
+        "enableMfa": "Enable MFA (recommended)",
+        "enableMfaDesc": "Require multi-factor authentication for the admin account",
+        "passwordMismatch": "Passwords do not match",
+        "passwordTooShort": "Password must be at least 12 characters"
+      },
+      "org": {
+        "title": "Configure Organization",
+        "description": "Tell us about your organization",
+        "orgName": "Organization Name",
+        "orgNamePlaceholder": "Acme Corporation",
+        "tenantId": "Default Tenant ID",
+        "tenantIdPlaceholder": "acme-prod",
+        "tenantIdDesc": "A unique identifier for your tenant (lowercase, no spaces)",
+        "industry": "Industry",
+        "industryTech": "Technology",
+        "industryFinance": "Financial Services",
+        "industryHealthcare": "Healthcare",
+        "industryEducation": "Education",
+        "industryRetail": "Retail",
+        "industryOther": "Other",
+        "region": "Region",
+        "regionUS": "North America",
+        "regionEU": "Europe",
+        "regionAPAC": "Asia Pacific",
+        "regionOther": "Other"
+      },
+      "auth": {
+        "title": "Choose Authentication Strategy",
+        "description": "How will your users sign in?",
+        "passkey": "Passkey-First (Recommended)",
+        "passkeyDesc": "Users enroll passkeys/WebAuthn on first login. Passwords optional as fallback.",
+        "password": "Traditional Password",
+        "passwordDesc": "Standard email + password with optional MFA. Most familiar to users.",
+        "hybrid": "Hybrid",
+        "hybridDesc": "Support both passkeys and passwords. Users choose their preferred method."
+      },
+      "sso": {
+        "title": "Configure SSO (Optional)",
+        "description": "Connect your identity provider for single sign-on",
+        "skip": "Skip for now",
+        "configure": "Configure SSO",
+        "protocol": "Protocol",
+        "protocolSaml": "SAML 2.0",
+        "protocolOidc": "OIDC / OAuth 2.0",
+        "entityId": "Entity ID / Client ID",
+        "entityIdPlaceholder": "https://your-idp.com/entity",
+        "ssoUrl": "SSO URL / Authorization Endpoint",
+        "ssoUrlPlaceholder": "https://your-idp.com/authorize",
+        "certificate": "X.509 Certificate (SAML)",
+        "certificatePlaceholder": "-----BEGIN CERTIFICATE-----\n...",
+        "testConn": "Test Connection",
+        "testing": "Testing...",
+        "connSuccess": "Connection successful",
+        "connFailed": "Connection failed",
+        "configureLater": "You can configure SSO later in Settings"
+      },
+      "done": {
+        "title": "Setup Complete!",
+        "description": "Your GGID platform is ready to use",
+        "summary": "Configuration Summary",
+        "goDashboard": "Go to Dashboard",
+        "importUsers": "Import Users",
+        "exploreDocs": "Explore Documentation",
+        "ready": "You are all set. Welcome aboard!"
+      }
+    },
+    "navigation": {
+      "back": "Back",
+      "next": "Next",
+      "skip": "Skip",
+      "finish": "Finish",
+      "saving": "Saving...",
+      "error": "Something went wrong. Please try again."
+    }
   }
 }
