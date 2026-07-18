@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+# Prebuilt binary Dockerfile for GGID Go services.
+# Binaries must be built BEFORE running docker build:
+#   CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o build/bin/<svc> ./services/<svc>/cmd/
+#
+# Usage:
+#   docker build --platform linux/amd64 \
+#     -f deploy/docker/Dockerfile.service \
+#     --build-arg BINARY=build/bin/gateway \
+#     -t registry.iot2.win/ggid/gateway:latest .
+
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates tzdata curl
+
+# Optional: copy migration files (only if they exist at build time)
+ARG MIGRATIONS_DIR=deploy/migrations
+COPY ${MIGRATIONS_DIR} /app/migrations
+
+ARG BINARY=build/bin/service
+COPY ${BINARY} /app/service
+
+RUN chmod +x /app/service
+
+WORKDIR /app
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
+  CMD wget -qO- http://localhost:8080/healthz || wget -qO- http://0.0.0.0:${HEALTH_PORT:-8080}/healthz || exit 1
+
+ENTRYPOINT ["/app/service"]

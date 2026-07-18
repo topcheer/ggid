@@ -1,4 +1,4 @@
-.PHONY: help proto build test test-short test-race coverage lint docker-run docker-stop docker-build docker-build-allinone docker-push swagger-gen migrate-up migrate-down clean
+.PHONY: help proto build test test-short test-race coverage lint docker-run docker-stop docker-build docker-build-allinone docker-push docker-build-services docker-push-services swagger-gen migrate-up migrate-down clean
 
 GGID_ROOT := $(shell pwd)
 PROTO_DIR := $(GGID_ROOT)/api/proto
@@ -18,6 +18,8 @@ help:
 	@echo "  migrate-down Rollback last migration"
 	@echo "  docker-run   Start infrastructure (PostgreSQL, Redis, NATS)"
 	@echo "  docker-stop  Stop infrastructure"
+	@echo "  docker-build-services  Build all 8 service images (prebuilt binary)"
+	@echo "  docker-push-services   Build + push all 8 service images"
 	@echo "  clean        Clean build artifacts"
 
 proto:
@@ -75,6 +77,12 @@ docker-build-allinone:
 docker-push: docker-build-allinone
 	docker tag ggid/ggid-all-in-one:latest registry.iot2.win/ggid/all-in-one:latest
 	docker push registry.iot2.win/ggid/all-in-one:latest
+
+docker-build-services:
+	@bash scripts/build-all-images.sh --no-push --console
+
+docker-push-services:
+	@bash scripts/build-all-images.sh --console
 
 swagger-gen:
 	@echo "Generating OpenAPI spec from annotations..."

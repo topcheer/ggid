@@ -139,8 +139,8 @@ func envOrDefault(key, defaultVal string) string {
 }
 
 func defaultPrivateKeyPath(publicKeyPath string) string {
-	if len(publicKeyPath) > 11 && publicKeyPath[len(publicKeyPath)-11:] == "public.pem" {
-		return publicKeyPath[:len(publicKeyPath)-11] + "private.pem"
+	if len(publicKeyPath) > 10 && publicKeyPath[len(publicKeyPath)-10:] == "public.pem" {
+		return publicKeyPath[:len(publicKeyPath)-10] + "private.pem"
 	}
 	return "configs/rsa_private.pem"
 }
