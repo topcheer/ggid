@@ -104,12 +104,12 @@ func (r *privilegedOpRepo) List(ctx context.Context, tenantID uuid.UUID, operato
 	argIdx := 2
 
 	if operatorID != "" {
-		q += strings.Replace(" AND operator_id = $N", "N", string(rune('0'+argIdx)), 1)
+		q += " AND operator_id = $" + intToStr(argIdx)
 		args = append(args, operatorID)
 		argIdx++
 	}
 	if action != "" {
-		q += strings.Replace(" AND action = $N", "N", string(rune('0'+argIdx)), 1)
+		q += " AND action = $" + intToStr(argIdx)
 		args = append(args, action)
 	}
 	q += " ORDER BY timestamp DESC LIMIT " + intToStr(limit)
