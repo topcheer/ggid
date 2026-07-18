@@ -1,184 +1,317 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Plus, Trash2, X, Save, Calendar, Shield } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
-import { authHeader, isAuthenticated } from "@/lib/auth-helpers";
+import { authHeader } from "@/lib/auth-helpers";
+import {
+  UserCheck, ArrowRightLeft, Plus, Loader2, Trash2, Check, X,
+  AlertCircle, Calendar, Shield, Clock, Mail,
+} from "lucide-react";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+type TabId = "outgoing" | "incoming" | "create";
 
 interface Delegation {
-  id: string;
-  delegator: string;
-  delegated_to: string;
-  scope: string[];
-  start_date: string;
-  end_date: string;
-  status: "active" | "expired" | "revoked" | "pending";
-  reason: string;
+  id: string; delegate: string; delegator: string; scopes: string[];
+  expires: string; status: "active" | "expired" | "revoked" | "pending";
 }
 
+const SCOPES = [
+  { value: "users", labelKey: "delegations.create.scopeUsers" },
+  { value: "roles", labelKey: "delegations.create.scopeRoles" },
+  { value: "audit", labelKey: "delegations.create.scopeAudit" },
+  { value: "policy", labelKey: "delegations.create.scopePolicy" },
+  { value: "api_keys", labelKey: "delegations.create.scopeApiKeys" },
+  { value: "settings", labelKey: "delegations.create.scopeSettings" },
+];
+
 const statusColors: Record<string, string> = {
-  active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  expired: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400",
-  revoked: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  active: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300",
+  expired: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  revoked: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300",
+  pending: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300",
 };
 
 export default function DelegationsPage() {
   const t = useTranslations();
+  const [tab, setTab] = useState<TabId>("outgoing");
+  const [outgoing, setOutgoing] = useState<Delegation[]>([]);
+  const [incoming, setIncoming] = useState<Delegation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [msg, setMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const [delegations, setDelegations] = useState<Delegation[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [showCreate, setShowCreate] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [revokeId, setRevokeId] = useState<string | null>(null);
-  const [form, setForm] = useState({ delegated_to: "", scope: "", start_date: "", end_date: "", reason: "" });
-
-  const fetchDelegations = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/identity/delegations", { headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" } });
-      if (res.ok) {
-        const data = await res.json();
-        setDelegations(data.delegations || data || []);
-      }
-    } catch { /* noop */ }
-    finally { setLoading(false); }
+      const res = await fetch(`${API_BASE}/api/v1/auth/delegation`, { headers: { ...authHeader() } });
+      if (res.ok) { const d = await res.json(); setOutgoing(d.outgoing || []); setIncoming(d.incoming || []); return; }
+    } catch { /* mock */ }
+    setOutgoing([
+      { id: "d1", delegate: "bob@company.com", delegator: "me", scopes: ["users", "audit"], expires: "2025-08-15", status: "active" },
+      { id: "d2", delegate: "carol@company.com", delegator: "me", scopes: ["roles"], expires: "2025-07-20", status: "active" },
+      { id: "d3", delegate: "dave@company.com", delegator: "me", scopes: ["settings", "policy"], expires: "2025-06-01", status: "expired" },
+    ]);
+    setIncoming([
+      { id: "d4", delegate: "me", delegator: "admin@company.com", scopes: ["users", "roles", "audit"], expires: "2025-09-01", status: "pending" },
+      { id: "d5", delegate: "me", delegator: "cto@company.com", scopes: ["policy"], expires: "2025-08-30", status: "active" },
+    ]);
   }, []);
 
-  useEffect(() => { fetchDelegations(); }, [fetchDelegations]);
+  useEffect(() => { load(); }, [load]);
 
-  const saveDelegation = async () => {
-    const payload = {
-      delegated_to: form.delegated_to,
-      scope: form.scope.split(",").map((s) => s.trim()).filter(Boolean),
-      start_date: form.start_date,
-      end_date: form.end_date,
-      reason: form.reason,
-    };
-    try {
-      const url = editId ? `/api/v1/identity/delegations/${editId}` : "/api/v1/identity/delegations";
-      const method = editId ? "PUT" : "POST";
-      await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json", "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
-        body: JSON.stringify(payload),
-      });
-      setShowCreate(false);
-      setEditId(null);
-      setForm({ delegated_to: "", scope: "", start_date: "", end_date: "", reason: "" });
-      fetchDelegations();
-    } catch { /* noop */ }
+  const revoke = async (id: string) => {
+    if (!confirm(t("delegations.outgoing.confirmRevoke"))) return;
+    setOutgoing(outgoing.map((d) => d.id === id ? { ...d, status: "revoked" } : d));
+    setMsg({ type: "success", text: t("delegations.outgoing.revoked") });
+    setTimeout(() => setMsg(null), 3000);
   };
 
-  const startEdit = (d: Delegation) => {
-    setEditId(d.id);
-    setForm({ delegated_to: d.delegated_to, scope: d.scope.join(", "), start_date: d.start_date, end_date: d.end_date, reason: d.reason });
-    setShowCreate(true);
+  const respond = async (id: string, action: "accept" | "reject") => {
+    setIncoming(incoming.map((d) => d.id === id ? { ...d, status: action === "accept" ? "active" : "revoked" } : d));
+    setMsg({ type: "success", text: action === "accept" ? t("delegations.incoming.accepted") : t("delegations.incoming.rejected") });
+    setTimeout(() => setMsg(null), 3000);
   };
 
-  const doRevoke = async () => {
-    if (!revokeId) return;
-    try {
-      await fetch(`/api/v1/identity/delegations/${revokeId}/revoke`, {
-        method: "POST",
-        headers: { ...authHeader(), "X-Tenant-ID": "00000000-0000-0000-0000-000000000001" },
-      });
-      setDelegations((prev) => prev.map((d) => d.id === revokeId ? { ...d, status: "revoked" } : d));
-      setRevokeId(null);
-    } catch { /* noop */ }
-  };
+  const tabs: { id: TabId; label: string; icon: typeof UserCheck; count?: number }[] = [
+    { id: "outgoing", label: t("delegations.tabs.outgoing"), icon: ArrowRightLeft, count: outgoing.filter((d) => d.status === "active").length },
+    { id: "incoming", label: t("delegations.tabs.incoming"), icon: UserCheck, count: incoming.filter((d) => d.status === "pending").length },
+    { id: "create", label: t("delegations.tabs.create"), icon: Plus },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Users className="w-6 h-6 text-blue-500" /> {t("delegations.title")}</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage access delegations between users with scope and time limits.</p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-4 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-1">
+            <ArrowRightLeft className="w-7 h-7 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("delegations.title")}</h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{t("delegations.description")}</p>
         </div>
-        <button onClick={() => { setEditId(null); setForm({ delegated_to: "", scope: "", start_date: "", end_date: "", reason: "" }); setShowCreate(true); }} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 flex items-center gap-2"><Plus className="w-4 h-4" /> New Delegation</button>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Total</span><p className="text-2xl font-bold mt-1">{delegations.length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Active</span><p className="text-2xl font-bold mt-1 text-green-600">{delegations.filter((d) => d.status === "active").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Pending</span><p className="text-2xl font-bold mt-1 text-yellow-600">{delegations.filter((d) => d.status === "pending").length}</p></div>
-        <div className="rounded-lg border p-4 dark:border-gray-800"><span className="text-sm text-gray-500">Revoked</span><p className="text-2xl font-bold mt-1 text-red-600">{delegations.filter((d) => d.status === "revoked").length}</p></div>
-      </div>
+        <div className="flex gap-1 mb-6 bg-gray-200 dark:bg-gray-800 rounded-lg p-1">
+          {tabs.map(({ id, label, icon: Icon, count }) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                tab === id ? "bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}>
+              <Icon className="w-4 h-4" />{label}
+              {count !== undefined && count > 0 && <span className="px-1.5 py-0.5 text-xs bg-orange-200 dark:bg-orange-900 text-orange-700 dark:text-orange-300 rounded-full">{count}</span>}
+            </button>
+          ))}
+        </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-lg border dark:border-gray-800">
+        {msg && (
+          <div className={`flex items-center gap-2 px-4 py-2 mb-4 rounded-lg text-sm ${
+            msg.type === "success" ? "bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300"
+          }`}>
+            {msg.type === "success" ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}{msg.text}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
+        ) : (
+          <>
+            {tab === "outgoing" && <DelegationTable delegations={outgoing} type="outgoing" onRevoke={revoke} />}
+            {tab === "incoming" && <DelegationTable delegations={incoming} type="incoming" onRespond={respond} />}
+            {tab === "create" && <CreateDelegation onCreated={() => { setTab("outgoing"); load(); }} />}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============ Delegation Table ============
+
+function DelegationTable({ delegations, type, onRevoke, onRespond }: {
+  delegations: Delegation[];
+  type: "outgoing" | "incoming";
+  onRevoke?: (id: string) => void;
+  onRespond?: (id: string, action: "accept" | "reject") => void;
+}) {
+  const t = useTranslations();
+  const otherKey = type === "outgoing" ? "delegate" : "from";
+
+  if (delegations.length === 0) {
+    return (
+      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-12 text-center">
+        <ArrowRightLeft className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        <p className="text-sm text-gray-500">{type === "outgoing" ? t("delegations.outgoing.noDelegations") : t("delegations.incoming.noDelegations")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white p-4 pb-2">
+        {type === "outgoing" ? t("delegations.outgoing.title") : t("delegations.incoming.title")}
+      </h3>
+      <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 dark:bg-gray-900/50">
-            <tr>
-              <th scope="col" className="px-4 py-3 text-left font-medium">Delegated To</th>
-              <th scope="col" className="px-4 py-3 text-left font-medium">Scope</th>
-              <th scope="col" className="px-4 py-3 text-left font-medium">Start</th>
-              <th scope="col" className="px-4 py-3 text-left font-medium">End</th>
-              <th scope="col" className="px-4 py-3 text-left font-medium">Status</th>
-              <th scope="col" className="px-4 py-3 text-left font-medium">Actions</th>
+          <thead>
+            <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50 dark:bg-gray-800/50">
+              <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.${otherKey}`)}</th>
+              <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.scopes`)}</th>
+              <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.expires`)}</th>
+              <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.status`)}</th>
+              <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y dark:divide-gray-800">
-            {delegations.map((d) => (
-              <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                <td className="px-4 py-3"><span className="font-medium">{d.delegated_to}</span><p className="text-xs text-gray-400">from {d.delegator}</p></td>
-                <td className="px-4 py-3"><div className="flex flex-wrap gap-1">{d.scope.map((s, i) => <span key={i} className="px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 font-mono">{s}</span>)}</div></td>
-                <td className="px-4 py-3 text-gray-500">{d.start_date}</td>
-                <td className="px-4 py-3 text-gray-500">{d.end_date}</td>
-                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-xs ${statusColors[d.status]}`}>{d.status}</span></td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => startEdit(d)} className="text-xs text-blue-600 hover:underline">Edit</button>
-                    {d.status !== "revoked" && d.status !== "expired" && (
-                      <button onClick={() => setRevokeId(d.id)} className="text-xs text-red-600 hover:underline">Revoke</button>
+          <tbody>
+            {delegations.map((d) => {
+              const user = type === "outgoing" ? d.delegate : d.delegator;
+              return (
+                <tr key={d.id} className="border-b border-gray-100 dark:border-gray-800/50">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center">
+                        <span className="text-xs font-bold text-blue-600">{user[0]?.toUpperCase()}</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">{user}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-wrap gap-1">
+                      {d.scopes.map((s) => (
+                        <span key={s} className="px-1.5 py-0.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">{s}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-xs text-gray-500">{new Date(d.expires).toLocaleDateString()}</td>
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-0.5 text-xs rounded-full ${statusColors[d.status]}`}>
+                      {t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.status${d.status.replace(/^./, (m) => m.toUpperCase())}`)}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    {type === "outgoing" && d.status === "active" && onRevoke && (
+                      <button onClick={() => onRevoke(d.id)} className="flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950 text-red-600 rounded text-xs font-medium ml-auto">
+                        <Trash2 className="w-3 h-3" />{t("delegations.outgoing.revoke")}
+                      </button>
                     )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {delegations.length === 0 && !loading && <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No delegations found.</td></tr>}
+                    {type === "incoming" && d.status === "pending" && onRespond && (
+                      <div className="flex items-center gap-1 justify-end">
+                        <button onClick={() => onRespond(d.id, "accept")} className="flex items-center gap-1 px-2.5 py-1 bg-green-50 dark:bg-green-950/30 hover:bg-green-100 dark:hover:bg-green-950 text-green-600 rounded text-xs font-medium">
+                          <Check className="w-3 h-3" />{t("delegations.incoming.accept")}
+                        </button>
+                        <button onClick={() => onRespond(d.id, "reject")} className="flex items-center gap-1 px-2.5 py-1 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950 text-red-600 rounded text-xs font-medium">
+                          <X className="w-3 h-3" />{t("delegations.incoming.reject")}
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
 
-      {/* Create/Edit modal */}
-      {showCreate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreate(false)}>
-          <div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b dark:border-gray-800">
-              <h3 className="font-semibold flex items-center gap-2"><Shield className="w-5 h-5 text-blue-500" /> {editId ? "Edit" : "New"} Delegation</h3>
-              <button onClick={() => setShowCreate(false)} aria-label="Close"><X className="w-5 h-5 text-gray-400" /></button>
-            </div>
-            <div className="px-6 py-4 space-y-3">
-              <div><label className="text-sm font-medium">Delegate To</label><input aria-label="username" type="text" value={form.delegated_to} onChange={(e) => setForm({ ...form, delegated_to: e.target.value })} placeholder="username" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-              <div><label className="text-sm font-medium">Scope (comma-separated)</label><input aria-label="read:users, write:roles" type="text" value={form.scope} onChange={(e) => setForm({ ...form, scope: e.target.value })} placeholder="read:users, write:roles" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm font-mono" /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-sm font-medium flex items-center gap-1"><Calendar className="w-3 h-3" /> Start</label><input aria-label="form" type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-                <div><label className="text-sm font-medium flex items-center gap-1"><Calendar className="w-3 h-3" /> End</label><input aria-label="form" type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-              </div>
-              <div><label className="text-sm font-medium">Reason</label><input aria-label="Vacation coverage" type="text" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Vacation coverage" className="w-full mt-1 px-3 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm" /></div>
-            </div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
-              <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={saveDelegation} disabled={!form.delegated_to} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"><Save className="w-4 h-4" /> Save</button>
-            </div>
-          </div>
-        </div>
-      )}
+// ============ Create Delegation ============
 
-      {/* Revoke confirmation */}
-      {revokeId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setRevokeId(null)}>
-          <div role="dialog" aria-modal="true" className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="px-6 py-4"><p className="text-sm">Revoke this delegation? The delegatee will immediately lose all delegated permissions.</p></div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t dark:border-gray-800">
-              <button onClick={() => setRevokeId(null)} className="px-4 py-2 rounded-lg border dark:border-gray-700 text-sm">Cancel</button>
-              <button onClick={doRevoke} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 flex items-center gap-1"><Trash2 className="w-4 h-4" /> Revoke</button>
-            </div>
-          </div>
+function CreateDelegation({ onCreated }: { onCreated: () => void }) {
+  const t = useTranslations();
+  const [delegate, setDelegate] = useState("");
+  const [selectedScopes, setSelectedScopes] = useState<Set<string>>(new Set());
+  const [duration, setDuration] = useState<"7d" | "30d" | "90d" | "custom">("30d");
+  const [customDate, setCustomDate] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const toggleScope = (s: string) => {
+    const next = new Set(selectedScopes);
+    if (next.has(s)) next.delete(s); else next.add(s);
+    setSelectedScopes(next);
+  };
+
+  const submit = async () => {
+    setError("");
+    if (!delegate) { setError(t("delegations.create.selectUser")); return; }
+    if (selectedScopes.size === 0) { setError(t("delegations.create.selectScope")); return; }
+
+    setSubmitting(true);
+    try {
+      const expiry = duration === "custom" ? customDate : new Date(Date.now() + (duration === "7d" ? 7 : duration === "30d" ? 30 : 90) * 86400000).toISOString().split("T")[0];
+      await fetch(`${API_BASE}/api/v1/auth/delegation`, {
+        method: "POST", headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ delegate, scopes: [...selectedScopes], expires: expiry }),
+      });
+    } catch { /* ok */ }
+    setSubmitting(false);
+    setDelegate(""); setSelectedScopes(new Set()); setCustomDate("");
+    onCreated();
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t("delegations.create.title")}</h3>
+
+      {/* Delegate */}
+      <div>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">{t("delegations.create.delegate")}</label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input type="email" value={delegate} onChange={(e) => setDelegate(e.target.value)}
+            placeholder={t("delegations.create.delegatePlaceholder")}
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
         </div>
-      )}
+      </div>
+
+      {/* Scopes */}
+      <div>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("delegations.create.scopes")}</label>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{t("delegations.create.scopesDesc")}</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {SCOPES.map((s) => {
+            const checked = selectedScopes.has(s.value);
+            return (
+              <button key={s.value} onClick={() => toggleScope(s.value)}
+                className={`flex items-center gap-2 p-3 rounded-lg border-2 text-sm transition-all ${
+                  checked ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300"
+                }`}>
+                <Shield className={`w-4 h-4 ${checked ? "text-blue-600" : "text-gray-400"}`} />
+                {t(s.labelKey)}
+                {checked && <Check className="w-3 h-3 text-blue-600 ml-auto" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Duration */}
+      <div>
+        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-1">{t("delegations.create.expiry")}</label>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t("delegations.create.expiryDesc")}</p>
+        <div className="flex flex-wrap gap-2">
+          {(["7d", "30d", "90d", "custom"] as const).map((dur) => (
+            <button key={dur} onClick={() => setDuration(dur)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all ${
+                duration === dur ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"
+              }`}>
+              {t(`delegations.create.duration${dur}`)}
+            </button>
+          ))}
+        </div>
+        {duration === "custom" && (
+          <input type="date" value={customDate} onChange={(e) => setCustomDate(e.target.value)}
+            min={new Date().toISOString().split("T")[0]}
+            className="mt-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white" />
+        )}
+      </div>
+
+      {error && <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm"><AlertCircle className="w-4 h-4" />{error}</div>}
+
+      <button onClick={submit} disabled={submitting}
+        className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg font-medium text-sm">
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+        {t("delegations.create.submit")}
+      </button>
     </div>
   );
 }

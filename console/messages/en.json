@@ -1704,5 +1704,113 @@
     "filterAll": "All Events",
     "filterRiskOnly": "Risk Only",
     "loadMore": "Load More"
+  },
+  "delegations": {
+    "title": "Delegation Management",
+    "description": "Manage access delegations to and from other users",
+    "tabs": {
+      "outgoing": "My Delegations",
+      "incoming": "Delegated to Me",
+      "create": "Create Delegation"
+    },
+    "outgoing": {
+      "title": "Delegations I Have Given",
+      "delegate": "Delegate",
+      "scopes": "Scopes",
+      "expires": "Expires",
+      "status": "Status",
+      "noDelegations": "No outgoing delegations",
+      "revoke": "Revoke",
+      "confirmRevoke": "Revoke this delegation?",
+      "revoked": "Delegation revoked successfully",
+      "statusActive": "Active",
+      "statusExpired": "Expired",
+      "statusRevoked": "Revoked",
+      "statusPending": "Pending"
+    },
+    "incoming": {
+      "title": "Delegations Given to Me",
+      "from": "From",
+      "scopes": "Scopes",
+      "expires": "Expires",
+      "status": "Status",
+      "noDelegations": "No incoming delegations",
+      "accept": "Accept",
+      "reject": "Reject",
+      "accepted": "Delegation accepted",
+      "rejected": "Delegation rejected",
+      "statusActive": "Active",
+      "statusExpired": "Expired",
+      "statusRevoked": "Revoked",
+      "statusPending": "Pending"
+    },
+    "create": {
+      "title": "Create New Delegation",
+      "delegate": "Delegate To",
+      "delegatePlaceholder": "Search user by email...",
+      "scopes": "Scopes",
+      "scopesDesc": "Select permissions to delegate",
+      "expiry": "Expiry Date",
+      "expiryDesc": "When this delegation expires",
+      "submit": "Create Delegation",
+      "created": "Delegation created successfully",
+      "scopeUsers": "User Management",
+      "scopeRoles": "Role Management",
+      "scopeAudit": "Audit Access",
+      "scopePolicy": "Policy Management",
+      "scopeApiKeys": "API Key Management",
+      "scopeSettings": "Settings",
+      "selectUser": "Please select a user",
+      "selectScope": "Please select at least one scope",
+      "duration7d": "7 Days",
+      "duration30d": "30 Days",
+      "duration90d": "90 Days",
+      "durationCustom": "Custom Date"
+    }
+  },
+  "sessionDetail": {
+    "title": "Session Detail",
+    "description": "Search and inspect individual session details",
+    "searchPlaceholder": "Enter session ID...",
+    "search": "Search",
+    "searching": "Searching...",
+    "notFound": "Session not found",
+    "noSearch": "Enter a session ID to view details",
+    "attributes": {
+      "title": "Session Attributes",
+      "sessionId": "Session ID",
+      "user": "User",
+      "email": "Email",
+      "device": "Device",
+      "userAgent": "User Agent",
+      "ipAddress": "IP Address",
+      "geoLocation": "Geo Location",
+      "riskScore": "Risk Score",
+      "tokenFamilyId": "Token Family ID",
+      "createdAt": "Created At",
+      "lastActive": "Last Active",
+      "expiresAt": "Expires At",
+      "status": "Status",
+      "authMethod": "Auth Method",
+      "mfaVerified": "MFA Verified"
+    },
+    "caeHistory": {
+      "title": "CAE Evaluation History",
+      "timestamp": "Timestamp",
+      "event": "Event",
+      "result": "Result",
+      "riskDelta": "Risk Δ",
+      "noHistory": "No CAE evaluations recorded"
+    },
+    "actions": {
+      "revoke": "Force Revoke Session",
+      "revokeConfirm": "Force revoke this session? The user will be immediately logged out.",
+      "revoked": "Session revoked successfully",
+      "revokeFailed": "Failed to revoke session"
+    },
+    "statusActive": "Active",
+    "statusExpired": "Expired",
+    "statusRevoked": "Revoked",
+    "statusIdle": "Idle"
   }
 }
