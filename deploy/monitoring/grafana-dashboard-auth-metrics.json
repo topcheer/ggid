@@ -1,0 +1,210 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "GGID Authentication Metrics — login attempts, failures, MFA, sessions",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "title": "Auth Success vs Failure Rate",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(ggid_auth_attempts_total{result=\"success\"}[5m])) * 60",
+          "legendFormat": "Success /min"
+        },
+        {
+          "expr": "sum(rate(ggid_auth_attempts_total{result=\"failure\"}[5m])) * 60",
+          "legendFormat": "Failure /min"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "title": "Login Success Rate (%)",
+      "type": "gauge",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(ggid_auth_attempts_total{result=\"success\"}[5m])) / clamp_min(sum(rate(ggid_auth_attempts_total[5m])), 1) * 100",
+          "legendFormat": "Success %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent", "max": 100, "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Auth Failures by Reason (last 1h)",
+      "type": "bargauge",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 8 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (reason) (increase(ggid_auth_failures_total[1h])))",
+          "legendFormat": "{{reason}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "title": "Active Sessions",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 8 },
+      "targets": [
+        {
+          "expr": "ggid_active_sessions",
+          "legendFormat": "Active"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 10 },
+              { "color": "orange", "value": 500 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Auth Request Duration P50/P95/P99 (ms)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(ggid_http_request_duration_seconds_bucket{route=~\".*login.*|.*token.*|.*mfa.*\"}[5m])) by (le)) * 1000",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ggid_http_request_duration_seconds_bucket{route=~\".*login.*|.*token.*|.*mfa.*\"}[5m])) by (le)) * 1000",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(ggid_http_request_duration_seconds_bucket{route=~\".*login.*|.*token.*|.*mfa.*\"}[5m])) by (le)) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 500 },
+          { "color": "red", "value": 1000 }
+        ]
+      }
+    },
+    {
+      "title": "Auth Failure Trend (per 5min)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "targets": [
+        {
+          "expr": "sum by (reason) (increase(ggid_auth_failures_total[5m]))",
+          "legendFormat": "{{reason}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "title": "Login Endpoint Status Codes",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 22 },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(ggid_http_requests_total{path=~\".*login.*\"}[5m])) * 60",
+          "legendFormat": "HTTP {{status}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "title": "Risk Evaluations by Source (last 1h)",
+      "type": "bargauge",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 30 },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (source, action) (increase(ggid_risk_evaluations_total[1h])))",
+          "legendFormat": "{{source}}/{{action}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "title": "Total Auth Attempts (cumulative)",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 30 },
+      "targets": [
+        {
+          "expr": "sum(ggid_auth_attempts_total)",
+          "legendFormat": "Total"
+        },
+        {
+          "expr": "sum(ggid_auth_attempts_total{result=\"success\"})",
+          "legendFormat": "Success"
+        },
+        {
+          "expr": "sum(ggid_auth_attempts_total{result=\"failure\"})",
+          "legendFormat": "Failure"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": ["ggid", "auth"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "GGID Auth Metrics",
+  "uid": "ggid-auth",
+  "version": 1
+}

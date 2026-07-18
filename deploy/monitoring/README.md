@@ -5,7 +5,10 @@ Prometheus alerts + Grafana dashboards for GGID observability.
 ## Files
 
 - `alerts.yml` — Prometheus alerting rules (auth failures, latency, session anomalies)
-- `grafana-dashboard-ggid-overview.json` — Pre-built Grafana dashboard
+- `grafana-dashboard-ggid-overview.json` — Pre-built Grafana dashboard (services, requests, latency, errors)
+- `grafana-dashboard-auth-metrics.json` — Auth deep dive (login success/failure, MFA, sessions, risk evals)
+- `grafana-dashboard-api-performance.json` — API perf (latency percentiles, slowest routes, payload sizes, GC)
+- `grafana-dashboard-security-overview.json` — Security posture (attack trends, auth failures, rate limits, anomalies)
 
 ## Setup
 
@@ -19,18 +22,22 @@ kubectl create configmap ggid-alerts --from-file=alerts.yml -n monitoring
 cat alerts.yml | kubectl apply -f -
 ```
 
-### Grafana Dashboard
+### Grafana Dashboards
 
-1. Open Grafana → Dashboards → Import
-2. Upload `grafana-dashboard-ggid-overview.json`
-3. Or use ConfigMap:
+Import all 4 dashboards:
 
 ```bash
-kubectl create configmap ggid-dashboard \
+# Create ConfigMap with all dashboards
+kubectl create configmap ggid-dashboards \
   --from-file=grafana-dashboard-ggid-overview.json \
+  --from-file=grafana-dashboard-auth-metrics.json \
+  --from-file=grafana-dashboard-api-performance.json \
+  --from-file=grafana-dashboard-security-overview.json \
   -n monitoring
-kubectl label configmap ggid-dashboard grafana_dashboard=1 -n monitoring
+kubectl label configmap ggid-dashboards grafana_dashboard=1 -n monitoring
 ```
+
+Or import individually via Grafana UI: Dashboards > Import > Upload JSON.
 
 ## Metrics Endpoints
 

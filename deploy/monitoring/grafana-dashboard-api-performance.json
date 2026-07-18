@@ -1,0 +1,210 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "GGID API Performance — latency percentiles, throughput, slowest endpoints, payload sizes",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "title": "Global P50/P95/P99 Latency (ms)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(ggid_http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(ggid_http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(ggid_http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } },
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 500 },
+          { "color": "red", "value": 1000 }
+        ]
+      }
+    },
+    {
+      "title": "Throughput (req/s)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(ggid_http_requests_total[1m])) by (method)",
+          "legendFormat": "{{method}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "reqps" } }
+    },
+    {
+      "title": "Error Rate by Status Class (%)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(ggid_http_requests_total{status=~\"4..|5..\"}[5m])) / sum(rate(ggid_http_requests_total[5m])) * 100",
+          "legendFormat": "HTTP {{status}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100, "min": 0 } }
+    },
+    {
+      "title": "Top 10 Slowest Routes P95 (ms)",
+      "type": "bargauge",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "topk(10, histogram_quantile(0.95, sum by (le, route) (rate(ggid_http_request_duration_seconds_bucket[5m]))) * 1000)",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 500 },
+              { "color": "red", "value": 1000 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "title": "Request Size by Route (bytes, P95)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(ggid_http_request_size_bytes_bucket[5m])))",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "title": "Response Size by Route (bytes, P95)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(ggid_http_response_size_bytes_bucket[5m])))",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "title": "Goroutine Count",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 32 },
+      "targets": [
+        {
+          "expr": "ggid_go_goroutines",
+          "legendFormat": "goroutines"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          { "color": "green", "value": null },
+          { "color": "yellow", "value": 500 },
+          { "color": "red", "value": 1000 }
+        ]
+      }
+    },
+    {
+      "title": "Memory Allocation (MB)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 32 },
+      "targets": [
+        {
+          "expr": "ggid_go_memory_alloc_bytes / 1024 / 1024",
+          "legendFormat": "Alloc MB"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "MB" } }
+    },
+    {
+      "title": "GC Pause Duration (ms)",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 32 },
+      "targets": [
+        {
+          "expr": "ggid_go_gc_duration_seconds * 1000",
+          "legendFormat": "Last GC pause"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" } }
+    },
+    {
+      "title": "Heap Objects",
+      "type": "timeseries",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 38 },
+      "targets": [
+        {
+          "expr": "ggid_go_heap_objects",
+          "legendFormat": "objects"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "title": "GC Runs Total",
+      "type": "stat",
+      "datasource": "Prometheus",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 38 },
+      "targets": [
+        {
+          "expr": "ggid_go_gc_total",
+          "legendFormat": "GC count"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    }
+  ],
+  "schemaVersion": 30,
+  "style": "dark",
+  "tags": ["ggid", "performance"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "GGID API Performance",
+  "uid": "ggid-perf",
+  "version": 1
+}
