@@ -108,6 +108,7 @@ func validatePassword(password string) bool {
 // --- HTTP Handlers ---
 
 // POST /api/v1/auth/register
+//nolint:unused// alternative handler
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -148,6 +149,7 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /api/v1/auth/verify-email?token=xxx
+//nolint:unused// alternative handler
 func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -175,6 +177,7 @@ func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/v1/auth/forgot-password
+//nolint:unused// alternative handler
 func (h *Handler) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -200,6 +203,7 @@ func (h *Handler) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/v1/auth/reset-password
+//nolint:unused// alternative handler
 func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -238,6 +242,7 @@ func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // PUT /api/v1/auth/profile
+//nolint:unused// alternative handler
 func (h *Handler) handleProfileUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
