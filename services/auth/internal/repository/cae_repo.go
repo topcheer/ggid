@@ -141,21 +141,3 @@ func (r *CAERepository) CountByAction(ctx context.Context, tenantID uuid.UUID, m
 	}
 	return result, nil
 }
-
-// scanCAERow is a helper for scanning a single row.
-func scanCAERow(row interface {
-	Scan(dest ...any) error
-}) (*CAEEvaluation, error) {
-	var e CAEEvaluation
-	err := row.Scan(
-		&e.ID, &e.TenantID, &e.SessionID, &e.UserID, &e.Action,
-		&e.PolicyName, &e.IPAddress, &e.RiskScore, &e.EvaluatedAt,
-	)
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return &e, nil
-}
