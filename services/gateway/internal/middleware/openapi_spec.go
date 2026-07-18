@@ -181,6 +181,19 @@ func generatePaths(sec []map[string][]string) map[string]OpenAPIPath {
 		"/api/v1/observability/health":     {Get: op([]string{"Observability"}, "Exporter health")},
 		"/healthz":                         {Get: op([]string{"System"}, "Health check")},
 		"/readyz":                          {Get: op([]string{"System"}, "Readiness check")},
+		// Legacy aliases for backward compatibility
+		"/api/v1/identity/users":           {Get: op([]string{"Identity"}, "List users (legacy alias)"), Post: op([]string{"Identity"}, "Create user (legacy alias)")},
+		"/api/v1/policy/authorize":         {Post: op([]string{"Policy"}, "Unified PDP authorize")},
+		"/api/v1/risk/evaluate":            {Post: op([]string{"Risk"}, "Evaluate risk score")},
+		"/api/v1/mdm/connectors":           {Get: op([]string{"MDM"}, "List MDM connectors"), Post: op([]string{"MDM"}, "Add MDM connector")},
+		"/api/v1/mdm/devices":              {Get: op([]string{"MDM"}, "List MDM devices")},
+		"/api/v1/risk/scores/{user_id}":    {Get: op([]string{"Risk"}, "Get risk score for user")},
+		"/api/v1/risk/signals":             {Get: op([]string{"Risk"}, "List risk signals")},
+		"/api/v1/hr/connectors":            {Get: op([]string{"HR"}, "List HR connectors"), Post: op([]string{"HR"}, "Add HR connector")},
+		"/api/v1/hr/sync":                  {Post: op([]string{"HR"}, "Trigger HR sync")},
+		"/api/v1/hr/dormant":               {Get: op([]string{"HR"}, "Dormant accounts")},
+		"/api/v1/notifications/rules":      {Get: op([]string{"Notifications"}, "List notification rules"), Post: op([]string{"Notifications"}, "Create notification rule")},
+		"/api/v1/soar/playbooks":           {Get: op([]string{"SOAR"}, "List SOAR playbooks"), Post: op([]string{"SOAR"}, "Create SOAR playbook")},
 	}
 }
 
