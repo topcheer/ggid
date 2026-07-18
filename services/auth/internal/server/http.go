@@ -252,10 +252,6 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/check-device", h.handleDeviceCheck)
 	h.mux.HandleFunc("/api/v1/auth/sessions/unbind-device", h.handleDeviceUnbind)
 	// Self-service registration + verification + password reset.
-	h.mux.HandleFunc("/api/v1/auth/register", h.handleRegister)
-	h.mux.HandleFunc("/api/v1/auth/verify-email", h.handleVerifyEmail)
-	h.mux.HandleFunc("/api/v1/auth/forgot-password", h.handleForgotPassword)
-	h.mux.HandleFunc("/api/v1/auth/reset-password", h.handleResetPassword)
 	h.mux.HandleFunc("/api/v1/auth/profile", h.handleProfileUpdate)
 	// Email provider config + test.
 	h.mux.HandleFunc("/api/v1/admin/email/config", h.handleEmailConfig)
@@ -267,7 +263,6 @@ func (h *Handler) registerRoutes() {
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
-	h.mux.HandleFunc("/api/v1/auth/login-attempts/", h.handleLoginAttemptsReset)
 	h.mux.HandleFunc("/api/v1/auth/login-attempts/", h.handleLoginAttemptsReset)
 
 	// Adaptive MFA: risk-based step-up authentication
