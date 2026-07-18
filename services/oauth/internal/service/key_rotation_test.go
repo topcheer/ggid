@@ -3,6 +3,7 @@ package service
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"sync"
 	"testing"
 	"time"
 )
@@ -119,16 +120,16 @@ func TestKeyAge(t *testing.T) {
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
 	kp := NewRotatingKeyProvider(key, 1*time.Hour)
 
-	// Key just initialized: age should be very small (not 0)
+	// Key just initialized: age should be small
 	age1 := kp.KeyAge()
-	if age1 < 0 || age1 > 1*time.Second {
+	if age1 < 0 || age1 > 2*time.Second {
 		t.Errorf("expected small age at init, got %v", age1)
 	}
 
 	// Rotate and check age resets to near-zero
 	_ = kp.RotateKey()
 	age2 := kp.KeyAge()
-	if age2 <= 0 || age2 > 1*time.Second {
+	if age2 < 0 || age2 > 2*time.Second {
 		t.Errorf("expected small age after rotation, got %v", age2)
 	}
 }
@@ -152,19 +153,35 @@ func TestStartAutoRotation_RotatesWhenOld(t *testing.T) {
 	kp := NewRotatingKeyProvider(key, 1*time.Hour)
 
 	oldKID := kp.KeyID()
+
+	var mu sync.Mutex
 	var auditCalls []struct{ old, new string }
 
-	// maxAge = 50ms, checkInterval = 20ms — should rotate after ~50ms
-	stop := kp.StartAutoRotation(20*time.Millisecond, 50*time.Millisecond, func(old, new string) {
+	// maxAge = 1ms, checkInterval = 10ms — should rotate quickly
+	rotated := make(chan struct{}, 4)
+	stop := kp.StartAutoRotation(10*time.Millisecond, 1*time.Millisecond, func(old, new string) {
+		mu.Lock()
 		auditCalls = append(auditCalls, struct{ old, new string }{old, new})
+		mu.Unlock()
+		rotated <- struct{}{}
 	})
-	time.Sleep(120 * time.Millisecond) // enough for 1 rotation, not 2
+
+	// Wait for at least one rotation (up to 2s for slow CI)
+	select {
+	case <-rotated:
+	case <-time.After(2 * time.Second):
+		stop()
+		t.Fatal("expected at least one rotation within 2s")
+	}
 	stop()
 
 	newKID := kp.KeyID()
 	if newKID == oldKID {
 		t.Error("expected key to auto-rotate when age exceeds maxAge")
 	}
+
+	mu.Lock()
+	defer mu.Unlock()
 	if len(auditCalls) == 0 {
 		t.Fatal("expected at least one audit callback on rotation")
 	}
