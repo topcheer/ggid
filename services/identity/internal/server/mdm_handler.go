@@ -31,7 +31,7 @@ type MDMDevice struct {
 
 // GET /api/v1/mdm/connectors
 // POST /api/v1/mdm/connectors
-func (h *Handler) handleMDMConnectors(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPHandler) handleMDMConnectors(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		var req MDMConnector
@@ -60,7 +60,7 @@ func (h *Handler) handleMDMConnectors(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST /api/v1/mdm/sync/:connector
-func (h *Handler) handleMDMSync(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPHandler) handleMDMSync(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
@@ -77,7 +77,7 @@ func (h *Handler) handleMDMSync(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /api/v1/mdm/devices
-func (h *Handler) handleMDMDevices(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPHandler) handleMDMDevices(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
@@ -86,7 +86,7 @@ func (h *Handler) handleMDMDevices(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /api/v1/mdm/devices/:id/compliance
-func (h *Handler) handleMDMCompliance(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPHandler) handleMDMCompliance(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
