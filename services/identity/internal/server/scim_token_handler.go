@@ -22,7 +22,7 @@ func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.scimRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "SCIM token management not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"tokens": []any{}, "count": 0})
 		return
 	}
 

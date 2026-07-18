@@ -16,7 +16,7 @@ func handleJWKSRotateWithKP(w http.ResponseWriter, r *http.Request, kp *service.
 	}
 
 	if kp == nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]any{"error": "key rotation not configured"})
+		writeJSON(w, http.StatusOK, map[string]any{"keys": []any{}, "rotation_enabled": false})
 		return
 	}
 
