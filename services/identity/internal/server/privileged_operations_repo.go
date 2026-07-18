@@ -110,6 +110,7 @@ func (r *privilegedOpRepo) List(ctx context.Context, tenantID uuid.UUID, operato
 	if action != "" {
 		q += " AND action = $" + intToStr(argIdx)
 		args = append(args, action)
+		argIdx++
 	}
 	q += " ORDER BY timestamp DESC LIMIT " + intToStr(limit)
 
