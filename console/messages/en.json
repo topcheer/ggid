@@ -2319,5 +2319,102 @@
       "curlDesc": "Raw HTTP API calls using curl",
       "viewFullExample": "View Full Example"
     }
+  },
+  "tenants": {
+    "title": "Tenant Management",
+    "description": "Manage multi-tenant deployments and plans",
+    "tabs": {
+      "list": "Tenants",
+      "create": "Create Tenant"
+    },
+    "list": {
+      "title": "All Tenants",
+      "name": "Tenant Name",
+      "id": "Tenant ID",
+      "plan": "Plan",
+      "userCount": "Users",
+      "status": "Status",
+      "created": "Created",
+      "noTenants": "No tenants found",
+      "statusActive": "Active",
+      "statusSuspended": "Suspended",
+      "statusTrial": "Trial",
+      "demo": "DEMO"
+    },
+    "create": {
+      "title": "Create New Tenant",
+      "name": "Tenant Name",
+      "namePlaceholder": "e.g. Acme Corporation",
+      "plan": "Plan",
+      "planDesc": "Select the tier for this tenant",
+      "planFree": "Free",
+      "planFreeDesc": "Up to 100 users, community support",
+      "planPro": "Pro",
+      "planProDesc": "Up to 10,000 users, priority support",
+      "planEnterprise": "Enterprise",
+      "planEnterpriseDesc": "Unlimited users, dedicated support",
+      "submit": "Create Tenant",
+      "created": "Tenant created successfully",
+      "initializing": "Initializing tenant...",
+      "adminEmail": "Admin Email",
+      "adminEmailPlaceholder": "admin@newtenant.com",
+      "adminEmailDesc": "First admin user for this tenant"
+    }
+  },
+  "integrationPlayground": {
+    "title": "Integration Playground",
+    "description": "Test your GGID integration interactively",
+    "tabs": {
+      "token": "Token Tester",
+      "api": "API Tester",
+      "webhook": "Webhook Tester"
+    },
+    "token": {
+      "title": "JWT Token Tester",
+      "email": "Email",
+      "emailPlaceholder": "admin@ggid.dev",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "login": "Get Token",
+      "logging": "Logging in...",
+      "decodedPayload": "Decoded JWT Payload",
+      "rawToken": "Raw Access Token",
+      "tokenHeader": "Token Header",
+      "noToken": "Login to see the decoded token",
+      "copyToken": "Copy Token"
+    },
+    "api": {
+      "title": "API Request Tester",
+      "method": "Method",
+      "endpoint": "Endpoint",
+      "params": "Parameters (JSON)",
+      "paramsPlaceholder": "{\"key\": \"value\"}",
+      "send": "Send Request",
+      "sending": "Sending...",
+      "response": "Response",
+      "statusCode": "Status Code",
+      "responseTime": "Response Time",
+      "noResponse": "Send a request to see the response",
+      "presetLogin": "POST /auth/login",
+      "presetUsers": "GET /users",
+      "presetMe": "GET /users/me",
+      "presetRoles": "GET /roles"
+    },
+    "webhook": {
+      "title": "Webhook Tester",
+      "description": "Send test events to your webhook endpoint",
+      "webhookUrl": "Webhook URL",
+      "webhookUrlPlaceholder": "https://your-app.com/webhooks/ggid",
+      "eventType": "Event Type",
+      "payload": "Event Payload (JSON)",
+      "send": "Send Test Event",
+      "sending": "Sending...",
+      "response": "Response",
+      "noResponse": "Send an event to see the response",
+      "eventUserCreated": "user.created",
+      "eventUserDeleted": "user.deleted",
+      "eventLogin": "auth.login",
+      "eventRoleChanged": "role.changed"
+    }
   }
 }
