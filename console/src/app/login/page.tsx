@@ -35,7 +35,7 @@ export default function LoginPage() {
   const [connectors, setConnectors] = useState<SocialConnector[]>([]);
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(false);
-  const [tenantSlug, setTenantSlug] = useState("default");
+  const [tenantSlug, setTenantSlug] = useState(DEFAULT_TENANT_ID);
   const [systemInitialized, setSystemInitialized] = useState<boolean | null>(null);
   const [initUserCount, setInitUserCount] = useState(0);
 
@@ -105,7 +105,7 @@ export default function LoginPage() {
       const resp = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: "POST",
         headers: { ...authHeader(), "Content-Type": "application/json", "X-Tenant-ID": tenantSlug || DEFAULT_TENANT_ID },
-        body: JSON.stringify({ username, password, tenant_slug: tenantSlug || "default" }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await resp.json();
 
@@ -176,7 +176,9 @@ export default function LoginPage() {
       syncSignalAfterLogin().catch(() => {});
 
       // No MFA needed — redirect to dashboard
-      router.push("/dashboard");
+      // Use window.location.href for hard navigation — router.push can silently fail
+      // when localStorage was just written (AuthGuard needs fresh page load)
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error — is the API running?");
     } finally {
@@ -207,6 +209,8 @@ export default function LoginPage() {
             localStorage.setItem("ggid_refresh_token", data.refresh_token || "");
           }
           router.push("/dashboard");
+          // Force hard navigation after localStorage write
+          if (typeof window !== "undefined") window.location.href = "/dashboard";
           return;
         }
       }
@@ -256,7 +260,7 @@ export default function LoginPage() {
             }
           }
         }
-        router.push("/dashboard");
+        if (typeof window !== "undefined") window.location.href = "/dashboard";
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
