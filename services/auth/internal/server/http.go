@@ -57,6 +57,7 @@ type Handler struct {
 	tapPolicyRepo          *repository.TAPPolicyRepository
 	capRepo                *repository.ConditionalAccessRepository
 	caeRepo                *repository.CAERepository
+	policyCheckFn          PolicyCheckFunc
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
@@ -518,6 +519,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/tap", h.handleTAP)
 	h.mux.HandleFunc("/api/v1/auth/tap/", h.handleTAP)
 	h.mux.HandleFunc("/api/v1/auth/conditional-access/", h.handleConditionalAccess)
+	h.mux.HandleFunc("/api/v1/authz/check", h.handleAuthzCheck)
 	h.mux.HandleFunc("/api/v1/auth/cae/status", h.handleCAE)
 	h.mux.HandleFunc("/api/v1/auth/cae/run", h.handleCAE)
 	h.mux.HandleFunc("/api/v1/auth/cae/log", h.handleCAE)

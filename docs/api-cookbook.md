@@ -259,6 +259,49 @@ curl -sS "$GGID/api/v1/audit/export?format=csv&start=2025-01-01T00:00:00Z" \
   -o audit-export.csv
 ```
 
+## 21. Token Introspection (Enhanced)
+
+```bash
+curl -sS -X POST "$GGID/api/v1/oauth/introspect" \
+  -u "client-id:client-secret" \
+  -d "token=<access-token>"
+# Returns: active, user_id, tenant_id, scope, session_id, device_id, risk_score, exp
+```
+
+## 22. Enhanced UserInfo (All-in-One)
+
+```bash
+curl -sS "$GGID/oauth/userinfo" \
+  -H "Authorization: Bearer $TOKEN"
+# Returns: sub, email, name, tenant_id, roles, groups, permissions, risk_level
+```
+
+## 23. JWKS with Cache (ETag)
+
+```bash
+# First request — saves ETag
+ETAG=$(curl -sS -D - "$GGID/.well-known/jwks.json" -o /dev/null | grep -i etag | tr -d '\r' | awk '{print $2}')
+
+# Conditional request — returns 304 Not Modified if unchanged
+curl -sS -o /dev/null -w "%{http_code}" \
+  -H "If-None-Match: $ETAG" \
+  "$GGID/.well-known/jwks.json"
+```
+
+## 24. Simplified Permission Check
+
+```bash
+curl -sS -X POST "$GGID/api/v1/authz/check" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "user_id": "user-uuid",
+    "resource": "document:123",
+    "action": "read"
+  }'
+# Returns: {allowed: true, reason: "read access allowed by default policy"}
+```
+
 ---
 
 ## Tips

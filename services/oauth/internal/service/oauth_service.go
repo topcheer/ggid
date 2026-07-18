@@ -810,13 +810,19 @@ func isSupportedSigningMethod(method jwt.SigningMethod) bool {
 }
 
 // UserInfoResponse holds the standard OIDC UserInfo claims.
+// Enhanced (KB-295) with roles, groups, permissions, and risk level.
 type UserInfoResponse struct {
-	Sub           string `json:"sub"`
-	Name          string `json:"name,omitempty"`
-	Email         string `json:"email,omitempty"`
-	EmailVerified bool   `json:"email_verified,omitempty"`
-	Picture       string `json:"picture,omitempty"`
-	TenantID      string `json:"tenant_id,omitempty"`
+	Sub           string   `json:"sub"`
+	Name          string   `json:"name,omitempty"`
+	Email         string   `json:"email,omitempty"`
+	EmailVerified bool     `json:"email_verified,omitempty"`
+	Picture       string   `json:"picture,omitempty"`
+	TenantID      string   `json:"tenant_id,omitempty"`
+	// KB-295: Extended fields for downstream applications.
+	Roles       []string `json:"roles,omitempty"`
+	Groups      []string `json:"groups,omitempty"`
+	Permissions []string `json:"permissions,omitempty"`
+	RiskLevel   string   `json:"risk_level,omitempty"`
 }
 
 // GetUserInfo returns user info claims from a validated access token.
@@ -833,11 +839,16 @@ func (s *OAuthService) GetUserInfo(tokenStr string) (*UserInfoResponse, error) {
 		EmailVerified: getBoolClaim(claims, "email_verified"),
 		Picture:       getStringClaim(claims, "picture"),
 		TenantID:      getStringClaim(claims, "tenant_id"),
+		Roles:         getStringSliceClaim(claims, "roles"),
+		Groups:        getStringSliceClaim(claims, "groups"),
+		Permissions:   getStringSliceClaim(claims, "permissions"),
+		RiskLevel:     getStringClaim(claims, "risk_level"),
 	}
 	return resp, nil
 }
 
 // IntrospectionResponse is the RFC 7662 token introspection response.
+// Enhanced (KB-295) with user_id, tenant_id, session_id, device_id, risk_score.
 type IntrospectionResponse struct {
 	Active    bool   `json:"active"`
 	Scope     string `json:"scope,omitempty"`
@@ -849,6 +860,12 @@ type IntrospectionResponse struct {
 	Sub       string `json:"sub,omitempty"`
 	Aud       string `json:"aud,omitempty"`
 	Iss       string `json:"iss,omitempty"`
+	// KB-295: Extended fields for downstream apps.
+	UserID     string `json:"user_id,omitempty"`
+	TenantID   string `json:"tenant_id,omitempty"`
+	SessionID  string `json:"session_id,omitempty"`
+	DeviceID   string `json:"device_id,omitempty"`
+	RiskScore  int    `json:"risk_score,omitempty"`
 }
 
 // IntrospectToken validates a token and returns introspection data.
@@ -871,6 +888,12 @@ func (s *OAuthService) IntrospectToken(tokenStr string) *IntrospectionResponse {
 		Username:  getStringClaim(claims, "preferred_username"),
 		Exp:       getInt64Claim(claims, "exp"),
 		Iat:       getInt64Claim(claims, "iat"),
+		// KB-295: Extended claims.
+		UserID:    getStringClaim(claims, "user_id"),
+		TenantID:  getStringClaim(claims, "tenant_id"),
+		SessionID: getStringClaim(claims, "session_id"),
+		DeviceID:  getStringClaim(claims, "device_id"),
+		RiskScore: getIntClaim(claims, "risk_score"),
 	}
 	if scope, ok := claims["scope"]; ok {
 		if s, ok := scope.(string); ok {
@@ -1328,6 +1351,30 @@ func getInt64Claim(claims jwt.MapClaims, key string) int64 {
 		}
 	}
 	return 0
+}
+
+func getIntClaim(claims jwt.MapClaims, key string) int {
+	return int(getInt64Claim(claims, key))
+}
+
+func getStringSliceClaim(claims jwt.MapClaims, key string) []string {
+	if v, ok := claims[key]; ok {
+		switch s := v.(type) {
+		case []string:
+			return s
+		case []interface{}:
+			result := make([]string, 0, len(s))
+			for _, item := range s {
+				if str, ok := item.(string); ok {
+					result = append(result, str)
+				}
+			}
+			return result
+		case string:
+			return []string{s}
+		}
+	}
+	return nil
 }
 
 func getBoolClaim(claims jwt.MapClaims, key string) bool {

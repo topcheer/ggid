@@ -262,8 +262,18 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// JWKS endpoint
+	// JWKS endpoint with caching headers (KB-295)
 	if r.URL.Path == "/.well-known/jwks.json" {
+		// Set Cache-Control for downstream caching (1 hour, stale-while-revalidate 5 min).
+		w.Header().Set("Cache-Control", "public, max-age=3600, stale-while-revalidate=300")
+		// ETag support for conditional requests.
+		if etag := gw.jwks.ETag(); etag != "" {
+			if match := r.Header.Get("If-None-Match"); match == etag {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
+			w.Header().Set("ETag", etag)
+		}
 		gw.jwks.JWKSHandler()(w, r)
 		return
 	}

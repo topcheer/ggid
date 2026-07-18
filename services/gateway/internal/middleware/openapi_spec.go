@@ -121,6 +121,10 @@ func generatePaths(sec []map[string][]string) map[string]OpenAPIPath {
 		// Auth — Conditional Access
 		"/api/v1/auth/conditional-access/policies": {Get: op([]string{"Conditional Access"}, "List CAP policies"), Post: op([]string{"Conditional Access"}, "Create CAP policy")},
 		"/api/v1/auth/conditional-access/evaluate": {Post: op([]string{"Conditional Access"}, "Evaluate conditions against context")},
+		// Auth: Simplified authz
+		"/api/v1/authz/check":              {Post: op([]string{"Authz"}, "Simplified permission check: {user_id, resource, action} -> {allowed}")},
+		// OAuth: UserInfo
+		"/oauth/userinfo":                  {Get: op([]string{"OAuth"}, "Enhanced UserInfo: profile + roles + groups + permissions + risk_level")},
 		// Auth — TAP
 		"/api/v1/auth/tap":                 {Post: op([]string{"TAP"}, "Issue Temporary Access Pass")},
 		"/api/v1/auth/tap/batch":           {Post: op([]string{"TAP"}, "Batch issue TAPs")},
@@ -182,8 +186,7 @@ func generatePaths(sec []map[string][]string) map[string]OpenAPIPath {
 		"/healthz":                         {Get: op([]string{"System"}, "Health check")},
 		"/readyz":                          {Get: op([]string{"System"}, "Readiness check")},
 		// Legacy aliases for backward compatibility
-		"/api/v1/identity/users":           {Get: op([]string{"Identity"}, "List users (legacy alias)"), Post: op([]string{"Identity"}, "Create user (legacy alias)")},
-		"/api/v1/policy/authorize":         {Post: op([]string{"Policy"}, "Unified PDP authorize")},
+		"/api/v1/identity/users":           {Get: op([]string{"Identity"}, "List users (legacy alias)"), Post: op([]string{"Identity"}, "Create user (legacy alias)")},		"/api/v1/policy/authorize":         {Post: op([]string{"Policy"}, "Unified PDP authorize")},
 		"/api/v1/risk/evaluate":            {Post: op([]string{"Risk"}, "Evaluate risk score")},
 		"/api/v1/mdm/connectors":           {Get: op([]string{"MDM"}, "List MDM connectors"), Post: op([]string{"MDM"}, "Add MDM connector")},
 		"/api/v1/mdm/devices":              {Get: op([]string{"MDM"}, "List MDM devices")},

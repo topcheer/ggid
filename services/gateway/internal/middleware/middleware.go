@@ -558,6 +558,32 @@ func (c *JWKSClient) JWKSHandler() http.HandlerFunc {
 	}
 }
 
+// ETag returns a hash of the current key set for HTTP caching (KB-295).
+func (c *JWKSClient) ETag() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	var h uint64 = 14695981039346656037
+	for kid, pub := range c.keys {
+		for _, b := range []byte(kid) {
+			h ^= uint64(b)
+			h *= 1099511628211
+		}
+		n := pub.N.Bytes()
+		for _, b := range n {
+			h ^= uint64(b)
+			h *= 1099511628211
+		}
+	}
+	if c.keyID != "" {
+		for _, b := range []byte(c.keyID) {
+			h ^= uint64(b)
+			h *= 1099511628211
+		}
+	}
+	return "\"" + fmt.Sprintf("%x", h) + "\""
+}
+
 // JWTAuth returns middleware that validates JWT Bearer tokens.
 // If required is true, requests without a valid token get 401.
 // If required is false, requests without a token pass through.
