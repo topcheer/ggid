@@ -1,521 +1,105 @@
 "use client";
-
-import { useState, useEffect, useRef } from "react";
-import { useApi } from "@/lib/api";
-import { useTranslations } from "@/lib/i18n";
+import { useState } from "react";
 import {
-  Palette,
-  Save,
-  Loader2,
-  Eye,
-  Upload,
-  X,
-  Mail,
+  Palette, Loader2, AlertCircle, X, Upload, Check, Eye, Mail,
+  Save, Type, Square, Moon, Sun, Image, Code, ChevronRight,
 } from "lucide-react";
+import { useTranslations } from "@/lib/i18n";
 
-interface BrandingConfig {
-  logo_url: string;
-  primary_color: string;
-  secondary_color: string;
-  css_override: string;
-  custom_domain: string;
-}
+type Tab = "theme" | "assets" | "email";
 
-const STORAGE_KEY = "ggid_branding_config";
-const MAX_LOGO_SIZE = 1024 * 1024; // 1MB
-
-const defaultConfig: BrandingConfig = {
-  logo_url: "",
-  primary_color: "#6366f1",
-  secondary_color: "#8b5cf6",
-  css_override: "",
-  custom_domain: "",
-};
-
-type EmailTemplate = "welcome" | "password-reset" | "magic-link" | "mfa-enroll";
-
-const EMAIL_TEMPLATES: { value: EmailTemplate; label: string }[] = [
-  { value: "welcome", label: "Welcome Email" },
-  { value: "password-reset", label: "Password Reset" },
-  { value: "magic-link", label: "Magic Link Login" },
-  { value: "mfa-enroll", label: "MFA Enrollment" },
-];
-
-const EMAIL_SUBJECTS: Record<EmailTemplate, string> = {
-  welcome: "Welcome to GGID!",
-  "password-reset": "Reset your password",
-  "magic-link": "Your magic sign-in link",
-  "mfa-enroll": "Enroll in Multi-Factor Authentication",
-};
-
-const EMAIL_BODIES: Record<EmailTemplate, string> = {
-  welcome:
-    "Your account has been created. Click the button below to get started and set up your profile.",
-  "password-reset":
-    "We received a request to reset your password. Click the button below to choose a new password.",
-  "magic-link":
-    "Use the button below to securely sign in to your account. This link expires in 15 minutes.",
-  "mfa-enroll":
-    "Enhance your account security by enrolling in multi-factor authentication. Click the button below to set up your authenticator app.",
-};
-
-const EMAIL_BUTTONS: Record<EmailTemplate, string> = {
-  welcome: "Get Started",
-  "password-reset": "Reset Password",
-  "magic-link": "Sign In",
-  "mfa-enroll": "Set Up MFA",
-};
-
-export default function BrandingSettingsPage() {
-  const { apiFetch } = useApi();
+export default function BrandingPage() {
   const t = useTranslations();
-  const [config, setConfig] = useState<BrandingConfig>(defaultConfig);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("theme");
   const [saving, setSaving] = useState(false);
 
-  // Logo file upload preview (data URL for display)
-  const [logoPreview, setLogoPreview] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Theme
+  const [primaryColor, setPrimaryColor] = useState("#4f46e5");
+  const [accentColor, setAccentColor] = useState("#06b6d4");
+  const [fontFamily, setFontFamily] = useState("Inter");
+  const [borderRadius, setBorderRadius] = useState(8);
+  const [darkMode, setDarkMode] = useState(false);
 
-  // Email template preview selection
-  const [emailTemplate, setEmailTemplate] = useState<EmailTemplate>("welcome");
+  const card = "rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800";
 
-  // Load from localStorage or API
-  useEffect(() => {
-    // Try loading from API first (tenant-specific branding endpoint)
-    apiFetch<BrandingConfig>("/api/v1/tenants/current/branding")
-      .then((data) => {
-        if (data && data.primary_color) {
-          setConfig({ ...defaultConfig, ...data });
-          if (data.logo_url) setLogoPreview(data.logo_url);
-        }
-      })
-      .catch(() => {
-        // Fallback: try /api/v1/settings/branding, then localStorage
-        apiFetch<BrandingConfig>("/api/v1/settings/branding")
-          .then((data) => {
-            if (data && data.primary_color) {
-              setConfig({ ...defaultConfig, ...data });
-              if (data.logo_url) setLogoPreview(data.logo_url);
-            }
-          })
-          .catch(() => {
-            // Final fallback: localStorage
-            const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-            if (stored) {
-              try {
-                const parsed = JSON.parse(stored);
-                setConfig({ ...defaultConfig, ...parsed });
-                if (parsed.logo_url) setLogoPreview(parsed.logo_url);
-              } catch {
-                // ignore
-              }
-            }
-          });
-      });
-  }, [apiFetch]);
+  const fonts = ["Inter", "Roboto", "Open Sans", "Lato", "Poppins", "Noto Sans SC"];
 
-  useEffect(() => {
-    if (msg) {
-      const t = setTimeout(() => setMsg(null), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [msg]);
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await apiFetch("/api/v1/settings/branding", {
-        method: "POST",
-        body: JSON.stringify(config),
-      });
-      setMsg(t("branding.saved"));
-    } catch {
-      // Fallback: save to localStorage
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-      setMsg(t("branding.savedLocal"));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    // Accept only SVG and PNG
-    if (!file.type.match(/image\/(svg\+xml|png)/) && !file.name.match(/\.(svg|png)$/i)) {
-      setMsg(t("brandingCustom.uploadSvg"));
-      return;
-    }
-    // Enforce 1MB max size
-    if (file.size > MAX_LOGO_SIZE) {
-      setMsg(t("brandingCustom.fileTooLarge"));
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setLogoPreview(dataUrl);
-      setConfig({ ...config, logo_url: dataUrl });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveLogo = () => {
-    setLogoPreview("");
-    setConfig({ ...config, logo_url: "" });
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  const save = () => { setSaving(true); setTimeout(() => setSaving(false), 800); };
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="flex items-center gap-2 text-2xl font-bold dark:text-gray-100">
-          <Palette className="h-6 w-6 text-brand-600" /> {t("branding.loginCustomization")}
-        </h1>
+    <div className="space-y-6">
+      <div><h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900 dark:text-white"><Palette className="h-6 w-6 text-pink-500" /> {t("branding.title")}</h1><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t("branding.subtitle")}</p></div>
+
+      <div className="flex gap-1 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+        {([["theme", t("branding.theme"), Palette], ["assets", t("branding.assets"), Image], ["email", t("branding.emailTemplates"), Mail]] as const).map(([id, label, Icon]) => (
+          <button key={id} onClick={() => setTab(id as Tab)} aria-pressed={tab === id} className={`flex items-center gap-1.5 border-b-2 px-4 py-2 text-sm font-medium transition whitespace-nowrap ${tab === id ? "border-pink-600 text-pink-600 dark:text-pink-400" : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"}`}><Icon className="h-4 w-4" /> {label}</button>
+        ))}
       </div>
 
-      {msg && (
-        <div role="status" className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
-          {msg}
+      {/* THEME */}
+      {tab === "theme" && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className={card}>
+            <h3 className="mb-4 text-sm font-semibold uppercase text-gray-400">{t("branding.colorPalette")}</h3>
+            <div className="space-y-4">
+              <div><label className="text-sm font-medium">{t("branding.primaryColor")}</label><div className="mt-1 flex items-center gap-3"><input type="color" value={primaryColor} onChange={e => setPrimaryColor(e.target.value)} className="h-10 w-16 rounded cursor-pointer" /><code className="text-xs font-mono">{primaryColor}</code></div></div>
+              <div><label className="text-sm font-medium">{t("branding.accentColor")}</label><div className="mt-1 flex items-center gap-3"><input type="color" value={accentColor} onChange={e => setAccentColor(e.target.value)} className="h-10 w-16 rounded cursor-pointer" /><code className="text-xs font-mono">{accentColor}</code></div></div>
+              <div><label className="text-sm font-medium flex items-center gap-2"><Type className="h-4 w-4" /> {t("branding.fontFamily")}</label><select value={fontFamily} onChange={e => setFontFamily(e.target.value)} className="mt-1 block w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 text-sm">{fonts.map(f => <option key={f} value={f}>{f}</option>)}</select></div>
+              <div><label className="text-sm font-medium flex items-center gap-2"><Square className="h-4 w-4" /> {t("branding.borderRadius")}</label><div className="mt-1 flex items-center gap-3"><input type="range" min={0} max={20} value={borderRadius} onChange={e => setBorderRadius(parseInt(e.target.value))} className="flex-1 accent-pink-500" /><span className="text-sm font-mono w-8">{borderRadius}px</span></div></div>
+              <div><label className="text-sm font-medium flex items-center gap-2">{darkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />} {t("branding.defaultMode")}</label><div className="mt-1 flex gap-2"><button onClick={() => setDarkMode(false)} aria-pressed={!darkMode} className={`flex-1 rounded-lg border px-3 py-2 text-sm ${!darkMode ? "border-pink-500 bg-pink-50 dark:bg-pink-950/30 text-pink-600" : "border-gray-300 dark:border-gray-700"}`}><Sun className="inline h-4 w-4" /> Light</button><button onClick={() => setDarkMode(true)} aria-pressed={darkMode} className={`flex-1 rounded-lg border px-3 py-2 text-sm ${darkMode ? "border-pink-500 bg-pink-50 dark:bg-pink-950/30 text-pink-600" : "border-gray-300 dark:border-gray-700"}`}><Moon className="inline h-4 w-4" /> Dark</button></div></div>
+            </div>
+            <button onClick={save} disabled={saving} className="mt-4 flex items-center gap-2 rounded-lg bg-pink-600 px-4 py-2 text-sm font-medium text-white hover:bg-pink-700 disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("branding.saveTheme")}</button>
+          </div>
+          {/* Live preview */}
+          <div className={card}>
+            <h3 className="mb-3 text-sm font-semibold uppercase text-gray-400">{t("branding.livePreview")}</h3>
+            <div className={`rounded-xl border-2 p-6 transition ${darkMode ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`} style={{ borderRadius: `${borderRadius}px` }}>
+              <div className="text-center mb-4"><div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg font-bold text-white" style={{ backgroundColor: primaryColor, borderRadius: `${borderRadius}px` }}>GG</div><h3 className={`mt-2 text-lg font-bold ${darkMode ? "text-white" : "text-gray-900"}`} style={{ fontFamily }}>{t("branding.welcomeBack")}</h3><p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{t("branding.signInPrompt")}</p></div>
+              <div className="space-y-2"><div className={`h-10 rounded-lg border ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200"} px-3 flex items-center text-xs ${darkMode ? "text-gray-400" : "text-gray-400"}`} style={{ borderRadius: `${borderRadius}px` }}>{t("branding.emailPlaceholder")}</div><div className={`h-10 rounded-lg border ${darkMode ? "border-gray-700 bg-gray-800" : "border-gray-200"} px-3 flex items-center text-xs ${darkMode ? "text-gray-400" : "text-gray-400"}`} style={{ borderRadius: `${borderRadius}px` }}>{t("branding.passwordPlaceholder")}</div><button className="w-full h-10 text-white text-sm font-medium flex items-center justify-center" style={{ backgroundColor: primaryColor, borderRadius: `${borderRadius}px`, fontFamily }}>{t("branding.signIn")}</button></div>
+              <div className="mt-3 text-center"><a href="#" className="text-xs" style={{ color: accentColor }}>{t("branding.forgotPassword")}</a></div>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Config Form */}
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold dark:text-gray-100">{t("branding.title")}</h2>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-             aria-label="Loader2">
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} {t("common.save")}
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            {/* Logo Upload */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">{t("branding.logo")}</label>
-              {logoPreview ? (
-                <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-600">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={logoPreview}
-                    alt={t("common.logoPreview")}
-                    className="h-12 max-w-32 object-contain"
-                  />
-                  <button
-                    onClick={handleRemoveLogo}
-                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
-                   aria-label="Close">
-                    <X className="h-3.5 w-3.5" /> {t("common.remove")}
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 py-8 transition hover:border-brand-400 dark:border-gray-600"
-                >
-                  <Upload className="mb-2 h-6 w-6 text-gray-400" />
-                  <span className="text-xs text-gray-500">{t("branding.clickToUpload")}</span>
-                  <span className="mt-0.5 text-xs text-gray-400">{t("branding.svgPng")}</span>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/svg+xml,image/png,.svg,.png"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
-            </div>
-
-            {/* Primary Color */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">{t("branding.primaryColor")}</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={config.primary_color}
-                  onChange={(e) => setConfig({ ...config, primary_color: e.target.value })}
-                  className="h-9 w-12 rounded border border-gray-300 dark:border-gray-600"
-                />
-                <input
-                  value={config.primary_color}
-                  onChange={(e) => setConfig({ ...config, primary_color: e.target.value })}
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-                />
-              </div>
-            </div>
-
-            {/* Secondary Color */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">{t("branding.secondaryColor")}</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={config.secondary_color}
-                  onChange={(e) => setConfig({ ...config, secondary_color: e.target.value })}
-                  className="h-9 w-12 rounded border border-gray-300 dark:border-gray-600"
-                />
-                <input
-                  value={config.secondary_color}
-                  onChange={(e) => setConfig({ ...config, secondary_color: e.target.value })}
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-                />
-              </div>
-            </div>
-
-            {/* Custom Domain */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">{t("branding.customDomain")}</label>
-              <input
-                value={config.custom_domain}
-                onChange={(e) => setConfig({ ...config, custom_domain: e.target.value })}
-                placeholder="login.example.com"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-              />
-              <p className="mt-1 text-xs text-gray-400">{t("branding.cnameHint")}</p>
-            </div>
-
-            {/* CSS Override */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">{t("branding.cssOverride")}</label>
-              <textarea
-                value={config.css_override}
-                onChange={(e) => setConfig({ ...config, css_override: e.target.value })}
-                rows={8}
-                placeholder="/* Custom CSS applied to the login page */\n.login-card {\n  border-radius: 16px;\n}"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Live Previews */}
+      {/* ASSETS */}
+      {tab === "assets" && (
         <div className="space-y-6">
-          {/* Login Page Preview */}
-          <div className="sticky top-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
-              <Eye className="h-5 w-5 text-brand-600" /> {t("branding.loginPreview")}
-            </h2>
-
-            {/* Simulated login page background */}
-            <div
-              className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
-              style={{ backgroundColor: "#f9fafb" }}
-            >
-              {/* Top bar */}
-              <div
-                className="flex h-10 items-center px-4"
-                style={{ backgroundColor: config.primary_color }}
-              >
-                {config.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={config.logo_url}
-                    alt="Preview header logo"
-                    className="h-6 object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <div
-                    className="flex h-6 w-6 items-center justify-center rounded text-xs font-bold text-white"
-                    style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
-                  >
-                    G
-                  </div>
-                )}
-                <span className="ml-2 text-sm font-medium text-white">GGID Login</span>
-                {config.custom_domain && (
-                  <span className="ml-auto text-xs text-white/80">{config.custom_domain}</span>
-                )}
-              </div>
-
-              {/* Login card */}
-              <div className="flex items-center justify-center p-8">
-                <div className="w-full max-w-xs rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
-                  {/* Logo in card */}
-                  <div className="mb-4 flex justify-center">
-                    {config.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={config.logo_url}
-                        alt="Preview login card logo"
-                        className="h-12 object-contain"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div
-                        className="flex h-12 w-12 items-center justify-center rounded-xl text-xl font-bold text-white"
-                        style={{ backgroundColor: config.primary_color }}
-                      >
-                        G
-                      </div>
-                    )}
-                  </div>
-
-                  <h3 className="mb-1 text-center text-lg font-semibold text-gray-900">Sign In</h3>
-                  <p className="mb-4 text-center text-xs text-gray-500">
-                    {config.custom_domain || "identity.ggid.dev"}
-                  </p>
-
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      disabled
-                      placeholder={t("login.username")}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-400"
-                    />
-                    <input
-                      type="password"
-                      disabled
-                      placeholder={t("login.password")}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-400"
-                    />
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full rounded-lg py-2 text-sm font-medium text-white"
-                      style={{ backgroundColor: config.primary_color }}
-                    >
-                      Sign In
-                    </button>
-                  </div>
-
-                  <p className="mt-4 text-center text-xs text-gray-400">
-                    Forgot password?
-                  </p>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className={card}>
+              <h3 className="mb-3 text-sm font-semibold">{t("branding.logo")}</h3>
+              <div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-300"><Image className="h-8 w-8" /></div><button className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 flex items-center gap-2"><Upload className="h-3.5 w-3.5" /> {t("branding.upload")}</button></div>
+              <p className="mt-2 text-xs text-gray-400">SVG, PNG — max 512×512px</p>
+            </div>
+            <div className={card}>
+              <h3 className="mb-3 text-sm font-semibold">{t("branding.favicon")}</h3>
+              <div className="flex items-center gap-4"><div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-300"><Image className="h-8 w-8" /></div><button className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 flex items-center gap-2"><Upload className="h-3.5 w-3.5" /> {t("branding.upload")}</button></div>
+              <p className="mt-2 text-xs text-gray-400">ICO, PNG — 32×32px / 16×16px</p>
             </div>
           </div>
-
-          {/* Email Template Preview */}
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold dark:text-gray-100">
-              <Mail className="h-5 w-5 text-brand-600" /> {t("branding.emailPreview")}
-            </h2>
-
-            {/* Template selector */}
-            <div className="mb-4">
-              <label className="mb-1 block text-xs font-medium text-gray-500">{t("branding.template")}</label>
-              <select
-                value={emailTemplate}
-                onChange={(e) => setEmailTemplate(e.target.value as EmailTemplate)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-              >
-                {EMAIL_TEMPLATES.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Rendered email preview */}
-            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
-              {/* Email header bar */}
-              <div
-                className="flex items-center gap-2 px-4 py-3"
-                style={{ backgroundColor: config.primary_color }}
-              >
-                {config.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={config.logo_url}
-                    alt="Preview email header logo"
-                    className="h-5 object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <div
-                    className="flex h-5 w-5 items-center justify-center rounded text-xs font-bold text-white"
-                    style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
-                  >
-                    G
-                  </div>
-                )}
-                <span className="text-sm font-semibold text-white">GGID</span>
-              </div>
-
-              {/* Email body */}
-              <div className="bg-white p-6 dark:bg-gray-900">
-                <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-                  {EMAIL_SUBJECTS[emailTemplate]}
-                </h3>
-                <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                  Hi there,
-                </p>
-                <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                  {EMAIL_BODIES[emailTemplate]}
-                </p>
-
-                {/* Branded CTA button */}
-                <div className="mb-4">
-                  <span
-                    className="inline-block cursor-default rounded-lg px-6 py-2.5 text-sm font-medium text-white"
-                    style={{ backgroundColor: config.primary_color }}
-                  >
-                    {EMAIL_BUTTONS[emailTemplate]}
-                  </span>
-                </div>
-
-                <p className="text-xs text-gray-400">
-                  If you didn&apos;t request this, you can safely ignore this email.
-                </p>
-                <hr className="my-4 border-gray-200 dark:border-gray-700" />
-                <p className="text-xs text-gray-400">
-                  {config.custom_domain || "identity.ggid.dev"} — Powered by GGID
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* CSS Override Preview */}
-          {config.css_override && (
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <p className="mb-1 text-xs font-medium text-gray-500">CSS Override (raw):</p>
-              <pre className="max-h-32 overflow-auto rounded-lg bg-gray-900 p-3 text-xs text-green-400">
-                {config.css_override}
-              </pre>
-            </div>
-          )}
-
-          {/* Summary */}
-          <div className="space-y-2 rounded-lg border border-gray-100 p-3 dark:border-gray-700">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">{t("branding.primaryColor")}</span>
-              <span className="font-mono text-gray-700 dark:text-gray-300">{config.primary_color}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">{t("branding.secondaryColor")}</span>
-              <span className="font-mono text-gray-700 dark:text-gray-300">{config.secondary_color}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">{t("branding.logo")}</span>
-              <span className="text-gray-700 dark:text-gray-300">
-                {config.logo_url ? "Custom" : "Default (G)"}
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">{t("common.domain")}</span>
-              <span className="text-gray-700 dark:text-gray-300">
-                {config.custom_domain || t("common.notSet")}
-              </span>
-            </div>
+          <div className={card}>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><Code className="h-4 w-4" /> {t("branding.customCss")}</h3>
+            <textarea rows={8} placeholder={"/* Custom CSS injected into console */\n:root {\n  --brand-gradient: linear-gradient(...);\n}"} className="w-full rounded-lg border dark:border-gray-700 dark:bg-gray-900 px-3 py-2 font-mono text-xs" />
+            <p className="mt-2 text-xs text-gray-400">{t("branding.customCssNote")}</p>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* EMAIL */}
+      {tab === "email" && (
+        <div className="space-y-4">
+          {["verification", "passwordReset", "welcome"].map(type => (
+            <div key={type} className={card}>
+              <div className="flex items-center justify-between mb-3"><div className="flex items-center gap-3"><Mail className="h-5 w-5 text-pink-400" /><div><h3 className="font-semibold text-sm capitalize">{type.replace(/([A-Z])/g, " $1")}</h3><p className="text-xs text-gray-400">{t(`branding.${type}Desc`)}</p></div></div><button className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs dark:border-gray-700"><Eye className="h-3 w-3" /> {t("branding.previewEmail")}</button></div>
+              <div className="rounded-lg border p-4 dark:border-gray-700" style={{ borderRadius: `${borderRadius}px` }}>
+                <div className="rounded-t-lg p-4 text-white text-center" style={{ backgroundColor: primaryColor, borderRadius: `${borderRadius}px ${borderRadius}px 0 0` }}><div className="mx-auto flex h-8 w-8 items-center justify-center rounded font-bold" style={{ fontFamily }}>GG</div></div>
+                <div className="bg-white dark:bg-gray-900 p-4"><h4 className={`font-semibold text-sm ${darkMode ? "text-white" : "text-gray-900"}`} style={{ fontFamily }}>{t(`branding.${type}Subject`)}</h4><p className={`mt-1 text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>{t(`branding.${type}Body`)}</p><button className="mt-3 px-4 py-2 text-white text-xs font-medium" style={{ backgroundColor: primaryColor, borderRadius: `${borderRadius}px` }}>{t(`branding.${type}Button`)}</button></div>
+                <div className="bg-gray-50 dark:bg-gray-800 p-2 text-center text-xs text-gray-400">© 2025 GGID · {t("branding.footerText")}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
