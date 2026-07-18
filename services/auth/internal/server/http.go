@@ -44,7 +44,8 @@ type Handler struct {
 	waCredStore    webauthn.CredentialStore
 	revocationMgr  *service.SessionRevocationManager
 	breakGlassRepo  *repository.BreakGlassRepository
-	authMethodPolicyRepo *repository.AuthMethodPolicyRepository
+	authMethodPolicyRepo    *repository.AuthMethodPolicyRepository
+	passwordDeprecationRepo *repository.PasswordDeprecationRepository
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
@@ -472,6 +473,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/mtls/config", h.tsHandler.HandleMTLSConfig)
 	h.mux.HandleFunc("/api/v1/auth/method-policies", h.handleAuthMethodPolicies)
 	h.mux.HandleFunc("/api/v1/auth/method-policies/", h.handleAuthMethodPolicies)
+	h.mux.HandleFunc("/api/v1/auth/password-deprecation", h.handlePasswordDeprecation)
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()
