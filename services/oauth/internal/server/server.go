@@ -140,7 +140,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 				if err := mapRepoVar.EnsureSchema(ctx); err != nil {
 					log.Printf("warning: oauth map repo schema error: %v", err)
 				}
-				log.Println("OAuth database connected")
+				log.Printf("OAuth database connected")
 			} else if err != nil {
 				log.Printf("warning: failed to connect database: %v (running without DB)", err)
 			} else {
@@ -152,7 +152,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 
 	// Fallback to in-memory repos when DB is not connected.
 	if clientRepo == nil {
-		log.Println("OAuth: using in-memory client repository (no DB)")
+		log.Printf("OAuth: using in-memory client repository (no DB)")
 		clientRepo = repository.NewMemoryClientRepository()
 	}
 	if codeRepo == nil {
@@ -172,7 +172,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 			rdb := redis.NewClient(opts)
 			if err := rdb.Ping(ctx).Err(); err == nil {
 				oauthSvc.SetRedisClient(&redisAdapter{rdb: rdb})
-				log.Println("OAuth Redis connected for refresh token lookup")
+				log.Printf("OAuth Redis connected for refresh token lookup")
 			} else {
 				log.Printf("warning: Redis ping failed: %v (refresh token fallback disabled)", err)
 			}
@@ -186,7 +186,7 @@ func NewWithKeyProvider(cfg *conf.Config, kp crypto.KeyProvider) (*Server, error
 	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
 		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
 			auditPub = pub
-			log.Println("OAuth: audit publisher connected to NATS")
+			log.Printf("OAuth: audit publisher connected to NATS")
 		} else {
 			log.Printf("OAuth: audit publisher disabled (%v)", err)
 		}
@@ -259,7 +259,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		log.Println("OAuth server shutting down...")
+		log.Printf("OAuth server shutting down...")
 		if s.stopTicker != nil {
 			s.stopTicker()
 		}

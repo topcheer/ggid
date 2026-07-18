@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -375,4 +374,3 @@ func (h *HTTPHandler) SetJourneyRepo(repo *journeyRepo) {
 
 // suppress unused
 var _ = sql.ErrNoRows
-var _ = log.Printf

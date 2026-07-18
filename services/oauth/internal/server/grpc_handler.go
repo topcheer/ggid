@@ -208,9 +208,9 @@ func (s *Server) startGRPCServer(addr string) (*grpc.Server, net.Listener, error
 	}
 
 	go func() {
-		log.Printf("OAuth gRPC server listening on %s", addr)
+		slog.Info("OAuth gRPC server listening", "addr", addr)
 		if err := grpcSrv.Serve(lis); err != nil {
-			log.Printf("OAuth gRPC server stopped: %v", err)
+			slog.Info("OAuth gRPC server stopped", "error", err)
 		}
 	}()
 
@@ -228,7 +228,7 @@ func newOAuthGRPCServer() *grpc.Server {
 				if os.Getenv("GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK") != "true" {
 					log.Fatalf("GRPC_TLS_ENABLED but cert/key invalid: %v; refusing to start. Set GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true only in dev.", err)
 				}
-				log.Printf("Warning: GRPC_TLS_ENABLED but cert/key invalid: %v, falling back to plaintext (GRPC_TLS_ALLOW_PLAINTEXT_FALLBACK=true)", err)
+				slog.Info("GRPC TLS cert/key invalid, falling back to plaintext", "error", err)
 			} else {
 				return grpc.NewServer(grpc.Creds(creds))
 			}

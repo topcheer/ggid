@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -209,7 +209,7 @@ func runJITPipelineInternal(h *HTTPHandler, mapping *JITMapping, externalAttrs m
 		result.UserID = userID
 		result.Action = action
 		result.Log = append(result.Log, fmt.Sprintf("user %s %s with %d roles", result.UserID, action, len(assignedRoles)))
-		log.Printf("JIT: provisioned user=%s email=%s roles=%v protocol=%s action=%s", result.UserID, email, assignedRoles, mapping.Protocol, action)
+		slog.Info("JIT provisioned user", "user_id", result.UserID, "email", email, "roles", assignedRoles, "protocol", mapping.Protocol, "action", action)
 	} else {
 		// Standalone mode (no handler) — simulate creation.
 		result.UserID = uuid.New().String()

@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"log/slog"
 	"net/http"
 	"net/mail"
@@ -75,9 +74,9 @@ func NewHTTPHandler(svc *service.IdentityService) *HTTPHandler {
 	if natsURL := os.Getenv("NATS_URL"); natsURL != "" {
 		if pub, err := audit.NewPublisher(context.Background(), natsURL); err == nil {
 			h.auditPublisher = pub
-			log.Println("Identity: audit publisher connected to NATS")
+			slog.Info("Identity: audit publisher connected to NATS")
 		} else {
-			log.Printf("Identity: audit publisher disabled (%v)", err)
+			slog.Info("audit publisher disabled", "error", err)
 		}
 	}
 	h.registerRoutes()

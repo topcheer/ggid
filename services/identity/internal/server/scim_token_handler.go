@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"log"
-	"log/slog"
 	"net/http"
 	"strings"
 
@@ -47,7 +46,7 @@ func (h *HTTPHandler) handleSCIMTokens(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := h.scimRepo.Revoke(r.Context(), tokenID, tc.TenantID); err != nil {
-			slog.Error("SCIM token revoke error", "err", err)
+			log.Printf("SCIM token revoke error: %v", err)
 			writeError(w, http.StatusInternalServerError, "failed to revoke token")
 			return
 		}
@@ -78,7 +77,7 @@ func (h *HTTPHandler) createSCIMToken(w http.ResponseWriter, r *http.Request, te
 
 	token, plaintext, err := h.scimRepo.Create(r.Context(), tenantID, req.Name, createdBy, hashSCIMToken)
 	if err != nil {
-		slog.Error("SCIM token create error", "err", err)
+		log.Printf("SCIM token create error: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to create token")
 		return
 	}
@@ -101,7 +100,7 @@ func (h *HTTPHandler) createSCIMToken(w http.ResponseWriter, r *http.Request, te
 func (h *HTTPHandler) listSCIMTokens(w http.ResponseWriter, r *http.Request, tenantID uuid.UUID) {
 	tokens, err := h.scimRepo.ListByTenant(r.Context(), tenantID)
 	if err != nil {
-		slog.Error("SCIM token list error", "err", err)
+		log.Printf("SCIM token list error: %v", err)
 		writeError(w, http.StatusInternalServerError, "failed to list tokens")
 		return
 	}

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net"
 	"os"
 	"strconv"
@@ -382,9 +382,9 @@ func (s *Server) startGRPCServer(addr string) (*grpc.Server, net.Listener, error
 	}
 
 	go func() {
-		log.Printf("Identity gRPC server listening on %s", addr)
+		slog.Info("Identity gRPC server listening", "addr", addr)
 		if err := grpcSrv.Serve(lis); err != nil {
-			log.Printf("Identity gRPC server stopped: %v", err)
+			slog.Info("Identity gRPC server stopped", "error", err)
 		}
 	}()
 

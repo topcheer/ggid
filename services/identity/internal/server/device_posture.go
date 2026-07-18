@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"time"
@@ -315,8 +314,8 @@ func (h *HTTPHandler) handleDevicePosture(w http.ResponseWriter, r *http.Request
 		if h.auditPublisher != nil {
 			_ = h.auditPublisher // NATS publish would go here in full integration
 		}
-		log.Printf("CAEP: device-compliance-change device=%s score=%d compliant=%v trust=%s",
-			deviceID, dp.ComplianceScore, dp.Compliant, dp.TrustLevel)
+		slog.Info("CAEP device-compliance-change",
+			"device", deviceID, "score", dp.ComplianceScore, "compliant", dp.Compliant, "trust", dp.TrustLevel)
 
 		writeJSON(w, http.StatusOK, dp)
 

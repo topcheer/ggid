@@ -264,7 +264,7 @@ func (s *Server) Run(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		log.Println("Identity server shutting down...")
+		log.Printf("Identity server shutting down...")
 		s.grpcSrv.GracefulStop()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
