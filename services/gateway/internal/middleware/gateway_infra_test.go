@@ -173,7 +173,7 @@ func TestTimeoutMiddleware_ContextCancelled(t *testing.T) {
 // === Per-Tenant CORS Tests ===
 
 func TestTenantCORSStore_SetGetDelete(t *testing.T) {
-	store := NewTenantCORSStore(DefaultCORSConfig())
+	store := NewTenantCORSStore(CORSConfig{AllowedOrigins: []string{"*"}})
 	store.SetOrigins("tenant-1", []string{"https://app1.com", "https://app2.com"})
 
 	origins := store.GetOrigins("tenant-1")

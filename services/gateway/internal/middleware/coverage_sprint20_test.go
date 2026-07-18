@@ -260,7 +260,7 @@ func TestCB_RegistryStats_C20(t *testing.T) {
 
 // Task 4: CORS
 func TestCORS_Preflight_C20(t *testing.T) {
-	h := CORSWithConfig(DefaultCORSConfig())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Error("no next")
 	}))
 	rr := httptest.NewRecorder()
@@ -272,7 +272,7 @@ func TestCORS_Preflight_C20(t *testing.T) {
 	}
 }
 func TestCORS_Wildcard_C20(t *testing.T) {
-	h := CORSWithConfig(DefaultCORSConfig())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 	}))
 	rr := httptest.NewRecorder()

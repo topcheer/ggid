@@ -203,6 +203,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/limit", h.sessionLimit)
 	h.mux.HandleFunc("/api/v1/auth/sessions/revoke", h.handleRevokeSessions)
 	h.mux.HandleFunc("/api/v1/auth/sessions/revoke-user", h.handleRevokeUser)
+	h.mux.HandleFunc("/api/v1/auth/invalidate-sessions/", h.handleInvalidateSessions)
 	h.mux.HandleFunc("/api/v1/auth/internal/revoke-user", h.handleInternalRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/rotate", h.handlePepperRotate)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)

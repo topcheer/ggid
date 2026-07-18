@@ -12,7 +12,7 @@ func TestCORSIntegration_AllowedOrigin(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("next should not be called for OPTIONS preflight")
 	})
-	handler := CORS(next)
+	handler := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(next)
 
 	req := httptest.NewRequest(http.MethodOptions, "/api/v1/users", nil)
 	req.Header.Set("Origin", "https://app.example.com")
@@ -42,7 +42,7 @@ func TestCORSIntegration_ActualRequest(t *testing.T) {
 	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	handler := CORS(next)
+	handler := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(next)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
 	req.Header.Set("Origin", "https://app.example.com")

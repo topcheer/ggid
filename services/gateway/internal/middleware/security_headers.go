@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -95,7 +96,7 @@ type TenantCORSConfig struct {
 
 var (
 	defaultTenantCORS = TenantCORSConfig{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   nil, // strict default: no origins allowed unless explicitly configured
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-Request-ID", "X-Trace-Id", "X-Session-ID"},
 		AllowCredentials: true,
@@ -127,12 +128,20 @@ func TenantCORSMiddleware(next http.Handler) http.Handler {
 				break
 			}
 		}
+		// Dev mode: allow localhost origins even without explicit config.
+		if !allowed && origin != "" && isLocalhostDevMode(origin) {
+			allowed = true
+		}
+		// Log warning when no explicit config and origin not allowed.
+		if !allowed && len(cfg.AllowedOrigins) == 0 && origin != "" {
+			log.Printf("[CORS] WARNING: tenant %s has no explicit allowed origins; rejecting origin %s", tenantID, origin)
+		}
 		if allowed && origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", strings.Join(cfg.AllowedMethods, ", "))
 			w.Header().Set("Access-Control-Allow-Headers", strings.Join(cfg.AllowedHeaders, ", "))
 			if cfg.AllowCredentials {
-				w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
 			w.Header().Set("Access-Control-Max-Age", "3600")
 		}
@@ -156,4 +165,13 @@ func SetSecureCookie(w http.ResponseWriter, name, value, path string, maxAge int
 		MaxAge: maxAge, Secure: true, HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})
+}
+
+// isLocalhostDevMode checks if the origin is a localhost origin and dev mode is active.
+func isLocalhostDevMode(origin string) bool {
+	if !isDevMode() {
+		return false
+	}
+	return strings.HasPrefix(origin, "http://localhost:") ||
+		strings.HasPrefix(origin, "http://127.0.0.1:")
 }

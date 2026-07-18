@@ -19,7 +19,7 @@ func TestMiddlewareChainOrder(t *testing.T) {
 	// Build chain in the same order as router.go Handler()
 	// PanicRecovery > SecurityHeaders > CORS > RequestID > inner
 	h := RequestID(inner)
-	h = CORS(h)
+	h = CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(h)
 	h = SecurityHeaders(h)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)

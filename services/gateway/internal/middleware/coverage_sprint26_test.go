@@ -42,7 +42,7 @@ func TestCovS26_GzipWriter_NoAcceptEncoding(t *testing.T) {
 // --- CORS preflight matching ---
 
 func TestCovS26_CORS_Preflight(t *testing.T) {
-	handler := CORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Fatal("should not call next on OPTIONS")
 	}))
 
@@ -62,7 +62,7 @@ func TestCovS26_CORS_Preflight(t *testing.T) {
 
 func TestCovS26_CORS_ActualRequest(t *testing.T) {
 	called := false
-	handler := CORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		called = true
 		w.WriteHeader(http.StatusOK)
 	}))

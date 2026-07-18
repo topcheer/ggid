@@ -101,7 +101,7 @@ func TestRequestID_PreservesIncomingID(t *testing.T) {
 // --- CORS Tests ---
 
 func TestCORS_SetsHeaders(t *testing.T) {
-	handler := CORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 

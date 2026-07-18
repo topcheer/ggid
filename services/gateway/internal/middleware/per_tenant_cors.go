@@ -48,10 +48,14 @@ func (s *TenantCORSStore) DeleteOrigins(tenantID string) {
 }
 
 // originAllowed checks if the given origin is in the allowed list.
-// An empty list or list containing "*" allows all origins.
+// An empty list rejects all origins (strict default). In dev mode, localhost is allowed.
 func originAllowed(origin string, allowed []string) bool {
 	if len(allowed) == 0 {
-		return true // no restrictions
+		// Dev mode: allow localhost origins even without explicit config.
+		if isLocalhostDevMode(origin) {
+			return true
+		}
+		return false // strict default: no origins allowed unless explicitly configured
 	}
 	for _, a := range allowed {
 		if a == "*" {

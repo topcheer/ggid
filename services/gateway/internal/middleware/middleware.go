@@ -13,6 +13,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"math/big"
 	"net/http"
@@ -96,9 +97,10 @@ type CORSConfig struct {
 	AllowCredentials bool     // allow cookies / Authorization header from browser
 }
 
-// DefaultCORSConfig returns a CORS config.
+// DefaultCORSConfig returns a CORS config with strict-by-default origins.
 // In production, set CORS_ALLOWED_ORIGINS env var (comma-separated origins).
-// Defaults to ["*"] only when no env var is set.
+// When no env var is set and not in dev mode, returns empty origins (CORS disabled).
+// In dev mode (GIN_MODE=debug or DEV_MODE=true), allows localhost origins.
 func DefaultCORSConfig() CORSConfig {
 	envOrigins := os.Getenv("CORS_ALLOWED_ORIGINS")
 	if envOrigins != "" {
@@ -111,8 +113,18 @@ func DefaultCORSConfig() CORSConfig {
 			AllowCredentials: true,
 		}
 	}
+	// Dev mode: allow localhost origins for development.
+	if isDevMode() {
+		log.Println("[CORS] no explicit config; using localhost-only dev origins")
+		return CORSConfig{
+			AllowedOrigins:   devLocalhostOrigins(),
+			AllowCredentials: true,
+		}
+	}
+	// Production default: no origins allowed unless explicitly configured.
+	log.Println("[CORS] WARNING: no CORS_ALLOWED_ORIGINS configured; CORS disabled")
 	return CORSConfig{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   nil,
 		AllowCredentials: false,
 	}
 }
@@ -121,11 +133,15 @@ func DefaultCORSConfig() CORSConfig {
 // When AllowCredentials is true, the Origin header is echoed back instead of
 // using a wildcard, and Access-Control-Allow-Credentials is set to true.
 func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
-	allowAll := len(cfg.AllowedOrigins) == 0
+	allowAll := false
 	for _, o := range cfg.AllowedOrigins {
 		if o == "*" {
 			allowAll = true
 		}
+	}
+	// Empty origins = no CORS allowed (strict default).
+	if len(cfg.AllowedOrigins) == 0 {
+		log.Println("[CORS] WARNING: CORSWithConfig called with no allowed origins; CORS disabled")
 	}
 
 	return func(next http.Handler) http.Handler {
@@ -166,6 +182,29 @@ func CORSWithConfig(cfg CORSConfig) func(http.Handler) http.Handler {
 // CORS is the default CORS middleware (backward-compatible with wildcard origin).
 func CORS(next http.Handler) http.Handler {
 	return CORSWithConfig(DefaultCORSConfig())(next)
+}
+
+// isDevMode returns true when GIN_MODE=debug or DEV_MODE=true.
+func isDevMode() bool {
+	return os.Getenv("GIN_MODE") == "debug" || os.Getenv("DEV_MODE") == "true"
+}
+
+// devLocalhostOrigins returns common localhost origins for development.
+func devLocalhostOrigins() []string {
+	return []string{
+		"http://localhost:3000",
+		"http://localhost:3001",
+		"http://localhost:5173",
+		"http://localhost:5174",
+		"http://localhost:8080",
+		"http://localhost:8081",
+		"http://127.0.0.1:3000",
+		"http://127.0.0.1:3001",
+		"http://127.0.0.1:5173",
+		"http://127.0.0.1:5174",
+		"http://127.0.0.1:8080",
+		"http://127.0.0.1:8081",
+	}
 }
 
 // --- CSRF Protection (Double-Submit Cookie) ---

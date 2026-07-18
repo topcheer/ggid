@@ -48,7 +48,7 @@ func TestCORS_PreflightOptions(t *testing.T) {
 }
 
 func TestCORS_WildcardOrigin(t *testing.T) {
-	handler := CORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 	}))
 
@@ -130,7 +130,7 @@ func TestCORS_CredentialsWithWildcard(t *testing.T) {
 }
 
 func TestCORS_NoOriginHeader(t *testing.T) {
-	handler := CORS(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := CORSWithConfig(CORSConfig{AllowedOrigins: []string{"*"}})(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 	}))
 
@@ -180,7 +180,7 @@ func TestCORS_GetRequestPassesThrough(t *testing.T) {
 }
 
 func TestCORS_EmptyAllowedOrigins(t *testing.T) {
-	// Empty allowed origins should behave as wildcard
+	// Empty allowed origins = strict default, no CORS headers should be set
 	cfg := CORSConfig{
 		AllowedOrigins: []string{},
 	}
@@ -194,7 +194,7 @@ func TestCORS_EmptyAllowedOrigins(t *testing.T) {
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
 
-	if w.Header().Get("Access-Control-Allow-Origin") != "*" {
-		t.Errorf("empty origins should default to wildcard, got %q", w.Header().Get("Access-Control-Allow-Origin"))
+	if w.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Errorf("empty origins should not set ACAO (strict default), got %q", w.Header().Get("Access-Control-Allow-Origin"))
 	}
 }

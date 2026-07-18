@@ -25,8 +25,10 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 }
 
 func TestTenantCORSMiddleware_Preflight(t *testing.T) {
+	SetTenantCORS("preflight-tenant", TenantCORSConfig{AllowedOrigins: []string{"https://example.com"}, AllowedMethods: []string{"GET"}})
 	req := httptest.NewRequest("OPTIONS", "/api/v1/users", nil)
 	req.Header.Set("Origin", "https://example.com")
+	req.Header.Set("X-Tenant-ID", "preflight-tenant")
 	w := httptest.NewRecorder()
 	called := false
 	TenantCORSMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,14 +51,16 @@ func TestTenantCORSMiddleware_RejectedOrigin(t *testing.T) {
 	if w.Header().Get("Access-Control-Allow-Origin") != "" { t.Error("should not allow rejected origin") }
 }
 
-func TestTenantCORSMiddleware_Wildcard(t *testing.T) {
+func TestTenantCORSMiddleware_StrictDefault(t *testing.T) {
+	// No explicit config: origin should NOT be allowed (strict default).
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
 	req.Header.Set("Origin", "https://anything.com")
+	req.Header.Set("X-Tenant-ID", "strict-default-tenant")
 	w := httptest.NewRecorder()
 	TenantCORSMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 	})).ServeHTTP(w, req)
-	if w.Header().Get("Access-Control-Allow-Origin") == "" { t.Error("wildcard should allow") }
+	if w.Header().Get("Access-Control-Allow-Origin") != "" { t.Error("strict default should not allow origin") }
 }
 
 func TestSetSecureCookie(t *testing.T) {
@@ -72,5 +76,5 @@ func TestSetSecureCookie(t *testing.T) {
 
 func TestGetTenantCORS_Default(t *testing.T) {
 	cfg := GetTenantCORS("unknown")
-	if cfg.AllowedOrigins[0] != "*" { t.Error("default should be wildcard") }
+	if len(cfg.AllowedOrigins) != 0 { t.Errorf("default should be empty (strict), got %v", cfg.AllowedOrigins) }
 }
