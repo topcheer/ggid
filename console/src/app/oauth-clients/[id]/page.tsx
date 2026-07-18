@@ -23,6 +23,12 @@ export default function OAuthClientDetailPage({ params }: { params: { id: string
   const t = useTranslations();
   const { apiFetch } = useApi();
   const router = useRouter();
+
+  // Guard: redirect if ID is missing or literal "[id]"
+  useEffect(() => {
+    if (!params.id || params.id === "[id]") router.replace("/oauth-clients");
+  }, [params.id, router]);
+
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

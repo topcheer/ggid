@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Shield,
@@ -43,8 +43,16 @@ interface AssignedUser {
 export default function RoleDetailPage() {
   const params = useParams();
   const roleId = params.id as string;
+  const router = useRouter();
   const t = useTranslations();
   const { apiFetch } = useApi();
+
+  // Guard: redirect to list if ID is missing or literal "[id]"
+  useEffect(() => {
+    if (!roleId || roleId === "[id]") {
+      router.replace("/roles");
+    }
+  }, [roleId, router]);
 
   const [role, setRole] = useState<Role | null>(null);
   const [permissions, setPermissions] = useState<Permission[]>([]);

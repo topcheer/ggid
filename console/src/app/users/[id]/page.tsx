@@ -128,6 +128,12 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   const t = useTranslations();
   const { apiFetch } = useApi();
   const router = useRouter();
+
+  // Guard: redirect if ID is missing or literal "[id]"
+  useEffect(() => {
+    if (!params.id || params.id === "[id]") router.replace("/users");
+  }, [params.id, router]);
+
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [userRoles, setUserRoles] = useState<Role[]>([]);
