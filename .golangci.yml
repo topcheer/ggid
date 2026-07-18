@@ -1,13 +1,12 @@
-# golangci-lint configuration
-# CI uses v1.64.8; local v2.x may need: golangci-lint config migrate
+version: "2"
+
 run:
   timeout: 5m
-  go: '1.25'
 
 linters:
+  default: none
   enable:
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
@@ -16,68 +15,32 @@ linters:
     - gosec
     - revive
     - misspell
-  disable-all: false
 
-linters-settings:
-  gosec:
-    excludes:
-      - G104
-      - G402
-      - G115
-      - G401
-      - G404
-      - G505
-      - G107
-      - G201
-      - G306
-    severity: medium
-    confidence: medium
-  revive:
-    severity: warning
-    rules:
-      - name: unused-parameter
-        disabled: true
-  gocritic:
-    disabled-checks:
-      - dupBranchBody
-      - ifElseChain
-      - assignOp
-      - appendAssign
-      - exitAfterDefer
-      - offBy1
+  settings:
+    gosec:
+      excludes:
+        - G104
+        - G402
+        - G115
+        - G401
+        - G404
+        - G505
+        - G107
+        - G201
+        - G306
+      severity: medium
+      confidence: medium
+    revive:
+      severity: warning
+    gocritic:
+      disabled-checks:
+        - dupBranchBody
+        - ifElseChain
+        - assignOp
+        - appendAssign
+        - exitAfterDefer
+        - offBy1
 
 issues:
-  exclude-rules:
-    # Relax errcheck for service code (many HTTP handlers with intentional write-only patterns)
-    - path: services/
-      linters:
-        - errcheck
-    # Relax linters for test files
-    - path: _test\.go
-      linters:
-        - gosec
-        - gocritic
-        - errcheck
-        - staticcheck
-        - ineffassign
-    # Relax for cmd/ entry points (intentional simplicity)
-    - path: cmd/
-      linters:
-        - errcheck
-        - gocritic
-    # Relax for integration tests
-    - path: test/integration
-      linters:
-        - errcheck
-        - gosec
-    # Relax for pkg utility packages with intentional patterns
-    - path: pkg/(audit|transport|truststore|email|db)
-      linters:
-        - errcheck
-    # Server files use stubs and mock patterns
-    - path: services/.*/internal/server/.*\.go
-      linters:
-        - staticcheck
-        - gosimple
   max-issues-per-linter: 0
   max-same-issues: 0
