@@ -328,3 +328,37 @@ func TestRequestLogging_IPRecorded(t *testing.T) {
 		t.Errorf("IP: want '203.0.113.50', got '%s'", cl.Entries[0].IP)
 	}
 }
+
+func TestRateLimiter_TokenEndpoint(t *testing.T) {
+	cfg := RateLimitConfig{TokenLimit: 3, Window: time.Minute}
+	rl := NewRateLimiter(cfg)
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	})
+	handler := rl.Middleware(next)
+
+	for i := 0; i < 3; i++ {
+		req := httptest.NewRequest("POST", "/oauth/token", nil)
+		req.RemoteAddr = "10.0.0.5:1234"
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+		if rr.Code != 200 {
+			t.Errorf("attempt %d: want 200, got %d", i, rr.Code)
+		}
+	}
+	// 4th should be rate limited (brute-force protection)
+	req := httptest.NewRequest("POST", "/oauth/token", nil)
+	req.RemoteAddr = "10.0.0.5:1234"
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	if rr.Code != 429 {
+		t.Errorf("token endpoint limit exceeded: want 429, got %d", rr.Code)
+	}
+}
+
+func TestDefaultRateLimitConfig_TokenLimit(t *testing.T) {
+	cfg := DefaultRateLimitConfig()
+	if cfg.TokenLimit != 10 {
+		t.Errorf("TokenLimit: want 10, got %d", cfg.TokenLimit)
+	}
+}
