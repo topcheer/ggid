@@ -151,7 +151,7 @@ export default function RiskScorePage() {
           ) : (
             <div className="space-y-3">
               {data.factors.map((f: any, i: any) => {
-                const colors = SEVERITY_COLOR[f.severity];
+                const colors = SEVERITY_COLOR[f.severity as keyof typeof SEVERITY_COLOR];
                 return (
                   <div key={i} className="space-y-1">
                     <div className="flex items-center justify-between">

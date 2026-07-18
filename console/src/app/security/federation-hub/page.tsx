@@ -166,7 +166,7 @@ export default function FederationHubPage() {
             {/* IdP nodes */}
             {trustRels.map((tr: any, i: number) => {
               const pos = positions[i]; if (!pos) return null;
-              const cfg = protoConfig[tr.protocol] || protoConfig.saml;
+              const cfg = protoConfig[tr.protocol as keyof typeof protoConfig] || protoConfig.saml;
               return (
                 <g key={i} onClick={() => setTab("trust")} className="cursor-pointer">
                   <circle cx={pos.x} cy={pos.y} r={22} fill={tr.connected ? "#10b981" : "#6b7280"} opacity={0.8} />

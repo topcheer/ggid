@@ -35,7 +35,7 @@ export default function OAuthScopeConsentMatrixPage() {
   };
 
   const summary = { none: 0, implicit: 0, explicit: 0, admin: 0 };
-  Object.values(data.assignments).forEach((v: any) => { summary[v]++; });
+  Object.values(data.assignments).forEach((v: any) => { summary[v as keyof typeof summary]++; });
 
   return (
     <div className="space-y-6">

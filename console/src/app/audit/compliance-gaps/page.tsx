@@ -98,7 +98,7 @@ export default function ComplianceGapsPage() {
           <div key={s} className="rounded-lg border p-4 dark:border-gray-800 cursor-pointer hover:border-blue-400" onClick={() => setFilterStatus(filterStatus === s ? "all" : s)}>
             <span className="text-sm text-gray-500 capitalize">{s.replace("_", " ")}</span>
             <p className={`text-2xl font-bold mt-1`}>
-              <span className={`inline-block px-2 py-0.5 rounded ${statusColors[s]}`}>{summary[s]}</span>
+              <span className={`inline-block px-2 py-0.5 rounded ${statusColors[s as keyof typeof statusColors]}`}>{summary[s as keyof typeof summary]}</span>
             </p>
           </div>
         ))}

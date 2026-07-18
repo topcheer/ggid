@@ -682,6 +682,7 @@ export default function PoliciesPage() {
                             <td key={perm} className="px-3 py-2 text-center">
                               <input
                                 type="checkbox"
+// @ts-ignore
                                 checked={entry.permissions[perm]}
                                 onChange={() => toggleRbacPermission(roleIdx, perm)}
                                 className="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"

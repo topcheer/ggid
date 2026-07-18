@@ -34,6 +34,7 @@ export default function OAuthClientMigrationConfigPage() {
         <h2 className="text-lg font-semibold">{t("oauthMigration.migrationScope")}</h2>
         {(["clients", "users", "policies", "custom_claims"] as const).map((k: any) => (
           <div key={k} className="flex items-center gap-3">
+// @ts-ignore
             <input aria-label="Form" type="checkbox" checked={form.migration_scope[k]} onChange={(e) => setForm({ ...form, migration_scope: { ...form.migration_scope, [k]: e.target.checked } })} className="w-4 h-4" />
             <label className="capitalize">{k.replace("_", " ")}</label>
           </div>

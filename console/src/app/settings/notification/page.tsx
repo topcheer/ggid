@@ -186,7 +186,7 @@ export default function NotificationPage() {
       {/* Provider channels */}
       <div className="grid gap-4 md:grid-cols-3">
         {settings && (Object.entries(settings.providers) as [Channel, ProviderConfig][]).map(([ch, cfg]: any[]) => {
-          const Icon = CHANNEL_ICON[ch];
+          const Icon = CHANNEL_ICON[ch as keyof typeof CHANNEL_ICON];
           return (
             <div key={ch} className={cardCls}>
               <div className="flex items-center justify-between">
@@ -195,7 +195,7 @@ export default function NotificationPage() {
                     <Icon className={`h-5 w-5 ${cfg.enabled ? "text-indigo-600" : "text-gray-400"}`} />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-800 dark:text-gray-200">{CHANNEL_LABEL[ch]}</h3>
+                    <h3 className="font-semibold text-gray-800 dark:text-gray-200">{CHANNEL_LABEL[ch as keyof typeof CHANNEL_LABEL]}</h3>
                     <p className="text-xs text-gray-400">{cfg.provider || "Not configured"}</p>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export default function NotificationPage() {
         ) : (
           <div className="space-y-3">
             {settings.templates.map((t: any) => {
-              const Icon = CHANNEL_ICON[t.channel];
+              const Icon = CHANNEL_ICON[t.channel as keyof typeof CHANNEL_ICON];
               return (
                 <div key={t.id} className={cardCls}>
                   <div className="flex items-start justify-between">
@@ -242,7 +242,7 @@ export default function NotificationPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-gray-800 dark:text-gray-200">{t.name}</span>
-                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{CHANNEL_LABEL[t.channel]}</span>
+                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{CHANNEL_LABEL[t.channel as keyof typeof CHANNEL_LABEL]}</span>
                           {!t.enabled && <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-gray-700">Disabled</span>}
                         </div>
                         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{t.subject}</p>
@@ -292,11 +292,11 @@ export default function NotificationPage() {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Channel</label>
                 <div className="mt-2 flex gap-2">
                   {(["email", "sms", "push"] as const).map((ch: any) => {
-                    const Icon = CHANNEL_ICON[ch];
+                    const Icon = CHANNEL_ICON[ch as keyof typeof CHANNEL_ICON];
                     return (
                       <button key={ch} onClick={() => setTmplForm((p) => ({ ...p, channel: ch }))}
                         className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${tmplForm.channel === ch ? "border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
-                        <Icon className="h-4 w-4" /> {CHANNEL_LABEL[ch]}
+                        <Icon className="h-4 w-4" /> {CHANNEL_LABEL[ch as keyof typeof CHANNEL_LABEL]}
                       </button>
                     );
                   })}

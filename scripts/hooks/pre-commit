@@ -1,0 +1,27 @@
+#!/bin/sh
+# GGID pre-commit hook: build + vet gate
+# Install: cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Or: git config core.hooksPath scripts/hooks
+#
+# This hook runs `go build` and `go vet` before allowing a commit.
+# If either fails, the commit is aborted with guidance.
+
+echo "[pre-commit] Running go build ./..."
+if ! go build ./... 2>&1; then
+    echo ""
+    echo "[pre-commit] FAIL: go build ./... failed."
+    echo "  Fix build errors above, then re-stage and commit."
+    echo "  To bypass: git commit --no-verify (use sparingly)"
+    exit 1
+fi
+
+echo "[pre-commit] Running go vet ./..."
+if ! go vet ./... 2>&1; then
+    echo ""
+    echo "[pre-commit] FAIL: go vet ./... found issues."
+    echo "  Fix vet warnings above, then re-stage and commit."
+    echo "  To bypass: git commit --no-verify (use sparingly)"
+    exit 1
+fi
+
+echo "[pre-commit] OK: build + vet passed."

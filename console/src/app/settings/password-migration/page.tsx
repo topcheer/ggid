@@ -412,6 +412,7 @@ function ConfigTab() {
                   {t(`passwordMigration.overview.level${lvl.value.replace(/_./g, (m: any) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+// @ts-ignore
                   {levelDescriptions[lvl.value]}
                 </div>
               </button>

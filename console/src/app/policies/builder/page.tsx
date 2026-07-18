@@ -340,7 +340,7 @@ export default function PolicyBuilderPage() {
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Node Types</h3>
           <div className="space-y-2">
             {sidebarNodes.map((type: any) => {
-              const cfg = NODE_CONFIG[type];
+              const cfg = NODE_CONFIG[type as keyof typeof NODE_CONFIG];
               const Icon = cfg.icon;
               return (
                 <div
@@ -410,7 +410,7 @@ export default function PolicyBuilderPage() {
           ) : (
             <div className="space-y-3">
               {nodes.map((node: any, idx: any) => {
-                const cfg = NODE_CONFIG[node.type];
+                const cfg = NODE_CONFIG[node.type as keyof typeof NODE_CONFIG];
                 const Icon = cfg.icon;
                 const err = getError(node.id);
 
@@ -517,7 +517,7 @@ export default function PolicyBuilderPage() {
               {/* Add node quick button */}
               <div className="flex gap-2 pt-2">
                 {sidebarNodes.map((type: any) => {
-                  const cfg = NODE_CONFIG[type];
+                  const cfg = NODE_CONFIG[type as keyof typeof NODE_CONFIG];
                   const Icon = cfg.icon;
                   return (
                     <button

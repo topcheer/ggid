@@ -69,7 +69,7 @@ export default function WebhookLogPage() {
       : (
         <div className="space-y-2">
           {entries.map((e: any) => {
-            const cfg = STATUS_CONFIG[e.status] ?? STATUS_CONFIG.pending;
+            const cfg = STATUS_CONFIG[e.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.pending;
             const StatusIcon = cfg.icon;
             return (
               <div key={e.id} className={`${cardCls} flex items-center gap-4 py-3`}>

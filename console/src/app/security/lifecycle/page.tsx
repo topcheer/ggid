@@ -219,7 +219,7 @@ export default function JMLLifecyclePage() {
               return (
                 <div key={key} className={cardCls + " flex items-center gap-4"}>
                   <div className={"flex h-12 w-12 items-center justify-center rounded-xl " + cfg.bg}><Icon className={"h-6 w-6 " + cfg.color} /></div>
-                  <div><p className="text-xs font-semibold uppercase text-gray-400">{cfg.label}s (30d)</p><p className={"text-2xl font-bold " + cfg.color}>{stats[key]}</p></div>
+                  <div><p className="text-xs font-semibold uppercase text-gray-400">{cfg.label}s (30d)</p><p className={"text-2xl font-bold " + cfg.color}>{stats[key as keyof typeof stats]}</p></div>
                 </div>
               );
             })}

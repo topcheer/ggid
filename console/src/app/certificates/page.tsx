@@ -488,7 +488,7 @@ export default function CertificatesPage() {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filteredCerts.map((cert: any) => {
                   const rawStatus = cert.status || getCertStatus(cert.expiry);
-                  const statusCfg = STATUS_CONFIG[rawStatus] || STATUS_CONFIG.valid;
+                  const statusCfg = STATUS_CONFIG[rawStatus as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.valid;
                   const isExpanded = expandedId === cert.id;
                   const testRes = testResult?.certId === cert.id ? testResult : null;
                   return (

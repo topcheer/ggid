@@ -102,7 +102,7 @@ export default function DeviceBindingsPage() {
       ) : (
         <div className="space-y-3">
           {bindings.map((b: any) => {
-            const Icon = TYPE_ICON[b.device_type] ?? Shield;
+            const Icon = TYPE_ICON[b.device_type as keyof typeof TYPE_ICON] ?? Shield;
             return (
               <div key={b.id} className={cardCls}>
                 <div className="flex items-center justify-between">

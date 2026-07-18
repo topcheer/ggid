@@ -1,4 +1,4 @@
-.PHONY: help proto build test test-short test-race coverage lint docker-run docker-stop docker-build docker-build-allinone docker-push docker-build-services docker-push-services swagger-gen migrate-up migrate-down clean
+.PHONY: help proto build test test-short test-race coverage lint lint-ci install-hooks docker-run docker-stop docker-build docker-build-allinone docker-push docker-build-services docker-push-services swagger-gen migrate-up migrate-down clean
 
 GGID_ROOT := $(shell pwd)
 PROTO_DIR := $(GGID_ROOT)/api/proto
@@ -92,12 +92,23 @@ swagger-gen:
 	swag init -g services/oauth/internal/server.go --output docs/swagger/oauth --parseDependency
 	@echo "Swagger specs generated under docs/swagger/"
 
+lint-ci:
+	@echo "Running CI lint gate (build + vet)..."
+	go build ./... && go vet ./... && echo "lint-ci OK"
+
+install-hooks:
+	@mkdir -p .git/hooks
+	@cp scripts/hooks/pre-commit .git/hooks/pre-commit
+	@chmod +x .git/hooks/pre-commit
+	@echo "Pre-commit hook installed: build + vet gate"
+
 clean:
 	find . -name '*.bin' -delete
 	find . -name 'bin' -type d -exec rm -rf {} +
 
 swagger:
 	@bash scripts/gen-swagger.sh
+	@echo ">> Swagger spec generated at deploy/openapi.yaml"
 
 console-build:
 	cd console && npm ci && npm run build
@@ -105,8 +116,3 @@ console-build:
 console-deploy: console-build
 	docker build --platform linux/amd64 -f console/Dockerfile -t registry.iot2.win/ggid/console:latest .
 	docker push registry.iot2.win/ggid/console:latest
-
-# KB-311: Generate OpenAPI spec from route scanning
-swagger:
-	@bash scripts/gen-swagger.sh
-	@echo ">> Swagger spec generated at deploy/openapi.yaml"

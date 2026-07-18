@@ -145,7 +145,7 @@ export default function EventCorrelationPage() {
         ) : (
           <div className="space-y-3">
             {rules.map((r: any) => {
-              const sev = SEV_CONFIG[r.severity];
+              const sev = SEV_CONFIG[r.severity as keyof typeof SEV_CONFIG];
               const SevIcon = sev.icon;
               return (
                 <div key={r.id} className={cardCls}>
@@ -176,7 +176,7 @@ export default function EventCorrelationPage() {
       ) : (
         <div className="space-y-4">
           {results.map((g: any) => {
-            const sev = SEV_CONFIG[g.severity];
+            const sev = SEV_CONFIG[g.severity as keyof typeof SEV_CONFIG];
             const SevIcon = sev.icon;
             return (
               <div key={g.id} className={`${cardCls} ${g.severity === "critical" ? "border-red-200 dark:border-red-800" : ""}`}>

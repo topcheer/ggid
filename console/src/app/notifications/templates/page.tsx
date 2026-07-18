@@ -478,7 +478,7 @@ export default function NotificationTemplatesPage() {
                 >
                   <div className="flex items-center justify-between">
                     <p className="truncate text-xs font-medium">
-                      {TEMPLATE_LABELS[tpl.type]}
+                      {TEMPLATE_LABELS[tpl.type as keyof typeof TEMPLATE_LABELS]}
                     </p>
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteTemplate(tpl.id); }}
@@ -520,7 +520,7 @@ export default function NotificationTemplatesPage() {
                 className={inputCls}
               >
                 {TEMPLATE_TYPES.map((t: any) => (
-                  <option key={t} value={t}>{TEMPLATE_LABELS[t]}</option>
+                  <option key={t} value={t}>{TEMPLATE_LABELS[t as keyof typeof TEMPLATE_LABELS]}</option>
                 ))}
               </select>
             </div>

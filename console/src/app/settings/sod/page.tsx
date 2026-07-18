@@ -191,7 +191,7 @@ export default function SoDPage() {
         ) : (
           <div className="space-y-3">
             {rules.map((rule: any) => {
-              const colors = SEVERITY_COLOR[rule.severity];
+              const colors = SEVERITY_COLOR[rule.severity as keyof typeof SEVERITY_COLOR];
               return (
                 <div key={rule.id} className={`${cardCls} ${rule.enabled ? "" : "opacity-60"}`}>
                   <div className="flex items-start justify-between">
@@ -238,7 +238,7 @@ export default function SoDPage() {
         ) : (
           <div className="space-y-3">
             {violations.map((v: any) => {
-              const colors = SEVERITY_COLOR[v.severity];
+              const colors = SEVERITY_COLOR[v.severity as keyof typeof SEVERITY_COLOR];
               return (
                 <div key={v.id} className={`${cardCls} ${colors.border}`}>
                   <div className="flex items-start gap-3">
@@ -291,7 +291,7 @@ export default function SoDPage() {
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{t("backend3.sod.severity")}</label>
                 <div className="mt-2 flex gap-2">
                   {(["critical", "high", "medium"] as const).map((s: any) => {
-                    const colors = SEVERITY_COLOR[s];
+                    const colors = SEVERITY_COLOR[s as keyof typeof SEVERITY_COLOR];
                     return (
                       <button key={s} onClick={() => setForm((p) => ({ ...p, severity: s }))}
                         className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium capitalize ${form.severity === s ? `${colors.border} ${colors.bg} ${colors.text}` : "border-gray-300 text-gray-500 dark:border-gray-600"}`}>
