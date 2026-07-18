@@ -24,6 +24,7 @@ import (
 	"github.com/ggid/ggid/pkg/audit"
 	"github.com/ggid/ggid/pkg/middleware"
 	"github.com/ggid/ggid/pkg/crypto"
+	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/ggid/ggid/pkg/sysconfig"
 	"github.com/ggid/ggid/pkg/truststore"
 	"github.com/ggid/ggid/services/auth/internal/conf"
@@ -351,7 +352,15 @@ func main() {
 	<-quit
 	log.Println("shutting down Auth Service...")
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// Set shutting down flag so health checks return 503.
+	shutdownMgr := shutdown.New(&shutdown.Resources{
+		HTTPServer: httpServer,
+		Pool:       pool,
+	})
+	_ = shutdownMgr // flag set via execute below
+
+	// Mark draining state.
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {

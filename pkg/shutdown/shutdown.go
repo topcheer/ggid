@@ -63,11 +63,11 @@ func (m *Manager) Wait() {
 	m.resources.Logger.Info("received shutdown signal, starting graceful shutdown",
 		"signal", sig.String(), "timeout", m.timeout.String())
 
-	m.execute()
+	m.Execute()
 }
 
-// execute runs the ordered shutdown sequence.
-func (m *Manager) execute() {
+// Execute runs the ordered shutdown sequence.
+func (m *Manager) Execute() {
 	shuttingDown.Store(true)
 
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)

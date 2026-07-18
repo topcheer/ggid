@@ -88,7 +88,7 @@ func TestManager_Execute_OrderedShutdown(t *testing.T) {
 		},
 	})
 
-	mgr.execute()
+	mgr.Execute()
 
 	mu.Lock()
 	defer mu.Unlock()
@@ -111,7 +111,7 @@ func TestManager_Execute_OrderedShutdown(t *testing.T) {
 
 func TestManager_NilResources(t *testing.T) {
 	mgr := New(&Resources{})
-	mgr.execute()
+	mgr.Execute()
 	// Should not panic with nil resources.
 	if !IsShuttingDown() {
 		t.Fatal("should set shuttingDown even with nil resources")

@@ -29,6 +29,7 @@ import (
 	"github.com/ggid/ggid/services/audit/internal/repository"
 	httpserver "github.com/ggid/ggid/services/audit/internal/server"
 	"github.com/ggid/ggid/services/audit/internal/service"
+	"github.com/ggid/ggid/pkg/shutdown"
 	"github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
@@ -312,6 +313,9 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
 
+	// Set shutdown flag so health checks return 503.
+	shutdown.New(&shutdown.Resources{HTTPServer: httpServer}).Execute()
+
 	log.Println("Audit Service: shutting down...")
 	grpcServer.GracefulStop()
 	if natsConsumer != nil {
@@ -323,6 +327,5 @@ func main() {
 	if alertNc != nil {
 		alertNc.Close()
 	}
-	httpServer.Shutdown(context.Background())
 	log.Println("Audit Service: stopped")
 }

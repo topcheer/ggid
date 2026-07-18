@@ -23,6 +23,7 @@ import (
 	"github.com/ggid/ggid/services/gateway/internal/config"
 	"github.com/ggid/ggid/services/gateway/internal/middleware"
 	"github.com/ggid/ggid/services/gateway/internal/router"
+	"github.com/ggid/ggid/pkg/shutdown"
 )
 
 func main() {
@@ -114,6 +115,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("received shutdown signal, draining in-flight requests...")
+	shutdown.New(&shutdown.Resources{HTTPServer: srv}).Execute()
 
 	// srv.Shutdown closes the listener (no new connections accepted)
 	// and waits for active requests to complete.

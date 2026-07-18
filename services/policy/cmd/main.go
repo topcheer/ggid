@@ -22,6 +22,7 @@ import (
 	httpserver "github.com/ggid/ggid/services/policy/internal/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/ggid/ggid/services/policy/internal/service"
+	"github.com/ggid/ggid/pkg/shutdown"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -189,8 +190,11 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
 
+	// Set shutdown flag so health checks return 503.
+	shutdown.New(&shutdown.Resources{HTTPServer: httpServer}).Execute()
+
 	log.Println("Policy Engine: shutting down...")
 	grpcServer.GracefulStop()
-	httpServer.Shutdown(context.Background())
+	// HTTP already shut down by execute() above
 	log.Println("Policy Engine: stopped")
 }
