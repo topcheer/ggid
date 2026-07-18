@@ -66,9 +66,9 @@ func TestList_ByTenant(t *testing.T) {
 	svc := newTestSvc()
 	t1 := uuid.New()
 	t2 := uuid.New()
-	svc.Create(context.Background(), t1, IdPTypeSAML, "SAML1", "{}")
-	svc.Create(context.Background(), t1, IdPTypeOIDC, "OIDC1", "{}")
-	svc.Create(context.Background(), t2, IdPTypeLDAP, "LDAP1", "{}")
+	_, _ = svc.Create(context.Background(), t1, IdPTypeSAML, "SAML1", "{}")
+	_, _ = svc.Create(context.Background(), t1, IdPTypeOIDC, "OIDC1", "{}")
+	_, _ = svc.Create(context.Background(), t2, IdPTypeLDAP, "LDAP1", "{}")
 
 	t1Configs, _ := svc.List(context.Background(), t1)
 	if len(t1Configs) != 2 {
