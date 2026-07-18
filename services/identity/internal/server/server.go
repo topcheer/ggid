@@ -129,6 +129,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.importJobRepo = importRepo
 
+	// Privilege creep detection.
+	pcRepo := newPrivilegeCreepRepo(pool)
+	if err := pcRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Privilege creep schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.pcRepo = pcRepo
+
 	// Journey definitions (JDL).
 	journeyRepo := newJourneyRepo(pool)
 	if err := journeyRepo.EnsureSchema(ctx); err != nil {

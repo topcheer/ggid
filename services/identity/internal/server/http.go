@@ -62,6 +62,8 @@ notificationRepo  *notificationRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 	importJobRepo     *importJobRepo
+	pcRepo            *privilegeCreepRepo
+	nhiRiskEngine     *NHIRiskEngine
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -81,6 +83,8 @@ func NewHTTPHandler(svc *service.IdentityService) *HTTPHandler {
 		}
 	}
 	h.registerRoutes()
+	// Initialize NHI risk engine (KB-271).
+	h.nhiRiskEngine = NewNHIRiskEngine()
 	return h
 }
 
@@ -291,6 +295,11 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/users/import-async/", h.handleImportAsyncStatus)
 	h.mux.HandleFunc("/api/v1/identity/users/import-async/create", h.handleImportAsync)
 
+	// Privilege creep detection.
+	h.mux.HandleFunc("/api/v1/identity/privilege-creep", h.handlePrivilegeCreep)
+	h.mux.HandleFunc("/api/v1/identity/privilege-creep/", h.handlePrivilegeCreep)
+	h.mux.HandleFunc("/api/v1/policy/roles/", h.handlePrivilegeBaseline) // PUT /:id/baseline
+
 	// Identity orchestration journeys (JDL CRUD + dry-run).
 	h.mux.HandleFunc("/api/v1/identity/journeys", h.handleJourneys)
 	h.mux.HandleFunc("/api/v1/identity/journeys/", h.handleJourneys)
@@ -336,6 +345,8 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/import-validation/config", h.handleImportValidationConfig)
 	h.mux.HandleFunc("/api/v1/identity/nhi", h.handleNHIInventory)
 	h.mux.HandleFunc("/api/v1/identity/nhi/orphans", h.handleNHIOrphans)
+	h.mux.HandleFunc("/api/v1/identity/nhi/risk-alerts", h.handleNHIRisk)
+	h.mux.HandleFunc("/api/v1/identity/nhi/risk/scan", h.handleNHIRisk)
 	h.mux.HandleFunc("/api/v1/identity/nhi/", h.handleNHIDecommission)
 	h.mux.HandleFunc("/api/v1/identity/vc/issue", h.handleVCIssue)
 	h.mux.HandleFunc("/api/v1/identity/vc/verify", h.handleVCVerify)
