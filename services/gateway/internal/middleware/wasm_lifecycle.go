@@ -145,7 +145,7 @@ type LifecycleManager struct {
 	hookPlugins map[LifecycleHook][]string
 	// pluginHooks maps plugin name → hooks it subscribes to.
 	pluginHooks map[string][]LifecycleHook
-	mu          sync.RWMutex
+	mu   sync.RWMutex
 	// reloadVersion for hot reload detection.
 	reloadVersion atomic.Int64
 }

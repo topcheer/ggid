@@ -407,10 +407,6 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		middleware.SwaggerUIHandler().ServeHTTP(w, r)
 		return
 	}
-	// WASM Plugin management (proxied to identity service).
-	if strings.HasPrefix(r.URL.Path, "/api/v1/plugins") {
-		// Proxy to identity backend — let the appRouter handle it.
-	}
 
 	// Provisioning requests are proxied to the ggid-operator API server
 	// (registered in cfg.Routes as /api/v1/provisioning). No stub fallback:
