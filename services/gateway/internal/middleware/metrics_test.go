@@ -210,7 +210,7 @@ func TestPrometheusMetricNaming(t *testing.T) {
 	requiredMetrics := []string{
 		"http_requests_total",
 		"http_request_duration_seconds",
-		"auth_failures_total",
+		"ggid_auth_failures_total",
 	}
 
 	for _, name := range requiredMetrics {
