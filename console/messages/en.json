@@ -1877,5 +1877,77 @@
       "ytd": "Year to Date",
       "last6m": "Last 6 Months"
     }
+  },
+  "privilegedActivity": {
+    "title": "Privileged Activity",
+    "description": "Timeline of privileged operations, break-glass events, and JIT elevations",
+    "tabs": {
+      "timeline": "Timeline",
+      "sessions": "Sessions",
+      "stats": "Statistics"
+    },
+    "timeline": {
+      "title": "Privileged Operations Timeline",
+      "operator": "Operator",
+      "action": "Action",
+      "target": "Target",
+      "elevatedRole": "Elevated Role",
+      "duration": "Duration",
+      "scopesDelta": "Scopes Δ",
+      "timestamp": "Timestamp",
+      "source": "Source",
+      "noOperations": "No privileged operations found",
+      "filterOperator": "All Operators",
+      "filterAction": "All Actions",
+      "filterRange": "Time Range",
+      "range1h": "Last Hour",
+      "range24h": "Last 24 Hours",
+      "range7d": "Last 7 Days",
+      "actionBreakGlass": "Break-Glass",
+      "actionJitElevate": "JIT Elevation",
+      "actionRoleAssign": "Role Assignment",
+      "actionPolicyChange": "Policy Change",
+      "actionUserModify": "User Modification",
+      "actionConfigChange": "Config Change",
+      "actionKeyAccess": "Key Access",
+      "sourceApi": "API",
+      "sourceCli": "CLI",
+      "sourceUi": "Console",
+      "sourceBreakGlass": "Break-Glass",
+      "sourceJit": "JIT",
+      "searchPlaceholder": "Search by operator or target..."
+    },
+    "sessions": {
+      "title": "Session Grouped View",
+      "description": "Privileged API calls grouped by session",
+      "sessionId": "Session",
+      "operator": "Operator",
+      "callCount": "Calls",
+      "firstCall": "First Call",
+      "lastCall": "Last Call",
+      "operations": "Operations",
+      "noSessions": "No privileged sessions found",
+      "expandSession": "Click to expand session operations",
+      "seqColumn": "Seq",
+      "actionColumn": "Action",
+      "targetColumn": "Target",
+      "resultColumn": "Result",
+      "durationColumn": "Duration"
+    },
+    "stats": {
+      "title": "Privileged Activity Statistics",
+      "totalOperations": "Total Operations",
+      "uniqueOperators": "Unique Operators",
+      "breakGlassCount": "Break-Glass Events",
+      "jitElevationCount": "JIT Elevations",
+      "topOperators": "Top Operators",
+      "mostElevatedRoles": "Most Elevated Roles",
+      "operationsByDay": "Operations by Day",
+      "action": "Action",
+      "count": "Count",
+      "operator": "Operator",
+      "role": "Role",
+      "noData": "No statistics available"
+    }
   }
 }
