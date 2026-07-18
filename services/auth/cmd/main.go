@@ -271,6 +271,13 @@ func main() {
 	}
 	handler.SetAuthMethodPolicyRepo(authMethodPolicyRepo)
 
+	// Password deprecation config DB-backed repository (KB-074).
+	passwordDeprecationRepo := repository.NewPasswordDeprecationRepository(pool)
+	if err := passwordDeprecationRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Password deprecation schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetPasswordDeprecationRepo(passwordDeprecationRepo)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")
