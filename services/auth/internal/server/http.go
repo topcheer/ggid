@@ -645,6 +645,59 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		h.publishAuditEvent("user.login", "success", tc.TenantID, uuid.Nil)
 	}
 
+	// KB-080: Conditional Access Policy evaluation.
+	// Evaluate after auth success, before returning tokens.
+	if tc, err := ggidtenant.FromContext(r.Context()); err == nil && h.capRepo != nil {
+		evalCtx := repository.EvalContext{
+			IPAddress:  ip,
+			AuthMethod: "password",
+		}
+		action, matchedPolicy := h.capRepo.Evaluate(r.Context(), tc.TenantID, evalCtx)
+		if matchedPolicy != nil {
+			switch action {
+			case repository.ActionBlock:
+				// Revoke the tokens we just issued — login is blocked.
+				h.publishAuditEventWithMeta(r,
+					"conditional_access.login_block", "blocked",
+					"login", req.Username, uuid.Nil,
+					map[string]any{
+						"policy_id":   matchedPolicy.ID,
+						"policy_name": matchedPolicy.Name,
+						"ip":          ip,
+					},
+				)
+				writeJSON(w, http.StatusForbidden, map[string]any{
+					"error":       "access_denied",
+					"reason":      "conditional_access_policy",
+					"policy_name": matchedPolicy.Name,
+					"message":     "Login blocked by conditional access policy",
+				})
+				return
+			case repository.ActionRequireMFA, repository.ActionRequireStepUp:
+				// Return the tokens but flag that MFA/step-up is required.
+				h.publishAuditEventWithMeta(r,
+					"conditional_access.login_challenge", action,
+					"login", req.Username, uuid.Nil,
+					map[string]any{
+						"policy_id":   matchedPolicy.ID,
+						"policy_name": matchedPolicy.Name,
+						"challenge":   action,
+					},
+				)
+				writeJSON(w, http.StatusOK, map[string]any{
+					"access_token":       tokens.AccessToken,
+					"refresh_token":      tokens.RefreshToken,
+					"token_type":         tokens.TokenType,
+					"expires_in":         tokens.ExpiresIn,
+					"mfa_required":       action == repository.ActionRequireMFA,
+					"step_up_required":   action == repository.ActionRequireStepUp,
+					"challenge_reason":   matchedPolicy.Name,
+				})
+				return
+			}
+		}
+	}
+
 	writeJSON(w, http.StatusOK, tokens)
 }
 
