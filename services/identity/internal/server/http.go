@@ -58,6 +58,7 @@ rlsRepo           *rlsRepo
 quotaRepo         *quotaRepo
 secretRepo        *secretRepo
 backupRepo        *backupRepo
+notificationRepo  *notificationRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
 }
@@ -212,6 +213,12 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/mdm/sync/", h.handleMDMSync)
 	h.mux.HandleFunc("/api/v1/mdm/devices", h.handleMDMDevices)
 	h.mux.HandleFunc("/api/v1/mdm/devices/", h.handleMDMCompliance)
+	// WASM Plugin management.
+	h.mux.HandleFunc("/api/v1/plugins", h.handlePluginsRoute)
+	h.mux.HandleFunc("/api/v1/plugins/", h.handlePluginsRoute)
+	// Notification Router.
+	h.mux.HandleFunc("/api/v1/notifications/rules", h.handleNotificationRules)
+	h.mux.HandleFunc("/api/v1/notifications/log", h.handleNotificationLog)
 	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 	h.mux.HandleFunc("/api/v1/identity/scim/error-recovery", h.handleSCIMErrorRecovery)
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)
