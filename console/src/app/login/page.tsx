@@ -31,6 +31,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [mfaToken, setMfaToken] = useState("");
   const [error, setError] = useState("");
+  const [rateLimitSeconds, setRateLimitSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
   const [connectors, setConnectors] = useState<SocialConnector[]>([]);
   const [connectorsLoaded, setConnectorsLoaded] = useState(false);
@@ -96,6 +97,13 @@ export default function LoginPage() {
       });
   }, []);
 
+  // Rate limit countdown timer
+  useEffect(() => {
+    if (rateLimitSeconds <= 0) return;
+    const timer = setTimeout(() => setRateLimitSeconds(s => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [rateLimitSeconds]);
+
   const handleCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -110,10 +118,27 @@ export default function LoginPage() {
       const data = await resp.json();
 
       if (!resp.ok) {
-        const errMsg = typeof data.error === 'string'
+        const rawErr = typeof data.error === 'string'
           ? data.error
-          : data.error?.message || data.error?.code || data.message || "Login failed";
-        setError(errMsg);
+          : data.error?.code || data.error?.message || data.message || "login_failed";
+
+        // Translate known error codes to user-friendly messages
+        const errorMessages: Record<string, string> = {
+          too_many_login_attempts: "Too many login attempts. Please try again later.",
+          rate_limited: "Too many login attempts. Please try again later.",
+          invalid_credentials: "Invalid username or password.",
+          account_locked: "Your account has been locked. Please contact your administrator.",
+          account_disabled: "Your account has been disabled.",
+          password_expired: "Your password has expired. Please reset it.",
+          tenant_not_found: "Organization not found. Please check your tenant.",
+        };
+        setError(errorMessages[rawErr] || rawErr);
+
+        // Start countdown for rate limit errors
+        if (rawErr === 'too_many_login_attempts' || rawErr === 'rate_limited') {
+          const retryAfter = parseInt(resp.headers.get('Retry-After') || '30', 10);
+          setRateLimitSeconds(retryAfter);
+        }
         return;
       }
 
@@ -335,6 +360,14 @@ export default function LoginPage() {
             {error && (
               <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
                 {error}
+                {rateLimitSeconds > 0 && (
+                  <div className="mt-2 flex items-center gap-2 text-xs">
+                    <div className="w-6 h-6 rounded-full border-2 border-red-400 flex items-center justify-center font-bold text-red-500">
+                      {rateLimitSeconds}
+                    </div>
+                    <span>seconds remaining. Please wait before retrying.</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -421,7 +454,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || rateLimitSeconds > 0}
               aria-label={loading ? t("login.signingIn") : t("login.signIn")}
               className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
             >
