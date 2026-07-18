@@ -143,6 +143,16 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.privilOpRepo = privilOpRepo
 
+	// NHI PG repos (replaces in-memory maps).
+	nhiPGRepo := newNHIPGRepo(pool)
+	if err := nhiPGRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("NHI identity schema ensure error (non-fatal): %v", err)
+	}
+	nhiRiskPGRepo := newNHIRiskPGRepo(pool)
+	if err := nhiRiskPGRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("NHI risk schema ensure error (non-fatal): %v", err)
+	}
+
 	// Journey definitions (JDL).
 	journeyRepo := newJourneyRepo(pool)
 	if err := journeyRepo.EnsureSchema(ctx); err != nil {
