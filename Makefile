@@ -16,6 +16,8 @@ help:
 	@echo "  lint         Run golangci-lint"
 	@echo "  migrate-up   Run database migrations"
 	@echo "  migrate-down Rollback last migration"
+	@echo "  lint-ci      CI lint gate (go build + go vet)"
+	@echo "  install-hooks  Install git pre-commit hook"
 	@echo "  docker-run   Start infrastructure (PostgreSQL, Redis, NATS)"
 	@echo "  docker-stop  Stop infrastructure"
 	@echo "  docker-build-services  Build all 8 service images (prebuilt binary)"
