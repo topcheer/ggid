@@ -51,8 +51,10 @@ type Handler struct {
 	aaguidAllowlistRepo    *repository.AAGUIDAllowlistRepository
 	tapEngine              *tap.Engine
 	migrationEngine        *jitMigrationEngine
+	attrMapRepo            *attributeMappingRepo
 	tapPolicyRepo          *repository.TAPPolicyRepository
 	capRepo                *repository.ConditionalAccessRepository
+	caeRepo                *repository.CAERepository
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
@@ -119,6 +121,11 @@ func (h *Handler) SetMemMapRepo(repo *authMemoryMapRepo) {
 // SetMigrationEngine injects the JIT migration engine.
 func (h *Handler) SetMigrationEngine(e *jitMigrationEngine) {
 	h.migrationEngine = e
+}
+
+// SetAttrMapRepo injects the attribute mapping repository.
+func (h *Handler) SetAttrMapRepo(r *attributeMappingRepo) {
+	h.attrMapRepo = r
 }
 
 // globalMemMapRepo is a package-level reference for non-handler functions.
@@ -225,6 +232,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/admin/migration/config", h.handleMigrationConfig)
 	h.mux.HandleFunc("/api/v1/admin/migration/stats", h.handleMigrationStats)
 	h.mux.HandleFunc("/api/v1/admin/migration/test", h.handleMigrationTest)
+	h.mux.HandleFunc("/api/v1/admin/migration/mappings", h.handleAttrMappings)
+	h.mux.HandleFunc("/api/v1/admin/migration/mappings/", h.handleAttrMappings)
 	h.mux.HandleFunc("/api/v1/auth/internal/revoke-user", h.handleInternalRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/rotate", h.handlePepperRotate)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)
@@ -499,6 +508,9 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/tap", h.handleTAP)
 	h.mux.HandleFunc("/api/v1/auth/tap/", h.handleTAP)
 	h.mux.HandleFunc("/api/v1/auth/conditional-access/", h.handleConditionalAccess)
+	h.mux.HandleFunc("/api/v1/auth/cae/status", h.handleCAE)
+	h.mux.HandleFunc("/api/v1/auth/cae/run", h.handleCAE)
+	h.mux.HandleFunc("/api/v1/auth/cae/log", h.handleCAE)
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()

@@ -312,12 +312,26 @@ func main() {
 	}
 	handler.SetConditionalAccessRepo(capRepo)
 
+	// CAE (Continuous Access Evaluation) repo (KB-081).
+	caeRepo := repository.NewCAERepository(pool)
+	if err := caeRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("CAE schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetCAERepo(caeRepo)
+
 	// JIT migration engine.
 	migrationEng := server.NewJITMigrationEngine(pool)
 	if err := migrationEng.EnsureSchema(ctx); err != nil {
 		log.Printf("Migration schema ensure error (non-fatal): %v", err)
 	}
 	handler.SetMigrationEngine(migrationEng)
+
+	// Attribute mapping repository for role/attribute mapping.
+	attrMapRepo := server.NewAttributeMappingRepo(pool)
+	if err := attrMapRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Attribute mapping schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetAttrMapRepo(attrMapRepo)
 
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
