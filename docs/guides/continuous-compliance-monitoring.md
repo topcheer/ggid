@@ -1,135 +1,144 @@
-# Continuous Compliance Monitoring
+# Continuous Compliance Monitoring Guide (KB-280)
 
-This guide covers real-time control monitoring, evidence automation, compliance dashboard, alerting, remediation workflow, audit trail, and GGID's implementation.
+## Overview
 
-## Real-Time Control Monitoring
+GGID's Continuous Compliance Monitoring (CCM) engine automatically evaluates security controls against compliance frameworks (SOC 2, ISO 27001, HIPAA, DORA) on a scheduled basis. Results are persisted to PostgreSQL for audit evidence and dashboard display.
 
-### What to Monitor
+## How It Works
 
-| Control Type | Monitoring Method | Alert Condition |
-|---|---|---|
-| Policy drift | Compare deployed vs approved policy | Any difference |
-| Config change | Watch config file/env changes | Unauthorized change |
-| Access control | Monitor role assignments | SoD violation |
-| Encryption | Verify encryption enabled | Encryption disabled |
-| Audit logging | Check audit event flow | Gap in audit events |
-| Rate limiting | Verify rate limits active | Rate limit disabled |
-| MFA enforcement | Check MFA config | MFA disabled for admin |
+```
+Scheduler triggers → CCM engine runs 15 controls → Results stored to ccm_results → Dashboard updates
+```
 
-### Policy Drift Detection
+## 15 Compliance Controls
 
-```go
-func detectPolicyDrift(current, approved *Policy) []DriftItem {
-    var drifts []DriftItem
-    if current.DefaultDecision != approved.DefaultDecision {
-        drifts = append(drifts, DriftItem{
-            Field: "default_decision",
-            Approved: approved.DefaultDecision,
-            Current: current.DefaultDecision,
-        })
+| Control ID | Category | What It Checks |
+|-----------|----------|----------------|
+| `MFA_ENFORCEMENT` | Access Control | All admin accounts have MFA enabled |
+| `PASSWORD_POLICY` | Access Control | Password policy meets minimum requirements |
+| `BREAK_GLASS_REVIEW` | Privileged Access | Break-glass activations reviewed within 24h |
+| `JIT_EXPIRY` | Privileged Access | No JIT elevations exceeding 8h duration |
+| `SESSION_TIMEOUT` | Session Mgmt | Idle session timeout < 30 minutes |
+| `AUDIT_INTEGRITY` | Audit | Hash-chain verification passes |
+| `AUDIT_RETENTION` | Audit | Audit logs retained per policy (90d+) |
+| `ROLE_HYGIENE` | RBAC | No dormant roles (>90d unused) |
+| `ORPHAN_ACCOUNTS` | IAM | No accounts without owner/manager |
+| `DEPARTED_USERS` | IAM | No active accounts for departed employees |
+| `PRIVILEGE_CREEP` | RBAC | No users with accumulated excess permissions |
+| `SOD_VIOLATIONS` | SoD | No unresolved segregation-of-duties violations |
+| `API_KEY_ROTATION` | Secrets | No API keys older than rotation policy |
+| `CERTIFICATE_VALIDITY` | PKI | No certificates expiring within 30 days |
+| `DLP_EGRESS_RULES` | Data Protection | DLP egress policies active and monitored |
+
+## API Endpoints
+
+### Run Full Scan
+
+```http
+POST /api/v1/audit/ccm/scan
+X-Tenant-ID: <tenant-uuid>
+```
+
+Triggers evaluation of all 15 controls. Returns immediately with scan ID.
+
+### Get Latest Results
+
+```http
+GET /api/v1/audit/ccm/latest
+X-Tenant-ID: <tenant-uuid>
+```
+
+Returns the most recent result for each control.
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "control_id": "MFA_ENFORCEMENT",
+      "control_name": "MFA Enforcement",
+      "category": "Access Control",
+      "status": "pass",
+      "metric_value": 100,
+      "threshold": 100,
+      "threshold_dir": ">=",
+      "details": "All 12 admin accounts have MFA enabled",
+      "checked_at": "2026-07-18T10:00:00Z"
+    },
+    {
+      "control_id": "SOD_VIOLATIONS",
+      "control_name": "SoD Violations",
+      "category": "SoD",
+      "status": "fail",
+      "metric_value": 3,
+      "threshold": 0,
+      "threshold_dir": "<=",
+      "details": "3 unresolved SoD violations detected",
+      "checked_at": "2026-07-18T10:00:00Z"
     }
-    // Compare rules
-    if len(current.Rules) != len(approved.Rules) {
-        drifts = append(drifts, DriftItem{Field: "rule_count", ...})
-    }
-    return drifts
+  ],
+  "summary": {
+    "pass": 13,
+    "fail": 1,
+    "warn": 1
+  }
 }
 ```
 
-## Evidence Automation
+### Get Control History
 
-### Auto-Collect + Hash Chain
-
-```yaml
-compliance:
-  evidence:
-    auto_collect: true
-    sources:
-      - config_files
-      - policy_state
-      - access_reviews
-      - scan_results
-      - audit_metrics
-    frequency: daily
-    hash_chain: true  # Tamper-evident evidence
-    storage: "s3://ggid-compliance-evidence"
+```http
+GET /api/v1/audit/ccm/history?control_id=MFA_ENFORCEMENT&limit=30
+X-Tenant-ID: <tenant-uuid>
 ```
 
-## Compliance Dashboard
+Returns historical results for trend analysis.
 
-### Framework x Control Status
+## Data Model
 
-| Framework | Total | Compliant | Warning | Non-Compliant | Score |
-|---|---|---|---|---|---|
-| SOC 2 | 64 | 62 | 2 | 0 | 97% |
-| ISO 27001 | 114 | 108 | 6 | 0 | 95% |
-| HIPAA | 54 | 50 | 4 | 0 | 93% |
-| GDPR | 99 | 95 | 4 | 0 | 96% |
+### `ccm_results` Table
 
-### Alert on Non-Compliance
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | TEXT (PK) | Unique result ID |
+| `tenant_id` | UUID | Tenant scope |
+| `control_id` | TEXT | Control identifier |
+| `control_name` | TEXT | Human-readable name |
+| `category` | TEXT | Control category |
+| `status` | TEXT | `pass`, `fail`, `warn` |
+| `metric_value` | FLOAT | Measured value |
+| `threshold` | FLOAT | Expected threshold |
+| `threshold_dir` | TEXT | `>=`, `<=`, `==` |
+| `details` | JSONB | Additional context |
+| `checked_at` | TIMESTAMPTZ | Evaluation timestamp |
 
-```yaml
-compliance:
-  alerting:
-    on_non_compliance: true
-    on_score_drop: true
-    score_drop_threshold: 0.05  # Alert if score drops 5%
-    channels:
-      - slack:#compliance
-      - email:compliance-team@example.com
-    critical_channels:
-      - pagerduty:compliance-critical
-```
+**Indexes:**
+- `idx_ccm_tenant_time` — tenant + time descending
+- `idx_ccm_control` — tenant + control_id + time (history queries)
 
-## Remediation Workflow
+## Control Status
 
-```
-Non-Compliance Detected → Alert → Assign Owner → Remediate → Verify → Close
-```
+| Status | Meaning | Action |
+|--------|---------|--------|
+| `pass` | Control meets threshold | None |
+| `fail` | Control violates threshold | Remediate immediately |
+| `warn` | Control nears threshold | Monitor closely |
 
-| Severity | SLA | Escalation |
-|---|---|---|
-| Critical | 24h | CISO |
-| High | 7d | Compliance officer |
-| Medium | 30d | Control owner |
-| Low | 90d | Control owner |
+## Compliance Framework Mapping
 
-## GGID Continuous Compliance
-
-```yaml
-compliance:
-  continuous_monitoring: true
-  frameworks: ["soc2", "iso27001", "hipaa", "gdpr", "pci-dss"]
-  evidence:
-    auto_collect: true
-    hash_chain: true
-    frequency: daily
-  dashboard:
-    real_time: true
-    refresh: 5m
-  alerting:
-    on_non_compliance: true
-    on_drift: true
-    on_score_drop: true
-  remediation:
-    auto_assign: true
-    sla_tracking: true
-    escalate_on_overdue: true
-  audit_trail:
-    log_all_checks: true
-    log_all_changes: true
-    immutable: true
-```
+| Control | SOC 2 | ISO 27001 | HIPAA | DORA |
+|---------|-------|-----------|-------|------|
+| MFA_ENFORCEMENT | CC6.1 | A.9.4.2 | 164.312(d) | Art. 9 |
+| AUDIT_INTEGRITY | CC7.2 | A.12.4 | 164.312(b) | Art. 11 |
+| SOD_VIOLATIONS | CC6.3 | A.6.1.2 | — | Art. 8 |
+| PRIVILEGE_CREEP | CC6.3 | A.9.4.4 | — | Art. 8 |
+| SESSION_TIMEOUT | CC6.1 | A.9.4.5 | 164.312(a)(2)(iii) | — |
 
 ## Best Practices
 
-1. **Monitor continuously** — Don't wait for annual audit
-2. **Automate evidence** — Manual collection doesn't scale
-3. **Alert on drift** — Catch unauthorized changes immediately
-4. **Track remediation** — Every non-compliance needs an owner + SLA
-5. **Dashboard for visibility** — Real-time compliance status
-6. **Hash-chain evidence** — Tamper-evident for audit
-7. **Integrate with CI/CD** — Compliance gate in deployment pipeline
-8. **Review alert thresholds** — Tune to reduce false positives
-9. **Report to leadership** - Monthly compliance summary
-10. **Update on regulation changes** — Reassess when frameworks update
+1. **Schedule daily scans** — Run full CCM evaluation at least once per day
+2. **Alert on status changes** — Configure webhook for `pass → fail` transitions
+3. **Export for audits** — Generate compliance reports from `ccm_results` for external auditors
+4. **Track trends** — Use history endpoint to show improvement/degradation over time
+5. **Correlate with privileged ops** — Cross-reference with `privileged_operations` for root-cause analysis
+6. **Auto-remediation** — Wire failing controls to SOAR playbooks for automated response

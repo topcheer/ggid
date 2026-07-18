@@ -135,7 +135,7 @@ export default function AccessRequestApprovalWorkflowPage() {
             Auto-Approve Rules
           </h2>
           <div className="space-y-2">
-            {(data?.auto_approve_rules ?? []).map((rule) => (
+            {(data?.auto_approve_rules ?? []).map((rule: any) => (
               <div key={rule.id} className="bg-gray-900 rounded-lg p-3 border border-gray-800">
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-sm font-medium">{rule.name}</p>

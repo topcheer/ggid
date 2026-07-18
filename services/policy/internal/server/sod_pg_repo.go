@@ -44,10 +44,6 @@ func NewSodPGRepo(pool *pgxpool.Pool) *sodPGRepo {
 	return &sodPGRepo{pool: pool}
 }
 
-func newSodPGRepo(pool *pgxpool.Pool) *sodPGRepo {
-	return &sodPGRepo{pool: pool}
-}
-
 func (r *sodPGRepo) EnsureSchema(ctx context.Context) error {
 	_, err := r.pool.Exec(ctx, `
 		CREATE TABLE IF NOT EXISTS sod_rules (

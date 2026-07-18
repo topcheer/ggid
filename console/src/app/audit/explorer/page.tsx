@@ -283,7 +283,7 @@ function ExportTab({ events }: { events: AuditEvent[] }) {
         content = JSON.stringify(data, null, 2);
       } else {
         const headers = ["id", "timestamp", "type", "severity", "user", "action", "resource", "status", "ip_address"];
-        const rows = data.map((e) => headers.map((h) => `"${String((e as Record<string, unknown>)[h] || "").replace(/"/g, '""')}"`).join(","));
+        const rows = data.map((e: any) => headers.map((h) => `"${String(e[h] || "").replace(/"/g, '""')}"`).join(","));
         content = [headers.join(","), ...rows].join("\n");
       }
       const blob = new Blob([content], { type: format === "json" ? "application/json" : "text/csv" });
