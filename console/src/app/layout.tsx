@@ -4,6 +4,7 @@ import { AuthGuard } from "@/components/auth-guard";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { ToastProvider } from "@/components/Toast";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 import PWARegister from "@/components/PWARegister";
 
 export const metadata: Metadata = {
@@ -52,9 +53,11 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <ToastProvider>
-              <AuthGuard>
-                {children}
-              </AuthGuard>
+              <ConfirmProvider>
+                <AuthGuard>
+                  {children}
+                </AuthGuard>
+              </ConfirmProvider>
             </ToastProvider>
           </I18nProvider>
         </ThemeProvider>

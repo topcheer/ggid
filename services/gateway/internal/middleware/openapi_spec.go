@@ -410,7 +410,8 @@ func addIdentityPaths(m map[string]OpenAPIPath) {
 	m["/api/v1/identity/tuples"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Tuples")}
 	m["/api/v1/identity/user-lifecycle/config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity User Lifecycle Config")}
 	m["/api/v1/identity/user-lifecycle/stages"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity User Lifecycle Stages")}
-	m["/api/v1/identity/users"] = OpenAPIPath{Get: op([]string{"Identity"}, "List users (legacy alias)"), Post: op([]string{"Identity"}, "Create user (legacy alias)")},		"/api/v1/policy/authorize":         {Post: op([]string{"Policy"}, "Unified PDP authorize")}
+	m["/api/v1/identity/users"] = OpenAPIPath{Get: op([]string{"Identity"}, "List users (legacy alias)"), Post: op([]string{"Identity"}, "Create user (legacy alias)")}
+	m["/api/v1/policy/authorize"] = OpenAPIPath{Post: op([]string{"Policy"}, "Unified PDP authorize")}
 	m["/api/v1/identity/users/bulk-import"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Users Bulk Import")}
 	m["/api/v1/identity/users/import-async"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Users Import Async")}
 	m["/api/v1/identity/users/import-async/"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Users Import Async")}

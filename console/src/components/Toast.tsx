@@ -40,10 +40,10 @@ const icons = {
 };
 
 const styles = {
-  success: "border-green-200 bg-green-50 text-green-800",
-  error: "border-red-200 bg-red-50 text-red-800",
-  warning: "border-amber-200 bg-amber-50 text-amber-800",
-  info: "border-blue-200 bg-blue-50 text-blue-800",
+  success: "border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200",
+  error: "border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200",
+  warning: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200",
+  info: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200",
 };
 
 const iconColors = {
@@ -74,7 +74,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast, success, error, warning, info }}>
       {children}
       {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
         {toasts.map((t) => (
           <ToastItem key={t.id} toast={t} onClose={() => remove(t.id)} />
         ))}
@@ -99,14 +99,15 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
 
   return (
     <div
-      className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg transition-all duration-200 ${
+      className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-xl transition-all duration-300 pointer-events-auto cursor-pointer ${
         styles[toast.type]
-      } ${visible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}
+      } ${visible ? "translate-x-0 opacity-100" : "translate-x-8 opacity-0"}`}
       style={{ minWidth: "300px", maxWidth: "420px" }}
+      onClick={onClose}
     >
-      <Icon className={`h-5 w-5 shrink-0 ${iconColors[toast.type]}`} />
+      <Icon className={`h-5 w-5 shrink-0 mt-0.5 ${iconColors[toast.type]}`} />
       <p className="flex-1 text-sm font-medium">{toast.message}</p>
-      <button onClick={onClose} className="shrink-0 text-gray-400 hover:text-gray-600">
+      <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
         <X className="h-4 w-4" />
       </button>
     </div>

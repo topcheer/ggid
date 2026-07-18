@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { authHeader } from "@/lib/auth-helpers";
 import {
   Search, Shield, Clock, Globe, Smartphone, Activity,
@@ -25,6 +26,7 @@ interface CAEEntry {
 
 export default function SessionDetailPage() {
   const t = useTranslations();
+  const { confirm } = useConfirm();
   const [query, setQuery] = useState("");
   const [session, setSession] = useState<SessionDetail | null>(null);
   const [caeHistory, setCaeHistory] = useState<CAEEntry[]>([]);
@@ -64,7 +66,12 @@ export default function SessionDetailPage() {
 
   const revoke = async () => {
     if (!session) return;
-    if (!confirm(t("sessionDetail.actions.revokeConfirm"))) return;
+    confirm({
+      title: t("sessionDetail.actions.revoke"),
+      description: t("sessionDetail.actions.revokeConfirm"),
+      confirmLabel: t("sessionDetail.actions.revoke"),
+      variant: "danger",
+      onConfirm: async () => {
     setRevoking(true);
     try {
       await fetch(`${API_BASE}/api/v1/auth/sessions/revoke`, {
@@ -76,6 +83,8 @@ export default function SessionDetailPage() {
     setSession({ ...session, status: "revoked" });
     setMsg(t("sessionDetail.actions.revoked"));
     setTimeout(() => setMsg(null), 3000);
+      },
+    });
   };
 
   const statusColors: Record<string, string> = {
