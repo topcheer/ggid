@@ -64,6 +64,7 @@ identityPolicyMap *identityPolicyMapRepo
 	importJobRepo     *importJobRepo
 	pcRepo            *privilegeCreepRepo
 	nhiRiskEngine     *NHIRiskEngine
+	privilOpRepo      *privilegedOpRepo
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -299,6 +300,9 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/identity/privilege-creep", h.handlePrivilegeCreep)
 	h.mux.HandleFunc("/api/v1/identity/privilege-creep/", h.handlePrivilegeCreep)
 	h.mux.HandleFunc("/api/v1/policy/roles/", h.handlePrivilegeBaseline) // PUT /:id/baseline
+
+	// Privileged operations audit log.
+	h.mux.HandleFunc("/api/v1/identity/privileged-operations", h.handlePrivilegedOperations)
 
 	// Identity orchestration journeys (JDL CRUD + dry-run).
 	h.mux.HandleFunc("/api/v1/identity/journeys", h.handleJourneys)

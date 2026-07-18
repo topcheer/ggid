@@ -136,6 +136,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.pcRepo = pcRepo
 
+	// Privileged operations audit log.
+	privilOpRepo := newPrivilegedOpRepo(pool)
+	if err := privilOpRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Privileged ops schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.privilOpRepo = privilOpRepo
+
 	// Journey definitions (JDL).
 	journeyRepo := newJourneyRepo(pool)
 	if err := journeyRepo.EnsureSchema(ctx); err != nil {
