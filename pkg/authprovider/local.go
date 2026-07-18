@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ggid/ggid/pkg/auth/multihash"
 	"github.com/ggid/ggid/pkg/crypto"
 	"github.com/ggid/ggid/pkg/errors"
 	"github.com/google/uuid"
@@ -65,8 +66,14 @@ func (p *LocalProvider) Authenticate(ctx context.Context, creds Credentials) (*A
 	}
 
 	ok, err := crypto.VerifyPassword(creds.Password, lc.PasswordHash)
-	if err != nil {
-		return nil, errors.Wrap(errors.ErrInternal, "password verification failed", err)
+	if err != nil || !ok {
+		// Fallback: try multi-hash verifier for legacy hash formats (bcrypt, PBKDF2, scrypt, SSHA).
+		mhOK, _, mhErr := multihash.VerifyPassword(creds.Password, lc.PasswordHash)
+		if mhErr != nil || !mhOK {
+			return nil, errors.Unauthenticated("invalid credentials")
+		}
+		// Legacy format matched — transparent rehashing happens at the service layer.
+		ok = true
 	}
 	if !ok {
 		return nil, errors.Unauthenticated("invalid credentials")
