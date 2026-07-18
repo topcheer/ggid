@@ -46,6 +46,7 @@ type Handler struct {
 	breakGlassRepo  *repository.BreakGlassRepository
 	authMethodPolicyRepo    *repository.AuthMethodPolicyRepository
 	passwordDeprecationRepo *repository.PasswordDeprecationRepository
+	enrollmentNudgeRepo    *repository.EnrollmentNudgeRepository
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
@@ -207,6 +208,7 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/sessions/revoke-user", h.handleRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/invalidate-sessions/", h.handleInvalidateSessions)
 	h.mux.HandleFunc("/api/v1/auth/multi-hash/verify", h.handleMultiHashVerify)
+	h.mux.HandleFunc("/api/v1/auth/multi-hash/rehash/", h.handleMultiHashRehash)
 	h.mux.HandleFunc("/api/v1/auth/internal/revoke-user", h.handleInternalRevokeUser)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/rotate", h.handlePepperRotate)
 	h.mux.HandleFunc("/api/v1/auth/password-pepper/status", h.handlePepperStatus)
@@ -474,6 +476,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/method-policies", h.handleAuthMethodPolicies)
 	h.mux.HandleFunc("/api/v1/auth/method-policies/", h.handleAuthMethodPolicies)
 	h.mux.HandleFunc("/api/v1/auth/password-deprecation", h.handlePasswordDeprecation)
+	h.mux.HandleFunc("/api/v1/auth/enrollment/nudge/", h.handleEnrollmentNudge)
+	h.mux.HandleFunc("/api/v1/auth/enrollment/dismiss", h.handleEnrollmentDismiss)
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()

@@ -278,6 +278,13 @@ func main() {
 	}
 	handler.SetPasswordDeprecationRepo(passwordDeprecationRepo)
 
+	// Enrollment nudge DB-backed repository (KB-075).
+	enrollmentNudgeRepo := repository.NewEnrollmentNudgeRepository(pool)
+	if err := enrollmentNudgeRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Enrollment nudge schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetEnrollmentNudgeRepo(enrollmentNudgeRepo)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")
