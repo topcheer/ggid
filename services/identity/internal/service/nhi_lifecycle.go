@@ -32,11 +32,18 @@ type NHILifecycleService struct {
 }
 
 func NewNHILifecycleService() *NHILifecycleService {
-	return &NHILifecycleService{inventory: make(map[string]*NHIIdentity)}
+	return &NHILifecycleService{}
+}
+
+func (s *NHILifecycleService) ensureMap() {
+	if s.inventory == nil {
+		s.inventory = make(map[string]*NHIIdentity)
+	}
 }
 
 func (s *NHILifecycleService) RegisterNHI(n NHIIdentity) {
 	s.mu.Lock()
+	s.ensureMap()
 	defer s.mu.Unlock()
 	s.inventory[n.ID] = &n
 }
@@ -69,6 +76,7 @@ func (s *NHILifecycleService) DetectOrphans(thresholdDays int) []NHIOrphan {
 
 func (s *NHILifecycleService) DecommissionNHI(id string) *DecommissionResult {
 	s.mu.Lock()
+	s.ensureMap()
 	defer s.mu.Unlock()
 	n, ok := s.inventory[id]
 	if !ok {

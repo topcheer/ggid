@@ -42,9 +42,16 @@ type NHIRiskEngine struct {
 }
 
 func NewNHIRiskEngine() *NHIRiskEngine {
-	return &NHIRiskEngine{
-		baselines: make(map[string][]*NHIBehaviorBaseline),
-		scores:    make(map[uuid.UUID]*NHIRiskScore),
+	return &NHIRiskEngine{}
+}
+
+// ensureMaps lazily initializes in-memory maps on first use.
+func (e *NHIRiskEngine) ensureMaps() {
+	if e.baselines == nil {
+		e.baselines = make(map[string][]*NHIBehaviorBaseline)
+	}
+	if e.scores == nil {
+		e.scores = make(map[uuid.UUID]*NHIRiskScore)
 	}
 }
 
@@ -64,6 +71,7 @@ func (e *NHIRiskEngine) EnsureSchema(ctx context.Context) error {
 // RecordBaseline adds or updates a behavior baseline entry for an NHI.
 func (e *NHIRiskEngine) RecordBaseline(nhiID, endpoint string, callsPerHour float64, ip string, hour int) {
 	e.mu.Lock()
+	e.ensureMaps()
 	defer e.mu.Unlock()
 
 	// Find or create baseline for this endpoint.
@@ -223,6 +231,7 @@ func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentAct
 	}
 
 	e.mu.Lock()
+	e.ensureMaps()
 	e.scores[nhiID] = result
 	e.mu.Unlock()
 
