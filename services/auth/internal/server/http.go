@@ -48,6 +48,7 @@ type Handler struct {
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
 	emailRepo           *emailRepo
+	keyRotationRepo     *keyRotationRepo
 	internalSecret     string
 	internalPrevSecret string
 }
@@ -219,6 +220,10 @@ func (h *Handler) registerRoutes() {
 	// Email provider config + test.
 	h.mux.HandleFunc("/api/v1/admin/email/config", h.handleEmailConfig)
 	h.mux.HandleFunc("/api/v1/admin/email/test", h.handleEmailTest)
+	// JWT Key Rotation Engine.
+	h.mux.HandleFunc("/api/v1/admin/keys", h.handleKeyList)
+	h.mux.HandleFunc("/api/v1/admin/keys/history", h.handleKeyHistory)
+	h.mux.HandleFunc("/api/v1/admin/keys/rotate/", h.handleKeyRotate)
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
