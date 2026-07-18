@@ -169,3 +169,16 @@ jobs:
           chmod +x scripts/ui-smoke-test.sh
           bash -n scripts/ui-smoke-test.sh  # syntax check
           echo "Smoke test script syntax OK"
+
+  e2e-syntax-check:
+    name: E2E Script Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify E2E business flows script
+        run: |
+          test -f scripts/e2e-business-flows.sh
+          chmod +x scripts/e2e-business-flows.sh
+          bash -n scripts/e2e-business-flows.sh
+          echo "E2E script syntax OK"

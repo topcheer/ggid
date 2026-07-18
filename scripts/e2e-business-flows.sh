@@ -197,9 +197,6 @@ if [ -n "$CLIENT_ID" ] && [ -n "$CLIENT_SECRET" ]; then
   CODE="$RAW"
   MS=$((END - START))
   BODY=$(cat /tmp/e2e_token_resp.txt 2>/dev/null)
-  CODE=$(echo "$RESP" | cut -d'|' -f1)
-  MS=$(echo "$RESP" | cut -d'|' -f2)
-  BODY=$(echo "$RESP" | cut -d'|' -f3-)
   MACHINE_TOKEN=$(echo "$BODY" | python3 -c "import sys,json;print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || echo "")
 
   if [ "$CODE" = "200" ] && [ -n "$MACHINE_TOKEN" ]; then
