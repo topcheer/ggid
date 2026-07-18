@@ -47,6 +47,7 @@ type Handler struct {
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
+	emailRepo           *emailRepo
 	internalSecret     string
 	internalPrevSecret string
 }
@@ -215,6 +216,9 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/forgot-password", h.handleForgotPassword)
 	h.mux.HandleFunc("/api/v1/auth/reset-password", h.handleResetPassword)
 	h.mux.HandleFunc("/api/v1/auth/profile", h.handleProfileUpdate)
+	// Email provider config + test.
+	h.mux.HandleFunc("/api/v1/admin/email/config", h.handleEmailConfig)
+	h.mux.HandleFunc("/api/v1/admin/email/test", h.handleEmailTest)
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
