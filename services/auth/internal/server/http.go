@@ -267,6 +267,8 @@ func (h *Handler) registerRoutes() {
 
 	// Login attempt logging
 	h.mux.HandleFunc("/api/v1/auth/login-attempts", h.loginAttempts)
+	h.mux.HandleFunc("/api/v1/auth/login-attempts/", h.handleLoginAttemptsReset)
+	h.mux.HandleFunc("/api/v1/auth/login-attempts/", h.handleLoginAttemptsReset)
 
 	// Adaptive MFA: risk-based step-up authentication
 	h.mux.HandleFunc("/api/v1/auth/risk-assess", h.riskAssess)
