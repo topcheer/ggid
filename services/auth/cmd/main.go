@@ -285,6 +285,13 @@ func main() {
 	}
 	handler.SetEnrollmentNudgeRepo(enrollmentNudgeRepo)
 
+	// AAGUID allowlist DB-backed repository (KB-078).
+	aaguidRepo := repository.NewAAGUIDAllowlistRepository(pool)
+	if err := aaguidRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("AAGUID allowlist schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetAAGUIDAllowlistRepo(aaguidRepo)
+
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
 	internalPrevSecret := os.Getenv("INTERNAL_AUTH_PREV_SECRET")

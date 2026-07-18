@@ -93,6 +93,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 			ID        string `json:"id"`
 			PublicKey string `json:"public_key"`
 		} `json:"credential"`
+		AAGUID string `json:"aaguid"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error":"invalid request body"}`, http.StatusBadRequest)
@@ -126,6 +127,15 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 		PublicKey: req.Credential.PublicKey,
 		CreatedAt: time.Now(),
 	}
+
+	// KB-078: AAGUID allowlist enforcement — check if the authenticator is approved.
+	if req.AAGUID != "" && h.aaguidAllowlistRepo != nil {
+		if !h.aaguidAllowlistRepo.IsApproved(r.Context(), req.AAGUID) {
+			http.Error(w, `{"error":"authenticator_not_approved","message":"This authenticator is not in the approved device list"}`, http.StatusForbidden)
+			return
+		}
+	}
+
 	pkCredentials[cred.ID] = cred
 	sess.Status = "completed"
 	// PG write-through for credential and session

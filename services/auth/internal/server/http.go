@@ -47,6 +47,7 @@ type Handler struct {
 	authMethodPolicyRepo    *repository.AuthMethodPolicyRepository
 	passwordDeprecationRepo *repository.PasswordDeprecationRepository
 	enrollmentNudgeRepo    *repository.EnrollmentNudgeRepository
+	aaguidAllowlistRepo    *repository.AAGUIDAllowlistRepository
 	smsSender           service.SMSSender
 	memMapRepo          *authMemoryMapRepo
 	verificationRepo    *verificationRepo
@@ -478,6 +479,8 @@ func (h *Handler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/auth/password-deprecation", h.handlePasswordDeprecation)
 	h.mux.HandleFunc("/api/v1/auth/enrollment/nudge/", h.handleEnrollmentNudge)
 	h.mux.HandleFunc("/api/v1/auth/enrollment/dismiss", h.handleEnrollmentDismiss)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/aaguid", h.handleAAGUIDAllowlist)
+	h.mux.HandleFunc("/api/v1/auth/webauthn/aaguid/", h.handleAAGUIDAllowlist)
 
 	// Batch 3C: 14 additional auth endpoints
 	h.registerBatch3CRoutes()
