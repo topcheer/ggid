@@ -1,4 +1,4 @@
-.PHONY: help proto build test test-short test-race coverage lint docker-run docker-stop migrate-up migrate-down clean
+.PHONY: help proto build test test-short test-race coverage lint docker-run docker-stop docker-build docker-build-allinone docker-push swagger-gen migrate-up migrate-down clean
 
 GGID_ROOT := $(shell pwd)
 PROTO_DIR := $(GGID_ROOT)/api/proto
@@ -66,6 +66,27 @@ docker-run:
 docker-stop:
 	docker compose -f deploy/docker-compose.yaml down
 
+docker-build:
+	docker build -f console/Dockerfile -t ggid/ggid-console:latest .
+
+docker-build-allinone:
+	docker build -f deploy/all-in-one/Dockerfile -t ggid/ggid-all-in-one:latest .
+
+docker-push: docker-build-allinone
+	docker tag ggid/ggid-all-in-one:latest registry.iot2.win/ggid/all-in-one:latest
+	docker push registry.iot2.win/ggid/all-in-one:latest
+
+swagger-gen:
+	@echo "Generating OpenAPI spec from annotations..."
+	@which swag > /dev/null 2>&1 || go install github.com/swaggo/swag/v2/cmd/swag@latest
+	swag init -g services/auth/internal/server/http.go --output docs/swagger/auth --parseDependency
+	swag init -g services/identity/internal/server/http.go --output docs/swagger/identity --parseDependency
+	swag init -g services/oauth/internal/server.go --output docs/swagger/oauth --parseDependency
+	@echo "Swagger specs generated under docs/swagger/"
+
 clean:
 	find . -name '*.bin' -delete
 	find . -name 'bin' -type d -exec rm -rf {} +
+
+swagger:
+	@bash scripts/gen-swagger.sh

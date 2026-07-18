@@ -28,7 +28,7 @@ type DecommissionResult struct {
 
 type NHILifecycleService struct {
 	mu         sync.RWMutex
-	inventory  map[string]*NHIIdentity
+	inventory  map[string]*NHIIdentity // fallback for nil-pool
 }
 
 func NewNHILifecycleService() *NHILifecycleService {

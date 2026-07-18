@@ -1,1419 +1,5783 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
-  title: GGID IAM API
-  description: Production-grade Identity & Access Management API
+  title: GGID Platform API
+  description: |
+    GGID — Global Governance & Identity Platform API.
+    Auto-generated from service route registration.
   version: 1.0.0
-  license:
-    name: Apache-2.0
   contact:
-    url: https://github.com/ggid/ggid
-
+    name: GGID Support
+    url: https://github.com/topcheer/ggid
 servers:
   - url: http://localhost:8080
     description: Local development
-  - url: https://api.ggid.dev
-    description: Production
-
 security:
   - BearerAuth: []
-
 paths:
-  # === Auth ===
-  /api/v1/auth/register:
-    post:
-      tags: [Auth]
-      summary: Register a new user
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [username, email, password]
-              properties:
-                username: { type: string }
-                email: { type: string, format: email }
-                password: { type: string, format: password }
-                display_name: { type: string }
-      responses:
-        "201": { description: User created }
-        "409": { description: Username/email already exists }
-
-  /api/v1/auth/login:
-    post:
-      tags: [Auth]
-      summary: Login with credentials
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [username, password]
-              properties:
-                username: { type: string }
-                password: { type: string, format: password }
-      responses:
-        "200":
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TokenSet"
-        "401": { description: Invalid credentials }
-
-  /api/v1/auth/refresh:
-    post:
-      tags: [Auth]
-      summary: Refresh access token
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [refresh_token]
-              properties:
-                refresh_token: { type: string }
-      responses:
-        "200":
-          description: New token set
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TokenSet"
-
-  # === Users ===
-  /api/v1/users:
-    get:
-      tags: [Users]
-      summary: List users
-      parameters:
-        - name: q
-          in: query
-          schema: { type: string }
-          description: Search query
-        - name: limit
-          in: query
-          schema: { type: integer, default: 50 }
-        - name: offset
-          in: query
-          schema: { type: integer, default: 0 }
-      responses:
-        "200":
-          description: User list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
-    post:
-      tags: [Users]
-      summary: Create user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateUserRequest"
-      responses:
-        "201":
-          description: User created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-
-  /api/v1/users/{id}:
-    get:
-      tags: [Users]
-      summary: Get user by ID
-      parameters:
-        - $ref: "#/components/parameters/UserId"
-      responses:
-        "200":
-          description: User details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "404": { description: User not found }
-    put:
-      tags: [Users]
-      summary: Update user
-      parameters:
-        - $ref: "#/components/parameters/UserId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateUserRequest"
-      responses:
-        "200":
-          description: Updated user
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-    delete:
-      tags: [Users]
-      summary: Delete user
-      parameters:
-        - $ref: "#/components/parameters/UserId"
-      responses:
-        "204": { description: User deleted }
-
-  /api/v1/users/{id}/lock:
-    post:
-      tags: [Users]
-      summary: Lock user account
-      parameters:
-        - $ref: "#/components/parameters/UserId"
-      responses:
-        "200": { description: User locked }
-
-  /api/v1/users/{id}/unlock:
-    post:
-      tags: [Users]
-      summary: Unlock user account
-      parameters:
-        - $ref: "#/components/parameters/UserId"
-      responses:
-        "200": { description: User unlocked }
-
-  # === Roles & Permissions ===
-  /api/v1/roles:
-    get:
-      tags: [Policy]
-      summary: List roles
-      responses:
-        "200":
-          description: Role list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Role"
-    post:
-      tags: [Policy]
-      summary: Create role
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateRoleRequest"
-      responses:
-        "201":
-          description: Role created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Role"
-
-  /api/v1/roles/{id}:
-    get:
-      tags: [Policy]
-      summary: Get role
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Role details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Role"
-    delete:
-      tags: [Policy]
-      summary: Delete role
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204": { description: Role deleted }
-
-  /api/v1/roles/assign:
-    post:
-      tags: [Policy]
-      summary: Assign role to user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [user_id, role_id]
-              properties:
-                user_id: { type: string }
-                role_id: { type: string }
-      responses:
-        "200": { description: Role assigned }
-
-  /api/v1/permissions:
-    get:
-      tags: [Policy]
-      summary: List all permissions
-      responses:
-        "200":
-          description: Permission list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Permission"
-
-  /api/v1/policies/check:
-    post:
-      tags: [Policy]
-      summary: Check permission (ABAC)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PolicyCheckRequest"
-      responses:
-        "200":
-          description: Policy decision
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PolicyResult"
-
-  # === Organizations ===
-  /api/v1/orgs:
-    get:
-      tags: [Organizations]
-      summary: List organizations
-      responses:
-        "200":
-          description: Organization list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Organization"
-    post:
-      tags: [Organizations]
-      summary: Create organization
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [name]
-              properties:
-                name: { type: string }
-                description: { type: string }
-      responses:
-        "201":
-          description: Organization created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Organization"
-
-  /api/v1/orgs/{id}/departments:
-    get:
-      tags: [Organizations]
-      summary: List departments
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Department list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Department"
-
-  # === Audit ===
-  /api/v1/audit/events:
-    get:
-      tags: [Audit]
-      summary: Query audit events
-      parameters:
-        - name: action
-          in: query
-          schema: { type: string }
-        - name: start_date
-          in: query
-          schema: { type: string, format: date-time }
-        - name: end_date
-          in: query
-          schema: { type: string, format: date-time }
-        - name: limit
-          in: query
-          schema: { type: integer, default: 100 }
-      responses:
-        "200":
-          description: Audit events
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AuditEvent"
-
-  /api/v1/audit/stream:
-    get:
-      tags: [Audit]
-      summary: SSE stream of audit events
-      responses:
-        "200":
-          description: Server-Sent Events stream
-          content:
-            text/event-stream: {}
-
-  /api/v1/audit/export:
-    get:
-      tags: [Audit]
-      summary: Export audit events
-      parameters:
-        - name: format
-          in: query
-          schema: { type: string, enum: [csv, json], default: json }
-      responses:
-        "200":
-          description: Exported data
-
-  /api/v1/audit/integrity:
-    get:
-      tags: [Audit]
-      summary: Verify audit hash chain integrity
-      responses:
-        "200":
-          description: Integrity status
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  valid: { type: boolean }
-                  broken_at: { type: string }
-
-  # === Agent Identity ===
-  /api/v1/agents:
-    get:
-      tags: [Agents]
-      summary: List registered AI agents
-      responses:
-        "200":
-          description: Agent list
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Agent"
-    post:
-      tags: [Agents]
-      summary: Register a new AI agent
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AgentRegistration"
-      responses:
-        "201":
-          description: Agent registered
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Agent"
-
-  /api/v1/agents/{id}/token:
-    post:
-      tags: [Agents]
-      summary: Exchange agent token
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [subject_token, scopes]
-              properties:
-                subject_token: { type: string }
-                scopes:
-                  type: array
-                  items: { type: string }
-      responses:
-        "200":
-          description: Agent token
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AgentTokenResponse"
-
-  # === Policy: Permission Tree & Rate Limits ===
-  /api/v1/policy/permissions/tree:
-    get:
-      tags: [Policy]
-      summary: Get permission inheritance tree
-      responses:
-        '200':
-          description: Permission tree
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PermissionTree'
-
-  /api/v1/policy/rate-limits:
-    get:
-      tags: [Policy]
-      summary: Get per-tenant rate limit configuration
-      responses:
-        '200':
-          description: Rate limit config
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RateLimitConfig'
-    put:
-      tags: [Policy]
-      summary: Update per-tenant rate limit configuration
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RateLimitConfig'
-      responses:
-        '200': { description: Updated }
-
-  /api/v1/policies/abac/evaluate:
-    post:
-      tags: [Policy]
-      summary: Evaluate ABAC conditions
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ABACEvalRequest'
-      responses:
-        '200':
-          description: Evaluation result
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ABACEvalResult'
-
-  /api/v1/policy/delegation/validate:
-    post:
-      tags: [Policy]
-      summary: Validate delegation chain
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DelegationValidateRequest'
-      responses:
-        '200':
-          description: Validation result
-
-  # === Auth: Login Security ===
-  /api/v1/auth/password-history-check:
-    post:
-      tags: [Auth]
-      summary: Check password against history
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [user_id, new_password]
-              properties:
-                user_id: { type: string, format: uuid }
-                new_password: { type: string }
-      responses:
-        '200':
-          description: Check result
-
-  /api/v1/auth/login-attempts/{user_id}:
-    get:
-      tags: [Auth]
-      summary: Get login attempt history
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
-      responses:
-        '200':
-          description: Login attempts
-
-  /api/v1/auth/login-attempts/{user_id}/reset:
-    post:
-      tags: [Auth]
-      summary: Reset login attempts
-      parameters:
-        - name: user_id
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
-      responses:
-        '200': { description: Reset successful }
-
-  /api/v1/auth/sessions/stream:
-    get:
-      tags: [Auth]
-      summary: Session activity stream (SSE)
-      responses:
-        '200':
-          description: SSE stream
-          content:
-            text/event-stream: {}
-
-  # === Audit: SIEM & Compliance ===
-  /api/v1/audit/siem/health:
-    get:
-      tags: [Audit]
-      summary: SIEM forwarder health
-      responses:
-        '200':
-          description: SIEM health status
-
-  /api/v1/audit/alert-webhooks:
-    get:
-      tags: [Audit]
-      summary: List alert webhooks
-      responses:
-        '200':
-          description: Alert webhooks list
-    post:
-      tags: [Audit]
-      summary: Create alert webhook
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [url]
-              properties:
-                url: { type: string, format: uri }
-                secret: { type: string }
-                events:
-                  type: array
-                  items: { type: string }
-      responses:
-        '201': { description: Created }
-    delete:
-      tags: [Audit]
-      summary: Delete alert webhook
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: string }
-      responses:
-        '204': { description: Deleted }
-
-  /api/v1/audit/compliance-schedules:
-    get:
-      tags: [Audit]
-      summary: List compliance report schedules
-      responses:
-        '200':
-          description: Schedules
-    post:
-      tags: [Audit]
-      summary: Create compliance report schedule
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [report_type, frequency]
-              properties:
-                report_type: { type: string, enum: [soc2, hipaa, gdpr, custom] }
-                frequency: { type: string, enum: [daily, weekly, monthly] }
-                recipients:
-                  type: array
-                  items: { type: string }
-      responses:
-        '201': { description: Created }
-    put:
-      tags: [Audit]
-      summary: Update compliance report schedule
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        '200': { description: Updated }
-    delete:
-      tags: [Audit]
-      summary: Delete compliance report schedule
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: string }
-      responses:
-        '204': { description: Deleted }
-
-  # === OAuth: Introspection Config & Consent ===
-  /api/v1/oauth/introspection/config:
-    get:
-      tags: [OAuth]
-      summary: Get introspection cache config
-      responses:
-        '200':
-          description: Config
-    put:
-      tags: [OAuth]
-      summary: Update introspection cache config
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                cache_ttl_seconds: { type: integer, default: 300 }
-                cache_enabled: { type: boolean, default: true }
-      responses:
-        '200': { description: Updated }
-
-  /api/v1/oauth/consent/list:
-    get:
-      tags: [OAuth]
-      summary: List user consents
-      parameters:
-        - name: user_id
-          in: query
-          required: true
-          schema: { type: string, format: uuid }
-      responses:
-        '200':
-          description: Consents list
-
-  /api/v1/oauth/consent/{id}:
-    delete:
-      tags: [OAuth]
-      summary: Revoke consent
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '204': { description: Revoked }
-
-  /api/v1/oauth/token-exchange:
-    post:
-      tags: [OAuth]
-      summary: Token exchange (RFC 8693)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [subject_token, subject_token_type]
-              properties:
-                subject_token: { type: string }
-                subject_token_type: { type: string }
-                actor_token: { type: string }
-                audience: { type: string }
-                scope: { type: string }
-      responses:
-        '200':
-          description: New token
-
-  # === Identity: Account Linking & Import ===
-  /api/v1/users/{id}/link:
-    post:
-      tags: [Identity]
-      summary: Link external provider to user
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [provider, external_id]
-              properties:
-                provider: { type: string }
-                external_id: { type: string }
-                external_email: { type: string }
-      responses:
-        '200': { description: Linked }
-
-  /api/v1/users/{id}/link/{provider}:
-    delete:
-      tags: [Identity]
-      summary: Unlink external provider
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string, format: uuid }
-        - name: provider
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '204': { description: Unlinked }
-
-  /api/v1/users/import/validate:
-    post:
-      tags: [Identity]
-      summary: Validate user import data
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                users:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      username: { type: string }
-                      email: { type: string }
-      responses:
-        '200':
-          description: Validation result
-
-  # === Auth: Sessions ===
-  /api/v1/auth/sessions:
-    get:
-      tags: [Auth, Sessions]
-      summary: List active sessions
-      security: [{BearerAuth: []}]
-      responses:
-        '200': { description: Session list }
-
-  /api/v1/auth/sessions/{id}:
-    delete:
-      tags: [Auth, Sessions]
-      summary: Revoke a session
-      security: [{BearerAuth: []}]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200': { description: Session revoked }
-
-  # === Auth: MFA ===
-  /api/v1/auth/mfa/enroll:
-    post:
-      tags: [Auth, MFA]
-      summary: Enroll MFA (TOTP)
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                method: { type: string, example: totp }
-      responses:
-        '200': { description: MFA enrollment with QR secret }
-
-  /api/v1/auth/mfa/verify:
-    post:
-      tags: [Auth, MFA]
-      summary: Verify MFA code
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                code: { type: string }
-      responses:
-        '200': { description: MFA verified }
-
-  /api/v1/auth/mfa/backup-codes:
-    get:
-      tags: [Auth, MFA]
-      summary: List backup codes
-      security: [{BearerAuth: []}]
-      responses:
-        '200': { description: Backup codes }
-    post:
-      tags: [Auth, MFA]
-      summary: Generate new backup codes
-      security: [{BearerAuth: []}]
-      responses:
-        '200': { description: New backup codes generated }
-
-  # === Auth: WebAuthn ===
-  /api/v1/auth/webauthn/begin:
-    post:
-      tags: [Auth, WebAuthn]
-      summary: Begin WebAuthn registration
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                user_id: { type: string }
-      responses:
-        '200': { description: Registration challenge }
-
-  /api/v1/auth/webauthn/finish:
-    post:
-      tags: [Auth, WebAuthn]
-      summary: Finish WebAuthn registration
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                credential_id: { type: string }
-                public_key: { type: string }
-                aaguid: { type: string }
-      responses:
-        '201': { description: Credential registered }
-
-  /api/v1/auth/webauthn/login/begin:
-    post:
-      tags: [Auth, WebAuthn]
-      summary: Begin WebAuthn login
-      responses:
-        '200': { description: Login challenge }
-
-  /api/v1/auth/webauthn/login/finish:
-    post:
-      tags: [Auth, WebAuthn]
-      summary: Finish WebAuthn login
-      responses:
-        '200': { description: Login successful with JWT tokens }
-
-  # === Auth: Password ===
-  /api/v1/auth/password/strength:
-    post:
-      tags: [Auth]
-      summary: Evaluate password strength (zxcvbn score 0-4)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                password: { type: string }
-      responses:
-        '200': { description: Strength score with crack time and suggestions }
-
-  /api/v1/auth/password/change:
-    post:
-      tags: [Auth]
-      summary: Change password (requires current password)
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                old_password: { type: string }
-                new_password: { type: string }
-      responses:
-        '200': { description: Password changed }
-
-  # === OAuth: Clients ===
-  /api/v1/oauth/clients:
-    get:
-      tags: [OAuth]
-      summary: List OAuth clients
-      security: [{BearerAuth: []}]
-      responses:
-        '200': { description: Client list }
-    post:
-      tags: [OAuth]
-      summary: Create OAuth client
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name: { type: string }
-                redirect_uris:
-                  type: array
-                  items: { type: string }
-                grant_types:
-                  type: array
-                  items: { type: string }
-      responses:
-        '201': { description: Client created }
-
-  /api/v1/oauth/clients/{id}:
-    get:
-      tags: [OAuth]
-      summary: Get OAuth client
-      security: [{BearerAuth: []}]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200': { description: Client detail }
-    delete:
-      tags: [OAuth]
-      summary: Delete OAuth client
-      security: [{BearerAuth: []}]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        '200': { description: Client deleted }
-
-  # === OAuth: Discovery ===
   /.well-known/openid-configuration:
     get:
       tags: [OAuth]
-      summary: OIDC discovery document
+      summary: Openid Configuration
+      security: [{BearerAuth: []}]
       responses:
-        '200': { description: OIDC configuration }
-
-  /.well-known/jwks.json:
+        '200': { description: OK }
+  /api/v1/.well-known/federation-configuration:
     get:
-      tags: [OAuth]
-      summary: JWKS public keys
+      tags: [Other]
+      summary: Federation Configuration
+      security: [{BearerAuth: []}]
       responses:
-        '200': { description: JSON Web Key Set }
-
-  # === Policy: CRUD ===
-  /api/v1/policies:
+        '200': { description: OK }
+  /api/v1/access-requests:
     get:
-      tags: [Policy]
-      summary: List policies
+      tags: [Other]
+      summary: Access Requests
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: Policy list }
-    post:
-      tags: [Policy]
-      summary: Create policy
-      security: [{BearerAuth: []}]
-      responses:
-        '201': { description: Policy created }
-
-  /api/v1/policies/{id}:
+        '200': { description: OK }
+  /api/v1/access-requests/:
     get:
-      tags: [Policy]
-      summary: Get policy by ID
-      security: [{BearerAuth: []}]
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
-      responses:
-        '200': { description: Policy detail }
-    delete:
-      tags: [Policy]
-      summary: Delete policy
-      security: [{BearerAuth: []}]
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
-      responses:
-        '200': { description: Policy deleted }
-
-  /api/v1/policies/evaluate:
-    post:
-      tags: [Policy]
-      summary: Evaluate all matching policies with decision trail
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                principal_id: { type: string }
-                resources: { type: array, items: { type: string } }
-                actions: { type: array, items: { type: string } }
-      responses:
-        '200': { description: Evaluation results }
-
-  /api/v1/policies/sod/check:
-    post:
-      tags: [Policy, SoD]
-      summary: Check Separation of Duties
+      tags: [Other]
+      summary: 
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: SoD check result }
-
-  # === Identity: Groups ===
-  /api/v1/groups:
+        '200': { description: OK }
+  /api/v1/admin/backups:
     get:
-      tags: [Identity]
-      summary: List groups
+      tags: [Admin]
+      summary: Backups
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: Group list }
-    post:
-      tags: [Identity]
-      summary: Create group
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name: { type: string }
-                description: { type: string }
-      responses:
-        '201': { description: Group created }
-
-  /api/v1/groups/{id}/members:
+        '200': { description: OK }
+  /api/v1/admin/backups/:
     get:
-      tags: [Identity]
-      summary: List group members
+      tags: [Admin]
+      summary: 
       security: [{BearerAuth: []}]
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
       responses:
-        '200': { description: Member list }
-    post:
-      tags: [Identity]
-      summary: Add member to group
+        '200': { description: OK }
+  /api/v1/admin/backups/trigger:
+    get:
+      tags: [Admin]
+      summary: Trigger
       security: [{BearerAuth: []}]
-      parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
       responses:
-        '200': { description: Member added }
-
-  # === Org: Teams & Departments ===
+        '200': { description: OK }
+  /api/v1/admin/config:
+    get:
+      tags: [Admin]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/config/:
+    get:
+      tags: [Admin]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/email/config:
+    get:
+      tags: [Admin]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/email/test:
+    get:
+      tags: [Admin]
+      summary: Test
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/feature-flags:
+    get:
+      tags: [Admin]
+      summary: Feature Flags
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/feature-flags/:
+    get:
+      tags: [Admin]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/keys:
+    get:
+      tags: [Admin]
+      summary: Keys
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/keys/history:
+    get:
+      tags: [Admin]
+      summary: History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/keys/rotate/:
+    get:
+      tags: [Admin]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/migration/config:
+    get:
+      tags: [Admin]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/migration/mappings:
+    get:
+      tags: [Admin]
+      summary: Mappings
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/migration/mappings/:
+    get:
+      tags: [Admin]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/migration/stats:
+    get:
+      tags: [Admin]
+      summary: Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/migration/test:
+    get:
+      tags: [Admin]
+      summary: Test
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/rls/enable/:
+    get:
+      tags: [Admin]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/rls/status:
+    get:
+      tags: [Admin]
+      summary: Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/rls/test:
+    get:
+      tags: [Admin]
+      summary: Test
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/secrets:
+    get:
+      tags: [Admin]
+      summary: Secrets
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/secrets/health:
+    get:
+      tags: [Admin]
+      summary: Health
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/admin/secrets/rotate/:
+    get:
+      tags: [Admin]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents:
+    get:
+      tags: [Other]
+      summary: Agents
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/drift/report:
+    get:
+      tags: [Other]
+      summary: Report
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/register:
+    get:
+      tags: [Other]
+      summary: Register
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/reviews:
+    get:
+      tags: [Other]
+      summary: Reviews
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/reviews/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/shadows:
+    get:
+      tags: [Other]
+      summary: Shadows
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/token:
+    get:
+      tags: [Other]
+      summary: Token
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/agents/verify:
+    get:
+      tags: [Other]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/alerts:
+    get:
+      tags: [Other]
+      summary: Alerts
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit:
+    get:
+      tags: [Other]
+      summary: Audit
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/access-reviews:
+    get:
+      tags: [Audit]
+      summary: Access Reviews
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/access-reviews/pending:
+    get:
+      tags: [Audit]
+      summary: Pending
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/activity:
+    get:
+      tags: [Audit]
+      summary: Activity
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/aggregations:
+    get:
+      tags: [Audit]
+      summary: Aggregations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/aggregations/daily:
+    get:
+      tags: [Audit]
+      summary: Daily
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/alert-evaluation/config:
+    get:
+      tags: [Audit]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/alert-webhooks:
+    get:
+      tags: [Audit]
+      summary: Alert Webhooks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/alerts/config:
+    get:
+      tags: [Audit]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/alerts/evaluate:
+    get:
+      tags: [Audit]
+      summary: Evaluate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/alerts/test:
+    get:
+      tags: [Audit]
+      summary: Test
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/anomalies/detect:
+    get:
+      tags: [Audit]
+      summary: Detect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/anomaly-detection:
+    get:
+      tags: [Audit]
+      summary: Anomaly Detection
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/anomaly-detection/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/ccm/history:
+    get:
+      tags: [Audit]
+      summary: History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/ccm/results:
+    get:
+      tags: [Audit]
+      summary: Results
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/ccm/run:
+    get:
+      tags: [Audit]
+      summary: Run
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/ccm/summary:
+    get:
+      tags: [Audit]
+      summary: Summary
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance-report:
+    get:
+      tags: [Audit]
+      summary: Compliance Report
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance-schedules:
+    get:
+      tags: [Audit]
+      summary: Compliance Schedules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/auto-collect:
+    get:
+      tags: [Audit]
+      summary: Auto Collect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/auto-score:
+    get:
+      tags: [Audit]
+      summary: Auto Score
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/cert-export:
+    get:
+      tags: [Audit]
+      summary: Cert Export
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/config:
+    get:
+      tags: [Audit]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/dashboard:
+    get:
+      tags: [Audit]
+      summary: Dashboard
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/drift:
+    get:
+      tags: [Audit]
+      summary: Drift
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/evidence:
+    get:
+      tags: [Audit]
+      summary: Evidence
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/evidence-attachments:
+    get:
+      tags: [Audit]
+      summary: Evidence Attachments
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/evidence-expiry:
+    get:
+      tags: [Audit]
+      summary: Evidence Expiry
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/evidence-refresh:
+    get:
+      tags: [Audit]
+      summary: Evidence Refresh
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/evidence/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/evidence/verify-integrity:
+    get:
+      tags: [Audit]
+      summary: Verify Integrity
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/gaps:
+    get:
+      tags: [Audit]
+      summary: Gaps
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/gaps/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/heatmap:
+    get:
+      tags: [Audit]
+      summary: Heatmap
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/mapping:
+    get:
+      tags: [Audit]
+      summary: Mapping
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/remediation-progress:
+    get:
+      tags: [Audit]
+      summary: Remediation Progress
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/schedule-collect:
+    get:
+      tags: [Audit]
+      summary: Schedule Collect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/schedules:
+    get:
+      tags: [Audit]
+      summary: Schedules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/score-history:
+    get:
+      tags: [Audit]
+      summary: Score History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/compliance/widget-data:
+    get:
+      tags: [Audit]
+      summary: Widget Data
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/correlate:
+    get:
+      tags: [Audit]
+      summary: Correlate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/correlation/rules:
+    get:
+      tags: [Audit]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/cross-system-correlate:
+    get:
+      tags: [Audit]
+      summary: Cross System Correlate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/dashboards/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/dsr:
+    get:
+      tags: [Audit]
+      summary: Dsr
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/events:
+    get:
+      tags: [Audit]
+      summary: Events
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/events/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/events/deduplicate:
+    get:
+      tags: [Audit]
+      summary: Deduplicate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/events/subscribe:
+    get:
+      tags: [Audit]
+      summary: Subscribe
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/events/subscribe/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/evidence-collection:
+    get:
+      tags: [Audit]
+      summary: Evidence Collection
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/evidence-collection/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/evidence/chain:
+    get:
+      tags: [Audit]
+      summary: Chain
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/export:
+    get:
+      tags: [Audit]
+      summary: Export
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/export/schedule-config:
+    get:
+      tags: [Audit]
+      summary: Schedule Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/exports:
+    get:
+      tags: [Audit]
+      summary: Exports
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/exports/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/exports/schedule:
+    get:
+      tags: [Audit]
+      summary: Schedule
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/forensics/timeline:
+    get:
+      tags: [Audit]
+      summary: Timeline
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/framework-coverage:
+    get:
+      tags: [Audit]
+      summary: Framework Coverage
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/gdpr-forget:
+    get:
+      tags: [Audit]
+      summary: Gdpr Forget
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/gdpr-forget/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/gdpr/forget:
+    get:
+      tags: [Audit]
+      summary: Forget
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/hash-chain:
+    get:
+      tags: [Audit]
+      summary: Hash Chain
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/hash-chain/config:
+    get:
+      tags: [Audit]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/impersonation:
+    get:
+      tags: [Audit]
+      summary: Impersonation
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/incidents:
+    get:
+      tags: [Audit]
+      summary: Incidents
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/incidents/active:
+    get:
+      tags: [Audit]
+      summary: Active
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/integrity/sign-pqc:
+    get:
+      tags: [Audit]
+      summary: Sign Pqc
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/integrity/verify:
+    get:
+      tags: [Audit]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/integrity/verify-pqc:
+    get:
+      tags: [Audit]
+      summary: Verify Pqc
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/isolation-check:
+    get:
+      tags: [Audit]
+      summary: Isolation Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/composite-rules:
+    get:
+      tags: [Audit]
+      summary: Composite Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/composite-rules/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/detections:
+    get:
+      tags: [Audit]
+      summary: Detections
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/detections/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/incidents:
+    get:
+      tags: [Audit]
+      summary: Incidents
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/kill-chain/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/playbooks:
+    get:
+      tags: [Audit]
+      summary: Playbooks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/rules:
+    get:
+      tags: [Audit]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/rules/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/stats:
+    get:
+      tags: [Audit]
+      summary: Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/itdr/threat-heatmap:
+    get:
+      tags: [Audit]
+      summary: Threat Heatmap
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/lineage:
+    get:
+      tags: [Audit]
+      summary: Lineage
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/metrics:
+    get:
+      tags: [Audit]
+      summary: Metrics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/pii-scan:
+    get:
+      tags: [Audit]
+      summary: Pii Scan
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/query-metrics:
+    get:
+      tags: [Audit]
+      summary: Query Metrics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/regulatory/report:
+    get:
+      tags: [Audit]
+      summary: Report
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/reports:
+    get:
+      tags: [Audit]
+      summary: Reports
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/reports/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/reports/custom:
+    get:
+      tags: [Audit]
+      summary: Custom
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/reports/generate:
+    get:
+      tags: [Audit]
+      summary: Generate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/retention:
+    get:
+      tags: [Audit]
+      summary: Retention
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/retention-policies:
+    get:
+      tags: [Audit]
+      summary: Retention Policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/retention/execute:
+    get:
+      tags: [Audit]
+      summary: Execute
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/retention/simulate:
+    get:
+      tags: [Audit]
+      summary: Simulate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/risk-score:
+    get:
+      tags: [Audit]
+      summary: Risk Score
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/rules:
+    get:
+      tags: [Audit]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/sbom:
+    get:
+      tags: [Audit]
+      summary: Sbom
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/sbom/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/search:
+    get:
+      tags: [Audit]
+      summary: Search
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/security-posture:
+    get:
+      tags: [Audit]
+      summary: Security Posture
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/siem/forwarder-config:
+    get:
+      tags: [Audit]
+      summary: Forwarder Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/siem/health:
+    get:
+      tags: [Audit]
+      summary: Health
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/siem/health-check:
+    get:
+      tags: [Audit]
+      summary: Health Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/siem/metrics:
+    get:
+      tags: [Audit]
+      summary: Metrics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/stats:
+    get:
+      tags: [Audit]
+      summary: Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/stream:
+    get:
+      tags: [Audit]
+      summary: Stream
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/tamper-check:
+    get:
+      tags: [Audit]
+      summary: Tamper Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/threat-feed:
+    get:
+      tags: [Audit]
+      summary: Threat Feed
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/threat-intel/check:
+    get:
+      tags: [Audit]
+      summary: Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/threat-intel/indicators:
+    get:
+      tags: [Audit]
+      summary: Indicators
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/threat-intel/sources:
+    get:
+      tags: [Audit]
+      summary: Sources
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/threat-intel/sources/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/threat-intel/stats:
+    get:
+      tags: [Audit]
+      summary: Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/timeline/reconstruct:
+    get:
+      tags: [Audit]
+      summary: Reconstruct
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/verify-integrity:
+    get:
+      tags: [Audit]
+      summary: Verify Integrity
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/webhooks:
+    get:
+      tags: [Audit]
+      summary: Webhooks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/webhooks/:
+    get:
+      tags: [Audit]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/webhooks/delivery-status:
+    get:
+      tags: [Audit]
+      summary: Delivery Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/audit/ws:
+    get:
+      tags: [Audit]
+      summary: Ws
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/access-keys:
+    get:
+      tags: [Auth]
+      summary: Access Keys
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/access-keys/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/account-linking:
+    get:
+      tags: [Auth]
+      summary: Account Linking
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/adaptive-auth/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/adaptive-mfa/evaluate:
+    get:
+      tags: [Auth]
+      summary: Evaluate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/anomaly/detect:
+    get:
+      tags: [Auth]
+      summary: Detect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/api-keys:
+    get:
+      tags: [Auth]
+      summary: Api Keys
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/api-keys/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/biometric/enroll:
+    get:
+      tags: [Auth]
+      summary: Enroll
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/biometric/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/breach-warnings:
+    get:
+      tags: [Auth]
+      summary: Breach Warnings
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/break-glass/activate:
+    get:
+      tags: [Auth]
+      summary: Activate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/break-glass/history:
+    get:
+      tags: [Auth]
+      summary: History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/brute-force/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/cae/log:
+    get:
+      tags: [Auth]
+      summary: Log
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/cae/run:
+    get:
+      tags: [Auth]
+      summary: Run
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/cae/status:
+    get:
+      tags: [Auth]
+      summary: Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/certificates:
+    get:
+      tags: [Auth]
+      summary: Certificates
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/certificates/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/change-email:
+    get:
+      tags: [Auth]
+      summary: Change Email
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/conditional-access/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/consent:
+    get:
+      tags: [Auth]
+      summary: Consent
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credential-exposure:
+    get:
+      tags: [Auth]
+      summary: Credential Exposure
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credential-stuffing/block:
+    get:
+      tags: [Auth]
+      summary: Block
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credential-stuffing/blocked:
+    get:
+      tags: [Auth]
+      summary: Blocked
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credentials/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credentials/rotation:
+    get:
+      tags: [Auth]
+      summary: Rotation
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credentials/rotation/due:
+    get:
+      tags: [Auth]
+      summary: Due
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credentials/rotation/execute:
+    get:
+      tags: [Auth]
+      summary: Execute
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/credentials/store:
+    get:
+      tags: [Auth]
+      summary: Store
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/delegation:
+    get:
+      tags: [Auth]
+      summary: Delegation
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/delegations:
+    get:
+      tags: [Auth]
+      summary: Delegations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/delegations/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/detect-credential-stuffing:
+    get:
+      tags: [Auth]
+      summary: Detect Credential Stuffing
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/detect-impossible-travel:
+    get:
+      tags: [Auth]
+      summary: Detect Impossible Travel
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/detect-password-spray:
+    get:
+      tags: [Auth]
+      summary: Detect Password Spray
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/device:
+    get:
+      tags: [Auth]
+      summary: Device
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/device-bindings:
+    get:
+      tags: [Auth]
+      summary: Device Bindings
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/device-fingerprint/analytics:
+    get:
+      tags: [Auth]
+      summary: Analytics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/devices/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/devices/attest:
+    get:
+      tags: [Auth]
+      summary: Attest
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/devices/list:
+    get:
+      tags: [Auth]
+      summary: List
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/devices/register:
+    get:
+      tags: [Auth]
+      summary: Register
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/devices/trusted:
+    get:
+      tags: [Auth]
+      summary: Trusted
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/devices/trusted/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/dlp/policies:
+    get:
+      tags: [Auth]
+      summary: Policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/dlp/policies/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/email-otp/send:
+    get:
+      tags: [Auth]
+      summary: Send
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/email-otp/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/email-template/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/email/change:
+    get:
+      tags: [Auth]
+      summary: Change
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/email/change/confirm:
+    get:
+      tags: [Auth]
+      summary: Confirm
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/email/resend:
+    get:
+      tags: [Auth]
+      summary: Resend
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/email/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/enrollment/dismiss:
+    get:
+      tags: [Auth]
+      summary: Dismiss
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/enrollment/nudge/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/expiry-status:
+    get:
+      tags: [Auth]
+      summary: Expiry Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/forgot-password:
+    get:
+      tags: [Auth]
+      summary: Forgot Password
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/fraud/score:
+    get:
+      tags: [Auth]
+      summary: Score
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/geo-fencing/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/geofencing:
+    get:
+      tags: [Auth]
+      summary: Geofencing
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/golden-ticket/detect:
+    get:
+      tags: [Auth]
+      summary: Detect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/hijack/timeline:
+    get:
+      tags: [Auth]
+      summary: Timeline
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/hooks:
+    get:
+      tags: [Auth]
+      summary: Hooks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/impersonate:
+    get:
+      tags: [Auth]
+      summary: Impersonate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/impersonate/revoke:
+    get:
+      tags: [Auth]
+      summary: Revoke
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/impersonation/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/internal/revoke-user:
+    get:
+      tags: [Auth]
+      summary: Revoke User
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/introspection/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/invalidate-sessions/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/lateral-movement/detect:
+    get:
+      tags: [Auth]
+      summary: Detect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/lockout-policy:
+    get:
+      tags: [Auth]
+      summary: Lockout Policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/lockout-policy/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login:
+    get:
+      tags: [Auth]
+      summary: Login
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-analytics:
+    get:
+      tags: [Auth]
+      summary: Login Analytics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-attempts:
+    get:
+      tags: [Auth]
+      summary: Login Attempts
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-flow/record:
+    get:
+      tags: [Auth]
+      summary: Record
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-geo/enrich:
+    get:
+      tags: [Auth]
+      summary: Enrich
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-notify:
+    get:
+      tags: [Auth]
+      summary: Login Notify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-notify/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-patterns/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-policy:
+    get:
+      tags: [Auth]
+      summary: Login Policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-security:
+    get:
+      tags: [Auth]
+      summary: Login Security
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login-velocity:
+    get:
+      tags: [Auth]
+      summary: Login Velocity
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/login/orchestrate:
+    get:
+      tags: [Auth]
+      summary: Orchestrate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/logout:
+    get:
+      tags: [Auth]
+      summary: Logout
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/logout-all:
+    get:
+      tags: [Auth]
+      summary: Logout All
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/magic-link:
+    get:
+      tags: [Auth]
+      summary: Magic Link
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/magic-link/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Me
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/method-policies:
+    get:
+      tags: [Auth]
+      summary: Method Policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/method-policies/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/backup-codes/generate:
+    get:
+      tags: [Auth]
+      summary: Generate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/backup-codes/remaining:
+    get:
+      tags: [Auth]
+      summary: Remaining
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/backup-codes/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/challenge-config:
+    get:
+      tags: [Auth]
+      summary: Challenge Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/disable:
+    get:
+      tags: [Auth]
+      summary: Disable
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/enrollment-stats:
+    get:
+      tags: [Auth]
+      summary: Enrollment Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/factors:
+    get:
+      tags: [Auth]
+      summary: Factors
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/factors/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/jit-enroll:
+    get:
+      tags: [Auth]
+      summary: Jit Enroll
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/login:
+    get:
+      tags: [Auth]
+      summary: Login
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/setup:
+    get:
+      tags: [Auth]
+      summary: Setup
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/status:
+    get:
+      tags: [Auth]
+      summary: Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/webauthn/begin:
+    get:
+      tags: [Auth]
+      summary: Begin
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mfa/webauthn/finish:
+    get:
+      tags: [Auth]
+      summary: Finish
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/mtls/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/multi-hash/rehash/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/multi-hash/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/notification-preferences:
+    get:
+      tags: [Auth]
+      summary: Notification Preferences
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/notifications:
+    get:
+      tags: [Auth]
+      summary: Notifications
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passkey/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passkey/auth/begin:
+    get:
+      tags: [Auth]
+      summary: Begin
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passkey/auth/finish:
+    get:
+      tags: [Auth]
+      summary: Finish
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passkey/register/begin:
+    get:
+      tags: [Auth]
+      summary: Begin
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passkey/register/finish:
+    get:
+      tags: [Auth]
+      summary: Finish
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passkeys/status:
+    get:
+      tags: [Auth]
+      summary: Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-breach-check:
+    get:
+      tags: [Auth]
+      summary: Password Breach Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-breach/notify:
+    get:
+      tags: [Auth]
+      summary: Notify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-deprecation:
+    get:
+      tags: [Auth]
+      summary: Password Deprecation
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-entropy/check:
+    get:
+      tags: [Auth]
+      summary: Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-history:
+    get:
+      tags: [Auth]
+      summary: Password History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-history-check:
+    get:
+      tags: [Auth]
+      summary: Password History Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-history/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-pepper/rotate:
+    get:
+      tags: [Auth]
+      summary: Rotate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-pepper/status:
+    get:
+      tags: [Auth]
+      summary: Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-policy:
+    get:
+      tags: [Auth]
+      summary: Password Policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-policy/audit:
+    get:
+      tags: [Auth]
+      summary: Audit
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-policy/check:
+    get:
+      tags: [Auth]
+      summary: Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-policy/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-reset/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-reset/analytics:
+    get:
+      tags: [Auth]
+      summary: Analytics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password-strength/distribution:
+    get:
+      tags: [Auth]
+      summary: Distribution
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password/change:
+    get:
+      tags: [Auth]
+      summary: Change
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password/forgot:
+    get:
+      tags: [Auth]
+      summary: Forgot
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password/policy:
+    get:
+      tags: [Auth]
+      summary: Policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password/reset:
+    get:
+      tags: [Auth]
+      summary: Reset
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/password/strength:
+    get:
+      tags: [Auth]
+      summary: Strength
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passwordless/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passwordless/register:
+    get:
+      tags: [Auth]
+      summary: Register
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/passwordless/stats:
+    get:
+      tags: [Auth]
+      summary: Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/phone/send:
+    get:
+      tags: [Auth]
+      summary: Send
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/phone/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/privilege-escalation/detect:
+    get:
+      tags: [Auth]
+      summary: Detect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/profile:
+    get:
+      tags: [Auth]
+      summary: Profile
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/rate-limits:
+    get:
+      tags: [Auth]
+      summary: Rate Limits
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/refresh:
+    get:
+      tags: [Auth]
+      summary: Refresh
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/register:
+    get:
+      tags: [Auth]
+      summary: Register
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/replay-check:
+    get:
+      tags: [Auth]
+      summary: Replay Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/reset-password:
+    get:
+      tags: [Auth]
+      summary: Reset Password
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/risk-assess:
+    get:
+      tags: [Auth]
+      summary: Risk Assess
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/risk-notify:
+    get:
+      tags: [Auth]
+      summary: Risk Notify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/risk-scoring/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/risk/aggregate:
+    get:
+      tags: [Auth]
+      summary: Aggregate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/rotation-reminders:
+    get:
+      tags: [Auth]
+      summary: Rotation Reminders
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/send-verification:
+    get:
+      tags: [Auth]
+      summary: Send Verification
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/session-binding/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/session-timeout:
+    get:
+      tags: [Auth]
+      summary: Session Timeout
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/session-timeout/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions:
+    get:
+      tags: [Auth]
+      summary: Sessions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/anomaly-score:
+    get:
+      tags: [Auth]
+      summary: Anomaly Score
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/bind-device:
+    get:
+      tags: [Auth]
+      summary: Bind Device
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/check-device:
+    get:
+      tags: [Auth]
+      summary: Check Device
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/device-binding-status:
+    get:
+      tags: [Auth]
+      summary: Device Binding Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/enforce-limit:
+    get:
+      tags: [Auth]
+      summary: Enforce Limit
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/force-logout:
+    get:
+      tags: [Auth]
+      summary: Force Logout
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/geo-stats:
+    get:
+      tags: [Auth]
+      summary: Geo Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/hijack-check:
+    get:
+      tags: [Auth]
+      summary: Hijack Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/limit:
+    get:
+      tags: [Auth]
+      summary: Limit
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/limits:
+    get:
+      tags: [Auth]
+      summary: Limits
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/revoke:
+    get:
+      tags: [Auth]
+      summary: Revoke
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/revoke-user:
+    get:
+      tags: [Auth]
+      summary: Revoke User
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/stream:
+    get:
+      tags: [Auth]
+      summary: Stream
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/termination-reasons:
+    get:
+      tags: [Auth]
+      summary: Termination Reasons
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/sessions/unbind-device:
+    get:
+      tags: [Auth]
+      summary: Unbind Device
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/social/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/stats/credential-stuffing:
+    get:
+      tags: [Auth]
+      summary: Credential Stuffing
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/stats/social-providers:
+    get:
+      tags: [Auth]
+      summary: Social Providers
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/step-up:
+    get:
+      tags: [Auth]
+      summary: Step Up
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/step-up-check:
+    get:
+      tags: [Auth]
+      summary: Step Up Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/stepup/challenge:
+    get:
+      tags: [Auth]
+      summary: Challenge
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/stepup/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/synthetic-identity/detect:
+    get:
+      tags: [Auth]
+      summary: Detect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/tap:
+    get:
+      tags: [Auth]
+      summary: Tap
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/tap/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/threat-intel/feed:
+    get:
+      tags: [Auth]
+      summary: Feed
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/throttle-status:
+    get:
+      tags: [Auth]
+      summary: Throttle Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/token-reuse-check:
+    get:
+      tags: [Auth]
+      summary: Token Reuse Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/tokens:
+    get:
+      tags: [Auth]
+      summary: Tokens
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/tor-vpn/detect:
+    get:
+      tags: [Auth]
+      summary: Detect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/trust-store/cas:
+    get:
+      tags: [Auth]
+      summary: Cas
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/trust-store/cas/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/trust-store/verify:
+    get:
+      tags: [Auth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/velocity-rules:
+    get:
+      tags: [Auth]
+      summary: Velocity Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/verify-email:
+    get:
+      tags: [Auth]
+      summary: Verify Email
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/verify-email-change:
+    get:
+      tags: [Auth]
+      summary: Verify Email Change
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/vpn-check:
+    get:
+      tags: [Auth]
+      summary: Vpn Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/aaguid:
+    get:
+      tags: [Auth]
+      summary: Aaguid
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/aaguid/:
+    get:
+      tags: [Auth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/autofill:
+    get:
+      tags: [Auth]
+      summary: Autofill
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/conditional:
+    get:
+      tags: [Auth]
+      summary: Conditional
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/config:
+    get:
+      tags: [Auth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/credentials/valid-ids:
+    get:
+      tags: [Auth]
+      summary: Valid Ids
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/login/begin:
+    get:
+      tags: [Auth]
+      summary: Begin
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/login/finish:
+    get:
+      tags: [Auth]
+      summary: Finish
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/passwordless/begin:
+    get:
+      tags: [Auth]
+      summary: Begin
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/passwordless/finish:
+    get:
+      tags: [Auth]
+      summary: Finish
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/register/begin:
+    get:
+      tags: [Auth]
+      summary: Begin
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/auth/webauthn/register/finish:
+    get:
+      tags: [Auth]
+      summary: Finish
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/authz/check:
+    get:
+      tags: [Other]
+      summary: Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/certificates:
+    get:
+      tags: [Other]
+      summary: Certificates
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/certificates/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/compliance/schedules:
+    get:
+      tags: [Other]
+      summary: Schedules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/crypto/fields:
+    get:
+      tags: [Other]
+      summary: Fields
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/crypto/fields/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
   /api/v1/departments:
     get:
       tags: [Org]
-      summary: List departments
+      summary: Departments
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: Department list }
-    post:
+        '200': { description: OK }
+  /api/v1/departments/:
+    get:
       tags: [Org]
-      summary: Create department
+      summary: 
       security: [{BearerAuth: []}]
       responses:
-        '201': { description: Department created }
-
+        '200': { description: OK }
+  /api/v1/dlp/policies:
+    get:
+      tags: [Other]
+      summary: Policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/dlp/policies/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/dlp/scan:
+    get:
+      tags: [Other]
+      summary: Scan
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/event-correlation/rules:
+    get:
+      tags: [Other]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/hr/connectors:
+    get:
+      tags: [Other]
+      summary: Connectors
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/hr/dormant:
+    get:
+      tags: [Other]
+      summary: Dormant
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/hr/reconcile:
+    get:
+      tags: [Other]
+      summary: Reconcile
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/hr/sync:
+    get:
+      tags: [Other]
+      summary: Sync
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/hr/sync/log:
+    get:
+      tags: [Other]
+      summary: Log
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/access-review/campaigns:
+    get:
+      tags: [Identity]
+      summary: Campaigns
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/account-linking/config:
+    get:
+      tags: [Identity]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/attribute-governance:
+    get:
+      tags: [Identity]
+      summary: Attribute Governance
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/branding/config:
+    get:
+      tags: [Identity]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/check:
+    get:
+      tags: [Identity]
+      summary: Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/ciam/metrics:
+    get:
+      tags: [Identity]
+      summary: Metrics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/consent/registry:
+    get:
+      tags: [Identity]
+      summary: Registry
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/dashboard/stats:
+    get:
+      tags: [Identity]
+      summary: Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/data-governance/classifications:
+    get:
+      tags: [Identity]
+      summary: Classifications
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/data-governance/dsr:
+    get:
+      tags: [Identity]
+      summary: Dsr
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/data-governance/inventory:
+    get:
+      tags: [Identity]
+      summary: Inventory
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/deprovisioning/config:
+    get:
+      tags: [Identity]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/devices/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/did:
+    get:
+      tags: [Identity]
+      summary: Did
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/did/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/directory-health:
+    get:
+      tags: [Identity]
+      summary: Directory Health
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/directory-snapshot:
+    get:
+      tags: [Identity]
+      summary: Directory Snapshot
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/directory/reconcile:
+    get:
+      tags: [Identity]
+      summary: Reconcile
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/dlp/events:
+    get:
+      tags: [Identity]
+      summary: Events
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/dlp/heatmap:
+    get:
+      tags: [Identity]
+      summary: Heatmap
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/dlp/policies:
+    get:
+      tags: [Identity]
+      summary: Policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/dlp/policies/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/entitlement-review/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/federation/discovery-rules:
+    get:
+      tags: [Identity]
+      summary: Discovery Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/federation/entities:
+    get:
+      tags: [Identity]
+      summary: Entities
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/federation/route-email:
+    get:
+      tags: [Identity]
+      summary: Route Email
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/federation/transform-rules:
+    get:
+      tags: [Identity]
+      summary: Transform Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/federation/transforms:
+    get:
+      tags: [Identity]
+      summary: Transforms
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/federation/trust-relations:
+    get:
+      tags: [Identity]
+      summary: Trust Relations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/flows:
+    get:
+      tags: [Identity]
+      summary: Flows
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/gdpr/export:
+    get:
+      tags: [Identity]
+      summary: Export
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/groups:
+    get:
+      tags: [Identity]
+      summary: Groups
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/groups/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/groups/analytics:
+    get:
+      tags: [Identity]
+      summary: Analytics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/idp/failover-config:
+    get:
+      tags: [Identity]
+      summary: Failover Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/idp/metadata-import:
+    get:
+      tags: [Identity]
+      summary: Metadata Import
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/import-validation/config:
+    get:
+      tags: [Identity]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/jit/dry-run:
+    get:
+      tags: [Identity]
+      summary: Dry Run
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/jit/mappings:
+    get:
+      tags: [Identity]
+      summary: Mappings
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/joiner-dashboard:
+    get:
+      tags: [Identity]
+      summary: Joiner Dashboard
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/joiner-flow:
+    get:
+      tags: [Identity]
+      summary: Joiner Flow
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/journeys:
+    get:
+      tags: [Identity]
+      summary: Journeys
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/journeys/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/ldap/sync:
+    get:
+      tags: [Identity]
+      summary: Sync
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/ldap/sync-config:
+    get:
+      tags: [Identity]
+      summary: Sync Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/ldap/sync-config/test:
+    get:
+      tags: [Identity]
+      summary: Test
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/ldap/sync-history:
+    get:
+      tags: [Identity]
+      summary: Sync History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/ldap/sync-status:
+    get:
+      tags: [Identity]
+      summary: Sync Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/lifecycle/events:
+    get:
+      tags: [Identity]
+      summary: Events
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/lifecycle/executions:
+    get:
+      tags: [Identity]
+      summary: Executions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/lifecycle/rules:
+    get:
+      tags: [Identity]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/list-objects:
+    get:
+      tags: [Identity]
+      summary: List Objects
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/list-subjects:
+    get:
+      tags: [Identity]
+      summary: List Subjects
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/nhi:
+    get:
+      tags: [Identity]
+      summary: Nhi
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/nhi/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/nhi/orphans:
+    get:
+      tags: [Identity]
+      summary: Orphans
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/nhi/risk-alerts:
+    get:
+      tags: [Identity]
+      summary: Risk Alerts
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/nhi/risk/scan:
+    get:
+      tags: [Identity]
+      summary: Scan
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/pii/discover:
+    get:
+      tags: [Identity]
+      summary: Discover
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/pipl/data-inventory:
+    get:
+      tags: [Identity]
+      summary: Data Inventory
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/privilege-creep:
+    get:
+      tags: [Identity]
+      summary: Privilege Creep
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/privilege-creep/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/privileged-operations:
+    get:
+      tags: [Identity]
+      summary: Privileged Operations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/provisioning/log:
+    get:
+      tags: [Identity]
+      summary: Log
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/rebac/sync-rbac:
+    get:
+      tags: [Identity]
+      summary: Sync Rbac
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/review-schedules:
+    get:
+      tags: [Identity]
+      summary: Review Schedules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/review-schedules/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/risk-scoring/config:
+    get:
+      tags: [Identity]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/role-mining:
+    get:
+      tags: [Identity]
+      summary: Role Mining
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/saml/attribute-mapping:
+    get:
+      tags: [Identity]
+      summary: Attribute Mapping
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/saml/sp-health:
+    get:
+      tags: [Identity]
+      summary: Sp Health
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/config:
+    get:
+      tags: [Identity]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/config/sync:
+    get:
+      tags: [Identity]
+      summary: Sync
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/error-recovery:
+    get:
+      tags: [Identity]
+      summary: Error Recovery
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/group-mapping:
+    get:
+      tags: [Identity]
+      summary: Group Mapping
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/provisioning-config:
+    get:
+      tags: [Identity]
+      summary: Provisioning Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/sync-health:
+    get:
+      tags: [Identity]
+      summary: Sync Health
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/tokens:
+    get:
+      tags: [Identity]
+      summary: Tokens
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/scim/tokens/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/sd-jwt/issue:
+    get:
+      tags: [Identity]
+      summary: Issue
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/sd-jwt/verify:
+    get:
+      tags: [Identity]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/secret-broker/active:
+    get:
+      tags: [Identity]
+      summary: Active
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/secret-broker/broker:
+    get:
+      tags: [Identity]
+      summary: Broker
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/secret-broker/revoke:
+    get:
+      tags: [Identity]
+      summary: Revoke
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/secret-broker/targets:
+    get:
+      tags: [Identity]
+      summary: Targets
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/secret-broker/targets/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/sync-status:
+    get:
+      tags: [Identity]
+      summary: Sync Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/tenants/branding:
+    get:
+      tags: [Identity]
+      summary: Branding
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/tenants/rate-limits:
+    get:
+      tags: [Identity]
+      summary: Rate Limits
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/tenants/rate-limits/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/tenants/self-register:
+    get:
+      tags: [Identity]
+      summary: Self Register
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/tuples:
+    get:
+      tags: [Identity]
+      summary: Tuples
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/user-lifecycle/config:
+    get:
+      tags: [Identity]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/user-lifecycle/stages:
+    get:
+      tags: [Identity]
+      summary: Stages
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/users/bulk-import:
+    get:
+      tags: [Identity]
+      summary: Bulk Import
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/users/import-async:
+    get:
+      tags: [Identity]
+      summary: Import Async
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/users/import-async/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/users/import-async/create:
+    get:
+      tags: [Identity]
+      summary: Create
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/vc:
+    get:
+      tags: [Identity]
+      summary: Vc
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/vc/:
+    get:
+      tags: [Identity]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/vc/issue:
+    get:
+      tags: [Identity]
+      summary: Issue
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/vc/present:
+    get:
+      tags: [Identity]
+      summary: Present
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/identity/vc/verify:
+    get:
+      tags: [Identity]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/idp/config:
+    get:
+      tags: [Other]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/mdm/connectors:
+    get:
+      tags: [Other]
+      summary: Connectors
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/mdm/devices:
+    get:
+      tags: [Other]
+      summary: Devices
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/mdm/devices/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/mdm/sync/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/notifications/log:
+    get:
+      tags: [Other]
+      summary: Log
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/notifications/rules:
+    get:
+      tags: [Other]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/notifications/send:
+    get:
+      tags: [Other]
+      summary: Send
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/.well-known/openid-configuration:
+    get:
+      tags: [OAuth]
+      summary: Openid Configuration
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/agents/:
+    get:
+      tags: [OAuth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/analytics/summary:
+    get:
+      tags: [OAuth]
+      summary: Summary
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/audience-mismatches:
+    get:
+      tags: [OAuth]
+      summary: Audience Mismatches
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/authorize:
+    get:
+      tags: [OAuth]
+      summary: Authorize
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/backchannel:
+    get:
+      tags: [OAuth]
+      summary: Backchannel
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/backchannel-logout:
+    get:
+      tags: [OAuth]
+      summary: Backchannel Logout
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/ciba/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/client-cert:
+    get:
+      tags: [OAuth]
+      summary: Client Cert
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/client-events:
+    get:
+      tags: [OAuth]
+      summary: Client Events
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/client-lifecycle/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/client-rate-limits:
+    get:
+      tags: [OAuth]
+      summary: Client Rate Limits
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/clients:
+    get:
+      tags: [OAuth]
+      summary: Clients
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/clients/:
+    get:
+      tags: [OAuth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/clients/dependency-graph:
+    get:
+      tags: [OAuth]
+      summary: Dependency Graph
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/clients/onboarding:
+    get:
+      tags: [OAuth]
+      summary: Onboarding
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/consent/:
+    get:
+      tags: [OAuth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/consent/admin-override:
+    get:
+      tags: [OAuth]
+      summary: Admin Override
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/consent/analytics:
+    get:
+      tags: [OAuth]
+      summary: Analytics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/consent/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/consent/list:
+    get:
+      tags: [OAuth]
+      summary: List
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/consents/dashboard:
+    get:
+      tags: [OAuth]
+      summary: Dashboard
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/consents/history:
+    get:
+      tags: [OAuth]
+      summary: History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/device:
+    get:
+      tags: [OAuth]
+      summary: Device
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/device/approve:
+    get:
+      tags: [OAuth]
+      summary: Approve
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/device_authorization:
+    get:
+      tags: [OAuth]
+      summary: Device_authorization
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/dpop/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/dpop/verify:
+    get:
+      tags: [OAuth]
+      summary: Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/dynamic-registration/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/fapi-config:
+    get:
+      tags: [OAuth]
+      summary: Fapi Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/frontchannel-logout:
+    get:
+      tags: [OAuth]
+      summary: Frontchannel Logout
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/grant-flows:
+    get:
+      tags: [OAuth]
+      summary: Grant Flows
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/introspect:
+    get:
+      tags: [OAuth]
+      summary: Introspect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/introspect/batch:
+    get:
+      tags: [OAuth]
+      summary: Batch
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/introspection/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/introspection/stats:
+    get:
+      tags: [OAuth]
+      summary: Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/issuer/metadata:
+    get:
+      tags: [OAuth]
+      summary: Metadata
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/jar/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/jwks:
+    get:
+      tags: [OAuth]
+      summary: Jwks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/jwks/rotate:
+    get:
+      tags: [OAuth]
+      summary: Rotate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/jwks/rotation-status:
+    get:
+      tags: [OAuth]
+      summary: Rotation Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/oidc-federation/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/oidc/claim-mapping:
+    get:
+      tags: [OAuth]
+      summary: Claim Mapping
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/onboarding-checklist:
+    get:
+      tags: [OAuth]
+      summary: Onboarding Checklist
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/par:
+    get:
+      tags: [OAuth]
+      summary: Par
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/par/:
+    get:
+      tags: [OAuth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/par/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/rar/consent-preview:
+    get:
+      tags: [OAuth]
+      summary: Consent Preview
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/redirect-uri-validation/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/register:
+    get:
+      tags: [OAuth]
+      summary: Register
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/resource-allowed:
+    get:
+      tags: [OAuth]
+      summary: Resource Allowed
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/resource-indicator:
+    get:
+      tags: [OAuth]
+      summary: Resource Indicator
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/revoke:
+    get:
+      tags: [OAuth]
+      summary: Revoke
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/revoke-cascade:
+    get:
+      tags: [OAuth]
+      summary: Revoke Cascade
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/rotation-policy:
+    get:
+      tags: [OAuth]
+      summary: Rotation Policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scope-delegation:
+    get:
+      tags: [OAuth]
+      summary: Scope Delegation
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scope-drift:
+    get:
+      tags: [OAuth]
+      summary: Scope Drift
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scope-lifecycle:
+    get:
+      tags: [OAuth]
+      summary: Scope Lifecycle
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scopes:
+    get:
+      tags: [OAuth]
+      summary: Scopes
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scopes/:
+    get:
+      tags: [OAuth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scopes/deprecations:
+    get:
+      tags: [OAuth]
+      summary: Deprecations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scopes/hierarchy:
+    get:
+      tags: [OAuth]
+      summary: Hierarchy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/scopes/resolve-dependencies:
+    get:
+      tags: [OAuth]
+      summary: Resolve Dependencies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/secret-compare:
+    get:
+      tags: [OAuth]
+      summary: Secret Compare
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/secret-history:
+    get:
+      tags: [OAuth]
+      summary: Secret History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/stats/authorize-flow:
+    get:
+      tags: [OAuth]
+      summary: Authorize Flow
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/stats/backchannel-logout:
+    get:
+      tags: [OAuth]
+      summary: Backchannel Logout
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/stats/grant-types:
+    get:
+      tags: [OAuth]
+      summary: Grant Types
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/stats/oauth-2-1-audit:
+    get:
+      tags: [OAuth]
+      summary: Oauth 2 1 Audit
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/stats/token-binding:
+    get:
+      tags: [OAuth]
+      summary: Token Binding
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/stats/token-revocation:
+    get:
+      tags: [OAuth]
+      summary: Token Revocation
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token:
+    get:
+      tags: [OAuth]
+      summary: Token
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-entropy:
+    get:
+      tags: [OAuth]
+      summary: Token Entropy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-events/stream:
+    get:
+      tags: [OAuth]
+      summary: Stream
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-exchange-delegation:
+    get:
+      tags: [OAuth]
+      summary: Token Exchange Delegation
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-families/:
+    get:
+      tags: [OAuth]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-lifetime:
+    get:
+      tags: [OAuth]
+      summary: Token Lifetime
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-lifetime/analytics:
+    get:
+      tags: [OAuth]
+      summary: Analytics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-rotation/config:
+    get:
+      tags: [OAuth]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token-scope-diff:
+    get:
+      tags: [OAuth]
+      summary: Token Scope Diff
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token/claims:
+    get:
+      tags: [OAuth]
+      summary: Claims
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token/downscope:
+    get:
+      tags: [OAuth]
+      summary: Downscope
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token/dpop-bind:
+    get:
+      tags: [OAuth]
+      summary: Dpop Bind
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/token/dpop-verify:
+    get:
+      tags: [OAuth]
+      summary: Dpop Verify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/tokens/validate-audience:
+    get:
+      tags: [OAuth]
+      summary: Validate Audience
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/userinfo:
+    get:
+      tags: [OAuth]
+      summary: Userinfo
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/oauth/validate-client-secret:
+    get:
+      tags: [OAuth]
+      summary: Validate Client Secret
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/budget-tracking:
+    get:
+      tags: [Other]
+      summary: Budget Tracking
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/cost-centers:
+    get:
+      tags: [Other]
+      summary: Cost Centers
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/department-analytics:
+    get:
+      tags: [Other]
+      summary: Department Analytics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/reporting-structure:
+    get:
+      tags: [Other]
+      summary: Reporting Structure
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/stats/membership-trends:
+    get:
+      tags: [Other]
+      summary: Membership Trends
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/team-insights:
+    get:
+      tags: [Other]
+      summary: Team Insights
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/tenants/migrate:
+    get:
+      tags: [Other]
+      summary: Migrate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/org/vendors:
+    get:
+      tags: [Other]
+      summary: Vendors
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/organizations:
+    get:
+      tags: [Other]
+      summary: Organizations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/organizations/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/orgs:
+    get:
+      tags: [Org]
+      summary: Orgs
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/orgs/:
+    get:
+      tags: [Org]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/orgs/tree:
+    get:
+      tags: [Org]
+      summary: Tree
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/orgs/tree-with-members:
+    get:
+      tags: [Org]
+      summary: Tree With Members
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/permissions:
+    get:
+      tags: [Policy]
+      summary: Permissions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/permissions/tree:
+    get:
+      tags: [Policy]
+      summary: Tree
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/plugins:
+    get:
+      tags: [Other]
+      summary: Plugins
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/plugins/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies:
+    get:
+      tags: [Policy]
+      summary: Policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/abac/evaluate:
+    get:
+      tags: [Policy]
+      summary: Evaluate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/abac/export:
+    get:
+      tags: [Policy]
+      summary: Export
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/abac/groups:
+    get:
+      tags: [Policy]
+      summary: Groups
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/abac/import:
+    get:
+      tags: [Policy]
+      summary: Import
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-frequency:
+    get:
+      tags: [Policy]
+      summary: Access Frequency
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-paths:
+    get:
+      tags: [Policy]
+      summary: Access Paths
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-paths/optimization:
+    get:
+      tags: [Policy]
+      summary: Optimization
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-requests:
+    get:
+      tags: [Policy]
+      summary: Access Requests
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-requests/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-requests/pending:
+    get:
+      tags: [Policy]
+      summary: Pending
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-review-exemptions:
+    get:
+      tags: [Policy]
+      summary: Access Review Exemptions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-review-exemptions/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/auto-assign:
+    get:
+      tags: [Policy]
+      summary: Auto Assign
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/campaigns:
+    get:
+      tags: [Policy]
+      summary: Campaigns
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/campaigns/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/campaigns/active:
+    get:
+      tags: [Policy]
+      summary: Active
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/delegate:
+    get:
+      tags: [Policy]
+      summary: Delegate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/delegated:
+    get:
+      tags: [Policy]
+      summary: Delegated
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/escalate:
+    get:
+      tags: [Policy]
+      summary: Escalate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/escalated:
+    get:
+      tags: [Policy]
+      summary: Escalated
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/access-reviews/metrics:
+    get:
+      tags: [Policy]
+      summary: Metrics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/analyze:
+    get:
+      tags: [Policy]
+      summary: Analyze
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/approvals:
+    get:
+      tags: [Policy]
+      summary: Approvals
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/approvals/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/attribute-mapping:
+    get:
+      tags: [Policy]
+      summary: Attribute Mapping
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/break-glass:
+    get:
+      tags: [Policy]
+      summary: Break Glass
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/break-glass/active:
+    get:
+      tags: [Policy]
+      summary: Active
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/bundles:
+    get:
+      tags: [Policy]
+      summary: Bundles
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/check:
+    get:
+      tags: [Policy]
+      summary: Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/conditional-access:
+    get:
+      tags: [Policy]
+      summary: Conditional Access
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/conflicts/resolve:
+    get:
+      tags: [Policy]
+      summary: Resolve
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/decision-log:
+    get:
+      tags: [Policy]
+      summary: Decision Log
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/default-action:
+    get:
+      tags: [Policy]
+      summary: Default Action
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/delegate:
+    get:
+      tags: [Policy]
+      summary: Delegate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/delegated-admin:
+    get:
+      tags: [Policy]
+      summary: Delegated Admin
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/delegated-admin/list:
+    get:
+      tags: [Policy]
+      summary: List
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/delegations:
+    get:
+      tags: [Policy]
+      summary: Delegations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/diff:
+    get:
+      tags: [Policy]
+      summary: Diff
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/dry-run:
+    get:
+      tags: [Policy]
+      summary: Dry Run
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/dynamic-roles:
+    get:
+      tags: [Policy]
+      summary: Dynamic Roles
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/dynamic-roles/list:
+    get:
+      tags: [Policy]
+      summary: List
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/effectiveness:
+    get:
+      tags: [Policy]
+      summary: Effectiveness
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/emergency-access/audit:
+    get:
+      tags: [Policy]
+      summary: Audit
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/evaluate:
+    get:
+      tags: [Policy]
+      summary: Evaluate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/export:
+    get:
+      tags: [Policy]
+      summary: Export
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/export-package:
+    get:
+      tags: [Policy]
+      summary: Export Package
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/export-yaml:
+    get:
+      tags: [Policy]
+      summary: Export Yaml
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/from-template/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/impact-preview:
+    get:
+      tags: [Policy]
+      summary: Impact Preview
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/import:
+    get:
+      tags: [Policy]
+      summary: Import
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/import-package:
+    get:
+      tags: [Policy]
+      summary: Import Package
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/import-yaml:
+    get:
+      tags: [Policy]
+      summary: Import Yaml
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/inheritance:
+    get:
+      tags: [Policy]
+      summary: Inheritance
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/inheritance/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/jit-elevate:
+    get:
+      tags: [Policy]
+      summary: Jit Elevate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/jit/active:
+    get:
+      tags: [Policy]
+      summary: Active
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/jit/request:
+    get:
+      tags: [Policy]
+      summary: Request
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/jit/requests:
+    get:
+      tags: [Policy]
+      summary: Requests
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/jit/requests/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/merge-conflicts:
+    get:
+      tags: [Policy]
+      summary: Merge Conflicts
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/permission-boundaries:
+    get:
+      tags: [Policy]
+      summary: Permission Boundaries
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/permissions/tree:
+    get:
+      tags: [Policy]
+      summary: Tree
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/policy-set/evaluate:
+    get:
+      tags: [Policy]
+      summary: Evaluate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/privileged-access:
+    get:
+      tags: [Policy]
+      summary: Privileged Access
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/privileged-access/revoke:
+    get:
+      tags: [Policy]
+      summary: Revoke
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/rate-limits:
+    get:
+      tags: [Policy]
+      summary: Rate Limits
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/recertify:
+    get:
+      tags: [Policy]
+      summary: Recertify
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/resource-acl:
+    get:
+      tags: [Policy]
+      summary: Resource Acl
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/resource-tags:
+    get:
+      tags: [Policy]
+      summary: Resource Tags
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/risk-score:
+    get:
+      tags: [Policy]
+      summary: Risk Score
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/role-mining:
+    get:
+      tags: [Policy]
+      summary: Role Mining
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/role-requests:
+    get:
+      tags: [Policy]
+      summary: Role Requests
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/role-requests/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/role-templates:
+    get:
+      tags: [Policy]
+      summary: Role Templates
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/role-templates/apply:
+    get:
+      tags: [Policy]
+      summary: Apply
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/roles/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/simulate:
+    get:
+      tags: [Policy]
+      summary: Simulate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/snapshots:
+    get:
+      tags: [Policy]
+      summary: Snapshots
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/snapshots/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/sod/check:
+    get:
+      tags: [Policy]
+      summary: Check
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/sod/matrix:
+    get:
+      tags: [Policy]
+      summary: Matrix
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/sod/rules:
+    get:
+      tags: [Policy]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/sod/violations:
+    get:
+      tags: [Policy]
+      summary: Violations
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/standing-access:
+    get:
+      tags: [Policy]
+      summary: Standing Access
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/tags:
+    get:
+      tags: [Policy]
+      summary: Tags
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/templates:
+    get:
+      tags: [Policy]
+      summary: Templates
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/test-harness:
+    get:
+      tags: [Policy]
+      summary: Test Harness
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/time-based:
+    get:
+      tags: [Policy]
+      summary: Time Based
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/time-conditions:
+    get:
+      tags: [Policy]
+      summary: Time Conditions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/versions:
+    get:
+      tags: [Policy]
+      summary: Versions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy-versions:
+    get:
+      tags: [Policy]
+      summary: Policy Versions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/abac/condition-config:
+    get:
+      tags: [Policy]
+      summary: Condition Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/access-certification/campaigns:
+    get:
+      tags: [Policy]
+      summary: Campaigns
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/access-graph/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/access-request/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/access-review/config:
+    get:
+      tags: [Policy]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/approval-workflow:
+    get:
+      tags: [Policy]
+      summary: Approval Workflow
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/as-code/import:
+    get:
+      tags: [Policy]
+      summary: Import
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/authorize:
+    get:
+      tags: [Policy]
+      summary: Authorize
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/auto-assignment/campaigns:
+    get:
+      tags: [Policy]
+      summary: Campaigns
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/blast-radius/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/cache:
+    get:
+      tags: [Policy]
+      summary: Cache
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/conflicts:
+    get:
+      tags: [Policy]
+      summary: Conflicts
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/coverage-matrix:
+    get:
+      tags: [Policy]
+      summary: Coverage Matrix
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/decisions:
+    get:
+      tags: [Policy]
+      summary: Decisions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/delegation/config:
+    get:
+      tags: [Policy]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/delegation/validate:
+    get:
+      tags: [Policy]
+      summary: Validate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/exceptions:
+    get:
+      tags: [Policy]
+      summary: Exceptions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/feature-flags:
+    get:
+      tags: [Policy]
+      summary: Feature Flags
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/import-export:
+    get:
+      tags: [Policy]
+      summary: Import Export
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/policies/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/privileged-access/batch-revoke:
+    get:
+      tags: [Policy]
+      summary: Batch Revoke
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/recommendations/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/risk-score/recalculate:
+    get:
+      tags: [Policy]
+      summary: Recalculate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/risk-score/summary:
+    get:
+      tags: [Policy]
+      summary: Summary
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/risk-score/users:
+    get:
+      tags: [Policy]
+      summary: Users
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/role-mining/analysis:
+    get:
+      tags: [Policy]
+      summary: Analysis
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/role-mining/apply:
+    get:
+      tags: [Policy]
+      summary: Apply
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/roles/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/roles/hierarchy:
+    get:
+      tags: [Policy]
+      summary: Hierarchy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/roles/inheritance:
+    get:
+      tags: [Policy]
+      summary: Inheritance
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/simulate/batch:
+    get:
+      tags: [Policy]
+      summary: Batch
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/sod-matrix/toggle:
+    get:
+      tags: [Policy]
+      summary: Toggle
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/sod/conflict-detection-config:
+    get:
+      tags: [Policy]
+      summary: Conflict Detection Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/sod/violations/summary:
+    get:
+      tags: [Policy]
+      summary: Summary
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/stats/decision-log:
+    get:
+      tags: [Policy]
+      summary: Decision Log
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/time-based/rules:
+    get:
+      tags: [Policy]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/versioning/config:
+    get:
+      tags: [Policy]
+      summary: Config
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/policy/versions/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/quotas/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/rate-limits:
+    get:
+      tags: [Other]
+      summary: Rate Limits
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/risk/evaluate:
+    get:
+      tags: [Other]
+      summary: Evaluate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/risk/policies:
+    get:
+      tags: [Other]
+      summary: Policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/risk/policies/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/risk/scores/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/risk/signals:
+    get:
+      tags: [Other]
+      summary: Signals
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/role-templates:
+    get:
+      tags: [Other]
+      summary: Role Templates
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/roles:
+    get:
+      tags: [Policy]
+      summary: Roles
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/roles/:
+    get:
+      tags: [Policy]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/scim/Groups:
+    get:
+      tags: [Other]
+      summary: Groups
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/scim/Groups/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/scim/sync/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/scim/sync/log:
+    get:
+      tags: [Other]
+      summary: Log
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/scim/targets:
+    get:
+      tags: [Other]
+      summary: Targets
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/scope-management/scopes:
+    get:
+      tags: [Other]
+      summary: Scopes
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/security/anomalies:
+    get:
+      tags: [Other]
+      summary: Anomalies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/security/dashboard:
+    get:
+      tags: [Other]
+      summary: Dashboard
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/security/password-policy:
+    get:
+      tags: [Other]
+      summary: Password Policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/security/threats:
+    get:
+      tags: [Other]
+      summary: Threats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/siem/health:
+    get:
+      tags: [Other]
+      summary: Health
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/soar/executions:
+    get:
+      tags: [Other]
+      summary: Executions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/soar/playbooks:
+    get:
+      tags: [Other]
+      summary: Playbooks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/soar/playbooks/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/sod/conflicts:
+    get:
+      tags: [Other]
+      summary: Conflicts
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/sod/rules:
+    get:
+      tags: [Other]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/system/bootstrap:
+    get:
+      tags: [Other]
+      summary: Bootstrap
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/system/initialized:
+    get:
+      tags: [Other]
+      summary: Initialized
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
   /api/v1/teams:
     get:
       tags: [Org]
-      summary: List teams
+      summary: Teams
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: Team list }
-    post:
+        '200': { description: OK }
+  /api/v1/teams/:
+    get:
       tags: [Org]
-      summary: Create team
+      summary: 
       security: [{BearerAuth: []}]
       responses:
-        '201': { description: Team created }
-
-  # === Audit: CCM ===
-  /api/v1/audit/ccm/results:
+        '200': { description: OK }
+  /api/v1/tenants/:
     get:
-      tags: [Audit, CCM]
-      summary: Get compliance monitoring results
+      tags: [Other]
+      summary: 
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: CCM control results }
-
-  /api/v1/audit/ccm/run:
-    post:
-      tags: [Audit, CCM]
-      summary: Trigger compliance scan
-      security: [{BearerAuth: []}]
-      responses:
-        '200': { description: Scan completed with results }
-
-  /api/v1/audit/ccm/history:
+        '200': { description: OK }
+  /api/v1/tenants/resolve:
     get:
-      tags: [Audit, CCM]
-      summary: Get compliance history
+      tags: [Other]
+      summary: Resolve
       security: [{BearerAuth: []}]
-      parameters:
-        - { name: control_id, in: query, schema: { type: string } }
       responses:
-        '200': { description: Historical CCM results }
-
-  # === Auth: Conditional Access ===
-  /api/v1/auth/conditional-access/policies:
+        '200': { description: OK }
+  /api/v1/users:
     get:
-      tags: [Conditional Access]
-      summary: List conditional access policies
+      tags: [Identity]
+      summary: Users
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: CAP policy list }
-    post:
-      tags: [Conditional Access]
-      summary: Create conditional access policy
-      security: [{BearerAuth: []}]
-      responses:
-        '201': { description: Policy created }
-
-  /api/v1/auth/conditional-access/evaluate:
-    post:
-      tags: [Conditional Access]
-      summary: Evaluate conditions against context
-      security: [{BearerAuth: []}]
-      responses:
-        '200': { description: Evaluation decision }
-
-  # === Auth: TAP ===
-  /api/v1/auth/tap:
-    post:
-      tags: [TAP]
-      summary: Issue Temporary Access Pass
-      security: [{BearerAuth: []}]
-      responses:
-        '201': { description: TAP issued }
-
-  /api/v1/auth/tap/batch:
-    post:
-      tags: [TAP]
-      summary: Batch issue TAPs
-      security: [{BearerAuth: []}]
-      responses:
-        '200': { description: Batch results }
-
-  /api/v1/auth/tap/policy:
+        '200': { description: OK }
+  /api/v1/users/:
     get:
-      tags: [TAP]
-      summary: Get TAP policy
+      tags: [Identity]
+      summary: 
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: Current TAP policy }
-    put:
-      tags: [TAP]
-      summary: Update TAP policy
+        '200': { description: OK }
+  /api/v1/users/aliases:
+    get:
+      tags: [Identity]
+      summary: Aliases
       security: [{BearerAuth: []}]
       responses:
-        '200': { description: Policy updated }
-
-  # === System ===
+        '200': { description: OK }
+  /api/v1/users/attestation/pending:
+    get:
+      tags: [Identity]
+      summary: Pending
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/attribute-history:
+    get:
+      tags: [Identity]
+      summary: Attribute History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/bulk-provision:
+    get:
+      tags: [Identity]
+      summary: Bulk Provision
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/bulk/status:
+    get:
+      tags: [Identity]
+      summary: Status
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/by-attribute:
+    get:
+      tags: [Identity]
+      summary: By Attribute
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/cleanup-inactive:
+    get:
+      tags: [Identity]
+      summary: Cleanup Inactive
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/consent-registry:
+    get:
+      tags: [Identity]
+      summary: Consent Registry
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/create-from-template:
+    get:
+      tags: [Identity]
+      summary: Create From Template
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/deprovision-schedule:
+    get:
+      tags: [Identity]
+      summary: Deprovision Schedule
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/export:
+    get:
+      tags: [Identity]
+      summary: Export
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/freeze:
+    get:
+      tags: [Identity]
+      summary: Freeze
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/import:
+    get:
+      tags: [Identity]
+      summary: Import
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/import-csv:
+    get:
+      tags: [Identity]
+      summary: Import Csv
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/import/validate:
+    get:
+      tags: [Identity]
+      summary: Validate
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/jit-provision:
+    get:
+      tags: [Identity]
+      summary: Jit Provision
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/lifecycle/rules:
+    get:
+      tags: [Identity]
+      summary: Rules
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/link:
+    get:
+      tags: [Identity]
+      summary: Link
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/merge-conflicts:
+    get:
+      tags: [Identity]
+      summary: Merge Conflicts
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/profile-diff:
+    get:
+      tags: [Identity]
+      summary: Profile Diff
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/provision-webhook:
+    get:
+      tags: [Identity]
+      summary: Provision Webhook
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/provisioning-webhooks:
+    get:
+      tags: [Identity]
+      summary: Provisioning Webhooks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/reactivation-history:
+    get:
+      tags: [Identity]
+      summary: Reactivation History
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/risk-profile:
+    get:
+      tags: [Identity]
+      summary: Risk Profile
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/search:
+    get:
+      tags: [Identity]
+      summary: Search
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/search-stats:
+    get:
+      tags: [Identity]
+      summary: Search Stats
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/segments:
+    get:
+      tags: [Identity]
+      summary: Segments
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/skill-matrix:
+    get:
+      tags: [Identity]
+      summary: Skill Matrix
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/smart-search:
+    get:
+      tags: [Identity]
+      summary: Smart Search
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/timeline:
+    get:
+      tags: [Identity]
+      summary: Timeline
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/transfer-org:
+    get:
+      tags: [Identity]
+      summary: Transfer Org
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/unfreeze:
+    get:
+      tags: [Identity]
+      summary: Unfreeze
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/users/unlink:
+    get:
+      tags: [Identity]
+      summary: Unlink
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/webhooks:
+    get:
+      tags: [Other]
+      summary: Webhooks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/zt/posture:
+    get:
+      tags: [Other]
+      summary: Posture
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/ztna/access-logs:
+    get:
+      tags: [Other]
+      summary: Access Logs
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/ztna/apps:
+    get:
+      tags: [Other]
+      summary: Apps
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/ztna/apps/:
+    get:
+      tags: [Other]
+      summary: 
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/ztna/metrics:
+    get:
+      tags: [Other]
+      summary: Metrics
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /api/v1/ztna/test-policy:
+    get:
+      tags: [Other]
+      summary: Test Policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
   /healthz:
     get:
       tags: [System]
-      summary: Health check
+      summary: Healthz
+      security: [{BearerAuth: []}]
       responses:
         '200': { description: OK }
-
+  /oauth/authorize:
+    get:
+      tags: [OAuth]
+      summary: Authorize
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/consent:
+    get:
+      tags: [OAuth]
+      summary: Consent
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/introspect:
+    get:
+      tags: [OAuth]
+      summary: Introspect
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/jwks:
+    get:
+      tags: [OAuth]
+      summary: Jwks
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/logout:
+    get:
+      tags: [OAuth]
+      summary: Logout
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/par:
+    get:
+      tags: [OAuth]
+      summary: Par
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/register:
+    get:
+      tags: [OAuth]
+      summary: Register
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/revoke:
+    get:
+      tags: [OAuth]
+      summary: Revoke
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/token:
+    get:
+      tags: [OAuth]
+      summary: Token
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
+  /oauth/userinfo:
+    get:
+      tags: [OAuth]
+      summary: Userinfo
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: OK }
   /readyz:
     get:
       tags: [System]
-      summary: Readiness check
+      summary: Readyz
+      security: [{BearerAuth: []}]
       responses:
-        '200': { description: Ready }
-
+        '200': { description: OK }
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
-  parameters:
-    UserId:
-      name: id
-      in: path
-      required: true
-      schema: { type: string }
-
-  schemas:
-    TokenSet:
-      type: object
-      properties:
-        access_token: { type: string }
-        refresh_token: { type: string }
-        token_type: { type: string, example: Bearer }
-        expires_in: { type: integer, example: 3600 }
-
-    User:
-      type: object
-      properties:
-        id: { type: string }
-        username: { type: string }
-        email: { type: string, format: email }
-        display_name: { type: string }
-        status: { type: string, enum: [active, locked, disabled] }
-        created_at: { type: string, format: date-time }
-
-    CreateUserRequest:
-      type: object
-      required: [username, email, password]
-      properties:
-        username: { type: string }
-        email: { type: string, format: email }
-        password: { type: string, format: password }
-        display_name: { type: string }
-        status: { type: string }
-
-    UpdateUserRequest:
-      type: object
-      properties:
-        email: { type: string, format: email }
-        display_name: { type: string }
-        status: { type: string }
-
-    Role:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        key: { type: string }
-        description: { type: string }
-
-    CreateRoleRequest:
-      type: object
-      required: [name, key]
-      properties:
-        name: { type: string }
-        key: { type: string }
-        description: { type: string }
-
-    Permission:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        resource: { type: string }
-        action: { type: string }
-        description: { type: string }
-
-    PolicyCheckRequest:
-      type: object
-      required: [subject, resource, action]
-      properties:
-        subject: { type: string }
-        resource: { type: string }
-        action: { type: string }
-        context:
-          type: object
-          additionalProperties: { type: string }
-
-    PolicyResult:
-      type: object
-      properties:
-        allowed: { type: boolean }
-        reason: { type: string }
-
-    Organization:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        parent_id: { type: string }
-        status: { type: string }
-
-    Department:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        org_id: { type: string }
-        parent_id: { type: string }
-
-    AuditEvent:
-      type: object
-      properties:
-        id: { type: string }
-        action: { type: string }
-        result: { type: string }
-        actor_type: { type: string }
-        actor_id: { type: string }
-        resource_type: { type: string }
-        resource_id: { type: string }
-        ip_address: { type: string }
-        created_at: { type: string, format: date-time }
-
-    Agent:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        type: { type: string }
-        status: { type: string }
-        public_key: { type: string }
-        scopes:
-          type: array
-          items: { type: string }
-
-    AgentRegistration:
-      type: object
-      required: [name, type, public_key]
-      properties:
-        name: { type: string }
-        type: { type: string }
-        public_key: { type: string }
-        scopes:
-          type: array
-          items: { type: string }
-        max_delegation_depth: { type: integer, default: 3 }
-
-    AgentTokenResponse:
-      type: object
-      properties:
-        access_token: { type: string }
-        token_type: { type: string }
-        expires_in: { type: integer }
-        delegation_chain:
-          type: array
-          items: { type: string }
