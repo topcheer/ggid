@@ -45,6 +45,7 @@ type HTTPServer struct {
 	memMapRepo2    *auditMemoryMapRepo2
 	threatIntelRepo *repository.ThreatIntelRepository
 	ccmEngine       *CCMEngine
+	complianceMappingRepo *repository.ComplianceMappingRepository
 }
 
 // SetITDRRepository injects the ITDR repository for detection API queries.
@@ -77,6 +78,11 @@ func (s *HTTPServer) SetCCMRepository(repo *repository.CCMRepository) {
 		s.ccmEngine = NewCCMEngine()
 	}
 	s.ccmEngine.SetRepository(repo)
+}
+
+// SetComplianceMappingRepo injects the compliance mapping PG repository.
+func (s *HTTPServer) SetComplianceMappingRepo(repo *repository.ComplianceMappingRepository) {
+	s.complianceMappingRepo = repo
 }
 
 // NewHTTPServer creates a new Audit Service HTTP server.
@@ -163,6 +169,7 @@ func (s *HTTPServer) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/audit/aggregations", s.handleAggregations)
 	mux.HandleFunc("/api/v1/audit/aggregations/daily", s.handleDailyAggregations)
 	mux.HandleFunc("/api/v1/audit/compliance/mapping", s.handleComplianceMapping)
+	mux.HandleFunc("/api/v1/audit/compliance-mapping", s.handleComplianceMapping) // KB-337 canonical path
 	mux.HandleFunc("/api/v1/audit/isolation-check", s.handleIsolationCheck)
 	mux.HandleFunc("/api/v1/audit/security-posture", s.handleSecurityPosture)
 	mux.HandleFunc("/api/v1/audit/threat-feed", s.handleThreatFeed)
