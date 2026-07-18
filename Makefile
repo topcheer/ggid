@@ -90,3 +90,10 @@ clean:
 
 swagger:
 	@bash scripts/gen-swagger.sh
+
+console-build:
+	cd console && npm ci && npm run build
+
+console-deploy: console-build
+	docker build --platform linux/amd64 -f console/Dockerfile -t registry.iot2.win/ggid/console:latest .
+	docker push registry.iot2.win/ggid/console:latest
