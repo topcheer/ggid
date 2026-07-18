@@ -30,20 +30,20 @@ func (h *Handler) handleBreakGlass(w http.ResponseWriter, r *http.Request) {
 	case strings.HasSuffix(r.URL.Path, "/activate"):
 		h.handleBreakGlassActivate(w, r)
 	default:
-		writeJSONError(w, http.StatusNotFound, "not found")
+		writeError(w, http.StatusNotFound, "not found")
 	}
 }
 
 // GET /api/v1/auth/break-glass/history
 func (h *Handler) handleBreakGlassHistory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
@@ -56,7 +56,7 @@ func (h *Handler) handleBreakGlassHistory(w http.ResponseWriter, r *http.Request
 	records, err := h.breakGlassRepo.ListByTenant(r.Context(), tc.TenantID, limit)
 	if err != nil {
 		slog.Error("break-glass history error", "error", err)
-		writeJSONError(w, http.StatusInternalServerError, "failed to query break-glass history")
+		writeError(w, http.StatusInternalServerError, "failed to query break-glass history")
 		return
 	}
 	if records == nil {
@@ -76,23 +76,23 @@ type breakGlassActivateRequest struct {
 // POST /api/v1/auth/break-glass/activate
 func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
 	var req breakGlassActivateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.Reason == "" {
-		writeJSONError(w, http.StatusBadRequest, "reason is required for break-glass activation")
+		writeError(w, http.StatusBadRequest, "reason is required for break-glass activation")
 		return
 	}
 	if req.DurationMinutes <= 0 || req.DurationMinutes > 480 {
@@ -104,7 +104,7 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 	if req.UserID != "" {
 		requesterID, err = uuid.Parse(req.UserID)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+			writeError(w, http.StatusBadRequest, "invalid user_id")
 			return
 		}
 	} else {
@@ -114,12 +114,12 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 		}
 	}
 	if requesterID == uuid.Nil {
-		writeJSONError(w, http.StatusBadRequest, "user_id is required")
+		writeError(w, http.StatusBadRequest, "user_id is required")
 		return
 	}
 
 	if h.breakGlassRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "break-glass not configured")
+		writeError(w, http.StatusServiceUnavailable, "break-glass not configured")
 		return
 	}
 
@@ -137,7 +137,7 @@ func (h *Handler) handleBreakGlassActivate(w http.ResponseWriter, r *http.Reques
 
 	if err := h.breakGlassRepo.Create(r.Context(), rec); err != nil {
 		slog.Error("break-glass activate error", "error", err)
-		writeJSONError(w, http.StatusInternalServerError, "failed to activate break-glass")
+		writeError(w, http.StatusInternalServerError, "failed to activate break-glass")
 		return
 	}
 

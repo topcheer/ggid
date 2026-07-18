@@ -40,12 +40,12 @@ func (h *Handler) handleWebAuthnConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		var req WebAuthnConfig
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request")
+			writeError(w, http.StatusBadRequest, "invalid request")
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"status": "updated", "config": req})
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

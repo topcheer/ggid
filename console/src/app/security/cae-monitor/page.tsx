@@ -256,7 +256,7 @@ function TriggerForm({ onAdd, onCancel }: { onAdd: (t: Trigger) => void; onCance
       </div>
       <div className="flex gap-2">
         <button onClick={() => onAdd({ id: `t${Date.now()}`, event, condition, action, enabled: true })}
-          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium">Add</button>
+          className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium">{t("caeMonitor.triggers.addTrigger")}</button>
         <button onClick={onCancel} className="px-4 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-medium">Cancel</button>
       </div>
     </div>

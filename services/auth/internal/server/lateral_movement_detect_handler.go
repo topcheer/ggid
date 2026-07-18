@@ -22,7 +22,7 @@ type LateralMovementResult struct {
 
 func (h *Handler) handleLateralMovementDetect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	result := LateralMovementResult{

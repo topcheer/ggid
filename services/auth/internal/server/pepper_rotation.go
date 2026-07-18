@@ -32,14 +32,14 @@ func InitPepperState(pepper string) {
 // Next user login re-hashes to the new pepper automatically.
 func (h *Handler) handlePepperRotate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	// Generate a new random pepper (32 bytes)
 	newPepperBytes := make([]byte, 32)
 	if _, err := rand.Read(newPepperBytes); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to generate pepper")
+		writeError(w, http.StatusInternalServerError, "failed to generate pepper")
 		return
 	}
 	newPepper := base64.RawURLEncoding.EncodeToString(newPepperBytes)
@@ -73,7 +73,7 @@ func (h *Handler) handlePepperRotate(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/auth/password-pepper/status — returns active/pending pepper info.
 func (h *Handler) handlePepperStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

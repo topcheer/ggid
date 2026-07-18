@@ -31,7 +31,7 @@ func (h *Handler) handleThrottleStatus(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		userID := r.URL.Query().Get("user_id")
 		if userID == "" {
-			writeJSONError(w, http.StatusBadRequest, "user_id is required")
+			writeError(w, http.StatusBadRequest, "user_id is required")
 			return
 		}
 
@@ -86,7 +86,7 @@ func (h *Handler) handleThrottleStatus(w http.ResponseWriter, r *http.Request) {
 			Action string `json:"action"` // "fail" or "reset"
 		}
 		if err := readJSONBody(r, &req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.UserID == "" {
@@ -140,7 +140,7 @@ func (h *Handler) handleThrottleStatus(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, state)
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

@@ -27,14 +27,14 @@ func (h *Handler) handleDelegations(w http.ResponseWriter, r *http.Request) {
 		case http.MethodPost:
 			h.delegationCreate(w, r)
 		default:
-			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 		return
 	}
 
 	if path == "check" {
 		if r.Method != http.MethodGet {
-			writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 		h.delegationCheck(w, r)
@@ -46,28 +46,28 @@ func (h *Handler) handleDelegations(w http.ResponseWriter, r *http.Request) {
 		h.delegationRevoke(w, r, path)
 		return
 	}
-	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 }
 
 func (h *Handler) delegationList(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 	userIDStr := r.Header.Get("X-User-ID")
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "valid X-User-ID header required")
+		writeError(w, http.StatusBadRequest, "valid X-User-ID header required")
 		return
 	}
 	delegations, err := h.delRepo.ListByUser(r.Context(), tc.TenantID, userID)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to list delegations")
+		writeError(w, http.StatusInternalServerError, "failed to list delegations")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -78,12 +78,12 @@ func (h *Handler) delegationList(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
@@ -95,13 +95,13 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt   string   `json:"expires_at"`       // ISO 8601
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 
 	delegatorID := r.Header.Get("X-User-ID")
 	if delegatorID == "" {
-		writeJSONError(w, http.StatusBadRequest, "X-User-ID header required")
+		writeError(w, http.StatusBadRequest, "X-User-ID header required")
 		return
 	}
 
@@ -110,13 +110,13 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 	if req.ExpiresAt != "" {
 		expiresAt, err = time.Parse(time.RFC3339, req.ExpiresAt)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid expires_at (use RFC3339)")
+			writeError(w, http.StatusBadRequest, "invalid expires_at (use RFC3339)")
 			return
 		}
 	} else if req.ExpiresIn > 0 {
 		expiresAt = time.Now().UTC().Add(time.Duration(req.ExpiresIn) * time.Hour)
 	} else {
-		writeJSONError(w, http.StatusBadRequest, "expires_at or expires_in_hours required")
+		writeError(w, http.StatusBadRequest, "expires_at or expires_in_hours required")
 		return
 	}
 
@@ -129,12 +129,12 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 		ExpiresAt:   expiresAt,
 	}
 	if err := ValidateDelegation(d); err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	if err := h.delRepo.Create(r.Context(), d); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to create delegation")
+		writeError(w, http.StatusInternalServerError, "failed to create delegation")
 		return
 	}
 
@@ -146,11 +146,11 @@ func (h *Handler) delegationCreate(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) delegationRevoke(w http.ResponseWriter, r *http.Request, id string) {
 	if h.delRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
 		return
 	}
 	if err := h.delRepo.Revoke(r.Context(), id); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to revoke delegation")
+		writeError(w, http.StatusInternalServerError, "failed to revoke delegation")
 		return
 	}
 
@@ -167,12 +167,12 @@ func (h *Handler) delegationRevoke(w http.ResponseWriter, r *http.Request, id st
 
 func (h *Handler) delegationCheck(w http.ResponseWriter, r *http.Request) {
 	if h.delRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "delegation repo not configured")
+		writeError(w, http.StatusServiceUnavailable, "delegation repo not configured")
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
@@ -181,18 +181,18 @@ func (h *Handler) delegationCheck(w http.ResponseWriter, r *http.Request) {
 	scope := r.URL.Query().Get("scope")
 
 	if delegatorID == "" || delegateeID == "" || scope == "" {
-		writeJSONError(w, http.StatusBadRequest, "delegator_id, delegatee_id, and scope query params required")
+		writeError(w, http.StatusBadRequest, "delegator_id, delegatee_id, and scope query params required")
 		return
 	}
 
 	degID, err := uuid.Parse(delegatorID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid delegator_id")
+		writeError(w, http.StatusBadRequest, "invalid delegator_id")
 		return
 	}
 	deeID, err := uuid.Parse(delegateeID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid delegatee_id")
+		writeError(w, http.StatusBadRequest, "invalid delegatee_id")
 		return
 	}
 

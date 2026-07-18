@@ -47,14 +47,14 @@ var (
 
 func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
 		UserID string `json:"user_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	pkMu.Lock()
@@ -86,7 +86,7 @@ func (h *Handler) handlePasskeyRegisterBegin(w http.ResponseWriter, r *http.Requ
 
 func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -98,7 +98,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 		AAGUID string `json:"aaguid"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	pkMu.Lock()
@@ -118,7 +118,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 		var ok bool
 		sess, ok = pkRegSessions[req.SessionID]
 		if !ok {
-			writeJSONError(w, http.StatusNotFound, "session not found")
+			writeError(w, http.StatusNotFound, "session not found")
 			return
 		}
 	}
@@ -144,7 +144,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 					"reason":       "authenticator_not_approved",
 				},
 			)
-			writeJSONError(w, http.StatusForbidden, "This authenticator is not in the approved device list")
+			writeError(w, http.StatusForbidden, "This authenticator is not in the approved device list")
 			return
 		}
 	}
@@ -169,7 +169,7 @@ func (h *Handler) handlePasskeyRegisterFinish(w http.ResponseWriter, r *http.Req
 
 func (h *Handler) handlePasskeyAuthBegin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	pkMu.Lock()
@@ -199,7 +199,7 @@ func (h *Handler) handlePasskeyAuthBegin(w http.ResponseWriter, r *http.Request)
 
 func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -208,7 +208,7 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 		Assertion    string `json:"assertion"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	pkMu.Lock()
@@ -233,7 +233,7 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 		var ok bool
 		sess, ok = pkAuthSessions[req.SessionID]
 		if !ok {
-			writeJSONError(w, http.StatusNotFound, "session not found")
+			writeError(w, http.StatusNotFound, "session not found")
 			return
 		}
 	}
@@ -241,11 +241,11 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 		var ok bool
 		cred, ok = pkCredentials[req.CredentialID]
 		if !ok || cred.Revoked {
-			writeJSONError(w, http.StatusUnauthorized, "credential not found or revoked")
+			writeError(w, http.StatusUnauthorized, "credential not found or revoked")
 			return
 		}
 	} else if cred.Revoked {
-		writeJSONError(w, http.StatusUnauthorized, "credential not found or revoked")
+		writeError(w, http.StatusUnauthorized, "credential not found or revoked")
 		return
 	}
 	cred.Counter++
@@ -256,12 +256,12 @@ func (h *Handler) handlePasskeyAuthFinish(w http.ResponseWriter, r *http.Request
 
 func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	parts := strings.Split(strings.TrimSuffix(r.URL.Path, "/"), "/")
 	if len(parts) < 1 {
-		writeJSONError(w, http.StatusBadRequest, "credential id required")
+		writeError(w, http.StatusBadRequest, "credential id required")
 		return
 	}
 	id := parts[len(parts)-1]
@@ -269,7 +269,7 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 	defer pkMu.Unlock()
 	cred, ok := pkCredentials[id]
 	if !ok {
-		writeJSONError(w, http.StatusNotFound, "credential not found")
+		writeError(w, http.StatusNotFound, "credential not found")
 		return
 	}
 	cred.Revoked = true
@@ -290,7 +290,7 @@ func (h *Handler) handlePasskeyRevoke(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handlePasskeyStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	pkMu.RLock()

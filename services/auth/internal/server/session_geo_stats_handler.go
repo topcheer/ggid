@@ -8,7 +8,7 @@ import (
 // GET /api/v1/auth/sessions/geo-stats
 func (h *Handler) handleSessionGeoStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

@@ -39,11 +39,11 @@ func (h *Handler) handleDeviceFingerprint(w http.ResponseWriter, r *http.Request
 			PluginsHash string `json:"plugins_hash"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.UserID == "" {
-			writeJSONError(w, http.StatusBadRequest, "user_id required")
+			writeError(w, http.StatusBadRequest, "user_id required")
 			return
 		}
 
@@ -107,7 +107,7 @@ func (h *Handler) handleDeviceFingerprint(w http.ResponseWriter, r *http.Request
 	if r.Method == http.MethodGet {
 		userID := r.URL.Query().Get("user_id")
 		if userID == "" {
-			writeJSONError(w, http.StatusBadRequest, "user_id required")
+			writeError(w, http.StatusBadRequest, "user_id required")
 			return
 		}
 
@@ -144,5 +144,5 @@ func (h *Handler) handleDeviceFingerprint(w http.ResponseWriter, r *http.Request
 	}
 
 	_ = strings.TrimSpace
-	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

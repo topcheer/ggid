@@ -10,18 +10,18 @@ import (
 // POST /api/v1/auth/password-entropy/check
 func (h *Handler) handlePasswordEntropy(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
 		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 	if req.Password == "" {
-		writeJSONError(w, http.StatusBadRequest, "password required")
+		writeError(w, http.StatusBadRequest, "password required")
 		return
 	}
 

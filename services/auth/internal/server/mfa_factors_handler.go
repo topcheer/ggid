@@ -54,7 +54,7 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 			Friendly string `json:"friendly_name"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.Type == "" {
@@ -124,5 +124,5 @@ func (h *Handler) handleMFAFactors(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"status": "deleted", "factor_id": factorID})
 		return
 	}
-	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

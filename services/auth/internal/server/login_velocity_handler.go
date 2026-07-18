@@ -9,13 +9,13 @@ import (
 // GET /api/v1/auth/login-velocity?user_id=X&window=1h
 func (h *Handler) handleLoginVelocity(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	userID := r.URL.Query().Get("user_id")
 	window := r.URL.Query().Get("window")
 	if userID == "" {
-		writeJSONError(w, http.StatusBadRequest, "user_id required")
+		writeError(w, http.StatusBadRequest, "user_id required")
 		return
 	}
 	windowDur := 3600

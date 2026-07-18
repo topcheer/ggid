@@ -13,6 +13,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -363,15 +364,15 @@ func TestJWKSClient_StartRefresh(t *testing.T) {
 	nB64 := base64.RawURLEncoding.EncodeToString(pub.N.Bytes())
 	eB64 := base64.RawURLEncoding.EncodeToString(big.NewInt(int64(pub.E)).Bytes())
 
-	callCount := 0
+	var callCount atomic.Int32
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
+		callCount.Add(1)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"keys": []map[string]any{
 				{
 					"kty": "RSA",
-					"kid": fmt.Sprintf("key-%d", callCount),
+					"kid": fmt.Sprintf("key-%d", callCount.Load()),
 					"use": "sig",
 					"n":   nB64,
 					"e":   eB64,
@@ -394,7 +395,7 @@ func TestJWKSClient_StartRefresh(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 
 	// Should have refreshed at least once
-	if callCount < 2 {
-		t.Errorf("Expected at least 2 refresh calls, got %d", callCount)
+	if callCount.Load() < 2 {
+		t.Errorf("Expected at least 2 refresh calls, got %d", callCount.Load())
 	}
 }

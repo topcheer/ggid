@@ -9,14 +9,14 @@ import (
 // GET /api/v1/auth/login-patterns/{user_id}
 func (h *Handler) handleLoginPatterns(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/login-patterns/")
 	userID = strings.TrimSuffix(userID, "/")
 	if userID == "" {
-		writeJSONError(w, http.StatusBadRequest, "user_id is required")
+		writeError(w, http.StatusBadRequest, "user_id is required")
 		return
 	}
 

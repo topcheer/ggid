@@ -23,31 +23,31 @@ type MultiHashRehashRequest struct {
 // then generates and returns a new Argon2id hash.
 func (h *Handler) handleMultiHashRehash(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	// Extract user_id from path.
 	userIDStr := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/multi-hash/rehash/")
 	if userIDStr == "" || strings.Contains(userIDStr, "/") {
-		writeJSONError(w, http.StatusBadRequest, "valid user_id required in path")
+		writeError(w, http.StatusBadRequest, "valid user_id required in path")
 		return
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "valid user_id required")
+		writeError(w, http.StatusBadRequest, "valid user_id required")
 		return
 	}
 
 	var req MultiHashRehashRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if req.Password == "" {
-		writeJSONError(w, http.StatusBadRequest, "password is required")
+		writeError(w, http.StatusBadRequest, "password is required")
 		return
 	}
 
@@ -62,7 +62,7 @@ func (h *Handler) handleMultiHashRehash(w http.ResponseWriter, r *http.Request) 
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "valid X-Tenant-ID header required")
+		writeError(w, http.StatusBadRequest, "valid X-Tenant-ID header required")
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *Handler) handleMultiHashRehash(w http.ResponseWriter, r *http.Request) 
 	if err != nil || cred == nil {
 		slog.Warn("rehash: credential lookup failed",
 			"user_id", userID, "error", err)
-		writeJSONError(w, http.StatusNotFound, "credential not found")
+		writeError(w, http.StatusNotFound, "credential not found")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h *Handler) handleMultiHashRehash(w http.ResponseWriter, r *http.Request) 
 func returnRehashResult(w http.ResponseWriter, password, oldHash string) {
 	resp, err := rehashPassword(password, oldHash)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)

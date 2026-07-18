@@ -102,11 +102,11 @@ func (h *Handler) handleTokenReuseCheck(w http.ResponseWriter, r *http.Request) 
 			EventType string `json:"event_type"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.TokenID == "" || req.UserID == "" {
-			writeJSONError(w, http.StatusBadRequest, "token_id and user_id are required")
+			writeError(w, http.StatusBadRequest, "token_id and user_id are required")
 			return
 		}
 
@@ -132,6 +132,6 @@ func (h *Handler) handleTokenReuseCheck(w http.ResponseWriter, r *http.Request) 
 		writeJSON(w, http.StatusCreated, event)
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

@@ -128,6 +128,8 @@ export default function SettingsHubPage() {
           onFocus={() => setFocused(true)}
           onBlur={() => setTimeout(() => setFocused(false), 200)}
           placeholder={t("settingsSearch.searchPlaceholder")}
+          aria-label="Search settings"
+          role="searchbox"
           className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-10 pr-10 py-2.5 text-sm shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/30 outline-none"
         />
         {search && (

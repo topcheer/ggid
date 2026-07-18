@@ -12,7 +12,7 @@ import (
 // Auto-detects auth method and returns available methods.
 func (h *Handler) handleLoginOrchestrate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -21,11 +21,11 @@ func (h *Handler) handleLoginOrchestrate(w http.ResponseWriter, r *http.Request)
 		TenantID   string `json:"tenant_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.Identifier == "" {
-		writeJSONError(w, http.StatusBadRequest, "identifier is required")
+		writeError(w, http.StatusBadRequest, "identifier is required")
 		return
 	}
 

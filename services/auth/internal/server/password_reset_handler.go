@@ -33,7 +33,7 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			Email string `json:"email"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 
@@ -72,11 +72,11 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			UserID      string `json:"user_id"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.Token == "" || req.NewPassword == "" {
-			writeJSONError(w, http.StatusBadRequest, "token and new_password required")
+			writeError(w, http.StatusBadRequest, "token and new_password required")
 			return
 		}
 
@@ -85,7 +85,7 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 			row, _ := h.memMapRepo.GetJSON(r.Context(), "auth_pwd_reset_tokens", req.Token)
 			if row != nil {
 				if used, _ := row["used"].(bool); used {
-					writeJSONError(w, http.StatusBadRequest, "token already used")
+					writeError(w, http.StatusBadRequest, "token already used")
 					return
 				}
 				// Valid token in PG — proceed to reset.
@@ -99,17 +99,17 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		rt, ok := pwdResetTokens[req.Token]
 		if !ok {
 			pwdResetMu.Unlock()
-			writeJSONError(w, http.StatusBadRequest, "invalid or expired token")
+			writeError(w, http.StatusBadRequest, "invalid or expired token")
 			return
 		}
 		if rt.Used {
 			pwdResetMu.Unlock()
-			writeJSONError(w, http.StatusBadRequest, "token already used")
+			writeError(w, http.StatusBadRequest, "token already used")
 			return
 		}
 		if time.Now().UTC().After(rt.ExpiresAt) {
 			pwdResetMu.Unlock()
-			writeJSONError(w, http.StatusBadRequest, "token expired")
+			writeError(w, http.StatusBadRequest, "token expired")
 			return
 		}
 		rt.Used = true
@@ -117,7 +117,7 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 
 		// Validate password strength
 		if len(req.NewPassword) < 8 {
-			writeJSONError(w, http.StatusBadRequest, "password must be at least 8 characters")
+			writeError(w, http.StatusBadRequest, "password must be at least 8 characters")
 			return
 		}
 
@@ -129,5 +129,5 @@ func (h *Handler) handlePasswordReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSONError(w, http.StatusNotFound, "not found")
+	writeError(w, http.StatusNotFound, "not found")
 }

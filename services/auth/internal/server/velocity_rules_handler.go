@@ -66,7 +66,7 @@ func (h *Handler) handleVelocityRules(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var req VelocityRuleRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.Metric == "" {
@@ -94,6 +94,6 @@ func (h *Handler) handleVelocityRules(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(rule)
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

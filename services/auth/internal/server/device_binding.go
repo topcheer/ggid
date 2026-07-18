@@ -47,7 +47,7 @@ func CheckBinding(jti, fingerprint string) (bool, *DeviceBinding) {
 
 func (h *Handler) handleDeviceBind(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -57,11 +57,11 @@ func (h *Handler) handleDeviceBind(w http.ResponseWriter, r *http.Request) {
 		IPAddress   string `json:"ip_address"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if req.TokenJTI == "" || req.Fingerprint == "" {
-		writeJSONError(w, http.StatusBadRequest, "token_jti and fingerprint are required")
+		writeError(w, http.StatusBadRequest, "token_jti and fingerprint are required")
 		return
 	}
 	binding := BindDevice(req.TokenJTI, req.Fingerprint, req.UserAgent, req.IPAddress)
@@ -80,7 +80,7 @@ func (h *Handler) handleDeviceBind(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleDeviceCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
@@ -88,7 +88,7 @@ func (h *Handler) handleDeviceCheck(w http.ResponseWriter, r *http.Request) {
 		Fingerprint string `json:"fingerprint"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	allowed, binding := CheckBinding(req.TokenJTI, req.Fingerprint)
@@ -104,14 +104,14 @@ func (h *Handler) handleDeviceCheck(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleDeviceUnbind(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	var req struct {
 		TokenJTI string `json:"token_jti"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	bindingCache.Delete(req.TokenJTI)

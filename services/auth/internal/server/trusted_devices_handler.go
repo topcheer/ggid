@@ -56,7 +56,7 @@ func (h *Handler) handleTrustedDevices(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodDelete {
 		deviceID := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/devices/trusted/")
 		if deviceID == "" || deviceID == "/api/v1/auth/devices/trusted" {
-			writeJSONError(w, http.StatusBadRequest, "device_id required")
+			writeError(w, http.StatusBadRequest, "device_id required")
 			return
 		}
 		trustedDeviceMu.Lock()
@@ -70,5 +70,5 @@ func (h *Handler) handleTrustedDevices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

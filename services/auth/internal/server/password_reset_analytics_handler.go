@@ -7,7 +7,7 @@ import (
 // GET /api/v1/auth/password-reset/analytics?from=X&to=Y
 func (h *Handler) handlePasswordResetAnalytics(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"from": r.URL.Query().Get("from"), "to": r.URL.Query().Get("to"),

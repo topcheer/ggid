@@ -34,7 +34,7 @@ func (h *Handler) handleSessionAnomalyScore(w http.ResponseWriter, r *http.Reque
 	case http.MethodGet:
 		sessionID := r.URL.Query().Get("session_id")
 		if sessionID == "" {
-			writeJSONError(w, http.StatusBadRequest, "session_id is required")
+			writeError(w, http.StatusBadRequest, "session_id is required")
 			return
 		}
 
@@ -71,7 +71,7 @@ func (h *Handler) handleSessionAnomalyScore(w http.ResponseWriter, r *http.Reque
 			DeviceMatch  *bool    `json:"device_match"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.SessionID == "" {
@@ -195,7 +195,7 @@ func (h *Handler) handleSessionAnomalyScore(w http.ResponseWriter, r *http.Reque
 		writeJSON(w, http.StatusOK, data)
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

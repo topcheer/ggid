@@ -32,15 +32,15 @@ func (h *Handler) handleLoginPolicy(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPut:
 		var req LoginPolicy
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if req.MaxAttempts < 1 || req.MaxAttempts > 100 {
-			writeJSONError(w, http.StatusBadRequest, "max_attempts must be between 1 and 100")
+			writeError(w, http.StatusBadRequest, "max_attempts must be between 1 and 100")
 			return
 		}
 		if req.LockoutDurationMinutes < 1 || req.LockoutDurationMinutes > 1440 {
-			writeJSONError(w, http.StatusBadRequest, "lockout_duration_minutes must be between 1 and 1440")
+			writeError(w, http.StatusBadRequest, "lockout_duration_minutes must be between 1 and 1440")
 			return
 		}
 
@@ -51,6 +51,6 @@ func (h *Handler) handleLoginPolicy(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, req)
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

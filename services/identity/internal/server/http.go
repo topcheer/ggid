@@ -1123,3 +1123,9 @@ func (h *HTTPHandler) handleExportUsers(w http.ResponseWriter, r *http.Request) 
 		json.NewEncoder(w).Encode(map[string]any{"users": users})
 	}
 }
+
+// writeJSONError writes a standard JSON error response.
+func writeJSONError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
+

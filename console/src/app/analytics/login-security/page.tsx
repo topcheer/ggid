@@ -309,7 +309,7 @@ function GeoTab() {
                   <td className="py-3 px-3 text-gray-600 dark:text-gray-400">{l.unique_ips}</td>
                   <td className="py-3 px-3">
                     {l.flagged ? (
-                      <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded-full">Flagged</span>
+                      <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 rounded-full">{t("loginSecurity.geo.flagged")}</span>
                     ) : (
                       <span className="text-xs text-gray-400">—</span>
                     )}

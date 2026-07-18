@@ -26,7 +26,7 @@ type validIDsResponse struct {
 // JWT-protected: extracts user_id from Bearer token sub claim.
 func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -34,7 +34,7 @@ func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request)
 	authHeader := r.Header.Get("Authorization")
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 	if tokenStr == "" || tokenStr == authHeader {
-		writeJSONError(w, http.StatusUnauthorized, "missing Authorization header")
+		writeError(w, http.StatusUnauthorized, "missing Authorization header")
 		return
 	}
 
@@ -43,26 +43,26 @@ func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request)
 		return h.authSvc.PublicKey(), nil
 	})
 	if err != nil {
-		writeJSONError(w, http.StatusUnauthorized, "invalid token")
+		writeError(w, http.StatusUnauthorized, "invalid token")
 		return
 	}
 
 	userIDStr, _ := claims["sub"].(string)
 	if userIDStr == "" {
-		writeJSONError(w, http.StatusUnauthorized, "token missing sub claim")
+		writeError(w, http.StatusUnauthorized, "token missing sub claim")
 		return
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id in token")
+		writeError(w, http.StatusBadRequest, "invalid user_id in token")
 		return
 	}
 
 	// Require tenant from context — no fallback to default tenant.
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil || tc == nil {
-		writeJSONError(w, http.StatusBadRequest, "tenant context required")
+		writeError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *Handler) handleWebAuthnValidIDs(w http.ResponseWriter, r *http.Request)
 	if h.waCredStore != nil {
 		creds, err := h.waCredStore.GetCredentialsByUser(r.Context(), tc.TenantID, userID)
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, "internal server error")
+			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 		for _, c := range creds {

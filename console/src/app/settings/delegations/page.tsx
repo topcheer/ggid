@@ -157,7 +157,7 @@ function DelegationTable({ delegations, type, onRevoke, onRespond }: {
               <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.scopes`)}</th>
               <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.expires`)}</th>
               <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400">{t(`delegations.${type === "outgoing" ? "outgoing" : "incoming"}.status`)}</th>
-              <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">Actions</th>
+              <th className="py-2 px-4 font-medium text-gray-600 dark:text-gray-400 text-right">{t("delegations.incoming.actions")}</th>
             </tr>
           </thead>
           <tbody>

@@ -47,7 +47,7 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 			ExpiresAt string   `json:"expires_at"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		key := APIKey{
@@ -87,10 +87,10 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
-			writeJSONError(w, http.StatusNotFound, "API key not found")
+			writeError(w, http.StatusNotFound, "API key not found")
 			return
 		}
-		writeJSONError(w, http.StatusNotFound, "unknown path")
+		writeError(w, http.StatusNotFound, "unknown path")
 
 	case strings.HasPrefix(r.URL.Path, "/api/v1/auth/api-keys/") && r.Method == http.MethodDelete:
 		parts := splitPath(r.URL.Path)
@@ -109,10 +109,10 @@ func (h *Handler) handleAPIKeys(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		writeJSONError(w, http.StatusNotFound, "API key not found")
+		writeError(w, http.StatusNotFound, "API key not found")
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 

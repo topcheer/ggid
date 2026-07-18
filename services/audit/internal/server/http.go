@@ -1719,6 +1719,11 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	errors.WriteSimpleAPIError(w, status, httpStatusToCode(status), msg)
 }
 
+// writeError is the standard error response.
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSONError(w, status, msg)
+}
+
 func writeServiceError(w http.ResponseWriter, err error) {
 	errors.WriteAPIError(w, err, "")
 }

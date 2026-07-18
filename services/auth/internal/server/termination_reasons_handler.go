@@ -34,7 +34,7 @@ var terminationStore = struct {
 // GET /api/v1/auth/sessions/termination-reasons?from=X&to=Y
 func (h *Handler) handleTerminationReasons(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

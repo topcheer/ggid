@@ -26,7 +26,7 @@ var (
 // POST /api/v1/auth/sessions/{id}/reevaluate — re-evaluate session risk.
 func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -38,7 +38,7 @@ func (h *Handler) handleSessionReevaluate(w http.ResponseWriter, r *http.Request
 		DeviceFP  string `json:"device_fingerprint"`
 		GeoRegion string `json:"geo_region"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 	if req.IPAddr == "" { req.IPAddr = r.RemoteAddr }
 	if req.DeviceFP == "" { req.DeviceFP = "unknown" }
 	if req.GeoRegion == "" { req.GeoRegion = "unknown" }

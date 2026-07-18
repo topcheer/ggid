@@ -41,11 +41,11 @@ func (h *Handler) handleCredentialStuffing(w http.ResponseWriter, r *http.Reques
 			Duration string `json:"duration"` // e.g. "1h", "24h", "permanent"
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.IP == "" {
-			writeJSONError(w, http.StatusBadRequest, "ip required")
+			writeError(w, http.StatusBadRequest, "ip required")
 			return
 		}
 
@@ -98,5 +98,5 @@ func (h *Handler) handleCredentialStuffing(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+	writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 }

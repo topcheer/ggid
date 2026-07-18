@@ -35,7 +35,7 @@ var (
 // POST /api/v1/auth/biometric/verify — verify biometric against stored template.
 func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -45,11 +45,11 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 		DeviceType  string `json:"device_type"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.UserID == "" || req.TemplateB64 == "" {
-		writeJSONError(w, http.StatusBadRequest, "user_id and template are required")
+		writeError(w, http.StatusBadRequest, "user_id and template are required")
 		return
 	}
 	if req.DeviceType == "" {
@@ -59,12 +59,12 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 	// Encrypt template
 	rawTemplate, err := base64.StdEncoding.DecodeString(req.TemplateB64)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid template encoding")
+		writeError(w, http.StatusBadRequest, "invalid template encoding")
 		return
 	}
 	encTemplate, err := encryptAESGCM(bioKey, rawTemplate)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "encryption failed")
+		writeError(w, http.StatusInternalServerError, "encryption failed")
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *Handler) handleBiometricEnroll(w http.ResponseWriter, r *http.Request) 
 
 func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -109,11 +109,11 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 		TemplateB64 string `json:"template"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.UserID == "" || req.TemplateB64 == "" {
-		writeJSONError(w, http.StatusBadRequest, "user_id and template are required")
+		writeError(w, http.StatusBadRequest, "user_id and template are required")
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if found == nil {
-		writeJSONError(w, http.StatusNotFound, "no biometric template enrolled")
+		writeError(w, http.StatusNotFound, "no biometric template enrolled")
 		return
 	}
 
@@ -155,7 +155,7 @@ func (h *Handler) handleBiometricVerify(w http.ResponseWriter, r *http.Request) 
 	encData, _ := base64.StdEncoding.DecodeString(found.TemplateEnc)
 	stored, err := decryptAESGCM(bioKey, encData)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "decryption failed")
+		writeError(w, http.StatusInternalServerError, "decryption failed")
 		return
 	}
 

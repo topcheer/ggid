@@ -9,15 +9,15 @@ import (
 // POST /api/v1/auth/risk-notify
 func (h *Handler) handleRiskNotify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return
 	}
 	var req struct {
 		UserID   string `json:"user_id"`
 		EventType string `json:"event_type"` // new_device, impossible_travel, brute_force
 		Channel  string `json:"channel"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid JSON"); return }
-	if req.UserID == "" || req.EventType == "" { writeJSONError(w, http.StatusBadRequest, "user_id and event_type required"); return }
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil { writeError(w, http.StatusBadRequest, "invalid JSON"); return }
+	if req.UserID == "" || req.EventType == "" { writeError(w, http.StatusBadRequest, "user_id and event_type required"); return }
 	channel := req.Channel
 	if channel == "" { channel = "email" }
 	var severity, message string

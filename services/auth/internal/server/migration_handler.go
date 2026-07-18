@@ -22,23 +22,23 @@ func (h *Handler) handleMigrationConfig(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if r.Method != http.MethodPut {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	if h.migrationEngine == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "migration engine not configured")
+		writeError(w, http.StatusServiceUnavailable, "migration engine not configured")
 		return
 	}
 
 	var cfg LegacyMigrationConfig
 	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 
 	if cfg.SourceDBConn == "" {
-		writeJSONError(w, http.StatusBadRequest, "source_db_conn is required")
+		writeError(w, http.StatusBadRequest, "source_db_conn is required")
 		return
 	}
 
@@ -57,7 +57,7 @@ func (h *Handler) handleMigrationConfig(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.migrationEngine.SaveConfig(r.Context(), &cfg); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to save config")
+		writeError(w, http.StatusInternalServerError, "failed to save config")
 		return
 	}
 
@@ -71,24 +71,24 @@ func (h *Handler) handleMigrationConfig(w http.ResponseWriter, r *http.Request) 
 // GET /api/v1/admin/migration/stats
 func (h *Handler) handleMigrationStats(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	if h.migrationEngine == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "migration engine not configured")
+		writeError(w, http.StatusServiceUnavailable, "migration engine not configured")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "X-Tenant-ID header required")
+		writeError(w, http.StatusBadRequest, "X-Tenant-ID header required")
 		return
 	}
 
 	stats, err := h.migrationEngine.GetStats(r.Context(), tc.TenantID)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to get stats")
+		writeError(w, http.StatusInternalServerError, "failed to get stats")
 		return
 	}
 
@@ -99,18 +99,18 @@ func (h *Handler) handleMigrationStats(w http.ResponseWriter, r *http.Request) {
 // POST /api/v1/admin/migration/test
 func (h *Handler) handleMigrationTest(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	if h.migrationEngine == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "migration engine not configured")
+		writeError(w, http.StatusServiceUnavailable, "migration engine not configured")
 		return
 	}
 
 	// Reload config from DB to ensure latest settings.
 	if _, err := h.migrationEngine.LoadConfig(r.Context()); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to load config")
+		writeError(w, http.StatusInternalServerError, "failed to load config")
 		return
 	}
 

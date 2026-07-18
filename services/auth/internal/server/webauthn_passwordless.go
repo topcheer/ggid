@@ -29,7 +29,7 @@ var (
 // Begins a passwordless WebAuthn login flow by generating a challenge.
 func (h *Handler) handleWebAuthnPasswordlessBegin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -38,11 +38,11 @@ func (h *Handler) handleWebAuthnPasswordlessBegin(w http.ResponseWriter, r *http
 		Username string `json:"username"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.Username == "" {
-		writeJSONError(w, http.StatusBadRequest, "username is required")
+		writeError(w, http.StatusBadRequest, "username is required")
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *Handler) handleWebAuthnPasswordlessBegin(w http.ResponseWriter, r *http
 // Completes passwordless login by verifying the WebAuthn assertion.
 func (h *Handler) handleWebAuthnPasswordlessFinish(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -98,11 +98,11 @@ func (h *Handler) handleWebAuthnPasswordlessFinish(w http.ResponseWriter, r *htt
 		Assertion  string          `json:"assertion"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if req.SessionID == "" {
-		writeJSONError(w, http.StatusBadRequest, "session_id is required")
+		writeError(w, http.StatusBadRequest, "session_id is required")
 		return
 	}
 
@@ -140,12 +140,12 @@ func (h *Handler) handleWebAuthnPasswordlessFinish(w http.ResponseWriter, r *htt
 	}
 
 	if !sessOK {
-		writeJSONError(w, http.StatusNotFound, "session not found or expired")
+		writeError(w, http.StatusNotFound, "session not found or expired")
 		return
 	}
 
 	if time.Now().UTC().After(sess.ExpiresAt) {
-		writeJSONError(w, http.StatusGone, "session expired")
+		writeError(w, http.StatusGone, "session expired")
 		return
 	}
 

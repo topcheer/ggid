@@ -43,7 +43,7 @@ func IsSessionRevoked(jti string) bool {
 // Returns: {"revoked_count": N, "failed": [...]}
 func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -53,12 +53,12 @@ func (h *Handler) handleRevokeSessions(w http.ResponseWriter, r *http.Request) {
 		Reason     string   `json:"reason"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 
 	if len(req.UserIDs) == 0 && len(req.SessionIDs) == 0 {
-		writeJSONError(w, http.StatusBadRequest, "user_ids or session_ids required")
+		writeError(w, http.StatusBadRequest, "user_ids or session_ids required")
 		return
 	}
 

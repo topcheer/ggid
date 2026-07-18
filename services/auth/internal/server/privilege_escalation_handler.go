@@ -26,7 +26,7 @@ type PrivilegeEscalationResult struct {
 
 func (h *Handler) handlePrivilegeEscalationDetect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	result := PrivilegeEscalationResult{

@@ -78,16 +78,16 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 			Value  string `json:"value"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid JSON")
+			writeError(w, http.StatusBadRequest, "invalid JSON")
 			return
 		}
 		if req.UserID == "" || req.Key == "" || req.Value == "" {
-			writeJSONError(w, http.StatusBadRequest, "user_id, key, value required")
+			writeError(w, http.StatusBadRequest, "user_id, key, value required")
 			return
 		}
 		encVal, err := encryptCredential(req.Value)
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, "encryption failed")
+			writeError(w, http.StatusInternalServerError, "encryption failed")
 			return
 		}
 		now := time.Now().UTC()
@@ -117,7 +117,7 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 		key := strings.TrimPrefix(r.URL.Path, "/api/v1/auth/credentials/")
 		userID := r.URL.Query().Get("user_id")
 		if key == "" || userID == "" {
-			writeJSONError(w, http.StatusBadRequest, "key and user_id required")
+			writeError(w, http.StatusBadRequest, "key and user_id required")
 			return
 		}
 		// Try PG first, fall back to in-memory.
@@ -136,27 +136,27 @@ func (h *Handler) handleCredentialVault(w http.ResponseWriter, r *http.Request) 
 			userVault, ok := credVault[userID]
 			credVaultMu.RUnlock()
 			if !ok {
-				writeJSONError(w, http.StatusNotFound, "vault not found")
+				writeError(w, http.StatusNotFound, "vault not found")
 				return
 			}
 			credVaultMu.RLock()
 			c, ok := userVault[key]
 			credVaultMu.RUnlock()
 			if !ok {
-				writeJSONError(w, http.StatusNotFound, "credential not found")
+				writeError(w, http.StatusNotFound, "credential not found")
 				return
 			}
 			cred = c
 		}
 		decVal, err := decryptCredential(cred.Value)
 		if err != nil {
-			writeJSONError(w, http.StatusInternalServerError, "decryption failed")
+			writeError(w, http.StatusInternalServerError, "decryption failed")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"key": cred.Key, "value": decVal, "created_at": cred.CreatedAt,
 		})
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

@@ -28,7 +28,7 @@ type TorVPNDetectResult struct {
 
 func (h *Handler) handleTorVPNDetect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	result := TorVPNDetectResult{

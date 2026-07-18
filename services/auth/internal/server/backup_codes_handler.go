@@ -24,13 +24,13 @@ type backupCodesGenerateRequest struct {
 // The plaintext codes are returned only once — the caller must store them securely.
 func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req backupCodesGenerateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -43,7 +43,7 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 			return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
-			writeJSONError(w, http.StatusUnauthorized, "invalid token")
+			writeError(w, http.StatusUnauthorized, "invalid token")
 			return
 		}
 		req.UserID, _ = claims["sub"].(string)
@@ -51,13 +51,13 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
 	bcs := h.authSvc.BackupCodeService()
 	if bcs == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "backup code service not configured")
+		writeError(w, http.StatusServiceUnavailable, "backup code service not configured")
 		return
 	}
 
@@ -93,18 +93,18 @@ type backupCodesVerifyRequest struct {
 // The backup code is consumed (single-use) upon successful verification.
 func (h *Handler) backupCodesVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req backupCodesVerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if req.BackupCode == "" {
-		writeJSONError(w, http.StatusBadRequest, "backup_code is required")
+		writeError(w, http.StatusBadRequest, "backup_code is required")
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *Handler) backupCodesVerify(w http.ResponseWriter, r *http.Request) {
 // Returns the count of unused backup codes remaining for the user.
 func (h *Handler) backupCodesRemaining(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -149,32 +149,32 @@ func (h *Handler) backupCodesRemaining(w http.ResponseWriter, r *http.Request) {
 			return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
-			writeJSONError(w, http.StatusUnauthorized, "invalid token")
+			writeError(w, http.StatusUnauthorized, "invalid token")
 			return
 		}
 		userIDStr, _ = claims["sub"].(string)
 	}
 
 	if userIDStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "user_id is required")
+		writeError(w, http.StatusBadRequest, "user_id is required")
 		return
 	}
 
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
 	bcs := h.authSvc.BackupCodeService()
 	if bcs == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "backup code service not configured")
+		writeError(w, http.StatusServiceUnavailable, "backup code service not configured")
 		return
 	}
 

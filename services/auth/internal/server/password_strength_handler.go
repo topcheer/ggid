@@ -7,7 +7,7 @@ import (
 // GET /api/v1/auth/password-strength/distribution
 func (h *Handler) handlePasswordStrengthDist(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return
 	}
 	total := 150
 	writeJSON(w, http.StatusOK, map[string]any{

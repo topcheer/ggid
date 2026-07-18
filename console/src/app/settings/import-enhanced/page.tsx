@@ -166,7 +166,7 @@ export default function ImportEnhancedPage() {
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
             <Upload className="w-7 h-7 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Enhanced Import</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Import</h1>
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400">Pre-check, import with live progress, and get a detailed summary report</p>
         </div>

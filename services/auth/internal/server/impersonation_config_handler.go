@@ -33,11 +33,11 @@ func (h *Handler) handleImpersonationConfig(w http.ResponseWriter, r *http.Reque
 	case http.MethodPut:
 		var cfg ImpersonationConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.MaxDurationMinutes < 1 {
-			writeJSONError(w, http.StatusBadRequest, "max_duration_minutes must be at least 1")
+			writeError(w, http.StatusBadRequest, "max_duration_minutes must be at least 1")
 			return
 		}
 		globalImpersonationConfig = &cfg
@@ -45,6 +45,6 @@ func (h *Handler) handleImpersonationConfig(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(cfg)
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }

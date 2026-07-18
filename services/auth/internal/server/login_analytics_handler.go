@@ -7,7 +7,7 @@ import (
 // GET /api/v1/auth/login-analytics?from=X&to=Y
 func (h *Handler) handleLoginAnalytics(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed"); return
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed"); return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"from": r.URL.Query().Get("from"), "to": r.URL.Query().Get("to"),

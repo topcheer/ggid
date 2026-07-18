@@ -29,7 +29,7 @@ var (
 // Body: {"user_ids": ["..."], "breach_name": "..."}
 func (h *Handler) handlePasswordBreachNotify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -38,11 +38,11 @@ func (h *Handler) handlePasswordBreachNotify(w http.ResponseWriter, r *http.Requ
 		BreachName string   `json:"breach_name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
 	if len(req.UserIDs) == 0 {
-		writeJSONError(w, http.StatusBadRequest, "user_ids is required")
+		writeError(w, http.StatusBadRequest, "user_ids is required")
 		return
 	}
 	if req.BreachName == "" {

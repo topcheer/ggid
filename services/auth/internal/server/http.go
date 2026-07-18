@@ -169,7 +169,7 @@ func (h *Handler) registerRoutes() {
 		} else if strings.HasSuffix(r.URL.Path, "/report") {
 			h.handleDeviceReport(w, r)
 		} else {
-			writeJSONError(w, http.StatusNotFound, "not found")
+			writeError(w, http.StatusNotFound, "not found")
 		}
 	})
 	h.mux.HandleFunc("/api/v1/auth/password/reset", h.resetPassword)
@@ -534,7 +534,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rvr := recover(); rvr != nil {
 			log.Printf("PANIC recovered in auth handler: %v", rvr)
-			writeJSONError(w, http.StatusInternalServerError, "internal server error")
+			writeError(w, http.StatusInternalServerError, "internal server error")
 		}
 	}()
 	// Inject tenant context from X-Tenant-ID header
@@ -782,7 +782,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 
 	// KB-082: Password strength gate — reject weak passwords (score < 2).
 	if ok, _ := checkPasswordStrengthGate(req.Password); !ok {
-		writeJSONError(w, http.StatusBadRequest, "password too weak")
+		writeError(w, http.StatusBadRequest, "password too weak")
 		return
 	}
 
@@ -796,7 +796,7 @@ func (h *Handler) register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Printf("register create user error: %v", err)
-		writeJSONError(w, http.StatusInternalServerError, "failed to create user")
+		writeError(w, http.StatusInternalServerError, "failed to create user")
 		return
 	}
 	if user != nil {
@@ -821,18 +821,18 @@ type logoutRequest struct {
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req logoutRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if err := h.authSvc.Logout(r.Context(), req.RefreshToken); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "logout failed")
+		writeError(w, http.StatusInternalServerError, "logout failed")
 		return
 	}
 
@@ -852,13 +852,13 @@ type refreshRequest struct {
 
 func (h *Handler) refresh(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req refreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -880,13 +880,13 @@ type forgotPasswordRequest struct {
 
 func (h *Handler) forgotPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req forgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -901,11 +901,11 @@ func (h *Handler) forgotPassword(w http.ResponseWriter, r *http.Request) {
 				}
 				r = r.WithContext(ggidtenant.WithContext(r.Context(), tc))
 			} else {
-				writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+				writeError(w, http.StatusBadRequest, "invalid tenant_id")
 				return
 			}
 		} else {
-			writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+			writeError(w, http.StatusBadRequest, "missing tenant context")
 			return
 		}
 	}
@@ -923,13 +923,13 @@ type resetPasswordRequest struct {
 
 func (h *Handler) resetPassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req resetPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -954,19 +954,19 @@ type changePasswordRequest struct {
 
 func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req changePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
@@ -975,7 +975,7 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 	if req.UserID != "" {
 		userID, err = uuid.Parse(req.UserID)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+			writeError(w, http.StatusBadRequest, "invalid user_id")
 			return
 		}
 	} else {
@@ -987,20 +987,20 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 			return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
-			writeJSONError(w, http.StatusUnauthorized, "invalid token")
+			writeError(w, http.StatusUnauthorized, "invalid token")
 			return
 		}
 		sub, _ := claims["sub"].(string)
 		userID, err = uuid.Parse(sub)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid user_id in token")
+			writeError(w, http.StatusBadRequest, "invalid user_id in token")
 			return
 		}
 	}
 
 	// KB-082: Password strength gate — reject weak new passwords (score < 2).
 	if ok, msg := checkPasswordStrengthGate(req.NewPassword); !ok {
-		writeJSONError(w, http.StatusBadRequest, "new password too weak: "+msg)
+		writeError(w, http.StatusBadRequest, "new password too weak: "+msg)
 		return
 	}
 
@@ -1024,7 +1024,7 @@ func (h *Handler) changePassword(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
@@ -1038,18 +1038,18 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 			return h.authSvc.PublicKey(), nil
 		})
 		if parseErr != nil {
-			writeJSONError(w, http.StatusUnauthorized, "invalid token")
+			writeError(w, http.StatusUnauthorized, "invalid token")
 			return
 		}
 		userIDStr, _ = claims["sub"].(string)
 		if userIDStr == "" {
-			writeJSONError(w, http.StatusBadRequest, "user_id is required")
+			writeError(w, http.StatusBadRequest, "user_id is required")
 			return
 		}
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -1067,17 +1067,17 @@ func (h *Handler) handleSessions(w http.ResponseWriter, r *http.Request) {
 		sessionIDStr := r.URL.Path[len("/api/v1/auth/sessions/"):]
 		sessionID, err := uuid.Parse(sessionIDStr)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid session_id")
+			writeError(w, http.StatusBadRequest, "invalid session_id")
 			return
 		}
 		if err := h.authSvc.RevokeSession(r.Context(), sessionID); err != nil {
-			writeJSONError(w, http.StatusInternalServerError, "failed to revoke session")
+			writeError(w, http.StatusInternalServerError, "failed to revoke session")
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]bool{"revoked": true})
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -1090,13 +1090,13 @@ type mfaSetupRequest struct {
 
 func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req mfaSetupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -1109,7 +1109,7 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 			return h.authSvc.PublicKey(), nil
 		})
 		if err != nil {
-			writeJSONError(w, http.StatusUnauthorized, "invalid token")
+			writeError(w, http.StatusUnauthorized, "invalid token")
 			return
 		}
 		req.UserID, _ = claims["sub"].(string)
@@ -1117,7 +1117,7 @@ func (h *Handler) mfaSetup(w http.ResponseWriter, r *http.Request) {
 
 	user, err := uuid.Parse(req.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -1138,26 +1138,26 @@ type mfaVerifyRequest struct {
 
 func (h *Handler) mfaVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req mfaVerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	deviceID, err := uuid.Parse(req.DeviceID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid device_id")
+		writeError(w, http.StatusBadRequest, "invalid device_id")
 		return
 	}
 
 	wasFirstEnrollment, err := h.authSvc.MFAService().VerifyMFA(r.Context(), deviceID, req.Code)
 	if err != nil {
 		if stderrors.Is(err, service.ErrInvalidMFACode) {
-			writeJSONError(w, http.StatusUnauthorized, "invalid MFA code")
+			writeError(w, http.StatusUnauthorized, "invalid MFA code")
 			return
 		}
 		writeInternalError(w, "auth handler", err)
@@ -1189,19 +1189,19 @@ type mfaDisableRequest struct {
 
 func (h *Handler) mfaDisable(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req mfaDisableRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	deviceID, err := uuid.Parse(req.DeviceID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid device_id")
+		writeError(w, http.StatusBadRequest, "invalid device_id")
 		return
 	}
 
@@ -1222,13 +1222,13 @@ type mfaLoginRequest struct {
 
 func (h *Handler) mfaLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req mfaLoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -1277,17 +1277,17 @@ func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var req PasswordPolicyConfigRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if err := h.authSvc.UpdatePasswordPolicy(req.MinLength, req.RequireUpper, req.RequireLower, req.RequireDigit, req.RequireSpecial, req.Blacklist); err != nil {
-			writeJSONError(w, http.StatusBadRequest, err.Error())
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 		policy := h.authSvc.PasswordPolicy()
 		writeJSON(w, http.StatusOK, policy)
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -1295,7 +1295,7 @@ func (h *Handler) passwordPolicy(w http.ResponseWriter, r *http.Request) {
 // Returns a summary of the user's password history (count + last changed).
 func (h *Handler) passwordHistory(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1305,7 +1305,7 @@ func (h *Handler) passwordHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "valid user_id is required")
+		writeError(w, http.StatusBadRequest, "valid user_id is required")
 		return
 	}
 
@@ -1340,13 +1340,13 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 			LockDuration *string `json:"lock_duration"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		policy := h.authSvc.PasswordPolicy()
 		if req.MaxAttempts != nil {
 			if *req.MaxAttempts < 1 || *req.MaxAttempts > 100 {
-				writeJSONError(w, http.StatusBadRequest, "max_attempts must be 1-100")
+				writeError(w, http.StatusBadRequest, "max_attempts must be 1-100")
 				return
 			}
 			policy.MaxAttempts = *req.MaxAttempts
@@ -1354,7 +1354,7 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 		if req.LockDuration != nil {
 			d, err := time.ParseDuration(*req.LockDuration)
 			if err != nil {
-				writeJSONError(w, http.StatusBadRequest, "invalid lock_duration format (e.g. '15m', '1h')")
+				writeError(w, http.StatusBadRequest, "invalid lock_duration format (e.g. '15m', '1h')")
 				return
 			}
 			policy.LockDuration = d
@@ -1366,7 +1366,7 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 			"require_captcha_after": policy.MaxAttempts - 1,
 		})
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -1375,7 +1375,7 @@ func (h *Handler) lockoutPolicy(w http.ResponseWriter, r *http.Request) {
 // The browser will show available passkeys in the credential picker.
 func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1402,7 +1402,7 @@ func (h *Handler) passkeyAutofill(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1410,11 +1410,11 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if body.Email == "" {
-		writeJSONError(w, http.StatusBadRequest, "email is required")
+		writeError(w, http.StatusBadRequest, "email is required")
 		return
 	}
 
@@ -1422,7 +1422,7 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 	tenantIDStr := r.Header.Get("X-Tenant-ID")
 	tenantID, err := uuid.Parse(tenantIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing valid X-Tenant-ID header")
+		writeError(w, http.StatusBadRequest, "missing valid X-Tenant-ID header")
 		return
 	}
 
@@ -1443,7 +1443,7 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.authSvc.IssueMagicLink(r.Context(), tenantID, user.ID, body.Email)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to issue magic link")
+		writeError(w, http.StatusInternalServerError, "failed to issue magic link")
 		return
 	}
 
@@ -1459,7 +1459,7 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) magicLinkVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1469,7 +1469,7 @@ func (h *Handler) magicLinkVerify(w http.ResponseWriter, r *http.Request) {
 		token = r.FormValue("token")
 	}
 	if token == "" {
-		writeJSONError(w, http.StatusBadRequest, "token is required")
+		writeError(w, http.StatusBadRequest, "token is required")
 		return
 	}
 
@@ -1478,7 +1478,7 @@ func (h *Handler) magicLinkVerify(w http.ResponseWriter, r *http.Request) {
 
 	tokens, err := h.authSvc.VerifyMagicLink(r.Context(), token, ip, userAgent)
 	if err != nil {
-		writeJSONError(w, http.StatusUnauthorized, "invalid or expired magic link")
+		writeError(w, http.StatusUnauthorized, "invalid or expired magic link")
 		return
 	}
 
@@ -1489,7 +1489,7 @@ func (h *Handler) magicLinkVerify(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) emailVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1504,13 +1504,13 @@ func (h *Handler) emailVerify(w http.ResponseWriter, r *http.Request) {
 		body.Token = r.URL.Query().Get("token")
 	}
 	if body.Token == "" {
-		writeJSONError(w, http.StatusBadRequest, "token is required")
+		writeError(w, http.StatusBadRequest, "token is required")
 		return
 	}
 
 	_, _, _, err := h.authSvc.VerifyEmailToken(r.Context(), body.Token)
 	if err != nil {
-		writeJSONError(w, http.StatusUnauthorized, "invalid or expired verification token")
+		writeError(w, http.StatusUnauthorized, "invalid or expired verification token")
 		return
 	}
 
@@ -1525,7 +1525,7 @@ func (h *Handler) emailResend(w http.ResponseWriter, r *http.Request) {
 // Generates a verification token, stores it in Redis (24h TTL), and returns it in dev mode.
 func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1534,17 +1534,17 @@ func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 		UserID  string `json:"user_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if body.Email == "" && body.UserID == "" {
-		writeJSONError(w, http.StatusBadRequest, "email or user_id is required")
+		writeError(w, http.StatusBadRequest, "email or user_id is required")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
@@ -1553,7 +1553,7 @@ func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 	if body.UserID != "" {
 		userID, err = uuid.Parse(body.UserID)
 		if err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+			writeError(w, http.StatusBadRequest, "invalid user_id")
 			return
 		}
 	} else {
@@ -1574,7 +1574,7 @@ func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.authSvc.SendVerificationEmail(r.Context(), tc.TenantID, userID, body.Email)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to send verification email")
+		writeError(w, http.StatusInternalServerError, "failed to send verification email")
 		return
 	}
 
@@ -1592,7 +1592,7 @@ func (h *Handler) sendVerification(w http.ResponseWriter, r *http.Request) {
 // Also supports POST with JSON body for API clients.
 func (h *Handler) verifyEmail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1606,13 +1606,13 @@ func (h *Handler) verifyEmail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if token == "" {
-		writeJSONError(w, http.StatusBadRequest, "token is required")
+		writeError(w, http.StatusBadRequest, "token is required")
 		return
 	}
 
 	_, _, _, err := h.authSvc.VerifyEmailToken(r.Context(), token)
 	if err != nil {
-		writeJSONError(w, http.StatusUnauthorized, "invalid or expired verification token")
+		writeError(w, http.StatusUnauthorized, "invalid or expired verification token")
 		return
 	}
 
@@ -1635,7 +1635,7 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 // Never expose internal error details to the HTTP client.
 func writeInternalError(w http.ResponseWriter, op string, err error) {
 	log.Printf("internal error in %s: %v", op, err)
-	writeJSONError(w, http.StatusInternalServerError, "internal server error")
+	writeError(w, http.StatusInternalServerError, "internal server error")
 }
 
 func writeAuthError(w http.ResponseWriter, err error) {
@@ -1674,30 +1674,30 @@ func writeAuthErrorWithTranslator(w http.ResponseWriter, err error, tr *i18n.Tra
 
 	switch {
 	case stderrors.Is(err, service.ErrInvalidCredentials):
-		writeJSONError(w, http.StatusUnauthorized, translate("error.invalid_credentials", "invalid credentials"))
+		writeError(w, http.StatusUnauthorized, translate("error.invalid_credentials", "invalid credentials"))
 	case stderrors.Is(err, service.ErrAccountLocked):
-		writeJSONError(w, http.StatusLocked, translate("error.account_locked", "account temporarily locked"))
+		writeError(w, http.StatusLocked, translate("error.account_locked", "account temporarily locked"))
 	case stderrors.Is(err, service.ErrMFASetupRequired):
-		writeJSONError(w, http.StatusForbidden, err.Error())
+		writeError(w, http.StatusForbidden, err.Error())
 	case stderrors.Is(err, service.ErrRateLimited):
-		writeJSONError(w, http.StatusTooManyRequests, translate("error.rate_limit_exceeded", "rate limit exceeded"))
+		writeError(w, http.StatusTooManyRequests, translate("error.rate_limit_exceeded", "rate limit exceeded"))
 	case stderrors.Is(err, service.ErrSessionNotFound):
-		writeJSONError(w, http.StatusNotFound, translate("error.session_not_found", "session not found"))
+		writeError(w, http.StatusNotFound, translate("error.session_not_found", "session not found"))
 	case stderrors.Is(err, service.ErrPasswordTooShort), stderrors.Is(err, service.ErrPasswordTooWeak):
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, err.Error())
 	case stderrors.Is(err, service.ErrPasswordReused):
-		writeJSONError(w, http.StatusConflict, err.Error())
+		writeError(w, http.StatusConflict, err.Error())
 	case stderrors.Is(err, service.ErrCredentialAlreadyExists):
-		writeJSONError(w, http.StatusConflict, translate("error.credential_already_exists", "username or email already registered"))
+		writeError(w, http.StatusConflict, translate("error.credential_already_exists", "username or email already registered"))
 	case stderrors.Is(err, service.ErrInvalidResetToken):
-		writeJSONError(w, http.StatusBadRequest, translate("error.reset_token_invalid", "invalid or expired reset token"))
+		writeError(w, http.StatusBadRequest, translate("error.reset_token_invalid", "invalid or expired reset token"))
 	default:
 		var ge *ggiderrors.GGIDError
 		if stderrors.As(err, &ge) {
-			writeJSONError(w, http.StatusInternalServerError, ge.Message)
+			writeError(w, http.StatusInternalServerError, ge.Message)
 			return
 		}
-		writeJSONError(w, http.StatusInternalServerError, translate("error.internal_server_error", "internal server error"))
+		writeError(w, http.StatusInternalServerError, translate("error.internal_server_error", "internal server error"))
 	}
 }
 
@@ -1748,7 +1748,7 @@ func clientIP(r *http.Request) string {
 
 func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1757,23 +1757,23 @@ func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
 		UserID string `json:"user_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if body.Phone == "" {
-		writeJSONError(w, http.StatusBadRequest, "phone is required")
+		writeError(w, http.StatusBadRequest, "phone is required")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -1799,7 +1799,7 @@ func (h *Handler) phoneOTPSend(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) phoneOTPVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1808,11 +1808,11 @@ func (h *Handler) phoneOTPVerify(w http.ResponseWriter, r *http.Request) {
 		OTP   string `json:"otp"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if body.Phone == "" || body.OTP == "" {
-		writeJSONError(w, http.StatusBadRequest, "phone and otp are required")
+		writeError(w, http.StatusBadRequest, "phone and otp are required")
 		return
 	}
 
@@ -1832,7 +1832,7 @@ func (h *Handler) phoneOTPVerify(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) stepUpChallenge(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1841,13 +1841,13 @@ func (h *Handler) stepUpChallenge(w http.ResponseWriter, r *http.Request) {
 		Method string `json:"method"` // "password" or "mfa"
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -1866,7 +1866,7 @@ func (h *Handler) stepUpChallenge(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1876,11 +1876,11 @@ func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 		Password  string `json:"password"`  // for password method
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if body.Challenge == "" {
-		writeJSONError(w, http.StatusBadRequest, "challenge is required")
+		writeError(w, http.StatusBadRequest, "challenge is required")
 		return
 	}
 
@@ -1897,18 +1897,18 @@ func (h *Handler) stepUpVerify(w http.ResponseWriter, r *http.Request) {
 // for sensitive operations (e.g. password change within last 5 minutes).
 func (h *Handler) stepUpCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
-		writeJSONError(w, http.StatusUnauthorized, "authentication required")
+		writeError(w, http.StatusUnauthorized, "authentication required")
 		return
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusUnauthorized, "invalid user identity")
+		writeError(w, http.StatusUnauthorized, "invalid user identity")
 		return
 	}
 
@@ -1941,7 +1941,7 @@ func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -1960,7 +1960,7 @@ func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid or missing user_id")
+		writeError(w, http.StatusBadRequest, "invalid or missing user_id")
 		return
 	}
 	if body.Method == "" {
@@ -1982,12 +1982,12 @@ func (h *Handler) stepUpTrigger(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) stepUpACRCheck(w http.ResponseWriter, r *http.Request) {
 	userIDStr := r.Header.Get("X-User-ID")
 	if userIDStr == "" {
-		writeJSONError(w, http.StatusUnauthorized, "authentication required")
+		writeError(w, http.StatusUnauthorized, "authentication required")
 		return
 	}
 	userID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		writeJSONError(w, http.StatusUnauthorized, "invalid user identity")
+		writeError(w, http.StatusUnauthorized, "invalid user identity")
 		return
 	}
 
@@ -2037,7 +2037,7 @@ func (h *Handler) stepUpACRCheck(w http.ResponseWriter, r *http.Request) {
 // Sends verification link to the new email address. Uses InitiateEmailChange service.
 func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2047,11 +2047,11 @@ func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
 		NewEmail string `json:"new_email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if body.NewEmail == "" {
-		writeJSONError(w, http.StatusBadRequest, "new_email is required")
+		writeError(w, http.StatusBadRequest, "new_email is required")
 		return
 	}
 	if body.UserID == "" {
@@ -2060,13 +2060,13 @@ func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
 	result, err := h.authSvc.InitiateEmailChange(r.Context(), userID, body.OldEmail, body.NewEmail)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -2082,7 +2082,7 @@ func (h *Handler) changeEmail(w http.ResponseWriter, r *http.Request) {
 // verifyEmailChange handles GET /api/v1/auth/verify-email-change?token=xxx&step=old|new.
 func (h *Handler) verifyEmailChange(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2104,13 +2104,13 @@ func (h *Handler) verifyEmailChange(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if token == "" {
-		writeJSONError(w, http.StatusBadRequest, "token is required")
+		writeError(w, http.StatusBadRequest, "token is required")
 		return
 	}
 
 	applied, err := h.authSvc.ConfirmEmailChange(r.Context(), token, step)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -2127,7 +2127,7 @@ func (h *Handler) verifyEmailChange(w http.ResponseWriter, r *http.Request) {
 // loginAttempts handles GET /api/v1/auth/login-attempts?username=xxx&limit=50
 func (h *Handler) loginAttempts(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2136,7 +2136,7 @@ func (h *Handler) loginAttempts(w http.ResponseWriter, r *http.Request) {
 		username = r.Header.Get("X-User-ID")
 	}
 	if username == "" {
-		writeJSONError(w, http.StatusBadRequest, "username query parameter is required")
+		writeError(w, http.StatusBadRequest, "username query parameter is required")
 		return
 	}
 
@@ -2151,7 +2151,7 @@ func (h *Handler) loginAttempts(w http.ResponseWriter, r *http.Request) {
 
 	attempts, err := h.authSvc.GetLoginAttempts(r.Context(), username, limit)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to query login attempts")
+		writeError(w, http.StatusInternalServerError, "failed to query login attempts")
 		return
 	}
 
@@ -2169,7 +2169,7 @@ func (h *Handler) loginAttempts(w http.ResponseWriter, r *http.Request) {
 // Body: {"user_id": "...", "ip": "...", "user_agent": "..."}
 func (h *Handler) riskAssess(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2179,19 +2179,19 @@ func (h *Handler) riskAssess(w http.ResponseWriter, r *http.Request) {
 		UserAgent string `json:"user_agent"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	userID, err := uuid.Parse(req.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "valid user_id is required")
+		writeError(w, http.StatusBadRequest, "valid user_id is required")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "tenant context required")
+		writeError(w, http.StatusBadRequest, "tenant context required")
 		return
 	}
 
@@ -2222,7 +2222,7 @@ func (h *Handler) riskAssess(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2232,11 +2232,11 @@ func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
 		DeviceName  string `json:"device_name"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	if body.Fingerprint == "" {
-		writeJSONError(w, http.StatusBadRequest, "fingerprint is required")
+		writeError(w, http.StatusBadRequest, "fingerprint is required")
 		return
 	}
 	if body.UserID == "" {
@@ -2244,7 +2244,7 @@ func (h *Handler) rememberDevice(w http.ResponseWriter, r *http.Request) {
 	}
 	userUUID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -2266,7 +2266,7 @@ func (h *Handler) manageHooks(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var hook service.AuthHook
 		if err := json.NewDecoder(r.Body).Decode(&hook); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if hook.ID == "" {
@@ -2281,13 +2281,13 @@ func (h *Handler) manageHooks(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
 		if id == "" {
-			writeJSONError(w, http.StatusBadRequest, "id is required")
+			writeError(w, http.StatusBadRequest, "id is required")
 			return
 		}
 		h.hooks.RemoveHook(id)
 		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -2295,7 +2295,7 @@ func (h *Handler) manageHooks(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) passwordlessRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2307,18 +2307,18 @@ func (h *Handler) passwordlessRegister(w http.ResponseWriter, r *http.Request) {
 		Email    string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if body.Email == "" {
-		writeJSONError(w, http.StatusBadRequest, "email is required")
+		writeError(w, http.StatusBadRequest, "email is required")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
@@ -2350,7 +2350,7 @@ func (h *Handler) passwordlessRegister(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) mfaWebAuthnBegin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2358,12 +2358,12 @@ func (h *Handler) mfaWebAuthnBegin(w http.ResponseWriter, r *http.Request) {
 		UserID string `json:"user_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if body.UserID == "" {
-		writeJSONError(w, http.StatusBadRequest, "user_id is required")
+		writeError(w, http.StatusBadRequest, "user_id is required")
 		return
 	}
 
@@ -2377,7 +2377,7 @@ func (h *Handler) mfaWebAuthnBegin(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) mfaWebAuthnFinish(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2401,7 +2401,7 @@ func (h *Handler) idpConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var cfg service.IdPConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid request body")
+			writeError(w, http.StatusBadRequest, "invalid request body")
 			return
 		}
 		if cfg.ID == "" {
@@ -2417,14 +2417,14 @@ func (h *Handler) idpConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodDelete:
 		id := r.URL.Query().Get("id")
 		if id == "" {
-			writeJSONError(w, http.StatusBadRequest, "id is required")
+			writeError(w, http.StatusBadRequest, "id is required")
 			return
 		}
 		delete(h.idpConfigs, id)
 		writeJSON(w, http.StatusOK, map[string]bool{"deleted": true})
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
 
@@ -2432,29 +2432,29 @@ func (h *Handler) idpConfig(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) logoutAll(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
 	var body struct {
 		UserID string `json:"user_id"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil { writeJSONError(w, http.StatusBadRequest, "invalid request body"); return }
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil { writeError(w, http.StatusBadRequest, "invalid request body"); return }
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
 	if err := h.authSvc.LogoutAll(r.Context(), tc.TenantID, userID, uuid.Nil); err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to logout all devices")
+		writeError(w, http.StatusInternalServerError, "failed to logout all devices")
 		return
 	}
 
@@ -2465,7 +2465,7 @@ func (h *Handler) logoutAll(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) emailChange(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2475,19 +2475,19 @@ func (h *Handler) emailChange(w http.ResponseWriter, r *http.Request) {
 		NewEmail string `json:"new_email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
 	result, err := h.authSvc.InitiateEmailChange(r.Context(), userID, body.OldEmail, body.NewEmail)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -2502,7 +2502,7 @@ func (h *Handler) emailChange(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) emailChangeConfirm(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2511,13 +2511,13 @@ func (h *Handler) emailChangeConfirm(w http.ResponseWriter, r *http.Request) {
 		Step  string `json:"step"` // "old" or "new"
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	applied, err := h.authSvc.ConfirmEmailChange(r.Context(), body.Token, body.Step)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, err.Error())
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -2538,7 +2538,7 @@ func (h *Handler) authorize(w http.ResponseWriter, r *http.Request) {
 	redirectURI := r.URL.Query().Get("redirect_uri")
 
 	if clientID == "" {
-		writeJSONError(w, http.StatusBadRequest, "client_id is required")
+		writeError(w, http.StatusBadRequest, "client_id is required")
 		return
 	}
 
@@ -2577,7 +2577,7 @@ func (h *Handler) authorize(w http.ResponseWriter, r *http.Request) {
 // usernamePasswordLogin handles Auth0 Lock's /usernamepassword/login endpoint.
 func (h *Handler) usernamePasswordLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2588,7 +2588,7 @@ func (h *Handler) usernamePasswordLogin(w http.ResponseWriter, r *http.Request) 
 		ClientID  string `json:"client_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
@@ -2607,7 +2607,7 @@ func (h *Handler) usernamePasswordLogin(w http.ResponseWriter, r *http.Request) 
 // dbConnectionsSignup handles Auth0 Lock's /dbconnections/signup endpoint.
 func (h *Handler) dbConnectionsSignup(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2618,20 +2618,20 @@ func (h *Handler) dbConnectionsSignup(w http.ResponseWriter, r *http.Request) {
 		ClientID  string `json:"client_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	tc, err := ggidtenant.FromContext(r.Context())
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "missing tenant context")
+		writeError(w, http.StatusBadRequest, "missing tenant context")
 		return
 	}
 
 	userID := uuid.New()
 	username := body.Email
 	if username == "" {
-		writeJSONError(w, http.StatusBadRequest, "email is required")
+		writeError(w, http.StatusBadRequest, "email is required")
 		return
 	}
 
@@ -2654,7 +2654,7 @@ func (h *Handler) handleSocial(w http.ResponseWriter, r *http.Request) {
 
 	provider := parts[0]
 	if provider == "" {
-		writeJSONError(w, http.StatusBadRequest, "provider is required")
+		writeError(w, http.StatusBadRequest, "provider is required")
 		return
 	}
 
@@ -2697,7 +2697,7 @@ func (h *Handler) socialBegin(w http.ResponseWriter, r *http.Request, provider s
 	// Validate the connector exists
 	conn, err := h.socialReg.Get(provider)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "unsupported provider: "+provider)
+		writeError(w, http.StatusBadRequest, "unsupported provider: "+provider)
 		return
 	}
 
@@ -2721,7 +2721,7 @@ func (h *Handler) socialBegin(w http.ResponseWriter, r *http.Request, provider s
 
 	authURL, err := conn.GetAuthURL(r.Context(), state, callbackURL)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, "failed to build auth URL")
+		writeError(w, http.StatusInternalServerError, "failed to build auth URL")
 		return
 	}
 
@@ -2737,13 +2737,13 @@ func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provide
 	code := r.URL.Query().Get("code")
 	state := r.URL.Query().Get("state")
 	if code == "" {
-		writeJSONError(w, http.StatusBadRequest, "missing authorization code")
+		writeError(w, http.StatusBadRequest, "missing authorization code")
 		return
 	}
 
 	conn, err := h.socialReg.Get(provider)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "unsupported provider: "+provider)
+		writeError(w, http.StatusBadRequest, "unsupported provider: "+provider)
 		return
 	}
 
@@ -2760,7 +2760,7 @@ func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provide
 	userInfo, err := conn.HandleCallback(r.Context(), code, state, callbackURL)
 	if err != nil {
 		log.Printf("social callback error (%s): %v", provider, err)
-		writeJSONError(w, http.StatusUnauthorized, "social authentication failed")
+		writeError(w, http.StatusUnauthorized, "social authentication failed")
 		return
 	}
 
@@ -2773,7 +2773,7 @@ func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provide
 	tokens, err := h.authSvc.SocialLogin(r.Context(), userInfo.Provider, userInfo.ExternalID, userInfo.Email, userInfo.Name, userInfo.AvatarURL, ip, userAgent)
 	if err != nil {
 		log.Printf("social login completion error (%s): %v", provider, err)
-		writeJSONError(w, http.StatusInternalServerError, "social login failed")
+		writeError(w, http.StatusInternalServerError, "social login failed")
 		return
 	}
 
@@ -2784,7 +2784,7 @@ func (h *Handler) socialCallback(w http.ResponseWriter, r *http.Request, provide
 // Admin operation: revokes all sessions for a user.
 func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2794,18 +2794,18 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 		ExceptSessionID string `json:"except_session_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	tenantID, err := uuid.Parse(body.TenantID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeError(w, http.StatusBadRequest, "invalid tenant_id")
 		return
 	}
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -2834,7 +2834,7 @@ func (h *Handler) forceLogout(w http.ResponseWriter, r *http.Request) {
 // Enforces the concurrent session limit for a user.
 func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -2843,18 +2843,18 @@ func (h *Handler) sessionLimit(w http.ResponseWriter, r *http.Request) {
 		UserID   string `json:"user_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	tenantID, err := uuid.Parse(body.TenantID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid tenant_id")
+		writeError(w, http.StatusBadRequest, "invalid tenant_id")
 		return
 	}
 	userID, err := uuid.Parse(body.UserID)
 	if err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid user_id")
+		writeError(w, http.StatusBadRequest, "invalid user_id")
 		return
 	}
 
@@ -2890,7 +2890,7 @@ func (h *Handler) securityPasswordPolicy(w http.ResponseWriter, r *http.Request)
 			MaxAttempts    int      `json:"max_attempts"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
-			writeJSONError(w, http.StatusBadRequest, "invalid JSON body")
+			writeError(w, http.StatusBadRequest, "invalid JSON body")
 			return
 		}
 		newPolicy := conf.PasswordPolicy{
@@ -2910,6 +2910,7 @@ func (h *Handler) securityPasswordPolicy(w http.ResponseWriter, r *http.Request)
 		})
 
 	default:
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 	}
 }
+

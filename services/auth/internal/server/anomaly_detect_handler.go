@@ -24,7 +24,7 @@ type AnomalyDetectResult struct {
 
 func (h *Handler) handleAnomalyDetect(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	result := AnomalyDetectResult{

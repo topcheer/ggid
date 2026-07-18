@@ -36,19 +36,19 @@ var vpnIPStore = struct {
 // Checks if an IP address belongs to a known VPN, proxy, datacenter, or Tor exit node.
 func (h *Handler) handleVPNCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	ipStr := r.URL.Query().Get("ip")
 	if ipStr == "" {
-		writeJSONError(w, http.StatusBadRequest, "ip query parameter is required")
+		writeError(w, http.StatusBadRequest, "ip query parameter is required")
 		return
 	}
 
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid IP address")
+		writeError(w, http.StatusBadRequest, "invalid IP address")
 		return
 	}
 

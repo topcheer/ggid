@@ -2363,3 +2363,8 @@ func parseAuthnRequest(rawXML []byte) (entityID, acsURL, requestID string) {
 
 	return entityID, acsURL, requestID
 }
+// writeJSONError writes a standard JSON error response.
+func writeJSONError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
+

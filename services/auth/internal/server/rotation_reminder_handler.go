@@ -52,7 +52,7 @@ var rotationReminderStore = struct {
 // GET /api/v1/auth/rotation-reminders?type=password&severity=critical
 func (h *Handler) handleRotationReminders(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 

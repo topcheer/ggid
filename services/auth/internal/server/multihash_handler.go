@@ -58,24 +58,24 @@ func rehashPassword(password, oldHash string) (*MultiHashVerifyResponse, error) 
 // POST /api/v1/auth/multi-hash/verify
 func (h *Handler) handleMultiHashVerify(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	var req MultiHashVerifyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, http.StatusBadRequest, "invalid request body")
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	if req.Hash == "" || req.Password == "" {
-		writeJSONError(w, http.StatusBadRequest, "hash and password are required")
+		writeError(w, http.StatusBadRequest, "hash and password are required")
 		return
 	}
 
 	resp, err := rehashPassword(req.Password, req.Hash)
 	if err != nil {
-		writeJSONError(w, http.StatusInternalServerError, err.Error())
+		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, resp)
