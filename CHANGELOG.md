@@ -91,16 +91,61 @@ The format is based on [Conventional Commits](https://conventionalcommits.org).
 - docs: Console feature pages F-42 through F-94
 - docs: User guides for SCEP, HR lifecycle, webhook delivery, RLS, backup/DR
 
-### 📊 Session Statistics
+### 🔒 v1.0-beta Stability Phase
 
-- **Console pages**: 53 feature pages (F-42 to F-94)
-- **Research rounds**: 48
-- **Backlog items**: 254 (KB-001 to KB-254)
-- **Research documents**: 48+ deep-dive analyses
-- **Test packages**: 61/61 passing
-- **API endpoints**: 786+
+#### Quality & Testing
+- test: 52 API security tests (auth/authz boundary cases across 25+ endpoints)
+- test: 33 E2E integration tests (full gateway request lifecycle)
+- test: Data race detection — 2 races found and fixed (atomic.Bool, atomic.Int32)
+- test: go test -race ./services/gateway/... — clean
+- test: 43/43 console page regression verification (all 200)
+- docs: Quality baseline report (API latency, race detection, coverage)
+- docs: Testing strategy (4-layer pyramid, CI pipeline, coverage targets)
+
+#### Performance
+- perf: API latency baseline — all 5 core endpoints < 200ms (25-167ms)
+- perf: Login 167ms, Users 54ms, Policies 37ms, Audit 59ms, Sessions 25ms
+
+#### Frontend
+- feat: F-140 i18n audit — hardcoded strings → t() across console
+- feat: F-141 a11y improvements — aria-label, label, alt text
+- feat: Navigation system refactor (8 functional domains + search + collapse)
+- feat: First-time setup wizard (5-step guided onboarding)
+- feat: Console experience polish (404/error boundary/loading skeleton/page titles)
+- fix: tsc TS7006 errors 834 → 4 (-99.5%)
+
+#### Backend
+- fix: KB-312 error handling unification (writeError → writeJSONError)
+- fix: Unused imports cleanup
+- fix: Data race in TimeoutMiddleware and JWKS refresh tests
+- fix: NHI repo nil pool guard (EnsureSchema panic prevention)
+
+#### Documentation
+- docs: Documentation completeness audit — 95.7% feature coverage (45/47)
+- docs: China GM (SM2/SM3/SM4) compliance guide
+- docs: Temporary Access Pass (TAP) guide
+- docs: Product overview, admin quickstart, integration guide
+- docs: Getting started, testing strategy, quality baseline
+- docs: GAP convergence report — 12 critical gaps resolved
+
+#### Security
+- docs: KB-313 Security checklist
+- test: API security test coverage: no-token, invalid-token, cross-tenant, rate-limit, JSON injection, oversized body, header injection
+- fix: 0 make(map) in non-cache production code
+
+### 📊 v1.0-beta Final Statistics
+
+- **Console pages**: 825
+- **Test functions**: 4461 (including 85+ API security, 33 E2E)
+- **API endpoints**: 864+
+- **OpenAPI paths**: 704 (81% coverage)
 - **SDKs**: 11 languages
-- **Code migrations**: 37 SQL migration files
+- **Code migrations**: 32 SQL migration files
+- **User guides**: 364
+- **Research documents**: 292
+- **CI pass rate**: >90%
+- **tsc TS7006**: 4 (from 834, -99.5%)
+- **Documentation coverage**: 95.7%
 
 ## [v0.1.0] - Initial Release
 
