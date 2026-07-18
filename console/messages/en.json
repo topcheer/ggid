@@ -1005,5 +1005,72 @@
       "errors": "Errors",
       "noErrors": "No errors"
     }
+  },
+  "passwordMigration": {
+    "title": "Password Migration Dashboard",
+    "description": "Monitor and manage the transition from passwords to passwordless authentication",
+    "tabs": {
+      "overview": "Overview",
+      "config": "Nudge Config",
+      "users": "User Status"
+    },
+    "overview": {
+      "deprecationLevel": "Deprecation Level",
+      "passwordlessUsers": "Passwordless Users",
+      "totalUsers": "Total Users",
+      "migrationProgress": "Migration Progress",
+      "migrationRate": "Migration Rate",
+      "pendingUsers": "Pending Migration",
+      "lastUpdated": "Last Updated",
+      "levelOff": "Off",
+      "levelReadOnly": "Read Only",
+      "levelMigrationRequired": "Migration Required",
+      "levelDisabled": "Disabled",
+      "noData": "No migration data available",
+      "registered": "Registered",
+      "pending": "Pending"
+    },
+    "config": {
+      "title": "Nudge Configuration",
+      "description": "Configure password deprecation level and enrollment nudges",
+      "deprecationLevel": "Deprecation Level",
+      "levelOffDesc": "Passwords fully active, no nudges",
+      "levelReadOnlyDesc": "Users can login with password but see nudges",
+      "levelMigrationRequiredDesc": "Users must enroll a passkey to continue",
+      "levelDisabledDesc": "Password login completely disabled",
+      "graceDays": "Grace Period (Days)",
+      "graceDaysDesc": "Days before enforcement after migration required",
+      "bannerText": "Nudge Banner Text",
+      "bannerTextPlaceholder": "Custom message shown to users during nudge",
+      "save": "Save Configuration",
+      "configSaved": "Configuration saved successfully",
+      "enrollmentEmail": "Enrollment Email Template",
+      "enrollmentEmailDesc": "Email sent to users who need to enroll passkeys",
+      "emailSubject": "Email Subject",
+      "emailBody": "Email Body"
+    },
+    "users": {
+      "title": "User Migration Status",
+      "description": "Users who have not yet enrolled a passkey or WebAuthn credential",
+      "filterAll": "All",
+      "filterPending": "Pending",
+      "filterNudged": "Nudged",
+      "filterEnrolled": "Enrolled",
+      "user": "User",
+      "email": "Email",
+      "status": "Status",
+      "lastLogin": "Last Login",
+      "methods": "Auth Methods",
+      "actions": "Actions",
+      "sendNudge": "Send Nudge",
+      "sendNudgeAll": "Nudge All Pending",
+      "nudgeSent": "Nudge sent to {count} users",
+      "noUsers": "No users found",
+      "searchPlaceholder": "Search by email or name...",
+      "statusPending": "Pending",
+      "statusNudged": "Nudged",
+      "statusEnrolled": "Enrolled",
+      "statusExpired": "Grace Expired"
+    }
   }
 }
