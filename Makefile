@@ -67,10 +67,10 @@ docker-stop:
 	docker compose -f deploy/docker-compose.yaml down
 
 docker-build:
-	docker build -f console/Dockerfile -t ggid/ggid-console:latest .
+	docker build --platform linux/amd64 -f console/Dockerfile -t ggid/ggid-console:latest .
 
 docker-build-allinone:
-	docker build -f deploy/all-in-one/Dockerfile -t ggid/ggid-all-in-one:latest .
+	docker build --platform linux/amd64 -f deploy/all-in-one/Dockerfile -t ggid/ggid-all-in-one:latest .
 
 docker-push: docker-build-allinone
 	docker tag ggid/ggid-all-in-one:latest registry.iot2.win/ggid/all-in-one:latest

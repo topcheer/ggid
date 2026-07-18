@@ -142,6 +142,7 @@ jobs:
           context: .
           file: deploy/all-in-one/Dockerfile
           push: false
+          platforms: linux/amd64
           tags: ggid/ggid-all-in-one:ci-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
