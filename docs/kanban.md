@@ -255,6 +255,9 @@
 | KB-241 | **Screenshots + repo badges + Mermaid architecture** | docs+frontend | P1 | readme-guide | 1d |
 | KB-242 | **Conventional commits + git-cliff + GitHub Releases** (auto-changelog) | devops | P0 | changelog-release | 2d |
 | KB-243 | **Deprecation headers + migration guide framework** (RFC 8594) | backend+docs | P1 | changelog-release | 2d |
+| KB-244 | **Rotation engine + JWT key rotation + cert-manager** (dual-key pattern) | backend | P0 | key-rotation | 4d |
+| KB-245 | **Client secret + device cert + API key rotation** (grace periods) | backend | P1 | key-rotation | 3d |
+| KB-246 | **Webhook secret + CMK rotation + rotation dashboard** | backend | P2 | key-rotation | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -389,6 +392,7 @@
 | User Self-Service & Onboarding | DONE | docs/research/user-self-service-onboarding.md |
 | README & Quickstart Guide | DONE | docs/research/readme-quickstart-guide.md |
 | Changelog & Release Notes Automation | DONE | docs/research/changelog-release-automation.md |
+| Automated Key Rotation & Cert Lifecycle | DONE | docs/research/key-rotation-cert-management.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
