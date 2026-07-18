@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 79: User Self-Service & Onboarding research complete — 3 backlog items)*
+*Last updated: 2026-07-17 (Round 80: README & Quickstart Guide research complete — 2 backlog items)*
 
 ## Current Stats
 
@@ -185,6 +185,7 @@
 | 159 | **Multi-region active-active** (P0-P2) | devops+backend | Global scale | PG streaming replication + failover + GeoDNS + bidirectional logical replication + LWW conflict resolution + per-tenant data residency. See docs/research/multi-region-active-active.md |
 | 160 | **OpenAPI 3.1 spec generation** (P0) | backend | API docs | swag annotations on 786+ handlers + gateway aggregator + Swagger UI + contract tests + SDK auto-generation. See docs/research/openapi-spec-generation.md |
 | 161 | **User self-service** (P0-P1) | backend | End-user UX | Registration + email verification + password reset + profile edit + device/session/MFA self-service + account linking + GDPR export/delete. See docs/research/user-self-service-onboarding.md |
+| 162 | **README + CONTRIBUTING + LICENSE** (P0) | docs | GitHub presence | Professional README.md with feature matrix + comparison table + quickstart + Mermaid architecture + badges + Apache 2.0 license. See docs/research/readme-quickstart-guide.md |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -250,6 +251,7 @@
 39. Multi-Region Active-Active Deployment → DONE (docs/research/multi-region-active-active.md) — 4 backlog items added
 40. OpenAPI 3.1 Spec Generation & API Docs → DONE (docs/research/openapi-spec-generation.md) — 3 backlog items added
 41. User Self-Service & Onboarding → DONE (docs/research/user-self-service-onboarding.md) — 3 backlog items added
+42. README & Quickstart Guide → DONE (docs/research/readme-quickstart-guide.md) — 2 backlog items added
 
 ## Rules
 
@@ -285,6 +287,7 @@ Active research topics:
 - Multi-Region Active-Active → DONE (docs/research/multi-region-active-active.md)
 - OpenAPI Spec Generation → DONE (docs/research/openapi-spec-generation.md)
 - User Self-Service & Onboarding → DONE (docs/research/user-self-service-onboarding.md)
+- README & Quickstart Guide → DONE (docs/research/readme-quickstart-guide.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
