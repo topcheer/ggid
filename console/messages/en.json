@@ -1176,5 +1176,102 @@
       "reviewTitle": "Review Campaign Details",
       "confirmLaunch": "Confirm and Launch"
     }
+  },
+  "identityAnalytics": {
+    "title": "Identity Analytics",
+    "description": "User growth, authentication methods, and risk distribution insights",
+    "tabs": {
+      "growth": "User Growth",
+      "methods": "Auth Methods",
+      "risk": "Risk Distribution"
+    },
+    "growth": {
+      "title": "User Growth Trends",
+      "registered": "Registered",
+      "active": "Active",
+      "dormant": "Dormant",
+      "totalUsers": "Total Users",
+      "newThisWeek": "New This Week",
+      "activeRate": "Active Rate",
+      "dormantRate": "Dormant Rate",
+      "last30Days": "Last 30 Days",
+      "last7Days": "Last 7 Days",
+      "noData": "No growth data available"
+    },
+    "methods": {
+      "title": "Authentication Method Distribution",
+      "description": "How users authenticate across the platform",
+      "password": "Password",
+      "passkey": "Passkey",
+      "webauthn": "WebAuthn",
+      "social": "Social Login",
+      "saml": "SAML",
+      "totp": "TOTP",
+      "totalAuths": "Total Authentications",
+      "passwordlessRate": "Passwordless Rate"
+    },
+    "risk": {
+      "title": "High Risk Users",
+      "description": "Users flagged with elevated risk scores",
+      "user": "User",
+      "email": "Email",
+      "riskScore": "Risk Score",
+      "riskLevel": "Risk Level",
+      "lastActivity": "Last Activity",
+      "factors": "Risk Factors",
+      "actions": "Actions",
+      "levelHigh": "High",
+      "levelMedium": "Medium",
+      "levelLow": "Low",
+      "levelCritical": "Critical",
+      "noRiskUsers": "No high-risk users detected",
+      "viewProfile": "View Profile",
+      "totalHighRisk": "High Risk Users",
+      "avgRiskScore": "Average Risk Score"
+    }
+  },
+  "loginSecurity": {
+    "title": "Login Security Dashboard",
+    "description": "Monitor login success rates, failure patterns, and geographic distribution",
+    "tabs": {
+      "success": "Success Rate",
+      "failures": "Failure Analysis",
+      "geo": "Geographic"
+    },
+    "success": {
+      "title": "Login Success Rate",
+      "successRate": "Success Rate",
+      "totalAttempts": "Total Attempts",
+      "successful": "Successful",
+      "failed": "Failed",
+      "last24h": "Last 24 Hours",
+      "last7d": "Last 7 Days",
+      "peakHour": "Peak Hour",
+      "noData": "No login data available"
+    },
+    "failures": {
+      "title": "Login Failure Analysis",
+      "description": "Breakdown of login failure reasons",
+      "wrongPassword": "Wrong Password",
+      "mfaFailed": "MFA Failed",
+      "locked": "Account Locked",
+      "riskBlocked": "Risk Blocked",
+      "expired": "Password Expired",
+      "disabled": "Account Disabled",
+      "totalFailures": "Total Failures",
+      "topReason": "Top Failure Reason"
+    },
+    "geo": {
+      "title": "Geographic Login Distribution",
+      "description": "Login attempts by IP location",
+      "location": "Location",
+      "attempts": "Attempts",
+      "successRate": "Success Rate",
+      "uniqueIPs": "Unique IPs",
+      "flagged": "Flagged",
+      "noData": "No geographic data available",
+      "totalCountries": "Countries",
+      "suspiciousIPs": "Suspicious IPs"
+    }
   }
 }
