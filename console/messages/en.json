@@ -1273,5 +1273,121 @@
       "totalCountries": "Countries",
       "suspiciousIPs": "Suspicious IPs"
     }
+  },
+  "apiHealth": {
+    "title": "API Health Monitor",
+    "description": "Monitor endpoint performance, slow requests, and error rate alerts",
+    "tabs": {
+      "endpoints": "Endpoints",
+      "slowRequests": "Slow Requests",
+      "alerts": "Alert Thresholds"
+    },
+    "endpoints": {
+      "title": "Endpoint Health",
+      "path": "Path",
+      "method": "Method",
+      "p95Latency": "P95 Latency",
+      "errorRate": "Error Rate",
+      "calls": "Calls",
+      "lastCalled": "Last Called",
+      "status": "Status",
+      "noData": "No endpoint data available",
+      "statusHealthy": "Healthy",
+      "statusDegraded": "Degraded",
+      "statusDown": "Down",
+      "refresh": "Refresh"
+    },
+    "slowRequests": {
+      "title": "Slow Requests (>500ms)",
+      "description": "Requests exceeding 500ms response time",
+      "timestamp": "Time",
+      "path": "Path",
+      "method": "Method",
+      "duration": "Duration",
+      "statusCode": "Status",
+      "userAgent": "User Agent",
+      "ip": "IP Address",
+      "noSlowRequests": "No slow requests detected"
+    },
+    "alerts": {
+      "title": "Error Rate Alert Thresholds",
+      "description": "Configure alert thresholds for error rates and latency",
+      "errorRateThreshold": "Error Rate Threshold (%)",
+      "latencyThreshold": "Latency Threshold (ms)",
+      "minCalls": "Minimum Calls (for alerting)",
+      "windowMinutes": "Time Window (minutes)",
+      "webhookUrl": "Alert Webhook URL",
+      "webhookPlaceholder": "https://hooks.slack.com/...",
+      "save": "Save Thresholds",
+      "saved": "Alert thresholds saved successfully",
+      "enabled": "Enable Alerting"
+    }
+  },
+  "auditExplorer": {
+    "title": "Audit Event Explorer",
+    "description": "Search, filter, and export audit events",
+    "tabs": {
+      "events": "Events",
+      "details": "Event Details",
+      "export": "Export"
+    },
+    "events": {
+      "title": "Audit Events",
+      "search": "Search events...",
+      "type": "Type",
+      "severity": "Severity",
+      "user": "User",
+      "timeRange": "Time Range",
+      "timestamp": "Timestamp",
+      "action": "Action",
+      "resource": "Resource",
+      "status": "Status",
+      "noEvents": "No events found",
+      "allTypes": "All Types",
+      "allSeverities": "All Severities",
+      "allUsers": "All Users",
+      "range1h": "Last Hour",
+      "range24h": "Last 24 Hours",
+      "range7d": "Last 7 Days",
+      "range30d": "Last 30 Days",
+      "severityInfo": "Info",
+      "severityWarning": "Warning",
+      "severityError": "Error",
+      "severityCritical": "Critical"
+    },
+    "details": {
+      "title": "Event Details",
+      "selectEvent": "Select an event to view details",
+      "eventId": "Event ID",
+      "timestamp": "Timestamp",
+      "type": "Type",
+      "severity": "Severity",
+      "user": "User",
+      "ipAddress": "IP Address",
+      "userAgent": "User Agent",
+      "resource": "Resource",
+      "action": "Action",
+      "result": "Result",
+      "payload": "Payload (JSON)",
+      "metadata": "Metadata",
+      "correlationId": "Correlation ID"
+    },
+    "export": {
+      "title": "Export Audit Events",
+      "description": "Export filtered events to JSON or CSV",
+      "format": "Format",
+      "formatJson": "JSON",
+      "formatCsv": "CSV",
+      "dateRange": "Date Range",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "filterType": "Filter by Type",
+      "filterSeverity": "Filter by Severity",
+      "estimatedEvents": "Estimated Events",
+      "export": "Export",
+      "exporting": "Exporting...",
+      "exportSuccess": "Export completed",
+      "maxEvents": "Max 10,000 events per export"
+    }
   }
 }
