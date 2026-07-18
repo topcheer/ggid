@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 
@@ -57,7 +58,7 @@ func (h *OAuthGRPCHandler) CreateClient(ctx context.Context, req *oauthv1.Create
 
 	result, err := h.svc.CreateClient(ctx, input)
 	if err != nil {
-		log.Printf("gRPC CreateClient error: %v", err)
+		slog.Error("gRPC CreateClient error", "err", err)
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to create client: %v", err))
 	}
 	return domainToPbClient(result.Client), nil

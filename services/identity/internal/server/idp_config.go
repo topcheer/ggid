@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -54,7 +54,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 		case http.MethodGet:
 			configs, err := h.idpConfigSvc.List(ctx, tenantID)
 			if err != nil {
-				log.Printf("idp_config list error: %v", err)
+				slog.Error("idp_config list error", "err", err)
 				writeError(w, http.StatusInternalServerError, "internal server error")
 				return
 			}
@@ -112,7 +112,7 @@ func (h *HTTPHandler) handleIdPConfig(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodDelete:
 		if err := h.idpConfigSvc.Delete(ctx, *configID); err != nil {
-			log.Printf("idp_config delete error: %v", err)
+			slog.Error("idp_config delete error", "err", err)
 			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}

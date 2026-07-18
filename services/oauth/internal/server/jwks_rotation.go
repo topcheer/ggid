@@ -1,7 +1,7 @@
 package server
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -22,7 +22,7 @@ func handleJWKSRotateWithKP(w http.ResponseWriter, r *http.Request, kp *service.
 
 	oldKID := kp.KeyID()
 	if err := kp.RotateKey(); err != nil {
-		log.Printf("jwks rotation error: %v", err)
+		slog.Error("jwks rotation error", "err", err)
 		writeJSON(w, http.StatusInternalServerError, map[string]any{"error": "internal server error"})
 		return
 	}

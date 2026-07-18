@@ -207,6 +207,11 @@ func (h *HTTPHandler) registerRoutes() {
 	h.mux.HandleFunc("/api/v1/admin/backups", h.handleBackupList)
 	h.mux.HandleFunc("/api/v1/admin/backups/trigger", h.handleBackupTrigger)
 	h.mux.HandleFunc("/api/v1/admin/backups/", h.handleBackupVerify)
+	// MDM (Mobile Device Management).
+	h.mux.HandleFunc("/api/v1/mdm/connectors", h.handleMDMConnectors)
+	h.mux.HandleFunc("/api/v1/mdm/sync/", h.handleMDMSync)
+	h.mux.HandleFunc("/api/v1/mdm/devices", h.handleMDMDevices)
+	h.mux.HandleFunc("/api/v1/mdm/devices/", h.handleMDMCompliance)
 	h.mux.HandleFunc("/api/v1/identity/gdpr/export", h.handleGDPRExport)
 	h.mux.HandleFunc("/api/v1/identity/scim/error-recovery", h.handleSCIMErrorRecovery)
 	h.mux.HandleFunc("/api/v1/identity/idp/failover-config", h.handleIdPFailoverConfig)
