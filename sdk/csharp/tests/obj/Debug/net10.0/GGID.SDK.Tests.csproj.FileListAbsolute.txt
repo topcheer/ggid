@@ -103,3 +103,4 @@
 /Users/zhanju/ggai/ggid/sdk/csharp/tests/obj/Debug/net10.0/GGID.SDK.Tests.pdb
 /Users/zhanju/ggai/ggid/sdk/csharp/tests/obj/Debug/net10.0/GGID.SDK.Tests.genruntimeconfig.cache
 /Users/zhanju/ggai/ggid/sdk/csharp/tests/obj/Debug/net10.0/ref/GGID.SDK.Tests.dll
+/Users/zhanju/ggai/ggid/sdk/csharp/tests/obj/Debug/net10.0/GGID.SDK.Tests.sourcelink.json

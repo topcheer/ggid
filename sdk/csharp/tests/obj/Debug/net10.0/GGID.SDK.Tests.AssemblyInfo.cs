@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GGID.SDK.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+450bd4899870681504650cd2c5a5df67b64c0689")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+edacea842318c7124aa3d176f8f249dd432128b1")]
 [assembly: System.Reflection.AssemblyProductAttribute("GGID.SDK.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GGID.SDK.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
