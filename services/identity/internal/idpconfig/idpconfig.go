@@ -7,7 +7,6 @@ package idpconfig
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -46,7 +45,6 @@ type Store interface {
 // Service manages per-tenant IdP configurations.
 type Service struct {
 	store Store
-	mu    sync.Mutex
 }
 
 // NewService creates a new IdP config service.
