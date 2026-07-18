@@ -2478,5 +2478,110 @@
     "clearFilters": "Clear filters",
     "loading": "Loading...",
     "error": "Something went wrong"
+  },
+  "oauthWizard": {
+    "title": "Create OAuth Client",
+    "subtitle": "Register a new application to use GGID for authentication",
+    "steps": {
+      "appType": "Application Type",
+      "authMethod": "Authentication Method",
+      "scopes": "Scopes",
+      "confirm": "Review & Create"
+    },
+    "appType": {
+      "title": "What type of application are you building?",
+      "web": "Web Application",
+      "webDesc": "Server-side app with a backend (Express, Django, Spring)",
+      "spa": "Single Page App",
+      "spaDesc": "Client-side app (React, Vue, Angular)",
+      "mobile": "Mobile App",
+      "mobileDesc": "Native mobile app (iOS, Android)",
+      "m2m": "Machine-to-Machine",
+      "m2mDesc": "Server-to-server communication (no user)"
+    },
+    "authMethod": {
+      "title": "How will your app authenticate?",
+      "clientSecret": "Client Secret",
+      "clientSecretDesc": "Traditional server-side auth (confidential client)",
+      "pkce": "PKCE (Recommended)",
+      "pkceDesc": "Proof Key for Code Exchange — no secret needed",
+      "mtls": "mTLS",
+      "mtlsDesc": "Mutual TLS certificate-based authentication"
+    },
+    "scopes": {
+      "title": "Select Scopes",
+      "description": "Choose what your application can access",
+      "openid": "OpenID Connect",
+      "openidDesc": "Basic authentication",
+      "profile": "Profile",
+      "profileDesc": "User name, display name, picture",
+      "email": "Email",
+      "emailDesc": "User email address",
+      "roles": "Roles",
+      "rolesDesc": "User role assignments",
+      "offline": "Offline Access",
+      "offlineDesc": "Refresh tokens for continuous access",
+      "custom": "Custom Scopes",
+      "customDesc": "Add your own scope (space-separated)"
+    },
+    "confirm": {
+      "title": "Review Configuration",
+      "clientName": "Client Name",
+      "clientNamePlaceholder": "My App",
+      "redirectUris": "Redirect URIs",
+      "redirectUrisPlaceholder": "https://yourapp.com/callback",
+      "redirectUrisDesc": "One URI per line",
+      "create": "Create Client",
+      "creating": "Creating...",
+      "created": "Client created successfully!",
+      "clientId": "Client ID",
+      "clientSecret": "Client Secret",
+      "secretWarning": "Save this secret now — it will not be shown again!",
+      "copyAll": "Copy All",
+      "curlExample": "Quick Test (cURL)",
+      "close": "Close",
+      "appTypeLabel": "App Type",
+      "authMethodLabel": "Auth Method"
+    },
+    "nav": {
+      "back": "Back",
+      "next": "Next"
+    }
+  },
+  "importEnhanced": {
+    "preCheck": {
+      "title": "Pre-Import Check",
+      "runCheck": "Run Dry-Run Check",
+      "checking": "Checking data...",
+      "results": "Dry-Run Results",
+      "total": "Total Rows",
+      "valid": "Valid",
+      "invalid": "Invalid",
+      "skipped": "Skipped",
+      "duplicates": "Duplicates",
+      "warnings": "Warnings",
+      "ready": "Ready to import",
+      "issues": "Issues Found",
+      "proceed": "Proceed to Import",
+      "fixFirst": "Please fix issues before importing"
+    },
+    "progress": {
+      "title": "Import Progress",
+      "processing": "Processing row {current} of {total}",
+      "completed": "Import Completed",
+      "failed": "Import Failed",
+      "importing": "Importing..."
+    },
+    "summary": {
+      "title": "Import Summary",
+      "totalImported": "Successfully Imported",
+      "totalFailed": "Failed",
+      "totalSkipped": "Skipped",
+      "duration": "Duration",
+      "rowsPerSecond": "Rows/sec",
+      "errorBreakdown": "Error Breakdown",
+      "downloadReport": "Download Report",
+      "newImport": "Start New Import"
+    }
   }
 }
