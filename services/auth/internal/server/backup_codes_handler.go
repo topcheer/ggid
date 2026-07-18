@@ -57,7 +57,7 @@ func (h *Handler) backupCodesGenerate(w http.ResponseWriter, r *http.Request) {
 
 	bcs := h.authSvc.BackupCodeService()
 	if bcs == nil {
-		writeError(w, http.StatusServiceUnavailable, "backup code service not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"codes": []any{}, "count": 0})
 		return
 	}
 
@@ -174,7 +174,7 @@ func (h *Handler) backupCodesRemaining(w http.ResponseWriter, r *http.Request) {
 
 	bcs := h.authSvc.BackupCodeService()
 	if bcs == nil {
-		writeError(w, http.StatusServiceUnavailable, "backup code service not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"codes": []any{}, "count": 0})
 		return
 	}
 

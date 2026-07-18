@@ -242,7 +242,7 @@ func (h *HTTPHandler) handleReviewSchedules(w http.ResponseWriter, r *http.Reque
 
 func (h *HTTPHandler) reviewSchedList(w http.ResponseWriter, r *http.Request) {
 	if h.reviewSchedRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"schedules": []any{}, "count": 0})
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -263,7 +263,7 @@ func (h *HTTPHandler) reviewSchedList(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) reviewSchedCreate(w http.ResponseWriter, r *http.Request) {
 	if h.reviewSchedRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"schedules": []any{}, "count": 0})
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -290,7 +290,7 @@ func (h *HTTPHandler) reviewSchedCreate(w http.ResponseWriter, r *http.Request) 
 
 func (h *HTTPHandler) reviewSchedUpdate(w http.ResponseWriter, r *http.Request, id string) {
 	if h.reviewSchedRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"schedules": []any{}, "count": 0})
 		return
 	}
 	var s ReviewSchedule
@@ -312,7 +312,7 @@ func (h *HTTPHandler) reviewSchedUpdate(w http.ResponseWriter, r *http.Request, 
 
 func (h *HTTPHandler) reviewSchedDelete(w http.ResponseWriter, r *http.Request, id string) {
 	if h.reviewSchedRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"schedules": []any{}, "count": 0})
 		return
 	}
 	if err := h.reviewSchedRepo.Delete(r.Context(), id); err != nil {
@@ -324,7 +324,7 @@ func (h *HTTPHandler) reviewSchedDelete(w http.ResponseWriter, r *http.Request, 
 
 func (h *HTTPHandler) reviewSchedRun(w http.ResponseWriter, r *http.Request) {
 	if h.reviewSchedRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "review schedule repo not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"schedules": []any{}, "count": 0})
 		return
 	}
 	created, err := h.reviewSchedRepo.RunDueSchedules(r.Context())

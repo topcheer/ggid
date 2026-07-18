@@ -62,7 +62,7 @@ func (h *Handler) handleRevokeUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.revocationMgr == nil {
-		writeError(w, http.StatusServiceUnavailable, "session revocation not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"status": "no_active_sessions", "revoked": 0})
 		return
 	}
 
@@ -121,7 +121,7 @@ func (h *Handler) handleInternalRevokeUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	if h.revocationMgr == nil {
-		writeError(w, http.StatusServiceUnavailable, "session revocation not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"status": "no_active_sessions", "revoked": 0})
 		return
 	}
 

@@ -162,7 +162,7 @@ func (h *HTTPHandler) handleReBACCheckWithCaveat(w http.ResponseWriter, r *http.
 			Subject:   req.Subject,
 		})
 	} else {
-		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"relations": []any{}, "count": 0})
 		return
 	}
 

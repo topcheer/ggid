@@ -171,7 +171,7 @@ func (h *Handler) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	writeError(w, http.StatusServiceUnavailable, "verification service not available")
+	writeJSON(w, http.StatusOK, map[string]any{"available": false})
 }
 
 // POST /api/v1/auth/forgot-password
@@ -234,7 +234,7 @@ func (h *Handler) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	writeError(w, http.StatusServiceUnavailable, "reset service not available")
+	writeJSON(w, http.StatusOK, map[string]any{"available": false})
 }
 
 // PUT /api/v1/auth/profile

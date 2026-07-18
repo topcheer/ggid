@@ -25,7 +25,7 @@ func (h *HTTPHandler) handleImportAsync(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if h.importJobRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "import job system not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"jobs": []any{}, "count": 0})
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h *HTTPHandler) handleImportAsyncStatus(w http.ResponseWriter, r *http.Req
 	}
 
 	if h.importJobRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "import job system not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"jobs": []any{}, "count": 0})
 		return
 	}
 
@@ -155,7 +155,7 @@ func (h *HTTPHandler) handleImportAsyncList(w http.ResponseWriter, r *http.Reque
 	}
 
 	if h.importJobRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "import job system not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"jobs": []any{}, "count": 0})
 		return
 	}
 

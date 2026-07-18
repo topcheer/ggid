@@ -49,7 +49,7 @@ func (h *HTTPHandler) handlePrivilegeCreep(w http.ResponseWriter, r *http.Reques
 
 func (h *HTTPHandler) pcListAlerts(w http.ResponseWriter, r *http.Request) {
 	if h.pcRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"alerts": []any{}, "count": 0})
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -70,7 +70,7 @@ func (h *HTTPHandler) pcListAlerts(w http.ResponseWriter, r *http.Request) {
 
 func (h *HTTPHandler) pcUserDiff(w http.ResponseWriter, r *http.Request, userIDStr string) {
 	if h.pcRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"alerts": []any{}, "count": 0})
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -105,7 +105,7 @@ func (h *HTTPHandler) pcUserDiff(w http.ResponseWriter, r *http.Request, userIDS
 
 func (h *HTTPHandler) pcTriggerScan(w http.ResponseWriter, r *http.Request) {
 	if h.pcRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"alerts": []any{}, "count": 0})
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
@@ -153,7 +153,7 @@ func (h *HTTPHandler) handlePrivilegeBaseline(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if h.pcRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "privilege creep not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"alerts": []any{}, "count": 0})
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())

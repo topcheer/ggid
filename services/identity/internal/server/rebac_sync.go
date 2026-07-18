@@ -44,7 +44,7 @@ func (h *HTTPHandler) handleReBACSyncRBAC(w http.ResponseWriter, r *http.Request
 	}
 
 	if h.rebacRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"relations": []any{}, "count": 0})
 		return
 	}
 

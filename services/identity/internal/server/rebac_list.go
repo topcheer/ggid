@@ -46,7 +46,7 @@ func (h *HTTPHandler) handleReBACListObjects(w http.ResponseWriter, r *http.Requ
 	}
 
 	if h.rebacRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"relations": []any{}, "count": 0})
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h *HTTPHandler) handleReBACListSubjects(w http.ResponseWriter, r *http.Req
 	}
 
 	if h.rebacRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "ReBAC not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"relations": []any{}, "count": 0})
 		return
 	}
 

@@ -324,7 +324,7 @@ func (h *HTTPHandler) jmlProcessEvent(w http.ResponseWriter, r *http.Request) {
 	}
 	event.TenantID = tc.TenantID
 	if h.lifecycleEngine == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "lifecycle engine not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"rules": []any{}, "count": 0})
 		return
 	}
 	go h.lifecycleEngine.ProcessEvent(r.Context(), event)

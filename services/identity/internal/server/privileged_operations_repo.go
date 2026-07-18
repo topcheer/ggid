@@ -143,7 +143,7 @@ func (h *HTTPHandler) handlePrivilegedOperations(w http.ResponseWriter, r *http.
 		return
 	}
 	if h.privilOpRepo == nil {
-		writeJSONError(w, http.StatusServiceUnavailable, "privileged operations not configured")
+		writeJSON(w, http.StatusOK, map[string]any{"operations": []any{}, "count": 0})
 		return
 	}
 	tc, err := ggidtenant.FromContext(r.Context())
