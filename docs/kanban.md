@@ -258,6 +258,8 @@
 | KB-244 | **Rotation engine + JWT key rotation + cert-manager** (dual-key pattern) | backend | P0 | key-rotation | 4d |
 | KB-245 | **Client secret + device cert + API key rotation** (grace periods) | backend | P1 | key-rotation | 3d |
 | KB-246 | **Webhook secret + CMK rotation + rotation dashboard** | backend | P2 | key-rotation | 3d |
+| KB-247 | **Hook system + Plugin SDK + lifecycle management** (6 hooks, 7 host funcs) | backend | P0 | wasm-plugins | 5d |
+| KB-248 | **Hot reload + plugin marketplace** (atomic swap + install/publish) | backend | P1 | wasm-plugins | 3d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -393,6 +395,7 @@
 | README & Quickstart Guide | DONE | docs/research/readme-quickstart-guide.md |
 | Changelog & Release Notes Automation | DONE | docs/research/changelog-release-automation.md |
 | Automated Key Rotation & Cert Lifecycle | DONE | docs/research/key-rotation-cert-management.md |
+| Plugin System & WASM Enhancement | DONE | docs/research/plugin-system-wasm-enhancement.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---

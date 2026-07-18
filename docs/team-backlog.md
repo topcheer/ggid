@@ -1,6 +1,6 @@
 # GGID Team Backlog
 
-*Last updated: 2026-07-17 (Round 82: Automated Key Rotation research complete — 3 backlog items)*
+*Last updated: 2026-07-17 (Round 83: Plugin System & WASM Enhancement research complete — 2 backlog items)*
 
 ## Current Stats
 
@@ -188,6 +188,7 @@
 | 162 | **README + CONTRIBUTING + LICENSE** (P0) | docs | GitHub presence | Professional README.md with feature matrix + comparison table + quickstart + Mermaid architecture + badges + Apache 2.0 license. See docs/research/readme-quickstart-guide.md |
 | 163 | **Changelog + release automation** (P0) | devops | Release process | Conventional commits + git-cliff auto-changelog + GitHub Releases on tag + semantic versioning + v1.0 criteria + RFC 8594 deprecation + migration guides. See docs/research/changelog-release-automation.md |
 | 164 | **Key rotation & cert lifecycle** (P0-P2) | backend | Security operations | Rotation engine with dual-key pattern for JWT/client secrets/device certs/TLS/API keys/CMK/webhook secrets + cert-manager ACME + audit trail. See docs/research/key-rotation-cert-management.md |
+| 165 | **WASM plugin enhancement** (P0-P1) | backend | Extensibility | Hook system (6 lifecycle hooks) + plugin SDK (7 host functions) + capability-based security + lifecycle management + hot reload + marketplace. See docs/research/plugin-system-wasm-enhancement.md |
 
 ### P3 — Quality/infrastructure improvements
 
@@ -256,6 +257,7 @@
 42. README & Quickstart Guide → DONE (docs/research/readme-quickstart-guide.md) — 2 backlog items added
 43. Changelog & Release Automation → DONE (docs/research/changelog-release-automation.md) — 2 backlog items added
 44. Automated Key Rotation & Cert Lifecycle → DONE (docs/research/key-rotation-cert-management.md) — 3 backlog items added
+45. Plugin System & WASM Enhancement → DONE (docs/research/plugin-system-wasm-enhancement.md) — 2 backlog items added
 
 ## Rules
 
@@ -294,6 +296,7 @@ Active research topics:
 - README & Quickstart Guide → DONE (docs/research/readme-quickstart-guide.md)
 - Changelog & Release Automation → DONE (docs/research/changelog-release-automation.md)
 - Key Rotation & Cert Lifecycle → DONE (docs/research/key-rotation-cert-management.md)
+- Plugin System & WASM Enhancement → DONE (docs/research/plugin-system-wasm-enhancement.md)
 - AI Agent Identity & Delegated Access → DONE (docs/research/ai-agent-identity.md)
 - Risk-Based Adaptive Authentication Engine → DONE (docs/research/risk-adaptive-auth-engine.md)
 - Consent Management Platform → DONE (docs/research/consent-management-platform.md)
