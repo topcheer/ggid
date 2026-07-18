@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface Agent {
   id: string;
@@ -155,7 +156,7 @@ export default function AgentsPage() {
   };
 
   const handleRevoke = async (agent: Agent) => {
-    if (!confirm(`Revoke agent "${agent.name}"? This permanently deletes the agent and invalidates all tokens.`)) return;
+    if (!window.confirm(`Revoke agent "${agent.name}"? This permanently deletes the agent and invalidates all tokens.`)) return;
     try {
       await apiFetch(`/api/v1/agents/${agent.id}`, { method: "DELETE" });
       showMessage(`Agent "${agent.name}" revoked`);

@@ -19,6 +19,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 // ===== Types =====
 
@@ -177,7 +178,7 @@ export default function ProvisioningPage() {
 
   // ===== Handlers =====
   const handleDeleteInstance = async (name: string) => {
-    if (!confirm(`Delete dedicated instance "${name}"? This will uninstall the Helm release and delete the namespace.`)) return;
+    if (!window.confirm(`Delete dedicated instance "${name}"? This will uninstall the Helm release and delete the namespace.`)) return;
     try {
       await apiFetch(`/api/v1/provisioning/instances/${name}`, { method: "DELETE" });
       setMsg(`Instance "${name}" deletion initiated`);
@@ -188,7 +189,7 @@ export default function ProvisioningPage() {
   };
 
   const handleDeleteTenant = async (name: string) => {
-    if (!confirm(`Delete shared tenant "${name}"? This will remove the tenant from the shared instance.`)) return;
+    if (!window.confirm(`Delete shared tenant "${name}"? This will remove the tenant from the shared instance.`)) return;
     try {
       await apiFetch(`/api/v1/provisioning/tenants/${name}`, { method: "DELETE" });
       setMsg(`Tenant "${name}" deletion initiated`);

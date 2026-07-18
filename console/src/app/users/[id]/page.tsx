@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   ArrowLeft,
   Lock,
@@ -265,7 +266,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   };
 
   const handleDeleteCredential = async (credId: string) => {
-    if (!confirm("Delete this credential? This cannot be undone.")) return;
+    if (!window.confirm("Delete this credential? This cannot be undone.")) return;
     setDeletingCred(credId);
     try {
       await apiFetch(`/api/v1/users/${params.id}/credentials/${credId}`, {
@@ -411,7 +412,7 @@ export default function UserDetailPage({ params }: { params: { id: string } }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
       await apiFetch(`/api/v1/users/${params.id}`, { method: "DELETE" });
       router.push("/users");

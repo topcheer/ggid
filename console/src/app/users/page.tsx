@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useUsers, useApi, type User } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { usePageTitle } from "@/lib/usePageTitle";
 import Link from "next/link";
 import {
@@ -113,7 +114,7 @@ export default function UsersPage() {
       setShowCreate(false);
       refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : t("users.createFailed"));
+      console.error(err instanceof Error ? err.message : t("users.createFailed"));
     }
   };
 
@@ -123,30 +124,30 @@ export default function UsersPage() {
       await apiFetch(`/api/v1/users/${userId}/${action}`, { method: "POST" });
       refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : `Failed to ${action} user`);
+      console.error(err instanceof Error ? err.message : `Failed to ${action} user`);
     }
   };
 
   const handleDelete = async (userId: string, username: string) => {
-    if (!confirm(`Delete user "${username}"?`)) return;
+    if (!window.confirm(`Delete user "${username}"?`)) return;
     try {
       await apiFetch(`/api/v1/users/${userId}`, { method: "DELETE" });
       refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed");
+      console.error(err instanceof Error ? err.message : "Failed");
     }
   };
 
   const handleBatchDelete = async () => {
     if (selected.size === 0) return;
-    if (!confirm(`Delete ${selected.size} selected users?`)) return;
+    if (!window.confirm(`Delete ${selected.size} selected users?`)) return;
     try {
       await Promise.all([...selected].map((id: any) => apiFetch(`/api/v1/users/${id}`, { method: "DELETE" })));
       setSelected(new Set());
       setMsg(`Deleted ${selected.size} users`);
       refresh();
     } catch (err) {
-      alert(err instanceof Error ? err.message : t("users.batchDeleteFailed"));
+      console.error(err instanceof Error ? err.message : t("users.batchDeleteFailed"));
     }
   };
 
@@ -162,7 +163,7 @@ export default function UsersPage() {
       setSelected(new Set());
       setBatchRole("");
     } catch (err) {
-      alert(err instanceof Error ? err.message : t("users.batchAssignFailed"));
+      console.error(err instanceof Error ? err.message : t("users.batchAssignFailed"));
     }
   };
 

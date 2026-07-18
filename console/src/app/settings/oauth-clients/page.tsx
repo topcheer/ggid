@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   KeyRound,
   Loader2,
@@ -163,7 +164,7 @@ export default function OAuthClientsSettingsPage() {
   };
 
   const handleDelete = async (clientId: string, name: string) => {
-    if (!confirm(`${t("oauth.deleteConfirm").replace("{name}", name)}`)) return;
+    if (!window.confirm(`${t("oauth.deleteConfirm").replace("{name}", name)}`)) return;
     try {
       await apiFetch(`/api/v1/oauth/clients/${clientId}`, { method: "DELETE" });
       setMsg(t("oauth.deleted"));
@@ -174,7 +175,7 @@ export default function OAuthClientsSettingsPage() {
   };
 
   const handleRotateSecret = async (clientId: string) => {
-    if (!confirm(t("oauth.rotateConfirm"))) return;
+    if (!window.confirm(t("oauth.rotateConfirm"))) return;
     setRotating(clientId);
     try {
       const result = await apiFetch<{ client_secret?: string }>(

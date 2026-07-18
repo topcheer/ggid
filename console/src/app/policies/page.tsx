@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useApi } from "@/lib/api";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Shield,
   Plus,
@@ -177,19 +178,19 @@ export default function PoliciesPage() {
       refresh();
       resetEditor();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to create policy");
+      console.error(err instanceof Error ? err.message : "Failed to create policy");
     }
   };
 
   const handleDeletePolicy = async (id: string, name: string) => {
-    if (!confirm(`Delete policy "${name}"?`)) return;
+    if (!window.confirm(`Delete policy "${name}"?`)) return;
     try {
       await apiFetch(`/api/v1/policies/${id}`, { method: "DELETE" });
       setMsg("Policy deleted");
       refresh();
       if (selectedPolicy?.id === id) resetEditor();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete policy");
+      console.error(err instanceof Error ? err.message : "Failed to delete policy");
     }
   };
 

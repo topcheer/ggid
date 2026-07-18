@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { authHeader } from "@/lib/auth-helpers";
 import {
   Megaphone, Plus, Users, KeyRound, Calendar, Mail, Check,
@@ -120,7 +121,7 @@ function CampaignsList({ campaigns, onRefresh }: { campaigns: Campaign[]; onRefr
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this campaign?")) return;
+    if (!window.confirm("Delete this campaign?")) return;
     try {
       await fetch(`${API_BASE}/api/v1/auth/enrollment/campaigns/${id}`, { method: "DELETE", headers: { ...authHeader() } });
     } catch { /* ok */ }

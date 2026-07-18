@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useOAuthDynamicClientReg, OAuthDynamicClientRegConfig, RegisteredClient } from "@ggid/sdk-react";
 
 export default function OAuthDynamicClientRegPage() {
@@ -25,7 +26,7 @@ export default function OAuthDynamicClientRegPage() {
   };
 
   const handleDelete = async (clientId: string) => {
-    if (!confirm(`Delete client ${clientId}?`)) return;
+    if (!window.confirm(`Delete client ${clientId}?`)) return;
     await deleteClient(clientId);
   };
 

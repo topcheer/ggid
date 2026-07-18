@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface ExportJob {
   id: string;
@@ -205,7 +206,7 @@ export default function ExportsPage() {
   };
 
   const handleDelete = async (jobId: string) => {
-    if (!confirm("Delete this export job? This cannot be undone.")) return;
+    if (!window.confirm("Delete this export job? This cannot be undone.")) return;
     try {
       await apiFetch(`/api/v1/exports/${jobId}`, { method: "DELETE" });
       setMsg({ type: "success", text: "Export job deleted" });

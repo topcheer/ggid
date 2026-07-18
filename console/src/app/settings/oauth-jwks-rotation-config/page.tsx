@@ -1,5 +1,6 @@
 "use client";
 import { useTranslations } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useEffect, useState } from "react";
 import { useOAuthJwksRotationConfig, OAuthJwksRotationConfig } from "@ggid/sdk-react";
 
@@ -24,7 +25,7 @@ export default function OAuthJwksRotationConfigPage() {
   useEffect(() => { if (config) setForm(config as unknown as LocalOAuthJwksRotationConfig); }, [config]);
 
   const handleSave = async () => { if (!form) return; setSaving(true); await updateConfig(form as unknown as Parameters<typeof updateConfig>[0]); setSaving(false); };
-  const handleRotate = async () => { if (!confirm("Rotate JWKS keys now?")) return; setRotating(true); await rotateNow(); setRotating(false); };
+  const handleRotate = async () => { if (!window.confirm("Rotate JWKS keys now?")) return; setRotating(true); await rotateNow(); setRotating(false); };
 
   if (loading && !form) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-600">Error: {error}</div>;

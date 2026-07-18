@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useApi } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Building2,
   Plus,
@@ -445,7 +446,7 @@ export default function OrganizationTreePage() {
   const handleDelete = async (orgId: string) => {
     const org = orgMap.get(orgId);
     if (!org) return;
-    if (!confirm(`Delete "${org.name}" and all its sub-organizations?`)) return;
+    if (!window.confirm(`Delete "${org.name}" and all its sub-organizations?`)) return;
     try {
       await apiFetch(`/api/v1/orgs/${orgId}`, { method: "DELETE" });
       setMsg(`Deleted "${org.name}"`);
