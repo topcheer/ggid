@@ -349,6 +349,27 @@ func (gw *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// KB-294: Integration convenience endpoints.
+	if r.URL.Path == "/api/v1/system/health" && r.Method == http.MethodGet {
+		gw.handleSystemHealth(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/system/bootstrap" && r.Method == http.MethodPost {
+		gw.handleSystemBootstrap(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/webhooks/events/catalog" && r.Method == http.MethodGet {
+		gw.handleWebhookCatalog(w, r)
+		return
+	}
+	if r.URL.Path == "/api/v1/tenants" && r.Method == http.MethodPost {
+		gw.handleTenantCreate(w, r)
+		return
+	}
+	if strings.HasPrefix(r.URL.Path, "/api/v1/tenants/") && r.Method == http.MethodGet {
+		gw.handleTenantDetail(w, r)
+		return
+	}
 	if r.URL.Path == "/api/v1/gateway/stats" && r.Method == http.MethodGet {
 		if gw.stats != nil {
 			gw.stats.StatsHandler().ServeHTTP(w, r)
