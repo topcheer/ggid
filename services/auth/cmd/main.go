@@ -31,6 +31,7 @@ import (
 	"github.com/ggid/ggid/services/auth/internal/repository"
 	"github.com/ggid/ggid/services/auth/internal/server"
 	"github.com/ggid/ggid/services/auth/internal/service"
+	"github.com/ggid/ggid/services/auth/internal/tap"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nats-io/nats.go"
@@ -291,6 +292,18 @@ func main() {
 		log.Printf("AAGUID allowlist schema ensure error (non-fatal): %v", err)
 	}
 	handler.SetAAGUIDAllowlistRepo(aaguidRepo)
+
+	// TAP engine and policy (KB-076).
+	tapEngine := tap.NewEngine(pool)
+	if err := tapEngine.EnsureSchema(ctx); err != nil {
+		log.Printf("TAP schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetTAPEngine(tapEngine)
+	tapPolicyRepo := repository.NewTAPPolicyRepository(pool)
+	if err := tapPolicyRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("TAP policy schema ensure error (non-fatal): %v", err)
+	}
+	handler.SetTAPPolicyRepo(tapPolicyRepo)
 
 	// Internal auth HMAC secrets for cross-service endpoints.
 	internalSecret := os.Getenv("INTERNAL_AUTH_SECRET")
