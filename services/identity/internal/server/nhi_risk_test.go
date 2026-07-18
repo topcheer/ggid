@@ -13,7 +13,7 @@ import (
 
 // Test 1: Risk evaluation with no baseline → score 20 (new NHI).
 func TestNHIRisk_NoBaseline(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	nhiID := uuid.New()
 
 	score := engine.EvaluateRisk(nhiID, CurrentActivity{
@@ -34,7 +34,7 @@ func TestNHIRisk_NoBaseline(t *testing.T) {
 
 // Test 2: Frequency spike detection — 10x normal → high score.
 func TestNHIRisk_FrequencySpike(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	nhiID := uuid.New()
 	nhiStr := nhiID.String()
 
@@ -63,7 +63,7 @@ func TestNHIRisk_FrequencySpike(t *testing.T) {
 
 // Test 3: New endpoint detection — unknown API → score increase.
 func TestNHIRisk_NewEndpoint(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	nhiID := uuid.New()
 	nhiStr := nhiID.String()
 
@@ -86,7 +86,7 @@ func TestNHIRisk_NewEndpoint(t *testing.T) {
 
 // Test 4: Off-hours access detection → score increase.
 func TestNHIRisk_OffHoursAccess(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	nhiID := uuid.New()
 	nhiStr := nhiID.String()
 
@@ -109,7 +109,7 @@ func TestNHIRisk_OffHoursAccess(t *testing.T) {
 
 // Test 5: New IP detection → score increase.
 func TestNHIRisk_NewIP(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	nhiID := uuid.New()
 	nhiStr := nhiID.String()
 
@@ -132,7 +132,7 @@ func TestNHIRisk_NewIP(t *testing.T) {
 
 // Test 6: Multiple anomalies combined → high or critical risk.
 func TestNHIRisk_AllAnomalies(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	nhiID := uuid.New()
 	nhiStr := nhiID.String()
 
@@ -159,7 +159,7 @@ func TestNHIRisk_AllAnomalies(t *testing.T) {
 
 // Test 7: ListHighRisk returns only high-risk NHIs.
 func TestNHIRisk_ListHighRisk(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	nhi1 := uuid.New()
 	nhi2 := uuid.New()
 
@@ -292,7 +292,7 @@ func TestNHIRisk_SOARTrigger(t *testing.T) {
 
 // Test 13: PG repo wiring — engine with nil-pool PG repo behaves like in-memory.
 func TestNHIRisk_PGRepoNilPool(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	engine.SetPGRepo(NewNHIRiskPGRepo(nil)) // nil pool = no-op PG
 
 	nhiID := uuid.New()
@@ -322,7 +322,7 @@ func TestNHIRisk_PGRepoNilPool(t *testing.T) {
 
 // Test 14: EnsureSchema with PG repo nil pool returns nil.
 func TestNHIRisk_PGRepoEnsureSchema(t *testing.T) {
-	engine := NewNHIRiskEngine()
+	engine := func() *NHIRiskEngine { e := NewNHIRiskEngine(); e.SetPGRepo(NewNHIRiskPGRepo(nil)); return e }()
 	engine.SetPGRepo(NewNHIRiskPGRepo(nil))
 
 	if err := engine.EnsureSchema(context.Background()); err != nil {

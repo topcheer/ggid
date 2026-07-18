@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,19 +38,13 @@ type NHIRiskScore struct {
 }
 
 // NHIRiskEngine evaluates NHI behavior against baselines.
-// Uses PG-backed repos for persistence. Falls back to in-memory when PG unavailable.
+// Uses PG-backed repo for persistence (in-memory fallback in repo when nil pool).
 type NHIRiskEngine struct {
-	mu        sync.RWMutex
-	baselines map[string][]*NHIBehaviorBaseline
-	scores    map[uuid.UUID]*NHIRiskScore
-	pgRepo    *NHIRiskPGRepo
+	pgRepo *NHIRiskPGRepo
 }
 
 func NewNHIRiskEngine() *NHIRiskEngine {
-	return &NHIRiskEngine{
-		baselines: make(map[string][]*NHIBehaviorBaseline),
-		scores:    make(map[uuid.UUID]*NHIRiskScore),
-	}
+	return &NHIRiskEngine{}
 }
 
 // SetPGRepo wires a PostgreSQL-backed repo.
@@ -222,9 +215,6 @@ func (e *NHIRiskEngine) EvaluateRisk(nhiID uuid.UUID, currentActivity CurrentAct
 
 func (e *NHIRiskEngine) persistScore(result *NHIRiskScore) {
 	// Always save to in-memory.
-	e.mu.Lock()
-	e.scores[result.NHIID] = result
-	e.mu.Unlock()
 	// Also persist to PG if configured.
 	if e.pgRepo != nil {
 		_ = e.pgRepo.SaveRiskScore(context.Background(), result)
@@ -238,10 +228,8 @@ func (e *NHIRiskEngine) GetRiskScore(nhiID uuid.UUID) *NHIRiskScore {
 			return score
 		}
 	}
-	// Fall back to in-memory.
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.scores[nhiID]
+	// No PG or not found.
+	return nil
 }
 
 // ListHighRisk returns all NHIs with score >= threshold from PG or in-memory.
@@ -251,16 +239,8 @@ func (e *NHIRiskEngine) ListHighRisk(threshold int) []*NHIRiskScore {
 			return high
 		}
 	}
-	// Fall back to in-memory.
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	var high []*NHIRiskScore
-	for _, s := range e.scores {
-		if s.Score >= threshold {
-			high = append(high, s)
-		}
-	}
-	return high
+	// PG not configured or returned nothing.
+	return []*NHIRiskScore{}
 }
 
 func riskLevel(score int) string {

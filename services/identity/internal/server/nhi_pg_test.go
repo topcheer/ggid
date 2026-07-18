@@ -21,6 +21,7 @@ func TestNHIPGRepo_NilPool(t *testing.T) {
 func TestNHIRiskEngine_NewEngine(t *testing.T) {
 	// Verify in-memory engine still works (backward compat).
 	e := NewNHIRiskEngine()
+	e.SetPGRepo(NewNHIRiskPGRepo(nil))
 	if e == nil {
 		t.Fatal("NewNHIRiskEngine returned nil")
 	}
@@ -28,6 +29,7 @@ func TestNHIRiskEngine_NewEngine(t *testing.T) {
 
 func TestNHIRiskEngine_RecordAndEvaluate(t *testing.T) {
 	e := NewNHIRiskEngine()
+	e.SetPGRepo(NewNHIRiskPGRepo(nil))
 
 	// Record baseline.
 	e.RecordBaseline("nhi-test-1", "/api/v1/users", 10.0, "10.0.0.1", 14)
@@ -50,6 +52,7 @@ func TestNHIRiskEngine_RecordAndEvaluate(t *testing.T) {
 
 func TestNHIRiskEngine_FrequencySpike(t *testing.T) {
 	e := NewNHIRiskEngine()
+	e.SetPGRepo(NewNHIRiskPGRepo(nil))
 	e.RecordBaseline("nhi-spike", "/api/v1/data", 5.0, "10.0.0.1", 10)
 
 	// 10x normal → frequency spike.
