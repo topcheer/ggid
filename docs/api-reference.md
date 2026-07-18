@@ -119,15 +119,15 @@ Complete endpoint inventory organized by service. All authenticated endpoints re
 ### NHI (Non-Human Identity)
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/v1/identity/nhi` | Bearer | List NHI inventory |
-| GET | `/api/v1/identity/nhi/{id}/risk` | Bearer | Get NHI risk score |
-| GET | `/api/v1/identity/nhi/risk-alerts` | Bearer | High-risk NHI list |
-| POST | `/api/v1/identity/nhi/risk/scan` | Bearer | Trigger risk evaluation |
+| GET | `/api/v1/nhi` | Bearer | List NHI inventory |
+| GET | `/api/v1/nhi/{id}/risk` | Bearer | Get NHI risk score |
+| GET | `/api/v1/nhi/risk-alerts` | Bearer | High-risk NHI list |
+| POST | `/api/v1/nhi/risk/scan` | Bearer | Trigger risk evaluation |
 
 ### Privileged Operations
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/api/v1/identity/privileged-operations` | Bearer | Privileged op audit trail |
+| GET | `/api/v1/privileged-operations` | Bearer | Privileged op audit trail |
 
 ---
 
