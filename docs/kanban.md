@@ -266,6 +266,8 @@
 | KB-252 | **Continuous tamper detection + auditor export bundle + retention** | backend | P1 | audit-worm | 3d |
 | KB-253 | **Notification router + 7 channel adapters** (email/SMS/Slack/Teams/PagerDuty/webhook/in-app) | backend | P0 | notifications | 5d |
 | KB-254 | **Escalation engine + user preferences + in-app WebSocket** | backend | P1 | notifications | 4d |
+| KB-255 | **Security hardening: request body validation + payload sanitization + govulncheck** | backend | P0 | security-audit | 3d |
+| KB-256 | **Session invalidation on password change + CORS strict default + hijack detection wiring** | backend | P1 | security-audit | 2d |
 | KB-038 | **Journey definition store** (PostgreSQL) | backend | P0 | identity-orchestration | 3d |
 | KB-039 | **Journey definition parser** (YAML JDL) | backend | P0 | identity-orchestration | 4d |
 | KB-040 | **Journey engine** (state machine executor) | backend | P0 | identity-orchestration | 5d |
@@ -405,6 +407,7 @@
 | WebAuthn/FIDO2 Enterprise Features | DONE | docs/research/webauthn-enterprise-implementation.md |
 | Audit Tamper Protection & WORM Storage | DONE | docs/research/audit-tamper-protection-worm.md |
 | Multi-Channel Notification & Alerting | DONE | docs/research/notification-multi-channel-alerting.md |
+| Security Hardening Audit | DONE | docs/research/security-hardening-audit.md |
 | OAuth Client Lifecycle Management (DCR) | NEXT | — |
 
 ---
