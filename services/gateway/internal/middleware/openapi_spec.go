@@ -39,6 +39,19 @@ type OpenAPIResponse struct {
 	Description string `json:"description"`
 }
 
+// op creates an OpenAPIOperation with tags + summary.
+func op(tags []string, summary string) *OpenAPIOperation {
+	return &OpenAPIOperation{
+		Tags:      tags,
+		Summary:   summary,
+		Responses: map[string]OpenAPIResponse{
+			"200": {Description: "OK"},
+			"400": {Description: "Bad Request"},
+			"401": {Description: "Unauthorized"},
+		},
+	}
+}
+
 type OpenAPIComponents struct {
 	SecuritySchemes map[string]OpenAPISecurityScheme `json:"securitySchemes"`
 }
@@ -824,7 +837,6 @@ func addGatewayPaths(m map[string]OpenAPIPath) {
 	m["/healthz"] = OpenAPIPath{Get: op([]string{"System"}, "Health check")}
 	m["/readyz"] = OpenAPIPath{Get: op([]string{"System"}, "Readiness check")}
 }
-
 
 // SwaggerUIHandler serves the interactive Swagger UI at /docs.
 func SwaggerUIHandler() http.HandlerFunc {
