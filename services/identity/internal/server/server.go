@@ -122,6 +122,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.devicePostureRepo = dpRepo
 
+	// Async import job system.
+	importRepo := newImportJobRepo(pool)
+	if err := importRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Import job schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.importJobRepo = importRepo
+
 	// Journey definitions (JDL).
 	journeyRepo := newJourneyRepo(pool)
 	if err := journeyRepo.EnsureSchema(ctx); err != nil {

@@ -61,6 +61,7 @@ backupRepo        *backupRepo
 notificationRepo  *notificationRepo
 identityPolicyMap *identityPolicyMapRepo
 	devicePostureRepo *devicePostureRepo
+	importJobRepo     *importJobRepo
 }
 
 // NewHTTPHandler creates a new HTTP handler with all routes registered.
@@ -286,6 +287,9 @@ func (h *HTTPHandler) registerRoutes() {
 
 	// Bulk user import (multi-hash, transparent re-hash).
 	h.mux.HandleFunc("/api/v1/identity/users/bulk-import", h.handleBulkImport)
+	h.mux.HandleFunc("/api/v1/identity/users/import-async", h.handleImportAsyncList)
+	h.mux.HandleFunc("/api/v1/identity/users/import-async/", h.handleImportAsyncStatus)
+	h.mux.HandleFunc("/api/v1/identity/users/import-async/create", h.handleImportAsync)
 
 	// Identity orchestration journeys (JDL CRUD + dry-run).
 	h.mux.HandleFunc("/api/v1/identity/journeys", h.handleJourneys)
