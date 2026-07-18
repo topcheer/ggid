@@ -98,7 +98,7 @@ export function useReportGenerator(): UseReportGeneratorResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/reports/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setReports((prev: any) => prev.filter((r) => r.id !== id));
+      setReports((prev: any) => prev.filter((r: any) => r.id !== id));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

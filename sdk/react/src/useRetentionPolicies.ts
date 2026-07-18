@@ -108,7 +108,7 @@ export function useRetentionPolicies(): UseRetentionPoliciesResult {
         });
         if (!resp.ok) throw new Error(`Failed to update policy (${resp.status})`);
         const updated = await resp.json();
-        setPolicies((prev: any) => prev.map((p) => (p.id === id ? updated : p)));
+        setPolicies((prev: any) => prev.map((p: any) => (p.id === id ? updated : p)));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -125,7 +125,7 @@ export function useRetentionPolicies(): UseRetentionPoliciesResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete policy (${resp.status})`);
-        setPolicies((prev: any) => prev.filter((p) => p.id !== id));
+        setPolicies((prev: any) => prev.filter((p: any) => p.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

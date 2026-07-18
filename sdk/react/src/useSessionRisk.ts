@@ -71,7 +71,7 @@ export function useSessionRisk(): UseSessionRiskResult {
       const resp = await fetch(`${apiBaseUrl}/api/v1/auth/sessions/${sessionId}/reevaluate`, { method: 'POST', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Re-evaluate failed (${resp.status})`);
       const updated = await resp.json() as SessionRiskEntry;
-      setSessions((prev: any) => prev.map((s) => s.session_id === sessionId ? updated : s));
+      setSessions((prev: any) => prev.map((s: any) => s.session_id === sessionId ? updated : s));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

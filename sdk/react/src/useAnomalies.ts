@@ -66,7 +66,7 @@ export function useAnomalies(): UseAnomaliesResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/anomalies/${id}/dismiss`, { method: 'POST', headers: makeHeaders(), body: JSON.stringify({ reason }) });
       if (!resp.ok) throw new Error(`Dismiss failed (${resp.status})`);
-      setAnomalies((prev: any) => prev.map((a) => a.id === id ? { ...a, status: 'dismissed' } : a));
+      setAnomalies((prev: any) => prev.map((a: any) => a.id === id ? { ...a, status: 'dismissed' } : a));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
@@ -75,7 +75,7 @@ export function useAnomalies(): UseAnomaliesResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/audit/anomalies/${id}/escalate`, { method: 'POST', headers: makeHeaders(), body: JSON.stringify({ note }) });
       if (!resp.ok) throw new Error(`Escalate failed (${resp.status})`);
-      setAnomalies((prev: any) => prev.map((a) => a.id === id ? { ...a, status: 'escalated' } : a));
+      setAnomalies((prev: any) => prev.map((a: any) => a.id === id ? { ...a, status: 'escalated' } : a));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

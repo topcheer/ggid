@@ -169,7 +169,7 @@ export function useAlerts(): UseAlertsResult {
 
   const toggleRule = useCallback(
     async (id: string): Promise<boolean> => {
-      const rule = rules.find((r) => r.id === id);
+      const rule = rules.find((r: any) => r.id === id);
       if (!rule) return false;
       return updateRule(id, { enabled: !rule.enabled });
     },

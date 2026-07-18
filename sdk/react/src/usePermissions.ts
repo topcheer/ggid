@@ -77,7 +77,7 @@ export function usePermissions(): UsePermissionsResult {
   const hasPermission = useCallback(
     (permission: string) => {
       const normalized = normalizePermission(permission);
-      return permissions.some((p) => permissionMatches(p, normalized));
+      return permissions.some((p: any) => permissionMatches(p, normalized));
     },
     [permissions]
   );

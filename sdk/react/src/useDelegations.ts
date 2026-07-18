@@ -57,7 +57,7 @@ export function useDelegations(baseUrl: string = "") {
     try {
       const res = await fetch(`${baseUrl}/api/v1/identity/delegations/${id}/revoke`, { method: "POST" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setDelegations((prev: any) => prev.map((d) => d.id === id ? { ...d, status: "revoked" } : d));
+      setDelegations((prev: any) => prev.map((d: any) => d.id === id ? { ...d, status: "revoked" } : d));
       return true;
     } catch (e: any) {
       setError(e.message);

@@ -106,7 +106,7 @@ export function useAuditStream(maxEvents = 100): UseAuditStreamResult {
   const clear = useCallback(() => setEvents([]), []);
 
   // Severity filtering
-  const filteredEvents = events.filter((e) => {
+  const filteredEvents = events.filter((e: any) => {
     if (severityFilter === 'all') return true;
     if (severityFilter === 'warning+') return e.severity === 'warning' || e.severity === 'critical';
     return e.severity === severityFilter;

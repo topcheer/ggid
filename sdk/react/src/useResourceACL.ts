@@ -82,7 +82,7 @@ export function useResourceACL(): UseResourceACLResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/policy/resource-acl/${id}`, { method: 'PUT', headers: makeHeaders(), body: JSON.stringify(patch) });
       if (!resp.ok) throw new Error(`Update failed (${resp.status})`);
-      setRules((prev: any) => prev.map((r) => r.id === id ? { ...r, ...patch } : r));
+      setRules((prev: any) => prev.map((r: any) => r.id === id ? { ...r, ...patch } : r));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
@@ -91,7 +91,7 @@ export function useResourceACL(): UseResourceACLResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/policy/resource-acl/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setRules((prev: any) => prev.filter((r) => r.id !== id));
+      setRules((prev: any) => prev.filter((r: any) => r.id !== id));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

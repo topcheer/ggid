@@ -123,7 +123,7 @@ export function useLoginAttempts(): UseLoginAttemptsResult {
           method: 'POST', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to unlock (${resp.status})`);
-        setLockouts((prev: any) => prev.filter((l) => l.user_id !== userId));
+        setLockouts((prev: any) => prev.filter((l: any) => l.user_id !== userId));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

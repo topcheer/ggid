@@ -110,7 +110,7 @@ export function useDelegation(): UseDelegationResult {
           headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to revoke delegation (${resp.status})`);
-        setDelegations((prev: any) => prev.filter((d) => d.id !== id));
+        setDelegations((prev: any) => prev.filter((d: any) => d.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

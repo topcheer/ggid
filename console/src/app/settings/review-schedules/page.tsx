@@ -188,7 +188,7 @@ function CreateTab({ onCreated }: { onCreated: () => void }) {
             <button key={s} onClick={() => setScope(s)}
               className={`flex items-center gap-2 p-3 rounded-lg border-2 text-sm transition-all ${scope === s ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300" : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400"}`}>
               {scope === s && <Check className="w-3 h-3" />}
-              {t(`reviewSchedules.create.scope${s.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
+              {t(`reviewSchedules.create.scope${s.replace(/_./g, (m: any) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
             </button>
           ))}
         </div>

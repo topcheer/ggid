@@ -150,7 +150,7 @@ export function useScopes(): UseScopesResult {
     (wildcard: string): OAuthScope[] => {
       if (!wildcard.includes('*')) return [];
       const prefix = wildcard.slice(0, wildcard.indexOf('*'));
-      return scopes.filter((s) => s.name.startsWith(prefix));
+      return scopes.filter((s: any) => s.name.startsWith(prefix));
     },
     [scopes]
   );

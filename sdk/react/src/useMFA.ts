@@ -192,8 +192,8 @@ export function useMFA(): UseMFAResult {
     }
   });
 
-  const platformCredentials = credentials.filter((c) => c.platform === 'platform' || c.device_type === 'platform');
-  const crossPlatformCredentials = credentials.filter((c) => c.platform !== 'platform' && c.device_type !== 'platform');
+  const platformCredentials = credentials.filter((c: any) => c.platform === 'platform' || c.device_type === 'platform');
+  const crossPlatformCredentials = credentials.filter((c: any) => c.platform !== 'platform' && c.device_type !== 'platform');
 
   return {
     status, credentials, isLoading, error,

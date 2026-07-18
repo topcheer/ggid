@@ -115,7 +115,7 @@ export function useAccessReviews(): UseAccessReviewsResult {
           method: 'POST', headers: makeHeaders(), body: JSON.stringify({ decision }),
         });
         if (!resp.ok) throw new Error(`Failed to submit review (${resp.status})`);
-        setItems((prev: any) => prev.filter((i) => i.id !== itemId));
+        setItems((prev: any) => prev.filter((i: any) => i.id !== itemId));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -132,7 +132,7 @@ export function useAccessReviews(): UseAccessReviewsResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete campaign (${resp.status})`);
-        setCampaigns((prev: any) => prev.filter((c) => c.id !== id));
+        setCampaigns((prev: any) => prev.filter((c: any) => c.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

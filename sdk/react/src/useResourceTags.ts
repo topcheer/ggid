@@ -62,7 +62,7 @@ export function useResourceTags(): UseResourceTagsResult {
   }, [apiBaseUrl, makeHeaders, fetchTags]);
 
   const remove = useCallback(async (id: string) => {
-    try { const resp = await fetch(`${apiBaseUrl}/api/v1/policy/resource-tags/${id}`, { method: 'DELETE', headers: makeHeaders() }); if (!resp.ok) throw new Error(`Delete failed (${resp.status})`); setTags((prev: any) => prev.filter((t) => t.id !== id)); return true; }
+    try { const resp = await fetch(`${apiBaseUrl}/api/v1/policy/resource-tags/${id}`, { method: 'DELETE', headers: makeHeaders() }); if (!resp.ok) throw new Error(`Delete failed (${resp.status})`); setTags((prev: any) => prev.filter((t: any) => t.id !== id)); return true; }
     catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
 

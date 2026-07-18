@@ -105,7 +105,7 @@ export function useSecurityCenter(): UseSecurityCenterResult {
   }, [isAuthenticated, fetchAll]);
 
   const dismissThreat = useCallback(async (id: string): Promise<boolean> => {
-    setThreats((prev: any) => prev.map((t) => (t.id === id ? { ...t, status: 'ignored' } : t)));
+    setThreats((prev: any) => prev.map((t: any) => (t.id === id ? { ...t, status: 'ignored' } : t)));
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/security/threats/${id}/dismiss`, {
         method: 'POST', headers: makeHeaders(),
@@ -117,7 +117,7 @@ export function useSecurityCenter(): UseSecurityCenterResult {
   }, [apiBaseUrl, makeHeaders]);
 
   const resolveRecommendation = useCallback(async (id: string): Promise<boolean> => {
-    setRecommendations((prev: any) => prev.map((r) => (r.id === id ? { ...r, status: 'resolved' } : r)));
+    setRecommendations((prev: any) => prev.map((r: any) => (r.id === id ? { ...r, status: 'resolved' } : r)));
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/security/recommendations/${id}/resolve`, {
         method: 'POST', headers: makeHeaders(),
@@ -132,8 +132,8 @@ export function useSecurityCenter(): UseSecurityCenterResult {
     posture,
     threats,
     recentThreats: threats
-      .filter((t) => t.status === 'active')
-      .sort((a, b) => new Date(b.detected_at).getTime() - new Date(a.detected_at).getTime())
+      .filter((t: any) => t.status === 'active')
+      .sort((a: any, b: any) => new Date(b.detected_at).getTime() - new Date(a.detected_at).getTime())
       .slice(0, 10),
     riskScore: posture ? Math.round((posture.failed_checks / Math.max(posture.total_checks, 1)) * 100) : 0,
     riskLevel: posture

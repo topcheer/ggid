@@ -85,7 +85,7 @@ export function useDelegatedAdmin(): UseDelegatedAdminResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/policy/delegated-admin/${id}/revoke`, { method: 'POST', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Revoke failed (${resp.status})`);
-      setDelegations((prev: any) => prev.map((d) => d.id === id ? { ...d, revoked: true } : d));
+      setDelegations((prev: any) => prev.map((d: any) => d.id === id ? { ...d, revoked: true } : d));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

@@ -78,7 +78,7 @@ export function useCredentialVault(): UseCredentialVaultResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/auth/credential-vault/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setCredentials((prev: any) => prev.filter((c) => c.id !== id));
+      setCredentials((prev: any) => prev.filter((c: any) => c.id !== id));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

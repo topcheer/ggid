@@ -49,8 +49,8 @@ export function useOnboardingChecklist(baseUrl: string = "") {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setChecklist((prev: any) => prev ? {
         ...prev,
-        steps: prev.steps.map((s) => s.key === stepKey ? { ...s, completed, completed_at: completed ? new Date().toISOString() : null } : s),
-        completion_pct: Math.round((prev.steps.filter((s) => s.key === stepKey ? completed : s.completed).length / prev.steps.length) * 100),
+        steps: prev.steps.map((s: any) => s.key === stepKey ? { ...s, completed, completed_at: completed ? new Date().toISOString() : null } : s),
+        completion_pct: Math.round((prev.steps.filter((s: any) => s.key === stepKey ? completed : s.completed).length / prev.steps.length) * 100),
       } : null);
       return true;
     } catch (e: any) {

@@ -38,7 +38,7 @@ export function useMFAFactors(baseUrl: string = "") {
         method: "DELETE",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setFactors((prev: any) => prev.filter((f) => f.id !== factorId));
+      setFactors((prev: any) => prev.filter((f: any) => f.id !== factorId));
       return true;
     } catch (e: any) {
       setError(e.message);

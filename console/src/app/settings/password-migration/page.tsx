@@ -409,7 +409,7 @@ function ConfigTab() {
                 }`}
               >
                 <div className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                  {t(`passwordMigration.overview.level${lvl.value.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
+                  {t(`passwordMigration.overview.level${lvl.value.replace(/_./g, (m: any) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {levelDescriptions[lvl.value]}

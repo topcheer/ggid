@@ -103,7 +103,7 @@ export function useSoDRules(): UseSoDRulesResult {
         });
         if (!resp.ok) throw new Error(`Failed to update rule (${resp.status})`);
         const updated = await resp.json();
-        setRules((prev: any) => prev.map((r) => (r.id === id ? updated : r)));
+        setRules((prev: any) => prev.map((r: any) => (r.id === id ? updated : r)));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -120,7 +120,7 @@ export function useSoDRules(): UseSoDRulesResult {
           method: 'DELETE', headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to delete rule (${resp.status})`);
-        setRules((prev: any) => prev.filter((r) => r.id !== id));
+        setRules((prev: any) => prev.filter((r: any) => r.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');

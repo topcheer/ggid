@@ -59,7 +59,7 @@ export function useJITElevation(baseUrl: string = "") {
     try {
       const res = await fetch(`${baseUrl}/api/v1/policy/jit-elevation/${id}/approve`, { method: "POST" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setRequests((prev: any) => prev.map((r) => r.id === id ? { ...r, status: "active" } : r));
+      setRequests((prev: any) => prev.map((r: any) => r.id === id ? { ...r, status: "active" } : r));
       return true;
     } catch (e: any) {
       setError(e.message);
@@ -75,7 +75,7 @@ export function useJITElevation(baseUrl: string = "") {
     try {
       const res = await fetch(`${baseUrl}/api/v1/policy/jit-elevation/${id}/reject`, { method: "POST" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setRequests((prev: any) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r));
+      setRequests((prev: any) => prev.map((r: any) => r.id === id ? { ...r, status: "rejected" } : r));
       return true;
     } catch (e: any) {
       setError(e.message);

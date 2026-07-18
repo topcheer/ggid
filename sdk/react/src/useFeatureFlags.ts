@@ -126,7 +126,7 @@ export function useFeatureFlags(): UseFeatureFlagsResult {
   }, [apiBaseUrl, makeHeaders, fetchFlags]);
 
   const toggleFlag = useCallback(async (id: string): Promise<boolean> => {
-    const flag = flags.find((f) => f.id === id);
+    const flag = flags.find((f: any) => f.id === id);
     if (!flag) return false;
     return updateFlag(id, { enabled: !flag.enabled });
   }, [flags, updateFlag]);
@@ -149,7 +149,7 @@ export function useFeatureFlags(): UseFeatureFlagsResult {
 
   /** Check if a flag is enabled, respecting per-tenant overrides */
   const isEnabled = useCallback((key: string): boolean => {
-    const flag = flags.find((f) => f.key === key);
+    const flag = flags.find((f: any) => f.key === key);
     if (!flag) return false;
     // Check per-tenant override first
     const override = flag.per_tenant?.[currentTenantId];

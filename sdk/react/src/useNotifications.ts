@@ -79,7 +79,7 @@ export function useNotifications(): UseNotificationsResult {
   }, [getAccessToken, apiBaseUrl, makeHeaders]);
 
   const markRead = useCallback(async (id: string): Promise<boolean> => {
-    setNotifications((prev: any) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    setNotifications((prev: any) => prev.map((n: any) => (n.id === id ? { ...n, read: true } : n)));
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/notifications/${id}/read`, { method: 'POST', headers: makeHeaders() });
       return resp.ok;
@@ -89,7 +89,7 @@ export function useNotifications(): UseNotificationsResult {
   }, [apiBaseUrl, makeHeaders]);
 
   const markAllRead = useCallback(async (): Promise<boolean> => {
-    setNotifications((prev: any) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications((prev: any) => prev.map((n: any) => ({ ...n, read: true })));
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/notifications/read-all`, { method: 'POST', headers: makeHeaders() });
       return resp.ok;
@@ -99,7 +99,7 @@ export function useNotifications(): UseNotificationsResult {
   }, [apiBaseUrl, makeHeaders]);
 
   const deleteNotification = useCallback(async (id: string): Promise<boolean> => {
-    setNotifications((prev: any) => prev.filter((n) => n.id !== id));
+    setNotifications((prev: any) => prev.filter((n: any) => n.id !== id));
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/notifications/${id}`, { method: 'DELETE', headers: makeHeaders() });
       return resp.ok;
@@ -132,7 +132,7 @@ export function useNotifications(): UseNotificationsResult {
     }
   }, [apiBaseUrl, makeHeaders]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n: any) => !n.read).length;
 
   return {
     notifications, unreadCount, preferences, isLoading, error,

@@ -41,7 +41,7 @@ export function useStandingAccess(baseUrl: string = "") {
         method: "POST",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setEntries((prev: any) => prev.filter((e) => e.id !== id));
+      setEntries((prev: any) => prev.filter((e: any) => e.id !== id));
       return true;
     } catch (e: any) {
       setError(e.message);

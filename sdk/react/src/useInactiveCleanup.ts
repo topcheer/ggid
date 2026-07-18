@@ -41,7 +41,7 @@ export function useInactiveCleanup(baseUrl: string = "") {
         body: JSON.stringify({ user_ids: userIds, action, schedule_date: scheduleDate }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setUsers((prev: any) => prev.filter((u) => !userIds.includes(u.user_id)));
+      setUsers((prev: any) => prev.filter((u: any) => !userIds.includes(u.user_id)));
       return true;
     } catch (e: any) {
       setError(e.message);

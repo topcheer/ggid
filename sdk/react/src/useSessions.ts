@@ -84,7 +84,7 @@ export function useSessions(): UseSessionsResult {
           headers: makeHeaders(),
         });
         if (!resp.ok) throw new Error(`Failed to revoke session (${resp.status})`);
-        setSessions((prev: any) => prev.filter((s) => s.id !== id));
+        setSessions((prev: any) => prev.filter((s: any) => s.id !== id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
@@ -95,7 +95,7 @@ export function useSessions(): UseSessionsResult {
   );
 
   const revokeAllOthers = useCallback(async (): Promise<number> => {
-    const others = sessions.filter((s) => !s.current);
+    const others = sessions.filter((s: any) => !s.current);
     let revoked = 0;
     for (const s of others) {
       const ok = await revokeSession(s.id);

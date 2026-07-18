@@ -57,7 +57,7 @@ export function useReviewExemptions(baseUrl: string = "") {
     try {
       const res = await fetch(`${baseUrl}/api/v1/policy/review-exemptions/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setExemptions((prev: any) => prev.filter((e) => e.id !== id));
+      setExemptions((prev: any) => prev.filter((e: any) => e.id !== id));
       return true;
     } catch (e: any) {
       setError(e.message);

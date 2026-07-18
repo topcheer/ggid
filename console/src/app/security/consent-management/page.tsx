@@ -218,7 +218,7 @@ export default function ConsentManagementPage() {
             <div className="space-y-3">
               {parseRAR().map((detail: any, i: number) => (
                 <div key={i} className="rounded-lg border p-3 dark:border-gray-700">
-                  <p className="font-semibold text-sm text-gray-900 dark:text-white">{detail.type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</p>
+                  <p className="font-semibold text-sm text-gray-900 dark:text-white">{detail.type.replace(/_/g, " ").replace(/\b\w/g, (c: any) => c.toUpperCase())}</p>
                   <div className="mt-2 space-y-1">
                     <p className="text-xs text-gray-500">This application requests to:</p>
                     {detail.actions?.map(a => <div key={a} className="flex items-center gap-1 text-xs"><ChevronRight className="h-3 w-3 text-purple-400" /><span className="font-mono">{a}</span> resources matching <span className="font-mono">{detail.resources?.join(", ") || "all"}</span></div>)}

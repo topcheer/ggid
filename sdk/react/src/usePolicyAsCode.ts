@@ -88,7 +88,7 @@ export function usePolicyAsCode(): UsePolicyAsCodeResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/policy/as-code/${id}`, { method: 'DELETE', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Delete failed (${resp.status})`);
-      setPolicies((prev: any) => prev.filter((p) => p.id !== id));
+      setPolicies((prev: any) => prev.filter((p: any) => p.id !== id));
       return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);

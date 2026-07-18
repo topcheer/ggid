@@ -62,7 +62,7 @@ export function useWebhookDelivery(): UseWebhookDeliveryResult {
     try {
       const resp = await fetch(`${apiBaseUrl}/api/v1/settings/webhooks/deliveries/${id}/retry`, { method: 'POST', headers: makeHeaders() });
       if (!resp.ok) throw new Error(`Retry failed (${resp.status})`);
-      setFailed((prev: any) => prev.filter((d) => d.id !== id)); return true;
+      setFailed((prev: any) => prev.filter((d: any) => d.id !== id)); return true;
     } catch (err) { setError(err instanceof Error ? err.message : 'Unknown'); return false; }
   }, [apiBaseUrl, makeHeaders]);
 

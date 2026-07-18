@@ -162,7 +162,7 @@ function LogsTab() {
                 <td className="py-3 px-3"><code className="text-xs text-gray-700 dark:text-gray-300">{l.event}</code></td>
                 <td className="py-3 px-3">
                   <span className={`px-2 py-0.5 text-xs rounded-full ${resultColors[l.result]}`}>
-                    {t(`caeMonitor.logs.result${l.result.replace(/_./g, (m) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
+                    {t(`caeMonitor.logs.result${l.result.replace(/_./g, (m: any) => m[1].toUpperCase()).replace(/^./, (m: any) => m.toUpperCase())}`)}
                   </span>
                 </td>
                 <td className="py-3 px-3 text-right">
