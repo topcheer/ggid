@@ -45,6 +45,13 @@ export default function DocsPage() {
         {tab === "api" && <APITab />}
         {tab === "sdk" && <SDKTab />}
       </div>
+
+      {/* Version footer */}
+      <div className="mt-6 flex items-center justify-center gap-4 text-xs text-gray-400">
+        <span className="flex items-center gap-1"><Shield className="w-3 h-3" />GGID v1.0-stable</span>
+        <span>Build {new Date().toISOString().split("T")[0]}</span>
+        <a href="https://github.com/topcheer/ggid" target="_blank" rel="noopener" className="hover:text-blue-600">GitHub</a>
+      </div>
     </div>
   );
 }

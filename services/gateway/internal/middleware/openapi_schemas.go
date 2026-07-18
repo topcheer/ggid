@@ -248,7 +248,7 @@ func coreSchemas() map[string]SchemaRef {
 		"CreateSCIMTokenRequest": {
 			Type: "object",
 			Properties: map[string]SchemaRef{
-				"name": {Type: "string", Example: " Okta provisioning"},
+				"name": {Type: "string", Example: "Okta provisioning"},
 			},
 			Required: []string{"name"},
 		},

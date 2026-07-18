@@ -265,7 +265,7 @@ function HelpDropdown({ t }: { t: (key: string) => string }) {
   const items = [
     { label: t("nav.helpQuickStart"), icon: Rocket, href: "/docs" },
     { label: t("nav.helpApiDocs"), icon: BookOpen, href: "/docs" },
-    { label: t("nav.helpSwagger"), icon: Terminal, href: "http://localhost:8080/docs", external: true },
+    { label: t("nav.helpSwagger"), icon: Terminal, href: "/docs/swagger", external: false },
     { label: t("nav.helpGithubIssues"), icon: ExternalLink, href: "https://github.com/topcheer/ggid/issues", external: true },
   ];
 

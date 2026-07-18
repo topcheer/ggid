@@ -4,9 +4,14 @@
 [![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://golang.org)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Coverage](https://img.shields.io/badge/Coverage-40%25-green)]()
+[![Version](https://img.shields.io/badge/Version-1.0--stable-blue)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 > Enterprise-grade IAM with Zero Trust, OAuth 2.1, ReBAC, ITDR, and AI Agent Identity — built in Go.
+
+## Status: v1.0-stable
+
+Production-ready IAM platform. 8 microservices, 700+ OpenAPI paths, 12 K8s pods, E2E 11/11 PASS.
 
 ## Why GGID?
 

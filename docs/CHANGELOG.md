@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.0-stable] — 2026-07-19
+
+### Overview
+
+Final stable release. All security hardening, performance optimization,
+productization, and documentation complete. Production-ready.
+
+### Performance
+
+- **Argon2id tuning** (KB-325): 64MB/t3/p2 → 19MB/t2/p1 (OWASP first-line). Login p50: 258ms → 148ms (-43%)
+- **PG indexes** (migration 022): 6 new indexes for login hot path — auth_credentials lookup 8ms → 0.3ms
+- **Redis list cache** (30s TTL): GET /api/v1/users 45ms → 2ms on cache HIT
+- **Token endpoint rate limiting**: 10/min (KB-326)
+
+### Security Hardening
+
+- **OAuth client security audit** (KB-326): secret storage (Argon2id PASS), rate limiting (FIXED), error leakage (FIXED)
+- **Hardening guide** (docs/security/hardening-guide.md): 10-section production checklist
+- **JWT auto key rotation** (KB-329): 90-day cycle, `JWT_KEY_ROTATION_DAYS` env var, 24h grace period, audit callback
+- **Agent permission scoping** (KB-335): `POST /api/v1/agents/:id/scopes`, 13-scope catalog, validated at token exchange
+- **Penetration test baseline** (KB-338): SQL injection (50 tests), XSS, IDOR, JWT tampering, rate limit bypass
+- **Security test script**: `scripts/security-test.sh` — automated 5-category scanner
+
+### API & Developer Experience
+
+- **OpenAPI schemas** (KB-334): 47 paths with requestBody, 13 reusable schema components, Swagger UI renders parameter models
+- **Grafana dashboards** (KB-331): auth-metrics (8 panels), api-performance (10 panels), security-overview (9 panels)
+- **Performance baseline** (docs/performance-baseline.md): k6 load test results at 50/100/200 concurrent
+- **OAuth2 federation guides**: AWS, Azure, Google federation docs
+- **Self-hosting guide**: deployment, troubleshooting, API cookbook
+
+### Infrastructure
+
+- **Docker unified build** (KB-328): 8 images with prebuilt binary approach, `--platform linux/amd64`
+- **CI pipeline** (KB-301): lint gate (golangci-lint v1.64.8), mod-tidy check, console TS check, periodic Docker
+- **Route dedup fix**: 5 duplicate routes in auth http.go caused K8s panic (2a151307)
+- **.golangci.yml cleanup** (KB-339): removed 9 blanket `unused` suppressions, re-enabled typecheck
+
+### Code Quality
+
+- `go vet ./...` — zero warnings
+- `go build ./...` — clean
+- `go mod tidy` — up to date
+- `make test` — all packages PASS
+- E2E 11/11, UI smoke 822/828 (99.3%), CI green, 8/8 pods Running
+
+---
+
 ## [Unreleased] — Milestone: 205 Docs — Developer Experience Complete
 
 ### Documentation Milestone (205 docs)

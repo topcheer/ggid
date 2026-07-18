@@ -1,7 +1,7 @@
 # OWASP API Security Top 10 Assessment
 
 **Date**: 2025-07-18  
-**Version**: v1.0-beta  
+**Version**: v1.0-stable  
 
 ---
 
