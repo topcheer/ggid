@@ -80,9 +80,9 @@ Each example covers: login → get user → create OAuth client, in under 50 lin
 graph TB
     Client[Client / SDK]
     GW[Gateway :8080]
-    Auth[Auth :8082]
+    Auth[Auth :9001]
     ID[Identity :8081]
-    OAuth[OAuth :8083]
+    OAuth[OAuth :9005]
     Policy[Policy :8084]
     Audit[Audit :8085]
     PG[(PostgreSQL)]
