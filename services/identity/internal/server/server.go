@@ -143,6 +143,13 @@ func New(cfg *conf.Config) (*Server, error) {
 	}
 	httpHandler.privilOpRepo = privilOpRepo
 
+	// Automated access review scheduling.
+	reviewSchedRepo := newReviewScheduleRepo(pool)
+	if err := reviewSchedRepo.EnsureSchema(ctx); err != nil {
+		log.Printf("Review schedule schema ensure error (non-fatal): %v", err)
+	}
+	httpHandler.reviewSchedRepo = reviewSchedRepo
+
 	// NHI PG repos (replaces in-memory maps).
 	nhiPGRepo := newNHIPGRepo(pool)
 	if err := nhiPGRepo.EnsureSchema(ctx); err != nil {
