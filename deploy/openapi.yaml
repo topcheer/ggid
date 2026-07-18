@@ -817,6 +817,451 @@ paths:
         '200':
           description: Validation result
 
+  # === Auth: Sessions ===
+  /api/v1/auth/sessions:
+    get:
+      tags: [Auth, Sessions]
+      summary: List active sessions
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Session list }
+
+  /api/v1/auth/sessions/{id}:
+    delete:
+      tags: [Auth, Sessions]
+      summary: Revoke a session
+      security: [{BearerAuth: []}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Session revoked }
+
+  # === Auth: MFA ===
+  /api/v1/auth/mfa/enroll:
+    post:
+      tags: [Auth, MFA]
+      summary: Enroll MFA (TOTP)
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                method: { type: string, example: totp }
+      responses:
+        '200': { description: MFA enrollment with QR secret }
+
+  /api/v1/auth/mfa/verify:
+    post:
+      tags: [Auth, MFA]
+      summary: Verify MFA code
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+      responses:
+        '200': { description: MFA verified }
+
+  /api/v1/auth/mfa/backup-codes:
+    get:
+      tags: [Auth, MFA]
+      summary: List backup codes
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Backup codes }
+    post:
+      tags: [Auth, MFA]
+      summary: Generate new backup codes
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: New backup codes generated }
+
+  # === Auth: WebAuthn ===
+  /api/v1/auth/webauthn/begin:
+    post:
+      tags: [Auth, WebAuthn]
+      summary: Begin WebAuthn registration
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id: { type: string }
+      responses:
+        '200': { description: Registration challenge }
+
+  /api/v1/auth/webauthn/finish:
+    post:
+      tags: [Auth, WebAuthn]
+      summary: Finish WebAuthn registration
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credential_id: { type: string }
+                public_key: { type: string }
+                aaguid: { type: string }
+      responses:
+        '201': { description: Credential registered }
+
+  /api/v1/auth/webauthn/login/begin:
+    post:
+      tags: [Auth, WebAuthn]
+      summary: Begin WebAuthn login
+      responses:
+        '200': { description: Login challenge }
+
+  /api/v1/auth/webauthn/login/finish:
+    post:
+      tags: [Auth, WebAuthn]
+      summary: Finish WebAuthn login
+      responses:
+        '200': { description: Login successful with JWT tokens }
+
+  # === Auth: Password ===
+  /api/v1/auth/password/strength:
+    post:
+      tags: [Auth]
+      summary: Evaluate password strength (zxcvbn score 0-4)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password: { type: string }
+      responses:
+        '200': { description: Strength score with crack time and suggestions }
+
+  /api/v1/auth/password/change:
+    post:
+      tags: [Auth]
+      summary: Change password (requires current password)
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                old_password: { type: string }
+                new_password: { type: string }
+      responses:
+        '200': { description: Password changed }
+
+  # === OAuth: Clients ===
+  /api/v1/oauth/clients:
+    get:
+      tags: [OAuth]
+      summary: List OAuth clients
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Client list }
+    post:
+      tags: [OAuth]
+      summary: Create OAuth client
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                redirect_uris:
+                  type: array
+                  items: { type: string }
+                grant_types:
+                  type: array
+                  items: { type: string }
+      responses:
+        '201': { description: Client created }
+
+  /api/v1/oauth/clients/{id}:
+    get:
+      tags: [OAuth]
+      summary: Get OAuth client
+      security: [{BearerAuth: []}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Client detail }
+    delete:
+      tags: [OAuth]
+      summary: Delete OAuth client
+      security: [{BearerAuth: []}]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Client deleted }
+
+  # === OAuth: Discovery ===
+  /.well-known/openid-configuration:
+    get:
+      tags: [OAuth]
+      summary: OIDC discovery document
+      responses:
+        '200': { description: OIDC configuration }
+
+  /.well-known/jwks.json:
+    get:
+      tags: [OAuth]
+      summary: JWKS public keys
+      responses:
+        '200': { description: JSON Web Key Set }
+
+  # === Policy: CRUD ===
+  /api/v1/policies:
+    get:
+      tags: [Policy]
+      summary: List policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Policy list }
+    post:
+      tags: [Policy]
+      summary: Create policy
+      security: [{BearerAuth: []}]
+      responses:
+        '201': { description: Policy created }
+
+  /api/v1/policies/{id}:
+    get:
+      tags: [Policy]
+      summary: Get policy by ID
+      security: [{BearerAuth: []}]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Policy detail }
+    delete:
+      tags: [Policy]
+      summary: Delete policy
+      security: [{BearerAuth: []}]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Policy deleted }
+
+  /api/v1/policies/evaluate:
+    post:
+      tags: [Policy]
+      summary: Evaluate all matching policies with decision trail
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                principal_id: { type: string }
+                resources: { type: array, items: { type: string } }
+                actions: { type: array, items: { type: string } }
+      responses:
+        '200': { description: Evaluation results }
+
+  /api/v1/policies/sod/check:
+    post:
+      tags: [Policy, SoD]
+      summary: Check Separation of Duties
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: SoD check result }
+
+  # === Identity: Groups ===
+  /api/v1/groups:
+    get:
+      tags: [Identity]
+      summary: List groups
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Group list }
+    post:
+      tags: [Identity]
+      summary: Create group
+      security: [{BearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        '201': { description: Group created }
+
+  /api/v1/groups/{id}/members:
+    get:
+      tags: [Identity]
+      summary: List group members
+      security: [{BearerAuth: []}]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Member list }
+    post:
+      tags: [Identity]
+      summary: Add member to group
+      security: [{BearerAuth: []}]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Member added }
+
+  # === Org: Teams & Departments ===
+  /api/v1/departments:
+    get:
+      tags: [Org]
+      summary: List departments
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Department list }
+    post:
+      tags: [Org]
+      summary: Create department
+      security: [{BearerAuth: []}]
+      responses:
+        '201': { description: Department created }
+
+  /api/v1/teams:
+    get:
+      tags: [Org]
+      summary: List teams
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Team list }
+    post:
+      tags: [Org]
+      summary: Create team
+      security: [{BearerAuth: []}]
+      responses:
+        '201': { description: Team created }
+
+  # === Audit: CCM ===
+  /api/v1/audit/ccm/results:
+    get:
+      tags: [Audit, CCM]
+      summary: Get compliance monitoring results
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: CCM control results }
+
+  /api/v1/audit/ccm/run:
+    post:
+      tags: [Audit, CCM]
+      summary: Trigger compliance scan
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Scan completed with results }
+
+  /api/v1/audit/ccm/history:
+    get:
+      tags: [Audit, CCM]
+      summary: Get compliance history
+      security: [{BearerAuth: []}]
+      parameters:
+        - { name: control_id, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Historical CCM results }
+
+  # === Auth: Conditional Access ===
+  /api/v1/auth/conditional-access/policies:
+    get:
+      tags: [Conditional Access]
+      summary: List conditional access policies
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: CAP policy list }
+    post:
+      tags: [Conditional Access]
+      summary: Create conditional access policy
+      security: [{BearerAuth: []}]
+      responses:
+        '201': { description: Policy created }
+
+  /api/v1/auth/conditional-access/evaluate:
+    post:
+      tags: [Conditional Access]
+      summary: Evaluate conditions against context
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Evaluation decision }
+
+  # === Auth: TAP ===
+  /api/v1/auth/tap:
+    post:
+      tags: [TAP]
+      summary: Issue Temporary Access Pass
+      security: [{BearerAuth: []}]
+      responses:
+        '201': { description: TAP issued }
+
+  /api/v1/auth/tap/batch:
+    post:
+      tags: [TAP]
+      summary: Batch issue TAPs
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Batch results }
+
+  /api/v1/auth/tap/policy:
+    get:
+      tags: [TAP]
+      summary: Get TAP policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Current TAP policy }
+    put:
+      tags: [TAP]
+      summary: Update TAP policy
+      security: [{BearerAuth: []}]
+      responses:
+        '200': { description: Policy updated }
+
+  # === System ===
+  /healthz:
+    get:
+      tags: [System]
+      summary: Health check
+      responses:
+        '200': { description: OK }
+
+  /readyz:
+    get:
+      tags: [System]
+      summary: Readiness check
+      responses:
+        '200': { description: Ready }
+
 components:
   securitySchemes:
     BearerAuth:

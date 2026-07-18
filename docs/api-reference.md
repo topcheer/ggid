@@ -1,497 +1,222 @@
 # GGID API Reference
 
-> Complete API reference for all GGID services.
-> Base URL: `https://ggid.iot2.win`
-> All requests require `Authorization: Bearer <token>` and `X-Tenant-ID: <tenant-uuid>` headers unless noted.
+Complete endpoint inventory organized by service. All authenticated endpoints require `Authorization: Bearer <JWT>` and `X-Tenant-ID` header.
+
+> **Base URL**: `http://localhost:8080`  
+> **Swagger UI**: `http://localhost:8080/docs`  
+> **OpenAPI Spec**: `http://localhost:8080/swagger.json`
 
 ---
 
-## Table of Contents
+## Auth Service
 
-1. [Auth Service](#1-auth-service)
-2. [Identity Service](#2-identity-service)
-3. [OAuth Service](#3-oauth-service)
-4. [Policy Service](#4-policy-service)
-5. [Audit Service](#5-audit-service)
-6. [Gateway](#6-gateway)
-
----
-
-## 1. Auth Service
-
-> Port: 9001 (HTTP) / 50052 (gRPC)
-> Handles authentication, MFA, sessions, passkeys, biometrics.
-
-### Authentication
-
-#### POST `/api/v1/auth/login`
-Authenticate a user with username/password.
-
-```bash
-curl -k -H 'Accept-Encoding: identity' \
-  -X POST "https://ggid.iot2.win/api/v1/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin@123456","tenant_id":"00000000-0000-0000-0000-000000000001"}'
-```
-
-**Response:** `{"access_token":"...","refresh_token":"...","expires_in":3600}`
-
-#### POST `/api/v1/auth/register`
-Register a new user.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{"username":"newuser","email":"newuser@example.com","password":"SecurePass123!"}'
-```
-
-#### POST `/api/v1/auth/refresh`
-Refresh an access token.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/auth/refresh" \
-  -H "Authorization: Bearer <token>" \
-  -d '{"refresh_token":"..."}'
-```
-
-#### POST `/api/v1/auth/logout`
-Invalidate the current session.
-
-#### POST `/api/v1/auth/password/change`
-Change password for the authenticated user.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/auth/password/change" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"current_password":"OldPass","new_password":"NewPass123!"}'
-```
-
-#### POST `/api/v1/auth/password/forgot`
-Request a password reset link. No auth required.
-
-#### POST `/api/v1/auth/password/reset`
-Reset password using a reset token.
-
-### MFA
-
-#### POST `/api/v1/auth/mfa/setup`
-Initialize TOTP MFA enrollment. Returns a QR code secret.
-
-#### POST `/api/v1/auth/mfa/verify`
-Verify a TOTP code to complete MFA enrollment.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/auth/mfa/verify" \
-  -H "Authorization: Bearer <token>" \
-  -d '{"code":"123456","secret":"BASE32SECRET"}'
-```
-
-#### POST `/api/v1/auth/mfa/login`
-Submit MFA code during login flow.
-
-#### POST `/api/v1/auth/mfa/disable`
-Disable MFA for the authenticated user.
-
-#### POST `/api/v1/auth/mfa/backup-codes/generate`
-Generate one-time backup codes.
-
-#### POST `/api/v1/auth/mfa/backup-codes/verify`
-Verify a backup code.
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/v1/auth/register` | — | Self-service user registration |
+| POST | `/api/v1/auth/login` | — | Login with username/password |
+| POST | `/api/v1/auth/logout` | Bearer | Logout and invalidate session |
+| POST | `/api/v1/auth/refresh` | — | Refresh access token |
+| GET | `/api/v1/auth/profile` | Bearer | Get current user profile |
+| PUT | `/api/v1/auth/profile` | Bearer | Update own profile |
+| GET | `/api/v1/auth/verify-email` | — | Verify email with token |
+| POST | `/api/v1/auth/password/forgot` | — | Request password reset |
+| POST | `/api/v1/auth/password/reset` | — | Reset password with token |
+| POST | `/api/v1/auth/password/change` | Bearer | Change password |
+| POST | `/api/v1/auth/password/strength` | — | Evaluate password strength (0-4) |
+| GET | `/api/v1/auth/password/policy` | — | Get password policy |
 
 ### Sessions
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/auth/sessions` | Bearer | List active sessions |
+| DELETE | `/api/v1/auth/sessions/{id}` | Bearer | Revoke a session |
 
-#### GET `/api/v1/auth/sessions`
-List active sessions for the authenticated user.
+### MFA
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/v1/auth/mfa/enroll` | Bearer | Enroll TOTP MFA |
+| POST | `/api/v1/auth/mfa/verify` | Bearer | Verify MFA code |
+| POST | `/api/v1/auth/mfa/disable` | Bearer | Disable MFA |
+| GET | `/api/v1/auth/mfa/backup-codes` | Bearer | List backup codes |
+| POST | `/api/v1/auth/mfa/backup-codes` | Bearer | Generate new backup codes |
 
-#### DELETE `/api/v1/auth/sessions`
-Revoke all sessions except the current one.
+### WebAuthn
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/v1/auth/webauthn/begin` | Bearer | Begin registration |
+| POST | `/api/v1/auth/webauthn/finish` | Bearer | Finish registration |
+| POST | `/api/v1/auth/webauthn/login/begin` | — | Begin WebAuthn login |
+| POST | `/api/v1/auth/webauthn/login/finish` | — | Finish WebAuthn login |
+| GET | `/api/v1/auth/webauthn/aaguid` | Bearer | List AAGUID allowlist |
+| POST | `/api/v1/auth/webauthn/aaguid` | Bearer | Add AAGUID to allowlist |
+| DELETE | `/api/v1/auth/webauthn/aaguid/{id}` | Bearer | Remove AAGUID |
 
-### DLP
+### Conditional Access (CAP)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/auth/conditional-access/policies` | Bearer | List CAP policies |
+| POST | `/api/v1/auth/conditional-access/policies` | Bearer | Create CAP policy |
+| PUT | `/api/v1/auth/conditional-access/policies/{id}` | Bearer | Update CAP policy |
+| DELETE | `/api/v1/auth/conditional-access/policies/{id}` | Bearer | Delete CAP policy |
+| POST | `/api/v1/auth/conditional-access/evaluate` | Bearer | Evaluate conditions |
 
-#### GET `/api/v1/dlp/policies`
-List DLP policies.
+### TAP (Temporary Access Pass)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/v1/auth/tap` | Bearer | Issue single TAP |
+| POST | `/api/v1/auth/tap/batch` | Bearer | Batch issue TAPs |
+| GET | `/api/v1/auth/tap/policy` | Bearer | Get TAP policy |
+| PUT | `/api/v1/auth/tap/policy` | Bearer | Update TAP policy |
 
-#### POST `/api/v1/dlp/scan`
-Scan content for PII.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/dlp/scan" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"content":"My SSN is 123-45-6789"}'
-```
+### Break Glass
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/v1/auth/break-glass/activate` | Bearer | Activate break-glass |
+| GET | `/api/v1/auth/break-glass/history` | Bearer | Break-glass history |
 
 ---
 
-## 2. Identity Service
-
-> Port: 8081 (HTTP) / 50051 (gRPC)
-> Handles users, groups, organizations, SCIM, federation, consent.
+## Identity Service
 
 ### Users
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/users` | Bearer | List users (paginated) |
+| POST | `/api/v1/users` | Bearer | Create user |
+| GET | `/api/v1/users/{id}` | Bearer | Get user by ID |
+| PUT | `/api/v1/users/{id}` | Bearer | Update user |
+| DELETE | `/api/v1/users/{id}` | Bearer | Delete user |
+| POST | `/api/v1/users/{id}/lock` | Bearer | Lock user |
+| POST | `/api/v1/users/{id}/unlock` | Bearer | Unlock user |
+| POST | `/api/v1/users/import` | Bearer | Import users (CSV) |
+| GET | `/api/v1/users/export` | Bearer | Export users (CSV) |
 
-#### GET `/api/v1/users`
-List all users (paginated).
+### Groups
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/groups` | Bearer | List groups |
+| POST | `/api/v1/groups` | Bearer | Create group |
+| GET | `/api/v1/groups/{id}` | Bearer | Get group |
+| PUT | `/api/v1/groups/{id}` | Bearer | Update group |
+| DELETE | `/api/v1/groups/{id}` | Bearer | Delete group |
+| GET | `/api/v1/groups/{id}/members` | Bearer | List members |
+| POST | `/api/v1/groups/{id}/members` | Bearer | Add member |
 
-```bash
-curl -k "https://ggid.iot2.win/api/v1/users?page=1&page_size=20" \
-  -H "Authorization: Bearer <token>" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001"
-```
+### Organization
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/orgs` | Bearer | List organizations |
+| POST | `/api/v1/orgs` | Bearer | Create organization |
+| GET | `/api/v1/orgs/{id}` | Bearer | Get organization |
+| PUT | `/api/v1/orgs/{id}` | Bearer | Update organization |
+| DELETE | `/api/v1/orgs/{id}` | Bearer | Delete organization |
+| GET | `/api/v1/orgs/tree` | Bearer | Full org tree |
+| GET | `/api/v1/departments` | Bearer | List departments |
+| POST | `/api/v1/departments` | Bearer | Create department |
+| GET | `/api/v1/teams` | Bearer | List teams |
+| POST | `/api/v1/teams` | Bearer | Create team |
 
-#### POST `/api/v1/users`
-Create a new user.
+### NHI (Non-Human Identity)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/identity/nhi` | Bearer | List NHI inventory |
+| GET | `/api/v1/identity/nhi/{id}/risk` | Bearer | Get NHI risk score |
+| GET | `/api/v1/identity/nhi/risk-alerts` | Bearer | High-risk NHI list |
+| POST | `/api/v1/identity/nhi/risk/scan` | Bearer | Trigger risk evaluation |
 
-#### GET `/api/v1/users/:id`
-Get a user by ID.
-
-#### PUT `/api/v1/users/:id`
-Update a user.
-
-#### DELETE `/api/v1/users/:id`
-Delete a user.
-
-#### POST `/api/v1/users/import`
-Bulk import users via CSV.
-
-#### GET `/api/v1/users/export`
-Export users as CSV.
-
-#### GET `/api/v1/users/search`
-Search users by name, email, or attributes.
-
-### SCIM 2.0
-
-#### GET `/api/v1/scim/Groups`
-List groups (SCIM 2.0 compliant).
-
-#### POST `/api/v1/scim/Groups`
-Create a group.
-
-#### GET `/api/v1/scim/Groups/:id`
-Get a group by ID.
-
-#### PATCH `/api/v1/scim/Groups/:id`
-Update group membership.
-
-### Organizations
-
-#### GET `/api/v1/organizations`
-List organizational hierarchy.
-
-#### POST `/api/v1/organizations`
-Create an organization.
-
-### Consent Management
-
-#### GET `/api/v1/identity/consent/registry`
-List consent records.
-
-```bash
-curl -k "https://ggid.iot2.win/api/v1/identity/consent/registry?status=active" \
-  -H "Authorization: Bearer <token>" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001"
-```
-
-#### POST `/api/v1/identity/consent/registry`
-Grant consent.
-
-#### DELETE `/api/v1/identity/consent/registry`
-Withdraw consent.
-
-### Federation
-
-#### GET `/api/v1/identity/federation/entities`
-List federation entities.
-
-#### POST `/api/v1/identity/federation/entities`
-Create a federation entity (SAML/OIDC).
-
-#### DELETE `/api/v1/identity/federation/entities?id=:id`
-Delete a federation entity.
-
-### Threat Intelligence
-
-#### GET `/api/v1/audit/threat-intel/sources`
-List configured intel sources.
-
-#### GET `/api/v1/audit/threat-intel/indicators`
-Query threat indicators.
-
-#### POST `/api/v1/audit/threat-intel/check`
-Real-time threat check.
-
-#### GET `/api/v1/audit/threat-intel/stats`
-Threat intel statistics.
+### Privileged Operations
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/identity/privileged-operations` | Bearer | Privileged op audit trail |
 
 ---
 
-## 3. OAuth Service
+## OAuth Service
 
-> Port: 9005
-> Handles OAuth 2.1, OIDC, SAML, DPoP, consent, device flow.
-
-### Authorization
-
-#### GET `/api/v1/oauth/authorize`
-Start the authorization code flow (with PKCE).
-
-```
-GET /api/v1/oauth/authorize?response_type=code&client_id=...&redirect_uri=...&code_challenge=...&code_challenge_method=S256&scope=openid+profile
-```
-
-#### POST `/api/v1/oauth/token`
-Exchange authorization code or refresh token for an access token.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/oauth/token" \
-  -d 'grant_type=authorization_code&code=...&redirect_uri=...&code_verifier=...&client_id=...'
-```
-
-**DPoP:** Include `DPoP` header with a signed JWT proof to bind the token to the client's key.
-
-#### GET `/api/v1/oauth/userinfo`
-Get user info from an access token (OIDC UserInfo endpoint).
-
-#### POST `/api/v1/oauth/revoke`
-Revoke a token.
-
-#### POST `/api/v1/oauth/introspect`
-Introspect a token (RFC 7662).
-
-### Client Registration
-
-#### GET `/api/v1/oauth/clients`
-List OAuth clients.
-
-#### POST `/api/v1/oauth/clients`
-Register a new OAuth client.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/oauth/clients" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"client_name":"My App","redirect_uris":["https://app.example.com/callback"],"grant_types":["authorization_code"],"scope":"openid profile"}'
-```
-
-#### GET `/api/v1/oauth/clients/:id`
-Get a client by ID.
-
-#### PUT `/api/v1/oauth/clients/:id`
-Update a client.
-
-#### DELETE `/api/v1/oauth/clients/:id`
-Delete a client.
-
-### Device Flow
-
-#### POST `/api/v1/oauth/device`
-Initiate device authorization flow (RFC 8628).
-
-### Consent
-
-#### GET/POST `/oauth/consent`
-Get or submit user consent for an authorization request.
-
-### SAML 2.0
-
-#### GET `/saml/metadata`
-Service Provider metadata.
-
-#### POST `/saml/acs`
-Assertion Consumer Service endpoint.
-
-#### GET `/saml/sso`
-Initiate SP-initiated SSO.
-
-#### GET `/saml/slo`
-Single Logout endpoint.
-
-#### GET `/saml/idp/metadata`
-IdP metadata (GGID as Identity Provider).
-
-### DPoP (RFC 9449)
-
-#### GET `/api/v1/oauth/dpop/config`
-Get DPoP configuration.
-
-#### POST `/api/v1/oauth/dpop/verify`
-Verify a DPoP proof.
-
-#### POST `/api/v1/oauth/token/dpop-bind`
-Bind an access token to a DPoP key.
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/oauth/authorize` | Session | OAuth authorize endpoint |
+| POST | `/api/v1/oauth/token` | Client | Issue token (all grants) |
+| POST | `/api/v1/oauth/introspect` | Bearer | Token introspection |
+| POST | `/api/v1/oauth/revoke` | Bearer | Revoke token |
+| GET | `/api/v1/oauth/clients` | Bearer | List clients |
+| POST | `/api/v1/oauth/clients` | Bearer | Create client |
+| GET | `/api/v1/oauth/clients/{id}` | Bearer | Get client |
+| PUT | `/api/v1/oauth/clients/{id}` | Bearer | Update client |
+| DELETE | `/api/v1/oauth/clients/{id}` | Bearer | Delete client |
+| GET | `/.well-known/openid-configuration` | — | OIDC discovery |
+| GET | `/.well-known/jwks.json` | — | JWKS public keys |
 
 ---
 
-## 4. Policy Service
+## Policy Service
 
-> Port: 8070 (HTTP) / 9070 (gRPC)
-> Handles roles, permissions, policies, ABAC, ReBAC, risk scoring.
+### Roles
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/roles` | Bearer | List roles |
+| POST | `/api/v1/roles` | Bearer | Create role |
+| GET | `/api/v1/roles/{id}` | Bearer | Get role |
+| PUT | `/api/v1/roles/{id}` | Bearer | Update role |
+| DELETE | `/api/v1/roles/{id}` | Bearer | Delete role |
+| POST | `/api/v1/roles/assign` | Bearer | Assign role to user |
 
-### Roles & Permissions
+### Permissions
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/permissions` | Bearer | List permissions |
+| POST | `/api/v1/permissions` | Bearer | Create permission |
 
-#### GET `/api/v1/roles`
-List all roles.
+### Policies (ABAC/RBAC)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/policies` | Bearer | List policies |
+| POST | `/api/v1/policies` | Bearer | Create policy |
+| GET | `/api/v1/policies/{id}` | Bearer | Get policy |
+| PUT | `/api/v1/policies/{id}` | Bearer | Update policy |
+| DELETE | `/api/v1/policies/{id}` | Bearer | Delete policy |
+| POST | `/api/v1/policies/check` | Bearer | Check single permission |
+| POST | `/api/v1/policies/evaluate` | Bearer | Evaluate with decision trail |
 
-#### POST `/api/v1/roles`
-Create a role.
-
-#### GET `/api/v1/roles/:id`
-Get a role by ID.
-
-#### PUT `/api/v1/roles/:id`
-Update a role.
-
-#### DELETE `/api/v1/roles/:id`
-Delete a role.
-
-#### GET `/api/v1/permissions`
-List all permissions.
-
-### Policies
-
-#### GET `/api/v1/policies`
-List policies.
-
-#### POST `/api/v1/policies`
-Create a policy.
-
-#### POST `/api/v1/policies/check`
-Check if a subject has permission for an action.
-
-```bash
-curl -k -X POST "https://ggid.iot2.win/api/v1/policies/check" \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{"subject":"user:admin","action":"read","resource":"document:123"}'
-```
-
-#### POST `/api/v1/policies/evaluate`
-Evaluate a policy with full context (ABAC).
-
-### Risk Scoring
-
-#### GET `/api/v1/policy/risk-score/summary`
-Get organization-wide risk summary.
-
-#### GET `/api/v1/policy/risk-score/users`
-List users with risk scores.
-
-#### POST `/api/v1/policy/risk-score/recalculate`
-Recalculate risk for a specific user.
-
-### JIT Elevation
-
-#### POST `/api/v1/policies/jit/request`
-Request just-in-time privilege elevation.
+### SoD (Separation of Duties)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/v1/policies/sod/check` | Bearer | Check SoD violation |
+| GET | `/api/v1/policies/sod/violations` | Bearer | List violations |
+| GET | `/api/v1/policies/sod/matrix` | Bearer | SoD conflict matrix |
 
 ---
 
-## 5. Audit Service
+## Audit Service
 
-> Port: 8072 (HTTP) / 9072 (gRPC)
-> Handles audit events, ITDR, compliance, reports.
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/audit/events` | Bearer | List audit events |
+| GET | `/api/v1/audit/events/{id}` | Bearer | Get event by ID |
+| GET | `/api/v1/audit/stats` | Bearer | Aggregate statistics |
+| GET | `/api/v1/audit/export` | Bearer | Export events (JSON/CSV) |
+| GET | `/api/v1/audit/stream` | Bearer | SSE event stream |
 
-### Events
-
-#### GET `/api/v1/audit/events`
-List audit events (paginated, filterable).
-
-```bash
-curl -k "https://ggid.iot2.win/api/v1/audit/events?page_size=50&action=login" \
-  -H "Authorization: Bearer <token>" \
-  -H "X-Tenant-ID: 00000000-0000-0000-0000-000000000001"
-```
-
-#### GET `/api/v1/audit/events/:id`
-Get a specific event.
-
-#### GET `/api/v1/audit/stats`
-Get audit statistics (event counts, trends).
-
-#### GET `/api/v1/audit/export`
-Export audit events as CSV/JSON.
-
-#### GET `/api/v1/audit/stream`
-Server-Sent Events stream of real-time audit events.
-
-#### GET `/api/v1/audit/ws`
-WebSocket endpoint for real-time push.
-
-### ITDR (Identity Threat Detection)
-
-#### GET `/api/v1/audit/itdr/detections`
-List ITDR detections.
-
-#### GET `/api/v1/audit/itdr/stats`
-ITDR statistics.
-
-#### GET/POST `/api/v1/audit/itdr/rules`
-Manage ITDR detection rules.
-
-### Compliance
-
-#### GET `/api/v1/audit/compliance-dashboard`
-Get compliance framework summaries.
-
-#### GET `/api/v1/audit/compliance-report`
-Generate compliance report.
-
-### Anomaly Detection
-
-#### GET/POST `/api/v1/audit/rules`
-Manage anomaly detection rules.
-
-#### POST `/api/v1/audit/correlate`
-Correlate events across sources.
-
-### Integrity
-
-#### GET `/api/v1/audit/verify-integrity`
-Verify audit log integrity (hash chain).
-
-### Threat Intelligence
-
-#### GET `/api/v1/audit/threat-intel/sources`
-List intel sources.
-
-#### GET `/api/v1/audit/threat-intel/indicators`
-Query indicators.
-
-#### POST `/api/v1/audit/threat-intel/check`
-Real-time IOC check.
-
-#### GET `/api/v1/audit/threat-intel/stats`
-Coverage and indicator statistics.
+### CCM (Continuous Compliance Monitoring)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/audit/ccm/results` | Bearer | Latest control results |
+| GET | `/api/v1/audit/ccm/history` | Bearer | Historical trends |
+| GET | `/api/v1/audit/ccm/summary` | Bearer | Compliance dashboard |
+| POST | `/api/v1/audit/ccm/run` | Bearer | Trigger compliance scan |
 
 ---
 
-## 6. Gateway
+## Admin & System
 
-> Port: 8080
-> API gateway with reverse proxy, middleware, rate limiting.
-
-### Health
-
-#### GET `/healthz`
-Health check endpoint.
-
-```bash
-curl -k "https://ggid.iot2.win/healthz"
-```
-
-#### GET `/readyz`
-Readiness check.
-
-### OIDC Discovery
-
-#### GET `/.well-known/openid-configuration`
-OpenID Connect discovery document.
-
-```bash
-curl -k "https://ggid.iot2.win/.well-known/openid-configuration" | python3 -m json.tool
-```
-
-#### GET `/oauth/jwks`
-JSON Web Key Set for token verification.
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/v1/admin/backups` | Admin | List backups |
+| POST | `/api/v1/admin/backups/trigger` | Admin | Trigger backup |
+| GET | `/api/v1/admin/secrets` | Admin | List secret references |
+| GET | `/api/v1/admin/keys` | Admin | List signing keys |
+| GET | `/api/v1/quotas/{tenant_id}` | Admin | Get tenant quota |
+| PUT | `/api/v1/quotas/{tenant_id}` | Admin | Update quota |
+| GET | `/healthz` | — | Health check |
+| GET | `/readyz` | — | Readiness check |
+| POST | `/graphql` | Bearer | GraphQL endpoint |
