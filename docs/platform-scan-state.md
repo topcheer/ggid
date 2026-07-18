@@ -1,8 +1,8 @@
 # Platform Scan State
 
-## Current round: 126
-## Last scan focus: E2E (Round 125) — Core 10/10, ERP 4/4; console route aliases deployed (/risk-scoring + /threat-intel → 200); 3 user guides (F-46/F-47/F-48)
-## Next scan focus: F (Coverage scan, Round 126 = even)
+## Current round: 127
+## Last scan focus: E2E (Round 126) — make test PASS (all 61 packages), gateway middleware build fixed (SecurityHeadersConfigurable), flaky test ordering identified (CORS/SQLi pass in isolation)
+## Next scan focus: G (Completeness scan, Round 127 = odd)
 ## Total findings: 76
 ## Done: 74
 ## Fixed (pending verification): 1 (handleRotationRoute — backend in progress)
