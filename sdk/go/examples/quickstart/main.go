@@ -22,7 +22,7 @@ func main() {
 	// 2. Login as admin
 	ctx := context.Background()
 	token, err := client.Login(ctx, &ggid.LoginRequest{
-		Email: "admin@ggid.dev", Password: "Admin@123456",
+		Username: "admin", Password: "Admin@123456",
 	})
 	if err != nil { log.Fatalf("login failed: %v", err) }
 	fmt.Println("✓ Logged in, token acquired")

@@ -14,7 +14,7 @@ def main():
     client = GGIDClient(base_url="http://localhost:8080")
 
     # 2. Login as admin
-    token = client.login(email="admin@ggid.dev", password="Admin@123456")
+    token = client.login(username="admin", password="Admin@123456")
     print("✓ Logged in as admin")
 
     # 3. List users
