@@ -99,7 +99,7 @@ func InputValidationMiddleware(next http.Handler) http.Handler {
 
 		// Check request body (for POST/PUT/PATCH with JSON).
 		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
-			if r.Header.Get("Content-Type") == "application/json" && r.ContentLength > 0 && r.ContentLength < cfg.MaxBodySize {
+			if r.Header.Get("Content-Type") == "application/json" && r.ContentLength < cfg.MaxBodySize {
 				body, err := io.ReadAll(r.Body)
 				if err != nil {
 					next.ServeHTTP(w, r)

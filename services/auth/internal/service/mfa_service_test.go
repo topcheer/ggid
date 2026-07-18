@@ -182,7 +182,7 @@ func TestMFAService_Verify_FirstTime_EnablesDevice(t *testing.T) {
 	deviceID, _ := uuid.Parse(resp.DeviceID)
 
 	// Verify the code.
-	err = svc.VerifyMFA(mfaCtx(), deviceID, code)
+	_, err = svc.VerifyMFA(mfaCtx(), deviceID, code)
 	if err != nil {
 		t.Fatalf("VerifyMFA failed: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestMFAService_Verify_InvalidCode(t *testing.T) {
 	resp, _ := svc.SetupMFA(mfaCtx(), uuid.New(), "test")
 	deviceID, _ := uuid.Parse(resp.DeviceID)
 
-	err := svc.VerifyMFA(mfaCtx(), deviceID, "000000")
+	_, err := svc.VerifyMFA(mfaCtx(), deviceID, "000000")
 	if err == nil {
 		t.Fatal("expected error for invalid TOTP code")
 	}
@@ -217,7 +217,7 @@ func TestMFAService_Verify_DeviceNotFound(t *testing.T) {
 	repo := newMockMFARepo()
 	svc := NewMFAService(repo)
 
-	err := svc.VerifyMFA(mfaCtx(), uuid.New(), "123456")
+	_, err := svc.VerifyMFA(mfaCtx(), uuid.New(), "123456")
 	if err == nil {
 		t.Fatal("expected error for non-existent device")
 	}
@@ -233,7 +233,7 @@ func TestMFAService_VerifyUserCode_Success(t *testing.T) {
 	resp, _ := svc.SetupMFA(mfaCtx(), userID, "test")
 	code, _ := totp.GenerateCode(resp.Secret, time.Now())
 	deviceID, _ := uuid.Parse(resp.DeviceID)
-	_ = svc.VerifyMFA(mfaCtx(), deviceID, code)
+	_, _ = svc.VerifyMFA(mfaCtx(), deviceID, code)
 
 	// Now verify by user code.
 	code2, _ := totp.GenerateCode(resp.Secret, time.Now())
@@ -285,7 +285,7 @@ func TestMFAService_HasMFAEnabled(t *testing.T) {
 	resp, _ := svc.SetupMFA(mfaCtx(), userID, "test")
 	code, _ := totp.GenerateCode(resp.Secret, time.Now())
 	deviceID, _ := uuid.Parse(resp.DeviceID)
-	_ = svc.VerifyMFA(mfaCtx(), deviceID, code)
+	_, _ = svc.VerifyMFA(mfaCtx(), deviceID, code)
 
 	// Now should be enabled.
 	if !svc.HasMFAEnabled(context.Background(), mfaTestTenantID, userID) {

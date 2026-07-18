@@ -242,6 +242,7 @@ func TestHandler_MultiplePublicPaths(t *testing.T) {
 }
 
 func TestHandler_CORSHeaders(t *testing.T) {
+	t.Setenv("CORS_ALLOWED_ORIGINS", "https://example.com")
 	gw := testGatewayNoJWKS(t)
 	handler := gw.Handler()
 
