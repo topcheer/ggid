@@ -16,14 +16,40 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-// Argon2id parameters — tuned for server-side hashing.
+// Argon2id parameters — tuned for interactive login (<100ms target).
+// OWASP-recommended first-line params: m=19456, t=2, p=1.
+// Previous: m=65536, t=3, p=2 (~250ms) — too slow for interactive login.
+// Stored hashes embed their params, so existing hashes verify with their
+// original settings. Only new password sets use these tuned params.
 const (
-	argonMemory      = 64 * 1024 // 64 MB
-	argonIterations  = 3
-	argonParallelism = 2
+	argonMemory      = 19 * 1024 // 19 MB (OWASP recommendation)
+	argonIterations  = 2         // 2 passes (OWASP recommendation)
+	argonParallelism = 1         // single lane (low-overhead)
 	argonKeyLength   = 32
 	argonSaltLength  = 16
 )
+
+// argonParams returns effective params with env overrides for tuning.
+// ARGON2_ITERATIONS, ARGON2_MEMORY_KB, ARGON2_PARALLELISM override defaults.
+func argonParams() (iter, mem, par, keyLen uint32) {
+	iter, mem, par, keyLen = uint32(argonIterations), uint32(argonMemory), uint32(argonParallelism), uint32(argonKeyLength)
+	if v := os.Getenv("ARGON2_ITERATIONS"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 1 {
+			iter = uint32(n)
+		}
+	}
+	if v := os.Getenv("ARGON2_MEMORY_KB"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 1024 {
+			mem = uint32(n)
+		}
+	}
+	if v := os.Getenv("ARGON2_PARALLELISM"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 1 {
+			par = uint32(n)
+		}
+	}
+	return
+}
 
 // testFastHash controls fast hashing for tests (set via init in test files).
 // When true, uses minimal Argon2id params (1 iteration, 4KB memory) to avoid
@@ -71,15 +97,15 @@ func HashPassword(password string) (string, error) {
 		return "", fmt.Errorf("failed to generate salt: %w", err)
 	}
 
-	iter, mem := uint32(argonIterations), uint32(argonMemory)
+	iter, mem, par, keyLen := argonParams()
 	if testFastHash {
-		iter, mem = 1, 4*1024 // Minimal params for test speed
+		iter, mem, par = 1, 4*1024, 1 // Minimal params for test speed
 	}
-	hash := argon2.IDKey(applyPepper(password), salt, iter, mem, argonParallelism, argonKeyLength)
+	hash := argon2.IDKey(applyPepper(password), salt, iter, mem, uint8(par), keyLen)
 
 	// Format: argon2id$iterations$memory$parallelism$salt.hash
 	encoded := fmt.Sprintf("argon2id$%d$%d$%d$%s.%s",
-		iter, mem, argonParallelism,
+		iter, mem, par,
 		base64.RawStdEncoding.EncodeToString(salt),
 		base64.RawStdEncoding.EncodeToString(hash),
 	)
