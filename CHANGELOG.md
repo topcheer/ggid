@@ -3,6 +3,67 @@
 All notable changes to GGID are documented here.
 The format is based on [Conventional Commits](https://conventionalcommits.org).
 
+## [v1.0-stable] - 2026-07-19
+
+### Performance
+- perf(auth): Argon2id env-tunable params + Redis session cache → login 258ms → 148ms (-43%)
+- perf(gateway): Enhanced metrics middleware with per-route histograms
+- perf(identity): PG indexes + Redis cache for user lookups
+
+### OpenAPI / API
+- feat(gateway): OpenAPI 3.1 spec — 723 paths, 47 requestBodies, 222 responseSchemas, 29 component schemas
+- feat(gateway): EnhancedOperation builder for schema-rich endpoint definitions (top 80 endpoints)
+- feat(gateway): Dynamic spec generation replaces static templates.go (fixes JSON parse errors)
+- feat(gateway): Swagger UI at /docs with interactive API explorer
+- feat(gateway): 4 Grafana dashboards (overview, auth-metrics, api-performance, security-overview)
+
+### Security & Compliance
+- feat(audit): Compliance framework mapping — SOC2 Type II (15 controls, 5 trust principles)
+- feat(audit): ISO 27001 Annex A (10 key controls A.5~A.16)
+- feat(audit): CCM cross-references (15 existing controls linked to framework mappings)
+- feat(audit): GET /api/v1/audit/compliance-mapping?framework=soc2|iso27001
+- feat(gateway): CORS strict defaults — no wildcard, dev-mode only
+- feat(auth): Session invalidation triggers (password change, role revoke, admin lockout)
+- feat(auth): Multi-hash password verifier (bcrypt/PBKDF2/scrypt/SSHA/Argon2id)
+- feat(auth): Transparent password rehash on login (legacy → Argon2id)
+- feat(auth): Conditional access policy integration
+- feat(policy): SoD (Separation of Duties) → PG persistence
+- feat(identity): NHI (Non-Human Identity) memory→PG dual-write migration
+- feat(identity): Privilege creep detection with PG repo
+- feat(identity): PAM session recording (API-level)
+- feat(identity): Access review scheduling
+- feat(oauth): JWT 90-day auto-rotation with grace period + audit callback
+
+### DevOps & Infrastructure
+- feat(deploy): Prebuilt binary Docker build pipeline (scripts/build-all-images.sh)
+- feat(deploy): `make docker-push-services` — one-command 8-image build + push
+- feat(deploy): Dockerfile.service — lightweight alpine + healthcheck for Go services
+- feat(deploy): 38 SQL migrations (including compliance_mappings, RLS, dormant accounts)
+- fix(gateway): defaultPrivateKeyPath off-by-one bug (len 11 → 10, "public.pem")
+
+### Testing & Quality
+- fix(test): Data race in key_rotation_test (sync.Mutex on auditCalls, channel-based wait)
+- fix(test): Timing flakiness in StartAutoRotation tests (2s timeout for slow CI)
+- test: go vet ./... zero warnings
+- test: golangci-lint v1.64.8 CI green
+- test: E2E 11/11 PASS
+- test: UI smoke 822/828 (99.3%)
+
+### Frontend
+- feat(console): i18n lazy loading (3.3MB → per-language on-demand)
+- feat(console): Dark mode support
+- feat(console): Mobile responsive layout
+- feat(console): Pagination on all list views
+- feat(console): Version badge in navigation
+
+### Documentation
+- docs: Production deployment guide (AWS/GCP/Azure)
+- docs: Build verification checklist
+- docs: API conventions guide
+- docs: Security hardening guide
+- docs: Performance baseline document
+- docs: Testing automation guide
+
 ## [Unreleased]
 
 ### ✨ Features

@@ -11,7 +11,7 @@
 
 ## Status: v1.0-stable
 
-Production-ready IAM platform. 8 microservices, 700+ OpenAPI paths, 12 K8s pods, E2E 11/11 PASS.
+Production-ready IAM platform. 8 microservices, 723+ OpenAPI paths, 47 request/response schemas, 12 K8s pods, E2E 11/11 PASS, UI smoke 99.3%.
 
 ## Why GGID?
 
@@ -160,8 +160,10 @@ graph TB
 - [x] Hash-chain audit (HMAC-SHA256)
 - [x] SIEM/SOAR integration
 - [x] Webhook engine (HMAC signed, retry, dead-letter)
-- [x] Compliance automation (SOC2/ISO/NIST evidence)
+- [x] Compliance automation (SOC2/ISO27001/CCM mapping with evidence queries)
 - [x] SCIM 2.0 outbound provisioning
+- [x] Grafana dashboards (4: overview, auth, performance, security)
+- [x] JWT 90-day auto-rotation with grace period
 
 ## Comparison
 
@@ -206,14 +208,14 @@ graph TB
 
 ## Roadmap
 
-See [Kanban](docs/kanban.md) for 254 backlog items. Highlights:
+See [Kanban](docs/kanban.md) for backlog items. Highlights:
 
-- OpenAPI 3.1 spec generation + Swagger UI
 - Multi-region active-active deployment
 - GraphQL API layer
 - EU Digital Identity Wallet (eIDAS 2.0)
 - BBS+ selective disclosure
 - Service mesh (Istio + microsegmentation)
+- OpenAPI 3.1 schema coverage expansion (target 100+ requestBodies)
 
 ## Contributing
 
