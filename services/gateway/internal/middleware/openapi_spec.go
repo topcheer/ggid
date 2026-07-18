@@ -79,751 +79,751 @@ func GenerateOpenAPISpec() *GGIDOpenAPISpec {
 }
 
 func generatePaths(sec []map[string][]string) map[string]OpenAPIPath {
-	op := func(tags []string, summary string) *OpenAPIOperation {
-		return &OpenAPIOperation{
-			Tags: tags, Summary: summary, Security: sec,
-			Responses: map[string]OpenAPIResponse{
-				"200": {Description: "Success"},
-				"400": {Description: "Bad request"},
-				"401": {Description: "Unauthorized"},
-				"403": {Description: "Forbidden"},
-			},
-		}
-	}
-	return map[string]OpenAPIPath{
-		// Auth — Authentication
-		"/api/v1/auth/login":               {Post: op([]string{"Auth"}, "User login — authenticate with username/password, returns JWT tokens")},
-		"/api/v1/auth/register":            {Post: op([]string{"Auth"}, "Self-service user registration")},
-		"/api/v1/auth/logout":              {Post: op([]string{"Auth"}, "Logout and invalidate session")},
-		"/api/v1/auth/refresh":             {Post: op([]string{"Auth"}, "Refresh access token using refresh token")},
-		"/api/v1/auth/profile":             {Get: op([]string{"Auth"}, "Get current user profile"), Put: op([]string{"Auth"}, "Update own profile")},
-		"/api/v1/auth/verify-email":        {Get: op([]string{"Auth"}, "Verify email address with token")},
-		"/api/v1/auth/forgot-password":     {Post: op([]string{"Auth"}, "Request password reset email")},
-		"/api/v1/auth/password/forgot":     {Post: op([]string{"Auth"}, "Request password reset (v2)")},
-		"/api/v1/auth/password/reset":      {Post: op([]string{"Auth"}, "Reset password with token")},
-		"/api/v1/auth/password/change":     {Post: op([]string{"Auth"}, "Change password (requires current password)")},
-		"/api/v1/auth/password/strength":   {Post: op([]string{"Auth"}, "Evaluate password strength (zxcvbn score 0-4)")},
-		"/api/v1/auth/password/policy":     {Get: op([]string{"Auth"}, "Get password policy requirements")},
-		// Auth — Sessions
-		"/api/v1/auth/sessions":            {Get: op([]string{"Sessions"}, "List active sessions for current user")},
-		"/api/v1/auth/sessions/{id}":       {Delete: op([]string{"Sessions"}, "Revoke a session by ID")},
-		// Auth — MFA
-		"/api/v1/auth/mfa/enroll":          {Post: op([]string{"MFA"}, "Enroll MFA (TOTP)")},
-		"/api/v1/auth/mfa/verify":          {Post: op([]string{"MFA"}, "Verify MFA code")},
-		"/api/v1/auth/mfa/disable":         {Post: op([]string{"MFA"}, "Disable MFA")},
-		"/api/v1/auth/mfa/backup-codes":    {Get: op([]string{"MFA"}, "List backup codes"), Post: op([]string{"MFA"}, "Generate new backup codes")},
-		// Auth — WebAuthn
-		"/api/v1/auth/webauthn/begin":      {Post: op([]string{"WebAuthn"}, "Begin WebAuthn registration")},
-		"/api/v1/auth/webauthn/finish":     {Post: op([]string{"WebAuthn"}, "Finish WebAuthn registration")},
-		"/api/v1/auth/webauthn/login/begin": {Post: op([]string{"WebAuthn"}, "Begin WebAuthn login")},
-		"/api/v1/auth/webauthn/login/finish": {Post: op([]string{"WebAuthn"}, "Finish WebAuthn login")},
-		"/api/v1/auth/webauthn/aaguid":     {Get: op([]string{"WebAuthn"}, "List AAGUID allowlist"), Post: op([]string{"WebAuthn"}, "Add AAGUID to allowlist")},
-		// Auth — Conditional Access
-		"/api/v1/auth/conditional-access/policies": {Get: op([]string{"Conditional Access"}, "List CAP policies"), Post: op([]string{"Conditional Access"}, "Create CAP policy")},
-		"/api/v1/auth/conditional-access/evaluate": {Post: op([]string{"Conditional Access"}, "Evaluate conditions against context")},
-		// Auth: Simplified authz
-		"/api/v1/authz/check":              {Post: op([]string{"Authz"}, "Simplified permission check: {user_id, resource, action} -> {allowed}")},
-		// OAuth: UserInfo
-		"/oauth/userinfo":                  {Get: op([]string{"OAuth"}, "Enhanced UserInfo: profile + roles + groups + permissions + risk_level")},
-		// Auth — TAP
-		"/api/v1/auth/tap":                 {Post: op([]string{"TAP"}, "Issue Temporary Access Pass")},
-		"/api/v1/auth/tap/batch":           {Post: op([]string{"TAP"}, "Batch issue TAPs")},
-		"/api/v1/auth/tap/policy":          {Get: op([]string{"TAP"}, "Get TAP policy"), Put: op([]string{"TAP"}, "Update TAP policy")},
-		// Auth — Break Glass
-		"/api/v1/auth/break-glass/activate": {Post: op([]string{"Break Glass"}, "Activate break-glass access")},
-		"/api/v1/auth/break-glass/history":  {Get: op([]string{"Break Glass"}, "Break-glass activation history")},
-		// Identity — Users
-		"/api/v1/users":                    {Get: op([]string{"Identity"}, "List users"), Post: op([]string{"Identity"}, "Create user")},
-		"/api/v1/users/{id}":               {Get: op([]string{"Identity"}, "Get user by ID"), Put: op([]string{"Identity"}, "Update user"), Delete: op([]string{"Identity"}, "Delete user")},
-		"/api/v1/users/import":             {Post: op([]string{"Identity"}, "Import users from CSV")},
-		"/api/v1/users/export":             {Get: op([]string{"Identity"}, "Export users to CSV")},
-		// Identity — Groups
-		"/api/v1/groups":                   {Get: op([]string{"Identity"}, "List groups"), Post: op([]string{"Identity"}, "Create group")},
-		"/api/v1/groups/{id}":              {Get: op([]string{"Identity"}, "Get group by ID"), Put: op([]string{"Identity"}, "Update group"), Delete: op([]string{"Identity"}, "Delete group")},
-		"/api/v1/groups/{id}/members":      {Get: op([]string{"Identity"}, "List group members"), Post: op([]string{"Identity"}, "Add member to group")},
-		// Identity — Organization
-		"/api/v1/orgs":                     {Get: op([]string{"Org"}, "List organizations"), Post: op([]string{"Org"}, "Create organization")},
-		"/api/v1/orgs/{id}":                {Get: op([]string{"Org"}, "Get organization by ID"), Put: op([]string{"Org"}, "Update organization"), Delete: op([]string{"Org"}, "Delete organization")},
-		"/api/v1/departments":              {Get: op([]string{"Org"}, "List departments"), Post: op([]string{"Org"}, "Create department")},
-		"/api/v1/teams":                    {Get: op([]string{"Org"}, "List teams"), Post: op([]string{"Org"}, "Create team")},
-		// OAuth
-		"/api/v1/oauth/token":              {Post: op([]string{"OAuth"}, "Issue token (client_credentials, authorization_code, refresh_token)")},
-		"/api/v1/oauth/authorize":          {Get: op([]string{"OAuth"}, "OAuth 2.0 authorize endpoint"), Post: op([]string{"OAuth"}, "OAuth 2.0 authorize (POST)")},
-		"/api/v1/oauth/clients":            {Get: op([]string{"OAuth"}, "List OAuth clients"), Post: op([]string{"OAuth"}, "Create OAuth client")},
-		"/api/v1/oauth/clients/{id}":       {Get: op([]string{"OAuth"}, "Get OAuth client"), Put: op([]string{"OAuth"}, "Update OAuth client"), Delete: op([]string{"OAuth"}, "Delete OAuth client")},
-		"/api/v1/oauth/introspect":         {Post: op([]string{"OAuth"}, "Token introspection (RFC 7662)")},
-		"/api/v1/oauth/revoke":             {Post: op([]string{"OAuth"}, "Revoke token (RFC 7009)")},
-		"/.well-known/openid-configuration": {Get: op([]string{"OAuth"}, "OIDC discovery document")},
-		"/.well-known/jwks.json":           {Get: op([]string{"OAuth"}, "JWKS — public keys for JWT verification")},
-		// Policy — Roles & Permissions
-		"/api/v1/roles":                    {Get: op([]string{"Policy"}, "List roles"), Post: op([]string{"Policy"}, "Create role")},
-		"/api/v1/roles/{id}":               {Get: op([]string{"Policy"}, "Get role by ID"), Put: op([]string{"Policy"}, "Update role"), Delete: op([]string{"Policy"}, "Delete role")},
-		"/api/v1/permissions":              {Get: op([]string{"Policy"}, "List permissions"), Post: op([]string{"Policy"}, "Create permission")},
-		// Policy — ABAC/RBAC
-		"/api/v1/policies":                 {Get: op([]string{"Policy"}, "List policies"), Post: op([]string{"Policy"}, "Create policy")},
-		"/api/v1/policies/{id}":            {Get: op([]string{"Policy"}, "Get policy by ID"), Put: op([]string{"Policy"}, "Update policy"), Delete: op([]string{"Policy"}, "Delete policy")},
-		"/api/v1/policies/check":           {Post: op([]string{"Policy"}, "Check access (principal, resource, action) → allow/deny")},
-		"/api/v1/policies/evaluate":        {Post: op([]string{"Policy"}, "Evaluate all matching policies with decision trail")},
-		"/api/v1/policies/sod/check":       {Post: op([]string{"Policy"}, "Check Separation of Duties violations")},
-		"/api/v1/policies/sod/violations":  {Get: op([]string{"Policy"}, "List SoD violations")},
-		// Audit
-		"/api/v1/audit/events":             {Get: op([]string{"Audit"}, "List audit events with filtering")},
-		"/api/v1/audit/events/{id}":        {Get: op([]string{"Audit"}, "Get audit event by ID")},
-		"/api/v1/audit/stats":              {Get: op([]string{"Audit"}, "Aggregate audit statistics")},
-		"/api/v1/audit/export":             {Get: op([]string{"Audit"}, "Export audit events (JSON/CSV)")},
-		"/api/v1/audit/ccm/results":        {Get: op([]string{"CCM"}, "Get compliance monitoring results")},
-		"/api/v1/audit/ccm/run":            {Post: op([]string{"CCM"}, "Trigger compliance scan")},
-		"/api/v1/audit/ccm/history":        {Get: op([]string{"CCM"}, "Get compliance history")},
-		// Admin
-		"/api/v1/admin/backups":            {Get: op([]string{"Admin"}, "List backups")},
-		"/api/v1/admin/backups/trigger":    {Post: op([]string{"Admin"}, "Trigger backup")},
-		"/api/v1/admin/secrets":            {Get: op([]string{"Admin"}, "List secret references")},
-		"/api/v1/admin/keys":               {Get: op([]string{"Admin"}, "List active signing keys")},
-		"/api/v1/quotas/{tenant_id}":       {Get: op([]string{"Admin"}, "Get tenant quota"), Put: op([]string{"Admin"}, "Update quota")},
-		// GraphQL + Observability
-		"/graphql":                         {Post: op([]string{"GraphQL"}, "GraphQL endpoint")},
-		"/api/v1/observability/health":     {Get: op([]string{"Observability"}, "Exporter health")},
-		"/healthz":                         {Get: op([]string{"System"}, "Health check")},
-		"/readyz":                          {Get: op([]string{"System"}, "Readiness check")},
-		// Legacy aliases for backward compatibility
-		"/api/v1/identity/users":           {Get: op([]string{"Identity"}, "List users (legacy alias)"), Post: op([]string{"Identity"}, "Create user (legacy alias)")},		"/api/v1/policy/authorize":         {Post: op([]string{"Policy"}, "Unified PDP authorize")},
-		"/api/v1/risk/evaluate":            {Post: op([]string{"Risk"}, "Evaluate risk score")},
-		"/api/v1/mdm/connectors":           {Get: op([]string{"MDM"}, "List MDM connectors"), Post: op([]string{"MDM"}, "Add MDM connector")},
-		"/api/v1/mdm/devices":              {Get: op([]string{"MDM"}, "List MDM devices")},
-		"/api/v1/risk/scores/{user_id}":    {Get: op([]string{"Risk"}, "Get risk score for user")},
-		"/api/v1/risk/signals":             {Get: op([]string{"Risk"}, "List risk signals")},
-		"/api/v1/hr/connectors":            {Get: op([]string{"HR"}, "List HR connectors"), Post: op([]string{"HR"}, "Add HR connector")},
-		"/api/v1/hr/sync":                  {Post: op([]string{"HR"}, "Trigger HR sync")},
-		"/api/v1/hr/dormant":               {Get: op([]string{"HR"}, "Dormant accounts")},
-		"/api/v1/notifications/rules":      {Get: op([]string{"Notifications"}, "List notification rules"), Post: op([]string{"Notifications"}, "Create notification rule")},
-		"/api/v1/soar/playbooks":           {Get: op([]string{"SOAR"}, "List SOAR playbooks"), Post: op([]string{"SOAR"}, "Create SOAR playbook")},
-		// KB-306: Additional coverage.
-		"/api/v1/org/cost-centers": {Get: op([]string{"Other"}, "Cost Centers"), Post: op([]string{"Other"}, "Cost Centers")},
-		"/api/v1/org/department-analytics": {Get: op([]string{"Other"}, "Department Analytics"), Post: op([]string{"Other"}, "Department Analytics")},
-		"/api/v1/org/reporting-structure": {Get: op([]string{"Other"}, "Reporting Structure"), Post: op([]string{"Other"}, "Reporting Structure")},
-		"/api/v1/org/stats/membership-trends": {Get: op([]string{"Other"}, "Membership Trends"), Post: op([]string{"Other"}, "Membership Trends")},
-		"/api/v1/org/team-insights": {Get: op([]string{"Other"}, "Team Insights"), Post: op([]string{"Other"}, "Team Insights")},
-		"/api/v1/org/tenants/migrate": {Get: op([]string{"Other"}, "Migrate"), Post: op([]string{"Other"}, "Migrate")},
-		"/api/v1/org/vendors": {Get: op([]string{"Other"}, "Vendors"), Post: op([]string{"Other"}, "Vendors")},
-		"/api/v1/organizations": {Get: op([]string{"Other"}, "Organizations"), Post: op([]string{"Other"}, "Organizations")},
-		"/api/v1/organizations/": {Get: op([]string{"Other"}, "Organizations"), Post: op([]string{"Other"}, "Organizations")},
-		"/api/v1/orgs/": {Get: op([]string{"Org"}, "Orgs"), Post: op([]string{"Org"}, "Orgs")},
-		"/api/v1/orgs/tree": {Get: op([]string{"Org"}, "Tree"), Post: op([]string{"Org"}, "Tree")},
-		"/api/v1/orgs/tree-with-members": {Get: op([]string{"Org"}, "Tree With Members"), Post: op([]string{"Org"}, "Tree With Members")},
-		"/api/v1/permissions/tree": {Get: op([]string{"Policy"}, "Tree"), Post: op([]string{"Policy"}, "Tree")},
-		"/api/v1/plugins": {Get: op([]string{"Other"}, "Plugins"), Post: op([]string{"Other"}, "Plugins")},
-		"/api/v1/plugins/": {Get: op([]string{"Other"}, "Plugins"), Post: op([]string{"Other"}, "Plugins")},
-		"/api/v1/policies/": {Get: op([]string{"Policy"}, "Policies"), Post: op([]string{"Policy"}, "Policies")},
-		"/api/v1/policies/abac/evaluate": {Get: op([]string{"Policy"}, "Evaluate"), Post: op([]string{"Policy"}, "Evaluate")},
-		"/api/v1/policies/abac/export": {Get: op([]string{"Policy"}, "Export"), Post: op([]string{"Policy"}, "Export")},
-		"/api/v1/policies/abac/groups": {Get: op([]string{"Policy"}, "Groups"), Post: op([]string{"Policy"}, "Groups")},
-		"/api/v1/policies/abac/import": {Get: op([]string{"Policy"}, "Import"), Post: op([]string{"Policy"}, "Import")},
-		"/api/v1/policies/access-frequency": {Get: op([]string{"Policy"}, "Access Frequency"), Post: op([]string{"Policy"}, "Access Frequency")},
-		"/api/v1/policies/access-paths": {Get: op([]string{"Policy"}, "Access Paths"), Post: op([]string{"Policy"}, "Access Paths")},
-		"/api/v1/policies/access-paths/optimization": {Get: op([]string{"Policy"}, "Optimization"), Post: op([]string{"Policy"}, "Optimization")},
-		"/api/v1/policies/access-requests": {Get: op([]string{"Policy"}, "Access Requests"), Post: op([]string{"Policy"}, "Access Requests")},
-		"/api/v1/policies/access-requests/": {Get: op([]string{"Policy"}, "Access Requests"), Post: op([]string{"Policy"}, "Access Requests")},
-		"/api/v1/policies/access-requests/pending": {Get: op([]string{"Policy"}, "Pending"), Post: op([]string{"Policy"}, "Pending")},
-		"/api/v1/policies/access-review-exemptions": {Get: op([]string{"Policy"}, "Access Review Exemptions"), Post: op([]string{"Policy"}, "Access Review Exemptions")},
-		"/api/v1/policies/access-review-exemptions/": {Get: op([]string{"Policy"}, "Access Review Exemptions"), Post: op([]string{"Policy"}, "Access Review Exemptions")},
-		"/api/v1/policies/access-reviews/": {Get: op([]string{"Policy"}, "Access Reviews"), Post: op([]string{"Policy"}, "Access Reviews")},
-		"/api/v1/policies/access-reviews/auto-assign": {Get: op([]string{"Policy"}, "Auto Assign"), Post: op([]string{"Policy"}, "Auto Assign")},
-		"/api/v1/policies/access-reviews/campaigns": {Get: op([]string{"Policy"}, "Campaigns"), Post: op([]string{"Policy"}, "Campaigns")},
-		"/api/v1/policies/access-reviews/campaigns/": {Get: op([]string{"Policy"}, "Campaigns"), Post: op([]string{"Policy"}, "Campaigns")},
-		"/api/v1/policies/access-reviews/campaigns/active": {Get: op([]string{"Policy"}, "Active"), Post: op([]string{"Policy"}, "Active")},
-		"/api/v1/policies/access-reviews/delegate": {Get: op([]string{"Policy"}, "Delegate"), Post: op([]string{"Policy"}, "Delegate")},
-		"/api/v1/policies/access-reviews/delegated": {Get: op([]string{"Policy"}, "Delegated"), Post: op([]string{"Policy"}, "Delegated")},
-		"/api/v1/policies/access-reviews/escalate": {Get: op([]string{"Policy"}, "Escalate"), Post: op([]string{"Policy"}, "Escalate")},
-		"/api/v1/policies/access-reviews/escalated": {Get: op([]string{"Policy"}, "Escalated"), Post: op([]string{"Policy"}, "Escalated")},
-		"/api/v1/policies/access-reviews/metrics": {Get: op([]string{"Policy"}, "Metrics"), Post: op([]string{"Policy"}, "Metrics")},
-		"/api/v1/policies/analyze": {Get: op([]string{"Policy"}, "Analyze"), Post: op([]string{"Policy"}, "Analyze")},
-		"/api/v1/policies/approvals": {Get: op([]string{"Policy"}, "Approvals"), Post: op([]string{"Policy"}, "Approvals")},
-		"/api/v1/policies/approvals/": {Get: op([]string{"Policy"}, "Approvals"), Post: op([]string{"Policy"}, "Approvals")},
-		"/api/v1/policies/attribute-mapping": {Get: op([]string{"Policy"}, "Attribute Mapping"), Post: op([]string{"Policy"}, "Attribute Mapping")},
-		"/api/v1/policies/break-glass": {Get: op([]string{"Policy"}, "Break Glass"), Post: op([]string{"Policy"}, "Break Glass")},
-		"/api/v1/policies/break-glass/active": {Get: op([]string{"Policy"}, "Active"), Post: op([]string{"Policy"}, "Active")},
-		"/api/v1/policies/bundles": {Get: op([]string{"Policy"}, "Bundles"), Post: op([]string{"Policy"}, "Bundles")},
-		"/api/v1/policies/conditional-access": {Get: op([]string{"Policy"}, "Conditional Access"), Post: op([]string{"Policy"}, "Conditional Access")},
-		"/api/v1/policies/conflicts/resolve": {Get: op([]string{"Policy"}, "Resolve"), Post: op([]string{"Policy"}, "Resolve")},
-		"/api/v1/policies/decision-log": {Get: op([]string{"Policy"}, "Decision Log"), Post: op([]string{"Policy"}, "Decision Log")},
-		"/api/v1/policies/default-action": {Get: op([]string{"Policy"}, "Default Action"), Post: op([]string{"Policy"}, "Default Action")},
-		"/api/v1/policies/delegate": {Get: op([]string{"Policy"}, "Delegate"), Post: op([]string{"Policy"}, "Delegate")},
-		"/api/v1/policies/delegated-admin": {Get: op([]string{"Policy"}, "Delegated Admin"), Post: op([]string{"Policy"}, "Delegated Admin")},
-		"/api/v1/policies/delegated-admin/list": {Get: op([]string{"Policy"}, "List"), Post: op([]string{"Policy"}, "List")},
-		"/api/v1/policies/delegations": {Get: op([]string{"Policy"}, "Delegations"), Post: op([]string{"Policy"}, "Delegations")},
-		"/api/v1/policies/diff": {Get: op([]string{"Policy"}, "Diff"), Post: op([]string{"Policy"}, "Diff")},
-		"/api/v1/policies/dry-run": {Get: op([]string{"Policy"}, "Dry Run"), Post: op([]string{"Policy"}, "Dry Run")},
-		"/api/v1/policies/dynamic-roles": {Get: op([]string{"Policy"}, "Dynamic Roles"), Post: op([]string{"Policy"}, "Dynamic Roles")},
-		"/api/v1/policies/dynamic-roles/list": {Get: op([]string{"Policy"}, "List"), Post: op([]string{"Policy"}, "List")},
-		"/api/v1/policies/effectiveness": {Get: op([]string{"Policy"}, "Effectiveness"), Post: op([]string{"Policy"}, "Effectiveness")},
-		"/api/v1/policies/emergency-access/audit": {Get: op([]string{"Policy"}, "Audit"), Post: op([]string{"Policy"}, "Audit")},
-		"/api/v1/policies/export": {Get: op([]string{"Policy"}, "Export"), Post: op([]string{"Policy"}, "Export")},
-		"/api/v1/policies/export-package": {Get: op([]string{"Policy"}, "Export Package"), Post: op([]string{"Policy"}, "Export Package")},
-		"/api/v1/policies/export-yaml": {Get: op([]string{"Policy"}, "Export Yaml"), Post: op([]string{"Policy"}, "Export Yaml")},
-		"/api/v1/policies/from-template/": {Get: op([]string{"Policy"}, "From Template"), Post: op([]string{"Policy"}, "From Template")},
-		"/api/v1/policies/impact-preview": {Get: op([]string{"Policy"}, "Impact Preview"), Post: op([]string{"Policy"}, "Impact Preview")},
-		"/api/v1/policies/import": {Get: op([]string{"Policy"}, "Import"), Post: op([]string{"Policy"}, "Import")},
-		"/api/v1/policies/import-package": {Get: op([]string{"Policy"}, "Import Package"), Post: op([]string{"Policy"}, "Import Package")},
-		"/api/v1/policies/import-yaml": {Get: op([]string{"Policy"}, "Import Yaml"), Post: op([]string{"Policy"}, "Import Yaml")},
-		"/api/v1/policies/inheritance": {Get: op([]string{"Policy"}, "Inheritance"), Post: op([]string{"Policy"}, "Inheritance")},
-		"/api/v1/policies/inheritance/": {Get: op([]string{"Policy"}, "Inheritance"), Post: op([]string{"Policy"}, "Inheritance")},
-		"/api/v1/policies/jit-elevate": {Get: op([]string{"Policy"}, "Jit Elevate"), Post: op([]string{"Policy"}, "Jit Elevate")},
-		"/api/v1/policies/jit/active": {Get: op([]string{"Policy"}, "Active"), Post: op([]string{"Policy"}, "Active")},
-		"/api/v1/policies/jit/request": {Get: op([]string{"Policy"}, "Request"), Post: op([]string{"Policy"}, "Request")},
-		"/api/v1/policies/jit/requests": {Get: op([]string{"Policy"}, "Requests"), Post: op([]string{"Policy"}, "Requests")},
-		"/api/v1/policies/jit/requests/": {Get: op([]string{"Policy"}, "Requests"), Post: op([]string{"Policy"}, "Requests")},
-		"/api/v1/policies/merge-conflicts": {Get: op([]string{"Policy"}, "Merge Conflicts"), Post: op([]string{"Policy"}, "Merge Conflicts")},
-		"/api/v1/policies/permission-boundaries": {Get: op([]string{"Policy"}, "Permission Boundaries"), Post: op([]string{"Policy"}, "Permission Boundaries")},
-		"/api/v1/policies/permissions/tree": {Get: op([]string{"Policy"}, "Tree"), Post: op([]string{"Policy"}, "Tree")},
-		"/api/v1/policies/policy-set/evaluate": {Get: op([]string{"Policy"}, "Evaluate"), Post: op([]string{"Policy"}, "Evaluate")},
-		"/api/v1/policies/privileged-access": {Get: op([]string{"Policy"}, "Privileged Access"), Post: op([]string{"Policy"}, "Privileged Access")},
-		"/api/v1/policies/privileged-access/revoke": {Get: op([]string{"Policy"}, "Revoke"), Post: op([]string{"Policy"}, "Revoke")},
-
-		// KB-299: Bulk endpoint coverage expansion.
-		"/api/v1/.well-known/federation-configuration": {Get: op([]string{"Other"}, "Federation Configuration"), Post: op([]string{"Other"}, "Federation Configuration")},
-		"/api/v1/access-requests": {Get: op([]string{"Access"}, "Access Requests"), Post: op([]string{"Access"}, "Access Requests")},
-		"/api/v1/access-requests/": {Get: op([]string{"Access"}, "Access Requests"), Post: op([]string{"Access"}, "Access Requests")},
-		"/api/v1/admin/config": {Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")},
-		"/api/v1/admin/config/": {Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")},
-		"/api/v1/admin/email/config": {Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")},
-		"/api/v1/admin/email/test": {Get: op([]string{"Admin"}, "Test"), Post: op([]string{"Admin"}, "Test")},
-		"/api/v1/admin/feature-flags": {Get: op([]string{"Admin"}, "Feature Flags"), Post: op([]string{"Admin"}, "Feature Flags")},
-		"/api/v1/admin/feature-flags/": {Get: op([]string{"Admin"}, "Feature Flags"), Post: op([]string{"Admin"}, "Feature Flags")},
-		"/api/v1/admin/keys/history": {Get: op([]string{"Admin"}, "History"), Post: op([]string{"Admin"}, "History")},
-		"/api/v1/admin/migration/config": {Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")},
-		"/api/v1/admin/migration/mappings": {Get: op([]string{"Admin"}, "Mappings"), Post: op([]string{"Admin"}, "Mappings")},
-		"/api/v1/admin/migration/mappings/": {Get: op([]string{"Admin"}, "Mappings"), Post: op([]string{"Admin"}, "Mappings")},
-		"/api/v1/admin/migration/stats": {Get: op([]string{"Admin"}, "Stats"), Post: op([]string{"Admin"}, "Stats")},
-		"/api/v1/admin/migration/test": {Get: op([]string{"Admin"}, "Test"), Post: op([]string{"Admin"}, "Test")},
-		"/api/v1/admin/rls/status": {Get: op([]string{"Admin"}, "Status"), Post: op([]string{"Admin"}, "Status")},
-		"/api/v1/admin/rls/test": {Get: op([]string{"Admin"}, "Test"), Post: op([]string{"Admin"}, "Test")},
-		"/api/v1/admin/secrets/health": {Get: op([]string{"Admin"}, "Health"), Post: op([]string{"Admin"}, "Health")},
-		"/api/v1/agents": {Get: op([]string{"Other"}, "Agents"), Post: op([]string{"Other"}, "Agents")},
-		"/api/v1/agents/": {Get: op([]string{"Other"}, "Agents"), Post: op([]string{"Other"}, "Agents")},
-		"/api/v1/agents/drift/report": {Get: op([]string{"Other"}, "Report"), Post: op([]string{"Other"}, "Report")},
-		"/api/v1/agents/register": {Get: op([]string{"Other"}, "Register"), Post: op([]string{"Other"}, "Register")},
-		"/api/v1/agents/reviews": {Get: op([]string{"Other"}, "Reviews"), Post: op([]string{"Other"}, "Reviews")},
-		"/api/v1/agents/reviews/": {Get: op([]string{"Other"}, "Reviews"), Post: op([]string{"Other"}, "Reviews")},
-		"/api/v1/agents/shadows": {Get: op([]string{"Other"}, "Shadows"), Post: op([]string{"Other"}, "Shadows")},
-		"/api/v1/agents/token": {Get: op([]string{"Other"}, "Token"), Post: op([]string{"Other"}, "Token")},
-		"/api/v1/agents/verify": {Get: op([]string{"Other"}, "Verify"), Post: op([]string{"Other"}, "Verify")},
-		"/api/v1/alerts": {Get: op([]string{"Other"}, "Alerts"), Post: op([]string{"Other"}, "Alerts")},
-		"/api/v1/audit": {Get: op([]string{"Audit"}, "Audit"), Post: op([]string{"Audit"}, "Audit")},
-		"/api/v1/audit/access-reviews": {Get: op([]string{"Audit"}, "Access Reviews"), Post: op([]string{"Audit"}, "Access Reviews")},
-		"/api/v1/audit/access-reviews/pending": {Get: op([]string{"Audit"}, "Pending"), Post: op([]string{"Audit"}, "Pending")},
-		"/api/v1/audit/activity": {Get: op([]string{"Audit"}, "Activity"), Post: op([]string{"Audit"}, "Activity")},
-		"/api/v1/audit/aggregations": {Get: op([]string{"Audit"}, "Aggregations"), Post: op([]string{"Audit"}, "Aggregations")},
-		"/api/v1/audit/aggregations/daily": {Get: op([]string{"Audit"}, "Daily"), Post: op([]string{"Audit"}, "Daily")},
-		"/api/v1/audit/alert-evaluation/config": {Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")},
-		"/api/v1/audit/alert-webhooks": {Get: op([]string{"Audit"}, "Alert Webhooks"), Post: op([]string{"Audit"}, "Alert Webhooks")},
-		"/api/v1/audit/alerts/config": {Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")},
-		"/api/v1/audit/alerts/evaluate": {Get: op([]string{"Audit"}, "Evaluate"), Post: op([]string{"Audit"}, "Evaluate")},
-		"/api/v1/audit/alerts/test": {Get: op([]string{"Audit"}, "Test"), Post: op([]string{"Audit"}, "Test")},
-		"/api/v1/audit/anomalies/detect": {Get: op([]string{"Audit"}, "Detect"), Post: op([]string{"Audit"}, "Detect")},
-		"/api/v1/audit/anomaly-detection": {Get: op([]string{"Audit"}, "Anomaly Detection"), Post: op([]string{"Audit"}, "Anomaly Detection")},
-		"/api/v1/audit/anomaly-detection/": {Get: op([]string{"Audit"}, "Anomaly Detection"), Post: op([]string{"Audit"}, "Anomaly Detection")},
-		"/api/v1/audit/ccm/summary": {Get: op([]string{"Audit"}, "Summary"), Post: op([]string{"Audit"}, "Summary")},
-		"/api/v1/audit/compliance-report": {Get: op([]string{"Audit"}, "Compliance Report"), Post: op([]string{"Audit"}, "Compliance Report")},
-		"/api/v1/audit/compliance-schedules": {Get: op([]string{"Audit"}, "Compliance Schedules"), Post: op([]string{"Audit"}, "Compliance Schedules")},
-		"/api/v1/audit/compliance/auto-collect": {Get: op([]string{"Audit"}, "Auto Collect"), Post: op([]string{"Audit"}, "Auto Collect")},
-		"/api/v1/audit/compliance/auto-score": {Get: op([]string{"Audit"}, "Auto Score"), Post: op([]string{"Audit"}, "Auto Score")},
-		"/api/v1/audit/compliance/cert-export": {Get: op([]string{"Audit"}, "Cert Export"), Post: op([]string{"Audit"}, "Cert Export")},
-		"/api/v1/audit/compliance/config": {Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")},
-		"/api/v1/audit/compliance/dashboard": {Get: op([]string{"Audit"}, "Dashboard"), Post: op([]string{"Audit"}, "Dashboard")},
-		"/api/v1/audit/compliance/drift": {Get: op([]string{"Audit"}, "Drift"), Post: op([]string{"Audit"}, "Drift")},
-		"/api/v1/audit/compliance/evidence": {Get: op([]string{"Audit"}, "Evidence"), Post: op([]string{"Audit"}, "Evidence")},
-		"/api/v1/audit/compliance/evidence-attachments": {Get: op([]string{"Audit"}, "Evidence Attachments"), Post: op([]string{"Audit"}, "Evidence Attachments")},
-		"/api/v1/audit/compliance/evidence-expiry": {Get: op([]string{"Audit"}, "Evidence Expiry"), Post: op([]string{"Audit"}, "Evidence Expiry")},
-		"/api/v1/audit/compliance/evidence-refresh": {Get: op([]string{"Audit"}, "Evidence Refresh"), Post: op([]string{"Audit"}, "Evidence Refresh")},
-		"/api/v1/audit/compliance/evidence/": {Get: op([]string{"Audit"}, "Evidence"), Post: op([]string{"Audit"}, "Evidence")},
-		"/api/v1/audit/compliance/evidence/verify-integrity": {Get: op([]string{"Audit"}, "Verify Integrity"), Post: op([]string{"Audit"}, "Verify Integrity")},
-		"/api/v1/audit/compliance/gaps": {Get: op([]string{"Audit"}, "Gaps"), Post: op([]string{"Audit"}, "Gaps")},
-		"/api/v1/audit/compliance/gaps/": {Get: op([]string{"Audit"}, "Gaps"), Post: op([]string{"Audit"}, "Gaps")},
-		"/api/v1/audit/compliance/heatmap": {Get: op([]string{"Audit"}, "Heatmap"), Post: op([]string{"Audit"}, "Heatmap")},
-		"/api/v1/audit/compliance/mapping": {Get: op([]string{"Audit"}, "Mapping"), Post: op([]string{"Audit"}, "Mapping")},
-		"/api/v1/audit/compliance/remediation-progress": {Get: op([]string{"Audit"}, "Remediation Progress"), Post: op([]string{"Audit"}, "Remediation Progress")},
-		"/api/v1/audit/compliance/schedule-collect": {Get: op([]string{"Audit"}, "Schedule Collect"), Post: op([]string{"Audit"}, "Schedule Collect")},
-		"/api/v1/audit/compliance/schedules": {Get: op([]string{"Audit"}, "Schedules"), Post: op([]string{"Audit"}, "Schedules")},
-		"/api/v1/audit/compliance/score-history": {Get: op([]string{"Audit"}, "Score History"), Post: op([]string{"Audit"}, "Score History")},
-		"/api/v1/audit/compliance/widget-data": {Get: op([]string{"Audit"}, "Widget Data"), Post: op([]string{"Audit"}, "Widget Data")},
-		"/api/v1/audit/correlate": {Get: op([]string{"Audit"}, "Correlate"), Post: op([]string{"Audit"}, "Correlate")},
-		"/api/v1/audit/correlation/rules": {Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")},
-		"/api/v1/audit/cross-system-correlate": {Get: op([]string{"Audit"}, "Cross System Correlate"), Post: op([]string{"Audit"}, "Cross System Correlate")},
-		"/api/v1/audit/dsr": {Get: op([]string{"Audit"}, "Dsr"), Post: op([]string{"Audit"}, "Dsr")},
-		"/api/v1/audit/events/deduplicate": {Get: op([]string{"Audit"}, "Deduplicate"), Post: op([]string{"Audit"}, "Deduplicate")},
-		"/api/v1/audit/events/subscribe": {Get: op([]string{"Audit"}, "Subscribe"), Post: op([]string{"Audit"}, "Subscribe")},
-		"/api/v1/audit/events/subscribe/": {Get: op([]string{"Audit"}, "Subscribe"), Post: op([]string{"Audit"}, "Subscribe")},
-		"/api/v1/audit/evidence-collection": {Get: op([]string{"Audit"}, "Evidence Collection"), Post: op([]string{"Audit"}, "Evidence Collection")},
-		"/api/v1/audit/evidence-collection/": {Get: op([]string{"Audit"}, "Evidence Collection"), Post: op([]string{"Audit"}, "Evidence Collection")},
-		"/api/v1/audit/evidence/chain": {Get: op([]string{"Audit"}, "Chain"), Post: op([]string{"Audit"}, "Chain")},
-		"/api/v1/audit/export/schedule-config": {Get: op([]string{"Audit"}, "Schedule Config"), Post: op([]string{"Audit"}, "Schedule Config")},
-		"/api/v1/audit/exports": {Get: op([]string{"Audit"}, "Exports"), Post: op([]string{"Audit"}, "Exports")},
-		"/api/v1/audit/exports/": {Get: op([]string{"Audit"}, "Exports"), Post: op([]string{"Audit"}, "Exports")},
-		"/api/v1/audit/exports/schedule": {Get: op([]string{"Audit"}, "Schedule"), Post: op([]string{"Audit"}, "Schedule")},
-		"/api/v1/audit/forensics/timeline": {Get: op([]string{"Audit"}, "Timeline"), Post: op([]string{"Audit"}, "Timeline")},
-		"/api/v1/audit/framework-coverage": {Get: op([]string{"Audit"}, "Framework Coverage"), Post: op([]string{"Audit"}, "Framework Coverage")},
-		"/api/v1/audit/gdpr-forget": {Get: op([]string{"Audit"}, "Gdpr Forget"), Post: op([]string{"Audit"}, "Gdpr Forget")},
-		"/api/v1/audit/gdpr-forget/": {Get: op([]string{"Audit"}, "Gdpr Forget"), Post: op([]string{"Audit"}, "Gdpr Forget")},
-		"/api/v1/audit/gdpr/forget": {Get: op([]string{"Audit"}, "Forget"), Post: op([]string{"Audit"}, "Forget")},
-		"/api/v1/audit/hash-chain": {Get: op([]string{"Audit"}, "Hash Chain"), Post: op([]string{"Audit"}, "Hash Chain")},
-		"/api/v1/audit/hash-chain/config": {Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")},
-		"/api/v1/audit/impersonation": {Get: op([]string{"Audit"}, "Impersonation"), Post: op([]string{"Audit"}, "Impersonation")},
-		"/api/v1/audit/incidents": {Get: op([]string{"Audit"}, "Incidents"), Post: op([]string{"Audit"}, "Incidents")},
-		"/api/v1/audit/incidents/active": {Get: op([]string{"Audit"}, "Active"), Post: op([]string{"Audit"}, "Active")},
-		"/api/v1/audit/integrity/sign-pqc": {Get: op([]string{"Audit"}, "Sign Pqc"), Post: op([]string{"Audit"}, "Sign Pqc")},
-		"/api/v1/audit/integrity/verify": {Get: op([]string{"Audit"}, "Verify"), Post: op([]string{"Audit"}, "Verify")},
-		"/api/v1/audit/integrity/verify-pqc": {Get: op([]string{"Audit"}, "Verify Pqc"), Post: op([]string{"Audit"}, "Verify Pqc")},
-		"/api/v1/audit/isolation-check": {Get: op([]string{"Audit"}, "Isolation Check"), Post: op([]string{"Audit"}, "Isolation Check")},
-		"/api/v1/audit/itdr/composite-rules": {Get: op([]string{"Audit"}, "Composite Rules"), Post: op([]string{"Audit"}, "Composite Rules")},
-		"/api/v1/audit/itdr/composite-rules/": {Get: op([]string{"Audit"}, "Composite Rules"), Post: op([]string{"Audit"}, "Composite Rules")},
-		"/api/v1/audit/itdr/detections": {Get: op([]string{"Audit"}, "Detections"), Post: op([]string{"Audit"}, "Detections")},
-		"/api/v1/audit/itdr/detections/": {Get: op([]string{"Audit"}, "Detections"), Post: op([]string{"Audit"}, "Detections")},
-		"/api/v1/audit/itdr/incidents": {Get: op([]string{"Audit"}, "Incidents"), Post: op([]string{"Audit"}, "Incidents")},
-		"/api/v1/audit/itdr/playbooks": {Get: op([]string{"Audit"}, "Playbooks"), Post: op([]string{"Audit"}, "Playbooks")},
-		"/api/v1/audit/itdr/rules": {Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")},
-		"/api/v1/audit/itdr/rules/": {Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")},
-		"/api/v1/audit/itdr/stats": {Get: op([]string{"Audit"}, "Stats"), Post: op([]string{"Audit"}, "Stats")},
-		"/api/v1/audit/itdr/threat-heatmap": {Get: op([]string{"Audit"}, "Threat Heatmap"), Post: op([]string{"Audit"}, "Threat Heatmap")},
-		"/api/v1/audit/lineage": {Get: op([]string{"Audit"}, "Lineage"), Post: op([]string{"Audit"}, "Lineage")},
-		"/api/v1/audit/metrics": {Get: op([]string{"Audit"}, "Metrics"), Post: op([]string{"Audit"}, "Metrics")},
-		"/api/v1/audit/pii-scan": {Get: op([]string{"Audit"}, "Pii Scan"), Post: op([]string{"Audit"}, "Pii Scan")},
-		"/api/v1/audit/query-metrics": {Get: op([]string{"Audit"}, "Query Metrics"), Post: op([]string{"Audit"}, "Query Metrics")},
-		"/api/v1/audit/regulatory/report": {Get: op([]string{"Audit"}, "Report"), Post: op([]string{"Audit"}, "Report")},
-		"/api/v1/audit/reports": {Get: op([]string{"Audit"}, "Reports"), Post: op([]string{"Audit"}, "Reports")},
-		"/api/v1/audit/reports/": {Get: op([]string{"Audit"}, "Reports"), Post: op([]string{"Audit"}, "Reports")},
-		"/api/v1/audit/reports/custom": {Get: op([]string{"Audit"}, "Custom"), Post: op([]string{"Audit"}, "Custom")},
-		"/api/v1/audit/reports/generate": {Get: op([]string{"Audit"}, "Generate"), Post: op([]string{"Audit"}, "Generate")},
-		"/api/v1/audit/retention": {Get: op([]string{"Audit"}, "Retention"), Post: op([]string{"Audit"}, "Retention")},
-		"/api/v1/audit/retention-policies": {Get: op([]string{"Audit"}, "Retention Policies"), Post: op([]string{"Audit"}, "Retention Policies")},
-		"/api/v1/audit/retention/execute": {Get: op([]string{"Audit"}, "Execute"), Post: op([]string{"Audit"}, "Execute")},
-		"/api/v1/audit/retention/simulate": {Get: op([]string{"Audit"}, "Simulate"), Post: op([]string{"Audit"}, "Simulate")},
-		"/api/v1/audit/risk-score": {Get: op([]string{"Audit"}, "Risk Score"), Post: op([]string{"Audit"}, "Risk Score")},
-		"/api/v1/audit/rules": {Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")},
-		"/api/v1/audit/sbom": {Get: op([]string{"Audit"}, "Sbom"), Post: op([]string{"Audit"}, "Sbom")},
-		"/api/v1/audit/sbom/": {Get: op([]string{"Audit"}, "Sbom"), Post: op([]string{"Audit"}, "Sbom")},
-		"/api/v1/audit/search": {Get: op([]string{"Audit"}, "Search"), Post: op([]string{"Audit"}, "Search")},
-		"/api/v1/audit/security-posture": {Get: op([]string{"Audit"}, "Security Posture"), Post: op([]string{"Audit"}, "Security Posture")},
-		"/api/v1/audit/siem/forwarder-config": {Get: op([]string{"Audit"}, "Forwarder Config"), Post: op([]string{"Audit"}, "Forwarder Config")},
-		"/api/v1/audit/siem/health": {Get: op([]string{"Audit"}, "Health"), Post: op([]string{"Audit"}, "Health")},
-		"/api/v1/audit/siem/health-check": {Get: op([]string{"Audit"}, "Health Check"), Post: op([]string{"Audit"}, "Health Check")},
-		"/api/v1/audit/siem/metrics": {Get: op([]string{"Audit"}, "Metrics"), Post: op([]string{"Audit"}, "Metrics")},
-		"/api/v1/audit/stream": {Get: op([]string{"Audit"}, "Stream"), Post: op([]string{"Audit"}, "Stream")},
-		"/api/v1/audit/tamper-check": {Get: op([]string{"Audit"}, "Tamper Check"), Post: op([]string{"Audit"}, "Tamper Check")},
-		"/api/v1/audit/threat-feed": {Get: op([]string{"Audit"}, "Threat Feed"), Post: op([]string{"Audit"}, "Threat Feed")},
-		"/api/v1/audit/threat-intel/check": {Get: op([]string{"Audit"}, "Check"), Post: op([]string{"Audit"}, "Check")},
-		"/api/v1/audit/threat-intel/indicators": {Get: op([]string{"Audit"}, "Indicators"), Post: op([]string{"Audit"}, "Indicators")},
-		"/api/v1/audit/threat-intel/sources": {Get: op([]string{"Audit"}, "Sources"), Post: op([]string{"Audit"}, "Sources")},
-		"/api/v1/audit/threat-intel/sources/": {Get: op([]string{"Audit"}, "Sources"), Post: op([]string{"Audit"}, "Sources")},
-		"/api/v1/audit/threat-intel/stats": {Get: op([]string{"Audit"}, "Stats"), Post: op([]string{"Audit"}, "Stats")},
-		"/api/v1/audit/timeline/reconstruct": {Get: op([]string{"Audit"}, "Reconstruct"), Post: op([]string{"Audit"}, "Reconstruct")},
-		"/api/v1/audit/verify-integrity": {Get: op([]string{"Audit"}, "Verify Integrity"), Post: op([]string{"Audit"}, "Verify Integrity")},
-		"/api/v1/audit/webhooks": {Get: op([]string{"Audit"}, "Webhooks"), Post: op([]string{"Audit"}, "Webhooks")},
-		"/api/v1/audit/webhooks/": {Get: op([]string{"Audit"}, "Webhooks"), Post: op([]string{"Audit"}, "Webhooks")},
-		"/api/v1/audit/webhooks/delivery-status": {Get: op([]string{"Audit"}, "Delivery Status"), Post: op([]string{"Audit"}, "Delivery Status")},
-		"/api/v1/audit/ws": {Get: op([]string{"Audit"}, "Ws"), Post: op([]string{"Audit"}, "Ws")},
-		"/api/v1/auth/access-keys": {Get: op([]string{"API Keys"}, "Access Keys"), Post: op([]string{"API Keys"}, "Access Keys")},
-		"/api/v1/auth/access-keys/": {Get: op([]string{"API Keys"}, "Access Keys"), Post: op([]string{"API Keys"}, "Access Keys")},
-		"/api/v1/admin/backups/": {Get: op([]string{"Admin"}, "V1 Admin Backups")},
-		"/api/v1/admin/keys/rotate/": {Put: op([]string{"Admin"}, "V1 Admin Keys Rotate")},
-		"/api/v1/admin/rls/enable/": {Get: op([]string{"Admin"}, "V1 Admin Rls Enable")},
-		"/api/v1/admin/secrets/rotate/": {Put: op([]string{"Admin"}, "V1 Admin Secrets Rotate")},
-		"/api/v1/audit/dashboards/": {Get: op([]string{"Audit"}, "V1 Audit Dashboards")},
-		"/api/v1/audit/events/": {Get: op([]string{"Audit"}, "V1 Audit Events")},
-		"/api/v1/audit/itdr/kill-chain/": {Get: op([]string{"Audit"}, "V1 Audit Itdr Kill Chain")},
-		"/api/v1/auth/account-linking": {Get: op([]string{"Auth"}, "V1 Auth Account Linking")},
-		"/api/v1/auth/adaptive-auth/config": {Get: op([]string{"Auth"}, "V1 Auth Adaptive Auth Config")},
-		"/api/v1/auth/adaptive-mfa/evaluate": {Post: op([]string{"Auth"}, "V1 Auth Adaptive Mfa Evaluate")},
-		"/api/v1/auth/anomaly/detect": {Get: op([]string{"Auth"}, "V1 Auth Anomaly Detect")},
-		"/api/v1/auth/api-keys": {Get: op([]string{"Auth"}, "V1 Auth Api Keys")},
-		"/api/v1/auth/api-keys/": {Get: op([]string{"Auth"}, "V1 Auth Api Keys")},
-		"/api/v1/auth/biometric/enroll": {Get: op([]string{"Auth"}, "V1 Auth Biometric Enroll")},
-		"/api/v1/auth/biometric/verify": {Post: op([]string{"Auth"}, "V1 Auth Biometric Verify")},
-		"/api/v1/auth/breach-warnings": {Get: op([]string{"Auth"}, "V1 Auth Breach Warnings")},
-		"/api/v1/auth/brute-force/config": {Get: op([]string{"Auth"}, "V1 Auth Brute Force Config")},
-		"/api/v1/auth/cae/log": {Get: op([]string{"Auth"}, "V1 Auth Cae Log")},
-		"/api/v1/auth/cae/run": {Post: op([]string{"Auth"}, "V1 Auth Cae Run")},
-		"/api/v1/auth/cae/status": {Get: op([]string{"Auth"}, "V1 Auth Cae Status")},
-		"/api/v1/auth/certificates": {Get: op([]string{"Auth"}, "V1 Auth Certificates")},
-		"/api/v1/auth/certificates/": {Get: op([]string{"Auth"}, "V1 Auth Certificates")},
-		"/api/v1/auth/change-email": {Get: op([]string{"Auth"}, "V1 Auth Change Email")},
-		"/api/v1/auth/conditional-access/": {Get: op([]string{"Auth"}, "V1 Auth Conditional Access")},
-		"/api/v1/auth/consent": {Post: op([]string{"Auth"}, "V1 Auth Consent")},
-		"/api/v1/auth/credential-exposure": {Get: op([]string{"Auth"}, "V1 Auth Credential Exposure")},
-		"/api/v1/auth/credential-stuffing/block": {Get: op([]string{"Auth"}, "V1 Auth Credential Stuffing Block")},
-		"/api/v1/auth/credential-stuffing/blocked": {Get: op([]string{"Auth"}, "V1 Auth Credential Stuffing Blocked")},
-		"/api/v1/auth/credentials/": {Get: op([]string{"Auth"}, "V1 Auth Credentials")},
-		"/api/v1/auth/credentials/rotation": {Get: op([]string{"Auth"}, "V1 Auth Credentials Rotation")},
-		"/api/v1/auth/credentials/rotation/due": {Get: op([]string{"Auth"}, "V1 Auth Credentials Rotation Due")},
-		"/api/v1/auth/credentials/rotation/execute": {Get: op([]string{"Auth"}, "V1 Auth Credentials Rotation Execute")},
-		"/api/v1/auth/credentials/store": {Get: op([]string{"Auth"}, "V1 Auth Credentials Store")},
-		"/api/v1/auth/delegation": {Get: op([]string{"Auth"}, "V1 Auth Delegation")},
-		"/api/v1/auth/delegations": {Get: op([]string{"Auth"}, "V1 Auth Delegations")},
-		"/api/v1/auth/delegations/": {Get: op([]string{"Auth"}, "V1 Auth Delegations")},
-		"/api/v1/auth/detect-credential-stuffing": {Get: op([]string{"Auth"}, "V1 Auth Detect Credential Stuffing")},
-		"/api/v1/auth/detect-impossible-travel": {Get: op([]string{"Auth"}, "V1 Auth Detect Impossible Travel")},
-		"/api/v1/auth/detect-password-spray": {Get: op([]string{"Auth"}, "V1 Auth Detect Password Spray")},
-		"/api/v1/auth/device": {Get: op([]string{"Auth"}, "V1 Auth Device")},
-		"/api/v1/auth/device-bindings": {Get: op([]string{"Auth"}, "V1 Auth Device Bindings")},
-		"/api/v1/auth/device-fingerprint/analytics": {Get: op([]string{"Auth"}, "V1 Auth Device Fingerprint Analytics")},
-		"/api/v1/auth/devices/": {Get: op([]string{"Auth"}, "V1 Auth Devices")},
-		"/api/v1/auth/devices/attest": {Post: op([]string{"Auth"}, "V1 Auth Devices Attest")},
-		"/api/v1/auth/devices/list": {Get: op([]string{"Auth"}, "V1 Auth Devices List")},
-		"/api/v1/auth/devices/register": {Post: op([]string{"Auth"}, "V1 Auth Devices Register")},
-		"/api/v1/auth/devices/trusted": {Get: op([]string{"Auth"}, "V1 Auth Devices Trusted")},
-		"/api/v1/auth/devices/trusted/": {Get: op([]string{"Auth"}, "V1 Auth Devices Trusted")},
-		"/api/v1/auth/dlp/policies": {Get: op([]string{"Auth"}, "V1 Auth Dlp Policies")},
-		"/api/v1/auth/dlp/policies/": {Get: op([]string{"Auth"}, "V1 Auth Dlp Policies")},
-		"/api/v1/auth/email-otp/send": {Get: op([]string{"Auth"}, "V1 Auth Email Otp Send")},
-		"/api/v1/auth/email-otp/verify": {Post: op([]string{"Auth"}, "V1 Auth Email Otp Verify")},
-		"/api/v1/auth/email-template/config": {Get: op([]string{"Auth"}, "V1 Auth Email Template Config")},
-		"/api/v1/auth/email/change": {Get: op([]string{"Auth"}, "V1 Auth Email Change")},
-		"/api/v1/auth/email/change/confirm": {Get: op([]string{"Auth"}, "V1 Auth Email Change Confirm")},
-		"/api/v1/auth/email/resend": {Get: op([]string{"Auth"}, "V1 Auth Email Resend")},
-		"/api/v1/auth/email/verify": {Post: op([]string{"Auth"}, "V1 Auth Email Verify")},
-		"/api/v1/auth/enrollment/dismiss": {Get: op([]string{"Auth"}, "V1 Auth Enrollment Dismiss")},
-		"/api/v1/auth/enrollment/nudge/": {Get: op([]string{"Auth"}, "V1 Auth Enrollment Nudge")},
-		"/api/v1/auth/expiry-status": {Get: op([]string{"Auth"}, "V1 Auth Expiry Status")},
-		"/api/v1/auth/fraud/score": {Get: op([]string{"Auth"}, "V1 Auth Fraud Score")},
-		"/api/v1/auth/geo-fencing/config": {Get: op([]string{"Auth"}, "V1 Auth Geo Fencing Config")},
-		"/api/v1/auth/geofencing": {Get: op([]string{"Auth"}, "V1 Auth Geofencing")},
-		"/api/v1/auth/golden-ticket/detect": {Get: op([]string{"Auth"}, "V1 Auth Golden Ticket Detect")},
-		"/api/v1/auth/hijack/timeline": {Get: op([]string{"Auth"}, "V1 Auth Hijack Timeline")},
-		"/api/v1/auth/hooks": {Get: op([]string{"Auth"}, "V1 Auth Hooks")},
-		"/api/v1/auth/impersonate": {Get: op([]string{"Auth"}, "V1 Auth Impersonate")},
-		"/api/v1/auth/impersonate/revoke": {Post: op([]string{"Auth"}, "V1 Auth Impersonate Revoke")},
-		"/api/v1/auth/impersonation/config": {Get: op([]string{"Auth"}, "V1 Auth Impersonation Config")},
-		"/api/v1/auth/internal/revoke-user": {Post: op([]string{"Auth"}, "V1 Auth Internal Revoke User")},
-		"/api/v1/auth/introspection/config": {Get: op([]string{"Auth"}, "V1 Auth Introspection Config")},
-		"/api/v1/auth/invalidate-sessions/": {Post: op([]string{"Auth"}, "V1 Auth Invalidate Sessions")},
-		"/api/v1/auth/lateral-movement/detect": {Get: op([]string{"Auth"}, "V1 Auth Lateral Movement Detect")},
-		"/api/v1/auth/lockout-policy": {Get: op([]string{"Auth"}, "V1 Auth Lockout Policy")},
-		"/api/v1/auth/lockout-policy/config": {Get: op([]string{"Auth"}, "V1 Auth Lockout Policy Config")},
-		"/api/v1/auth/login-analytics": {Post: op([]string{"Auth"}, "V1 Auth Login Analytics")},
-		"/api/v1/auth/login-attempts": {Post: op([]string{"Auth"}, "V1 Auth Login Attempts")},
-		"/api/v1/auth/login-flow/record": {Post: op([]string{"Auth"}, "V1 Auth Login Flow Record")},
-		"/api/v1/auth/login-geo/enrich": {Post: op([]string{"Auth"}, "V1 Auth Login Geo Enrich")},
-		"/api/v1/auth/login-notify": {Post: op([]string{"Auth"}, "V1 Auth Login Notify")},
-		"/api/v1/auth/login-notify/config": {Post: op([]string{"Auth"}, "V1 Auth Login Notify Config")},
-		"/api/v1/auth/login-patterns/": {Post: op([]string{"Auth"}, "V1 Auth Login Patterns")},
-		"/api/v1/auth/login-policy": {Post: op([]string{"Auth"}, "V1 Auth Login Policy")},
-		"/api/v1/auth/login-security": {Post: op([]string{"Auth"}, "V1 Auth Login Security")},
-		"/api/v1/auth/login-velocity": {Post: op([]string{"Auth"}, "V1 Auth Login Velocity")},
-		"/api/v1/auth/login/orchestrate": {Post: op([]string{"Auth"}, "V1 Auth Login Orchestrate")},
-		"/api/v1/auth/logout-all": {Post: op([]string{"Auth"}, "V1 Auth Logout All")},
-		"/api/v1/auth/magic-link": {Get: op([]string{"Auth"}, "V1 Auth Magic Link")},
-		"/api/v1/auth/magic-link/verify": {Post: op([]string{"Auth"}, "V1 Auth Magic Link Verify")},
-		"/api/v1/auth/me": {Get: op([]string{"Auth"}, "V1 Auth Me")},
-		"/api/v1/auth/method-policies": {Get: op([]string{"Auth"}, "V1 Auth Method Policies")},
-		"/api/v1/auth/method-policies/": {Get: op([]string{"Auth"}, "V1 Auth Method Policies")},
-		"/api/v1/auth/mfa/backup-codes/generate": {Post: op([]string{"Auth"}, "V1 Auth Mfa Backup Codes Generate")},
-		"/api/v1/auth/mfa/backup-codes/remaining": {Post: op([]string{"Auth"}, "V1 Auth Mfa Backup Codes Remaining")},
-		"/api/v1/auth/mfa/backup-codes/verify": {Post: op([]string{"Auth"}, "V1 Auth Mfa Backup Codes Verify")},
-		"/api/v1/auth/mfa/challenge-config": {Post: op([]string{"Auth"}, "V1 Auth Mfa Challenge Config")},
-		"/api/v1/auth/mfa/config": {Post: op([]string{"Auth"}, "V1 Auth Mfa Config")},
-		"/api/v1/auth/mfa/enrollment-stats": {Post: op([]string{"Auth"}, "V1 Auth Mfa Enrollment Stats")},
-		"/api/v1/auth/mfa/factors": {Post: op([]string{"Auth"}, "V1 Auth Mfa Factors")},
-		"/api/v1/auth/mfa/factors/": {Post: op([]string{"Auth"}, "V1 Auth Mfa Factors")},
-		"/api/v1/auth/mfa/jit-enroll": {Post: op([]string{"Auth"}, "V1 Auth Mfa Jit Enroll")},
-		"/api/v1/auth/mfa/login": {Post: op([]string{"Auth"}, "V1 Auth Mfa Login")},
-		"/api/v1/auth/mfa/setup": {Post: op([]string{"Auth"}, "V1 Auth Mfa Setup")},
-		"/api/v1/auth/mfa/status": {Post: op([]string{"Auth"}, "V1 Auth Mfa Status")},
-		"/api/v1/auth/mfa/webauthn/begin": {Post: op([]string{"Auth"}, "V1 Auth Mfa Webauthn Begin")},
-		"/api/v1/auth/mfa/webauthn/finish": {Post: op([]string{"Auth"}, "V1 Auth Mfa Webauthn Finish")},
-		"/api/v1/auth/mtls/config": {Get: op([]string{"Auth"}, "V1 Auth Mtls Config")},
-		"/api/v1/auth/multi-hash/rehash/": {Post: op([]string{"Auth"}, "V1 Auth Multi Hash Rehash")},
-		"/api/v1/auth/multi-hash/verify": {Post: op([]string{"Auth"}, "V1 Auth Multi Hash Verify")},
-		"/api/v1/auth/notification-preferences": {Get: op([]string{"Auth"}, "V1 Auth Notification Preferences")},
-		"/api/v1/auth/notifications": {Get: op([]string{"Auth"}, "V1 Auth Notifications")},
-		"/api/v1/auth/passkey/": {Get: op([]string{"Auth"}, "V1 Auth Passkey")},
-		"/api/v1/auth/passkey/auth/begin": {Get: op([]string{"Auth"}, "V1 Auth Passkey Auth Begin")},
-		"/api/v1/auth/passkey/auth/finish": {Get: op([]string{"Auth"}, "V1 Auth Passkey Auth Finish")},
-		"/api/v1/auth/passkey/register/begin": {Post: op([]string{"Auth"}, "V1 Auth Passkey Register Begin")},
-		"/api/v1/auth/passkey/register/finish": {Post: op([]string{"Auth"}, "V1 Auth Passkey Register Finish")},
-		"/api/v1/auth/passkeys/status": {Get: op([]string{"Auth"}, "V1 Auth Passkeys Status")},
-		"/api/v1/auth/password-breach-check": {Get: op([]string{"Auth"}, "V1 Auth Password Breach Check")},
-		"/api/v1/auth/password-breach/notify": {Get: op([]string{"Auth"}, "V1 Auth Password Breach Notify")},
-		"/api/v1/auth/password-deprecation": {Get: op([]string{"Auth"}, "V1 Auth Password Deprecation")},
-		"/api/v1/auth/password-entropy/check": {Get: op([]string{"Auth"}, "V1 Auth Password Entropy Check")},
-		"/api/v1/auth/password-history": {Get: op([]string{"Auth"}, "V1 Auth Password History")},
-		"/api/v1/auth/password-history-check": {Get: op([]string{"Auth"}, "V1 Auth Password History Check")},
-		"/api/v1/auth/password-history/config": {Get: op([]string{"Auth"}, "V1 Auth Password History Config")},
-		"/api/v1/auth/password-pepper/rotate": {Put: op([]string{"Auth"}, "V1 Auth Password Pepper Rotate")},
-		"/api/v1/auth/password-pepper/status": {Get: op([]string{"Auth"}, "V1 Auth Password Pepper Status")},
-		"/api/v1/auth/password-policy": {Get: op([]string{"Auth"}, "V1 Auth Password Policy")},
-		"/api/v1/auth/password-policy/audit": {Get: op([]string{"Auth"}, "V1 Auth Password Policy Audit")},
-		"/api/v1/auth/password-policy/check": {Get: op([]string{"Auth"}, "V1 Auth Password Policy Check")},
-		"/api/v1/auth/password-policy/config": {Get: op([]string{"Auth"}, "V1 Auth Password Policy Config")},
-		"/api/v1/auth/password-reset/": {Get: op([]string{"Auth"}, "V1 Auth Password Reset")},
-		"/api/v1/auth/password-reset/analytics": {Get: op([]string{"Auth"}, "V1 Auth Password Reset Analytics")},
-		"/api/v1/auth/password-strength/distribution": {Get: op([]string{"Auth"}, "V1 Auth Password Strength Distribution")},
-		"/api/v1/auth/passwordless/config": {Get: op([]string{"Auth"}, "V1 Auth Passwordless Config")},
-		"/api/v1/auth/passwordless/register": {Post: op([]string{"Auth"}, "V1 Auth Passwordless Register")},
-		"/api/v1/auth/passwordless/stats": {Get: op([]string{"Auth"}, "V1 Auth Passwordless Stats")},
-		"/api/v1/auth/phone/send": {Get: op([]string{"Auth"}, "V1 Auth Phone Send")},
-		"/api/v1/auth/phone/verify": {Post: op([]string{"Auth"}, "V1 Auth Phone Verify")},
-		"/api/v1/auth/privilege-escalation/detect": {Get: op([]string{"Auth"}, "V1 Auth Privilege Escalation Detect")},
-		"/api/v1/auth/rate-limits": {Get: op([]string{"Auth"}, "V1 Auth Rate Limits")},
-		"/api/v1/auth/replay-check": {Get: op([]string{"Auth"}, "V1 Auth Replay Check")},
-		"/api/v1/auth/reset-password": {Get: op([]string{"Auth"}, "V1 Auth Reset Password")},
-		"/api/v1/auth/risk-assess": {Get: op([]string{"Auth"}, "V1 Auth Risk Assess")},
-		"/api/v1/auth/risk-notify": {Get: op([]string{"Auth"}, "V1 Auth Risk Notify")},
-		"/api/v1/auth/risk-scoring/config": {Get: op([]string{"Auth"}, "V1 Auth Risk Scoring Config")},
-		"/api/v1/auth/risk/aggregate": {Get: op([]string{"Auth"}, "V1 Auth Risk Aggregate")},
-		"/api/v1/auth/rotation-reminders": {Get: op([]string{"Auth"}, "V1 Auth Rotation Reminders")},
-		"/api/v1/auth/send-verification": {Get: op([]string{"Auth"}, "V1 Auth Send Verification")},
-		"/api/v1/auth/session-binding/config": {Get: op([]string{"Auth"}, "V1 Auth Session Binding Config")},
-		"/api/v1/auth/session-timeout": {Get: op([]string{"Auth"}, "V1 Auth Session Timeout")},
-		"/api/v1/auth/session-timeout/config": {Get: op([]string{"Auth"}, "V1 Auth Session Timeout Config")},
-		"/api/v1/auth/sessions/": {Get: op([]string{"Auth"}, "V1 Auth Sessions")},
-		"/api/v1/auth/sessions/anomaly-score": {Get: op([]string{"Auth"}, "V1 Auth Sessions Anomaly Score")},
-		"/api/v1/auth/sessions/bind-device": {Get: op([]string{"Auth"}, "V1 Auth Sessions Bind Device")},
-		"/api/v1/auth/sessions/check-device": {Get: op([]string{"Auth"}, "V1 Auth Sessions Check Device")},
-		"/api/v1/auth/sessions/device-binding-status": {Get: op([]string{"Auth"}, "V1 Auth Sessions Device Binding Status")},
-		"/api/v1/auth/sessions/enforce-limit": {Get: op([]string{"Auth"}, "V1 Auth Sessions Enforce Limit")},
-		"/api/v1/auth/sessions/force-logout": {Post: op([]string{"Auth"}, "V1 Auth Sessions Force Logout")},
-		"/api/v1/auth/sessions/geo-stats": {Get: op([]string{"Auth"}, "V1 Auth Sessions Geo Stats")},
-		"/api/v1/auth/sessions/hijack-check": {Get: op([]string{"Auth"}, "V1 Auth Sessions Hijack Check")},
-		"/api/v1/auth/sessions/limit": {Get: op([]string{"Auth"}, "V1 Auth Sessions Limit")},
-		"/api/v1/auth/sessions/limits": {Get: op([]string{"Auth"}, "V1 Auth Sessions Limits")},
-		"/api/v1/auth/sessions/revoke": {Post: op([]string{"Auth"}, "V1 Auth Sessions Revoke")},
-		"/api/v1/auth/sessions/revoke-user": {Post: op([]string{"Auth"}, "V1 Auth Sessions Revoke User")},
-		"/api/v1/auth/sessions/stream": {Get: op([]string{"Auth"}, "V1 Auth Sessions Stream")},
-		"/api/v1/auth/sessions/termination-reasons": {Get: op([]string{"Auth"}, "V1 Auth Sessions Termination Reasons")},
-		"/api/v1/auth/sessions/unbind-device": {Get: op([]string{"Auth"}, "V1 Auth Sessions Unbind Device")},
-		"/api/v1/auth/social/": {Get: op([]string{"Auth"}, "V1 Auth Social")},
-		"/api/v1/auth/stats/credential-stuffing": {Get: op([]string{"Auth"}, "V1 Auth Stats Credential Stuffing")},
-		"/api/v1/auth/stats/social-providers": {Get: op([]string{"Auth"}, "V1 Auth Stats Social Providers")},
-		"/api/v1/auth/step-up": {Get: op([]string{"Auth"}, "V1 Auth Step Up")},
-		"/api/v1/auth/step-up-check": {Get: op([]string{"Auth"}, "V1 Auth Step Up Check")},
-		"/api/v1/auth/stepup/challenge": {Get: op([]string{"Auth"}, "V1 Auth Stepup Challenge")},
-		"/api/v1/auth/stepup/verify": {Post: op([]string{"Auth"}, "V1 Auth Stepup Verify")},
-		"/api/v1/auth/synthetic-identity/detect": {Get: op([]string{"Auth"}, "V1 Auth Synthetic Identity Detect")},
-		"/api/v1/auth/tap/": {Get: op([]string{"Auth"}, "V1 Auth Tap")},
-		"/api/v1/auth/threat-intel/feed": {Get: op([]string{"Auth"}, "V1 Auth Threat Intel Feed")},
-		"/api/v1/auth/throttle-status": {Get: op([]string{"Auth"}, "V1 Auth Throttle Status")},
-		"/api/v1/auth/token-reuse-check": {Post: op([]string{"Auth"}, "V1 Auth Token Reuse Check")},
-		"/api/v1/auth/tokens": {Post: op([]string{"Auth"}, "V1 Auth Tokens")},
-		"/api/v1/auth/tor-vpn/detect": {Get: op([]string{"Auth"}, "V1 Auth Tor Vpn Detect")},
-		"/api/v1/auth/trust-store/cas": {Get: op([]string{"Auth"}, "V1 Auth Trust Store Cas")},
-		"/api/v1/auth/trust-store/cas/": {Get: op([]string{"Auth"}, "V1 Auth Trust Store Cas")},
-		"/api/v1/auth/trust-store/verify": {Post: op([]string{"Auth"}, "V1 Auth Trust Store Verify")},
-		"/api/v1/auth/velocity-rules": {Get: op([]string{"Auth"}, "V1 Auth Velocity Rules")},
-		"/api/v1/auth/verify-email-change": {Post: op([]string{"Auth"}, "V1 Auth Verify Email Change")},
-		"/api/v1/auth/vpn-check": {Get: op([]string{"Auth"}, "V1 Auth Vpn Check")},
-		"/api/v1/auth/webauthn/aaguid/": {Get: op([]string{"Auth"}, "V1 Auth Webauthn Aaguid")},
-		"/api/v1/auth/webauthn/autofill": {Get: op([]string{"Auth"}, "V1 Auth Webauthn Autofill")},
-		"/api/v1/auth/webauthn/conditional": {Get: op([]string{"Auth"}, "V1 Auth Webauthn Conditional")},
-		"/api/v1/auth/webauthn/config": {Get: op([]string{"Auth"}, "V1 Auth Webauthn Config")},
-		"/api/v1/auth/webauthn/credentials/valid-ids": {Get: op([]string{"Auth"}, "V1 Auth Webauthn Credentials Valid Ids")},
-		"/api/v1/auth/webauthn/passwordless/begin": {Get: op([]string{"Auth"}, "V1 Auth Webauthn Passwordless Begin")},
-		"/api/v1/auth/webauthn/passwordless/finish": {Get: op([]string{"Auth"}, "V1 Auth Webauthn Passwordless Finish")},
-		"/api/v1/auth/webauthn/register/begin": {Post: op([]string{"Auth"}, "V1 Auth Webauthn Register Begin")},
-		"/api/v1/auth/webauthn/register/finish": {Post: op([]string{"Auth"}, "V1 Auth Webauthn Register Finish")},
-		"/api/v1/certificates": {Get: op([]string{"Platform"}, "V1 Certificates")},
-		"/api/v1/certificates/": {Get: op([]string{"Platform"}, "V1 Certificates")},
-		"/api/v1/compliance/schedules": {Get: op([]string{"Platform"}, "V1 Compliance Schedules")},
-		"/api/v1/crypto/fields": {Get: op([]string{"Crypto"}, "V1 Crypto Fields")},
-		"/api/v1/crypto/fields/": {Get: op([]string{"Crypto"}, "V1 Crypto Fields")},
-		"/api/v1/departments/": {Post: op([]string{"Platform"}, "V1 Departments")},
-		"/api/v1/dlp/policies": {Get: op([]string{"DLP"}, "V1 Dlp Policies")},
-		"/api/v1/dlp/policies/": {Get: op([]string{"DLP"}, "V1 Dlp Policies")},
-		"/api/v1/dlp/scan": {Post: op([]string{"DLP"}, "V1 Dlp Scan")},
-		"/api/v1/event-correlation/rules": {Get: op([]string{"Platform"}, "V1 Event Correlation Rules")},
-		"/api/v1/hr/reconcile": {Get: op([]string{"Platform"}, "V1 Hr Reconcile")},
-		"/api/v1/hr/sync/log": {Get: op([]string{"Platform"}, "V1 Hr Sync Log")},
-		"/api/v1/identity/access-review/campaigns": {Get: op([]string{"Identity"}, "V1 Identity Access Review Campaigns")},
-		"/api/v1/identity/account-linking/config": {Get: op([]string{"Identity"}, "V1 Identity Account Linking Config")},
-		"/api/v1/identity/attribute-governance": {Get: op([]string{"Identity"}, "V1 Identity Attribute Governance")},
-		"/api/v1/identity/branding/config": {Get: op([]string{"Identity"}, "V1 Identity Branding Config")},
-		"/api/v1/identity/check": {Get: op([]string{"Identity"}, "V1 Identity Check")},
-		"/api/v1/identity/ciam/metrics": {Get: op([]string{"Identity"}, "V1 Identity Ciam Metrics")},
-		"/api/v1/identity/consent/registry": {Post: op([]string{"Identity"}, "V1 Identity Consent Registry")},
-		"/api/v1/identity/dashboard/stats": {Get: op([]string{"Identity"}, "V1 Identity Dashboard Stats")},
-		"/api/v1/identity/data-governance/classifications": {Get: op([]string{"Identity"}, "V1 Identity Data Governance Classifications")},
-		"/api/v1/identity/data-governance/dsr": {Get: op([]string{"Identity"}, "V1 Identity Data Governance Dsr")},
-		"/api/v1/identity/data-governance/inventory": {Get: op([]string{"Identity"}, "V1 Identity Data Governance Inventory")},
-		"/api/v1/identity/deprovisioning/config": {Get: op([]string{"Identity"}, "V1 Identity Deprovisioning Config")},
-		"/api/v1/identity/devices/": {Get: op([]string{"Identity"}, "V1 Identity Devices")},
-		"/api/v1/identity/did": {Get: op([]string{"Identity"}, "V1 Identity Did")},
-		"/api/v1/identity/did/": {Get: op([]string{"Identity"}, "V1 Identity Did")},
-		"/api/v1/identity/directory-health": {Get: op([]string{"Identity"}, "V1 Identity Directory Health")},
-		"/api/v1/identity/directory-snapshot": {Get: op([]string{"Identity"}, "V1 Identity Directory Snapshot")},
-		"/api/v1/identity/directory/reconcile": {Get: op([]string{"Identity"}, "V1 Identity Directory Reconcile")},
-		"/api/v1/identity/dlp/events": {Get: op([]string{"Identity"}, "V1 Identity Dlp Events")},
-		"/api/v1/identity/dlp/heatmap": {Get: op([]string{"Identity"}, "V1 Identity Dlp Heatmap")},
-		"/api/v1/identity/dlp/policies": {Get: op([]string{"Identity"}, "V1 Identity Dlp Policies")},
-		"/api/v1/identity/dlp/policies/": {Get: op([]string{"Identity"}, "V1 Identity Dlp Policies")},
-		"/api/v1/identity/entitlement-review/": {Get: op([]string{"Identity"}, "V1 Identity Entitlement Review")},
-		"/api/v1/identity/federation/discovery-rules": {Get: op([]string{"Identity"}, "V1 Identity Federation Discovery Rules")},
-		"/api/v1/identity/federation/entities": {Get: op([]string{"Identity"}, "V1 Identity Federation Entities")},
-		"/api/v1/identity/federation/route-email": {Get: op([]string{"Identity"}, "V1 Identity Federation Route Email")},
-		"/api/v1/identity/federation/transform-rules": {Get: op([]string{"Identity"}, "V1 Identity Federation Transform Rules")},
-		"/api/v1/identity/federation/transforms": {Get: op([]string{"Identity"}, "V1 Identity Federation Transforms")},
-		"/api/v1/identity/federation/trust-relations": {Get: op([]string{"Identity"}, "V1 Identity Federation Trust Relations")},
-		"/api/v1/identity/flows": {Get: op([]string{"Identity"}, "V1 Identity Flows")},
-		"/api/v1/identity/gdpr/export": {Get: op([]string{"Identity"}, "V1 Identity Gdpr Export")},
-		"/api/v1/identity/groups": {Get: op([]string{"Identity"}, "V1 Identity Groups")},
-		"/api/v1/identity/groups/": {Get: op([]string{"Identity"}, "V1 Identity Groups")},
-		"/api/v1/identity/groups/analytics": {Get: op([]string{"Identity"}, "V1 Identity Groups Analytics")},
-		"/api/v1/identity/idp/failover-config": {Get: op([]string{"Identity"}, "V1 Identity Idp Failover Config")},
-		"/api/v1/identity/idp/metadata-import": {Post: op([]string{"Identity"}, "V1 Identity Idp Metadata Import")},
-		"/api/v1/identity/import-validation/config": {Post: op([]string{"Identity"}, "V1 Identity Import Validation Config")},
-		"/api/v1/identity/jit/dry-run": {Post: op([]string{"Identity"}, "V1 Identity Jit Dry Run")},
-		"/api/v1/identity/jit/mappings": {Get: op([]string{"Identity"}, "V1 Identity Jit Mappings")},
-		"/api/v1/identity/joiner-dashboard": {Get: op([]string{"Identity"}, "V1 Identity Joiner Dashboard")},
-		"/api/v1/identity/joiner-flow": {Get: op([]string{"Identity"}, "V1 Identity Joiner Flow")},
-		"/api/v1/identity/journeys": {Get: op([]string{"Identity"}, "V1 Identity Journeys")},
-		"/api/v1/identity/journeys/": {Get: op([]string{"Identity"}, "V1 Identity Journeys")},
-		"/api/v1/identity/ldap/sync": {Get: op([]string{"Identity"}, "V1 Identity Ldap Sync")},
-		"/api/v1/identity/ldap/sync-config": {Get: op([]string{"Identity"}, "V1 Identity Ldap Sync Config")},
-		"/api/v1/identity/ldap/sync-config/test": {Post: op([]string{"Identity"}, "V1 Identity Ldap Sync Config Test")},
-		"/api/v1/identity/ldap/sync-history": {Get: op([]string{"Identity"}, "V1 Identity Ldap Sync History")},
-		"/api/v1/identity/ldap/sync-status": {Get: op([]string{"Identity"}, "V1 Identity Ldap Sync Status")},
-		"/api/v1/identity/lifecycle/events": {Get: op([]string{"Identity"}, "V1 Identity Lifecycle Events")},
-		"/api/v1/identity/lifecycle/executions": {Get: op([]string{"Identity"}, "V1 Identity Lifecycle Executions")},
-		"/api/v1/identity/lifecycle/rules": {Get: op([]string{"Identity"}, "V1 Identity Lifecycle Rules")},
-		"/api/v1/identity/list-objects": {Get: op([]string{"Identity"}, "V1 Identity List Objects")},
-		"/api/v1/identity/list-subjects": {Get: op([]string{"Identity"}, "V1 Identity List Subjects")},
-		"/api/v1/identity/nhi": {Get: op([]string{"Identity"}, "V1 Identity Nhi")},
-		"/api/v1/identity/nhi/": {Get: op([]string{"Identity"}, "V1 Identity Nhi")},
-		"/api/v1/identity/nhi/orphans": {Get: op([]string{"Identity"}, "V1 Identity Nhi Orphans")},
-		"/api/v1/identity/nhi/risk-alerts": {Get: op([]string{"Identity"}, "V1 Identity Nhi Risk Alerts")},
-		"/api/v1/identity/nhi/risk/scan": {Post: op([]string{"Identity"}, "V1 Identity Nhi Risk Scan")},
-		"/api/v1/identity/pii/discover": {Get: op([]string{"Identity"}, "V1 Identity Pii Discover")},
-		"/api/v1/identity/pipl/data-inventory": {Get: op([]string{"Identity"}, "V1 Identity Pipl Data Inventory")},
-		"/api/v1/identity/privilege-creep": {Get: op([]string{"Identity"}, "V1 Identity Privilege Creep")},
-		"/api/v1/identity/privilege-creep/": {Get: op([]string{"Identity"}, "V1 Identity Privilege Creep")},
-		"/api/v1/identity/privileged-operations": {Get: op([]string{"Identity"}, "V1 Identity Privileged Operations")},
-		"/api/v1/identity/provisioning/log": {Get: op([]string{"Identity"}, "V1 Identity Provisioning Log")},
-		"/api/v1/identity/rebac/sync-rbac": {Get: op([]string{"Identity"}, "V1 Identity Rebac Sync Rbac")},
-		"/api/v1/identity/review-schedules": {Get: op([]string{"Identity"}, "V1 Identity Review Schedules")},
-		"/api/v1/identity/review-schedules/": {Get: op([]string{"Identity"}, "V1 Identity Review Schedules")},
-		"/api/v1/identity/risk-scoring/config": {Get: op([]string{"Identity"}, "V1 Identity Risk Scoring Config")},
-		"/api/v1/identity/role-mining": {Get: op([]string{"Identity"}, "V1 Identity Role Mining")},
-		"/api/v1/identity/saml/attribute-mapping": {Get: op([]string{"Identity"}, "V1 Identity Saml Attribute Mapping")},
-		"/api/v1/identity/saml/sp-health": {Get: op([]string{"Identity"}, "V1 Identity Saml Sp Health")},
-		"/api/v1/identity/scim/config": {Get: op([]string{"Identity"}, "V1 Identity Scim Config")},
-		"/api/v1/identity/scim/config/sync": {Put: op([]string{"Identity"}, "V1 Identity Scim Config Sync")},
-		"/api/v1/identity/scim/error-recovery": {Get: op([]string{"Identity"}, "V1 Identity Scim Error Recovery")},
-		"/api/v1/identity/scim/group-mapping": {Get: op([]string{"Identity"}, "V1 Identity Scim Group Mapping")},
-		"/api/v1/identity/scim/provisioning-config": {Get: op([]string{"Identity"}, "V1 Identity Scim Provisioning Config")},
-		"/api/v1/identity/scim/sync-health": {Get: op([]string{"Identity"}, "V1 Identity Scim Sync Health")},
-		"/api/v1/identity/scim/tokens": {Post: op([]string{"Identity"}, "V1 Identity Scim Tokens")},
-		"/api/v1/identity/scim/tokens/": {Post: op([]string{"Identity"}, "V1 Identity Scim Tokens")},
-		"/api/v1/identity/sd-jwt/issue": {Get: op([]string{"Identity"}, "V1 Identity Sd Jwt Issue")},
-		"/api/v1/identity/sd-jwt/verify": {Post: op([]string{"Identity"}, "V1 Identity Sd Jwt Verify")},
-		"/api/v1/identity/secret-broker/active": {Get: op([]string{"Identity"}, "V1 Identity Secret Broker Active")},
-		"/api/v1/identity/secret-broker/broker": {Get: op([]string{"Identity"}, "V1 Identity Secret Broker Broker")},
-		"/api/v1/identity/secret-broker/revoke": {Post: op([]string{"Identity"}, "V1 Identity Secret Broker Revoke")},
-		"/api/v1/identity/secret-broker/targets": {Get: op([]string{"Identity"}, "V1 Identity Secret Broker Targets")},
-		"/api/v1/identity/secret-broker/targets/": {Get: op([]string{"Identity"}, "V1 Identity Secret Broker Targets")},
-		"/api/v1/identity/sync-status": {Get: op([]string{"Identity"}, "V1 Identity Sync Status")},
-		"/api/v1/identity/tenants/branding": {Get: op([]string{"Identity"}, "V1 Identity Tenants Branding")},
-		"/api/v1/identity/tenants/rate-limits": {Get: op([]string{"Identity"}, "V1 Identity Tenants Rate Limits")},
-		"/api/v1/identity/tenants/rate-limits/": {Get: op([]string{"Identity"}, "V1 Identity Tenants Rate Limits")},
-		"/api/v1/identity/tenants/self-register": {Post: op([]string{"Identity"}, "V1 Identity Tenants Self Register")},
-		"/api/v1/identity/tuples": {Get: op([]string{"Identity"}, "V1 Identity Tuples")},
-		"/api/v1/identity/user-lifecycle/config": {Get: op([]string{"Identity"}, "V1 Identity User Lifecycle Config")},
-		"/api/v1/identity/user-lifecycle/stages": {Get: op([]string{"Identity"}, "V1 Identity User Lifecycle Stages")},
-		"/api/v1/identity/users/bulk-import": {Post: op([]string{"Identity"}, "V1 Identity Users Bulk Import")},
-		"/api/v1/identity/users/import-async": {Post: op([]string{"Identity"}, "V1 Identity Users Import Async")},
-		"/api/v1/identity/users/import-async/": {Post: op([]string{"Identity"}, "V1 Identity Users Import Async")},
-		"/api/v1/identity/users/import-async/create": {Post: op([]string{"Identity"}, "V1 Identity Users Import Async Create")},
-		"/api/v1/identity/vc": {Get: op([]string{"Identity"}, "V1 Identity Vc")},
-		"/api/v1/identity/vc/": {Get: op([]string{"Identity"}, "V1 Identity Vc")},
-		"/api/v1/identity/vc/issue": {Get: op([]string{"Identity"}, "V1 Identity Vc Issue")},
-		"/api/v1/identity/vc/present": {Get: op([]string{"Identity"}, "V1 Identity Vc Present")},
-		"/api/v1/identity/vc/verify": {Post: op([]string{"Identity"}, "V1 Identity Vc Verify")},
-		"/api/v1/idp/config": {Get: op([]string{"Platform"}, "V1 Idp Config")},
-		"/api/v1/mdm/devices/": {Get: op([]string{"Devices"}, "V1 Mdm Devices")},
-		"/api/v1/mdm/sync/": {Get: op([]string{"Platform"}, "V1 Mdm Sync")},
-		"/api/v1/notifications/log": {Get: op([]string{"Platform"}, "V1 Notifications Log")},
-		"/api/v1/notifications/send": {Get: op([]string{"Platform"}, "V1 Notifications Send")},
-		"/api/v1/oauth/.well-known/openid-configuration": {Get: op([]string{"Auth"}, "V1 Oauth .Well Known Openid Configuration")},
-		"/api/v1/oauth/agents/": {Get: op([]string{"Auth"}, "V1 Oauth Agents")},
-		"/api/v1/oauth/analytics/summary": {Get: op([]string{"Auth"}, "V1 Oauth Analytics Summary")},
-		"/api/v1/oauth/audience-mismatches": {Get: op([]string{"Auth"}, "V1 Oauth Audience Mismatches")},
-		"/api/v1/oauth/backchannel": {Get: op([]string{"Auth"}, "V1 Oauth Backchannel")},
-		"/api/v1/oauth/backchannel-logout": {Post: op([]string{"Auth"}, "V1 Oauth Backchannel Logout")},
-		"/api/v1/oauth/ciba/config": {Get: op([]string{"Auth"}, "V1 Oauth Ciba Config")},
-		"/api/v1/oauth/client-cert": {Get: op([]string{"Auth"}, "V1 Oauth Client Cert")},
-		"/api/v1/oauth/client-events": {Get: op([]string{"Auth"}, "V1 Oauth Client Events")},
-		"/api/v1/oauth/client-lifecycle/config": {Get: op([]string{"Auth"}, "V1 Oauth Client Lifecycle Config")},
-		"/api/v1/oauth/client-rate-limits": {Get: op([]string{"Auth"}, "V1 Oauth Client Rate Limits")},
-		"/api/v1/oauth/clients/": {Get: op([]string{"Auth"}, "V1 Oauth Clients")},
-		"/api/v1/oauth/clients/dependency-graph": {Get: op([]string{"Auth"}, "V1 Oauth Clients Dependency Graph")},
-		"/api/v1/oauth/clients/onboarding": {Get: op([]string{"Auth"}, "V1 Oauth Clients Onboarding")},
-		"/api/v1/oauth/consent/": {Post: op([]string{"Auth"}, "V1 Oauth Consent")},
-		"/api/v1/oauth/consent/admin-override": {Post: op([]string{"Auth"}, "V1 Oauth Consent Admin Override")},
-		"/api/v1/oauth/consent/analytics": {Post: op([]string{"Auth"}, "V1 Oauth Consent Analytics")},
-		"/api/v1/oauth/consent/config": {Post: op([]string{"Auth"}, "V1 Oauth Consent Config")},
-		"/api/v1/oauth/consent/list": {Post: op([]string{"Auth"}, "V1 Oauth Consent List")},
-		"/api/v1/oauth/consents/dashboard": {Post: op([]string{"Auth"}, "V1 Oauth Consents Dashboard")},
-		"/api/v1/oauth/consents/history": {Post: op([]string{"Auth"}, "V1 Oauth Consents History")},
-		"/api/v1/oauth/device": {Get: op([]string{"Auth"}, "V1 Oauth Device")},
-		"/api/v1/oauth/device/approve": {Get: op([]string{"Auth"}, "V1 Oauth Device Approve")},
-		"/api/v1/oauth/device_authorization": {Get: op([]string{"Auth"}, "V1 Oauth Device Authorization")},
-		"/api/v1/oauth/dpop/config": {Get: op([]string{"Auth"}, "V1 Oauth Dpop Config")},
-		"/api/v1/oauth/dpop/verify": {Post: op([]string{"Auth"}, "V1 Oauth Dpop Verify")},
-		"/api/v1/oauth/dynamic-registration/config": {Get: op([]string{"Auth"}, "V1 Oauth Dynamic Registration Config")},
-		"/api/v1/oauth/fapi-config": {Get: op([]string{"Auth"}, "V1 Oauth Fapi Config")},
-		"/api/v1/oauth/frontchannel-logout": {Post: op([]string{"Auth"}, "V1 Oauth Frontchannel Logout")},
-		"/api/v1/oauth/grant-flows": {Get: op([]string{"Auth"}, "V1 Oauth Grant Flows")},
-		"/api/v1/oauth/introspect/batch": {Get: op([]string{"Auth"}, "V1 Oauth Introspect Batch")},
-		"/api/v1/oauth/introspection/config": {Get: op([]string{"Auth"}, "V1 Oauth Introspection Config")},
-		"/api/v1/oauth/introspection/stats": {Get: op([]string{"Auth"}, "V1 Oauth Introspection Stats")},
-		"/api/v1/oauth/issuer/metadata": {Get: op([]string{"Auth"}, "V1 Oauth Issuer Metadata")},
-		"/api/v1/oauth/jar/config": {Get: op([]string{"Auth"}, "V1 Oauth Jar Config")},
-		"/api/v1/oauth/jwks": {Get: op([]string{"Auth"}, "V1 Oauth Jwks")},
-		"/api/v1/oauth/jwks/rotate": {Put: op([]string{"Auth"}, "V1 Oauth Jwks Rotate")},
-		"/api/v1/oauth/jwks/rotation-status": {Get: op([]string{"Auth"}, "V1 Oauth Jwks Rotation Status")},
-		"/api/v1/oauth/oidc-federation/config": {Get: op([]string{"Auth"}, "V1 Oauth Oidc Federation Config")},
-		"/api/v1/oauth/oidc/claim-mapping": {Get: op([]string{"Auth"}, "V1 Oauth Oidc Claim Mapping")},
-		"/api/v1/oauth/onboarding-checklist": {Get: op([]string{"Auth"}, "V1 Oauth Onboarding Checklist")},
-		"/api/v1/oauth/par": {Post: op([]string{"Auth"}, "V1 Oauth Par")},
-		"/api/v1/oauth/par/": {Post: op([]string{"Auth"}, "V1 Oauth Par")},
-		"/api/v1/oauth/par/config": {Post: op([]string{"Auth"}, "V1 Oauth Par Config")},
-		"/api/v1/oauth/rar/consent-preview": {Post: op([]string{"Auth"}, "V1 Oauth Rar Consent Preview")},
-		"/api/v1/oauth/redirect-uri-validation/config": {Get: op([]string{"Auth"}, "V1 Oauth Redirect Uri Validation Config")},
-		"/api/v1/oauth/register": {Post: op([]string{"Auth"}, "V1 Oauth Register")},
-		"/api/v1/oauth/resource-allowed": {Get: op([]string{"Auth"}, "V1 Oauth Resource Allowed")},
-		"/api/v1/oauth/resource-indicator": {Get: op([]string{"Auth"}, "V1 Oauth Resource Indicator")},
-		"/api/v1/oauth/revoke-cascade": {Post: op([]string{"Auth"}, "V1 Oauth Revoke Cascade")},
-		"/api/v1/oauth/rotation-policy": {Get: op([]string{"Auth"}, "V1 Oauth Rotation Policy")},
-		"/api/v1/oauth/scope-delegation": {Get: op([]string{"Auth"}, "V1 Oauth Scope Delegation")},
-		"/api/v1/oauth/scope-drift": {Get: op([]string{"Auth"}, "V1 Oauth Scope Drift")},
-		"/api/v1/oauth/scope-lifecycle": {Get: op([]string{"Auth"}, "V1 Oauth Scope Lifecycle")},
-		"/api/v1/oauth/scopes": {Get: op([]string{"Auth"}, "V1 Oauth Scopes")},
-		"/api/v1/oauth/scopes/": {Get: op([]string{"Auth"}, "V1 Oauth Scopes")},
-		"/api/v1/oauth/scopes/deprecations": {Get: op([]string{"Auth"}, "V1 Oauth Scopes Deprecations")},
-		"/api/v1/oauth/scopes/hierarchy": {Get: op([]string{"Auth"}, "V1 Oauth Scopes Hierarchy")},
-		"/api/v1/oauth/scopes/resolve-dependencies": {Get: op([]string{"Auth"}, "V1 Oauth Scopes Resolve Dependencies")},
-		"/api/v1/oauth/secret-compare": {Post: op([]string{"Auth"}, "V1 Oauth Secret Compare")},
-		"/api/v1/oauth/secret-history": {Get: op([]string{"Auth"}, "V1 Oauth Secret History")},
-		"/api/v1/oauth/stats/authorize-flow": {Get: op([]string{"Auth"}, "V1 Oauth Stats Authorize Flow")},
-		"/api/v1/oauth/stats/backchannel-logout": {Post: op([]string{"Auth"}, "V1 Oauth Stats Backchannel Logout")},
-		"/api/v1/oauth/stats/grant-types": {Get: op([]string{"Auth"}, "V1 Oauth Stats Grant Types")},
-		"/api/v1/oauth/stats/oauth-2-1-audit": {Get: op([]string{"Auth"}, "V1 Oauth Stats Oauth 2 1 Audit")},
-		"/api/v1/oauth/stats/token-binding": {Post: op([]string{"Auth"}, "V1 Oauth Stats Token Binding")},
-		"/api/v1/oauth/stats/token-revocation": {Post: op([]string{"Auth"}, "V1 Oauth Stats Token Revocation")},
-		"/api/v1/oauth/token-entropy": {Post: op([]string{"Auth"}, "V1 Oauth Token Entropy")},
-		"/api/v1/oauth/token-events/stream": {Post: op([]string{"Auth"}, "V1 Oauth Token Events Stream")},
-		"/api/v1/oauth/token-exchange-delegation": {Post: op([]string{"Auth"}, "V1 Oauth Token Exchange Delegation")},
-		"/api/v1/oauth/token-families/": {Post: op([]string{"Auth"}, "V1 Oauth Token Families")},
-		"/api/v1/oauth/token-lifetime": {Post: op([]string{"Auth"}, "V1 Oauth Token Lifetime")},
-		"/api/v1/oauth/token-lifetime/analytics": {Post: op([]string{"Auth"}, "V1 Oauth Token Lifetime Analytics")},
-		"/api/v1/oauth/token-rotation/config": {Post: op([]string{"Auth"}, "V1 Oauth Token Rotation Config")},
-		"/api/v1/oauth/token-scope-diff": {Post: op([]string{"Auth"}, "V1 Oauth Token Scope Diff")},
-		"/api/v1/oauth/token/claims": {Post: op([]string{"Auth"}, "V1 Oauth Token Claims")},
-		"/api/v1/oauth/token/downscope": {Post: op([]string{"Auth"}, "V1 Oauth Token Downscope")},
-		"/api/v1/oauth/token/dpop-bind": {Post: op([]string{"Auth"}, "V1 Oauth Token Dpop Bind")},
-		"/api/v1/oauth/token/dpop-verify": {Post: op([]string{"Auth"}, "V1 Oauth Token Dpop Verify")},
-		"/api/v1/oauth/tokens/validate-audience": {Post: op([]string{"Auth"}, "V1 Oauth Tokens Validate Audience")},
-		"/api/v1/oauth/userinfo": {Get: op([]string{"Auth"}, "V1 Oauth Userinfo")},
-		"/api/v1/oauth/validate-client-secret": {Get: op([]string{"Auth"}, "V1 Oauth Validate Client Secret")},
-		"/api/v1/org/budget-tracking": {Get: op([]string{"Org"}, "V1 Org Budget Tracking")},
-	}
+	m := make(map[string]OpenAPIPath)
+	addAuthPaths(m)
+	addIdentityPaths(m)
+	addOAuthPaths(m)
+	addPolicyPaths(m)
+	addAuditPaths(m)
+	addOrgPaths(m)
+	addAdminPaths(m)
+	addGatewayPaths(m)
+	return m
 }
+
+func addAuthPaths(m map[string]OpenAPIPath) {
+	m["/api/v1/auth/access-keys"] = OpenAPIPath{Get: op([]string{"API Keys"}, "Access Keys"), Post: op([]string{"API Keys"}, "Access Keys")}
+	m["/api/v1/auth/access-keys/"] = OpenAPIPath{Get: op([]string{"API Keys"}, "Access Keys"), Post: op([]string{"API Keys"}, "Access Keys")}
+	m["/api/v1/auth/account-linking"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Account Linking")}
+	m["/api/v1/auth/adaptive-auth/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Adaptive Auth Config")}
+	m["/api/v1/auth/adaptive-mfa/evaluate"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Adaptive Mfa Evaluate")}
+	m["/api/v1/auth/anomaly/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Anomaly Detect")}
+	m["/api/v1/auth/api-keys"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Api Keys")}
+	m["/api/v1/auth/api-keys/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Api Keys")}
+	m["/api/v1/auth/biometric/enroll"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Biometric Enroll")}
+	m["/api/v1/auth/biometric/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Biometric Verify")}
+	m["/api/v1/auth/breach-warnings"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Breach Warnings")}
+	m["/api/v1/auth/break-glass/activate"] = OpenAPIPath{Post: op([]string{"Break Glass"}, "Activate break-glass access")}
+	m["/api/v1/auth/break-glass/history"] = OpenAPIPath{Get: op([]string{"Break Glass"}, "Break-glass activation history")}
+	m["/api/v1/auth/brute-force/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Brute Force Config")}
+	m["/api/v1/auth/cae/log"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Cae Log")}
+	m["/api/v1/auth/cae/run"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Cae Run")}
+	m["/api/v1/auth/cae/status"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Cae Status")}
+	m["/api/v1/auth/certificates"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Certificates")}
+	m["/api/v1/auth/certificates/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Certificates")}
+	m["/api/v1/auth/change-email"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Change Email")}
+	m["/api/v1/auth/conditional-access/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Conditional Access")}
+	m["/api/v1/auth/conditional-access/evaluate"] = OpenAPIPath{Post: op([]string{"Conditional Access"}, "Evaluate conditions against context")}
+	m["/api/v1/auth/conditional-access/policies"] = OpenAPIPath{Get: op([]string{"Conditional Access"}, "List CAP policies"), Post: op([]string{"Conditional Access"}, "Create CAP policy")}
+	m["/api/v1/auth/consent"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Consent")}
+	m["/api/v1/auth/credential-exposure"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credential Exposure")}
+	m["/api/v1/auth/credential-stuffing/block"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credential Stuffing Block")}
+	m["/api/v1/auth/credential-stuffing/blocked"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credential Stuffing Blocked")}
+	m["/api/v1/auth/credentials/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credentials")}
+	m["/api/v1/auth/credentials/rotation"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credentials Rotation")}
+	m["/api/v1/auth/credentials/rotation/due"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credentials Rotation Due")}
+	m["/api/v1/auth/credentials/rotation/execute"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credentials Rotation Execute")}
+	m["/api/v1/auth/credentials/store"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Credentials Store")}
+	m["/api/v1/auth/delegation"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Delegation")}
+	m["/api/v1/auth/delegations"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Delegations")}
+	m["/api/v1/auth/delegations/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Delegations")}
+	m["/api/v1/auth/detect-credential-stuffing"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Detect Credential Stuffing")}
+	m["/api/v1/auth/detect-impossible-travel"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Detect Impossible Travel")}
+	m["/api/v1/auth/detect-password-spray"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Detect Password Spray")}
+	m["/api/v1/auth/device"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Device")}
+	m["/api/v1/auth/device-bindings"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Device Bindings")}
+	m["/api/v1/auth/device-fingerprint/analytics"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Device Fingerprint Analytics")}
+	m["/api/v1/auth/devices/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Devices")}
+	m["/api/v1/auth/devices/attest"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Devices Attest")}
+	m["/api/v1/auth/devices/list"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Devices List")}
+	m["/api/v1/auth/devices/register"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Devices Register")}
+	m["/api/v1/auth/devices/trusted"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Devices Trusted")}
+	m["/api/v1/auth/devices/trusted/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Devices Trusted")}
+	m["/api/v1/auth/dlp/policies"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Dlp Policies")}
+	m["/api/v1/auth/dlp/policies/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Dlp Policies")}
+	m["/api/v1/auth/email-otp/send"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Email Otp Send")}
+	m["/api/v1/auth/email-otp/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Email Otp Verify")}
+	m["/api/v1/auth/email-template/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Email Template Config")}
+	m["/api/v1/auth/email/change"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Email Change")}
+	m["/api/v1/auth/email/change/confirm"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Email Change Confirm")}
+	m["/api/v1/auth/email/resend"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Email Resend")}
+	m["/api/v1/auth/email/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Email Verify")}
+	m["/api/v1/auth/enrollment/dismiss"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Enrollment Dismiss")}
+	m["/api/v1/auth/enrollment/nudge/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Enrollment Nudge")}
+	m["/api/v1/auth/expiry-status"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Expiry Status")}
+	m["/api/v1/auth/forgot-password"] = OpenAPIPath{Post: op([]string{"Auth"}, "Request password reset email")}
+	m["/api/v1/auth/fraud/score"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Fraud Score")}
+	m["/api/v1/auth/geo-fencing/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Geo Fencing Config")}
+	m["/api/v1/auth/geofencing"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Geofencing")}
+	m["/api/v1/auth/golden-ticket/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Golden Ticket Detect")}
+	m["/api/v1/auth/hijack/timeline"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Hijack Timeline")}
+	m["/api/v1/auth/hooks"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Hooks")}
+	m["/api/v1/auth/impersonate"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Impersonate")}
+	m["/api/v1/auth/impersonate/revoke"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Impersonate Revoke")}
+	m["/api/v1/auth/impersonation/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Impersonation Config")}
+	m["/api/v1/auth/internal/revoke-user"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Internal Revoke User")}
+	m["/api/v1/auth/introspection/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Introspection Config")}
+	m["/api/v1/auth/invalidate-sessions/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Invalidate Sessions")}
+	m["/api/v1/auth/lateral-movement/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Lateral Movement Detect")}
+	m["/api/v1/auth/lockout-policy"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Lockout Policy")}
+	m["/api/v1/auth/lockout-policy/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Lockout Policy Config")}
+	m["/api/v1/auth/login"] = OpenAPIPath{Post: op([]string{"Auth"}, "User login — authenticate with username/password, returns JWT tokens")}
+	m["/api/v1/auth/login-analytics"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Analytics")}
+	m["/api/v1/auth/login-attempts"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Attempts")}
+	m["/api/v1/auth/login-flow/record"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Flow Record")}
+	m["/api/v1/auth/login-geo/enrich"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Geo Enrich")}
+	m["/api/v1/auth/login-notify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Notify")}
+	m["/api/v1/auth/login-notify/config"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Notify Config")}
+	m["/api/v1/auth/login-patterns/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Patterns")}
+	m["/api/v1/auth/login-policy"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Policy")}
+	m["/api/v1/auth/login-security"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Security")}
+	m["/api/v1/auth/login-velocity"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Velocity")}
+	m["/api/v1/auth/login/orchestrate"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Login Orchestrate")}
+	m["/api/v1/auth/logout"] = OpenAPIPath{Post: op([]string{"Auth"}, "Logout and invalidate session")}
+	m["/api/v1/auth/logout-all"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Logout All")}
+	m["/api/v1/auth/magic-link"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Magic Link")}
+	m["/api/v1/auth/magic-link/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Magic Link Verify")}
+	m["/api/v1/auth/me"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Me")}
+	m["/api/v1/auth/method-policies"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Method Policies")}
+	m["/api/v1/auth/method-policies/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Method Policies")}
+	m["/api/v1/auth/mfa/backup-codes"] = OpenAPIPath{Get: op([]string{"MFA"}, "List backup codes"), Post: op([]string{"MFA"}, "Generate new backup codes")}
+	m["/api/v1/auth/mfa/backup-codes/generate"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Backup Codes Generate")}
+	m["/api/v1/auth/mfa/backup-codes/remaining"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Backup Codes Remaining")}
+	m["/api/v1/auth/mfa/backup-codes/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Backup Codes Verify")}
+	m["/api/v1/auth/mfa/challenge-config"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Challenge Config")}
+	m["/api/v1/auth/mfa/config"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Config")}
+	m["/api/v1/auth/mfa/disable"] = OpenAPIPath{Post: op([]string{"MFA"}, "Disable MFA")}
+	m["/api/v1/auth/mfa/enroll"] = OpenAPIPath{Post: op([]string{"MFA"}, "Enroll MFA (TOTP)")}
+	m["/api/v1/auth/mfa/enrollment-stats"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Enrollment Stats")}
+	m["/api/v1/auth/mfa/factors"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Factors")}
+	m["/api/v1/auth/mfa/factors/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Factors")}
+	m["/api/v1/auth/mfa/jit-enroll"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Jit Enroll")}
+	m["/api/v1/auth/mfa/login"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Login")}
+	m["/api/v1/auth/mfa/setup"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Setup")}
+	m["/api/v1/auth/mfa/status"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Status")}
+	m["/api/v1/auth/mfa/verify"] = OpenAPIPath{Post: op([]string{"MFA"}, "Verify MFA code")}
+	m["/api/v1/auth/mfa/webauthn/begin"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Webauthn Begin")}
+	m["/api/v1/auth/mfa/webauthn/finish"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Mfa Webauthn Finish")}
+	m["/api/v1/auth/mtls/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Mtls Config")}
+	m["/api/v1/auth/multi-hash/rehash/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Multi Hash Rehash")}
+	m["/api/v1/auth/multi-hash/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Multi Hash Verify")}
+	m["/api/v1/auth/notification-preferences"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Notification Preferences")}
+	m["/api/v1/auth/notifications"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Notifications")}
+	m["/api/v1/auth/passkey/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Passkey")}
+	m["/api/v1/auth/passkey/auth/begin"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Passkey Auth Begin")}
+	m["/api/v1/auth/passkey/auth/finish"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Passkey Auth Finish")}
+	m["/api/v1/auth/passkey/register/begin"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Passkey Register Begin")}
+	m["/api/v1/auth/passkey/register/finish"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Passkey Register Finish")}
+	m["/api/v1/auth/passkeys/status"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Passkeys Status")}
+	m["/api/v1/auth/password-breach-check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Breach Check")}
+	m["/api/v1/auth/password-breach/notify"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Breach Notify")}
+	m["/api/v1/auth/password-deprecation"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Deprecation")}
+	m["/api/v1/auth/password-entropy/check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Entropy Check")}
+	m["/api/v1/auth/password-history"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password History")}
+	m["/api/v1/auth/password-history-check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password History Check")}
+	m["/api/v1/auth/password-history/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password History Config")}
+	m["/api/v1/auth/password-pepper/rotate"] = OpenAPIPath{Put: op([]string{"Auth"}, "V1 Auth Password Pepper Rotate")}
+	m["/api/v1/auth/password-pepper/status"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Pepper Status")}
+	m["/api/v1/auth/password-policy"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Policy")}
+	m["/api/v1/auth/password-policy/audit"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Policy Audit")}
+	m["/api/v1/auth/password-policy/check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Policy Check")}
+	m["/api/v1/auth/password-policy/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Policy Config")}
+	m["/api/v1/auth/password-reset/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Reset")}
+	m["/api/v1/auth/password-reset/analytics"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Reset Analytics")}
+	m["/api/v1/auth/password-strength/distribution"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Password Strength Distribution")}
+	m["/api/v1/auth/password/change"] = OpenAPIPath{Post: op([]string{"Auth"}, "Change password (requires current password)")}
+	m["/api/v1/auth/password/forgot"] = OpenAPIPath{Post: op([]string{"Auth"}, "Request password reset (v2)")}
+	m["/api/v1/auth/password/policy"] = OpenAPIPath{Get: op([]string{"Auth"}, "Get password policy requirements")}
+	m["/api/v1/auth/password/reset"] = OpenAPIPath{Post: op([]string{"Auth"}, "Reset password with token")}
+	m["/api/v1/auth/password/strength"] = OpenAPIPath{Post: op([]string{"Auth"}, "Evaluate password strength (zxcvbn score 0-4)")}
+	m["/api/v1/auth/passwordless/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Passwordless Config")}
+	m["/api/v1/auth/passwordless/register"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Passwordless Register")}
+	m["/api/v1/auth/passwordless/stats"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Passwordless Stats")}
+	m["/api/v1/auth/phone/send"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Phone Send")}
+	m["/api/v1/auth/phone/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Phone Verify")}
+	m["/api/v1/auth/privilege-escalation/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Privilege Escalation Detect")}
+	m["/api/v1/auth/profile"] = OpenAPIPath{Get: op([]string{"Auth"}, "Get current user profile"), Put: op([]string{"Auth"}, "Update own profile")}
+	m["/api/v1/auth/rate-limits"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Rate Limits")}
+	m["/api/v1/auth/refresh"] = OpenAPIPath{Post: op([]string{"Auth"}, "Refresh access token using refresh token")}
+	m["/api/v1/auth/register"] = OpenAPIPath{Post: op([]string{"Auth"}, "Self-service user registration")}
+	m["/api/v1/auth/replay-check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Replay Check")}
+	m["/api/v1/auth/reset-password"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Reset Password")}
+	m["/api/v1/auth/risk-assess"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Risk Assess")}
+	m["/api/v1/auth/risk-notify"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Risk Notify")}
+	m["/api/v1/auth/risk-scoring/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Risk Scoring Config")}
+	m["/api/v1/auth/risk/aggregate"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Risk Aggregate")}
+	m["/api/v1/auth/rotation-reminders"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Rotation Reminders")}
+	m["/api/v1/auth/send-verification"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Send Verification")}
+	m["/api/v1/auth/session-binding/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Session Binding Config")}
+	m["/api/v1/auth/session-timeout"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Session Timeout")}
+	m["/api/v1/auth/session-timeout/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Session Timeout Config")}
+	m["/api/v1/auth/sessions"] = OpenAPIPath{Get: op([]string{"Sessions"}, "List active sessions for current user")}
+	m["/api/v1/auth/sessions/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions")}
+	m["/api/v1/auth/sessions/anomaly-score"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Anomaly Score")}
+	m["/api/v1/auth/sessions/bind-device"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Bind Device")}
+	m["/api/v1/auth/sessions/check-device"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Check Device")}
+	m["/api/v1/auth/sessions/device-binding-status"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Device Binding Status")}
+	m["/api/v1/auth/sessions/enforce-limit"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Enforce Limit")}
+	m["/api/v1/auth/sessions/force-logout"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Sessions Force Logout")}
+	m["/api/v1/auth/sessions/geo-stats"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Geo Stats")}
+	m["/api/v1/auth/sessions/hijack-check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Hijack Check")}
+	m["/api/v1/auth/sessions/limit"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Limit")}
+	m["/api/v1/auth/sessions/limits"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Limits")}
+	m["/api/v1/auth/sessions/revoke"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Sessions Revoke")}
+	m["/api/v1/auth/sessions/revoke-user"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Sessions Revoke User")}
+	m["/api/v1/auth/sessions/stream"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Stream")}
+	m["/api/v1/auth/sessions/termination-reasons"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Termination Reasons")}
+	m["/api/v1/auth/sessions/unbind-device"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Sessions Unbind Device")}
+	m["/api/v1/auth/sessions/{id}"] = OpenAPIPath{Delete: op([]string{"Sessions"}, "Revoke a session by ID")}
+	m["/api/v1/auth/social/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Social")}
+	m["/api/v1/auth/stats/credential-stuffing"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Stats Credential Stuffing")}
+	m["/api/v1/auth/stats/social-providers"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Stats Social Providers")}
+	m["/api/v1/auth/step-up"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Step Up")}
+	m["/api/v1/auth/step-up-check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Step Up Check")}
+	m["/api/v1/auth/stepup/challenge"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Stepup Challenge")}
+	m["/api/v1/auth/stepup/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Stepup Verify")}
+	m["/api/v1/auth/synthetic-identity/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Synthetic Identity Detect")}
+	m["/api/v1/auth/tap"] = OpenAPIPath{Post: op([]string{"TAP"}, "Issue Temporary Access Pass")}
+	m["/api/v1/auth/tap/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Tap")}
+	m["/api/v1/auth/tap/batch"] = OpenAPIPath{Post: op([]string{"TAP"}, "Batch issue TAPs")}
+	m["/api/v1/auth/tap/policy"] = OpenAPIPath{Get: op([]string{"TAP"}, "Get TAP policy"), Put: op([]string{"TAP"}, "Update TAP policy")}
+	m["/api/v1/auth/threat-intel/feed"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Threat Intel Feed")}
+	m["/api/v1/auth/throttle-status"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Throttle Status")}
+	m["/api/v1/auth/token-reuse-check"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Token Reuse Check")}
+	m["/api/v1/auth/tokens"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Tokens")}
+	m["/api/v1/auth/tor-vpn/detect"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Tor Vpn Detect")}
+	m["/api/v1/auth/trust-store/cas"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Trust Store Cas")}
+	m["/api/v1/auth/trust-store/cas/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Trust Store Cas")}
+	m["/api/v1/auth/trust-store/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Trust Store Verify")}
+	m["/api/v1/auth/velocity-rules"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Velocity Rules")}
+	m["/api/v1/auth/verify-email"] = OpenAPIPath{Get: op([]string{"Auth"}, "Verify email address with token")}
+	m["/api/v1/auth/verify-email-change"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Verify Email Change")}
+	m["/api/v1/auth/vpn-check"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Vpn Check")}
+	m["/api/v1/auth/webauthn/aaguid"] = OpenAPIPath{Get: op([]string{"WebAuthn"}, "List AAGUID allowlist"), Post: op([]string{"WebAuthn"}, "Add AAGUID to allowlist")}
+	m["/api/v1/auth/webauthn/aaguid/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Webauthn Aaguid")}
+	m["/api/v1/auth/webauthn/autofill"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Webauthn Autofill")}
+	m["/api/v1/auth/webauthn/begin"] = OpenAPIPath{Post: op([]string{"WebAuthn"}, "Begin WebAuthn registration")}
+	m["/api/v1/auth/webauthn/conditional"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Webauthn Conditional")}
+	m["/api/v1/auth/webauthn/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Webauthn Config")}
+	m["/api/v1/auth/webauthn/credentials/valid-ids"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Webauthn Credentials Valid Ids")}
+	m["/api/v1/auth/webauthn/finish"] = OpenAPIPath{Post: op([]string{"WebAuthn"}, "Finish WebAuthn registration")}
+	m["/api/v1/auth/webauthn/login/begin"] = OpenAPIPath{Post: op([]string{"WebAuthn"}, "Begin WebAuthn login")}
+	m["/api/v1/auth/webauthn/login/finish"] = OpenAPIPath{Post: op([]string{"WebAuthn"}, "Finish WebAuthn login")}
+	m["/api/v1/auth/webauthn/passwordless/begin"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Webauthn Passwordless Begin")}
+	m["/api/v1/auth/webauthn/passwordless/finish"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Auth Webauthn Passwordless Finish")}
+	m["/api/v1/auth/webauthn/register/begin"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Webauthn Register Begin")}
+	m["/api/v1/auth/webauthn/register/finish"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Auth Webauthn Register Finish")}
+}
+
+func addIdentityPaths(m map[string]OpenAPIPath) {
+	m["/api/v1/identity/access-review/campaigns"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Access Review Campaigns")}
+	m["/api/v1/identity/account-linking/config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Account Linking Config")}
+	m["/api/v1/identity/attribute-governance"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Attribute Governance")}
+	m["/api/v1/identity/branding/config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Branding Config")}
+	m["/api/v1/identity/check"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Check")}
+	m["/api/v1/identity/ciam/metrics"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Ciam Metrics")}
+	m["/api/v1/identity/consent/registry"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Consent Registry")}
+	m["/api/v1/identity/dashboard/stats"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Dashboard Stats")}
+	m["/api/v1/identity/data-governance/classifications"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Data Governance Classifications")}
+	m["/api/v1/identity/data-governance/dsr"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Data Governance Dsr")}
+	m["/api/v1/identity/data-governance/inventory"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Data Governance Inventory")}
+	m["/api/v1/identity/deprovisioning/config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Deprovisioning Config")}
+	m["/api/v1/identity/devices/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Devices")}
+	m["/api/v1/identity/did"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Did")}
+	m["/api/v1/identity/did/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Did")}
+	m["/api/v1/identity/directory-health"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Directory Health")}
+	m["/api/v1/identity/directory-snapshot"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Directory Snapshot")}
+	m["/api/v1/identity/directory/reconcile"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Directory Reconcile")}
+	m["/api/v1/identity/dlp/events"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Dlp Events")}
+	m["/api/v1/identity/dlp/heatmap"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Dlp Heatmap")}
+	m["/api/v1/identity/dlp/policies"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Dlp Policies")}
+	m["/api/v1/identity/dlp/policies/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Dlp Policies")}
+	m["/api/v1/identity/entitlement-review/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Entitlement Review")}
+	m["/api/v1/identity/federation/discovery-rules"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Federation Discovery Rules")}
+	m["/api/v1/identity/federation/entities"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Federation Entities")}
+	m["/api/v1/identity/federation/route-email"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Federation Route Email")}
+	m["/api/v1/identity/federation/transform-rules"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Federation Transform Rules")}
+	m["/api/v1/identity/federation/transforms"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Federation Transforms")}
+	m["/api/v1/identity/federation/trust-relations"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Federation Trust Relations")}
+	m["/api/v1/identity/flows"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Flows")}
+	m["/api/v1/identity/gdpr/export"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Gdpr Export")}
+	m["/api/v1/identity/groups"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Groups")}
+	m["/api/v1/identity/groups/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Groups")}
+	m["/api/v1/identity/groups/analytics"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Groups Analytics")}
+	m["/api/v1/identity/idp/failover-config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Idp Failover Config")}
+	m["/api/v1/identity/idp/metadata-import"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Idp Metadata Import")}
+	m["/api/v1/identity/import-validation/config"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Import Validation Config")}
+	m["/api/v1/identity/jit/dry-run"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Jit Dry Run")}
+	m["/api/v1/identity/jit/mappings"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Jit Mappings")}
+	m["/api/v1/identity/joiner-dashboard"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Joiner Dashboard")}
+	m["/api/v1/identity/joiner-flow"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Joiner Flow")}
+	m["/api/v1/identity/journeys"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Journeys")}
+	m["/api/v1/identity/journeys/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Journeys")}
+	m["/api/v1/identity/ldap/sync"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Ldap Sync")}
+	m["/api/v1/identity/ldap/sync-config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Ldap Sync Config")}
+	m["/api/v1/identity/ldap/sync-config/test"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Ldap Sync Config Test")}
+	m["/api/v1/identity/ldap/sync-history"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Ldap Sync History")}
+	m["/api/v1/identity/ldap/sync-status"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Ldap Sync Status")}
+	m["/api/v1/identity/lifecycle/events"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Lifecycle Events")}
+	m["/api/v1/identity/lifecycle/executions"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Lifecycle Executions")}
+	m["/api/v1/identity/lifecycle/rules"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Lifecycle Rules")}
+	m["/api/v1/identity/list-objects"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity List Objects")}
+	m["/api/v1/identity/list-subjects"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity List Subjects")}
+	m["/api/v1/identity/nhi"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Nhi")}
+	m["/api/v1/identity/nhi/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Nhi")}
+	m["/api/v1/identity/nhi/orphans"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Nhi Orphans")}
+	m["/api/v1/identity/nhi/risk-alerts"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Nhi Risk Alerts")}
+	m["/api/v1/identity/nhi/risk/scan"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Nhi Risk Scan")}
+	m["/api/v1/identity/pii/discover"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Pii Discover")}
+	m["/api/v1/identity/pipl/data-inventory"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Pipl Data Inventory")}
+	m["/api/v1/identity/privilege-creep"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Privilege Creep")}
+	m["/api/v1/identity/privilege-creep/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Privilege Creep")}
+	m["/api/v1/identity/privileged-operations"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Privileged Operations")}
+	m["/api/v1/identity/provisioning/log"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Provisioning Log")}
+	m["/api/v1/identity/rebac/sync-rbac"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Rebac Sync Rbac")}
+	m["/api/v1/identity/review-schedules"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Review Schedules")}
+	m["/api/v1/identity/review-schedules/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Review Schedules")}
+	m["/api/v1/identity/risk-scoring/config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Risk Scoring Config")}
+	m["/api/v1/identity/role-mining"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Role Mining")}
+	m["/api/v1/identity/saml/attribute-mapping"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Saml Attribute Mapping")}
+	m["/api/v1/identity/saml/sp-health"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Saml Sp Health")}
+	m["/api/v1/identity/scim/config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Scim Config")}
+	m["/api/v1/identity/scim/config/sync"] = OpenAPIPath{Put: op([]string{"Identity"}, "V1 Identity Scim Config Sync")}
+	m["/api/v1/identity/scim/error-recovery"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Scim Error Recovery")}
+	m["/api/v1/identity/scim/group-mapping"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Scim Group Mapping")}
+	m["/api/v1/identity/scim/provisioning-config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Scim Provisioning Config")}
+	m["/api/v1/identity/scim/sync-health"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Scim Sync Health")}
+	m["/api/v1/identity/scim/tokens"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Scim Tokens")}
+	m["/api/v1/identity/scim/tokens/"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Scim Tokens")}
+	m["/api/v1/identity/sd-jwt/issue"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Sd Jwt Issue")}
+	m["/api/v1/identity/sd-jwt/verify"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Sd Jwt Verify")}
+	m["/api/v1/identity/secret-broker/active"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Secret Broker Active")}
+	m["/api/v1/identity/secret-broker/broker"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Secret Broker Broker")}
+	m["/api/v1/identity/secret-broker/revoke"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Secret Broker Revoke")}
+	m["/api/v1/identity/secret-broker/targets"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Secret Broker Targets")}
+	m["/api/v1/identity/secret-broker/targets/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Secret Broker Targets")}
+	m["/api/v1/identity/sync-status"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Sync Status")}
+	m["/api/v1/identity/tenants/branding"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Tenants Branding")}
+	m["/api/v1/identity/tenants/rate-limits"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Tenants Rate Limits")}
+	m["/api/v1/identity/tenants/rate-limits/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Tenants Rate Limits")}
+	m["/api/v1/identity/tenants/self-register"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Tenants Self Register")}
+	m["/api/v1/identity/tuples"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Tuples")}
+	m["/api/v1/identity/user-lifecycle/config"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity User Lifecycle Config")}
+	m["/api/v1/identity/user-lifecycle/stages"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity User Lifecycle Stages")}
+	m["/api/v1/identity/users"] = OpenAPIPath{Get: op([]string{"Identity"}, "List users (legacy alias)"), Post: op([]string{"Identity"}, "Create user (legacy alias)")},		"/api/v1/policy/authorize":         {Post: op([]string{"Policy"}, "Unified PDP authorize")}
+	m["/api/v1/identity/users/bulk-import"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Users Bulk Import")}
+	m["/api/v1/identity/users/import-async"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Users Import Async")}
+	m["/api/v1/identity/users/import-async/"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Users Import Async")}
+	m["/api/v1/identity/users/import-async/create"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Users Import Async Create")}
+	m["/api/v1/identity/vc"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Vc")}
+	m["/api/v1/identity/vc/"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Vc")}
+	m["/api/v1/identity/vc/issue"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Vc Issue")}
+	m["/api/v1/identity/vc/present"] = OpenAPIPath{Get: op([]string{"Identity"}, "V1 Identity Vc Present")}
+	m["/api/v1/identity/vc/verify"] = OpenAPIPath{Post: op([]string{"Identity"}, "V1 Identity Vc Verify")}
+	m["/api/v1/users"] = OpenAPIPath{Get: op([]string{"Identity"}, "List users"), Post: op([]string{"Identity"}, "Create user")}
+	m["/api/v1/users/export"] = OpenAPIPath{Get: op([]string{"Identity"}, "Export users to CSV")}
+	m["/api/v1/users/import"] = OpenAPIPath{Post: op([]string{"Identity"}, "Import users from CSV")}
+	m["/api/v1/users/{id}"] = OpenAPIPath{Get: op([]string{"Identity"}, "Get user by ID"), Put: op([]string{"Identity"}, "Update user"), Delete: op([]string{"Identity"}, "Delete user")}
+}
+
+func addOAuthPaths(m map[string]OpenAPIPath) {
+	m["/.well-known/jwks.json"] = OpenAPIPath{Get: op([]string{"OAuth"}, "JWKS — public keys for JWT verification")}
+	m["/.well-known/openid-configuration"] = OpenAPIPath{Get: op([]string{"OAuth"}, "OIDC discovery document")}
+	m["/api/v1/oauth/.well-known/openid-configuration"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth .Well Known Openid Configuration")}
+	m["/api/v1/oauth/agents/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Agents")}
+	m["/api/v1/oauth/analytics/summary"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Analytics Summary")}
+	m["/api/v1/oauth/audience-mismatches"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Audience Mismatches")}
+	m["/api/v1/oauth/authorize"] = OpenAPIPath{Get: op([]string{"OAuth"}, "OAuth 2.0 authorize endpoint"), Post: op([]string{"OAuth"}, "OAuth 2.0 authorize (POST)")}
+	m["/api/v1/oauth/backchannel"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Backchannel")}
+	m["/api/v1/oauth/backchannel-logout"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Backchannel Logout")}
+	m["/api/v1/oauth/ciba/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Ciba Config")}
+	m["/api/v1/oauth/client-cert"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Client Cert")}
+	m["/api/v1/oauth/client-events"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Client Events")}
+	m["/api/v1/oauth/client-lifecycle/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Client Lifecycle Config")}
+	m["/api/v1/oauth/client-rate-limits"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Client Rate Limits")}
+	m["/api/v1/oauth/clients"] = OpenAPIPath{Get: op([]string{"OAuth"}, "List OAuth clients"), Post: op([]string{"OAuth"}, "Create OAuth client")}
+	m["/api/v1/oauth/clients/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Clients")}
+	m["/api/v1/oauth/clients/dependency-graph"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Clients Dependency Graph")}
+	m["/api/v1/oauth/clients/onboarding"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Clients Onboarding")}
+	m["/api/v1/oauth/clients/{id}"] = OpenAPIPath{Get: op([]string{"OAuth"}, "Get OAuth client"), Put: op([]string{"OAuth"}, "Update OAuth client"), Delete: op([]string{"OAuth"}, "Delete OAuth client")}
+	m["/api/v1/oauth/consent/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Consent")}
+	m["/api/v1/oauth/consent/admin-override"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Consent Admin Override")}
+	m["/api/v1/oauth/consent/analytics"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Consent Analytics")}
+	m["/api/v1/oauth/consent/config"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Consent Config")}
+	m["/api/v1/oauth/consent/list"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Consent List")}
+	m["/api/v1/oauth/consents/dashboard"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Consents Dashboard")}
+	m["/api/v1/oauth/consents/history"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Consents History")}
+	m["/api/v1/oauth/device"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Device")}
+	m["/api/v1/oauth/device/approve"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Device Approve")}
+	m["/api/v1/oauth/device_authorization"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Device Authorization")}
+	m["/api/v1/oauth/dpop/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Dpop Config")}
+	m["/api/v1/oauth/dpop/verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Dpop Verify")}
+	m["/api/v1/oauth/dynamic-registration/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Dynamic Registration Config")}
+	m["/api/v1/oauth/fapi-config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Fapi Config")}
+	m["/api/v1/oauth/frontchannel-logout"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Frontchannel Logout")}
+	m["/api/v1/oauth/grant-flows"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Grant Flows")}
+	m["/api/v1/oauth/introspect"] = OpenAPIPath{Post: op([]string{"OAuth"}, "Token introspection (RFC 7662)")}
+	m["/api/v1/oauth/introspect/batch"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Introspect Batch")}
+	m["/api/v1/oauth/introspection/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Introspection Config")}
+	m["/api/v1/oauth/introspection/stats"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Introspection Stats")}
+	m["/api/v1/oauth/issuer/metadata"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Issuer Metadata")}
+	m["/api/v1/oauth/jar/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Jar Config")}
+	m["/api/v1/oauth/jwks"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Jwks")}
+	m["/api/v1/oauth/jwks/rotate"] = OpenAPIPath{Put: op([]string{"Auth"}, "V1 Oauth Jwks Rotate")}
+	m["/api/v1/oauth/jwks/rotation-status"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Jwks Rotation Status")}
+	m["/api/v1/oauth/oidc-federation/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Oidc Federation Config")}
+	m["/api/v1/oauth/oidc/claim-mapping"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Oidc Claim Mapping")}
+	m["/api/v1/oauth/onboarding-checklist"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Onboarding Checklist")}
+	m["/api/v1/oauth/par"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Par")}
+	m["/api/v1/oauth/par/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Par")}
+	m["/api/v1/oauth/par/config"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Par Config")}
+	m["/api/v1/oauth/rar/consent-preview"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Rar Consent Preview")}
+	m["/api/v1/oauth/redirect-uri-validation/config"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Redirect Uri Validation Config")}
+	m["/api/v1/oauth/register"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Register")}
+	m["/api/v1/oauth/resource-allowed"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Resource Allowed")}
+	m["/api/v1/oauth/resource-indicator"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Resource Indicator")}
+	m["/api/v1/oauth/revoke"] = OpenAPIPath{Post: op([]string{"OAuth"}, "Revoke token (RFC 7009)")}
+	m["/api/v1/oauth/revoke-cascade"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Revoke Cascade")}
+	m["/api/v1/oauth/rotation-policy"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Rotation Policy")}
+	m["/api/v1/oauth/scope-delegation"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scope Delegation")}
+	m["/api/v1/oauth/scope-drift"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scope Drift")}
+	m["/api/v1/oauth/scope-lifecycle"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scope Lifecycle")}
+	m["/api/v1/oauth/scopes"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scopes")}
+	m["/api/v1/oauth/scopes/"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scopes")}
+	m["/api/v1/oauth/scopes/deprecations"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scopes Deprecations")}
+	m["/api/v1/oauth/scopes/hierarchy"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scopes Hierarchy")}
+	m["/api/v1/oauth/scopes/resolve-dependencies"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Scopes Resolve Dependencies")}
+	m["/api/v1/oauth/secret-compare"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Secret Compare")}
+	m["/api/v1/oauth/secret-history"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Secret History")}
+	m["/api/v1/oauth/stats/authorize-flow"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Stats Authorize Flow")}
+	m["/api/v1/oauth/stats/backchannel-logout"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Stats Backchannel Logout")}
+	m["/api/v1/oauth/stats/grant-types"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Stats Grant Types")}
+	m["/api/v1/oauth/stats/oauth-2-1-audit"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Stats Oauth 2 1 Audit")}
+	m["/api/v1/oauth/stats/token-binding"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Stats Token Binding")}
+	m["/api/v1/oauth/stats/token-revocation"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Stats Token Revocation")}
+	m["/api/v1/oauth/token"] = OpenAPIPath{Post: op([]string{"OAuth"}, "Issue token (client_credentials, authorization_code, refresh_token)")}
+	m["/api/v1/oauth/token-entropy"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Entropy")}
+	m["/api/v1/oauth/token-events/stream"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Events Stream")}
+	m["/api/v1/oauth/token-exchange-delegation"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Exchange Delegation")}
+	m["/api/v1/oauth/token-families/"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Families")}
+	m["/api/v1/oauth/token-lifetime"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Lifetime")}
+	m["/api/v1/oauth/token-lifetime/analytics"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Lifetime Analytics")}
+	m["/api/v1/oauth/token-rotation/config"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Rotation Config")}
+	m["/api/v1/oauth/token-scope-diff"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Scope Diff")}
+	m["/api/v1/oauth/token/claims"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Claims")}
+	m["/api/v1/oauth/token/downscope"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Downscope")}
+	m["/api/v1/oauth/token/dpop-bind"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Dpop Bind")}
+	m["/api/v1/oauth/token/dpop-verify"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Token Dpop Verify")}
+	m["/api/v1/oauth/tokens/validate-audience"] = OpenAPIPath{Post: op([]string{"Auth"}, "V1 Oauth Tokens Validate Audience")}
+	m["/api/v1/oauth/userinfo"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Userinfo")}
+	m["/api/v1/oauth/validate-client-secret"] = OpenAPIPath{Get: op([]string{"Auth"}, "V1 Oauth Validate Client Secret")}
+	m["/oauth/userinfo"] = OpenAPIPath{Get: op([]string{"OAuth"}, "Enhanced UserInfo: profile + roles + groups + permissions + risk_level")}
+}
+
+func addPolicyPaths(m map[string]OpenAPIPath) {
+	m["/api/v1/roles"] = OpenAPIPath{Get: op([]string{"Policy"}, "List roles"), Post: op([]string{"Policy"}, "Create role")}
+	m["/api/v1/roles/{id}"] = OpenAPIPath{Get: op([]string{"Policy"}, "Get role by ID"), Put: op([]string{"Policy"}, "Update role"), Delete: op([]string{"Policy"}, "Delete role")}
+}
+
+func addAuditPaths(m map[string]OpenAPIPath) {
+	m["/api/v1/audit/access-reviews"] = OpenAPIPath{Get: op([]string{"Audit"}, "Access Reviews"), Post: op([]string{"Audit"}, "Access Reviews")}
+	m["/api/v1/audit/access-reviews/pending"] = OpenAPIPath{Get: op([]string{"Audit"}, "Pending"), Post: op([]string{"Audit"}, "Pending")}
+	m["/api/v1/audit/activity"] = OpenAPIPath{Get: op([]string{"Audit"}, "Activity"), Post: op([]string{"Audit"}, "Activity")}
+	m["/api/v1/audit/aggregations"] = OpenAPIPath{Get: op([]string{"Audit"}, "Aggregations"), Post: op([]string{"Audit"}, "Aggregations")}
+	m["/api/v1/audit/aggregations/daily"] = OpenAPIPath{Get: op([]string{"Audit"}, "Daily"), Post: op([]string{"Audit"}, "Daily")}
+	m["/api/v1/audit/alert-evaluation/config"] = OpenAPIPath{Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")}
+	m["/api/v1/audit/alert-webhooks"] = OpenAPIPath{Get: op([]string{"Audit"}, "Alert Webhooks"), Post: op([]string{"Audit"}, "Alert Webhooks")}
+	m["/api/v1/audit/alerts/config"] = OpenAPIPath{Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")}
+	m["/api/v1/audit/alerts/evaluate"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evaluate"), Post: op([]string{"Audit"}, "Evaluate")}
+	m["/api/v1/audit/alerts/test"] = OpenAPIPath{Get: op([]string{"Audit"}, "Test"), Post: op([]string{"Audit"}, "Test")}
+	m["/api/v1/audit/anomalies/detect"] = OpenAPIPath{Get: op([]string{"Audit"}, "Detect"), Post: op([]string{"Audit"}, "Detect")}
+	m["/api/v1/audit/anomaly-detection"] = OpenAPIPath{Get: op([]string{"Audit"}, "Anomaly Detection"), Post: op([]string{"Audit"}, "Anomaly Detection")}
+	m["/api/v1/audit/anomaly-detection/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Anomaly Detection"), Post: op([]string{"Audit"}, "Anomaly Detection")}
+	m["/api/v1/audit/ccm/history"] = OpenAPIPath{Get: op([]string{"CCM"}, "Get compliance history")}
+	m["/api/v1/audit/ccm/results"] = OpenAPIPath{Get: op([]string{"CCM"}, "Get compliance monitoring results")}
+	m["/api/v1/audit/ccm/run"] = OpenAPIPath{Post: op([]string{"CCM"}, "Trigger compliance scan")}
+	m["/api/v1/audit/ccm/summary"] = OpenAPIPath{Get: op([]string{"Audit"}, "Summary"), Post: op([]string{"Audit"}, "Summary")}
+	m["/api/v1/audit/compliance-report"] = OpenAPIPath{Get: op([]string{"Audit"}, "Compliance Report"), Post: op([]string{"Audit"}, "Compliance Report")}
+	m["/api/v1/audit/compliance-schedules"] = OpenAPIPath{Get: op([]string{"Audit"}, "Compliance Schedules"), Post: op([]string{"Audit"}, "Compliance Schedules")}
+	m["/api/v1/audit/compliance/auto-collect"] = OpenAPIPath{Get: op([]string{"Audit"}, "Auto Collect"), Post: op([]string{"Audit"}, "Auto Collect")}
+	m["/api/v1/audit/compliance/auto-score"] = OpenAPIPath{Get: op([]string{"Audit"}, "Auto Score"), Post: op([]string{"Audit"}, "Auto Score")}
+	m["/api/v1/audit/compliance/cert-export"] = OpenAPIPath{Get: op([]string{"Audit"}, "Cert Export"), Post: op([]string{"Audit"}, "Cert Export")}
+	m["/api/v1/audit/compliance/config"] = OpenAPIPath{Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")}
+	m["/api/v1/audit/compliance/dashboard"] = OpenAPIPath{Get: op([]string{"Audit"}, "Dashboard"), Post: op([]string{"Audit"}, "Dashboard")}
+	m["/api/v1/audit/compliance/drift"] = OpenAPIPath{Get: op([]string{"Audit"}, "Drift"), Post: op([]string{"Audit"}, "Drift")}
+	m["/api/v1/audit/compliance/evidence"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evidence"), Post: op([]string{"Audit"}, "Evidence")}
+	m["/api/v1/audit/compliance/evidence-attachments"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evidence Attachments"), Post: op([]string{"Audit"}, "Evidence Attachments")}
+	m["/api/v1/audit/compliance/evidence-expiry"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evidence Expiry"), Post: op([]string{"Audit"}, "Evidence Expiry")}
+	m["/api/v1/audit/compliance/evidence-refresh"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evidence Refresh"), Post: op([]string{"Audit"}, "Evidence Refresh")}
+	m["/api/v1/audit/compliance/evidence/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evidence"), Post: op([]string{"Audit"}, "Evidence")}
+	m["/api/v1/audit/compliance/evidence/verify-integrity"] = OpenAPIPath{Get: op([]string{"Audit"}, "Verify Integrity"), Post: op([]string{"Audit"}, "Verify Integrity")}
+	m["/api/v1/audit/compliance/gaps"] = OpenAPIPath{Get: op([]string{"Audit"}, "Gaps"), Post: op([]string{"Audit"}, "Gaps")}
+	m["/api/v1/audit/compliance/gaps/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Gaps"), Post: op([]string{"Audit"}, "Gaps")}
+	m["/api/v1/audit/compliance/heatmap"] = OpenAPIPath{Get: op([]string{"Audit"}, "Heatmap"), Post: op([]string{"Audit"}, "Heatmap")}
+	m["/api/v1/audit/compliance/mapping"] = OpenAPIPath{Get: op([]string{"Audit"}, "Mapping"), Post: op([]string{"Audit"}, "Mapping")}
+	m["/api/v1/audit/compliance/remediation-progress"] = OpenAPIPath{Get: op([]string{"Audit"}, "Remediation Progress"), Post: op([]string{"Audit"}, "Remediation Progress")}
+	m["/api/v1/audit/compliance/schedule-collect"] = OpenAPIPath{Get: op([]string{"Audit"}, "Schedule Collect"), Post: op([]string{"Audit"}, "Schedule Collect")}
+	m["/api/v1/audit/compliance/schedules"] = OpenAPIPath{Get: op([]string{"Audit"}, "Schedules"), Post: op([]string{"Audit"}, "Schedules")}
+	m["/api/v1/audit/compliance/score-history"] = OpenAPIPath{Get: op([]string{"Audit"}, "Score History"), Post: op([]string{"Audit"}, "Score History")}
+	m["/api/v1/audit/compliance/widget-data"] = OpenAPIPath{Get: op([]string{"Audit"}, "Widget Data"), Post: op([]string{"Audit"}, "Widget Data")}
+	m["/api/v1/audit/correlate"] = OpenAPIPath{Get: op([]string{"Audit"}, "Correlate"), Post: op([]string{"Audit"}, "Correlate")}
+	m["/api/v1/audit/correlation/rules"] = OpenAPIPath{Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")}
+	m["/api/v1/audit/cross-system-correlate"] = OpenAPIPath{Get: op([]string{"Audit"}, "Cross System Correlate"), Post: op([]string{"Audit"}, "Cross System Correlate")}
+	m["/api/v1/audit/dashboards/"] = OpenAPIPath{Get: op([]string{"Audit"}, "V1 Audit Dashboards")}
+	m["/api/v1/audit/dsr"] = OpenAPIPath{Get: op([]string{"Audit"}, "Dsr"), Post: op([]string{"Audit"}, "Dsr")}
+	m["/api/v1/audit/events"] = OpenAPIPath{Get: op([]string{"Audit"}, "List audit events with filtering")}
+	m["/api/v1/audit/events/"] = OpenAPIPath{Get: op([]string{"Audit"}, "V1 Audit Events")}
+	m["/api/v1/audit/events/deduplicate"] = OpenAPIPath{Get: op([]string{"Audit"}, "Deduplicate"), Post: op([]string{"Audit"}, "Deduplicate")}
+	m["/api/v1/audit/events/subscribe"] = OpenAPIPath{Get: op([]string{"Audit"}, "Subscribe"), Post: op([]string{"Audit"}, "Subscribe")}
+	m["/api/v1/audit/events/subscribe/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Subscribe"), Post: op([]string{"Audit"}, "Subscribe")}
+	m["/api/v1/audit/events/{id}"] = OpenAPIPath{Get: op([]string{"Audit"}, "Get audit event by ID")}
+	m["/api/v1/audit/evidence-collection"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evidence Collection"), Post: op([]string{"Audit"}, "Evidence Collection")}
+	m["/api/v1/audit/evidence-collection/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Evidence Collection"), Post: op([]string{"Audit"}, "Evidence Collection")}
+	m["/api/v1/audit/evidence/chain"] = OpenAPIPath{Get: op([]string{"Audit"}, "Chain"), Post: op([]string{"Audit"}, "Chain")}
+	m["/api/v1/audit/export"] = OpenAPIPath{Get: op([]string{"Audit"}, "Export audit events (JSON/CSV)")}
+	m["/api/v1/audit/export/schedule-config"] = OpenAPIPath{Get: op([]string{"Audit"}, "Schedule Config"), Post: op([]string{"Audit"}, "Schedule Config")}
+	m["/api/v1/audit/exports"] = OpenAPIPath{Get: op([]string{"Audit"}, "Exports"), Post: op([]string{"Audit"}, "Exports")}
+	m["/api/v1/audit/exports/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Exports"), Post: op([]string{"Audit"}, "Exports")}
+	m["/api/v1/audit/exports/schedule"] = OpenAPIPath{Get: op([]string{"Audit"}, "Schedule"), Post: op([]string{"Audit"}, "Schedule")}
+	m["/api/v1/audit/forensics/timeline"] = OpenAPIPath{Get: op([]string{"Audit"}, "Timeline"), Post: op([]string{"Audit"}, "Timeline")}
+	m["/api/v1/audit/framework-coverage"] = OpenAPIPath{Get: op([]string{"Audit"}, "Framework Coverage"), Post: op([]string{"Audit"}, "Framework Coverage")}
+	m["/api/v1/audit/gdpr-forget"] = OpenAPIPath{Get: op([]string{"Audit"}, "Gdpr Forget"), Post: op([]string{"Audit"}, "Gdpr Forget")}
+	m["/api/v1/audit/gdpr-forget/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Gdpr Forget"), Post: op([]string{"Audit"}, "Gdpr Forget")}
+	m["/api/v1/audit/gdpr/forget"] = OpenAPIPath{Get: op([]string{"Audit"}, "Forget"), Post: op([]string{"Audit"}, "Forget")}
+	m["/api/v1/audit/hash-chain"] = OpenAPIPath{Get: op([]string{"Audit"}, "Hash Chain"), Post: op([]string{"Audit"}, "Hash Chain")}
+	m["/api/v1/audit/hash-chain/config"] = OpenAPIPath{Get: op([]string{"Audit"}, "Config"), Post: op([]string{"Audit"}, "Config")}
+	m["/api/v1/audit/impersonation"] = OpenAPIPath{Get: op([]string{"Audit"}, "Impersonation"), Post: op([]string{"Audit"}, "Impersonation")}
+	m["/api/v1/audit/incidents"] = OpenAPIPath{Get: op([]string{"Audit"}, "Incidents"), Post: op([]string{"Audit"}, "Incidents")}
+	m["/api/v1/audit/incidents/active"] = OpenAPIPath{Get: op([]string{"Audit"}, "Active"), Post: op([]string{"Audit"}, "Active")}
+	m["/api/v1/audit/integrity/sign-pqc"] = OpenAPIPath{Get: op([]string{"Audit"}, "Sign Pqc"), Post: op([]string{"Audit"}, "Sign Pqc")}
+	m["/api/v1/audit/integrity/verify"] = OpenAPIPath{Get: op([]string{"Audit"}, "Verify"), Post: op([]string{"Audit"}, "Verify")}
+	m["/api/v1/audit/integrity/verify-pqc"] = OpenAPIPath{Get: op([]string{"Audit"}, "Verify Pqc"), Post: op([]string{"Audit"}, "Verify Pqc")}
+	m["/api/v1/audit/isolation-check"] = OpenAPIPath{Get: op([]string{"Audit"}, "Isolation Check"), Post: op([]string{"Audit"}, "Isolation Check")}
+	m["/api/v1/audit/itdr/composite-rules"] = OpenAPIPath{Get: op([]string{"Audit"}, "Composite Rules"), Post: op([]string{"Audit"}, "Composite Rules")}
+	m["/api/v1/audit/itdr/composite-rules/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Composite Rules"), Post: op([]string{"Audit"}, "Composite Rules")}
+	m["/api/v1/audit/itdr/detections"] = OpenAPIPath{Get: op([]string{"Audit"}, "Detections"), Post: op([]string{"Audit"}, "Detections")}
+	m["/api/v1/audit/itdr/detections/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Detections"), Post: op([]string{"Audit"}, "Detections")}
+	m["/api/v1/audit/itdr/incidents"] = OpenAPIPath{Get: op([]string{"Audit"}, "Incidents"), Post: op([]string{"Audit"}, "Incidents")}
+	m["/api/v1/audit/itdr/kill-chain/"] = OpenAPIPath{Get: op([]string{"Audit"}, "V1 Audit Itdr Kill Chain")}
+	m["/api/v1/audit/itdr/playbooks"] = OpenAPIPath{Get: op([]string{"Audit"}, "Playbooks"), Post: op([]string{"Audit"}, "Playbooks")}
+	m["/api/v1/audit/itdr/rules"] = OpenAPIPath{Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")}
+	m["/api/v1/audit/itdr/rules/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")}
+	m["/api/v1/audit/itdr/stats"] = OpenAPIPath{Get: op([]string{"Audit"}, "Stats"), Post: op([]string{"Audit"}, "Stats")}
+	m["/api/v1/audit/itdr/threat-heatmap"] = OpenAPIPath{Get: op([]string{"Audit"}, "Threat Heatmap"), Post: op([]string{"Audit"}, "Threat Heatmap")}
+	m["/api/v1/audit/lineage"] = OpenAPIPath{Get: op([]string{"Audit"}, "Lineage"), Post: op([]string{"Audit"}, "Lineage")}
+	m["/api/v1/audit/metrics"] = OpenAPIPath{Get: op([]string{"Audit"}, "Metrics"), Post: op([]string{"Audit"}, "Metrics")}
+	m["/api/v1/audit/pii-scan"] = OpenAPIPath{Get: op([]string{"Audit"}, "Pii Scan"), Post: op([]string{"Audit"}, "Pii Scan")}
+	m["/api/v1/audit/query-metrics"] = OpenAPIPath{Get: op([]string{"Audit"}, "Query Metrics"), Post: op([]string{"Audit"}, "Query Metrics")}
+	m["/api/v1/audit/regulatory/report"] = OpenAPIPath{Get: op([]string{"Audit"}, "Report"), Post: op([]string{"Audit"}, "Report")}
+	m["/api/v1/audit/reports"] = OpenAPIPath{Get: op([]string{"Audit"}, "Reports"), Post: op([]string{"Audit"}, "Reports")}
+	m["/api/v1/audit/reports/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Reports"), Post: op([]string{"Audit"}, "Reports")}
+	m["/api/v1/audit/reports/custom"] = OpenAPIPath{Get: op([]string{"Audit"}, "Custom"), Post: op([]string{"Audit"}, "Custom")}
+	m["/api/v1/audit/reports/generate"] = OpenAPIPath{Get: op([]string{"Audit"}, "Generate"), Post: op([]string{"Audit"}, "Generate")}
+	m["/api/v1/audit/retention"] = OpenAPIPath{Get: op([]string{"Audit"}, "Retention"), Post: op([]string{"Audit"}, "Retention")}
+	m["/api/v1/audit/retention-policies"] = OpenAPIPath{Get: op([]string{"Audit"}, "Retention Policies"), Post: op([]string{"Audit"}, "Retention Policies")}
+	m["/api/v1/audit/retention/execute"] = OpenAPIPath{Get: op([]string{"Audit"}, "Execute"), Post: op([]string{"Audit"}, "Execute")}
+	m["/api/v1/audit/retention/simulate"] = OpenAPIPath{Get: op([]string{"Audit"}, "Simulate"), Post: op([]string{"Audit"}, "Simulate")}
+	m["/api/v1/audit/risk-score"] = OpenAPIPath{Get: op([]string{"Audit"}, "Risk Score"), Post: op([]string{"Audit"}, "Risk Score")}
+	m["/api/v1/audit/rules"] = OpenAPIPath{Get: op([]string{"Audit"}, "Rules"), Post: op([]string{"Audit"}, "Rules")}
+	m["/api/v1/audit/sbom"] = OpenAPIPath{Get: op([]string{"Audit"}, "Sbom"), Post: op([]string{"Audit"}, "Sbom")}
+	m["/api/v1/audit/sbom/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Sbom"), Post: op([]string{"Audit"}, "Sbom")}
+	m["/api/v1/audit/search"] = OpenAPIPath{Get: op([]string{"Audit"}, "Search"), Post: op([]string{"Audit"}, "Search")}
+	m["/api/v1/audit/security-posture"] = OpenAPIPath{Get: op([]string{"Audit"}, "Security Posture"), Post: op([]string{"Audit"}, "Security Posture")}
+	m["/api/v1/audit/siem/forwarder-config"] = OpenAPIPath{Get: op([]string{"Audit"}, "Forwarder Config"), Post: op([]string{"Audit"}, "Forwarder Config")}
+	m["/api/v1/audit/siem/health"] = OpenAPIPath{Get: op([]string{"Audit"}, "Health"), Post: op([]string{"Audit"}, "Health")}
+	m["/api/v1/audit/siem/health-check"] = OpenAPIPath{Get: op([]string{"Audit"}, "Health Check"), Post: op([]string{"Audit"}, "Health Check")}
+	m["/api/v1/audit/siem/metrics"] = OpenAPIPath{Get: op([]string{"Audit"}, "Metrics"), Post: op([]string{"Audit"}, "Metrics")}
+	m["/api/v1/audit/stats"] = OpenAPIPath{Get: op([]string{"Audit"}, "Aggregate audit statistics")}
+	m["/api/v1/audit/stream"] = OpenAPIPath{Get: op([]string{"Audit"}, "Stream"), Post: op([]string{"Audit"}, "Stream")}
+	m["/api/v1/audit/tamper-check"] = OpenAPIPath{Get: op([]string{"Audit"}, "Tamper Check"), Post: op([]string{"Audit"}, "Tamper Check")}
+	m["/api/v1/audit/threat-feed"] = OpenAPIPath{Get: op([]string{"Audit"}, "Threat Feed"), Post: op([]string{"Audit"}, "Threat Feed")}
+	m["/api/v1/audit/threat-intel/check"] = OpenAPIPath{Get: op([]string{"Audit"}, "Check"), Post: op([]string{"Audit"}, "Check")}
+	m["/api/v1/audit/threat-intel/indicators"] = OpenAPIPath{Get: op([]string{"Audit"}, "Indicators"), Post: op([]string{"Audit"}, "Indicators")}
+	m["/api/v1/audit/threat-intel/sources"] = OpenAPIPath{Get: op([]string{"Audit"}, "Sources"), Post: op([]string{"Audit"}, "Sources")}
+	m["/api/v1/audit/threat-intel/sources/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Sources"), Post: op([]string{"Audit"}, "Sources")}
+	m["/api/v1/audit/threat-intel/stats"] = OpenAPIPath{Get: op([]string{"Audit"}, "Stats"), Post: op([]string{"Audit"}, "Stats")}
+	m["/api/v1/audit/timeline/reconstruct"] = OpenAPIPath{Get: op([]string{"Audit"}, "Reconstruct"), Post: op([]string{"Audit"}, "Reconstruct")}
+	m["/api/v1/audit/verify-integrity"] = OpenAPIPath{Get: op([]string{"Audit"}, "Verify Integrity"), Post: op([]string{"Audit"}, "Verify Integrity")}
+	m["/api/v1/audit/webhooks"] = OpenAPIPath{Get: op([]string{"Audit"}, "Webhooks"), Post: op([]string{"Audit"}, "Webhooks")}
+	m["/api/v1/audit/webhooks/"] = OpenAPIPath{Get: op([]string{"Audit"}, "Webhooks"), Post: op([]string{"Audit"}, "Webhooks")}
+	m["/api/v1/audit/webhooks/delivery-status"] = OpenAPIPath{Get: op([]string{"Audit"}, "Delivery Status"), Post: op([]string{"Audit"}, "Delivery Status")}
+	m["/api/v1/audit/ws"] = OpenAPIPath{Get: op([]string{"Audit"}, "Ws"), Post: op([]string{"Audit"}, "Ws")}
+	m["/api/v1/compliance/schedules"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Compliance Schedules")}
+}
+
+func addOrgPaths(m map[string]OpenAPIPath) {
+	m["/api/v1/org/budget-tracking"] = OpenAPIPath{Get: op([]string{"Org"}, "V1 Org Budget Tracking")}
+	m["/api/v1/org/cost-centers"] = OpenAPIPath{Get: op([]string{"Other"}, "Cost Centers"), Post: op([]string{"Other"}, "Cost Centers")}
+	m["/api/v1/org/department-analytics"] = OpenAPIPath{Get: op([]string{"Other"}, "Department Analytics"), Post: op([]string{"Other"}, "Department Analytics")}
+	m["/api/v1/org/reporting-structure"] = OpenAPIPath{Get: op([]string{"Other"}, "Reporting Structure"), Post: op([]string{"Other"}, "Reporting Structure")}
+	m["/api/v1/org/stats/membership-trends"] = OpenAPIPath{Get: op([]string{"Other"}, "Membership Trends"), Post: op([]string{"Other"}, "Membership Trends")}
+	m["/api/v1/org/team-insights"] = OpenAPIPath{Get: op([]string{"Other"}, "Team Insights"), Post: op([]string{"Other"}, "Team Insights")}
+	m["/api/v1/org/tenants/migrate"] = OpenAPIPath{Get: op([]string{"Other"}, "Migrate"), Post: op([]string{"Other"}, "Migrate")}
+	m["/api/v1/org/vendors"] = OpenAPIPath{Get: op([]string{"Other"}, "Vendors"), Post: op([]string{"Other"}, "Vendors")}
+}
+
+func addAdminPaths(m map[string]OpenAPIPath) {
+	m["/api/v1/admin/backups"] = OpenAPIPath{Get: op([]string{"Admin"}, "List backups")}
+	m["/api/v1/admin/backups/"] = OpenAPIPath{Get: op([]string{"Admin"}, "V1 Admin Backups")}
+	m["/api/v1/admin/backups/trigger"] = OpenAPIPath{Post: op([]string{"Admin"}, "Trigger backup")}
+	m["/api/v1/admin/config"] = OpenAPIPath{Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")}
+	m["/api/v1/admin/config/"] = OpenAPIPath{Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")}
+	m["/api/v1/admin/email/config"] = OpenAPIPath{Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")}
+	m["/api/v1/admin/email/test"] = OpenAPIPath{Get: op([]string{"Admin"}, "Test"), Post: op([]string{"Admin"}, "Test")}
+	m["/api/v1/admin/feature-flags"] = OpenAPIPath{Get: op([]string{"Admin"}, "Feature Flags"), Post: op([]string{"Admin"}, "Feature Flags")}
+	m["/api/v1/admin/feature-flags/"] = OpenAPIPath{Get: op([]string{"Admin"}, "Feature Flags"), Post: op([]string{"Admin"}, "Feature Flags")}
+	m["/api/v1/admin/keys"] = OpenAPIPath{Get: op([]string{"Admin"}, "List active signing keys")}
+	m["/api/v1/admin/keys/history"] = OpenAPIPath{Get: op([]string{"Admin"}, "History"), Post: op([]string{"Admin"}, "History")}
+	m["/api/v1/admin/keys/rotate/"] = OpenAPIPath{Put: op([]string{"Admin"}, "V1 Admin Keys Rotate")}
+	m["/api/v1/admin/migration/config"] = OpenAPIPath{Get: op([]string{"Admin"}, "Config"), Post: op([]string{"Admin"}, "Config")}
+	m["/api/v1/admin/migration/mappings"] = OpenAPIPath{Get: op([]string{"Admin"}, "Mappings"), Post: op([]string{"Admin"}, "Mappings")}
+	m["/api/v1/admin/migration/mappings/"] = OpenAPIPath{Get: op([]string{"Admin"}, "Mappings"), Post: op([]string{"Admin"}, "Mappings")}
+	m["/api/v1/admin/migration/stats"] = OpenAPIPath{Get: op([]string{"Admin"}, "Stats"), Post: op([]string{"Admin"}, "Stats")}
+	m["/api/v1/admin/migration/test"] = OpenAPIPath{Get: op([]string{"Admin"}, "Test"), Post: op([]string{"Admin"}, "Test")}
+	m["/api/v1/admin/rls/enable/"] = OpenAPIPath{Get: op([]string{"Admin"}, "V1 Admin Rls Enable")}
+	m["/api/v1/admin/rls/status"] = OpenAPIPath{Get: op([]string{"Admin"}, "Status"), Post: op([]string{"Admin"}, "Status")}
+	m["/api/v1/admin/rls/test"] = OpenAPIPath{Get: op([]string{"Admin"}, "Test"), Post: op([]string{"Admin"}, "Test")}
+	m["/api/v1/admin/secrets"] = OpenAPIPath{Get: op([]string{"Admin"}, "List secret references")}
+	m["/api/v1/admin/secrets/health"] = OpenAPIPath{Get: op([]string{"Admin"}, "Health"), Post: op([]string{"Admin"}, "Health")}
+	m["/api/v1/admin/secrets/rotate/"] = OpenAPIPath{Put: op([]string{"Admin"}, "V1 Admin Secrets Rotate")}
+}
+
+func addGatewayPaths(m map[string]OpenAPIPath) {
+	m["/api/v1/.well-known/federation-configuration"] = OpenAPIPath{Get: op([]string{"Other"}, "Federation Configuration"), Post: op([]string{"Other"}, "Federation Configuration")}
+	m["/api/v1/access-requests"] = OpenAPIPath{Get: op([]string{"Access"}, "Access Requests"), Post: op([]string{"Access"}, "Access Requests")}
+	m["/api/v1/access-requests/"] = OpenAPIPath{Get: op([]string{"Access"}, "Access Requests"), Post: op([]string{"Access"}, "Access Requests")}
+	m["/api/v1/agents"] = OpenAPIPath{Get: op([]string{"Other"}, "Agents"), Post: op([]string{"Other"}, "Agents")}
+	m["/api/v1/agents/"] = OpenAPIPath{Get: op([]string{"Other"}, "Agents"), Post: op([]string{"Other"}, "Agents")}
+	m["/api/v1/agents/drift/report"] = OpenAPIPath{Get: op([]string{"Other"}, "Report"), Post: op([]string{"Other"}, "Report")}
+	m["/api/v1/agents/register"] = OpenAPIPath{Get: op([]string{"Other"}, "Register"), Post: op([]string{"Other"}, "Register")}
+	m["/api/v1/agents/reviews"] = OpenAPIPath{Get: op([]string{"Other"}, "Reviews"), Post: op([]string{"Other"}, "Reviews")}
+	m["/api/v1/agents/reviews/"] = OpenAPIPath{Get: op([]string{"Other"}, "Reviews"), Post: op([]string{"Other"}, "Reviews")}
+	m["/api/v1/agents/shadows"] = OpenAPIPath{Get: op([]string{"Other"}, "Shadows"), Post: op([]string{"Other"}, "Shadows")}
+	m["/api/v1/agents/token"] = OpenAPIPath{Get: op([]string{"Other"}, "Token"), Post: op([]string{"Other"}, "Token")}
+	m["/api/v1/agents/verify"] = OpenAPIPath{Get: op([]string{"Other"}, "Verify"), Post: op([]string{"Other"}, "Verify")}
+	m["/api/v1/alerts"] = OpenAPIPath{Get: op([]string{"Other"}, "Alerts"), Post: op([]string{"Other"}, "Alerts")}
+	m["/api/v1/audit"] = OpenAPIPath{Get: op([]string{"Audit"}, "Audit"), Post: op([]string{"Audit"}, "Audit")}
+	m["/api/v1/authz/check"] = OpenAPIPath{Post: op([]string{"Authz"}, "Simplified permission check: {user_id, resource, action} -> {allowed}")}
+	m["/api/v1/certificates"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Certificates")}
+	m["/api/v1/certificates/"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Certificates")}
+	m["/api/v1/crypto/fields"] = OpenAPIPath{Get: op([]string{"Crypto"}, "V1 Crypto Fields")}
+	m["/api/v1/crypto/fields/"] = OpenAPIPath{Get: op([]string{"Crypto"}, "V1 Crypto Fields")}
+	m["/api/v1/departments"] = OpenAPIPath{Get: op([]string{"Org"}, "List departments"), Post: op([]string{"Org"}, "Create department")}
+	m["/api/v1/departments/"] = OpenAPIPath{Post: op([]string{"Platform"}, "V1 Departments")}
+	m["/api/v1/dlp/policies"] = OpenAPIPath{Get: op([]string{"DLP"}, "V1 Dlp Policies")}
+	m["/api/v1/dlp/policies/"] = OpenAPIPath{Get: op([]string{"DLP"}, "V1 Dlp Policies")}
+	m["/api/v1/dlp/scan"] = OpenAPIPath{Post: op([]string{"DLP"}, "V1 Dlp Scan")}
+	m["/api/v1/event-correlation/rules"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Event Correlation Rules")}
+	m["/api/v1/groups"] = OpenAPIPath{Get: op([]string{"Identity"}, "List groups"), Post: op([]string{"Identity"}, "Create group")}
+	m["/api/v1/groups/{id}"] = OpenAPIPath{Get: op([]string{"Identity"}, "Get group by ID"), Put: op([]string{"Identity"}, "Update group"), Delete: op([]string{"Identity"}, "Delete group")}
+	m["/api/v1/groups/{id}/members"] = OpenAPIPath{Get: op([]string{"Identity"}, "List group members"), Post: op([]string{"Identity"}, "Add member to group")}
+	m["/api/v1/hr/connectors"] = OpenAPIPath{Get: op([]string{"HR"}, "List HR connectors"), Post: op([]string{"HR"}, "Add HR connector")}
+	m["/api/v1/hr/dormant"] = OpenAPIPath{Get: op([]string{"HR"}, "Dormant accounts")}
+	m["/api/v1/hr/reconcile"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Hr Reconcile")}
+	m["/api/v1/hr/sync"] = OpenAPIPath{Post: op([]string{"HR"}, "Trigger HR sync")}
+	m["/api/v1/hr/sync/log"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Hr Sync Log")}
+	m["/api/v1/idp/config"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Idp Config")}
+	m["/api/v1/mdm/connectors"] = OpenAPIPath{Get: op([]string{"MDM"}, "List MDM connectors"), Post: op([]string{"MDM"}, "Add MDM connector")}
+	m["/api/v1/mdm/devices"] = OpenAPIPath{Get: op([]string{"MDM"}, "List MDM devices")}
+	m["/api/v1/mdm/devices/"] = OpenAPIPath{Get: op([]string{"Devices"}, "V1 Mdm Devices")}
+	m["/api/v1/mdm/sync/"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Mdm Sync")}
+	m["/api/v1/notifications/log"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Notifications Log")}
+	m["/api/v1/notifications/rules"] = OpenAPIPath{Get: op([]string{"Notifications"}, "List notification rules"), Post: op([]string{"Notifications"}, "Create notification rule")}
+	m["/api/v1/notifications/send"] = OpenAPIPath{Get: op([]string{"Platform"}, "V1 Notifications Send")}
+	m["/api/v1/observability/health"] = OpenAPIPath{Get: op([]string{"Observability"}, "Exporter health")}
+	m["/api/v1/organizations"] = OpenAPIPath{Get: op([]string{"Other"}, "Organizations"), Post: op([]string{"Other"}, "Organizations")}
+	m["/api/v1/organizations/"] = OpenAPIPath{Get: op([]string{"Other"}, "Organizations"), Post: op([]string{"Other"}, "Organizations")}
+	m["/api/v1/orgs"] = OpenAPIPath{Get: op([]string{"Org"}, "List organizations"), Post: op([]string{"Org"}, "Create organization")}
+	m["/api/v1/orgs/"] = OpenAPIPath{Get: op([]string{"Org"}, "Orgs"), Post: op([]string{"Org"}, "Orgs")}
+	m["/api/v1/orgs/tree"] = OpenAPIPath{Get: op([]string{"Org"}, "Tree"), Post: op([]string{"Org"}, "Tree")}
+	m["/api/v1/orgs/tree-with-members"] = OpenAPIPath{Get: op([]string{"Org"}, "Tree With Members"), Post: op([]string{"Org"}, "Tree With Members")}
+	m["/api/v1/orgs/{id}"] = OpenAPIPath{Get: op([]string{"Org"}, "Get organization by ID"), Put: op([]string{"Org"}, "Update organization"), Delete: op([]string{"Org"}, "Delete organization")}
+	m["/api/v1/permissions"] = OpenAPIPath{Get: op([]string{"Policy"}, "List permissions"), Post: op([]string{"Policy"}, "Create permission")}
+	m["/api/v1/permissions/tree"] = OpenAPIPath{Get: op([]string{"Policy"}, "Tree"), Post: op([]string{"Policy"}, "Tree")}
+	m["/api/v1/plugins"] = OpenAPIPath{Get: op([]string{"Other"}, "Plugins"), Post: op([]string{"Other"}, "Plugins")}
+	m["/api/v1/plugins/"] = OpenAPIPath{Get: op([]string{"Other"}, "Plugins"), Post: op([]string{"Other"}, "Plugins")}
+	m["/api/v1/policies"] = OpenAPIPath{Get: op([]string{"Policy"}, "List policies"), Post: op([]string{"Policy"}, "Create policy")}
+	m["/api/v1/policies/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Policies"), Post: op([]string{"Policy"}, "Policies")}
+	m["/api/v1/policies/abac/evaluate"] = OpenAPIPath{Get: op([]string{"Policy"}, "Evaluate"), Post: op([]string{"Policy"}, "Evaluate")}
+	m["/api/v1/policies/abac/export"] = OpenAPIPath{Get: op([]string{"Policy"}, "Export"), Post: op([]string{"Policy"}, "Export")}
+	m["/api/v1/policies/abac/groups"] = OpenAPIPath{Get: op([]string{"Policy"}, "Groups"), Post: op([]string{"Policy"}, "Groups")}
+	m["/api/v1/policies/abac/import"] = OpenAPIPath{Get: op([]string{"Policy"}, "Import"), Post: op([]string{"Policy"}, "Import")}
+	m["/api/v1/policies/access-frequency"] = OpenAPIPath{Get: op([]string{"Policy"}, "Access Frequency"), Post: op([]string{"Policy"}, "Access Frequency")}
+	m["/api/v1/policies/access-paths"] = OpenAPIPath{Get: op([]string{"Policy"}, "Access Paths"), Post: op([]string{"Policy"}, "Access Paths")}
+	m["/api/v1/policies/access-paths/optimization"] = OpenAPIPath{Get: op([]string{"Policy"}, "Optimization"), Post: op([]string{"Policy"}, "Optimization")}
+	m["/api/v1/policies/access-requests"] = OpenAPIPath{Get: op([]string{"Policy"}, "Access Requests"), Post: op([]string{"Policy"}, "Access Requests")}
+	m["/api/v1/policies/access-requests/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Access Requests"), Post: op([]string{"Policy"}, "Access Requests")}
+	m["/api/v1/policies/access-requests/pending"] = OpenAPIPath{Get: op([]string{"Policy"}, "Pending"), Post: op([]string{"Policy"}, "Pending")}
+	m["/api/v1/policies/access-review-exemptions"] = OpenAPIPath{Get: op([]string{"Policy"}, "Access Review Exemptions"), Post: op([]string{"Policy"}, "Access Review Exemptions")}
+	m["/api/v1/policies/access-review-exemptions/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Access Review Exemptions"), Post: op([]string{"Policy"}, "Access Review Exemptions")}
+	m["/api/v1/policies/access-reviews/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Access Reviews"), Post: op([]string{"Policy"}, "Access Reviews")}
+	m["/api/v1/policies/access-reviews/auto-assign"] = OpenAPIPath{Get: op([]string{"Policy"}, "Auto Assign"), Post: op([]string{"Policy"}, "Auto Assign")}
+	m["/api/v1/policies/access-reviews/campaigns"] = OpenAPIPath{Get: op([]string{"Policy"}, "Campaigns"), Post: op([]string{"Policy"}, "Campaigns")}
+	m["/api/v1/policies/access-reviews/campaigns/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Campaigns"), Post: op([]string{"Policy"}, "Campaigns")}
+	m["/api/v1/policies/access-reviews/campaigns/active"] = OpenAPIPath{Get: op([]string{"Policy"}, "Active"), Post: op([]string{"Policy"}, "Active")}
+	m["/api/v1/policies/access-reviews/delegate"] = OpenAPIPath{Get: op([]string{"Policy"}, "Delegate"), Post: op([]string{"Policy"}, "Delegate")}
+	m["/api/v1/policies/access-reviews/delegated"] = OpenAPIPath{Get: op([]string{"Policy"}, "Delegated"), Post: op([]string{"Policy"}, "Delegated")}
+	m["/api/v1/policies/access-reviews/escalate"] = OpenAPIPath{Get: op([]string{"Policy"}, "Escalate"), Post: op([]string{"Policy"}, "Escalate")}
+	m["/api/v1/policies/access-reviews/escalated"] = OpenAPIPath{Get: op([]string{"Policy"}, "Escalated"), Post: op([]string{"Policy"}, "Escalated")}
+	m["/api/v1/policies/access-reviews/metrics"] = OpenAPIPath{Get: op([]string{"Policy"}, "Metrics"), Post: op([]string{"Policy"}, "Metrics")}
+	m["/api/v1/policies/analyze"] = OpenAPIPath{Get: op([]string{"Policy"}, "Analyze"), Post: op([]string{"Policy"}, "Analyze")}
+	m["/api/v1/policies/approvals"] = OpenAPIPath{Get: op([]string{"Policy"}, "Approvals"), Post: op([]string{"Policy"}, "Approvals")}
+	m["/api/v1/policies/approvals/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Approvals"), Post: op([]string{"Policy"}, "Approvals")}
+	m["/api/v1/policies/attribute-mapping"] = OpenAPIPath{Get: op([]string{"Policy"}, "Attribute Mapping"), Post: op([]string{"Policy"}, "Attribute Mapping")}
+	m["/api/v1/policies/break-glass"] = OpenAPIPath{Get: op([]string{"Policy"}, "Break Glass"), Post: op([]string{"Policy"}, "Break Glass")}
+	m["/api/v1/policies/break-glass/active"] = OpenAPIPath{Get: op([]string{"Policy"}, "Active"), Post: op([]string{"Policy"}, "Active")}
+	m["/api/v1/policies/bundles"] = OpenAPIPath{Get: op([]string{"Policy"}, "Bundles"), Post: op([]string{"Policy"}, "Bundles")}
+	m["/api/v1/policies/check"] = OpenAPIPath{Post: op([]string{"Policy"}, "Check access (principal, resource, action) → allow/deny")}
+	m["/api/v1/policies/conditional-access"] = OpenAPIPath{Get: op([]string{"Policy"}, "Conditional Access"), Post: op([]string{"Policy"}, "Conditional Access")}
+	m["/api/v1/policies/conflicts/resolve"] = OpenAPIPath{Get: op([]string{"Policy"}, "Resolve"), Post: op([]string{"Policy"}, "Resolve")}
+	m["/api/v1/policies/decision-log"] = OpenAPIPath{Get: op([]string{"Policy"}, "Decision Log"), Post: op([]string{"Policy"}, "Decision Log")}
+	m["/api/v1/policies/default-action"] = OpenAPIPath{Get: op([]string{"Policy"}, "Default Action"), Post: op([]string{"Policy"}, "Default Action")}
+	m["/api/v1/policies/delegate"] = OpenAPIPath{Get: op([]string{"Policy"}, "Delegate"), Post: op([]string{"Policy"}, "Delegate")}
+	m["/api/v1/policies/delegated-admin"] = OpenAPIPath{Get: op([]string{"Policy"}, "Delegated Admin"), Post: op([]string{"Policy"}, "Delegated Admin")}
+	m["/api/v1/policies/delegated-admin/list"] = OpenAPIPath{Get: op([]string{"Policy"}, "List"), Post: op([]string{"Policy"}, "List")}
+	m["/api/v1/policies/delegations"] = OpenAPIPath{Get: op([]string{"Policy"}, "Delegations"), Post: op([]string{"Policy"}, "Delegations")}
+	m["/api/v1/policies/diff"] = OpenAPIPath{Get: op([]string{"Policy"}, "Diff"), Post: op([]string{"Policy"}, "Diff")}
+	m["/api/v1/policies/dry-run"] = OpenAPIPath{Get: op([]string{"Policy"}, "Dry Run"), Post: op([]string{"Policy"}, "Dry Run")}
+	m["/api/v1/policies/dynamic-roles"] = OpenAPIPath{Get: op([]string{"Policy"}, "Dynamic Roles"), Post: op([]string{"Policy"}, "Dynamic Roles")}
+	m["/api/v1/policies/dynamic-roles/list"] = OpenAPIPath{Get: op([]string{"Policy"}, "List"), Post: op([]string{"Policy"}, "List")}
+	m["/api/v1/policies/effectiveness"] = OpenAPIPath{Get: op([]string{"Policy"}, "Effectiveness"), Post: op([]string{"Policy"}, "Effectiveness")}
+	m["/api/v1/policies/emergency-access/audit"] = OpenAPIPath{Get: op([]string{"Policy"}, "Audit"), Post: op([]string{"Policy"}, "Audit")}
+	m["/api/v1/policies/evaluate"] = OpenAPIPath{Post: op([]string{"Policy"}, "Evaluate all matching policies with decision trail")}
+	m["/api/v1/policies/export"] = OpenAPIPath{Get: op([]string{"Policy"}, "Export"), Post: op([]string{"Policy"}, "Export")}
+	m["/api/v1/policies/export-package"] = OpenAPIPath{Get: op([]string{"Policy"}, "Export Package"), Post: op([]string{"Policy"}, "Export Package")}
+	m["/api/v1/policies/export-yaml"] = OpenAPIPath{Get: op([]string{"Policy"}, "Export Yaml"), Post: op([]string{"Policy"}, "Export Yaml")}
+	m["/api/v1/policies/from-template/"] = OpenAPIPath{Get: op([]string{"Policy"}, "From Template"), Post: op([]string{"Policy"}, "From Template")}
+	m["/api/v1/policies/impact-preview"] = OpenAPIPath{Get: op([]string{"Policy"}, "Impact Preview"), Post: op([]string{"Policy"}, "Impact Preview")}
+	m["/api/v1/policies/import"] = OpenAPIPath{Get: op([]string{"Policy"}, "Import"), Post: op([]string{"Policy"}, "Import")}
+	m["/api/v1/policies/import-package"] = OpenAPIPath{Get: op([]string{"Policy"}, "Import Package"), Post: op([]string{"Policy"}, "Import Package")}
+	m["/api/v1/policies/import-yaml"] = OpenAPIPath{Get: op([]string{"Policy"}, "Import Yaml"), Post: op([]string{"Policy"}, "Import Yaml")}
+	m["/api/v1/policies/inheritance"] = OpenAPIPath{Get: op([]string{"Policy"}, "Inheritance"), Post: op([]string{"Policy"}, "Inheritance")}
+	m["/api/v1/policies/inheritance/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Inheritance"), Post: op([]string{"Policy"}, "Inheritance")}
+	m["/api/v1/policies/jit-elevate"] = OpenAPIPath{Get: op([]string{"Policy"}, "Jit Elevate"), Post: op([]string{"Policy"}, "Jit Elevate")}
+	m["/api/v1/policies/jit/active"] = OpenAPIPath{Get: op([]string{"Policy"}, "Active"), Post: op([]string{"Policy"}, "Active")}
+	m["/api/v1/policies/jit/request"] = OpenAPIPath{Get: op([]string{"Policy"}, "Request"), Post: op([]string{"Policy"}, "Request")}
+	m["/api/v1/policies/jit/requests"] = OpenAPIPath{Get: op([]string{"Policy"}, "Requests"), Post: op([]string{"Policy"}, "Requests")}
+	m["/api/v1/policies/jit/requests/"] = OpenAPIPath{Get: op([]string{"Policy"}, "Requests"), Post: op([]string{"Policy"}, "Requests")}
+	m["/api/v1/policies/merge-conflicts"] = OpenAPIPath{Get: op([]string{"Policy"}, "Merge Conflicts"), Post: op([]string{"Policy"}, "Merge Conflicts")}
+	m["/api/v1/policies/permission-boundaries"] = OpenAPIPath{Get: op([]string{"Policy"}, "Permission Boundaries"), Post: op([]string{"Policy"}, "Permission Boundaries")}
+	m["/api/v1/policies/permissions/tree"] = OpenAPIPath{Get: op([]string{"Policy"}, "Tree"), Post: op([]string{"Policy"}, "Tree")}
+	m["/api/v1/policies/policy-set/evaluate"] = OpenAPIPath{Get: op([]string{"Policy"}, "Evaluate"), Post: op([]string{"Policy"}, "Evaluate")}
+	m["/api/v1/policies/privileged-access"] = OpenAPIPath{Get: op([]string{"Policy"}, "Privileged Access"), Post: op([]string{"Policy"}, "Privileged Access")}
+	m["/api/v1/policies/privileged-access/revoke"] = OpenAPIPath{Get: op([]string{"Policy"}, "Revoke"), Post: op([]string{"Policy"}, "Revoke")}
+	m["/api/v1/policies/sod/check"] = OpenAPIPath{Post: op([]string{"Policy"}, "Check Separation of Duties violations")}
+	m["/api/v1/policies/sod/violations"] = OpenAPIPath{Get: op([]string{"Policy"}, "List SoD violations")}
+	m["/api/v1/policies/{id}"] = OpenAPIPath{Get: op([]string{"Policy"}, "Get policy by ID"), Put: op([]string{"Policy"}, "Update policy"), Delete: op([]string{"Policy"}, "Delete policy")}
+	m["/api/v1/quotas/{tenant_id}"] = OpenAPIPath{Get: op([]string{"Admin"}, "Get tenant quota"), Put: op([]string{"Admin"}, "Update quota")}
+	m["/api/v1/risk/evaluate"] = OpenAPIPath{Post: op([]string{"Risk"}, "Evaluate risk score")}
+	m["/api/v1/risk/scores/{user_id}"] = OpenAPIPath{Get: op([]string{"Risk"}, "Get risk score for user")}
+	m["/api/v1/risk/signals"] = OpenAPIPath{Get: op([]string{"Risk"}, "List risk signals")}
+	m["/api/v1/soar/playbooks"] = OpenAPIPath{Get: op([]string{"SOAR"}, "List SOAR playbooks"), Post: op([]string{"SOAR"}, "Create SOAR playbook")}
+	m["/api/v1/teams"] = OpenAPIPath{Get: op([]string{"Org"}, "List teams"), Post: op([]string{"Org"}, "Create team")}
+	m["/graphql"] = OpenAPIPath{Post: op([]string{"GraphQL"}, "GraphQL endpoint")}
+	m["/healthz"] = OpenAPIPath{Get: op([]string{"System"}, "Health check")}
+	m["/readyz"] = OpenAPIPath{Get: op([]string{"System"}, "Readiness check")}
+}
+
 
 // SwaggerUIHandler serves the interactive Swagger UI at /docs.
 func SwaggerUIHandler() http.HandlerFunc {

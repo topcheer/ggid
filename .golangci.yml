@@ -1,16 +1,23 @@
+# golangci-lint configuration
+# CI uses v1.64.8; local v2.x may need: golangci-lint config migrate
 run:
   timeout: 5m
+  go: '1.25'
 
 linters:
   enable:
     - errcheck
+    - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - gosec
+    - unused
     - gocritic
+    - gosec
     - revive
     - misspell
+  disable:
+    - typecheck
   disable-all: false
 
 linters-settings:
@@ -34,6 +41,7 @@ linters-settings:
         disabled: true
   gocritic:
     disabled-checks:
+      - dupBranchBody
       - ifElseChain
       - assignOp
       - appendAssign
