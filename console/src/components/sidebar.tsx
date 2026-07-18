@@ -255,8 +255,9 @@ export function Sidebar() {
 
 // ============ Help Dropdown ============
 
-const BUILD_VERSION = "1.0.0";
+const BUILD_VERSION = "v1.0-stable";
 const BUILD_DATE = new Date().toISOString().split("T")[0];
+const COMMIT_HASH = process.env.NEXT_PUBLIC_GIT_SHA?.slice(0, 7) || "dev";
 
 function HelpDropdown({ t }: { t: (key: string) => string }) {
   const [open, setOpen] = useState(false);
@@ -308,7 +309,8 @@ function HelpDropdown({ t }: { t: (key: string) => string }) {
             <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-800 mt-1">
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <Info className="w-3 h-3" />
-                <span>{t("nav.helpVersion")} {BUILD_VERSION}</span>
+                <span>{BUILD_VERSION}</span>
+                <span className="font-mono text-gray-300 dark:text-gray-600">{COMMIT_HASH}</span>
               </div>
               <div className="text-xs text-gray-400 mt-0.5 pl-5">
                 {t("nav.helpBuild")} {BUILD_DATE}
